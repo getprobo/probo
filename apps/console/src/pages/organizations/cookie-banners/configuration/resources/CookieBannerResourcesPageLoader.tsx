@@ -35,8 +35,9 @@ export default function CookieBannerResourcesPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
-  const { graphqlFilter } = useResourcesListFilters();
+  const { graphqlFilter, graphqlOrder } = useResourcesListFilters();
   const filterRef = useRef(graphqlFilter);
+  const orderRef = useRef(graphqlOrder);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerResourcesPageQuery>(
     cookieBannerResourcesPageQuery,
   );
@@ -46,10 +47,15 @@ export default function CookieBannerResourcesPageLoader() {
   }, [graphqlFilter]);
 
   useEffect(() => {
+    orderRef.current = graphqlOrder;
+  }, [graphqlOrder]);
+
+  useEffect(() => {
     loadQuery({
       cookieBannerId,
       first: RESOURCES_PAGE_SIZE,
       filter: filterRef.current,
+      order: orderRef.current,
     });
   }, [loadQuery, cookieBannerId]);
 

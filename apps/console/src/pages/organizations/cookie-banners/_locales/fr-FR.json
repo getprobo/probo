@@ -101,6 +101,7 @@
     "types": { "all": "Tous les types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Nom", "thirdParty": "Tiers", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "lastMatched": "Dernière correspondance" },
+    "sort": { "name": "Trier par nom", "source": "Trier par source", "lastMatched": "Trier par dernière correspondance" },
     "actions": { "previous": "Précédent", "next": "Suivant" },
     "empty": { "title": "Aucun modèle de traceur", "description": "Aucun modèle de cookie n’a encore été détecté. Les modèles apparaîtront ici lorsqu’ils seront détectés." },
     "emptyFiltered": "Aucun traceur correspondant"
@@ -150,6 +151,7 @@
     "filters": { "search": "Rechercher par origine ou chemin...", "type": "Type" },
     "types": { "all": "Tous les types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Feuille de style", "font": "Police", "beacon": "Balise", "fetch": "Fetch", "media": "Média", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origine", "path": "Chemin", "category": "Catégorie", "lastDetected": "Dernière détection" },
+    "sort": { "origin": "Trier par origine", "lastDetected": "Trier par dernière détection" },
     "actions": { "previous": "Précédent", "next": "Suivant" },
     "empty": { "title": "Aucune ressource non catégorisée", "description": "Toutes les ressources détectées ont été catégorisées. Les nouvelles ressources apparaîtront ici lorsqu’elles seront détectées." },
     "emptyFiltered": "Aucune ressource correspondante"

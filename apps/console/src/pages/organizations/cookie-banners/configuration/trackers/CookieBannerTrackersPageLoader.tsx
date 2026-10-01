@@ -35,8 +35,9 @@ export default function CookieBannerTrackersPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
-  const { graphqlFilter } = useTrackersListFilters();
+  const { graphqlFilter, graphqlOrder } = useTrackersListFilters();
   const filterRef = useRef(graphqlFilter);
+  const orderRef = useRef(graphqlOrder);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerTrackersPageQuery>(
     cookieBannerTrackersPageQuery,
   );
@@ -46,10 +47,15 @@ export default function CookieBannerTrackersPageLoader() {
   }, [graphqlFilter]);
 
   useEffect(() => {
+    orderRef.current = graphqlOrder;
+  }, [graphqlOrder]);
+
+  useEffect(() => {
     loadQuery({
       cookieBannerId,
       first: TRACKERS_PAGE_SIZE,
       filter: filterRef.current,
+      order: orderRef.current,
     });
   }, [loadQuery, cookieBannerId]);
 

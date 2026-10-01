@@ -34,6 +34,25 @@ export const trackerResourceTypes = [
 ] as const;
 export type TrackerResourceType = (typeof trackerResourceTypes)[number];
 
+export const trackerResourceOrderFields = ["ORIGIN", "LAST_DETECTED_AT"] as const;
+export type TrackerResourceOrderField = (typeof trackerResourceOrderFields)[number];
+export type OrderDirection = "ASC" | "DESC";
+
+export type ResourcesListOrder = {
+  field: TrackerResourceOrderField;
+  direction: OrderDirection;
+};
+
+export const defaultResourcesListOrder: ResourcesListOrder = {
+  field: "LAST_DETECTED_AT",
+  direction: "DESC",
+};
+
+const firstResourcesListDirection: Record<TrackerResourceOrderField, OrderDirection> = {
+  ORIGIN: "ASC",
+  LAST_DETECTED_AT: "DESC",
+};
+
 export type ResourcesListGraphqlFilter = {
   query: string | null;
   type: TrackerResourceType | null;
@@ -41,6 +60,42 @@ export type ResourcesListGraphqlFilter = {
 
 export function isTrackerResourceType(value: string): value is TrackerResourceType {
   return (trackerResourceTypes as readonly string[]).includes(value);
+}
+
+export function isTrackerResourceOrderField(value: string): value is TrackerResourceOrderField {
+  return (trackerResourceOrderFields as readonly string[]).includes(value);
+}
+
+export function isOrderDirection(value: string): value is OrderDirection {
+  return value === "ASC" || value === "DESC";
+}
+
+export function resourcesListHeaderSort(
+  field: TrackerResourceOrderField,
+  order: ResourcesListOrder,
+): "ascending" | "descending" | "none" {
+  if (order.field !== field) {
+    return "none";
+  }
+  return order.direction === "ASC" ? "ascending" : "descending";
+}
+
+function writeResourcesListOrder(
+  params: URLSearchParams,
+  field: TrackerResourceOrderField,
+  direction: OrderDirection,
+) {
+  if (
+    field === defaultResourcesListOrder.field
+    && direction === defaultResourcesListOrder.direction
+  ) {
+    params.delete("sort");
+    params.delete("dir");
+    return;
+  }
+
+  params.set("sort", field);
+  params.set("dir", direction);
 }
 
 export function resourcesListGraphqlFilter(filters: {
@@ -62,16 +117,30 @@ export interface ResourcesListFilters {
   query: string;
   type: TrackerResourceType | null;
   graphqlFilter: ResourcesListGraphqlFilter | null;
+  graphqlOrder: ResourcesListOrder;
   hasActiveFilters: boolean;
   setQuery: (value: string) => void;
   setType: (value: TrackerResourceType | null) => void;
+  setOrder: (field: TrackerResourceOrderField) => void;
 }
 
 export function useResourcesListFilters(): ResourcesListFilters {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const rawType = searchParams.get("type") ?? "";
+  const rawSort = searchParams.get("sort") ?? "";
+  const rawDir = searchParams.get("dir") ?? "";
   const type = isTrackerResourceType(rawType) ? rawType : null;
+  const field = isTrackerResourceOrderField(rawSort)
+    ? rawSort
+    : defaultResourcesListOrder.field;
+  const direction = isTrackerResourceOrderField(rawSort) && isOrderDirection(rawDir)
+    ? rawDir
+    : firstResourcesListDirection[field];
+  const graphqlOrder = useMemo(
+    () => ({ field, direction }),
+    [direction, field],
+  );
 
   const graphqlFilter = useMemo(
     () => resourcesListGraphqlFilter({ query, type }),
@@ -95,12 +164,35 @@ export function useResourcesListFilters(): ResourcesListFilters {
     setParam("type", value ?? "");
   }, [setParam]);
 
+  const setOrder = useCallback((nextField: TrackerResourceOrderField) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      const firstDirection = firstResourcesListDirection[nextField];
+      if (nextField !== field) {
+        writeResourcesListOrder(next, nextField, firstDirection);
+        return next;
+      }
+      if (direction === firstDirection) {
+        writeResourcesListOrder(next, nextField, direction === "ASC" ? "DESC" : "ASC");
+        return next;
+      }
+      writeResourcesListOrder(
+        next,
+        defaultResourcesListOrder.field,
+        defaultResourcesListOrder.direction,
+      );
+      return next;
+    }, { replace: true });
+  }, [direction, field, setSearchParams]);
+
   return {
     query,
     type,
     graphqlFilter,
+    graphqlOrder,
     hasActiveFilters: query !== "" || type != null,
     setQuery,
     setType,
+    setOrder,
   };
 }

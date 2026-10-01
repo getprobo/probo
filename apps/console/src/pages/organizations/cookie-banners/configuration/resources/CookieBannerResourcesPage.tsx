@@ -38,12 +38,13 @@ export const cookieBannerResourcesPageQuery = graphql`
     $last: Int
     $before: CursorKey
     $filter: TrackerResourceFilter
+    $order: TrackerResourceOrder
   ) {
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
         ...TrackerResourceList_cookieBanner
-          @arguments(first: $first, after: $after, last: $last, before: $before, filter: $filter)
+          @arguments(first: $first, after: $after, last: $last, before: $before, filter: $filter, order: $order)
       }
     }
   }

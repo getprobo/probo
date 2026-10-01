@@ -37,7 +37,10 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { cookieBannerList } from "../../../variants";
-import { useTrackersListFilters } from "../_lib/useTrackersListFilters";
+import {
+  trackersListHeaderSort,
+  useTrackersListFilters,
+} from "../_lib/useTrackersListFilters";
 
 import { TrackerPatternListItem } from "./TrackerPatternListItem";
 import { TrackersListFilters } from "./TrackersListFilters";
@@ -53,6 +56,7 @@ export const trackerPatternListFragment = graphql`
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     filter: { type: "TrackerPatternFilter", defaultValue: null }
+    order: { type: "TrackerPatternOrder", defaultValue: { field: NAME, direction: ASC } }
   ) {
     ...TrackersListFilters_cookieBanner
     ...MoveToCategorySelect_cookieBanner
@@ -61,7 +65,7 @@ export const trackerPatternListFragment = graphql`
       after: $after
       last: $last
       before: $before
-      orderBy: { field: NAME, direction: ASC }
+      orderBy: $order
       filter: $filter
     )
       @required(action: THROW) {
@@ -87,7 +91,7 @@ interface TrackerPatternListProps {
 
 export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { graphqlFilter, hasActiveFilters } = useTrackersListFilters();
+  const { graphqlFilter, graphqlOrder, hasActiveFilters, setOrder } = useTrackersListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const [cookieBanner, refetch] = useRefetchableFragment<
@@ -104,8 +108,8 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
 
   const refetchPage = useCallback((variables: CursorPaginationVariables) => {
     pageVariablesRef.current = variables;
-    refetch({ ...variables, filter: graphqlFilter }, { fetchPolicy: "store-or-network" });
-  }, [graphqlFilter, refetch]);
+    refetch({ ...variables, filter: graphqlFilter, order: graphqlOrder }, { fetchPolicy: "store-or-network" });
+  }, [graphqlFilter, graphqlOrder, refetch]);
 
   const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
     refetchPage,
@@ -127,11 +131,11 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
     };
     startRefetchTransition(() => {
       refetch(
-        { ...pageVariablesRef.current, filter: graphqlFilter },
+        { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
         { fetchPolicy: "store-or-network" },
       );
     });
-  }, [graphqlFilter, refetch]);
+  }, [graphqlFilter, graphqlOrder, refetch]);
 
   const edges = cookieBanner.trackerPatterns.edges;
   const pageInfo = cookieBanner.trackerPatterns.pageInfo;
@@ -141,7 +145,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
   function refetchCurrentPage() {
     startRefetchTransition(() => {
       refetch(
-        { ...pageVariablesRef.current, filter: graphqlFilter },
+        { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
         { fetchPolicy: "network-only" },
       );
     });
@@ -187,13 +191,21 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                 <Table variant="surface">
                   <TableHeader>
                     <TableRow>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell
+                        sort={trackersListHeaderSort("NAME", graphqlOrder)}
+                        onSort={() => setOrder("NAME")}
+                        aria-label={t("trackersPage.sort.name")}
+                      >
                         {t("trackersPage.columns.name")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell>
                         {t("trackersPage.columns.thirdParty")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell
+                        sort={trackersListHeaderSort("SOURCE", graphqlOrder)}
+                        onSort={() => setOrder("SOURCE")}
+                        aria-label={t("trackersPage.sort.source")}
+                      >
                         {t("trackersPage.columns.source")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell>
@@ -202,7 +214,11 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                       <TableColumnHeaderCell>
                         {t("trackersPage.columns.maxAge")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell
+                        sort={trackersListHeaderSort("LAST_MATCHED_AT", graphqlOrder)}
+                        onSort={() => setOrder("LAST_MATCHED_AT")}
+                        aria-label={t("trackersPage.sort.lastMatched")}
+                      >
                         {t("trackersPage.columns.lastMatched")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell />

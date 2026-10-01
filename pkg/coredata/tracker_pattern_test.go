@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 // trackerPatternFixture bootstraps the parent rows that a tracker
@@ -493,4 +494,51 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	}))
 
 	assert.Equal(t, int64(0), emptyCount, "empty domain set must be a no-op")
+}
+
+// TestTrackerPatterns_LoadByCookieBannerID_SourceOrder pins SOURCE
+// sort: cookie_source is an enum, so ORDER BY COALESCE(source, ”)
+// fails with SQLSTATE 22P02. The column expression must cast to text
+// first so NULL sources sort as empty.
+func TestTrackerPatterns_LoadByCookieBannerID_SourceOrder(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	seedTrackerPattern(
+		t,
+		ctx,
+		client,
+		fx,
+		"*_session",
+		coredata.TrackerPatternMatchTypeGlob,
+		coredata.CookieSourceScript,
+	)
+
+	cursor := page.NewCursor(
+		10,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldSource,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	var patterns coredata.TrackerPatterns
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return patterns.LoadByCookieBannerID(
+			ctx,
+			conn,
+			fx.scope,
+			fx.cookieBannerID,
+			cursor,
+			coredata.NewTrackerPatternFilter(nil, nil, nil),
+		)
+	}))
+
+	require.Len(t, patterns, 1)
 }

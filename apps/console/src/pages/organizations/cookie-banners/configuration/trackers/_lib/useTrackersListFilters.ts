@@ -33,6 +33,26 @@ export const trackerTypes = [
 ] as const;
 export type TrackerType = (typeof trackerTypes)[number];
 
+export const trackerPatternOrderFields = ["NAME", "SOURCE", "LAST_MATCHED_AT"] as const;
+export type TrackerPatternOrderField = (typeof trackerPatternOrderFields)[number];
+export type OrderDirection = "ASC" | "DESC";
+
+export type TrackersListOrder = {
+  field: TrackerPatternOrderField;
+  direction: OrderDirection;
+};
+
+export const defaultTrackersListOrder: TrackersListOrder = {
+  field: "NAME",
+  direction: "ASC",
+};
+
+const firstTrackersListDirection: Record<TrackerPatternOrderField, OrderDirection> = {
+  NAME: "ASC",
+  SOURCE: "ASC",
+  LAST_MATCHED_AT: "DESC",
+};
+
 export type TrackersListGraphqlFilter = {
   query: string | null;
   source: CookieSource | null;
@@ -47,6 +67,42 @@ export function isCookieSource(value: string): value is CookieSource {
 
 export function isTrackerType(value: string): value is TrackerType {
   return (trackerTypes as readonly string[]).includes(value);
+}
+
+export function isTrackerPatternOrderField(value: string): value is TrackerPatternOrderField {
+  return (trackerPatternOrderFields as readonly string[]).includes(value);
+}
+
+export function isOrderDirection(value: string): value is OrderDirection {
+  return value === "ASC" || value === "DESC";
+}
+
+export function trackersListHeaderSort(
+  field: TrackerPatternOrderField,
+  order: TrackersListOrder,
+): "ascending" | "descending" | "none" {
+  if (order.field !== field) {
+    return "none";
+  }
+  return order.direction === "ASC" ? "ascending" : "descending";
+}
+
+function writeTrackersListOrder(
+  params: URLSearchParams,
+  field: TrackerPatternOrderField,
+  direction: OrderDirection,
+) {
+  if (
+    field === defaultTrackersListOrder.field
+    && direction === defaultTrackersListOrder.direction
+  ) {
+    params.delete("sort");
+    params.delete("dir");
+    return;
+  }
+
+  params.set("sort", field);
+  params.set("dir", direction);
 }
 
 export function trackersListGraphqlFilter(filters: {
@@ -83,12 +139,14 @@ export interface TrackersListFilters {
   category: string | null;
   party: string | null;
   graphqlFilter: TrackersListGraphqlFilter | null;
+  graphqlOrder: TrackersListOrder;
   hasActiveFilters: boolean;
   setQuery: (value: string) => void;
   setSource: (value: CookieSource | null) => void;
   setType: (value: TrackerType | null) => void;
   setCategory: (value: string | null) => void;
   setParty: (value: string | null) => void;
+  setOrder: (field: TrackerPatternOrderField) => void;
 }
 
 export function useTrackersListFilters(): TrackersListFilters {
@@ -98,10 +156,22 @@ export function useTrackersListFilters(): TrackersListFilters {
   const rawType = searchParams.get("type") ?? "";
   const rawCategory = searchParams.get("category") ?? "";
   const rawParty = searchParams.get("party") ?? "";
+  const rawSort = searchParams.get("sort") ?? "";
+  const rawDir = searchParams.get("dir") ?? "";
   const source = isCookieSource(rawSource) ? rawSource : null;
   const type = isTrackerType(rawType) ? rawType : null;
   const category = rawCategory === "" ? null : rawCategory;
   const party = rawParty === "" ? null : rawParty;
+  const field = isTrackerPatternOrderField(rawSort)
+    ? rawSort
+    : defaultTrackersListOrder.field;
+  const direction = isTrackerPatternOrderField(rawSort) && isOrderDirection(rawDir)
+    ? rawDir
+    : firstTrackersListDirection[field];
+  const graphqlOrder = useMemo(
+    () => ({ field, direction }),
+    [direction, field],
+  );
 
   const graphqlFilter = useMemo(
     () => trackersListGraphqlFilter({ query, source, type, category, party }),
@@ -134,6 +204,27 @@ export function useTrackersListFilters(): TrackersListFilters {
     setParam("party", value ?? "");
   }, [setParam]);
 
+  const setOrder = useCallback((nextField: TrackerPatternOrderField) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      const firstDirection = firstTrackersListDirection[nextField];
+      if (nextField !== field) {
+        writeTrackersListOrder(next, nextField, firstDirection);
+        return next;
+      }
+      if (direction === firstDirection) {
+        writeTrackersListOrder(next, nextField, direction === "ASC" ? "DESC" : "ASC");
+        return next;
+      }
+      writeTrackersListOrder(
+        next,
+        defaultTrackersListOrder.field,
+        defaultTrackersListOrder.direction,
+      );
+      return next;
+    }, { replace: true });
+  }, [direction, field, setSearchParams]);
+
   return {
     query,
     source,
@@ -141,6 +232,7 @@ export function useTrackersListFilters(): TrackersListFilters {
     category,
     party,
     graphqlFilter,
+    graphqlOrder,
     hasActiveFilters:
       query !== ""
       || source != null
@@ -152,5 +244,6 @@ export function useTrackersListFilters(): TrackersListFilters {
     setType,
     setCategory,
     setParty,
+    setOrder,
   };
 }

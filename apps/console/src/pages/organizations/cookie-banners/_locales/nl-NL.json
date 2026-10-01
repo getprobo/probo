@@ -101,6 +101,7 @@
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "columns": { "name": "Naam", "thirdParty": "Derde partij", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "lastMatched": "Laatst overeengekomen" },
+    "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron", "lastMatched": "Sorteren op laatst overeengekomen" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
     "empty": { "title": "Geen trackerpatronen", "description": "Er zijn nog geen cookiepatronen gedetecteerd. Patronen verschijnen hier zodra ze worden gedetecteerd." },
     "emptyFiltered": "Geen overeenkomende trackers"
@@ -150,6 +151,7 @@
     "filters": { "search": "Zoeken op origin of pad...", "type": "Type" },
     "types": { "all": "Alle typen", "script": "Script", "iframe": "Iframe", "image": "Afbeelding", "stylesheet": "Stylesheet", "font": "Lettertype", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origin", "path": "Pad", "category": "Categorie", "lastDetected": "Laatst gedetecteerd" },
+    "sort": { "origin": "Sorteren op origin", "lastDetected": "Sorteren op laatst gedetecteerd" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
     "empty": { "title": "Geen ongecategoriseerde resources", "description": "Alle gedetecteerde resources zijn gecategoriseerd. Nieuwe resources verschijnen hier zodra ze worden gedetecteerd." },
     "emptyFiltered": "Geen overeenkomende resources"

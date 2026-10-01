@@ -37,7 +37,10 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
 import { cookieBannerList } from "../../../variants";
-import { useResourcesListFilters } from "../_lib/useResourcesListFilters";
+import {
+  resourcesListHeaderSort,
+  useResourcesListFilters,
+} from "../_lib/useResourcesListFilters";
 
 import { ResourcesListFilters } from "./ResourcesListFilters";
 import { TrackerResourceListItem } from "./TrackerResourceListItem";
@@ -53,6 +56,7 @@ export const trackerResourceListFragment = graphql`
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     filter: { type: "TrackerResourceFilter", defaultValue: null }
+    order: { type: "TrackerResourceOrder", defaultValue: { field: LAST_DETECTED_AT, direction: DESC } }
   ) {
     ...MoveToCategorySelect_cookieBanner
     uncategorisedTrackerResources(
@@ -60,7 +64,7 @@ export const trackerResourceListFragment = graphql`
       after: $after
       last: $last
       before: $before
-      orderBy: { field: LAST_DETECTED_AT, direction: DESC }
+      orderBy: $order
       filter: $filter
     )
       @required(action: THROW) {
@@ -86,7 +90,7 @@ interface TrackerResourceListProps {
 
 export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { graphqlFilter, hasActiveFilters } = useResourcesListFilters();
+  const { graphqlFilter, graphqlOrder, hasActiveFilters, setOrder } = useResourcesListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const [cookieBanner, refetch] = useRefetchableFragment<
@@ -103,8 +107,8 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
 
   const refetchPage = useCallback((variables: CursorPaginationVariables) => {
     pageVariablesRef.current = variables;
-    refetch({ ...variables, filter: graphqlFilter }, { fetchPolicy: "store-or-network" });
-  }, [graphqlFilter, refetch]);
+    refetch({ ...variables, filter: graphqlFilter, order: graphqlOrder }, { fetchPolicy: "store-or-network" });
+  }, [graphqlFilter, graphqlOrder, refetch]);
 
   const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
     refetchPage,
@@ -126,11 +130,11 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
     };
     startRefetchTransition(() => {
       refetch(
-        { ...pageVariablesRef.current, filter: graphqlFilter },
+        { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
         { fetchPolicy: "store-or-network" },
       );
     });
-  }, [graphqlFilter, refetch]);
+  }, [graphqlFilter, graphqlOrder, refetch]);
 
   const edges = cookieBanner.uncategorisedTrackerResources.edges;
   const pageInfo = cookieBanner.uncategorisedTrackerResources.pageInfo;
@@ -140,7 +144,7 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
   function refetchCurrentPage() {
     startRefetchTransition(() => {
       refetch(
-        { ...pageVariablesRef.current, filter: graphqlFilter },
+        { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
         { fetchPolicy: "network-only" },
       );
     });
@@ -189,7 +193,11 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
                       <TableColumnHeaderCell>
                         {t("resourcesPage.columns.type")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell
+                        sort={resourcesListHeaderSort("ORIGIN", graphqlOrder)}
+                        onSort={() => setOrder("ORIGIN")}
+                        aria-label={t("resourcesPage.sort.origin")}
+                      >
                         {t("resourcesPage.columns.origin")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell>
@@ -198,7 +206,11 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
                       <TableColumnHeaderCell>
                         {t("resourcesPage.columns.category")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell
+                        sort={resourcesListHeaderSort("LAST_DETECTED_AT", graphqlOrder)}
+                        onSort={() => setOrder("LAST_DETECTED_AT")}
+                        aria-label={t("resourcesPage.sort.lastDetected")}
+                      >
                         {t("resourcesPage.columns.lastDetected")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell />

@@ -18,12 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretDownIcon, CaretUpDownIcon, CaretUpIcon } from "@phosphor-icons/react";
 import type { ComponentProps } from "react";
 import type { VariantProps } from "tailwind-variants/lite";
 
 import { cellStyle } from "./cellStyle";
 import { useTableContext } from "./context";
 import { table } from "./variants";
+
+export type TableColumnHeaderSort = "ascending" | "descending" | "none";
 
 export type TableColumnHeaderCellProps
   = Omit<ComponentProps<"th">, "width">
@@ -32,20 +35,62 @@ export type TableColumnHeaderCellProps
       width?: string;
       minWidth?: string;
       maxWidth?: string;
+      // Controlled sort state. Maps to aria-sort. Ignored unless onSort is set.
+      sort?: TableColumnHeaderSort;
+      // Turns the header label into a sort button. The parent owns the next order.
+      onSort?: () => void;
     };
 
 // Column heading cell (Radix "Table.ColumnHeaderCell"). Renders a <th scope="col">.
+// Pass onSort to make the label a controlled sort button; the kit does not toggle.
 export function TableColumnHeaderCell(props: TableColumnHeaderCellProps) {
-  const { justify, width, minWidth, maxWidth, className, style, ...rest } = props;
+  const {
+    justify,
+    width,
+    minWidth,
+    maxWidth,
+    className,
+    style,
+    sort,
+    onSort,
+    children,
+    "aria-label": ariaLabel,
+    ...rest
+  } = props;
   const size = useTableContext();
-  const { cell, columnHeader } = table({ size, justify });
+  const sortState = onSort == null ? undefined : (sort ?? "none");
+  const { cell, columnHeader, sortButton, sortIcon } = table({
+    size,
+    justify,
+    sort: sortState,
+  });
+  const Icon = sortState === "ascending"
+    ? CaretUpIcon
+    : sortState === "descending"
+      ? CaretDownIcon
+      : CaretUpDownIcon;
 
   return (
     <th
       scope="col"
+      aria-sort={sortState}
       className={columnHeader({ className: cell({ className }) })}
       style={cellStyle(width, minWidth, maxWidth, style)}
       {...rest}
-    />
+    >
+      {onSort == null
+        ? children
+        : (
+            <button
+              type="button"
+              className={sortButton()}
+              onClick={onSort}
+              aria-label={ariaLabel}
+            >
+              {children}
+              <Icon className={sortIcon()} />
+            </button>
+          )}
+    </th>
   );
 }

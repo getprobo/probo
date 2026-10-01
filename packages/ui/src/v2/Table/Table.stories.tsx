@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
 import { MemoryRouter } from "react-router";
 
 import { ButtonLink } from "../Button/ButtonLink";
@@ -120,6 +121,62 @@ export const Skeleton: Story = {
 
 // Title TableLink stretches across the row; the trailing ButtonLink sits
 // above the overlay via TableCell interactive.
+export const SortableHeaders: Story = {
+  render: function SortableHeadersStory() {
+    const [field, setField] = useState<"name" | "email">("name");
+    const [direction, setDirection] = useState<"ASC" | "DESC">("ASC");
+
+    function headerSort(column: "name" | "email") {
+      if (field !== column) {
+        return "none" as const;
+      }
+      return direction === "ASC" ? "ascending" as const : "descending" as const;
+    }
+
+    function handleSort(column: "name" | "email") {
+      if (field !== column) {
+        setField(column);
+        setDirection("ASC");
+        return;
+      }
+      setDirection(current => current === "ASC" ? "DESC" : "ASC");
+    }
+
+    return (
+      <div className="w-xl">
+        <Table variant="surface">
+          <TableHeader>
+            <TableRow>
+              <TableColumnHeaderCell
+                sort={headerSort("name")}
+                onSort={() => handleSort("name")}
+              >
+                Full name
+              </TableColumnHeaderCell>
+              <TableColumnHeaderCell
+                sort={headerSort("email")}
+                onSort={() => handleSort("email")}
+              >
+                Email
+              </TableColumnHeaderCell>
+              <TableColumnHeaderCell>Group</TableColumnHeaderCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map(entry => (
+              <TableRow key={entry.email}>
+                <TableRowHeaderCell>{entry.name}</TableRowHeaderCell>
+                <TableCell>{entry.email}</TableCell>
+                <TableCell>{entry.group}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  },
+};
+
 export const InteractiveRows: Story = {
   render: () => (
     <div className="w-xl">
