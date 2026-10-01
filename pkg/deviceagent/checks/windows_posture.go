@@ -119,11 +119,11 @@ func windowsTimeSyncOn(serviceStart, typ string) bool {
 // screen with the credential prompt and does not stop the host locking, so it
 // cannot answer this check either way.
 func windowsScreenLockOn(values map[string]string) (string, bool, bool) {
-	if seconds, ok := windowsInt(values["InactivityTimeoutSecs"]); ok && seconds > 0 {
+	if seconds, ok := trimmedInt(values["InactivityTimeoutSecs"]); ok && seconds > 0 {
 		return "machine_inactivity_limit", true, true
 	}
 
-	if minutes, ok := windowsInt(values["MaxInactivityTimeDeviceLock"]); ok && minutes > 0 {
+	if minutes, ok := trimmedInt(values["MaxInactivityTimeDeviceLock"]); ok && minutes > 0 {
 		return "mdm_device_lock", true, true
 	}
 
@@ -139,10 +139,10 @@ func windowsScreenLockOn(values map[string]string) (string, bool, bool) {
 	return "", false, false
 }
 
-// windowsInteractiveUserSID reports whether a HKEY_USERS child is a real
+// trimmedInteractiveUserSID reports whether a HKEY_USERS child is a real
 // interactive account. Local and AD users are S-1-5-21-*; Entra users are
 // S-1-12-1-*. The _Classes suffix is a per-user COM hive, not a login.
-func windowsInteractiveUserSID(sid string) bool {
+func trimmedInteractiveUserSID(sid string) bool {
 	sid = strings.TrimSpace(sid)
 	if sid == "" {
 		return false
@@ -179,7 +179,7 @@ func parseWindowsUserScreenLock(s string) (map[string]string, bool, bool) {
 		sid := strings.TrimSpace(line[:idx])
 		value := strings.TrimSpace(line[idx+1:])
 
-		if !windowsInteractiveUserSID(sid) {
+		if !trimmedInteractiveUserSID(sid) {
 			continue
 		}
 
@@ -218,7 +218,7 @@ func windowsScreenSaverLockOn(secure, active, timeout string) (bool, bool) {
 			return false, true
 		}
 
-		seconds, ok := windowsInt(timeout)
+		seconds, ok := trimmedInt(timeout)
 
 		return ok && seconds > 0, true
 	}
@@ -226,7 +226,7 @@ func windowsScreenSaverLockOn(secure, active, timeout string) (bool, bool) {
 	return false, false
 }
 
-func windowsInt(s string) (int, bool) {
+func trimmedInt(s string) (int, bool) {
 	n, err := strconv.Atoi(strings.TrimSpace(s))
 	if err != nil {
 		return 0, false
@@ -249,31 +249,28 @@ func parseWindowsSeceditMinPasswordLength(inf string) (int, bool) {
 			continue
 		}
 
-		return windowsInt(value)
+		return trimmedInt(value)
 	}
 
 	return 0, false
 }
 
-// windowsPasswordPolicyOn picks the stricter of the local SAM policy and the
-// MDM DeviceLock PIN length. Both sources are optional: domain-joined hosts
-// often have only secedit, Entra-joined hosts often have only DeviceLock.
-func windowsPasswordPolicyOn(inf, mdm string) (int, string, bool) {
-	samLen, samOK := parseWindowsSeceditMinPasswordLength(inf)
-	mdmLen, mdmOK := windowsInt(mdm)
+// windowsPasswordLengths collects the local SAM policy and the MDM DeviceLock
+// PIN length. Both sources are optional: domain-joined hosts often have only
+// secedit, Entra-joined hosts often have only DeviceLock. DeviceLock lengths
+// only apply while DevicePasswordEnabled is not 1 (disabled).
+func windowsPasswordLengths(inf, mdmLength, mdmEnabled string) passwordLengths {
+	lengths := passwordLengths{}
 
-	switch {
-	case samOK && mdmOK:
-		length := max(mdmLen, samLen)
-
-		return length, "max", true
-	case samOK:
-		return samLen, "secedit", true
-	case mdmOK:
-		return mdmLen, "mdm_device_lock", true
-	default:
-		return 0, "", false
+	if n, ok := parseWindowsSeceditMinPasswordLength(inf); ok {
+		lengths[passwordSourceSecedit] = n
 	}
+
+	if n, ok := trimmedInt(mdmLength); ok && strings.TrimSpace(mdmEnabled) != "1" {
+		lengths[passwordSourceMDMDeviceLock] = n
+	}
+
+	return lengths
 }
 
 func windowsAutoUpdateOn(noAutoUpdate, auOptions, serviceStart string) (bool, bool) {

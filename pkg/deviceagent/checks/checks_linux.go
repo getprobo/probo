@@ -22,8 +22,11 @@ package checks
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -874,39 +877,89 @@ func linuxAutoUpdate(ctx context.Context) Result {
 	)
 }
 
+// linuxPAMPasswordFiles hold the password stack on Debian/Ubuntu/SUSE
+// (common-password), Fedora/RHEL (system-auth, password-auth) and Arch
+// (passwd, which includes system-auth). Includes are not followed: every file
+// that can hold a stack is read directly.
+var linuxPAMPasswordFiles = []string{
+	"/etc/pam.d/common-password",
+	"/etc/pam.d/system-auth",
+	"/etc/pam.d/password-auth",
+	"/etc/pam.d/passwd",
+}
+
+// linuxPasswordPolicy reports the minimum length PAM enforces on password
+// changes. /etc/login.defs PASS_MIN_LEN is only used when the host has no PAM
+// password stack, since PAM-based passwd ignores it.
 func linuxPasswordPolicy(ctx context.Context) Result {
-	data, err := os.ReadFile("/etc/login.defs")
-	if err != nil {
-		return unknown(map[string]any{"error": err.Error()})
+	var (
+		rules    []pamPasswordRule
+		pamFiles []string
+	)
+
+	for _, name := range linuxPAMPasswordFiles {
+		data, err := os.ReadFile(name)
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+
+		if err != nil {
+			return unknown(map[string]any{"error": err.Error()})
+		}
+
+		pamFiles = append(pamFiles, name)
+		rules = append(rules, parsePAMPasswordRules(string(data))...)
 	}
 
-	body := string(data)
-	minLen := loginDefsLookup(body, "PASS_MIN_LEN")
-	maxDays := loginDefsLookup(body, "PASS_MAX_DAYS")
+	loginDefs, loginDefsErr := os.ReadFile("/etc/login.defs")
+	loginDefsMinLen, loginDefsFound := parseLoginDefsMinLen(string(loginDefs))
 
-	ev := map[string]any{
-		"pass_min_len":  minLen,
-		"pass_max_days": maxDays,
-	}
-	if minLen == "" {
-		ev["parse_error"] = "PASS_MIN_LEN not set"
-		return fail(ev)
-	}
+	if len(pamFiles) == 0 {
+		if loginDefsErr != nil {
+			return unknown(map[string]any{"error": loginDefsErr.Error()})
+		}
 
-	minLenValue, err := strconv.Atoi(minLen)
-	if err != nil {
-		ev["parse_error"] = "invalid PASS_MIN_LEN value"
-		return unknown(ev)
-	}
+		lengths := passwordLengths{}
+		if loginDefsFound {
+			lengths[passwordSourceLoginDefs] = loginDefsMinLen
+		}
 
-	if minLenValue >= 8 {
-		ev["pass_min_len_value"] = minLenValue
-		return pass(ev)
+		ev, length := passwordPolicyEvidence(lengths)
+
+		return passwordPolicyResult(ev, length)
 	}
 
-	ev["pass_min_len_value"] = minLenValue
+	ev, length := passwordPolicyEvidence(pamPasswordLengths(rules, readPwqualityConf()))
+	ev["pam_files"] = pamFiles
 
-	return fail(ev)
+	if loginDefsFound {
+		ev["login_defs_pass_min_len"] = loginDefsMinLen
+	}
+
+	return passwordPolicyResult(ev, length)
+}
+
+// readPwqualityConf joins pwquality.conf and its drop-ins in the order
+// libpwquality loads them. Missing files are an empty configuration.
+func readPwqualityConf() string {
+	var b strings.Builder
+
+	if data, err := os.ReadFile("/etc/security/pwquality.conf"); err == nil {
+		b.Write(data)
+		b.WriteString("\n")
+	}
+
+	dropIns, _ := filepath.Glob("/etc/security/pwquality.conf.d/*.conf")
+	sort.Strings(dropIns)
+
+	for _, name := range dropIns {
+		if data, err := os.ReadFile(name); err == nil {
+			b.Write(data)
+			b.WriteString("\n")
+		}
+	}
+
+	return b.String()
 }
 
 func linuxRemoteLogin(ctx context.Context) Result {
@@ -1020,22 +1073,6 @@ func kvLookup(body, key string) string {
 			v = strings.Trim(v, `"`)
 
 			return v
-		}
-	}
-
-	return ""
-}
-
-func loginDefsLookup(body, key string) string {
-	for line := range strings.SplitSeq(body, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		fields := strings.Fields(line)
-		if len(fields) >= 2 && fields[0] == key {
-			return fields[1]
 		}
 	}
 

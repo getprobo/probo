@@ -592,6 +592,48 @@ func TestParseDevicePostureValue_PasswordPolicy(t *testing.T) {
 		t,
 		[]devicePostureValueCase{
 			{
+				name:     "pam_pwquality minimum length",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"backend":             "pam_pwquality",
+					"min_password_length": float64(12),
+					"sources":             map[string]any{"pam_pwquality": float64(12), "pam_unix": float64(6)},
+				},
+				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
+				wantNumber: new(12),
+			},
+			{
+				name:     "pwpolicy minimum length",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"backend":             "pwpolicy",
+					"min_password_length": float64(7),
+					"sources":             map[string]any{"pwpolicy": float64(7)},
+					"pwpolicy_lengths":    []any{float64(7), float64(4)},
+				},
+				wantKind:   coredata.DevicePostureValueKindMinPasswordLength,
+				wantNumber: new(7),
+			},
+			{
+				name:     "no source enforces a length",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"backend":             "none",
+					"min_password_length": float64(0),
+					"sources":             map[string]any{},
+				},
+				wantKind: coredata.DevicePostureValueKindNone,
+			},
+			{
+				name:     "pwpolicy read failure is unknown",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"backend": "pwpolicy",
+					"error":   "exit status 1",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
 				name:     "linux login defs minimum length",
 				checkKey: "PASSWORD_POLICY",
 				evidence: map[string]any{

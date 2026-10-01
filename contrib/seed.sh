@@ -1023,23 +1023,23 @@ posture_evidence() {
       ;;
     DARWIN:PASSWORD_POLICY)
       case "$status" in
-        PASS) jq -nc '{raw_truncated:"<dict><key>policyCategoryPasswordContent</key><array/></dict>"}' ;;
-        FAIL) jq -nc '{raw_truncated:"There are no account policies for all users."}' ;;
-        *) jq -nc '{error:"pwpolicy failed"}' ;;
+        PASS) jq -nc '{backend:"pwpolicy",min_password_length:10,sources:{pwpolicy:10},pwpolicy_lengths:[10,4]}' ;;
+        FAIL) jq -nc '{backend:"none",min_password_length:0,sources:{},pwpolicy_lengths:[]}' ;;
+        *) jq -nc '{backend:"pwpolicy",error:"pwpolicy failed"}' ;;
       esac
       ;;
     LINUX:PASSWORD_POLICY)
       case "$status" in
-        PASS) jq -nc '{pass_min_len:"12",pass_max_days:"90",pass_min_len_value:12}' ;;
-        FAIL) jq -nc '{pass_min_len:"",pass_max_days:"99999",parse_error:"PASS_MIN_LEN not set"}' ;;
-        *) jq -nc '{error:"login.defs unreadable"}' ;;
+        PASS) jq -nc '{backend:"pam_pwquality",min_password_length:12,sources:{pam_pwquality:12,pam_unix:6},pam_files:["/etc/pam.d/common-password"]}' ;;
+        FAIL) jq -nc '{backend:"none",min_password_length:0,sources:{},pam_files:["/etc/pam.d/common-password"]}' ;;
+        *) jq -nc '{error:"open /etc/pam.d/common-password: permission denied"}' ;;
       esac
       ;;
     WINDOWS:PASSWORD_POLICY)
       case "$status" in
-        PASS) jq -nc '{min_password_length:8}' ;;
-        FAIL) jq -nc '{min_password_length:0}' ;;
-        *) jq -nc '{error:"MinPasswordLength unavailable"}' ;;
+        PASS) jq -nc '{backend:"secedit",min_password_length:8,sources:{secedit:8}}' ;;
+        FAIL) jq -nc '{backend:"secedit",min_password_length:0,sources:{secedit:0}}' ;;
+        *) jq -nc '{error:"no password length from secedit or DeviceLock"}' ;;
       esac
       ;;
     # REMOTE_LOGIN is inverted: PASS means remote access is Off / denied.

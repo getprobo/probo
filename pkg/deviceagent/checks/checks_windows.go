@@ -393,7 +393,8 @@ const windowsPasswordPolicyScript = `` +
 	`} finally { ` +
 	`  Remove-Item -LiteralPath $dir -Recurse -Force -ErrorAction SilentlyContinue ` +
 	`}; ` +
-	`Write-Output "MinDevicePasswordLength=$($d.MinDevicePasswordLength)"; Write-Output $sam`
+	`Write-Output "MinDevicePasswordLength=$($d.MinDevicePasswordLength);DevicePasswordEnabled=$($d.DevicePasswordEnabled)"; ` +
+	`Write-Output $sam`
 
 func windowsPasswordPolicy(ctx context.Context) Result {
 	out := powershell(ctx, windowsPasswordPolicyScript)
@@ -408,27 +409,27 @@ func windowsPasswordPolicy(ctx context.Context) Result {
 
 	header, inf, _ := strings.Cut(out.Stdout, "\n")
 	values := parseWindowsJoinedPairs(header)
-	minLen, backend, known := windowsPasswordPolicyOn(
+	lengths := windowsPasswordLengths(
 		inf,
 		values["MinDevicePasswordLength"],
+		values["DevicePasswordEnabled"],
 	)
 
-	ev := map[string]any{
-		"backend": backend,
-		"raw":     strings.TrimSpace(header),
-	}
-	if !known {
-		ev["error"] = "no password length from secedit or DeviceLock"
-
-		return unknown(ev)
-	}
-
-	ev["min_password_length"] = minLen
-	if minLen > 0 {
-		return pass(ev)
+	// secedit always exports MinimumPasswordLength, so no source at all means
+	// the export failed rather than that no policy exists.
+	if len(lengths) == 0 {
+		return unknown(
+			map[string]any{
+				"error": "no password length from secedit or DeviceLock",
+				"raw":   strings.TrimSpace(header),
+			},
+		)
 	}
 
-	return fail(ev)
+	ev, length := passwordPolicyEvidence(lengths)
+	ev["raw"] = strings.TrimSpace(header)
+
+	return passwordPolicyResult(ev, length)
 }
 
 // windowsMalwareProtectionScript reads the class behind Get-MpComputerStatus

@@ -256,7 +256,7 @@ func TestWindowsInteractiveUserSID(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				assert.Equal(t, tt.expected, windowsInteractiveUserSID(tt.sid))
+				assert.Equal(t, tt.expected, trimmedInteractiveUserSID(tt.sid))
 			},
 		)
 	}
@@ -460,61 +460,43 @@ func TestParseWindowsSeceditMinPasswordLength(t *testing.T) {
 	}
 }
 
-func TestWindowsPasswordPolicyOn(t *testing.T) {
+func TestWindowsPasswordLengths(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name            string
-		inf             string
-		mdm             string
-		expectedLen     int
-		expectedBackend string
-		expectedKnown   bool
+		name       string
+		inf        string
+		mdmLength  string
+		mdmEnabled string
+		expected   passwordLengths
 	}{
 		{
-			name:            "secedit only",
-			inf:             "MinimumPasswordLength = 8\n",
-			expectedLen:     8,
-			expectedBackend: "secedit",
-			expectedKnown:   true,
+			name:     "secedit only",
+			inf:      "MinimumPasswordLength = 8\n",
+			expected: passwordLengths{"secedit": 8},
 		},
 		{
-			name:            "mdm device lock only",
-			mdm:             "6",
-			expectedLen:     6,
-			expectedBackend: "mdm_device_lock",
-			expectedKnown:   true,
+			name:      "mdm device lock only",
+			mdmLength: "6",
+			expected:  passwordLengths{"mdm_device_lock": 6},
 		},
 		{
-			name:            "stricter source wins",
-			inf:             "MinimumPasswordLength = 0\n",
-			mdm:             "6",
-			expectedLen:     6,
-			expectedBackend: "max",
-			expectedKnown:   true,
+			name:       "both sources are kept",
+			inf:        "MinimumPasswordLength = 0\n",
+			mdmLength:  "6",
+			mdmEnabled: "0",
+			expected:   passwordLengths{"secedit": 0, "mdm_device_lock": 6},
 		},
 		{
-			name:            "equal sources still report max",
-			inf:             "MinimumPasswordLength = 8\n",
-			mdm:             "8",
-			expectedLen:     8,
-			expectedBackend: "max",
-			expectedKnown:   true,
+			name:       "disabled device lock does not count",
+			inf:        "MinimumPasswordLength = 0\n",
+			mdmLength:  "12",
+			mdmEnabled: "1",
+			expected:   passwordLengths{"secedit": 0},
 		},
 		{
-			name:            "both zero is a known disabled policy",
-			inf:             "MinimumPasswordLength = 0\n",
-			mdm:             "0",
-			expectedBackend: "max",
-			expectedKnown:   true,
-		},
-		{
-			name: "neither source is unknown",
-		},
-		{
-			name: "blank secedit and mdm are unknown",
-			inf:  "",
-			mdm:  "",
+			name:     "neither source",
+			expected: passwordLengths{},
 		},
 	}
 
@@ -524,10 +506,11 @@ func TestWindowsPasswordPolicyOn(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				length, backend, known := windowsPasswordPolicyOn(tt.inf, tt.mdm)
-				assert.Equal(t, tt.expectedLen, length)
-				assert.Equal(t, tt.expectedBackend, backend)
-				assert.Equal(t, tt.expectedKnown, known)
+				assert.Equal(
+					t,
+					tt.expected,
+					windowsPasswordLengths(tt.inf, tt.mdmLength, tt.mdmEnabled),
+				)
 			},
 		)
 	}

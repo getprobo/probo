@@ -23,6 +23,7 @@ package checks
 import (
 	"context"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -526,25 +527,39 @@ func darwinPrefIndicatesEnabled(value string) bool {
 	return false
 }
 
+// darwinPasswordPolicy reads the global account policies, where both local
+// pwpolicy rules and configuration profile passcode payloads land.
 func darwinPasswordPolicy(ctx context.Context) Result {
 	out := RunCommand(ctx, "pwpolicy", "-getaccountpolicies")
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
-				"error":  out.Err.Error(),
-				"stderr": out.Stderr,
+				"backend": passwordSourcePwpolicy,
+				"error":   out.Err.Error(),
+				"stderr":  out.Stderr,
 			},
 		)
 	}
 
-	lower := strings.ToLower(out.Stdout)
-
-	ev := map[string]any{"raw_truncated": truncate(out.Stdout, 400)}
-	if strings.Contains(lower, "no account policies") || lower == "" {
-		return fail(ev)
+	lengths, err := parsePwpolicyMinLengths(out.Stdout)
+	if err != nil {
+		return unknown(
+			map[string]any{
+				"backend": passwordSourcePwpolicy,
+				"error":   "cannot parse pwpolicy output: " + err.Error(),
+			},
+		)
 	}
 
-	return pass(ev)
+	found := passwordLengths{}
+	if len(lengths) > 0 {
+		found[passwordSourcePwpolicy] = slices.Max(lengths)
+	}
+
+	ev, length := passwordPolicyEvidence(found)
+	ev["pwpolicy_lengths"] = lengths
+
+	return passwordPolicyResult(ev, length)
 }
 
 func darwinRemoteLogin(ctx context.Context) Result {

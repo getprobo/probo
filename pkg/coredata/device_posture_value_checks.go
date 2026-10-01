@@ -506,7 +506,25 @@ func parseWindowsAutoUpdateStartValue(
 }
 
 func parsePasswordPolicyValue(ev map[string]any) DevicePostureValue {
-	// Linux reads PASS_MIN_LEN from /etc/login.defs.
+	// Every platform reports min_password_length with the source that set it,
+	// and "none" when no source enforces a length.
+	if _, ok := ev["sources"]; ok {
+		if stringEvidence(ev, "error") != "" {
+			return unknownValue()
+		}
+
+		if backendOf(ev) == "none" {
+			return noneValue()
+		}
+
+		if minLen, ok := numberEvidence(ev, "min_password_length"); ok {
+			return minPasswordLengthValue(minLen)
+		}
+
+		return unknownValue()
+	}
+
+	// Older Linux agents read PASS_MIN_LEN from /etc/login.defs.
 	if minLen, ok := numberEvidence(ev, "pass_min_len_value"); ok {
 		return minPasswordLengthValue(minLen)
 	}
