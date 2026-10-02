@@ -856,55 +856,6 @@ func (r *compliancePortalDocumentAccessResolver) Audit(ctx context.Context, obj 
 	return types.NewAudit(audit), nil
 }
 
-func (r *compliancePortalDocumentAccessResolver) authorizedDocumentAccess(
-	ctx context.Context,
-	obj *types.CompliancePortalDocumentAccess,
-) (*coredata.CompliancePortalDocumentAccess, error) {
-	if _, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet); err != nil {
-		return nil, err
-	}
-
-	access, err := dataloader.FromContext(ctx).CompliancePortalDocumentAccess.Load(ctx, obj.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return access, nil
-}
-
-func (r *compliancePortalDocumentAccessResolver) auditLink(
-	ctx context.Context,
-	obj *types.CompliancePortalDocumentAccess,
-) (*coredata.CompliancePortalAudit, error) {
-	access, err := r.authorizedDocumentAccess(ctx, obj)
-	if err != nil {
-		return nil, err
-	}
-
-	if access.CompliancePortalAuditID == nil {
-		return nil, nil
-	}
-
-	link, err := dataloader.FromContext(ctx).CompliancePortalAuditByID.Load(ctx, *access.CompliancePortalAuditID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return link, nil
-}
-
 // CompliancePortalFile is the resolver for the compliancePortalFile field.
 func (r *compliancePortalDocumentAccessResolver) CompliancePortalFile(ctx context.Context, obj *types.CompliancePortalDocumentAccess) (*types.CompliancePortalFile, error) {
 	if obj.CompliancePortalFile == nil {
