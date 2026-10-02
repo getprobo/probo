@@ -27,12 +27,16 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"strings"
 	"time"
 
 	"go.probo.inc/probo/pkg/version"
 )
+
+// filePartName is the multipart field the upload map points at.
+const filePartName = "0"
 
 type (
 	Client struct {
@@ -213,9 +217,10 @@ func (c *Client) DoUpload(
 	variables map[string]any,
 	varPath string,
 	filename string,
+	contentType string,
 	file io.Reader,
 ) (json.RawMessage, error) {
-	raw, err := c.doUploadRequest(query, variables, varPath, filename, file)
+	raw, err := c.doUploadRequest(query, variables, varPath, filename, contentType, file)
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +249,7 @@ func (c *Client) doUploadRequest(
 	variables map[string]any,
 	varPath string,
 	filename string,
+	contentType string,
 	file io.Reader,
 ) ([]byte, error) {
 	var buf bytes.Buffer
@@ -268,7 +274,7 @@ func (c *Client) doUploadRequest(
 	// Part 2: map
 	mapJSON, err := json.Marshal(
 		map[string][]string{
-			"0": {varPath},
+			filePartName: {varPath},
 		},
 	)
 	if err != nil {
@@ -280,7 +286,7 @@ func (c *Client) doUploadRequest(
 	}
 
 	// Part 3: file
-	part, err := writer.CreateFormFile("0", filename)
+	part, err := writer.CreatePart(filePartHeader(filename, contentType))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create form file: %w", err)
 	}
@@ -340,6 +346,26 @@ func (c *Client) doUploadRequest(
 	}
 
 	return respBody, nil
+}
+
+// filePartHeader mirrors multipart.Writer.CreateFormFile, except that the part
+// carries the file's own content type: the API validates evidence against the
+// declared type and refuses application/octet-stream.
+func filePartHeader(filename string, contentType string) textproto.MIMEHeader {
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	escapedFilename := strings.NewReplacer("\\", "\\\\", `"`, "\\\"").Replace(filename)
+
+	header := make(textproto.MIMEHeader)
+	header.Set(
+		"Content-Disposition",
+		fmt.Sprintf(`form-data; name=%q; filename="%s"`, filePartName, escapedFilename),
+	)
+	header.Set("Content-Type", contentType)
+
+	return header
 }
 
 func (c *Client) tryRefreshToken() error {
