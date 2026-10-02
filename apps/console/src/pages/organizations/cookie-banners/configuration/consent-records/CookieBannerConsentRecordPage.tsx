@@ -65,6 +65,12 @@ export const cookieBannerConsentRecordPageQuery = graphql`
         subdivisionCode
         consentData
         tc
+        origin
+        cookieBanner {
+          capabilities {
+            corsless
+          }
+        }
         createdAt
       }
     }
@@ -96,6 +102,7 @@ export default function CookieBannerConsentRecordPage({
     }
   }, [record.consentData]);
 
+  const showOrigin = record.cookieBanner?.capabilities.corsless ?? record.origin != null;
   const categories = record.cookieBannerVersion.categories;
   const formatDuration = (seconds: number | null, trackerType?: string | null) => {
     if (seconds === null || seconds <= 0) {
@@ -119,6 +126,11 @@ export default function CookieBannerConsentRecordPage({
             {t(`consentRecordPage.actions.${record.action.toLowerCase()}`)}
           </Badge>
         </PropertyRow>
+        {showOrigin && (
+          <PropertyRow label={t("consentRecordPage.properties.origin")}>
+            <span className="font-mono text-sm">{record.origin || "-"}</span>
+          </PropertyRow>
+        )}
         <PropertyRow label={t("consentRecordPage.properties.bannerVersion")}>
           {record.cookieBannerVersion
             ? (

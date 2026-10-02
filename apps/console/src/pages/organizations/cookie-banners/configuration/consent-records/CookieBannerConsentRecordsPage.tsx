@@ -77,6 +77,9 @@ const consentRecordsFragment = graphql`
     visitorId: { type: "String", defaultValue: null }
     version: { type: "Int", defaultValue: null }
   ) {
+    capabilities {
+      corsless
+    }
     consentRecords(
       first: $first
       after: $after
@@ -119,6 +122,8 @@ export function CookieBannerConsentRecordsPage({
     throw new Error("invalid type for node");
   }
 
+  const banner = data.node;
+
   const [isPending, startTransition] = useTransition();
   const [actionFilter, setActionFilter] = useState<CookieConsentAction | null>(null);
   const [visitorIdFilter, setVisitorIdFilter] = useState<string>("");
@@ -128,9 +133,10 @@ export function CookieBannerConsentRecordsPage({
   const { data: fragmentData, ...pagination } = usePaginationFragment<
     CookieBannerConsentRecordsPageRefetchQuery,
     CookieBannerConsentRecordsPageFragment$key
-  >(consentRecordsFragment, data.node);
+  >(consentRecordsFragment, banner);
 
   const records = fragmentData.consentRecords.edges.map(edge => edge.node) ?? [];
+  const showOrigin = fragmentData.capabilities.corsless;
 
   const parseVersion = (v: string): number | null => {
     if (!v || !/^\d+$/.test(v)) return null;
@@ -233,6 +239,9 @@ export function CookieBannerConsentRecordsPage({
                       <Th>{t("consentRecordsPage.columns.visitorId")}</Th>
                       <Th>{t("consentRecordsPage.columns.action")}</Th>
                       <Th>{t("consentRecordsPage.columns.bannerVersion")}</Th>
+                      {showOrigin && (
+                        <Th>{t("consentRecordsPage.columns.origin")}</Th>
+                      )}
                       <Th>{t("consentRecordsPage.columns.ipAddress")}</Th>
                       <Th>{t("consentRecordsPage.columns.sdkVersion")}</Th>
                       <Th>{t("consentRecordsPage.columns.regulation")}</Th>
@@ -244,7 +253,11 @@ export function CookieBannerConsentRecordsPage({
                   </Thead>
                   <Tbody>
                     {records.map(record => (
-                      <ConsentRecordRow key={record.id} recordKey={record} />
+                      <ConsentRecordRow
+                        key={record.id}
+                        recordKey={record}
+                        showOrigin={showOrigin}
+                      />
                     ))}
                   </Tbody>
                 </SortableTable>

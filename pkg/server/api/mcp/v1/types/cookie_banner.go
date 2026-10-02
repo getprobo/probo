@@ -29,6 +29,7 @@ func NewCookieBannerCapabilities(c coredata.CookieBannerCapabilities) *CookieBan
 	return &CookieBannerCapabilities{
 		ResourceReporting: c.ResourceReporting,
 		Tcf:               c.TCF,
+		Corsless:          c.Corsless,
 	}
 }
 

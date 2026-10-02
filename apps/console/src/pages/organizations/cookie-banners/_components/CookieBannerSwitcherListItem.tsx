@@ -31,6 +31,9 @@ const cookieBannerSwitcherListItemFragment = graphql`
     id
     name
     origin
+    capabilities {
+      corsless
+    }
   }
 `;
 
@@ -50,7 +53,7 @@ export function CookieBannerSwitcherListItem({
     <NavPanelSwitcherListItem
       to={`${cookieBannerPath(organizationId, cookieBanner.id)}/configure`}
       name={cookieBanner.name}
-      detail={cookieBanner.origin}
+      detail={cookieBanner.capabilities.corsless ? undefined : cookieBanner.origin}
       selected={selected}
     />
   );
