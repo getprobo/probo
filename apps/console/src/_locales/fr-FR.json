@@ -1348,7 +1348,6 @@
       "revoked": "Révoqué"
     },
     "compliancePortalVisibility": {
-      "none": "Aucune",
       "restricted": "Restreint",
       "public": "Public"
     },

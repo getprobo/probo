@@ -1,9 +1,5 @@
 enum CompliancePortalVisibility
     @goModel(model: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibility") {
-    NONE
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityNone"
-        )
     RESTRICTED
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.CompliancePortalVisibilityRestricted"

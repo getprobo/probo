@@ -182,7 +182,6 @@ func compliancePortalAccessResourceUnionArgs(
 		"visibility_restricted":       CompliancePortalVisibilityRestricted,
 		"file_visibilities": []string{
 			CompliancePortalVisibilityRestricted.String(),
-			CompliancePortalVisibilityNone.String(),
 		},
 	}
 	maps.Copy(args, scope.SQLArguments())

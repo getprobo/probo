@@ -82,7 +82,7 @@ func loadResources(
 					return nil, nil, nil, fmt.Errorf("cannot load compliance portal document: %w", err)
 				}
 
-				if err == nil && link.Visibility != coredata.CompliancePortalVisibilityNone {
+				if err == nil {
 					documents = append(
 						documents,
 						messageDocument{

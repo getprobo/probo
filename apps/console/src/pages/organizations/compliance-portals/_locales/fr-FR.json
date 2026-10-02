@@ -232,6 +232,11 @@
     "actions": {
       "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
     },
+    "unlink": {
+      "title": "Retirer l’audit du portail ?",
+      "description": "Les demandes d’accès des visiteurs pour ce rapport d’audit seront supprimées. Cette action est irréversible.",
+      "confirm": "Retirer"
+    },
     "noExpiry": "Aucune expiration",
     "untitled": "Sans titre",
     "states": {
@@ -453,6 +458,11 @@
     },
     "actions": {
       "toggle": "Afficher ou masquer {{title}} sur le portail de conformité"
+    },
+    "unlink": {
+      "title": "Retirer le document du portail ?",
+      "description": "Les demandes d’accès des visiteurs pour ce document seront supprimées. Cette action est irréversible.",
+      "confirm": "Retirer"
     }
   },
   "thirdPartyListItem": {
@@ -738,7 +748,7 @@
   },
   "deleteFileDialog": {
     "title": "Supprimer le fichier",
-    "description": "Voulez-vous vraiment supprimer ce fichier ? Cette action est irréversible.",
+    "description": "Les demandes d’accès des visiteurs pour ce fichier seront supprimées. Cette action est irréversible.",
     "messages": {
       "deleted": "Fichier supprimé avec succès"
     },

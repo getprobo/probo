@@ -169,10 +169,6 @@ func (s *Service) ListAudits(
 					continue
 				}
 
-				if link.Visibility == coredata.CompliancePortalVisibilityNone {
-					continue
-				}
-
 				entries = append(entries, &PortalAudit{
 					ID:         link.ID,
 					Audit:      audit,
@@ -304,10 +300,6 @@ func (s *Service) GetDocumentLink(
 				return err
 			}
 
-			if link.Visibility == coredata.CompliancePortalVisibilityNone {
-				return coredata.ErrResourceNotFound
-			}
-
 			return nil
 		},
 	)
@@ -359,10 +351,6 @@ func (s *Service) GetAuditLink(
 		func(ctx context.Context, conn pg.Querier) error {
 			if err := link.LoadByCompliancePortalIDAndAuditID(ctx, conn, scope, compliancePortalID, auditID); err != nil {
 				return err
-			}
-
-			if link.Visibility == coredata.CompliancePortalVisibilityNone {
-				return coredata.ErrResourceNotFound
 			}
 
 			return nil

@@ -237,8 +237,8 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 			return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
 		}
 
-		// Return every link, including visibility NONE. That field is the
-		// console's linked-vs-unlinked signal; callers filter displayed rows.
+		// Return every link. Presence of a row is the console's
+		// linked-vs-unlinked signal; callers filter displayed rows.
 		for _, link := range links {
 			result[CompliancePortalDocumentKey{
 				TenantID:           group.tenantID,
@@ -283,8 +283,8 @@ func (f *batchFetcher) fetchCompliancePortalAudits(
 			return nil, fmt.Errorf("cannot batch load compliance portal audits: %w", err)
 		}
 
-		// Return every link, including visibility NONE. That field is the
-		// console's linked-vs-unlinked signal; callers filter displayed rows.
+		// Return every link. Presence of a row is the console's
+		// linked-vs-unlinked signal; callers filter displayed rows.
 		for _, link := range links {
 			result[CompliancePortalAuditKey{
 				TenantID:           group.tenantID,

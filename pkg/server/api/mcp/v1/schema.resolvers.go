@@ -8868,7 +8868,7 @@ func (r *Resolver) ListCompliancePortalDocumentsTool(ctx context.Context, req *m
 	entries := make([]*types.CompliancePortalCatalogDocument, len(documentPage.Data))
 	for i, document := range documentPage.Data {
 		link := linksByDocumentID[document.ID]
-		if link == nil || link.Visibility == coredata.CompliancePortalVisibilityNone {
+		if link == nil {
 			return nil, types.ListCompliancePortalDocumentsOutput{}, fmt.Errorf("missing compliance portal document link")
 		}
 

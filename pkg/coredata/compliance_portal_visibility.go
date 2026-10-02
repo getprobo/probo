@@ -28,7 +28,6 @@ import (
 type CompliancePortalVisibility string
 
 const (
-	CompliancePortalVisibilityNone       CompliancePortalVisibility = "NONE"
 	CompliancePortalVisibilityRestricted CompliancePortalVisibility = "RESTRICTED"
 	CompliancePortalVisibilityPublic     CompliancePortalVisibility = "PUBLIC"
 )
@@ -41,7 +40,6 @@ var (
 
 func CompliancePortalVisibilities() []CompliancePortalVisibility {
 	return []CompliancePortalVisibility{
-		CompliancePortalVisibilityNone,
 		CompliancePortalVisibilityRestricted,
 		CompliancePortalVisibilityPublic,
 	}
@@ -66,7 +64,6 @@ func compliancePortalVisibilityStrings(visibilities []CompliancePortalVisibility
 func (v CompliancePortalVisibility) IsValid() bool {
 	switch v {
 	case
-		CompliancePortalVisibilityNone,
 		CompliancePortalVisibilityRestricted,
 		CompliancePortalVisibilityPublic:
 		return true

@@ -152,6 +152,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					organizationID,
 					portalA,
 					"kept-file",
+					coredata.CompliancePortalVisibilityPublic,
 				)
 				if err != nil {
 					return err
@@ -164,6 +165,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					organizationID,
 					portalB,
 					"skipped-file",
+					coredata.CompliancePortalVisibilityPublic,
 				)
 				if err != nil {
 					return err
@@ -328,6 +330,7 @@ func insertTestPortalFile(
 	organizationID gid.GID,
 	portalID gid.GID,
 	name string,
+	visibility coredata.CompliancePortalVisibility,
 ) (gid.GID, error) {
 	now := time.Now()
 
@@ -349,7 +352,7 @@ func insertTestPortalFile(
 		Name:                       name,
 		Category:                   "OTHER",
 		FileID:                     blobID,
-		CompliancePortalVisibility: coredata.CompliancePortalVisibilityPublic,
+		CompliancePortalVisibility: visibility,
 		CreatedAt:                  now,
 		UpdatedAt:                  now,
 	}

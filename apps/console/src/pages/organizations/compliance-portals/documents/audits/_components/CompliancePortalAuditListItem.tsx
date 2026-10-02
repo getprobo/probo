@@ -20,7 +20,7 @@
 
 import { getAuditStateVariant, getCompliancePortalLinkedVisibilityOptions } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
-import { Badge, Checkbox, Field, Option, Td, Tr } from "@probo/ui";
+import { Badge, Checkbox, Field, Option, Td, Tr, useConfirm } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -111,6 +111,7 @@ export function CompliancePortalAuditListItem(props: {
 }) {
   const organizationId = useOrganizationId();
   const { i18n, t } = useTranslation("organizations/compliance-portals");
+  const confirm = useConfirm();
   const visibilityOptions = getCompliancePortalLinkedVisibilityOptions(t);
 
   const compliancePortal = useFragment<CompliancePortalAuditListItem_compliancePortal$key>(
@@ -171,10 +172,10 @@ export function CompliancePortalAuditListItem(props: {
         return;
       }
 
-      setPendingLinked(checked);
+      if (checked) {
+        setPendingLinked(true);
 
-      try {
-        if (checked) {
+        try {
           await updateAuditVisibility({
             variables: {
               input: {
@@ -186,35 +187,51 @@ export function CompliancePortalAuditListItem(props: {
             },
           });
           setPendingLinked(null);
-          return;
-        }
-
-        if (!catalogAudit) {
+        } catch {
           setPendingLinked(null);
-          return;
         }
-
-        await removeAudit({
-          variables: {
-            input: {
-              id: catalogAudit.id,
-            },
-            compliancePortalId: compliancePortal.id,
-          },
-        });
-        setPendingLinked(null);
-      } catch {
-        setPendingLinked(null);
+        return;
       }
+
+      if (!catalogAudit) {
+        return;
+      }
+
+      confirm(
+        async () => {
+          setPendingLinked(false);
+
+          try {
+            await removeAudit({
+              variables: {
+                input: {
+                  id: catalogAudit.id,
+                },
+                compliancePortalId: compliancePortal.id,
+              },
+            });
+            setPendingLinked(null);
+          } catch {
+            setPendingLinked(null);
+          }
+        },
+        {
+          title: t("auditListItem.unlink.title"),
+          message: t("auditListItem.unlink.description"),
+          label: t("auditListItem.unlink.confirm"),
+        },
+      );
     },
     [
+      audit.id,
       catalogAudit,
       compliancePortal.canUpdate,
       compliancePortal.id,
+      confirm,
       isLinked,
       removeAudit,
+      t,
       updateAuditVisibility,
-      audit.id,
     ],
   );
 

@@ -1348,7 +1348,6 @@
       "revoked": "Ingetrokken"
     },
     "compliancePortalVisibility": {
-      "none": "Geen",
       "restricted": "Beperkt",
       "public": "Openbaar"
     },

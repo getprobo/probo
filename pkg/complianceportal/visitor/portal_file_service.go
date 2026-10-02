@@ -73,10 +73,6 @@ func (s *Service) GetPortalFile(
 		return nil, err
 	}
 
-	if compliancePortalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
-		return nil, ErrPortalFileNotVisible
-	}
-
 	return compliancePortalFile, nil
 }
 

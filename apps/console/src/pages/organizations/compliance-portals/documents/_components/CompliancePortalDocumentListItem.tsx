@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { getCompliancePortalLinkedVisibilityOptions } from "@probo/helpers";
-import { Badge, Checkbox, DocumentTypeBadge, Field, Option, Td, Tr } from "@probo/ui";
+import { Badge, Checkbox, DocumentTypeBadge, Field, Option, Td, Tr, useConfirm } from "@probo/ui";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -119,6 +119,7 @@ export function CompliancePortalDocumentListItem(props: {
 }) {
   const organizationId = useOrganizationId();
   const { t } = useTranslation("organizations/compliance-portals");
+  const confirm = useConfirm();
   const visibilityOptions = getCompliancePortalLinkedVisibilityOptions(t);
 
   const compliancePortal = useFragment<CompliancePortalDocumentListItem_compliancePortal$key>(
@@ -179,10 +180,10 @@ export function CompliancePortalDocumentListItem(props: {
         return;
       }
 
-      setPendingLinked(checked);
+      if (checked) {
+        setPendingLinked(true);
 
-      try {
-        if (checked) {
+        try {
           await updateDocumentVisibility({
             variables: {
               input: {
@@ -194,34 +195,50 @@ export function CompliancePortalDocumentListItem(props: {
             },
           });
           setPendingLinked(null);
-          return;
-        }
-
-        if (!catalogDocument) {
+        } catch {
           setPendingLinked(null);
-          return;
         }
-
-        await removeDocument({
-          variables: {
-            input: {
-              id: catalogDocument.id,
-            },
-            compliancePortalId: compliancePortal.id,
-          },
-        });
-        setPendingLinked(null);
-      } catch {
-        setPendingLinked(null);
+        return;
       }
+
+      if (!catalogDocument) {
+        return;
+      }
+
+      confirm(
+        async () => {
+          setPendingLinked(false);
+
+          try {
+            await removeDocument({
+              variables: {
+                input: {
+                  id: catalogDocument.id,
+                },
+                compliancePortalId: compliancePortal.id,
+              },
+            });
+            setPendingLinked(null);
+          } catch {
+            setPendingLinked(null);
+          }
+        },
+        {
+          title: t("documentListItem.unlink.title"),
+          message: t("documentListItem.unlink.description"),
+          label: t("documentListItem.unlink.confirm"),
+        },
+      );
     },
     [
       catalogDocument,
       compliancePortal.canUpdate,
       compliancePortal.id,
+      confirm,
       document.id,
       isLinked,
       removeDocument,
+      t,
       updateDocumentVisibility,
     ],
   );

@@ -386,6 +386,76 @@ WHERE
 	return nil
 }
 
+func DeleteCompliancePortalDocumentAccessesByDocumentIDAndCompliancePortalID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	compliancePortalID gid.GID,
+) error {
+	q := `
+DELETE FROM cp_document_accesses
+WHERE
+    %s
+    AND document_id = @document_id
+    AND compliance_portal_access_id IN (
+        SELECT id
+        FROM cp_accesses
+        WHERE compliance_portal_id = @compliance_portal_id
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":          documentID,
+		"compliance_portal_id": compliancePortalID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete compliance portal document accesses: %w", err)
+	}
+
+	return nil
+}
+
+func DeleteCompliancePortalDocumentAccessesByReportFileIDAndCompliancePortalID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	reportFileID gid.GID,
+	compliancePortalID gid.GID,
+) error {
+	q := `
+DELETE FROM cp_document_accesses
+WHERE
+    %s
+    AND report_file_id = @report_file_id
+    AND compliance_portal_access_id IN (
+        SELECT id
+        FROM cp_accesses
+        WHERE compliance_portal_id = @compliance_portal_id
+    )
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"report_file_id":       reportFileID,
+		"compliance_portal_id": compliancePortalID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete compliance portal report accesses: %w", err)
+	}
+
+	return nil
+}
+
 func (tcdas *CompliancePortalDocumentAccesses) CountByCompliancePortalAccessID(
 	ctx context.Context,
 	conn pg.Querier,
