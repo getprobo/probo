@@ -360,6 +360,7 @@ func TestResolveAccessResourceIDs_MapsPortalIDsAndDropsForeignRows(t *testing.T)
 				}
 
 				foreignDocumentID = gid.New(tenantID, coredata.DocumentEntityType)
+
 				foreignDocument := coredata.Document{
 					ID:             foreignDocumentID,
 					OrganizationID: organizationID,
