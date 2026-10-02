@@ -29,17 +29,35 @@ export type TonedCardProps = ComponentProps<"div"> & {
   icon: ReactNode;
   lead?: ReactNode;
   control?: ReactNode;
+  stretch?: ReactNode;
 };
 
 // Status-shaped shell: toned frame, header icon + optional lead + control,
 // body children. Domain cards keep custom JSX and call `tonedCard` directly.
 export function TonedCard(props: TonedCardProps) {
-  const { tone = "sand", iconSize = 10, icon, lead, control, className, children, ...rest } = props;
+  const {
+    tone = "sand",
+    iconSize = 10,
+    icon,
+    lead,
+    control,
+    stretch,
+    className,
+    children,
+    ...rest
+  } = props;
   const { frame, header, wash, fade, icon: iconSlot, lead: leadSlot, control: controlSlot, body }
     = tonedCard({ tone, iconSize });
 
   return (
-    <Card variant="ghost" size={2} padding="none" className={frame({ className })} {...rest}>
+    <Card
+      variant="ghost"
+      size={2}
+      padding="none"
+      className={frame({ className })}
+      {...rest}
+    >
+      {stretch}
       <div className={header()}>
         <div className={wash()} />
         <div className={fade()} />

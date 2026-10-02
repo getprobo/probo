@@ -18,36 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PlusIcon } from "@phosphor-icons/react";
-import { Card } from "@probo/ui/src/v2/Card/Card";
-import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
+import type { ComponentProps } from "react";
 
-import { marketplacePath } from "../_lib/integrationPath";
+import { cardLink } from "./variants";
 
-interface MarketplaceEntryCardProps {
-  organizationId: string;
-}
+export type CardButtonProps = ComponentProps<"button">;
 
-export function MarketplaceEntryCard({
-  organizationId,
-}: MarketplaceEntryCardProps) {
-  const { t } = useTranslation("organizations/settings/integrations");
-  const label = t("listPage.addMore");
+// Action that stretches across an interactive Card. Renders a button whose
+// ::after covers the card. Pair with Card interactive. Nested buttons need
+// `relative z-1`. For in-app navigation use CardLink. See contrib/claude/ui.md.
+export function CardButton(props: CardButtonProps) {
+  const { className, type = "button", ...rest } = props;
 
-  return (
-    <Card variant="soft" size={2} interactive className="h-full">
-      <CardLink
-        to={marketplacePath(organizationId)}
-        aria-label={label}
-      />
-      <div className="flex h-full flex-col items-center justify-center gap-3 opacity-60">
-        <PlusIcon className="size-8" aria-hidden />
-        <Text size={2} color="faint">
-          {label}
-        </Text>
-      </div>
-    </Card>
-  );
+  return <button type={type} className={cardLink({ className })} {...rest} />;
 }
