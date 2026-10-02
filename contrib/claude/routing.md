@@ -87,6 +87,7 @@ import { useLocation } from "react-router";
 
 const location = useLocation();
 
+// GOOD — child of the list route; detail owns no extra params
 <Link
   to={{ pathname: "..", search: location.search }}
   size={2}
@@ -95,7 +96,7 @@ const location = useLocation();
   iconStart={<CaretLeftIcon />}
   className={back()}
 >
-  {t("visitorPage.back")}
+  {t("userPage.back")}
 </Link>
 ```
 
@@ -118,6 +119,22 @@ const location = useLocation();
 ```
 
 When the detail page owns extra search params the list does not (for example a visitor’s document-access `status`), copy only the list keys back onto the list URL with `URLSearchParams`. Do not concatenate a query string by hand (see [`ts-style.md`](ts-style.md)).
+
+```tsx
+const [searchParams] = useSearchParams();
+const listSearch = visitorsListSearch(searchParams);
+
+<Link
+  to={{ pathname: "..", search: listSearch }}
+  size={2}
+  color="neutral"
+  underline={false}
+  iconStart={<CaretLeftIcon />}
+  className={back()}
+>
+  {t("visitorPage.back")}
+</Link>
+```
 
 ## Register every new console page in the nav
 

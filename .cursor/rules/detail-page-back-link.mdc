@@ -21,7 +21,7 @@ so the list-to-detail link and the back link must both pass
   {t("trackerProperties.actions.back")}
 </ButtonLink>
 
-// GOOD — child of the list route; keep the list search
+// GOOD — child of the list route; detail owns no extra params
 <Link
   to={{ pathname: "..", search: location.search }}
   size={2}
@@ -30,7 +30,7 @@ so the list-to-detail link and the back link must both pass
   iconStart={<CaretLeftIcon />}
   className={back()}
 >
-  {t("visitorPage.back")}
+  {t("userPage.back")}
 </Link>
 ```
 
@@ -58,5 +58,21 @@ at the list path explicitly and still pass `search`.
 When the detail page owns extra search params the list does not (for
 example a visitor’s document-access `status`), copy only the list keys
 back onto the list URL.
+
+```tsx
+// GOOD — child detail; drop params the list does not own
+const listSearch = visitorsListSearch(searchParams);
+
+<Link
+  to={{ pathname: "..", search: listSearch }}
+  size={2}
+  color="neutral"
+  underline={false}
+  iconStart={<CaretLeftIcon />}
+  className={back()}
+>
+  {t("visitorPage.back")}
+</Link>
+```
 
 See [`contrib/claude/routing.md`](../../contrib/claude/routing.md#back-to-the-list).
