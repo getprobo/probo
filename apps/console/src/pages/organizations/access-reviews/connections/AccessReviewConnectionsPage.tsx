@@ -27,7 +27,7 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
@@ -38,13 +38,16 @@ import type { AccessReviewConnectionsPagePaginationQuery } from "#/__generated__
 import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { groupByProvider } from "#/pages/organizations/_lib/connectorStatus";
 import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
 
-import { AddableConnectorListItem } from "./_components/AddableConnectorListItem";
+import {
+  type AddableConnectorCard,
+  AddableConnectorGroups,
+} from "./_components/AddableConnectorListItem";
 import { sourcesPage } from "./_components/variants";
-import { groupConnectorsByProvider, listedConnectorAccounts } from "./_lib/listedConnectorAccounts";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
   params.delete("connector_id");
@@ -62,15 +65,7 @@ export const accessReviewConnectionsPageQuery = graphql`
         canCreateConnector: permission(action: "core:connector:create")
         connectors {
           id
-          displayName
           provider
-          accounts(first: 50) {
-            edges {
-              node {
-                name
-              }
-            }
-          }
           ...AddableConnectorListItem_connector
         }
         ...AccessReviewConnectionsPageFragment
@@ -83,7 +78,7 @@ const sourcesFragment = graphql`
   fragment AccessReviewConnectionsPageFragment on Organization
   @refetchable(queryName: "AccessReviewConnectionsPagePaginationQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
+    first: { type: "Int", defaultValue: 20 }
     order: {
       type: "AccessReviewSourceOrder"
       defaultValue: { direction: DESC, field: CREATED_AT }
@@ -155,7 +150,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
   // stays available on that term to retry, and success clears the latch.
   const [failedSearch, setFailedSearch] = useState<string | null>(null);
   const loadMoreSources = useCallback(() => {
-    loadNext(50, {
+    loadNext(20, {
       onComplete: error => setFailedSearch(error ? normalizedSearch : null),
     });
   }, [loadNext, normalizedSearch]);
@@ -178,29 +173,15 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     }),
     [accessReviewSources.edges, normalizedSearch],
   );
-  const addableVendors = useMemo(
-    () => groupConnectorsByProvider(organization.connectors).filter(group =>
-      group.some(connector =>
-        listedConnectorAccounts(
-          connector.accounts.edges.map(({ node }) => node),
-          {
-            displayName: connector.displayName,
-            provider: connector.provider,
-          },
-          normalizedSearch,
-        ) != null,
-      ),
-    ),
-    [organization.connectors, normalizedSearch],
+  const vendorGroups = useMemo(
+    () => groupByProvider(organization.connectors),
+    [organization.connectors],
   );
   const showCSV = !normalizedSearch
     || "csv".includes(normalizedSearch)
     || t("addAccessReviewSourceDialog.csv.title")
       .toLowerCase()
       .includes(normalizedSearch);
-  const showAddMore = organization.canCreateConnector
-    && (addableVendors.length > 0 || showCSV);
-
   const callbackError = searchParams.get("error");
 
   useEffect(() => {
@@ -235,9 +216,6 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
       : isSearching
         ? t("accessReviewConnectionsPage.emptyConnectedSearch")
         : t("accessReviewConnectionsPage.emptyConnected");
-  const hasAddable = addableVendors.length > 0 || showCSV;
-  const availableCount = addableVendors.length + (showCSV ? 1 : 0);
-
   return (
     <div className={root()}>
       <div className={header()}>
@@ -306,46 +284,76 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
           )}
         </section>
         {organization.canCreateSource && (
-          <section className={section()}>
-            <div className={sectionTitle()}>
-              <Heading level={2} size={3} weight="medium">
-                {t("accessReviewConnectionsPage.sections.addSource")}
-              </Heading>
-              <Text size={2} color="faint">{availableCount}</Text>
-            </div>
-            {!hasAddable
-              ? (
-                  <Card variant="soft" size={2}>
-                    <div className={empty()}>
-                      <Text size={2} color="faint">
-                        {t("accessReviewConnectionsPage.emptyAccounts")}
-                      </Text>
-                    </div>
-                  </Card>
-                )
-              : (
-                  <div className={grid()}>
-                    {showAddMore && (
-                      <MarketplaceEntryCard organizationId={organizationId} />
-                    )}
-                    {addableVendors.map(connectors => (
-                      <AddableConnectorListItem
-                        key={connectors[0].provider}
-                        connectorKeys={connectors}
-                        organizationId={organizationId}
-                        connectionId={accessReviewSources.__id}
-                        normalizedSearch={normalizedSearch}
-                      />
-                    ))}
-                    {showCSV && (
-                      <CsvSourceCard organizationId={organizationId} />
-                    )}
-                  </div>
-                )}
-          </section>
+          <AddableConnectorGroups
+            groups={vendorGroups}
+            normalizedSearch={normalizedSearch}
+            organizationId={organizationId}
+            connectionId={accessReviewSources.__id}
+          >
+            {cards => (
+              <AddSourceSection
+                cards={cards}
+                showCSV={showCSV}
+                canCreateConnector={organization.canCreateConnector}
+                organizationId={organizationId}
+              />
+            )}
+          </AddableConnectorGroups>
         )}
       </div>
     </div>
+  );
+}
+
+function AddSourceSection({
+  cards,
+  showCSV,
+  canCreateConnector,
+  organizationId,
+}: {
+  cards: readonly AddableConnectorCard[];
+  showCSV: boolean;
+  canCreateConnector: boolean;
+  organizationId: string;
+}) {
+  const { t } = useTranslation();
+  const { section, sectionTitle, grid, empty } = sourcesPage();
+  const hasAddable = cards.length > 0 || showCSV;
+  const showAddMore = canCreateConnector && hasAddable;
+  const availableCount = cards.length + (showCSV ? 1 : 0);
+
+  return (
+    <section className={section()}>
+      <div className={sectionTitle()}>
+        <Heading level={2} size={3} weight="medium">
+          {t("accessReviewConnectionsPage.sections.addSource")}
+        </Heading>
+        <Text size={2} color="faint">{availableCount}</Text>
+      </div>
+      {!hasAddable
+        ? (
+            <Card variant="soft" size={2}>
+              <div className={empty()}>
+                <Text size={2} color="faint">
+                  {t("accessReviewConnectionsPage.emptyAccounts")}
+                </Text>
+              </div>
+            </Card>
+          )
+        : (
+            <div className={grid()}>
+              {showAddMore && (
+                <MarketplaceEntryCard organizationId={organizationId} />
+              )}
+              {cards.map(({ provider, card }) => (
+                <Fragment key={provider}>{card}</Fragment>
+              ))}
+              {showCSV && (
+                <CsvSourceCard organizationId={organizationId} />
+              )}
+            </div>
+          )}
+    </section>
   );
 }
 

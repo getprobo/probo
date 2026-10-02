@@ -165,8 +165,6 @@
   },
   "detailsPage": {
     "notFound": "Integration not found",
-    "accountCount_one": "{{count}} account",
-    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Connected",
       "DISCONNECTED": "Disconnected",

@@ -18,26 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function groupConnectorsByProvider<T extends { provider: string }>(
-  connectors: readonly T[],
-): T[][] {
-  const groups: T[][] = [];
-  const indexByProvider = new Map<string, number>();
-
-  for (const connector of connectors) {
-    const index = indexByProvider.get(connector.provider);
-    if (index == null) {
-      indexByProvider.set(connector.provider, groups.length);
-      groups.push([connector]);
-      continue;
-    }
-
-    groups[index].push(connector);
-  }
-
-  return groups;
-}
-
 interface NamedAccount {
   name: string;
 }

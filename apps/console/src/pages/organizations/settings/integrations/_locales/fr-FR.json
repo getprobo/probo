@@ -165,8 +165,6 @@
   },
   "detailsPage": {
     "notFound": "Intégration introuvable",
-    "accountCount_one": "{{count}} compte",
-    "accountCount_other": "{{count}} comptes",
     "status": {
       "CONNECTED": "Connecté",
       "DISCONNECTED": "Déconnecté",
