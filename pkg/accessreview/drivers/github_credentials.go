@@ -29,6 +29,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/x/ref"
@@ -76,14 +77,15 @@ type (
 	}
 
 	githubCredentialAuthorization struct {
-		Login                     string  `json:"login"`
-		CredentialID              int64   `json:"credential_id"`
-		CredentialType            string  `json:"credential_type"`
-		CredentialAuthorizedAt    string  `json:"credential_authorized_at"`
-		CredentialAccessedAt      *string `json:"credential_accessed_at"`
-		AuthorizedCredentialID    *int64  `json:"authorized_credential_id"`
-		AuthorizedCredentialTitle *string `json:"authorized_credential_title"`
-		AuthorizedCredentialNote  *string `json:"authorized_credential_note"`
+		Login                         string  `json:"login"`
+		CredentialID                  int64   `json:"credential_id"`
+		CredentialType                string  `json:"credential_type"`
+		CredentialAuthorizedAt        string  `json:"credential_authorized_at"`
+		CredentialAccessedAt          *string `json:"credential_accessed_at"`
+		AuthorizedCredentialID        *int64  `json:"authorized_credential_id"`
+		AuthorizedCredentialTitle     *string `json:"authorized_credential_title"`
+		AuthorizedCredentialNote      *string `json:"authorized_credential_note"`
+		AuthorizedCredentialExpiresAt *string `json:"authorized_credential_expires_at"`
 	}
 
 	gitHubDeployKeysRequest struct {
@@ -206,6 +208,8 @@ func (d *GitHubDriver) appendServiceAccounts(ctx context.Context, records []Acco
 	if err != nil {
 		d.logger.WarnCtx(ctx, "cannot fetch github credential authorizations", log.Error(err))
 	} else {
+		now := time.Now()
+
 		for _, cred := range credentials {
 			if !githubCredentialIsToken(cred.CredentialType) {
 				continue
@@ -215,7 +219,7 @@ func (d *GitHubDriver) appendServiceAccounts(ctx context.Context, records []Acco
 				continue
 			}
 
-			if rec, ok := githubCredentialRecord(cred); ok {
+			if rec, ok := githubCredentialRecord(cred, now); ok {
 				records = append(records, rec)
 			}
 		}
@@ -699,7 +703,7 @@ func githubCredentialDuplicatesPAT(seen map[string]struct{}, cred githubCredenti
 	return false
 }
 
-func githubCredentialRecord(cred githubCredentialAuthorization) (AccountRecord, bool) {
+func githubCredentialRecord(cred githubCredentialAuthorization, now time.Time) (AccountRecord, bool) {
 	if cred.CredentialID == 0 {
 		return AccountRecord{}, false
 	}
@@ -733,7 +737,7 @@ func githubCredentialRecord(cred githubCredentialAuthorization) (AccountRecord, 
 	return AccountRecord{
 		FullName:    fullName,
 		Roles:       roles,
-		Active:      new(true),
+		Active:      githubCredentialActive(cred, now),
 		IsAdmin:     new(false),
 		MFAStatus:   coredata.MFAStatusUnknown,
 		AuthMethod:  githubCredentialAuthMethod(cred.CredentialType),
@@ -742,6 +746,14 @@ func githubCredentialRecord(cred githubCredentialAuthorization) (AccountRecord, 
 		CreatedAt:   parseRFC3339Ptr(cred.CredentialAuthorizedAt),
 		ExternalID:  githubCredentialExternalPrefix + strconv.FormatInt(cred.CredentialID, 10),
 	}, true
+}
+
+func githubCredentialActive(cred githubCredentialAuthorization, now time.Time) *bool {
+	if exp := parseRFC3339Ptr(ref.UnrefOrZero(cred.AuthorizedCredentialExpiresAt)); exp != nil && now.After(*exp) {
+		return new(false)
+	}
+
+	return new(true)
 }
 
 func githubDeployKeyAccountRecord(item githubDeployKeyRecord) (AccountRecord, bool) {

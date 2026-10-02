@@ -630,6 +630,36 @@ func TestGitHubDriver_DeployKeysPaginatesRepositoryConnection(t *testing.T) {
 	assert.Equal(t, "DK_2", keys[1].Key.ID)
 }
 
+func TestGitHubCredentialRecord_ActiveFollowsExpiry(t *testing.T) {
+	t.Parallel()
+
+	now := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
+	expired := "2026-10-02T03:00:00Z"
+	future := "2026-10-02T20:00:00Z"
+
+	for name, tc := range map[string]struct {
+		expiresAt *string
+		active    bool
+	}{
+		"expired": {expiresAt: &expired, active: false},
+		"future":  {expiresAt: &future, active: true},
+		"missing": {expiresAt: nil, active: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			rec, ok := githubCredentialRecord(githubCredentialAuthorization{
+				CredentialID:                  7,
+				CredentialType:                "GitHub app token",
+				AuthorizedCredentialExpiresAt: tc.expiresAt,
+			}, now)
+			require.True(t, ok)
+			require.NotNil(t, rec.Active)
+			assert.Equal(t, tc.active, *rec.Active)
+		})
+	}
+}
+
 func TestGitHubDriver_SkipsFineGrainedPATDuplicatedInSSO(t *testing.T) {
 	t.Parallel()
 
