@@ -101,11 +101,12 @@ export function TaskCommentForm() {
       </Field>
       <div className={actions()}>
         <Button
-          type="submit"
+          type="button"
           variant="solid"
           color="neutral"
           highContrast
           loading={isCreating}
+          onClick={handleSubmit}
         >
           {t("detailsPage.comments.actions.submit")}
         </Button>

@@ -20,7 +20,7 @@
 
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Fragment, type Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
-import { NodeSelection } from "@tiptap/pm/state";
+import { TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 
 export const pictureContentTypes = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -51,14 +51,18 @@ export function insertBlockNode(view: EditorView, pos: number, node: ProseMirror
     new Slice(Fragment.from(node), 0, 0),
   );
   const insertedAt = tr.mapping.map(from);
+  const after = insertedAt + node.nodeSize;
+  const paragraph = view.state.schema.nodes.paragraph;
 
-  try {
-    tr = tr.setSelection(NodeSelection.create(tr.doc, insertedAt));
-  } catch {
-    // The mapped position is not a selectable node.
+  // Leave a text cursor after the file so typing adds words beside it
+  // instead of replacing the selected attachment.
+  if (paragraph && tr.doc.nodeAt(after)?.type !== paragraph) {
+    tr = tr.insert(after, paragraph.create());
   }
 
+  tr = tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(after + 1, tr.doc.content.size))));
   view.dispatch(tr.scrollIntoView());
+  view.focus();
 }
 
 export function insertPicture(

@@ -38,7 +38,7 @@ import { type ChangeEvent, type ComponentProps, type DragEvent, useCallback, use
 import { tv } from "tailwind-variants";
 
 import { attachmentAccept, AttachmentExtension } from "./AttachmentExtension";
-import { AttachmentUploadExtension, insertUploadedFile, type RichEditorAttachmentUpload, setAttachmentUpload, uploadEditorFiles } from "./AttachmentUploadExtension";
+import { AttachmentUploadExtension, filesFromDataTransfer, insertUploadedFile, type RichEditorAttachmentUpload, setAttachmentUpload, uploadEditorFiles } from "./AttachmentUploadExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
@@ -265,21 +265,25 @@ export function RichEditor(props: RichEditorProps) {
       return;
     }
 
-    const coords = editor.view.posAtCoords({
-      left: event.clientX,
-      top: event.clientY,
-    });
-    const handled = uploadEditorFiles(
-      editor.view,
-      event.dataTransfer?.files,
-      coords?.pos ?? editor.state.selection.from,
-      upload,
-    );
-    if (!handled) {
+    const files = filesFromDataTransfer(event.dataTransfer);
+    const fileDrag = files.length > 0
+      || (event.dataTransfer?.types.includes("Files") ?? false);
+    if (!fileDrag) {
       return;
     }
 
     event.preventDefault();
+    event.stopPropagation();
+    const coords = editor.view.posAtCoords({
+      left: event.clientX,
+      top: event.clientY,
+    });
+    uploadEditorFiles(
+      editor.view,
+      files,
+      coords?.pos ?? editor.state.selection.from,
+      upload,
+    );
   }, [editor]);
 
   if (!editor) return null;

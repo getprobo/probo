@@ -107,17 +107,44 @@ async function uploadAttachments(
   }
 }
 
+export function filesFromDataTransfer(data: DataTransfer | null | undefined) {
+  if (!data) {
+    return [];
+  }
+
+  // Read the file items before anything else touches the payload. Chrome
+  // drops the file list once text or a URI is read, and then opens the file.
+  const files: File[] = [];
+  for (const item of data.items) {
+    if (item.kind !== "file") {
+      continue;
+    }
+
+    const file = item.getAsFile();
+    if (file) {
+      files.push(file);
+    }
+  }
+
+  if (files.length === 0) {
+    files.push(...data.files);
+  }
+
+  return files;
+}
+
 export function uploadEditorFiles(
   view: EditorView,
-  fileList: FileList | null | undefined,
+  fileList: FileList | File[] | null | undefined,
   pos: number,
   upload: RichEditorAttachmentUpload,
 ) {
-  if (!fileList || fileList.length === 0) {
+  const files = fileList ? [...fileList] : [];
+  if (files.length === 0) {
     return false;
   }
 
-  void uploadAttachments(view, [...fileList], pos, upload);
+  void uploadAttachments(view, files, pos, upload);
   return true;
 }
 
@@ -148,22 +175,21 @@ export const AttachmentUploadExtension = Extension.create<object, AttachmentUplo
           handleDOMEvents: {
             drop(view, event) {
               const upload = storage.upload;
-              if (!upload) {
+              const files = filesFromDataTransfer(event.dataTransfer);
+              const fileDrag = files.length > 0
+                || (event.dataTransfer?.types.includes("Files") ?? false);
+              if (!upload || !fileDrag) {
                 return false;
               }
 
-              const handled = uploadEditorFiles(
-                view,
-                event.dataTransfer?.files,
-                dropPosition(view, event),
-                upload,
-              );
-              if (!handled) {
-                return false;
-              }
-
+              // Claim the drop before the browser opens the file in the tab.
               event.preventDefault();
               event.stopPropagation();
+              if (files.length === 0) {
+                return true;
+              }
+
+              void uploadAttachments(view, files, dropPosition(view, event), upload);
               return true;
             },
 
