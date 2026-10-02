@@ -39,6 +39,7 @@ type (
 		ID                   gid.GID      `db:"id"`
 		TenantID             gid.TenantID `db:"tenant_id"`
 		Name                 string       `db:"name"`
+		LegalName            *string      `db:"legal_name"`
 		LogoFileID           *gid.GID     `db:"logo_file_id"`
 		HorizontalLogoFileID *gid.GID     `db:"horizontal_logo_file_id"`
 		CreatedAt            time.Time    `db:"created_at"`
@@ -110,6 +111,7 @@ SELECT
     tenant_id,
     id,
     name,
+    legal_name,
     logo_file_id,
     horizontal_logo_file_id,
     created_at,
@@ -157,6 +159,7 @@ SELECT
     tenant_id,
     id,
     name,
+    legal_name,
     logo_file_id,
     horizontal_logo_file_id,
     created_at,
@@ -212,6 +215,7 @@ SELECT
 	tenant_id,
     id,
     name,
+    legal_name,
     logo_file_id,
     horizontal_logo_file_id,
     created_at,
@@ -268,6 +272,7 @@ SELECT
 	tenant_id,
 	id,
 	name,
+	legal_name,
 	logo_file_id,
 	horizontal_logo_file_id,
 	created_at,
@@ -311,17 +316,19 @@ INSERT INTO organizations (
     tenant_id,
     id,
     name,
+    legal_name,
     logo_file_id,
     horizontal_logo_file_id,
     created_at,
     updated_at
-) VALUES (@tenant_id, @id, @name, @logo_file_id, @horizontal_logo_file_id, @created_at, @updated_at)
+) VALUES (@tenant_id, @id, @name, @legal_name, @logo_file_id, @horizontal_logo_file_id, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":               o.TenantID,
 		"id":                      o.ID,
 		"name":                    o.Name,
+		"legal_name":              o.LegalName,
 		"logo_file_id":            o.LogoFileID,
 		"horizontal_logo_file_id": o.HorizontalLogoFileID,
 		"created_at":              o.CreatedAt,
@@ -345,6 +352,7 @@ func (o *Organization) Update(
 UPDATE organizations
 SET
     name = @name,
+    legal_name = @legal_name,
     logo_file_id = @logo_file_id,
     horizontal_logo_file_id = @horizontal_logo_file_id,
     updated_at = @updated_at
@@ -358,6 +366,7 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                      o.ID,
 		"name":                    o.Name,
+		"legal_name":              o.LegalName,
 		"logo_file_id":            o.LogoFileID,
 		"horizontal_logo_file_id": o.HorizontalLogoFileID,
 		"updated_at":              o.UpdatedAt,

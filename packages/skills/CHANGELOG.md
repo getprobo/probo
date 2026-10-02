@@ -5,6 +5,10 @@ this file.
 
 ## Unreleased
 
+### Added
+
+- `listOrganizations` exposes `legal_name`, the organization's registered legal name, alongside `name` (the operating name). Skills that draft legal documents use `legal_name` when it is set.
+
 ## [0.3.2] - 2026-09-04
 
 ### Changed

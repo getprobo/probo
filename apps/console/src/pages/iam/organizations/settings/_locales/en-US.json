@@ -11,7 +11,10 @@
       "horizontalLogo": "Horizontal logo",
       "horizontalLogoPlaceholder": "Drop or click",
       "acceptedFiles": "JPEG, PNG, SVG, or WebP. Maximum 5 MB.",
-      "name": "Name"
+      "name": "Name",
+      "nameDescription": "Operating name shown in the console.",
+      "legalName": "Legal name",
+      "legalNameDescription": "Registered legal name. Skills use this in legal documents when it is set."
     },
     "actions": {
       "save": "Save",

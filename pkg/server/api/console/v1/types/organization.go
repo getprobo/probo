@@ -26,8 +26,9 @@ import (
 
 func NewOrganization(o *coredata.Organization) *Organization {
 	org := &Organization{
-		ID:   o.ID,
-		Name: o.Name,
+		ID:        o.ID,
+		Name:      o.Name,
+		LegalName: o.LegalName,
 		Context: &OrganizationContext{
 			OrganizationID: o.ID,
 		},

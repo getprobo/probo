@@ -62,12 +62,14 @@ type (
 
 	CreateOrganizationRequest struct {
 		Name               string
+		LegalName          *string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
 	}
 
 	UpdateOrganizationRequest struct {
 		Name               *string
+		LegalName          **string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
 	}
@@ -151,9 +153,10 @@ var (
 const (
 	TokenTypeAPIKey = "api_key"
 
-	NameMaxLength    = 100
-	TitleMaxLength   = 1000
-	ContentMaxLength = 5000
+	NameMaxLength          = 100
+	TitleMaxLength         = 1000
+	ContentMaxLength       = 5000
+	organizationNameMaxLen = 255
 
 	maxOrganizationLogoFileSize = 5 << 20
 
@@ -191,7 +194,8 @@ func (req CreateOrganizationRequest) Validate() error {
 		}
 	}
 
-	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(organizationNameMaxLen))
+	v.Check(req.LegalName, "legalName", validator.SafeTextNoNewLine(organizationNameMaxLen))
 
 	return v.Error()
 }
@@ -199,7 +203,8 @@ func (req CreateOrganizationRequest) Validate() error {
 func (req UpdateOrganizationRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
+	v.Check(req.Name, "name", validator.SafeTextNoNewLine(organizationNameMaxLen))
+	v.Check(req.LegalName, "legalName", validator.SafeTextNoNewLine(organizationNameMaxLen))
 	v.Check(req.LogoFile, "logo_file", validator.NotEmpty())
 
 	if req.LogoFile != nil {
@@ -587,11 +592,36 @@ func (s *OrganizationService) InviteUser(
 	return invitation, nil
 }
 
+func normalizeLegalName(legalName *string) *string {
+	if legalName == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*legalName)
+	if trimmed == "" {
+		return nil
+	}
+
+	return &trimmed
+}
+
+func normalizeOptionalLegalName(legalName **string) **string {
+	if legalName == nil {
+		return nil
+	}
+
+	normalized := normalizeLegalName(*legalName)
+
+	return &normalized
+}
+
 func (s *OrganizationService) CreateOrganization(
 	ctx context.Context,
 	identityID gid.GID,
 	req *CreateOrganizationRequest,
 ) (*coredata.Organization, *coredata.MembershipProfile, error) {
+	req.LegalName = normalizeLegalName(req.LegalName)
+
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -604,6 +634,7 @@ func (s *OrganizationService) CreateOrganization(
 			ID:        organizationID,
 			TenantID:  tenantID,
 			Name:      req.Name,
+			LegalName: req.LegalName,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -797,6 +828,8 @@ func (s *OrganizationService) CreateOrganization(
 }
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizationID gid.GID, req *UpdateOrganizationRequest) (*coredata.Organization, error) {
+	req.LegalName = normalizeOptionalLegalName(req.LegalName)
+
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -899,6 +932,10 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 
 			if req.Name != nil {
 				organization.Name = *req.Name
+			}
+
+			if req.LegalName != nil {
+				organization.LegalName = *req.LegalName
 			}
 
 			if logoFile != nil {

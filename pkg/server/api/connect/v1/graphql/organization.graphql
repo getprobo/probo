@@ -1,6 +1,7 @@
 type Organization implements Node {
   id: ID!
   name: String!
+  legalName: String
   logo: File @goField(forceResolver: true)
   horizontalLogo: File @goField(forceResolver: true)
   createdAt: Datetime!
@@ -58,6 +59,7 @@ extend type Mutation {
 
 input CreateOrganizationInput {
   name: String!
+  legalName: String
   logoFile: Upload
   horizontalLogoFile: Upload
 }
@@ -65,6 +67,7 @@ input CreateOrganizationInput {
 input UpdateOrganizationInput {
   organizationId: ID!
   name: String
+  legalName: String @goField(omittable: true)
   logoFile: Upload
   horizontalLogoFile: Upload
 }

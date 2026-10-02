@@ -70,6 +70,7 @@ export async function execute(
 							organization {
 								id
 								name
+								legalName
 								logo {
 									id
 									fileName
