@@ -796,10 +796,10 @@
   },
   "measureGraph": {
     "messages": {
-      "deleted": "Measure deleted successfully.",
-      "updated": "Measure updated successfully."
+      "deleted": "Internal control deleted successfully.",
+      "updated": "Internal control updated successfully."
     },
-    "errors": { "delete": "Failed to delete measure", "update": "Failed to update measure" }
+    "errors": { "delete": "Failed to delete internal control", "update": "Failed to update internal control" }
   },
   "obligationGraph": {
     "deleteConfirmation": "This will permanently delete this obligation. This action cannot be undone.",

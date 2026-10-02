@@ -1266,12 +1266,12 @@
   },
   "measureGraph": {
     "messages": {
-      "deleted": "Mesure supprimée avec succès.",
-      "updated": "Mesure mise à jour avec succès."
+      "deleted": "Contrôle interne supprimé avec succès.",
+      "updated": "Contrôle interne mis à jour avec succès."
     },
     "errors": {
-      "delete": "Échec de la suppression de la mesure",
-      "update": "Échec de la mise à jour de la mesure"
+      "delete": "Échec de la suppression du contrôle interne",
+      "update": "Échec de la mise à jour du contrôle interne"
     }
   },
   "obligationGraph": {

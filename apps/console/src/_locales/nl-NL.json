@@ -1266,12 +1266,12 @@
   },
   "measureGraph": {
     "messages": {
-      "deleted": "Maatregel succesvol verwijderd.",
-      "updated": "Maatregel succesvol bijgewerkt."
+      "deleted": "Interne controle succesvol verwijderd.",
+      "updated": "Interne controle succesvol bijgewerkt."
     },
     "errors": {
-      "delete": "Verwijderen van maatregel mislukt",
-      "update": "Bijwerken van maatregel mislukt"
+      "delete": "Verwijderen van interne controle mislukt",
+      "update": "Bijwerken van interne controle mislukt"
     }
   },
   "obligationGraph": {
