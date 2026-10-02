@@ -73,7 +73,6 @@ const createWorkloadIdentityConnectorMutation = graphql`
       connector {
         id
         connectionStatus
-        canEnable: permission(action: "core:connector:create")
         discoveredAccounts {
           externalAccountId
           name
@@ -246,7 +245,6 @@ function useFinishWorkloadIdentity(organizationId: string) {
           ? null
           : {
               connectorId: connector.id,
-              canEnable: connector.canEnable,
               discoveredAccounts,
             },
       });
