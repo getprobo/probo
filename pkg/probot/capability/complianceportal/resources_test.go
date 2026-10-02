@@ -253,7 +253,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	assert.NotEqual(t, skippedFileID.String(), files[0].ID)
 }
 
-func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.T) {
+func TestResolveAccessResourceIDs_MapsPortalIDsAndDropsForeignRows(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -263,13 +263,17 @@ func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.
 	now := time.Now()
 
 	var (
-		portalID          gid.GID
-		documentID        gid.GID
-		documentLinkID    gid.GID
-		reportFileID      gid.GID
-		auditLinkID       gid.GID
-		portalFileID      gid.GID
-		alreadyCatalogDoc gid.GID
+		portalID              gid.GID
+		documentID            gid.GID
+		documentLinkID        gid.GID
+		reportFileID          gid.GID
+		auditLinkID           gid.GID
+		portalFileID          gid.GID
+		missingCatalogDoc     gid.GID
+		foreignDocumentID     gid.GID
+		foreignDocumentLinkID gid.GID
+		foreignReportFileID   gid.GID
+		foreignPortalFileID   gid.GID
 	)
 
 	require.NoError(
@@ -323,7 +327,7 @@ func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.
 				}
 
 				documentLinkID = portalDocument.ID
-				alreadyCatalogDoc = gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
+				missingCatalogDoc = gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
 
 				reportFileID, auditLinkID, err = insertTestReport(
 					ctx,
@@ -344,6 +348,64 @@ func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.
 					organizationID,
 					portalID,
 					"resolve-file",
+					coredata.CompliancePortalVisibilityRestricted,
+				)
+				if err != nil {
+					return err
+				}
+
+				otherPortalID, err := insertTestPortal(ctx, tx, scope, organizationID, "resolve-other-portal")
+				if err != nil {
+					return err
+				}
+
+				foreignDocumentID = gid.New(tenantID, coredata.DocumentEntityType)
+				foreignDocument := coredata.Document{
+					ID:             foreignDocumentID,
+					OrganizationID: organizationID,
+					WriteMode:      coredata.DocumentWriteModeAuthored,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+				if err := foreignDocument.Insert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				foreignPortalDocument := coredata.CompliancePortalDocument{
+					ID:                 gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
+					OrganizationID:     organizationID,
+					CompliancePortalID: otherPortalID,
+					DocumentID:         foreignDocumentID,
+					Visibility:         coredata.CompliancePortalVisibilityRestricted,
+					CreatedAt:          now,
+					UpdatedAt:          now,
+				}
+				if err := foreignPortalDocument.Upsert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				foreignDocumentLinkID = foreignPortalDocument.ID
+
+				foreignReportFileID, _, err = insertTestReport(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					otherPortalID,
+					"resolve-foreign-report",
+				)
+				if err != nil {
+					return err
+				}
+
+				foreignPortalFileID, err = insertTestPortalFile(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					otherPortalID,
+					"resolve-foreign-file",
 					coredata.CompliancePortalVisibilityRestricted,
 				)
 
@@ -376,7 +438,17 @@ func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.
 					conn,
 					scope,
 					portalID,
-					[]gid.GID{documentID, alreadyCatalogDoc, reportFileID, portalFileID},
+					[]gid.GID{
+						documentID,
+						documentLinkID,
+						missingCatalogDoc,
+						foreignDocumentID,
+						foreignDocumentLinkID,
+						reportFileID,
+						foreignReportFileID,
+						portalFileID,
+						foreignPortalFileID,
+					},
 				)
 
 				return err
@@ -384,7 +456,7 @@ func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.
 		),
 	)
 
-	assert.ElementsMatch(t, []gid.GID{documentLinkID, alreadyCatalogDoc}, documentIDs)
+	assert.ElementsMatch(t, []gid.GID{documentLinkID}, documentIDs)
 	assert.Equal(t, []gid.GID{auditLinkID}, auditIDs)
 	assert.Equal(t, []gid.GID{portalFileID}, fileIDs)
 }

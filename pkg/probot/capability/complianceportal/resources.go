@@ -242,5 +242,107 @@ func resolveAccessResourceIDs(
 		}
 	}
 
+	documentIDs, err := filterDocumentLinksOnPortal(ctx, conn, scope, compliancePortalID, documentIDs)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	auditIDs, err = filterAuditLinksOnPortal(ctx, conn, scope, compliancePortalID, auditIDs)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	compliancePortalFileIDs, err = filterFilesOnPortal(
+		ctx,
+		conn,
+		scope,
+		compliancePortalID,
+		compliancePortalFileIDs,
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	return documentIDs, auditIDs, compliancePortalFileIDs, nil
+}
+
+func filterDocumentLinksOnPortal(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	documentLinkIDs []gid.GID,
+) ([]gid.GID, error) {
+	if len(documentLinkIDs) == 0 {
+		return nil, nil
+	}
+
+	var links coredata.CompliancePortalDocuments
+	if err := links.LoadByIDs(ctx, conn, scope, documentLinkIDs); err != nil &&
+		!errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load portal document links: %w", err)
+	}
+
+	filtered := make([]gid.GID, 0, len(links))
+	for _, link := range links {
+		if link.CompliancePortalID == compliancePortalID {
+			filtered = append(filtered, link.ID)
+		}
+	}
+
+	return filtered, nil
+}
+
+func filterAuditLinksOnPortal(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	auditLinkIDs []gid.GID,
+) ([]gid.GID, error) {
+	if len(auditLinkIDs) == 0 {
+		return nil, nil
+	}
+
+	var links coredata.CompliancePortalAudits
+	if err := links.LoadByIDs(ctx, conn, scope, auditLinkIDs); err != nil &&
+		!errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load portal audit links: %w", err)
+	}
+
+	filtered := make([]gid.GID, 0, len(links))
+	for _, link := range links {
+		if link.CompliancePortalID == compliancePortalID {
+			filtered = append(filtered, link.ID)
+		}
+	}
+
+	return filtered, nil
+}
+
+func filterFilesOnPortal(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	fileIDs []gid.GID,
+) ([]gid.GID, error) {
+	if len(fileIDs) == 0 {
+		return nil, nil
+	}
+
+	var files coredata.CompliancePortalFiles
+	if err := files.LoadByIDs(ctx, conn, scope, fileIDs); err != nil &&
+		!errors.Is(err, coredata.ErrResourceNotFound) {
+		return nil, fmt.Errorf("cannot load portal files: %w", err)
+	}
+
+	filtered := make([]gid.GID, 0, len(files))
+	for _, file := range files {
+		if file.CompliancePortalID == compliancePortalID {
+			filtered = append(filtered, file.ID)
+		}
+	}
+
+	return filtered, nil
 }

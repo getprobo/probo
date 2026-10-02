@@ -309,18 +309,21 @@ func (f *batchFetcher) fetchCompliancePortalDocumentsByID(
 	ctx context.Context,
 	keys []gid.GID,
 ) (map[gid.GID]*coredata.CompliancePortalDocument, error) {
-	links, err := f.compliancePortal.GetDocumentLinksByIDs(
-		ctx,
-		coredata.NewScopeFromObjectID(keys[0]),
-		keys,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
-	}
+	result := make(map[gid.GID]*coredata.CompliancePortalDocument, len(keys))
 
-	result := make(map[gid.GID]*coredata.CompliancePortalDocument, len(links))
-	for _, link := range links {
-		result[link.ID] = link
+	for tenantID, documentLinkIDs := range gidKeysByTenant(keys) {
+		links, err := f.compliancePortal.GetDocumentLinksByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			documentLinkIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
+		}
+
+		for _, link := range links {
+			result[link.ID] = link
+		}
 	}
 
 	return result, nil
@@ -330,18 +333,21 @@ func (f *batchFetcher) fetchCompliancePortalAuditsByID(
 	ctx context.Context,
 	keys []gid.GID,
 ) (map[gid.GID]*coredata.CompliancePortalAudit, error) {
-	links, err := f.compliancePortal.GetAuditLinksByIDs(
-		ctx,
-		coredata.NewScopeFromObjectID(keys[0]),
-		keys,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load compliance portal audits: %w", err)
-	}
+	result := make(map[gid.GID]*coredata.CompliancePortalAudit, len(keys))
 
-	result := make(map[gid.GID]*coredata.CompliancePortalAudit, len(links))
-	for _, link := range links {
-		result[link.ID] = link
+	for tenantID, auditLinkIDs := range gidKeysByTenant(keys) {
+		links, err := f.compliancePortal.GetAuditLinksByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			auditLinkIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal audits: %w", err)
+		}
+
+		for _, link := range links {
+			result[link.ID] = link
+		}
 	}
 
 	return result, nil
@@ -351,32 +357,38 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccesses(
 	ctx context.Context,
 	keys []gid.GID,
 ) (map[gid.GID]*coredata.CompliancePortalDocumentAccess, error) {
-	accesses, err := f.compliancePortal.GetDocumentAccessesByIDs(
-		ctx,
-		coredata.NewScopeFromObjectID(keys[0]),
-		keys,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load compliance portal document accesses: %w", err)
-	}
+	result := make(map[gid.GID]*coredata.CompliancePortalDocumentAccess, len(keys))
 
-	result := make(map[gid.GID]*coredata.CompliancePortalDocumentAccess, len(accesses))
-	for _, access := range accesses {
-		result[access.ID] = access
+	for tenantID, accessIDs := range gidKeysByTenant(keys) {
+		accesses, err := f.compliancePortal.GetDocumentAccessesByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			accessIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal document accesses: %w", err)
+		}
+
+		for _, access := range accesses {
+			result[access.ID] = access
+		}
 	}
 
 	return result, nil
 }
 
 func (f *batchFetcher) fetchAudits(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Audit, error) {
-	audits, err := f.probo.Audits.GetByIDs(ctx, coredata.NewScopeFromObjectID(keys[0]), keys...)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load audits: %w", err)
-	}
+	result := make(map[gid.GID]*coredata.Audit, len(keys))
 
-	result := make(map[gid.GID]*coredata.Audit, len(audits))
-	for _, audit := range audits {
-		result[audit.ID] = audit
+	for tenantID, auditIDs := range gidKeysByTenant(keys) {
+		audits, err := f.probo.Audits.GetByIDs(ctx, coredata.NewScope(tenantID), auditIDs...)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load audits: %w", err)
+		}
+
+		for _, audit := range audits {
+			result[audit.ID] = audit
+		}
 	}
 
 	return result, nil
@@ -1074,4 +1086,15 @@ func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {
 	}
 
 	return attrs, nil
+}
+
+func gidKeysByTenant(keys []gid.GID) map[gid.TenantID][]gid.GID {
+	keysByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, key := range keys {
+		tenantID := key.TenantID()
+		keysByTenant[tenantID] = append(keysByTenant[tenantID], key)
+	}
+
+	return keysByTenant
 }
