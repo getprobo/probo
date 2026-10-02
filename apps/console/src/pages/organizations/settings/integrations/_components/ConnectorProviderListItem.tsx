@@ -35,17 +35,17 @@ import { connectorCard } from "../variants";
 
 import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
 
-export const connectorProviderListItemFragment = graphql`
+const connectorProviderListItemFragment = graphql`
   fragment ConnectorProviderListItem_provider on ConnectorProviderInfo {
     provider
     displayName
-    documentationUrl
     configuredProtocols
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
     workloadIdentitySupported
     installSupported
+    ...ConnectorDocumentationLink_provider
   }
 `;
 
@@ -99,7 +99,7 @@ export function ConnectorProviderListItem({
             {provider.displayName}
           </Heading>
           <div className="pointer-events-auto relative z-1">
-            <ConnectorDocumentationLink url={provider.documentationUrl} />
+            <ConnectorDocumentationLink providerKey={provider} />
           </div>
         </div>
         {credentialCount > 0 && (

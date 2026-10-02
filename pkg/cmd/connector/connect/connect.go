@@ -208,7 +208,7 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 		&flagName,
 		"name",
 		"",
-		"Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.",
+		"e.g. production, main or any word that may distinct 2 credentials to the same provider.",
 	)
 	cmd.Flags().BoolVar(&flagOrganization, "organization", false, "Connect an organization and list its accounts")
 	cmd.Flags().StringVar(&flagProvider, "provider", "", "Connector provider (AWS, GCP, AZURE)")

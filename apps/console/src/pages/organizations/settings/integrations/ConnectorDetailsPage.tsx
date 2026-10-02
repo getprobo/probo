@@ -58,7 +58,7 @@ export const connectorDetailsPageQuery = graphql`
           id
           provider
           displayName
-          documentationUrl
+          ...ConnectorDocumentationLink_connector
           ...ConnectorListItem_connector
         }
       }
@@ -153,7 +153,7 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
               {vendor.displayName}
             </Heading>
           </div>
-          <ConnectorDocumentationLink url={vendor.documentationUrl} />
+          <ConnectorDocumentationLink connectorKey={vendor} />
         </div>
         {organization.canCreateConnector && (
           <ButtonLink

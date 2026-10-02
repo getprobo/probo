@@ -18,46 +18,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+import type { OAuthConnectForm_provider$key } from "#/__generated__/core/OAuthConnectForm_provider.graphql";
 
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
+import { cleanZendeskSubdomain } from "../_lib/connectorSettings";
 
-import { ConnectForm } from "./ConnectForm";
+import { OAuthConnectForm } from "./OAuthConnectForm";
 
-const startConnectFormFragment = graphql`
-  fragment StartConnectForm_provider on ConnectorProviderInfo {
-    provider
-    ...ConnectForm_provider
-  }
-`;
-
-export function StartConnectForm({
+export function ZendeskConnectForm({
   organizationId,
   providerKey,
-  method,
 }: {
   organizationId: string;
-  providerKey: StartConnectForm_provider$key;
-  method: "GITHUB_APP" | "INSTALL";
+  providerKey: OAuthConnectForm_provider$key;
 }) {
-  const provider = useFragment(startConnectFormFragment, providerKey);
+  const { t } = useTranslation("organizations/settings/integrations");
+  const [subdomain, setSubdomain] = useState("");
+  const site = cleanZendeskSubdomain(subdomain);
 
   return (
-    <ConnectForm
-      providerKey={provider}
-      onSubmit={({ name }) => {
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, provider.provider, name);
-          return null;
-        }
-        connectProviderProtocol(organizationId, provider.provider, method, { name });
-        return null;
-      }}
-    />
+    <OAuthConnectForm
+      organizationId={organizationId}
+      providerKey={providerKey}
+      extras={{ site }}
+      canSubmit={site !== ""}
+    >
+      <Field label={t("marketplacePage.fields.zendeskSubdomain")} required>
+        <TextField
+          value={subdomain}
+          onChange={event => setSubdomain(event.target.value)}
+        />
+      </Field>
+    </OAuthConnectForm>
   );
 }

@@ -18,46 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useTranslation } from "react-i18next";
 
-import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+import { useCopyValue } from "../_lib/useCopyValue";
 
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
+interface TerraformInstallButtonProps {
+  snippet: string;
+}
 
-import { ConnectForm } from "./ConnectForm";
-
-const startConnectFormFragment = graphql`
-  fragment StartConnectForm_provider on ConnectorProviderInfo {
-    provider
-    ...ConnectForm_provider
-  }
-`;
-
-export function StartConnectForm({
-  organizationId,
-  providerKey,
-  method,
-}: {
-  organizationId: string;
-  providerKey: StartConnectForm_provider$key;
-  method: "GITHUB_APP" | "INSTALL";
-}) {
-  const provider = useFragment(startConnectFormFragment, providerKey);
+export function TerraformInstallButton({ snippet }: TerraformInstallButtonProps) {
+  const { t } = useTranslation("organizations/settings/integrations");
+  const copyValue = useCopyValue();
 
   return (
-    <ConnectForm
-      providerKey={provider}
-      onSubmit={({ name }) => {
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, provider.provider, name);
-          return null;
-        }
-        connectProviderProtocol(organizationId, provider.provider, method, { name });
-        return null;
-      }}
-    />
+    <Button
+      type="button"
+      variant="soft"
+      className="shrink-0"
+      onClick={() => copyValue(
+        snippet,
+        t("marketplacePage.workloadIdentity.messages.copiedTerraform"),
+        t("marketplacePage.workloadIdentity.messages.copyFailed"),
+      )}
+    >
+      {t("marketplacePage.workloadIdentity.actions.installViaTerraform")}
+    </Button>
   );
 }

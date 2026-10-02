@@ -37,7 +37,8 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TasksSettingsDialog_organization$key } from "#/__generated__/core/TasksSettingsDialog_organization.graphql";
-import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
+import { ConnectorNameField } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
+import { useConnectorName } from "#/pages/organizations/settings/integrations/_lib/useConnectorName";
 
 import { linearInitiateUrl } from "../_lib/linearInitiateUrl";
 import { taskListPath } from "../_lib/taskPath";

@@ -20,27 +20,33 @@
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
+import type { ConnectFormFooter_provider$key } from "#/__generated__/core/ConnectFormFooter_provider.graphql";
 
 import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
 
-export type ConnectVendorDriver = ConnectVendorPageQuery["response"]["connectorProviders"][number];
+const connectFormFooterFragment = graphql`
+  fragment ConnectFormFooter_provider on ConnectorProviderInfo {
+    ...ConnectorDocumentationLink_provider
+  }
+`;
 
 export function ConnectFormFooter({
-  documentationUrl,
+  providerKey,
   disabled,
   loading,
 }: {
-  documentationUrl: string | null | undefined;
+  providerKey: ConnectFormFooter_provider$key;
   disabled?: boolean;
   loading?: boolean;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const provider = useFragment(connectFormFooterFragment, providerKey);
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <ConnectorDocumentationLink url={documentationUrl} variant="button" />
+      <ConnectorDocumentationLink providerKey={provider} variant="button" />
       <Button type="submit" variant="solid" disabled={disabled} loading={loading}>
         {t("marketplacePage.connect")}
       </Button>

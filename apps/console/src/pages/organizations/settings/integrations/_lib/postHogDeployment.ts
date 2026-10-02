@@ -18,46 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
-
-import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
-
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
-
-import { ConnectForm } from "./ConnectForm";
-
-const startConnectFormFragment = graphql`
-  fragment StartConnectForm_provider on ConnectorProviderInfo {
-    provider
-    ...ConnectForm_provider
-  }
-`;
-
-export function StartConnectForm({
-  organizationId,
-  providerKey,
-  method,
-}: {
-  organizationId: string;
-  providerKey: StartConnectForm_provider$key;
-  method: "GITHUB_APP" | "INSTALL";
-}) {
-  const provider = useFragment(startConnectFormFragment, providerKey);
-
+// A Cloud region (us/eu) or a non-empty self-hosted instance URL.
+export function isPostHogDeploymentSelected(
+  values: Record<string, string>,
+): boolean {
   return (
-    <ConnectForm
-      providerKey={provider}
-      onSubmit={({ name }) => {
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, provider.provider, name);
-          return null;
-        }
-        connectProviderProtocol(organizationId, provider.provider, method, { name });
-        return null;
-      }}
-    />
+    values.region === "US"
+    || values.region === "EU"
+    || !!values.instanceUrl?.trim()
   );
 }

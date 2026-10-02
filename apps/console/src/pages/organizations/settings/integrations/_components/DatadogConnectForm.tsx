@@ -18,48 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type ReactNode } from "react";
-import { graphql, useFragment } from "react-relay";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { OAuthConnectForm_provider$key } from "#/__generated__/core/OAuthConnectForm_provider.graphql";
 
-import { connectOAuthProvider } from "../_lib/connectorSettings";
+import { DATADOG_SITES } from "../_lib/connectorSettings";
 
-import { ConnectForm } from "./ConnectForm";
+import { OAuthConnectForm } from "./OAuthConnectForm";
 
-const oauthConnectFormFragment = graphql`
-  fragment OAuthConnectForm_provider on ConnectorProviderInfo {
-    provider
-    oauth2Scopes
-    ...ConnectForm_provider
-  }
-`;
-
-export function OAuthConnectForm({
+export function DatadogConnectForm({
   organizationId,
   providerKey,
-  extras,
-  canSubmit = true,
-  children,
 }: {
   organizationId: string;
   providerKey: OAuthConnectForm_provider$key;
-  extras?: Record<string, string>;
-  canSubmit?: boolean;
-  children?: ReactNode;
 }) {
-  const provider = useFragment(oauthConnectFormFragment, providerKey);
+  const { t } = useTranslation("organizations/settings/integrations");
+  const [site, setSite] = useState("US1");
 
   return (
-    <ConnectForm
-      providerKey={provider}
-      canSubmit={canSubmit}
-      onSubmit={({ name }) => {
-        connectOAuthProvider(organizationId, provider.provider, provider.oauth2Scopes, extras, name);
-        return null;
-      }}
+    <OAuthConnectForm
+      organizationId={organizationId}
+      providerKey={providerKey}
+      extras={{ site }}
     >
-      {children}
-    </ConnectForm>
+      <Field label={t("marketplacePage.fields.datadogSite")} required>
+        <Select value={site} onValueChange={(value: string | null) => setSite(value ?? "US1")}>
+          <SelectTrigger>
+            {(value: string | null) => DATADOG_SITES.find(entry => entry.value === value)?.label ?? null}
+          </SelectTrigger>
+          <SelectPopup>
+            {DATADOG_SITES.map(entry => (
+              <SelectItem key={entry.value} value={entry.value}>{entry.label}</SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
+      </Field>
+    </OAuthConnectForm>
   );
 }

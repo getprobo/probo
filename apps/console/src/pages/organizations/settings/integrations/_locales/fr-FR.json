@@ -2,7 +2,7 @@
   "connectForm": {
     "name": {
       "label": "Nom",
-      "description": "Sert à suivre ce connecteur et l'identifiant qui lui est attaché, afin de distinguer plusieurs connexions au même fournisseur. displayName reste le nom du fournisseur.",
+      "description": "Par exemple production, main, ou tout mot qui distingue deux identifiants du même fournisseur.",
       "required": "Saisissez un nom.",
       "saveFailed": "Le nom n'a pas pu être enregistré."
     }

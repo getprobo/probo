@@ -18,46 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import type { CopyValue } from "./useCopyValue";
 
-import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+const setupFields = ["issuer", "audience", "subject"] as const;
 
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
+export interface WorkloadIdentitySetupRow {
+  label: string;
+  value: string;
+  copyLabel: string;
+  onCopy: () => void;
+}
 
-import { ConnectForm } from "./ConnectForm";
+export function setupRows(
+  t: (key: string) => string,
+  pageKey: string,
+  setup: { issuer: string; audience: string; subject: string },
+  copyValue: CopyValue,
+): WorkloadIdentitySetupRow[] {
+  const copiedKey = {
+    issuer: "copiedIssuer",
+    audience: "copiedAudience",
+    subject: "copiedSubject",
+  } as const;
 
-const startConnectFormFragment = graphql`
-  fragment StartConnectForm_provider on ConnectorProviderInfo {
-    provider
-    ...ConnectForm_provider
-  }
-`;
-
-export function StartConnectForm({
-  organizationId,
-  providerKey,
-  method,
-}: {
-  organizationId: string;
-  providerKey: StartConnectForm_provider$key;
-  method: "GITHUB_APP" | "INSTALL";
-}) {
-  const provider = useFragment(startConnectFormFragment, providerKey);
-
-  return (
-    <ConnectForm
-      providerKey={provider}
-      onSubmit={({ name }) => {
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, provider.provider, name);
-          return null;
-        }
-        connectProviderProtocol(organizationId, provider.provider, method, { name });
-        return null;
-      }}
-    />
-  );
+  return setupFields.map(field => ({
+    label: t(`${pageKey}.fields.${field}`),
+    value: setup[field],
+    copyLabel: t(`${pageKey}.actions.copy`),
+    onCopy: () => copyValue(
+      setup[field],
+      t(`${pageKey}.messages.${copiedKey[field]}`),
+      t(`${pageKey}.messages.copyFailed`),
+    ),
+  }));
 }

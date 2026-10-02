@@ -18,48 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Field } from "@probo/ui/src/v2/form/Field";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { CopyIcon } from "@phosphor-icons/react";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useId } from "react";
-import { useTranslation } from "react-i18next";
 
-export function ConnectorNameField({
-  name,
-  error,
-  onChange,
-  onEmpty,
-}: {
-  name: string;
-  error?: string;
-  onChange: (value: string) => void;
-  onEmpty: () => void;
-}) {
-  const { t } = useTranslation("organizations/settings/integrations");
-  const descriptionId = useId();
+import type { WorkloadIdentitySetupRow } from "../_lib/workloadIdentitySetup";
 
+interface WorkloadIdentitySetupValuesProps {
+  rows: WorkloadIdentitySetupRow[];
+}
+
+export function WorkloadIdentitySetupValues({
+  rows,
+}: WorkloadIdentitySetupValuesProps) {
   return (
-    <div className="flex flex-col gap-1">
-      <Field
-        label={t("connectForm.name.label")}
-        error={error}
-        required
-      >
-        <TextField
-          name="connectorName"
-          value={name}
-          autoComplete="off"
-          aria-describedby={descriptionId}
-          onChange={event => onChange(event.target.value)}
-          onInvalid={(event) => {
-            event.preventDefault();
-            onEmpty();
-          }}
-        />
-      </Field>
-      <Text id={descriptionId} size={1} color="faint">
-        {t("connectForm.name.description")}
-      </Text>
+    <div className="flex flex-col gap-2 rounded-2 bg-sand-3 p-3">
+      {rows.map(row => (
+        <div key={row.label} className="flex flex-col gap-1">
+          <Text size={1} color="faint">{row.label}</Text>
+          <div className="flex min-w-0 items-center gap-1">
+            <Code size={2} className="min-w-0 flex-1 break-all">{row.value}</Code>
+            <IconButton
+              type="button"
+              size={1}
+              variant="soft"
+              color="neutral"
+              aria-label={row.copyLabel}
+              onClick={row.onCopy}
+            >
+              <CopyIcon />
+            </IconButton>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

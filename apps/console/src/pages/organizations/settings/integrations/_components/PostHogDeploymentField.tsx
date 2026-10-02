@@ -97,15 +97,3 @@ export function PostHogDeploymentField({
     </>
   );
 }
-
-// isPostHogDeploymentSelected reports whether a valid PostHog deployment has
-// been chosen: a Cloud region (us/eu) or a non-empty self-hosted instance URL.
-export function isPostHogDeploymentSelected(
-  values: Record<string, string>,
-): boolean {
-  return (
-    values.region === "US"
-    || values.region === "EU"
-    || !!values.instanceUrl?.trim()
-  );
-}

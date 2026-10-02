@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import { graphql } from "relay-runtime";
+import { graphql, useFragment } from "react-relay";
 
+import type { ClientCredentialsConnectForm_provider$key } from "#/__generated__/core/ClientCredentialsConnectForm_provider.graphql";
 import type { ClientCredentialsConnectFormCreateMutation } from "#/__generated__/core/ClientCredentialsConnectFormCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -36,8 +35,20 @@ import {
 } from "../_lib/connectorSettings";
 import { integrationListPath } from "../_lib/integrationPath";
 
-import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
-import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
+import { ConnectForm } from "./ConnectForm";
+
+const clientCredentialsConnectFormFragment = graphql`
+  fragment ClientCredentialsConnectForm_provider on ConnectorProviderInfo {
+    provider
+    clientCredentialsTokenUrl
+    clientCredentialsExtraSettings {
+      key
+      label
+      required
+    }
+    ...ConnectForm_provider
+  }
+`;
 
 const createClientCredentialsConnectorMutation = graphql`
   mutation ClientCredentialsConnectFormCreateMutation(
@@ -53,80 +64,52 @@ const createClientCredentialsConnectorMutation = graphql`
 
 export function ClientCredentialsConnectForm({
   organizationId,
-  driver,
+  providerKey,
 }: {
   organizationId: string;
-  driver: ConnectVendorDriver;
+  providerKey: ClientCredentialsConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const connectorName = useConnectorName();
+  const provider = useFragment(clientCredentialsConnectFormFragment, providerKey);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [tokenUrl, setTokenUrl] = useState("");
   const [scope, setScope] = useState("");
   const [extras, setExtras] = useState<Record<string, string>>({});
-  const [isConnecting, setIsConnecting] = useState(false);
   const [createClientCredentialsConnector] = useMutation<ClientCredentialsConnectFormCreateMutation>(
     createClientCredentialsConnectorMutation,
   );
-  const tokenReady = Boolean(driver.clientCredentialsTokenUrl) || tokenUrl.trim() !== "";
-  const extrasValid = hasRequiredExtraSettings(driver.clientCredentialsExtraSettings, extras);
+  const tokenReady = Boolean(provider.clientCredentialsTokenUrl) || tokenUrl.trim() !== "";
+  const extrasValid = hasRequiredExtraSettings(provider.clientCredentialsExtraSettings, extras);
   const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && tokenReady && extrasValid;
 
-  const onSubmit = async () => {
-    if (connectorName.rejectIfEmpty() || !canSubmit || isConnecting) {
-      return;
-    }
-    setIsConnecting(true);
-    try {
-      await createClientCredentialsConnector({
-        variables: {
-          input: {
-            organizationId,
-            name: connectorName.trimmed,
-            provider: driver.provider,
-            clientId: clientId.trim(),
-            clientSecret: clientSecret.trim(),
-            tokenUrl: driver.clientCredentialsTokenUrl ? null : tokenUrl.trim(),
-            scope: scope.trim() || null,
-            ...buildExtraFields(
-              driver.provider,
-              driver.clientCredentialsExtraSettings,
-              extras,
-              mapClientCredentialsExtraSettingToField,
-            ),
-          },
-        },
-      }, { errorToast: t("marketplacePage.connectFailed") });
-      toast({
-        title: t("marketplacePage.connected"),
-        description: t("listPage.messages.connectedDescription"),
-        variant: "success",
-      });
-      void navigate(integrationListPath(organizationId));
-    } catch {
-      return;
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void onSubmit();
+    <ConnectForm
+      providerKey={provider}
+      canSubmit={canSubmit}
+      onSubmit={async ({ name }) => {
+        await createClientCredentialsConnector({
+          variables: {
+            input: {
+              organizationId,
+              name,
+              provider: provider.provider,
+              clientId: clientId.trim(),
+              clientSecret: clientSecret.trim(),
+              tokenUrl: provider.clientCredentialsTokenUrl ? null : tokenUrl.trim(),
+              scope: scope.trim() || null,
+              ...buildExtraFields(
+                provider.provider,
+                provider.clientCredentialsExtraSettings,
+                extras,
+                mapClientCredentialsExtraSettingToField,
+              ),
+            },
+          },
+        }, { errorToast: t("marketplacePage.connectFailed") });
+        return { to: integrationListPath(organizationId) };
       }}
     >
-      <ConnectorNameField
-        name={connectorName.name}
-        error={connectorName.error}
-        onChange={connectorName.onChange}
-        onEmpty={connectorName.rejectIfEmpty}
-      />
       <Field label={t("marketplacePage.fields.clientId")} required>
         <TextField value={clientId} onChange={event => setClientId(event.target.value)} />
       </Field>
@@ -138,7 +121,7 @@ export function ClientCredentialsConnectForm({
           autoComplete="off"
         />
       </Field>
-      {driver.clientCredentialsTokenUrl == null && (
+      {provider.clientCredentialsTokenUrl == null && (
         <Field label={t("marketplacePage.fields.tokenUrl")} required>
           <TextField value={tokenUrl} onChange={event => setTokenUrl(event.target.value)} />
         </Field>
@@ -146,7 +129,7 @@ export function ClientCredentialsConnectForm({
       <Field label={t("marketplacePage.fields.scope")}>
         <TextField value={scope} onChange={event => setScope(event.target.value)} />
       </Field>
-      {driver.clientCredentialsExtraSettings.map(setting => (
+      {provider.clientCredentialsExtraSettings.map(setting => (
         <Field key={setting.key} label={setting.label} required={setting.required}>
           <TextField
             value={extras[setting.key] ?? ""}
@@ -154,11 +137,6 @@ export function ClientCredentialsConnectForm({
           />
         </Field>
       ))}
-      <ConnectFormFooter
-        documentationUrl={driver.documentationUrl}
-        disabled={!canSubmit}
-        loading={isConnecting}
-      />
-    </form>
+    </ConnectForm>
   );
 }

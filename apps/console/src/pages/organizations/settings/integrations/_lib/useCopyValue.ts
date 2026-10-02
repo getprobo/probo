@@ -18,46 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { useToast } from "@probo/ui";
 
-import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+export type CopyValue = (
+  value: string,
+  title: string,
+  failure: string,
+) => void;
 
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
+export function useCopyValue(): CopyValue {
+  const { toast } = useToast();
 
-import { ConnectForm } from "./ConnectForm";
-
-const startConnectFormFragment = graphql`
-  fragment StartConnectForm_provider on ConnectorProviderInfo {
-    provider
-    ...ConnectForm_provider
-  }
-`;
-
-export function StartConnectForm({
-  organizationId,
-  providerKey,
-  method,
-}: {
-  organizationId: string;
-  providerKey: StartConnectForm_provider$key;
-  method: "GITHUB_APP" | "INSTALL";
-}) {
-  const provider = useFragment(startConnectFormFragment, providerKey);
-
-  return (
-    <ConnectForm
-      providerKey={provider}
-      onSubmit={({ name }) => {
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, provider.provider, name);
-          return null;
-        }
-        connectProviderProtocol(organizationId, provider.provider, method, { name });
-        return null;
-      }}
-    />
-  );
+  return (value, title, failure) => {
+    const onCopyFailure = () => {
+      toast({ title: failure, description: failure, variant: "error" });
+    };
+    if (!navigator.clipboard?.writeText) {
+      onCopyFailure();
+      return;
+    }
+    navigator.clipboard.writeText(value).then(
+      () => toast({ title, description: title, variant: "success" }),
+      onCopyFailure,
+    );
+  };
 }

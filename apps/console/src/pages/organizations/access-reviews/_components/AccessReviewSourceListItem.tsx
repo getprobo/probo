@@ -54,6 +54,7 @@ import type { AccessReviewSourceListItemOrganizations_source$key } from "#/__gen
 import type { AccessReviewSourceListItemOrganizationsEmpty_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsEmpty_source.graphql";
 import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsUnavailable_source.graphql";
 import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
+import type { AccessReviewSourceListItemSourceConnectionIssue_connector$key } from "#/__generated__/core/AccessReviewSourceListItemSourceConnectionIssue_connector.graphql";
 import {
   type ConnectionIssueKey,
   connectionSignalFrom,
@@ -101,11 +102,10 @@ const fragment = graphql`
     connectorId
     connector {
       provider
-      displayName
-      documentationUrl
       protocol
       canReconnect
       oauth2Scopes
+      ...AccessReviewSourceListItemSourceConnectionIssue_connector
     }
     connectionStatus
     selectedOrganization
@@ -151,9 +151,19 @@ const organizationsFragment = graphql`
         displayName
       }
     }
+    connector {
+      ...AccessReviewSourceListItemSourceConnectionIssue_connector
+    }
     ...AccessReviewSourceListItemCapturedOrganization_source
     ...AccessReviewSourceListItemOrganizationsEmpty_source
     ...AccessReviewSourceListItemOrganizationsUnavailable_source
+  }
+`;
+
+const connectionIssueFragment = graphql`
+  fragment AccessReviewSourceListItemSourceConnectionIssue_connector on Connector {
+    displayName
+    ...ConnectorDocumentationLink_connector
   }
 `;
 
@@ -173,7 +183,7 @@ const organizationsEmptyFragment = graphql`
 const organizationsUnavailableFragment = graphql`
   fragment AccessReviewSourceListItemOrganizationsUnavailable_source on AccessReviewSource {
     connector {
-      displayName
+      ...AccessReviewSourceListItemSourceConnectionIssue_connector
     }
   }
 `;
@@ -380,20 +390,17 @@ export function AccessReviewSourceListItem({
             <InlineOrgSelect
               accessReviewSourceId={accessSource.id}
               onSelect={handleOrgChange}
-              provider={sourceLabel(accessSource.connector, t)}
               connectionStatus={accessSource.connectionStatus}
               canReconnect={canReconnect}
               reconnectUrl={canReconnect ? reconnectUrl : null}
-              documentationUrl={accessSource.connector?.documentationUrl ?? null}
             />
           </Suspense>
         )}
         {showStandaloneIssue && standaloneIssue != null && (
           <SourceConnectionIssue
-            provider={sourceLabel(accessSource.connector, t)}
+            connectorKey={accessSource.connector}
             issueKey={standaloneIssue}
             reconnectUrl={canReconnect ? reconnectUrl : null}
-            documentationUrl={accessSource.connector?.documentationUrl ?? null}
           />
         )}
         {accessSource.canDelete && (
@@ -419,18 +426,14 @@ export function AccessReviewSourceListItem({
 function InlineOrgSelect({
   accessReviewSourceId,
   onSelect,
-  provider,
   connectionStatus,
   canReconnect,
   reconnectUrl,
-  documentationUrl,
 }: {
   accessReviewSourceId: string;
-  provider: string;
   connectionStatus: AccessReviewSourceConnectionStatus;
   canReconnect: boolean;
   reconnectUrl: string | null;
-  documentationUrl: string | null;
   onSelect: (slug: string) => void;
 }) {
   const { t } = useTranslation();
@@ -479,10 +482,9 @@ function InlineOrgSelect({
       if (issue != null) {
         return (
           <SourceConnectionIssue
-            provider={provider}
+            connectorKey={source.connector}
             issueKey={issue}
             reconnectUrl={reconnectUrl}
-            documentationUrl={documentationUrl}
           />
         );
       }
@@ -506,7 +508,6 @@ function InlineOrgSelect({
           sourceKey={source}
           issueKey={issue}
           reconnectUrl={reconnectUrl}
-          documentationUrl={documentationUrl}
         />
       );
     }
@@ -514,17 +515,17 @@ function InlineOrgSelect({
 }
 
 function SourceConnectionIssue({
-  provider,
+  connectorKey,
   issueKey,
   reconnectUrl,
-  documentationUrl,
 }: {
-  provider: string;
+  connectorKey: AccessReviewSourceListItemSourceConnectionIssue_connector$key | null | undefined;
   issueKey: ConnectionIssueKey;
   reconnectUrl: string | null;
-  documentationUrl: string | null;
 }) {
   const { t } = useTranslation();
+  const connector = useFragment(connectionIssueFragment, connectorKey ?? null);
+  const provider = connector?.displayName ?? t("accessReviewSourceRow.sources.csv");
   const {
     issue,
     issueIcon,
@@ -546,7 +547,7 @@ function SourceConnectionIssue({
           {t(`${unavailable}.${issueKey}Description`, { provider })}
         </p>
         {issueKey !== "reconnect" && (
-          <ConnectorDocumentationLink url={documentationUrl} />
+          <ConnectorDocumentationLink connectorKey={connector} />
         )}
       </div>
       {reconnectUrl && (
@@ -615,22 +616,18 @@ function ProviderOrganizationsUnavailable({
   sourceKey,
   issueKey,
   reconnectUrl,
-  documentationUrl,
 }: {
   sourceKey: AccessReviewSourceListItemOrganizationsUnavailable_source$key;
   issueKey: ConnectionIssueKey;
   reconnectUrl: string | null;
-  documentationUrl: string | null;
 }) {
-  const { t } = useTranslation();
   const source = useFragment(organizationsUnavailableFragment, sourceKey);
 
   return (
     <SourceConnectionIssue
-      provider={sourceLabel(source.connector, t)}
+      connectorKey={source.connector}
       issueKey={issueKey}
       reconnectUrl={reconnectUrl}
-      documentationUrl={documentationUrl}
     />
   );
 }

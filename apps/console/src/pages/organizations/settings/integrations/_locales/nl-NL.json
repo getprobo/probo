@@ -2,7 +2,7 @@
   "connectForm": {
     "name": {
       "label": "Naam",
-      "description": "Houdt deze connector en de gekoppelde credential bij, zodat meerdere verbindingen met dezelfde leverancier uit elkaar te houden zijn. displayName blijft de naam van de leverancier.",
+      "description": "Bijvoorbeeld production, main, of een woord dat twee credentials voor dezelfde leverancier onderscheidt.",
       "required": "Vul een naam in.",
       "saveFailed": "De naam kon niet worden opgeslagen."
     }

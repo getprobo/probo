@@ -18,46 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useFragment } from "react-relay";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+export function useConnectorName() {
+  const { t } = useTranslation("organizations/settings/integrations");
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | undefined>();
+  const trimmed = name.trim();
 
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
-
-import { ConnectForm } from "./ConnectForm";
-
-const startConnectFormFragment = graphql`
-  fragment StartConnectForm_provider on ConnectorProviderInfo {
-    provider
-    ...ConnectForm_provider
+  function onChange(value: string) {
+    setName(value);
+    if (value.trim() !== "") {
+      setError(undefined);
+    }
   }
-`;
 
-export function StartConnectForm({
-  organizationId,
-  providerKey,
-  method,
-}: {
-  organizationId: string;
-  providerKey: StartConnectForm_provider$key;
-  method: "GITHUB_APP" | "INSTALL";
-}) {
-  const provider = useFragment(startConnectFormFragment, providerKey);
+  function rejectIfEmpty(): boolean {
+    if (trimmed !== "") {
+      return false;
+    }
+    setError(t("connectForm.name.required"));
+    return true;
+  }
 
-  return (
-    <ConnectForm
-      providerKey={provider}
-      onSubmit={({ name }) => {
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, provider.provider, name);
-          return null;
-        }
-        connectProviderProtocol(organizationId, provider.provider, method, { name });
-        return null;
-      }}
-    />
-  );
+  return { name, trimmed, error, onChange, rejectIfEmpty };
 }
