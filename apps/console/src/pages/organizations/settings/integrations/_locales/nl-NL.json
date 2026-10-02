@@ -159,8 +159,6 @@
   },
   "detailsPage": {
     "notFound": "Integratie niet gevonden",
-    "accountCount_one": "{{count}} account",
-    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Verbonden",
       "DISCONNECTED": "Verbinding verbroken",

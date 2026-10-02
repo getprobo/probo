@@ -51,6 +51,11 @@ import type { ConnectorAccountsDrawerQuery } from "#/__generated__/core/Connecto
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
+import {
+  connectionSignalFrom,
+  type ConnectorConnectionStatus,
+  presentConnection,
+} from "#/pages/organizations/_lib/connectorStatus";
 
 import {
   collectStoredAccountIds,
@@ -578,15 +583,13 @@ function ConnectorAccountsDrawerSkeleton() {
   );
 }
 
-type ConnectionStatus = "CONNECTED" | "DISCONNECTED" | "NOT_AUTHORIZED" | "RECONNECT_REQUIRED";
-
 type ResolvedProbe
   = { kind: "missing" }
     | { kind: "failed" }
     | {
       kind: "ready";
       accounts: DiscoveredAccount[];
-      status: ConnectionStatus;
+      status: ConnectorConnectionStatus;
     };
 
 interface StoredProbe {
@@ -598,7 +601,7 @@ type DiscoveryListing
   = { missing: true }
     | {
       missing: false;
-      connectionStatus: ConnectionStatus;
+      connectionStatus: ConnectorConnectionStatus;
       accounts: DiscoveredAccount[];
     };
 
@@ -607,20 +610,17 @@ function probeKey(connectorId: string, fetchKey: number): string {
 }
 
 function connectionFailure(
-  status: ConnectionStatus,
+  status: ConnectorConnectionStatus,
   t: (key: string, options: { provider: string }) => string,
   providerName: string,
 ): string | null {
-  if (status === "NOT_AUTHORIZED") {
-    return t("listPage.connectionIssues.notAuthorized", { provider: providerName });
+  const signal = connectionSignalFrom({ connectionStatus: status });
+  const issue = signal == null ? null : presentConnection(signal).issue;
+  if (issue == null) {
+    return null;
   }
-  if (status === "RECONNECT_REQUIRED") {
-    return t("listPage.connectionIssues.reconnect", { provider: providerName });
-  }
-  if (status !== "CONNECTED") {
-    return t("listPage.connectionIssues.credentials", { provider: providerName });
-  }
-  return null;
+
+  return t(`listPage.connectionIssues.${issue}`, { provider: providerName });
 }
 
 async function loadDiscoveredAccounts(

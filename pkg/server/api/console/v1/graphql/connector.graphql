@@ -394,6 +394,13 @@ type Connector implements Node {
         orderBy: ConnectorAccountOrder
     ): ConnectorAccountConnection! @goField(forceResolver: true)
     """
+    distinctAccountCount is how many external account ids are enabled on
+    any connector of this provider in the organization. The same external
+    id on two credentials counts once. It does not follow accounts
+    pagination.
+    """
+    distinctAccountCount: Int! @goField(forceResolver: true)
+    """
     discoveredAccounts probes the provider live on every read, so selecting it
     across a list of connectors costs one outbound call per connector. Select
     it on a single connector, or on the one a mutation just returned. A caller

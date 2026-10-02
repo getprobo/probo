@@ -146,6 +146,27 @@ func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, 
 	return types.NewConnectorAccountConnection(p, r, obj.ID), nil
 }
 
+// DistinctAccountCount is the resolver for the distinctAccountCount field.
+func (r *connectorResolver) DistinctAccountCount(ctx context.Context, obj *types.Connector) (int, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.probo.Connectors.CountDistinctAccounts(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return 0, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot count distinct connector accounts", log.Error(err))
+
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // DiscoveredAccounts is the resolver for the discoveredAccounts field.
 func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.Connector) ([]*types.DiscoveredConnectorAccount, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorDiscover)

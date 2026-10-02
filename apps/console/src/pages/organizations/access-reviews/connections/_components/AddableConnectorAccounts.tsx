@@ -18,11 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { graphql, usePaginationFragment } from "react-relay";
 
 import type { AddableConnectorAccounts_connector$key } from "#/__generated__/core/AddableConnectorAccounts_connector.graphql";
 import type { AddableConnectorAccountsPaginationQuery } from "#/__generated__/core/AddableConnectorAccountsPaginationQuery.graphql";
+import type { AddableConnectorListItem_account$key } from "#/__generated__/core/AddableConnectorListItem_account.graphql";
+
+// The account fragment is defined next to the card that reads it. This import
+// keeps the spread above colocated with that module for the Relay lint rule.
+import "./AddableConnectorListItem";
 
 const PAGE_SIZE = 50;
 
@@ -39,12 +44,9 @@ const fragment = graphql`
       after: $after
       orderBy: { direction: DESC, field: CREATED_AT }
     ) @connection(key: "AddableConnectorAccounts_accounts", filters: []) {
-      totalCount
       edges {
         node {
-          id
-          name
-          externalAccountId
+          ...AddableConnectorListItem_account
         }
       }
     }
@@ -53,15 +55,8 @@ const fragment = graphql`
 
 export interface LoadedConnectorAccounts {
   id: string;
-  totalCount: number;
   hasNext: boolean;
-  isLoadingNext: boolean;
-  loadMore: () => void;
-  accounts: readonly {
-    id: string;
-    name: string;
-    externalAccountId: string;
-  }[];
+  accounts: AddableConnectorListItem_account$key;
 }
 
 export function ConnectorAccountPages({
@@ -125,17 +120,23 @@ function ConnectorAccountPage({
     AddableConnectorAccountsPaginationQuery,
     AddableConnectorAccounts_connector$key
   >(fragment, connectorKey);
+  // hasNext stays true when a page fails, so a failed load is latched
+  // to stop the effect from requesting that page again.
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (failed || !hasNext || isLoadingNext) {
+      return;
+    }
+
+    loadNext(PAGE_SIZE, {
+      onComplete: error => setFailed(error != null),
+    });
+  }, [failed, hasNext, isLoadingNext, loadNext]);
 
   return children({
     id: data.id,
-    totalCount: data.accounts.totalCount,
-    hasNext,
-    isLoadingNext,
-    loadMore: () => loadNext(PAGE_SIZE),
-    accounts: data.accounts.edges.map(({ node }) => ({
-      id: node.id,
-      name: node.name,
-      externalAccountId: node.externalAccountId,
-    })),
+    hasNext: hasNext && !failed,
+    accounts: data.accounts.edges.map(({ node }) => node),
   });
 }

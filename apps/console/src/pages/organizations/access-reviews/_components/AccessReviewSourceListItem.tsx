@@ -42,7 +42,10 @@ import { useTranslation } from "react-i18next";
 import { useFragment, useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { AccessReviewSourceListItem_source$key } from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
+import type {
+  AccessReviewSourceConnectionStatus,
+  AccessReviewSourceListItem_source$key,
+} from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
 import type { AccessReviewSourceListItemCapturedOrganization_source$key } from "#/__generated__/core/AccessReviewSourceListItemCapturedOrganization_source.graphql";
 import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated__/core/AccessReviewSourceListItemConfigureMutation.graphql";
 import type { AccessReviewSourceListItemDeleteMutation } from "#/__generated__/core/AccessReviewSourceListItemDeleteMutation.graphql";
@@ -51,6 +54,11 @@ import type { AccessReviewSourceListItemOrganizations_source$key } from "#/__gen
 import type { AccessReviewSourceListItemOrganizationsEmpty_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsEmpty_source.graphql";
 import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsUnavailable_source.graphql";
 import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
+import {
+  type ConnectionIssueKey,
+  connectionSignalFrom,
+  presentConnection,
+} from "#/pages/organizations/_lib/connectorStatus";
 import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
 import { buildConnectorInitiateURL } from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
 
@@ -60,6 +68,30 @@ function canReconnectConnector(
   connector: { canReconnect: boolean } | null | undefined,
 ): boolean {
   return connector?.canReconnect ?? false;
+}
+
+// A source with no connector is NOT_APPLICABLE. That is not a credential failure.
+function sourceConnectorIssue(
+  connectionStatus: AccessReviewSourceConnectionStatus,
+  canReconnect: boolean,
+  organizationsUnavailable: boolean,
+): ConnectionIssueKey | null {
+  if (connectionStatus === "NOT_APPLICABLE") {
+    return null;
+  }
+
+  const signal = connectionSignalFrom({
+    connectionStatus,
+    canReconnect,
+    providerOrganizations: {
+      status: organizationsUnavailable ? "UNAVAILABLE" : "NOT_APPLICABLE",
+    },
+  });
+  if (signal == null) {
+    return null;
+  }
+
+  return presentConnection(signal).issue;
 }
 
 const fragment = graphql`
@@ -307,6 +339,11 @@ export function AccessReviewSourceListItem({
     = accessSource.connectionStatus !== "CONNECTED"
       && accessSource.connectionStatus !== "NOT_APPLICABLE";
   const showStandaloneIssue = hasConnectionIssue && !showOrgSelector;
+  const standaloneIssue = sourceConnectorIssue(
+    accessSource.connectionStatus,
+    canReconnect,
+    false,
+  );
 
   return (
     <Card variant="soft" size={2} className="flex h-full min-w-0 flex-col gap-3">
@@ -345,15 +382,16 @@ export function AccessReviewSourceListItem({
               onSelect={handleOrgChange}
               provider={sourceLabel(accessSource.connector, t)}
               connectionStatus={accessSource.connectionStatus}
+              canReconnect={canReconnect}
               reconnectUrl={canReconnect ? reconnectUrl : null}
               documentationUrl={accessSource.connector?.documentationUrl ?? null}
             />
           </Suspense>
         )}
-        {showStandaloneIssue && (
+        {showStandaloneIssue && standaloneIssue != null && (
           <SourceConnectionIssue
             provider={sourceLabel(accessSource.connector, t)}
-            connectionStatus={accessSource.connectionStatus}
+            issueKey={standaloneIssue}
             reconnectUrl={canReconnect ? reconnectUrl : null}
             documentationUrl={accessSource.connector?.documentationUrl ?? null}
           />
@@ -383,12 +421,14 @@ function InlineOrgSelect({
   onSelect,
   provider,
   connectionStatus,
+  canReconnect,
   reconnectUrl,
   documentationUrl,
 }: {
   accessReviewSourceId: string;
   provider: string;
-  connectionStatus: string;
+  connectionStatus: AccessReviewSourceConnectionStatus;
+  canReconnect: boolean;
   reconnectUrl: string | null;
   documentationUrl: string | null;
   onSelect: (slug: string) => void;
@@ -434,12 +474,13 @@ function InlineOrgSelect({
     // refusal: this branch owns the whole trailing cell, so the parent's
     // standalone issue is suppressed here and a broken source would otherwise
     // render as nothing but an organization name.
-    case "NOT_APPLICABLE":
-      if (connectionStatus !== "CONNECTED") {
+    case "NOT_APPLICABLE": {
+      const issue = sourceConnectorIssue(connectionStatus, canReconnect, false);
+      if (issue != null) {
         return (
           <SourceConnectionIssue
             provider={provider}
-            connectionStatus={connectionStatus}
+            issueKey={issue}
             reconnectUrl={reconnectUrl}
             documentationUrl={documentationUrl}
           />
@@ -447,50 +488,39 @@ function InlineOrgSelect({
       }
 
       return <CapturedOrganization sourceKey={source} />;
+    }
     case "EMPTY":
       return (
         <ProviderOrganizationsEmpty sourceKey={source} onSubmit={onSelect} />
       );
     // UNAVAILABLE, plus the impossible case of a node that is not an
     // AccessReviewSource: either way the list could not be read.
-    default:
+    default: {
+      const issue = sourceConnectorIssue(connectionStatus, canReconnect, true);
+      if (issue == null) {
+        return null;
+      }
+
       return (
         <ProviderOrganizationsUnavailable
           sourceKey={source}
-          connectionStatus={connectionStatus}
+          issueKey={issue}
           reconnectUrl={reconnectUrl}
           documentationUrl={documentationUrl}
         />
       );
+    }
   }
-}
-
-// The three ways a source can be unusable, told apart because the customer
-// fixes each somewhere else: a grant to re-authorize, a credential to
-// re-paste, or — when the provider took the credential and refused the
-// operation anyway — a plan or a role to change at the provider, which no
-// amount of re-pasting reaches.
-type ConnectionIssueVariant = "reconnect" | "notAuthorized" | "credentials";
-
-function connectionIssueVariant(
-  connectionStatus: string,
-  reconnectUrl: string | null,
-): ConnectionIssueVariant {
-  if (connectionStatus === "NOT_AUTHORIZED") {
-    return "notAuthorized";
-  }
-
-  return reconnectUrl ? "reconnect" : "credentials";
 }
 
 function SourceConnectionIssue({
   provider,
-  connectionStatus,
+  issueKey,
   reconnectUrl,
   documentationUrl,
 }: {
   provider: string;
-  connectionStatus: string;
+  issueKey: ConnectionIssueKey;
   reconnectUrl: string | null;
   documentationUrl: string | null;
 }) {
@@ -504,19 +534,18 @@ function SourceConnectionIssue({
   } = accessReviewSourceSection();
 
   const unavailable = "accessReviewSourceRow.organizations.unavailable";
-  const variant = connectionIssueVariant(connectionStatus, reconnectUrl);
 
   return (
     <div className={issue()}>
       <IconWarning size={16} className={issueIcon()} />
       <div className={issueContent()}>
         <p className={issueTitle()}>
-          {t(`${unavailable}.${variant}Title`, { provider })}
+          {t(`${unavailable}.${issueKey}Title`, { provider })}
         </p>
         <p className={issueDescription()}>
-          {t(`${unavailable}.${variant}Description`, { provider })}
+          {t(`${unavailable}.${issueKey}Description`, { provider })}
         </p>
-        {variant !== "reconnect" && (
+        {issueKey !== "reconnect" && (
           <ConnectorDocumentationLink url={documentationUrl} />
         )}
       </div>
@@ -584,12 +613,12 @@ function ProviderOrganizationsEmpty({
 // affordance offered is reconnecting the connector.
 function ProviderOrganizationsUnavailable({
   sourceKey,
-  connectionStatus,
+  issueKey,
   reconnectUrl,
   documentationUrl,
 }: {
   sourceKey: AccessReviewSourceListItemOrganizationsUnavailable_source$key;
-  connectionStatus: string;
+  issueKey: ConnectionIssueKey;
   reconnectUrl: string | null;
   documentationUrl: string | null;
 }) {
@@ -599,7 +628,7 @@ function ProviderOrganizationsUnavailable({
   return (
     <SourceConnectionIssue
       provider={sourceLabel(source.connector, t)}
-      connectionStatus={connectionStatus}
+      issueKey={issueKey}
       reconnectUrl={reconnectUrl}
       documentationUrl={documentationUrl}
     />

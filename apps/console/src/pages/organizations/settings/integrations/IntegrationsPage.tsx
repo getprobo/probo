@@ -44,8 +44,12 @@ import type { IntegrationsPageQuery } from "#/__generated__/core/IntegrationsPag
 import type { IntegrationsPageRefetchQuery } from "#/__generated__/core/IntegrationsPageRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
+import {
+  connectionSignalFrom,
+  groupByProvider,
+} from "#/pages/organizations/_lib/connectorStatus";
 
-import { connectionSignalFrom, ConnectorListItem } from "./_components/ConnectorListItem";
+import { ConnectorListItem } from "./_components/ConnectorListItem";
 import { MarketplaceEntryCard } from "./_components/MarketplaceEntryCard";
 import {
   connectionStatuses,
@@ -56,24 +60,6 @@ import {
 } from "./_lib/useIntegrationsListFilters";
 import { useIntegrationsListSearch } from "./_lib/useIntegrationsListSearch";
 import { integrationsList, integrationsPage } from "./variants";
-
-function groupByProvider<T extends { provider: string }>(connectors: readonly T[]): T[][] {
-  const groups: T[][] = [];
-  const indexByProvider = new Map<string, number>();
-
-  for (const connector of connectors) {
-    const index = indexByProvider.get(connector.provider);
-    if (index == null) {
-      indexByProvider.set(connector.provider, groups.length);
-      groups.push([connector]);
-      continue;
-    }
-
-    groups[index].push(connector);
-  }
-
-  return groups;
-}
 
 export const integrationsPageQuery = graphql`
   query IntegrationsPageQuery($organizationId: ID!, $filter: ConnectorFilter) {
@@ -338,7 +324,13 @@ function IntegrationsConnectors({
                           connectionSignals={
                             aggregated
                               ? group.flatMap((connector) => {
-                                  const signal = connectionSignalFrom(connector);
+                                  const signal = connectionSignalFrom({
+                                  connectionStatus: connector.connectionStatus,
+                                  canReconnect: connector.canReconnect,
+                                  providerOrganizations: {
+                                    status: connector.providerOrganizations.status,
+                                  },
+                                });
                                   return signal == null ? [] : [signal];
                                 })
                               : undefined

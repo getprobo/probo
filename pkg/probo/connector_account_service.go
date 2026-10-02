@@ -164,6 +164,42 @@ func (s *ConnectorService) CountAccounts(
 	return count, nil
 }
 
+func (s *ConnectorService) CountDistinctAccounts(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			var err error
+
+			accounts := coredata.ConnectorAccounts{}
+			count, err = accounts.CountDistinctExternalAccountIDsByOrganizationAndProvider(
+				ctx,
+				conn,
+				scope,
+				cnnctr.OrganizationID,
+				cnnctr.Provider,
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count distinct connector accounts: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s *ConnectorService) EnableAccounts(
 	ctx context.Context,
 	scope coredata.Scoper,
