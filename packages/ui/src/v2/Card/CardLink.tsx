@@ -18,36 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PlusIcon } from "@phosphor-icons/react";
-import { Card } from "@probo/ui/src/v2/Card/Card";
-import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
+import type { ComponentProps } from "react";
+import { Link as RouterLink } from "react-router";
 
-import { marketplacePath } from "../_lib/integrationPath";
+import { cardLink } from "./variants";
 
-interface MarketplaceEntryCardProps {
-  organizationId: string;
-}
+export type CardLinkProps = ComponentProps<typeof RouterLink>;
 
-export function MarketplaceEntryCard({
-  organizationId,
-}: MarketplaceEntryCardProps) {
-  const { t } = useTranslation("organizations/settings/integrations");
-  const label = t("listPage.addMore");
+// In-app navigation that stretches across an interactive Card. Renders a
+// react-router Link whose ::after covers the card. Pair with Card
+// interactive. Nested buttons need `relative z-1`. For underlined text use
+// Link; for a stretched action use CardButton. See contrib/claude/ui.md.
+export function CardLink(props: CardLinkProps) {
+  const { className, ...rest } = props;
 
-  return (
-    <Card variant="soft" size={2} interactive className="h-full">
-      <CardLink
-        to={marketplacePath(organizationId)}
-        aria-label={label}
-      />
-      <div className="flex h-full flex-col items-center justify-center gap-3 opacity-60">
-        <PlusIcon className="size-8" aria-hidden />
-        <Text size={2} color="faint">
-          {label}
-        </Text>
-      </div>
-    </Card>
-  );
+  return <RouterLink className={cardLink({ className })} {...rest} />;
 }

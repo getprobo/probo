@@ -50,10 +50,10 @@ export const card = tv({
       soft: "border border-sand-a3 bg-sand-1",
       ghost: "",
     },
-    // Hover/active affordance for clickable cards. This tunes look only; wrap
-    // the card in an <a>/router link (or Base UI `render`) for real navigation.
+    // Hover/active affordance for clickable cards, and the containing block
+    // for a CardLink / CardButton ::after. Look only; the card stays a div.
     interactive: {
-      true: "cursor-pointer transition-colors",
+      true: "relative cursor-pointer transition-colors",
       false: "",
     },
   },
@@ -109,6 +109,17 @@ export const cardInset = tv({
     padding: 1,
     side: "all",
   },
+});
+
+// Stretched card hit target (CardLink / CardButton). ::after is positioned
+// against the interactive Card; do not make this relative or the overlay
+// shrinks to the label. Unstyled — not the underlined Link recipe.
+export const cardLink = tv({
+  base: [
+    "min-w-0 cursor-pointer pointer-events-auto",
+    "after:absolute after:inset-0 after:content-['']",
+    "outline-none focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+  ],
 });
 
 export const cardSkeleton = tv({

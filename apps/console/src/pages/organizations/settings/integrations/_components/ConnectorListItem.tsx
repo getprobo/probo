@@ -22,6 +22,7 @@ import { TrashIcon } from "@phosphor-icons/react";
 import { dateFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
+import { CardButton } from "@probo/ui/src/v2/Card/CardButton";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -119,18 +120,19 @@ export function ConnectorListItem({
 
   return (
     <div className={card()}>
-      {connector.canGet && (
-        <button
-          type="button"
-          aria-label={connector.name}
-          className="absolute inset-0 z-0 cursor-pointer"
-          onClick={() => onSelect(connector.id)}
-        />
-      )}
       <TonedCard
         tone={tone}
         iconSize={14}
-        className={connector.canGet ? "pointer-events-none relative z-0 h-full" : "relative z-0 h-full"}
+        className={connector.canGet ? "pointer-events-none h-full" : "h-full"}
+        stretch={connector.canGet
+          ? (
+              <CardButton
+                type="button"
+                aria-label={connector.name}
+                onClick={() => onSelect(connector.id)}
+              />
+            )
+          : undefined}
         icon={(
           <ConnectorTypeMark
             protocol={connector.protocol}
@@ -163,12 +165,12 @@ export function ConnectorListItem({
           </Badge>
         </div>
         <div className={metaRow()}>
-          <div className="pointer-events-auto ml-auto">
+          <div className="pointer-events-auto relative z-1 ml-auto">
             <ConnectorOrganizationSelect connectorKey={connector} />
           </div>
         </div>
         {connector.canReconnect && (
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto relative z-1">
             <ButtonAnchor
               href={buildConnectorInitiateURL(
                 organizationId,
@@ -186,7 +188,7 @@ export function ConnectorListItem({
             </ButtonAnchor>
           </div>
         )}
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto relative z-1">
           <UsedBy modules={connector.modules} />
         </div>
         <Text size={1} color="faint">

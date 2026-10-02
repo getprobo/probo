@@ -55,7 +55,7 @@ export const connectorCard = tv({
     usedBy: "flex items-center gap-2",
     usedByIcons: "flex items-center gap-1.5",
     organizationSelect: "w-44 shrink-0",
-    probeError: "pointer-events-auto flex flex-col gap-2 rounded-2 bg-sand-3 p-3",
+    probeError: "pointer-events-auto relative z-1 flex flex-col gap-2 rounded-2 bg-sand-3 p-3",
     probeErrorHeader: "flex items-center justify-between gap-2",
     probeErrorRow: "flex min-w-0 items-start gap-1",
     probeErrorText: "min-w-0 flex-1",
