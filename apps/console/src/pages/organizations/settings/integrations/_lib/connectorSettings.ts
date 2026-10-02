@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { ConnectorProtocol } from "#/__generated__/core/connectorProviderInfoFields_installableProtocols.graphql";
+import type { ConnectorProtocol } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 
 // DATADOG_SITES labels are technical identifiers (region code + hostname),
 // intentionally not translated. The dialog's prose strings are.
@@ -104,36 +104,13 @@ export function mapAPIKeyExtraSettingToField(
 
 // Same grammar as pkg/awsx/arn.RoleARNPattern, with the three supported
 // partitions inlined so the field rejects other partitions immediately.
-export const AWS_IAM_ROLE_ARN_PATTERN
+const AWS_IAM_ROLE_ARN_PATTERN
   = "arn:(aws-us-gov|aws-cn|aws):iam::([0-9]{12}):role(?:/[\\w+=,.@\\-]+)*/[\\w+=,.@\\-]{1,64}";
 
 const awsIAMRoleARN = new RegExp(`^${AWS_IAM_ROLE_ARN_PATTERN}$`);
 
 export function isAWSRoleARN(value: string): boolean {
   return awsIAMRoleARN.test(value.trim());
-}
-
-export function awsAccountIDFromRoleARN(value: string): string | null {
-  const match = value.trim().match(awsIAMRoleARN);
-  if (!match) {
-    return null;
-  }
-
-  return match[2] ?? null;
-}
-
-// Immediate name while the worker assumes the role and replaces the
-// account ID with the official account name (or the sign-in alias).
-export function awsConnectorName(
-  displayName: string,
-  roleArn: string,
-): string {
-  const accountID = awsAccountIDFromRoleARN(roleArn);
-  if (!accountID) {
-    return displayName;
-  }
-
-  return `${displayName} / ${accountID}`;
 }
 
 const GCP_PROVIDER_RESOURCE_PATTERN
@@ -150,27 +127,6 @@ export function isGCPServiceAccountEmail(value: string): boolean {
   return GCP_SERVICE_ACCOUNT_EMAIL_PATTERN.test(value.trim());
 }
 
-export function gcpProjectNumberFromProvider(value: string): string | null {
-  const match = value.trim().match(GCP_PROVIDER_RESOURCE_PATTERN);
-  if (!match) {
-    return null;
-  }
-
-  return match[1] ?? null;
-}
-
-export function gcpConnectorName(
-  displayName: string,
-  providerResource: string,
-): string {
-  const projectNumber = gcpProjectNumberFromProvider(providerResource);
-  if (!projectNumber) {
-    return displayName;
-  }
-
-  return `${displayName} / ${projectNumber}`;
-}
-
 const AZURE_GUID_PATTERN
   = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -183,18 +139,6 @@ export function isAzureGUID(value: string): boolean {
   }
 
   return AZURE_GUID_PATTERN.test(trimmed);
-}
-
-export function azureConnectorName(
-  displayName: string,
-  subscriptionId: string,
-): string {
-  const trimmed = subscriptionId.trim();
-  if (!isAzureGUID(trimmed)) {
-    return displayName;
-  }
-
-  return `${displayName} / ${trimmed}`;
 }
 
 export function mapClientCredentialsExtraSettingToField(
@@ -222,9 +166,9 @@ export function hasRequiredExtraSettings(
 // buildExtraFields flattens one connect path's extra settings into the
 // input-field map that path's create mutation expects: each non-empty, trimmed
 // value keyed by its provider-specific input field name (via mapFn), skipping
-// settings that map to nothing. Each dialog passes the settings list for its own
-// path together with the matching mapFn — a provider offering both paths
-// (1Password) declares different settings on each.
+// settings that map to nothing. Each connect form passes the settings list for
+// its own path together with the matching mapFn — a provider offering both
+// paths (1Password) declares different settings on each.
 export function buildExtraFields(
   provider: string,
   settings: ReadonlyArray<{ readonly key: string }>,
