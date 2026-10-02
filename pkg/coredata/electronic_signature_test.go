@@ -35,12 +35,20 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestElectronicSignature_SkipCompletionEmailRoundTrip(t *testing.T) {
+func TestElectronicSignature_EmailSubjectRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	for _, skipCompletionEmail := range []bool{false, true} {
+	completionSubject := "Your signed Non-Disclosure Agreement - Certificate of Completion"
+
+	for _, tt := range []struct {
+		name    string
+		subject *string
+	}{
+		{name: "without completion email", subject: nil},
+		{name: "with completion email", subject: &completionSubject},
+	} {
 		t.Run(
-			fmt.Sprintf("skip completion email is %t", skipCompletionEmail),
+			tt.name,
 			func(t *testing.T) {
 				t.Parallel()
 
@@ -67,18 +75,18 @@ func TestElectronicSignature_SkipCompletionEmailRoundTrip(t *testing.T) {
 					UpdatedAt:      now,
 				}
 				signature := coredata.ElectronicSignature{
-					ID:                  gid.New(tenantID, coredata.ElectronicSignatureEntityType),
-					OrganizationID:      organization.ID,
-					Status:              coredata.ElectronicSignatureStatusPending,
-					DocumentType:        coredata.ElectronicSignatureDocumentTypeNDA,
-					FileID:              file.ID,
-					SignerEmail:         "signer@example.com",
-					ConsentText:         "I consent.",
-					SkipCompletionEmail: skipCompletionEmail,
-					SealVersion:         1,
-					MaxAttempts:         10,
-					CreatedAt:           now,
-					UpdatedAt:           now,
+					ID:             gid.New(tenantID, coredata.ElectronicSignatureEntityType),
+					OrganizationID: organization.ID,
+					Status:         coredata.ElectronicSignatureStatusPending,
+					DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
+					FileID:         file.ID,
+					SignerEmail:    "signer@example.com",
+					ConsentText:    "I consent.",
+					EmailSubject:   tt.subject,
+					SealVersion:    1,
+					MaxAttempts:    10,
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				}
 
 				err := client.WithTx(
@@ -132,7 +140,7 @@ func TestElectronicSignature_SkipCompletionEmailRoundTrip(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				assert.Equal(t, skipCompletionEmail, loaded.SkipCompletionEmail)
+				assert.Equal(t, tt.subject, loaded.EmailSubject)
 			},
 		)
 	}

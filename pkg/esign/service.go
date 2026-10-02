@@ -52,15 +52,20 @@ type (
 		logger         *log.Logger
 	}
 
+	// EmailSubject configures the certificate-of-completion email.
+	// A nil subject means the signature is recorded without that email.
+	EmailSubject struct {
+		Text string
+	}
+
 	CreateSignatureRequest struct {
-		OrganizationID      gid.GID
-		DocumentType        coredata.ElectronicSignatureDocumentType
-		DocumentName        *string
-		FileID              gid.GID
-		SignerEmail         mail.Addr
-		ConsentText         string // optional; required when DocumentType == OTHER
-		EmailSubject        string
-		SkipCompletionEmail bool
+		OrganizationID gid.GID
+		DocumentType   coredata.ElectronicSignatureDocumentType
+		DocumentName   *string
+		FileID         gid.GID
+		SignerEmail    mail.Addr
+		ConsentText    string // optional; required when DocumentType == OTHER
+		EmailSubject   *EmailSubject
 	}
 
 	AcceptSignatureRequest struct {
@@ -72,17 +77,16 @@ type (
 	}
 
 	CreateAndAcceptSignatureRequest struct {
-		OrganizationID      gid.GID
-		DocumentType        coredata.ElectronicSignatureDocumentType
-		DocumentName        *string
-		FileID              gid.GID
-		SignerEmail         mail.Addr
-		SignerFullName      string
-		SignerIPAddr        string
-		SignerUA            string
-		ConsentText         string
-		EmailSubject        string
-		SkipCompletionEmail bool
+		OrganizationID gid.GID
+		DocumentType   coredata.ElectronicSignatureDocumentType
+		DocumentName   *string
+		FileID         gid.GID
+		SignerEmail    mail.Addr
+		SignerFullName string
+		SignerIPAddr   string
+		SignerUA       string
+		ConsentText    string
+		EmailSubject   *EmailSubject
 	}
 
 	RecordEventRequest struct {
@@ -95,6 +99,14 @@ type (
 		ActorUA       string
 	}
 )
+
+func (s EmailSubject) Validate() error {
+	v := validator.New()
+
+	v.Check(s.Text, "text", validator.NotEmpty())
+
+	return v.Error()
+}
 
 func (req AcceptSignatureRequest) Validate() error {
 	v := validator.New()
@@ -188,14 +200,14 @@ func (s *Service) CreateSignature(
 		return nil, fmt.Errorf("consent text is required")
 	}
 
-	emailSubject := req.EmailSubject
-	if emailSubject == "" {
-		docName := req.DocumentType.DisplayName()
-		if req.DocumentName != nil && *req.DocumentName != "" {
-			docName = *req.DocumentName
+	var emailSubject *string
+
+	if req.EmailSubject != nil {
+		if err := req.EmailSubject.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid email subject: %w", err)
 		}
 
-		emailSubject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
+		emailSubject = new(req.EmailSubject.Text)
 	}
 
 	now := time.Now()
@@ -209,21 +221,20 @@ func (s *Service) CreateSignature(
 	}
 
 	sig := &coredata.ElectronicSignature{
-		ID:                  signatureID,
-		OrganizationID:      req.OrganizationID,
-		Status:              coredata.ElectronicSignatureStatusPending,
-		DocumentType:        req.DocumentType,
-		DocumentName:        req.DocumentName,
-		FileID:              stampedFileID,
-		SignerEmail:         req.SignerEmail.String(),
-		ConsentText:         consentText,
-		EmailSubject:        emailSubject,
-		SkipCompletionEmail: req.SkipCompletionEmail,
-		SealVersion:         1,
-		AttemptCount:        0,
-		MaxAttempts:         10,
-		CreatedAt:           now,
-		UpdatedAt:           now,
+		ID:             signatureID,
+		OrganizationID: req.OrganizationID,
+		Status:         coredata.ElectronicSignatureStatusPending,
+		DocumentType:   req.DocumentType,
+		DocumentName:   req.DocumentName,
+		FileID:         stampedFileID,
+		SignerEmail:    req.SignerEmail.String(),
+		ConsentText:    consentText,
+		EmailSubject:   emailSubject,
+		SealVersion:    1,
+		AttemptCount:   0,
+		MaxAttempts:    10,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := sig.Insert(ctx, conn, scope); err != nil {
@@ -246,14 +257,13 @@ func (s *Service) CreateAndAcceptSignature(
 		ctx,
 		conn,
 		&CreateSignatureRequest{
-			OrganizationID:      req.OrganizationID,
-			DocumentType:        req.DocumentType,
-			DocumentName:        req.DocumentName,
-			FileID:              req.FileID,
-			SignerEmail:         req.SignerEmail,
-			ConsentText:         req.ConsentText,
-			EmailSubject:        req.EmailSubject,
-			SkipCompletionEmail: req.SkipCompletionEmail,
+			OrganizationID: req.OrganizationID,
+			DocumentType:   req.DocumentType,
+			DocumentName:   req.DocumentName,
+			FileID:         req.FileID,
+			SignerEmail:    req.SignerEmail,
+			ConsentText:    req.ConsentText,
+			EmailSubject:   req.EmailSubject,
 		},
 	)
 	if err != nil {

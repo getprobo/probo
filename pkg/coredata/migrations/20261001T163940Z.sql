@@ -19,7 +19,4 @@
 -- SOFTWARE.
 
 ALTER TABLE electronic_signatures
-    ADD COLUMN skip_completion_email BOOLEAN NOT NULL DEFAULT FALSE;
-
-ALTER TABLE electronic_signatures
-    ALTER COLUMN skip_completion_email DROP DEFAULT;
+    ALTER COLUMN email_subject DROP NOT NULL;

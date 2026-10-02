@@ -160,7 +160,7 @@ func (h *completionCertificateHandler) generateAndCommit(
 		email       *coredata.Email
 		attachments coredata.EmailAttachments
 	)
-	if !signature.SkipCompletionEmail {
+	if ref.UnrefOrZero(signature.EmailSubject) != "" {
 		email, attachments, err = h.generateCompletionEmail(
 			ctx,
 			signature,
@@ -319,10 +319,7 @@ func (h *completionCertificateHandler) generateCompletionEmail(
 		docName = signature.DocumentType.DisplayName()
 	}
 
-	subject := signature.EmailSubject
-	if subject == "" {
-		subject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
-	}
+	subject := *signature.EmailSubject
 
 	textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName, subject)
 	if err != nil {
