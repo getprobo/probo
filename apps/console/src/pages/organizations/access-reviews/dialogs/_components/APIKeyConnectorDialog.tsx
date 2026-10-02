@@ -37,19 +37,19 @@ import { graphql } from "relay-runtime";
 
 import type { APIKeyConnectorDialog_provider$key } from "#/__generated__/core/APIKeyConnectorDialog_provider.graphql";
 import type { APIKeyConnectorDialogCreateAPIKeyConnectorMutation } from "#/__generated__/core/APIKeyConnectorDialogCreateAPIKeyConnectorMutation.graphql";
-
-import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
+import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
+import {
+  isPostHogDeploymentSelected,
+  PostHogDeploymentField,
+} from "#/pages/organizations/settings/integrations/_components/PostHogDeploymentField";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapAPIKeyExtraSettingToField,
-} from "../_lib/connectorSettings";
-import {
-  isPostHogDeploymentSelected,
-  PostHogDeploymentField,
-} from "../PostHogDeploymentField";
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
 
-import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
+import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
 
 const apiKeyConnectorDialogFragment = graphql`
   fragment APIKeyConnectorDialog_provider on ConnectorProviderInfo {
@@ -98,7 +98,6 @@ function extraSettingsKind(provider: string): "posthog" | "segment" | "generic" 
 type Props = {
   providerKey: APIKeyConnectorDialog_provider$key | null;
   organizationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -106,7 +105,6 @@ type Props = {
 export function APIKeyConnectorDialog({
   providerKey,
   organizationId,
-  connectionId,
   onClose,
   onSuccess,
 }: Props) {
@@ -115,6 +113,7 @@ export function APIKeyConnectorDialog({
   const provider = useFragment(apiKeyConnectorDialogFragment, providerKey);
   const dialogRef = useDialogRef();
 
+  const connectorName = useConnectorName();
   const [apiKeyValue, setApiKeyValue] = useState("");
   // The shape check is shown once the customer has left the field or tried to
   // connect. Judging a key while it is still being typed would mark every
@@ -132,7 +131,6 @@ export function APIKeyConnectorDialog({
 
   const createSourceAfterConnector = useCreateAccessReviewSource({
     organizationId,
-    connectionId,
     onSuccess,
   });
 
@@ -171,6 +169,9 @@ export function APIKeyConnectorDialog({
     = !!apiKeyPattern && trimmedAPIKey !== "" && !apiKeyPattern.test(trimmedAPIKey);
 
   const connectAPIKeyProvider = () => {
+    if (connectorName.rejectIfEmpty()) {
+      return;
+    }
     // Managed providers (Model B) supply no customer key: the server injects
     // Probo's own credential, so only the extra settings are required.
     if (!provider || (!provider.apiKeyManaged && !trimmedAPIKey)) {
@@ -201,6 +202,7 @@ export function APIKeyConnectorDialog({
       variables: {
         input: {
           organizationId,
+          name: connectorName.trimmed,
           provider: provider.provider,
           apiKey: provider.apiKeyManaged ? null : apiKeyValue.trim(),
           ...extraFields,
@@ -359,6 +361,12 @@ export function APIKeyConnectorDialog({
         }}
       >
         <DialogContent padded className="space-y-4">
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <p className="text-txt-secondary text-sm">
             {provider?.apiKeyManaged
               ? t("apiKeyConnectorDialog.managedDescription", {

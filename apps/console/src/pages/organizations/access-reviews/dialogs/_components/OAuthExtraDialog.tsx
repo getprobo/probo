@@ -33,12 +33,12 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { OAuthExtraDialog_provider$key } from "#/__generated__/core/OAuthExtraDialog_provider.graphql";
-
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
 import {
   cleanZendeskSubdomain,
   connectOAuthProvider,
   DATADOG_SITES,
-} from "../_lib/connectorSettings";
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
 
 const oAuthExtraDialogFragment = graphql`
   fragment OAuthExtraDialog_provider on ConnectorProviderInfo {
@@ -61,6 +61,7 @@ export function DatadogConnectDialog({
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const provider = useFragment(oAuthExtraDialogFragment, providerKey);
+  const connectorName = useConnectorName();
   const [datadogSite, setDatadogSite] = useState<string>("US1");
 
   // Opening is driven imperatively by the parent's active-provider state; the
@@ -83,17 +84,25 @@ export function DatadogConnectDialog({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (provider) {
-            connectOAuthProvider(
-              organizationId,
-              provider.provider,
-              provider.oauth2Scopes,
-              { site: datadogSite },
-            );
+          if (connectorName.rejectIfEmpty() || !provider) {
+            return;
           }
+          connectOAuthProvider(
+            organizationId,
+            provider.provider,
+            provider.oauth2Scopes,
+            { site: datadogSite },
+            connectorName.trimmed,
+          );
         }}
       >
         <DialogContent padded className="space-y-4">
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <p className="text-txt-secondary text-sm">
             {t("oauthExtraDialog.datadog.description")}
           </p>
@@ -130,6 +139,7 @@ export function ZendeskConnectDialog({
   const { t } = useTranslation();
   const dialogRef = useDialogRef();
   const provider = useFragment(oAuthExtraDialogFragment, providerKey);
+  const connectorName = useConnectorName();
   const [zendeskSubdomain, setZendeskSubdomain] = useState<string>("");
 
   // Opening is driven imperatively by the parent's active-provider state; the
@@ -152,20 +162,28 @@ export function ZendeskConnectDialog({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (provider) {
-            const site = cleanZendeskSubdomain(zendeskSubdomain);
-            if (site) {
-              connectOAuthProvider(
-                organizationId,
-                provider.provider,
-                provider.oauth2Scopes,
-                { site },
-              );
-            }
+          if (connectorName.rejectIfEmpty() || !provider) {
+            return;
+          }
+          const site = cleanZendeskSubdomain(zendeskSubdomain);
+          if (site) {
+            connectOAuthProvider(
+              organizationId,
+              provider.provider,
+              provider.oauth2Scopes,
+              { site },
+              connectorName.trimmed,
+            );
           }
         }}
       >
         <DialogContent padded className="space-y-4">
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <p className="text-txt-secondary text-sm">
             {t("oauthExtraDialog.zendesk.description")}
           </p>

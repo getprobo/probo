@@ -69,6 +69,7 @@ func TestMCP_AzureConnector(t *testing.T) {
 
 	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":       orgID,
+		"name":                  "Test",
 		"provider":              "AZURE",
 		"azure_tenant_id":       azureFixtureTenantID,
 		"azure_client_id":       azureFixtureClientID,
@@ -112,6 +113,7 @@ func TestMCP_AzureConnector_Government(t *testing.T) {
 
 	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":       orgID,
+		"name":                  "Test",
 		"provider":              "AZURE",
 		"azure_tenant_id":       azureGovTenantID,
 		"azure_client_id":       azureGovClientID,
@@ -162,6 +164,7 @@ func TestMCP_AzureConnector_RBAC(t *testing.T) {
 
 	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":       orgID,
+		"name":                  "Test",
 		"provider":              "AZURE",
 		"azure_tenant_id":       azureFixtureTenantID,
 		"azure_client_id":       azureFixtureClientID,
@@ -185,6 +188,7 @@ func TestMCP_AzureConnector_TenantIsolation(t *testing.T) {
 
 	msg = org2MC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
 		"organization_id":       org1ID,
+		"name":                  "Test",
 		"provider":              "AZURE",
 		"azure_tenant_id":       azureFixtureTenantID,
 		"azure_client_id":       azureFixtureClientID,

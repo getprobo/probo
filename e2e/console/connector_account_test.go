@@ -219,6 +219,39 @@ func TestDisableConnectorAccount_RefusedWhenSourceReferences(t *testing.T) {
 	assert.Equal(t, memberID, disabled.DisableConnectorAccount.DisabledConnectorAccountID)
 }
 
+func TestDisableConnectorAccount_RefusedWhenInitial(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	connectorID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	var accounts connectorAccountsResult
+
+	err := owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &accounts)
+	require.NoError(t, err)
+	require.Len(t, accounts.Node.Accounts.Edges, 1)
+
+	initialID := accounts.Node.Accounts.Edges[0].Node.ID
+
+	err = owner.Execute(
+		disableConnectorAccountMutation,
+		map[string]any{"input": map[string]any{"connectorAccountId": initialID}},
+		&struct {
+			DisableConnectorAccount struct {
+				DisabledConnectorAccountID string `json:"disabledConnectorAccountId"`
+			} `json:"disableConnectorAccount"`
+		}{},
+	)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	err = owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &accounts)
+	require.NoError(t, err)
+	require.Len(t, accounts.Node.Accounts.Edges, 1)
+	assert.Equal(t, initialID, accounts.Node.Accounts.Edges[0].Node.ID)
+}
+
 func TestCreateAccessReviewSource_ConnectorIdOnlyResolvesAccount(t *testing.T) {
 	t.Parallel()
 
@@ -243,14 +276,14 @@ func TestCreateAccessReviewSource_ConnectorIdOnlyResolvesAccount(t *testing.T) {
 	assert.NotEmpty(t, *result.Node.ConnectorAccountID)
 }
 
-func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
+func TestConnectorProviders_OrganizationInstallSupported(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				organizationInstallSupported
 			}
@@ -258,18 +291,18 @@ func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
 	`
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider                     string `json:"provider"`
 			OrganizationInstallSupported bool   `json:"organizationInstallSupported"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	err := owner.Execute(query, nil, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.AccessReviewDrivers)
+	require.NotEmpty(t, result.ConnectorProviders)
 
 	supported := map[string]bool{}
-	for _, driver := range result.AccessReviewDrivers {
+	for _, driver := range result.ConnectorProviders {
 		supported[driver.Provider] = driver.OrganizationInstallSupported
 	}
 

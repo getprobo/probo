@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
@@ -55,6 +56,56 @@ func (s *ConnectorService) initialAccount(c *coredata.Connector) (string, string
 	return externalID, name, nil
 }
 
+// resolveStoredInitialAccount is the account this credential is. A connector
+// with no tenant in settings is still that one account, keyed by the connector
+// id. Organization installs with nothing resolved yet have no such account.
+// DisableAccount refuses to delete it.
+func (s *ConnectorService) resolveStoredInitialAccount(c *coredata.Connector) (string, string, error) {
+	if c == nil {
+		return "", "", nil
+	}
+
+	externalID, name, err := s.initialAccount(c)
+	if err != nil {
+		return "", "", err
+	}
+
+	if externalID == "" && !s.organizationInstall(c) {
+		return c.ID.String(), s.implicitAccountName(c), nil
+	}
+
+	return externalID, name, nil
+}
+
+func (s *ConnectorService) InitialAccountExternalID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (string, error) {
+	var externalID string
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			var err error
+
+			externalID, _, err = s.resolveStoredInitialAccount(cnnctr)
+
+			return err
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve initial connector account: %w", err)
+	}
+
+	return externalID, nil
+}
+
 // recordInitialAccount stores the account present at create time. A connector
 // with no tenant in settings is still that one account. Organization installs
 // wait for discover.
@@ -64,14 +115,9 @@ func (s *ConnectorService) recordInitialAccount(
 	scope coredata.Scoper,
 	cnnctr *coredata.Connector,
 ) error {
-	externalID, name, err := s.initialAccount(cnnctr)
+	externalID, name, err := s.resolveStoredInitialAccount(cnnctr)
 	if err != nil {
 		return err
-	}
-
-	if externalID == "" && !s.organizationInstall(cnnctr) {
-		externalID = cnnctr.ID.String()
-		name = s.implicitAccountName(cnnctr)
 	}
 
 	if _, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
@@ -104,6 +150,13 @@ func (s *ConnectorService) implicitAccountName(c *coredata.Connector) string {
 	return string(c.Provider)
 }
 
+type ConnectorModule string
+
+const (
+	ConnectorModuleAccessReview ConnectorModule = "ACCESS_REVIEW"
+	ConnectorModuleSCIM         ConnectorModule = "SCIM"
+)
+
 // ErrInstallStateAlreadyUsed is returned when an install callback replays a
 // state another request already claimed or completed. The vendor's proof stays
 // valid (unlike an OAuth code, which the vendor itself burns) and the
@@ -120,6 +173,7 @@ type (
 
 	CreateConnectorRequest struct {
 		OrganizationID gid.GID
+		Name           string
 		Provider       coredata.ConnectorProvider
 		Protocol       coredata.ConnectorProtocol
 		Connection     connector.Connection
@@ -143,6 +197,11 @@ type (
 		RawSettings json.RawMessage
 	}
 
+	UpdateConnectorRequest struct {
+		ConnectorID gid.GID
+		Name        string
+	}
+
 	// CompleteConnectorInstallRequest carries the verified outcome of an
 	// app-install ceremony: the vendor tenant id the callback proved control
 	// of, and the single-use state claim that proof was spent against.
@@ -158,6 +217,10 @@ type (
 		// idempotency lookup, so it would bind twice.
 		ResourceID string
 		Connection connector.Connection
+		// Name is stored only when this completion inserts a row. A repeat
+		// install of the same tenant reuses the existing connector and keeps
+		// the name already on it.
+		Name string
 		// State and ProcessingToken identify the claim this completion burns,
 		// in the same transaction as the insert.
 		State           string
@@ -166,14 +229,43 @@ type (
 )
 
 func (car *CreateConnectorRequest) Validate() error {
+	car.Name = strings.TrimSpace(car.Name)
+
 	v := validator.New()
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
 	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
 	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
 	v.Check(car.Connection, "connection", validator.Required())
 	v.Check(car.RawSettings, "raw_settings", validJSONRawMessage)
 
 	return v.Error()
+}
+
+func (r *UpdateConnectorRequest) Validate() error {
+	r.Name = strings.TrimSpace(r.Name)
+
+	v := validator.New()
+	v.Check(r.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
+	v.Check(r.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	return v.Error()
+}
+
+// NormalizeConnectorName trims a connector name and applies the same rules as
+// create and update. Initiate handlers call it before a redirect so a blank
+// name never starts a ceremony that would fail when the row is inserted.
+func NormalizeConnectorName(name string) (string, error) {
+	trimmed := strings.TrimSpace(name)
+
+	v := validator.New()
+	v.Check(trimmed, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	if err := v.Error(); err != nil {
+		return "", err
+	}
+
+	return trimmed, nil
 }
 
 // validJSONRawMessage rejects a non-empty RawSettings that does not
@@ -320,6 +412,83 @@ func (s *ConnectorService) Delete(
 	)
 }
 
+// Modules lists the product modules that currently hold this credential.
+// Counts only; it does not probe the vendor.
+func (s *ConnectorService) Modules(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) ([]ConnectorModule, error) {
+	modules := []ConnectorModule{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			sources := &coredata.AccessReviewSources{}
+
+			sourceCount, err := sources.CountByConnectorID(ctx, conn, scope, connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count access review sources for connector: %w", err)
+			}
+
+			if sourceCount > 0 {
+				modules = append(modules, ConnectorModuleAccessReview)
+			}
+
+			bridges := &coredata.SCIMBridges{}
+
+			bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, connectorID)
+			if err != nil {
+				return fmt.Errorf("cannot count SCIM bridges for connector: %w", err)
+			}
+
+			if bridgeCount > 0 {
+				modules = append(modules, ConnectorModuleSCIM)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return modules, nil
+}
+
+// AccountModules lists the product modules that currently hold this account.
+// Counts only; it does not probe the vendor.
+func (s *ConnectorService) AccountModules(
+	ctx context.Context,
+	scope coredata.Scoper,
+	accountID gid.GID,
+) ([]ConnectorModule, error) {
+	modules := []ConnectorModule{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			sources := &coredata.AccessReviewSources{}
+
+			sourceCount, err := sources.CountByConnectorAccountID(ctx, conn, scope, accountID)
+			if err != nil {
+				return fmt.Errorf("cannot count access review sources for connector account: %w", err)
+			}
+
+			if sourceCount > 0 {
+				modules = append(modules, ConnectorModuleAccessReview)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return modules, nil
+}
+
 // refuseReferencedConnector names the module still holding the credential.
 // The foreign key that fires first names the account, because connector_accounts
 // cascades while the source restricts. Accounts are not counted: a source on an
@@ -370,6 +539,7 @@ func (s *ConnectorService) Create(
 	newConnector := &coredata.Connector{
 		ID:             id,
 		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
 		Provider:       req.Provider,
 		Protocol:       req.Protocol,
 		Connection:     req.Connection,
@@ -396,6 +566,41 @@ func (s *ConnectorService) Create(
 	}
 
 	return newConnector, nil
+}
+
+func (s *ConnectorService) Update(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpdateConnectorRequest,
+) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	cnnctr := &coredata.Connector{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := cnnctr.LoadMetadataByID(ctx, tx, scope, req.ConnectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			cnnctr.Name = req.Name
+			cnnctr.UpdatedAt = time.Now()
+
+			if err := cnnctr.UpdateName(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update connector name: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return cnnctr, nil
 }
 
 // Reconnect updates an existing OAuth2 connector's connection (token)
@@ -604,9 +809,15 @@ func (s *ConnectorService) CompleteInstall(
 			case errors.Is(err, coredata.ErrResourceNotFound):
 				now := time.Now()
 
+				name, err := NormalizeConnectorName(req.Name)
+				if err != nil {
+					return fmt.Errorf("invalid connector name: %w", err)
+				}
+
 				*cnnctr = coredata.Connector{
 					ID:             gid.New(scope.GetTenantID(), coredata.ConnectorEntityType),
 					OrganizationID: req.OrganizationID,
+					Name:           name,
 					Provider:       req.Provider,
 					Protocol:       coredata.ConnectorProtocolAPIKey,
 					Connection:     req.Connection,

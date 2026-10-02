@@ -36,6 +36,7 @@ query($id: ID!) {
     ... on Organization {
       connectors {
         id
+        name
         provider
         protocol
         createdAt
@@ -47,6 +48,7 @@ query($id: ID!) {
 
 type connector struct {
 	ID        string `json:"id"`
+	Name      string `json:"name"`
 	Provider  string `json:"provider"`
 	Protocol  string `json:"protocol"`
 	CreatedAt string `json:"createdAt"`
@@ -132,13 +134,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			for _, c := range connectors {
 				rows = append(rows, []string{
 					c.ID,
+					c.Name,
 					c.Provider,
 					c.Protocol,
 					cmdutil.FormatTime(c.CreatedAt),
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "PROVIDER", "PROTOCOL", "CREATED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "NAME", "PROVIDER", "PROTOCOL", "CREATED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			return nil

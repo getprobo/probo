@@ -755,7 +755,9 @@ func (r *mutationResolver) CreateAccessReviewSource(ctx context.Context, input t
 		},
 	)
 	if err != nil {
-		if errors.Is(err, accessreview.ErrNoConnectorAccount) || errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
+		if errors.Is(err, accessreview.ErrNoConnectorAccount) ||
+			errors.Is(err, accessreview.ErrConnectorAccountNeedsOrganization) ||
+			errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
 			return nil, gqlutils.Invalid(ctx, err)
 		}
 

@@ -163,6 +163,7 @@ func newConnectorForDelete(
 
 	cnnctr, err := service.Create(t.Context(), scope, CreateConnectorRequest{
 		OrganizationID: organizationID,
+		Name:           "Test",
 		Provider:       coredata.ConnectorProviderBrex,
 		Protocol:       coredata.ConnectorProtocolOAuth2,
 		Connection: &connector.OAuth2Connection{
@@ -331,4 +332,250 @@ func TestConnectorService_Delete(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, loadConnectorAccountsForDelete(t, client, scope, cnnctr.ID), 1)
 	})
+}
+
+func TestConnectorService_Modules(t *testing.T) {
+	t.Parallel()
+
+	t.Run("an unused connector has no modules", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+
+		modules, err := service.Modules(t.Context(), scope, cnnctr.ID)
+		require.NoError(t, err)
+		assert.Empty(t, modules)
+	})
+
+	t.Run("an access review source names the access review module", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+		account := insertConnectorAccountForDelete(t, client, scope, organizationID, cnnctr.ID)
+
+		now := time.Now().UTC()
+		source := &coredata.AccessReviewSource{
+			ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+			OrganizationID:     organizationID,
+			ConnectorAccountID: &account.ID,
+			Name:               "Production",
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := source.Insert(ctx, tx, scope)
+
+			return err
+		}))
+
+		modules, err := service.Modules(t.Context(), scope, cnnctr.ID)
+		require.NoError(t, err)
+		assert.Equal(t, []ConnectorModule{ConnectorModuleAccessReview}, modules)
+	})
+
+	t.Run("a SCIM bridge names the SCIM module", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+
+		now := time.Now().UTC()
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			config := &coredata.SCIMConfiguration{
+				ID:             gid.New(scope.GetTenantID(), coredata.SCIMConfigurationEntityType),
+				OrganizationID: organizationID,
+				HashedToken:    []byte{0x01},
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := config.Insert(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			bridge := &coredata.SCIMBridge{
+				ID:                  gid.New(scope.GetTenantID(), coredata.SCIMBridgeEntityType),
+				OrganizationID:      organizationID,
+				ScimConfigurationID: config.ID,
+				ConnectorID:         &cnnctr.ID,
+				Type:                coredata.SCIMBridgeTypeGoogleWorkspace,
+				State:               coredata.SCIMBridgeStateActive,
+				ExcludedUserNames:   []string{},
+				CreatedAt:           now,
+				UpdatedAt:           now,
+			}
+
+			return bridge.Insert(ctx, tx, scope)
+		}))
+
+		modules, err := service.Modules(t.Context(), scope, cnnctr.ID)
+		require.NoError(t, err)
+		assert.Equal(t, []ConnectorModule{ConnectorModuleSCIM}, modules)
+	})
+}
+
+func TestConnectorService_AccountModules(t *testing.T) {
+	t.Parallel()
+
+	t.Run("an unused account has no modules", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+		account := insertConnectorAccount(t, client, scope, cnnctr, "111", "Prod")
+
+		modules, err := service.AccountModules(t.Context(), scope, account.ID)
+		require.NoError(t, err)
+		assert.Empty(t, modules)
+	})
+
+	t.Run("an access review source names the access review module", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		scope, organizationID := seedConnectorDeleteOrg(t, client)
+		service := ConnectorService{svc: &Service{pg: client}}
+		cnnctr := newConnectorForDelete(t, client, scope, organizationID)
+		account := insertConnectorAccount(t, client, scope, cnnctr, "111", "Prod")
+
+		now := time.Now().UTC()
+		source := &coredata.AccessReviewSource{
+			ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+			OrganizationID:     organizationID,
+			ConnectorAccountID: &account.ID,
+			Name:               "Production",
+			CreatedAt:          now,
+			UpdatedAt:          now,
+		}
+
+		require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+			_, err := source.Insert(ctx, tx, scope)
+
+			return err
+		}))
+
+		modules, err := service.AccountModules(t.Context(), scope, account.ID)
+		require.NoError(t, err)
+		assert.Equal(t, []ConnectorModule{ConnectorModuleAccessReview}, modules)
+	})
+}
+
+func insertConnectorAccountForDelete(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	connectorID gid.GID,
+) *coredata.ConnectorAccount {
+	t.Helper()
+
+	return insertConnectorAccount(
+		t,
+		client,
+		scope,
+		&coredata.Connector{ID: connectorID, OrganizationID: organizationID},
+		"workspace",
+		"workspace",
+	)
+}
+
+func insertConnectorAccount(
+	t *testing.T,
+	client *pg.Client,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+	externalID string,
+	name string,
+) *coredata.ConnectorAccount {
+	t.Helper()
+
+	var account *coredata.ConnectorAccount
+
+	require.NoError(t, client.WithTx(t.Context(), func(ctx context.Context, tx pg.Tx) error {
+		created, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name)
+		if err != nil {
+			return err
+		}
+
+		account = created
+
+		return nil
+	}))
+
+	return account
+}
+
+func TestConnectorName_RejectsEmptyAndUnsafeValues(t *testing.T) {
+	t.Parallel()
+
+	longName := strings.Repeat("a", NameMaxLength+1)
+
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{name: "empty", value: ""},
+		{name: "blank", value: "   "},
+		{name: "too long", value: longName},
+		{name: "html", value: "<b>Production</b>"},
+		{name: "newline", value: "Production\norg"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := NormalizeConnectorName(tt.value)
+			require.Error(t, err)
+
+			validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+			require.True(t, ok)
+			assert.Contains(t, validationErrors.Fields(), "name")
+		})
+	}
+}
+
+func TestCreateAndUpdate_StoreTrimmedConnectorName(t *testing.T) {
+	t.Parallel()
+
+	svc, scope, organizationID := newConnectorCreateEnv(t)
+
+	created, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "  Production  ",
+		Provider:       coredata.ConnectorProviderBrex,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection:     &connector.APIKeyConnection{APIKey: "bxt_test-key"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Production", created.Name)
+
+	updated, err := svc.Update(t.Context(), scope, UpdateConnectorRequest{
+		ConnectorID: created.ID,
+		Name:        "  QA  ",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "QA", updated.Name)
+
+	_, err = svc.Update(t.Context(), scope, UpdateConnectorRequest{
+		ConnectorID: created.ID,
+		Name:        "   ",
+	})
+	require.Error(t, err)
+
+	validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+	require.True(t, ok)
+	assert.Contains(t, validationErrors.Fields(), "name")
 }

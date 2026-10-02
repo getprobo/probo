@@ -32,26 +32,25 @@ import { type ChangeEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { CreateGcpAccessReviewSourcePageCreateMutation } from "#/__generated__/core/CreateGcpAccessReviewSourcePageCreateMutation.graphql";
 import type { CreateGcpAccessReviewSourcePageDeleteMutation } from "#/__generated__/core/CreateGcpAccessReviewSourcePageDeleteMutation.graphql";
 import type { CreateGcpAccessReviewSourcePageQuery } from "#/__generated__/core/CreateGcpAccessReviewSourcePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
+import {
+  isGCPServiceAccountEmail,
+  isGCPWorkloadIdentityProvider,
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
+import { integrationListPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
 import {
   ActionSplitButton,
   type ActionSplitButtonAction,
 } from "../_components/ActionSplitButton";
-import { ConnectorDocumentationLink } from "../dialogs/_components/ConnectorDocumentationLink";
-import {
-  gcpAccessReviewSourceName,
-  isGCPServiceAccountEmail,
-  isGCPWorkloadIdentityProvider,
-} from "../dialogs/_lib/connectorSettings";
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
 export const createGcpAccessReviewSourcePageQuery = graphql`
   query CreateGcpAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -61,7 +60,7 @@ export const createGcpAccessReviewSourcePageQuery = graphql`
       subject
       terraformSnippet
     }
-    accessReviewDrivers {
+    connectorProviders {
       provider
       displayName
       documentationUrl
@@ -111,13 +110,14 @@ export function CreateGcpAccessReviewSourcePage({
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
+  const connectorName = useConnectorName();
   const [providerResource, setProviderResource] = useState("");
   const [serviceAccountEmail, setServiceAccountEmail] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
   usePageTitle(t("createGcpAccessReviewSourcePage.pageTitle"));
 
-  const { organization, gcpConnectorSetup, accessReviewDrivers }
+  const { organization, gcpConnectorSetup, connectorProviders }
     = usePreloadedQuery<CreateGcpAccessReviewSourcePageQuery>(
       createGcpAccessReviewSourcePageQuery,
       queryRef,
@@ -126,17 +126,12 @@ export function CreateGcpAccessReviewSourcePage({
     throw new Error("Organization not found");
   }
 
-  const gcpDriver = accessReviewDrivers.find(
+  const gcpDriver = connectorProviders.find(
     driver => driver.provider === "GCP",
   );
   if (!gcpDriver) {
     throw new Error("GCP access review driver not found");
   }
-
-  const connectionId = ConnectionHandler.getConnectionID(
-    organization.id,
-    "AccessReviewConnectionsPage_accessReviewSources",
-  );
 
   const [createWorkloadIdentityConnector] = useMutation<
     CreateGcpAccessReviewSourcePageCreateMutation
@@ -144,9 +139,6 @@ export function CreateGcpAccessReviewSourcePage({
   const [deleteConnector] = useMutation<
     CreateGcpAccessReviewSourcePageDeleteMutation
   >(deleteConnectorMutation);
-  const [createAccessReviewSource] = useMutation<
-    accessReviewSourceMutationsCreateMutation
-  >(createAccessReviewSourceMutation);
 
   if (!organization.canCreateSource) {
     return (
@@ -193,7 +185,7 @@ export function CreateGcpAccessReviewSourcePage({
   const formValid = providerValid && emailValid;
 
   const onSubmit = async () => {
-    if (!formValid || isCreating) {
+    if (connectorName.rejectIfEmpty() || !formValid || isCreating) {
       return;
     }
 
@@ -205,6 +197,7 @@ export function CreateGcpAccessReviewSourcePage({
           variables: {
             input: {
               organizationId,
+              name: connectorName.trimmed,
               provider: "GCP",
               gcpWorkloadIdentityProvider: providerResource.trim(),
               gcpServiceAccountEmail: serviceAccountEmail.trim(),
@@ -234,39 +227,12 @@ export function CreateGcpAccessReviewSourcePage({
         return;
       }
 
-      try {
-        await createAccessReviewSource(
-          {
-            variables: {
-              input: {
-                organizationId,
-                connectorId,
-                name: gcpAccessReviewSourceName(
-                  gcpDriver.displayName,
-                  providerResource,
-                ),
-                csvData: null,
-              },
-            },
-            updater: (store) => {
-              if (connectionId) {
-                prependCreatedSourceEdge(store, connectionId);
-              }
-            },
-          },
-          { errorToast: t("createGcpAccessReviewSourcePage.errors.source") },
-        );
-      } catch {
-        await discardConnector();
-        return;
-      }
-
       toast({
         title: t("createGcpAccessReviewSourcePage.messages.success"),
         description: t("createGcpAccessReviewSourcePage.messages.created"),
         variant: "success",
       });
-      void navigate(`/organizations/${organizationId}/access-reviews/connections`);
+      void navigate(integrationListPath(organizationId));
     } catch {
       return;
     } finally {
@@ -311,6 +277,12 @@ export function CreateGcpAccessReviewSourcePage({
           }}
           className="space-y-4"
         >
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <Field
             name="workloadIdentityProvider"
             label={t(

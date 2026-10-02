@@ -124,7 +124,7 @@ export function awsAccountIDFromRoleARN(value: string): string | null {
 
 // Immediate name while the worker assumes the role and replaces the
 // account ID with the official account name (or the sign-in alias).
-export function awsAccessReviewSourceName(
+export function awsConnectorName(
   displayName: string,
   roleArn: string,
 ): string {
@@ -159,7 +159,7 @@ export function gcpProjectNumberFromProvider(value: string): string | null {
   return match[1] ?? null;
 }
 
-export function gcpAccessReviewSourceName(
+export function gcpConnectorName(
   displayName: string,
   providerResource: string,
 ): string {
@@ -185,7 +185,7 @@ export function isAzureGUID(value: string): boolean {
   return AZURE_GUID_PATTERN.test(trimmed);
 }
 
-export function azureAccessReviewSourceName(
+export function azureConnectorName(
   displayName: string,
   subscriptionId: string,
 ): string {
@@ -265,10 +265,12 @@ export function connectOAuthProvider(
   provider: string,
   oauth2Scopes: ReadonlyArray<string>,
   extras?: Record<string, string>,
+  name?: string,
 ) {
   connectProviderProtocol(organizationId, provider, "OAUTH2", {
     oauth2Scopes,
     extras,
+    name,
   });
 }
 
@@ -282,6 +284,7 @@ export function buildConnectorInitiateURL(
     oauth2Scopes?: ReadonlyArray<string>;
     connectorId?: string;
     extras?: Record<string, string>;
+    name?: string;
   },
 ): string {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
@@ -297,6 +300,9 @@ export function buildConnectorInitiateURL(
   if (options?.connectorId) {
     url.searchParams.append("connector_id", options.connectorId);
   }
+  if (options?.name) {
+    url.searchParams.append("name", options.name);
+  }
   if (protocol !== "GITHUB_APP") {
     for (const scope of options?.oauth2Scopes ?? []) {
       url.searchParams.append("scope", scope);
@@ -309,7 +315,7 @@ export function buildConnectorInitiateURL(
   }
   url.searchParams.append(
     "continue",
-    `/organizations/${organizationId}/access-reviews/connections`,
+    `/organizations/${organizationId}/settings/integrations`,
   );
   return url.toString();
 }
@@ -321,23 +327,27 @@ export function buildConnectorInitiateURL(
 export function buildConnectorInstallInitiateURL(
   organizationId: string,
   provider: string,
+  name?: string,
 ): string {
   const baseURL = import.meta.env.VITE_API_URL || window.location.origin;
   const url = new URL("/api/console/v1/connectors/install/initiate", baseURL);
   url.searchParams.append("organization_id", organizationId);
   url.searchParams.append("provider", provider);
+  if (name) {
+    url.searchParams.append("name", name);
+  }
   return url.toString();
 }
 
 // connectProviderInstall navigates the browser to the install ceremony. The
-// customer proves control of the vendor tenant there, so no value is collected
-// in Probo first.
+// name is collected first so the callback can store it on the new connector.
 export function connectProviderInstall(
   organizationId: string,
   provider: string,
+  name: string,
 ) {
   window.location.assign(
-    buildConnectorInstallInitiateURL(organizationId, provider),
+    buildConnectorInstallInitiateURL(organizationId, provider, name),
   );
 }
 
@@ -351,6 +361,7 @@ export function connectProviderProtocol(
     oauth2Scopes?: ReadonlyArray<string>;
     connectorId?: string;
     extras?: Record<string, string>;
+    name?: string;
   },
 ) {
   window.location.assign(

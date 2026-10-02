@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
@@ -86,6 +87,31 @@ func (r *connectorResolver) DocumentationURL(ctx context.Context, obj *types.Con
 	return new(reg.DocumentationURL), nil
 }
 
+// InitialAccountExternalID is the resolver for the initialAccountExternalId field.
+func (r *connectorResolver) InitialAccountExternalID(ctx context.Context, obj *types.Connector) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	externalID, err := r.probo.Connectors.InitialAccountExternalID(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot resolve initial connector account", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if externalID == "" {
+		return nil, nil
+	}
+
+	return new(externalID), nil
+}
+
 // Accounts is the resolver for the accounts field.
 func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorAccountOrderBy) (*types.ConnectorAccountConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
@@ -133,12 +159,139 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot discover connector accounts", log.Error(err))
+		// A failed listing must not fail connector creation, which selects this
+		// field on the new connector. Authorization and not-found still error.
+		r.logger.WarnCtx(
+			ctx,
+			"cannot discover connector accounts",
+			log.String("connector_id", obj.ID.String()),
+			log.Error(err),
+		)
+
+		return []*types.DiscoveredConnectorAccount{}, nil
+	}
+
+	return types.NewDiscoveredConnectorAccounts(accounts), nil
+}
+
+// Modules is the resolver for the modules field.
+func (r *connectorResolver) Modules(ctx context.Context, obj *types.Connector) ([]types.ConnectorModule, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	modules, err := r.probo.Connectors.Modules(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list connector modules", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewDiscoveredConnectorAccounts(accounts), nil
+	out := make([]types.ConnectorModule, 0, len(modules))
+	for _, module := range modules {
+		switch module {
+		case probo.ConnectorModuleAccessReview:
+			out = append(out, types.ConnectorModuleAccessReview)
+		case probo.ConnectorModuleSCIM:
+			out = append(out, types.ConnectorModuleScim)
+		default:
+			r.logger.ErrorCtx(
+				ctx,
+				"cannot list connector modules",
+				log.String("module", string(module)),
+			)
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return out, nil
+}
+
+// ProviderOrganizations is the resolver for the providerOrganizations field.
+func (r *connectorResolver) ProviderOrganizations(ctx context.Context, obj *types.Connector) (*types.ProviderOrganizations, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	unavailable := &types.ProviderOrganizations{
+		Status: types.ProviderOrganizationsStatusUnavailable,
+		Nodes:  []*types.ProviderOrganization{},
+	}
+
+	cnnctr, err := r.probo.Connectors.Get(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return unavailable, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+
+		return unavailable, nil
+	}
+
+	if !accessreview.ProviderSupportsOrganizationPicker(cnnctr.Provider, cnnctr.Protocol) {
+		return &types.ProviderOrganizations{
+			Status: types.ProviderOrganizationsStatusNotApplicable,
+			Nodes:  []*types.ProviderOrganization{},
+		}, nil
+	}
+
+	orgs, err := r.accessReview.ProviderOrganizations(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list provider organizations",
+			log.String("provider", cnnctr.Provider.String()),
+			log.String("connector_id", obj.ID.String()),
+			log.Error(err),
+		)
+
+		return unavailable, nil
+	}
+
+	if len(orgs) == 0 {
+		return &types.ProviderOrganizations{
+			Status:         types.ProviderOrganizationsStatusEmpty,
+			Nodes:          []*types.ProviderOrganization{},
+			RemediationURL: r.emptyOrganizationsRemediationURL(ctx, cnnctr.Provider),
+		}, nil
+	}
+
+	nodes := make([]*types.ProviderOrganization, len(orgs))
+	for i, org := range orgs {
+		nodes[i] = &types.ProviderOrganization{Slug: org.Slug, DisplayName: org.DisplayName}
+	}
+
+	return &types.ProviderOrganizations{
+		Status: types.ProviderOrganizationsStatusAvailable,
+		Nodes:  nodes,
+	}, nil
+}
+
+// SelectedOrganization is the resolver for the selectedOrganization field.
+func (r *connectorResolver) SelectedOrganization(ctx context.Context, obj *types.Connector) (*string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	slug, err := r.accessReview.SelectedOrganizationSlug(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot read selected organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if slug == "" {
+		return nil, nil
+	}
+
+	return &slug, nil
 }
 
 // Permission is the resolver for the permission field.
@@ -184,6 +337,41 @@ func (r *connectorAccountResolver) ConnectionStatus(ctx context.Context, obj *ty
 	}
 
 	return status, nil
+}
+
+// Modules is the resolver for the modules field.
+func (r *connectorAccountResolver) Modules(ctx context.Context, obj *types.ConnectorAccount) ([]types.ConnectorModule, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorGet)
+	if err != nil {
+		return nil, err
+	}
+
+	modules, err := r.probo.Connectors.AccountModules(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list connector account modules", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	out := make([]types.ConnectorModule, 0, len(modules))
+	for _, module := range modules {
+		switch module {
+		case probo.ConnectorModuleAccessReview:
+			out = append(out, types.ConnectorModuleAccessReview)
+		case probo.ConnectorModuleSCIM:
+			out = append(out, types.ConnectorModuleScim)
+		default:
+			r.logger.ErrorCtx(
+				ctx,
+				"cannot list connector account modules",
+				log.String("module", string(module)),
+			)
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	return out, nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -232,6 +420,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolAPIKey,
 		Connection:     conn,
@@ -261,10 +450,10 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create API key connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create API key connector", err)
 	}
+
+	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
 
 	return &types.CreateAPIKeyConnectorPayload{
 		Connector: types.NewConnector(cnnctr),
@@ -294,6 +483,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	req := probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolOAuth2,
 		Connection:     oauth2Conn,
@@ -308,10 +498,10 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create client credentials connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create client credentials connector", err)
 	}
+
+	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
 
 	return &types.CreateClientCredentialsConnectorPayload{
 		Connector: types.NewConnector(cnnctr),
@@ -336,15 +526,14 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 		Connection:     &connector.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create workload identity connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create workload identity connector", err)
 	}
 
 	return &types.CreateWorkloadIdentityConnectorPayload{
@@ -370,15 +559,14 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
 		Connection:     &connector.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create organization connector", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
+		return nil, connectorWriteError(ctx, r.logger, "cannot create organization connector", err)
 	}
 
 	discovered := []*types.DiscoveredConnectorAccount{}
@@ -468,6 +656,10 @@ func (r *mutationResolver) DisableConnectorAccount(ctx context.Context, input ty
 			return nil, gqlutils.Conflictf(ctx, "connector account is in use")
 		}
 
+		if errors.Is(err, probo.ErrInitialConnectorAccount) {
+			return nil, gqlutils.Conflictf(ctx, "connector account is the initial account")
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot disable connector account", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
@@ -497,6 +689,55 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 
 	return &types.DeleteConnectorPayload{
 		DeletedConnectorID: input.ConnectorID,
+	}, nil
+}
+
+// UpdateConnector is the resolver for the updateConnector field.
+func (r *mutationResolver) UpdateConnector(ctx context.Context, input types.UpdateConnectorInput) (*types.UpdateConnectorPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	cnnctr, err := r.probo.Connectors.Update(ctx, scope, probo.UpdateConnectorRequest{
+		ConnectorID: input.ConnectorID,
+		Name:        input.Name,
+	})
+	if err != nil {
+		return nil, connectorWriteError(ctx, r.logger, "cannot update connector", err)
+	}
+
+	return &types.UpdateConnectorPayload{
+		Connector: types.NewConnector(cnnctr),
+	}, nil
+}
+
+// ConfigureConnectorOrganization is the resolver for the configureConnectorOrganization field.
+func (r *mutationResolver) ConfigureConnectorOrganization(ctx context.Context, input types.ConfigureConnectorOrganizationInput) (*types.ConfigureConnectorOrganizationPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.accessReview.SetConnectorOrganization(ctx, scope, input.ConnectorID, input.OrganizationSlug); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot set connector organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	cnnctr, err := r.probo.Connectors.Get(ctx, scope, input.ConnectorID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.ConfigureConnectorOrganizationPayload{
+		Connector: types.NewConnector(cnnctr),
 	}, nil
 }
 

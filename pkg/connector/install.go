@@ -68,6 +68,9 @@ type InstallState struct {
 	// claims, which is why row dedupe needs its own lock (see
 	// coredata.LockConnectorInstallResource).
 	Nonce string `json:"nonce"`
+	// Name is the label stored when this ceremony inserts a connector. A
+	// repeat install of the same tenant reuses the existing row and ignores it.
+	Name string `json:"name"`
 }
 
 // NewInstallState mints the signed state an app-install redirect carries to the
@@ -77,6 +80,7 @@ func NewInstallState(
 	provider string,
 	organizationID gid.GID,
 	identityID gid.GID,
+	name string,
 ) (string, error) {
 	nonce, err := uuid.NewV7()
 	if err != nil {
@@ -92,6 +96,7 @@ func NewInstallState(
 			OrganizationID: organizationID,
 			IdentityID:     identityID,
 			Nonce:          nonce.String(),
+			Name:           name,
 		},
 	)
 	if err != nil {

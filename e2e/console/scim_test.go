@@ -390,11 +390,11 @@ func TestSCIM_Unauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 }
 
-// A SCIM configuration refuses a connector already held by an access
-// review source, and the refusal must not commit a bridgeless
-// configuration: configurations are unique per organization, so a
-// leftover one would block every retry.
-func TestSCIMConfiguration_RefusesSourceHeldConnector(t *testing.T) {
+// A SCIM configuration refuses a provider that cannot bridge, and the
+// refusal must not commit a bridgeless configuration: configurations are
+// unique per organization, so a leftover one would block every retry.
+// An access-review source on the same connector is not the reason.
+func TestSCIMConfiguration_RefusesUnsupportedProvider(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -417,6 +417,7 @@ func TestSCIMConfiguration_RefusesSourceHeldConnector(t *testing.T) {
 	`, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "BREX",
 			"apiKey":         "bxt_test-key-brex-scim-refusal",
 		},
@@ -471,7 +472,7 @@ func TestSCIMConfiguration_RefusesSourceHeldConnector(t *testing.T) {
 			"connectorId":    connectorID,
 		},
 	}, &configResult)
-	require.ErrorContains(t, err, "used by an access review source")
+	require.ErrorContains(t, err, "not supported for SCIM bridge")
 
 	// The refused bind rolled the configuration back with it: the same
 	// mutation without a connector must succeed.

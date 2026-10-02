@@ -1,37 +1,206 @@
 {
+  "connectForm": {
+    "name": {
+      "label": "Name",
+      "description": "Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.",
+      "required": "Enter a name.",
+      "saveFailed": "The name could not be saved."
+    }
+  },
+  "marketplacePage": {
+    "title": "Marketplace",
+    "description": "Vendors Probo can connect to.",
+    "connect": "Connect",
+    "credentialCount_one": "{{count}} credential connected",
+    "credentialCount_other": "{{count}} credentials connected",
+    "connectTitle": "Connect {{provider}}",
+    "choose": "Choose how to connect {{provider}}.",
+    "back": "Back",
+    "methods": {
+      "WORKLOAD_IDENTITY": "Workload identity",
+      "GITHUB_APP": "GitHub App",
+      "INSTALL": "App install",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "Client credentials",
+      "API_KEY": "API key"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "Trust Probo with a cloud role. No long-lived secret.",
+      "GITHUB_APP": "Install the Probo GitHub App.",
+      "INSTALL": "Install the Probo app in the vendor.",
+      "OAUTH2": "Sign in with the vendor and grant access.",
+      "CLIENT_CREDENTIALS": "Use a client ID and client secret.",
+      "API_KEY": "Paste an API key from the vendor."
+    },
+    "documentation": "Documentation",
+    "fields": {
+      "apiKey": "API key",
+      "clientId": "Client ID",
+      "clientSecret": "Client secret",
+      "tokenUrl": "Token URL",
+      "scope": "Scope",
+      "datadogSite": "Datadog site",
+      "zendeskSubdomain": "Zendesk subdomain",
+      "region": "Region",
+      "regionPlaceholder": "Select a region",
+      "regionUnitedStates": "United States",
+      "regionEurope": "Europe"
+    },
+    "workloadIdentity": {
+      "propagationHint": "Federation can take a few minutes to propagate. If Connect reports a disconnected connector, wait and try again.",
+      "fields": {
+        "roleArn": "Role ARN",
+        "roleArnHelp": "e.g. arn:aws:iam::123456789012:role/ProboAudit",
+        "workloadIdentityProvider": "Workload identity provider",
+        "workloadIdentityProviderHelp": "e.g. projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+        "serviceAccountEmail": "Service account email",
+        "serviceAccountEmailHelp": "e.g. probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+        "tenantId": "Directory (tenant) ID",
+        "tenantIdHelp": "e.g. 11111111-1111-1111-1111-111111111111",
+        "clientId": "Application (client) ID",
+        "clientIdHelp": "e.g. 22222222-2222-2222-2222-222222222222",
+        "subscriptionId": "Subscription ID",
+        "subscriptionIdHelp": "e.g. 33333333-3333-3333-3333-333333333333",
+        "environment": "Azure environment",
+        "environmentGccNote": "GCC uses Azure Public. Only GCC High and DoD use Government.",
+        "issuer": "Issuer",
+        "audience": "Audience",
+        "subject": "Subject"
+      },
+      "environments": {
+        "AZURE_PUBLIC": "Public — GCC uses Azure Public",
+        "AZURE_GOVERNMENT": "Government (GCC High)",
+        "AZURE_GOVERNMENT_DOD": "Government DoD",
+        "AZURE_CHINA": "China"
+      },
+      "messages": {
+        "copyFailed": "Copy failed",
+        "copiedIssuer": "Issuer copied.",
+        "copiedAudience": "Audience copied.",
+        "copiedSubject": "Subject copied.",
+        "copiedTerraform": "Terraform snippet copied.",
+        "error": "Error"
+      },
+      "errors": {
+        "roleArn": "Enter a valid IAM role ARN.",
+        "workloadIdentityProvider": "Enter a valid workload identity provider resource.",
+        "serviceAccountEmail": "Enter a valid service account email.",
+        "tenantId": "Enter a valid directory (tenant) ID.",
+        "clientId": "Enter a valid application (client) ID.",
+        "subscriptionId": "Enter a valid subscription ID.",
+        "aws": {
+          "create": "Could not create the connector. Check the role ARN and try again.",
+          "disconnected": "Probo could not assume the audit role. Confirm the stack is deployed in this account and that the issuer and subject match the values shown during setup."
+        },
+        "gcp": {
+          "create": "Could not create the connector. Check the provider resource and the service account email, then try again.",
+          "disconnected": "Probo could not impersonate the audit service account. Confirm that the module is applied in this project and that the issuer and subject match the values shown during setup."
+        },
+        "azure": {
+          "create": "Could not create the connector. Check the tenant, client, and subscription IDs, then try again.",
+          "disconnected": "Probo could not assume the audit identity. Confirm that the module is applied and that the issuer and subject match the values shown during setup. Federation can take a few minutes."
+        },
+        "delete": "Could not delete the connector. Try again."
+      },
+      "actions": {
+        "copy": "Copy",
+        "installViaCloudFormation": "Install via CloudFormation",
+        "installViaTerraform": "Install via Terraform"
+      }
+    },
+    "connected": "Vendor connected.",
+    "connectFailed": "Could not connect"
+  },
   "listPage": {
-    "title": "Integrations",
-    "description": "The vendors Probo holds a credential for, and what else it can connect to.",
+    "title": "Connectors",
+    "description": "The vendors Probo holds a credential for.",
     "notFound": "Organization not found",
     "sections": {
       "connected": "Connected",
       "available": "Available"
     },
+    "addMore": "Add more",
     "emptyConnected": "No vendor is connected yet.",
+    "emptyConnectedSearch": "No connected vendor matches your search.",
     "emptyAvailable": "Every available vendor is already connected.",
+    "emptyAvailableSearch": "No available vendor matches your search.",
+    "searchPlaceholder": "Search vendors...",
+    "searchConnectorsPlaceholder": "Search connectors...",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "All statuses"
+    },
+    "created": "Created {{date}}",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "connectedCount": "{{connected}}/{{total}} connected",
+    "connectionIssues": {
+      "reconnect": "Reconnect {{provider}} to restore access.",
+      "credentials": "{{provider}} credentials are invalid. Probo cannot read this vendor with the current credentials.",
+      "notAuthorized": "{{provider}} accepted the credential but refused the request. Check the permissions this credential has, and whether the plan includes the API Probo uses."
+    },
+    "usedBy": "Used by:",
+    "notUsedYet": "Not used yet",
+    "modules": {
+      "ACCESS_REVIEW": "Access Review",
+      "SCIM": "Auth & Provisioning"
+    },
+    "organization": "Organization",
+    "organizationPlaceholder": "Select an organization",
     "comingSoon": "Coming soon",
-    "connectElsewhere": "To connect a vendor, open <connections>access review connections</connections>.",
     "actions": {
-      "manage": "Manage"
+      "add": "Add connector",
+      "manage": "Manage",
+      "connectMore": "Connect more"
+    },
+    "messages": {
+      "connected": "Vendor connected.",
+      "connectedDescription": "This vendor is ready to use.",
+      "error": "Could not connect",
+      "organizationUpdated": "Organization updated."
+    },
+    "errors": {
+      "organization": "Failed to update organization"
     }
   },
   "detailsPage": {
     "notFound": "Integration not found",
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Connected",
       "DISCONNECTED": "Disconnected",
       "NOT_AUTHORIZED": "Not authorized",
       "RECONNECT_REQUIRED": "Reconnect required"
     },
+    "connectors": {
+      "title": "Connectors"
+    },
     "accounts": {
       "title": "Accounts",
+      "subtitle": "Pending accounts still have to be created before other modules of the platform can use them.",
       "empty": "No account is enabled on this credential yet.",
+      "discoveryFailed": "Probo cannot list accounts with these credentials.",
+      "pending": "Pending",
+      "selectAll": "Select all",
+      "enable": "Enable",
+      "disconnect": "Disconnect",
+      "disconnectTitle": "Disconnect account",
+      "disconnectDescription": "Disconnecting removes {{name}}. Anything still using it has to be removed first.",
+      "disconnectConfirm": "Disconnect",
       "loadMore": "Show more accounts"
     },
     "actions": {
+      "back": "Connectors",
+      "close": "Close",
+      "reconnect": "Reconnect",
       "delete": "Disconnect",
       "cancel": "Cancel",
       "more": "More actions"
+    },
+    "probeError": {
+      "copy": "Copy error",
+      "copied": "Error copied."
     },
     "delete": {
       "title": "Disconnect integration",
@@ -39,10 +208,13 @@
       "confirm": "Disconnect"
     },
     "messages": {
-      "deleted": "Integration disconnected."
+      "deleted": "Integration disconnected.",
+      "accountDisconnected": "Account disconnected."
     },
     "errors": {
-      "delete": "Failed to disconnect integration"
+      "delete": "Failed to disconnect integration",
+      "enable": "Failed to enable accounts",
+      "disable": "Failed to disconnect account"
     }
   }
 }

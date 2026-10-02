@@ -36,13 +36,14 @@ import { graphql } from "relay-runtime";
 
 import type { ClientCredentialsConnectorDialog_provider$key } from "#/__generated__/core/ClientCredentialsConnectorDialog_provider.graphql";
 import type { ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation } from "#/__generated__/core/ClientCredentialsConnectorDialogCreateClientCredentialsConnectorMutation.graphql";
-
-import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
 import {
   buildExtraFields,
   hasRequiredExtraSettings,
   mapClientCredentialsExtraSettingToField,
-} from "../_lib/connectorSettings";
+} from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
+
+import { useCreateAccessReviewSource } from "../_hooks/useCreateAccessReviewSource";
 
 const clientCredentialsConnectorDialogFragment = graphql`
   fragment ClientCredentialsConnectorDialog_provider on ConnectorProviderInfo {
@@ -74,7 +75,6 @@ const createClientCredentialsConnectorMutation = graphql`
 type Props = {
   providerKey: ClientCredentialsConnectorDialog_provider$key | null;
   organizationId: string;
-  connectionId: string;
   onClose: () => void;
   onSuccess: () => void;
 };
@@ -82,7 +82,6 @@ type Props = {
 export function ClientCredentialsConnectorDialog({
   providerKey,
   organizationId,
-  connectionId,
   onClose,
   onSuccess,
 }: Props) {
@@ -94,6 +93,7 @@ export function ClientCredentialsConnectorDialog({
   );
   const dialogRef = useDialogRef();
 
+  const connectorName = useConnectorName();
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [tokenUrl, setTokenUrl] = useState("");
@@ -108,7 +108,6 @@ export function ClientCredentialsConnectorDialog({
 
   const createSourceAfterConnector = useCreateAccessReviewSource({
     organizationId,
-    connectionId,
     onSuccess,
   });
 
@@ -122,6 +121,9 @@ export function ClientCredentialsConnectorDialog({
   }, [dialogRef, provider]);
 
   const connectClientCredentialsProvider = () => {
+    if (connectorName.rejectIfEmpty()) {
+      return;
+    }
     if (!provider || !clientId.trim() || !clientSecret.trim()) {
       return;
     }
@@ -150,6 +152,7 @@ export function ClientCredentialsConnectorDialog({
       variables: {
         input: {
           organizationId,
+          name: connectorName.trimmed,
           provider: provider.provider,
           clientId: clientId.trim(),
           clientSecret: clientSecret.trim(),
@@ -227,6 +230,12 @@ export function ClientCredentialsConnectorDialog({
         }}
       >
         <DialogContent padded className="space-y-4">
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <p className="text-txt-secondary text-sm">
             {t("clientCredentialsConnectorDialog.description", {
               provider: provider?.displayName ?? "",

@@ -34,9 +34,8 @@ import { type ChangeEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Link, useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type {
   AzureEnvironment,
   CreateAzureAccessReviewSourcePageCreateMutation,
@@ -45,17 +44,15 @@ import type { CreateAzureAccessReviewSourcePageDeleteMutation } from "#/__genera
 import type { CreateAzureAccessReviewSourcePageQuery } from "#/__generated__/core/CreateAzureAccessReviewSourcePageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { ConnectorDocumentationLink } from "#/pages/organizations/settings/integrations/_components/ConnectorDocumentationLink";
+import { ConnectorNameField, useConnectorName } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
+import { isAzureGUID } from "#/pages/organizations/settings/integrations/_lib/connectorSettings";
+import { integrationListPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
 import {
   ActionSplitButton,
   type ActionSplitButtonAction,
 } from "../_components/ActionSplitButton";
-import { ConnectorDocumentationLink } from "../dialogs/_components/ConnectorDocumentationLink";
-import {
-  azureAccessReviewSourceName,
-  isAzureGUID,
-} from "../dialogs/_lib/connectorSettings";
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
 const azureEnvironments = [
   "AZURE_PUBLIC",
@@ -72,7 +69,7 @@ export const createAzureAccessReviewSourcePageQuery = graphql`
       subject
       terraformSnippet
     }
-    accessReviewDrivers {
+    connectorProviders {
       provider
       displayName
       documentationUrl
@@ -122,6 +119,7 @@ export function CreateAzureAccessReviewSourcePage({
   const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
+  const connectorName = useConnectorName();
   const [tenantId, setTenantId] = useState("");
   const [clientId, setClientId] = useState("");
   const [subscriptionId, setSubscriptionId] = useState("");
@@ -130,7 +128,7 @@ export function CreateAzureAccessReviewSourcePage({
 
   usePageTitle(t("createAzureAccessReviewSourcePage.pageTitle"));
 
-  const { organization, azureConnectorSetup, accessReviewDrivers }
+  const { organization, azureConnectorSetup, connectorProviders }
     = usePreloadedQuery<CreateAzureAccessReviewSourcePageQuery>(
       createAzureAccessReviewSourcePageQuery,
       queryRef,
@@ -139,17 +137,12 @@ export function CreateAzureAccessReviewSourcePage({
     throw new Error("Organization not found");
   }
 
-  const azureDriver = accessReviewDrivers.find(
+  const azureDriver = connectorProviders.find(
     driver => driver.provider === "AZURE",
   );
   if (!azureDriver) {
     throw new Error("Azure access review driver not found");
   }
-
-  const connectionId = ConnectionHandler.getConnectionID(
-    organization.id,
-    "AccessReviewConnectionsPage_accessReviewSources",
-  );
 
   const [createWorkloadIdentityConnector] = useMutation<
     CreateAzureAccessReviewSourcePageCreateMutation
@@ -157,9 +150,6 @@ export function CreateAzureAccessReviewSourcePage({
   const [deleteConnector] = useMutation<
     CreateAzureAccessReviewSourcePageDeleteMutation
   >(deleteConnectorMutation);
-  const [createAccessReviewSource] = useMutation<
-    accessReviewSourceMutationsCreateMutation
-  >(createAccessReviewSourceMutation);
 
   if (!organization.canCreateSource) {
     return (
@@ -208,7 +198,7 @@ export function CreateAzureAccessReviewSourcePage({
   const formValid = tenantValid && clientValid && subscriptionValid;
 
   const onSubmit = async () => {
-    if (!formValid || isCreating) {
+    if (connectorName.rejectIfEmpty() || !formValid || isCreating) {
       return;
     }
 
@@ -220,6 +210,7 @@ export function CreateAzureAccessReviewSourcePage({
           variables: {
             input: {
               organizationId,
+              name: connectorName.trimmed,
               provider: "AZURE",
               azureTenantId: tenantId.trim(),
               azureClientId: clientId.trim(),
@@ -251,47 +242,12 @@ export function CreateAzureAccessReviewSourcePage({
         return;
       }
 
-      try {
-        await createAccessReviewSource(
-          {
-            variables: {
-              input: {
-                organizationId,
-                connectorId,
-                name: azureAccessReviewSourceName(
-                  azureDriver.displayName,
-                  subscriptionId,
-                ),
-                csvData: null,
-              },
-            },
-            updater: (store) => {
-              if (connectionId) {
-                prependCreatedSourceEdge(store, connectionId);
-              }
-            },
-          },
-          { errorToast: t("createAzureAccessReviewSourcePage.errors.source") },
-        );
-      } catch {
-        await discardConnector();
-        return;
-      }
-
       toast({
         title: t("createAzureAccessReviewSourcePage.messages.success"),
         description: t("createAzureAccessReviewSourcePage.messages.created"),
         variant: "success",
       });
-      void navigate(
-        [
-          "",
-          "organizations",
-          organizationId,
-          "access-reviews",
-          "connections",
-        ].join("/"),
-      );
+      void navigate(integrationListPath(organizationId));
     } catch {
       return;
     } finally {
@@ -336,6 +292,12 @@ export function CreateAzureAccessReviewSourcePage({
           }}
           className="space-y-4"
         >
+          <ConnectorNameField
+            name={connectorName.name}
+            error={connectorName.error}
+            onChange={connectorName.onChange}
+            onEmpty={connectorName.rejectIfEmpty}
+          />
           <Field
             name="tenantId"
             label={t("createAzureAccessReviewSourcePage.fields.tenantId")}

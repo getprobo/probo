@@ -64,6 +64,7 @@ type (
 		OrganizationID string `json:"oid"`
 		ContinueURL    string `json:"continue,omitempty"`
 		ConnectorID    string `json:"cid,omitempty"`
+		Name           string `json:"name,omitempty"`
 		Organization   string `json:"-"`
 	}
 
@@ -167,6 +168,7 @@ func (c *GitHubAppConnector) Initiate(
 	stateData := GitHubAppState{
 		OrganizationID: organizationID.String(),
 		ConnectorID:    opts.ConnectorID,
+		Name:           opts.Name,
 	}
 	if r != nil {
 		stateData.ContinueURL = r.URL.Query().Get("continue")

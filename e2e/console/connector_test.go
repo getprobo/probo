@@ -30,13 +30,13 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestAccessReviewDrivers(t *testing.T) {
+func TestConnectorProviders(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				displayName
 				documentationUrl
@@ -80,7 +80,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	}
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider                       string        `json:"provider"`
 			DisplayName                    string        `json:"displayName"`
 			DocumentationURL               *string       `json:"documentationUrl"`
@@ -93,12 +93,12 @@ func TestAccessReviewDrivers(t *testing.T) {
 			ClientCredentialsExtraSettings []settingInfo `json:"clientCredentialsExtraSettings"`
 			WorkloadIdentitySupported      bool          `json:"workloadIdentitySupported"`
 			WorkloadIdentityExtraSettings  []settingInfo `json:"workloadIdentityExtraSettings"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	err := owner.Execute(query, nil, &result)
 	require.NoError(t, err)
-	assert.NotEmpty(t, result.AccessReviewDrivers)
+	assert.NotEmpty(t, result.ConnectorProviders)
 
 	providerNames := make(map[string]bool)
 	docURLByProvider := make(map[string]*string)
@@ -109,7 +109,7 @@ func TestAccessReviewDrivers(t *testing.T) {
 	workloadIdentitySettingKeys := make(map[string][]string)
 	workloadIdentitySupported := make(map[string]bool)
 
-	for _, info := range result.AccessReviewDrivers {
+	for _, info := range result.ConnectorProviders {
 		assert.NotEmpty(t, info.Provider)
 		assert.NotEmpty(t, info.DisplayName)
 		assert.NotNil(t, info.APIKeyExtraSettings)
@@ -217,15 +217,15 @@ func TestAccessReviewDrivers(t *testing.T) {
 		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 
 		var viewerResult struct {
-			AccessReviewDrivers []struct {
+			ConnectorProviders []struct {
 				Provider    string `json:"provider"`
 				DisplayName string `json:"displayName"`
-			} `json:"accessReviewDrivers"`
+			} `json:"connectorProviders"`
 		}
 
 		err := viewer.Execute(query, nil, &viewerResult)
 		require.NoError(t, err)
-		assert.NotEmpty(t, viewerResult.AccessReviewDrivers)
+		assert.NotEmpty(t, viewerResult.ConnectorProviders)
 	})
 }
 
@@ -264,6 +264,7 @@ func TestCreateAPIKeyConnector(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "BREX",
 			"apiKey":         "bxt_test-key-123",
 		},
@@ -304,6 +305,7 @@ func TestCreateAPIKeyConnectorSentryMissingSlug(t *testing.T) {
 	_, err := owner.Do(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "SENTRY",
 			"apiKey":         "test-key",
 		},
@@ -332,6 +334,7 @@ func TestCreateAPIKeyConnectorMalformedKey(t *testing.T) {
 	_, err := owner.Do(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "LANGFUSE",
 			// The public half alone: the colon and the secret key are missing.
 			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555",
@@ -369,6 +372,7 @@ func TestCreateAPIKeyConnectorLangfuseKeyPair(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId":  orgID,
+			"name":            "Test",
 			"provider":        "LANGFUSE",
 			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555:sk-lf-66666666-7777-8888-9999-000000000000",
 			"langfuseBaseUrl": "https://cloud.langfuse.com",
@@ -407,6 +411,7 @@ func TestCreateAPIKeyConnectorSentryRoundTrip(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId":         orgID,
+			"name":                   "Test",
 			"provider":               "SENTRY",
 			"apiKey":                 "test-key",
 			"sentryOrganizationSlug": "my-org",
@@ -445,6 +450,7 @@ func TestCreateClientCredentialsConnector(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId":       orgID,
+			"name":                 "Test",
 			"provider":             "ONE_PASSWORD",
 			"clientId":             "test-client",
 			"clientSecret":         "test-secret",
@@ -489,6 +495,7 @@ func TestDeleteConnector(t *testing.T) {
 	err := owner.Execute(createQuery, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "BREX",
 			"apiKey":         "bxt_key-to-delete",
 		},
@@ -672,7 +679,7 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				apiKeySupported
 				apiKeyManaged
@@ -685,7 +692,7 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 	`
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider            string `json:"provider"`
 			APIKeySupported     bool   `json:"apiKeySupported"`
 			APIKeyManaged       bool   `json:"apiKeyManaged"`
@@ -693,14 +700,14 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 			APIKeyExtraSettings []struct {
 				Key string `json:"key"`
 			} `json:"apiKeyExtraSettings"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	require.NoError(t, owner.Execute(query, nil, &result))
 
 	crispFound := false
 
-	for _, driver := range result.AccessReviewDrivers {
+	for _, driver := range result.ConnectorProviders {
 		if driver.Provider != "CRISP" {
 			assert.Falsef(
 				t,
@@ -721,4 +728,77 @@ func TestCrispConnectsByAppInstall(t *testing.T) {
 	}
 
 	assert.True(t, crispFound, "crisp is configured in the e2e probod and must be in the catalog")
+}
+
+func TestConnectorName_RequiredOnCreateAndUpdate(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const createQuery = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id name }
+			}
+		}
+	`
+
+	_, err := owner.Do(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"name":           "   ",
+			"provider":       "BREX",
+			"apiKey":         "bxt_test-key-123",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a blank connector name must be rejected")
+
+	var created struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+	require.NoError(t, owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"name":           "  Access review  ",
+			"provider":       "BREX",
+			"apiKey":         "bxt_test-key-456",
+		},
+	}, &created))
+	assert.Equal(t, "Access review", created.CreateAPIKeyConnector.Connector.Name)
+
+	const updateQuery = `
+		mutation($input: UpdateConnectorInput!) {
+			updateConnector(input: $input) {
+				connector { id name }
+			}
+		}
+	`
+
+	_, err = owner.Do(updateQuery, map[string]any{
+		"input": map[string]any{
+			"connectorId": created.CreateAPIKeyConnector.Connector.ID,
+			"name":        "",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "clearing a connector name must be rejected")
+
+	var updated struct {
+		UpdateConnector struct {
+			Connector struct {
+				Name string `json:"name"`
+			} `json:"connector"`
+		} `json:"updateConnector"`
+	}
+	require.NoError(t, owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"connectorId": created.CreateAPIKeyConnector.Connector.ID,
+			"name":        "Production",
+		},
+	}, &updated))
+	assert.Equal(t, "Production", updated.UpdateConnector.Connector.Name)
 }

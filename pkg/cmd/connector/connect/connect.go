@@ -35,6 +35,7 @@ mutation($input: CreateWorkloadIdentityConnectorInput!) {
   createWorkloadIdentityConnector(input: $input) {
     connector {
       id
+      name
       provider
       protocol
       connectionStatus
@@ -48,6 +49,7 @@ mutation($input: CreateOrganizationConnectorInput!) {
   createOrganizationConnector(input: $input) {
     connector {
       id
+      name
       provider
       protocol
       connectionStatus
@@ -64,6 +66,7 @@ mutation($input: CreateOrganizationConnectorInput!) {
 type (
 	connectedConnector struct {
 		ID               string `json:"id"`
+		Name             string `json:"name"`
 		Provider         string `json:"provider"`
 		Protocol         string `json:"protocol"`
 		ConnectionStatus string `json:"connectionStatus"`
@@ -94,6 +97,7 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 		flagAzureClientID               string
 		flagAzureSubscriptionID         string
 		flagAzureEnvironment            string
+		flagName                        string
 		flagOutput                      *string
 	)
 
@@ -121,6 +125,10 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 
 			if flagProvider == "" {
 				return fmt.Errorf("--provider is required")
+			}
+
+			if flagName == "" {
+				return fmt.Errorf("--name is required")
 			}
 
 			if flagOrganization && flagAzureSubscriptionID != "" {
@@ -159,6 +167,7 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 
 			input := connectorInput(
 				flagOrg,
+				flagName,
 				flagProvider,
 				flagRoleARN,
 				flagGCPWorkloadIdentityProvider,
@@ -193,6 +202,12 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmd.Flags().StringVar(
+		&flagName,
+		"name",
+		"",
+		"Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.",
+	)
 	cmd.Flags().BoolVar(&flagOrganization, "organization", false, "Connect an organization and list its accounts")
 	cmd.Flags().StringVar(&flagProvider, "provider", "", "Connector provider (AWS, GCP, AZURE)")
 	cmd.Flags().StringVar(&flagRoleARN, "aws-role-arn", "", "IAM role ARN")
@@ -221,6 +236,7 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 
 func connectorInput(
 	orgID string,
+	name string,
 	provider string,
 	roleARN string,
 	gcpProvider string,
@@ -231,6 +247,7 @@ func connectorInput(
 ) map[string]any {
 	input := map[string]any{
 		"organizationId": orgID,
+		"name":           name,
 		"provider":       provider,
 	}
 

@@ -10533,6 +10533,7 @@ components:
       type: object
       required:
         - id
+        - name
         - provider
         - protocol
         - connection_status
@@ -10541,6 +10542,12 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Connector ID
+        name:
+          type: string
+          description: >-
+            Keeps track of this connector and the credential attached to it,
+            so several connections to the same provider stay distinct.
+            displayName stays the provider name.
         provider:
           type: string
           description: Connector provider
@@ -10708,6 +10715,7 @@ components:
       type: object
       required:
         - organization_id
+        - name
         - provider
       oneOf:
         - title: AWS
@@ -10741,6 +10749,12 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        name:
+          type: string
+          description: >-
+            Keeps track of this connector and the credential attached to it,
+            so several connections to the same provider stay distinct.
+            displayName stays the provider name.
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
           description: Connector provider (AWS, GCP, or Azure)
@@ -10851,10 +10865,35 @@ components:
         connector:
           $ref: "#/components/schemas/Connector"
 
+    UpdateConnectorMCPInput:
+      type: object
+      required:
+        - connector_id
+        - name
+      properties:
+        connector_id:
+          $ref: "#/components/schemas/GID"
+          description: Connector ID
+        name:
+          type: string
+          description: >-
+            Keeps track of this connector and the credential attached to it,
+            so several connections to the same provider stay distinct.
+            displayName stays the provider name.
+
+    UpdateConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+
     CreateOrganizationConnectorMCPInput:
       type: object
       required:
         - organization_id
+        - name
         - provider
       oneOf:
         - title: AWS
@@ -10887,6 +10926,12 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        name:
+          type: string
+          description: >-
+            Keeps track of this connector and the credential attached to it,
+            so several connections to the same provider stay distinct.
+            displayName stays the provider name.
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
           description: Connector provider (AWS, GCP, or Azure)
@@ -19075,6 +19120,18 @@ tools:
       $ref: "#/components/schemas/GetConnectorMCPInput"
     outputSchema:
       $ref: "#/components/schemas/GetConnectorMCPOutput"
+  - name: updateConnector
+    title: Update Connector
+    description: Rename a connector
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateConnectorMCPOutput"
   - name: createOrganizationConnector
     title: Create Organization Connector
     description: Create an organization-scoped workload-identity connector and list discovered accounts

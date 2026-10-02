@@ -254,6 +254,7 @@ const (
 
 	// Connector actions (generic)
 	ActionConnectorCreate   = "core:connector:create"
+	ActionConnectorUpdate   = "core:connector:update"
 	ActionConnectorGet      = "core:connector:get"
 	ActionConnectorList     = "core:connector:list"
 	ActionConnectorDelete   = "core:connector:delete"
