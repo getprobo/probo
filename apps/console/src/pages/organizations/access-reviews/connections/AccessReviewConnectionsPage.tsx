@@ -38,13 +38,14 @@ import type { AccessReviewConnectionsPagePaginationQuery } from "#/__generated__
 import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { groupByProvider } from "#/pages/organizations/_lib/connectorStatus";
 import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
 
 import { AddableConnectorListItem } from "./_components/AddableConnectorListItem";
 import { sourcesPage } from "./_components/variants";
-import { groupConnectorsByProvider, listedConnectorAccounts } from "./_lib/listedConnectorAccounts";
+import { listedConnectorAccounts } from "./_lib/listedConnectorAccounts";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
   params.delete("connector_id");
@@ -179,7 +180,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     [accessReviewSources.edges, normalizedSearch],
   );
   const addableVendors = useMemo(
-    () => groupConnectorsByProvider(organization.connectors).filter(group =>
+    () => groupByProvider(organization.connectors).filter(group =>
       group.some(connector =>
         listedConnectorAccounts(
           connector.accounts.edges.map(({ node }) => node),

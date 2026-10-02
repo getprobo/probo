@@ -34,6 +34,11 @@ import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/
 import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useMutation } from "#/lib/relay/useMutation";
+import {
+  aggregateConnectionTone,
+  connectionSignalFrom,
+  presentConnection,
+} from "#/pages/organizations/_lib/connectorStatus";
 import { connectorDetailsPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
 import {
@@ -48,6 +53,10 @@ const fragment = graphql`
     displayName
     provider
     connectionStatus
+    canReconnect
+    providerOrganizations {
+      status
+    }
     accounts(first: 50) {
       totalCount
       edges {
@@ -72,32 +81,6 @@ function accountNeedsOrganization(externalAccountId: string, connectorId: string
   return externalAccountId === connectorId;
 }
 
-function connectorTone(status: string): "green" | "amber" | "red" {
-  if (status === "CONNECTED") {
-    return "green";
-  }
-  if (status === "RECONNECT_REQUIRED" || status === "NOT_AUTHORIZED") {
-    return "amber";
-  }
-  return "red";
-}
-
-function vendorTone(statuses: readonly string[]): "green" | "amber" | "red" {
-  const [first] = statuses;
-  if (first != null && statuses.every(status => status === first)) {
-    return connectorTone(first);
-  }
-
-  const down = statuses.filter(status => status !== "CONNECTED").length;
-  if (down === 0) {
-    return "green";
-  }
-  if (down === statuses.length) {
-    return "red";
-  }
-  return "amber";
-}
-
 export function AddableConnectorListItem({
   connectorKeys,
   organizationId,
@@ -105,6 +88,7 @@ export function AddableConnectorListItem({
   normalizedSearch,
 }: AddableConnectorListItemProps) {
   const { t } = useTranslation();
+  const { t: tConnector } = useTranslation("organizations/settings/integrations");
   const connectors = useFragment(fragment, connectorKeys);
   const [isAdding, setIsAdding] = useState(false);
   const [createAccessReviewSources, isCreating]
@@ -113,11 +97,22 @@ export function AddableConnectorListItem({
     );
   const busy = isAdding || isCreating;
   const [face] = connectors;
-  const statuses = connectors.map(connector => connector.connectionStatus);
-  const sharedStatus = statuses.every(status => status === statuses[0])
-    ? statuses[0]
+  const presented = connectors.flatMap((connector) => {
+    const signal = connectionSignalFrom({
+      connectionStatus: connector.connectionStatus,
+      canReconnect: connector.canReconnect,
+      providerOrganizations: {
+        status: connector.providerOrganizations.status,
+      },
+    });
+    return signal == null ? [] : [presentConnection(signal)];
+  });
+  const [firstPresented] = presented;
+  const sharedStatus = firstPresented != null
+    && presented.every(item => item.status === firstPresented.status)
+    ? firstPresented.status
     : null;
-  const tone = vendorTone(statuses);
+  const tone = presented.length === 0 ? "green" : aggregateConnectionTone(presented);
   const accountCount = connectors.length === 1
     ? connectors[0].accounts.totalCount
     : new Set(
@@ -227,10 +222,10 @@ export function AddableConnectorListItem({
       <div className="mt-auto flex flex-wrap items-center gap-2">
         <Badge variant="soft" color={tone} size={1}>
           {sharedStatus != null
-            ? t(`accessReviewConnectionsPage.status.${sharedStatus}`)
-            : t("accessReviewConnectionsPage.connectedCount", {
-                connected: statuses.filter(status => status === "CONNECTED").length,
-                total: statuses.length,
+            ? tConnector(`detailsPage.status.${sharedStatus}`)
+            : tConnector("listPage.connectedCount", {
+                connected: presented.filter(item => item.status === "CONNECTED").length,
+                total: presented.length,
               })}
         </Badge>
         <Badge variant="soft" color="neutral" size={1}>

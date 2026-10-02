@@ -44,6 +44,17 @@ import type { ConnectorListItemUpdateNameMutation } from "#/__generated__/core/C
 import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useMutation } from "#/lib/relay/useMutation";
+import {
+  aggregateConnectionTone,
+  type ConnectionIssueKey,
+  connectionIssueKeys,
+  type ConnectionPresentation,
+  type ConnectionSignal,
+  connectionSignalFrom,
+  type ConnectionTone,
+  connectionTone,
+  presentConnection,
+} from "#/pages/organizations/_lib/connectorStatus";
 
 import { connectMethodFromConnector } from "../_lib/connectMethods";
 import { buildConnectorInitiateURL } from "../_lib/connectorSettings";
@@ -98,109 +109,6 @@ const updateConnectorNameMutation = graphql`
     }
   }
 `;
-
-type ConnectionStatus = "CONNECTED" | "DISCONNECTED" | "NOT_AUTHORIZED" | "RECONNECT_REQUIRED";
-
-type OrganizationsStatus = "AVAILABLE" | "EMPTY" | "NOT_APPLICABLE" | "UNAVAILABLE";
-
-type IssueKey = "reconnect" | "notAuthorized" | "credentials";
-
-type ConnectionTone = "green" | "amber" | "red";
-
-interface ConnectionSignal {
-  status: ConnectionStatus;
-  organizationsStatus: OrganizationsStatus;
-  canReconnect: boolean;
-}
-
-interface ConnectionPresentation {
-  status: ConnectionStatus;
-  issue: IssueKey | null;
-}
-
-// A record linked in by a narrower query (modules, or a create that returned
-// only an id) has no status yet. Absent is not a failure: the page refetch
-// writes the real one. A missing account list is also not a failure.
-export function connectionSignalFrom(connector: {
-  connectionStatus?: ConnectionStatus | null;
-  canReconnect?: boolean | null;
-  providerOrganizations?: { status?: OrganizationsStatus | null } | null;
-}): ConnectionSignal | null {
-  if (connector.connectionStatus == null) {
-    return null;
-  }
-
-  return {
-    status: connector.connectionStatus,
-    organizationsStatus: connector.providerOrganizations?.status ?? "NOT_APPLICABLE",
-    canReconnect: connector.canReconnect ?? false,
-  };
-}
-
-// One outcome for the badge and the warning icon. A single card uses the same
-// status for its color. An account list that cannot be read is a failure,
-// including when the token-verify probe still says connected.
-function presentConnection(signal: ConnectionSignal): ConnectionPresentation {
-  if (signal.organizationsStatus === "UNAVAILABLE") {
-    if (signal.status === "NOT_AUTHORIZED") {
-      return { status: "NOT_AUTHORIZED", issue: "notAuthorized" };
-    }
-    if (signal.canReconnect) {
-      return {
-        status: signal.status === "CONNECTED" ? "RECONNECT_REQUIRED" : signal.status,
-        issue: "reconnect",
-      };
-    }
-    return {
-      status: signal.status === "CONNECTED" ? "DISCONNECTED" : signal.status,
-      issue: "credentials",
-    };
-  }
-
-  if (signal.status === "RECONNECT_REQUIRED") {
-    return { status: signal.status, issue: "reconnect" };
-  }
-  if (signal.status === "NOT_AUTHORIZED") {
-    return { status: signal.status, issue: "notAuthorized" };
-  }
-  if (signal.status !== "CONNECTED") {
-    return { status: signal.status, issue: "credentials" };
-  }
-
-  return { status: "CONNECTED", issue: null };
-}
-
-function connectionIssueKeys(presented: readonly ConnectionPresentation[]): IssueKey[] {
-  const present = new Set<IssueKey>();
-  for (const item of presented) {
-    if (item.issue != null) {
-      present.add(item.issue);
-    }
-  }
-
-  return (["reconnect", "notAuthorized", "credentials"] as const).filter(key => present.has(key));
-}
-
-function aggregateConnectionTone(presented: readonly ConnectionPresentation[]): ConnectionTone {
-  const down = presented.filter(item => item.status !== "CONNECTED").length;
-  if (down === 0) {
-    return "green";
-  }
-  if (down === presented.length) {
-    return "red";
-  }
-  return "amber";
-}
-
-function connectionTone(status: ConnectionStatus): ConnectionTone {
-  if (status === "CONNECTED") {
-    return "green";
-  }
-  if (status === "RECONNECT_REQUIRED" || status === "NOT_AUTHORIZED") {
-    return "amber";
-  }
-  return "red";
-}
 
 interface ConnectorListItemProps {
   connectorKey: ConnectorListItem_connector$key;
@@ -350,7 +258,13 @@ export function ConnectorListItem({
   const { card, controls, identity, metaRow, name, tags, title } = connectorCard();
   const aggregated = aggregatedConnectorIds != null;
   const showDelete = !aggregated && connector.canDelete;
-  const ownSignal = connectionSignalFrom(connector);
+  const ownSignal = connectionSignalFrom({
+    connectionStatus: connector.connectionStatus,
+    canReconnect: connector.canReconnect,
+    providerOrganizations: {
+      status: connector.providerOrganizations.status,
+    },
+  });
   const signals = connectionSignals ?? (ownSignal == null ? [] : [ownSignal]);
   const presented = signals.map(presentConnection);
   const connectionIssues = connectionIssueKeys(presented);
@@ -462,7 +376,7 @@ export function ConnectorListItem({
             />
             {detailAccountCount != null && (
               <Badge variant="soft" color="neutral" size={1}>
-                {t("detailsPage.accountCount", { count: detailAccountCount })}
+                {t("listPage.accountCount", { count: detailAccountCount })}
               </Badge>
             )}
           </div>
@@ -617,7 +531,7 @@ function ConnectorProbeError({
   issues,
   provider,
 }: {
-  issues: readonly IssueKey[];
+  issues: readonly ConnectionIssueKey[];
   provider: string;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
@@ -670,7 +584,7 @@ function ConnectorProbeError({
 function ConnectionIssueMark({
   issues,
 }: {
-  issues: readonly IssueKey[];
+  issues: readonly ConnectionIssueKey[];
 }) {
   if (issues.length === 0) {
     return null;
