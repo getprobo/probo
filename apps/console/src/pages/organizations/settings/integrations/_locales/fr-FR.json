@@ -2,7 +2,7 @@
   "connectForm": {
     "name": {
       "label": "Nom",
-      "description": "Sert à suivre ce connecteur et l'identifiant qui lui est attaché, afin de distinguer plusieurs connexions au même fournisseur. displayName reste le nom du fournisseur.",
+      "description": "Un nom qui distingue cet identifiant des autres identifiants du même fournisseur. Par exemple, production ou main.",
       "required": "Saisissez un nom.",
       "saveFailed": "Le nom n'a pas pu être enregistré."
     }
@@ -159,8 +159,6 @@
   },
   "detailsPage": {
     "notFound": "Intégration introuvable",
-    "accountCount_one": "{{count}} compte",
-    "accountCount_other": "{{count}} comptes",
     "status": {
       "CONNECTED": "Connecté",
       "DISCONNECTED": "Déconnecté",
@@ -176,6 +174,7 @@
       "empty": "Aucun compte n'est encore activé sur cet identifiant.",
       "discoveryFailed": "Probo ne peut pas lister les comptes avec ces identifiants.",
       "pending": "En attente",
+      "unknown": "Inconnu",
       "selectAll": "Tout sélectionner",
       "enable": "Activer",
       "disconnect": "Déconnecter",

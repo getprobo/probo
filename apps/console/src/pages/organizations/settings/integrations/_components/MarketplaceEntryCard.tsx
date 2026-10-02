@@ -20,7 +20,7 @@
 
 import { PlusIcon } from "@phosphor-icons/react";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Link } from "@probo/ui/src/v2/Link/Link";
+import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
@@ -37,14 +37,12 @@ export function MarketplaceEntryCard({
   const label = t("listPage.addMore");
 
   return (
-    <Card variant="soft" size={2} interactive className="relative h-full overflow-hidden">
-      <Link
+    <Card variant="soft" size={2} interactive className="h-full">
+      <CardLink
         to={marketplacePath(organizationId)}
-        underline={false}
-        className="absolute inset-0 z-10"
         aria-label={label}
       />
-      <div className="flex h-full flex-col items-center justify-center gap-3 opacity-60">
+      <div className="pointer-events-none flex h-full flex-col items-center justify-center gap-3 opacity-60">
         <PlusIcon className="size-8" aria-hidden />
         <Text size={2} color="faint">
           {label}

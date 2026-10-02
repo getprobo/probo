@@ -18,14 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useLocation, useParams } from "react-router";
+import { useParams } from "react-router";
 
 import type { ConnectorDetailsPageQuery } from "#/__generated__/core/ConnectorDetailsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { createdConnectorLocationState } from "./_lib/discoveredAccounts";
 import { providerFromSlug } from "./_lib/integrationPath";
 import {
   ConnectorDetailsPage,
@@ -33,18 +32,8 @@ import {
 } from "./ConnectorDetailsPage";
 import { ConnectorDetailsPageSkeleton } from "./ConnectorDetailsPageSkeleton";
 
-function routeState(location: { state: unknown }) {
-  return location.state;
-}
-
 export default function ConnectorDetailsPageLoader() {
   const organizationId = useOrganizationId();
-  const location = useLocation();
-  const [fetchPolicy] = useState<"network-only" | "store-or-network">(() => (
-    createdConnectorLocationState(routeState(location)) != null
-      ? "network-only"
-      : "store-or-network"
-  ));
   const { provider: providerSlug } = useParams<{ provider: string }>();
   const provider = providerSlug == null ? null : providerFromSlug(providerSlug);
   const [queryRef, loadQuery] = useQueryLoader<ConnectorDetailsPageQuery>(
@@ -58,8 +47,8 @@ export default function ConnectorDetailsPageLoader() {
     loadQuery({
       organizationId,
       provider: provider as ConnectorDetailsPageQuery["variables"]["provider"],
-    }, { fetchPolicy });
-  }, [fetchPolicy, loadQuery, organizationId, provider]);
+    }, { fetchPolicy: "store-and-network" });
+  }, [loadQuery, organizationId, provider]);
 
   if (provider == null) {
     throw new Error(":provider missing in route params");

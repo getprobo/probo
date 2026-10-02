@@ -367,6 +367,47 @@ WHERE
 	return count, nil
 }
 
+// CountDistinctExternalAccountIDsByOrganizationAndProvider counts external
+// account ids once across every connector of provider in the organization.
+// The same id stored on two credentials counts once.
+func (accounts *ConnectorAccounts) CountDistinctExternalAccountIDsByOrganizationAndProvider(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+	provider ConnectorProvider,
+) (int, error) {
+	q := `
+SELECT COUNT(DISTINCT external_account_id)
+FROM connector_accounts
+WHERE
+    %s
+    AND organization_id = @organization_id
+    AND connector_id IN (
+        SELECT id
+        FROM connectors
+        WHERE
+            %s
+            AND organization_id = @organization_id
+            AND provider = @provider
+    );
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"provider":        provider,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot count distinct connector_accounts: %w", err)
+	}
+
+	return count, nil
+}
+
 func (a *ConnectorAccount) Upsert(
 	ctx context.Context,
 	conn pg.Tx,

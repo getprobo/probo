@@ -35,31 +35,6 @@ export function connectVendorPath(organizationId: string, provider: string) {
   return `${marketplacePath(organizationId)}/${provider.toLowerCase().replaceAll("_", "-")}`;
 }
 
-const connectMethodSlug = {
-  WORKLOAD_IDENTITY: "workload-identity",
-  GITHUB_APP: "github-app",
-  INSTALL: "install",
-  OAUTH2: "oauth",
-  CLIENT_CREDENTIALS: "client-credentials",
-  API_KEY: "api-key",
-} as const;
-
-export type ConnectVendorMethod = keyof typeof connectMethodSlug;
-
-export function connectMethodFromSlug(slug: string): ConnectVendorMethod | null {
-  const match = (Object.entries(connectMethodSlug) as Array<[ConnectVendorMethod, string]>)
-    .find(([, value]) => value === slug);
-  return match?.[0] ?? null;
-}
-
-export function connectVendorMethodPath(
-  organizationId: string,
-  provider: string,
-  method: ConnectVendorMethod,
-) {
-  return `${connectVendorPath(organizationId, provider)}/${connectMethodSlug[method]}`;
-}
-
 export function providerFromSlug(slug: string) {
   return slug.toUpperCase().replaceAll("-", "_");
 }

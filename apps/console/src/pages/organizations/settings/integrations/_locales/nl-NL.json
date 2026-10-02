@@ -2,7 +2,7 @@
   "connectForm": {
     "name": {
       "label": "Naam",
-      "description": "Houdt deze connector en de gekoppelde credential bij, zodat meerdere verbindingen met dezelfde leverancier uit elkaar te houden zijn. displayName blijft de naam van de leverancier.",
+      "description": "Een naam die deze credential onderscheidt van andere credentials voor dezelfde leverancier. Bijvoorbeeld production of main.",
       "required": "Vul een naam in.",
       "saveFailed": "De naam kon niet worden opgeslagen."
     }
@@ -159,8 +159,6 @@
   },
   "detailsPage": {
     "notFound": "Integratie niet gevonden",
-    "accountCount_one": "{{count}} account",
-    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Verbonden",
       "DISCONNECTED": "Verbinding verbroken",
@@ -176,6 +174,7 @@
       "empty": "Er is nog geen account ingeschakeld op deze credential.",
       "discoveryFailed": "Probo kan met deze credentials geen accounts opvragen.",
       "pending": "In behandeling",
+      "unknown": "Onbekend",
       "selectAll": "Alles selecteren",
       "enable": "Inschakelen",
       "disconnect": "Verbinding verbreken",

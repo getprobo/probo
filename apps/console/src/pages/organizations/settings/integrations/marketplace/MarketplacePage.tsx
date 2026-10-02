@@ -33,9 +33,10 @@ import type { MarketplacePageQuery } from "#/__generated__/core/MarketplacePageQ
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { integrationListPath } from "../_lib/integrationPath";
+import { integrationsList, integrationsPage } from "../variants";
+
 import { ConnectorProviderListItem } from "./_components/ConnectorProviderListItem";
-import { integrationListPath } from "./_lib/integrationPath";
-import { integrationsList, integrationsPage } from "./variants";
 
 export const marketplacePageQuery = graphql`
   query MarketplacePageQuery($organizationId: ID!) {

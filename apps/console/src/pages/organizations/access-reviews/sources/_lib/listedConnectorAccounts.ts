@@ -18,42 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function groupConnectorsByProvider<T extends { provider: string }>(
-  connectors: readonly T[],
-): T[][] {
-  const groups: T[][] = [];
-  const indexByProvider = new Map<string, number>();
-
-  for (const connector of connectors) {
-    const index = indexByProvider.get(connector.provider);
-    if (index == null) {
-      indexByProvider.set(connector.provider, groups.length);
-      groups.push([connector]);
-      continue;
-    }
-
-    groups[index].push(connector);
-  }
-
-  return groups;
-}
-
-interface NamedAccount {
-  name: string;
-}
-
-interface NamedConnector {
-  displayName: string;
-  provider: string;
-}
-
 // A connector-name match lists every account. An account-name match lists only
 // those accounts. No accounts, or no match, hides the connector.
-export function listedConnectorAccounts<T extends NamedAccount>(
-  accounts: readonly T[],
-  connector: NamedConnector,
+export function listedConnectorAccounts<TAccount extends { name: string }>(
+  accounts: readonly TAccount[],
+  connector: { displayName: string; provider: string },
   normalizedSearch: string,
-): readonly T[] | null {
+): readonly TAccount[] | null {
   if (accounts.length === 0) {
     return null;
   }

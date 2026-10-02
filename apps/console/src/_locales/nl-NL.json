@@ -2828,7 +2828,6 @@
     }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV" },
     "errors": {
       "delete": "Verwijderen van toegangsbron mislukt",
       "configure": "Configureren van bron mislukt"
@@ -3121,10 +3120,8 @@
     "errors": { "create": "Aanmaken van toegangsbron mislukt" },
     "messages": { "error": "Fout", "success": "Succes", "created": "Toegangsbron succesvol aangemaakt." },
     "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen", "more": "Meer acties", "addAll": "Alles toevoegen", "edit": "Bewerken" },
-    "status": { "CONNECTED": "Verbonden", "DISCONNECTED": "Verbinding verbroken", "NOT_AUTHORIZED": "Niet geautoriseerd", "RECONNECT_REQUIRED": "Opnieuw verbinden vereist" },
     "accountCount_one": "{{count}} account",
     "accountCount_other": "{{count}} accounts",
-    "connectedCount": "{{connected}}/{{total}} verbonden",
     "sections": { "connected": "Bronnen", "available": "Beschikbaar", "addSource": "Beschikbare connectoren" },
     "needsOrganization": "Kies eerst een organisatie in Instellingen.",
     "emptyAccounts": "Geen account is klaar. Verbind eerst een leverancier in Instellingen.",

@@ -21,18 +21,28 @@
 import { PlusIcon } from "@phosphor-icons/react";
 import { iconButton } from "@probo/ui/src/v2/IconButton/variants";
 import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
-import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
+import type { ConnectorConnectMore_provider$key } from "#/__generated__/core/ConnectorConnectMore_provider.graphql";
 
 import { connectMethods } from "../_lib/connectMethods";
 import { connectVendorPath } from "../_lib/integrationPath";
 
-import { connectorProviderListItemFragment } from "./ConnectorProviderListItem";
+const connectorConnectMoreFragment = graphql`
+  fragment ConnectorConnectMore_provider on ConnectorProviderInfo {
+    provider
+    configuredProtocols
+    apiKeySupported
+    apiKeyManaged
+    clientCredentialsSupported
+    workloadIdentitySupported
+    installSupported
+  }
+`;
 
 interface ConnectorConnectMoreProps {
-  providerKey: ConnectorProviderListItem_provider$key;
+  providerKey: ConnectorConnectMore_provider$key;
   organizationId: string;
 }
 
@@ -41,7 +51,7 @@ export function ConnectorConnectMore({
   organizationId,
 }: ConnectorConnectMoreProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const provider = useFragment(connectorProviderListItemFragment, providerKey);
+  const provider = useFragment(connectorConnectMoreFragment, providerKey);
   const methods = connectMethods({
     configuredProtocols: provider.configuredProtocols,
     apiKeySupported: provider.apiKeySupported,

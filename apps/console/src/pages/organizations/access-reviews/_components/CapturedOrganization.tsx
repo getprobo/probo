@@ -1,0 +1,50 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { graphql, useFragment } from "react-relay";
+
+import type { CapturedOrganization_source$key } from "#/__generated__/core/CapturedOrganization_source.graphql";
+
+const capturedOrganizationFragment = graphql`
+  fragment CapturedOrganization_source on AccessReviewSource {
+    selectedOrganization
+  }
+`;
+
+interface CapturedOrganizationProps {
+  sourceKey: CapturedOrganization_source$key;
+}
+
+// The organization a 2-auto provider captured during its OAuth callback
+// (PagerDuty's subdomain, Vercel's team, Datadog's domain, Zendesk's
+// subdomain). It is not user-editable: the value came from the handshake, and
+// the only way to change it is to reconnect against a different one.
+//
+// No empty state: these providers have NeedsPicker false, so an unset
+// organization leaves needsConfiguration false and the parent renders no
+// selector at all.
+export function CapturedOrganization({ sourceKey }: CapturedOrganizationProps) {
+  const source = useFragment(capturedOrganizationFragment, sourceKey);
+  return (
+    <span className="text-sm text-txt-primary">
+      {source.selectedOrganization}
+    </span>
+  );
+}

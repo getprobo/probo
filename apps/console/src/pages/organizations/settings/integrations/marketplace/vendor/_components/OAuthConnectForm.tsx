@@ -18,49 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  connectProviderInstall,
-  connectProviderProtocol,
-} from "../_lib/connectorSettings";
+import { type ReactNode } from "react";
+import { graphql, useFragment } from "react-relay";
 
-import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
-import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
+import type { OAuthConnectForm_provider$key } from "#/__generated__/core/OAuthConnectForm_provider.graphql";
 
-export function StartConnectForm({
+import { connectOAuthProvider } from "../_lib/startConnect";
+
+import { ConnectForm } from "./ConnectForm";
+
+const oauthConnectFormFragment = graphql`
+  fragment OAuthConnectForm_provider on ConnectorProviderInfo {
+    provider
+    oauth2Scopes
+    ...ConnectForm_provider
+  }
+`;
+
+export function OAuthConnectForm({
   organizationId,
-  driver,
-  method,
+  providerKey,
+  extras,
+  canSubmit = true,
+  children,
 }: {
   organizationId: string;
-  driver: ConnectVendorDriver;
-  method: "GITHUB_APP" | "INSTALL";
+  providerKey: OAuthConnectForm_provider$key;
+  extras?: Record<string, string>;
+  canSubmit?: boolean;
+  children?: ReactNode;
 }) {
-  const connectorName = useConnectorName();
+  const provider = useFragment(oauthConnectFormFragment, providerKey);
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (connectorName.rejectIfEmpty()) {
-          return;
-        }
-        if (method === "INSTALL") {
-          connectProviderInstall(organizationId, driver.provider, connectorName.trimmed);
-          return;
-        }
-        connectProviderProtocol(organizationId, driver.provider, method, {
-          name: connectorName.trimmed,
-        });
+    <ConnectForm
+      providerKey={provider}
+      canSubmit={canSubmit}
+      onSubmit={({ name }) => {
+        connectOAuthProvider(organizationId, provider.provider, provider.oauth2Scopes, extras, name);
+        return null;
       }}
     >
-      <ConnectorNameField
-        name={connectorName.name}
-        error={connectorName.error}
-        onChange={connectorName.onChange}
-        onEmpty={connectorName.rejectIfEmpty}
-      />
-      <ConnectFormFooter documentationUrl={driver.documentationUrl} />
-    </form>
+      {children}
+    </ConnectForm>
   );
 }

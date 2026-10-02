@@ -2828,7 +2828,6 @@
     }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV" },
     "errors": {
       "delete": "Échec de la suppression de la source d’accès",
       "configure": "Échec de la configuration de la source"
@@ -3121,10 +3120,8 @@
     "errors": { "create": "Échec de la création de la source d’accès" },
     "messages": { "error": "Erreur", "success": "Succès", "created": "Source d’accès créée avec succès." },
     "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer", "more": "Plus d’actions", "addAll": "Tout ajouter", "edit": "Modifier" },
-    "status": { "CONNECTED": "Connecté", "DISCONNECTED": "Déconnecté", "NOT_AUTHORIZED": "Non autorisé", "RECONNECT_REQUIRED": "Reconnexion requise" },
     "accountCount_one": "{{count}} compte",
     "accountCount_other": "{{count}} comptes",
-    "connectedCount": "{{connected}}/{{total}} connectés",
     "sections": { "connected": "Sources", "available": "Disponibles", "addSource": "Connecteurs disponibles" },
     "needsOrganization": "Choisissez d'abord une organisation dans les paramètres.",
     "emptyAccounts": "Aucun compte n'est prêt. Connectez d'abord un fournisseur dans les paramètres.",

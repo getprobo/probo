@@ -48,8 +48,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description:
-			'Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.',
+		description: 'A name that distinguishes this credential from other credentials for the same provider. For example, production or main.',
 		required: true,
 	},
 	{

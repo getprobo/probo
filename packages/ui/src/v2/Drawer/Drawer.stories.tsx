@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "../Button/Button";
 import { Text } from "../typography/Text";
@@ -136,6 +136,39 @@ export function NonModal() {
         </DrawerPopup>
       </Drawer>
     </div>
+  );
+}
+
+export function WithPayload() {
+  const handle = useMemo(() => Drawer.createHandle<string>(), []);
+
+  return (
+    <>
+      <Button
+        variant="solid"
+        color="neutral"
+        highContrast
+        onClick={() => handle.openWithPayload("account-1")}
+      >
+        Open with payload
+      </Button>
+      <Drawer<string> handle={handle} swipeDirection="right">
+        {({ payload }) => (
+          <DrawerPopup side="right">
+            <DrawerHeader>
+              <DrawerTitle>{payload ?? "Account"}</DrawerTitle>
+              <DrawerClose render={<Button variant="soft" color="neutral" highContrast>Close</Button>} />
+            </DrawerHeader>
+            <DrawerBody>
+              <Text size={2} color="neutral">
+                The payload stays set while the drawer closes, so the body does
+                not blank during the animation.
+              </Text>
+            </DrawerBody>
+          </DrawerPopup>
+        )}
+      </Drawer>
+    </>
   );
 }
 

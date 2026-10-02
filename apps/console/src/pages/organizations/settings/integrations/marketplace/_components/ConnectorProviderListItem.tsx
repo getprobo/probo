@@ -22,30 +22,29 @@ import { PlugIcon } from "@phosphor-icons/react";
 import { ThirdPartyLogo } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Link } from "@probo/ui/src/v2/Link/Link";
+import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 
-import { connectMethods } from "../_lib/connectMethods";
-import { connectVendorPath } from "../_lib/integrationPath";
-import { connectorCard } from "../variants";
+import { ConnectorDocumentationLink } from "../../_components/ConnectorDocumentationLink";
+import { connectMethods } from "../../_lib/connectMethods";
+import { connectVendorPath } from "../../_lib/integrationPath";
+import { connectorCard } from "../../variants";
 
-import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
-
-export const connectorProviderListItemFragment = graphql`
+const connectorProviderListItemFragment = graphql`
   fragment ConnectorProviderListItem_provider on ConnectorProviderInfo {
     provider
     displayName
-    documentationUrl
     configuredProtocols
     apiKeySupported
     apiKeyManaged
     clientCredentialsSupported
     workloadIdentitySupported
     installSupported
+    ...ConnectorDocumentationLink_provider
   }
 `;
 
@@ -82,10 +81,8 @@ export function ConnectorProviderListItem({
       className={card()}
     >
       {methods.length > 0 && (
-        <Link
+        <CardLink
           to={connectVendorPath(organizationId, provider.provider)}
-          underline={false}
-          className="absolute inset-0 z-0"
           aria-label={connectLabel}
         />
       )}
@@ -99,7 +96,7 @@ export function ConnectorProviderListItem({
             {provider.displayName}
           </Heading>
           <div className="pointer-events-auto relative z-1">
-            <ConnectorDocumentationLink url={provider.documentationUrl} />
+            <ConnectorDocumentationLink providerKey={provider} />
           </div>
         </div>
         {credentialCount > 0 && (

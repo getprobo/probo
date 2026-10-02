@@ -20,24 +20,44 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
 
 import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { connectMethodFromSlug } from "../../_lib/connectMethods";
+import { providerFromSlug } from "../../_lib/integrationPath";
+
 import { ConnectVendorPage, connectVendorPageQuery } from "./ConnectVendorPage";
 
 export default function ConnectVendorPageLoader() {
   const organizationId = useOrganizationId();
+  const { provider: providerSlug, method: methodSlug } = useParams<{
+    provider?: string;
+    method?: string;
+  }>();
+  const { includeAWS, includeAzure, includeGCP } = workloadIdentityIncludes(
+    providerSlug,
+    methodSlug,
+  );
   const [queryRef, loadQuery]
     = useQueryLoader<ConnectVendorPageQuery>(connectVendorPageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId });
-  }, [loadQuery, organizationId]);
+    loadQuery({
+      organizationId,
+      includeAWS,
+      includeAzure,
+      includeGCP,
+    });
+  }, [loadQuery, organizationId, includeAWS, includeAzure, includeGCP]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
+    && queryRef.variables.includeAWS === includeAWS
+    && queryRef.variables.includeAzure === includeAzure
+    && queryRef.variables.includeGCP === includeGCP
     ? queryRef
     : null;
 
@@ -50,4 +70,19 @@ export default function ConnectVendorPageLoader() {
       <ConnectVendorPage queryRef={currentQueryRef} />
     </Suspense>
   );
+}
+
+function workloadIdentityIncludes(
+  providerSlug: string | undefined,
+  methodSlug: string | undefined,
+) {
+  const provider = providerSlug == null ? null : providerFromSlug(providerSlug);
+  const method = methodSlug == null ? null : connectMethodFromSlug(methodSlug);
+  const workloadIdentity = method === "WORKLOAD_IDENTITY";
+
+  return {
+    includeAWS: workloadIdentity && provider === "AWS",
+    includeAzure: workloadIdentity && provider === "AZURE",
+    includeGCP: workloadIdentity && provider === "GCP",
+  };
 }

@@ -33,46 +33,80 @@ import { DrawerFooter } from "@probo/ui/src/v2/Drawer/DrawerFooter";
 import { DrawerHeader } from "@probo/ui/src/v2/Drawer/DrawerHeader";
 import { DrawerPopup } from "@probo/ui/src/v2/Drawer/DrawerPopup";
 import { DrawerTitle } from "@probo/ui/src/v2/Drawer/DrawerTitle";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { fetchQuery, graphql, useLazyLoadQuery, usePaginationFragment, useRelayEnvironment } from "react-relay";
-import type { Environment } from "relay-runtime";
+import { graphql, type PreloadedQuery, useFragment, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
 import type { ConnectorAccountsDrawer_accounts$key } from "#/__generated__/core/ConnectorAccountsDrawer_accounts.graphql";
+import type { ConnectorAccountsDrawer_connector$key } from "#/__generated__/core/ConnectorAccountsDrawer_connector.graphql";
 import type { ConnectorAccountsDrawerAccountsQuery } from "#/__generated__/core/ConnectorAccountsDrawerAccountsQuery.graphql";
-import type { ConnectorAccountsDrawerDiscoveryQuery } from "#/__generated__/core/ConnectorAccountsDrawerDiscoveryQuery.graphql";
 import type { ConnectorAccountsDrawerEnableMutation } from "#/__generated__/core/ConnectorAccountsDrawerEnableMutation.graphql";
+import type { ConnectorAccountsDrawerPendingAccount_account$key } from "#/__generated__/core/ConnectorAccountsDrawerPendingAccount_account.graphql";
+import type { ConnectorAccountsDrawerPendingAccount_connector$key } from "#/__generated__/core/ConnectorAccountsDrawerPendingAccount_connector.graphql";
 import type { ConnectorAccountsDrawerQuery } from "#/__generated__/core/ConnectorAccountsDrawerQuery.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
-
 import {
-  collectStoredAccountIds,
-  type DiscoveredAccount,
-  labelDiscoveredAccounts,
-} from "../_lib/discoveredAccounts";
+  connectionIssueKeys,
+  connectionSignalFrom,
+  presentConnection,
+} from "#/pages/organizations/_lib/connectorStatus";
+
 import { connectorAccountsDrawer, connectorCard } from "../variants";
 
 import { ConnectorAccountListItem } from "./ConnectorAccountListItem";
+import { ConnectorProbeError } from "./ConnectorProbeError";
 
 const PAGE_SIZE = 50;
 
-const connectorAccountsDrawerQuery = graphql`
+const connectorAccountsDrawerFragment = graphql`
+  fragment ConnectorAccountsDrawer_connector on Connector {
+    id
+    canEnable: permission(action: "core:connector:create")
+    canReconnect
+    connectionStatus
+    providerOrganizations {
+      status
+    }
+    discoveredAccounts {
+      externalAccountId
+      name
+      enabled
+      ...ConnectorAccountsDrawerPendingAccount_account
+    }
+    ...ConnectorAccountsDrawer_accounts
+    ...ConnectorAccountsDrawerPendingAccount_connector
+    ...ConnectorProbeError_connector
+    ...ConnectorAccountListItem_connector
+  }
+`;
+
+const pendingAccountFragment = graphql`
+  fragment ConnectorAccountsDrawerPendingAccount_account on DiscoveredConnectorAccount {
+    externalAccountId
+    name
+  }
+`;
+
+const pendingAccountConnectorFragment = graphql`
+  fragment ConnectorAccountsDrawerPendingAccount_connector on Connector {
+    provider
+  }
+`;
+
+export const connectorAccountsDrawerQuery = graphql`
   query ConnectorAccountsDrawerQuery($connectorId: ID!) {
     connector: node(id: $connectorId) {
       __typename
       ... on Connector {
-        canDiscover: permission(action: "core:connector:discover")
-        canEnable: permission(action: "core:connector:create")
-        canDelete: permission(action: "core:connector:delete")
-        initialAccountExternalId
-        ...ConnectorAccountsDrawer_accounts
+        ...ConnectorAccountsDrawer_connector
       }
     }
   }
@@ -94,34 +128,7 @@ const connectorAccountsDrawerAccountsFragment = graphql`
       edges {
         node {
           id
-          externalAccountId
           ...ConnectorAccountListItem_account
-        }
-      }
-    }
-  }
-`;
-
-const connectorAccountsDrawerDiscoveryQuery = graphql`
-  query ConnectorAccountsDrawerDiscoveryQuery($connectorId: ID!) {
-    connector: node(id: $connectorId) {
-      __typename
-      ... on Connector {
-        connectionStatus
-        discoveredAccounts {
-          externalAccountId
-          name
-        }
-        accounts(first: 50, orderBy: { direction: ASC, field: CREATED_AT }) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          edges {
-            node {
-              externalAccountId
-            }
-          }
         }
       }
     }
@@ -139,203 +146,115 @@ const enableConnectorAccountsMutation = graphql`
 `;
 
 interface ConnectorAccountsDrawerProps {
-  connectorId: string | null;
-  provider: string | null;
-  providerName: string | null;
-  open: boolean;
-  fetchKey: number;
-  preset: DiscoveredAccount[] | null;
+  handle: ReturnType<typeof Drawer.createHandle<string>>;
+  queryRef: PreloadedQuery<ConnectorAccountsDrawerQuery> | null | undefined;
+  onReload: (connectorId: string) => void;
   onOpenChange: (open: boolean) => void;
 }
 
 export function ConnectorAccountsDrawer({
-  connectorId,
-  provider,
-  providerName,
-  open,
-  fetchKey,
-  preset,
+  handle,
+  queryRef,
+  onReload,
   onOpenChange,
 }: ConnectorAccountsDrawerProps) {
   return (
-    <Drawer
-      open={open}
+    <Drawer<string>
+      handle={handle}
       onOpenChange={onOpenChange}
       swipeDirection="right"
     >
-      <DrawerPopup side="right" size={3}>
-        {connectorId != null && provider != null && providerName != null && (
-          <SuspenseAccounts
-            connectorId={connectorId}
-            provider={provider}
-            providerName={providerName}
-            fetchKey={fetchKey}
-            preset={preset}
-          />
-        )}
-      </DrawerPopup>
+      {({ payload: connectorId }) => (
+        <DrawerPopup side="right" size={3}>
+          {connectorId != null && (
+            <ErrorBoundary
+              fallback={(error) => {
+                if (error instanceof NotFoundError) {
+                  throw error;
+                }
+                return <DrawerLoadFailed />;
+              }}
+            >
+              {queryRef != null && queryRef.variables.connectorId === connectorId
+                ? (
+                    <Suspense fallback={<ConnectorAccountsDrawerSkeleton />}>
+                      <Accounts queryRef={queryRef} onReload={onReload} />
+                    </Suspense>
+                  )
+                : <ConnectorAccountsDrawerSkeleton />}
+            </ErrorBoundary>
+          )}
+        </DrawerPopup>
+      )}
     </Drawer>
   );
 }
 
-function SuspenseAccounts({
-  connectorId,
-  provider,
-  providerName,
-  fetchKey,
-  preset,
+function Accounts({
+  queryRef,
+  onReload,
 }: {
-  connectorId: string;
-  provider: string;
-  providerName: string;
-  fetchKey: number;
-  preset: DiscoveredAccount[] | null;
-}) {
-  return (
-    <Suspense fallback={<ConnectorAccountsDrawerSkeleton />}>
-      <ConnectorAccounts
-        key={connectorId}
-        connectorId={connectorId}
-        provider={provider}
-        providerName={providerName}
-        fetchKey={fetchKey}
-        preset={preset}
-      />
-    </Suspense>
-  );
-}
-
-function ConnectorAccounts({
-  connectorId,
-  provider,
-  providerName,
-  fetchKey,
-  preset,
-}: {
-  connectorId: string;
-  provider: string;
-  providerName: string;
-  fetchKey: number;
-  preset: DiscoveredAccount[] | null;
+  queryRef: PreloadedQuery<ConnectorAccountsDrawerQuery>;
+  onReload: (connectorId: string) => void;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const environment = useRelayEnvironment();
-  const data = useLazyLoadQuery<ConnectorAccountsDrawerQuery>(
+  const data = usePreloadedQuery<ConnectorAccountsDrawerQuery>(
     connectorAccountsDrawerQuery,
-    { connectorId },
-    {
-      fetchKey,
-      fetchPolicy: fetchKey > 0 ? "network-only" : "store-or-network",
-    },
+    queryRef,
   );
 
   if (data.connector?.__typename !== "Connector") {
     throw new NotFoundError(t("detailsPage.notFound"));
   }
 
-  const connector = data.connector;
+  return <AccountList connectorKey={data.connector} onReload={onReload} />;
+}
+
+function AccountList({
+  connectorKey,
+  onReload,
+}: {
+  connectorKey: ConnectorAccountsDrawer_connector$key;
+  onReload: (connectorId: string) => void;
+}) {
+  const { t } = useTranslation("organizations/settings/integrations");
+  const connector = useFragment(connectorAccountsDrawerFragment, connectorKey);
   const {
     data: accountsData,
     loadNext,
     hasNext,
     isLoadingNext,
-    refetch,
   } = usePaginationFragment<
     ConnectorAccountsDrawerAccountsQuery,
     ConnectorAccountsDrawer_accounts$key
   >(connectorAccountsDrawerAccountsFragment, connector);
-  const [probe, setProbe] = useState<StoredProbe | null>(null);
-  const [enabledIds, setEnabledIds] = useState<ReadonlySet<string>>(() => new Set());
-  const [reopenedIds, setReopenedIds] = useState<ReadonlySet<string>>(() => new Set());
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
   const [enableAccounts, isEnabling] = useMutation<ConnectorAccountsDrawerEnableMutation>(
     enableConnectorAccountsMutation,
   );
   const [, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (preset != null || !connector.canDiscover) {
-      return;
-    }
-
-    let cancelled = false;
-    const key = probeKey(connectorId, fetchKey);
-    void loadDiscoveredAccounts(environment, connectorId).then(
-      (next) => {
-        if (cancelled) {
-          return;
-        }
-        if (next.missing) {
-          setProbe({ key, value: { kind: "missing" } });
-          return;
-        }
-        setProbe({
-          key,
-          value: {
-            kind: "ready",
-            accounts: next.accounts,
-            status: next.connectionStatus,
-          },
-        });
-      },
-      () => {
-        if (!cancelled) {
-          setProbe({ key, value: { kind: "failed" } });
-        }
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [connector.canDiscover, connectorId, environment, fetchKey, preset]);
-
-  const resolved = preset == null && connector.canDiscover
-    ? (probe?.key === probeKey(connectorId, fetchKey) ? probe.value : null)
-    : null;
-
-  if (preset == null && connector.canDiscover && resolved == null) {
-    return <ConnectorAccountsDrawerSkeleton />;
-  }
-
-  if (resolved?.kind === "missing") {
-    throw new NotFoundError(t("detailsPage.notFound"));
-  }
-
-  const failure = resolved?.kind === "failed"
-    ? t("detailsPage.accounts.discoveryFailed")
-    : resolved?.kind === "ready"
-      ? connectionFailure(resolved.status, t, providerName)
-      : null;
-  const discovered = preset != null
-    ? preset
-    : resolved?.kind === "ready" && failure == null
-      ? resolved.accounts
-      : [];
+  const signal = connectionSignalFrom({
+    connectionStatus: connector.connectionStatus,
+    canReconnect: connector.canReconnect,
+    providerOrganizations: {
+      status: connector.providerOrganizations.status,
+    },
+  });
+  const presented = signal == null ? null : presentConnection(signal);
+  const issues = connectionIssueKeys(presented == null ? [] : [presented]);
   const stored = accountsData.accounts.edges;
-  const storedIds = new Set(stored.map(({ node }) => node.externalAccountId));
-  const pending = discovered.filter(account => (
-    (account.status === "PENDING" || reopenedIds.has(account.externalAccountId))
-    && !storedIds.has(account.externalAccountId)
-    && !enabledIds.has(account.externalAccountId)
-  ));
+  const pending = issues.length === 0
+    ? connector.discoveredAccounts.filter(account => !account.enabled)
+    : [];
   const selectedAccounts = pending.filter(account => selected.has(account.externalAccountId));
   const allPendingSelected = pending.length > 0 && selectedAccounts.length === pending.length;
   const total = accountsData.accounts.totalCount + pending.length;
   const { heading, title, list, empty, actions } = connectorAccountsDrawer();
 
-  function markAccountPending(externalAccountId: string) {
-    setEnabledIds((current) => {
-      if (!current.has(externalAccountId)) {
-        return current;
-      }
-      const next = new Set(current);
-      next.delete(externalAccountId);
-      return next;
-    });
-    setReopenedIds((current) => {
-      const next = new Set(current);
-      next.add(externalAccountId);
-      return next;
+  function reload() {
+    setSelected(new Set());
+    startTransition(() => {
+      onReload(connector.id);
     });
   }
 
@@ -356,7 +275,7 @@ function ConnectorAccounts({
       await enableAccounts({
         variables: {
           input: {
-            connectorId,
+            connectorId: connector.id,
             accounts: selectedAccounts.map(account => ({
               externalAccountId: account.externalAccountId,
               name: account.name,
@@ -368,18 +287,7 @@ function ConnectorAccounts({
       return;
     }
 
-    const enabled = new Set(selectedAccounts.map(account => account.externalAccountId));
-    setEnabledIds((current) => {
-      const next = new Set(current);
-      for (const id of enabled) {
-        next.add(id);
-      }
-      return next;
-    });
-    setSelected(new Set());
-    startTransition(() => {
-      refetch({}, { fetchPolicy: "network-only" });
-    });
+    reload();
   }
 
   return (
@@ -407,17 +315,8 @@ function ConnectorAccounts({
           )}
         />
       </DrawerHeader>
-      <DrawerBody className={failure == null && connector.canEnable && pending.length > 0 ? "pb-16" : undefined}>
-        {failure != null && (
-          <Card variant="soft" size={2}>
-            <div className={empty()}>
-              <Text size={2} color="faint">
-                {failure}
-              </Text>
-            </div>
-          </Card>
-        )}
-        {failure == null && pending.length === 0 && stored.length === 0
+      <DrawerBody className={issues.length === 0 && connector.canEnable && pending.length > 0 ? "pb-16" : undefined}>
+        {issues.length === 0 && pending.length === 0 && stored.length === 0
           ? (
               <Card variant="soft" size={2}>
                 <div className={empty()}>
@@ -427,26 +326,28 @@ function ConnectorAccounts({
                 </div>
               </Card>
             )
-          : (pending.length > 0 || stored.length > 0) && (
+          : (
               <div className={list()}>
+                {issues.length > 0 && (
+                  <ConnectorProbeError
+                    connectorKey={connector}
+                    issues={issues}
+                  />
+                )}
                 {stored.map(({ node }) => (
                   <ConnectorAccountListItem
                     key={node.id}
                     accountKey={node}
-                    provider={provider}
-                    connectorId={connectorId}
-                    canDisconnect={
-                      connector.canDelete
-                      && node.externalAccountId !== connector.initialAccountExternalId
-                    }
-                    onDisconnected={markAccountPending}
+                    connectorKey={connector}
+                    unknown={issues.length > 0}
+                    onDisconnected={reload}
                   />
                 ))}
                 {pending.map(account => (
                   <PendingAccountRow
                     key={account.externalAccountId}
-                    account={account}
-                    provider={provider}
+                    accountKey={account}
+                    connectorKey={connector}
                     selected={selected.has(account.externalAccountId)}
                     selectable={connector.canEnable}
                     onSelectedChange={(checked) => {
@@ -476,7 +377,7 @@ function ConnectorAccounts({
           </Button>
         )}
       </DrawerBody>
-      {failure == null && connector.canEnable && pending.length > 0 && (
+      {issues.length === 0 && connector.canEnable && pending.length > 0 && (
         <DrawerFooter className="absolute inset-x-4 bottom-4">
           <div className={actions()}>
             <Button
@@ -505,19 +406,21 @@ function ConnectorAccounts({
 }
 
 function PendingAccountRow({
-  account,
-  provider,
+  accountKey,
+  connectorKey,
   selected,
   selectable,
   onSelectedChange,
 }: {
-  account: DiscoveredAccount;
-  provider: string;
+  accountKey: ConnectorAccountsDrawerPendingAccount_account$key;
+  connectorKey: ConnectorAccountsDrawerPendingAccount_connector$key;
   selected: boolean;
   selectable: boolean;
   onSelectedChange: (checked: boolean) => void;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const account = useFragment(pendingAccountFragment, accountKey);
+  const connector = useFragment(pendingAccountConnectorFragment, connectorKey);
   const { identity, name, title } = connectorCard();
 
   return (
@@ -525,7 +428,7 @@ function PendingAccountRow({
       tone="sand"
       size={2}
       icon={(
-        <ThirdPartyLogo thirdParty={provider} />
+        <ThirdPartyLogo thirdParty={connector.provider} />
       )}
       lead={(
         <div className={identity()}>
@@ -578,81 +481,29 @@ function ConnectorAccountsDrawerSkeleton() {
   );
 }
 
-type ConnectionStatus = "CONNECTED" | "DISCONNECTED" | "NOT_AUTHORIZED" | "RECONNECT_REQUIRED";
+function DrawerLoadFailed() {
+  const { t } = useTranslation("organizations/settings/integrations");
+  const { heading, empty } = connectorAccountsDrawer();
 
-type ResolvedProbe
-  = { kind: "missing" }
-    | { kind: "failed" }
-    | {
-      kind: "ready";
-      accounts: DiscoveredAccount[];
-      status: ConnectionStatus;
-    };
-
-interface StoredProbe {
-  key: string;
-  value: ResolvedProbe;
-}
-
-type DiscoveryListing
-  = { missing: true }
-    | {
-      missing: false;
-      connectionStatus: ConnectionStatus;
-      accounts: DiscoveredAccount[];
-    };
-
-function probeKey(connectorId: string, fetchKey: number): string {
-  return `${connectorId}:${fetchKey}`;
-}
-
-function connectionFailure(
-  status: ConnectionStatus,
-  t: (key: string, options: { provider: string }) => string,
-  providerName: string,
-): string | null {
-  if (status === "NOT_AUTHORIZED") {
-    return t("listPage.connectionIssues.notAuthorized", { provider: providerName });
-  }
-  if (status === "RECONNECT_REQUIRED") {
-    return t("listPage.connectionIssues.reconnect", { provider: providerName });
-  }
-  if (status !== "CONNECTED") {
-    return t("listPage.connectionIssues.credentials", { provider: providerName });
-  }
-  return null;
-}
-
-async function loadDiscoveredAccounts(
-  environment: Environment,
-  connectorId: string,
-): Promise<DiscoveryListing> {
-  const data = await fetchQuery<ConnectorAccountsDrawerDiscoveryQuery>(
-    environment,
-    connectorAccountsDrawerDiscoveryQuery,
-    { connectorId },
-    { fetchPolicy: "network-only" },
-  ).toPromise();
-
-  if (data?.connector?.__typename !== "Connector") {
-    return { missing: true };
-  }
-
-  const connector = data.connector;
-  const storedIds = await collectStoredAccountIds(
-    environment,
-    connectorId,
-    {
-      pageInfo: connector.accounts.pageInfo,
-      edges: connector.accounts.edges.map(edge => ({
-        node: { externalAccountId: edge.node.externalAccountId },
-      })),
-    },
+  return (
+    <>
+      <DrawerHeader>
+        <div className={heading()}>
+          <DrawerTitle>{t("detailsPage.accounts.title")}</DrawerTitle>
+          <DrawerDescription>
+            {t("detailsPage.accounts.subtitle")}
+          </DrawerDescription>
+        </div>
+      </DrawerHeader>
+      <DrawerBody>
+        <Card variant="soft" size={2}>
+          <div className={empty()}>
+            <Text size={2} color="faint">
+              {t("detailsPage.accounts.discoveryFailed")}
+            </Text>
+          </div>
+        </Card>
+      </DrawerBody>
+    </>
   );
-
-  return {
-    missing: false,
-    connectionStatus: connector.connectionStatus,
-    accounts: labelDiscoveredAccounts(connector.discoveredAccounts, storedIds),
-  };
 }

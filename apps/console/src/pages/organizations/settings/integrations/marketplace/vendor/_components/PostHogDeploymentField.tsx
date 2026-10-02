@@ -26,6 +26,17 @@ import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useTranslation } from "react-i18next";
 
+// A Cloud region (us/eu) or a non-empty self-hosted instance URL.
+export function isPostHogDeploymentSelected(
+  values: Record<string, string>,
+): boolean {
+  return (
+    values.region === "US"
+    || values.region === "EU"
+    || !!values.instanceUrl?.trim()
+  );
+}
+
 // PostHog is a single provider spanning Cloud (region us/eu) and self-hosted
 // (instance URL). The API-key form surfaces this as one deployment choice;
 // the two settings are mutually exclusive, so picking one clears the other.
@@ -86,26 +97,16 @@ export function PostHogDeploymentField({
         </Select>
       </Field>
       {deployment === "SELF_HOSTED" && (
-        <Field label={t("postHogDeploymentField.instanceUrl")} required>
+        <Field required label={t("postHogDeploymentField.instanceUrl")}>
           <TextField
+            name="instanceUrl"
+            required
             value={values.instanceUrl ?? ""}
             disabled={disabled}
-            onChange={event => onChange({ instanceUrl: event.target.value })}
+            onValueChange={value => onChange({ instanceUrl: value })}
           />
         </Field>
       )}
     </>
-  );
-}
-
-// isPostHogDeploymentSelected reports whether a valid PostHog deployment has
-// been chosen: a Cloud region (us/eu) or a non-empty self-hosted instance URL.
-export function isPostHogDeploymentSelected(
-  values: Record<string, string>,
-): boolean {
-  return (
-    values.region === "US"
-    || values.region === "EU"
-    || !!values.instanceUrl?.trim()
   );
 }

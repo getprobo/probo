@@ -34,17 +34,17 @@ export const integrationRoutes = [
   {
     path: "integrations/marketplace",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("./MarketplacePageLoader")),
+    Component: lazy(() => import("./marketplace/MarketplacePageLoader")),
   },
   {
     path: "integrations/marketplace/:provider",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("./ConnectVendorPageLoader")),
+    Component: lazy(() => import("./marketplace/vendor/ConnectVendorPageLoader")),
   },
   {
     path: "integrations/marketplace/:provider/:method",
     Fallback: PageSkeleton,
-    Component: lazy(() => import("./ConnectVendorPageLoader")),
+    Component: lazy(() => import("./marketplace/vendor/ConnectVendorPageLoader")),
   },
   {
     path: "integrations/:provider",

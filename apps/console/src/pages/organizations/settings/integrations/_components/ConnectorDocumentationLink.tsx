@@ -22,9 +22,26 @@ import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+
+import type { ConnectorDocumentationLink_connector$key } from "#/__generated__/core/ConnectorDocumentationLink_connector.graphql";
+import type { ConnectorDocumentationLink_provider$key } from "#/__generated__/core/ConnectorDocumentationLink_provider.graphql";
+
+const providerFragment = graphql`
+  fragment ConnectorDocumentationLink_provider on ConnectorProviderInfo {
+    documentationUrl
+  }
+`;
+
+const connectorFragment = graphql`
+  fragment ConnectorDocumentationLink_connector on Connector {
+    documentationUrl
+  }
+`;
 
 type Props = {
-  url?: string | null;
+  providerKey?: ConnectorDocumentationLink_provider$key | null;
+  connectorKey?: ConnectorDocumentationLink_connector$key | null;
   // "link" (default) is a quiet inline text link for the provider card;
   // "button" is a secondary button that sits next to Cancel/Connect in a
   // connect dialog footer. Both open the docs page in a new tab.
@@ -34,8 +51,15 @@ type Props = {
 // A "Documentation" link to a connector's probo.com docs page, or nothing when
 // the provider has no documentation URL. Shared by the provider card and the
 // connect dialogs so the URL/label/target markup lives in one place.
-export function ConnectorDocumentationLink({ url, variant = "link" }: Props) {
+export function ConnectorDocumentationLink({
+  providerKey = null,
+  connectorKey = null,
+  variant = "link",
+}: Props) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const provider = useFragment(providerFragment, providerKey);
+  const connector = useFragment(connectorFragment, connectorKey);
+  const url = provider?.documentationUrl ?? connector?.documentationUrl;
 
   if (!url) {
     return null;

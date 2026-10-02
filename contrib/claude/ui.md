@@ -161,6 +161,8 @@ The clearest case is navigation vs action: a clickable action, button-looking na
 | `Link` | react-router | underlined text |
 | `Anchor` | `<a>` | underlined text |
 | `TableLink` | react-router | unstyled; `::after` stretches across an interactive `TableRow` |
+| `CardLink` | react-router | unstyled; `::after` stretches across an interactive `Card` |
+| `CardButton` | `<button>` | unstyled; `::after` stretches across an interactive `Card` |
 
 A detail page’s “back to the list” control uses `Link` (`size={2}`, `color="neutral"`, `underline={false}`, `CaretLeftIcon`) — never `Button` or `ButtonLink`. See [`routing.md`](routing.md#back-to-the-list).
 
@@ -247,6 +249,26 @@ Use the look variants and `TableLink`:
 ```
 
 Put `interactive` only on body rows that contain a `TableLink`. Header rows stay inert. Do not set `position: relative` on `TableLink` — the overlay must use the row as its containing block.
+
+## Clickable cards
+
+A whole card that navigates or acts stays a `Card`. Do **not** put `to` on `Card`, and do **not** cover it with an empty `absolute inset-0` link or button.
+
+- `Card interactive` — containing block (`relative`) and cursor. Do not add `isolate`; a stacking context traps menus that escape the card.
+- `CardLink` — unstyled react-router link whose `::after` covers the card. Cmd/ctrl/middle-click stay native. One tab stop.
+- `CardButton` — the same stretch on a `<button>`, for a card that opens something in place rather than navigating.
+- Nested controls — `relative z-1` and `pointer-events-auto` so they sit above the overlay and can hover.
+
+```tsx
+<Card variant="soft" interactive>
+  <CardLink to={to}>{title}</CardLink>
+  <div className="relative z-1">
+    <Button type="button">Edit</Button>
+  </div>
+</Card>
+```
+
+Do not set `position: relative` on `CardLink` or `CardButton`. The overlay must use the card as its containing block.
 
 ## Props typing
 
@@ -598,4 +620,4 @@ Base UI primitives ship correct roles, focus management, and keyboard interactio
 - Keep accessible labels: every control has a visible label or an `aria-label`; icon-only buttons (`Button icon={…}`) require an `aria-label`.
 - Don't strip `aria-*` / `role` that primitives set, and don't trap or override focus the primitive manages.
 - Convey state with more than color (e.g. an icon + text alongside a `red-*` tone), so meaning survives for color-blind users — the [token contrast guarantees](v2-tokens.md#contrast-guarantees) cover text legibility, not state encoding.
-- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button / ButtonLink / ButtonAnchor / Link / Anchor / TableLink](#no-structure-changing-variants) split. Whole-row table navigation uses `TableRow interactive` + `TableLink` — see [Clickable table rows](#clickable-table-rows).
+- Use semantic elements (`<button>`, `<a>`, `<nav>`, headings) — see the [Button / ButtonLink / ButtonAnchor / Link / Anchor / TableLink / CardLink / CardButton](#no-structure-changing-variants) split. Whole-row table navigation uses `TableRow interactive` + `TableLink` — see [Clickable table rows](#clickable-table-rows). Whole-card navigation uses `Card interactive` + `CardLink` — see [Clickable cards](#clickable-cards).

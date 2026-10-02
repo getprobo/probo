@@ -18,32 +18,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Toast } from "@base-ui/react/toast";
+import { ErrorNotice } from "@probo/ui/src/v2/ErrorNotice/ErrorNotice";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
+import type { ConnectorProbeError_connector$key } from "#/__generated__/core/ConnectorProbeError_connector.graphql";
+import type { ConnectionIssueKey } from "#/pages/organizations/_lib/connectorStatus";
 
-import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
+const connectorProbeErrorFragment = graphql`
+  fragment ConnectorProbeError_connector on Connector {
+    displayName
+  }
+`;
 
-export type ConnectVendorDriver = ConnectVendorPageQuery["response"]["connectorProviders"][number];
+interface ConnectorProbeErrorProps {
+  connectorKey: ConnectorProbeError_connector$key;
+  issues: readonly ConnectionIssueKey[];
+}
 
-export function ConnectFormFooter({
-  documentationUrl,
-  disabled,
-  loading,
-}: {
-  documentationUrl: string | null | undefined;
-  disabled?: boolean;
-  loading?: boolean;
-}) {
+export function ConnectorProbeError({
+  connectorKey,
+  issues,
+}: ConnectorProbeErrorProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const connector = useFragment(connectorProbeErrorFragment, connectorKey);
+  const toast = Toast.useToastManager();
+  const provider = connector.displayName;
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <ConnectorDocumentationLink url={documentationUrl} variant="button" />
-      <Button type="submit" variant="solid" disabled={disabled} loading={loading}>
-        {t("marketplacePage.connect")}
-      </Button>
-    </div>
+    <ErrorNotice
+      className="pointer-events-auto relative z-1"
+      messages={issues.map(issue => t(`listPage.connectionIssues.${issue}`, { provider }))}
+      copyLabel={t("detailsPage.probeError.copy")}
+      onCopied={() => {
+        toast.add({
+          title: t("detailsPage.probeError.copied"),
+          type: "success",
+        });
+      }}
+    />
   );
 }

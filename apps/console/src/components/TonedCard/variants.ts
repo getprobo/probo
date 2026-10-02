@@ -24,7 +24,7 @@ import { tv, type VariantProps } from "tailwind-variants/lite";
 // without fighting Card's sand-a3 (tv/lite has no merge).
 export const tonedCard = tv({
   slots: {
-    frame: "flex flex-col overflow-hidden rounded-4 border bg-sand-1",
+    frame: "relative flex flex-col overflow-hidden rounded-4 border bg-sand-1",
     header: "relative flex w-full items-center justify-between overflow-hidden px-5 py-4",
     wash: "pointer-events-none absolute top-1/2 left-1/2 aspect-square w-full -translate-x-1/2 -translate-y-1/2 opacity-10 blur-[14px]",
     fade: "pointer-events-none absolute inset-0 bg-linear-to-b from-sand-1/0 to-sand-1",

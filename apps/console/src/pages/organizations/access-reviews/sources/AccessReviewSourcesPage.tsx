@@ -18,11 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon, FileCsvIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -36,16 +35,18 @@ import { useSearchParams } from "react-router";
 import type { AccessReviewSourcesPageFragment$key } from "#/__generated__/core/AccessReviewSourcesPageFragment.graphql";
 import type { AccessReviewSourcesPagePaginationQuery } from "#/__generated__/core/AccessReviewSourcesPagePaginationQuery.graphql";
 import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
-import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
-import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
+import { groupByProvider } from "#/pages/organizations/_lib/connectorStatus";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
 
-import { AddableConnectorListItem } from "./_components/AddableConnectorListItem";
+import { AddableConnectorGroups } from "./_components/AddableConnectorGroups";
+import { AddSourceSection } from "./_components/AddSourceSection";
 import { sourcesPage } from "./_components/variants";
-import { groupConnectorsByProvider, listedConnectorAccounts } from "./_lib/listedConnectorAccounts";
+
+// The page query spreads the connector fragment owned by the list item.
+import "./_components/AddableConnectorListItem";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
   params.delete("connector_id");
@@ -63,15 +64,7 @@ export const accessReviewSourcesPageQuery = graphql`
         canCreateConnector: permission(action: "core:connector:create")
         connectors {
           id
-          displayName
           provider
-          accounts(first: 50) {
-            edges {
-              node {
-                name
-              }
-            }
-          }
           ...AddableConnectorListItem_connector
         }
         ...AccessReviewSourcesPageFragment
@@ -84,7 +77,7 @@ const sourcesFragment = graphql`
   fragment AccessReviewSourcesPageFragment on Organization
   @refetchable(queryName: "AccessReviewSourcesPagePaginationQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
+    first: { type: "Int", defaultValue: 20 }
     order: {
       type: "AccessReviewSourceOrder"
       defaultValue: { direction: DESC, field: CREATED_AT }
@@ -157,7 +150,7 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
   // stays available on that term to retry, and success clears the latch.
   const [failedSearch, setFailedSearch] = useState<string | null>(null);
   const loadMoreSources = useCallback(() => {
-    loadNext(50, {
+    loadNext(20, {
       onComplete: error => setFailedSearch(error ? normalizedSearch : null),
     });
   }, [loadNext, normalizedSearch]);
@@ -185,29 +178,15 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
   const connectedCount = isSearching
     ? (hasNext ? null : filteredSources.length)
     : accessReviewSources.totalCount;
-  const addableVendors = useMemo(
-    () => groupConnectorsByProvider(organization.connectors).filter(group =>
-      group.some(connector =>
-        listedConnectorAccounts(
-          connector.accounts.edges.map(({ node }) => node),
-          {
-            displayName: connector.displayName,
-            provider: connector.provider,
-          },
-          normalizedSearch,
-        ) != null,
-      ),
-    ),
-    [organization.connectors, normalizedSearch],
+  const vendorGroups = useMemo(
+    () => groupByProvider(organization.connectors),
+    [organization.connectors],
   );
   const showCSV = !normalizedSearch
     || "csv".includes(normalizedSearch)
     || t("addAccessReviewSourceDialog.csv.title")
       .toLowerCase()
       .includes(normalizedSearch);
-  const showAddMore = organization.canCreateConnector
-    && (addableVendors.length > 0 || showCSV);
-
   const callbackError = searchParams.get("error");
 
   useEffect(() => {
@@ -243,9 +222,6 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
       : isSearching
         ? t("accessReviewSourcesPage.emptyConnectedSearch")
         : t("accessReviewSourcesPage.emptyConnected");
-  const hasAddable = addableVendors.length > 0 || showCSV;
-  const availableCount = addableVendors.length + (showCSV ? 1 : 0);
-
   return (
     <div className={root()}>
       <div className={header()}>
@@ -318,75 +294,23 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
           )}
         </section>
         {organization.canCreateSource && (
-          <section className={section()}>
-            <div className={sectionTitle()}>
-              <Heading level={2} size={3} weight="medium">
-                {t("accessReviewSourcesPage.sections.addSource")}
-              </Heading>
-              <Text size={2} color="faint">{availableCount}</Text>
-            </div>
-            {!hasAddable
-              ? (
-                  <Card variant="soft" size={2}>
-                    <div className={empty()}>
-                      <Text size={2} color="faint">
-                        {t("accessReviewSourcesPage.emptyAccounts")}
-                      </Text>
-                    </div>
-                  </Card>
-                )
-              : (
-                  <div className={grid()}>
-                    {showAddMore && (
-                      <MarketplaceEntryCard organizationId={organizationId} />
-                    )}
-                    {addableVendors.map(connectors => (
-                      <AddableConnectorListItem
-                        key={connectors[0].provider}
-                        connectorKeys={connectors}
-                        organizationId={organizationId}
-                        connectionId={accessReviewSources.__id}
-                        normalizedSearch={normalizedSearch}
-                      />
-                    ))}
-                    {showCSV && (
-                      <CsvSourceCard organizationId={organizationId} />
-                    )}
-                  </div>
-                )}
-          </section>
+          <AddableConnectorGroups
+            groups={vendorGroups}
+            normalizedSearch={normalizedSearch}
+            organizationId={organizationId}
+            connectionId={accessReviewSources.__id}
+          >
+            {cards => (
+              <AddSourceSection
+                cards={cards}
+                showCSV={showCSV}
+                canCreateConnector={organization.canCreateConnector}
+                organizationId={organizationId}
+              />
+            )}
+          </AddableConnectorGroups>
         )}
       </div>
     </div>
-  );
-}
-
-function CsvSourceCard({ organizationId }: { organizationId: string }) {
-  const { t } = useTranslation();
-
-  return (
-    <TonedCard
-      tone="sand"
-      iconSize={14}
-      icon={<FileCsvIcon className="size-8" />}
-      lead={(
-        <Heading level={3} size={3} weight="medium" highContrast>
-          {t("addAccessReviewSourceDialog.csv.title")}
-        </Heading>
-      )}
-      control={(
-        <ButtonLink
-          to={`/organizations/${organizationId}/access-reviews/sources/new/csv`}
-          variant="solid"
-          size={1}
-        >
-          {t("addAccessReviewSourceDialog.actions.open")}
-        </ButtonLink>
-      )}
-    >
-      <Text size={2} color="faint">
-        {t("addAccessReviewSourceDialog.csv.description")}
-      </Text>
-    </TonedCard>
   );
 }

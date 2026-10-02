@@ -10789,9 +10789,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
         provider:
           type: string
           description: Connector provider
@@ -10996,9 +10995,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
           description: Connector provider (AWS, GCP, or Azure)
@@ -11125,9 +11123,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
 
     UpdateConnectorMCPOutput:
       type: object
@@ -11177,9 +11174,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
           description: Connector provider (AWS, GCP, or Azure)

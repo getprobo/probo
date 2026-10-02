@@ -115,6 +115,63 @@ func TestConnectorAccounts_StandaloneAWSHasInitialAccount(t *testing.T) {
 	assert.Equal(t, connectorAccountAWSAccount, result.Node.Accounts.Edges[0].Node.ExternalAccountID)
 }
 
+func TestConnector_DistinctAccountCountIgnoresPagination(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	firstID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+	secondID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	factory.NewConnectorAccount(owner, firstID).
+		WithExternalAccountID("111111111111").
+		WithName("Shared").
+		Create()
+	factory.NewConnectorAccount(owner, secondID).
+		WithExternalAccountID("111111111111").
+		WithName("Shared").
+		Create()
+	factory.NewConnectorAccount(owner, firstID).
+		WithExternalAccountID("222222222222").
+		WithName("Only first").
+		Create()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector {
+					distinctAccountCount
+					accounts(first: 1) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			DistinctAccountCount int `json:"distinctAccountCount"`
+			Accounts             struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accounts"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{"id": firstID}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Accounts.Edges, 1)
+	// Shared AWS account and 111111111111, plus 222222222222 on the first credential.
+	assert.Equal(t, 3, result.Node.DistinctAccountCount)
+}
+
 func TestEnableConnectorAccounts_AddsRowWithoutTouchingSource(t *testing.T) {
 	t.Parallel()
 

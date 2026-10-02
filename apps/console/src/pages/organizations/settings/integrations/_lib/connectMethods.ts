@@ -20,7 +20,18 @@
 
 import type { ConnectorProtocol } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 
+import { connectVendorPath } from "./integrationPath";
+
 export type ConnectMethod = ConnectorProtocol | "CLIENT_CREDENTIALS" | "INSTALL";
+
+const connectMethodSlug = {
+  WORKLOAD_IDENTITY: "workload-identity",
+  GITHUB_APP: "github-app",
+  INSTALL: "install",
+  OAUTH2: "oauth",
+  CLIENT_CREDENTIALS: "client-credentials",
+  API_KEY: "api-key",
+} as const satisfies Record<ConnectMethod, string>;
 
 interface ConnectMethodSupport {
   configuredProtocols: ReadonlyArray<ConnectorProtocol>;
@@ -81,4 +92,18 @@ export function connectMethodFromConnector(
   }
 
   return protocol;
+}
+
+export function connectMethodFromSlug(slug: string): ConnectMethod | null {
+  const match = (Object.entries(connectMethodSlug) as Array<[ConnectMethod, string]>)
+    .find(([, value]) => value === slug);
+  return match?.[0] ?? null;
+}
+
+export function connectVendorMethodPath(
+  organizationId: string,
+  provider: string,
+  method: ConnectMethod,
+) {
+  return `${connectVendorPath(organizationId, provider)}/${connectMethodSlug[method]}`;
 }
