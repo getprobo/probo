@@ -10,6 +10,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   header and claims, and whether this process's key set verifies the
   signature. The signature is never logged. It is off by default
 
+### Fixed
+
+- GitHub access review marks an SSO credential authorization inactive
+  once its token has expired, instead of reporting every authorization
+  as active. Expired tokens stay in the list so a reviewer can still
+  see and revoke them
+
 ## [0.310.0] - 2026-10-13
 
 ### Added
