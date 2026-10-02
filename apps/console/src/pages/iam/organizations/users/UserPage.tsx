@@ -30,7 +30,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { UserPageQuery } from "#/__generated__/iam/UserPageQuery.graphql";
@@ -84,6 +84,7 @@ interface UserPageProps {
 
 export function UserPage({ queryRef }: UserPageProps) {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const { user } = usePreloadedQuery<UserPageQuery>(userPageQuery, queryRef);
@@ -106,13 +107,13 @@ export function UserPage({ queryRef }: UserPageProps) {
   const hasToolbarActions = canSendActivationMail || canDeactivate || canRemove;
 
   function handleLeft() {
-    void navigate("..");
+    void navigate({ pathname: "..", search: location.search });
   }
 
   return (
     <div className={root()}>
       <Link
-        to=".."
+        to={{ pathname: "..", search: location.search }}
         size={2}
         color="neutral"
         underline={false}

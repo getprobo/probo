@@ -10,15 +10,20 @@ A detail page’s “back to the list” control is a **text `Link`**, not a
 `Button` or `ButtonLink`. `ButtonLink` is for button-looking navigation
 (Create, New, primary CTAs).
 
+React Router does not copy the current search string onto a `Link` or
+`navigate` target unless `search` is set. A list’s filters live in the URL,
+so the list-to-detail link and the back link must both pass
+`search: location.search` (or the list-owned subset of those params).
+
 ```tsx
-// BAD — back control styled as a button
+// BAD — back control styled as a button; drops list filters
 <ButtonLink to=".." variant="ghost" color="neutral" iconStart={<CaretLeftIcon />}>
   {t("trackerProperties.actions.back")}
 </ButtonLink>
 
-// GOOD — same control as CompliancePortalVisitorPage / UserPage
+// GOOD — child of the list route; keep the list search
 <Link
-  to=".."
+  to={{ pathname: "..", search: location.search }}
   size={2}
   color="neutral"
   underline={false}
@@ -31,7 +36,27 @@ A detail page’s “back to the list” control is a **text `Link`**, not a
 
 `to=".."` is correct only when the detail route is a **child** of the list
 route. When the detail is a **sibling** of the list (e.g. `trackers` and
-`trackers/:id`), `..` climbs to the parent — not the list. Point `to` at
-the list path explicitly.
+`trackers/:id`), `..` climbs to the parent — not the list. Point `pathname`
+at the list path explicitly and still pass `search`.
+
+```tsx
+// BAD — sibling detail; ".." leaves the feature and drops filters
+<Link to=".." …>{t("trackerProperties.actions.back")}</Link>
+
+// GOOD — explicit list path, same search the list owns
+<Link
+  to={{
+    pathname: `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`,
+    search: location.search,
+  }}
+  …
+>
+  {t("trackerProperties.actions.back")}
+</Link>
+```
+
+When the detail page owns extra search params the list does not (for
+example a visitor’s document-access `status`), copy only the list keys
+back onto the list URL.
 
 See [`contrib/claude/routing.md`](../../contrib/claude/routing.md#back-to-the-list).

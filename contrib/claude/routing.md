@@ -78,12 +78,17 @@ Build paths from segments; never hand-concatenate query strings (see [`ts-style.
 
 A detail page’s “back to the list” control is a **text `Link`**, not a `Button` or `ButtonLink`. `ButtonLink` is for button-looking navigation (Create, New, primary CTAs). See [`ui.md`](ui.md#no-structure-changing-variants).
 
+React Router does not copy the current search string onto a `Link` or `navigate` target unless `search` is set. When the list stores filters, sort, or a search term in the URL, the list-to-detail link and the back link must both pass `search: location.search` (or the list-owned subset of those params). `location.search` already includes the leading `?`.
+
 ```tsx
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import { useLocation } from "react-router";
+
+const location = useLocation();
 
 <Link
-  to=".."
+  to={{ pathname: "..", search: location.search }}
   size={2}
   color="neutral"
   underline={false}
@@ -94,17 +99,25 @@ import { Link } from "@probo/ui/src/v2/Link/Link";
 </Link>
 ```
 
-`to=".."` is correct only when the detail route is a **child** of the list route. When the detail is a **sibling** of the list (for example `trackers` and `trackers/:id` under the same parent), `..` climbs to that parent — not the list. Point `to` at the list path explicitly.
+`to=".."` is correct only when the detail route is a **child** of the list route. When the detail is a **sibling** of the list (for example `trackers` and `trackers/:id` under the same parent), `..` climbs to that parent — not the list. Point `pathname` at the list path explicitly and still pass `search`.
 
 ```tsx
-// BAD — sibling detail; ".." leaves the feature
+// BAD — sibling detail; ".." leaves the feature and drops filters
 <Link to=".." …>{t("trackerProperties.actions.back")}</Link>
 
-// GOOD — explicit list path
-<Link to={`${cookieBannerPath(organizationId, cookieBannerId)}/trackers`} …>
+// GOOD — explicit list path, same search the list owns
+<Link
+  to={{
+    pathname: `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`,
+    search: location.search,
+  }}
+  …
+>
   {t("trackerProperties.actions.back")}
 </Link>
 ```
+
+When the detail page owns extra search params the list does not (for example a visitor’s document-access `status`), copy only the list keys back onto the list URL with `URLSearchParams`. Do not concatenate a query string by hand (see [`ts-style.md`](ts-style.md)).
 
 ## Register every new console page in the nav
 

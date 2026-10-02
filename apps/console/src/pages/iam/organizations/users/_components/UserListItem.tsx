@@ -35,6 +35,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { UserListItem_profile$key } from "#/__generated__/iam/UserListItem_profile.graphql";
@@ -91,6 +92,7 @@ interface UserListItemProps {
 
 export function UserListItem({ profileKey, onDeactivated, onDeleted }: UserListItemProps) {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
   const profile = useFragment(fragment, profileKey);
   const [sendOpen, setSendOpen] = useState(false);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
@@ -132,7 +134,13 @@ export function UserListItem({ profileKey, onDeactivated, onDeleted }: UserListI
 
   return (
     <Card variant="soft" size={2} padding="none" interactive className={card()}>
-      <Link to={profile.id} underline={false} className={overlay()} aria-label={profile.fullName} />
+      <Link
+        to={{
+          pathname: profile.id, search: location.search }}
+        underline={false}
+        className={overlay()}
+        aria-label={profile.fullName}
+      />
       <div className={person()}>
         <div className={avatar()}>
           <Avatar

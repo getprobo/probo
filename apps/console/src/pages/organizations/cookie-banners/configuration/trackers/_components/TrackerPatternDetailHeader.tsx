@@ -25,7 +25,7 @@ import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { TrackerPatternDetailHeader_trackerPattern$key } from "#/__generated__/core/TrackerPatternDetailHeader_trackerPattern.graphql";
@@ -79,6 +79,7 @@ export function TrackerPatternDetailHeader({
 }: TrackerPatternDetailHeaderProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
+  const location = useLocation();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternDetailHeaderFragment, trackerPatternKey);
   const { root, back, bar, titleRow, title, badges, actions } = trackerPatternDetailHeader();
@@ -112,7 +113,7 @@ export function TrackerPatternDetailHeader({
   return (
     <div className={root()}>
       <Link
-        to={trackersPath}
+        to={{ pathname: trackersPath, search: location.search }}
         size={2}
         color="neutral"
         underline={false}

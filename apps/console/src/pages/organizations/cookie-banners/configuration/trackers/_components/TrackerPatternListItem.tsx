@@ -37,7 +37,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { MoveToCategorySelect_cookieBanner$key } from "#/__generated__/core/MoveToCategorySelect_cookieBanner.graphql";
@@ -142,6 +142,7 @@ export function TrackerPatternListItem({
 }: TrackerPatternListItemProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
+  const location = useLocation();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -225,7 +226,7 @@ export function TrackerPatternListItem({
                   {t(`trackerPatternRow.types.${typeBadge.labelKey}`)}
                 </Badge>
               )}
-              <TableLink to={detailPath}>
+              <TableLink to={{ pathname: detailPath, search: location.search }}>
                 <Text size={2} weight="medium" highContrast className={title()}>
                   {pattern.displayName}
                 </Text>

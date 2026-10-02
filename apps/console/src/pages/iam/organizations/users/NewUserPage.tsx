@@ -27,7 +27,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { NewUserPageMutation } from "#/__generated__/iam/NewUserPageMutation.graphql";
@@ -85,6 +85,7 @@ interface NewUserPageProps {
 
 export function NewUserPage({ queryRef }: NewUserPageProps) {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const title = t("newUserPage.title");
@@ -130,7 +131,10 @@ export function NewUserPage({ queryRef }: NewUserPageProps) {
         }
         const profileId = response.createUser?.profileEdge.node.id;
         if (profileId != null && profileId !== "") {
-          void navigate(`/organizations/${organizationId}/settings/users/${profileId}`);
+          void navigate({
+            pathname: `/organizations/${organizationId}/settings/users/${profileId}`,
+            search: location.search,
+          });
         }
       },
     }).catch(() => {
@@ -141,7 +145,7 @@ export function NewUserPage({ queryRef }: NewUserPageProps) {
   return (
     <div className={root()}>
       <Link
-        to=".."
+        to={{ pathname: "..", search: location.search }}
         size={2}
         color="neutral"
         underline={false}

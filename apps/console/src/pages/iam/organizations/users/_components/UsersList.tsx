@@ -27,6 +27,7 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
+import { useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { UsersList_organization$key } from "#/__generated__/iam/UsersList_organization.graphql";
@@ -83,6 +84,7 @@ interface UsersListProps {
 
 export function UsersList({ organizationKey }: UsersListProps) {
   const { t } = useTranslation();
+  const location = useLocation();
   const { graphqlFilter, hasActiveFilters } = useUsersListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
@@ -161,7 +163,7 @@ export function UsersList({ organizationKey }: UsersListProps) {
           </Heading>
         </div>
         {organization.canCreateUser && (
-          <ButtonLink to="new" variant="solid" iconStart={<PlusIcon />}>
+          <ButtonLink to={{ pathname: "new", search: location.search }} variant="solid" iconStart={<PlusIcon />}>
             {t("usersPage.actions.add")}
           </ButtonLink>
         )}

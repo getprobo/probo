@@ -25,6 +25,7 @@ import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useSearchParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalVisitorPageActivateMutation } from "#/__generated__/core/CompliancePortalVisitorPageActivateMutation.graphql";
@@ -36,6 +37,7 @@ import { CompliancePortalDocumentAccessList } from "./_components/CompliancePort
 import { CompliancePortalVisitorProfileCard } from "./_components/CompliancePortalVisitorProfileCard";
 import { DeactivateVisitorDialog } from "./_components/DeactivateVisitorDialog";
 import { ElectronicSignatureSection } from "./_components/ElectronicSignatureSection";
+import { visitorsListSearch } from "./_lib/useAccessListFilters";
 import { visitorDisplayName } from "./_lib/visitorIdentity";
 import { visitorPage } from "./variants";
 
@@ -82,7 +84,9 @@ interface CompliancePortalVisitorPageProps {
 
 export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisitorPageProps) {
   const { t } = useTranslation("organizations/compliance-portals");
+  const [searchParams] = useSearchParams();
   const { root, back, hero, callout } = visitorPage();
+  const listSearch = visitorsListSearch(searchParams);
   const data = usePreloadedQuery<CompliancePortalVisitorPageQuery>(
     compliancePortalVisitorPageQuery,
     queryRef,
@@ -116,7 +120,7 @@ export function CompliancePortalVisitorPage({ queryRef }: CompliancePortalVisito
 
   return (
     <div className={root()}>
-      <Link to=".." size={2} color="neutral" underline={false} iconStart={<CaretLeftIcon />} className={back()}>
+      <Link to={{ pathname: "..", search: listSearch }} size={2} color="neutral" underline={false} iconStart={<CaretLeftIcon />} className={back()}>
         {t("visitorPage.back")}
       </Link>
       {access.state === "DEACTIVATED" && (
