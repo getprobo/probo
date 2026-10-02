@@ -161,6 +161,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				if p.Organization != nil {
 					orgID = p.Organization.ID
 					orgName = p.Organization.Name
+
 					if p.Organization.LegalName != nil {
 						legalName = *p.Organization.LegalName
 					}
