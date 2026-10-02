@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.301.0] - 2026-10-02
+
+### Added
+
+- Settings > Integrations lists the vendors Probo holds a connector for
+  and the ones it can still connect to. A connector opens to the accounts
+  recorded against it and can be disconnected there; disconnect is
+  refused while an access review source or SCIM configuration still uses
+  the credential, and the message names which one
+
+### Changed
+
+- Trust center files no longer have a hidden (`NONE`) visibility; delete
+  the file instead. Unlinking a document or audit from a trust center now
+  clears its visitor access requests, and the console asks for
+  confirmation first
+
+### Fixed
+
+- Back links from tracker, visitor, and user detail pages keep the list's
+  filters instead of resetting them
+
 ## [0.300.0] - 2026-10-02
 
 ### Changed
