@@ -46,7 +46,12 @@ export function TrackerMaxAgeField({
   onBlur,
 }: TrackerMaxAgeFieldProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const { t: translateDuration } = useTranslation();
   const { root, value: valueSlot, unit: unitSlot } = trackerMaxAgeField();
+
+  function durationUnitLabel(unit: string) {
+    return translateDuration(`duration.${unit}`, { count: 2 });
+  }
 
   return (
     <div className={root()}>
@@ -78,13 +83,12 @@ export function TrackerMaxAgeField({
             aria-label={t("trackerProperties.properties.maxAgeUnit")}
           >
             {(selected: string | null) =>
-              DURATION_UNITS.find(durationUnit => durationUnit.value === selected)?.label
-              ?? selected}
+              selected == null ? selected : durationUnitLabel(selected)}
           </SelectTrigger>
           <SelectPopup align="end">
             {DURATION_UNITS.map(durationUnit => (
               <SelectItem key={durationUnit.value} value={durationUnit.value}>
-                {durationUnit.label}
+                {durationUnitLabel(durationUnit.value)}
               </SelectItem>
             ))}
           </SelectPopup>

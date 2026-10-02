@@ -229,6 +229,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                         key={node.id}
                         patternKey={node}
                         cookieBannerKey={cookieBanner}
+                        onMoved={refetchCurrentPage}
                         onRemoved={handleRemoved}
                       />
                     ))}

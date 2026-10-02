@@ -130,12 +130,14 @@ const updatePatternMutation = graphql`
 interface TrackerPatternListItemProps {
   patternKey: TrackerPatternListItem_trackerPattern$key;
   cookieBannerKey: MoveToCategorySelect_cookieBanner$key;
+  onMoved: () => void;
   onRemoved: () => void;
 }
 
 export function TrackerPatternListItem({
   patternKey,
   cookieBannerKey,
+  onMoved,
   onRemoved,
 }: TrackerPatternListItemProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
@@ -177,7 +179,12 @@ export function TrackerPatternListItem({
           targetCookieCategoryId: targetCategoryId,
         },
       },
-    }).catch(() => undefined);
+    }).then(
+      () => {
+        onMoved();
+      },
+      () => undefined,
+    );
   }
 
   function handleToggleExcluded() {

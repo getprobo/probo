@@ -140,6 +140,11 @@ export const SortableHeaders: Story = {
       setDirection(current => current === "ASC" ? "DESC" : "ASC");
     }
 
+    const sortedRows = [...rows].sort((left, right) => {
+      const comparison = left[field].localeCompare(right[field]);
+      return direction === "ASC" ? comparison : -comparison;
+    });
+
     return (
       <div className="w-xl">
         <Table variant="surface">
@@ -161,7 +166,7 @@ export const SortableHeaders: Story = {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map(entry => (
+            {sortedRows.map(entry => (
               <TableRow key={entry.email}>
                 <TableRowHeaderCell>{entry.name}</TableRowHeaderCell>
                 <TableCell>{entry.email}</TableCell>
