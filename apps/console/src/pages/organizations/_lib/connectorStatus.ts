@@ -18,10 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type {
-  ConnectorConnectionStatus,
-  ProviderOrganizationsStatus,
-} from "#/__generated__/core/ConnectorListItem_connector.graphql";
+import type { ConnectorConnectionStatus } from "#/__generated__/core/ConnectorListItemStatus_connector.graphql";
+import type { ProviderOrganizationsStatus } from "#/__generated__/core/ConnectorListItem_connector.graphql";
 
 export type { ConnectorConnectionStatus };
 

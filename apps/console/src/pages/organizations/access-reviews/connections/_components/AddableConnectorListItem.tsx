@@ -25,17 +25,20 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { iconButton } from "@probo/ui/src/v2/IconButton/variants";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
+import type { AddableConnectorListItem_connector$data } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
 import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
+import type { AddableConnectorListItemStatus_connector$key } from "#/__generated__/core/AddableConnectorListItemStatus_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useMutation } from "#/lib/relay/useMutation";
 import {
   aggregateConnectionTone,
+  type ConnectorConnectionStatus,
   connectionSignalFrom,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
@@ -48,11 +51,14 @@ import {
 import { listedConnectorAccounts } from "../_lib/listedConnectorAccounts";
 
 const fragment = graphql`
-  fragment AddableConnectorListItem_connector on Connector @relay(plural: true) {
+  fragment AddableConnectorListItem_connector on Connector
+    @argumentDefinitions(
+      deferConnectionStatus: { type: "Boolean!", defaultValue: true }
+    )
+    @relay(plural: true) {
     id
     displayName
     provider
-    connectionStatus
     canReconnect
     providerOrganizations {
       status
@@ -67,6 +73,14 @@ const fragment = graphql`
         }
       }
     }
+    ...AddableConnectorListItemStatus_connector
+      @defer(if: $deferConnectionStatus, label: "$defer$AddableConnectorListItemStatus")
+  }
+`;
+
+const statusFragment = graphql`
+  fragment AddableConnectorListItemStatus_connector on Connector @relay(plural: true) {
+    connectionStatus
   }
 `;
 
@@ -87,32 +101,13 @@ export function AddableConnectorListItem({
   connectionId,
   normalizedSearch,
 }: AddableConnectorListItemProps) {
-  const { t } = useTranslation();
-  const { t: tConnector } = useTranslation("organizations/settings/integrations");
   const connectors = useFragment(fragment, connectorKeys);
   const [isAdding, setIsAdding] = useState(false);
   const [createAccessReviewSources, isCreating]
     = useMutation<accessReviewSourceMutationsCreateMutation>(
       createAccessReviewSourcesMutation,
     );
-  const busy = isAdding || isCreating;
   const [face] = connectors;
-  const presented = connectors.flatMap((connector) => {
-    const signal = connectionSignalFrom({
-      connectionStatus: connector.connectionStatus,
-      canReconnect: connector.canReconnect,
-      providerOrganizations: {
-        status: connector.providerOrganizations.status,
-      },
-    });
-    return signal == null ? [] : [presentConnection(signal)];
-  });
-  const [firstPresented] = presented;
-  const sharedStatus = firstPresented != null
-    && presented.every(item => item.status === firstPresented.status)
-    ? firstPresented.status
-    : null;
-  const tone = presented.length === 0 ? "green" : aggregateConnectionTone(presented);
   const accountCount = connectors.length === 1
     ? connectors[0].accounts.totalCount
     : new Set(
@@ -131,6 +126,94 @@ export function AddableConnectorListItem({
       needsOrganization: accountNeedsOrganization(account.externalAccountId, connector.id),
     })),
   );
+  if (face == null || listed.length === 0) {
+    return null;
+  }
+
+  const cardProps = {
+    connectors,
+    organizationId,
+    connectionId,
+    face,
+    accountCount,
+    listed,
+    isAdding,
+    isCreating,
+    setIsAdding,
+    createAccessReviewSources,
+  };
+
+  return (
+    <Suspense fallback={<AddableConnectorCard statuses={null} {...cardProps} />}>
+      <AddableConnectorResolved {...cardProps} />
+    </Suspense>
+  );
+}
+
+function AddableConnectorResolved(
+  props: Omit<AddableConnectorCardProps, "statuses">,
+) {
+  const statuses = useFragment(
+    statusFragment,
+    props.connectors as unknown as AddableConnectorListItemStatus_connector$key,
+  );
+
+  return (
+    <AddableConnectorCard
+      statuses={statuses.map(status => status.connectionStatus)}
+      {...props}
+    />
+  );
+}
+
+interface AddableConnectorCardProps {
+  connectors: AddableConnectorListItem_connector$data;
+  statuses: readonly ConnectorConnectionStatus[] | null;
+  organizationId: string;
+  connectionId: string;
+  face: AddableConnectorListItem_connector$data[number];
+  accountCount: number;
+  listed: { id: string; name: string; needsOrganization: boolean }[];
+  isAdding: boolean;
+  isCreating: boolean;
+  setIsAdding: (adding: boolean) => void;
+  createAccessReviewSources: ReturnType<
+    typeof useMutation<accessReviewSourceMutationsCreateMutation>
+  >[0];
+}
+
+function AddableConnectorCard({
+  connectors,
+  statuses,
+  organizationId,
+  connectionId,
+  face,
+  accountCount,
+  listed,
+  isAdding,
+  isCreating,
+  setIsAdding,
+  createAccessReviewSources,
+}: AddableConnectorCardProps) {
+  const { t } = useTranslation();
+  const { t: tConnector } = useTranslation("organizations/settings/integrations");
+  const busy = isAdding || isCreating;
+  const presented = connectors.flatMap((connector, index) => {
+    const signal = connectionSignalFrom({
+      connectionStatus: statuses?.[index] ?? null,
+      canReconnect: connector.canReconnect,
+      providerOrganizations: {
+        status: connector.providerOrganizations.status,
+      },
+    });
+    return signal == null ? [] : [presentConnection(signal)];
+  });
+  const [firstPresented] = presented;
+  const sharedStatus = firstPresented != null
+    && presented.every(item => item.status === firstPresented.status)
+    ? firstPresented.status
+    : null;
+  const tone = presented.length === 0 ? "sand" : aggregateConnectionTone(presented);
   const addable = listed.filter(account => !account.needsOrganization);
 
   async function addSources(accounts: { id: string; name: string }[]) {
@@ -164,10 +247,6 @@ export function AddableConnectorListItem({
     } finally {
       setIsAdding(false);
     }
-  }
-
-  if (face == null || listed.length === 0) {
-    return null;
   }
 
   return (
@@ -220,13 +299,15 @@ export function AddableConnectorListItem({
         </Text>
       )}
       <div className="mt-auto flex flex-wrap items-center gap-2">
-        <Badge variant="soft" color={tone} size={1}>
-          {sharedStatus != null
-            ? tConnector(`detailsPage.status.${sharedStatus}`)
-            : tConnector("listPage.connectedCount", {
-                connected: presented.filter(item => item.status === "CONNECTED").length,
-                total: presented.length,
-              })}
+        <Badge variant="soft" color={tone === "sand" ? "neutral" : tone} size={1}>
+          {statuses == null
+            ? tConnector("detailsPage.accounts.pending")
+            : sharedStatus != null
+              ? tConnector(`detailsPage.status.${sharedStatus}`)
+              : tConnector("listPage.connectedCount", {
+                  connected: presented.filter(item => item.status === "CONNECTED").length,
+                  total: presented.length,
+                })}
         </Badge>
         <Badge variant="soft" color="neutral" size={1}>
           {t("accessReviewConnectionsPage.accountCount", {
