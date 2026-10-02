@@ -93,14 +93,39 @@ async function uploadAttachments(
       return;
     }
 
-    const uploaded = await upload(file);
-    if (view.isDestroyed) {
-      return;
-    }
+    try {
+      const uploaded = await upload(file);
+      if (view.isDestroyed) {
+        return;
+      }
 
-    insertUploadedFile(view, at, uploaded);
-    at = view.state.selection.to;
+      insertUploadedFile(view, at, uploaded);
+      at = view.state.selection.to;
+    } catch {
+      // The upload callback reports the failure.
+    }
   }
+}
+
+export function uploadEditorFiles(
+  view: EditorView,
+  fileList: FileList | null | undefined,
+  pos: number,
+  upload: RichEditorAttachmentUpload,
+) {
+  if (!fileList || fileList.length === 0) {
+    return false;
+  }
+
+  void uploadAttachments(view, [...fileList], pos, upload);
+  return true;
+}
+
+function dropPosition(view: EditorView, event: DragEvent) {
+  return view.posAtCoords({
+    left: event.clientX,
+    top: event.clientY,
+  })?.pos ?? view.state.selection.from;
 }
 
 export const AttachmentUploadExtension = Extension.create<object, AttachmentUploadStorage>({
@@ -117,40 +142,43 @@ export const AttachmentUploadExtension = Extension.create<object, AttachmentUplo
       new Plugin({
         key: attachmentUploadKey,
         props: {
-          handlePaste(view, event) {
-            const upload = storage.upload;
-            const files = attachmentFiles(event.clipboardData?.files);
-            if (!upload || files.length === 0) {
-              return false;
-            }
+          // ProseMirror's handleDrop and handlePaste read dataTransfer text
+          // before those props run. Chrome clears the file list when that
+          // happens, so file drops have to be taken from the DOM event.
+          handleDOMEvents: {
+            drop(view, event) {
+              const upload = storage.upload;
+              if (!upload) {
+                return false;
+              }
 
-            event.preventDefault();
-            void uploadAttachments(view, files, view.state.selection.from, upload).catch(() => {
-              // The upload callback reports the failure.
-            });
-            return true;
-          },
+              const handled = uploadEditorFiles(
+                view,
+                event.dataTransfer?.files,
+                dropPosition(view, event),
+                upload,
+              );
+              if (!handled) {
+                return false;
+              }
 
-          handleDrop(view, event) {
-            const upload = storage.upload;
-            const files = attachmentFiles(event.dataTransfer?.files);
-            if (!upload || files.length === 0) {
-              return false;
-            }
+              event.preventDefault();
+              event.stopPropagation();
+              return true;
+            },
 
-            const coords = view.posAtCoords({
-              left: event.clientX,
-              top: event.clientY,
-            });
-            if (!coords) {
-              return false;
-            }
+            paste(view, event) {
+              const upload = storage.upload;
+              const files = attachmentFiles(event.clipboardData?.files);
+              if (!upload || files.length === 0) {
+                return false;
+              }
 
-            event.preventDefault();
-            void uploadAttachments(view, files, coords.pos, upload).catch(() => {
-              // The upload callback reports the failure.
-            });
-            return true;
+              event.preventDefault();
+              event.stopPropagation();
+              void uploadAttachments(view, files, view.state.selection.from, upload);
+              return true;
+            },
           },
         },
       }),

@@ -34,11 +34,11 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ChangeEvent, type ComponentProps, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { type ChangeEvent, type ComponentProps, type DragEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { tv } from "tailwind-variants";
 
 import { attachmentAccept, AttachmentExtension } from "./AttachmentExtension";
-import { AttachmentUploadExtension, insertUploadedFile, type RichEditorAttachmentUpload, setAttachmentUpload } from "./AttachmentUploadExtension";
+import { AttachmentUploadExtension, insertUploadedFile, type RichEditorAttachmentUpload, setAttachmentUpload, uploadEditorFiles } from "./AttachmentUploadExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
@@ -242,10 +242,55 @@ export function RichEditor(props: RichEditorProps) {
     );
   }, [editor]);
 
+  const handleAttachmentDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!uploadRef.current || !event.dataTransfer) {
+      return;
+    }
+
+    if (![...event.dataTransfer.types].includes("Files")) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const handleAttachmentDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    const upload = uploadRef.current;
+    if (!upload || !editor || editor.isDestroyed) {
+      return;
+    }
+
+    const coords = editor.view.posAtCoords({
+      left: event.clientX,
+      top: event.clientY,
+    });
+    const handled = uploadEditorFiles(
+      editor.view,
+      event.dataTransfer?.files,
+      coords?.pos ?? editor.state.selection.from,
+      upload,
+    );
+    if (!handled) {
+      return;
+    }
+
+    event.preventDefault();
+  }, [editor]);
+
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled })} {...divProps}>
+    <div
+      className={richEditorVariants({ className, disabled })}
+      {...divProps}
+      onDragOver={handleAttachmentDragOver}
+      onDrop={handleAttachmentDrop}
+    >
       {uploadEnabled && (
         <input
           ref={fileInputRef}
