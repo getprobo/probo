@@ -52,7 +52,7 @@ const configureMutation = graphql`
       connector {
         id
         selectedOrganization
-        ...ConnectorListItem_connector
+        ...ConnectorListItem_connector @arguments(deferConnectionStatus: false)
       }
     }
   }

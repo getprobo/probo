@@ -29,7 +29,7 @@ import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
@@ -72,7 +72,6 @@ export const integrationsPageQuery = graphql`
           id
           provider
           displayName
-          connectionStatus
           ...ConnectorGroupListItem_connector
         }
       }
@@ -90,6 +89,15 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [status, setStatus] = useState<ConnectorConnectionStatus | null>(null);
+  const [reported, setReported] = useState<Readonly<Record<string, ConnectorConnectionStatus>>>({});
+  const reportStatus = useCallback((id: string, next: ConnectorConnectionStatus) => {
+    setReported((current) => {
+      if (current[id] === next) {
+        return current;
+      }
+      return { ...current, [id]: next };
+    });
+  }, []);
   const organizationId = useOrganizationId();
   const { organization, connectorProviders }
     = usePreloadedQuery<IntegrationsPageQuery>(integrationsPageQuery, queryRef);
@@ -152,10 +160,17 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
       || provider.replaceAll("_", " ").toLowerCase().includes(normalizedSearch);
   };
   const isFiltering = isSearching || status != null;
-  const connectors = organization.connectors.filter(connector =>
-    matchesSearch(connector.displayName, connector.provider)
-    && (status == null || connector.connectionStatus === status),
+  const searchMatches = organization.connectors.filter(connector =>
+    matchesSearch(connector.displayName, connector.provider),
   );
+  // Status arrives on a deferred fragment. Keep every search match mounted
+  // until it reports, otherwise a filter would drop the reader before the probe.
+  const awaitingStatus = status != null
+    && searchMatches.some(connector => reported[connector.id] == null);
+  const visibleCount = status == null
+    ? searchMatches.length
+    : searchMatches.filter(connector => reported[connector.id] === status).length;
+  const showEmptySearch = !awaitingStatus && visibleCount === 0 && isFiltering;
 
   const { root, header, intro } = integrationsPage();
   const { root: list, tools, search, filters, filter, section, sectionTitle, grid, empty } = integrationsList();
@@ -225,9 +240,9 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
             <Heading level={2} size={3} weight="medium">
               {t("listPage.sections.connected")}
             </Heading>
-            <Text size={2} color="faint">{connectors.length}</Text>
+            <Text size={2} color="faint">{visibleCount}</Text>
           </div>
-          {connectors.length === 0 && isFiltering
+          {showEmptySearch
             ? (
                 <Card variant="soft" size={2}>
                   <div className={empty()}>
@@ -242,7 +257,7 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
                   {organization.canCreateConnector && (
                     <MarketplaceEntryCard organizationId={organizationId} />
                   )}
-                  {groupByProvider(connectors).map((group) => {
+                  {groupByProvider(searchMatches).map((group) => {
                     const face = group[0];
                     const providerKey = connectorProviders.find(
                       driver => driver.provider === face.provider,
@@ -255,10 +270,12 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
                         providerKey={providerKey}
                         organizationId={organizationId}
                         canConnect={organization.canCreateConnector}
+                        statusFilter={status}
+                        onStatus={reportStatus}
                       />
                     );
                   })}
-                  {connectors.length === 0 && !organization.canCreateConnector && (
+                  {searchMatches.length === 0 && !organization.canCreateConnector && (
                     <Card variant="soft" size={2}>
                       <div className={empty()}>
                         <Text size={2} color="faint">

@@ -19,7 +19,14 @@
 // SOFTWARE.
 
 import { GraphQLError } from "graphql";
-import { type FetchFunction, type GraphQLResponse } from "relay-runtime";
+import {
+  Observable,
+  type FetchFunction,
+  type GraphQLResponse,
+  type RequestParameters,
+  type UploadableMap,
+  type Variables,
+} from "relay-runtime";
 
 import {
   AssumptionRequiredError,
@@ -30,6 +37,7 @@ import {
   NDASignatureRequiredError,
   UnAuthenticatedError,
 } from "./errors";
+import { pushSSE, type GraphQLSSEPayload } from "./sse";
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
   error.extensions?.code === "UNAUTHENTICATED";
@@ -49,98 +57,188 @@ const hasMembershipRequiredError = (error: GraphQLError) =>
 const hasForbiddenError = (error: GraphQLError) =>
   error.extensions?.code === "FORBIDDEN";
 
+function classifyGraphQLErrors(errors: readonly GraphQLError[] | undefined) {
+  if (errors == null) {
+    return;
+  }
+
+  const unauthenticatedError = errors.find(hasUnauthenticatedError);
+  if (unauthenticatedError) {
+    throw new UnAuthenticatedError(unauthenticatedError.message);
+  }
+
+  const fullNameRequiredError = errors.find(hasFullNameRequiredError);
+  if (fullNameRequiredError) {
+    throw new FullNameRequiredError(fullNameRequiredError.message);
+  }
+
+  const assumptionRequiredError = errors.find(hasAssumptionRequiredError);
+  if (assumptionRequiredError) {
+    throw new AssumptionRequiredError(assumptionRequiredError.message);
+  }
+
+  const ndaSignatureRequiredError = errors.find(hasNDASignatureRequiredError);
+  if (ndaSignatureRequiredError) {
+    throw new NDASignatureRequiredError(ndaSignatureRequiredError.message);
+  }
+
+  const membershipRequiredError = errors.find(hasMembershipRequiredError);
+  if (membershipRequiredError) {
+    throw new MembershipRequiredError(membershipRequiredError.message);
+  }
+
+  const forbiddenError = errors.find(hasForbiddenError);
+  if (forbiddenError) {
+    throw new ForbiddenError(forbiddenError.message);
+  }
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+async function readJSONResponse(response: Response): Promise<GraphQLResponse> {
+  const json = (await response.json()) as GraphQLResponse & {
+    errors?: GraphQLError[];
+  };
+  classifyGraphQLErrors(json.errors);
+  return json;
+}
+
+async function fetchUpload(
+  endpoint: string,
+  request: RequestParameters,
+  variables: Variables,
+  uploadables: UploadableMap,
+): Promise<GraphQLResponse> {
+  const formData = new FormData();
+  formData.append(
+    "operations",
+    JSON.stringify({
+      operationName: request.name,
+      query: request.text,
+      variables,
+    }),
+  );
+
+  const uploadableMap: { [key: string]: string[] } = {};
+  const uploadableKeys = Object.keys(uploadables);
+  uploadableKeys.forEach((key) => {
+    uploadableMap[key] = [`variables.${key}`];
+  });
+  formData.append("map", JSON.stringify(uploadableMap));
+  uploadableKeys.forEach((key) => {
+    formData.append(key, uploadables[key]);
+  });
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    credentials: "include",
+    body: formData,
+  });
+  if (response.status === 500) {
+    throw new InternalServerError();
+  }
+
+  return readJSONResponse(response);
+}
+
+async function readEventStream(
+  response: Response,
+  publish: (payload: GraphQLSSEPayload) => void,
+): Promise<void> {
+  if (response.body == null) {
+    throw new InternalServerError();
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let completed = false;
+
+  try {
+    while (!completed) {
+      const { done, value } = await reader.read();
+      const chunk = value == null
+        ? decoder.decode()
+        : decoder.decode(value, { stream: !done });
+      const pushed = pushSSE(buffer, chunk);
+      buffer = pushed.buffer;
+      completed = pushed.completed;
+      for (const payload of pushed.payloads) {
+        classifyGraphQLErrors(payload.errors);
+        publish(payload);
+      }
+      if (done) {
+        break;
+      }
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+
+  if (!completed) {
+    throw new Error("graphql event stream ended before complete");
+  }
+}
+
 export const makeFetchQuery = (endpoint: string): FetchFunction => {
-  return async (request, variables, _, uploadables) => {
-    const requestInit: RequestInit = {
-      method: "POST",
-      credentials: "include",
-      headers: {},
-    };
-
+  return (request, variables, _, uploadables) => {
     if (uploadables) {
-      const formData = new FormData();
-      formData.append(
-        "operations",
-        JSON.stringify({
-          operationName: request.name,
-          query: request.text,
-          variables: variables,
-        }),
-      );
+      return fetchUpload(endpoint, request, variables, uploadables);
+    }
 
-      const uploadableMap: {
-        [key: string]: string[];
-      } = {};
-      const uploadableKeys = Object.keys(uploadables);
+    return Observable.create((sink) => {
+      const controller = new AbortController();
 
-      uploadableKeys.forEach((key) => {
-        uploadableMap[key] = [`variables.${key}`];
-      });
+      void (async () => {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            credentials: "include",
+            signal: controller.signal,
+            headers: {
+              "Accept": [
+            "text/event-stream",
+            "application/graphql-response+json; charset=utf-8",
+            "application/json; charset=utf-8",
+          ].join(", "),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              operationName: request.name,
+              query: request.text,
+              variables,
+            }),
+          });
 
-      formData.append("map", JSON.stringify(uploadableMap));
+          if (response.status === 500) {
+            sink.error(new InternalServerError());
+            return;
+          }
 
-      uploadableKeys.forEach((key) => {
-        formData.append(key, uploadables[key]);
-      });
+          const contentType = response.headers.get("content-type") ?? "";
+          if (!contentType.includes("text/event-stream")) {
+            sink.next(await readJSONResponse(response));
+            sink.complete();
+            return;
+          }
 
-      requestInit.body = formData;
-    } else {
-      requestInit.headers = {
-        "Accept": "application/graphql-response+json; charset=utf-8, application/json; charset=utf-8",
-        "Content-Type": "application/json",
+          await readEventStream(response, (payload) => {
+            sink.next(payload as GraphQLResponse);
+          });
+          sink.complete();
+        } catch (error) {
+          if (isAbortError(error) || sink.closed) {
+            return;
+          }
+          sink.error(error instanceof Error ? error : new Error("graphql request failed"));
+        }
+      })();
+
+      return () => {
+        controller.abort();
       };
-
-      requestInit.body = JSON.stringify({
-        operationName: request.name,
-        query: request.text,
-        variables,
-      });
-    }
-
-    const response = await fetch(endpoint, requestInit);
-
-    if (response.status === 500) {
-      throw new InternalServerError();
-    }
-
-    const json = (await response.json()) as GraphQLResponse & {
-      errors?: GraphQLError[];
-    };
-
-    if (json.errors) {
-      const errors = json.errors;
-
-      const unauthenticatedError = errors.find(hasUnauthenticatedError);
-      if (unauthenticatedError) {
-        throw new UnAuthenticatedError(unauthenticatedError.message);
-      }
-
-      const fullNameRequiredError = errors.find(hasFullNameRequiredError);
-      if (fullNameRequiredError) {
-        throw new FullNameRequiredError(fullNameRequiredError.message);
-      }
-
-      const assumptionRequiredError = errors.find(hasAssumptionRequiredError);
-      if (assumptionRequiredError) {
-        throw new AssumptionRequiredError(assumptionRequiredError.message);
-      }
-
-      const ndaSignatureRequiredError = errors.find(hasNDASignatureRequiredError);
-      if (ndaSignatureRequiredError) {
-        throw new NDASignatureRequiredError(ndaSignatureRequiredError.message);
-      }
-
-      const membershipRequiredError = errors.find(hasMembershipRequiredError);
-      if (membershipRequiredError) {
-        throw new MembershipRequiredError(membershipRequiredError.message);
-      }
-
-      const forbiddenError = errors.find(hasForbiddenError);
-      if (forbiddenError) {
-        throw new ForbiddenError(forbiddenError.message);
-      }
-    }
-
-    return json;
+    });
   };
 };

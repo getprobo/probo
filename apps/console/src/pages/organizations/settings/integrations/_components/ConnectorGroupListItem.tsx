@@ -27,16 +27,19 @@ import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
+import type { ConnectorGroupListItem_connector$data } from "#/__generated__/core/ConnectorGroupListItem_connector.graphql";
 import type { ConnectorGroupListItem_connector$key } from "#/__generated__/core/ConnectorGroupListItem_connector.graphql";
+import type { ConnectorGroupListItemStatus_connector$key } from "#/__generated__/core/ConnectorGroupListItemStatus_connector.graphql";
 import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import {
   aggregateConnectionTone,
   type ConnectionIssueKey,
+  type ConnectorConnectionStatus,
   connectionIssueKeys,
   connectionSignalFrom,
   connectionTone,
@@ -52,16 +55,19 @@ import { ConnectorConnectMore } from "./ConnectorConnectMore";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
 import { UsedBy } from "./UsedBy";
 
-// connectionStatus probes the vendor on every read, so this list pays one
-// outbound call per connected connector. providerOrganizations does too, for
-// providers that have an account picker.
+// connectionStatus probes the vendor on every read. It is deferred so the
+// card can paint before that call returns. Mutations opt out: a mutation
+// response is a single payload, and a deferred field there would never arrive.
 const connectorGroupListItemFragment = graphql`
-  fragment ConnectorGroupListItem_connector on Connector @relay(plural: true) {
+  fragment ConnectorGroupListItem_connector on Connector
+    @argumentDefinitions(
+      deferConnectionStatus: { type: "Boolean!", defaultValue: true }
+    )
+    @relay(plural: true) {
     id
     name
     provider
     displayName
-    connectionStatus
     canReconnect
     protocol
     oauth2Scopes
@@ -76,6 +82,15 @@ const connectorGroupListItemFragment = graphql`
     canGet: permission(action: "core:connector:get")
     canDelete: permission(action: "core:connector:delete")
     ...ConnectorDeleteDialog_connector
+    ...ConnectorGroupListItemStatus_connector
+      @defer(if: $deferConnectionStatus, label: "$defer$ConnectorGroupListItemStatus")
+  }
+`;
+
+const connectorGroupListItemStatusFragment = graphql`
+  fragment ConnectorGroupListItemStatus_connector on Connector @relay(plural: true) {
+    id
+    connectionStatus
   }
 `;
 
@@ -84,6 +99,8 @@ interface ConnectorGroupListItemProps {
   providerKey?: ConnectorProviderListItem_provider$key;
   organizationId: string;
   canConnect: boolean;
+  statusFilter: ConnectorConnectionStatus | null;
+  onStatus: (id: string, status: ConnectorConnectionStatus) => void;
 }
 
 export function ConnectorGroupListItem({
@@ -91,10 +108,113 @@ export function ConnectorGroupListItem({
   providerKey,
   organizationId,
   canConnect,
+  statusFilter,
+  onStatus,
 }: ConnectorGroupListItemProps) {
-  const { t, i18n } = useTranslation("organizations/settings/integrations");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const connectors = useFragment(connectorGroupListItemFragment, connectorKeys);
+  if (connectors.length === 0) {
+    return null;
+  }
+
+  const cardProps = {
+    providerKey,
+    organizationId,
+    canConnect,
+    deleteOpen,
+    onDeleteOpenChange: setDeleteOpen,
+  };
+
+  return (
+    <Suspense
+      fallback={statusFilter == null
+        ? (
+            <ConnectorGroupCard
+              connectors={connectors}
+              statuses={null}
+              {...cardProps}
+            />
+          )
+        : null}
+    >
+      <ConnectorGroupResolved
+        connectors={connectors}
+        statusFilter={statusFilter}
+        onStatus={onStatus}
+        {...cardProps}
+      />
+    </Suspense>
+  );
+}
+
+function ConnectorGroupResolved({
+  connectors,
+  statusFilter,
+  onStatus,
+  ...cardProps
+}: {
+  connectors: ConnectorGroupListItem_connector$data;
+  statusFilter: ConnectorConnectionStatus | null;
+  onStatus: (id: string, status: ConnectorConnectionStatus) => void;
+} & ConnectorGroupCardProps) {
+  const statuses = useFragment(
+    connectorGroupListItemStatusFragment,
+    connectors as unknown as ConnectorGroupListItemStatus_connector$key,
+  );
+
+  useEffect(() => {
+    for (const status of statuses) {
+      onStatus(status.id, status.connectionStatus);
+    }
+  }, [onStatus, statuses]);
+
+  const visibleConnectors: ConnectorGroupListItem_connector$data[number][] = [];
+  const visibleStatuses: ConnectorConnectionStatus[] = [];
+  connectors.forEach((connector, index) => {
+    const connectionStatus = statuses[index]?.connectionStatus;
+    if (connectionStatus == null) {
+      return;
+    }
+    if (statusFilter != null && connectionStatus !== statusFilter) {
+      return;
+    }
+    visibleConnectors.push(connector);
+    visibleStatuses.push(connectionStatus);
+  });
+  if (visibleConnectors.length === 0) {
+    return null;
+  }
+
+  return (
+    <ConnectorGroupCard
+      connectors={visibleConnectors}
+      statuses={visibleStatuses}
+      {...cardProps}
+    />
+  );
+}
+
+interface ConnectorGroupCardProps {
+  providerKey?: ConnectorProviderListItem_provider$key;
+  organizationId: string;
+  canConnect: boolean;
+  deleteOpen: boolean;
+  onDeleteOpenChange: (open: boolean) => void;
+}
+
+function ConnectorGroupCard({
+  connectors,
+  statuses,
+  providerKey,
+  organizationId,
+  canConnect,
+  deleteOpen,
+  onDeleteOpenChange,
+}: {
+  connectors: readonly ConnectorGroupListItem_connector$data[number][];
+  statuses: readonly ConnectorConnectionStatus[] | null;
+} & ConnectorGroupCardProps) {
+  const { t, i18n } = useTranslation("organizations/settings/integrations");
   const { card, controls, identity, name, tags, title } = connectorCard();
   const [face] = connectors;
   if (face == null) {
@@ -102,9 +222,9 @@ export function ConnectorGroupListItem({
   }
 
   const single = connectors.length === 1 ? face : null;
-  const presented = connectors.flatMap((connector) => {
+  const presented = connectors.flatMap((connector, index) => {
     const signal = connectionSignalFrom({
-      connectionStatus: connector.connectionStatus,
+      connectionStatus: statuses?.[index] ?? null,
       canReconnect: connector.canReconnect,
       providerOrganizations: {
         status: connector.providerOrganizations.status,
@@ -138,7 +258,7 @@ export function ConnectorGroupListItem({
               color="red"
               size={1}
               aria-label={t("detailsPage.actions.delete")}
-              onClick={() => setDeleteOpen(true)}
+              onClick={() => onDeleteOpenChange(true)}
             >
               <TrashIcon />
             </IconButton>
@@ -230,7 +350,7 @@ export function ConnectorGroupListItem({
           <ConnectorDeleteDialog
             connectorKey={face}
             open={deleteOpen}
-            onOpenChange={setDeleteOpen}
+            onOpenChange={onDeleteOpenChange}
           />
         )}
       </TonedCard>

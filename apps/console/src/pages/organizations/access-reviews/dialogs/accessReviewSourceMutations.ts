@@ -34,7 +34,7 @@ export const createAccessReviewSourcesMutation = graphql`
             name
             connectorId
             createdAt
-            ...AccessReviewSourceListItem_source
+            ...AccessReviewSourceListItem_source @arguments(deferConnectionStatus: false)
           }
         }
       }

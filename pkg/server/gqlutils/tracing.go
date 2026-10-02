@@ -103,25 +103,16 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 
 	handler := next(spanCtx)
 
-	return func(ctx context.Context) *graphql.Response {
-		// gqlgen invokes the response handler with a different ctx than the one
-		// passed to next(...). Re-attach the span so the logger can extract trace_id.
-		if operationSpan != nil {
-			ctx = trace.ContextWithSpan(ctx, operationSpan)
-			defer operationSpan.End()
-		}
+	operationType := string(requestContext.Operation.Operation)
+	operationName := requestContext.OperationName
+	if operationName == "" {
+		operationName = "unnamed"
+	}
 
-		resp := handler(ctx)
+	logged := false
+	logOutcome := func(ctx context.Context, resp *graphql.Response) {
 		duration := time.Since(startTime)
-
-		operationType := string(requestContext.Operation.Operation)
-
-		operationName := requestContext.OperationName
-		if operationName == "" {
-			operationName = "unnamed"
-		}
-
-		if resp.Errors != nil {
+		if resp != nil && resp.Errors != nil {
 			t.logger.ErrorCtx(
 				ctx,
 				fmt.Sprintf("%s %s failed %s", operationType, operationName, duration.String()),
@@ -130,14 +121,37 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 				log.Duration("graphql_operation_duration", duration),
 				log.Any("graphql_operation_errors", resp.Errors),
 			)
-		} else {
-			t.logger.InfoCtx(
-				ctx,
-				fmt.Sprintf("%s %s succeed %s", operationType, operationName, duration.String()),
-				log.String("graphql_operation_name", operationName),
-				log.String("graphql_operation_type", operationType),
-				log.Duration("graphql_operation_duration", duration),
-			)
+
+			return
+		}
+
+		t.logger.InfoCtx(
+			ctx,
+			fmt.Sprintf("%s %s succeed %s", operationType, operationName, duration.String()),
+			log.String("graphql_operation_name", operationName),
+			log.String("graphql_operation_type", operationType),
+			log.Duration("graphql_operation_duration", duration),
+		)
+	}
+
+	return func(ctx context.Context) *graphql.Response {
+		// gqlgen invokes the response handler with a different ctx than the one
+		// passed to next(...). Re-attach the span so the logger can extract trace_id.
+		if operationSpan != nil {
+			ctx = trace.ContextWithSpan(ctx, operationSpan)
+		}
+
+		resp := handler(ctx)
+		// A nil response ends an incremental stream (@defer / subscriptions).
+		// The handler is invoked once per payload, so the span stays open
+		// until the terminal one.
+		terminal := resp == nil || resp.HasNext == nil || !*resp.HasNext
+		if terminal && !logged {
+			logged = true
+			logOutcome(ctx, resp)
+			if operationSpan != nil {
+				operationSpan.End()
+			}
 		}
 
 		return resp
