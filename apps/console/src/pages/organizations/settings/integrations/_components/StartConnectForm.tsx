@@ -3,7 +3,7 @@
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// to use, copy, modify, merge, publish, distribute, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
@@ -18,49 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { graphql, useFragment } from "react-relay";
+
+import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+
 import {
   connectProviderInstall,
   connectProviderProtocol,
 } from "../_lib/connectorSettings";
 
-import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
-import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
+import { ConnectForm } from "./ConnectForm";
+
+const startConnectFormFragment = graphql`
+  fragment StartConnectForm_provider on ConnectorProviderInfo {
+    provider
+    documentationUrl
+  }
+`;
 
 export function StartConnectForm({
   organizationId,
-  driver,
+  providerKey,
   method,
 }: {
   organizationId: string;
-  driver: ConnectVendorDriver;
+  providerKey: StartConnectForm_provider$key;
   method: "GITHUB_APP" | "INSTALL";
 }) {
-  const connectorName = useConnectorName();
+  const provider = useFragment(startConnectFormFragment, providerKey);
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (connectorName.rejectIfEmpty()) {
-          return;
-        }
+    <ConnectForm
+      documentationUrl={provider.documentationUrl}
+      onSubmit={({ name }) => {
         if (method === "INSTALL") {
-          connectProviderInstall(organizationId, driver.provider, connectorName.trimmed);
-          return;
+          connectProviderInstall(organizationId, provider.provider, name);
+          return null;
         }
-        connectProviderProtocol(organizationId, driver.provider, method, {
-          name: connectorName.trimmed,
-        });
+        connectProviderProtocol(organizationId, provider.provider, method, { name });
+        return null;
       }}
-    >
-      <ConnectorNameField
-        name={connectorName.name}
-        error={connectorName.error}
-        onChange={connectorName.onChange}
-        onEmpty={connectorName.rejectIfEmpty}
-      />
-      <ConnectFormFooter documentationUrl={driver.documentationUrl} />
-    </form>
+    />
   );
 }

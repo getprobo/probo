@@ -20,34 +20,85 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
 
+import type { AWSConnectFormQuery } from "#/__generated__/core/AWSConnectFormQuery.graphql";
+import type { AzureConnectFormQuery } from "#/__generated__/core/AzureConnectFormQuery.graphql";
 import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
+import type { GCPConnectFormQuery } from "#/__generated__/core/GCPConnectFormQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { awsConnectFormQuery } from "./_components/AWSConnectForm";
+import { azureConnectFormQuery } from "./_components/AzureConnectForm";
+import { gcpConnectFormQuery } from "./_components/GCPConnectForm";
+import { connectMethodFromSlug, providerFromSlug } from "./_lib/integrationPath";
 import { ConnectVendorPage, connectVendorPageQuery } from "./ConnectVendorPage";
 
 export default function ConnectVendorPageLoader() {
   const organizationId = useOrganizationId();
+  const { provider: providerSlug = "", method: methodSlug } = useParams();
+  const provider = providerFromSlug(providerSlug);
+  const method = methodSlug == null ? null : connectMethodFromSlug(methodSlug);
   const [queryRef, loadQuery]
     = useQueryLoader<ConnectVendorPageQuery>(connectVendorPageQuery);
+  const [awsQueryRef, loadAwsQuery]
+    = useQueryLoader<AWSConnectFormQuery>(awsConnectFormQuery);
+  const [gcpQueryRef, loadGcpQuery]
+    = useQueryLoader<GCPConnectFormQuery>(gcpConnectFormQuery);
+  const [azureQueryRef, loadAzureQuery]
+    = useQueryLoader<AzureConnectFormQuery>(azureConnectFormQuery);
 
   useEffect(() => {
     loadQuery({ organizationId });
-  }, [loadQuery, organizationId]);
+    if (method !== "WORKLOAD_IDENTITY") {
+      return;
+    }
+    if (provider === "AWS") {
+      loadAwsQuery({ organizationId });
+    } else if (provider === "GCP") {
+      loadGcpQuery({ organizationId });
+    } else if (provider === "AZURE") {
+      loadAzureQuery({ organizationId });
+    }
+  }, [
+    loadAwsQuery,
+    loadAzureQuery,
+    loadGcpQuery,
+    loadQuery,
+    method,
+    organizationId,
+    provider,
+  ]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
     ? queryRef
     : null;
+  const setupReady = method !== "WORKLOAD_IDENTITY"
+    || (provider !== "AWS" && provider !== "GCP" && provider !== "AZURE")
+    || (provider === "AWS"
+      && awsQueryRef != null
+      && awsQueryRef.variables.organizationId === organizationId)
+    || (provider === "GCP"
+      && gcpQueryRef != null
+      && gcpQueryRef.variables.organizationId === organizationId)
+    || (provider === "AZURE"
+      && azureQueryRef != null
+      && azureQueryRef.variables.organizationId === organizationId);
 
-  if (currentQueryRef == null) {
+  if (currentQueryRef == null || !setupReady) {
     return <PageSkeleton />;
   }
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <ConnectVendorPage queryRef={currentQueryRef} />
+      <ConnectVendorPage
+        queryRef={currentQueryRef}
+        awsQueryRef={provider === "AWS" ? awsQueryRef ?? null : null}
+        gcpQueryRef={provider === "GCP" ? gcpQueryRef ?? null : null}
+        azureQueryRef={provider === "AZURE" ? azureQueryRef ?? null : null}
+      />
     </Suspense>
   );
 }

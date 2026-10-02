@@ -10567,9 +10567,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            e.g. production, main or any word that may distinct 2 credentials
+            to the same provider.
         provider:
           type: string
           description: Connector provider
@@ -10774,9 +10773,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            e.g. production, main or any word that may distinct 2 credentials
+            to the same provider.
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
           description: Connector provider (AWS, GCP, or Azure)
@@ -10903,9 +10901,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            e.g. production, main or any word that may distinct 2 credentials
+            to the same provider.
 
     UpdateConnectorMCPOutput:
       type: object
@@ -10955,9 +10952,8 @@ components:
         name:
           type: string
           description: >-
-            Keeps track of this connector and the credential attached to it,
-            so several connections to the same provider stay distinct.
-            displayName stays the provider name.
+            e.g. production, main or any word that may distinct 2 credentials
+            to the same provider.
         provider:
           $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
           description: Connector provider (AWS, GCP, or Azure)
