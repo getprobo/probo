@@ -151,15 +151,31 @@ func (h *completionCertificateHandler) generateAndCommit(
 ) error {
 	scope := coredata.NewScopeFromObjectID(signature.ID)
 
-	email, attachments, err := h.generateCertificate(ctx, signature, scope)
+	certificateFile, err := h.generateCertificate(ctx, signature, scope)
 	if err != nil {
 		return err
+	}
+
+	var (
+		email       *coredata.Email
+		attachments coredata.EmailAttachments
+	)
+	if ref.UnrefOrZero(signature.EmailSubject) != "" {
+		email, attachments, err = h.generateCompletionEmail(
+			ctx,
+			signature,
+			scope,
+			certificateFile,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := h.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			signature.CertificateFileID = &attachments[1].FileID
+			signature.CertificateFileID = &certificateFile.ID
 
 			signature.UpdatedAt = time.Now()
 			if err := signature.Update(ctx, tx, scope); err != nil {
@@ -174,13 +190,15 @@ func (h *completionCertificateHandler) generateAndCommit(
 				return fmt.Errorf("cannot insert certificate event: %w", err)
 			}
 
-			if err := email.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert certificate email: %w", err)
-			}
+			if email != nil {
+				if err := email.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert certificate email: %w", err)
+				}
 
-			for _, attachment := range attachments {
-				if err := attachment.Insert(ctx, tx); err != nil {
-					return fmt.Errorf("cannot insert email attachment: %w", err)
+				for _, attachment := range attachments {
+					if err := attachment.Insert(ctx, tx); err != nil {
+						return fmt.Errorf("cannot insert email attachment: %w", err)
+					}
 				}
 			}
 
@@ -197,12 +215,8 @@ func (h *completionCertificateHandler) generateCertificate(
 	ctx context.Context,
 	signature *coredata.ElectronicSignature,
 	scope coredata.Scoper,
-) (*coredata.Email, coredata.EmailAttachments, error) {
-	var (
-		events       = coredata.ElectronicSignatureEvents{}
-		signedFile   = coredata.File{}
-		organization = coredata.Organization{}
-	)
+) (*coredata.File, error) {
+	events := coredata.ElectronicSignatureEvents{}
 
 	if err := h.pg.WithConn(
 		ctx,
@@ -211,23 +225,15 @@ func (h *completionCertificateHandler) generateCertificate(
 				return fmt.Errorf("cannot load events: %w", err)
 			}
 
-			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
-				return fmt.Errorf("cannot load signed file: %w", err)
-			}
-
-			if err := organization.LoadByID(ctx, conn, scope, signature.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
 			return nil
 		},
 	); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	certificatePDFReader, err := h.certificateGen.Generate(ctx, signature, events)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot generate certificate: %w", err)
+		return nil, fmt.Errorf("cannot generate certificate: %w", err)
 	}
 
 	certificateOfCompletionFile := coredata.File{
@@ -252,7 +258,7 @@ func (h *completionCertificateHandler) generateCertificate(
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot upload cert to S3: %w", err)
+		return nil, fmt.Errorf("cannot upload cert to S3: %w", err)
 	}
 
 	certificateOfCompletionFile.FileSize = certificateOfCompletionFileSize
@@ -262,6 +268,37 @@ func (h *completionCertificateHandler) generateCertificate(
 		func(ctx context.Context, tx pg.Tx) error {
 			if err := certificateOfCompletionFile.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert certificate of completion file: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	return &certificateOfCompletionFile, nil
+}
+
+func (h *completionCertificateHandler) generateCompletionEmail(
+	ctx context.Context,
+	signature *coredata.ElectronicSignature,
+	scope coredata.Scoper,
+	certificateFile *coredata.File,
+) (*coredata.Email, coredata.EmailAttachments, error) {
+	var (
+		signedFile   = coredata.File{}
+		organization = coredata.Organization{}
+	)
+
+	if err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := signedFile.LoadByID(ctx, conn, scope, signature.FileID); err != nil {
+				return fmt.Errorf("cannot load signed file: %w", err)
+			}
+
+			if err := organization.LoadByID(ctx, conn, scope, signature.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			return nil
@@ -282,10 +319,7 @@ func (h *completionCertificateHandler) generateCertificate(
 		docName = signature.DocumentType.DisplayName()
 	}
 
-	subject := signature.EmailSubject
-	if subject == "" {
-		subject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
-	}
+	subject := *signature.EmailSubject
 
 	textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName, subject)
 	if err != nil {
@@ -311,7 +345,7 @@ func (h *completionCertificateHandler) generateCertificate(
 		),
 		coredata.NewEmailAttachment(
 			email.ID,
-			certificateOfCompletionFile.ID,
+			certificateFile.ID,
 			certificateFilename,
 		),
 	}
