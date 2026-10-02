@@ -25,16 +25,18 @@ import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
 import { CardButton } from "@probo/ui/src/v2/Card/CardButton";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
-import type { ConnectorListItem_connector$key } from "#/__generated__/core/ConnectorListItem_connector.graphql";
+import type { ConnectorListItem_connector$data, ConnectorListItem_connector$key } from "#/__generated__/core/ConnectorListItem_connector.graphql";
+import type { ConnectorListItemStatus_connector$key } from "#/__generated__/core/ConnectorListItemStatus_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import {
   connectionIssueKeys,
   connectionSignalFrom,
   connectionTone,
+  type ConnectorConnectionStatus,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 
@@ -49,11 +51,13 @@ import { ConnectorProbeError } from "./ConnectorProbeError";
 import { ConnectorTypeMark } from "./ConnectorTypeMark";
 
 const connectorListItemFragment = graphql`
-  fragment ConnectorListItem_connector on Connector {
+  fragment ConnectorListItem_connector on Connector
+    @argumentDefinitions(
+      deferConnectionStatus: { type: "Boolean!", defaultValue: true }
+    ) {
     id
     name
     provider
-    connectionStatus
     canReconnect
     protocol
     oauth2Scopes
@@ -71,6 +75,14 @@ const connectorListItemFragment = graphql`
     ...ConnectorProbeError_connector
     ...ConnectorOrganizationSelect_connector
     ...ConnectorDeleteDialog_connector
+    ...ConnectorListItemStatus_connector
+      @defer(if: $deferConnectionStatus, label: "$defer$ConnectorListItemStatus")
+  }
+`;
+
+const connectorListItemStatusFragment = graphql`
+  fragment ConnectorListItemStatus_connector on Connector {
+    connectionStatus
   }
 `;
 
@@ -87,12 +99,74 @@ export function ConnectorListItem({
   onSelect,
   onDeleted,
 }: ConnectorListItemProps) {
-  const { t, i18n } = useTranslation("organizations/settings/integrations");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const connector = useFragment(connectorListItemFragment, connectorKey);
+  const bodyProps = {
+    connector,
+    organizationId,
+    onSelect,
+    onDeleted,
+    deleteOpen,
+    onDeleteOpenChange: setDeleteOpen,
+  };
+
+  return (
+    <Suspense
+      fallback={(
+        <ConnectorListItemBody
+          connectionStatus={null}
+          {...bodyProps}
+        />
+      )}
+    >
+      <ConnectorListItemResolved {...bodyProps} />
+    </Suspense>
+  );
+}
+
+function ConnectorListItemResolved({
+  connector,
+  ...bodyProps
+}: {
+  connector: ConnectorListItem_connector$data;
+} & Omit<ConnectorListItemBodyProps, "connectionStatus" | "connector">) {
+  const status = useFragment(
+    connectorListItemStatusFragment,
+    connector as unknown as ConnectorListItemStatus_connector$key,
+  );
+
+  return (
+    <ConnectorListItemBody
+      connector={connector}
+      connectionStatus={status.connectionStatus}
+      {...bodyProps}
+    />
+  );
+}
+
+interface ConnectorListItemBodyProps {
+  connector: ConnectorListItem_connector$data;
+  connectionStatus: ConnectorConnectionStatus | null;
+  organizationId: string;
+  onSelect: (connectorId: string) => void;
+  onDeleted?: () => void;
+  deleteOpen: boolean;
+  onDeleteOpenChange: (open: boolean) => void;
+}
+
+function ConnectorListItemBody({
+  connector,
+  connectionStatus,
+  organizationId,
+  onSelect,
+  onDeleted,
+  deleteOpen,
+  onDeleteOpenChange,
+}: ConnectorListItemBodyProps) {
+  const { t, i18n } = useTranslation("organizations/settings/integrations");
   const { card, controls, identity, metaRow, name, tags } = connectorCard();
   const signal = connectionSignalFrom({
-    connectionStatus: connector.connectionStatus,
+    connectionStatus,
     canReconnect: connector.canReconnect,
     providerOrganizations: {
       status: connector.providerOrganizations.status,
@@ -109,7 +183,7 @@ export function ConnectorListItem({
             color="red"
             size={1}
             aria-label={t("detailsPage.actions.delete")}
-            onClick={() => setDeleteOpen(true)}
+            onClick={() => onDeleteOpenChange(true)}
           >
             <TrashIcon />
           </IconButton>
@@ -195,7 +269,7 @@ export function ConnectorListItem({
           <ConnectorDeleteDialog
             connectorKey={connector}
             open={deleteOpen}
-            onOpenChange={setDeleteOpen}
+            onOpenChange={onDeleteOpenChange}
             onDeleted={onDeleted}
           />
         )}

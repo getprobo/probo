@@ -25,7 +25,7 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { iconButton } from "@probo/ui/src/v2/IconButton/variants";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
@@ -37,11 +37,13 @@ import type {
   AddableConnectorListItem_connector$key,
   ProviderOrganizationsStatus,
 } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
+import type { AddableConnectorListItemStatus_connector$key } from "#/__generated__/core/AddableConnectorListItemStatus_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useMutation } from "#/lib/relay/useMutation";
 import {
   aggregateConnectionTone,
   connectionSignalFrom,
+  type ConnectorConnectionStatus,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 import { connectorDetailsPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
@@ -58,17 +60,28 @@ import {
 } from "./AddableConnectorAccounts";
 
 const fragment = graphql`
-  fragment AddableConnectorListItem_connector on Connector @relay(plural: true) {
+  fragment AddableConnectorListItem_connector on Connector
+    @argumentDefinitions(
+      deferConnectionStatus: { type: "Boolean!", defaultValue: true }
+    )
+    @relay(plural: true) {
     id
     displayName
     provider
-    connectionStatus
     canReconnect
     providerOrganizations {
       status
     }
     distinctAccountCount
     ...AddableConnectorAccounts_connector
+    ...AddableConnectorListItemStatus_connector
+      @defer(if: $deferConnectionStatus, label: "$defer$AddableConnectorListItemStatus")
+  }
+`;
+
+const statusFragment = graphql`
+  fragment AddableConnectorListItemStatus_connector on Connector @relay(plural: true) {
+    connectionStatus
   }
 `;
 
@@ -257,8 +270,6 @@ function ResolvedAddableConnectorCard({
   onAdd: (accounts: { id: string; name: string }[]) => void;
   children: (card: AddableConnectorCard | null) => ReactNode;
 }) {
-  const { t } = useTranslation();
-  const { t: tConnector } = useTranslation("organizations/settings/integrations");
   const accountKeys: AddableConnectorListItem_account$key = pages.flatMap(
     page => page.accounts,
   );
@@ -284,9 +295,88 @@ function ResolvedAddableConnectorCard({
         ),
       }));
   });
-  const presented = connectors.flatMap((connector) => {
+  const accountCount = face?.distinctAccountCount ?? 0;
+  const addable = listed.filter(account => !account.needsOrganization);
+  const hasNext = pages.some(page => page.hasNext);
+  if (face == null || (listed.length === 0 && !hasNext)) {
+    return children(null);
+  }
+
+  return children({
+    provider: face.provider,
+    card: (
+      <Suspense
+        fallback={(
+          <AddableConnectorFace
+            connectors={connectors}
+            statuses={null}
+            face={face}
+            organizationId={organizationId}
+            busy={busy}
+            addable={addable}
+            listedCount={listed.length}
+            accountCount={accountCount}
+            onAdd={onAdd}
+          />
+        )}
+      >
+        <AddableConnectorFaceWithStatus
+          connectors={connectors}
+          face={face}
+          organizationId={organizationId}
+          busy={busy}
+          addable={addable}
+          listedCount={listed.length}
+          accountCount={accountCount}
+          onAdd={onAdd}
+        />
+      </Suspense>
+    ),
+  });
+}
+
+function AddableConnectorFaceWithStatus(
+  props: Omit<Parameters<typeof AddableConnectorFace>[0], "statuses">,
+) {
+  const statuses = useFragment(
+    statusFragment,
+    props.connectors as unknown as AddableConnectorListItemStatus_connector$key,
+  );
+
+  return (
+    <AddableConnectorFace
+      {...props}
+      statuses={statuses.map(status => status.connectionStatus)}
+    />
+  );
+}
+
+function AddableConnectorFace({
+  connectors,
+  statuses,
+  face,
+  organizationId,
+  busy,
+  addable,
+  listedCount,
+  accountCount,
+  onAdd,
+}: {
+  connectors: AddableConnectorListItem_connector$data;
+  statuses: readonly ConnectorConnectionStatus[] | null;
+  face: AddableConnectorListItem_connector$data[number];
+  organizationId: string;
+  busy: boolean;
+  addable: { id: string; name: string }[];
+  listedCount: number;
+  accountCount: number;
+  onAdd: (accounts: { id: string; name: string }[]) => void;
+}) {
+  const { t } = useTranslation();
+  const { t: tConnector } = useTranslation("organizations/settings/integrations");
+  const presented = connectors.flatMap((connector, index) => {
     const signal = connectionSignalFrom({
-      connectionStatus: connector.connectionStatus,
+      connectionStatus: statuses?.[index] ?? null,
       canReconnect: connector.canReconnect,
       providerOrganizations: {
         status: connector.providerOrganizations.status,
@@ -299,78 +389,75 @@ function ResolvedAddableConnectorCard({
     && presented.every(item => item.status === firstPresented.status)
     ? firstPresented.status
     : null;
-  const tone = presented.length === 0 ? "green" : aggregateConnectionTone(presented);
-  const accountCount = face?.distinctAccountCount ?? 0;
-  const addable = listed.filter(account => !account.needsOrganization);
-  const hasNext = pages.some(page => page.hasNext);
-  if (face == null || (listed.length === 0 && !hasNext)) {
-    return children(null);
-  }
+  const tone = statuses == null
+    ? "sand"
+    : presented.length === 0
+      ? "green"
+      : aggregateConnectionTone(presented);
 
-  return children({
-    provider: face.provider,
-    card: (
-      <TonedCard
-        tone={tone}
-        size={2}
-        icon={(
-          <ThirdPartyLogo thirdParty={face.provider} />
-        )}
-        lead={(
-          <Heading level={3} size={3} weight="medium" highContrast className="min-w-0 truncate">
-            {face.displayName}
-          </Heading>
-        )}
-        control={(
-          <div className="flex items-center gap-1">
-            <IconButton
-              variant="ghost"
-              color="neutral"
-              size={1}
-              loading={busy}
-              disabled={addable.length === 0}
-              aria-label={addable.length > 1
-                ? t("accessReviewConnectionsPage.actions.addAll")
-                : t("accessReviewConnectionsPage.actions.add")}
-              onClick={() => {
-                void onAdd(addable);
-              }}
-            >
-              <PlusIcon />
-            </IconButton>
-            <Link
-              to={connectorDetailsPath(organizationId, face.provider)}
-              aria-label={t("accessReviewConnectionsPage.actions.edit", {
-                connector: face.displayName,
-              })}
-              className={iconButton({ variant: "ghost", color: "neutral", size: 1 })}
-            >
-              <PencilSimpleIcon />
-            </Link>
-          </div>
-        )}
-      >
-        {listed.length > 0 && addable.length === 0 && (
-          <Text size={2} color="faint">
-            {t("accessReviewConnectionsPage.needsOrganization")}
-          </Text>
-        )}
-        <div className="mt-auto flex flex-wrap items-center gap-2">
-          <Badge variant="soft" color={tone} size={1}>
-            {sharedStatus != null
+  return (
+    <TonedCard
+      tone={tone}
+      size={2}
+      icon={(
+        <ThirdPartyLogo thirdParty={face.provider} />
+      )}
+      lead={(
+        <Heading level={3} size={3} weight="medium" highContrast className="min-w-0 truncate">
+          {face.displayName}
+        </Heading>
+      )}
+      control={(
+        <div className="flex items-center gap-1">
+          <IconButton
+            variant="ghost"
+            color="neutral"
+            size={1}
+            loading={busy}
+            disabled={addable.length === 0}
+            aria-label={addable.length > 1
+              ? t("accessReviewConnectionsPage.actions.addAll")
+              : t("accessReviewConnectionsPage.actions.add")}
+            onClick={() => {
+              void onAdd(addable);
+            }}
+          >
+            <PlusIcon />
+          </IconButton>
+          <Link
+            to={connectorDetailsPath(organizationId, face.provider)}
+            aria-label={t("accessReviewConnectionsPage.actions.edit", {
+              connector: face.displayName,
+            })}
+            className={iconButton({ variant: "ghost", color: "neutral", size: 1 })}
+          >
+            <PencilSimpleIcon />
+          </Link>
+        </div>
+      )}
+    >
+      {listedCount > 0 && addable.length === 0 && (
+        <Text size={2} color="faint">
+          {t("accessReviewConnectionsPage.needsOrganization")}
+        </Text>
+      )}
+      <div className="mt-auto flex flex-wrap items-center gap-2">
+        <Badge variant="soft" color={tone === "sand" ? "neutral" : tone} size={1}>
+          {statuses == null
+            ? tConnector("detailsPage.accounts.pending")
+            : sharedStatus != null
               ? tConnector(`detailsPage.status.${sharedStatus}`)
               : tConnector("listPage.connectedCount", {
                   connected: presented.filter(item => item.status === "CONNECTED").length,
                   total: presented.length,
                 })}
-          </Badge>
-          <Badge variant="soft" color="neutral" size={1}>
-            {t("accessReviewConnectionsPage.accountCount", {
-              count: accountCount,
-            })}
-          </Badge>
-        </div>
-      </TonedCard>
-    ),
-  });
+        </Badge>
+        <Badge variant="soft" color="neutral" size={1}>
+          {t("accessReviewConnectionsPage.accountCount", {
+            count: accountCount,
+          })}
+        </Badge>
+      </div>
+    </TonedCard>
+  );
 }

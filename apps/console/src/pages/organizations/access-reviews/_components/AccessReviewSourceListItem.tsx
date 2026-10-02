@@ -42,10 +42,7 @@ import { useTranslation } from "react-i18next";
 import { useFragment, useLazyLoadQuery, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type {
-  AccessReviewSourceConnectionStatus,
-  AccessReviewSourceListItem_source$key,
-} from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
+import type { AccessReviewSourceListItem_source$data, AccessReviewSourceListItem_source$key } from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
 import type { AccessReviewSourceListItemCapturedOrganization_source$key } from "#/__generated__/core/AccessReviewSourceListItemCapturedOrganization_source.graphql";
 import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated__/core/AccessReviewSourceListItemConfigureMutation.graphql";
 import type { AccessReviewSourceListItemDeleteMutation } from "#/__generated__/core/AccessReviewSourceListItemDeleteMutation.graphql";
@@ -53,8 +50,9 @@ import type { AccessReviewSourceListItemManualOrgInput_source$key } from "#/__ge
 import type { AccessReviewSourceListItemOrganizations_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizations_source.graphql";
 import type { AccessReviewSourceListItemOrganizationsEmpty_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsEmpty_source.graphql";
 import type { AccessReviewSourceListItemOrganizationsUnavailable_source$key } from "#/__generated__/core/AccessReviewSourceListItemOrganizationsUnavailable_source.graphql";
-import type { AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
+import type { AccessReviewSourceListItemOrgsQuery$data, AccessReviewSourceListItemOrgsQuery } from "#/__generated__/core/AccessReviewSourceListItemOrgsQuery.graphql";
 import type { AccessReviewSourceListItemSourceConnectionIssue_connector$key } from "#/__generated__/core/AccessReviewSourceListItemSourceConnectionIssue_connector.graphql";
+import type { AccessReviewSourceConnectionStatus, AccessReviewSourceListItemStatus_source$key } from "#/__generated__/core/AccessReviewSourceListItemStatus_source.graphql";
 import {
   type ConnectionIssueKey,
   connectionSignalFrom,
@@ -96,7 +94,10 @@ function sourceConnectorIssue(
 }
 
 const fragment = graphql`
-  fragment AccessReviewSourceListItem_source on AccessReviewSource {
+  fragment AccessReviewSourceListItem_source on AccessReviewSource
+    @argumentDefinitions(
+      deferConnectionStatus: { type: "Boolean!", defaultValue: true }
+    ) {
     id
     name
     connectorId
@@ -107,11 +108,18 @@ const fragment = graphql`
       oauth2Scopes
       ...AccessReviewSourceListItemSourceConnectionIssue_connector
     }
-    connectionStatus
     selectedOrganization
     needsConfiguration
     createdAt
     canDelete: permission(action: "access-review:source:delete")
+    ...AccessReviewSourceListItemStatus_source
+      @defer(if: $deferConnectionStatus, label: "$defer$AccessReviewSourceListItemStatus")
+  }
+`;
+
+const statusFragment = graphql`
+  fragment AccessReviewSourceListItemStatus_source on AccessReviewSource {
+    connectionStatus
   }
 `;
 
@@ -341,19 +349,6 @@ export function AccessReviewSourceListItem({
   const showOrgSelector
     = accessSource.needsConfiguration || accessSource.selectedOrganization;
   const canReconnect = canReconnectConnector(accessSource.connector);
-  // Stated as what a healthy source is, not as a list of the ways it can
-  // break: a status added to the enum after this bundle shipped would match
-  // no branch of such a list and silently render nothing at all for a source
-  // that is in fact broken. An unrecognised one is treated as DISCONNECTED is.
-  const hasConnectionIssue
-    = accessSource.connectionStatus !== "CONNECTED"
-      && accessSource.connectionStatus !== "NOT_APPLICABLE";
-  const showStandaloneIssue = hasConnectionIssue && !showOrgSelector;
-  const standaloneIssue = sourceConnectorIssue(
-    accessSource.connectionStatus,
-    canReconnect,
-    false,
-  );
 
   return (
     <Card variant="soft" size={2} className="flex h-full min-w-0 flex-col gap-3">
@@ -387,21 +382,23 @@ export function AccessReviewSourceListItem({
               />
             )}
           >
-            <InlineOrgSelect
+            <DeferredInlineOrgSelect
+              sourceKey={accessSource}
               accessReviewSourceId={accessSource.id}
               onSelect={handleOrgChange}
-              connectionStatus={accessSource.connectionStatus}
               canReconnect={canReconnect}
               reconnectUrl={canReconnect ? reconnectUrl : null}
             />
           </Suspense>
         )}
-        {showStandaloneIssue && standaloneIssue != null && (
-          <SourceConnectionIssue
-            connectorKey={accessSource.connector}
-            issueKey={standaloneIssue}
-            reconnectUrl={canReconnect ? reconnectUrl : null}
-          />
+        {!showOrgSelector && (
+          <Suspense fallback={null}>
+            <DeferredStandaloneIssue
+              sourceKey={accessSource}
+              canReconnect={canReconnect}
+              reconnectUrl={canReconnect ? reconnectUrl : null}
+            />
+          </Suspense>
         )}
         {accessSource.canDelete && (
           <ActionDropdown>
@@ -423,26 +420,88 @@ export function AccessReviewSourceListItem({
   );
 }
 
-function InlineOrgSelect({
+function DeferredInlineOrgSelect({
+  sourceKey,
   accessReviewSourceId,
+  onSelect,
+  canReconnect,
+  reconnectUrl,
+}: {
+  sourceKey: AccessReviewSourceListItem_source$data;
+  accessReviewSourceId: string;
+  canReconnect: boolean;
+  reconnectUrl: string | null;
+  onSelect: (slug: string) => void;
+}) {
+  const data = useLazyLoadQuery<AccessReviewSourceListItemOrgsQuery>(
+    orgsQuery,
+    { accessReviewSourceId },
+    { fetchPolicy: "store-or-network" },
+  );
+  const status = useFragment(
+    statusFragment,
+    sourceKey as unknown as AccessReviewSourceListItemStatus_source$key,
+  );
+
+  return (
+    <InlineOrgSelect
+      data={data}
+      onSelect={onSelect}
+      connectionStatus={status.connectionStatus}
+      canReconnect={canReconnect}
+      reconnectUrl={reconnectUrl}
+    />
+  );
+}
+
+function DeferredStandaloneIssue({
+  sourceKey,
+  canReconnect,
+  reconnectUrl,
+}: {
+  sourceKey: AccessReviewSourceListItem_source$data;
+  canReconnect: boolean;
+  reconnectUrl: string | null;
+}) {
+  const status = useFragment(
+    statusFragment,
+    sourceKey as unknown as AccessReviewSourceListItemStatus_source$key,
+  );
+  const hasConnectionIssue
+    = status.connectionStatus !== "CONNECTED"
+      && status.connectionStatus !== "NOT_APPLICABLE";
+  if (!hasConnectionIssue) {
+    return null;
+  }
+
+  const issue = sourceConnectorIssue(status.connectionStatus, canReconnect, false);
+  if (issue == null) {
+    return null;
+  }
+
+  return (
+    <SourceConnectionIssue
+      connectorKey={sourceKey.connector}
+      issueKey={issue}
+      reconnectUrl={reconnectUrl}
+    />
+  );
+}
+
+function InlineOrgSelect({
+  data,
   onSelect,
   connectionStatus,
   canReconnect,
   reconnectUrl,
 }: {
-  accessReviewSourceId: string;
+  data: AccessReviewSourceListItemOrgsQuery$data;
   connectionStatus: AccessReviewSourceConnectionStatus;
   canReconnect: boolean;
   reconnectUrl: string | null;
   onSelect: (slug: string) => void;
 }) {
   const { t } = useTranslation();
-  const data = useLazyLoadQuery<AccessReviewSourceListItemOrgsQuery>(
-    orgsQuery,
-    { accessReviewSourceId },
-    { fetchPolicy: "store-or-network" },
-  );
-
   const source
     = useFragment<AccessReviewSourceListItemOrganizations_source$key>(
       organizationsFragment,
