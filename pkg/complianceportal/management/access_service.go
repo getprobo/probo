@@ -379,11 +379,12 @@ func (s *Service) CreateAccess(
 					ctx,
 					tx,
 					&esign.CreateSignatureRequest{
-						OrganizationID: access.OrganizationID,
-						DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
-						FileID:         *compliancePortal.NonDisclosureAgreementFileID,
-						SignerEmail:    identity.EmailAddress,
-						ConsentText:    NDAConsentText(ref.UnrefOrZero(compliancePortal.Email)),
+						OrganizationID:      access.OrganizationID,
+						DocumentType:        coredata.ElectronicSignatureDocumentTypeNDA,
+						FileID:              *compliancePortal.NonDisclosureAgreementFileID,
+						SignerEmail:         identity.EmailAddress,
+						ConsentText:         NDAConsentText(ref.UnrefOrZero(compliancePortal.Email)),
+						SkipCompletionEmail: true,
 					},
 				)
 				if err != nil {

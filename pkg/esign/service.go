@@ -53,13 +53,14 @@ type (
 	}
 
 	CreateSignatureRequest struct {
-		OrganizationID gid.GID
-		DocumentType   coredata.ElectronicSignatureDocumentType
-		DocumentName   *string
-		FileID         gid.GID
-		SignerEmail    mail.Addr
-		ConsentText    string // optional; required when DocumentType == OTHER
-		EmailSubject   string
+		OrganizationID      gid.GID
+		DocumentType        coredata.ElectronicSignatureDocumentType
+		DocumentName        *string
+		FileID              gid.GID
+		SignerEmail         mail.Addr
+		ConsentText         string // optional; required when DocumentType == OTHER
+		EmailSubject        string
+		SkipCompletionEmail bool
 	}
 
 	AcceptSignatureRequest struct {
@@ -71,16 +72,17 @@ type (
 	}
 
 	CreateAndAcceptSignatureRequest struct {
-		OrganizationID gid.GID
-		DocumentType   coredata.ElectronicSignatureDocumentType
-		DocumentName   *string
-		FileID         gid.GID
-		SignerEmail    mail.Addr
-		SignerFullName string
-		SignerIPAddr   string
-		SignerUA       string
-		ConsentText    string
-		EmailSubject   string
+		OrganizationID      gid.GID
+		DocumentType        coredata.ElectronicSignatureDocumentType
+		DocumentName        *string
+		FileID              gid.GID
+		SignerEmail         mail.Addr
+		SignerFullName      string
+		SignerIPAddr        string
+		SignerUA            string
+		ConsentText         string
+		EmailSubject        string
+		SkipCompletionEmail bool
 	}
 
 	RecordEventRequest struct {
@@ -207,20 +209,21 @@ func (s *Service) CreateSignature(
 	}
 
 	sig := &coredata.ElectronicSignature{
-		ID:             signatureID,
-		OrganizationID: req.OrganizationID,
-		Status:         coredata.ElectronicSignatureStatusPending,
-		DocumentType:   req.DocumentType,
-		DocumentName:   req.DocumentName,
-		FileID:         stampedFileID,
-		SignerEmail:    req.SignerEmail.String(),
-		ConsentText:    consentText,
-		EmailSubject:   emailSubject,
-		SealVersion:    1,
-		AttemptCount:   0,
-		MaxAttempts:    10,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                  signatureID,
+		OrganizationID:      req.OrganizationID,
+		Status:              coredata.ElectronicSignatureStatusPending,
+		DocumentType:        req.DocumentType,
+		DocumentName:        req.DocumentName,
+		FileID:              stampedFileID,
+		SignerEmail:         req.SignerEmail.String(),
+		ConsentText:         consentText,
+		EmailSubject:        emailSubject,
+		SkipCompletionEmail: req.SkipCompletionEmail,
+		SealVersion:         1,
+		AttemptCount:        0,
+		MaxAttempts:         10,
+		CreatedAt:           now,
+		UpdatedAt:           now,
 	}
 
 	if err := sig.Insert(ctx, conn, scope); err != nil {
@@ -243,13 +246,14 @@ func (s *Service) CreateAndAcceptSignature(
 		ctx,
 		conn,
 		&CreateSignatureRequest{
-			OrganizationID: req.OrganizationID,
-			DocumentType:   req.DocumentType,
-			DocumentName:   req.DocumentName,
-			FileID:         req.FileID,
-			SignerEmail:    req.SignerEmail,
-			ConsentText:    req.ConsentText,
-			EmailSubject:   req.EmailSubject,
+			OrganizationID:      req.OrganizationID,
+			DocumentType:        req.DocumentType,
+			DocumentName:        req.DocumentName,
+			FileID:              req.FileID,
+			SignerEmail:         req.SignerEmail,
+			ConsentText:         req.ConsentText,
+			EmailSubject:        req.EmailSubject,
+			SkipCompletionEmail: req.SkipCompletionEmail,
 		},
 	)
 	if err != nil {

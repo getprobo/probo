@@ -356,11 +356,12 @@ func (s *Service) ProvisionPortalMember(
 						ctx,
 						tx,
 						&esign.CreateSignatureRequest{
-							OrganizationID: access.OrganizationID,
-							DocumentType:   coredata.ElectronicSignatureDocumentTypeNDA,
-							FileID:         *compliancePage.NonDisclosureAgreementFileID,
-							SignerEmail:    identity.EmailAddress,
-							ConsentText:    management.NDAConsentText(ref.UnrefOrZero(compliancePage.Email)),
+							OrganizationID:      access.OrganizationID,
+							DocumentType:        coredata.ElectronicSignatureDocumentTypeNDA,
+							FileID:              *compliancePage.NonDisclosureAgreementFileID,
+							SignerEmail:         identity.EmailAddress,
+							ConsentText:         management.NDAConsentText(ref.UnrefOrZero(compliancePage.Email)),
+							SkipCompletionEmail: true,
 						},
 					)
 					if err != nil {
