@@ -40,6 +40,7 @@ const bannerSettingsFormFragment = graphql`
     publisherCountryCode
     capabilities {
       resourceReporting
+      corsless
     }
   }
 `;
@@ -139,9 +140,11 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             <Input {...register("name")} required />
           </Field>
 
-          <Field label={t("bannerSettingsForm.fields.origin")}>
-            <Input value={banner.origin} disabled />
-          </Field>
+          {!banner.capabilities.corsless && (
+            <Field label={t("bannerSettingsForm.fields.origin")}>
+              <Input value={banner.origin} disabled />
+            </Field>
+          )}
 
           <Field label={t("bannerSettingsForm.fields.cookiePolicyUrl")}>
             <Input {...register("cookiePolicyUrl")} required />

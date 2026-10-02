@@ -108,7 +108,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 		}
 
 		organizationID = banner.OrganizationID
-		bannerOrigin = banner.Origin
+		bannerOrigin = trackerPolicyWebsiteLabel(banner)
 
 		return nil
 	})
@@ -250,12 +250,20 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 
 	return docgen.TrackerPolicyData{
 		OrganizationName:  organization.Name,
-		WebsiteOrigin:     banner.Origin,
+		WebsiteOrigin:     trackerPolicyWebsiteLabel(banner),
 		PrivacyPolicyURL:  privacyPolicyURL,
 		ConsentExpiryDays: snapshot.ConsentExpiryDays,
 		Categories:        categories,
 		ThirdParties:      thirdParties,
 	}, nil
+}
+
+func trackerPolicyWebsiteLabel(banner *coredata.CookieBanner) string {
+	if banner.Capabilities.Corsless {
+		return banner.Name
+	}
+
+	return banner.Origin
 }
 
 func (s *GeneratedDocumentService) buildTrackerPolicyThirdParties(

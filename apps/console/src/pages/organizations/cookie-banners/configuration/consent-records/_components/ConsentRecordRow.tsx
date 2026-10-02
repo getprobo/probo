@@ -46,15 +46,17 @@ const consentRecordFragment = graphql`
     regulationSource
     countryCode
     subdivisionCode
+    origin
     createdAt
   }
 `;
 
 interface ConsentRecordRowProps {
   recordKey: ConsentRecordRowFragment$key;
+  showOrigin?: boolean;
 }
 
-export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
+export function ConsentRecordRow({ recordKey, showOrigin }: ConsentRecordRowProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
@@ -79,6 +81,11 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
             )
           : <span className="text-txt-tertiary">-</span>}
       </Td>
+      {showOrigin && (
+        <Td>
+          <span className="font-mono text-sm">{record.origin || "-"}</span>
+        </Td>
+      )}
       <Td>
         <span className="font-mono text-sm">
           {record.ipAddress ? formatAnonymizedIp(record.ipAddress) : "-"}

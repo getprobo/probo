@@ -13398,6 +13398,7 @@ components:
       required:
         - resource_reporting
         - tcf
+        - corsless
       properties:
         resource_reporting:
           type: boolean
@@ -13405,6 +13406,9 @@ components:
         tcf:
           type: boolean
           description: Whether IAB TCF is enabled for this banner
+        corsless:
+          type: boolean
+          description: Whether this banner accepts any website origin
 
     CookieBannerCapabilitiesInput:
       type: object
@@ -14007,6 +14011,11 @@ components:
             - string
             - "null"
           description: IAB TCF consent string
+        origin:
+          type:
+            - string
+            - "null"
+          description: Request origin that recorded this consent
         created_at:
           type: string
           format: date-time
