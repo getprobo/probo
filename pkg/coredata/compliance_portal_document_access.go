@@ -1186,7 +1186,7 @@ FROM
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_document_id = ANY(@compliance_portal_document_ids::text[]);
+    AND compliance_portal_document_id = ANY(@compliance_portal_document_ids);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -1241,7 +1241,7 @@ FROM
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_audit_id = ANY(@compliance_portal_audit_ids::text[]);
+    AND compliance_portal_audit_id = ANY(@compliance_portal_audit_ids);
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())

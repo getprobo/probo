@@ -187,11 +187,6 @@ func (s *Service) DeleteDocument(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			link := &coredata.CompliancePortalDocument{}
-			if err := link.LoadByID(ctx, tx, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load portal document: %w", err)
-			}
-
 			if err := coredata.DeleteCompliancePortalDocumentByID(
 				ctx,
 				tx,
@@ -260,11 +255,6 @@ func (s *Service) DeleteAudit(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			link := &coredata.CompliancePortalAudit{}
-			if err := link.LoadByID(ctx, tx, scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load portal audit: %w", err)
-			}
-
 			if err := coredata.DeleteCompliancePortalAuditByID(
 				ctx,
 				tx,

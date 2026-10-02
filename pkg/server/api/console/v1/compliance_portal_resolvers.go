@@ -745,7 +745,7 @@ func (r *compliancePortalDocumentResolver) Document(ctx context.Context, obj *ty
 
 // Document is the resolver for the document field.
 func (r *compliancePortalDocumentAccessResolver) Document(ctx context.Context, obj *types.CompliancePortalDocumentAccess) (*types.Document, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return nil, err
 	}
@@ -774,6 +774,10 @@ func (r *compliancePortalDocumentAccessResolver) Document(ctx context.Context, o
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	if _, err := r.authorize(ctx, link.DocumentID, probo.ActionDocumentGet); err != nil {
+		return nil, err
 	}
 
 	document, err := r.probo.Documents.Get(ctx, scope, link.DocumentID)
@@ -858,7 +862,7 @@ func (r *compliancePortalDocumentAccessResolver) ReportFile(ctx context.Context,
 
 // Audit is the resolver for the audit field.
 func (r *compliancePortalDocumentAccessResolver) Audit(ctx context.Context, obj *types.CompliancePortalDocumentAccess) (*types.Audit, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
+	scope, err := r.authorize(ctx, obj.ID, management.ActionCompliancePortalAccessGet)
 	if err != nil {
 		return nil, err
 	}
@@ -887,6 +891,10 @@ func (r *compliancePortalDocumentAccessResolver) Audit(ctx context.Context, obj 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
+	}
+
+	if _, err := r.authorize(ctx, link.AuditID, probo.ActionAuditGet); err != nil {
+		return nil, err
 	}
 
 	audit, err := r.probo.Audits.Get(ctx, scope, link.AuditID)

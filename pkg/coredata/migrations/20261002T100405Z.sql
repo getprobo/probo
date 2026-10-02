@@ -35,13 +35,29 @@ WHERE da.compliance_portal_access_id = acc.id
     AND da.document_id IS NOT NULL;
 
 UPDATE cp_document_accesses da
-SET compliance_portal_audit_id = cpa.id
-FROM cp_accesses acc, audits, cp_audits cpa
-WHERE da.compliance_portal_access_id = acc.id
-    AND audits.report_file_id = da.report_file_id
-    AND cpa.compliance_portal_id = acc.compliance_portal_id
-    AND cpa.audit_id = audits.id
-    AND da.report_file_id IS NOT NULL;
+SET compliance_portal_audit_id = picked.catalog_id
+FROM (
+    SELECT DISTINCT ON (da.id)
+        da.id,
+        cpa.id AS catalog_id
+    FROM cp_document_accesses da
+    JOIN cp_accesses acc
+        ON acc.id = da.compliance_portal_access_id
+    JOIN audits
+        ON audits.report_file_id = da.report_file_id
+    JOIN cp_audits cpa
+        ON cpa.compliance_portal_id = acc.compliance_portal_id
+        AND cpa.audit_id = audits.id
+    WHERE da.report_file_id IS NOT NULL
+    ORDER BY
+        da.id,
+        CASE
+            WHEN cpa.visibility = 'PUBLIC' THEN 0
+            ELSE 1
+        END,
+        cpa.id
+) picked
+WHERE da.id = picked.id;
 
 DELETE FROM cp_document_accesses
 WHERE (document_id IS NOT NULL AND compliance_portal_document_id IS NULL)

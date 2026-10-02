@@ -459,9 +459,11 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByReportFile(
 
 		catalogIDs := make([]gid.GID, 0, len(linksByReportFileID))
 		reportFileIDByCatalogID := make(map[gid.GID]gid.GID, len(linksByReportFileID))
-		for reportFileID, link := range linksByReportFileID {
-			catalogIDs = append(catalogIDs, link.ID)
-			reportFileIDByCatalogID[link.ID] = reportFileID
+		for reportFileID, links := range linksByReportFileID {
+			for _, link := range links {
+				catalogIDs = append(catalogIDs, link.ID)
+				reportFileIDByCatalogID[link.ID] = reportFileID
+			}
 		}
 
 		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalAuditIDs(

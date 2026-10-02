@@ -45,6 +45,7 @@ type portalAccessResourceFixture struct {
 	accessID       gid.GID
 	restrictedID   gid.GID
 	publicID       gid.GID
+	documentID     gid.GID
 	identityID     gid.GID
 }
 
@@ -61,6 +62,7 @@ func seedPortalAccessResourceFixture(t *testing.T, ctx context.Context, client *
 		accessID     gid.GID
 		restrictedID gid.GID
 		publicID     gid.GID
+		documentID   gid.GID
 		identityID   gid.GID
 	)
 
@@ -166,6 +168,18 @@ func seedPortalAccessResourceFixture(t *testing.T, ctx context.Context, client *
 			return err
 		}
 
+		documentID, err = insertPortalAccessResourceDocument(
+			ctx,
+			tx,
+			scope,
+			organizationID,
+			portalID,
+			accessID,
+		)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}))
 
@@ -184,6 +198,7 @@ func seedPortalAccessResourceFixture(t *testing.T, ctx context.Context, client *
 		accessID:       accessID,
 		restrictedID:   restrictedID,
 		publicID:       publicID,
+		documentID:     documentID,
 		identityID:     identityID,
 	}
 }
@@ -238,6 +253,83 @@ func insertPortalAccessResourceFile(
 	return file.ID, nil
 }
 
+func insertPortalAccessResourceDocument(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	portalID gid.GID,
+	accessID gid.GID,
+) (gid.GID, error) {
+	now := time.Now()
+	publishedMajor := 1
+	publishedMinor := 0
+	publishedAt := now
+
+	document := coredata.Document{
+		ID:                    gid.New(organizationID.TenantID(), coredata.DocumentEntityType),
+		OrganizationID:        organizationID,
+		CurrentPublishedMajor: &publishedMajor,
+		CurrentPublishedMinor: &publishedMinor,
+		WriteMode:             coredata.DocumentWriteModeAuthored,
+		Status:                coredata.DocumentStatusActive,
+		CreatedAt:             now,
+		UpdatedAt:             now,
+	}
+	if err := document.Insert(ctx, tx, scope); err != nil {
+		return gid.Nil, err
+	}
+
+	version := coredata.DocumentVersion{
+		ID:             gid.New(organizationID.TenantID(), coredata.DocumentVersionEntityType),
+		OrganizationID: organizationID,
+		DocumentID:     document.ID,
+		Title:          "Restricted policy",
+		Major:          publishedMajor,
+		Minor:          publishedMinor,
+		Classification: coredata.DocumentClassificationInternal,
+		DocumentType:   coredata.DocumentTypePolicy,
+		Content:        "policy",
+		Status:         coredata.DocumentVersionStatusPublished,
+		Orientation:    coredata.DocumentVersionOrientationPortrait,
+		PublishedAt:    &publishedAt,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+	if err := version.Insert(ctx, tx, scope); err != nil {
+		return gid.Nil, err
+	}
+
+	portalDocument := coredata.CompliancePortalDocument{
+		ID:                 gid.New(organizationID.TenantID(), coredata.CompliancePortalDocumentEntityType),
+		OrganizationID:     organizationID,
+		CompliancePortalID: portalID,
+		DocumentID:         document.ID,
+		Visibility:         coredata.CompliancePortalVisibilityRestricted,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	}
+	if err := portalDocument.Upsert(ctx, tx, scope); err != nil {
+		return gid.Nil, err
+	}
+
+	documentAccess := coredata.CompliancePortalDocumentAccess{
+		ID:                         gid.New(organizationID.TenantID(), coredata.CompliancePortalDocumentAccessEntityType),
+		OrganizationID:             organizationID,
+		CompliancePortalAccessID:   accessID,
+		CompliancePortalDocumentID: &portalDocument.ID,
+		Status:                     coredata.CompliancePortalDocumentAccessStatusRequested,
+		RequestedAt:                &now,
+		CreatedAt:                  now,
+		UpdatedAt:                  now,
+	}
+	if err := documentAccess.Insert(ctx, tx, scope); err != nil {
+		return gid.Nil, err
+	}
+
+	return document.ID, nil
+}
+
 func TestCompliancePortalAccessResources_LoadByCompliancePortalAccessID_ExcludesPublicFiles(t *testing.T) {
 	t.Parallel()
 
@@ -270,9 +362,22 @@ func TestCompliancePortalAccessResources_LoadByCompliancePortalAccessID_Excludes
 		)
 	}))
 
-	require.Len(t, resources, 1)
-	assert.Equal(t, fx.restrictedID, resources[0].ID)
-	assert.NotEqual(t, fx.publicID, resources[0].ID)
-	assert.Equal(t, coredata.CompliancePortalAccessResourceKindFile, resources[0].Kind)
-	assert.Nil(t, resources[0].Status)
+	require.Len(t, resources, 2)
+
+	byKind := make(map[coredata.CompliancePortalAccessResourceKind]*coredata.CompliancePortalAccessResource, len(resources))
+	for _, resource := range resources {
+		byKind[resource.Kind] = resource
+	}
+
+	fileResource, ok := byKind[coredata.CompliancePortalAccessResourceKindFile]
+	require.True(t, ok)
+	assert.Equal(t, fx.restrictedID, fileResource.ID)
+	assert.NotEqual(t, fx.publicID, fileResource.ID)
+	assert.Nil(t, fileResource.Status)
+
+	documentResource, ok := byKind[coredata.CompliancePortalAccessResourceKindDocument]
+	require.True(t, ok)
+	assert.Equal(t, fx.documentID, documentResource.ID)
+	require.NotNil(t, documentResource.Status)
+	assert.Equal(t, coredata.CompliancePortalDocumentAccessStatusRequested, *documentResource.Status)
 }
