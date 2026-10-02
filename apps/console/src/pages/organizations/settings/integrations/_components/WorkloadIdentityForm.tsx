@@ -33,7 +33,6 @@ import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
@@ -51,10 +50,7 @@ import {
   isGCPServiceAccountEmail,
   isGCPWorkloadIdentityProvider,
 } from "../_lib/connectorSettings";
-import {
-  collectStoredAccountIds,
-  labelDiscoveredAccounts,
-} from "../_lib/discoveredAccounts";
+import { createdConnectorState } from "../_lib/discoveredAccounts";
 import { connectorDetailsPath } from "../_lib/integrationPath";
 
 import { ConnectFormFooter } from "./ConnectFormFooter";
@@ -75,18 +71,6 @@ const createWorkloadIdentityConnectorMutation = graphql`
         connectionStatus
         discoveredAccounts {
           externalAccountId
-          name
-        }
-        accounts(first: 50, orderBy: { direction: ASC, field: CREATED_AT }) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          edges {
-            node {
-              externalAccountId
-            }
-          }
         }
       }
     }
@@ -199,7 +183,6 @@ function useFinishWorkloadIdentity(organizationId: string) {
   const { t } = useTranslation("organizations/settings/integrations");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const environment = useRelayEnvironment();
   const [isCreating, setIsCreating] = useState(false);
   const [createConnector] = useMutation<WorkloadIdentityFormCreateMutation>(createWorkloadIdentityConnectorMutation);
   const [deleteConnector] = useMutation<WorkloadIdentityFormDeleteMutation>(deleteConnectorMutation);
@@ -233,20 +216,10 @@ function useFinishWorkloadIdentity(organizationId: string) {
         description: t("listPage.messages.connectedDescription"),
         variant: "success",
       });
-      let storedIds: Set<string>;
-      try {
-        storedIds = await collectStoredAccountIds(environment, connector.id, connector.accounts);
-      } catch {
-        storedIds = new Set(connector.accounts.edges.map(edge => edge.node.externalAccountId));
-      }
-      const discoveredAccounts = labelDiscoveredAccounts(connector.discoveredAccounts, storedIds);
       void navigate(connectorDetailsPath(organizationId, input.provider), {
-        state: discoveredAccounts.length === 0
+        state: connector.discoveredAccounts.length === 0
           ? null
-          : {
-              connectorId: connector.id,
-              discoveredAccounts,
-            },
+          : createdConnectorState(connector.id),
       });
     } catch {
       return;

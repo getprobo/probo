@@ -44,7 +44,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { connectorCard } from "../variants";
 
-import { UsedBy } from "./ConnectorModules";
+import { UsedBy } from "./UsedBy";
 
 const connectorAccountListItemFragment = graphql`
   fragment ConnectorAccountListItem_account on ConnectorAccount {
