@@ -36,17 +36,21 @@ func TestCookieBannerCapabilities_Scan(t *testing.T) {
 		value                 any
 		wantResourceReporting bool
 		wantTCF               bool
+		wantCorsless          bool
 	}{
-		{"null column", nil, true, false},
-		{"empty bytes", []byte{}, true, false},
-		{"object without the key", []byte(`{}`), true, false},
-		{"unrelated key only", []byte(`{"future_capability": true}`), true, false},
-		{"explicit true", []byte(`{"resource_reporting": true}`), true, false},
-		{"explicit false", []byte(`{"resource_reporting": false}`), false, false},
-		{"string payload", `{"resource_reporting": false}`, false, false},
-		{"explicit tcf true", []byte(`{"tcf": true}`), true, true},
-		{"explicit tcf false", []byte(`{"tcf": false}`), true, false},
-		{"both set", []byte(`{"resource_reporting": false, "tcf": true}`), false, true},
+		{"null column", nil, true, false, false},
+		{"empty bytes", []byte{}, true, false, false},
+		{"object without the key", []byte(`{}`), true, false, false},
+		{"unrelated key only", []byte(`{"future_capability": true}`), true, false, false},
+		{"explicit true", []byte(`{"resource_reporting": true}`), true, false, false},
+		{"explicit false", []byte(`{"resource_reporting": false}`), false, false, false},
+		{"string payload", `{"resource_reporting": false}`, false, false, false},
+		{"explicit tcf true", []byte(`{"tcf": true}`), true, true, false},
+		{"explicit tcf false", []byte(`{"tcf": false}`), true, false, false},
+		{"explicit corsless true", []byte(`{"corsless": true}`), true, false, true},
+		{"explicit corsless false", []byte(`{"corsless": false}`), true, false, false},
+		{"both set", []byte(`{"resource_reporting": false, "tcf": true}`), false, true, false},
+		{"all set", []byte(`{"resource_reporting": false, "tcf": true, "corsless": true}`), false, true, true},
 	}
 
 	for _, tt := range tests {
@@ -59,6 +63,7 @@ func TestCookieBannerCapabilities_Scan(t *testing.T) {
 				require.NoError(t, capabilities.Scan(tt.value))
 				assert.Equal(t, tt.wantResourceReporting, capabilities.ResourceReporting)
 				assert.Equal(t, tt.wantTCF, capabilities.TCF)
+				assert.Equal(t, tt.wantCorsless, capabilities.Corsless)
 			},
 		)
 	}
@@ -99,16 +104,17 @@ func TestCookieBannerCapabilitiesPatch_Apply(t *testing.T) {
 	)
 
 	t.Run(
-		"resource reporting patch preserves tcf",
+		"resource reporting patch preserves tcf and corsless",
 		func(t *testing.T) {
 			t.Parallel()
 
-			current := coredata.CookieBannerCapabilities{ResourceReporting: true, TCF: true}
+			current := coredata.CookieBannerCapabilities{ResourceReporting: true, TCF: true, Corsless: true}
 			patch := coredata.CookieBannerCapabilitiesPatch{ResourceReporting: new(false)}
 			got := patch.Apply(current)
 
 			assert.False(t, got.ResourceReporting)
 			assert.True(t, got.TCF)
+			assert.True(t, got.Corsless)
 		},
 	)
 }

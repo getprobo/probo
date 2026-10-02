@@ -133,6 +133,7 @@ type CookieBannerCapabilities
     ) {
     resourceReporting: Boolean!
     tcf: Boolean! @goField(name: "TCF")
+    corsless: Boolean!
 }
 
 type CookieBanner implements Node {

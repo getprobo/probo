@@ -47,6 +47,7 @@ query($id: ID!) {
       countryCode
       subdivisionCode
       tc
+      origin
       createdAt
     }
   }
@@ -68,6 +69,7 @@ type viewResponse struct {
 		CountryCode      *string `json:"countryCode"`
 		SubdivisionCode  *string `json:"subdivisionCode"`
 		TC               *string `json:"tc"`
+		Origin           *string `json:"origin"`
 		CreatedAt        string  `json:"createdAt"`
 	} `json:"node"`
 }
@@ -158,6 +160,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if v.UserAgent != nil && *v.UserAgent != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("User Agent:"), *v.UserAgent)
+			}
+
+			if v.Origin != nil && *v.Origin != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Origin:"), *v.Origin)
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Consent Data:"), v.ConsentData)

@@ -217,6 +217,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		RegulationSource: regulationSource,
 		ConsentMode:      &cm,
 		TC:               body.TC,
+		Origin:           r.Header.Get("Origin"),
 	}
 	if location != nil {
 		req.CountryCode = &location.CountryCode

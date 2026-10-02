@@ -139,6 +139,7 @@ type (
 		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
 		TC               *string
+		Origin           string
 	}
 
 	DetectedCookie struct {
@@ -584,6 +585,24 @@ func CanonicalizeOrigin(raw string) string {
 	}
 
 	return u.Scheme + "://" + host
+}
+
+func IsReflectableOrigin(raw string) bool {
+	if raw == "" || raw == "null" {
+		return false
+	}
+
+	return validator.Origin()(raw) == nil
+}
+
+func canonicalRequestOrigin(raw string) *string {
+	if !IsReflectableOrigin(raw) {
+		return nil
+	}
+
+	canonical := CanonicalizeOrigin(raw)
+
+	return &canonical
 }
 
 func (s *Service) ensureDraftVersion(
@@ -2615,6 +2634,11 @@ func (s *Service) RecordConsent(
 				return fmt.Errorf("invalid request: %w", err)
 			}
 
+			var origin *string
+			if banner.Capabilities.Corsless {
+				origin = canonicalRequestOrigin(req.Origin)
+			}
+
 			record = &coredata.CookieConsentRecord{
 				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
 				OrganizationID:        banner.OrganizationID,
@@ -2632,6 +2656,7 @@ func (s *Service) RecordConsent(
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
 				TC:                    optionalNonEmptyString(req.TC),
+				Origin:                origin,
 				CreatedAt:             time.Now(),
 			}
 

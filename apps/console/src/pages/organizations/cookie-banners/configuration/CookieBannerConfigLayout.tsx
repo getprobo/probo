@@ -52,6 +52,9 @@ export const cookieBannerConfigLayoutQuery = graphql`
         name
         origin
         state
+        capabilities {
+          corsless
+        }
         canDelete: permission(action: "core:cookie-banner:delete")
         latestVersion {
           id
@@ -267,12 +270,16 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
         )}
         description={(
           <span className="flex items-center gap-3 text-sm text-txt-secondary">
-            <span>
-              <span className="font-medium text-txt-primary">{t("configLayout.metadata.origin")}</span>
-              {" "}
-              {banner.origin}
-            </span>
-            <span className="text-border-primary">·</span>
+            {!banner.capabilities.corsless && (
+              <>
+                <span>
+                  <span className="font-medium text-txt-primary">{t("configLayout.metadata.origin")}</span>
+                  {" "}
+                  {banner.origin}
+                </span>
+                <span className="text-border-primary">·</span>
+              </>
+            )}
             <span className="flex items-center gap-1">
               <span className="font-medium text-txt-primary">{t("configLayout.metadata.id")}</span>
               {" "}

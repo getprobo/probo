@@ -56,7 +56,7 @@ export async function execute(
 					cookiePolicyUrl
 					consentExpiryDays
 					showBranding
-					capabilities { resourceReporting }
+					capabilities { resourceReporting corsless }
 					defaultLanguage
 					publisherCountryCode
 					tcfCmpId
