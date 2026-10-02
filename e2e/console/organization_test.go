@@ -132,6 +132,7 @@ func TestOrganization_Update(t *testing.T) {
 				LegalName *string `json:"legalName"`
 			} `json:"node"`
 		}
+
 		err = owner.Execute(`
 			query GetOrganization($id: ID!) {
 				node(id: $id) {

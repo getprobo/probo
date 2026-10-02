@@ -78,6 +78,7 @@ func TestMCP_ListOrganizations_LegalName(t *testing.T) {
 		gotName      string
 		gotLegalName *string
 	)
+
 	for _, organization := range result.Organizations {
 		if organization.ID != owner.GetOrganizationID().String() {
 			continue
@@ -86,6 +87,7 @@ func TestMCP_ListOrganizations_LegalName(t *testing.T) {
 		found = true
 		gotName = organization.Name
 		gotLegalName = organization.LegalName
+
 		break
 	}
 
