@@ -198,7 +198,7 @@ export function NewOAuthTokenPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-8 py-8">
       <Breadcrumb
         items={[
           {
@@ -300,6 +300,6 @@ export function NewOAuthTokenPage() {
         token={token}
         onDone={handleDone}
       />
-    </div>
+    </main>
   );
 }
