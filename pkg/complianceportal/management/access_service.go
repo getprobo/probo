@@ -818,7 +818,7 @@ func (s *Service) UpdateAccess(
 					},
 				)
 
-				if err := tcdas.UpsertReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
+				if err := tcdas.UpsertCompliancePortalAuditAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
 					return fmt.Errorf("cannot upsert report accesses: %w", err)
 				}
 			}
@@ -853,11 +853,6 @@ func (s *Service) UpdateAccess(
 						return row.CompliancePortalFileID
 					},
 				)
-
-				compliancePortalFiles := &coredata.CompliancePortalFiles{}
-				if err := compliancePortalFiles.LoadByIDs(ctx, tx, scope, compliancePortalFileIDs); err != nil {
-					return fmt.Errorf("cannot load compliance page files: %w", err)
-				}
 
 				if err := ensurePortalFileTargets(
 					ctx,
@@ -1372,7 +1367,7 @@ func (s *Service) grantCreatedAccessTargets(
 			})
 		}
 
-		if err := tcdas.UpsertReportFileAccesses(
+		if err := tcdas.UpsertCompliancePortalAuditAccesses(
 			ctx,
 			tx,
 			scope,

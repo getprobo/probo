@@ -46,8 +46,8 @@ type (
 	}
 
 	accessVisitor interface {
-		GrantPortalAccessByIDsIdempotently(ctx context.Context, scope coredata.Scoper, compliancePortalID gid.GID, requesterEmail mail.Addr, documentIDs, reportIDs, fileIDs []gid.GID, operationKey string) error
-		RejectOrRevokePortalAccessByIDsIdempotently(ctx context.Context, scope coredata.Scoper, compliancePortalID gid.GID, requesterEmail mail.Addr, documentIDs, reportIDs, fileIDs []gid.GID, operationKey string) error
+		GrantPortalAccessByIDsIdempotently(ctx context.Context, scope coredata.Scoper, compliancePortalID gid.GID, requesterEmail mail.Addr, compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs []gid.GID, operationKey string) error
+		RejectOrRevokePortalAccessByIDsIdempotently(ctx context.Context, scope coredata.Scoper, compliancePortalID gid.GID, requesterEmail mail.Addr, compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs []gid.GID, operationKey string) error
 	}
 
 	actionAuthorizer interface {

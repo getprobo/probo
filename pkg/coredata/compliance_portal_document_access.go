@@ -574,20 +574,20 @@ WHERE
 	return nil
 }
 
-// RerequestByDocumentIDs reactivates REJECTED/REVOKED document access rows for
-// a visitor retry (status back to REQUESTED) and stamps requested_at when
-// missing on those rows or on pre-existing REQUESTED rows so
-// viewerHasRequestedAccess stays consistent with the mutation. documentIDs
-// are catalog link IDs (cp_documents.id).
-func RerequestByDocumentIDs(
+// RerequestByCompliancePortalDocumentIDs reactivates REJECTED/REVOKED document
+// access rows for a visitor retry (status back to REQUESTED) and stamps
+// requested_at when missing on those rows or on pre-existing REQUESTED rows so
+// viewerHasRequestedAccess stays consistent with the mutation.
+// compliancePortalDocumentIDs are catalog link IDs (cp_documents.id).
+func RerequestByCompliancePortalDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
-	documentIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
 	requestedAt time.Time,
 ) error {
-	if len(documentIDs) == 0 {
+	if len(compliancePortalDocumentIDs) == 0 {
 		return nil
 	}
 
@@ -600,7 +600,7 @@ SET
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_document_id = ANY(@document_ids)
+    AND compliance_portal_document_id = ANY(@compliance_portal_document_ids)
     AND (
         status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
         OR (
@@ -613,10 +613,10 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"compliance_portal_access_id": compliancePortalAccessID,
-		"document_ids":                documentIDs,
-		"requested_at":                requestedAt,
-		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
+		"compliance_portal_access_id":    compliancePortalAccessID,
+		"compliance_portal_document_ids": compliancePortalDocumentIDs,
+		"requested_at":                   requestedAt,
+		"requested_status":               CompliancePortalDocumentAccessStatusRequested,
 		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
 			CompliancePortalDocumentAccessStatusRejected,
 			CompliancePortalDocumentAccessStatusRevoked,
@@ -632,12 +632,12 @@ WHERE
 	return nil
 }
 
-func GrantByDocumentIDs(
+func GrantByCompliancePortalDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
-	documentIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -646,32 +646,32 @@ SET status = 'GRANTED'::compliance_portal_document_access_status, updated_at = @
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_document_id = ANY(@document_ids)
+    AND compliance_portal_document_id = ANY(@compliance_portal_document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"compliance_portal_access_id": compliancePortalAccessID,
-		"document_ids":                documentIDs,
-		"updated_at":                  updatedAt,
+		"compliance_portal_access_id":    compliancePortalAccessID,
+		"compliance_portal_document_ids": compliancePortalDocumentIDs,
+		"updated_at":                     updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot grant compliance portal document accesses by document IDs: %w", err)
+		return fmt.Errorf("cannot grant compliance portal document accesses: %w", err)
 	}
 
 	return nil
 }
 
-func RejectOrRevokeByDocumentIDs(
+func RejectOrRevokeByCompliancePortalDocumentIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
-	documentIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -685,38 +685,39 @@ SET
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_document_id = ANY(@document_ids)
+    AND compliance_portal_document_id = ANY(@compliance_portal_document_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"compliance_portal_access_id": compliancePortalAccessID,
-		"document_ids":                documentIDs,
-		"updated_at":                  updatedAt,
+		"compliance_portal_access_id":    compliancePortalAccessID,
+		"compliance_portal_document_ids": compliancePortalDocumentIDs,
+		"updated_at":                     updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot reject compliance portal document accesses by document IDs: %w", err)
+		return fmt.Errorf("cannot reject compliance portal document accesses: %w", err)
 	}
 
 	return nil
 }
 
-// RerequestByReportFileIDs reactivates REJECTED/REVOKED report access rows for
-// a visitor retry and stamps unstamped REQUESTED rows. reportFileIDs are
-// catalog audit link IDs (cp_audits.id). See RerequestByDocumentIDs.
-func RerequestByReportFileIDs(
+// RerequestByCompliancePortalAuditIDs reactivates REJECTED/REVOKED report
+// access rows for a visitor retry and stamps unstamped REQUESTED rows.
+// compliancePortalAuditIDs are catalog audit link IDs (cp_audits.id). See
+// RerequestByCompliancePortalDocumentIDs.
+func RerequestByCompliancePortalAuditIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
-	reportFileIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
 	requestedAt time.Time,
 ) error {
-	if len(reportFileIDs) == 0 {
+	if len(compliancePortalAuditIDs) == 0 {
 		return nil
 	}
 
@@ -729,7 +730,7 @@ SET
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_audit_id = ANY(@report_file_ids)
+    AND compliance_portal_audit_id = ANY(@compliance_portal_audit_ids)
     AND (
         status = ANY(@retryable_statuses::compliance_portal_document_access_status[])
         OR (
@@ -743,7 +744,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"compliance_portal_access_id": compliancePortalAccessID,
-		"report_file_ids":             reportFileIDs,
+		"compliance_portal_audit_ids": compliancePortalAuditIDs,
 		"requested_at":                requestedAt,
 		"requested_status":            CompliancePortalDocumentAccessStatusRequested,
 		"retryable_statuses": []CompliancePortalDocumentAccessStatus{
@@ -761,12 +762,12 @@ WHERE
 	return nil
 }
 
-func GrantByReportFileIDs(
+func GrantByCompliancePortalAuditIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
-	reportFileIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -775,32 +776,32 @@ SET status = 'GRANTED'::compliance_portal_document_access_status, updated_at = @
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_audit_id = ANY(@report_file_ids)
+    AND compliance_portal_audit_id = ANY(@compliance_portal_audit_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"compliance_portal_access_id": compliancePortalAccessID,
-		"report_file_ids":             reportFileIDs,
+		"compliance_portal_audit_ids": compliancePortalAuditIDs,
 		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot grant compliance portal document accesses by report file IDs: %w", err)
+		return fmt.Errorf("cannot grant compliance portal audit accesses: %w", err)
 	}
 
 	return nil
 }
 
-func RejectOrRevokeByReportFileIDs(
+func RejectOrRevokeByCompliancePortalAuditIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
-	reportFileIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
 	q := `
@@ -814,21 +815,21 @@ SET
 WHERE
     %s
     AND compliance_portal_access_id = @compliance_portal_access_id
-    AND compliance_portal_audit_id = ANY(@report_file_ids)
+    AND compliance_portal_audit_id = ANY(@compliance_portal_audit_ids)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"compliance_portal_access_id": compliancePortalAccessID,
-		"report_file_ids":             reportFileIDs,
+		"compliance_portal_audit_ids": compliancePortalAuditIDs,
 		"updated_at":                  updatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot reject compliance portal document accesses by report file IDs: %w", err)
+		return fmt.Errorf("cannot reject compliance portal audit accesses: %w", err)
 	}
 
 	return nil
@@ -970,7 +971,7 @@ ON CONFLICT DO NOTHING
 	return nil
 }
 
-func (tcdas CompliancePortalDocumentAccesses) UpsertReportFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) UpsertCompliancePortalAuditAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -1031,35 +1032,35 @@ ON CONFLICT (compliance_portal_access_id, compliance_portal_audit_id) DO UPDATE 
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot upsert report file accesses: %w", err)
+		return fmt.Errorf("cannot upsert compliance portal audit accesses: %w", err)
 	}
 
 	return nil
 }
 
-func (tcdas CompliancePortalDocumentAccesses) BulkInsertReportFileAccesses(
+func (tcdas CompliancePortalDocumentAccesses) BulkInsertCompliancePortalAuditAccesses(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	compliancePortalAccessID gid.GID,
 	organizationID gid.GID,
-	reportFileIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
 	status CompliancePortalDocumentAccessStatus,
 	createdAt time.Time,
 ) error {
-	if len(reportFileIDs) == 0 {
+	if len(compliancePortalAuditIDs) == 0 {
 		return nil
 	}
 
 	q := `
-WITH report_file_access_data AS (
+WITH audit_access_data AS (
     SELECT
         generate_gid(decode_base64_unpadded(@tenant_id), @compliance_portal_document_access_entity_type) AS id,
         @tenant_id AS tenant_id,
         @organization_id AS organization_id,
         @compliance_portal_access_id AS compliance_portal_access_id,
         null::text AS compliance_portal_document_id,
-        unnest(@report_file_ids::text[]) AS compliance_portal_audit_id,
+        unnest(@compliance_portal_audit_ids::text[]) AS compliance_portal_audit_id,
         null::text AS compliance_portal_file_id,
         @status::compliance_portal_document_access_status AS status,
         @created_at::timestamptz AS requested_at,
@@ -1079,7 +1080,7 @@ INSERT INTO cp_document_accesses (
     created_at,
     updated_at
 )
-SELECT * FROM report_file_access_data
+SELECT * FROM audit_access_data
 ON CONFLICT DO NOTHING
 `
 
@@ -1088,14 +1089,14 @@ ON CONFLICT DO NOTHING
 		"organization_id": organizationID,
 		"compliance_portal_document_access_entity_type": CompliancePortalDocumentAccessEntityType,
 		"compliance_portal_access_id":                   compliancePortalAccessID,
-		"report_file_ids":                               reportFileIDs,
+		"compliance_portal_audit_ids":                   compliancePortalAuditIDs,
 		"status":                                        status,
 		"created_at":                                    createdAt,
 		"updated_at":                                    createdAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot bulk insert compliance portal report file accesses: %w", err)
+		return fmt.Errorf("cannot bulk insert compliance portal audit accesses: %w", err)
 	}
 
 	return nil
@@ -1323,7 +1324,7 @@ WHERE
 
 // RerequestByCompliancePortalFileIDs reactivates REJECTED/REVOKED file access
 // rows for a visitor retry and stamps unstamped REQUESTED rows. See
-// RerequestByDocumentIDs.
+// RerequestByCompliancePortalDocumentIDs.
 func RerequestByCompliancePortalFileIDs(
 	ctx context.Context,
 	conn pg.Querier,

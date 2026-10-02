@@ -36,10 +36,10 @@ import (
 )
 
 type actionSelection struct {
-	decision    string
-	documentIDs []gid.GID
-	reportIDs   []gid.GID
-	fileIDs     []gid.GID
+	decision                    string
+	compliancePortalDocumentIDs []gid.GID
+	compliancePortalAuditIDs    []gid.GID
+	compliancePortalFileIDs     []gid.GID
 }
 
 func (c *Capability) NormalizeActionAlias(action messaging.Action) (messaging.Action, error) {
@@ -121,9 +121,9 @@ func (c *Capability) execute(
 			scope,
 			portalID,
 			requesterEmail,
-			selection.documentIDs,
-			selection.reportIDs,
-			selection.fileIDs,
+			selection.compliancePortalDocumentIDs,
+			selection.compliancePortalAuditIDs,
+			selection.compliancePortalFileIDs,
 			action.DeduplicationKey,
 		)
 	case "deny":
@@ -132,9 +132,9 @@ func (c *Capability) execute(
 			scope,
 			portalID,
 			requesterEmail,
-			selection.documentIDs,
-			selection.reportIDs,
-			selection.fileIDs,
+			selection.compliancePortalDocumentIDs,
+			selection.compliancePortalAuditIDs,
+			selection.compliancePortalFileIDs,
 			action.DeduplicationKey,
 		)
 	default:
@@ -253,7 +253,7 @@ func (c *Capability) selectResources(
 	}
 
 	if strings.HasSuffix(action.ID, "_all") {
-		documentIDs, reportIDs, fileIDs, err := c.notifications.GetMessageResourceIDs(
+		compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs, err := c.notifications.GetMessageResourceIDs(
 			ctx,
 			scope,
 			action.Message.ID,
@@ -262,7 +262,9 @@ func (c *Capability) selectResources(
 			return actionSelection{}, fmt.Errorf("cannot load requested resources: %w", err)
 		}
 
-		if len(documentIDs) == 0 && len(reportIDs) == 0 && len(fileIDs) == 0 {
+		if len(compliancePortalDocumentIDs) == 0 &&
+			len(compliancePortalAuditIDs) == 0 &&
+			len(compliancePortalFileIDs) == 0 {
 			return actionSelection{}, fmt.Errorf(
 				"%w: access request has no resources to %s",
 				messaging.ErrCapabilityInvalidInput,
@@ -271,10 +273,10 @@ func (c *Capability) selectResources(
 		}
 
 		return actionSelection{
-			decision:    decision,
-			documentIDs: documentIDs,
-			reportIDs:   reportIDs,
-			fileIDs:     fileIDs,
+			decision:                    decision,
+			compliancePortalDocumentIDs: compliancePortalDocumentIDs,
+			compliancePortalAuditIDs:    compliancePortalAuditIDs,
+			compliancePortalFileIDs:     compliancePortalFileIDs,
 		}, nil
 	}
 
@@ -286,7 +288,7 @@ func (c *Capability) selectResources(
 		)
 	}
 
-	documentIDs, reportIDs, fileIDs, err := c.notifications.GetMessageResourceIDs(
+	compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs, err := c.notifications.GetMessageResourceIDs(
 		ctx,
 		scope,
 		action.Message.ID,
@@ -295,7 +297,12 @@ func (c *Capability) selectResources(
 		return actionSelection{}, fmt.Errorf("cannot load requested resources: %w", err)
 	}
 
-	if !resourceIDOnMessage(resourceID, documentIDs, reportIDs, fileIDs) {
+	if !resourceIDOnMessage(
+		resourceID,
+		compliancePortalDocumentIDs,
+		compliancePortalAuditIDs,
+		compliancePortalFileIDs,
+	) {
 		return actionSelection{}, fmt.Errorf(
 			"%w: resource is not attached to this access request",
 			messaging.ErrCapabilityInvalidInput,
@@ -305,12 +312,12 @@ func (c *Capability) selectResources(
 	selection := actionSelection{decision: decision}
 
 	switch resourceID.EntityType() {
-	case coredata.DocumentEntityType:
-		selection.documentIDs = []gid.GID{resourceID}
-	case coredata.FileEntityType:
-		selection.reportIDs = []gid.GID{resourceID}
+	case coredata.CompliancePortalDocumentEntityType:
+		selection.compliancePortalDocumentIDs = []gid.GID{resourceID}
+	case coredata.CompliancePortalAuditEntityType:
+		selection.compliancePortalAuditIDs = []gid.GID{resourceID}
 	case coredata.CompliancePortalFileEntityType:
-		selection.fileIDs = []gid.GID{resourceID}
+		selection.compliancePortalFileIDs = []gid.GID{resourceID}
 	default:
 		return actionSelection{}, fmt.Errorf(
 			"%w: unsupported resource type %d",
@@ -324,11 +331,11 @@ func (c *Capability) selectResources(
 
 func resourceIDOnMessage(
 	resourceID gid.GID,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 ) bool {
-	for _, ids := range [][]gid.GID{documentIDs, reportIDs, fileIDs} {
+	for _, ids := range [][]gid.GID{compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs} {
 		if slices.Contains(ids, resourceID) {
 			return true
 		}

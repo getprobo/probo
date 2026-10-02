@@ -40,19 +40,19 @@ import (
 
 type (
 	fakeAccessService struct {
-		message              bot.Message
-		renderer             *portal.Renderer
-		documentIDs          []gid.GID
-		reportIDs            []gid.GID
-		fileIDs              []gid.GID
-		resolvedAccessID     gid.GID
-		lookupOrganizationID gid.GID
-		lookupAnchor         messaging.MessageAnchor
-		claimedKeys          map[string]struct{}
-		eventIntent          bot.MessageIntent
-		claimCount           int
-		updateCount          int
-		updateErr            error
+		message                     bot.Message
+		renderer                    *portal.Renderer
+		compliancePortalDocumentIDs []gid.GID
+		compliancePortalAuditIDs    []gid.GID
+		compliancePortalFileIDs     []gid.GID
+		resolvedAccessID            gid.GID
+		lookupOrganizationID        gid.GID
+		lookupAnchor                messaging.MessageAnchor
+		claimedKeys                 map[string]struct{}
+		eventIntent                 bot.MessageIntent
+		claimCount                  int
+		updateCount                 int
+		updateErr                   error
 	}
 
 	fakeVisitor struct {
@@ -100,7 +100,7 @@ func (f *fakeAccessService) GetMessageResourceIDs(
 	coredata.Scoper,
 	gid.GID,
 ) ([]gid.GID, []gid.GID, []gid.GID, error) {
-	return f.documentIDs, f.reportIDs, f.fileIDs, nil
+	return f.compliancePortalDocumentIDs, f.compliancePortalAuditIDs, f.compliancePortalFileIDs, nil
 }
 
 func (f *fakeAccessService) ResolveCompliancePortalAccessID(
@@ -282,7 +282,7 @@ func TestCapability_ButtonAndAgentUseSameCommand(t *testing.T) {
 	}
 	notificationService := &fakeAccessService{
 		message: message,
-		documentIDs: []gid.GID{
+		compliancePortalDocumentIDs: []gid.GID{
 			gid.New(tenantID, coredata.DocumentEntityType),
 		},
 	}
@@ -371,7 +371,7 @@ func TestCapability_FailedActionCanRetry(t *testing.T) {
 	}
 	notifications := &fakeAccessService{
 		message: message,
-		documentIDs: []gid.GID{
+		compliancePortalDocumentIDs: []gid.GID{
 			gid.New(tenantID, coredata.DocumentEntityType),
 		},
 	}
@@ -445,7 +445,7 @@ func TestCapability_ManageToolRequiresToolCallID(t *testing.T) {
 	capability := NewCapability(
 		&fakeAccessService{
 			message: message,
-			documentIDs: []gid.GID{
+			compliancePortalDocumentIDs: []gid.GID{
 				gid.New(tenantID, coredata.DocumentEntityType),
 			},
 		},
@@ -486,7 +486,7 @@ func TestCapability_HandlesReviewMenuSelection(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	documentID := gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
 	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
@@ -521,8 +521,8 @@ func TestCapability_HandlesReviewMenuSelection(t *testing.T) {
 
 				visitor := &fakeVisitor{}
 				notifications := &fakeAccessService{
-					message:     message,
-					documentIDs: []gid.GID{documentID},
+					message:                     message,
+					compliancePortalDocumentIDs: []gid.GID{documentID},
 				}
 				capability := NewCapability(
 					notifications,
@@ -562,7 +562,7 @@ func TestCapability_SkipsRefreshWhenActionFails(t *testing.T) {
 	}
 	notifications := &fakeAccessService{
 		message: message,
-		documentIDs: []gid.GID{
+		compliancePortalDocumentIDs: []gid.GID{
 			gid.New(tenantID, coredata.DocumentEntityType),
 		},
 	}
@@ -597,7 +597,7 @@ func TestCapability_SurfacesRefreshFailureAfterAction(t *testing.T) {
 	}
 	notifications := &fakeAccessService{
 		message: message,
-		documentIDs: []gid.GID{
+		compliancePortalDocumentIDs: []gid.GID{
 			gid.New(tenantID, coredata.DocumentEntityType),
 		},
 		updateErr: errors.New("cannot queue revision"),
@@ -657,8 +657,8 @@ func TestCapability_RejectsResourceIDNotOnMessage(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	attachedID := gid.New(tenantID, coredata.DocumentEntityType)
-	foreignID := gid.New(tenantID, coredata.DocumentEntityType)
+	attachedID := gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
+	foreignID := gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
 	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
@@ -668,8 +668,8 @@ func TestCapability_RejectsResourceIDNotOnMessage(t *testing.T) {
 	visitor := &fakeVisitor{}
 	capability := NewCapability(
 		&fakeAccessService{
-			message:     message,
-			documentIDs: []gid.GID{attachedID},
+			message:                     message,
+			compliancePortalDocumentIDs: []gid.GID{attachedID},
 		},
 		visitor,
 		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
@@ -693,8 +693,8 @@ func TestCapability_ManageToolRejectsResourceIDNotOnMessage(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	attachedID := gid.New(tenantID, coredata.DocumentEntityType)
-	foreignID := gid.New(tenantID, coredata.DocumentEntityType)
+	attachedID := gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
+	foreignID := gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
 	message := bot.Message{
 		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
@@ -704,8 +704,8 @@ func TestCapability_ManageToolRejectsResourceIDNotOnMessage(t *testing.T) {
 	visitor := &fakeVisitor{}
 	capability := NewCapability(
 		&fakeAccessService{
-			message:     message,
-			documentIDs: []gid.GID{attachedID},
+			message:                     message,
+			compliancePortalDocumentIDs: []gid.GID{attachedID},
 		},
 		visitor,
 		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
