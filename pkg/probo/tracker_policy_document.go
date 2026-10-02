@@ -260,7 +260,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 
 func trackerPolicyWebsiteLabel(banner *coredata.CookieBanner) string {
 	if banner.Capabilities.Corsless {
-		return banner.Name
+		return sanitizeTrackerCell(banner.Name)
 	}
 
 	return banner.Origin

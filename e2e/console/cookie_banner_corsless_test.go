@@ -23,6 +23,7 @@ package console_test
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -144,7 +145,7 @@ func TestCookieBanner_Corsless(t *testing.T) {
 	)
 
 	t.Run(
-		"canonicalizes www origins on corsless consent records",
+		"stores the raw www origin on corsless consent records",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -182,7 +183,7 @@ func TestCookieBanner_Corsless(t *testing.T) {
 
 			record := loadConsentRecord(t, fixture.Owner, created.ID)
 			require.NotNil(t, record.Origin)
-			assert.Equal(t, "https://customer.example", *record.Origin)
+			assert.Equal(t, rawOrigin, *record.Origin)
 		},
 	)
 
@@ -329,6 +330,7 @@ func TestCookieBanner_Corsless(t *testing.T) {
 			}
 
 			var version policyVersion
+
 			require.Eventually(
 				t,
 				func() bool {
@@ -369,7 +371,7 @@ func TestCookieBanner_Corsless(t *testing.T) {
 
 					version = policy.Node.PolicyDocument.Versions.Edges[0].Node
 
-					return true
+					return strings.Contains(version.Title, banner.Node.Name)
 				},
 				15*time.Second,
 				200*time.Millisecond,
