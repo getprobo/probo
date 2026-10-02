@@ -648,6 +648,17 @@ func TestAttrs_SchemaDefaults(t *testing.T) {
 				assert.Nil(t, attrs.Alt)
 			},
 		},
+		{
+			name: "attachment",
+			raw:  `{"type":"attachment","attrs":{"href":"https://example.com/notes.pdf","fileName":"notes.pdf","mimeType":"application/pdf"}}`,
+			check: func(t *testing.T, n Node) {
+				attrs, err := n.AttachmentAttrs()
+				require.NoError(t, err)
+				assert.Equal(t, "https://example.com/notes.pdf", attrs.Href)
+				assert.Equal(t, "notes.pdf", attrs.FileName)
+				assert.Equal(t, "application/pdf", attrs.MimeType)
+			},
+		},
 	} {
 		t.Run(
 			tc.name,

@@ -99,6 +99,13 @@
       "update": "Échec de la mise à jour de la tâche",
       "content": "Impossible d'afficher cette description"
     },
+    "attachments": {
+      "errors": {
+        "upload": "Échec de l'ajout de la pièce jointe",
+        "type": "Ce type de fichier n'est pas pris en charge",
+        "size": "La pièce jointe doit faire 10 Mo ou moins"
+      }
+    },
     "comments": {
       "title": "Commentaires",
       "empty": "Aucun commentaire pour le moment",

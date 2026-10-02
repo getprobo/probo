@@ -34,12 +34,14 @@ var readActions = []string{
 	ActionTaskGet, ActionTaskList,
 	ActionTaskCommentGet, ActionTaskCommentList,
 	ActionTaskActivityGet, ActionTaskActivityList,
+	ActionTaskPictureGet, ActionTaskPictureList,
 }
 
 var writeActions = []string{
 	ActionTaskCreate, ActionTaskUpdate, ActionTaskDelete,
 	ActionTaskAssign, ActionTaskUnassign,
 	ActionTaskCommentCreate, ActionTaskCommentUpdate, ActionTaskCommentDelete,
+	ActionTaskPictureCreate, ActionTaskPictureDelete,
 }
 
 // FullAccessPolicy grants complete task access to organization owners and

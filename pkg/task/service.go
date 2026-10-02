@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -51,6 +52,8 @@ const (
 type Service struct {
 	pg     *pg.Client
 	logger *log.Logger
+	files  *filemanager.Service
+	bucket string
 	Sync   *tasksync.Service
 }
 
@@ -60,11 +63,15 @@ func NewService(
 	connectorRegistry *connector.Registry,
 	baseURL string,
 	linearAPIBaseURL string,
+	bucket string,
+	files *filemanager.Service,
 	logger *log.Logger,
 ) *Service {
 	return &Service{
 		pg:     pgClient,
 		logger: logger,
+		files:  files,
+		bucket: bucket,
 		Sync: tasksync.NewService(
 			pgClient,
 			encryptionKey,

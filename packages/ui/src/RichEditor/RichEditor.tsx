@@ -34,12 +34,15 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect, useLayoutEffect } from "react";
+import { type ChangeEvent, type ComponentProps, type DragEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { tv } from "tailwind-variants";
 
+import { attachmentAccept, AttachmentExtension } from "./AttachmentExtension";
+import { AttachmentUploadExtension, filesFromDataTransfer, insertUploadedFile, type RichEditorAttachmentUpload, setAttachmentUpload, uploadEditorFiles } from "./AttachmentUploadExtension";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
+import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
@@ -92,6 +95,14 @@ const richEditorVariants = tv({
   },
 });
 
+const attachmentInput = tv({
+  base: "sr-only",
+});
+
+export type RichEditorAttachments = {
+  upload?: RichEditorAttachmentUpload;
+};
+
 function stripNonTextMarks(node: JSONContent) {
   if (node.type !== "text") delete node.marks;
   node.content?.forEach(stripNonTextMarks);
@@ -101,6 +112,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
   placeholder?: string;
+  attachments?: RichEditorAttachments;
   onChangeContent?: (content: string) => void;
 };
 
@@ -122,9 +134,29 @@ export function RichEditor(props: RichEditorProps) {
     content,
     disabled = false,
     placeholder,
+    attachments,
     onChangeContent,
     ...divProps
   } = props;
+
+  const uploadRef = useRef<RichEditorAttachmentUpload | undefined>(undefined);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const insertAtRef = useRef<number | null>(null);
+  const attachmentsEnabled = attachments != null;
+  const uploadEnabled = attachments?.upload != null && !disabled;
+
+  const editorExtensions = useMemo(() => {
+    if (!attachmentsEnabled) {
+      return extensions;
+    }
+
+    const withAttachments = [...extensions, ImageExtension, AttachmentExtension];
+    if (!uploadEnabled) {
+      return withAttachments;
+    }
+
+    return [...withAttachments, AttachmentUploadExtension];
+  }, [attachmentsEnabled, uploadEnabled]);
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -147,7 +179,7 @@ export function RichEditor(props: RichEditorProps) {
       },
     },
     editable: !disabled,
-    extensions,
+    extensions: editorExtensions,
     content: parseContent(content),
     onUpdate: handleUpdate,
   });
@@ -168,15 +200,120 @@ export function RichEditor(props: RichEditorProps) {
     editor.setEditable(!disabled, false);
   }, [editor, disabled]);
 
+  useEffect(() => {
+    const upload = disabled ? undefined : attachments?.upload;
+    uploadRef.current = upload;
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+
+    setAttachmentUpload(editor, upload);
+  }, [disabled, editor, attachments?.upload]);
+
+  const openAttachmentPicker = useCallback(() => {
+    if (!editor || editor.isDestroyed) {
+      return;
+    }
+
+    insertAtRef.current = editor.state.selection.from;
+    fileInputRef.current?.click();
+  }, [editor]);
+
+  const handleAttachmentFile = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    const upload = uploadRef.current;
+    if (!file || !upload || !editor || editor.isDestroyed) {
+      return;
+    }
+
+    const pos = insertAtRef.current ?? editor.state.selection.from;
+    void upload(file).then(
+      (uploaded) => {
+        if (editor.isDestroyed) {
+          return;
+        }
+
+        insertUploadedFile(editor.view, pos, uploaded);
+      },
+      () => {
+        // The upload callback reports the failure.
+      },
+    );
+  }, [editor]);
+
+  const handleAttachmentDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!uploadRef.current || !event.dataTransfer) {
+      return;
+    }
+
+    if (![...event.dataTransfer.types].includes("Files")) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const handleAttachmentDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    const upload = uploadRef.current;
+    if (!upload || !editor || editor.isDestroyed) {
+      return;
+    }
+
+    const files = filesFromDataTransfer(event.dataTransfer);
+    const fileDrag = files.length > 0
+      || (event.dataTransfer?.types.includes("Files") ?? false);
+    if (!fileDrag) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const coords = editor.view.posAtCoords({
+      left: event.clientX,
+      top: event.clientY,
+    });
+    uploadEditorFiles(
+      editor.view,
+      files,
+      coords?.pos ?? editor.state.selection.from,
+      upload,
+    );
+  }, [editor]);
+
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled })} {...divProps}>
+    <div
+      className={richEditorVariants({ className, disabled })}
+      {...divProps}
+      onDragOver={handleAttachmentDragOver}
+      onDrop={handleAttachmentDrop}
+    >
+      {uploadEnabled && (
+        <input
+          ref={fileInputRef}
+          className={attachmentInput()}
+          type="file"
+          accept={attachmentAccept}
+          tabIndex={-1}
+          aria-label="Upload attachment"
+          onChange={handleAttachmentFile}
+        />
+      )}
       {!disabled
         && (
           <>
             <BubbleMenu editor={editor} />
-            <BlockMenu editor={editor} />
+            <BlockMenu
+              editor={editor}
+              onInsertAttachment={uploadEnabled ? openAttachmentPicker : undefined}
+            />
             <OptionsMenu editor={editor} />
             <TableSelectionOverlay editor={editor} />
             <TableCellMenu editor={editor} />

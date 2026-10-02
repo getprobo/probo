@@ -7683,6 +7683,163 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted task comment ID
 
+    TaskPictureOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskPictureOrderField
+
+    TaskPictureOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/TaskPictureOrderField"
+          description: Task picture order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Task picture order direction
+
+    TaskPicture:
+      type: object
+      required:
+        - id
+        - organization_id
+        - task_id
+        - file_id
+        - file
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task picture ID
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        file_id:
+          $ref: "#/components/schemas/GID"
+          description: Stored picture file ID
+        file:
+          $ref: "#/components/schemas/File"
+          description: Stored picture file
+        linear_asset_url:
+          type:
+            - string
+            - "null"
+          description: Linear asset URL when the picture is attached to the linked issue
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    ListTaskPicturesInput:
+      type: object
+      required:
+        - task_id
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID
+        order_by:
+          $ref: "#/components/schemas/TaskPictureOrderBy"
+          description: Task picture order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListTaskPicturesOutput:
+      type: object
+      required:
+        - task_pictures
+      properties:
+        task_pictures:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskPicture"
+          description: Pictures uploaded to the task
+        next_cursor:
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
+          description: Next page cursor
+
+    GetTaskPictureInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task picture ID
+
+    GetTaskPictureOutput:
+      type: object
+      required:
+        - task_picture
+      properties:
+        task_picture:
+          $ref: "#/components/schemas/TaskPicture"
+
+    UploadTaskPictureInput:
+      type: object
+      required:
+        - task_id
+        - file_name
+        - content_type
+        - content_base64
+      properties:
+        task_id:
+          $ref: "#/components/schemas/GID"
+          description: Task ID. When the task is linked to a Linear issue, the file is attached to that issue.
+        file_name:
+          type: string
+          description: File name, including an extension that matches the content type
+        content_type:
+          type: string
+          description: MIME type. Documents, spreadsheets, presentations, text, images, data files, and videos are accepted.
+        content_base64:
+          type: string
+          description: Base64-encoded file bytes. Supported files up to 10 MB are accepted.
+
+    UploadTaskPictureOutput:
+      type: object
+      required:
+        - task_picture
+      properties:
+        task_picture:
+          $ref: "#/components/schemas/TaskPicture"
+
+    DeleteTaskPictureInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Task picture ID
+
+    DeleteTaskPictureOutput:
+      type: object
+      required:
+        - deleted_task_picture_id
+      properties:
+        deleted_task_picture_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted task picture ID
+
     TaskActivityType:
       type: string
       enum:
@@ -18344,6 +18501,54 @@ tools:
       $ref: "#/components/schemas/DeleteTaskCommentInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteTaskCommentOutput"
+  - name: listTaskPictures
+    title: List Task Pictures
+    description: List pictures uploaded to a task, oldest first
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListTaskPicturesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListTaskPicturesOutput"
+  - name: getTaskPicture
+    title: Get Task Picture
+    description: Get a task picture by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetTaskPictureInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetTaskPictureOutput"
+  - name: uploadTaskPicture
+    title: Upload Task Picture
+    description: Upload a file to a task. Pictures and other supported files up to 10 MB are accepted. When the task is linked to a Linear issue, the file is attached to that issue.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UploadTaskPictureInput"
+    outputSchema:
+      $ref: "#/components/schemas/UploadTaskPictureOutput"
+  - name: deleteTaskPicture
+    title: Delete Task Picture
+    description: Delete a picture from a task and from the linked Linear issue when it was attached there
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/DeleteTaskPictureInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteTaskPictureOutput"
   - name: listTaskActivities
     title: List Task Activities
     description: List activities for a task, newest first

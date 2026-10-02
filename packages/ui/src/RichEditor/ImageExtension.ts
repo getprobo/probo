@@ -1,0 +1,107 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { mergeAttributes, Node } from "@tiptap/core";
+import { Fragment, type Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
+import { TextSelection } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
+
+export const pictureContentTypes = ["image/jpeg", "image/png", "image/webp"] as const;
+
+export function isPictureMime(mimeType: string) {
+  return pictureContentTypes.some(type => type === mimeType);
+}
+
+export function insertBlockNode(view: EditorView, pos: number, node: ProseMirrorNode) {
+  const doc = view.state.doc;
+  const safePos = Math.max(0, Math.min(pos, doc.content.size));
+  const $pos = doc.resolve(safePos);
+  let from = safePos;
+  let to = safePos;
+
+  if (
+    $pos.depth > 0
+    && $pos.parent.type.name === "paragraph"
+    && $pos.parent.content.size === 0
+  ) {
+    from = $pos.before($pos.depth);
+    to = $pos.after($pos.depth);
+  }
+
+  let tr = view.state.tr.replaceRange(
+    from,
+    to,
+    new Slice(Fragment.from(node), 0, 0),
+  );
+  const insertedAt = tr.mapping.map(from);
+  const after = insertedAt + node.nodeSize;
+  const paragraph = view.state.schema.nodes.paragraph;
+
+  // Leave a text cursor after the file so typing adds words beside it
+  // instead of replacing the selected attachment.
+  if (paragraph && tr.doc.nodeAt(after)?.type !== paragraph) {
+    tr = tr.insert(after, paragraph.create());
+  }
+
+  tr = tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(after + 1, tr.doc.content.size))));
+  view.dispatch(tr.scrollIntoView());
+  view.focus();
+}
+
+export function insertPicture(
+  view: EditorView,
+  pos: number,
+  picture: { src: string; alt?: string },
+) {
+  const type = view.state.schema.nodes.image;
+  if (!type) {
+    return;
+  }
+
+  insertBlockNode(view, pos, type.create({
+    src: picture.src,
+    alt: picture.alt ?? null,
+    title: null,
+  }));
+}
+
+export const ImageExtension = Node.create({
+  name: "image",
+  group: "block",
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      alt: { default: null },
+      title: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "img[src]" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["img", mergeAttributes(HTMLAttributes)];
+  },
+});

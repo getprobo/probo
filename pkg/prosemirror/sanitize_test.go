@@ -101,6 +101,11 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			in:      `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`,
 			wantErr: false,
 		},
+		{
+			name:    "valid attachment block",
+			in:      `{"type":"doc","content":[{"type":"attachment","attrs":{"href":"https://example.com/notes.pdf","fileName":"notes.pdf","mimeType":"application/pdf"}}]}`,
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -256,4 +261,39 @@ func TestSanitizeDocumentJSON_PreservesSafeImageSrc(t *testing.T) {
 	attrs, err := img.ImageAttrs()
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com/img.png", attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_AttachmentHref(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"attachment","attrs":{"href":"javascript:alert(1)","fileName":"notes.pdf","mimeType":"application/pdf"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attachment := doc.Content[0]
+	attrs, err := attachment.AttachmentAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, "#", attrs.Href)
+	assert.Equal(t, "notes.pdf", attrs.FileName)
+	assert.Equal(t, "application/pdf", attrs.MimeType)
+}
+
+func TestSanitizeDocumentJSON_PreservesSafeAttachmentHref(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"attachment","attrs":{"href":"/api/files/v1/file","fileName":"notes.txt","mimeType":"text/plain"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attachment := doc.Content[0]
+	attrs, err := attachment.AttachmentAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, "/api/files/v1/file", attrs.Href)
+	assert.Equal(t, "notes.txt", attrs.FileName)
 }

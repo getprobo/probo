@@ -71,6 +71,14 @@ type (
 		Title *string `json:"title"`
 	}
 
+	// AttachmentAttrs contains attributes for file attachment nodes.
+	// Pictures that preview inline use an image node instead.
+	AttachmentAttrs struct {
+		Href     string `json:"href"`
+		FileName string `json:"fileName"`
+		MimeType string `json:"mimeType"`
+	}
+
 	// TableCellAttrs contains attributes for table cell and table header nodes.
 	TableCellAttrs struct {
 		Colspan  int   `json:"colspan"`
@@ -101,6 +109,7 @@ const (
 	NodeHardBreak      NodeType = "hardBreak"
 	NodeText           NodeType = "text"
 	NodeImage          NodeType = "image"
+	NodeAttachment     NodeType = "attachment"
 	NodeBulletList     NodeType = "bulletList"
 	NodeOrderedList    NodeType = "orderedList"
 	NodeListItem       NodeType = "listItem"
@@ -167,6 +176,20 @@ func (n Node) OrderedListAttrs() (OrderedListAttrs, error) {
 
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse ordered list attrs: %w", err)
+	}
+
+	return a, nil
+}
+
+// AttachmentAttrs parses and returns the attachment attributes.
+func (n Node) AttachmentAttrs() (AttachmentAttrs, error) {
+	var a AttachmentAttrs
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
+	if err := json.Unmarshal(n.Attrs, &a); err != nil {
+		return a, fmt.Errorf("cannot parse attachment attrs: %w", err)
 	}
 
 	return a, nil

@@ -115,6 +115,7 @@ func TestHasVisibleRichText(t *testing.T) {
 
 	emptyHR := `{"type":"doc","content":[{"type":"horizontalRule"}]}`
 	imageOnly := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`
+	attachmentOnly := `{"type":"doc","content":[{"type":"attachment","attrs":{"href":"https://example.com/notes.pdf","fileName":"notes.pdf","mimeType":"application/pdf"}}]}`
 	emptyList := `{"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph"}]}]}]}`
 	emptyTable := `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableCell","content":[{"type":"paragraph"}]}]}]}]}`
 
@@ -132,6 +133,7 @@ func TestHasVisibleRichText(t *testing.T) {
 		{"text on non-text node", `{"type":"doc","content":[{"type":"paragraph","text":"hello"}]}`, true, ErrorCodeRequired},
 		{"horizontal rule only", emptyHR, false, ""},
 		{"image only", imageOnly, false, ""},
+		{"attachment only", attachmentOnly, false, ""},
 		{"empty list", emptyList, true, ErrorCodeRequired},
 		{"empty table", emptyTable, true, ErrorCodeRequired},
 		{"plain text", "hello", true, ErrorCodeInvalidFormat},

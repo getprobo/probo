@@ -323,6 +323,32 @@ func TestRenderHTML_LinkSanitizesDangerousHrefs(t *testing.T) {
 	}
 }
 
+func TestRenderHTML_Attachment(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"attachment","attrs":{"href":"https://example.com/notes.pdf","fileName":"notes.pdf","mimeType":"application/pdf"}}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderHTML(n)
+	require.NoError(t, err)
+	assert.Equal(t, `<a class="attachment" href="https://example.com/notes.pdf" data-file-name="notes.pdf" data-mime-type="application/pdf">notes.pdf</a>`, got)
+}
+
+func TestRenderHTML_AttachmentSanitizesDangerousHref(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"attachment","attrs":{"href":"javascript:alert(1)","fileName":"x","mimeType":"text/plain"}}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderHTML(n)
+	require.NoError(t, err)
+	assert.Equal(t, `<a class="attachment" href="#" data-file-name="x" data-mime-type="text/plain">x</a>`, got)
+}
+
 func TestRenderHTML_Image(t *testing.T) {
 	t.Parallel()
 
@@ -456,6 +482,11 @@ func TestRenderHTML_NodesWithoutAttrs(t *testing.T) {
 			name:     "image",
 			raw:      `{"type":"image"}`,
 			expected: `<img src="">`,
+		},
+		{
+			name:     "attachment",
+			raw:      `{"type":"attachment"}`,
+			expected: `<a class="attachment" href="#">Attachment</a>`,
 		},
 	} {
 		t.Run(

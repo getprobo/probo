@@ -65,7 +65,7 @@ func validateNode(n Node) error {
 		return validateChildren(n, "block", isBlock, 1)
 	case NodeCodeBlock:
 		return validateCodeBlock(n)
-	case NodeHorizontalRule, NodeImage, NodeHardBreak:
+	case NodeHorizontalRule, NodeImage, NodeAttachment, NodeHardBreak:
 		return validateLeaf(n)
 	case NodeText:
 		return validateText(n)
@@ -205,7 +205,7 @@ func rejectNonTextPayload(n Node) error {
 func isBlock(t NodeType) bool {
 	switch t {
 	case NodeParagraph, NodeHeading, NodeBlockquote, NodeCodeBlock,
-		NodeHorizontalRule, NodeBulletList, NodeOrderedList, NodeTable, NodeImage:
+		NodeHorizontalRule, NodeBulletList, NodeOrderedList, NodeTable, NodeImage, NodeAttachment:
 		return true
 	default:
 		return false

@@ -870,6 +870,8 @@ func (impl *Implm) Run(
 		defaultConnectorRegistry,
 		baseURL.String(),
 		linearAPIBaseURL,
+		impl.cfg.AWS.Bucket,
+		fileManagerService,
 		l.Named("task"),
 	)
 

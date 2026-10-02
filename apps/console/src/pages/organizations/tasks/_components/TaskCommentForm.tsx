@@ -32,11 +32,13 @@ import {
 
 import { taskCommentMaxLength } from "../_lib/taskCommentMaxLength";
 import { useCreateTaskComment } from "../_lib/useCreateTaskComment";
+import { useUploadTaskPicture } from "../_lib/useUploadTaskPicture";
 import { taskCommentEditor, taskCommentForm } from "../variants";
 
 export function TaskCommentForm() {
   const { t } = useTranslation("organizations/tasks");
   const [createTaskComment, isCreating] = useCreateTaskComment();
+  const uploadAttachment = useUploadTaskPicture();
   const [content, setContent] = useState("");
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -79,6 +81,7 @@ export function TaskCommentForm() {
           key={editorKey}
           className={taskCommentEditor()}
           content={content}
+          attachments={{ upload: uploadAttachment }}
           disabled={isCreating}
           aria-label={t("detailsPage.comments.fields.leaveAComment")}
           onChangeContent={(next) => {
@@ -98,11 +101,12 @@ export function TaskCommentForm() {
       </Field>
       <div className={actions()}>
         <Button
-          type="submit"
+          type="button"
           variant="solid"
           color="neutral"
           highContrast
           loading={isCreating}
+          onClick={handleSubmit}
         >
           {t("detailsPage.comments.actions.submit")}
         </Button>
