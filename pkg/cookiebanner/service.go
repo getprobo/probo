@@ -595,14 +595,12 @@ func IsReflectableOrigin(raw string) bool {
 	return validator.Origin()(raw) == nil
 }
 
-func canonicalRequestOrigin(raw string) *string {
+func storedConsentOrigin(raw string) *string {
 	if !IsReflectableOrigin(raw) {
 		return nil
 	}
 
-	canonical := CanonicalizeOrigin(raw)
-
-	return &canonical
+	return &raw
 }
 
 func (s *Service) ensureDraftVersion(
@@ -1378,6 +1376,21 @@ func (s *Service) UpdateCookieBanner(
 			if snapshotChanged {
 				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			if nameChanged && banner.Capabilities.Corsless {
+				var published coredata.CookieBannerVersion
+
+				err := published.LoadLatestPublishedByCookieBannerID(ctx, tx, scope, banner.ID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load latest published version: %w", err)
+				}
+
+				if err == nil {
+					if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+						return fmt.Errorf("cannot request tracker policy generation: %w", err)
+					}
 				}
 			}
 
@@ -2636,7 +2649,7 @@ func (s *Service) RecordConsent(
 
 			var origin *string
 			if banner.Capabilities.Corsless {
-				origin = canonicalRequestOrigin(req.Origin)
+				origin = storedConsentOrigin(req.Origin)
 			}
 
 			record = &coredata.CookieConsentRecord{

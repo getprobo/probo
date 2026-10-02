@@ -68,4 +68,25 @@ func TestTrackerPolicyWebsiteLabel_UsesBannerNameWhenCorsless(t *testing.T) {
 			)
 		},
 	)
+
+	t.Run(
+		"sanitizes markdown-sensitive characters in the corsless name",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(
+				t,
+				"Foo \\| Bar",
+				trackerPolicyWebsiteLabel(
+					&coredata.CookieBanner{
+						Name:   "Foo | Bar",
+						Origin: "https://placeholder.example",
+						Capabilities: coredata.CookieBannerCapabilities{
+							Corsless: true,
+						},
+					},
+				),
+			)
+		},
+	)
 }
