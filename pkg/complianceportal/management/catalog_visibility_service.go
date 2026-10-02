@@ -93,6 +93,36 @@ func (s *Service) GetAuditLinks(
 	return rows, nil
 }
 
+func (s *Service) GetAuditLinksByReportFileIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	reportFileIDs []gid.GID,
+) (map[gid.GID]*coredata.CompliancePortalAudit, error) {
+	var rowsByReportFileID map[gid.GID]*coredata.CompliancePortalAudit
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+			rowsByReportFileID, err = coredata.LoadCompliancePortalAuditsByCompliancePortalIDAndReportFileIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				reportFileIDs,
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load portal audit links: %w", err)
+	}
+
+	return rowsByReportFileID, nil
+}
+
 func (s *Service) GetThirdPartyLinks(
 	ctx context.Context,
 	scope coredata.Scoper,

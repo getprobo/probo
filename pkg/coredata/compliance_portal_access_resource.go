@@ -105,7 +105,7 @@ INNER JOIN cp_documents cpd
     AND cpd.visibility = @visibility_restricted::compliance_portal_visibility
 LEFT JOIN cp_document_accesses da
     ON da.compliance_portal_access_id = @compliance_portal_access_id
-    AND da.document_id = documents.id
+    AND da.compliance_portal_document_id = cpd.id
 
 UNION ALL
 
@@ -137,7 +137,7 @@ INNER JOIN frameworks
     ON frameworks.id = audits.framework_id
 LEFT JOIN cp_document_accesses da
     ON da.compliance_portal_access_id = @compliance_portal_access_id
-    AND da.report_file_id = audits.report_file_id
+    AND da.compliance_portal_audit_id = cpa.id
 
 UNION ALL
 

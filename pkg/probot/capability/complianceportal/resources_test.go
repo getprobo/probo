@@ -49,10 +49,10 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	var (
 		portalAID       gid.GID
 		accessID        gid.GID
-		keptReportID    gid.GID
+		keptAuditLinkID gid.GID
 		skippedReportID gid.GID
-		keptFileID      gid.GID
 		skippedFileID   gid.GID
+		keptFileID      gid.GID
 		identityID      gid.GID
 	)
 
@@ -121,7 +121,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 
 				accessID = access.ID
 
-				keptReportID, err = insertTestReport(
+				_, keptAuditLinkID, err = insertTestReport(
 					ctx,
 					tx,
 					scope,
@@ -133,7 +133,8 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					return err
 				}
 
-				skippedReportID, err = insertTestReport(
+				var skippedAuditLinkID gid.GID
+				skippedReportID, skippedAuditLinkID, err = insertTestReport(
 					ctx,
 					tx,
 					scope,
@@ -171,14 +172,14 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					return err
 				}
 
-				for _, reportID := range []gid.GID{keptReportID, skippedReportID} {
-					id := reportID
+				for _, auditLinkID := range []gid.GID{keptAuditLinkID, skippedAuditLinkID} {
+					id := auditLinkID
 
 					row := coredata.CompliancePortalDocumentAccess{
 						ID:                       gid.New(tenantID, coredata.CompliancePortalDocumentAccessEntityType),
 						OrganizationID:           organizationID,
 						CompliancePortalAccessID: access.ID,
-						ReportFileID:             &id,
+						CompliancePortalAuditID:  &id,
 						Status:                   coredata.CompliancePortalDocumentAccessStatusRequested,
 						CreatedAt:                now,
 						UpdatedAt:                now,
@@ -243,7 +244,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	)
 
 	require.Len(t, reports, 1)
-	assert.Equal(t, keptReportID.String(), reports[0].ID)
+	assert.Equal(t, keptAuditLinkID.String(), reports[0].ID)
 	require.Len(t, files, 1)
 	assert.Equal(t, keptFileID.String(), files[0].ID)
 	assert.NotEqual(t, skippedReportID.String(), reports[0].ID)
@@ -370,7 +371,7 @@ func insertTestReport(
 	organizationID gid.GID,
 	portalID gid.GID,
 	name string,
-) (gid.GID, error) {
+) (gid.GID, gid.GID, error) {
 	now := time.Now()
 
 	reportFileID, err := insertTestBlobFile(
@@ -381,7 +382,7 @@ func insertTestReport(
 		name+"-report",
 	)
 	if err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
 	framework := coredata.Framework{
@@ -393,7 +394,7 @@ func insertTestReport(
 		UpdatedAt:      now,
 	}
 	if err := framework.Insert(ctx, tx, scope); err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
 	audit := coredata.Audit{
@@ -406,7 +407,7 @@ func insertTestReport(
 		UpdatedAt:      now,
 	}
 	if err := audit.Insert(ctx, tx, scope); err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
 	portalAudit := coredata.CompliancePortalAudit{
@@ -419,8 +420,8 @@ func insertTestReport(
 		UpdatedAt:          now,
 	}
 	if err := portalAudit.Upsert(ctx, tx, scope); err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
-	return reportFileID, nil
+	return reportFileID, portalAudit.ID, nil
 }

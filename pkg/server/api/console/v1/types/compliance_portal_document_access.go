@@ -30,18 +30,6 @@ func NewCompliancePortalDocumentAccess(tcda *coredata.CompliancePortalDocumentAc
 		Status: tcda.Status,
 	}
 
-	if tcda.DocumentID != nil {
-		object.Document = &Document{
-			ID: *tcda.DocumentID,
-		}
-	}
-
-	if tcda.ReportFileID != nil {
-		object.ReportFile = &File{
-			ID: *tcda.ReportFileID,
-		}
-	}
-
 	if tcda.CompliancePortalFileID != nil {
 		object.CompliancePortalFile = &CompliancePortalFile{
 			ID: *tcda.CompliancePortalFileID,

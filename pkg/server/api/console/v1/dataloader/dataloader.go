@@ -363,26 +363,55 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByDocument(
 	result := make(map[CompliancePortalDocumentAccessByDocumentKey]*coredata.CompliancePortalDocumentAccess, len(keys))
 
 	for group, documentIDs := range documentIDsByGroup {
-		accesses, err := f.compliancePortal.GetDocumentAccessesByDocumentIDs(
+		scope := coredata.NewScope(group.tenantID)
+
+		access, err := f.compliancePortal.GetAccess(ctx, scope, group.compliancePortalAccessID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal access: %w", err)
+		}
+
+		links, err := f.compliancePortal.GetDocumentLinks(
 			ctx,
-			coredata.NewScope(group.tenantID),
-			group.compliancePortalAccessID,
+			scope,
+			access.CompliancePortalID,
 			documentIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal documents: %w", err)
+		}
+
+		catalogIDs := make([]gid.GID, 0, len(links))
+		documentIDByCatalogID := make(map[gid.GID]gid.GID, len(links))
+		for _, link := range links {
+			catalogIDs = append(catalogIDs, link.ID)
+			documentIDByCatalogID[link.ID] = link.DocumentID
+		}
+
+		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalDocumentIDs(
+			ctx,
+			scope,
+			group.compliancePortalAccessID,
+			catalogIDs,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load document accesses: %w", err)
 		}
 
-		for _, access := range accesses {
-			if access.DocumentID == nil {
+		for _, documentAccess := range accesses {
+			if documentAccess.CompliancePortalDocumentID == nil {
+				continue
+			}
+
+			documentID, ok := documentIDByCatalogID[*documentAccess.CompliancePortalDocumentID]
+			if !ok {
 				continue
 			}
 
 			result[CompliancePortalDocumentAccessByDocumentKey{
 				TenantID:                 group.tenantID,
 				CompliancePortalAccessID: group.compliancePortalAccessID,
-				DocumentID:               *access.DocumentID,
-			}] = access
+				DocumentID:               documentID,
+			}] = documentAccess
 		}
 	}
 
@@ -411,26 +440,55 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByReportFile(
 	result := make(map[CompliancePortalDocumentAccessByReportFileKey]*coredata.CompliancePortalDocumentAccess, len(keys))
 
 	for group, reportFileIDs := range reportFileIDsByGroup {
-		accesses, err := f.compliancePortal.GetDocumentAccessesByReportFileIDs(
+		scope := coredata.NewScope(group.tenantID)
+
+		access, err := f.compliancePortal.GetAccess(ctx, scope, group.compliancePortalAccessID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal access: %w", err)
+		}
+
+		linksByReportFileID, err := f.compliancePortal.GetAuditLinksByReportFileIDs(
 			ctx,
-			coredata.NewScope(group.tenantID),
-			group.compliancePortalAccessID,
+			scope,
+			access.CompliancePortalID,
 			reportFileIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal audits: %w", err)
+		}
+
+		catalogIDs := make([]gid.GID, 0, len(linksByReportFileID))
+		reportFileIDByCatalogID := make(map[gid.GID]gid.GID, len(linksByReportFileID))
+		for reportFileID, link := range linksByReportFileID {
+			catalogIDs = append(catalogIDs, link.ID)
+			reportFileIDByCatalogID[link.ID] = reportFileID
+		}
+
+		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalAuditIDs(
+			ctx,
+			scope,
+			group.compliancePortalAccessID,
+			catalogIDs,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load report file accesses: %w", err)
 		}
 
-		for _, access := range accesses {
-			if access.ReportFileID == nil {
+		for _, documentAccess := range accesses {
+			if documentAccess.CompliancePortalAuditID == nil {
+				continue
+			}
+
+			reportFileID, ok := reportFileIDByCatalogID[*documentAccess.CompliancePortalAuditID]
+			if !ok {
 				continue
 			}
 
 			result[CompliancePortalDocumentAccessByReportFileKey{
 				TenantID:                 group.tenantID,
 				CompliancePortalAccessID: group.compliancePortalAccessID,
-				ReportFileID:             *access.ReportFileID,
-			}] = access
+				ReportFileID:             reportFileID,
+			}] = documentAccess
 		}
 	}
 

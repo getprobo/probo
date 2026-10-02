@@ -249,6 +249,104 @@ LIMIT 1;
 	return nil
 }
 
+func LoadCompliancePortalAuditsByCompliancePortalIDAndReportFileIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	compliancePortalID gid.GID,
+	reportFileIDs []gid.GID,
+) (map[gid.GID]*CompliancePortalAudit, error) {
+	if len(reportFileIDs) == 0 {
+		return map[gid.GID]*CompliancePortalAudit{}, nil
+	}
+
+	q := `
+SELECT DISTINCT ON (audits.report_file_id)
+	cp_audits.id,
+	cp_audits.organization_id,
+	cp_audits.compliance_portal_id,
+	cp_audits.audit_id,
+	cp_audits.visibility,
+	cp_audits.created_at,
+	cp_audits.updated_at,
+	audits.report_file_id
+FROM
+	cp_audits
+INNER JOIN (
+	SELECT
+		id,
+		report_file_id
+	FROM
+		audits
+	WHERE
+		%s
+		AND report_file_id = ANY(@report_file_ids::text[])
+) audits
+	ON audits.id = cp_audits.audit_id
+WHERE
+	%s
+	AND cp_audits.compliance_portal_id = @compliance_portal_id
+ORDER BY
+	audits.report_file_id,
+	CASE
+		WHEN cp_audits.visibility = @public_visibility::compliance_portal_visibility THEN 0
+		ELSE 1
+	END,
+	cp_audits.audit_id;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"compliance_portal_id": compliancePortalID,
+		"report_file_ids":      reportFileIDs,
+		"public_visibility":    CompliancePortalVisibilityPublic,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query trust center audits: %w", err)
+	}
+	defer rows.Close()
+
+	type catalogAuditByReportFile struct {
+		ID                 gid.GID                    `db:"id"`
+		OrganizationID     gid.GID                    `db:"organization_id"`
+		CompliancePortalID gid.GID                    `db:"compliance_portal_id"`
+		AuditID            gid.GID                    `db:"audit_id"`
+		Visibility         CompliancePortalVisibility `db:"visibility"`
+		CreatedAt          time.Time                  `db:"created_at"`
+		UpdatedAt          time.Time                  `db:"updated_at"`
+		ReportFileID       gid.GID                    `db:"report_file_id"`
+	}
+
+	rowsByReportFileID := map[gid.GID]*CompliancePortalAudit{}
+
+	for rows.Next() {
+		row, err := pgx.RowToStructByName[catalogAuditByReportFile](rows)
+		if err != nil {
+			return nil, fmt.Errorf("cannot scan trust center audit: %w", err)
+		}
+
+		rowsByReportFileID[row.ReportFileID] = &CompliancePortalAudit{
+			ID:                 row.ID,
+			OrganizationID:     row.OrganizationID,
+			CompliancePortalID: row.CompliancePortalID,
+			AuditID:            row.AuditID,
+			Visibility:         row.Visibility,
+			CreatedAt:          row.CreatedAt,
+			UpdatedAt:          row.UpdatedAt,
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot collect trust center audits: %w", err)
+	}
+
+	return rowsByReportFileID, nil
+}
+
 func (cpa *CompliancePortalAudit) LoadByCompliancePortalIDAndFrameworkID(
 	ctx context.Context,
 	conn pg.Querier,

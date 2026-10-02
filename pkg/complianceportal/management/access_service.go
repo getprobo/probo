@@ -518,23 +518,23 @@ func (s *Service) GetDocumentAccess(
 	return &documentAccess, nil
 }
 
-func (s *Service) GetDocumentAccessesByDocumentIDs(
+func (s *Service) GetDocumentAccessesByCompliancePortalDocumentIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalAccessID gid.GID,
-	documentIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
 ) (coredata.CompliancePortalDocumentAccesses, error) {
 	var documentAccesses coredata.CompliancePortalDocumentAccesses
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return documentAccesses.LoadByCompliancePortalAccessIDAndDocumentIDs(
+			return documentAccesses.LoadByCompliancePortalAccessIDAndCompliancePortalDocumentIDs(
 				ctx,
 				conn,
 				scope,
 				compliancePortalAccessID,
-				documentIDs,
+				compliancePortalDocumentIDs,
 			)
 		},
 	)
@@ -545,23 +545,23 @@ func (s *Service) GetDocumentAccessesByDocumentIDs(
 	return documentAccesses, nil
 }
 
-func (s *Service) GetDocumentAccessesByReportFileIDs(
+func (s *Service) GetDocumentAccessesByCompliancePortalAuditIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
 	compliancePortalAccessID gid.GID,
-	reportFileIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
 ) (coredata.CompliancePortalDocumentAccesses, error) {
 	var documentAccesses coredata.CompliancePortalDocumentAccesses
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return documentAccesses.LoadByCompliancePortalAccessIDAndReportFileIDs(
+			return documentAccesses.LoadByCompliancePortalAccessIDAndCompliancePortalAuditIDs(
 				ctx,
 				conn,
 				scope,
 				compliancePortalAccessID,
-				reportFileIDs,
+				compliancePortalAuditIDs,
 			)
 		},
 	)
@@ -728,21 +728,35 @@ func (s *Service) UpdateAccess(
 
 				documentIDs := make([]gid.GID, 0, len(req.DocumentAccesses))
 				for _, d := range req.DocumentAccesses {
-					documentData = append(documentData, coredata.UpsertCompliancePortalDocumentAccessesData{
-						ID:     d.ID,
-						Status: d.Status,
-					})
-
 					documentIDs = append(documentIDs, d.ID)
 				}
 
+				catalogIDs, err := resolveOrCreatePortalDocumentLinks(
+					ctx,
+					tx,
+					scope,
+					access,
+					documentIDs,
+				)
+				if err != nil {
+					return err
+				}
+
+				for i, d := range req.DocumentAccesses {
+					req.DocumentAccesses[i].ID = catalogIDs[i]
+					documentData = append(documentData, coredata.UpsertCompliancePortalDocumentAccessesData{
+						ID:     catalogIDs[i],
+						Status: d.Status,
+					})
+				}
+
 				var existing coredata.CompliancePortalDocumentAccesses
-				if err := existing.LoadByCompliancePortalAccessIDAndDocumentIDs(
+				if err := existing.LoadByCompliancePortalAccessIDAndCompliancePortalDocumentIDs(
 					ctx,
 					tx,
 					scope,
 					access.ID,
-					documentIDs,
+					catalogIDs,
 				); err != nil {
 					return fmt.Errorf("cannot load existing document accesses: %w", err)
 				}
@@ -750,26 +764,9 @@ func (s *Service) UpdateAccess(
 				grantedDocumentIDs = grantedTargetIDs(
 					existing,
 					func(row *coredata.CompliancePortalDocumentAccess) *gid.GID {
-						return row.DocumentID
+						return row.CompliancePortalDocumentID
 					},
 				)
-
-				documents := &coredata.Documents{}
-				if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil {
-					return fmt.Errorf("cannot load documents: %w", err)
-				}
-
-				if err := validatePortalAccessTargets(
-					ctx,
-					tx,
-					scope,
-					access.CompliancePortalID,
-					documentIDs,
-					nil,
-					nil,
-				); err != nil {
-					return err
-				}
 
 				if err := tcdas.UpsertDocumentAccesses(ctx, tx, scope, access.OrganizationID, access.ID, documentData); err != nil {
 					return fmt.Errorf("cannot upsert document accesses: %w", err)
@@ -779,23 +776,37 @@ func (s *Service) UpdateAccess(
 			if len(req.ReportAccesses) > 0 {
 				var reportData []coredata.UpsertCompliancePortalDocumentAccessesData
 
-				reportIDs := make([]gid.GID, 0, len(req.ReportAccesses))
+				reportFileIDs := make([]gid.GID, 0, len(req.ReportAccesses))
 				for _, d := range req.ReportAccesses {
+					reportFileIDs = append(reportFileIDs, d.ID)
+				}
+
+				catalogIDs, err := resolveOrCreatePortalAuditLinksByReportFileIDs(
+					ctx,
+					tx,
+					scope,
+					access,
+					reportFileIDs,
+				)
+				if err != nil {
+					return err
+				}
+
+				for i, d := range req.ReportAccesses {
+					req.ReportAccesses[i].ID = catalogIDs[i]
 					reportData = append(reportData, coredata.UpsertCompliancePortalDocumentAccessesData{
-						ID:     d.ID,
+						ID:     catalogIDs[i],
 						Status: d.Status,
 					})
-
-					reportIDs = append(reportIDs, d.ID)
 				}
 
 				var existing coredata.CompliancePortalDocumentAccesses
-				if err := existing.LoadByCompliancePortalAccessIDAndReportFileIDs(
+				if err := existing.LoadByCompliancePortalAccessIDAndCompliancePortalAuditIDs(
 					ctx,
 					tx,
 					scope,
 					access.ID,
-					reportIDs,
+					catalogIDs,
 				); err != nil {
 					return fmt.Errorf("cannot load existing report accesses: %w", err)
 				}
@@ -803,26 +814,9 @@ func (s *Service) UpdateAccess(
 				grantedReportIDs = grantedTargetIDs(
 					existing,
 					func(row *coredata.CompliancePortalDocumentAccess) *gid.GID {
-						return row.ReportFileID
+						return row.CompliancePortalAuditID
 					},
 				)
-
-				files := &coredata.Files{}
-				if err := files.LoadByIDs(ctx, tx, scope, reportIDs); err != nil {
-					return fmt.Errorf("cannot load report files: %w", err)
-				}
-
-				if err := validatePortalAccessTargets(
-					ctx,
-					tx,
-					scope,
-					access.CompliancePortalID,
-					nil,
-					reportIDs,
-					nil,
-				); err != nil {
-					return err
-				}
 
 				if err := tcdas.UpsertReportFileAccesses(ctx, tx, scope, access.OrganizationID, access.ID, reportData); err != nil {
 					return fmt.Errorf("cannot upsert report accesses: %w", err)
@@ -865,13 +859,11 @@ func (s *Service) UpdateAccess(
 					return fmt.Errorf("cannot load compliance page files: %w", err)
 				}
 
-				if err := validatePortalAccessTargets(
+				if err := ensurePortalFileTargets(
 					ctx,
 					tx,
 					scope,
 					access.CompliancePortalID,
-					nil,
-					nil,
 					compliancePortalFileIDs,
 				); err != nil {
 					return err
@@ -980,63 +972,115 @@ func (s *Service) DeleteAccess(
 	return err
 }
 
-func validatePortalAccessTargets(
+func resolveOrCreatePortalDocumentLinks(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	compliancePortalID gid.GID,
+	access *coredata.CompliancePortalAccess,
 	documentIDs []gid.GID,
-	reportFileIDs []gid.GID,
-	compliancePortalFileIDs []gid.GID,
-) error {
-	for _, documentID := range documentIDs {
-		link := &coredata.CompliancePortalDocument{}
+) ([]gid.GID, error) {
+	catalogIDs := make([]gid.GID, 0, len(documentIDs))
+	now := time.Now()
 
+	for _, documentID := range documentIDs {
+		document := &coredata.Document{}
+		if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
+			return nil, fmt.Errorf("cannot load document: %w", err)
+		}
+
+		if document.OrganizationID != access.OrganizationID {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		link := &coredata.CompliancePortalDocument{}
 		err := link.LoadByCompliancePortalIDAndDocumentID(
 			ctx,
 			tx,
 			scope,
-			compliancePortalID,
+			access.CompliancePortalID,
 			documentID,
 		)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return coredata.ErrResourceNotFound
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			*link = coredata.CompliancePortalDocument{
+				ID:                 gid.New(scope.GetTenantID(), coredata.CompliancePortalDocumentEntityType),
+				OrganizationID:     access.OrganizationID,
+				CompliancePortalID: access.CompliancePortalID,
+				DocumentID:         documentID,
+				Visibility:         coredata.CompliancePortalVisibilityRestricted,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
-
-			return fmt.Errorf("cannot load portal document link: %w", err)
+			if err := link.Upsert(ctx, tx, scope); err != nil {
+				return nil, fmt.Errorf("cannot upsert portal document: %w", err)
+			}
+		} else if err != nil {
+			return nil, fmt.Errorf("cannot load portal document: %w", err)
 		}
+
+		catalogIDs = append(catalogIDs, link.ID)
 	}
+
+	return catalogIDs, nil
+}
+
+func resolveOrCreatePortalAuditLinksByReportFileIDs(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	access *coredata.CompliancePortalAccess,
+	reportFileIDs []gid.GID,
+) ([]gid.GID, error) {
+	catalogIDs := make([]gid.GID, 0, len(reportFileIDs))
+	now := time.Now()
 
 	for _, reportFileID := range reportFileIDs {
 		audit := &coredata.Audit{}
-
 		if err := audit.LoadByReportFileID(ctx, tx, scope, reportFileID); err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return coredata.ErrResourceNotFound
-			}
+			return nil, fmt.Errorf("cannot load audit: %w", err)
+		}
 
-			return fmt.Errorf("cannot load audit for report file: %w", err)
+		if audit.OrganizationID != access.OrganizationID {
+			return nil, coredata.ErrResourceNotFound
 		}
 
 		link := &coredata.CompliancePortalAudit{}
-
 		err := link.LoadByCompliancePortalIDAndAuditID(
 			ctx,
 			tx,
 			scope,
-			compliancePortalID,
+			access.CompliancePortalID,
 			audit.ID,
 		)
-		if err != nil {
-			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return coredata.ErrResourceNotFound
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			*link = coredata.CompliancePortalAudit{
+				ID:                 gid.New(scope.GetTenantID(), coredata.CompliancePortalAuditEntityType),
+				OrganizationID:     access.OrganizationID,
+				CompliancePortalID: access.CompliancePortalID,
+				AuditID:            audit.ID,
+				Visibility:         coredata.CompliancePortalVisibilityRestricted,
+				CreatedAt:          now,
+				UpdatedAt:          now,
 			}
-
-			return fmt.Errorf("cannot load portal audit link: %w", err)
+			if err := link.Upsert(ctx, tx, scope); err != nil {
+				return nil, fmt.Errorf("cannot upsert portal audit: %w", err)
+			}
+		} else if err != nil {
+			return nil, fmt.Errorf("cannot load portal audit: %w", err)
 		}
+
+		catalogIDs = append(catalogIDs, link.ID)
 	}
 
+	return catalogIDs, nil
+}
+
+func ensurePortalFileTargets(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	compliancePortalFileIDs []gid.GID,
+) error {
 	for _, compliancePortalFileID := range compliancePortalFileIDs {
 		file := &coredata.CompliancePortalFile{}
 
@@ -1277,24 +1321,23 @@ func (s *Service) grantCreatedAccessTargets(
 	var tcdas coredata.CompliancePortalDocumentAccesses
 
 	if len(req.DocumentIDs) > 0 {
-		documentData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(req.DocumentIDs))
-		for _, documentID := range req.DocumentIDs {
-			documentData = append(documentData, coredata.UpsertCompliancePortalDocumentAccessesData{
-				ID:     documentID,
-				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
-			})
-		}
-
-		if err := validatePortalAccessTargets(
+		catalogIDs, err := resolveOrCreatePortalDocumentLinks(
 			ctx,
 			tx,
 			scope,
-			access.CompliancePortalID,
+			access,
 			req.DocumentIDs,
-			nil,
-			nil,
-		); err != nil {
+		)
+		if err != nil {
 			return err
+		}
+
+		documentData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(catalogIDs))
+		for _, catalogID := range catalogIDs {
+			documentData = append(documentData, coredata.UpsertCompliancePortalDocumentAccessesData{
+				ID:     catalogID,
+				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+			})
 		}
 
 		if err := tcdas.UpsertDocumentAccesses(
@@ -1310,24 +1353,23 @@ func (s *Service) grantCreatedAccessTargets(
 	}
 
 	if len(req.ReportFileIDs) > 0 {
-		reportData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(req.ReportFileIDs))
-		for _, reportFileID := range req.ReportFileIDs {
-			reportData = append(reportData, coredata.UpsertCompliancePortalDocumentAccessesData{
-				ID:     reportFileID,
-				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
-			})
-		}
-
-		if err := validatePortalAccessTargets(
+		catalogIDs, err := resolveOrCreatePortalAuditLinksByReportFileIDs(
 			ctx,
 			tx,
 			scope,
-			access.CompliancePortalID,
-			nil,
+			access,
 			req.ReportFileIDs,
-			nil,
-		); err != nil {
+		)
+		if err != nil {
 			return err
+		}
+
+		reportData := make([]coredata.UpsertCompliancePortalDocumentAccessesData, 0, len(catalogIDs))
+		for _, catalogID := range catalogIDs {
+			reportData = append(reportData, coredata.UpsertCompliancePortalDocumentAccessesData{
+				ID:     catalogID,
+				Status: coredata.CompliancePortalDocumentAccessStatusGranted,
+			})
 		}
 
 		if err := tcdas.UpsertReportFileAccesses(
@@ -1351,13 +1393,11 @@ func (s *Service) grantCreatedAccessTargets(
 			})
 		}
 
-		if err := validatePortalAccessTargets(
+		if err := ensurePortalFileTargets(
 			ctx,
 			tx,
 			scope,
 			access.CompliancePortalID,
-			nil,
-			nil,
 			req.CompliancePortalFileIDs,
 		); err != nil {
 			return err
