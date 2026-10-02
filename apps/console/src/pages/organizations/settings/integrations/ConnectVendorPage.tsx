@@ -21,6 +21,7 @@
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -200,11 +201,9 @@ function ConnectVendorChooser({
       </div>
       <div className="grid grid-cols-4 gap-3 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
         {methods.map(method => (
-          <Card key={method} variant="soft" size={1} interactive className="relative">
-            <Link
+          <Card key={method} variant="soft" size={1} interactive>
+            <CardLink
               to={connectVendorMethodPath(organizationId, driver.provider, method)}
-              underline={false}
-              className="absolute inset-0 z-0"
               aria-label={t(`marketplacePage.methods.${method}`)}
             />
             <div className="pointer-events-none flex flex-col items-center gap-3 py-2 text-center">

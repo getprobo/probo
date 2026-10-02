@@ -23,8 +23,8 @@ import { dateFormat } from "@probo/i18n";
 import { IconWarning, ThirdPartyLogo } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { ButtonAnchor } from "@probo/ui/src/v2/Button/ButtonAnchor";
+import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -147,18 +147,18 @@ export function ConnectorGroupListItem({
 
   return (
     <div className={card()}>
-      {face.canGet && (
-        <Link
-          to={connectorDetailsPath(organizationId, face.provider)}
-          underline={false}
-          aria-label={face.displayName}
-          className="absolute inset-0 z-0"
-        />
-      )}
       <TonedCard
         tone={tone}
         size={2}
-        className={face.canGet ? "pointer-events-none relative z-0 h-full" : "relative z-0 h-full"}
+        className={face.canGet ? "pointer-events-none h-full" : "h-full"}
+        stretch={face.canGet
+          ? (
+              <CardLink
+                to={connectorDetailsPath(organizationId, face.provider)}
+                aria-label={face.displayName}
+              />
+            )
+          : undefined}
         icon={(
           <ThirdPartyLogo thirdParty={face.provider} />
         )}
@@ -193,7 +193,7 @@ export function ConnectorGroupListItem({
           </Badge>
         </div>
         {single != null && single.canReconnect && (
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto relative z-1">
             <ButtonAnchor
               href={buildConnectorInitiateURL(
                 organizationId,
