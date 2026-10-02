@@ -2264,7 +2264,6 @@
     "rightsRequests": "Rechtenverzoeken",
     "campaigns": "Campagnes",
     "connections": "Connectoren",
-    "marketplace": "Marketplace",
     "sources": "Bronnen",
     "compliancePortals": "Compliancepagina's",
     "compliancePortalsSettings": "Instellingen",
@@ -3043,13 +3042,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": {
-      "connectWithOAuth": "OAuth",
-      "connectWithGitHubApp": "GitHub-app",
-      "connectWithApiKey": "API-sleutel",
-      "connectWithClientCredentials": "Clientreferenties",
-      "connectWithWorkloadIdentity": "Workload-identiteit",
-      "connectWithAppInstall": "App-installatie",
-      "chooseAnotherMethod": "Kies een andere verbindingsmethode",
       "open": "Open"
     },
     "csv": {
@@ -3110,85 +3102,6 @@
       "selfHosted": "Self-hosted"
     },
     "instanceUrl": "Instantie-URL"
-  },
-  "apiKeyConnectorDialog": {
-    "title": "Provider verbinden",
-    "titleWithProvider": "{{provider}} verbinden",
-    "managedDescription": "Verbind {{provider}} als toegangsbron. Vul hieronder de gegevens in om af te ronden.",
-    "apiKeyDescription": "Voer de API-sleutel voor {{provider}} in om deze te verbinden als toegangsbron.",
-    "apiKey": "API-sleutel",
-    "messages": {
-      "connectionFailed": "Verbinding mislukt"
-    },
-    "errors": {
-      "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en probeer het opnieuw.",
-      "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
-      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
-      "rejected": {
-        "better_stack_team_not_found": "Better Stack heeft geen team met deze naam voor dit API-token. Teamnamen zijn hoofdlettergevoelig: kopieer de exacte naam uit Settings > Teams in Better Stack, of gebruik een teamgebonden API-token.",
-        "supabase_organization_not_found": "Supabase heeft geen organisatie met deze slug. Kopieer deze uit de URL van de organisatie in het Supabase-dashboard (supabase.com/dashboard/org/<slug>).",
-        "supabase_organization_not_accessible": "Dit toegangstoken kan de leden van deze organisatie niet lezen. Maak een token aan met Organization-resourcetoegang die deze organisatie omvat, en Organization Members ingesteld op Read."
-      }
-    },
-    "actions": {
-      "connect": "Verbinden",
-      "connecting": "Verbinden..."
-    }
-  },
-  "clientCredentialsConnectorDialog": {
-    "title": "Provider verbinden",
-    "titleWithProvider": "{{provider}} verbinden",
-    "description": "Voer de clientreferenties voor {{provider}} in om deze te verbinden als toegangsbron.",
-    "messages": {
-      "connectionFailed": "Verbinding mislukt"
-    },
-    "errors": {
-      "connect": "Verbinden met provider mislukt. Controleer uw gegevens en probeer het opnieuw."
-    },
-    "fields": {
-      "clientId": "Client-ID",
-      "clientSecret": "Client Secret",
-      "tokenUrl": "Token-URL",
-      "scope": "Scope"
-    },
-    "region": {
-      "placeholder": "Selecteer een regio",
-      "us": "Verenigde Staten (US)",
-      "ca": "Canada (CA)",
-      "eu": "Europa (EU)"
-    },
-    "actions": {
-      "connect": "Verbinden",
-      "connecting": "Verbinden..."
-    }
-  },
-  "oauthExtraDialog": {
-    "actions": {
-      "continue": "Doorgaan"
-    },
-    "datadog": {
-      "title": "Datadog verbinden",
-      "description": "Selecteer uw Datadog-site en ga vervolgens verder om toegang te autoriseren.",
-      "siteLabel": "Datadog-site",
-      "sitePlaceholder": "Selecteer een site"
-    },
-    "zendesk": {
-      "title": "Zendesk verbinden",
-      "description": "Voer uw Zendesk-subdomein in en ga verder om toegang te autoriseren.",
-      "subdomainLabel": "Zendesk-subdomein",
-      "subdomainPlaceholder": "acme",
-      "subdomainHelp": "Het <subdomain>-gedeelte van <subdomain>.zendesk.com"
-    }
-  },
-  "useCreateAccessReviewSource": {
-    "errors": {
-      "create": "Aanmaken van toegangsbron mislukt"
-    },
-    "messages": {
-      "error": "Fout",
-      "success": "Succes",
-      "created": "Toegangsbron succesvol aangemaakt."
-    }
   },
   "accessReviewConnectionsPage": {
     "title": "Bronnen",
@@ -6131,14 +6044,6 @@
     "default": {
       "title": "Authenticatie mislukt",
       "description": "We konden uw aanmelding niet voltooien. Probeer het opnieuw."
-    }
-  },
-  "accessReviewSource": {
-    "regions": {
-      "label": "Regio",
-      "placeholder": "Selecteer een regio",
-      "unitedStates": "Verenigde Staten",
-      "europe": "Europa"
     }
   },
   "devices": {

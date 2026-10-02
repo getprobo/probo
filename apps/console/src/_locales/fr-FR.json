@@ -2264,7 +2264,6 @@
     "rightsRequests": "Demandes d’exercice de droits",
     "campaigns": "Campagnes",
     "connections": "Connecteurs",
-    "marketplace": "Marketplace",
     "sources": "Sources",
     "compliancePortals": "Portails de conformité",
     "compliancePortalsSettings": "Paramètres",
@@ -3043,13 +3042,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": {
-      "connectWithOAuth": "OAuth",
-      "connectWithGitHubApp": "Application GitHub",
-      "connectWithApiKey": "Clé API",
-      "connectWithClientCredentials": "Identifiants client",
-      "connectWithWorkloadIdentity": "Identité de charge de travail",
-      "connectWithAppInstall": "Installation de l’application",
-      "chooseAnotherMethod": "Choisir une autre méthode de connexion",
       "open": "Ouvrir"
     },
     "csv": {
@@ -3110,85 +3102,6 @@
       "selfHosted": "Auto-hébergé"
     },
     "instanceUrl": "URL de l’instance"
-  },
-  "apiKeyConnectorDialog": {
-    "title": "Connecter le fournisseur",
-    "titleWithProvider": "Connecter {{provider}}",
-    "managedDescription": "Connectez {{provider}} en tant que source d’accès. Renseignez les informations ci-dessous pour terminer.",
-    "apiKeyDescription": "Saisissez la clé API de {{provider}} pour le connecter en tant que source d’accès.",
-    "apiKey": "Clé API",
-    "messages": {
-      "connectionFailed": "Connexion échouée"
-    },
-    "errors": {
-      "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
-      "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
-      "rejected": {
-        "better_stack_team_not_found": "Better Stack n’a aucune équipe portant ce nom pour ce jeton API. Les noms d’équipe sont sensibles à la casse : copiez le nom exact depuis Settings > Teams dans Better Stack, ou utilisez un jeton API d’équipe.",
-        "supabase_organization_not_found": "Supabase n’a aucune organisation avec ce slug. Copiez-le depuis l’URL de l’organisation dans le tableau de bord Supabase (supabase.com/dashboard/org/<slug>).",
-        "supabase_organization_not_accessible": "Ce jeton d’accès ne peut pas lire les membres de cette organisation. Créez un jeton avec un accès aux ressources de type Organization incluant cette organisation, et Organization Members réglé sur Read."
-      }
-    },
-    "actions": {
-      "connect": "Connecter",
-      "connecting": "Connexion..."
-    }
-  },
-  "clientCredentialsConnectorDialog": {
-    "title": "Connecter un fournisseur",
-    "titleWithProvider": "Connecter {{provider}}",
-    "description": "Saisissez les identifiants client de {{provider}} pour le connecter comme source d’accès.",
-    "messages": {
-      "connectionFailed": "Échec de la connexion"
-    },
-    "errors": {
-      "connect": "Échec de la connexion au fournisseur. Vérifiez vos identifiants et réessayez."
-    },
-    "fields": {
-      "clientId": "ID client",
-      "clientSecret": "Secret client",
-      "tokenUrl": "URL du jeton",
-      "scope": "Portée"
-    },
-    "region": {
-      "placeholder": "Sélectionner une région",
-      "us": "États-Unis (US)",
-      "ca": "Canada (CA)",
-      "eu": "Europe (EU)"
-    },
-    "actions": {
-      "connect": "Connecter",
-      "connecting": "Connexion..."
-    }
-  },
-  "oauthExtraDialog": {
-    "actions": {
-      "continue": "Continuer"
-    },
-    "datadog": {
-      "title": "Connecter Datadog",
-      "description": "Sélectionnez votre site Datadog, puis continuez pour autoriser l’accès.",
-      "siteLabel": "Site Datadog",
-      "sitePlaceholder": "Sélectionnez un site"
-    },
-    "zendesk": {
-      "title": "Connecter Zendesk",
-      "description": "Saisissez votre sous-domaine Zendesk, puis continuez pour autoriser l’accès.",
-      "subdomainLabel": "Sous-domaine Zendesk",
-      "subdomainPlaceholder": "acme",
-      "subdomainHelp": "La partie <subdomain> de <subdomain>.zendesk.com"
-    }
-  },
-  "useCreateAccessReviewSource": {
-    "errors": {
-      "create": "Échec de la création de la source d’accès"
-    },
-    "messages": {
-      "error": "Erreur",
-      "success": "Succès",
-      "created": "Source d’accès créée avec succès."
-    }
   },
   "accessReviewConnectionsPage": {
     "title": "Sources",
@@ -6142,14 +6055,6 @@
     "default": {
       "title": "Échec de l’authentification",
       "description": "Nous n’avons pas pu terminer votre connexion. Veuillez réessayer."
-    }
-  },
-  "accessReviewSource": {
-    "regions": {
-      "label": "Région",
-      "placeholder": "Sélectionner une région",
-      "unitedStates": "États-Unis",
-      "europe": "Europe"
     }
   },
   "devices": {
