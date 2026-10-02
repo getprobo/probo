@@ -26,6 +26,9 @@ import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
+
+import type { OAuthConnectForm_provider$key } from "#/__generated__/core/OAuthConnectForm_provider.graphql";
 
 import {
   cleanZendeskSubdomain,
@@ -33,45 +36,44 @@ import {
   DATADOG_SITES,
 } from "../_lib/connectorSettings";
 
-import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
-import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
+import { ConnectForm } from "./ConnectForm";
+
+const oauthConnectFormFragment = graphql`
+  fragment OAuthConnectForm_provider on ConnectorProviderInfo {
+    provider
+    documentationUrl
+    oauth2Scopes
+  }
+`;
 
 export function OAuthConnectForm({
   organizationId,
-  driver,
+  providerKey,
 }: {
   organizationId: string;
-  driver: ConnectVendorDriver;
+  providerKey: OAuthConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const connectorName = useConnectorName();
+  const provider = useFragment(oauthConnectFormFragment, providerKey);
   const [datadogSite, setDatadogSite] = useState("US1");
   const [zendeskSubdomain, setZendeskSubdomain] = useState("");
-  const zendeskReady = driver.provider !== "ZENDESK" || cleanZendeskSubdomain(zendeskSubdomain) !== "";
+  const zendeskReady = provider.provider !== "ZENDESK" || cleanZendeskSubdomain(zendeskSubdomain) !== "";
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (connectorName.rejectIfEmpty() || !zendeskReady) {
-          return;
-        }
-        const extras: Record<string, string> | undefined = driver.provider === "DATADOG"
+    <ConnectForm
+      documentationUrl={provider.documentationUrl}
+      canSubmit={zendeskReady}
+      onSubmit={({ name }) => {
+        const extras: Record<string, string> | undefined = provider.provider === "DATADOG"
           ? { site: datadogSite }
-          : driver.provider === "ZENDESK"
+          : provider.provider === "ZENDESK"
             ? { site: cleanZendeskSubdomain(zendeskSubdomain) }
             : undefined;
-        connectOAuthProvider(organizationId, driver.provider, driver.oauth2Scopes, extras, connectorName.trimmed);
+        connectOAuthProvider(organizationId, provider.provider, provider.oauth2Scopes, extras, name);
+        return null;
       }}
     >
-      <ConnectorNameField
-        name={connectorName.name}
-        error={connectorName.error}
-        onChange={connectorName.onChange}
-        onEmpty={connectorName.rejectIfEmpty}
-      />
-      {driver.provider === "DATADOG" && (
+      {provider.provider === "DATADOG" && (
         <Field label={t("marketplacePage.fields.datadogSite")} required>
           <Select value={datadogSite} onValueChange={(value: string | null) => setDatadogSite(value ?? "US1")}>
             <SelectTrigger>
@@ -85,7 +87,7 @@ export function OAuthConnectForm({
           </Select>
         </Field>
       )}
-      {driver.provider === "ZENDESK" && (
+      {provider.provider === "ZENDESK" && (
         <Field label={t("marketplacePage.fields.zendeskSubdomain")} required>
           <TextField
             value={zendeskSubdomain}
@@ -93,10 +95,6 @@ export function OAuthConnectForm({
           />
         </Field>
       )}
-      <ConnectFormFooter
-        documentationUrl={driver.documentationUrl}
-        disabled={!zendeskReady}
-      />
-    </form>
+    </ConnectForm>
   );
 }

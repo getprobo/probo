@@ -21,11 +21,7 @@
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useTranslation } from "react-i18next";
 
-import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
-
 import { ConnectorDocumentationLink } from "./ConnectorDocumentationLink";
-
-export type ConnectVendorDriver = ConnectVendorPageQuery["response"]["connectorProviders"][number];
 
 export function ConnectFormFooter({
   documentationUrl,

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
@@ -27,9 +26,9 @@ import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import { graphql } from "relay-runtime";
+import { graphql, useFragment } from "react-relay";
 
+import type { APIKeyConnectForm_provider$key } from "#/__generated__/core/APIKeyConnectForm_provider.graphql";
 import type { APIKeyConnectFormCreateMutation } from "#/__generated__/core/APIKeyConnectFormCreateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -40,9 +39,21 @@ import {
 } from "../_lib/connectorSettings";
 import { integrationListPath } from "../_lib/integrationPath";
 
-import { ConnectFormFooter, type ConnectVendorDriver } from "./ConnectFormFooter";
-import { ConnectorNameField, useConnectorName } from "./ConnectorNameField";
+import { ConnectForm } from "./ConnectForm";
 import { isPostHogDeploymentSelected, PostHogDeploymentField } from "./PostHogDeploymentField";
+
+const apiKeyConnectFormFragment = graphql`
+  fragment APIKeyConnectForm_provider on ConnectorProviderInfo {
+    provider
+    documentationUrl
+    apiKeyManaged
+    apiKeyExtraSettings {
+      key
+      label
+      required
+    }
+  }
+`;
 
 const createAPIKeyConnectorMutation = graphql`
   mutation APIKeyConnectFormCreateMutation($input: CreateAPIKeyConnectorInput!) {
@@ -56,76 +67,47 @@ const createAPIKeyConnectorMutation = graphql`
 
 export function APIKeyConnectForm({
   organizationId,
-  driver,
+  providerKey,
 }: {
   organizationId: string;
-  driver: ConnectVendorDriver;
+  providerKey: APIKeyConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const provider = useFragment(apiKeyConnectFormFragment, providerKey);
   const [apiKey, setApiKey] = useState("");
-  const connectorName = useConnectorName();
   const [extras, setExtras] = useState<Record<string, string>>({});
-  const [isConnecting, setIsConnecting] = useState(false);
   const [createAPIKeyConnector] = useMutation<APIKeyConnectFormCreateMutation>(
     createAPIKeyConnectorMutation,
   );
-
-  const postHogValid = driver.provider !== "POSTHOG" || isPostHogDeploymentSelected(extras);
-  const extrasValid = hasRequiredExtraSettings(driver.apiKeyExtraSettings, extras);
-  const canSubmit = (driver.apiKeyManaged || apiKey.trim() !== "") && extrasValid && postHogValid;
-
-  const onSubmit = async () => {
-    if (connectorName.rejectIfEmpty() || !canSubmit || isConnecting) {
-      return;
-    }
-    setIsConnecting(true);
-    try {
-      await createAPIKeyConnector({
-        variables: {
-          input: {
-            organizationId,
-            name: connectorName.trimmed,
-            provider: driver.provider,
-            apiKey: driver.apiKeyManaged ? null : apiKey.trim(),
-            ...buildExtraFields(
-              driver.provider,
-              driver.apiKeyExtraSettings,
-              extras,
-              mapAPIKeyExtraSettingToField,
-            ),
-          },
-        },
-      }, { errorToast: t("marketplacePage.connectFailed") });
-      toast({
-        title: t("marketplacePage.connected"),
-        description: t("listPage.messages.connectedDescription"),
-        variant: "success",
-      });
-      void navigate(integrationListPath(organizationId));
-    } catch {
-      return;
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+  const postHogValid = provider.provider !== "POSTHOG" || isPostHogDeploymentSelected(extras);
+  const extrasValid = hasRequiredExtraSettings(provider.apiKeyExtraSettings, extras);
+  const canSubmit = (provider.apiKeyManaged || apiKey.trim() !== "") && extrasValid && postHogValid;
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void onSubmit();
+    <ConnectForm
+      documentationUrl={provider.documentationUrl}
+      canSubmit={canSubmit}
+      onSubmit={async ({ name }) => {
+        await createAPIKeyConnector({
+          variables: {
+            input: {
+              organizationId,
+              name,
+              provider: provider.provider,
+              apiKey: provider.apiKeyManaged ? null : apiKey.trim(),
+              ...buildExtraFields(
+                provider.provider,
+                provider.apiKeyExtraSettings,
+                extras,
+                mapAPIKeyExtraSettingToField,
+              ),
+            },
+          },
+        }, { errorToast: t("marketplacePage.connectFailed") });
+        return { to: integrationListPath(organizationId) };
       }}
     >
-      <ConnectorNameField
-        name={connectorName.name}
-        error={connectorName.error}
-        onChange={connectorName.onChange}
-        onEmpty={connectorName.rejectIfEmpty}
-      />
-      {!driver.apiKeyManaged && (
+      {!provider.apiKeyManaged && (
         <Field label={t("marketplacePage.fields.apiKey")} required>
           <TextField
             value={apiKey}
@@ -134,36 +116,36 @@ export function APIKeyConnectForm({
           />
         </Field>
       )}
-      <APIKeyExtraFields driver={driver} extras={extras} onChange={setExtras} regionLabel={t("marketplacePage.fields.region")} />
-      <ConnectFormFooter
-        documentationUrl={driver.documentationUrl}
-        disabled={!canSubmit}
-        loading={isConnecting}
+      <APIKeyExtraFields
+        provider={provider.provider}
+        extraSettings={provider.apiKeyExtraSettings}
+        extras={extras}
+        onChange={setExtras}
       />
-    </form>
+    </ConnectForm>
   );
 }
 
 function APIKeyExtraFields({
-  driver,
+  provider,
+  extraSettings,
   extras,
   onChange,
-  regionLabel,
 }: {
-  driver: ConnectVendorDriver;
+  provider: string;
+  extraSettings: ReadonlyArray<{ readonly key: string; readonly label: string; readonly required: boolean }>;
   extras: Record<string, string>;
   onChange: (values: Record<string, string>) => void;
-  regionLabel: string;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
 
-  if (driver.provider === "POSTHOG") {
+  if (provider === "POSTHOG") {
     return <PostHogDeploymentField values={extras} onChange={onChange} />;
   }
 
-  if (driver.provider === "SEGMENT") {
+  if (provider === "SEGMENT") {
     return (
-      <Field label={regionLabel} required>
+      <Field label={t("marketplacePage.fields.region")} required>
         <Select
           value={extras.region ?? null}
           onValueChange={(value: string | null) => {
@@ -190,7 +172,7 @@ function APIKeyExtraFields({
     );
   }
 
-  return driver.apiKeyExtraSettings.map(setting => (
+  return extraSettings.map(setting => (
     <Field key={setting.key} label={setting.label} required={setting.required}>
       <TextField
         value={extras[setting.key] ?? ""}
