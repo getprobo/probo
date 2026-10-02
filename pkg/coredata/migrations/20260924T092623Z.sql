@@ -1,0 +1,1 @@
+ALTER TYPE connector_provider ADD VALUE IF NOT EXISTS 'ELASTIC_CLOUD';

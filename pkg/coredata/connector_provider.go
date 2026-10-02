@@ -100,6 +100,7 @@ const (
 	ConnectorProviderAWS             ConnectorProvider = "AWS"
 	ConnectorProviderGCP             ConnectorProvider = "GCP"
 	ConnectorProviderElevenLabs      ConnectorProvider = "ELEVENLABS"
+	ConnectorProviderElasticCloud    ConnectorProvider = "ELASTIC_CLOUD"
 	ConnectorProviderNewRelic        ConnectorProvider = "NEW_RELIC"
 	ConnectorProviderRetool          ConnectorProvider = "RETOOL"
 	ConnectorProviderTwingate        ConnectorProvider = "TWINGATE"
@@ -184,6 +185,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderAWS,
 		ConnectorProviderGCP,
 		ConnectorProviderElevenLabs,
+		ConnectorProviderElasticCloud,
 		ConnectorProviderNewRelic,
 		ConnectorProviderRetool,
 		ConnectorProviderTwingate,
@@ -265,6 +267,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderAWS,
 		ConnectorProviderGCP,
 		ConnectorProviderElevenLabs,
+		ConnectorProviderElasticCloud,
 		ConnectorProviderNewRelic,
 		ConnectorProviderRetool,
 		ConnectorProviderTwingate,
