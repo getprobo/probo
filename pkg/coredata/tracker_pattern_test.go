@@ -532,6 +532,7 @@ func TestTrackerPatterns_LoadByCookieBannerID_SourceOrder(t *testing.T) {
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return unsourced.Insert(ctx, tx, fx.scope)
 	}))
