@@ -33,24 +33,11 @@ WHERE visibility = 'NONE';
 
 -- CHECK (visibility IN (...)) binds literals to the old enum, so ALTER TYPE
 -- fails unless those constraints are dropped first.
-DO $$
-DECLARE
-    rec RECORD;
-BEGIN
-    FOR rec IN
-        SELECT c.conrelid::regclass AS table_name, c.conname
-        FROM pg_constraint c
-        JOIN pg_attribute a
-            ON a.attrelid = c.conrelid
-            AND a.attnum = ANY (c.conkey)
-        WHERE c.contype = 'c'
-          AND c.conrelid IN ('cp_documents'::regclass, 'cp_audits'::regclass)
-          AND a.attname = 'visibility'
-    LOOP
-        EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', rec.table_name, rec.conname);
-    END LOOP;
-END
-$$;
+ALTER TABLE cp_documents
+    DROP CONSTRAINT cp_documents_visibility_check;
+
+ALTER TABLE cp_audits
+    DROP CONSTRAINT cp_audits_visibility_check;
 
 CREATE TYPE compliance_portal_visibility_new AS ENUM (
     'RESTRICTED',
