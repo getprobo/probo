@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -135,6 +136,31 @@ func (s AuditService) Get(
 	}
 
 	return audit, nil
+}
+
+func (s AuditService) GetByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditIDs ...gid.GID,
+) (coredata.Audits, error) {
+	var audits coredata.Audits
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := audits.LoadByIDs(ctx, conn, scope, auditIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load audits by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return audits, nil
 }
 
 func (s AuditService) GetByReportFileID(

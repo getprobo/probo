@@ -85,7 +85,7 @@ func loadResources(
 				documents = append(
 					documents,
 					messageDocument{
-						ID:     link.ID.String(),
+						ID:     document.ID.String(),
 						Title:  document.Title,
 						Status: access.Status.String(),
 					},
@@ -117,6 +117,10 @@ func loadResources(
 				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
 			}
 
+			if audit.ReportFileID == nil {
+				continue
+			}
+
 			title := framework.Name
 			if audit.Name != nil && *audit.Name != "" {
 				title += " - " + *audit.Name
@@ -125,7 +129,7 @@ func loadResources(
 			reports = append(
 				reports,
 				messageReport{
-					ID:      portalAudit.ID.String(),
+					ID:      audit.ReportFileID.String(),
 					Title:   title,
 					AuditID: audit.ID.String(),
 					Status:  access.Status.String(),
@@ -162,4 +166,81 @@ func loadResources(
 	}
 
 	return documents, reports, files, nil
+}
+
+func resolveAccessResourceIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	resourceIDs []gid.GID,
+) ([]gid.GID, []gid.GID, []gid.GID, error) {
+	var (
+		documentIDs             []gid.GID
+		publicDocumentIDs       []gid.GID
+		auditIDs                []gid.GID
+		reportFileIDs           []gid.GID
+		compliancePortalFileIDs []gid.GID
+	)
+
+	for _, resourceID := range resourceIDs {
+		switch resourceID.EntityType() {
+		case coredata.CompliancePortalDocumentEntityType:
+			documentIDs = append(documentIDs, resourceID)
+		case coredata.DocumentEntityType:
+			publicDocumentIDs = append(publicDocumentIDs, resourceID)
+		case coredata.CompliancePortalAuditEntityType:
+			auditIDs = append(auditIDs, resourceID)
+		case coredata.FileEntityType:
+			reportFileIDs = append(reportFileIDs, resourceID)
+		case coredata.CompliancePortalFileEntityType:
+			compliancePortalFileIDs = append(compliancePortalFileIDs, resourceID)
+		}
+	}
+
+	if len(publicDocumentIDs) > 0 {
+		var links coredata.CompliancePortalDocuments
+		if err := links.LoadByCompliancePortalIDAndDocumentIDs(
+			ctx,
+			conn,
+			scope,
+			compliancePortalID,
+			publicDocumentIDs,
+		); err != nil {
+			return nil, nil, nil, fmt.Errorf("cannot load portal document links: %w", err)
+		}
+
+		for _, link := range links {
+			documentIDs = append(documentIDs, link.ID)
+		}
+	}
+
+	if len(reportFileIDs) > 0 {
+		var audits coredata.Audits
+		if err := audits.LoadByReportFileIDs(ctx, conn, scope, reportFileIDs); err != nil {
+			return nil, nil, nil, fmt.Errorf("cannot load audits by report file IDs: %w", err)
+		}
+
+		legacyAuditIDs := make([]gid.GID, 0, len(audits))
+		for _, audit := range audits {
+			legacyAuditIDs = append(legacyAuditIDs, audit.ID)
+		}
+
+		linksByAuditID, err := coredata.LoadCompliancePortalAuditsByCompliancePortalIDAndAuditIDs(
+			ctx,
+			conn,
+			scope,
+			compliancePortalID,
+			legacyAuditIDs,
+		)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("cannot load portal audit links: %w", err)
+		}
+
+		for _, link := range linksByAuditID {
+			auditIDs = append(auditIDs, link.ID)
+		}
+	}
+
+	return documentIDs, auditIDs, compliancePortalFileIDs, nil
 }

@@ -285,6 +285,35 @@ func (s *Service) GetDocumentLinkByID(
 	return link, nil
 }
 
+func (s *Service) GetDocumentLinksByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentLinkIDs []gid.GID,
+) (coredata.CompliancePortalDocuments, error) {
+	var links coredata.CompliancePortalDocuments
+
+	if len(documentLinkIDs) == 0 {
+		return links, nil
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := links.LoadByIDs(ctx, conn, scope, documentLinkIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load portal document catalog entries: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
+}
+
 func (s *Service) GetDocumentLink(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -336,6 +365,35 @@ func (s *Service) GetAuditLinkByID(
 	}
 
 	return link, nil
+}
+
+func (s *Service) GetAuditLinksByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditLinkIDs []gid.GID,
+) (coredata.CompliancePortalAudits, error) {
+	var links coredata.CompliancePortalAudits
+
+	if len(auditLinkIDs) == 0 {
+		return links, nil
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := links.LoadByIDs(ctx, conn, scope, auditLinkIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load portal audit catalog entries: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
 }
 
 func (s *Service) GetAuditLink(

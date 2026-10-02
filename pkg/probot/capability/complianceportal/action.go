@@ -99,11 +99,6 @@ func (c *Capability) execute(
 		return messaging.ActionResult{}, err
 	}
 
-	selection, err := c.selectResources(ctx, scope, action)
-	if err != nil {
-		return messaging.ActionResult{}, err
-	}
-
 	portalID, err := c.notifications.ResolveCompliancePortalID(
 		ctx,
 		scope,
@@ -112,6 +107,11 @@ func (c *Capability) execute(
 	)
 	if err != nil {
 		return messaging.ActionResult{}, fmt.Errorf("cannot resolve compliance portal: %w", err)
+	}
+
+	selection, err := c.selectResources(ctx, scope, action, portalID)
+	if err != nil {
+		return messaging.ActionResult{}, err
 	}
 
 	switch selection.decision {
@@ -210,6 +210,7 @@ func (c *Capability) selectResources(
 	ctx context.Context,
 	scope coredata.Scoper,
 	action messaging.Action,
+	compliancePortalID gid.GID,
 ) (actionSelection, error) {
 	decision := ""
 	resourceValue := action.Value
@@ -252,19 +253,20 @@ func (c *Capability) selectResources(
 		)
 	}
 
-	if strings.HasSuffix(action.ID, "_all") {
-		compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs, err := c.notifications.GetMessageResourceIDs(
-			ctx,
-			scope,
-			action.Message.ID,
-		)
-		if err != nil {
-			return actionSelection{}, fmt.Errorf("cannot load requested resources: %w", err)
-		}
+	messageDocumentIDs, messageAuditIDs, messageFileIDs, err := c.messageCatalogResourceIDs(
+		ctx,
+		scope,
+		compliancePortalID,
+		action.Message.ID,
+	)
+	if err != nil {
+		return actionSelection{}, err
+	}
 
-		if len(compliancePortalDocumentIDs) == 0 &&
-			len(compliancePortalAuditIDs) == 0 &&
-			len(compliancePortalFileIDs) == 0 {
+	if strings.HasSuffix(action.ID, "_all") {
+		if len(messageDocumentIDs) == 0 &&
+			len(messageAuditIDs) == 0 &&
+			len(messageFileIDs) == 0 {
 			return actionSelection{}, fmt.Errorf(
 				"%w: access request has no resources to %s",
 				messaging.ErrCapabilityInvalidInput,
@@ -274,9 +276,9 @@ func (c *Capability) selectResources(
 
 		return actionSelection{
 			decision:                    decision,
-			compliancePortalDocumentIDs: compliancePortalDocumentIDs,
-			compliancePortalAuditIDs:    compliancePortalAuditIDs,
-			compliancePortalFileIDs:     compliancePortalFileIDs,
+			compliancePortalDocumentIDs: messageDocumentIDs,
+			compliancePortalAuditIDs:    messageAuditIDs,
+			compliancePortalFileIDs:     messageFileIDs,
 		}, nil
 	}
 
@@ -288,58 +290,76 @@ func (c *Capability) selectResources(
 		)
 	}
 
-	compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs, err := c.notifications.GetMessageResourceIDs(
+	clickedDocumentIDs, clickedAuditIDs, clickedFileIDs, err := c.notifications.ResolveAccessResourceIDs(
 		ctx,
 		scope,
-		action.Message.ID,
+		compliancePortalID,
+		[]gid.GID{resourceID},
 	)
 	if err != nil {
-		return actionSelection{}, fmt.Errorf("cannot load requested resources: %w", err)
+		return actionSelection{}, fmt.Errorf("cannot resolve requested resource: %w", err)
 	}
 
-	if !resourceIDOnMessage(
-		resourceID,
-		compliancePortalDocumentIDs,
-		compliancePortalAuditIDs,
-		compliancePortalFileIDs,
-	) {
+	selection := actionSelection{
+		decision:                    decision,
+		compliancePortalDocumentIDs: intersectIDs(clickedDocumentIDs, messageDocumentIDs),
+		compliancePortalAuditIDs:    intersectIDs(clickedAuditIDs, messageAuditIDs),
+		compliancePortalFileIDs:     intersectIDs(clickedFileIDs, messageFileIDs),
+	}
+
+	if len(selection.compliancePortalDocumentIDs) == 0 &&
+		len(selection.compliancePortalAuditIDs) == 0 &&
+		len(selection.compliancePortalFileIDs) == 0 {
 		return actionSelection{}, fmt.Errorf(
 			"%w: resource is not attached to this access request",
 			messaging.ErrCapabilityInvalidInput,
 		)
 	}
 
-	selection := actionSelection{decision: decision}
-
-	switch resourceID.EntityType() {
-	case coredata.CompliancePortalDocumentEntityType:
-		selection.compliancePortalDocumentIDs = []gid.GID{resourceID}
-	case coredata.CompliancePortalAuditEntityType:
-		selection.compliancePortalAuditIDs = []gid.GID{resourceID}
-	case coredata.CompliancePortalFileEntityType:
-		selection.compliancePortalFileIDs = []gid.GID{resourceID}
-	default:
-		return actionSelection{}, fmt.Errorf(
-			"%w: unsupported resource type %d",
-			messaging.ErrCapabilityInvalidInput,
-			resourceID.EntityType(),
-		)
-	}
-
 	return selection, nil
 }
 
-func resourceIDOnMessage(
-	resourceID gid.GID,
-	compliancePortalDocumentIDs []gid.GID,
-	compliancePortalAuditIDs []gid.GID,
-	compliancePortalFileIDs []gid.GID,
-) bool {
-	for _, ids := range [][]gid.GID{compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs} {
-		if slices.Contains(ids, resourceID) {
-			return true
+func (c *Capability) messageCatalogResourceIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	messageID gid.GID,
+) ([]gid.GID, []gid.GID, []gid.GID, error) {
+	documentIDs, auditIDs, fileIDs, err := c.notifications.GetMessageResourceIDs(
+		ctx,
+		scope,
+		messageID,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("cannot load requested resources: %w", err)
+	}
+
+	resourceIDs := make([]gid.GID, 0, len(documentIDs)+len(auditIDs)+len(fileIDs))
+	resourceIDs = append(resourceIDs, documentIDs...)
+	resourceIDs = append(resourceIDs, auditIDs...)
+	resourceIDs = append(resourceIDs, fileIDs...)
+
+	documentIDs, auditIDs, fileIDs, err = c.notifications.ResolveAccessResourceIDs(
+		ctx,
+		scope,
+		compliancePortalID,
+		resourceIDs,
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("cannot resolve requested resources: %w", err)
+	}
+
+	return documentIDs, auditIDs, fileIDs, nil
+}
+
+func intersectIDs(left []gid.GID, right []gid.GID) []gid.GID {
+	intersection := make([]gid.GID, 0)
+
+	for _, id := range left {
+		if slices.Contains(right, id) {
+			intersection = append(intersection, id)
 		}
 	}
 
-	return false
+	return intersection
 }

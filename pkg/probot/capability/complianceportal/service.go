@@ -209,6 +209,41 @@ func (s *Service) GetMessageResourceIDs(
 		extractIDsFromMetadata(message.Message.Attributes, "files"), nil
 }
 
+func (s *Service) ResolveAccessResourceIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	resourceIDs []gid.GID,
+) ([]gid.GID, []gid.GID, []gid.GID, error) {
+	var (
+		documentIDs []gid.GID
+		auditIDs    []gid.GID
+		fileIDs     []gid.GID
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+
+			documentIDs, auditIDs, fileIDs, err = resolveAccessResourceIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				resourceIDs,
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("cannot resolve access resource IDs: %w", err)
+	}
+
+	return documentIDs, auditIDs, fileIDs, nil
+}
+
 func (s *Service) ResolveCompliancePortalAccessID(
 	ctx context.Context,
 	scope coredata.Scoper,

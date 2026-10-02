@@ -89,6 +89,7 @@ func seedPortalAccessResourceFixture(t *testing.T, ctx context.Context, client *
 		}
 
 		portalID = gid.New(tenantID, coredata.CompliancePortalEntityType)
+
 		portal := coredata.CompliancePortal{
 			ID:                   portalID,
 			OrganizationID:       organizationID,
@@ -114,6 +115,7 @@ func seedPortalAccessResourceFixture(t *testing.T, ctx context.Context, client *
 		}
 
 		identityID = gid.New(gid.NilTenant, coredata.IdentityEntityType)
+
 		identity := coredata.Identity{
 			ID:                   identityID,
 			EmailAddress:         emailAddress,

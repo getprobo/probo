@@ -40,6 +40,7 @@ type (
 		BuildOutboundMessage(ctx context.Context, organizationID gid.GID, messageType string, attributes map[string]any) (messaging.OutboundMessage, error)
 		GetInitialMessage(ctx context.Context, organizationID gid.GID, anchor messaging.MessageAnchor) (*bot.DeliveredMessage, error)
 		GetMessageResourceIDs(ctx context.Context, scope coredata.Scoper, messageID gid.GID) ([]gid.GID, []gid.GID, []gid.GID, error)
+		ResolveAccessResourceIDs(ctx context.Context, scope coredata.Scoper, compliancePortalID gid.GID, resourceIDs []gid.GID) ([]gid.GID, []gid.GID, []gid.GID, error)
 		ResolveCompliancePortalAccessID(ctx context.Context, scope coredata.Scoper, message bot.Message) (gid.GID, error)
 		ResolveCompliancePortalID(ctx context.Context, scope coredata.Scoper, organizationID gid.GID, metadata map[string]any) (gid.GID, error)
 		UpdateAccessRequest(ctx context.Context, scope coredata.Scoper, messageID gid.GID, requesterEmail mail.Addr) error

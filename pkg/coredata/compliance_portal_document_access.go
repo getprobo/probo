@@ -152,6 +152,60 @@ LIMIT 1;
 	return nil
 }
 
+func (tcdas *CompliancePortalDocumentAccesses) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	accessIDs []gid.GID,
+) error {
+	if len(accessIDs) == 0 {
+		*tcdas = CompliancePortalDocumentAccesses{}
+		return nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    compliance_portal_access_id,
+    compliance_portal_document_id,
+    compliance_portal_audit_id,
+    compliance_portal_file_id,
+    status,
+    requested_at,
+    created_at,
+    updated_at
+FROM
+    cp_document_accesses
+WHERE
+    %s
+    AND id = ANY(@ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": accessIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal document accesses: %w", err)
+	}
+
+	accesses, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocumentAccess])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal document accesses: %w", err)
+	}
+
+	*tcdas = accesses
+
+	if len(accesses) != len(gid.NewSet(accessIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (tcda *CompliancePortalDocumentAccess) LoadByCompliancePortalAccessIDAndCompliancePortalDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

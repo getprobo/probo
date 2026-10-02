@@ -166,6 +166,63 @@ LIMIT 1;
 	return nil
 }
 
+func (a *Audits) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	auditIDs []gid.GID,
+) error {
+	if len(auditIDs) == 0 {
+		*a = Audits{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	name,
+	firm,
+	organization_id,
+	framework_id,
+	report_file_id,
+	valid_from,
+	valid_until,
+	audit_start_date,
+	audit_end_date,
+	state,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND id = ANY(@ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": auditIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits: %w", err)
+	}
+
+	*a = audits
+
+	if len(audits) != len(gid.NewSet(auditIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (a *Audits) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

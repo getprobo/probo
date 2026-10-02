@@ -83,6 +83,7 @@ func seedCatalogUnlinkFixture(t *testing.T, ctx context.Context, client *pg.Clie
 		}
 
 		portalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+
 		portal := coredata.CompliancePortal{
 			ID:                   portalID,
 			OrganizationID:       organizationID,
@@ -108,6 +109,7 @@ func seedCatalogUnlinkFixture(t *testing.T, ctx context.Context, client *pg.Clie
 		}
 
 		identityID = gid.New(gid.NilTenant, coredata.IdentityEntityType)
+
 		identity := coredata.Identity{
 			ID:                   identityID,
 			EmailAddress:         emailAddress,
@@ -163,6 +165,7 @@ func seedCatalogUnlinkFixture(t *testing.T, ctx context.Context, client *pg.Clie
 
 		documentLink = portalDocument.ID
 		requestedAt := now
+
 		documentAccess := coredata.CompliancePortalDocumentAccess{
 			ID:                         gid.New(tenantID, coredata.CompliancePortalDocumentAccessEntityType),
 			OrganizationID:             organizationID,
@@ -277,11 +280,14 @@ func countAccesses(
 ) int {
 	t.Helper()
 
-	var accesses coredata.CompliancePortalDocumentAccesses
-	var count int
+	var (
+		accesses coredata.CompliancePortalDocumentAccesses
+		count    int
+	)
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		var err error
+
 		count, err = accesses.CountByCompliancePortalAccessID(ctx, conn, scope, accessID)
 
 		return err

@@ -518,6 +518,35 @@ func (s *Service) GetDocumentAccess(
 	return &documentAccess, nil
 }
 
+func (s *Service) GetDocumentAccessesByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentAccessIDs []gid.GID,
+) (coredata.CompliancePortalDocumentAccesses, error) {
+	var documentAccesses coredata.CompliancePortalDocumentAccesses
+
+	if len(documentAccessIDs) == 0 {
+		return documentAccesses, nil
+	}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := documentAccesses.LoadByIDs(ctx, conn, scope, documentAccessIDs); err != nil &&
+				!errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load document accesses: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return documentAccesses, nil
+}
+
 func (s *Service) GetDocumentAccessesByCompliancePortalDocumentIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -988,6 +1017,7 @@ func resolveOrCreatePortalDocumentLinks(
 		}
 
 		link := &coredata.CompliancePortalDocument{}
+
 		err := link.LoadByCompliancePortalIDAndDocumentID(
 			ctx,
 			tx,
@@ -1039,6 +1069,7 @@ func resolveOrCreatePortalAuditLinksByReportFileIDs(
 		}
 
 		link := &coredata.CompliancePortalAudit{}
+
 		err := link.LoadByCompliancePortalIDAndAuditID(
 			ctx,
 			tx,

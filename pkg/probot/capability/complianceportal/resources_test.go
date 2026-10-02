@@ -47,13 +47,14 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	now := time.Now()
 
 	var (
-		portalAID       gid.GID
-		accessID        gid.GID
-		keptAuditLinkID gid.GID
-		skippedReportID gid.GID
-		skippedFileID   gid.GID
-		keptFileID      gid.GID
-		identityID      gid.GID
+		portalAID        gid.GID
+		accessID         gid.GID
+		keptAuditLinkID  gid.GID
+		keptReportFileID gid.GID
+		skippedReportID  gid.GID
+		skippedFileID    gid.GID
+		keptFileID       gid.GID
+		identityID       gid.GID
 	)
 
 	require.NoError(
@@ -121,7 +122,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 
 				accessID = access.ID
 
-				_, keptAuditLinkID, err = insertTestReport(
+				keptReportFileID, keptAuditLinkID, err = insertTestReport(
 					ctx,
 					tx,
 					scope,
@@ -134,6 +135,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 				}
 
 				var skippedAuditLinkID gid.GID
+
 				skippedReportID, skippedAuditLinkID, err = insertTestReport(
 					ctx,
 					tx,
@@ -244,11 +246,147 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	)
 
 	require.Len(t, reports, 1)
-	assert.Equal(t, keptAuditLinkID.String(), reports[0].ID)
+	assert.Equal(t, keptReportFileID.String(), reports[0].ID)
 	require.Len(t, files, 1)
 	assert.Equal(t, keptFileID.String(), files[0].ID)
 	assert.NotEqual(t, skippedReportID.String(), reports[0].ID)
 	assert.NotEqual(t, skippedFileID.String(), files[0].ID)
+}
+
+func TestResolveAccessResourceIDs_MapsLegacyDocumentAndReportFileIDs(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	scope := coredata.NewScope(tenantID)
+	now := time.Now()
+
+	var (
+		portalID          gid.GID
+		documentID        gid.GID
+		documentLinkID    gid.GID
+		reportFileID      gid.GID
+		auditLinkID       gid.GID
+		portalFileID      gid.GID
+		alreadyCatalogDoc gid.GID
+	)
+
+	require.NoError(
+		t,
+		client.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				organization := coredata.Organization{
+					ID:        organizationID,
+					TenantID:  tenantID,
+					Name:      "resolve-ids-" + organizationID.String(),
+					CreatedAt: now,
+					UpdatedAt: now,
+				}
+				if err := organization.Insert(ctx, tx); err != nil {
+					return err
+				}
+
+				var err error
+
+				portalID, err = insertTestPortal(ctx, tx, scope, organizationID, "resolve-portal")
+				if err != nil {
+					return err
+				}
+
+				documentID = gid.New(tenantID, coredata.DocumentEntityType)
+
+				document := coredata.Document{
+					ID:             documentID,
+					OrganizationID: organizationID,
+					WriteMode:      coredata.DocumentWriteModeAuthored,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+				if err := document.Insert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				portalDocument := coredata.CompliancePortalDocument{
+					ID:                 gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
+					OrganizationID:     organizationID,
+					CompliancePortalID: portalID,
+					DocumentID:         documentID,
+					Visibility:         coredata.CompliancePortalVisibilityRestricted,
+					CreatedAt:          now,
+					UpdatedAt:          now,
+				}
+				if err := portalDocument.Upsert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				documentLinkID = portalDocument.ID
+				alreadyCatalogDoc = gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
+
+				reportFileID, auditLinkID, err = insertTestReport(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					portalID,
+					"resolve-report",
+				)
+				if err != nil {
+					return err
+				}
+
+				portalFileID, err = insertTestPortalFile(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					portalID,
+					"resolve-file",
+					coredata.CompliancePortalVisibilityRestricted,
+				)
+
+				return err
+			},
+		),
+	)
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			return (&coredata.Organization{}).Delete(ctx, tx, organizationID)
+		})
+	})
+
+	var (
+		documentIDs []gid.GID
+		auditIDs    []gid.GID
+		fileIDs     []gid.GID
+	)
+
+	require.NoError(
+		t,
+		client.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				var err error
+
+				documentIDs, auditIDs, fileIDs, err = resolveAccessResourceIDs(
+					ctx,
+					conn,
+					scope,
+					portalID,
+					[]gid.GID{documentID, alreadyCatalogDoc, reportFileID, portalFileID},
+				)
+
+				return err
+			},
+		),
+	)
+
+	assert.ElementsMatch(t, []gid.GID{documentLinkID, alreadyCatalogDoc}, documentIDs)
+	assert.Equal(t, []gid.GID{auditLinkID}, auditIDs)
+	assert.Equal(t, []gid.GID{portalFileID}, fileIDs)
 }
 
 func insertTestPortal(

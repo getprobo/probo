@@ -114,6 +114,7 @@ func (s *Service) GetAuditLinksByReportFileIDs(
 			}
 
 			auditIDs := make([]gid.GID, 0, len(audits))
+
 			reportFileIDByAuditID := make(map[gid.GID]gid.GID, len(audits))
 			for _, audit := range audits {
 				if audit.ReportFileID == nil {

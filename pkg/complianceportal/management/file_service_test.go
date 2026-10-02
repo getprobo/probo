@@ -81,6 +81,7 @@ func seedUpdateFileAccessFixture(t *testing.T, ctx context.Context, client *pg.C
 		}
 
 		portalID := gid.New(tenantID, coredata.CompliancePortalEntityType)
+
 		portal := coredata.CompliancePortal{
 			ID:                   portalID,
 			OrganizationID:       organizationID,
@@ -106,6 +107,7 @@ func seedUpdateFileAccessFixture(t *testing.T, ctx context.Context, client *pg.C
 		}
 
 		identityID = gid.New(gid.NilTenant, coredata.IdentityEntityType)
+
 		identity := coredata.Identity{
 			ID:                   identityID,
 			EmailAddress:         emailAddress,

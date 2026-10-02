@@ -45,6 +45,7 @@ type (
 		compliancePortalDocumentIDs []gid.GID
 		compliancePortalAuditIDs    []gid.GID
 		compliancePortalFileIDs     []gid.GID
+		legacyCatalogIDs            map[gid.GID]gid.GID
 		resolvedAccessID            gid.GID
 		lookupOrganizationID        gid.GID
 		lookupAnchor                messaging.MessageAnchor
@@ -101,6 +102,36 @@ func (f *fakeAccessService) GetMessageResourceIDs(
 	gid.GID,
 ) ([]gid.GID, []gid.GID, []gid.GID, error) {
 	return f.compliancePortalDocumentIDs, f.compliancePortalAuditIDs, f.compliancePortalFileIDs, nil
+}
+
+func (f *fakeAccessService) ResolveAccessResourceIDs(
+	_ context.Context,
+	_ coredata.Scoper,
+	_ gid.GID,
+	resourceIDs []gid.GID,
+) ([]gid.GID, []gid.GID, []gid.GID, error) {
+	var (
+		documentIDs []gid.GID
+		auditIDs    []gid.GID
+		fileIDs     []gid.GID
+	)
+
+	for _, resourceID := range resourceIDs {
+		if mappedID, ok := f.legacyCatalogIDs[resourceID]; ok {
+			resourceID = mappedID
+		}
+
+		switch resourceID.EntityType() {
+		case coredata.CompliancePortalDocumentEntityType:
+			documentIDs = append(documentIDs, resourceID)
+		case coredata.CompliancePortalAuditEntityType:
+			auditIDs = append(auditIDs, resourceID)
+		case coredata.CompliancePortalFileEntityType:
+			fileIDs = append(fileIDs, resourceID)
+		}
+	}
+
+	return documentIDs, auditIDs, fileIDs, nil
 }
 
 func (f *fakeAccessService) ResolveCompliancePortalAccessID(
@@ -283,7 +314,7 @@ func TestCapability_ButtonAndAgentUseSameCommand(t *testing.T) {
 	notificationService := &fakeAccessService{
 		message: message,
 		compliancePortalDocumentIDs: []gid.GID{
-			gid.New(tenantID, coredata.DocumentEntityType),
+			gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
 		},
 	}
 	visitor := &fakeVisitor{}
@@ -372,7 +403,7 @@ func TestCapability_FailedActionCanRetry(t *testing.T) {
 	notifications := &fakeAccessService{
 		message: message,
 		compliancePortalDocumentIDs: []gid.GID{
-			gid.New(tenantID, coredata.DocumentEntityType),
+			gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
 		},
 	}
 	visitor := &fakeVisitor{err: errors.New("temporary action failure")}
@@ -446,7 +477,7 @@ func TestCapability_ManageToolRequiresToolCallID(t *testing.T) {
 		&fakeAccessService{
 			message: message,
 			compliancePortalDocumentIDs: []gid.GID{
-				gid.New(tenantID, coredata.DocumentEntityType),
+				gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
 			},
 		},
 		visitor,
@@ -550,6 +581,91 @@ func TestCapability_HandlesReviewMenuSelection(t *testing.T) {
 	}
 }
 
+func TestCapability_MapsLegacyDocumentAndReportFileIDs(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	legacyDocumentID := gid.New(tenantID, coredata.DocumentEntityType)
+	legacyReportFileID := gid.New(tenantID, coredata.FileEntityType)
+	catalogDocumentID := gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
+	catalogAuditID := gid.New(tenantID, coredata.CompliancePortalAuditEntityType)
+	message := bot.Message{
+		ID:             gid.New(tenantID, coredata.CompliancePortalAccessEntityType),
+		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+		Type:           portal.AccessMessageType,
+		Attributes:     map[string]any{"requester_email": "requester@example.com"},
+	}
+
+	t.Run(
+		"approve all",
+		func(t *testing.T) {
+			t.Parallel()
+
+			visitor := &fakeVisitor{}
+			capability := NewCapability(
+				&fakeAccessService{
+					message:                     message,
+					compliancePortalDocumentIDs: []gid.GID{legacyDocumentID},
+					compliancePortalAuditIDs:    []gid.GID{legacyReportFileID},
+					legacyCatalogIDs: map[gid.GID]gid.GID{
+						legacyDocumentID:   catalogDocumentID,
+						legacyReportFileID: catalogAuditID,
+					},
+				},
+				visitor,
+				&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+			)
+
+			result, err := capability.HandleAction(
+				context.Background(),
+				messaging.Action{
+					ID:               "compliance_access.approve_all",
+					DeduplicationKey: "legacy-all",
+					ActorIdentityID:  gid.New(gid.NilTenant, coredata.IdentityEntityType),
+					Message:          message,
+				},
+			)
+			require.NoError(t, err)
+			assert.Equal(t, "Access request approved", result.Message)
+			assert.Equal(t, 1, visitor.grantCount)
+		},
+	)
+
+	t.Run(
+		"approve item",
+		func(t *testing.T) {
+			t.Parallel()
+
+			visitor := &fakeVisitor{}
+			capability := NewCapability(
+				&fakeAccessService{
+					message:                     message,
+					compliancePortalDocumentIDs: []gid.GID{legacyDocumentID},
+					legacyCatalogIDs: map[gid.GID]gid.GID{
+						legacyDocumentID: catalogDocumentID,
+					},
+				},
+				visitor,
+				&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+			)
+
+			result, err := capability.HandleAction(
+				context.Background(),
+				messaging.Action{
+					ID:               "compliance_access.approve_item",
+					Value:            legacyDocumentID.String(),
+					DeduplicationKey: "legacy-item",
+					ActorIdentityID:  gid.New(gid.NilTenant, coredata.IdentityEntityType),
+					Message:          message,
+				},
+			)
+			require.NoError(t, err)
+			assert.Equal(t, "Access request approved", result.Message)
+			assert.Equal(t, 1, visitor.grantCount)
+		},
+	)
+}
+
 func TestCapability_SkipsRefreshWhenActionFails(t *testing.T) {
 	t.Parallel()
 
@@ -563,7 +679,7 @@ func TestCapability_SkipsRefreshWhenActionFails(t *testing.T) {
 	notifications := &fakeAccessService{
 		message: message,
 		compliancePortalDocumentIDs: []gid.GID{
-			gid.New(tenantID, coredata.DocumentEntityType),
+			gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
 		},
 	}
 	capability := NewCapability(
@@ -598,7 +714,7 @@ func TestCapability_SurfacesRefreshFailureAfterAction(t *testing.T) {
 	notifications := &fakeAccessService{
 		message: message,
 		compliancePortalDocumentIDs: []gid.GID{
-			gid.New(tenantID, coredata.DocumentEntityType),
+			gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
 		},
 		updateErr: errors.New("cannot queue revision"),
 	}
