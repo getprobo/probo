@@ -101,12 +101,29 @@ func NewMux(
 		azureConnectorInstall: azureConnectorInstall,
 	}
 
-	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
+	recoverFunc := mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger))
+	mcpServer := server.New(resolver, recoverFunc)
+	documentsServer := server.New(resolver, recoverFunc)
+	if err := mcputils.RestrictTools(documentsServer, InDocumentToolset); err != nil {
+		panic(fmt.Errorf("cannot restrict documents MCP toolset: %w", err))
+	}
 
-	mcpServer.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
-	mcpServer.AddReceivingMiddleware(mcputils.ListToolsCacheMiddleware(5 * time.Minute))
+	wire := func(target *mcp.Server, instructions string) {
+		target.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
+		target.AddReceivingMiddleware(mcputils.ListToolsCacheMiddleware(5 * time.Minute))
+		target.AddReceivingMiddleware(mcputils.InstructionsMiddleware(instructions))
+	}
+	wire(mcpServer, fullServerInstructions)
+	wire(documentsServer, documentToolsetInstructions)
 
-	getServer := func(r *http.Request) *mcp.Server { return mcpServer }
+	getServer := func(r *http.Request) *mcp.Server {
+		name, err := toolsetFromRequest(r)
+		if err != nil || name == "" {
+			return mcpServer
+		}
+
+		return documentsServer
+	}
 	eventStore := mcp.NewMemoryEventStore(nil)
 
 	handler := mcp.NewStreamableHTTPHandler(
@@ -123,7 +140,18 @@ func NewMux(
 	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			if _, err := toolsetFromRequest(req); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			next.ServeHTTP(w, req)
+		})
+	})
 	r.Handle("/", handler)
+	r.Handle("/toolsets/{toolset}", handler)
 
 	logger.Info("MCP server initialized successfully")
 

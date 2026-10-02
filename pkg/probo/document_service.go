@@ -71,6 +71,9 @@ type (
 	ErrDocumentVersionNotDraft struct {
 	}
 
+	ErrDocumentNotPublished struct {
+	}
+
 	ErrDocumentVersionNotPublished struct {
 	}
 
@@ -157,11 +160,17 @@ type (
 		Version  *coredata.DocumentVersion
 		Quorum   *coredata.DocumentVersionApprovalQuorum
 	}
+
+	DocumentReadTarget string
 )
 
 const (
 	documentContentMaxTextLength = 200_000
 	documentContentMaxJSONBytes  = 1 << 20 // 1 MiB
+
+	DocumentReadLatest    DocumentReadTarget = "LATEST"
+	DocumentReadPublished DocumentReadTarget = "PUBLISHED"
+	DocumentReadDraft     DocumentReadTarget = "DRAFT"
 )
 
 func (cdr *CreateDocumentRequest) Validate() error {
@@ -271,6 +280,10 @@ func (e ErrDocumentVersionNotDraft) Error() string {
 	return "document version is not a draft"
 }
 
+func (e ErrDocumentNotPublished) Error() string {
+	return "document has no published version"
+}
+
 func (e ErrDocumentVersionNotPublished) Error() string {
 	return "document version is not published"
 }
@@ -309,6 +322,85 @@ func (e ErrDocumentVersionSignatureAlreadySigned) Error() string {
 
 func (e ErrProfileContractEnded) Error() string {
 	return fmt.Sprintf("cannot use profile %q: contract has ended", e.ProfileID)
+}
+
+func (s *DocumentService) Read(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	target DocumentReadTarget,
+) (*coredata.Document, *coredata.DocumentVersion, error) {
+	var (
+		document *coredata.Document
+		version  *coredata.DocumentVersion
+	)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			document = &coredata.Document{}
+			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return err
+				}
+
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			version = &coredata.DocumentVersion{}
+
+			switch target {
+			case DocumentReadLatest:
+				if err := version.LoadLatestVersion(ctx, conn, scope, documentID); err != nil {
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return err
+					}
+
+					return fmt.Errorf("cannot load latest document version: %w", err)
+				}
+			case DocumentReadPublished:
+				if document.CurrentPublishedMajor == nil || document.CurrentPublishedMinor == nil {
+					return &ErrDocumentNotPublished{}
+				}
+
+				if err := version.LoadByDocumentIDAndVersion(
+					ctx,
+					conn,
+					scope,
+					documentID,
+					*document.CurrentPublishedMajor,
+					*document.CurrentPublishedMinor,
+				); err != nil {
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return err
+					}
+
+					return fmt.Errorf("cannot load published document version: %w", err)
+				}
+			case DocumentReadDraft:
+				if err := version.LoadLatestVersion(ctx, conn, scope, documentID); err != nil {
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return err
+					}
+
+					return fmt.Errorf("cannot load latest document version: %w", err)
+				}
+
+				if version.Status != coredata.DocumentVersionStatusDraft {
+					return &ErrDocumentVersionNotDraft{}
+				}
+			default:
+				return fmt.Errorf("cannot read document: unknown version %q", target)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return document, version, nil
 }
 
 func (s *DocumentService) Get(
@@ -688,11 +780,13 @@ func (s *DocumentService) Create(
 	organization := &coredata.Organization{}
 
 	document := &coredata.Document{
-		ID:        documentID,
-		WriteMode: coredata.DocumentWriteModeAuthored,
-		Status:    coredata.DocumentStatusActive,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:           documentID,
+		Title:        req.Title,
+		DocumentType: req.DocumentType,
+		WriteMode:    coredata.DocumentWriteModeAuthored,
+		Status:       coredata.DocumentStatusActive,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	content := req.Content
@@ -2262,6 +2356,22 @@ func (s *DocumentService) Update(
 		},
 	)
 	if err != nil {
+		return nil, nil, false, err
+	}
+
+	if resultVersion != nil {
+		document.Title = resultVersion.Title
+		document.DocumentType = resultVersion.DocumentType
+	} else if err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := document.LoadByID(ctx, conn, scope, req.DocumentID); err != nil {
+				return fmt.Errorf("cannot reload document: %w", err)
+			}
+
+			return nil
+		},
+	); err != nil {
 		return nil, nil, false, err
 	}
 

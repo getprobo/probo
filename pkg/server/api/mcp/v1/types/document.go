@@ -69,6 +69,8 @@ func NewDocument(d *coredata.Document) *Document {
 	return &Document{
 		ID:                    d.ID,
 		OrganizationID:        d.OrganizationID,
+		Title:                 d.Title,
+		DocumentType:          d.DocumentType,
 		CurrentPublishedMajor: d.CurrentPublishedMajor,
 		CurrentPublishedMinor: d.CurrentPublishedMinor,
 		WriteMode:             d.WriteMode,

@@ -64,6 +64,28 @@ tools:
 
 `title` is the human-readable display name (MCP `title` / `annotations.title`).
 
+## Agent selection
+
+Tool descriptions are how clients such as Claude Code choose a tool. For a
+workflow with several similar tools, say which id the tool takes and which
+nearby tool not to call. Document ids and document version ids are the
+sharp case: `getDocument` returns metadata (including the latest version's
+`title`), and `readDocument` returns the markdown body.
+
+A description written beside `$ref` does not reach the tool schema. Put it
+on the referenced schema. `DocumentID`, `DocumentVersionID`, and
+`DocumentVersionSignatureID` exist so those argument schemas say which id
+they take.
+
+The full server also returns that playbook as MCP `instructions`. Clients
+that only need documents can connect to the same URL with
+`?toolset=documents` (OAuth resource stays `/api/mcp/v1`) or to
+`/api/mcp/v1/toolsets/documents`.
+
+`pkg/server/api/mcp/v1/toolselect` scores realistic document tasks against
+the specification. The name-only baseline records the wrong-tool rate that
+descriptions are there to beat.
+
 `hints` map to MCP tool annotations. Set all of them explicitly — several
 defaults are surprising (`destructiveHint` defaults to **true**,
 `openWorldHint` defaults to **true**):

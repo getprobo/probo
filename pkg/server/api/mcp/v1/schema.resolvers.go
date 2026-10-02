@@ -10633,3 +10633,45 @@ func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
 
 	return node, nil
 }
+
+func (r *Resolver) ReadDocumentTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ReadDocumentInput) (*mcp.CallToolResult, types.ReadDocumentOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, types.ReadDocumentOutput{}, err
+	}
+
+	if input.Version == nil || !input.Version.IsValid() {
+		return nil, types.ReadDocumentOutput{}, fmt.Errorf("version must be LATEST, PUBLISHED, or DRAFT")
+	}
+
+	document, version, err := r.proboSvc.Documents.Read(
+		ctx,
+		scope,
+		input.DocumentID,
+		probo.DocumentReadTarget(*input.Version),
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.ReadDocumentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		if _, ok := errors.AsType[*probo.ErrDocumentNotPublished](err); ok {
+			return nil, types.ReadDocumentOutput{}, err
+		}
+
+		if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, types.ReadDocumentOutput{}, err
+		}
+
+		panic(fmt.Errorf("cannot read document: %w", err))
+	}
+
+	if _, err := r.Authorize(ctx, version.ID, probo.ActionDocumentVersionGet); err != nil {
+		return nil, types.ReadDocumentOutput{}, err
+	}
+
+	return nil, types.ReadDocumentOutput{
+		Document:        types.NewDocument(document),
+		DocumentVersion: types.NewDocumentVersion(version),
+	}, nil
+}
