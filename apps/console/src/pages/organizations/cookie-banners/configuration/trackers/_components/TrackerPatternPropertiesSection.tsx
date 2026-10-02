@@ -209,6 +209,10 @@ export function TrackerPatternPropertiesSection({
 
   function saveMaxAge(next = duration) {
     const nextSeconds = toMaxAgeSeconds(next.value, next.unit);
+    if (next.value.trim() !== "" && nextSeconds == null) {
+      setDuration(fromMaxAgeSeconds(currentMaxAge));
+      return;
+    }
     if (nextSeconds === currentMaxAge) {
       return;
     }

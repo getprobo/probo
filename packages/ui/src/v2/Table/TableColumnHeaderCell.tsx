@@ -89,7 +89,7 @@ export function TableColumnHeaderCell(props: TableColumnHeaderCellProps) {
               aria-label={ariaLabel}
             >
               {children}
-              <Icon className={sortIcon()} />
+              <Icon className={sortIcon()} aria-hidden />
             </button>
           )}
     </th>

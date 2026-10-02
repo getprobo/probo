@@ -64,7 +64,12 @@ export function TrackerMaxAgeField({
         placeholder="—"
         className={valueSlot()}
         aria-label={t("trackerProperties.properties.maxAge")}
-        onValueChange={onValueChange}
+        onValueChange={(next) => {
+          if (next !== "" && !/^\d*\.?\d*$/.test(next)) {
+            return;
+          }
+          onValueChange(next);
+        }}
         onBlur={onBlur}
       />
       <div className={unitSlot()}>
