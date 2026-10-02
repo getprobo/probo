@@ -23,6 +23,7 @@ package gqlutils
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -49,9 +50,29 @@ type (
 	}
 )
 
+const sseKeepAlivePingInterval = 15 * time.Second
+
+type eventStreamTransport struct {
+	transport.SSE
+}
+
+func (t eventStreamTransport) Do(w http.ResponseWriter, r *http.Request, exec graphql.GraphExecutor) {
+	// Proxies buffer until the handler returns unless told not to. @defer
+	// only helps if the first event leaves the process immediately.
+	w.Header().Set("X-Accel-Buffering", "no")
+	t.SSE.Do(w, r, exec)
+}
+
 var (
 	mb int64 = 1024 * 1024
 
+	// SSE is registered before POST. Both accept application/json; the
+	// event stream wins only when the client asks for text/event-stream.
+	sseTransport = eventStreamTransport{
+		SSE: transport.SSE{
+			KeepAlivePingInterval: sseKeepAlivePingInterval,
+		},
+	}
 	postTransport      = transport.POST{}
 	optionsTransport   = transport.Options{}
 	multipartTransport = transport.MultipartForm{
@@ -65,6 +86,7 @@ var (
 func NewHandler[S graphql.ExecutableSchema](executableSchema S, logger *log.Logger, limits Limits) *Handler {
 	handler := handler.New(executableSchema)
 
+	handler.AddTransport(sseTransport)
 	handler.AddTransport(postTransport)
 	handler.AddTransport(optionsTransport)
 	handler.AddTransport(multipartTransport)
