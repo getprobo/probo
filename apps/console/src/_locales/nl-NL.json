@@ -2203,7 +2203,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTEGRATIES",
     "tasks": "Taken",
-    "measures": "Maatregelen",
+    "measures": "Interne controles",
     "risks": "Risico's",
     "allRisks": "Alle risico's",
     "riskAnalyses": "Risicobeoordelingen",
@@ -3758,9 +3758,20 @@
     }
   },
   "measureDetailPage": {
-    "deleteConfirmation": "Hiermee wordt de maatregel \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "fields": {
-      "selectState": "Selecteer status"
+      "selectState": "Selecteer status",
+      "code": "Code",
+      "owner": "Eigenaar",
+      "reviewer": "Beoordelaar",
+      "nextEvidenceDue": "Bewijs verschuldigd",
+      "nextTestDue": "Test verschuldigd"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
     },
     "actions": {
       "edit": "Bewerken",
@@ -3784,29 +3795,29 @@
     }
   },
   "measuresPage": {
-    "title": "Maatregelen",
-    "description": "Maatregelen zijn acties die worden genomen om het risico te verminderen. Voeg ze toe om de implementatiestatus bij te houden.",
+    "title": "Interne controles",
+    "description": "Interne controles zijn benoemde, toegewezen waarborgen die op een cadans draaien, bewijs opleveren en meerdere raamwerkeisen tegelijk dekken.",
     "messages": {
-      "imported": "Maatregelen succesvol geïmporteerd.",
+      "imported": "Interne controles succesvol geïmporteerd.",
       "error": "Fout",
       "success": "Succes",
-      "deleted": "Maatregel succesvol verwijderd"
+      "deleted": "Interne controle succesvol verwijderd"
     },
     "errors": {
-      "import": "Importeren van maatregelen mislukt",
-      "delete": "Verwijderen van maatregel mislukt"
+      "import": "Importeren van interne controles mislukt",
+      "delete": "Verwijderen van interne controle mislukt"
     },
-    "deleteConfirmation": "Hiermee wordt de maatregel \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "import": "Importeren",
-      "newMeasure": "Nieuwe maatregel",
+      "newMeasure": "Nieuwe interne controle",
       "loading": "Laden...",
       "loadMore": "Meer laden",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     },
     "filters": {
-      "searchPlaceholder": "Maatregelen zoeken...",
+      "searchPlaceholder": "Interne controles zoeken...",
       "allStates": "Alle statussen",
       "allCategories": "Alle categorieën"
     },
@@ -3817,13 +3828,15 @@
       "not_started": "Niet gestart"
     },
     "columns": {
-      "measure": "Maatregel",
+      "measure": "Interne controle",
+      "code": "Code",
       "category": "Categorie",
-      "state": "Status"
+      "state": "Status",
+      "status": "Implementatie"
     },
     "empty": {
-      "title": "Nog geen maatregelen",
-      "description": "Maak uw eerste maatregel aan om te beginnen."
+      "title": "Nog geen interne controles",
+      "description": "Maak uw eerste interne controle aan om te beginnen."
     }
   },
   "linkedThirdPartiesCard": {
@@ -3910,29 +3923,41 @@
   },
   "measureFormDialog": {
     "breadcrumb": {
-      "measures": "Maatregelen",
-      "editMeasure": "Maatregel bewerken",
-      "newMeasure": "Nieuwe maatregel"
+      "measures": "Interne controles",
+      "editMeasure": "Interne controle bewerken",
+      "newMeasure": "Nieuwe interne controle"
     },
     "messages": {
-      "created": "Maatregel succesvol aangemaakt."
+      "created": "Interne controle succesvol aangemaakt."
     },
     "errors": {
-      "create": "Aanmaken van maatregel mislukt"
+      "create": "Aanmaken van interne controle mislukt"
     },
     "validation": {
       "nameRequired": "Naam is verplicht",
-      "categoryRequired": "Categorie is verplicht"
+      "categoryRequired": "Categorie is verplicht",
+      "reviewerDistinct": "De beoordelaar moet een andere persoon zijn dan de eigenaar"
     },
     "fields": {
-      "name": "Naam van maatregel",
-      "namePlaceholder": "Titel van maatregel",
+      "name": "Naam",
+      "namePlaceholder": "Titel van de controle",
       "description": "Beschrijving",
       "descriptionPlaceholder": "Beschrijving toevoegen",
       "category": "Categorie",
       "categoryPlaceholder": "Selecteer categorie",
       "state": "Status",
-      "statePlaceholder": "Selecteer status"
+      "statePlaceholder": "Selecteer status",
+      "code": "Code",
+      "codePlaceholder": "IC-ACCESS-01",
+      "notSet": "Niet ingesteld",
+      "controlType": "Type",
+      "nature": "Aard",
+      "operatingFrequency": "Uitvoeringsfrequentie",
+      "evidenceCadence": "Bewijscadans",
+      "testingCadence": "Testcadans",
+      "implementationStatus": "Implementatiestatus",
+      "owner": "Eigenaar",
+      "reviewer": "Beoordelaar"
     },
     "properties": "Eigenschappen",
     "states": {
@@ -3943,9 +3968,35 @@
       "unknown": "Onbekend",
       "not_implemented": "Niet geïmplementeerd"
     },
+    "controlTypes": {
+      "preventive": "Preventief",
+      "detective": "Detectief",
+      "corrective": "Correctief"
+    },
+    "natures": {
+      "manual": "Handmatig",
+      "automated": "Geautomatiseerd",
+      "hybrid": "Hybride"
+    },
+    "cadences": {
+      "continuous": "Continu",
+      "daily": "Dagelijks",
+      "weekly": "Wekelijks",
+      "monthly": "Maandelijks",
+      "quarterly": "Per kwartaal",
+      "semiannually": "Halfjaarlijks",
+      "annually": "Jaarlijks",
+      "ad_hoc": "Ad hoc"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
+    },
     "actions": {
-      "create": "Maatregel aanmaken",
-      "update": "Maatregel bijwerken"
+      "create": "Interne controle aanmaken",
+      "update": "Interne controle bijwerken"
     }
   },
   "measureEvidencesTab": {

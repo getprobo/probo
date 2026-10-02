@@ -100,15 +100,34 @@ func NewMeasureEdge(c *coredata.Measure, orderBy coredata.MeasureOrderField) *Me
 }
 
 func NewMeasure(c *coredata.Measure) *Measure {
-	return &Measure{
-		ID:          c.ID,
-		Category:    c.Category,
-		Name:        c.Name,
-		Description: c.Description,
-		State:       c.State,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
+	measure := &Measure{
+		ID:                   c.ID,
+		Category:             c.Category,
+		Name:                 c.Name,
+		Description:          c.Description,
+		State:                c.State,
+		Code:                 c.Code,
+		ControlType:          c.ControlType,
+		Nature:               c.Nature,
+		OperatingFrequency:   c.OperatingFrequency,
+		EvidenceCadence:      c.EvidenceCadence,
+		TestingCadence:       c.TestingCadence,
+		NextEvidenceDue:      c.NextEvidenceDue,
+		NextTestDue:          c.NextTestDue,
+		ImplementationStatus: c.ImplementationStatus,
+		CreatedAt:            c.CreatedAt,
+		UpdatedAt:            c.UpdatedAt,
 	}
+
+	if c.OwnerID != nil {
+		measure.Owner = &Profile{ID: *c.OwnerID}
+	}
+
+	if c.ReviewerID != nil {
+		measure.Reviewer = &Profile{ID: *c.ReviewerID}
+	}
+
+	return measure
 }
 
 func NewMeasureAsOf(c *coredata.Measure, asOf time.Time) *Measure {

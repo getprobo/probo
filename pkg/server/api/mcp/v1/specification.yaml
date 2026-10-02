@@ -2474,6 +2474,44 @@ components:
           $ref: "#/components/schemas/MeasureState"
           description: Measure state as of the requested instant
 
+    InternalControlType:
+      type: string
+      enum:
+        - PREVENTIVE
+        - DETECTIVE
+        - CORRECTIVE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlType
+
+    InternalControlNature:
+      type: string
+      enum:
+        - MANUAL
+        - AUTOMATED
+        - HYBRID
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlNature
+
+    InternalControlCadence:
+      type: string
+      enum:
+        - CONTINUOUS
+        - DAILY
+        - WEEKLY
+        - MONTHLY
+        - QUARTERLY
+        - SEMIANNUALLY
+        - ANNUALLY
+        - AD_HOC
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlCadence
+
+    InternalControlImplementationStatus:
+      type: string
+      enum:
+        - NOT_IMPLEMENTED
+        - IN_PROGRESS
+        - IMPLEMENTED
+        - OPERATING
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus
+
     MeasureState:
       type: string
       enum:
@@ -2512,6 +2550,7 @@ components:
         - category
         - name
         - state
+        - implementation_status
         - created_at
         - updated_at
       properties:
@@ -2532,6 +2571,63 @@ components:
         state:
           $ref: "#/components/schemas/MeasureState"
           description: Measure state
+        code:
+          type:
+            - string
+            - "null"
+          description: Stable human reference, for example IC-ACCESS-01
+        control_type:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlType"
+            - type: "null"
+          description: Preventive, detective, or corrective
+        nature:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlNature"
+            - type: "null"
+          description: Manual, automated, or hybrid
+        operating_frequency:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlCadence"
+            - type: "null"
+          description: How often the control runs
+        evidence_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlCadence"
+            - type: "null"
+          description: How often evidence is collected
+        testing_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlCadence"
+            - type: "null"
+          description: How often effectiveness is tested
+        next_evidence_due:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next evidence collection, derived from the evidence cadence
+        next_test_due:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next effectiveness test, derived from the testing cadence
+        implementation_status:
+          $ref: "#/components/schemas/InternalControlImplementationStatus"
+          description: Whether the control is not implemented, in progress, implemented, or operating
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        reviewer_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Reviewer profile ID
         created_at:
           type: string
           format: date-time
@@ -2890,6 +2986,33 @@ components:
         category:
           type: string
           description: Measure category
+        code:
+          type: string
+          description: Stable human reference, for example IC-ACCESS-01
+        control_type:
+          $ref: "#/components/schemas/InternalControlType"
+          description: Preventive, detective, or corrective
+        nature:
+          $ref: "#/components/schemas/InternalControlNature"
+          description: Manual, automated, or hybrid
+        operating_frequency:
+          $ref: "#/components/schemas/InternalControlCadence"
+          description: How often the control runs
+        evidence_cadence:
+          $ref: "#/components/schemas/InternalControlCadence"
+          description: How often evidence is collected
+        testing_cadence:
+          $ref: "#/components/schemas/InternalControlCadence"
+          description: How often effectiveness is tested
+        implementation_status:
+          $ref: "#/components/schemas/InternalControlImplementationStatus"
+          description: Whether the control is not implemented, in progress, implemented, or operating
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        reviewer_id:
+          $ref: "#/components/schemas/GID"
+          description: Reviewer profile ID
 
     AddMeasureOutput:
       type: object
@@ -2920,6 +3043,57 @@ components:
         state:
           $ref: "#/components/schemas/MeasureState"
           description: Measure state
+        code:
+          type: ["string", "null"]
+          description: Stable human reference, for example IC-ACCESS-01
+          go.probo.inc/mcpgen/omittable: true
+        control_type:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlType"
+            - type: "null"
+          description: Preventive, detective, or corrective
+          go.probo.inc/mcpgen/omittable: true
+        nature:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlNature"
+            - type: "null"
+          description: Manual, automated, or hybrid
+          go.probo.inc/mcpgen/omittable: true
+        operating_frequency:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlCadence"
+            - type: "null"
+          description: How often the control runs
+          go.probo.inc/mcpgen/omittable: true
+        evidence_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlCadence"
+            - type: "null"
+          description: How often evidence is collected
+          go.probo.inc/mcpgen/omittable: true
+        testing_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlCadence"
+            - type: "null"
+          description: How often effectiveness is tested
+          go.probo.inc/mcpgen/omittable: true
+        implementation_status:
+          $ref: "#/components/schemas/InternalControlImplementationStatus"
+          description: Whether the control is not implemented, in progress, implemented, or operating
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        reviewer_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Reviewer profile ID
+          go.probo.inc/mcpgen/omittable: true
 
     UpdateMeasureOutput:
       type: object

@@ -1403,7 +1403,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTEGRATIONS",
     "tasks": "Tasks",
-    "measures": "Measures",
+    "measures": "Internal controls",
     "risks": "Risks",
     "allRisks": "All Risks",
     "riskAnalyses": "Risk Analyses",
@@ -2277,23 +2277,24 @@
     "actions": { "create": "Create framework", "update": "Update framework" }
   },
   "measureDetailPage": {
-    "deleteConfirmation": "This will permanently delete the measure \"{{name}}\". This action cannot be undone.",
-    "fields": { "selectState": "Select state" },
+    "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
+    "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
     "actions": { "edit": "Edit", "delete": "Delete" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
+    "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "tabs": { "evidences": "Evidences", "tasks": "Tasks", "controls": "Controls", "risks": "Risks", "documents": "Documents", "thirdParties": "Third parties" }
   },
   "measuresPage": {
-    "title": "Measures",
-    "description": "Measures are actions taken to reduce the risk. Add them to track their implementation status.",
-    "messages": { "imported": "Measures imported successfully.", "error": "Error", "success": "Success", "deleted": "Measure deleted successfully" },
-    "errors": { "import": "Failed to import measures", "delete": "Failed to delete measure" },
-    "deleteConfirmation": "This will permanently delete the measure \"{{name}}\". This action cannot be undone.",
-    "actions": { "import": "Import", "newMeasure": "New measure", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
-    "filters": { "searchPlaceholder": "Search measures...", "allStates": "All states", "allCategories": "All categories" },
+    "title": "Internal controls",
+    "description": "Internal controls are owned safeguards that run on a cadence, produce evidence, and cover many framework requirements at once.",
+    "messages": { "imported": "Internal controls imported successfully.", "error": "Error", "success": "Success", "deleted": "Internal control deleted successfully" },
+    "errors": { "import": "Failed to import internal controls", "delete": "Failed to delete internal control" },
+    "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
+    "actions": { "import": "Import", "newMeasure": "New internal control", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
+    "filters": { "searchPlaceholder": "Search internal controls...", "allStates": "All states", "allCategories": "All categories" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started" },
-    "columns": { "measure": "Measure", "category": "Category", "state": "State" },
-    "empty": { "title": "No measures yet", "description": "Create your first measure to get started." }
+    "columns": { "measure": "Internal control", "code": "Code", "category": "Category", "state": "State", "status": "Status" },
+    "empty": { "title": "No internal controls yet", "description": "Create your first internal control to get started." }
   },
   "linkedThirdPartiesCard": {
     "columns": { "name": "Name", "category": "Category" },
@@ -2339,14 +2340,18 @@
     "actions": { "download": "Download File" }
   },
   "measureFormDialog": {
-    "breadcrumb": { "measures": "Measures", "editMeasure": "Edit Measure", "newMeasure": "New Measure" },
-    "messages": { "created": "Measure created successfully." },
-    "errors": { "create": "Failed to create measure" },
-    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required" },
-    "fields": { "name": "Measure name", "namePlaceholder": "Measure title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state" },
+    "breadcrumb": { "measures": "Internal controls", "editMeasure": "Edit internal control", "newMeasure": "New internal control" },
+    "messages": { "created": "Internal control created successfully." },
+    "errors": { "create": "Failed to create internal control" },
+    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "reviewerDistinct": "Reviewer must be a different person from the owner" },
+    "fields": { "name": "Name", "namePlaceholder": "Control title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state", "code": "Code", "codePlaceholder": "IC-ACCESS-01", "notSet": "Not set", "controlType": "Type", "nature": "Nature", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "implementationStatus": "Implementation status", "owner": "Owner", "reviewer": "Reviewer" },
     "properties": "Properties",
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
-    "actions": { "create": "Create measure", "update": "Update measure" }
+    "controlTypes": { "preventive": "Preventive", "detective": "Detective", "corrective": "Corrective" },
+    "natures": { "manual": "Manual", "automated": "Automated", "hybrid": "Hybrid" },
+    "cadences": { "continuous": "Continuous", "daily": "Daily", "weekly": "Weekly", "monthly": "Monthly", "quarterly": "Quarterly", "semiannually": "Semiannually", "annually": "Annually", "ad_hoc": "Ad hoc" },
+    "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
+    "actions": { "create": "Create internal control", "update": "Update internal control" }
   },
   "measureEvidencesTab": {
     "pageTitle": "{{name}} - Evidences",

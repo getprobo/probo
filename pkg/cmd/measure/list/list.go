@@ -40,7 +40,9 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: MeasureOrder, $filter:
           node {
             id
             name
+            code
             category
+            implementationStatus
             state
           }
         }
@@ -55,10 +57,12 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: MeasureOrder, $filter:
 `
 
 type measure struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Category string `json:"category"`
-	State    string `json:"state"`
+	ID                   string  `json:"id"`
+	Name                 string  `json:"name"`
+	Code                 *string `json:"code"`
+	Category             string  `json:"category"`
+	ImplementationStatus string  `json:"implementationStatus"`
+	State                string  `json:"state"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -73,7 +77,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List measures in an organization",
+		Short:   "List internal controls in an organization",
 		Aliases: []string{"ls"},
 		Example: `  # List measures in the default organization
   prb measure list
@@ -178,15 +182,22 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(measures))
 			for _, m := range measures {
+				code := ""
+				if m.Code != nil {
+					code = *m.Code
+				}
+
 				rows = append(rows, []string{
 					m.ID,
+					code,
 					m.Name,
 					m.Category,
+					m.ImplementationStatus,
 					m.State,
 				})
 			}
 
-			t := cmdutil.NewTable("ID", "NAME", "CATEGORY", "STATE").Rows(rows...)
+			t := cmdutil.NewTable("ID", "CODE", "NAME", "CATEGORY", "STATUS", "STATE").Rows(rows...)
 
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 

@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
 import type { MeasureGraphDeleteMutation } from "#/__generated__/core/MeasureGraphDeleteMutation.graphql";
+import type { MeasureGraphUpdateMutation } from "#/__generated__/core/MeasureGraphUpdateMutation.graphql";
 
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
@@ -63,7 +64,7 @@ const measureUpdateMutation = graphql`
 export const useUpdateMeasure = () => {
   const { t } = useTranslation();
 
-  return useMutationWithToasts(measureUpdateMutation, {
+  return useMutationWithToasts<MeasureGraphUpdateMutation>(measureUpdateMutation, {
     successMessage: t("measureGraph.messages.updated"),
     errorMessage: t("measureGraph.errors.update"),
   });

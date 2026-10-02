@@ -37,7 +37,7 @@ import (
 func NewCmdMeasure(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "measure <command>",
-		Short: "Manage measures",
+		Short: "Manage internal controls",
 	}
 
 	cmd.AddCommand(list.NewCmdList(f))

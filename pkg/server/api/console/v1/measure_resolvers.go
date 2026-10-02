@@ -11,18 +11,56 @@ import (
 	"errors"
 	"time"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+// Owner is the resolver for the owner field.
+func (r *measureResolver) Owner(ctx context.Context, obj *types.Measure) (*types.Profile, error) {
+	return r.loadProfile(ctx, obj.Owner)
+}
+
+// Reviewer is the resolver for the reviewer field.
+func (r *measureResolver) Reviewer(ctx context.Context, obj *types.Measure) (*types.Profile, error) {
+	return r.loadProfile(ctx, obj.Reviewer)
+}
+
+func (r *measureResolver) loadProfile(ctx context.Context, profile *types.Profile) (*types.Profile, error) {
+	if profile == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, profile.ID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	loaded, err := loaders.Profile.Load(ctx, profile.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfile(loaded), nil
+}
 
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
@@ -378,15 +416,28 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 	measure, err := r.probo.Measures.Create(
 		ctx, scope,
 		probo.CreateMeasureRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Description:    input.Description,
-			Category:       input.Category,
+			OrganizationID:       input.OrganizationID,
+			Name:                 input.Name,
+			Description:          input.Description,
+			Category:             input.Category,
+			Code:                 input.Code,
+			ControlType:          input.ControlType,
+			Nature:               input.Nature,
+			OperatingFrequency:   input.OperatingFrequency,
+			EvidenceCadence:      input.EvidenceCadence,
+			TestingCadence:       input.TestingCadence,
+			ImplementationStatus: input.ImplementationStatus,
+			OwnerID:              input.OwnerID,
+			ReviewerID:           input.ReviewerID,
 		},
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -413,14 +464,31 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 	measure, err := r.probo.Measures.Update(
 		ctx, scope,
 		probo.UpdateMeasureRequest{
-			ID:          input.ID,
-			Name:        input.Name,
-			Description: gqlutils.UnwrapOmittable(input.Description),
-			Category:    input.Category,
-			State:       input.State,
+			ID:                   input.ID,
+			Name:                 input.Name,
+			Description:          gqlutils.UnwrapOmittable(input.Description),
+			Category:             input.Category,
+			State:                input.State,
+			Code:                 gqlutils.UnwrapOmittable(input.Code),
+			ControlType:          gqlutils.UnwrapOmittable(input.ControlType),
+			Nature:               gqlutils.UnwrapOmittable(input.Nature),
+			OperatingFrequency:   gqlutils.UnwrapOmittable(input.OperatingFrequency),
+			EvidenceCadence:      gqlutils.UnwrapOmittable(input.EvidenceCadence),
+			TestingCadence:       gqlutils.UnwrapOmittable(input.TestingCadence),
+			ImplementationStatus: input.ImplementationStatus,
+			OwnerID:              gqlutils.UnwrapOmittable(input.OwnerID),
+			ReviewerID:           gqlutils.UnwrapOmittable(input.ReviewerID),
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}

@@ -1,3 +1,93 @@
+enum InternalControlType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlType") {
+    PREVENTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypePreventive"
+        )
+    DETECTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypeDetective"
+        )
+    CORRECTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypeCorrective"
+        )
+}
+
+enum InternalControlNature
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlNature") {
+    MANUAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureManual"
+        )
+    AUTOMATED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureAutomated"
+        )
+    HYBRID
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureHybrid"
+        )
+}
+
+enum InternalControlCadence
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlCadence") {
+    CONTINUOUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceContinuous"
+        )
+    DAILY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceDaily"
+        )
+    WEEKLY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceWeekly"
+        )
+    MONTHLY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceMonthly"
+        )
+    QUARTERLY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceQuarterly"
+        )
+    SEMIANNUALLY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceSemiannually"
+        )
+    ANNUALLY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceAnnually"
+        )
+    AD_HOC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceAdHoc"
+        )
+}
+
+enum InternalControlImplementationStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus"
+    ) {
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusNotImplemented"
+        )
+    IN_PROGRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusInProgress"
+        )
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusImplemented"
+        )
+    OPERATING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusOperating"
+        )
+}
+
 enum MeasureState
     @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureState") {
     NOT_STARTED
@@ -51,6 +141,17 @@ type Measure implements Node {
     name: String!
     description: String
     state: MeasureState!
+    code: String
+    controlType: InternalControlType
+    nature: InternalControlNature
+    operatingFrequency: InternalControlCadence
+    evidenceCadence: InternalControlCadence
+    testingCadence: InternalControlCadence
+    nextEvidenceDue: Datetime
+    nextTestDue: Datetime
+    implementationStatus: InternalControlImplementationStatus!
+    owner: Profile @goField(forceResolver: true)
+    reviewer: Profile @goField(forceResolver: true)
     asOf: Datetime
 
     evidences(
@@ -160,6 +261,15 @@ input CreateMeasureInput {
     name: String!
     description: String
     category: String!
+    code: String
+    controlType: InternalControlType
+    nature: InternalControlNature
+    operatingFrequency: InternalControlCadence
+    evidenceCadence: InternalControlCadence
+    testingCadence: InternalControlCadence
+    implementationStatus: InternalControlImplementationStatus
+    ownerId: ID
+    reviewerId: ID
 }
 
 input UpdateMeasureInput {
@@ -168,6 +278,15 @@ input UpdateMeasureInput {
     description: String @goField(omittable: true)
     category: String
     state: MeasureState
+    code: String @goField(omittable: true)
+    controlType: InternalControlType @goField(omittable: true)
+    nature: InternalControlNature @goField(omittable: true)
+    operatingFrequency: InternalControlCadence @goField(omittable: true)
+    evidenceCadence: InternalControlCadence @goField(omittable: true)
+    testingCadence: InternalControlCadence @goField(omittable: true)
+    implementationStatus: InternalControlImplementationStatus
+    ownerId: ID @goField(omittable: true)
+    reviewerId: ID @goField(omittable: true)
 }
 
 input ImportMeasureInput {

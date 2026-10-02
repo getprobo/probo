@@ -18,7 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { measureStates } from "@probo/helpers";
+import {
+  internalControlCadences,
+  internalControlImplementationStatuses,
+  internalControlNatures,
+  internalControlTypes,
+  measureStates,
+} from "@probo/helpers";
 import {
   Button,
   Dialog,
@@ -40,12 +46,17 @@ import { graphql } from "relay-runtime";
 
 import type { MeasureFormDialogCreateMutation } from "#/__generated__/core/MeasureFormDialogCreateMutation.graphql";
 import type { MeasureFormDialogMeasureFragment$key } from "#/__generated__/core/MeasureFormDialogMeasureFragment.graphql";
+import type { MeasureGraphUpdateMutation$variables } from "#/__generated__/core/MeasureGraphUpdateMutation.graphql";
 import { ControlledSelect } from "#/components/form/ControlledField";
+import { PeopleSelectField } from "#/components/form/PeopleSelectField";
 import { useUpdateMeasure } from "#/hooks/graph/MeasureGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
+
+const blankableEnum = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.union([z.enum(values), z.literal("")]);
 
 const measureFragment = graphql`
   fragment MeasureFormDialogMeasureFragment on Measure {
@@ -54,6 +65,19 @@ const measureFragment = graphql`
     name
     category
     state
+    code
+    controlType
+    nature
+    operatingFrequency
+    evidenceCadence
+    testingCadence
+    implementationStatus
+    owner {
+      id
+    }
+    reviewer {
+      id
+    }
   }
 `;
 
@@ -101,6 +125,23 @@ export default function MeasureFormDialog(props: Props) {
     description: z.string().optional().nullable(),
     category: z.string().min(1, t("measureFormDialog.validation.categoryRequired")),
     state: z.enum(measureStates),
+    code: z.string().optional().nullable(),
+    controlType: blankableEnum(internalControlTypes),
+    nature: blankableEnum(internalControlNatures),
+    operatingFrequency: blankableEnum(internalControlCadences),
+    evidenceCadence: blankableEnum(internalControlCadences),
+    testingCadence: blankableEnum(internalControlCadences),
+    implementationStatus: z.enum(internalControlImplementationStatuses),
+    ownerId: z.string().optional().nullable(),
+    reviewerId: z.string().optional().nullable(),
+  }).superRefine((value, ctx) => {
+    if (value.ownerId && value.reviewerId && value.ownerId === value.reviewerId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["reviewerId"],
+        message: t("measureFormDialog.validation.reviewerDistinct"),
+      });
+    }
   });
 
   const { control, handleSubmit, register, formState, reset }
@@ -110,20 +151,48 @@ export default function MeasureFormDialog(props: Props) {
         description: measure?.description ?? "",
         category: measure?.category ?? "",
         state: measure?.state ?? "NOT_STARTED",
+        code: measure?.code ?? "",
+        controlType: measure?.controlType ?? "",
+        nature: measure?.nature ?? "",
+        operatingFrequency: measure?.operatingFrequency ?? "",
+        evidenceCadence: measure?.evidenceCadence ?? "",
+        testingCadence: measure?.testingCadence ?? "",
+        implementationStatus: measure?.implementationStatus ?? "NOT_IMPLEMENTED",
+        ownerId: measure?.owner?.id ?? "",
+        reviewerId: measure?.reviewer?.id ?? "",
       },
     });
 
   const onSubmit = async (data: z.infer<typeof measureSchema>) => {
+    const fields = {
+      code: data.code || null,
+      controlType: data.controlType || null,
+      nature: data.nature || null,
+      operatingFrequency: data.operatingFrequency || null,
+      evidenceCadence: data.evidenceCadence || null,
+      testingCadence: data.testingCadence || null,
+      ownerId: data.ownerId || null,
+      reviewerId: data.reviewerId || null,
+    };
     if (measure) {
+      const input: MeasureGraphUpdateMutation$variables["input"] = {
+        id: measure.id,
+        name: data.name,
+        description: data.description || null,
+        category: data.category,
+        ...fields,
+      };
+      // Send only the status that changed. Repeating both would collapse an
+      // operating control back to implemented, or a not-started control into
+      // not implemented.
+      if (data.implementationStatus !== measure.implementationStatus) {
+        input.implementationStatus = data.implementationStatus;
+      } else if (data.state !== measure.state) {
+        input.state = data.state;
+      }
       await updateMeasure({
         variables: {
-          input: {
-            id: measure.id,
-            name: data.name,
-            description: data.description || null,
-            category: data.category,
-            state: data.state,
-          },
+          input,
         },
       });
     } else {
@@ -135,6 +204,8 @@ export default function MeasureFormDialog(props: Props) {
             name: data.name,
             description: data.description || null,
             category: data.category,
+            implementationStatus: data.implementationStatus,
+            ...fields,
           },
           connections: connection ? [connection] : [],
         },
@@ -198,6 +269,114 @@ export default function MeasureFormDialog(props: Props) {
                 {...register("category")}
                 required
                 placeholder={t("measureFormDialog.fields.categoryPlaceholder")}
+              />
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.code")}
+              error={formState.errors.code?.message}
+            >
+              <Input
+                {...register("code")}
+                placeholder={t("measureFormDialog.fields.codePlaceholder")}
+              />
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.controlType")}
+              error={formState.errors.controlType?.message}
+            >
+              <ControlledSelect control={control} name="controlType">
+                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
+                {internalControlTypes.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.controlTypes.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.nature")}
+              error={formState.errors.nature?.message}
+            >
+              <ControlledSelect control={control} name="nature">
+                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
+                {internalControlNatures.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.natures.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.operatingFrequency")}
+              error={formState.errors.operatingFrequency?.message}
+            >
+              <ControlledSelect control={control} name="operatingFrequency">
+                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
+                {internalControlCadences.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.cadences.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.evidenceCadence")}
+              error={formState.errors.evidenceCadence?.message}
+            >
+              <ControlledSelect control={control} name="evidenceCadence">
+                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
+                {internalControlCadences.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.cadences.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.testingCadence")}
+              error={formState.errors.testingCadence?.message}
+            >
+              <ControlledSelect control={control} name="testingCadence">
+                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
+                {internalControlCadences.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.cadences.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.implementationStatus")}
+              error={formState.errors.implementationStatus?.message}
+            >
+              <ControlledSelect control={control} name="implementationStatus">
+                {internalControlImplementationStatuses.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.implementationStatuses.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.owner")}
+              error={formState.errors.ownerId?.message}
+            >
+              <PeopleSelectField
+                name="ownerId"
+                control={control}
+                organizationId={organizationId}
+                optional
+              />
+            </PropertyRow>
+            <PropertyRow
+              label={t("measureFormDialog.fields.reviewer")}
+              error={formState.errors.reviewerId?.message}
+            >
+              <PeopleSelectField
+                name="reviewerId"
+                control={control}
+                organizationId={organizationId}
+                optional
               />
             </PropertyRow>
             {measure && (

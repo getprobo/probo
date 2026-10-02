@@ -29,6 +29,36 @@ export const measureStates = [
     "NOT_IMPLEMENTED",
 ] as const;
 
+export const internalControlTypes = [
+    "PREVENTIVE",
+    "DETECTIVE",
+    "CORRECTIVE",
+] as const;
+
+export const internalControlNatures = [
+    "MANUAL",
+    "AUTOMATED",
+    "HYBRID",
+] as const;
+
+export const internalControlCadences = [
+    "CONTINUOUS",
+    "DAILY",
+    "WEEKLY",
+    "MONTHLY",
+    "QUARTERLY",
+    "SEMIANNUALLY",
+    "ANNUALLY",
+    "AD_HOC",
+] as const;
+
+export const internalControlImplementationStatuses = [
+    "NOT_IMPLEMENTED",
+    "IN_PROGRESS",
+    "IMPLEMENTED",
+    "OPERATING",
+] as const;
+
 export function getMeasureStateLabel(t: Translator, state: string) {
     switch (state) {
         case "IMPLEMENTED":

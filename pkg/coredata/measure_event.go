@@ -65,13 +65,14 @@ func NewMeasureEvent(
 
 func (e *MeasureEvent) Measure() *Measure {
 	return &Measure{
-		ID:             e.MeasureID,
-		OrganizationID: e.OrganizationID,
-		Category:       e.Category,
-		Name:           e.Name,
-		State:          e.State,
-		CreatedAt:      e.MeasureCreatedAt,
-		UpdatedAt:      e.CreatedAt,
+		ID:                   e.MeasureID,
+		OrganizationID:       e.OrganizationID,
+		Category:             e.Category,
+		Name:                 e.Name,
+		State:                e.State,
+		ImplementationStatus: ImplementationStatusForMeasureState(e.State),
+		CreatedAt:            e.MeasureCreatedAt,
+		UpdatedAt:            e.CreatedAt,
 	}
 }
 

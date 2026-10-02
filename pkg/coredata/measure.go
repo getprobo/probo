@@ -37,15 +37,26 @@ import (
 
 type (
 	Measure struct {
-		ID             gid.GID      `db:"id"`
-		OrganizationID gid.GID      `db:"organization_id"`
-		Category       string       `db:"category"`
-		Name           string       `db:"name"`
-		Description    *string      `db:"description"`
-		State          MeasureState `db:"state"`
-		ReferenceID    string       `db:"reference_id"`
-		CreatedAt      time.Time    `db:"created_at"`
-		UpdatedAt      time.Time    `db:"updated_at"`
+		ID                   gid.GID                             `db:"id"`
+		OrganizationID       gid.GID                             `db:"organization_id"`
+		Category             string                              `db:"category"`
+		Name                 string                              `db:"name"`
+		Description          *string                             `db:"description"`
+		State                MeasureState                        `db:"state"`
+		ReferenceID          string                              `db:"reference_id"`
+		Code                 *string                             `db:"code"`
+		ControlType          *InternalControlType                `db:"control_type"`
+		Nature               *InternalControlNature              `db:"nature"`
+		OperatingFrequency   *InternalControlCadence             `db:"operating_frequency"`
+		EvidenceCadence      *InternalControlCadence             `db:"evidence_cadence"`
+		TestingCadence       *InternalControlCadence             `db:"testing_cadence"`
+		NextEvidenceDue      *time.Time                          `db:"next_evidence_due"`
+		NextTestDue          *time.Time                          `db:"next_test_due"`
+		ImplementationStatus InternalControlImplementationStatus `db:"implementation_status"`
+		OwnerID              *gid.GID                            `db:"owner_profile_id"`
+		ReviewerID           *gid.GID                            `db:"reviewer_profile_id"`
+		CreatedAt            time.Time                           `db:"created_at"`
+		UpdatedAt            time.Time                           `db:"updated_at"`
 	}
 
 	Measures []*Measure
@@ -202,6 +213,17 @@ WITH msrs AS (
 		m.description,
 		m.state,
 		m.reference_id,
+		m.code,
+		m.control_type,
+		m.nature,
+		m.operating_frequency,
+		m.evidence_cadence,
+		m.testing_cadence,
+		m.next_evidence_due,
+		m.next_test_due,
+		m.implementation_status,
+		m.owner_profile_id,
+		m.reviewer_profile_id,
 		m.created_at,
 		m.updated_at,
 		m.search_vector
@@ -220,6 +242,17 @@ SELECT
 	description,
 	state,
 	reference_id,
+	code,
+	control_type,
+	nature,
+	operating_frequency,
+	evidence_cadence,
+	testing_cadence,
+	next_evidence_due,
+	next_test_due,
+	implementation_status,
+	owner_profile_id,
+	reviewer_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -314,6 +347,17 @@ WITH msrs AS (
 		m.description,
 		m.state,
 		m.reference_id,
+		m.code,
+		m.control_type,
+		m.nature,
+		m.operating_frequency,
+		m.evidence_cadence,
+		m.testing_cadence,
+		m.next_evidence_due,
+		m.next_test_due,
+		m.implementation_status,
+		m.owner_profile_id,
+		m.reviewer_profile_id,
 		m.created_at,
 		m.updated_at,
 		m.search_vector
@@ -332,6 +376,17 @@ SELECT
 	description,
 	state,
 	reference_id,
+	code,
+	control_type,
+	nature,
+	operating_frequency,
+	evidence_cadence,
+	testing_cadence,
+	next_evidence_due,
+	next_test_due,
+	implementation_status,
+	owner_profile_id,
+	reviewer_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -408,6 +463,21 @@ msrs AS (
 		CAST(NULL AS text) AS description,
 		latest.state,
 		'' AS reference_id,
+		CAST(NULL AS text) AS code,
+		CAST(NULL AS text) AS control_type,
+		CAST(NULL AS text) AS nature,
+		CAST(NULL AS text) AS operating_frequency,
+		CAST(NULL AS text) AS evidence_cadence,
+		CAST(NULL AS text) AS testing_cadence,
+		CAST(NULL AS timestamptz) AS next_evidence_due,
+		CAST(NULL AS timestamptz) AS next_test_due,
+		CASE latest.state
+			WHEN @state_in_progress THEN @status_in_progress
+			WHEN @state_implemented THEN @status_implemented
+			ELSE @status_not_implemented
+		END AS implementation_status,
+		CAST(NULL AS text) AS owner_profile_id,
+		CAST(NULL AS text) AS reviewer_profile_id,
 		latest.measure_created_at AS created_at,
 		latest.created_at AS updated_at
 	FROM
@@ -423,6 +493,17 @@ SELECT
 	description,
 	state,
 	reference_id,
+	code,
+	control_type,
+	nature,
+	operating_frequency,
+	evidence_cadence,
+	testing_cadence,
+	next_evidence_due,
+	next_test_due,
+	implementation_status,
+	owner_profile_id,
+	reviewer_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -441,9 +522,14 @@ WHERE
 	)
 
 	args := pgx.StrictNamedArgs{
-		"measure_ids": measureIDs,
-		"as_of":       asOf,
-		"deleted":     MeasureEventTypeDeleted,
+		"measure_ids":            measureIDs,
+		"as_of":                  asOf,
+		"deleted":                MeasureEventTypeDeleted,
+		"state_in_progress":      MeasureStateInProgress,
+		"state_implemented":      MeasureStateImplemented,
+		"status_in_progress":     InternalControlImplementationStatusInProgress,
+		"status_implemented":     InternalControlImplementationStatusImplemented,
+		"status_not_implemented": InternalControlImplementationStatusNotImplemented,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -599,6 +685,17 @@ WITH mtgtns AS (
 		m.description,
 		m.state,
 		m.reference_id,
+		m.code,
+		m.control_type,
+		m.nature,
+		m.operating_frequency,
+		m.evidence_cadence,
+		m.testing_cadence,
+		m.next_evidence_due,
+		m.next_test_due,
+		m.implementation_status,
+		m.owner_profile_id,
+		m.reviewer_profile_id,
 		m.search_vector,
 		m.created_at,
 		m.updated_at
@@ -617,6 +714,17 @@ SELECT
 	description,
 	state,
 	reference_id,
+	code,
+	control_type,
+	nature,
+	operating_frequency,
+	evidence_cadence,
+	testing_cadence,
+	next_evidence_due,
+	next_test_due,
+	implementation_status,
+	owner_profile_id,
+	reviewer_profile_id,
 	created_at,
 	updated_at
 FROM
@@ -732,6 +840,17 @@ SELECT
     description,
     state,
     reference_id,
+    code,
+    control_type,
+    nature,
+    operating_frequency,
+    evidence_cadence,
+    testing_cadence,
+    next_evidence_due,
+    next_test_due,
+    implementation_status,
+    owner_profile_id,
+    reviewer_profile_id,
     created_at,
     updated_at
 FROM
@@ -779,6 +898,17 @@ SELECT
     description,
     state,
     reference_id,
+    code,
+    control_type,
+    nature,
+    operating_frequency,
+    evidence_cadence,
+    testing_cadence,
+    next_evidence_due,
+    next_test_due,
+    implementation_status,
+    owner_profile_id,
+    reviewer_profile_id,
     created_at,
     updated_at
 FROM
@@ -828,6 +958,17 @@ SELECT
     description,
     state,
     reference_id,
+    code,
+    control_type,
+    nature,
+    operating_frequency,
+    evidence_cadence,
+    testing_cadence,
+    next_evidence_due,
+    next_test_due,
+    implementation_status,
+    owner_profile_id,
+    reviewer_profile_id,
     created_at,
     updated_at
 FROM
@@ -877,6 +1018,17 @@ INSERT INTO
 		state,
         description,
         reference_id,
+        code,
+        control_type,
+        nature,
+        operating_frequency,
+        evidence_cadence,
+        testing_cadence,
+        next_evidence_due,
+        next_test_due,
+        implementation_status,
+        owner_profile_id,
+        reviewer_profile_id,
         created_at,
         updated_at
 	)
@@ -889,6 +1041,17 @@ VALUES (
 	@state,
     @description,
     @reference_id,
+    @code,
+    @control_type,
+    @nature,
+    @operating_frequency,
+    @evidence_cadence,
+    @testing_cadence,
+    @next_evidence_due,
+    @next_test_due,
+    @implementation_status,
+    @owner_profile_id,
+    @reviewer_profile_id,
     @created_at,
     @updated_at
 )
@@ -905,21 +1068,43 @@ RETURNING
 	state,
     description,
 	reference_id,
+    code,
+    control_type,
+    nature,
+    operating_frequency,
+    evidence_cadence,
+    testing_cadence,
+    next_evidence_due,
+    next_test_due,
+    implementation_status,
+    owner_profile_id,
+    reviewer_profile_id,
     created_at,
     updated_at
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"measure_id":      m.ID,
-		"organization_id": m.OrganizationID,
-		"category":        m.Category,
-		"name":            m.Name,
-		"state":           m.State,
-		"description":     m.Description,
-		"reference_id":    m.ReferenceID,
-		"created_at":      m.CreatedAt,
-		"updated_at":      m.UpdatedAt,
+		"tenant_id":             scope.GetTenantID(),
+		"measure_id":            m.ID,
+		"organization_id":       m.OrganizationID,
+		"category":              m.Category,
+		"name":                  m.Name,
+		"state":                 m.State,
+		"description":           m.Description,
+		"reference_id":          m.ReferenceID,
+		"code":                  m.Code,
+		"control_type":          m.ControlType,
+		"nature":                m.Nature,
+		"operating_frequency":   m.OperatingFrequency,
+		"evidence_cadence":      m.EvidenceCadence,
+		"testing_cadence":       m.TestingCadence,
+		"next_evidence_due":     m.NextEvidenceDue,
+		"next_test_due":         m.NextTestDue,
+		"implementation_status": m.ImplementationStatus,
+		"owner_profile_id":      m.OwnerID,
+		"reviewer_profile_id":   m.ReviewerID,
+		"created_at":            m.CreatedAt,
+		"updated_at":            m.UpdatedAt,
 	}
 
 	rows, err := conn.Query(ctx, q, args)
@@ -953,6 +1138,17 @@ INSERT INTO
 		state,
         description,
         reference_id,
+        code,
+        control_type,
+        nature,
+        operating_frequency,
+        evidence_cadence,
+        testing_cadence,
+        next_evidence_due,
+        next_test_due,
+        implementation_status,
+        owner_profile_id,
+        reviewer_profile_id,
         created_at,
         updated_at
     )
@@ -965,28 +1161,52 @@ VALUES (
 	@state,
     @description,
     @reference_id,
+    @code,
+    @control_type,
+    @nature,
+    @operating_frequency,
+    @evidence_cadence,
+    @testing_cadence,
+    @next_evidence_due,
+    @next_test_due,
+    @implementation_status,
+    @owner_profile_id,
+    @reviewer_profile_id,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
-		"measure_id":      m.ID,
-		"organization_id": m.OrganizationID,
-		"category":        m.Category,
-		"name":            m.Name,
-		"description":     m.Description,
-		"reference_id":    m.ReferenceID,
-		"created_at":      m.CreatedAt,
-		"updated_at":      m.UpdatedAt,
-		"state":           m.State,
+		"tenant_id":             scope.GetTenantID(),
+		"measure_id":            m.ID,
+		"organization_id":       m.OrganizationID,
+		"category":              m.Category,
+		"name":                  m.Name,
+		"description":           m.Description,
+		"reference_id":          m.ReferenceID,
+		"code":                  m.Code,
+		"control_type":          m.ControlType,
+		"nature":                m.Nature,
+		"operating_frequency":   m.OperatingFrequency,
+		"evidence_cadence":      m.EvidenceCadence,
+		"testing_cadence":       m.TestingCadence,
+		"next_evidence_due":     m.NextEvidenceDue,
+		"next_test_due":         m.NextTestDue,
+		"implementation_status": m.ImplementationStatus,
+		"owner_profile_id":      m.OwnerID,
+		"reviewer_profile_id":   m.ReviewerID,
+		"created_at":            m.CreatedAt,
+		"updated_at":            m.UpdatedAt,
+		"state":                 m.State,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "mitigations_org_ref_unique" {
+			if pgErr.Code == "23505" &&
+				(pgErr.ConstraintName == "mitigations_org_ref_unique" ||
+					pgErr.ConstraintName == "measures_organization_id_code_key") {
 				return ErrResourceAlreadyExists
 			}
 		}
@@ -1009,6 +1229,17 @@ SET
   description = @description,
   category = @category,
   state = @state,
+  code = @code,
+  control_type = @control_type,
+  nature = @nature,
+  operating_frequency = @operating_frequency,
+  evidence_cadence = @evidence_cadence,
+  testing_cadence = @testing_cadence,
+  next_evidence_due = @next_evidence_due,
+  next_test_due = @next_test_due,
+  implementation_status = @implementation_status,
+  owner_profile_id = @owner_profile_id,
+  reviewer_profile_id = @reviewer_profile_id,
   updated_at = @updated_at
 WHERE %s
     AND id = @measure_id
@@ -1016,18 +1247,35 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"measure_id":  m.ID,
-		"name":        m.Name,
-		"description": m.Description,
-		"category":    m.Category,
-		"state":       m.State,
-		"updated_at":  m.UpdatedAt,
+		"measure_id":            m.ID,
+		"name":                  m.Name,
+		"description":           m.Description,
+		"category":              m.Category,
+		"state":                 m.State,
+		"code":                  m.Code,
+		"control_type":          m.ControlType,
+		"nature":                m.Nature,
+		"operating_frequency":   m.OperatingFrequency,
+		"evidence_cadence":      m.EvidenceCadence,
+		"testing_cadence":       m.TestingCadence,
+		"next_evidence_due":     m.NextEvidenceDue,
+		"next_test_due":         m.NextTestDue,
+		"implementation_status": m.ImplementationStatus,
+		"owner_profile_id":      m.OwnerID,
+		"reviewer_profile_id":   m.ReviewerID,
+		"updated_at":            m.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "measures_organization_id_code_key" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot update measure: %w", err)
 	}
 
@@ -1123,6 +1371,17 @@ WITH mtgtns AS (
 		m.description,
 		m.state,
 		m.reference_id,
+		m.code,
+		m.control_type,
+		m.nature,
+		m.operating_frequency,
+		m.evidence_cadence,
+		m.testing_cadence,
+		m.next_evidence_due,
+		m.next_test_due,
+		m.implementation_status,
+		m.owner_profile_id,
+		m.reviewer_profile_id,
 		m.search_vector,
 		m.created_at,
 		m.updated_at
@@ -1141,6 +1400,17 @@ SELECT
 	description,
 	state,
 	reference_id,
+	code,
+	control_type,
+	nature,
+	operating_frequency,
+	evidence_cadence,
+	testing_cadence,
+	next_evidence_due,
+	next_test_due,
+	implementation_status,
+	owner_profile_id,
+	reviewer_profile_id,
 	created_at,
 	updated_at
 FROM
