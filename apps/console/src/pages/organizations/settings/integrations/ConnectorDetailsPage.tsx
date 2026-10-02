@@ -22,24 +22,26 @@ import { CaretLeftIcon, PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { ThirdPartyLogo } from "@probo/ui";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import { Drawer } from "@probo/ui/src/v2/Drawer/Drawer";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation, useNavigate } from "react-router";
 
+import type { ConnectorAccountsDrawerQuery } from "#/__generated__/core/ConnectorAccountsDrawerQuery.graphql";
 import type { ConnectorDetailsPageQuery } from "#/__generated__/core/ConnectorDetailsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import { ConnectorAccountsDrawer } from "./_components/ConnectorAccountsDrawer";
+import {
+  ConnectorAccountsDrawer,
+  connectorAccountsDrawerQuery,
+} from "./_components/ConnectorAccountsDrawer";
 import { ConnectorDocumentationLink } from "./_components/ConnectorDocumentationLink";
 import { ConnectorListItem } from "./_components/ConnectorListItem";
-import {
-  createdConnectorLocationState,
-  type DiscoveredAccount,
-} from "./_lib/discoveredAccounts";
+import { createdConnectorId } from "./_lib/discoveredAccounts";
 import { connectVendorPath, integrationListPath } from "./_lib/integrationPath";
 import { connectorDetailsPage } from "./variants";
 
@@ -57,10 +59,7 @@ export const connectorDetailsPageQuery = graphql`
           provider
           displayName
           documentationUrl
-          ...ConnectorListItem_connector @arguments(
-            includeAccountCount: true
-            includeOrganizationSelect: true
-          )
+          ...ConnectorListItem_connector
         }
       }
     }
@@ -76,15 +75,12 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const location = useLocation();
-  const created = createdConnectorLocationState(location.state);
-  const [openId, setOpenId] = useState<string | null>(() => created?.connectorId ?? null);
-  const [preset, setPreset] = useState<DiscoveredAccount[] | null>(() => (
-    created?.discoveredAccounts ?? null
-  ));
-  const [presetConnectorId, setPresetConnectorId] = useState<string | null>(() => (
-    created?.connectorId ?? null
-  ));
-  const [fetchKey, setFetchKey] = useState(0);
+  const createdId = createdConnectorId(location.state);
+  const accountsHandle = useMemo(() => Drawer.createHandle<string>(), []);
+  const openedId = useRef<string | null>(null);
+  const [shellRef, loadShell] = useQueryLoader<ConnectorAccountsDrawerQuery>(
+    connectorAccountsDrawerQuery,
+  );
   const { organization } = usePreloadedQuery<ConnectorDetailsPageQuery>(
     connectorDetailsPageQuery,
     queryRef,
@@ -93,15 +89,18 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
     ? organization.connectors
     : [];
   const vendor = connectors[0];
-  // Keep the last id so the close animation still has the account list.
-  const [displayedId, setDisplayedId] = useState<string | null>(openId);
-  if (openId != null && displayedId !== openId) {
-    setDisplayedId(openId);
-  }
-  const activeId = openId ?? displayedId;
-  const displayed = connectors.find(connector => connector.id === activeId) ?? null;
 
   usePageTitle(vendor?.displayName ?? "");
+
+  useEffect(() => {
+    if (createdId == null) {
+      return;
+    }
+
+    openedId.current = createdId;
+    loadShell({ connectorId: createdId }, { fetchPolicy: "network-only" });
+    accountsHandle.openWithPayload(createdId);
+  }, [accountsHandle, createdId, loadShell]);
 
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");
@@ -114,7 +113,7 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
   const { root, back, header, intro, title, grid } = connectorDetailsPage();
 
   function clearCreatedState() {
-    if (createdConnectorLocationState(location.state) == null) {
+    if (createdConnectorId(location.state) == null) {
       return;
     }
 
@@ -125,11 +124,10 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
   }
 
   function openAccounts(connectorId: string) {
+    openedId.current = connectorId;
     clearCreatedState();
-    setPreset(null);
-    setPresetConnectorId(null);
-    setFetchKey(key => key + 1);
-    setOpenId(connectorId);
+    loadShell({ connectorId }, { fetchPolicy: "network-only" });
+    accountsHandle.openWithPayload(connectorId);
   }
 
   return (
@@ -173,14 +171,11 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
             key={connector.id}
             connectorKey={connector}
             organizationId={organizationId}
-            canConnect={false}
-            showName={false}
-            showConnectorType
-            showProbeError
             onSelect={openAccounts}
             onDeleted={() => {
-              if (connector.id === openId) {
-                setOpenId(null);
+              if (connector.id === openedId.current) {
+                accountsHandle.close();
+                openedId.current = null;
                 clearCreatedState();
               }
               if (connectors.length <= 1) {
@@ -191,15 +186,14 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
         ))}
       </div>
       <ConnectorAccountsDrawer
-        connectorId={activeId}
-        provider={displayed?.provider ?? vendor.provider}
-        providerName={displayed?.displayName ?? vendor.displayName}
-        fetchKey={fetchKey}
-        preset={activeId != null && activeId === presetConnectorId ? preset : null}
-        open={openId != null}
+        handle={accountsHandle}
+        queryRef={shellRef}
+        onReload={(connectorId) => {
+          loadShell({ connectorId }, { fetchPolicy: "network-only" });
+        }}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
-            setOpenId(null);
+            openedId.current = null;
             clearCreatedState();
           }
         }}

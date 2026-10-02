@@ -45,15 +45,14 @@ import type { IntegrationsPageRefetchQuery } from "#/__generated__/core/Integrat
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 import {
-  connectionSignalFrom,
+  type ConnectorConnectionStatus,
   groupByProvider,
 } from "#/pages/organizations/_lib/connectorStatus";
 
-import { ConnectorListItem } from "./_components/ConnectorListItem";
+import { ConnectorGroupListItem } from "./_components/ConnectorGroupListItem";
 import { MarketplaceEntryCard } from "./_components/MarketplaceEntryCard";
 import {
   connectionStatuses,
-  type ConnectorConnectionStatus,
   integrationsListFilter,
   isConnectionStatus,
   useIntegrationsListFilters,
@@ -65,7 +64,6 @@ export const integrationsPageQuery = graphql`
   query IntegrationsPageQuery($organizationId: ID!, $filter: ConnectorFilter) {
     connectorProviders {
       provider
-      displayName
       ...ConnectorProviderListItem_provider
     }
     organization: node(id: $organizationId) {
@@ -88,14 +86,7 @@ const integrationsPageFragment = graphql`
       id
       provider
       connectionStatus
-      canReconnect
-      providerOrganizations {
-        status
-      }
-      accounts(first: 1) {
-        totalCount
-      }
-      ...ConnectorListItem_connector @arguments(includeAccountCount: true)
+      ...ConnectorGroupListItem_connector
     }
   }
 `;
@@ -309,40 +300,14 @@ function IntegrationsConnectors({
                       const providerKey = connectorProviders.find(
                         driver => driver.provider === face.provider,
                       );
-                      const aggregated = group.length > 1;
 
                       return (
-                        <ConnectorListItem
-                          key={aggregated ? face.provider : face.id}
-                          connectorKey={face}
+                        <ConnectorGroupListItem
+                          key={group.length > 1 ? face.provider : face.id}
+                          connectorKeys={group}
                           providerKey={providerKey}
                           organizationId={organizationId}
                           canConnect={organization.canCreateConnector}
-                          aggregatedConnectorIds={
-                            aggregated ? group.map(connector => connector.id) : undefined
-                          }
-                          connectionSignals={
-                            aggregated
-                              ? group.flatMap((connector) => {
-                                  const signal = connectionSignalFrom({
-                                  connectionStatus: connector.connectionStatus,
-                                  canReconnect: connector.canReconnect,
-                                  providerOrganizations: {
-                                    status: connector.providerOrganizations.status,
-                                  },
-                                });
-                                  return signal == null ? [] : [signal];
-                                })
-                              : undefined
-                          }
-                          accountCount={
-                            aggregated
-                              ? group.reduce(
-                                  (sum, connector) => sum + connector.accounts.totalCount,
-                                  0,
-                                )
-                              : undefined
-                          }
                         />
                       );
                     })}

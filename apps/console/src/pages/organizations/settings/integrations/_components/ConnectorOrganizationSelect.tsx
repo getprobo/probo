@@ -53,10 +53,7 @@ const configureMutation = graphql`
       connector {
         id
         selectedOrganization
-        ...ConnectorListItem_connector @arguments(
-          includeAccountCount: true
-          includeOrganizationSelect: true
-        )
+        ...ConnectorListItem_connector
       }
     }
   }
