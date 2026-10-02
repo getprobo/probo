@@ -4,6 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.300.0] - 2026-10-02
+
+### Changed
+
+- Cookie banner Discovery is split into separate Trackers and Resources
+  pages in the nav, and Discovery and Trail no longer show the banner
+  header and publish actions, which stay on Configure
+- Trackers and Resources lists are rebuilt on the v2 kit, with filters,
+  pagination, and column sort kept in the URL so views are shareable
+- Tracker edits (description, category, max age, inclusion) move from
+  inline row forms to the tracker detail page, which also lists
+  detections in a table. Row actions follow update and delete
+  permissions
+
 ## [0.299.1] - 2026-10-01
 
 ### Fixed
