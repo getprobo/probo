@@ -48,6 +48,7 @@ export const sourcesPage = tvLite({
     tools: "flex flex-wrap items-center justify-between gap-2",
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     section: "flex flex-col gap-3",
+    sectionTitle: "flex items-center gap-2.5",
     grid: "grid grid-cols-3 gap-3 max-xl:grid-cols-2 max-lg:grid-cols-1",
     empty: "flex flex-col items-center py-8 text-center",
   },

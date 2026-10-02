@@ -22,7 +22,7 @@ import { PlugIcon } from "@phosphor-icons/react";
 import { ThirdPartyLogo } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Link } from "@probo/ui/src/v2/Link/Link";
+import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -46,10 +46,6 @@ export const connectorProviderListItemFragment = graphql`
     clientCredentialsSupported
     workloadIdentitySupported
     installSupported
-    oauth2Scopes
-    ...APIKeyConnectorDialog_provider
-    ...ClientCredentialsConnectorDialog_provider
-    ...OAuthExtraDialog_provider
   }
 `;
 
@@ -86,10 +82,8 @@ export function ConnectorProviderListItem({
       className={card()}
     >
       {methods.length > 0 && (
-        <Link
+        <CardLink
           to={connectVendorPath(organizationId, provider.provider)}
-          underline={false}
-          className="absolute inset-0 z-0"
           aria-label={connectLabel}
         />
       )}

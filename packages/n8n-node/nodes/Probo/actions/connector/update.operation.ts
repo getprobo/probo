@@ -22,7 +22,7 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n
 import { proboApiRequest } from '../../GenericFunctions';
 
 const nameDescription =
-	'Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.';
+	'e.g. production, main or any word that may distinct 2 credentials to the same provider.';
 
 export const description: INodeProperties[] = [
 	{

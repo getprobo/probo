@@ -2,7 +2,7 @@
   "connectForm": {
     "name": {
       "label": "Name",
-      "description": "Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.",
+      "description": "e.g. production, main or any word that may distinct 2 credentials to the same provider.",
       "required": "Enter a name.",
       "saveFailed": "The name could not be saved."
     }
@@ -165,8 +165,6 @@
   },
   "detailsPage": {
     "notFound": "Integration not found",
-    "accountCount_one": "{{count}} account",
-    "accountCount_other": "{{count}} accounts",
     "status": {
       "CONNECTED": "Connected",
       "DISCONNECTED": "Disconnected",

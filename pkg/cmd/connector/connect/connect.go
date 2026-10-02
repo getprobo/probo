@@ -57,6 +57,7 @@ mutation($input: CreateOrganizationConnectorInput!) {
     discoveredAccounts {
       externalAccountId
       name
+      enabled
     }
   }
 }
@@ -75,6 +76,7 @@ type (
 	discoveredAccount struct {
 		ExternalAccountID string `json:"externalAccountId"`
 		Name              string `json:"name"`
+		Enabled           bool   `json:"enabled"`
 	}
 
 	connectResult struct {
@@ -206,7 +208,7 @@ func NewCmdConnect(f *cmdutil.Factory) *cobra.Command {
 		&flagName,
 		"name",
 		"",
-		"Keeps track of this connector and the credential attached to it, so several connections to the same provider stay distinct. displayName stays the provider name.",
+		"e.g. production, main or any word that may distinct 2 credentials to the same provider.",
 	)
 	cmd.Flags().BoolVar(&flagOrganization, "organization", false, "Connect an organization and list its accounts")
 	cmd.Flags().StringVar(&flagProvider, "provider", "", "Connector provider (AWS, GCP, AZURE)")
@@ -321,10 +323,17 @@ func printConnectResult(
 
 	rows := make([][]string, 0, len(result.DiscoveredAccounts))
 	for _, account := range result.DiscoveredAccounts {
-		rows = append(rows, []string{account.ExternalAccountID, account.Name})
+		rows = append(
+			rows,
+			[]string{
+				account.ExternalAccountID,
+				account.Name,
+				fmt.Sprintf("%t", account.Enabled),
+			},
+		)
 	}
 
-	t := cmdutil.NewTable("EXTERNAL ID", "NAME").Rows(rows...)
+	t := cmdutil.NewTable("EXTERNAL ID", "NAME", "ENABLED").Rows(rows...)
 	_, _ = fmt.Fprintln(out, t)
 
 	return nil

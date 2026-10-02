@@ -1442,7 +1442,6 @@
     "rightsRequests": "Rights Requests",
     "campaigns": "Campaigns",
     "connections": "Connectors",
-    "marketplace": "Marketplace",
     "sources": "Sources",
     "compliancePortals": "Compliance Portals",
     "compliancePortalsSettings": "Settings",
@@ -1867,7 +1866,7 @@
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
   "addAccessReviewSourceDialog": {
-    "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "connectWithWorkloadIdentity": "Workload Identity", "connectWithAppInstall": "App Install", "chooseAnotherMethod": "Choose another connection method", "open": "Open" },
+    "actions": { "open": "Open" },
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {
@@ -1892,42 +1891,15 @@
     "deployment": { "label": "Deployment", "placeholder": "Select a deployment", "usCloud": "PostHog Cloud (US)", "euCloud": "PostHog Cloud (EU)", "selfHosted": "Self-hosted" },
     "instanceUrl": "Instance URL"
   },
-  "apiKeyConnectorDialog": {
-    "title": "Connect provider",
-    "titleWithProvider": "Connect {{provider}}",
-    "managedDescription": "Connect {{provider}} as an access source. Provide the details below to finish.",
-    "apiKeyDescription": "Enter the API key for {{provider}} to connect it as an access source.",
-    "apiKey": "API Key",
-    "messages": { "connectionFailed": "Connection failed" },
-    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}", "rejected": { "better_stack_team_not_found": "Better Stack has no team with this name for this API token. Team names are case-sensitive: copy the exact name from Settings > Teams in Better Stack, or use a team-based API token.", "supabase_organization_not_found": "Supabase has no organization with this slug. Copy it from the organization URL in the Supabase dashboard (supabase.com/dashboard/org/<slug>).", "supabase_organization_not_accessible": "This access token cannot read the members of this organization. Create a token with Organization resource access that includes this organization, and Organization Members set to Read." } },
-    "actions": { "connect": "Connect", "connecting": "Connecting..." }
-  },
-  "clientCredentialsConnectorDialog": {
-    "title": "Connect provider",
-    "titleWithProvider": "Connect {{provider}}",
-    "description": "Enter the client credentials for {{provider}} to connect it as an access source.",
-    "messages": { "connectionFailed": "Connection failed" },
-    "errors": { "connect": "Failed to connect provider. Please check your credentials and try again." },
-    "fields": { "clientId": "Client ID", "clientSecret": "Client Secret", "tokenUrl": "Token URL", "scope": "Scope" },
-    "region": { "placeholder": "Select a region", "us": "United States (US)", "ca": "Canada (CA)", "eu": "Europe (EU)" },
-    "actions": { "connect": "Connect", "connecting": "Connecting..." }
-  },
-  "oauthExtraDialog": {
-    "actions": { "continue": "Continue" },
-    "datadog": { "title": "Connect Datadog", "description": "Select your Datadog site, then continue to authorize access.", "siteLabel": "Datadog site", "sitePlaceholder": "Select a site" },
-    "zendesk": { "title": "Connect Zendesk", "description": "Enter your Zendesk subdomain, then continue to authorize access.", "subdomainLabel": "Zendesk subdomain", "subdomainPlaceholder": "acme", "subdomainHelp": "The <subdomain> part of <subdomain>.zendesk.com" }
-  },
-  "useCreateAccessReviewSource": {
-    "errors": { "create": "Failed to create access source" },
-    "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." }
-  },
   "accessReviewConnectionsPage": {
     "title": "Sources",
     "description": "Add a source from an account already connected in Settings.",
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
-    "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry", "add": "Add source" },
-    "sections": { "connected": "Sources", "available": "Available", "addSource": "Add source" },
+    "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry", "add": "Add as source", "addAll": "Add all", "edit": "Edit {{connector}}" },
+    "accountCount_one": "{{count}} distinct account",
+    "accountCount_other": "{{count}} distinct accounts",
+    "sections": { "connected": "Sources", "available": "Available", "addSource": "Available connectors" },
     "needsOrganization": "Pick an organization in Settings first.",
     "emptyAccounts": "No account is ready. Connect a vendor in Settings first.",
     "searchPlaceholder": "Search sources and providers...",
@@ -3255,9 +3227,6 @@
     "magicLinkAlreadyUsed": { "title": "Link Already Used", "description": "This magic link has already been used. Please request a new one." },
     "invalidLink": { "title": "Invalid link", "description": "This magic link is invalid. Please request a new one." },
     "default": { "title": "Authentication failed", "description": "We could not complete your sign-in. Please try again." }
-  },
-  "accessReviewSource": {
-    "regions": { "label": "Region", "placeholder": "Select a region", "unitedStates": "United States", "europe": "Europe" }
   },
   "devices": {
     "title": "Devices",

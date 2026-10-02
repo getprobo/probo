@@ -18,41 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { useTranslation } from "react-i18next";
 
-import type { CreateGcpAccessReviewSourcePageQuery } from "#/__generated__/core/CreateGcpAccessReviewSourcePageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { ConnectorProtocol } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
 
-import {
-  CreateGcpAccessReviewSourcePage,
-  createGcpAccessReviewSourcePageQuery,
-} from "./CreateGcpAccessReviewSourcePage";
+import { connectMethodFromConnector } from "../_lib/connectMethods";
 
-export default function CreateGcpAccessReviewSourcePageLoader() {
-  const organizationId = useOrganizationId();
-  const [queryRef, loadQuery]
-    = useQueryLoader<CreateGcpAccessReviewSourcePageQuery>(
-      createGcpAccessReviewSourcePageQuery,
-    );
+import { ConnectorMethodIcon } from "./ConnectorMethodIcon";
 
-  useEffect(() => {
-    loadQuery({ organizationId });
-  }, [loadQuery, organizationId]);
+interface ConnectorTypeMarkProps {
+  protocol: ConnectorProtocol;
+  canReconnect: boolean;
+}
 
-  const currentQueryRef = queryRef != null
-    && queryRef.variables.organizationId === organizationId
-    ? queryRef
-    : null;
-
-  if (currentQueryRef == null) {
-    return <PageSkeleton />;
-  }
+export function ConnectorTypeMark({
+  protocol,
+  canReconnect,
+}: ConnectorTypeMarkProps) {
+  const { t } = useTranslation("organizations/settings/integrations");
+  const method = connectMethodFromConnector(protocol, canReconnect);
+  const label = t(`marketplacePage.methods.${method}`);
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <CreateGcpAccessReviewSourcePage queryRef={currentQueryRef} />
-    </Suspense>
+    <Tooltip>
+      <TooltipTrigger
+        aria-label={label}
+        className="pointer-events-auto text-inherit"
+      >
+        <ConnectorMethodIcon method={method} className="size-8" />
+      </TooltipTrigger>
+      <TooltipPopup>{label}</TooltipPopup>
+    </Tooltip>
   );
 }

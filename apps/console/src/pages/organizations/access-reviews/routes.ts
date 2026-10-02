@@ -52,25 +52,4 @@ export const accessReviewRoutes = [
       () => import("./connections/CreateCsvAccessReviewSourcePageLoader"),
     ),
   },
-  {
-    path: "connections/new/aws-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateAwsAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/gcp-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateGcpAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/azure-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateAzureAccessReviewSourcePageLoader"),
-    ),
-  },
 ] satisfies AppRoute[];

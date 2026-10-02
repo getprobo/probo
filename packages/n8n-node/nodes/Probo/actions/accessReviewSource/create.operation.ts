@@ -278,15 +278,17 @@ export async function execute(
 	const connectionStatus = connector?.connectionStatus as string | undefined;
 
 	const createSourceQuery = `
-		mutation CreateAccessReviewSource($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				created
-				accessReviewSourceEdge {
-					node {
-						id
-						name
-						connectorId
-						createdAt
+		mutation CreateAccessReviewSources($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					created
+					accessReviewSourceEdge {
+						node {
+							id
+							name
+							connectorId
+							createdAt
+						}
 					}
 				}
 			}
@@ -313,8 +315,7 @@ export async function execute(
 		const sourceResponse = await proboApiRequest.call(this, createSourceQuery, {
 			input: {
 				organizationId,
-				name,
-				connectorId,
+				sources: [{ name, connectorId }],
 			},
 		});
 

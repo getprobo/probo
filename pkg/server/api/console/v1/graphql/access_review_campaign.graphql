@@ -531,9 +531,9 @@ type AccessReviewEntryFlagCount {
 }
 
 extend type Mutation {
-    createAccessReviewSource(
-        input: CreateAccessReviewSourceInput!
-    ): CreateAccessReviewSourcePayload!
+    createAccessReviewSources(
+        input: CreateAccessReviewSourcesInput!
+    ): CreateAccessReviewSourcesPayload!
     updateAccessReviewSource(
         input: UpdateAccessReviewSourceInput!
     ): UpdateAccessReviewSourcePayload!
@@ -578,20 +578,28 @@ extend type Mutation {
     ): FlagAccessReviewEntryPayload!
 }
 
-input CreateAccessReviewSourceInput {
+input CreateAccessReviewSourcesInput {
     organizationId: ID!
+    sources: [AccessReviewSourceCreateInput!]!
+}
+
+input AccessReviewSourceCreateInput {
     connectorId: ID
     connectorAccountId: ID
     name: String!
     csvData: String
 }
 
-type CreateAccessReviewSourcePayload {
+type CreateAccessReviewSourcesPayload {
+    results: [CreateAccessReviewSourceResult!]!
+}
+
+type CreateAccessReviewSourceResult {
     accessReviewSourceEdge: AccessReviewSourceEdge!
     """
-    created is false when a source already existed for the requested
-    connector account: creation is idempotent per connector account, and
-    the existing source is returned instead of a duplicate.
+    created is false when a source already existed for this item's
+    provider and external account id. The existing source is returned
+    instead of a duplicate. CSV items always insert.
     """
     created: Boolean!
 }

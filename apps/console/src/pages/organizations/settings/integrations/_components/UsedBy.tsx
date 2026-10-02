@@ -23,27 +23,9 @@ import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { useTranslation } from "react-i18next";
-import { graphql, useLazyLoadQuery } from "react-relay";
-
-import type { ConnectorModulesQuery } from "#/__generated__/core/ConnectorModulesQuery.graphql";
 
 import { connectorCard } from "../variants";
-
-const connectorModulesQuery = graphql`
-  query ConnectorModulesQuery($organizationId: ID!) {
-    node(id: $organizationId) {
-      __typename
-      ... on Organization {
-        connectors {
-          id
-          modules
-        }
-      }
-    }
-  }
-`;
 
 function moduleIcon(module: string): Icon | null {
   switch (module) {
@@ -56,7 +38,11 @@ function moduleIcon(module: string): Icon | null {
   }
 }
 
-export function UsedBy({ modules }: { modules: readonly string[] }) {
+interface UsedByProps {
+  modules: readonly string[];
+}
+
+export function UsedBy({ modules }: UsedByProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const { usedBy, usedByIcons } = connectorCard();
   const icons = modules.flatMap((module) => {
@@ -94,55 +80,6 @@ export function UsedBy({ modules }: { modules: readonly string[] }) {
         {t("listPage.usedBy")}
       </Text>
       <div className={usedByIcons()}>{icons}</div>
-    </div>
-  );
-}
-
-interface ConnectorModulesProps {
-  connectorIds: readonly string[];
-  organizationId: string;
-}
-
-export function ConnectorModules({
-  connectorIds,
-  organizationId,
-}: ConnectorModulesProps) {
-  const data = useLazyLoadQuery<ConnectorModulesQuery>(
-    connectorModulesQuery,
-    { organizationId },
-    { fetchPolicy: "store-and-network" },
-  );
-  if (data.node?.__typename !== "Organization") {
-    return null;
-  }
-
-  const modulesByConnectorId = new Map(
-    data.node.connectors.map(connector => [connector.id, connector.modules]),
-  );
-  const seen = new Set<string>();
-  const modules = connectorIds.flatMap((connectorId) => {
-    const connectorModules = modulesByConnectorId.get(connectorId) ?? [];
-
-    return connectorModules.filter((module) => {
-      if (seen.has(module) || moduleIcon(module) == null) {
-        return false;
-      }
-
-      seen.add(module);
-
-      return true;
-    });
-  });
-
-  return <UsedBy modules={modules} />;
-}
-
-export function ConnectorModulesSkeleton() {
-  const { usedBy } = connectorCard();
-
-  return (
-    <div className={usedBy()} aria-hidden>
-      <TextSkeleton size={1} className="w-24" />
     </div>
   );
 }

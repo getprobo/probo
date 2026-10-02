@@ -21,23 +21,30 @@
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Navigate, useParams } from "react-router";
 
+import type { AWSConnectFormQuery } from "#/__generated__/core/AWSConnectFormQuery.graphql";
+import type { AzureConnectFormQuery } from "#/__generated__/core/AzureConnectFormQuery.graphql";
 import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
+import type { GCPConnectFormQuery } from "#/__generated__/core/GCPConnectFormQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { APIKeyConnectForm } from "./_components/APIKeyConnectForm";
+import { AWSConnectForm, AWSConnectInstallActions } from "./_components/AWSConnectForm";
+import { AzureConnectForm, AzureConnectInstallActions } from "./_components/AzureConnectForm";
 import { ClientCredentialsConnectForm } from "./_components/ClientCredentialsConnectForm";
 import { ConnectorMethodIcon } from "./_components/ConnectorMethodIcon";
+import { GCPConnectForm, GCPConnectInstallActions } from "./_components/GCPConnectForm";
 import { OAuthConnectForm } from "./_components/OAuthConnectForm";
 import { StartConnectForm } from "./_components/StartConnectForm";
-import { WorkloadIdentityForm, WorkloadIdentityInstallActions } from "./_components/WorkloadIdentityForm";
 import {
   type ConnectMethod,
   connectMethods,
@@ -58,44 +65,13 @@ export const connectVendorPageQuery = graphql`
       configuredProtocols
       apiKeySupported
       apiKeyManaged
-      apiKeyFormat {
-        pattern
-        example
-      }
-      apiKeyExtraSettings {
-        key
-        label
-        required
-      }
       clientCredentialsSupported
-      clientCredentialsTokenUrl
-      clientCredentialsExtraSettings {
-        key
-        label
-        required
-      }
       workloadIdentitySupported
       installSupported
-      oauth2Scopes
-    }
-    awsConnectorSetup(organizationId: $organizationId) {
-      issuer
-      audience
-      subject
-      terraformSnippet
-      cloudFormationQuickCreateURL
-    }
-    gcpConnectorSetup(organizationId: $organizationId) {
-      issuer
-      audience
-      subject
-      terraformSnippet
-    }
-    azureConnectorSetup(organizationId: $organizationId) {
-      issuer
-      audience
-      subject
-      terraformSnippet
+      ...APIKeyConnectForm_provider
+      ...ClientCredentialsConnectForm_provider
+      ...OAuthConnectForm_provider
+      ...StartConnectForm_provider
     }
     organization: node(id: $organizationId) {
       __typename
@@ -110,13 +86,21 @@ type Driver = ConnectVendorPageQuery["response"]["connectorProviders"][number];
 
 interface ConnectVendorPageProps {
   queryRef: PreloadedQuery<ConnectVendorPageQuery>;
+  awsQueryRef: PreloadedQuery<AWSConnectFormQuery> | null;
+  gcpQueryRef: PreloadedQuery<GCPConnectFormQuery> | null;
+  azureQueryRef: PreloadedQuery<AzureConnectFormQuery> | null;
 }
 
-export function ConnectVendorPage({ queryRef }: ConnectVendorPageProps) {
+export function ConnectVendorPage({
+  queryRef,
+  awsQueryRef,
+  gcpQueryRef,
+  azureQueryRef,
+}: ConnectVendorPageProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
   const { provider: providerSlug = "", method: methodSlug } = useParams();
-  const { organization, connectorProviders, awsConnectorSetup, gcpConnectorSetup, azureConnectorSetup }
+  const { organization, connectorProviders }
     = usePreloadedQuery<ConnectVendorPageQuery>(connectVendorPageQuery, queryRef);
 
   const providerId = providerFromSlug(providerSlug);
@@ -163,9 +147,9 @@ export function ConnectVendorPage({ queryRef }: ConnectVendorPageProps) {
       organizationId={organizationId}
       driver={driver}
       method={method}
-      awsConnectorSetup={awsConnectorSetup}
-      gcpConnectorSetup={gcpConnectorSetup}
-      azureConnectorSetup={azureConnectorSetup}
+      awsQueryRef={awsQueryRef}
+      gcpQueryRef={gcpQueryRef}
+      azureQueryRef={azureQueryRef}
     />
   );
 }
@@ -203,11 +187,9 @@ function ConnectVendorChooser({
       </div>
       <div className="grid grid-cols-4 gap-3 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
         {methods.map(method => (
-          <Card key={method} variant="soft" size={1} interactive className="relative">
-            <Link
+          <Card key={method} variant="soft" size={1} interactive>
+            <CardLink
               to={connectVendorMethodPath(organizationId, driver.provider, method)}
-              underline={false}
-              className="absolute inset-0 z-0"
               aria-label={t(`marketplacePage.methods.${method}`)}
             />
             <div className="pointer-events-none flex flex-col items-center gap-3 py-2 text-center">
@@ -227,18 +209,27 @@ function ConnectVendorMethod({
   organizationId,
   driver,
   method,
-  awsConnectorSetup,
-  gcpConnectorSetup,
-  azureConnectorSetup,
+  awsQueryRef,
+  gcpQueryRef,
+  azureQueryRef,
 }: {
   organizationId: string;
   driver: Driver;
   method: ConnectMethod;
-  awsConnectorSetup: ConnectVendorPageQuery["response"]["awsConnectorSetup"];
-  gcpConnectorSetup: ConnectVendorPageQuery["response"]["gcpConnectorSetup"];
-  azureConnectorSetup: ConnectVendorPageQuery["response"]["azureConnectorSetup"];
+  awsQueryRef: PreloadedQuery<AWSConnectFormQuery> | null;
+  gcpQueryRef: PreloadedQuery<GCPConnectFormQuery> | null;
+  azureQueryRef: PreloadedQuery<AzureConnectFormQuery> | null;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const cloud = workloadIdentityCloud({
+    organizationId,
+    documentationUrl: driver.documentationUrl,
+    provider: driver.provider,
+    method,
+    awsQueryRef,
+    gcpQueryRef,
+    azureQueryRef,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -261,43 +252,87 @@ function ConnectVendorMethod({
             {t(`marketplacePage.methodDescriptions.${method}`)}
           </Text>
         </div>
-        {method === "WORKLOAD_IDENTITY" && (
-          <WorkloadIdentityInstallActions
-            provider={driver.provider}
-            awsConnectorSetup={awsConnectorSetup}
-            gcpConnectorSetup={gcpConnectorSetup}
-            azureConnectorSetup={azureConnectorSetup}
-          />
-        )}
+        {cloud?.actions}
       </div>
       <Card variant="soft" size={2}>
-        {method === "WORKLOAD_IDENTITY" && (
-          <WorkloadIdentityForm
-            organizationId={organizationId}
-            provider={driver.provider}
-            documentationUrl={driver.documentationUrl}
-            awsConnectorSetup={awsConnectorSetup}
-            gcpConnectorSetup={gcpConnectorSetup}
-            azureConnectorSetup={azureConnectorSetup}
-          />
-        )}
+        {cloud?.form}
         {method === "API_KEY" && (
-          <APIKeyConnectForm organizationId={organizationId} driver={driver} />
+          <APIKeyConnectForm organizationId={organizationId} providerKey={driver} />
         )}
         {method === "CLIENT_CREDENTIALS" && (
-          <ClientCredentialsConnectForm organizationId={organizationId} driver={driver} />
+          <ClientCredentialsConnectForm organizationId={organizationId} providerKey={driver} />
         )}
         {method === "OAUTH2" && (
-          <OAuthConnectForm organizationId={organizationId} driver={driver} />
+          <OAuthConnectForm organizationId={organizationId} providerKey={driver} />
         )}
         {(method === "GITHUB_APP" || method === "INSTALL") && (
           <StartConnectForm
             organizationId={organizationId}
-            driver={driver}
+            providerKey={driver}
             method={method}
           />
         )}
       </Card>
     </div>
   );
+}
+
+function workloadIdentityCloud({
+  organizationId,
+  documentationUrl,
+  provider,
+  method,
+  awsQueryRef,
+  gcpQueryRef,
+  azureQueryRef,
+}: {
+  organizationId: string;
+  documentationUrl: string | null | undefined;
+  provider: Driver["provider"];
+  method: ConnectMethod;
+  awsQueryRef: PreloadedQuery<AWSConnectFormQuery> | null;
+  gcpQueryRef: PreloadedQuery<GCPConnectFormQuery> | null;
+  azureQueryRef: PreloadedQuery<AzureConnectFormQuery> | null;
+}): { actions: ReactNode; form: ReactNode } | null {
+  if (method !== "WORKLOAD_IDENTITY") {
+    return null;
+  }
+  if (provider === "AWS" && awsQueryRef != null) {
+    return {
+      actions: <AWSConnectInstallActions queryRef={awsQueryRef} />,
+      form: (
+        <AWSConnectForm
+          organizationId={organizationId}
+          documentationUrl={documentationUrl}
+          queryRef={awsQueryRef}
+        />
+      ),
+    };
+  }
+  if (provider === "GCP" && gcpQueryRef != null) {
+    return {
+      actions: <GCPConnectInstallActions queryRef={gcpQueryRef} />,
+      form: (
+        <GCPConnectForm
+          organizationId={organizationId}
+          documentationUrl={documentationUrl}
+          queryRef={gcpQueryRef}
+        />
+      ),
+    };
+  }
+  if (provider === "AZURE" && azureQueryRef != null) {
+    return {
+      actions: <AzureConnectInstallActions queryRef={azureQueryRef} />,
+      form: (
+        <AzureConnectForm
+          organizationId={organizationId}
+          documentationUrl={documentationUrl}
+          queryRef={azureQueryRef}
+        />
+      ),
+    };
+  }
+
+  return null;
 }

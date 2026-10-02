@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { formatError } from "@probo/helpers";
+import { FileCsvIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -28,21 +27,26 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
-import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
 
 import type { AccessReviewConnectionsPageFragment$key } from "#/__generated__/core/AccessReviewConnectionsPageFragment.graphql";
 import type { AccessReviewConnectionsPagePaginationQuery } from "#/__generated__/core/AccessReviewConnectionsPagePaginationQuery.graphql";
 import type { AccessReviewConnectionsPageQuery } from "#/__generated__/core/AccessReviewConnectionsPageQuery.graphql";
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { groupByProvider } from "#/pages/organizations/_lib/connectorStatus";
+import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
-import { createAccessReviewSourceMutation, prependCreatedSourceEdge } from "../dialogs/accessReviewSourceMutations";
 
+import {
+  type AddableConnectorCard,
+  AddableConnectorGroups,
+} from "./_components/AddableConnectorListItem";
 import { sourcesPage } from "./_components/variants";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
@@ -58,18 +62,11 @@ export const accessReviewConnectionsPageQuery = graphql`
       __typename
       ... on Organization {
         canCreateSource: permission(action: "access-review:source:create")
+        canCreateConnector: permission(action: "core:connector:create")
         connectors {
           id
-          displayName
-          accounts(first: 50) {
-            edges {
-              node {
-                id
-                name
-                externalAccountId
-              }
-            }
-          }
+          provider
+          ...AddableConnectorListItem_connector
         }
         ...AccessReviewConnectionsPageFragment
       }
@@ -81,7 +78,7 @@ const sourcesFragment = graphql`
   fragment AccessReviewConnectionsPageFragment on Organization
   @refetchable(queryName: "AccessReviewConnectionsPagePaginationQuery")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 50 }
+    first: { type: "Int", defaultValue: 20 }
     order: {
       type: "AccessReviewSourceOrder"
       defaultValue: { direction: DESC, field: CREATED_AT }
@@ -153,7 +150,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
   // stays available on that term to retry, and success clears the latch.
   const [failedSearch, setFailedSearch] = useState<string | null>(null);
   const loadMoreSources = useCallback(() => {
-    loadNext(50, {
+    loadNext(20, {
       onComplete: error => setFailedSearch(error ? normalizedSearch : null),
     });
   }, [loadNext, normalizedSearch]);
@@ -176,81 +173,16 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     }),
     [accessReviewSources.edges, normalizedSearch],
   );
-  const addableAccounts = useMemo(() => {
-    const accounts = organization.connectors.flatMap(connector =>
-      connector.accounts.edges.map(({ node }) => ({
-        id: node.id,
-        name: node.name,
-        connectorName: connector.displayName,
-        needsOrganization: node.externalAccountId === connector.id,
-      })),
-    );
-
-    return accounts.filter(account =>
-      !normalizedSearch
-      || account.name.toLowerCase().includes(normalizedSearch)
-      || account.connectorName.toLowerCase().includes(normalizedSearch),
-    );
-  }, [organization.connectors, normalizedSearch]);
+  const vendorGroups = useMemo(
+    () => groupByProvider(organization.connectors),
+    [organization.connectors],
+  );
   const showCSV = !normalizedSearch
     || "csv".includes(normalizedSearch)
     || t("addAccessReviewSourceDialog.csv.title")
       .toLowerCase()
       .includes(normalizedSearch);
-
-  const [createAccessReviewSource, isCreatingSource]
-    = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourceMutation,
-    );
-
   const callbackError = searchParams.get("error");
-
-  const addSource = (accountId: string, name: string) => {
-    if (isCreatingSource) {
-      return;
-    }
-
-    createAccessReviewSource({
-      variables: {
-        input: {
-          organizationId,
-          connectorAccountId: accountId,
-          name,
-          csvData: null,
-        },
-      },
-      updater: store => prependCreatedSourceEdge(store, accessReviewSources.__id),
-      onCompleted(_data, errors) {
-        if (errors?.length) {
-          toast({
-            title: t("accessReviewConnectionsPage.messages.error"),
-            description: formatError(
-              t("accessReviewConnectionsPage.errors.create"),
-              errors,
-            ),
-            variant: "error",
-          });
-          return;
-        }
-
-        toast({
-          title: t("accessReviewConnectionsPage.messages.success"),
-          description: t("accessReviewConnectionsPage.messages.created"),
-          variant: "success",
-        });
-      },
-      onError(error) {
-        toast({
-          title: t("accessReviewConnectionsPage.messages.error"),
-          description: formatError(
-            t("accessReviewConnectionsPage.errors.create"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
-    });
-  };
 
   useEffect(() => {
     if (!callbackError) {
@@ -273,6 +205,7 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
     tools,
     search,
     section,
+    sectionTitle,
     grid,
     empty,
   } = sourcesPage();
@@ -283,8 +216,6 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
       : isSearching
         ? t("accessReviewConnectionsPage.emptyConnectedSearch")
         : t("accessReviewConnectionsPage.emptyConnected");
-  const addableCount = addableAccounts.length + (showCSV ? 1 : 0);
-
   return (
     <div className={root()}>
       <div className={header()}>
@@ -310,9 +241,12 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
           </div>
         </div>
         <section className={section()}>
-          <Heading level={2} size={3} weight="medium">
-            {t("accessReviewConnectionsPage.sections.connected")}
-          </Heading>
+          <div className={sectionTitle()}>
+            <Heading level={2} size={3} weight="medium">
+              {t("accessReviewConnectionsPage.sections.connected")}
+            </Heading>
+            <Text size={2} color="faint">{filteredSources.length}</Text>
+          </div>
           {filteredSources.length === 0
             ? (
                 <Card variant="soft" size={2}>
@@ -350,65 +284,105 @@ export function AccessReviewConnectionsPage({ queryRef }: AccessReviewConnection
           )}
         </section>
         {organization.canCreateSource && (
-          <section className={section()}>
-            <Heading level={2} size={3} weight="medium">
-              {t("accessReviewConnectionsPage.sections.addSource")}
-            </Heading>
-            {addableCount === 0
-              ? (
-                  <Card variant="soft" size={2}>
-                    <div className={empty()}>
-                      <Text size={2} color="faint">
-                        {t("accessReviewConnectionsPage.emptyAccounts")}
-                      </Text>
-                    </div>
-                  </Card>
-                )
-              : (
-                  <div className={grid()}>
-                    {addableAccounts.map(account => (
-                      <Card key={account.id} variant="soft" size={2} className="flex h-full flex-col gap-3">
-                        <Heading level={2} size={3} weight="medium" highContrast>
-                          {account.connectorName}
-                        </Heading>
-                        <Text size={2} color="faint">
-                          {account.needsOrganization
-                            ? t("accessReviewConnectionsPage.needsOrganization")
-                            : account.name}
-                        </Text>
-                        <Button
-                          variant="soft"
-                          color="neutral"
-                          disabled={account.needsOrganization || isCreatingSource}
-                          onClick={() => addSource(account.id, account.name)}
-                          className="self-end"
-                        >
-                          {t("accessReviewConnectionsPage.actions.add")}
-                        </Button>
-                      </Card>
-                    ))}
-                    {showCSV && (
-                      <Card variant="soft" size={2} className="flex h-full flex-col gap-3">
-                        <Heading level={2} size={3} weight="medium" highContrast>
-                          {t("addAccessReviewSourceDialog.csv.title")}
-                        </Heading>
-                        <Text size={2} color="faint">
-                          {t("addAccessReviewSourceDialog.csv.description")}
-                        </Text>
-                        <ButtonLink
-                          to={`/organizations/${organizationId}/access-reviews/connections/new/csv`}
-                          variant="solid"
-                          className="self-end"
-                        >
-                          {t("addAccessReviewSourceDialog.actions.open")}
-                        </ButtonLink>
-                      </Card>
-                    )}
-                  </div>
-                )}
-          </section>
+          <AddableConnectorGroups
+            groups={vendorGroups}
+            normalizedSearch={normalizedSearch}
+            organizationId={organizationId}
+            connectionId={accessReviewSources.__id}
+          >
+            {cards => (
+              <AddSourceSection
+                cards={cards}
+                showCSV={showCSV}
+                canCreateConnector={organization.canCreateConnector}
+                organizationId={organizationId}
+              />
+            )}
+          </AddableConnectorGroups>
         )}
       </div>
     </div>
+  );
+}
+
+function AddSourceSection({
+  cards,
+  showCSV,
+  canCreateConnector,
+  organizationId,
+}: {
+  cards: readonly AddableConnectorCard[];
+  showCSV: boolean;
+  canCreateConnector: boolean;
+  organizationId: string;
+}) {
+  const { t } = useTranslation();
+  const { section, sectionTitle, grid, empty } = sourcesPage();
+  const hasAddable = cards.length > 0 || showCSV;
+  const showAddMore = canCreateConnector && hasAddable;
+  const availableCount = cards.length + (showCSV ? 1 : 0);
+
+  return (
+    <section className={section()}>
+      <div className={sectionTitle()}>
+        <Heading level={2} size={3} weight="medium">
+          {t("accessReviewConnectionsPage.sections.addSource")}
+        </Heading>
+        <Text size={2} color="faint">{availableCount}</Text>
+      </div>
+      {!hasAddable
+        ? (
+            <Card variant="soft" size={2}>
+              <div className={empty()}>
+                <Text size={2} color="faint">
+                  {t("accessReviewConnectionsPage.emptyAccounts")}
+                </Text>
+              </div>
+            </Card>
+          )
+        : (
+            <div className={grid()}>
+              {showAddMore && (
+                <MarketplaceEntryCard organizationId={organizationId} />
+              )}
+              {cards.map(({ provider, card }) => (
+                <Fragment key={provider}>{card}</Fragment>
+              ))}
+              {showCSV && (
+                <CsvSourceCard organizationId={organizationId} />
+              )}
+            </div>
+          )}
+    </section>
+  );
+}
+
+function CsvSourceCard({ organizationId }: { organizationId: string }) {
+  const { t } = useTranslation();
+
+  return (
+    <TonedCard
+      tone="sand"
+      iconSize={14}
+      icon={<FileCsvIcon className="size-8" />}
+      lead={(
+        <Heading level={2} size={3} weight="medium" highContrast>
+          {t("addAccessReviewSourceDialog.csv.title")}
+        </Heading>
+      )}
+      control={(
+        <ButtonLink
+          to={`/organizations/${organizationId}/access-reviews/connections/new/csv`}
+          variant="solid"
+          size={1}
+        >
+          {t("addAccessReviewSourceDialog.actions.open")}
+        </ButtonLink>
+      )}
+    >
+      <Text size={2} color="faint">
+        {t("addAccessReviewSourceDialog.csv.description")}
+      </Text>
+    </TonedCard>
   );
 }
