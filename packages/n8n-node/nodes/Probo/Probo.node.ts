@@ -184,9 +184,9 @@ export class Probo implements INodeType {
 						description: 'Manage frameworks',
 					},
 					{
-						name: 'Measure',
+						name: 'Internal Control',
 						value: 'measure',
-						description: 'Manage measures',
+						description: 'Manage internal controls',
 					},
 					{
 						name: 'Obligation',

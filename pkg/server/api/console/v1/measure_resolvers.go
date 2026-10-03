@@ -24,6 +24,16 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Owner is the resolver for the owner field.
+func (r *measureResolver) Owner(ctx context.Context, obj *types.Measure) (*types.Profile, error) {
+	return r.loadProfile(ctx, obj.Owner)
+}
+
+// Reviewer is the resolver for the reviewer field.
+func (r *measureResolver) Reviewer(ctx context.Context, obj *types.Measure) (*types.Profile, error) {
+	return r.loadProfile(ctx, obj.Reviewer)
+}
+
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionEvidenceList)
@@ -378,15 +388,28 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 	measure, err := r.probo.Measures.Create(
 		ctx, scope,
 		probo.CreateMeasureRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-			Description:    input.Description,
-			Category:       input.Category,
+			OrganizationID:       input.OrganizationID,
+			Name:                 input.Name,
+			Description:          input.Description,
+			Category:             input.Category,
+			Code:                 input.Code,
+			ControlType:          input.ControlType,
+			Nature:               input.Nature,
+			OperatingFrequency:   input.OperatingFrequency,
+			EvidenceCadence:      input.EvidenceCadence,
+			TestingCadence:       input.TestingCadence,
+			ImplementationStatus: input.ImplementationStatus,
+			OwnerID:              input.OwnerID,
+			ReviewerID:           input.ReviewerID,
 		},
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -413,14 +436,31 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 	measure, err := r.probo.Measures.Update(
 		ctx, scope,
 		probo.UpdateMeasureRequest{
-			ID:          input.ID,
-			Name:        input.Name,
-			Description: gqlutils.UnwrapOmittable(input.Description),
-			Category:    input.Category,
-			State:       input.State,
+			ID:                   input.ID,
+			Name:                 input.Name,
+			Description:          gqlutils.UnwrapOmittable(input.Description),
+			Category:             input.Category,
+			State:                input.State,
+			Code:                 gqlutils.UnwrapOmittable(input.Code),
+			ControlType:          gqlutils.UnwrapOmittable(input.ControlType),
+			Nature:               gqlutils.UnwrapOmittable(input.Nature),
+			OperatingFrequency:   gqlutils.UnwrapOmittable(input.OperatingFrequency),
+			EvidenceCadence:      gqlutils.UnwrapOmittable(input.EvidenceCadence),
+			TestingCadence:       gqlutils.UnwrapOmittable(input.TestingCadence),
+			ImplementationStatus: input.ImplementationStatus,
+			OwnerID:              gqlutils.UnwrapOmittable(input.OwnerID),
+			ReviewerID:           gqlutils.UnwrapOmittable(input.ReviewerID),
 		},
 	)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}

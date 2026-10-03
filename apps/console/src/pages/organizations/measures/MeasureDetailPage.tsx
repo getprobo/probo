@@ -19,9 +19,10 @@
 // SOFTWARE.
 
 import {
-  measureStates,
+  internalControlImplementationStatuses,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { formatDuration } from "@probo/i18n";
 import {
   ActionDropdown,
   Button,
@@ -54,6 +55,7 @@ import {
 } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 
+import type { InternalControlImplementationStatus } from "#/__generated__/core/MeasureGraphUpdateMutation.graphql";
 import type { MeasureDetailPageNodeQuery } from "#/__generated__/core/MeasureDetailPageNodeQuery.graphql";
 import type { MeasureDetailPageTasksCountQuery } from "#/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
 import {
@@ -83,6 +85,19 @@ export const measureNodeQuery = graphql`
         name
         description
         state
+        code
+        implementationStatus
+        operatingFrequency
+        evidenceCadence
+        testingCadence
+        nextEvidenceDue
+        nextTestDue
+        owner {
+          fullName
+        }
+        reviewer {
+          fullName
+        }
         canUpdate: permission(action: "core:measure:update")
         canDelete: permission(action: "core:measure:delete")
         canListTasks: permission(action: "core:task:list")
@@ -185,21 +200,31 @@ export default function MeasureDetailPage(props: Props) {
     );
   };
 
-  const onStateChange = (state: string) => {
+  const onStatusChange = (implementationStatus: InternalControlImplementationStatus) => {
     void updateMeasure({
       variables: {
         input: {
           id: measureId,
-          state,
+          implementationStatus,
         },
       },
     });
   };
 
+  const dueDate = (value?: string | null) => {
+    if (!value) {
+      return null;
+    }
+
+    return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(value));
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title={measure.name} description={measure.description}>
-        {!measure.canUpdate && <MeasureBadge state={measure.state!} />}
+        {!measure.canUpdate && measure.implementationStatus && (
+          <MeasureBadge state={measure.implementationStatus === "OPERATING" ? "IMPLEMENTED" : measure.implementationStatus} />
+        )}
         {measure.canUpdate && (
           <>
             <MeasureFormDialog measure={measure}>
@@ -209,15 +234,19 @@ export default function MeasureDetailPage(props: Props) {
             </MeasureFormDialog>
             <Select
               disabled={isUpdating}
-              onValueChange={state => void onStateChange(state)}
-              name="state"
+              onValueChange={(status) => {
+                if ((internalControlImplementationStatuses as readonly string[]).includes(status)) {
+                  onStatusChange(status as InternalControlImplementationStatus);
+                }
+              }}
+              name="implementationStatus"
               placeholder={t("measureDetailPage.fields.selectState")}
               className="rounded-full"
-              value={measure.state}
+              value={measure.implementationStatus ?? undefined}
             >
-              {measureStates.map(state => (
-                <Option key={state} value={state}>
-                  {t(`measureDetailPage.states.${state.toLowerCase()}`)}
+              {internalControlImplementationStatuses.map(status => (
+                <Option key={status} value={status}>
+                  {t(`measureDetailPage.implementationStatuses.${status.toLowerCase()}`)}
                 </Option>
               ))}
             </Select>
@@ -235,6 +264,64 @@ export default function MeasureDetailPage(props: Props) {
           </ActionDropdown>
         )}
       </PageHeader>
+      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-txt-tertiary">
+        {measure.code && (
+          <span>
+            {t("measureDetailPage.fields.code")}
+            {": "}
+            {measure.code}
+          </span>
+        )}
+        {measure.owner?.fullName && (
+          <span>
+            {t("measureDetailPage.fields.owner")}
+            {": "}
+            {measure.owner.fullName}
+          </span>
+        )}
+        {measure.reviewer?.fullName && (
+          <span>
+            {t("measureDetailPage.fields.reviewer")}
+            {": "}
+            {measure.reviewer.fullName}
+          </span>
+        )}
+        {formatDuration(measure.operatingFrequency, t) && (
+          <span>
+            {t("measureDetailPage.fields.operatingFrequency")}
+            {": "}
+            {formatDuration(measure.operatingFrequency, t)}
+          </span>
+        )}
+        {formatDuration(measure.evidenceCadence, t) && (
+          <span>
+            {t("measureDetailPage.fields.evidenceCadence")}
+            {": "}
+            {formatDuration(measure.evidenceCadence, t)}
+          </span>
+        )}
+        {dueDate(measure.nextEvidenceDue) && (
+          <span>
+            {t("measureDetailPage.fields.nextEvidenceDue")}
+            {": "}
+            {dueDate(measure.nextEvidenceDue)}
+          </span>
+        )}
+        {formatDuration(measure.testingCadence, t) && (
+          <span>
+            {t("measureDetailPage.fields.testingCadence")}
+            {": "}
+            {formatDuration(measure.testingCadence, t)}
+          </span>
+        )}
+        {dueDate(measure.nextTestDue) && (
+          <span>
+            {t("measureDetailPage.fields.nextTestDue")}
+            {": "}
+            {dueDate(measure.nextTestDue)}
+          </span>
+        )}
+      </div>
 
       <Tabs>
         <TabLink

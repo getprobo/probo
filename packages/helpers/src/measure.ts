@@ -29,6 +29,23 @@ export const measureStates = [
     "NOT_IMPLEMENTED",
 ] as const;
 
+export const internalControlTypes = [
+    "PREVENTIVE",
+    "DETECTIVE",
+    "CORRECTIVE",
+] as const;
+
+export const internalControlNatures = [
+    "MANUAL",
+] as const;
+
+export const internalControlImplementationStatuses = [
+    "NOT_IMPLEMENTED",
+    "IN_PROGRESS",
+    "IMPLEMENTED",
+    "OPERATING",
+] as const;
+
 export function getMeasureStateLabel(t: Translator, state: string) {
     switch (state) {
         case "IMPLEMENTED":

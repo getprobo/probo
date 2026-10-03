@@ -40,6 +40,15 @@ query($id: ID!) {
       description
       category
       state
+      code
+      controlType
+      nature
+      operatingFrequency
+      evidenceCadence
+      testingCadence
+      nextEvidenceDue
+      nextTestDue
+      implementationStatus
       createdAt
       updatedAt
     }
@@ -49,14 +58,23 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename    string  `json:"__typename"`
-		ID          string  `json:"id"`
-		Name        string  `json:"name"`
-		Description *string `json:"description"`
-		Category    string  `json:"category"`
-		State       string  `json:"state"`
-		CreatedAt   string  `json:"createdAt"`
-		UpdatedAt   string  `json:"updatedAt"`
+		Typename             string  `json:"__typename"`
+		ID                   string  `json:"id"`
+		Name                 string  `json:"name"`
+		Description          *string `json:"description"`
+		Category             string  `json:"category"`
+		State                string  `json:"state"`
+		Code                 *string `json:"code"`
+		ControlType          *string `json:"controlType"`
+		Nature               *string `json:"nature"`
+		OperatingFrequency   *string `json:"operatingFrequency"`
+		EvidenceCadence      *string `json:"evidenceCadence"`
+		TestingCadence       *string `json:"testingCadence"`
+		NextEvidenceDue      *string `json:"nextEvidenceDue"`
+		NextTestDue          *string `json:"nextTestDue"`
+		ImplementationStatus string  `json:"implementationStatus"`
+		CreatedAt            string  `json:"createdAt"`
+		UpdatedAt            string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -65,7 +83,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "view <id>",
-		Short: "View a measure",
+		Short: "View an internal control",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -124,8 +142,17 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(m.Name))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), m.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Code:"), deref(m.Code))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), m.Category)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Status:"), m.ImplementationStatus)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), m.State)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), deref(m.ControlType))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Nature:"), deref(m.Nature))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Operating:"), deref(m.OperatingFrequency))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence cadence:"), deref(m.EvidenceCadence))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Testing cadence:"), deref(m.TestingCadence))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence due:"), deref(m.NextEvidenceDue))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Test due:"), deref(m.NextTestDue))
 
 			if m.Description != nil && *m.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *m.Description)
@@ -142,4 +169,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func deref(value *string) string {
+	if value == nil {
+		return ""
+	}
+
+	return *value
 }

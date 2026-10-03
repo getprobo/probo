@@ -1,3 +1,49 @@
+enum InternalControlType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlType") {
+    PREVENTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypePreventive"
+        )
+    DETECTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypeDetective"
+        )
+    CORRECTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypeCorrective"
+        )
+}
+
+enum InternalControlNature
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlNature") {
+    MANUAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureManual"
+        )
+}
+
+enum InternalControlImplementationStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus"
+    ) {
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusNotImplemented"
+        )
+    IN_PROGRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusInProgress"
+        )
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusImplemented"
+        )
+    OPERATING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusOperating"
+        )
+}
+
 enum MeasureState
     @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureState") {
     NOT_STARTED
@@ -51,6 +97,17 @@ type Measure implements Node {
     name: String!
     description: String
     state: MeasureState!
+    code: String
+    controlType: InternalControlType
+    nature: InternalControlNature
+    operatingFrequency: TimeSpan
+    evidenceCadence: TimeSpan
+    testingCadence: TimeSpan
+    nextEvidenceDue: Datetime
+    nextTestDue: Datetime
+    implementationStatus: InternalControlImplementationStatus!
+    owner: Profile @goField(forceResolver: true)
+    reviewer: Profile @goField(forceResolver: true)
     asOf: Datetime
 
     evidences(
@@ -160,6 +217,15 @@ input CreateMeasureInput {
     name: String!
     description: String
     category: String!
+    code: String
+    controlType: InternalControlType
+    nature: InternalControlNature
+    operatingFrequency: TimeSpan
+    evidenceCadence: TimeSpan
+    testingCadence: TimeSpan
+    implementationStatus: InternalControlImplementationStatus
+    ownerId: ID
+    reviewerId: ID
 }
 
 input UpdateMeasureInput {
@@ -168,6 +234,15 @@ input UpdateMeasureInput {
     description: String @goField(omittable: true)
     category: String
     state: MeasureState
+    code: String @goField(omittable: true)
+    controlType: InternalControlType @goField(omittable: true)
+    nature: InternalControlNature @goField(omittable: true)
+    operatingFrequency: TimeSpan @goField(omittable: true)
+    evidenceCadence: TimeSpan @goField(omittable: true)
+    testingCadence: TimeSpan @goField(omittable: true)
+    implementationStatus: InternalControlImplementationStatus
+    ownerId: ID @goField(omittable: true)
+    reviewerId: ID @goField(omittable: true)
 }
 
 input ImportMeasureInput {

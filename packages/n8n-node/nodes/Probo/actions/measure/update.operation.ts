@@ -20,6 +20,7 @@
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+import { internalControlFields, readInternalControlFields } from './internalControlFields';
 
 export const description: INodeProperties[] = [
 	{
@@ -106,6 +107,7 @@ export const description: INodeProperties[] = [
 		default: 'NOT_STARTED',
 		description: 'The state of the measure',
 	},
+	...internalControlFields('update'),
 ];
 
 export async function execute(
@@ -126,6 +128,15 @@ export async function execute(
 					name
 					description
 					category
+					code
+					controlType
+					nature
+					operatingFrequency
+					evidenceCadence
+					testingCadence
+					nextEvidenceDue
+					nextTestDue
+					implementationStatus
 					state
 					createdAt
 					updatedAt
@@ -134,7 +145,12 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = { id };
+	const input: Record<string, string> = {
+		id,
+		...readInternalControlFields(
+			(field) => this.getNodeParameter(field, itemIndex, '') as string,
+		),
+	};
 	if (name) input.name = name;
 	if (description) input.description = description;
 	if (category) input.category = category;

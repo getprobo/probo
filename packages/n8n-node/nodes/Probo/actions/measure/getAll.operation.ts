@@ -87,6 +87,15 @@ export async function execute(
 								name
 								description
 								category
+								code
+								controlType
+								nature
+								operatingFrequency
+								evidenceCadence
+								testingCadence
+								nextEvidenceDue
+								nextTestDue
+								implementationStatus
 								state
 								createdAt
 								updatedAt
