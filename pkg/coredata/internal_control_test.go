@@ -26,40 +26,53 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/timespan"
 )
+
+func mustTimeSpan(t *testing.T, raw string) *timespan.TimeSpan {
+	t.Helper()
+
+	span, err := timespan.Parse(raw)
+	require.NoError(t, err)
+
+	return &span
+}
 
 func TestNextInternalControlDue(t *testing.T) {
 	t.Parallel()
 
 	from := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
 
-	t.Run("scheduled cadences advance from the anchor", func(t *testing.T) {
+	t.Run("positive durations advance from the anchor", func(t *testing.T) {
 		t.Parallel()
 
 		cases := []struct {
-			cadence InternalControlCadence
-			want    time.Time
+			raw  string
+			want time.Time
 		}{
-			{InternalControlCadenceDaily, from.AddDate(0, 0, 1)},
-			{InternalControlCadenceWeekly, from.AddDate(0, 0, 7)},
-			{InternalControlCadenceMonthly, from.AddDate(0, 1, 0)},
-			{InternalControlCadenceQuarterly, from.AddDate(0, 3, 0)},
-			{InternalControlCadenceSemiannually, from.AddDate(0, 6, 0)},
-			{InternalControlCadenceAnnually, from.AddDate(1, 0, 0)},
+			{"P1D", from.AddDate(0, 0, 1)},
+			{"P7D", from.AddDate(0, 0, 7)},
+			{"P1M", from.AddDate(0, 1, 0)},
+			{"P3M", from.AddDate(0, 3, 0)},
+			{"P6M", from.AddDate(0, 6, 0)},
+			{"P1Y", from.AddDate(1, 0, 0)},
 		}
 
 		for _, tc := range cases {
-			got := NextInternalControlDue(from, tc.cadence)
+			got := NextInternalControlDue(from, mustTimeSpan(t, tc.raw))
 			require.NotNil(t, got)
-			assert.True(t, tc.want.Equal(*got), tc.cadence)
+			assert.True(t, tc.want.Equal(*got), tc.raw)
 		}
 	})
 
-	t.Run("continuous and ad hoc have no due date", func(t *testing.T) {
+	t.Run("empty and non-positive durations have no due date", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Nil(t, NextInternalControlDue(from, InternalControlCadenceContinuous))
-		assert.Nil(t, NextInternalControlDue(from, InternalControlCadenceAdHoc))
+		assert.Nil(t, NextInternalControlDue(from, nil))
+
+		zero := timespan.TimeSpan{}
+		assert.Nil(t, NextInternalControlDue(from, &zero))
+		assert.Nil(t, NextInternalControlDue(from, mustTimeSpan(t, "-P1D")))
 	})
 }
 

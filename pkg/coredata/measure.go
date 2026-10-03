@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 type (
@@ -47,9 +48,9 @@ type (
 		Code                 *string                             `db:"code"`
 		ControlType          *InternalControlType                `db:"control_type"`
 		Nature               *InternalControlNature              `db:"nature"`
-		OperatingFrequency   *InternalControlCadence             `db:"operating_frequency"`
-		EvidenceCadence      *InternalControlCadence             `db:"evidence_cadence"`
-		TestingCadence       *InternalControlCadence             `db:"testing_cadence"`
+		OperatingFrequency   *timespan.TimeSpan                  `db:"operating_frequency"`
+		EvidenceCadence      *timespan.TimeSpan                  `db:"evidence_cadence"`
+		TestingCadence       *timespan.TimeSpan                  `db:"testing_cadence"`
 		NextEvidenceDue      *time.Time                          `db:"next_evidence_due"`
 		NextTestDue          *time.Time                          `db:"next_test_due"`
 		ImplementationStatus InternalControlImplementationStatus `db:"implementation_status"`
@@ -466,9 +467,9 @@ msrs AS (
 		CAST(NULL AS text) AS code,
 		CAST(NULL AS text) AS control_type,
 		CAST(NULL AS text) AS nature,
-		CAST(NULL AS text) AS operating_frequency,
-		CAST(NULL AS text) AS evidence_cadence,
-		CAST(NULL AS text) AS testing_cadence,
+		CAST(NULL AS interval) AS operating_frequency,
+		CAST(NULL AS interval) AS evidence_cadence,
+		CAST(NULL AS interval) AS testing_cadence,
 		CAST(NULL AS timestamptz) AS next_evidence_due,
 		CAST(NULL AS timestamptz) AS next_test_due,
 		CASE latest.state

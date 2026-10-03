@@ -2488,19 +2488,6 @@ components:
         - MANUAL
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlNature
 
-    InternalControlCadence:
-      type: string
-      enum:
-        - CONTINUOUS
-        - DAILY
-        - WEEKLY
-        - MONTHLY
-        - QUARTERLY
-        - SEMIANNUALLY
-        - ANNUALLY
-        - AD_HOC
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlCadence
-
     InternalControlImplementationStatus:
       type: string
       enum:
@@ -2586,19 +2573,19 @@ components:
           description: Manual
         operating_frequency:
           anyOf:
-            - $ref: "#/components/schemas/InternalControlCadence"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: How often the control runs
+          description: How often the control runs, as an ISO-8601 duration
         evidence_cadence:
           anyOf:
-            - $ref: "#/components/schemas/InternalControlCadence"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: How often evidence is collected
+          description: How often evidence is collected, as an ISO-8601 duration
         testing_cadence:
           anyOf:
-            - $ref: "#/components/schemas/InternalControlCadence"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: How often effectiveness is tested
+          description: How often effectiveness is tested, as an ISO-8601 duration
         next_evidence_due:
           type:
             - string
@@ -2994,14 +2981,14 @@ components:
           $ref: "#/components/schemas/InternalControlNature"
           description: Manual
         operating_frequency:
-          $ref: "#/components/schemas/InternalControlCadence"
-          description: How often the control runs
+          $ref: "#/components/schemas/TimeSpan"
+          description: How often the control runs, as an ISO-8601 duration
         evidence_cadence:
-          $ref: "#/components/schemas/InternalControlCadence"
-          description: How often evidence is collected
+          $ref: "#/components/schemas/TimeSpan"
+          description: How often evidence is collected, as an ISO-8601 duration
         testing_cadence:
-          $ref: "#/components/schemas/InternalControlCadence"
-          description: How often effectiveness is tested
+          $ref: "#/components/schemas/TimeSpan"
+          description: How often effectiveness is tested, as an ISO-8601 duration
         implementation_status:
           $ref: "#/components/schemas/InternalControlImplementationStatus"
           description: Whether the control is not implemented, in progress, implemented, or operating
@@ -3059,21 +3046,21 @@ components:
           go.probo.inc/mcpgen/omittable: true
         operating_frequency:
           anyOf:
-            - $ref: "#/components/schemas/InternalControlCadence"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: How often the control runs
+          description: How often the control runs, as an ISO-8601 duration
           go.probo.inc/mcpgen/omittable: true
         evidence_cadence:
           anyOf:
-            - $ref: "#/components/schemas/InternalControlCadence"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: How often evidence is collected
+          description: How often evidence is collected, as an ISO-8601 duration
           go.probo.inc/mcpgen/omittable: true
         testing_cadence:
           anyOf:
-            - $ref: "#/components/schemas/InternalControlCadence"
+            - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: How often effectiveness is tested
+          description: How often effectiveness is tested, as an ISO-8601 duration
           go.probo.inc/mcpgen/omittable: true
         implementation_status:
           $ref: "#/components/schemas/InternalControlImplementationStatus"

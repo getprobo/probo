@@ -24,12 +24,13 @@ import (
 	"encoding"
 	"fmt"
 	"time"
+
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 type (
 	InternalControlType                 string
 	InternalControlNature               string
-	InternalControlCadence              string
 	InternalControlImplementationStatus string
 )
 
@@ -39,15 +40,6 @@ const (
 	InternalControlTypeCorrective InternalControlType = "CORRECTIVE"
 
 	InternalControlNatureManual InternalControlNature = "MANUAL"
-
-	InternalControlCadenceContinuous   InternalControlCadence = "CONTINUOUS"
-	InternalControlCadenceDaily        InternalControlCadence = "DAILY"
-	InternalControlCadenceWeekly       InternalControlCadence = "WEEKLY"
-	InternalControlCadenceMonthly      InternalControlCadence = "MONTHLY"
-	InternalControlCadenceQuarterly    InternalControlCadence = "QUARTERLY"
-	InternalControlCadenceSemiannually InternalControlCadence = "SEMIANNUALLY"
-	InternalControlCadenceAnnually     InternalControlCadence = "ANNUALLY"
-	InternalControlCadenceAdHoc        InternalControlCadence = "AD_HOC"
 
 	InternalControlImplementationStatusNotImplemented InternalControlImplementationStatus = "NOT_IMPLEMENTED"
 	InternalControlImplementationStatusInProgress     InternalControlImplementationStatus = "IN_PROGRESS"
@@ -63,10 +55,6 @@ var (
 	_ fmt.Stringer             = InternalControlNature("")
 	_ encoding.TextMarshaler   = InternalControlNature("")
 	_ encoding.TextUnmarshaler = (*InternalControlNature)(nil)
-
-	_ fmt.Stringer             = InternalControlCadence("")
-	_ encoding.TextMarshaler   = InternalControlCadence("")
-	_ encoding.TextUnmarshaler = (*InternalControlCadence)(nil)
 
 	_ fmt.Stringer             = InternalControlImplementationStatus("")
 	_ encoding.TextMarshaler   = InternalControlImplementationStatus("")
@@ -145,73 +133,15 @@ func (v *InternalControlNature) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func InternalControlCadences() []InternalControlCadence {
-	return []InternalControlCadence{
-		InternalControlCadenceContinuous,
-		InternalControlCadenceDaily,
-		InternalControlCadenceWeekly,
-		InternalControlCadenceMonthly,
-		InternalControlCadenceQuarterly,
-		InternalControlCadenceSemiannually,
-		InternalControlCadenceAnnually,
-		InternalControlCadenceAdHoc,
-	}
-}
-
-func (v InternalControlCadence) IsValid() bool {
-	switch v {
-	case InternalControlCadenceContinuous,
-		InternalControlCadenceDaily,
-		InternalControlCadenceWeekly,
-		InternalControlCadenceMonthly,
-		InternalControlCadenceQuarterly,
-		InternalControlCadenceSemiannually,
-		InternalControlCadenceAnnually,
-		InternalControlCadenceAdHoc:
-		return true
-	}
-
-	return false
-}
-
-func (v InternalControlCadence) String() string {
-	return string(v)
-}
-
-func (v InternalControlCadence) MarshalText() ([]byte, error) {
-	return []byte(v.String()), nil
-}
-
-func (v *InternalControlCadence) UnmarshalText(text []byte) error {
-	val := InternalControlCadence(text)
-	if !val.IsValid() {
-		return fmt.Errorf("invalid InternalControlCadence value: %q", string(text))
-	}
-
-	*v = val
-
-	return nil
-}
-
 // NextInternalControlDue returns the next evidence or test due instant for a
-// cadence measured from from. Continuous and ad-hoc cadences have no schedule.
-func NextInternalControlDue(from time.Time, cadence InternalControlCadence) *time.Time {
-	var next time.Time
+// cadence measured from from. An empty or non-positive duration has no schedule.
+func NextInternalControlDue(from time.Time, cadence *timespan.TimeSpan) *time.Time {
+	if cadence == nil || cadence.IsZero() {
+		return nil
+	}
 
-	switch cadence {
-	case InternalControlCadenceDaily:
-		next = from.AddDate(0, 0, 1)
-	case InternalControlCadenceWeekly:
-		next = from.AddDate(0, 0, 7)
-	case InternalControlCadenceMonthly:
-		next = from.AddDate(0, 1, 0)
-	case InternalControlCadenceQuarterly:
-		next = from.AddDate(0, 3, 0)
-	case InternalControlCadenceSemiannually:
-		next = from.AddDate(0, 6, 0)
-	case InternalControlCadenceAnnually:
-		next = from.AddDate(1, 0, 0)
-	default:
+	next := cadence.AddTo(from)
+	if !next.After(from) {
 		return nil
 	}
 

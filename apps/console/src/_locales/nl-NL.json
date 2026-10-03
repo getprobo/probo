@@ -3764,6 +3764,9 @@
       "code": "Code",
       "owner": "Eigenaar",
       "reviewer": "Beoordelaar",
+      "operatingFrequency": "Uitvoeringsfrequentie",
+      "evidenceCadence": "Bewijscadans",
+      "testingCadence": "Testcadans",
       "nextEvidenceDue": "Bewijs verschuldigd",
       "nextTestDue": "Test verschuldigd"
     },
@@ -3976,16 +3979,6 @@
     "natures": {
       "manual": "Handmatig"
     },
-    "cadences": {
-      "continuous": "Continu",
-      "daily": "Dagelijks",
-      "weekly": "Wekelijks",
-      "monthly": "Maandelijks",
-      "quarterly": "Per kwartaal",
-      "semiannually": "Halfjaarlijks",
-      "annually": "Jaarlijks",
-      "ad_hoc": "Ad hoc"
-    },
     "implementationStatuses": {
       "not_implemented": "Niet geïmplementeerd",
       "in_progress": "In uitvoering",
@@ -3994,7 +3987,9 @@
     },
     "actions": {
       "create": "Interne controle aanmaken",
-      "update": "Interne controle bijwerken"
+      "update": "Interne controle bijwerken",
+      "addDuration": "Duur toevoegen",
+      "clearDuration": "Duur wissen"
     }
   },
   "measureEvidencesTab": {

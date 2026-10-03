@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import {
-  internalControlCadences,
   internalControlImplementationStatuses,
   internalControlNatures,
   internalControlTypes,
@@ -39,7 +38,8 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { Breadcrumb } from "@probo/ui";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -54,6 +54,9 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
+import { TaskDurationField } from "#/pages/organizations/tasks/_components/TaskDurationField";
+
+const controlDurationUnits = ["D", "W", "MO", "Y"] as const;
 
 const blankableEnum = <T extends readonly [string, ...string[]]>(values: T) =>
   z.union([z.enum(values), z.literal("")]);
@@ -128,9 +131,9 @@ export default function MeasureFormDialog(props: Props) {
     code: z.string().optional().nullable(),
     controlType: blankableEnum(internalControlTypes),
     nature: blankableEnum(internalControlNatures),
-    operatingFrequency: blankableEnum(internalControlCadences),
-    evidenceCadence: blankableEnum(internalControlCadences),
-    testingCadence: blankableEnum(internalControlCadences),
+    operatingFrequency: z.string().nullable(),
+    evidenceCadence: z.string().nullable(),
+    testingCadence: z.string().nullable(),
     implementationStatus: z.enum(internalControlImplementationStatuses),
     ownerId: z.string().optional().nullable(),
     reviewerId: z.string().optional().nullable(),
@@ -154,9 +157,9 @@ export default function MeasureFormDialog(props: Props) {
         code: measure?.code ?? "",
         controlType: measure?.controlType ?? "",
         nature: measure?.nature ?? "",
-        operatingFrequency: measure?.operatingFrequency ?? "",
-        evidenceCadence: measure?.evidenceCadence ?? "",
-        testingCadence: measure?.testingCadence ?? "",
+        operatingFrequency: measure?.operatingFrequency ?? null,
+        evidenceCadence: measure?.evidenceCadence ?? null,
+        testingCadence: measure?.testingCadence ?? null,
         implementationStatus: measure?.implementationStatus ?? "NOT_IMPLEMENTED",
         ownerId: measure?.owner?.id ?? "",
         reviewerId: measure?.reviewer?.id ?? "",
@@ -310,40 +313,64 @@ export default function MeasureFormDialog(props: Props) {
               label={t("measureFormDialog.fields.operatingFrequency")}
               error={formState.errors.operatingFrequency?.message}
             >
-              <ControlledSelect control={control} name="operatingFrequency">
-                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
-                {internalControlCadences.map(value => (
-                  <Option key={value} value={value}>
-                    {t(`measureFormDialog.cadences.${value.toLowerCase()}`)}
-                  </Option>
-                ))}
-              </ControlledSelect>
+              <Suspense fallback={null}>
+                <Controller
+                  control={control}
+                  name="operatingFrequency"
+                  render={({ field }) => (
+                    <TaskDurationField
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      defaultValue="P1D"
+                      units={controlDurationUnits}
+                      addLabel={t("measureFormDialog.actions.addDuration")}
+                      clearLabel={t("measureFormDialog.actions.clearDuration")}
+                    />
+                  )}
+                />
+              </Suspense>
             </PropertyRow>
             <PropertyRow
               label={t("measureFormDialog.fields.evidenceCadence")}
               error={formState.errors.evidenceCadence?.message}
             >
-              <ControlledSelect control={control} name="evidenceCadence">
-                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
-                {internalControlCadences.map(value => (
-                  <Option key={value} value={value}>
-                    {t(`measureFormDialog.cadences.${value.toLowerCase()}`)}
-                  </Option>
-                ))}
-              </ControlledSelect>
+              <Suspense fallback={null}>
+                <Controller
+                  control={control}
+                  name="evidenceCadence"
+                  render={({ field }) => (
+                    <TaskDurationField
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      defaultValue="P1M"
+                      units={controlDurationUnits}
+                      addLabel={t("measureFormDialog.actions.addDuration")}
+                      clearLabel={t("measureFormDialog.actions.clearDuration")}
+                    />
+                  )}
+                />
+              </Suspense>
             </PropertyRow>
             <PropertyRow
               label={t("measureFormDialog.fields.testingCadence")}
               error={formState.errors.testingCadence?.message}
             >
-              <ControlledSelect control={control} name="testingCadence">
-                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
-                {internalControlCadences.map(value => (
-                  <Option key={value} value={value}>
-                    {t(`measureFormDialog.cadences.${value.toLowerCase()}`)}
-                  </Option>
-                ))}
-              </ControlledSelect>
+              <Suspense fallback={null}>
+                <Controller
+                  control={control}
+                  name="testingCadence"
+                  render={({ field }) => (
+                    <TaskDurationField
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      defaultValue="P3M"
+                      units={controlDurationUnits}
+                      addLabel={t("measureFormDialog.actions.addDuration")}
+                      clearLabel={t("measureFormDialog.actions.clearDuration")}
+                    />
+                  )}
+                />
+              </Suspense>
             </PropertyRow>
             <PropertyRow
               label={t("measureFormDialog.fields.implementationStatus")}

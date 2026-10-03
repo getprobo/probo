@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/timespan"
 )
 
 func TestApplyMeasureUpdate(t *testing.T) {
@@ -129,7 +130,7 @@ func TestApplyMeasureUpdate(t *testing.T) {
 	t.Run("changing the evidence cadence sets the next due date", func(t *testing.T) {
 		t.Parallel()
 
-		quarterly := coredata.InternalControlCadenceQuarterly
+		quarterly := mustMeasureSpan(t, "P3M")
 		cadence := &quarterly
 		measure := &coredata.Measure{}
 
@@ -148,7 +149,7 @@ func TestApplyMeasureUpdate(t *testing.T) {
 	t.Run("repeating a cadence keeps the existing due date", func(t *testing.T) {
 		t.Parallel()
 
-		quarterly := coredata.InternalControlCadenceQuarterly
+		quarterly := mustMeasureSpan(t, "P3M")
 		cadence := &quarterly
 		due := now.AddDate(0, 1, 0)
 		measure := &coredata.Measure{
@@ -169,8 +170,8 @@ func TestApplyMeasureUpdate(t *testing.T) {
 	t.Run("clearing a cadence clears the due date", func(t *testing.T) {
 		t.Parallel()
 
-		quarterly := coredata.InternalControlCadenceQuarterly
-		var cleared *coredata.InternalControlCadence
+		quarterly := mustMeasureSpan(t, "P3M")
+		var cleared *timespan.TimeSpan
 		due := now
 		measure := &coredata.Measure{
 			EvidenceCadence: &quarterly,
@@ -186,4 +187,13 @@ func TestApplyMeasureUpdate(t *testing.T) {
 		assert.Nil(t, measure.EvidenceCadence)
 		assert.Nil(t, measure.NextEvidenceDue)
 	})
+}
+
+func mustMeasureSpan(t *testing.T, raw string) timespan.TimeSpan {
+	t.Helper()
+
+	span, err := timespan.Parse(raw)
+	require.NoError(t, err)
+
+	return span
 }

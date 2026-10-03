@@ -39,17 +39,6 @@ export const internalControlNatures = [
     "MANUAL",
 ] as const;
 
-export const internalControlCadences = [
-    "CONTINUOUS",
-    "DAILY",
-    "WEEKLY",
-    "MONTHLY",
-    "QUARTERLY",
-    "SEMIANNUALLY",
-    "ANNUALLY",
-    "AD_HOC",
-] as const;
-
 export const internalControlImplementationStatuses = [
     "NOT_IMPLEMENTED",
     "IN_PROGRESS",

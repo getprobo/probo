@@ -2278,7 +2278,7 @@
   },
   "measureDetailPage": {
     "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
-    "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
+    "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
     "actions": { "edit": "Edit", "delete": "Delete" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
@@ -2349,9 +2349,8 @@
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "controlTypes": { "preventive": "Preventive", "detective": "Detective", "corrective": "Corrective" },
     "natures": { "manual": "Manual" },
-    "cadences": { "continuous": "Continuous", "daily": "Daily", "weekly": "Weekly", "monthly": "Monthly", "quarterly": "Quarterly", "semiannually": "Semiannually", "annually": "Annually", "ad_hoc": "Ad hoc" },
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
-    "actions": { "create": "Create internal control", "update": "Update internal control" }
+    "actions": { "create": "Create internal control", "update": "Update internal control", "addDuration": "Add duration", "clearDuration": "Clear duration" }
   },
   "measureEvidencesTab": {
     "pageTitle": "{{name}} - Evidences",

@@ -3768,6 +3768,9 @@
       "code": "Code",
       "owner": "Responsable",
       "reviewer": "Relecteur",
+      "operatingFrequency": "Fréquence d’exploitation",
+      "evidenceCadence": "Cadence des preuves",
+      "testingCadence": "Cadence des tests",
       "nextEvidenceDue": "Preuve due",
       "nextTestDue": "Test dû"
     },
@@ -3980,16 +3983,6 @@
     "natures": {
       "manual": "Manuel"
     },
-    "cadences": {
-      "continuous": "Continu",
-      "daily": "Quotidien",
-      "weekly": "Hebdomadaire",
-      "monthly": "Mensuel",
-      "quarterly": "Trimestriel",
-      "semiannually": "Semestriel",
-      "annually": "Annuel",
-      "ad_hoc": "Ponctuel"
-    },
     "implementationStatuses": {
       "not_implemented": "Non mis en œuvre",
       "in_progress": "En cours",
@@ -3998,7 +3991,9 @@
     },
     "actions": {
       "create": "Créer le contrôle interne",
-      "update": "Mettre à jour le contrôle interne"
+      "update": "Mettre à jour le contrôle interne",
+      "addDuration": "Ajouter une durée",
+      "clearDuration": "Effacer la durée"
     }
   },
   "measureEvidencesTab": {

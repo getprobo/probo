@@ -20,18 +20,6 @@
 
 import type { INodeProperties } from 'n8n-workflow';
 
-const cadences = [
-	{ name: 'Not set', value: '' },
-	{ name: 'Continuous', value: 'CONTINUOUS' },
-	{ name: 'Daily', value: 'DAILY' },
-	{ name: 'Weekly', value: 'WEEKLY' },
-	{ name: 'Monthly', value: 'MONTHLY' },
-	{ name: 'Quarterly', value: 'QUARTERLY' },
-	{ name: 'Semiannually', value: 'SEMIANNUALLY' },
-	{ name: 'Annually', value: 'ANNUALLY' },
-	{ name: 'Ad hoc', value: 'AD_HOC' },
-];
-
 export function internalControlFields(operation: string): INodeProperties[] {
 	const displayOptions = {
 		show: {
@@ -78,29 +66,26 @@ export function internalControlFields(operation: string): INodeProperties[] {
 		{
 			displayName: 'Operating Frequency',
 			name: 'operatingFrequency',
-			type: 'options',
+			type: 'string',
 			displayOptions,
-			options: cadences,
 			default: '',
-			description: 'How often the control runs',
+			description: 'ISO-8601 duration, for example P1D',
 		},
 		{
 			displayName: 'Evidence Cadence',
 			name: 'evidenceCadence',
-			type: 'options',
+			type: 'string',
 			displayOptions,
-			options: cadences,
 			default: '',
-			description: 'How often evidence is collected',
+			description: 'ISO-8601 duration, for example P1M',
 		},
 		{
 			displayName: 'Testing Cadence',
 			name: 'testingCadence',
-			type: 'options',
+			type: 'string',
 			displayOptions,
-			options: cadences,
 			default: '',
-			description: 'How often effectiveness is tested',
+			description: 'ISO-8601 duration, for example P3M',
 		},
 		{
 			displayName: 'Implementation Status',

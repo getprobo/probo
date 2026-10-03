@@ -22,42 +22,6 @@ enum InternalControlNature
         )
 }
 
-enum InternalControlCadence
-    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlCadence") {
-    CONTINUOUS
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceContinuous"
-        )
-    DAILY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceDaily"
-        )
-    WEEKLY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceWeekly"
-        )
-    MONTHLY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceMonthly"
-        )
-    QUARTERLY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceQuarterly"
-        )
-    SEMIANNUALLY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceSemiannually"
-        )
-    ANNUALLY
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceAnnually"
-        )
-    AD_HOC
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlCadenceAdHoc"
-        )
-}
-
 enum InternalControlImplementationStatus
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus"
@@ -136,9 +100,9 @@ type Measure implements Node {
     code: String
     controlType: InternalControlType
     nature: InternalControlNature
-    operatingFrequency: InternalControlCadence
-    evidenceCadence: InternalControlCadence
-    testingCadence: InternalControlCadence
+    operatingFrequency: TimeSpan
+    evidenceCadence: TimeSpan
+    testingCadence: TimeSpan
     nextEvidenceDue: Datetime
     nextTestDue: Datetime
     implementationStatus: InternalControlImplementationStatus!
@@ -256,9 +220,9 @@ input CreateMeasureInput {
     code: String
     controlType: InternalControlType
     nature: InternalControlNature
-    operatingFrequency: InternalControlCadence
-    evidenceCadence: InternalControlCadence
-    testingCadence: InternalControlCadence
+    operatingFrequency: TimeSpan
+    evidenceCadence: TimeSpan
+    testingCadence: TimeSpan
     implementationStatus: InternalControlImplementationStatus
     ownerId: ID
     reviewerId: ID
@@ -273,9 +237,9 @@ input UpdateMeasureInput {
     code: String @goField(omittable: true)
     controlType: InternalControlType @goField(omittable: true)
     nature: InternalControlNature @goField(omittable: true)
-    operatingFrequency: InternalControlCadence @goField(omittable: true)
-    evidenceCadence: InternalControlCadence @goField(omittable: true)
-    testingCadence: InternalControlCadence @goField(omittable: true)
+    operatingFrequency: TimeSpan @goField(omittable: true)
+    evidenceCadence: TimeSpan @goField(omittable: true)
+    testingCadence: TimeSpan @goField(omittable: true)
     implementationStatus: InternalControlImplementationStatus
     ownerId: ID @goField(omittable: true)
     reviewerId: ID @goField(omittable: true)

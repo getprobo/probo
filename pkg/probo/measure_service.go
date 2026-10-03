@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
 	taskpkg "go.probo.inc/probo/pkg/task"
+	"go.probo.inc/probo/pkg/timespan"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -50,9 +51,9 @@ type (
 		Code                 *string
 		ControlType          *coredata.InternalControlType
 		Nature               *coredata.InternalControlNature
-		OperatingFrequency   *coredata.InternalControlCadence
-		EvidenceCadence      *coredata.InternalControlCadence
-		TestingCadence       *coredata.InternalControlCadence
+		OperatingFrequency   *timespan.TimeSpan
+		EvidenceCadence      *timespan.TimeSpan
+		TestingCadence       *timespan.TimeSpan
 		ImplementationStatus *coredata.InternalControlImplementationStatus
 		OwnerID              *gid.GID
 		ReviewerID           *gid.GID
@@ -67,9 +68,9 @@ type (
 		Code                 **string
 		ControlType          **coredata.InternalControlType
 		Nature               **coredata.InternalControlNature
-		OperatingFrequency   **coredata.InternalControlCadence
-		EvidenceCadence      **coredata.InternalControlCadence
-		TestingCadence       **coredata.InternalControlCadence
+		OperatingFrequency   **timespan.TimeSpan
+		EvidenceCadence      **timespan.TimeSpan
+		TestingCadence       **timespan.TimeSpan
 		ImplementationStatus *coredata.InternalControlImplementationStatus
 		OwnerID              **gid.GID
 		ReviewerID           **gid.GID
@@ -111,9 +112,9 @@ func (cmr *CreateMeasureRequest) Validate() error {
 	v.Check(cmr.Code, "code", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cmr.ControlType, "control_type", validator.OneOfSlice(coredata.InternalControlTypes()))
 	v.Check(cmr.Nature, "nature", validator.OneOfSlice(coredata.InternalControlNatures()))
-	v.Check(cmr.OperatingFrequency, "operating_frequency", validator.OneOfSlice(coredata.InternalControlCadences()))
-	v.Check(cmr.EvidenceCadence, "evidence_cadence", validator.OneOfSlice(coredata.InternalControlCadences()))
-	v.Check(cmr.TestingCadence, "testing_cadence", validator.OneOfSlice(coredata.InternalControlCadences()))
+	v.Check(cmr.OperatingFrequency, "operating_frequency", positiveTimeSpan())
+	v.Check(cmr.EvidenceCadence, "evidence_cadence", positiveTimeSpan())
+	v.Check(cmr.TestingCadence, "testing_cadence", positiveTimeSpan())
 	v.Check(cmr.ImplementationStatus, "implementation_status", validator.OneOfSlice(coredata.InternalControlImplementationStatuses()))
 	v.Check(cmr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(cmr.ReviewerID, "reviewer_id", validator.GID(coredata.MembershipProfileEntityType))
@@ -139,9 +140,9 @@ func (umr *UpdateMeasureRequest) Validate() error {
 	v.Check(umr.Code, "code", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(umr.ControlType, "control_type", validator.OneOfSlice(coredata.InternalControlTypes()))
 	v.Check(umr.Nature, "nature", validator.OneOfSlice(coredata.InternalControlNatures()))
-	v.Check(umr.OperatingFrequency, "operating_frequency", validator.OneOfSlice(coredata.InternalControlCadences()))
-	v.Check(umr.EvidenceCadence, "evidence_cadence", validator.OneOfSlice(coredata.InternalControlCadences()))
-	v.Check(umr.TestingCadence, "testing_cadence", validator.OneOfSlice(coredata.InternalControlCadences()))
+	v.Check(umr.OperatingFrequency, "operating_frequency", positiveTimeSpan())
+	v.Check(umr.EvidenceCadence, "evidence_cadence", positiveTimeSpan())
+	v.Check(umr.TestingCadence, "testing_cadence", positiveTimeSpan())
 	v.Check(umr.ImplementationStatus, "implementation_status", validator.OneOfSlice(coredata.InternalControlImplementationStatuses()))
 	v.Check(umr.OwnerID, "owner_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(umr.ReviewerID, "reviewer_id", validator.GID(coredata.MembershipProfileEntityType))
@@ -812,8 +813,8 @@ func (s MeasureService) Create(
 				OperatingFrequency:   req.OperatingFrequency,
 				EvidenceCadence:      req.EvidenceCadence,
 				TestingCadence:       req.TestingCadence,
-				NextEvidenceDue:      coredata.NextInternalControlDue(now, cadenceOrZero(req.EvidenceCadence)),
-				NextTestDue:          coredata.NextInternalControlDue(now, cadenceOrZero(req.TestingCadence)),
+				NextEvidenceDue:      coredata.NextInternalControlDue(now, req.EvidenceCadence),
+				NextTestDue:          coredata.NextInternalControlDue(now, req.TestingCadence),
 				ImplementationStatus: status,
 				OwnerID:              req.OwnerID,
 				ReviewerID:           req.ReviewerID,
@@ -1169,9 +1170,9 @@ func setOmittable[T any](dest **T, src **T) {
 }
 
 func assignCadence(
-	current **coredata.InternalControlCadence,
+	current **timespan.TimeSpan,
 	due **time.Time,
-	next **coredata.InternalControlCadence,
+	next **timespan.TimeSpan,
 	now time.Time,
 ) {
 	if next == nil {
@@ -1190,7 +1191,7 @@ func assignCadence(
 	changed := *current == nil || **current != **next
 	*current = *next
 	if changed && due != nil {
-		*due = coredata.NextInternalControlDue(now, **next)
+		*due = coredata.NextInternalControlDue(now, *next)
 	}
 }
 
@@ -1222,12 +1223,23 @@ func applyMeasureUpdate(req *UpdateMeasureRequest, measure *coredata.Measure, no
 	}
 }
 
-func cadenceOrZero(cadence *coredata.InternalControlCadence) coredata.InternalControlCadence {
-	if cadence == nil {
-		return ""
-	}
+func positiveTimeSpan() validator.ValidatorFunc {
+	return func(value any) *validator.ValidationError {
+		span, ok := value.(timespan.TimeSpan)
+		if !ok || span.IsZero() {
+			return nil
+		}
 
-	return *cadence
+		anchor := time.Unix(0, 0).UTC()
+		if !span.AddTo(anchor).After(anchor) {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeCustom,
+				Message: "must be a positive duration",
+			}
+		}
+
+		return nil
+	}
 }
 
 func loadMeasureProfile(

@@ -22,6 +22,7 @@ import {
   internalControlImplementationStatuses,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { formatDuration } from "@probo/i18n";
 import {
   ActionDropdown,
   Button,
@@ -86,6 +87,9 @@ export const measureNodeQuery = graphql`
         state
         code
         implementationStatus
+        operatingFrequency
+        evidenceCadence
+        testingCadence
         nextEvidenceDue
         nextTestDue
         owner {
@@ -282,11 +286,32 @@ export default function MeasureDetailPage(props: Props) {
             {measure.reviewer.fullName}
           </span>
         )}
+        {formatDuration(measure.operatingFrequency, t) && (
+          <span>
+            {t("measureDetailPage.fields.operatingFrequency")}
+            {": "}
+            {formatDuration(measure.operatingFrequency, t)}
+          </span>
+        )}
+        {formatDuration(measure.evidenceCadence, t) && (
+          <span>
+            {t("measureDetailPage.fields.evidenceCadence")}
+            {": "}
+            {formatDuration(measure.evidenceCadence, t)}
+          </span>
+        )}
         {dueDate(measure.nextEvidenceDue) && (
           <span>
             {t("measureDetailPage.fields.nextEvidenceDue")}
             {": "}
             {dueDate(measure.nextEvidenceDue)}
+          </span>
+        )}
+        {formatDuration(measure.testingCadence, t) && (
+          <span>
+            {t("measureDetailPage.fields.testingCadence")}
+            {": "}
+            {formatDuration(measure.testingCadence, t)}
           </span>
         )}
         {dueDate(measure.nextTestDue) && (

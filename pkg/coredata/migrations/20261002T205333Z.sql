@@ -26,9 +26,9 @@ ALTER TABLE measures
     ADD COLUMN code TEXT,
     ADD COLUMN control_type TEXT,
     ADD COLUMN nature TEXT,
-    ADD COLUMN operating_frequency TEXT,
-    ADD COLUMN evidence_cadence TEXT,
-    ADD COLUMN testing_cadence TEXT,
+    ADD COLUMN operating_frequency INTERVAL,
+    ADD COLUMN evidence_cadence INTERVAL,
+    ADD COLUMN testing_cadence INTERVAL,
     ADD COLUMN next_evidence_due TIMESTAMP WITH TIME ZONE,
     ADD COLUMN next_test_due TIMESTAMP WITH TIME ZONE,
     ADD COLUMN implementation_status TEXT,
@@ -62,48 +62,6 @@ ALTER TABLE measures
         CHECK (
             nature IS NULL
             OR nature IN ('MANUAL')
-        ),
-    ADD CONSTRAINT measures_operating_frequency_check
-        CHECK (
-            operating_frequency IS NULL
-            OR operating_frequency IN (
-                'CONTINUOUS',
-                'DAILY',
-                'WEEKLY',
-                'MONTHLY',
-                'QUARTERLY',
-                'SEMIANNUALLY',
-                'ANNUALLY',
-                'AD_HOC'
-            )
-        ),
-    ADD CONSTRAINT measures_evidence_cadence_check
-        CHECK (
-            evidence_cadence IS NULL
-            OR evidence_cadence IN (
-                'CONTINUOUS',
-                'DAILY',
-                'WEEKLY',
-                'MONTHLY',
-                'QUARTERLY',
-                'SEMIANNUALLY',
-                'ANNUALLY',
-                'AD_HOC'
-            )
-        ),
-    ADD CONSTRAINT measures_testing_cadence_check
-        CHECK (
-            testing_cadence IS NULL
-            OR testing_cadence IN (
-                'CONTINUOUS',
-                'DAILY',
-                'WEEKLY',
-                'MONTHLY',
-                'QUARTERLY',
-                'SEMIANNUALLY',
-                'ANNUALLY',
-                'AD_HOC'
-            )
         ),
     ADD CONSTRAINT measures_implementation_status_check
         CHECK (
