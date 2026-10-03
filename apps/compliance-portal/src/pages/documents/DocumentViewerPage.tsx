@@ -22,6 +22,7 @@ import type { PreloadedQuery } from "react-relay";
 import { graphql, usePreloadedQuery } from "react-relay";
 
 import { useLocalizedPath } from "#/lib/i18n/useLocale";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import type { DocumentViewerPageQuery } from "./__generated__/DocumentViewerPageQuery.graphql";
 import { DocumentViewer } from "./_components/DocumentViewer";
@@ -110,7 +111,7 @@ function resolveNode(node: DocumentViewerPageQuery["response"]["aliasedNode"]): 
         requested: node.access?.status === "REQUESTED",
       };
     default:
-      throw new Error(`Unexpected aliased node type: ${node.__typename}`);
+      throw new NotFoundError(`Unexpected aliased node type: ${node.__typename}`);
   }
 }
 
