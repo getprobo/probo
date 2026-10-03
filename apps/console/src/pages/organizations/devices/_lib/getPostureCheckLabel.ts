@@ -30,6 +30,7 @@ const checkKeyLabels: Record<string, string> = {
   PASSWORD_POLICY: "devices.postures.checks.passwordPolicy",
   REMOTE_LOGIN: "devices.postures.checks.remoteLogin",
   MALWARE_PROTECTION: "devices.postures.checks.malwareProtection",
+  LOGIN_PASSWORD_REQUIRED: "devices.postures.checks.loginPasswordRequired",
 };
 
 export function getPostureCheckLabel(t: Translator, checkKey: string) {

@@ -3440,7 +3440,7 @@ components:
           description: Device ID
         check_key:
           type: string
-          description: Posture check identifier (for example DISK_ENCRYPTION, SCREEN_LOCK, FIREWALL_ENABLED, TIME_SYNC, OS_VERSION, AUTO_UPDATE, PASSWORD_POLICY, REMOTE_LOGIN, MALWARE_PROTECTION).
+          description: Posture check identifier (for example DISK_ENCRYPTION, SCREEN_LOCK, FIREWALL_ENABLED, TIME_SYNC, OS_VERSION, AUTO_UPDATE, PASSWORD_POLICY, REMOTE_LOGIN, MALWARE_PROTECTION, LOGIN_PASSWORD_REQUIRED).
         status:
           $ref: "#/components/schemas/DevicePostureStatus"
           description: Posture check verdict (PASS, FAIL, UNKNOWN, or NOT_APPLICABLE). NOT_APPLICABLE means the check does not apply on this host or platform.

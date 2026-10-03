@@ -5,6 +5,47 @@ documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `LOGIN_PASSWORD_REQUIRED` check: reports whether a session can open
+  without a password. It looks for automatic login (Windows Winlogon
+  `AutoAdminLogon`; macOS `autoLoginUser` with `/etc/kcpassword`; GDM,
+  LightDM, SDDM and getty `--autologin` on Linux; gettytab `al=` and
+  display managers on FreeBSD) and, on Linux and FreeBSD, counts login
+  accounts with an empty password field. Windows also reports enabled
+  local accounts flagged as not requiring a password, and macOS whether
+  the guest account is on; neither affects the result. Only yes/no
+  values and counts are sent: no account names and no password hashes.
+
+### Changed
+
+- The password policy check now reports the minimum password length
+  that is actually enforced, and its source, on every platform:
+  - Linux reads the PAM password stack (`pam_pwquality`,
+    `pam_cracklib`, `pam_passwdqc`, `pam_unix`) and `pwquality.conf`,
+    falling back to `/etc/login.defs` only when there is no PAM stack.
+  - macOS reads every length rule from `pwpolicy`, including
+    configuration profile passcode payloads, instead of only noting
+    that some policy exists.
+  - FreeBSD reads `minpasswordlen` from the `default` login class and
+    `pam_passwdqc`, ignoring comments; `passwordtime` alone no longer
+    counts as a policy.
+  - Windows reports the `secedit` and MDM DeviceLock lengths separately
+    and ignores the DeviceLock length when DevicePasswordEnabled is off.
+  The check passes when any length rule exists; it does not judge the
+  length.
+
+### Fixed
+
+- Windows disk encryption, firewall, and malware protection checks no
+  longer report Unknown on busy hosts because PowerShell timed out
+  loading the BitLocker, NetSecurity, or Defender module. Disk
+  encryption now queries `Win32_EncryptableVolume` for the system drive
+  only, malware protection queries `MSFT_MpComputerStatus` directly,
+  and the firewall check reads `HNetCfg.FwPolicy2` first, falling back
+  to `Get-NetFirewallProfile`. These WMI-backed calls get 60 seconds
+  instead of 10, and each check now has 75 seconds instead of 25.
+
 ## [0.7.1] - 2026-09-14
 
 ### Fixed

@@ -76,6 +76,8 @@ func ParseDevicePostureValue(
 		return parseRemoteLoginValue(ev)
 	case DevicePostureCheckKeyMalwareProtection:
 		return parseMalwareProtectionValue(ev)
+	case DevicePostureCheckKeyLoginPassword:
+		return parseLoginPasswordValue(ev)
 	}
 
 	return unknownValue()

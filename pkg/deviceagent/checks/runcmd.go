@@ -49,7 +49,18 @@ type CmdResult struct {
 
 // RunCommand executes a command and returns trimmed stdout/stderr.
 func RunCommand(ctx context.Context, name string, args ...string) CmdResult {
-	cmdCtx, cancel := context.WithTimeout(ctx, defaultCommandTimeout)
+	return RunCommandTimeout(ctx, defaultCommandTimeout, name, args...)
+}
+
+// RunCommandTimeout is RunCommand with a caller-chosen timeout, for commands
+// known to need longer than the default. The context deadline still applies.
+func RunCommandTimeout(
+	ctx context.Context,
+	timeout time.Duration,
+	name string,
+	args ...string,
+) CmdResult {
+	cmdCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	resolved, ok := resolveCommandPath(name)
@@ -90,7 +101,7 @@ func RunCommand(ctx context.Context, name string, args ...string) CmdResult {
 		result.Err = fmt.Errorf(
 			"command %q timed out after %s: %w",
 			name,
-			defaultCommandTimeout,
+			timeout,
 			err,
 		)
 	}

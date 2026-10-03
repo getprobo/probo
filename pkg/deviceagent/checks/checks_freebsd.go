@@ -36,6 +36,7 @@ func init() {
 	Register(KeyPasswordPolicy, freebsdPasswordPolicy)
 	Register(KeyRemoteLogin, freebsdRemoteLogin)
 	Register(KeyMalwareProtection, freebsdMalwareProtection)
+	Register(KeyLoginPassword, freebsdLoginPassword)
 }
 
 func freebsdDiskEncryption(ctx context.Context) Result {
@@ -123,24 +124,32 @@ func freebsdAutoUpdate(ctx context.Context) Result {
 	)
 }
 
+// freebsdPasswordPolicy reads minpasswordlen from the default login class,
+// which pam_unix enforces, and pam_passwdqc when /etc/pam.d/passwd enables it
+// (it ships commented out).
 func freebsdPasswordPolicy(ctx context.Context) Result {
 	data, err := os.ReadFile("/etc/login.conf")
 	if err != nil {
 		return unknown(map[string]any{"error": err.Error()})
 	}
 
-	body := string(data)
-	hasPolicy := strings.Contains(body, "minpasswordlen=") ||
-		strings.Contains(body, "passwordtime=")
-
-	ev := map[string]any{
-		"login_conf_snippet": truncate(body, 400),
-	}
-	if hasPolicy {
-		return pass(ev)
+	lengths := passwordLengths{}
+	if n, ok := parseLoginConfMinPasswordLen(string(data)); ok {
+		lengths[passwordSourceLoginConf] = n
 	}
 
-	return fail(ev)
+	if pam, err := os.ReadFile("/etc/pam.d/passwd"); err == nil {
+		for source, n := range pamPasswordLengths(parsePAMPasswordRules(string(pam)), "") {
+			// pam_unix reads its minimum from login.conf, already counted.
+			if source != passwordSourcePAMUnix {
+				lengths[source] = n
+			}
+		}
+	}
+
+	ev, length := passwordPolicyEvidence(lengths)
+
+	return passwordPolicyResult(ev, length)
 }
 
 func freebsdMalwareProtection(ctx context.Context) Result {
@@ -179,4 +188,27 @@ func freebsdRemoteLogin(ctx context.Context) Result {
 	}
 
 	return pass(ev)
+}
+
+// freebsdLoginPassword reports console auto-login through gettytab al=,
+// display managers installed from ports, and master.passwd accounts with an
+// empty password field. Hashes never leave the host.
+func freebsdLoginPassword(ctx context.Context) Result {
+	master, err := os.ReadFile("/etc/master.passwd")
+	if err != nil {
+		return unknown(map[string]any{"error": err.Error()})
+	}
+
+	gettytab, _ := os.ReadFile("/etc/gettytab")
+	ttys, _ := os.ReadFile("/etc/ttys")
+
+	sources := displayManagerAutoLogin("/usr/local/")
+	if freebsdGettyAutoLogin(string(gettytab), string(ttys)) {
+		sources = append(sources, autoLoginSourceGetty)
+	}
+
+	empty := countFreeBSDAccountsWithoutPassword(string(master))
+	ev := loginPasswordEvidence(sources, empty)
+
+	return loginPasswordResult(ev, sources, empty)
 }
