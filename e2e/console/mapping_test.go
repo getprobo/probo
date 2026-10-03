@@ -218,12 +218,9 @@ func TestRiskMeasureMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"organizationId":     owner.GetOrganizationID().String(),
-			"name":               "Risk for Mapping",
-			"category":           "Operational",
-			"treatment":          "MITIGATED",
-			"inherentLikelihood": 3,
-			"inherentImpact":     3,
+			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Risk for Mapping",
+			"category":       "Operational",
 		},
 	}, &createRiskResult)
 	require.NoError(t, err)
@@ -639,12 +636,9 @@ func TestRiskDocumentMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"organizationId":     owner.GetOrganizationID().String(),
-			"name":               "Risk for Document Mapping",
-			"category":           "Operational",
-			"treatment":          "MITIGATED",
-			"inherentLikelihood": 3,
-			"inherentImpact":     3,
+			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Risk for Document Mapping",
+			"category":       "Operational",
 		},
 	}, &createRiskResult)
 	require.NoError(t, err)
@@ -917,12 +911,9 @@ func TestRiskObligationMapping_CreateDelete(t *testing.T) {
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"organizationId":     owner.GetOrganizationID().String(),
-			"name":               "Risk for Obligation Mapping",
-			"category":           "Compliance",
-			"treatment":          "MITIGATED",
-			"inherentLikelihood": 2,
-			"inherentImpact":     4,
+			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Risk for Obligation Mapping",
+			"category":       "Compliance",
 		},
 	}, &createRiskResult)
 	require.NoError(t, err)
