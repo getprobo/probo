@@ -37,8 +37,6 @@ export const internalControlTypes = [
 
 export const internalControlNatures = [
     "MANUAL",
-    "AUTOMATED",
-    "HYBRID",
 ] as const;
 
 export const internalControlCadences = [

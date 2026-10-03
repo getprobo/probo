@@ -3978,9 +3978,7 @@
       "corrective": "Correctif"
     },
     "natures": {
-      "manual": "Manuel",
-      "automated": "Automatisé",
-      "hybrid": "Hybride"
+      "manual": "Manuel"
     },
     "cadences": {
       "continuous": "Continu",

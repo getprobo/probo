@@ -3974,9 +3974,7 @@
       "corrective": "Correctief"
     },
     "natures": {
-      "manual": "Handmatig",
-      "automated": "Geautomatiseerd",
-      "hybrid": "Hybride"
+      "manual": "Handmatig"
     },
     "cadences": {
       "continuous": "Continu",

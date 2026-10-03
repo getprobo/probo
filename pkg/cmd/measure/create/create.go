@@ -239,7 +239,7 @@ func addMeasureFieldFlags(
 ) {
 	cmd.Flags().StringVar(code, "code", "", "Stable reference, for example IC-ACCESS-01")
 	cmd.Flags().StringVar(controlType, "control-type", "", "Control type: PREVENTIVE, DETECTIVE, CORRECTIVE")
-	cmd.Flags().StringVar(nature, "nature", "", "Nature: MANUAL, AUTOMATED, HYBRID")
+	cmd.Flags().StringVar(nature, "nature", "", "Nature: MANUAL")
 	cmd.Flags().StringVar(operatingFrequency, "operating-frequency", "", "How often the control runs")
 	cmd.Flags().StringVar(evidenceCadence, "evidence-cadence", "", "How often evidence is collected")
 	cmd.Flags().StringVar(testingCadence, "testing-cadence", "", "How often effectiveness is tested")
@@ -273,7 +273,7 @@ func setMeasureFields(cmd *cobra.Command, input map[string]any, flags measureFie
 	}
 
 	if cmd.Flags().Changed("nature") {
-		if err := cmdutil.ValidateEnum("nature", flags.nature, []string{"MANUAL", "AUTOMATED", "HYBRID"}); err != nil {
+		if err := cmdutil.ValidateEnum("nature", flags.nature, []string{"MANUAL"}); err != nil {
 			return err
 		}
 

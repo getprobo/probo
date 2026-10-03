@@ -2486,8 +2486,6 @@ components:
       type: string
       enum:
         - MANUAL
-        - AUTOMATED
-        - HYBRID
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlNature
 
     InternalControlCadence:
@@ -2585,7 +2583,7 @@ components:
           anyOf:
             - $ref: "#/components/schemas/InternalControlNature"
             - type: "null"
-          description: Manual, automated, or hybrid
+          description: Manual
         operating_frequency:
           anyOf:
             - $ref: "#/components/schemas/InternalControlCadence"
@@ -2994,7 +2992,7 @@ components:
           description: Preventive, detective, or corrective
         nature:
           $ref: "#/components/schemas/InternalControlNature"
-          description: Manual, automated, or hybrid
+          description: Manual
         operating_frequency:
           $ref: "#/components/schemas/InternalControlCadence"
           description: How often the control runs
@@ -3057,7 +3055,7 @@ components:
           anyOf:
             - $ref: "#/components/schemas/InternalControlNature"
             - type: "null"
-          description: Manual, automated, or hybrid
+          description: Manual
           go.probo.inc/mcpgen/omittable: true
         operating_frequency:
           anyOf:

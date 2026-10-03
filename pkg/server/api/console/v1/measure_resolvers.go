@@ -11,15 +11,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -35,31 +32,6 @@ func (r *measureResolver) Owner(ctx context.Context, obj *types.Measure) (*types
 // Reviewer is the resolver for the reviewer field.
 func (r *measureResolver) Reviewer(ctx context.Context, obj *types.Measure) (*types.Profile, error) {
 	return r.loadProfile(ctx, obj.Reviewer)
-}
-
-func (r *measureResolver) loadProfile(ctx context.Context, profile *types.Profile) (*types.Profile, error) {
-	if profile == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, profile.ID, iam.ActionMembershipProfileGet); err != nil {
-		return nil, err
-	}
-
-	loaders := dataloader.FromContext(ctx)
-
-	loaded, err := loaders.Profile.Load(ctx, profile.ID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewProfile(loaded), nil
 }
 
 // Evidences is the resolver for the evidences field.

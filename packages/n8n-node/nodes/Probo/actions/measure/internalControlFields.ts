@@ -71,11 +71,9 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			options: [
 				{ name: 'Not set', value: '' },
 				{ name: 'Manual', value: 'MANUAL' },
-				{ name: 'Automated', value: 'AUTOMATED' },
-				{ name: 'Hybrid', value: 'HYBRID' },
 			],
 			default: '',
-			description: 'Whether evidence can be collected automatically',
+			description: 'How the control is performed',
 		},
 		{
 			displayName: 'Operating Frequency',

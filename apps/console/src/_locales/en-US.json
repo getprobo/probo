@@ -2348,7 +2348,7 @@
     "properties": "Properties",
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "controlTypes": { "preventive": "Preventive", "detective": "Detective", "corrective": "Corrective" },
-    "natures": { "manual": "Manual", "automated": "Automated", "hybrid": "Hybrid" },
+    "natures": { "manual": "Manual" },
     "cadences": { "continuous": "Continuous", "daily": "Daily", "weekly": "Weekly", "monthly": "Monthly", "quarterly": "Quarterly", "semiannually": "Semiannually", "annually": "Annually", "ad_hoc": "Ad hoc" },
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "actions": { "create": "Create internal control", "update": "Update internal control" }

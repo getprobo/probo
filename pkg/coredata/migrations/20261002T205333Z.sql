@@ -61,7 +61,7 @@ ALTER TABLE measures
     ADD CONSTRAINT measures_nature_check
         CHECK (
             nature IS NULL
-            OR nature IN ('MANUAL', 'AUTOMATED', 'HYBRID')
+            OR nature IN ('MANUAL')
         ),
     ADD CONSTRAINT measures_operating_frequency_check
         CHECK (

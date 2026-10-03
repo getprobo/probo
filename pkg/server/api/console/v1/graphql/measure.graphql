@@ -20,14 +20,6 @@ enum InternalControlNature
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureManual"
         )
-    AUTOMATED
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureAutomated"
-        )
-    HYBRID
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureHybrid"
-        )
 }
 
 enum InternalControlCadence

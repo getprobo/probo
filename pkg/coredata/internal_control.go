@@ -38,9 +38,7 @@ const (
 	InternalControlTypeDetective  InternalControlType = "DETECTIVE"
 	InternalControlTypeCorrective InternalControlType = "CORRECTIVE"
 
-	InternalControlNatureManual    InternalControlNature = "MANUAL"
-	InternalControlNatureAutomated InternalControlNature = "AUTOMATED"
-	InternalControlNatureHybrid    InternalControlNature = "HYBRID"
+	InternalControlNatureManual InternalControlNature = "MANUAL"
 
 	InternalControlCadenceContinuous   InternalControlCadence = "CONTINUOUS"
 	InternalControlCadenceDaily        InternalControlCadence = "DAILY"
@@ -116,16 +114,12 @@ func (v *InternalControlType) UnmarshalText(text []byte) error {
 func InternalControlNatures() []InternalControlNature {
 	return []InternalControlNature{
 		InternalControlNatureManual,
-		InternalControlNatureAutomated,
-		InternalControlNatureHybrid,
 	}
 }
 
 func (v InternalControlNature) IsValid() bool {
 	switch v {
-	case InternalControlNatureManual,
-		InternalControlNatureAutomated,
-		InternalControlNatureHybrid:
+	case InternalControlNatureManual:
 		return true
 	}
 
