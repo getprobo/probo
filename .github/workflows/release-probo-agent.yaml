@@ -26,7 +26,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@46910bf61b41721b0579f237e186afb35477007a" # v2
+      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
       - uses: "./.github/actions/setup"
         with:
           node: "false"
@@ -119,7 +119,7 @@ jobs:
           go build -ldflags $guiLdflags -gcflags="-e" -o dist/probo-agentw.exe ./cmd/probo-agent
           if ($LASTEXITCODE -ne 0) { throw "GUI go build failed" }
       - name: "Azure login"
-        uses: "azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c" # v3.0.2
+        uses: "azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906" # v3.1.0
         with:
           client-id: "${{ secrets.AZURE_CLIENT_ID }}"
           tenant-id: "${{ secrets.AZURE_TENANT_ID }}"
@@ -297,7 +297,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@46910bf61b41721b0579f237e186afb35477007a" # v2
+      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
       - uses: "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6" # v4.1.2
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
