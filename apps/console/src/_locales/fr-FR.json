@@ -3934,7 +3934,8 @@
       "description": "Description",
       "descriptionPlaceholder": "Ajouter une description",
       "category": "Catégorie",
-      "categoryPlaceholder": "Sélectionner une catégorie",
+      "categoryPlaceholder": "Sélectionner ou créer une catégorie",
+      "createCategory": "Créer « {{name}} »",
       "state": "État",
       "statePlaceholder": "Sélectionner un état"
     },
