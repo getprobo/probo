@@ -56,6 +56,8 @@ const measureUpdateMutation = graphql`
     updateMeasure(input: $input) {
       measure {
         ...MeasureFormDialogMeasureFragment
+        nextEvidenceDue
+        nextTestDue
       }
     }
   }
