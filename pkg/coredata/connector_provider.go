@@ -93,6 +93,7 @@ const (
 	ConnectorProviderSquare          ConnectorProvider = "SQUARE"
 	ConnectorProviderGoogleAnalytics ConnectorProvider = "GOOGLE_ANALYTICS"
 	ConnectorProviderUpCloud         ConnectorProvider = "UPCLOUD"
+	ConnectorProviderFront           ConnectorProvider = "FRONT"
 	ConnectorProviderNuki            ConnectorProvider = "NUKI"
 	ConnectorProviderAuthentik       ConnectorProvider = "AUTHENTIK"
 	ConnectorProviderCalCom          ConnectorProvider = "CAL_COM"
@@ -177,6 +178,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderSquare,
 		ConnectorProviderGoogleAnalytics,
 		ConnectorProviderUpCloud,
+		ConnectorProviderFront,
 		ConnectorProviderNuki,
 		ConnectorProviderAuthentik,
 		ConnectorProviderCalCom,
@@ -258,6 +260,7 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderSquare,
 		ConnectorProviderGoogleAnalytics,
 		ConnectorProviderUpCloud,
+		ConnectorProviderFront,
 		ConnectorProviderNuki,
 		ConnectorProviderAuthentik,
 		ConnectorProviderCalCom,

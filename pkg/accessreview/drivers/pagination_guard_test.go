@@ -94,6 +94,16 @@ func TestDriversRefuseCrossHostPagination(t *testing.T) {
 			},
 		},
 		{
+			name:    "front teammates",
+			baseURL: "https://api2.frontapp.com",
+			body:    `{"_pagination":{"next":"https://evil.example.com/teammates?page_token=abc"},"_results":[{"id":"tea_1","email":"alice@example.com","type":"user"}]}`,
+			listFunc: func(ctx context.Context, client *http.Client, baseURL string) error {
+				_, err := NewFrontDriver(client, baseURL).ListAccounts(ctx)
+
+				return err
+			},
+		},
+		{
 			name:    "github organization members",
 			baseURL: "https://api.github.com",
 			body:    `[]`,
