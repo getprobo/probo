@@ -45,7 +45,7 @@ func NewCmdUnlinkTreatmentPlan(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "unlink-treatment-plan",
-		Short: "Unlink a treatment plan from a measure",
+		Short: "Unlink a treatment plan from an internal control",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

@@ -78,16 +78,19 @@ ALTER TABLE measures
                 AND operating_event IS NULL
             )
             OR (
-                operating_mode = 'CONTINUOUS'
+                operating_mode IS NOT NULL
+                AND operating_mode = 'CONTINUOUS'
                 AND operating_frequency IS NULL
                 AND operating_event IS NULL
             )
             OR (
-                operating_mode = 'EVENT'
+                operating_mode IS NOT NULL
+                AND operating_mode = 'EVENT'
                 AND operating_frequency IS NULL
             )
             OR (
-                operating_mode = 'PERIODIC'
+                operating_mode IS NOT NULL
+                AND operating_mode = 'PERIODIC'
                 AND operating_frequency IS NOT NULL
                 AND operating_event IS NULL
             )
@@ -132,3 +135,30 @@ GENERATED ALWAYS AS (
 ) STORED;
 
 CREATE INDEX measures_search_idx ON measures USING gin(search_vector);
+
+-- As-of snapshots keep the operational status. Legacy rows only stored
+-- state, which cannot tell an operating control from an implemented one.
+ALTER TABLE measure_events
+    ADD COLUMN implementation_status TEXT;
+
+UPDATE measure_events
+SET implementation_status = CASE state
+    WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+    WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+    ELSE 'NOT_IMPLEMENTED'
+END
+WHERE implementation_status IS NULL;
+
+ALTER TABLE measure_events
+    ALTER COLUMN implementation_status SET NOT NULL;
+
+ALTER TABLE measure_events
+    ADD CONSTRAINT measure_events_implementation_status_check
+        CHECK (
+            implementation_status IN (
+                'NOT_IMPLEMENTED',
+                'IN_PROGRESS',
+                'IMPLEMENTED',
+                'OPERATING'
+            )
+        );

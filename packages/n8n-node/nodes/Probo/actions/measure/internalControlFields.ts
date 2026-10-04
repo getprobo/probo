@@ -89,6 +89,7 @@ export function internalControlFields(operation: string): INodeProperties[] {
 				},
 			},
 			default: '',
+			required: true,
 			description: 'ISO-8601 duration for a periodic control, for example P3M',
 		},
 		{
@@ -182,9 +183,10 @@ export function readInternalControlFields(
 		const frequency: Record<string, string> = { mode };
 		if (mode === 'PERIODIC') {
 			const interval = get('operatingInterval');
-			if (interval) {
-				frequency.interval = interval;
+			if (!interval) {
+				throw new Error('Operating interval is required when the operating mode is periodic');
 			}
+			frequency.interval = interval;
 		}
 		if (mode === 'EVENT') {
 			const event = get('operatingEvent');

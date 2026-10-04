@@ -159,10 +159,7 @@ const importMeasuresMutation = graphql`
     importMeasure(input: $input) {
       measureEdges @appendEdge(connections: $connections) {
         node {
-          id
-          name
-          category
-          state
+          ...MeasuresPageRowFragment
         }
       }
     }

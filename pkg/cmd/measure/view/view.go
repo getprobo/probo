@@ -53,6 +53,14 @@ query($id: ID!) {
       nextEvidenceDue
       nextTestDue
       implementationStatus
+      owner {
+        id
+        fullName
+      }
+      reviewer {
+        id
+        fullName
+      }
       createdAt
       updatedAt
     }
@@ -77,6 +85,8 @@ type viewResponse struct {
 		NextEvidenceDue      *string             `json:"nextEvidenceDue"`
 		NextTestDue          *string             `json:"nextTestDue"`
 		ImplementationStatus string              `json:"implementationStatus"`
+		Owner                *profileRef         `json:"owner"`
+		Reviewer             *profileRef         `json:"reviewer"`
 		CreatedAt            string              `json:"createdAt"`
 		UpdatedAt            string              `json:"updatedAt"`
 	} `json:"node"`
@@ -155,8 +165,10 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Operating:"), formatOperatingFrequency(m.OperatingFrequency))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence cadence:"), deref(m.EvidenceCadence))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Testing cadence:"), deref(m.TestingCadence))
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence due:"), deref(m.NextEvidenceDue))
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Test due:"), deref(m.NextTestDue))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence due:"), formatOptionalTime(m.NextEvidenceDue))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Test due:"), formatOptionalTime(m.NextTestDue))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Owner:"), profileName(m.Owner))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Reviewer:"), profileName(m.Reviewer))
 
 			if m.Description != nil && *m.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *m.Description)
@@ -173,6 +185,27 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+type profileRef struct {
+	ID       string `json:"id"`
+	FullName string `json:"fullName"`
+}
+
+func profileName(profile *profileRef) string {
+	if profile == nil {
+		return ""
+	}
+
+	return profile.FullName
+}
+
+func formatOptionalTime(value *string) string {
+	if value == nil || *value == "" {
+		return ""
+	}
+
+	return cmdutil.FormatTime(*value)
 }
 
 type operatingFrequency struct {

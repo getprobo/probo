@@ -2500,6 +2500,42 @@ components:
       type: object
       required:
         - mode
+      oneOf:
+        - title: Continuous
+          properties:
+            mode:
+              type: string
+              enum:
+                - CONTINUOUS
+            interval:
+              type: "null"
+            event:
+              type: "null"
+          required:
+            - mode
+        - title: Event
+          properties:
+            mode:
+              type: string
+              enum:
+                - EVENT
+            interval:
+              type: "null"
+          required:
+            - mode
+        - title: Periodic
+          properties:
+            mode:
+              type: string
+              enum:
+                - PERIODIC
+            interval:
+              $ref: "#/components/schemas/TimeSpan"
+            event:
+              type: "null"
+          required:
+            - mode
+            - interval
       properties:
         mode:
           $ref: "#/components/schemas/InternalControlOperatingMode"
@@ -2508,7 +2544,7 @@ components:
           anyOf:
             - $ref: "#/components/schemas/TimeSpan"
             - type: "null"
-          description: ISO-8601 duration, required when the mode is periodic
+          description: ISO-8601 duration, required when the mode is periodic and forbidden otherwise
         event:
           type:
             - string

@@ -3767,8 +3767,8 @@
       "operatingFrequency": "Uitvoeringsfrequentie",
       "evidenceCadence": "Bewijscadans",
       "testingCadence": "Testcadans",
-      "nextEvidenceDue": "Bewijs verschuldigd",
-      "nextTestDue": "Test verschuldigd"
+      "nextEvidenceDue": "Bewijsdeadline",
+      "nextTestDue": "Testdeadline"
     },
     "operatingModes": {
       "continuous": "Continu",

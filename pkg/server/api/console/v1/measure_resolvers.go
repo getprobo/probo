@@ -409,7 +409,7 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlutils.NotFoundf(ctx, "resource not found")
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -458,7 +458,7 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlutils.NotFoundf(ctx, "resource not found")
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {

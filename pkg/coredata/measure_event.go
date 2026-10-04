@@ -33,14 +33,15 @@ import (
 
 type (
 	MeasureEvent struct {
-		OrganizationID   gid.GID          `db:"organization_id"`
-		MeasureID        gid.GID          `db:"measure_id"`
-		EventType        MeasureEventType `db:"event_type"`
-		Name             string           `db:"name"`
-		Category         string           `db:"category"`
-		State            MeasureState     `db:"state"`
-		MeasureCreatedAt time.Time        `db:"measure_created_at"`
-		CreatedAt        time.Time        `db:"created_at"`
+		OrganizationID       gid.GID                             `db:"organization_id"`
+		MeasureID            gid.GID                             `db:"measure_id"`
+		EventType            MeasureEventType                    `db:"event_type"`
+		Name                 string                              `db:"name"`
+		Category             string                              `db:"category"`
+		State                MeasureState                        `db:"state"`
+		ImplementationStatus InternalControlImplementationStatus `db:"implementation_status"`
+		MeasureCreatedAt     time.Time                           `db:"measure_created_at"`
+		CreatedAt            time.Time                           `db:"created_at"`
 	}
 
 	MeasureEvents []*MeasureEvent
@@ -52,15 +53,24 @@ func NewMeasureEvent(
 	now time.Time,
 ) *MeasureEvent {
 	return &MeasureEvent{
-		OrganizationID:   measure.OrganizationID,
-		MeasureID:        measure.ID,
-		EventType:        eventType,
-		Name:             measure.Name,
-		Category:         measure.Category,
-		State:            measure.State,
-		MeasureCreatedAt: measure.CreatedAt,
-		CreatedAt:        now,
+		OrganizationID:       measure.OrganizationID,
+		MeasureID:            measure.ID,
+		EventType:            eventType,
+		Name:                 measure.Name,
+		Category:             measure.Category,
+		State:                measure.State,
+		ImplementationStatus: measure.ImplementationStatus,
+		MeasureCreatedAt:     measure.CreatedAt,
+		CreatedAt:            now,
 	}
+}
+
+func measureEventImplementationStatus(event *MeasureEvent) InternalControlImplementationStatus {
+	if event.ImplementationStatus.IsValid() {
+		return event.ImplementationStatus
+	}
+
+	return ImplementationStatusForMeasureState(event.State)
 }
 
 func (e *MeasureEvent) Measure() *Measure {
@@ -70,7 +80,7 @@ func (e *MeasureEvent) Measure() *Measure {
 		Category:             e.Category,
 		Name:                 e.Name,
 		State:                e.State,
-		ImplementationStatus: ImplementationStatusForMeasureState(e.State),
+		ImplementationStatus: measureEventImplementationStatus(e),
 		CreatedAt:            e.MeasureCreatedAt,
 		UpdatedAt:            e.CreatedAt,
 	}
@@ -91,6 +101,7 @@ INSERT INTO
         name,
         category,
         state,
+        implementation_status,
         measure_created_at,
         created_at
     )
@@ -102,21 +113,23 @@ VALUES (
     @name,
     @category,
     @state,
+    @implementation_status,
     @measure_created_at,
     @created_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    e.OrganizationID,
-		"measure_id":         e.MeasureID,
-		"event_type":         e.EventType,
-		"name":               e.Name,
-		"category":           e.Category,
-		"state":              e.State,
-		"measure_created_at": e.MeasureCreatedAt,
-		"created_at":         e.CreatedAt,
+		"tenant_id":             scope.GetTenantID(),
+		"organization_id":       e.OrganizationID,
+		"measure_id":            e.MeasureID,
+		"event_type":            e.EventType,
+		"name":                  e.Name,
+		"category":              e.Category,
+		"state":                 e.State,
+		"implementation_status": e.ImplementationStatus,
+		"measure_created_at":    e.MeasureCreatedAt,
+		"created_at":            e.CreatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -148,6 +161,7 @@ SELECT
     name,
     category,
     state,
+    implementation_status,
     measure_created_at,
     created_at
 FROM (
@@ -158,6 +172,7 @@ FROM (
         name,
         category,
         state,
+        implementation_status,
         measure_created_at,
         created_at
     FROM

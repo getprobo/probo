@@ -452,6 +452,7 @@ WITH latest AS (
 		name,
 		category,
 		state,
+		implementation_status,
 		measure_created_at,
 		created_at
 	FROM
@@ -484,11 +485,7 @@ msrs AS (
 		CAST(NULL AS interval) AS testing_cadence,
 		CAST(NULL AS timestamptz) AS next_evidence_due,
 		CAST(NULL AS timestamptz) AS next_test_due,
-		CASE latest.state
-			WHEN @state_in_progress THEN @status_in_progress
-			WHEN @state_implemented THEN @status_implemented
-			ELSE @status_not_implemented
-		END AS implementation_status,
+		latest.implementation_status,
 		CAST(NULL AS text) AS owner_profile_id,
 		CAST(NULL AS text) AS reviewer_profile_id,
 		latest.measure_created_at AS created_at,
@@ -537,14 +534,9 @@ WHERE
 	)
 
 	args := pgx.StrictNamedArgs{
-		"measure_ids":            measureIDs,
-		"as_of":                  asOf,
-		"deleted":                MeasureEventTypeDeleted,
-		"state_in_progress":      MeasureStateInProgress,
-		"state_implemented":      MeasureStateImplemented,
-		"status_in_progress":     InternalControlImplementationStatusInProgress,
-		"status_implemented":     InternalControlImplementationStatusImplemented,
-		"status_not_implemented": InternalControlImplementationStatusNotImplemented,
+		"measure_ids": measureIDs,
+		"as_of":       asOf,
+		"deleted":     MeasureEventTypeDeleted,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -1142,6 +1134,14 @@ RETURNING
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" &&
+				(pgErr.ConstraintName == "mitigations_org_ref_unique" ||
+					pgErr.ConstraintName == "measures_organization_id_code_key") {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot query measures: %w", err)
 	}
 

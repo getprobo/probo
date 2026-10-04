@@ -153,6 +153,17 @@ func TestImplementationStatusMapping(t *testing.T) {
 		state, ok := MeasureStateForImplementationStatus(InternalControlImplementationStatusOperating)
 		require.True(t, ok)
 		assert.Equal(t, MeasureStateImplemented, state)
+
+		state, ok = MeasureStateForImplementationStatus(InternalControlImplementationStatusInProgress)
+		require.True(t, ok)
+		assert.Equal(t, MeasureStateInProgress, state)
+
+		state, ok = MeasureStateForImplementationStatus(InternalControlImplementationStatusNotImplemented)
+		require.True(t, ok)
+		assert.Equal(t, MeasureStateNotImplemented, state)
+
+		_, ok = MeasureStateForImplementationStatus("WEEKLY")
+		assert.False(t, ok)
 	})
 
 	t.Run("legacy states without an operational equivalent stay not implemented", func(t *testing.T) {
@@ -172,6 +183,16 @@ func TestImplementationStatusMapping(t *testing.T) {
 			t,
 			InternalControlImplementationStatusImplemented,
 			ImplementationStatusForMeasureState(MeasureStateImplemented),
+		)
+		assert.Equal(
+			t,
+			InternalControlImplementationStatusInProgress,
+			ImplementationStatusForMeasureState(MeasureStateInProgress),
+		)
+		assert.Equal(
+			t,
+			InternalControlImplementationStatusNotImplemented,
+			ImplementationStatusForMeasureState(MeasureStateNotImplemented),
 		)
 	})
 }

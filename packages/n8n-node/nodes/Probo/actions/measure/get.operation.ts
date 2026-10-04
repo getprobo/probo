@@ -66,6 +66,14 @@ export async function execute(
 					nextTestDue
 					implementationStatus
 					state
+					owner {
+						id
+						fullName
+					}
+					reviewer {
+						id
+						fullName
+					}
 					createdAt
 					updatedAt
 				}

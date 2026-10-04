@@ -45,7 +45,7 @@ func NewCmdUnlinkThirdParty(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "unlink-third-party",
-		Short: "Unlink a third party from a measure",
+		Short: "Unlink a third party from an internal control",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

@@ -105,6 +105,8 @@ func (cmr *CreateMeasureRequest) Validate() error {
 
 	cmr.Code = normalizeMeasureCode(cmr.Code)
 	normalizeOperatingFrequency(cmr.OperatingFrequency)
+	cmr.EvidenceCadence = normalizeNonPositiveCadence(cmr.EvidenceCadence)
+	cmr.TestingCadence = normalizeNonPositiveCadence(cmr.TestingCadence)
 
 	v.Check(cmr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cmr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
@@ -135,6 +137,8 @@ func (umr *UpdateMeasureRequest) Validate() error {
 	if umr.OperatingFrequency != nil {
 		normalizeOperatingFrequency(*umr.OperatingFrequency)
 	}
+	normalizeOmittableCadence(umr.EvidenceCadence)
+	normalizeOmittableCadence(umr.TestingCadence)
 
 	v.Check(umr.ID, "id", validator.Required(), validator.GID(coredata.MeasureEntityType))
 	v.Check(umr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
@@ -717,13 +721,13 @@ func (s MeasureService) Update(
 			}
 
 			if measure.OwnerID != nil {
-				if err := loadMeasureProfile(ctx, conn, scope, *measure.OwnerID, measure.OrganizationID, "owner"); err != nil {
+				if err := loadMeasureProfile(ctx, conn, scope, *measure.OwnerID, measure.OrganizationID); err != nil {
 					return err
 				}
 			}
 
 			if measure.ReviewerID != nil {
-				if err := loadMeasureProfile(ctx, conn, scope, *measure.ReviewerID, measure.OrganizationID, "reviewer"); err != nil {
+				if err := loadMeasureProfile(ctx, conn, scope, *measure.ReviewerID, measure.OrganizationID); err != nil {
 					return err
 				}
 			}
@@ -784,13 +788,13 @@ func (s MeasureService) Create(
 			}
 
 			if req.OwnerID != nil {
-				if err := loadMeasureProfile(ctx, conn, scope, *req.OwnerID, organization.ID, "owner"); err != nil {
+				if err := loadMeasureProfile(ctx, conn, scope, *req.OwnerID, organization.ID); err != nil {
 					return err
 				}
 			}
 
 			if req.ReviewerID != nil {
-				if err := loadMeasureProfile(ctx, conn, scope, *req.ReviewerID, organization.ID, "reviewer"); err != nil {
+				if err := loadMeasureProfile(ctx, conn, scope, *req.ReviewerID, organization.ID); err != nil {
 					return err
 				}
 			}
@@ -1156,17 +1160,40 @@ func distinctMeasurePeople() validator.ValidatorFunc {
 }
 
 func distinctMeasurePeopleError(ownerID, reviewerID *gid.GID) error {
-	if ownerID == nil || reviewerID == nil || *ownerID != *reviewerID {
+	validationError := distinctMeasurePeople()(measurePeople{ownerID: ownerID, reviewerID: reviewerID})
+	if validationError == nil {
 		return nil
 	}
 
-	return validator.ValidationErrors{
-		&validator.ValidationError{
-			Field:   "reviewer_id",
-			Code:    validator.ErrorCodeCustom,
-			Message: "must be a different person from the owner",
-		},
+	validationError.Field = "reviewer_id"
+
+	return validator.ValidationErrors{validationError}
+}
+
+func normalizeNonPositiveCadence(cadence *timespan.TimeSpan) *timespan.TimeSpan {
+	if cadence == nil || !cadenceAdvances(*cadence) {
+		return nil
 	}
+
+	return cadence
+}
+
+func normalizeOmittableCadence(cadence **timespan.TimeSpan) {
+	if cadence == nil || *cadence == nil {
+		return
+	}
+
+	*cadence = normalizeNonPositiveCadence(*cadence)
+}
+
+func cadenceAdvances(span timespan.TimeSpan) bool {
+	if span.IsZero() {
+		return false
+	}
+
+	anchor := time.Unix(0, 0).UTC()
+
+	return span.AddTo(anchor).After(anchor)
 }
 
 func setOmittable[T any](dest **T, src **T) {
@@ -1325,19 +1352,14 @@ func validOperatingFrequency() validator.ValidatorFunc {
 func positiveTimeSpan() validator.ValidatorFunc {
 	return func(value any) *validator.ValidationError {
 		span, ok := value.(timespan.TimeSpan)
-		if !ok || span.IsZero() {
+		if !ok || span.IsZero() || cadenceAdvances(span) {
 			return nil
 		}
 
-		anchor := time.Unix(0, 0).UTC()
-		if !span.AddTo(anchor).After(anchor) {
-			return &validator.ValidationError{
-				Code:    validator.ErrorCodeCustom,
-				Message: "must be a positive duration",
-			}
+		return &validator.ValidationError{
+			Code:    validator.ErrorCodeCustom,
+			Message: "must be a positive duration",
 		}
-
-		return nil
 	}
 }
 
@@ -1347,23 +1369,18 @@ func loadMeasureProfile(
 	scope coredata.Scoper,
 	profileID gid.GID,
 	organizationID gid.GID,
-	role string,
 ) error {
 	profile := &coredata.MembershipProfile{}
 	if err := profile.LoadByID(ctx, conn, scope, profileID); err != nil {
-		if role == "owner" {
-			return fmt.Errorf("cannot load owner profile: %w", err)
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return coredata.ErrResourceNotFound
 		}
 
-		return fmt.Errorf("cannot load reviewer profile: %w", err)
+		return fmt.Errorf("cannot load membership profile: %w", err)
 	}
 
 	if profile.OrganizationID != organizationID {
-		if role == "owner" {
-			return fmt.Errorf("owner profile is outside the organization: %w", coredata.ErrResourceNotFound)
-		}
-
-		return fmt.Errorf("reviewer profile is outside the organization: %w", coredata.ErrResourceNotFound)
+		return coredata.ErrResourceNotFound
 	}
 
 	return nil

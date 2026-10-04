@@ -350,6 +350,40 @@ func TestNormalizeOperatingFrequency(t *testing.T) {
 	})
 }
 
+func TestNonPositiveCadenceBecomesUnscheduled(t *testing.T) {
+	t.Parallel()
+
+	negative := mustMeasureSpan(t, "-P1M")
+	zero := timespan.TimeSpan{}
+	create := &CreateMeasureRequest{
+		EvidenceCadence: &negative,
+		TestingCadence:  &zero,
+	}
+
+	_ = create.Validate()
+
+	assert.Nil(t, create.EvidenceCadence)
+	assert.Nil(t, create.TestingCadence)
+
+	quarterly := mustMeasureSpan(t, "P3M")
+	kept := &quarterly
+	update := &UpdateMeasureRequest{EvidenceCadence: &kept}
+
+	_ = update.Validate()
+
+	require.NotNil(t, update.EvidenceCadence)
+	require.NotNil(t, *update.EvidenceCadence)
+	assert.Equal(t, quarterly, **update.EvidenceCadence)
+
+	cleared := &negative
+	update.EvidenceCadence = &cleared
+
+	_ = update.Validate()
+
+	require.NotNil(t, update.EvidenceCadence)
+	assert.Nil(t, *update.EvidenceCadence)
+}
+
 func mustMeasureSpan(t *testing.T, raw string) timespan.TimeSpan {
 	t.Helper()
 

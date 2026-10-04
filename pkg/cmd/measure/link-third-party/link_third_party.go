@@ -49,7 +49,7 @@ func NewCmdLinkThirdParty(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "link-third-party",
-		Short: "Link a third party to a measure",
+		Short: "Link a third party to an internal control",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

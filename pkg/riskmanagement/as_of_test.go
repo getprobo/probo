@@ -166,8 +166,18 @@ func TestMeasureEvent_Measure(t *testing.T) {
 	assert.Equal(t, measure.Name, reconstructed.Name)
 	assert.Equal(t, measure.Category, reconstructed.Category)
 	assert.Equal(t, measure.State, reconstructed.State)
+	assert.Equal(t, coredata.InternalControlImplementationStatusImplemented, reconstructed.ImplementationStatus)
 	assert.Equal(t, createdAt, reconstructed.CreatedAt)
 	assert.Equal(t, updatedAt, reconstructed.UpdatedAt)
+
+	operating := *measure
+	operating.ImplementationStatus = coredata.InternalControlImplementationStatusOperating
+	operatingEvent := coredata.NewMeasureEvent(&operating, coredata.MeasureEventTypeUpdated, updatedAt)
+	assert.Equal(t, coredata.InternalControlImplementationStatusOperating, operatingEvent.ImplementationStatus)
+
+	restored := operatingEvent.Measure()
+	assert.Equal(t, coredata.MeasureStateImplemented, restored.State)
+	assert.Equal(t, coredata.InternalControlImplementationStatusOperating, restored.ImplementationStatus)
 }
 
 func TestMeasureIDStrings_Empty(t *testing.T) {

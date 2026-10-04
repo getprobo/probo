@@ -28,7 +28,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/timespan"
+	"go.probo.inc/probo/pkg/cmd/measure/fields"
 )
 
 const createMutation = `
@@ -157,18 +157,18 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["description"] = flagDescription
 			}
 
-			if err := setMeasureFields(cmd, input, measureFieldFlags{
-				code:                 flagCode,
-				controlType:          flagControlType,
-				nature:               flagNature,
-				operatingMode:        flagOperatingMode,
-				operatingFrequency:   flagOperatingFrequency,
-				operatingEvent:       flagOperatingEvent,
-				evidenceCadence:      flagEvidenceCadence,
-				testingCadence:       flagTestingCadence,
-				implementationStatus: flagImplementationStatus,
-				ownerID:              flagOwnerID,
-				reviewerID:           flagReviewerID,
+			if err := fields.SetMeasureFields(cmd, input, fields.MeasureFieldFlags{
+				Code:                 flagCode,
+				ControlType:          flagControlType,
+				Nature:               flagNature,
+				OperatingMode:        flagOperatingMode,
+				OperatingFrequency:   flagOperatingFrequency,
+				OperatingEvent:       flagOperatingEvent,
+				EvidenceCadence:      flagEvidenceCadence,
+				TestingCadence:       flagTestingCadence,
+				ImplementationStatus: flagImplementationStatus,
+				OwnerID:              flagOwnerID,
+				ReviewerID:           flagReviewerID,
 			}); err != nil {
 				return err
 			}
@@ -202,7 +202,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Measure name (required)")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Measure category (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Measure description")
-	addMeasureFieldFlags(
+	fields.AddMeasureFieldFlags(
 		cmd,
 		&flagCode,
 		&flagControlType,
@@ -218,167 +218,4 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	return cmd
-}
-
-type measureFieldFlags struct {
-	code                 string
-	controlType          string
-	nature               string
-	operatingMode        string
-	operatingFrequency   string
-	operatingEvent       string
-	evidenceCadence      string
-	testingCadence       string
-	implementationStatus string
-	ownerID              string
-	reviewerID           string
-}
-
-func addMeasureFieldFlags(
-	cmd *cobra.Command,
-	code *string,
-	controlType *string,
-	nature *string,
-	operatingMode *string,
-	operatingFrequency *string,
-	operatingEvent *string,
-	evidenceCadence *string,
-	testingCadence *string,
-	implementationStatus *string,
-	ownerID *string,
-	reviewerID *string,
-) {
-	cmd.Flags().StringVar(code, "code", "", "Stable reference, for example IC-ACCESS-01")
-	cmd.Flags().StringVar(controlType, "control-type", "", "Control type: PREVENTIVE, DETECTIVE, CORRECTIVE")
-	cmd.Flags().StringVar(nature, "nature", "", "Nature: MANUAL")
-	cmd.Flags().StringVar(operatingMode, "operating-mode", "", "Operating mode: CONTINUOUS, EVENT, or PERIODIC. Empty clears it")
-	cmd.Flags().StringVar(operatingFrequency, "operating-frequency", "", "ISO-8601 duration for PERIODIC mode, for example P3M")
-	cmd.Flags().StringVar(operatingEvent, "operating-event", "", "Event that runs the control, for example when someone leaves")
-	cmd.Flags().StringVar(evidenceCadence, "evidence-cadence", "", "How often evidence is collected, as an ISO-8601 duration such as P1M")
-	cmd.Flags().StringVar(testingCadence, "testing-cadence", "", "How often effectiveness is tested, as an ISO-8601 duration such as P3M")
-	cmd.Flags().StringVar(implementationStatus, "implementation-status", "", "Status: NOT_IMPLEMENTED, IN_PROGRESS, IMPLEMENTED, OPERATING")
-	cmd.Flags().StringVar(ownerID, "owner-id", "", "Owner profile ID")
-	cmd.Flags().StringVar(reviewerID, "reviewer-id", "", "Reviewer profile ID")
-}
-
-func setOperatingFrequency(cmd *cobra.Command, input map[string]any, mode, interval, event string) error {
-	if !cmd.Flags().Changed("operating-mode") &&
-		!cmd.Flags().Changed("operating-frequency") &&
-		!cmd.Flags().Changed("operating-event") {
-		return nil
-	}
-
-	if mode == "" {
-		if interval != "" || event != "" {
-			return fmt.Errorf("operating-mode is required")
-		}
-
-		input["operatingFrequency"] = nil
-
-		return nil
-	}
-
-	if err := cmdutil.ValidateEnum("operating-mode", mode, []string{"CONTINUOUS", "EVENT", "PERIODIC"}); err != nil {
-		return err
-	}
-
-	value := map[string]any{"mode": mode}
-
-	switch mode {
-	case "PERIODIC":
-		if interval == "" {
-			return fmt.Errorf("operating-frequency is required for PERIODIC")
-		}
-
-		span, err := timespan.Parse(interval)
-		if err != nil {
-			return fmt.Errorf("operating-frequency: %w", err)
-		}
-
-		value["interval"] = span.String()
-	case "EVENT":
-		if event != "" {
-			value["event"] = event
-		}
-	}
-
-	input["operatingFrequency"] = value
-
-	return nil
-}
-
-func setDuration(cmd *cobra.Command, input map[string]any, flag, key, raw string) error {
-	if !cmd.Flags().Changed(flag) {
-		return nil
-	}
-
-	if raw == "" {
-		input[key] = nil
-		return nil
-	}
-
-	span, err := timespan.Parse(raw)
-	if err != nil {
-		return fmt.Errorf("%s: %w", flag, err)
-	}
-
-	input[key] = span.String()
-
-	return nil
-}
-
-func setMeasureFields(cmd *cobra.Command, input map[string]any, flags measureFieldFlags) error {
-	if cmd.Flags().Changed("code") {
-		input["code"] = flags.code
-	}
-
-	if cmd.Flags().Changed("control-type") {
-		if err := cmdutil.ValidateEnum("control-type", flags.controlType, []string{"PREVENTIVE", "DETECTIVE", "CORRECTIVE"}); err != nil {
-			return err
-		}
-
-		input["controlType"] = flags.controlType
-	}
-
-	if cmd.Flags().Changed("nature") {
-		if err := cmdutil.ValidateEnum("nature", flags.nature, []string{"MANUAL"}); err != nil {
-			return err
-		}
-
-		input["nature"] = flags.nature
-	}
-
-	if err := setOperatingFrequency(cmd, input, flags.operatingMode, flags.operatingFrequency, flags.operatingEvent); err != nil {
-		return err
-	}
-
-	if err := setDuration(cmd, input, "evidence-cadence", "evidenceCadence", flags.evidenceCadence); err != nil {
-		return err
-	}
-
-	if err := setDuration(cmd, input, "testing-cadence", "testingCadence", flags.testingCadence); err != nil {
-		return err
-	}
-
-	if cmd.Flags().Changed("implementation-status") {
-		if err := cmdutil.ValidateEnum(
-			"implementation-status",
-			flags.implementationStatus,
-			[]string{"NOT_IMPLEMENTED", "IN_PROGRESS", "IMPLEMENTED", "OPERATING"},
-		); err != nil {
-			return err
-		}
-
-		input["implementationStatus"] = flags.implementationStatus
-	}
-
-	if cmd.Flags().Changed("owner-id") {
-		input["ownerId"] = flags.ownerID
-	}
-
-	if cmd.Flags().Changed("reviewer-id") {
-		input["reviewerId"] = flags.reviewerID
-	}
-
-	return nil
 }

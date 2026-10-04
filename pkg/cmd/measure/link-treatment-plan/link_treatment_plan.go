@@ -49,7 +49,7 @@ func NewCmdLinkTreatmentPlan(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "link-treatment-plan",
-		Short: "Link a treatment plan to a measure",
+		Short: "Link a treatment plan to an internal control",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {

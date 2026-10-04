@@ -22,9 +22,10 @@ import {
   internalControlImplementationStatuses,
 } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { formatDuration } from "@probo/i18n";
+import { dateFormat, formatDuration } from "@probo/i18n";
 import {
   ActionDropdown,
+  Badge,
   Button,
   DropdownItem,
   IconCheckmark1,
@@ -152,6 +153,38 @@ function TasksCountBadge({ measureId }: { measureId: string }) {
   return <TabBadge>{count}</TabBadge>;
 }
 
+function ReadOnlyImplementationStatus({
+  state,
+  implementationStatus,
+}: {
+  state?: string | null;
+  implementationStatus?: string | null;
+}) {
+  const { t } = useTranslation();
+
+  if (state === "NOT_STARTED" || state === "NOT_APPLICABLE" || state === "UNKNOWN") {
+    return <MeasureBadge state={state} />;
+  }
+
+  if (implementationStatus === "OPERATING") {
+    return (
+      <Badge variant="success">
+        {t("measureDetailPage.implementationStatuses.operating")}
+      </Badge>
+    );
+  }
+
+  if (
+    implementationStatus === "NOT_IMPLEMENTED" ||
+    implementationStatus === "IN_PROGRESS" ||
+    implementationStatus === "IMPLEMENTED"
+  ) {
+    return <MeasureBadge state={implementationStatus} />;
+  }
+
+  return null;
+}
+
 type Props = {
   queryRef: PreloadedQuery<MeasureDetailPageNodeQuery>;
 };
@@ -161,7 +194,7 @@ export default function MeasureDetailPage(props: Props) {
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<MeasureDetailPageNodeQuery>(measureNodeQuery, props.queryRef);
   const measure = data.node;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   usePageTitle(measure.name ?? "");
   const [deleteMeasure] = useDeleteMeasureMutation();
   const navigate = useNavigate();
@@ -220,7 +253,7 @@ export default function MeasureDetailPage(props: Props) {
       return null;
     }
 
-    return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(value));
+    return dateFormat(i18n.language, value, { dateStyle: "medium" });
   };
 
   const operating = operatingFrequencyLabel(measure.operatingFrequency, t);
@@ -228,8 +261,11 @@ export default function MeasureDetailPage(props: Props) {
   return (
     <div className="space-y-6">
       <PageHeader title={measure.name} description={measure.description}>
-        {!measure.canUpdate && measure.implementationStatus && (
-          <MeasureBadge state={measure.implementationStatus === "OPERATING" ? "IMPLEMENTED" : measure.implementationStatus} />
+        {!measure.canUpdate && (
+          <ReadOnlyImplementationStatus
+            state={measure.state}
+            implementationStatus={measure.implementationStatus}
+          />
         )}
         {measure.canUpdate && (
           <>
