@@ -54,6 +54,47 @@ func TestSetOperatingFrequency_RejectsFlagsFromAnotherMode(t *testing.T) {
 	}
 }
 
+func TestSetOperatingFrequency_KeepsAnEventThatWasNotCleared(t *testing.T) {
+	t.Parallel()
+
+	cmd := operatingCommand(t, "EVENT", "", "")
+	input := map[string]any{}
+	require.NoError(t, SetOperatingFrequency(cmd, input, "EVENT", "", "when someone leaves"))
+	assert.Equal(t, map[string]any{"mode": "EVENT", "event": "when someone leaves"}, input["operatingFrequency"])
+}
+
+func TestSetOperatingFrequency_EmptyEventClearsTheDescription(t *testing.T) {
+	t.Parallel()
+
+	cmd := operatingCommand(t, "EVENT", "", "")
+	require.NoError(t, cmd.Flags().Set("operating-event", ""))
+	input := map[string]any{}
+	require.NoError(t, SetOperatingFrequency(cmd, input, "EVENT", "", ""))
+	assert.Equal(t, map[string]any{"mode": "EVENT", "event": nil}, input["operatingFrequency"])
+}
+
+func TestSetMeasureFields_EmptyProfileClearsTheAssignment(t *testing.T) {
+	t.Parallel()
+
+	cmd := operatingCommand(t, "CONTINUOUS", "", "")
+	require.NoError(t, cmd.Flags().Set("owner-id", ""))
+	require.NoError(t, cmd.Flags().Set("reviewer-id", "profile-1"))
+
+	input := map[string]any{}
+	require.NoError(t, SetMeasureFields(cmd, input, MeasureFieldFlags{
+		OperatingMode: "CONTINUOUS",
+		ReviewerID:    "profile-1",
+	}))
+
+	frequency, ok := input["operatingFrequency"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "CONTINUOUS", frequency["mode"])
+	assert.Nil(t, input["ownerId"])
+	_, ownerSet := input["ownerId"]
+	assert.True(t, ownerSet)
+	assert.Equal(t, "profile-1", input["reviewerId"])
+}
+
 func TestSetOperatingFrequency_PeriodicKeepsTheInterval(t *testing.T) {
 	t.Parallel()
 

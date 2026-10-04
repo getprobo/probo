@@ -123,15 +123,9 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			operatingMode := flagOperatingMode
-			if operatingMode == "" &&
-				!cmd.Flags().Changed("operating-mode") &&
-				(cmd.Flags().Changed("operating-frequency") || cmd.Flags().Changed("operating-event")) {
-				current, err := currentOperatingMode(client, args[0])
-				if err != nil {
-					return err
-				}
-
-				operatingMode = current
+			operatingEvent := flagOperatingEvent
+			if err := preserveOperatingFrequency(cmd, client, args[0], &operatingMode, &operatingEvent); err != nil {
+				return err
 			}
 
 			if err := fields.SetMeasureFields(cmd, input, fields.MeasureFieldFlags{
@@ -140,7 +134,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				Nature:               flagNature,
 				OperatingMode:        operatingMode,
 				OperatingFrequency:   flagOperatingFrequency,
-				OperatingEvent:       flagOperatingEvent,
+				OperatingEvent:       operatingEvent,
 				EvidenceCadence:      flagEvidenceCadence,
 				TestingCadence:       flagTestingCadence,
 				ImplementationStatus: flagImplementationStatus,
@@ -201,44 +195,92 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-const operatingModeQuery = `
+const operatingFrequencyQuery = `
 query($id: ID!) {
   node(id: $id) {
     __typename
     ... on Measure {
       operatingFrequency {
         mode
+        event
       }
     }
   }
 }
 `
 
-func currentOperatingMode(client *api.Client, id string) (string, error) {
-	data, err := client.Do(operatingModeQuery, map[string]any{"id": id})
+type storedOperatingFrequency struct {
+	Mode  string
+	Event string
+}
+
+func preserveOperatingFrequency(
+	cmd *cobra.Command,
+	client *api.Client,
+	id string,
+	mode *string,
+	event *string,
+) error {
+	sendingFrequency := cmd.Flags().Changed("operating-mode") ||
+		cmd.Flags().Changed("operating-frequency") ||
+		cmd.Flags().Changed("operating-event")
+	if !sendingFrequency {
+		return nil
+	}
+
+	needsMode := !cmd.Flags().Changed("operating-mode")
+	needsEvent := !cmd.Flags().Changed("operating-event") && (needsMode || *mode == "EVENT")
+	if !needsMode && !needsEvent {
+		return nil
+	}
+
+	current, err := currentOperatingFrequency(client, id)
 	if err != nil {
-		return "", err
+		return err
+	}
+
+	if needsMode {
+		*mode = current.Mode
+	}
+
+	if needsEvent && *mode == "EVENT" {
+		*event = current.Event
+	}
+
+	return nil
+}
+
+func currentOperatingFrequency(client *api.Client, id string) (storedOperatingFrequency, error) {
+	data, err := client.Do(operatingFrequencyQuery, map[string]any{"id": id})
+	if err != nil {
+		return storedOperatingFrequency{}, err
 	}
 
 	var resp struct {
 		Node *struct {
 			Typename           string `json:"__typename"`
 			OperatingFrequency *struct {
-				Mode string `json:"mode"`
+				Mode  string  `json:"mode"`
+				Event *string `json:"event"`
 			} `json:"operatingFrequency"`
 		} `json:"node"`
 	}
 	if err := json.Unmarshal(data, &resp); err != nil {
-		return "", fmt.Errorf("cannot parse response: %w", err)
+		return storedOperatingFrequency{}, fmt.Errorf("cannot parse response: %w", err)
 	}
 
 	if resp.Node == nil || resp.Node.Typename != "Measure" {
-		return "", fmt.Errorf("measure %s not found", id)
+		return storedOperatingFrequency{}, fmt.Errorf("measure %s not found", id)
 	}
 
 	if resp.Node.OperatingFrequency == nil {
-		return "", nil
+		return storedOperatingFrequency{}, nil
 	}
 
-	return resp.Node.OperatingFrequency.Mode, nil
+	current := storedOperatingFrequency{Mode: resp.Node.OperatingFrequency.Mode}
+	if resp.Node.OperatingFrequency.Event != nil {
+		current.Event = *resp.Node.OperatingFrequency.Event
+	}
+
+	return current, nil
 }

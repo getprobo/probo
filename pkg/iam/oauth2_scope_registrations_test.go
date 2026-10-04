@@ -93,4 +93,9 @@ func TestRegisteredOAuth2ScopeRegistries_EvidenceOnControlNotTask(t *testing.T) 
 	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, probo.ActionEvidenceList))
 	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, probo.ActionEvidenceDelete))
 	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, probo.ActionMeasureEvidenceUpload))
+
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1ControlRead}, iam.ActionMembershipProfileGet))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, iam.ActionMembershipProfileGet))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, iam.ActionMembershipProfileList))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{probo.ScopeV1Control}, iam.ActionMembershipProfileUpdate))
 }

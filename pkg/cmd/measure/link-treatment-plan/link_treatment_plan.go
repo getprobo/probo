@@ -84,7 +84,7 @@ func NewCmdLinkTreatmentPlan(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Linked treatment plan %s to measure %s\n",
+				"Linked treatment plan %s to internal control %s\n",
 				flagTreatmentPlanID,
 				flagMeasureID,
 			)
@@ -93,7 +93,7 @@ func NewCmdLinkTreatmentPlan(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagMeasureID, "measure-id", "", "Measure ID (required)")
+	cmd.Flags().StringVar(&flagMeasureID, "measure-id", "", "Internal control ID (required)")
 	cmd.Flags().StringVar(&flagTreatmentPlanID, "treatment-plan-id", "", "Treatment plan ID (required)")
 
 	_ = cmd.MarkFlagRequired("measure-id")

@@ -173,7 +173,8 @@ func TestMeasureEvent_Measure(t *testing.T) {
 	operating := *measure
 	operating.ImplementationStatus = coredata.InternalControlImplementationStatusOperating
 	operatingEvent := coredata.NewMeasureEvent(&operating, coredata.MeasureEventTypeUpdated, updatedAt)
-	assert.Equal(t, coredata.InternalControlImplementationStatusOperating, operatingEvent.ImplementationStatus)
+	require.NotNil(t, operatingEvent.ImplementationStatus)
+	assert.Equal(t, coredata.InternalControlImplementationStatusOperating, *operatingEvent.ImplementationStatus)
 
 	restored := operatingEvent.Measure()
 	assert.Equal(t, coredata.MeasureStateImplemented, restored.State)

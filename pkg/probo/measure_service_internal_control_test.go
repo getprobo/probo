@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/timespan"
 )
 
@@ -353,24 +354,29 @@ func TestNormalizeOperatingFrequency(t *testing.T) {
 func TestNonPositiveCadenceBecomesUnscheduled(t *testing.T) {
 	t.Parallel()
 
+	tenantID := gid.NewTenantID()
 	negative := mustMeasureSpan(t, "-P1M")
 	zero := timespan.TimeSpan{}
 	create := &CreateMeasureRequest{
+		OrganizationID:  gid.New(tenantID, coredata.OrganizationEntityType),
+		Name:            "Access reviews",
+		Category:        "Access",
 		EvidenceCadence: &negative,
 		TestingCadence:  &zero,
 	}
 
-	_ = create.Validate()
-
+	require.NoError(t, create.Validate())
 	assert.Nil(t, create.EvidenceCadence)
 	assert.Nil(t, create.TestingCadence)
 
 	quarterly := mustMeasureSpan(t, "P3M")
 	kept := &quarterly
-	update := &UpdateMeasureRequest{EvidenceCadence: &kept}
+	update := &UpdateMeasureRequest{
+		ID:              gid.New(tenantID, coredata.MeasureEntityType),
+		EvidenceCadence: &kept,
+	}
 
-	_ = update.Validate()
-
+	require.NoError(t, update.Validate())
 	require.NotNil(t, update.EvidenceCadence)
 	require.NotNil(t, *update.EvidenceCadence)
 	assert.Equal(t, quarterly, **update.EvidenceCadence)
@@ -378,8 +384,7 @@ func TestNonPositiveCadenceBecomesUnscheduled(t *testing.T) {
 	cleared := &negative
 	update.EvidenceCadence = &cleared
 
-	_ = update.Validate()
-
+	require.NoError(t, update.Validate())
 	require.NotNil(t, update.EvidenceCadence)
 	assert.Nil(t, *update.EvidenceCadence)
 }

@@ -84,7 +84,7 @@ func NewCmdLinkThirdParty(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Linked third party %s to measure %s\n",
+				"Linked third party %s to internal control %s\n",
 				flagThirdPartyID,
 				flagMeasureID,
 			)
@@ -93,7 +93,7 @@ func NewCmdLinkThirdParty(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagMeasureID, "measure-id", "", "Measure ID (required)")
+	cmd.Flags().StringVar(&flagMeasureID, "measure-id", "", "Internal control ID (required)")
 	cmd.Flags().StringVar(&flagThirdPartyID, "third-party-id", "", "Third party ID (required)")
 
 	_ = cmd.MarkFlagRequired("measure-id")

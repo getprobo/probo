@@ -22,6 +22,7 @@ package probo
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/iam"
 )
 
 const (
@@ -164,6 +165,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionControlList,
 		ActionMeasureGet,
 		ActionMeasureList,
+		iam.ActionMembershipProfileGet,
 		ActionFrameworkGet,
 		ActionFrameworkList,
 		ActionFrameworkExport,
@@ -180,6 +182,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionControlList,
 		ActionMeasureGet,
 		ActionMeasureList,
+		iam.ActionMembershipProfileGet,
 		ActionFrameworkGet,
 		ActionFrameworkList,
 		ActionFrameworkExport,

@@ -33,15 +33,15 @@ import (
 
 type (
 	MeasureEvent struct {
-		OrganizationID       gid.GID                             `db:"organization_id"`
-		MeasureID            gid.GID                             `db:"measure_id"`
-		EventType            MeasureEventType                    `db:"event_type"`
-		Name                 string                              `db:"name"`
-		Category             string                              `db:"category"`
-		State                MeasureState                        `db:"state"`
-		ImplementationStatus InternalControlImplementationStatus `db:"implementation_status"`
-		MeasureCreatedAt     time.Time                           `db:"measure_created_at"`
-		CreatedAt            time.Time                           `db:"created_at"`
+		OrganizationID       gid.GID                              `db:"organization_id"`
+		MeasureID            gid.GID                              `db:"measure_id"`
+		EventType            MeasureEventType                     `db:"event_type"`
+		Name                 string                               `db:"name"`
+		Category             string                               `db:"category"`
+		State                MeasureState                         `db:"state"`
+		ImplementationStatus *InternalControlImplementationStatus `db:"implementation_status"`
+		MeasureCreatedAt     time.Time                            `db:"measure_created_at"`
+		CreatedAt            time.Time                            `db:"created_at"`
 	}
 
 	MeasureEvents []*MeasureEvent
@@ -52,6 +52,8 @@ func NewMeasureEvent(
 	eventType MeasureEventType,
 	now time.Time,
 ) *MeasureEvent {
+	status := measure.ImplementationStatus
+
 	return &MeasureEvent{
 		OrganizationID:       measure.OrganizationID,
 		MeasureID:            measure.ID,
@@ -59,15 +61,15 @@ func NewMeasureEvent(
 		Name:                 measure.Name,
 		Category:             measure.Category,
 		State:                measure.State,
-		ImplementationStatus: measure.ImplementationStatus,
+		ImplementationStatus: &status,
 		MeasureCreatedAt:     measure.CreatedAt,
 		CreatedAt:            now,
 	}
 }
 
 func measureEventImplementationStatus(event *MeasureEvent) InternalControlImplementationStatus {
-	if event.ImplementationStatus.IsValid() {
-		return event.ImplementationStatus
+	if event.ImplementationStatus != nil && event.ImplementationStatus.IsValid() {
+		return *event.ImplementationStatus
 	}
 
 	return ImplementationStatusForMeasureState(event.State)

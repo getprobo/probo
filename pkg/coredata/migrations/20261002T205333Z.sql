@@ -138,6 +138,10 @@ CREATE INDEX measures_search_idx ON measures USING gin(search_vector);
 
 -- As-of snapshots keep the operational status. Legacy rows only stored
 -- state, which cannot tell an operating control from an implemented one.
+-- The column stays nullable: probod deploys blue/green, so pods running the
+-- previous release keep inserting events without this column until the
+-- rollout finishes. NULL means "derive the status from state". NOT NULL
+-- belongs in a later migration, after every event writer sends the column.
 ALTER TABLE measure_events
     ADD COLUMN implementation_status TEXT;
 
@@ -148,9 +152,6 @@ SET implementation_status = CASE state
     ELSE 'NOT_IMPLEMENTED'
 END
 WHERE implementation_status IS NULL;
-
-ALTER TABLE measure_events
-    ALTER COLUMN implementation_status SET NOT NULL;
 
 ALTER TABLE measure_events
     ADD CONSTRAINT measure_events_implementation_status_check

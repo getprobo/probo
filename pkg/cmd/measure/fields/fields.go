@@ -105,7 +105,15 @@ func SetOperatingFrequency(cmd *cobra.Command, input map[string]any, mode, inter
 
 		value["interval"] = span.String()
 	case "EVENT":
-		if event != "" {
+		// An omitted event flag keeps the description the caller already
+		// resolved. An explicit empty value clears it.
+		if cmd.Flags().Changed("operating-event") {
+			if event == "" {
+				value["event"] = nil
+			} else {
+				value["event"] = event
+			}
+		} else if event != "" {
 			value["event"] = event
 		}
 	}
@@ -140,6 +148,19 @@ func rejectMismatchedOperatingFlags(mode, interval, event string) error {
 	}
 
 	return nil
+}
+
+func setOptionalID(cmd *cobra.Command, input map[string]any, flag, key, raw string) {
+	if !cmd.Flags().Changed(flag) {
+		return
+	}
+
+	if raw == "" {
+		input[key] = nil
+		return
+	}
+
+	input[key] = raw
 }
 
 func setDuration(cmd *cobra.Command, input map[string]any, flag, key, raw string) error {
@@ -207,13 +228,8 @@ func SetMeasureFields(cmd *cobra.Command, input map[string]any, flags MeasureFie
 		input["implementationStatus"] = flags.ImplementationStatus
 	}
 
-	if cmd.Flags().Changed("owner-id") {
-		input["ownerId"] = flags.OwnerID
-	}
-
-	if cmd.Flags().Changed("reviewer-id") {
-		input["reviewerId"] = flags.ReviewerID
-	}
+	setOptionalID(cmd, input, "owner-id", "ownerId", flags.OwnerID)
+	setOptionalID(cmd, input, "reviewer-id", "reviewerId", flags.ReviewerID)
 
 	return nil
 }

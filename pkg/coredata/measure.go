@@ -485,7 +485,14 @@ msrs AS (
 		CAST(NULL AS interval) AS testing_cadence,
 		CAST(NULL AS timestamptz) AS next_evidence_due,
 		CAST(NULL AS timestamptz) AS next_test_due,
-		latest.implementation_status,
+		COALESCE(
+			latest.implementation_status,
+			CASE latest.state
+				WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+				WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+				ELSE 'NOT_IMPLEMENTED'
+			END
+		) AS implementation_status,
 		CAST(NULL AS text) AS owner_profile_id,
 		CAST(NULL AS text) AS reviewer_profile_id,
 		latest.measure_created_at AS created_at,
