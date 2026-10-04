@@ -68,6 +68,7 @@ func TestSetOperatingFrequency_EmptyEventClearsTheDescription(t *testing.T) {
 
 	cmd := operatingCommand(t, "EVENT", "", "")
 	require.NoError(t, cmd.Flags().Set("operating-event", ""))
+
 	input := map[string]any{}
 	require.NoError(t, SetOperatingFrequency(cmd, input, "EVENT", "", ""))
 	assert.Equal(t, map[string]any{"mode": "EVENT", "event": nil}, input["operatingFrequency"])
@@ -108,8 +109,12 @@ func operatingCommand(t *testing.T, mode, interval, event string) *cobra.Command
 	t.Helper()
 
 	cmd := &cobra.Command{Use: "measure"}
-	var code, controlType, nature, operatingMode, operatingFrequency, operatingEvent string
-	var evidence, testing, status, owner, reviewer string
+
+	var (
+		code, controlType, nature, operatingMode, operatingFrequency, operatingEvent string
+		evidence, testing, status, owner, reviewer                                   string
+	)
+
 	AddMeasureFieldFlags(
 		cmd,
 		&code,
@@ -125,9 +130,11 @@ func operatingCommand(t *testing.T, mode, interval, event string) *cobra.Command
 		&reviewer,
 	)
 	require.NoError(t, cmd.Flags().Set("operating-mode", mode))
+
 	if interval != "" {
 		require.NoError(t, cmd.Flags().Set("operating-frequency", interval))
 	}
+
 	if event != "" {
 		require.NoError(t, cmd.Flags().Set("operating-event", event))
 	}

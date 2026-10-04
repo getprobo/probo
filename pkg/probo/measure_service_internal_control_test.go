@@ -172,7 +172,9 @@ func TestApplyMeasureUpdate(t *testing.T) {
 		t.Parallel()
 
 		quarterly := mustMeasureSpan(t, "P3M")
+
 		var cleared *timespan.TimeSpan
+
 		due := now
 		measure := &coredata.Measure{
 			EvidenceCadence: &quarterly,
@@ -229,7 +231,9 @@ func TestApplyMeasureUpdate(t *testing.T) {
 
 		quarterly := mustMeasureSpan(t, "P1D")
 		mode := coredata.InternalControlOperatingModePeriodic
+
 		var cleared *coredata.InternalControlOperatingFrequency
+
 		measure := &coredata.Measure{
 			OperatingMode:     &mode,
 			OperatingInterval: &quarterly,

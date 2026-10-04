@@ -48,6 +48,7 @@ func TestInternalControlOperatingFrequency_Columns(t *testing.T) {
 		t.Parallel()
 
 		var freq *InternalControlOperatingFrequency
+
 		mode, interval, text := freq.Columns()
 
 		assert.Nil(t, mode)

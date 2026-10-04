@@ -56,9 +56,9 @@ import {
 } from "react-relay";
 import { Outlet, useNavigate, useParams } from "react-router";
 
-import type { InternalControlImplementationStatus } from "#/__generated__/core/MeasureGraphUpdateMutation.graphql";
 import type { MeasureDetailPageNodeQuery } from "#/__generated__/core/MeasureDetailPageNodeQuery.graphql";
 import type { MeasureDetailPageTasksCountQuery } from "#/__generated__/core/MeasureDetailPageTasksCountQuery.graphql";
+import type { InternalControlImplementationStatus } from "#/__generated__/core/MeasureGraphUpdateMutation.graphql";
 import {
   MeasureConnectionKey,
   useDeleteMeasureMutation,
@@ -175,9 +175,9 @@ function ReadOnlyImplementationStatus({
   }
 
   if (
-    implementationStatus === "NOT_IMPLEMENTED" ||
-    implementationStatus === "IN_PROGRESS" ||
-    implementationStatus === "IMPLEMENTED"
+    implementationStatus === "NOT_IMPLEMENTED"
+    || implementationStatus === "IN_PROGRESS"
+    || implementationStatus === "IMPLEMENTED"
   ) {
     return <MeasureBadge state={implementationStatus} />;
   }

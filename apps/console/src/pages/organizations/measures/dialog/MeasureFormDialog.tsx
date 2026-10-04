@@ -39,7 +39,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { Breadcrumb } from "@probo/ui";
-import { Suspense, type ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { Controller, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";

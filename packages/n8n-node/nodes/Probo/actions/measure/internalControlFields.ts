@@ -43,7 +43,7 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			type: 'options',
 			displayOptions,
 			options: [
-				{ name: 'Not set', value: '' },
+				{ name: 'Not Set', value: '' },
 				{ name: 'Preventive', value: 'PREVENTIVE' },
 				{ name: 'Detective', value: 'DETECTIVE' },
 				{ name: 'Corrective', value: 'CORRECTIVE' },
@@ -57,7 +57,7 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			type: 'options',
 			displayOptions,
 			options: [
-				{ name: 'Not set', value: '' },
+				{ name: 'Not Set', value: '' },
 				{ name: 'Manual', value: 'MANUAL' },
 			],
 			default: '',
@@ -69,9 +69,9 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			type: 'options',
 			displayOptions,
 			options: [
-				{ name: 'Not set', value: '' },
+				{ name: 'Not Set', value: '' },
 				{ name: 'Continuous', value: 'CONTINUOUS' },
-				{ name: 'When an event occurs', value: 'EVENT' },
+				{ name: 'When an Event Occurs', value: 'EVENT' },
 				{ name: 'Every', value: 'PERIODIC' },
 			],
 			default: '',
@@ -128,10 +128,10 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			type: 'options',
 			displayOptions,
 			options: [
-				{ name: 'Not set', value: '' },
-				{ name: 'Not implemented', value: 'NOT_IMPLEMENTED' },
-				{ name: 'In progress', value: 'IN_PROGRESS' },
 				{ name: 'Implemented', value: 'IMPLEMENTED' },
+				{ name: 'In Progress', value: 'IN_PROGRESS' },
+				{ name: 'Not Implemented', value: 'NOT_IMPLEMENTED' },
+				{ name: 'Not Set', value: '' },
 				{ name: 'Operating', value: 'OPERATING' },
 			],
 			default: '',

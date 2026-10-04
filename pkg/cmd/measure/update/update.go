@@ -124,6 +124,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 			operatingMode := flagOperatingMode
 			operatingEvent := flagOperatingEvent
+
 			if err := preserveOperatingFrequency(cmd, client, args[0], &operatingMode, &operatingEvent); err != nil {
 				return err
 			}
@@ -230,6 +231,7 @@ func preserveOperatingFrequency(
 
 	needsMode := !cmd.Flags().Changed("operating-mode")
 	needsEvent := !cmd.Flags().Changed("operating-event") && (needsMode || *mode == "EVENT")
+
 	if !needsMode && !needsEvent {
 		return nil
 	}

@@ -134,9 +134,11 @@ func (umr *UpdateMeasureRequest) Validate() error {
 	v := validator.New()
 
 	normalizeOmittableMeasureCode(umr.Code)
+
 	if umr.OperatingFrequency != nil {
 		normalizeOperatingFrequency(*umr.OperatingFrequency)
 	}
+
 	normalizeOmittableCadence(umr.EvidenceCadence)
 	normalizeOmittableCadence(umr.TestingCadence)
 
@@ -801,6 +803,7 @@ func (s MeasureService) Create(
 
 			status := coredata.InternalControlImplementationStatusNotImplemented
 			state := coredata.MeasureStateNotStarted
+
 			if req.ImplementationStatus != nil {
 				status = *req.ImplementationStatus
 				if mapped, ok := coredata.MeasureStateForImplementationStatus(status); ok {
@@ -1216,6 +1219,7 @@ func assignCadence(
 
 	if *next == nil {
 		*current = nil
+
 		if due != nil {
 			*due = nil
 		}
@@ -1225,6 +1229,7 @@ func assignCadence(
 
 	changed := *current == nil || **current != **next
 	*current = *next
+
 	if changed && due != nil {
 		*due = coredata.NextInternalControlDue(now, *next)
 	}
