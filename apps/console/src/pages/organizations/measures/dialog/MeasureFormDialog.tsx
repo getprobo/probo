@@ -21,6 +21,7 @@
 import {
   internalControlImplementationStatuses,
   internalControlNatures,
+  internalControlOperatingModes,
   internalControlTypes,
   measureStates,
 } from "@probo/helpers";
@@ -39,7 +40,7 @@ import {
 } from "@probo/ui";
 import { Breadcrumb } from "@probo/ui";
 import { Suspense, type ReactNode } from "react";
-import { Controller } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -71,7 +72,11 @@ const measureFragment = graphql`
     code
     controlType
     nature
-    operatingFrequency
+    operatingFrequency {
+      mode
+      interval
+      event
+    }
     evidenceCadence
     testingCadence
     implementationStatus
@@ -131,7 +136,9 @@ export default function MeasureFormDialog(props: Props) {
     code: z.string().optional().nullable(),
     controlType: blankableEnum(internalControlTypes),
     nature: blankableEnum(internalControlNatures),
-    operatingFrequency: z.string().nullable(),
+    operatingMode: blankableEnum(internalControlOperatingModes),
+    operatingInterval: z.string().nullable(),
+    operatingEvent: z.string(),
     evidenceCadence: z.string().nullable(),
     testingCadence: z.string().nullable(),
     implementationStatus: z.enum(internalControlImplementationStatuses),
@@ -143,6 +150,13 @@ export default function MeasureFormDialog(props: Props) {
         code: "custom",
         path: ["reviewerId"],
         message: t("measureFormDialog.validation.reviewerDistinct"),
+      });
+    }
+    if (value.operatingMode === "PERIODIC" && !value.operatingInterval) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["operatingInterval"],
+        message: t("measureFormDialog.validation.operatingIntervalRequired"),
       });
     }
   });
@@ -157,7 +171,9 @@ export default function MeasureFormDialog(props: Props) {
         code: measure?.code ?? "",
         controlType: measure?.controlType ?? "",
         nature: measure?.nature ?? "",
-        operatingFrequency: measure?.operatingFrequency ?? null,
+        operatingMode: measure?.operatingFrequency?.mode ?? "",
+        operatingInterval: measure?.operatingFrequency?.interval ?? null,
+        operatingEvent: measure?.operatingFrequency?.event ?? "",
         evidenceCadence: measure?.evidenceCadence ?? null,
         testingCadence: measure?.testingCadence ?? null,
         implementationStatus: measure?.implementationStatus ?? "NOT_IMPLEMENTED",
@@ -166,12 +182,14 @@ export default function MeasureFormDialog(props: Props) {
       },
     });
 
+  const operatingMode = useWatch({ control, name: "operatingMode" });
+
   const onSubmit = async (data: z.infer<typeof measureSchema>) => {
     const fields = {
       code: data.code || null,
       controlType: data.controlType || null,
       nature: data.nature || null,
-      operatingFrequency: data.operatingFrequency || null,
+      operatingFrequency: operatingFrequencyInput(data),
       evidenceCadence: data.evidenceCadence || null,
       testingCadence: data.testingCadence || null,
       ownerId: data.ownerId || null,
@@ -311,25 +329,51 @@ export default function MeasureFormDialog(props: Props) {
             </PropertyRow>
             <PropertyRow
               label={t("measureFormDialog.fields.operatingFrequency")}
-              error={formState.errors.operatingFrequency?.message}
+              error={formState.errors.operatingMode?.message}
             >
-              <Suspense fallback={null}>
-                <Controller
-                  control={control}
-                  name="operatingFrequency"
-                  render={({ field }) => (
-                    <TaskDurationField
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      defaultValue="P1D"
-                      units={controlDurationUnits}
-                      addLabel={t("measureFormDialog.actions.addDuration")}
-                      clearLabel={t("measureFormDialog.actions.clearDuration")}
-                    />
-                  )}
-                />
-              </Suspense>
+              <ControlledSelect control={control} name="operatingMode">
+                <Option value="">{t("measureFormDialog.fields.notSet")}</Option>
+                {internalControlOperatingModes.map(value => (
+                  <Option key={value} value={value}>
+                    {t(`measureFormDialog.operatingModes.${value.toLowerCase()}`)}
+                  </Option>
+                ))}
+              </ControlledSelect>
             </PropertyRow>
+            {operatingMode === "PERIODIC" && (
+              <PropertyRow
+                label={t("measureFormDialog.operatingModes.periodic")}
+                error={formState.errors.operatingInterval?.message}
+              >
+                <Suspense fallback={null}>
+                  <Controller
+                    control={control}
+                    name="operatingInterval"
+                    render={({ field }) => (
+                      <TaskDurationField
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        defaultValue="P3M"
+                        units={controlDurationUnits}
+                        addLabel={t("measureFormDialog.actions.addDuration")}
+                        clearLabel={t("measureFormDialog.actions.clearDuration")}
+                      />
+                    )}
+                  />
+                </Suspense>
+              </PropertyRow>
+            )}
+            {operatingMode === "EVENT" && (
+              <PropertyRow
+                label={t("measureFormDialog.fields.operatingEvent")}
+                error={formState.errors.operatingEvent?.message}
+              >
+                <Input
+                  {...register("operatingEvent")}
+                  placeholder={t("measureFormDialog.fields.operatingEventPlaceholder")}
+                />
+              </PropertyRow>
+            )}
             <PropertyRow
               label={t("measureFormDialog.fields.evidenceCadence")}
               error={formState.errors.evidenceCadence?.message}
@@ -434,4 +478,31 @@ export default function MeasureFormDialog(props: Props) {
       </form>
     </Dialog>
   );
+}
+
+function operatingFrequencyInput(data: {
+  operatingMode: "" | (typeof internalControlOperatingModes)[number];
+  operatingInterval: string | null;
+  operatingEvent: string;
+}) {
+  if (data.operatingMode === "") {
+    return null;
+  }
+
+  if (data.operatingMode === "PERIODIC") {
+    return {
+      mode: data.operatingMode,
+      interval: data.operatingInterval,
+    };
+  }
+
+  if (data.operatingMode === "EVENT") {
+    const event = data.operatingEvent.trim();
+    return {
+      mode: data.operatingMode,
+      ...(event ? { event } : {}),
+    };
+  }
+
+  return { mode: data.operatingMode };
 }

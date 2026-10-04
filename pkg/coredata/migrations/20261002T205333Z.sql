@@ -26,7 +26,9 @@ ALTER TABLE measures
     ADD COLUMN code TEXT,
     ADD COLUMN control_type TEXT,
     ADD COLUMN nature TEXT,
+    ADD COLUMN operating_mode TEXT,
     ADD COLUMN operating_frequency INTERVAL,
+    ADD COLUMN operating_event TEXT,
     ADD COLUMN evidence_cadence INTERVAL,
     ADD COLUMN testing_cadence INTERVAL,
     ADD COLUMN next_evidence_due TIMESTAMP WITH TIME ZONE,
@@ -63,6 +65,33 @@ ALTER TABLE measures
             nature IS NULL
             OR nature IN ('MANUAL')
         ),
+    ADD CONSTRAINT measures_operating_mode_check
+        CHECK (
+            operating_mode IS NULL
+            OR operating_mode IN ('CONTINUOUS', 'EVENT', 'PERIODIC')
+        ),
+    ADD CONSTRAINT measures_operating_frequency_shape_check
+        CHECK (
+            (
+                operating_mode IS NULL
+                AND operating_frequency IS NULL
+                AND operating_event IS NULL
+            )
+            OR (
+                operating_mode = 'CONTINUOUS'
+                AND operating_frequency IS NULL
+                AND operating_event IS NULL
+            )
+            OR (
+                operating_mode = 'EVENT'
+                AND operating_frequency IS NULL
+            )
+            OR (
+                operating_mode = 'PERIODIC'
+                AND operating_frequency IS NOT NULL
+                AND operating_event IS NULL
+            )
+        ),
     ADD CONSTRAINT measures_implementation_status_check
         CHECK (
             implementation_status IN (
@@ -98,7 +127,7 @@ ALTER TABLE measures ADD COLUMN search_vector tsvector
 GENERATED ALWAYS AS (
     to_tsvector(
         'simple',
-        COALESCE(name, '') || ' ' || COALESCE(code, '')
+        COALESCE(name, '') || ' ' || COALESCE(code, '') || ' ' || COALESCE(operating_event, '')
     )
 ) STORED;
 

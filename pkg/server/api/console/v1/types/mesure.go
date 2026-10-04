@@ -109,7 +109,7 @@ func NewMeasure(c *coredata.Measure) *Measure {
 		Code:                 c.Code,
 		ControlType:          c.ControlType,
 		Nature:               c.Nature,
-		OperatingFrequency:   c.OperatingFrequency,
+		OperatingFrequency:   newOperatingFrequency(c),
 		EvidenceCadence:      c.EvidenceCadence,
 		TestingCadence:       c.TestingCadence,
 		NextEvidenceDue:      c.NextEvidenceDue,
@@ -128,6 +128,18 @@ func NewMeasure(c *coredata.Measure) *Measure {
 	}
 
 	return measure
+}
+
+func newOperatingFrequency(c *coredata.Measure) *coredata.InternalControlOperatingFrequency {
+	if c.OperatingMode == nil {
+		return nil
+	}
+
+	return &coredata.InternalControlOperatingFrequency{
+		Mode:     *c.OperatingMode,
+		Interval: c.OperatingInterval,
+		Event:    c.OperatingEvent,
+	}
 }
 
 func NewMeasureAsOf(c *coredata.Measure, asOf time.Time) *Measure {

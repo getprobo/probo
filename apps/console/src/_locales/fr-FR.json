@@ -3774,6 +3774,10 @@
       "nextEvidenceDue": "Preuve due",
       "nextTestDue": "Test dû"
     },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Lors d’un événement"
+    },
     "implementationStatuses": {
       "not_implemented": "Non mis en œuvre",
       "in_progress": "En cours",
@@ -3943,7 +3947,8 @@
     "validation": {
       "nameRequired": "Le nom est requis",
       "categoryRequired": "La catégorie est requise",
-      "reviewerDistinct": "Le relecteur doit être une personne différente du responsable"
+      "reviewerDistinct": "Le relecteur doit être une personne différente du responsable",
+      "operatingIntervalRequired": "Indiquez tous les combien le contrôle s’exécute"
     },
     "fields": {
       "name": "Nom",
@@ -3960,6 +3965,8 @@
       "controlType": "Type",
       "nature": "Nature",
       "operatingFrequency": "Fréquence d’exploitation",
+      "operatingEvent": "Événement",
+      "operatingEventPlaceholder": "lorsqu’une personne part",
       "evidenceCadence": "Cadence des preuves",
       "testingCadence": "Cadence des tests",
       "implementationStatus": "Statut de mise en œuvre",
@@ -3982,6 +3989,11 @@
     },
     "natures": {
       "manual": "Manuel"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Lorsqu’un événement se produit",
+      "periodic": "Tous les"
     },
     "implementationStatuses": {
       "not_implemented": "Non mis en œuvre",

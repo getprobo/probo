@@ -187,6 +187,167 @@ func TestApplyMeasureUpdate(t *testing.T) {
 		assert.Nil(t, measure.EvidenceCadence)
 		assert.Nil(t, measure.NextEvidenceDue)
 	})
+
+	t.Run("an operating frequency change leaves evidence and test dues", func(t *testing.T) {
+		t.Parallel()
+
+		quarterly := mustMeasureSpan(t, "P3M")
+		event := "when someone leaves"
+		freq := &coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModePeriodic,
+			Interval: &quarterly,
+			Event:    &event,
+		}
+		due := now.AddDate(0, 1, 0)
+		measure := &coredata.Measure{
+			EvidenceCadence: &quarterly,
+			NextEvidenceDue: &due,
+			TestingCadence:  &quarterly,
+			NextTestDue:     &due,
+		}
+
+		applyMeasureUpdate(
+			&UpdateMeasureRequest{OperatingFrequency: &freq},
+			measure,
+			now,
+		)
+
+		require.NotNil(t, measure.OperatingMode)
+		assert.Equal(t, coredata.InternalControlOperatingModePeriodic, *measure.OperatingMode)
+		require.NotNil(t, measure.OperatingInterval)
+		assert.Equal(t, quarterly, *measure.OperatingInterval)
+		assert.Nil(t, measure.OperatingEvent)
+		require.NotNil(t, measure.NextEvidenceDue)
+		assert.True(t, measure.NextEvidenceDue.Equal(due))
+		require.NotNil(t, measure.NextTestDue)
+		assert.True(t, measure.NextTestDue.Equal(due))
+	})
+
+	t.Run("clearing the operating frequency clears its columns", func(t *testing.T) {
+		t.Parallel()
+
+		quarterly := mustMeasureSpan(t, "P1D")
+		mode := coredata.InternalControlOperatingModePeriodic
+		var cleared *coredata.InternalControlOperatingFrequency
+		measure := &coredata.Measure{
+			OperatingMode:     &mode,
+			OperatingInterval: &quarterly,
+		}
+
+		applyMeasureUpdate(
+			&UpdateMeasureRequest{OperatingFrequency: &cleared},
+			measure,
+			now,
+		)
+
+		assert.Nil(t, measure.OperatingMode)
+		assert.Nil(t, measure.OperatingInterval)
+		assert.Nil(t, measure.OperatingEvent)
+	})
+}
+
+func TestValidOperatingFrequency(t *testing.T) {
+	t.Parallel()
+
+	t.Run("an empty value is allowed", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Nil(t, validOperatingFrequency()(nil))
+	})
+
+	t.Run("continuous rejects an interval or an event", func(t *testing.T) {
+		t.Parallel()
+
+		quarterly := mustMeasureSpan(t, "P3M")
+		event := "when someone leaves"
+
+		assert.Nil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode: coredata.InternalControlOperatingModeContinuous,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModeContinuous,
+			Interval: &quarterly,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:  coredata.InternalControlOperatingModeContinuous,
+			Event: &event,
+		}))
+	})
+
+	t.Run("event keeps optional text and rejects an interval", func(t *testing.T) {
+		t.Parallel()
+
+		quarterly := mustMeasureSpan(t, "P3M")
+		event := "when someone leaves"
+
+		assert.Nil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode: coredata.InternalControlOperatingModeEvent,
+		}))
+		assert.Nil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:  coredata.InternalControlOperatingModeEvent,
+			Event: &event,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModeEvent,
+			Interval: &quarterly,
+		}))
+	})
+
+	t.Run("periodic requires a positive duration and rejects an event", func(t *testing.T) {
+		t.Parallel()
+
+		quarterly := mustMeasureSpan(t, "P3M")
+		negative := mustMeasureSpan(t, "-P1M")
+		event := "when someone leaves"
+		zero := timespan.TimeSpan{}
+
+		assert.Nil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModePeriodic,
+			Interval: &quarterly,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode: coredata.InternalControlOperatingModePeriodic,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModePeriodic,
+			Interval: &zero,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModePeriodic,
+			Interval: &negative,
+		}))
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode:     coredata.InternalControlOperatingModePeriodic,
+			Interval: &quarterly,
+			Event:    &event,
+		}))
+	})
+
+	t.Run("an unknown mode is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		assert.NotNil(t, validOperatingFrequency()(coredata.InternalControlOperatingFrequency{
+			Mode: "WEEKLY",
+		}))
+	})
+}
+
+func TestNormalizeOperatingFrequency(t *testing.T) {
+	t.Parallel()
+
+	t.Run("blank event text becomes empty", func(t *testing.T) {
+		t.Parallel()
+
+		blank := "  "
+		freq := &coredata.InternalControlOperatingFrequency{
+			Mode:  coredata.InternalControlOperatingModeEvent,
+			Event: &blank,
+		}
+
+		normalizeOperatingFrequency(freq)
+
+		assert.Nil(t, freq.Event)
+	})
 }
 
 func mustMeasureSpan(t *testing.T, raw string) timespan.TimeSpan {

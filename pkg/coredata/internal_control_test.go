@@ -38,6 +38,74 @@ func mustTimeSpan(t *testing.T, raw string) *timespan.TimeSpan {
 	return &span
 }
 
+func TestInternalControlOperatingFrequency_Columns(t *testing.T) {
+	t.Parallel()
+
+	quarterly := mustTimeSpan(t, "P3M")
+	event := "when someone leaves"
+
+	t.Run("nil clears every column", func(t *testing.T) {
+		t.Parallel()
+
+		var freq *InternalControlOperatingFrequency
+		mode, interval, text := freq.Columns()
+
+		assert.Nil(t, mode)
+		assert.Nil(t, interval)
+		assert.Nil(t, text)
+	})
+
+	t.Run("continuous keeps only the mode", func(t *testing.T) {
+		t.Parallel()
+
+		freq := &InternalControlOperatingFrequency{
+			Mode:     InternalControlOperatingModeContinuous,
+			Interval: quarterly,
+			Event:    &event,
+		}
+		mode, interval, text := freq.Columns()
+
+		require.NotNil(t, mode)
+		assert.Equal(t, InternalControlOperatingModeContinuous, *mode)
+		assert.Nil(t, interval)
+		assert.Nil(t, text)
+	})
+
+	t.Run("event keeps the text and drops the interval", func(t *testing.T) {
+		t.Parallel()
+
+		freq := &InternalControlOperatingFrequency{
+			Mode:     InternalControlOperatingModeEvent,
+			Interval: quarterly,
+			Event:    &event,
+		}
+		mode, interval, text := freq.Columns()
+
+		require.NotNil(t, mode)
+		assert.Equal(t, InternalControlOperatingModeEvent, *mode)
+		assert.Nil(t, interval)
+		require.NotNil(t, text)
+		assert.Equal(t, event, *text)
+	})
+
+	t.Run("periodic keeps the interval and drops the event", func(t *testing.T) {
+		t.Parallel()
+
+		freq := &InternalControlOperatingFrequency{
+			Mode:     InternalControlOperatingModePeriodic,
+			Interval: quarterly,
+			Event:    &event,
+		}
+		mode, interval, text := freq.Columns()
+
+		require.NotNil(t, mode)
+		assert.Equal(t, InternalControlOperatingModePeriodic, *mode)
+		require.NotNil(t, interval)
+		assert.Equal(t, *quarterly, *interval)
+		assert.Nil(t, text)
+	})
+}
+
 func TestNextInternalControlDue(t *testing.T) {
 	t.Parallel()
 

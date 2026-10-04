@@ -22,6 +22,42 @@ enum InternalControlNature
         )
 }
 
+enum InternalControlOperatingMode
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingMode"
+    ) {
+    CONTINUOUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingModeContinuous"
+        )
+    EVENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingModeEvent"
+        )
+    PERIODIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingModePeriodic"
+        )
+}
+
+type InternalControlOperatingFrequency
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingFrequency"
+    ) {
+    mode: InternalControlOperatingMode!
+    interval: TimeSpan
+    event: String
+}
+
+input InternalControlOperatingFrequencyInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingFrequency"
+    ) {
+    mode: InternalControlOperatingMode!
+    interval: TimeSpan
+    event: String
+}
+
 enum InternalControlImplementationStatus
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus"
@@ -100,7 +136,7 @@ type Measure implements Node {
     code: String
     controlType: InternalControlType
     nature: InternalControlNature
-    operatingFrequency: TimeSpan
+    operatingFrequency: InternalControlOperatingFrequency
     evidenceCadence: TimeSpan
     testingCadence: TimeSpan
     nextEvidenceDue: Datetime
@@ -220,7 +256,7 @@ input CreateMeasureInput {
     code: String
     controlType: InternalControlType
     nature: InternalControlNature
-    operatingFrequency: TimeSpan
+    operatingFrequency: InternalControlOperatingFrequencyInput
     evidenceCadence: TimeSpan
     testingCadence: TimeSpan
     implementationStatus: InternalControlImplementationStatus
@@ -237,7 +273,7 @@ input UpdateMeasureInput {
     code: String @goField(omittable: true)
     controlType: InternalControlType @goField(omittable: true)
     nature: InternalControlNature @goField(omittable: true)
-    operatingFrequency: TimeSpan @goField(omittable: true)
+    operatingFrequency: InternalControlOperatingFrequencyInput @goField(omittable: true)
     evidenceCadence: TimeSpan @goField(omittable: true)
     testingCadence: TimeSpan @goField(omittable: true)
     implementationStatus: InternalControlImplementationStatus

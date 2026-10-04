@@ -31,7 +31,14 @@ import (
 type (
 	InternalControlType                 string
 	InternalControlNature               string
+	InternalControlOperatingMode        string
 	InternalControlImplementationStatus string
+
+	InternalControlOperatingFrequency struct {
+		Mode     InternalControlOperatingMode `json:"mode"`
+		Interval *timespan.TimeSpan           `json:"interval,omitempty"`
+		Event    *string                      `json:"event,omitempty"`
+	}
 )
 
 const (
@@ -40,6 +47,10 @@ const (
 	InternalControlTypeCorrective InternalControlType = "CORRECTIVE"
 
 	InternalControlNatureManual InternalControlNature = "MANUAL"
+
+	InternalControlOperatingModeContinuous InternalControlOperatingMode = "CONTINUOUS"
+	InternalControlOperatingModeEvent      InternalControlOperatingMode = "EVENT"
+	InternalControlOperatingModePeriodic   InternalControlOperatingMode = "PERIODIC"
 
 	InternalControlImplementationStatusNotImplemented InternalControlImplementationStatus = "NOT_IMPLEMENTED"
 	InternalControlImplementationStatusInProgress     InternalControlImplementationStatus = "IN_PROGRESS"
@@ -55,6 +66,10 @@ var (
 	_ fmt.Stringer             = InternalControlNature("")
 	_ encoding.TextMarshaler   = InternalControlNature("")
 	_ encoding.TextUnmarshaler = (*InternalControlNature)(nil)
+
+	_ fmt.Stringer             = InternalControlOperatingMode("")
+	_ encoding.TextMarshaler   = InternalControlOperatingMode("")
+	_ encoding.TextUnmarshaler = (*InternalControlOperatingMode)(nil)
 
 	_ fmt.Stringer             = InternalControlImplementationStatus("")
 	_ encoding.TextMarshaler   = InternalControlImplementationStatus("")
@@ -131,6 +146,68 @@ func (v *InternalControlNature) UnmarshalText(text []byte) error {
 	*v = val
 
 	return nil
+}
+
+func InternalControlOperatingModes() []InternalControlOperatingMode {
+	return []InternalControlOperatingMode{
+		InternalControlOperatingModeContinuous,
+		InternalControlOperatingModeEvent,
+		InternalControlOperatingModePeriodic,
+	}
+}
+
+func (v InternalControlOperatingMode) IsValid() bool {
+	switch v {
+	case InternalControlOperatingModeContinuous,
+		InternalControlOperatingModeEvent,
+		InternalControlOperatingModePeriodic:
+		return true
+	}
+
+	return false
+}
+
+func (v InternalControlOperatingMode) String() string {
+	return string(v)
+}
+
+func (v InternalControlOperatingMode) MarshalText() ([]byte, error) {
+	return []byte(v.String()), nil
+}
+
+func (v *InternalControlOperatingMode) UnmarshalText(text []byte) error {
+	val := InternalControlOperatingMode(text)
+	if !val.IsValid() {
+		return fmt.Errorf("invalid InternalControlOperatingMode value: %q", string(text))
+	}
+
+	*v = val
+
+	return nil
+}
+
+// Columns splits an operating frequency into the stored mode, interval, and
+// event. A nil frequency clears all three. Only the fields that belong to the
+// mode are kept.
+func (f *InternalControlOperatingFrequency) Columns() (
+	*InternalControlOperatingMode,
+	*timespan.TimeSpan,
+	*string,
+) {
+	if f == nil {
+		return nil, nil, nil
+	}
+
+	mode := f.Mode
+
+	switch mode {
+	case InternalControlOperatingModePeriodic:
+		return &mode, f.Interval, nil
+	case InternalControlOperatingModeEvent:
+		return &mode, nil, f.Event
+	default:
+		return &mode, nil, nil
+	}
 }
 
 // NextInternalControlDue returns the next evidence or test due instant for a

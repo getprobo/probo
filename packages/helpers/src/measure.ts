@@ -39,6 +39,12 @@ export const internalControlNatures = [
     "MANUAL",
 ] as const;
 
+export const internalControlOperatingModes = [
+    "CONTINUOUS",
+    "EVENT",
+    "PERIODIC",
+] as const;
+
 export const internalControlImplementationStatuses = [
     "NOT_IMPLEMENTED",
     "IN_PROGRESS",

@@ -35,7 +35,7 @@ func NewMeasure(m *coredata.Measure) *Measure {
 		Code:                 m.Code,
 		ControlType:          m.ControlType,
 		Nature:               m.Nature,
-		OperatingFrequency:   m.OperatingFrequency,
+		OperatingFrequency:   newOperatingFrequency(m),
 		EvidenceCadence:      m.EvidenceCadence,
 		TestingCadence:       m.TestingCadence,
 		NextEvidenceDue:      m.NextEvidenceDue,
@@ -102,5 +102,17 @@ func NewListMeasuresOutput(measurePage *page.Page[*coredata.Measure, coredata.Me
 	return ListMeasuresOutput{
 		NextCursor: nextCursor,
 		Measures:   measures,
+	}
+}
+
+func newOperatingFrequency(m *coredata.Measure) *coredata.InternalControlOperatingFrequency {
+	if m.OperatingMode == nil {
+		return nil
+	}
+
+	return &coredata.InternalControlOperatingFrequency{
+		Mode:     *m.OperatingMode,
+		Interval: m.OperatingInterval,
+		Event:    m.OperatingEvent,
 	}
 }

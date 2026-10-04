@@ -47,6 +47,7 @@ export {
   getMeasureStateLabel,
   internalControlImplementationStatuses,
   internalControlNatures,
+  internalControlOperatingModes,
   internalControlTypes,
   measureStates,
 } from "./measure";

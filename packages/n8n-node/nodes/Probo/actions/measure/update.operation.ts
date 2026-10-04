@@ -131,7 +131,11 @@ export async function execute(
 					code
 					controlType
 					nature
-					operatingFrequency
+					operatingFrequency {
+						mode
+						interval
+						event
+					}
 					evidenceCadence
 					testingCadence
 					nextEvidenceDue
@@ -145,7 +149,7 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = {
+	const input: Record<string, unknown> = {
 		id,
 		...readInternalControlFields(
 			(field) => this.getNodeParameter(field, itemIndex, '') as string,

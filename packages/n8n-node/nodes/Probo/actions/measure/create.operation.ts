@@ -102,7 +102,11 @@ export async function execute(
 						code
 						controlType
 						nature
-						operatingFrequency
+						operatingFrequency {
+							mode
+							interval
+							event
+						}
 						evidenceCadence
 						testingCadence
 						nextEvidenceDue

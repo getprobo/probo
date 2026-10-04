@@ -51,7 +51,7 @@ type (
 		Code                 *string
 		ControlType          *coredata.InternalControlType
 		Nature               *coredata.InternalControlNature
-		OperatingFrequency   *timespan.TimeSpan
+		OperatingFrequency   *coredata.InternalControlOperatingFrequency
 		EvidenceCadence      *timespan.TimeSpan
 		TestingCadence       *timespan.TimeSpan
 		ImplementationStatus *coredata.InternalControlImplementationStatus
@@ -68,7 +68,7 @@ type (
 		Code                 **string
 		ControlType          **coredata.InternalControlType
 		Nature               **coredata.InternalControlNature
-		OperatingFrequency   **timespan.TimeSpan
+		OperatingFrequency   **coredata.InternalControlOperatingFrequency
 		EvidenceCadence      **timespan.TimeSpan
 		TestingCadence       **timespan.TimeSpan
 		ImplementationStatus *coredata.InternalControlImplementationStatus
@@ -104,6 +104,7 @@ func (cmr *CreateMeasureRequest) Validate() error {
 	v := validator.New()
 
 	cmr.Code = normalizeMeasureCode(cmr.Code)
+	normalizeOperatingFrequency(cmr.OperatingFrequency)
 
 	v.Check(cmr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(cmr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
@@ -112,7 +113,7 @@ func (cmr *CreateMeasureRequest) Validate() error {
 	v.Check(cmr.Code, "code", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(cmr.ControlType, "control_type", validator.OneOfSlice(coredata.InternalControlTypes()))
 	v.Check(cmr.Nature, "nature", validator.OneOfSlice(coredata.InternalControlNatures()))
-	v.Check(cmr.OperatingFrequency, "operating_frequency", positiveTimeSpan())
+	v.Check(cmr.OperatingFrequency, "operating_frequency", validOperatingFrequency())
 	v.Check(cmr.EvidenceCadence, "evidence_cadence", positiveTimeSpan())
 	v.Check(cmr.TestingCadence, "testing_cadence", positiveTimeSpan())
 	v.Check(cmr.ImplementationStatus, "implementation_status", validator.OneOfSlice(coredata.InternalControlImplementationStatuses()))
@@ -131,6 +132,9 @@ func (umr *UpdateMeasureRequest) Validate() error {
 	v := validator.New()
 
 	normalizeOmittableMeasureCode(umr.Code)
+	if umr.OperatingFrequency != nil {
+		normalizeOperatingFrequency(*umr.OperatingFrequency)
+	}
 
 	v.Check(umr.ID, "id", validator.Required(), validator.GID(coredata.MeasureEntityType))
 	v.Check(umr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
@@ -140,7 +144,7 @@ func (umr *UpdateMeasureRequest) Validate() error {
 	v.Check(umr.Code, "code", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(umr.ControlType, "control_type", validator.OneOfSlice(coredata.InternalControlTypes()))
 	v.Check(umr.Nature, "nature", validator.OneOfSlice(coredata.InternalControlNatures()))
-	v.Check(umr.OperatingFrequency, "operating_frequency", positiveTimeSpan())
+	v.Check(umr.OperatingFrequency, "operating_frequency", validOperatingFrequency())
 	v.Check(umr.EvidenceCadence, "evidence_cadence", positiveTimeSpan())
 	v.Check(umr.TestingCadence, "testing_cadence", positiveTimeSpan())
 	v.Check(umr.ImplementationStatus, "implementation_status", validator.OneOfSlice(coredata.InternalControlImplementationStatuses()))
@@ -800,6 +804,8 @@ func (s MeasureService) Create(
 				}
 			}
 
+			operatingMode, operatingInterval, operatingEvent := req.OperatingFrequency.Columns()
+
 			measure = &coredata.Measure{
 				ID:                   gid.New(organization.ID.TenantID(), coredata.MeasureEntityType),
 				OrganizationID:       organization.ID,
@@ -810,7 +816,9 @@ func (s MeasureService) Create(
 				Code:                 req.Code,
 				ControlType:          req.ControlType,
 				Nature:               req.Nature,
-				OperatingFrequency:   req.OperatingFrequency,
+				OperatingMode:        operatingMode,
+				OperatingInterval:    operatingInterval,
+				OperatingEvent:       operatingEvent,
 				EvidenceCadence:      req.EvidenceCadence,
 				TestingCadence:       req.TestingCadence,
 				NextEvidenceDue:      coredata.NextInternalControlDue(now, req.EvidenceCadence),
@@ -1199,7 +1207,7 @@ func applyMeasureUpdate(req *UpdateMeasureRequest, measure *coredata.Measure, no
 	setOmittable(&measure.Code, req.Code)
 	setOmittable(&measure.ControlType, req.ControlType)
 	setOmittable(&measure.Nature, req.Nature)
-	assignCadence(&measure.OperatingFrequency, nil, req.OperatingFrequency, now)
+	assignOperatingFrequency(measure, req.OperatingFrequency)
 	assignCadence(&measure.EvidenceCadence, &measure.NextEvidenceDue, req.EvidenceCadence, now)
 	assignCadence(&measure.TestingCadence, &measure.NextTestDue, req.TestingCadence, now)
 	setOmittable(&measure.OwnerID, req.OwnerID)
@@ -1220,6 +1228,97 @@ func applyMeasureUpdate(req *UpdateMeasureRequest, measure *coredata.Measure, no
 	if req.State != nil && measure.State != *req.State {
 		measure.State = *req.State
 		measure.ImplementationStatus = coredata.ImplementationStatusForMeasureState(*req.State)
+	}
+}
+
+func normalizeOperatingFrequency(freq *coredata.InternalControlOperatingFrequency) {
+	if freq == nil {
+		return
+	}
+
+	freq.Event = normalizeOperatingEvent(freq.Event)
+}
+
+func normalizeOperatingEvent(event *string) *string {
+	if event == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*event)
+	if trimmed == "" {
+		return nil
+	}
+
+	return &trimmed
+}
+
+func assignOperatingFrequency(measure *coredata.Measure, next **coredata.InternalControlOperatingFrequency) {
+	if next == nil {
+		return
+	}
+
+	mode, interval, event := (*next).Columns()
+	measure.OperatingMode = mode
+	measure.OperatingInterval = interval
+	measure.OperatingEvent = event
+}
+
+func validOperatingFrequency() validator.ValidatorFunc {
+	return func(value any) *validator.ValidationError {
+		freq, ok := value.(coredata.InternalControlOperatingFrequency)
+		if !ok {
+			return nil
+		}
+
+		if !freq.Mode.IsValid() {
+			return &validator.ValidationError{
+				Code:    validator.ErrorCodeInvalidEnum,
+				Message: "must be CONTINUOUS, EVENT, or PERIODIC",
+			}
+		}
+
+		if freq.Event != nil {
+			if err := validator.SafeTextNoNewLine(TitleMaxLength)(*freq.Event); err != nil {
+				return err
+			}
+		}
+
+		switch freq.Mode {
+		case coredata.InternalControlOperatingModeContinuous:
+			if freq.Interval != nil || freq.Event != nil {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeCustom,
+					Message: "continuous frequency has no interval or event",
+				}
+			}
+		case coredata.InternalControlOperatingModeEvent:
+			if freq.Interval != nil {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeCustom,
+					Message: "event frequency has no interval",
+				}
+			}
+		case coredata.InternalControlOperatingModePeriodic:
+			if freq.Event != nil {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeCustom,
+					Message: "periodic frequency has no event",
+				}
+			}
+
+			if freq.Interval == nil || freq.Interval.IsZero() {
+				return &validator.ValidationError{
+					Code:    validator.ErrorCodeRequired,
+					Message: "periodic frequency requires a duration",
+				}
+			}
+
+			if err := positiveTimeSpan()(*freq.Interval); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	}
 }
 

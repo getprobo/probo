@@ -3770,6 +3770,10 @@
       "nextEvidenceDue": "Bewijs verschuldigd",
       "nextTestDue": "Test verschuldigd"
     },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Bij een gebeurtenis"
+    },
     "implementationStatuses": {
       "not_implemented": "Niet geïmplementeerd",
       "in_progress": "In uitvoering",
@@ -3939,7 +3943,8 @@
     "validation": {
       "nameRequired": "Naam is verplicht",
       "categoryRequired": "Categorie is verplicht",
-      "reviewerDistinct": "De beoordelaar moet een andere persoon zijn dan de eigenaar"
+      "reviewerDistinct": "De beoordelaar moet een andere persoon zijn dan de eigenaar",
+      "operatingIntervalRequired": "Geef aan hoe vaak de controle wordt uitgevoerd"
     },
     "fields": {
       "name": "Naam",
@@ -3956,6 +3961,8 @@
       "controlType": "Type",
       "nature": "Aard",
       "operatingFrequency": "Uitvoeringsfrequentie",
+      "operatingEvent": "Gebeurtenis",
+      "operatingEventPlaceholder": "wanneer iemand vertrekt",
       "evidenceCadence": "Bewijscadans",
       "testingCadence": "Testcadans",
       "implementationStatus": "Implementatiestatus",
@@ -3978,6 +3985,11 @@
     },
     "natures": {
       "manual": "Handmatig"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Bij een gebeurtenis",
+      "periodic": "Elke"
     },
     "implementationStatuses": {
       "not_implemented": "Niet geïmplementeerd",

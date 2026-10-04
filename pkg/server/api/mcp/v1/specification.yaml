@@ -2488,6 +2488,34 @@ components:
         - MANUAL
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlNature
 
+    InternalControlOperatingMode:
+      type: string
+      enum:
+        - CONTINUOUS
+        - EVENT
+        - PERIODIC
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOperatingMode
+
+    InternalControlOperatingFrequency:
+      type: object
+      required:
+        - mode
+      properties:
+        mode:
+          $ref: "#/components/schemas/InternalControlOperatingMode"
+          description: Continuous, event, or periodic
+        interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+          description: ISO-8601 duration, required when the mode is periodic
+        event:
+          type:
+            - string
+            - "null"
+          description: What triggers an event-driven control, for example when someone leaves
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOperatingFrequency
+
     InternalControlImplementationStatus:
       type: string
       enum:
@@ -2573,9 +2601,9 @@ components:
           description: Manual
         operating_frequency:
           anyOf:
-            - $ref: "#/components/schemas/TimeSpan"
+            - $ref: "#/components/schemas/InternalControlOperatingFrequency"
             - type: "null"
-          description: How often the control runs, as an ISO-8601 duration
+          description: Whether the control runs continuously, when an event occurs, or on a duration
         evidence_cadence:
           anyOf:
             - $ref: "#/components/schemas/TimeSpan"
@@ -2981,8 +3009,8 @@ components:
           $ref: "#/components/schemas/InternalControlNature"
           description: Manual
         operating_frequency:
-          $ref: "#/components/schemas/TimeSpan"
-          description: How often the control runs, as an ISO-8601 duration
+          $ref: "#/components/schemas/InternalControlOperatingFrequency"
+          description: Whether the control runs continuously, when an event occurs, or on a duration
         evidence_cadence:
           $ref: "#/components/schemas/TimeSpan"
           description: How often evidence is collected, as an ISO-8601 duration
@@ -3046,9 +3074,9 @@ components:
           go.probo.inc/mcpgen/omittable: true
         operating_frequency:
           anyOf:
-            - $ref: "#/components/schemas/TimeSpan"
+            - $ref: "#/components/schemas/InternalControlOperatingFrequency"
             - type: "null"
-          description: How often the control runs, as an ISO-8601 duration
+          description: Whether the control runs continuously, when an event occurs, or on a duration
           go.probo.inc/mcpgen/omittable: true
         evidence_cadence:
           anyOf:

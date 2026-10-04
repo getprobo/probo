@@ -64,12 +64,46 @@ export function internalControlFields(operation: string): INodeProperties[] {
 			description: 'How the control is performed',
 		},
 		{
-			displayName: 'Operating Frequency',
-			name: 'operatingFrequency',
-			type: 'string',
+			displayName: 'Operating Mode',
+			name: 'operatingMode',
+			type: 'options',
 			displayOptions,
+			options: [
+				{ name: 'Not set', value: '' },
+				{ name: 'Continuous', value: 'CONTINUOUS' },
+				{ name: 'When an event occurs', value: 'EVENT' },
+				{ name: 'Every', value: 'PERIODIC' },
+			],
 			default: '',
-			description: 'ISO-8601 duration, for example P1D',
+			description: 'Whether the control runs always, when an event occurs, or on a duration',
+		},
+		{
+			displayName: 'Operating Interval',
+			name: 'operatingInterval',
+			type: 'string',
+			displayOptions: {
+				show: {
+					resource: ['measure'],
+					operation: [operation],
+					operatingMode: ['PERIODIC'],
+				},
+			},
+			default: '',
+			description: 'ISO-8601 duration for a periodic control, for example P3M',
+		},
+		{
+			displayName: 'Operating Event',
+			name: 'operatingEvent',
+			type: 'string',
+			displayOptions: {
+				show: {
+					resource: ['measure'],
+					operation: [operation],
+					operatingMode: ['EVENT'],
+				},
+			},
+			default: '',
+			description: 'What triggers an event-driven control, for example when someone leaves',
 		},
 		{
 			displayName: 'Evidence Cadence',
@@ -125,7 +159,6 @@ const fieldNames = [
 	'code',
 	'controlType',
 	'nature',
-	'operatingFrequency',
 	'evidenceCadence',
 	'testingCadence',
 	'implementationStatus',
@@ -135,13 +168,31 @@ const fieldNames = [
 
 export function readInternalControlFields(
 	get: (name: string) => string,
-): Record<string, string> {
-	const input: Record<string, string> = {};
+): Record<string, unknown> {
+	const input: Record<string, unknown> = {};
 	for (const name of fieldNames) {
 		const value = get(name);
 		if (value) {
 			input[name] = value;
 		}
+	}
+
+	const mode = get('operatingMode');
+	if (mode) {
+		const frequency: Record<string, string> = { mode };
+		if (mode === 'PERIODIC') {
+			const interval = get('operatingInterval');
+			if (interval) {
+				frequency.interval = interval;
+			}
+		}
+		if (mode === 'EVENT') {
+			const event = get('operatingEvent');
+			if (event) {
+				frequency.event = event;
+			}
+		}
+		input.operatingFrequency = frequency;
 	}
 
 	return input;

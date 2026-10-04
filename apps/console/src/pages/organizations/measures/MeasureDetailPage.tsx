@@ -87,7 +87,11 @@ export const measureNodeQuery = graphql`
         state
         code
         implementationStatus
-        operatingFrequency
+        operatingFrequency {
+          mode
+          interval
+          event
+        }
         evidenceCadence
         testingCadence
         nextEvidenceDue
@@ -219,6 +223,8 @@ export default function MeasureDetailPage(props: Props) {
     return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(value));
   };
 
+  const operating = operatingFrequencyLabel(measure.operatingFrequency, t);
+
   return (
     <div className="space-y-6">
       <PageHeader title={measure.name} description={measure.description}>
@@ -286,11 +292,11 @@ export default function MeasureDetailPage(props: Props) {
             {measure.reviewer.fullName}
           </span>
         )}
-        {formatDuration(measure.operatingFrequency, t) && (
+        {operating && (
           <span>
             {t("measureDetailPage.fields.operatingFrequency")}
             {": "}
-            {formatDuration(measure.operatingFrequency, t)}
+            {operating}
           </span>
         )}
         {formatDuration(measure.evidenceCadence, t) && (
@@ -375,4 +381,28 @@ export default function MeasureDetailPage(props: Props) {
       <Outlet context={{ measure }} />
     </div>
   );
+}
+
+function operatingFrequencyLabel(
+  frequency: {
+    readonly mode: string;
+    readonly interval?: string | null;
+    readonly event?: string | null;
+  } | null | undefined,
+  t: (key: string, options?: { count?: number }) => string,
+): string | null {
+  if (!frequency) {
+    return null;
+  }
+
+  switch (frequency.mode) {
+    case "CONTINUOUS":
+      return t("measureDetailPage.operatingModes.continuous");
+    case "EVENT":
+      return frequency.event || t("measureDetailPage.operatingModes.event");
+    case "PERIODIC":
+      return formatDuration(frequency.interval, t);
+    default:
+      return null;
+  }
 }

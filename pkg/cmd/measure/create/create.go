@@ -72,7 +72,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagCode                 string
 		flagControlType          string
 		flagNature               string
+		flagOperatingMode        string
 		flagOperatingFrequency   string
+		flagOperatingEvent       string
 		flagEvidenceCadence      string
 		flagTestingCadence       string
 		flagImplementationStatus string
@@ -159,7 +161,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				code:                 flagCode,
 				controlType:          flagControlType,
 				nature:               flagNature,
+				operatingMode:        flagOperatingMode,
 				operatingFrequency:   flagOperatingFrequency,
+				operatingEvent:       flagOperatingEvent,
 				evidenceCadence:      flagEvidenceCadence,
 				testingCadence:       flagTestingCadence,
 				implementationStatus: flagImplementationStatus,
@@ -203,7 +207,9 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		&flagCode,
 		&flagControlType,
 		&flagNature,
+		&flagOperatingMode,
 		&flagOperatingFrequency,
+		&flagOperatingEvent,
 		&flagEvidenceCadence,
 		&flagTestingCadence,
 		&flagImplementationStatus,
@@ -218,7 +224,9 @@ type measureFieldFlags struct {
 	code                 string
 	controlType          string
 	nature               string
+	operatingMode        string
 	operatingFrequency   string
+	operatingEvent       string
 	evidenceCadence      string
 	testingCadence       string
 	implementationStatus string
@@ -231,7 +239,9 @@ func addMeasureFieldFlags(
 	code *string,
 	controlType *string,
 	nature *string,
+	operatingMode *string,
 	operatingFrequency *string,
+	operatingEvent *string,
 	evidenceCadence *string,
 	testingCadence *string,
 	implementationStatus *string,
@@ -241,12 +251,60 @@ func addMeasureFieldFlags(
 	cmd.Flags().StringVar(code, "code", "", "Stable reference, for example IC-ACCESS-01")
 	cmd.Flags().StringVar(controlType, "control-type", "", "Control type: PREVENTIVE, DETECTIVE, CORRECTIVE")
 	cmd.Flags().StringVar(nature, "nature", "", "Nature: MANUAL")
-	cmd.Flags().StringVar(operatingFrequency, "operating-frequency", "", "How often the control runs, as an ISO-8601 duration such as P1D")
+	cmd.Flags().StringVar(operatingMode, "operating-mode", "", "Operating mode: CONTINUOUS, EVENT, or PERIODIC. Empty clears it")
+	cmd.Flags().StringVar(operatingFrequency, "operating-frequency", "", "ISO-8601 duration for PERIODIC mode, for example P3M")
+	cmd.Flags().StringVar(operatingEvent, "operating-event", "", "Event that runs the control, for example when someone leaves")
 	cmd.Flags().StringVar(evidenceCadence, "evidence-cadence", "", "How often evidence is collected, as an ISO-8601 duration such as P1M")
 	cmd.Flags().StringVar(testingCadence, "testing-cadence", "", "How often effectiveness is tested, as an ISO-8601 duration such as P3M")
 	cmd.Flags().StringVar(implementationStatus, "implementation-status", "", "Status: NOT_IMPLEMENTED, IN_PROGRESS, IMPLEMENTED, OPERATING")
 	cmd.Flags().StringVar(ownerID, "owner-id", "", "Owner profile ID")
 	cmd.Flags().StringVar(reviewerID, "reviewer-id", "", "Reviewer profile ID")
+}
+
+func setOperatingFrequency(cmd *cobra.Command, input map[string]any, mode, interval, event string) error {
+	if !cmd.Flags().Changed("operating-mode") &&
+		!cmd.Flags().Changed("operating-frequency") &&
+		!cmd.Flags().Changed("operating-event") {
+		return nil
+	}
+
+	if mode == "" {
+		if interval != "" || event != "" {
+			return fmt.Errorf("operating-mode is required")
+		}
+
+		input["operatingFrequency"] = nil
+
+		return nil
+	}
+
+	if err := cmdutil.ValidateEnum("operating-mode", mode, []string{"CONTINUOUS", "EVENT", "PERIODIC"}); err != nil {
+		return err
+	}
+
+	value := map[string]any{"mode": mode}
+
+	switch mode {
+	case "PERIODIC":
+		if interval == "" {
+			return fmt.Errorf("operating-frequency is required for PERIODIC")
+		}
+
+		span, err := timespan.Parse(interval)
+		if err != nil {
+			return fmt.Errorf("operating-frequency: %w", err)
+		}
+
+		value["interval"] = span.String()
+	case "EVENT":
+		if event != "" {
+			value["event"] = event
+		}
+	}
+
+	input["operatingFrequency"] = value
+
+	return nil
 }
 
 func setDuration(cmd *cobra.Command, input map[string]any, flag, key, raw string) error {
@@ -290,7 +348,7 @@ func setMeasureFields(cmd *cobra.Command, input map[string]any, flags measureFie
 		input["nature"] = flags.nature
 	}
 
-	if err := setDuration(cmd, input, "operating-frequency", "operatingFrequency", flags.operatingFrequency); err != nil {
+	if err := setOperatingFrequency(cmd, input, flags.operatingMode, flags.operatingFrequency, flags.operatingEvent); err != nil {
 		return err
 	}
 

@@ -2279,6 +2279,7 @@
   "measureDetailPage": {
     "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
     "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
+    "operatingModes": { "continuous": "Continuous", "event": "On event" },
     "actions": { "edit": "Edit", "delete": "Delete" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
@@ -2343,12 +2344,13 @@
     "breadcrumb": { "measures": "Internal controls", "editMeasure": "Edit internal control", "newMeasure": "New internal control" },
     "messages": { "created": "Internal control created successfully." },
     "errors": { "create": "Failed to create internal control" },
-    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "reviewerDistinct": "Reviewer must be a different person from the owner" },
-    "fields": { "name": "Name", "namePlaceholder": "Control title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state", "code": "Code", "codePlaceholder": "IC-ACCESS-01", "notSet": "Not set", "controlType": "Type", "nature": "Nature", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "implementationStatus": "Implementation status", "owner": "Owner", "reviewer": "Reviewer" },
+    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "reviewerDistinct": "Reviewer must be a different person from the owner", "operatingIntervalRequired": "Enter how often the control runs" },
+    "fields": { "name": "Name", "namePlaceholder": "Control title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state", "code": "Code", "codePlaceholder": "IC-ACCESS-01", "notSet": "Not set", "controlType": "Type", "nature": "Nature", "operatingFrequency": "Operating frequency", "operatingEvent": "Event", "operatingEventPlaceholder": "when someone leaves", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "implementationStatus": "Implementation status", "owner": "Owner", "reviewer": "Reviewer" },
     "properties": "Properties",
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
     "controlTypes": { "preventive": "Preventive", "detective": "Detective", "corrective": "Corrective" },
     "natures": { "manual": "Manual" },
+    "operatingModes": { "continuous": "Continuous", "event": "When an event occurs", "periodic": "Every" },
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "actions": { "create": "Create internal control", "update": "Update internal control", "addDuration": "Add duration", "clearDuration": "Clear duration" }
   },

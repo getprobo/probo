@@ -43,7 +43,11 @@ query($id: ID!) {
       code
       controlType
       nature
-      operatingFrequency
+      operatingFrequency {
+        mode
+        interval
+        event
+      }
       evidenceCadence
       testingCadence
       nextEvidenceDue
@@ -58,23 +62,23 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename             string  `json:"__typename"`
-		ID                   string  `json:"id"`
-		Name                 string  `json:"name"`
-		Description          *string `json:"description"`
-		Category             string  `json:"category"`
-		State                string  `json:"state"`
-		Code                 *string `json:"code"`
-		ControlType          *string `json:"controlType"`
-		Nature               *string `json:"nature"`
-		OperatingFrequency   *string `json:"operatingFrequency"`
-		EvidenceCadence      *string `json:"evidenceCadence"`
-		TestingCadence       *string `json:"testingCadence"`
-		NextEvidenceDue      *string `json:"nextEvidenceDue"`
-		NextTestDue          *string `json:"nextTestDue"`
-		ImplementationStatus string  `json:"implementationStatus"`
-		CreatedAt            string  `json:"createdAt"`
-		UpdatedAt            string  `json:"updatedAt"`
+		Typename             string              `json:"__typename"`
+		ID                   string              `json:"id"`
+		Name                 string              `json:"name"`
+		Description          *string             `json:"description"`
+		Category             string              `json:"category"`
+		State                string              `json:"state"`
+		Code                 *string             `json:"code"`
+		ControlType          *string             `json:"controlType"`
+		Nature               *string             `json:"nature"`
+		OperatingFrequency   *operatingFrequency `json:"operatingFrequency"`
+		EvidenceCadence      *string             `json:"evidenceCadence"`
+		TestingCadence       *string             `json:"testingCadence"`
+		NextEvidenceDue      *string             `json:"nextEvidenceDue"`
+		NextTestDue          *string             `json:"nextTestDue"`
+		ImplementationStatus string              `json:"implementationStatus"`
+		CreatedAt            string              `json:"createdAt"`
+		UpdatedAt            string              `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -148,7 +152,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), m.State)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), deref(m.ControlType))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Nature:"), deref(m.Nature))
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Operating:"), deref(m.OperatingFrequency))
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Operating:"), formatOperatingFrequency(m.OperatingFrequency))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence cadence:"), deref(m.EvidenceCadence))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Testing cadence:"), deref(m.TestingCadence))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Evidence due:"), deref(m.NextEvidenceDue))
@@ -169,6 +173,37 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+type operatingFrequency struct {
+	Mode     string  `json:"mode"`
+	Interval *string `json:"interval"`
+	Event    *string `json:"event"`
+}
+
+func formatOperatingFrequency(freq *operatingFrequency) string {
+	if freq == nil {
+		return ""
+	}
+
+	switch freq.Mode {
+	case "CONTINUOUS":
+		return "continuous"
+	case "EVENT":
+		if freq.Event != nil && *freq.Event != "" {
+			return *freq.Event
+		}
+
+		return "event"
+	case "PERIODIC":
+		if freq.Interval != nil {
+			return *freq.Interval
+		}
+
+		return freq.Mode
+	default:
+		return freq.Mode
+	}
 }
 
 func deref(value *string) string {
