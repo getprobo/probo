@@ -831,6 +831,8 @@ func (impl *Implm) Run(
 
 	staticCIMDAllow := oauth2.CIMDAllowFromClientIDs(impl.cfg.Auth.OAuth2Server.CIMDAllowedClientIDs)
 
+	iamService.OAuth2ServerService.SetCIMDSupported(len(impl.cfg.Auth.OAuth2Server.CIMDAllowedClientIDs) > 0)
+
 	iamService.OAuth2ServerService.SetCIMDAllow(
 		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
 			host, ok := oauth2.CIMDClientIDHost(clientIDURL)

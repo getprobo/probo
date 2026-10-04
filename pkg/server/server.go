@@ -311,6 +311,7 @@ func (s *Server) oidcDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 	metadata := connect_v1.OAuth2ServerMetadata(
 		s.cfg.BaseURL,
 		s.iamService.OAuth2ScopeRegistry.RegisteredScopes(),
+		s.iamService.OAuth2ServerService.CIMDSupported(),
 	)
 
 	w.Header().Set("Cache-Control", "public, max-age=3600")

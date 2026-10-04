@@ -66,7 +66,15 @@ type (
 	}
 )
 
-func NewMetadata(issuer uri.URI, endpoints Endpoints, registeredScopes []coredata.OAuth2Scope) *ServerMetadata {
+// NewMetadata builds the discovery document. cimdSupported must reflect
+// whether third-party clients can use a Client ID Metadata Document, so
+// that a deployment without a CIMD allowlist does not advertise it.
+func NewMetadata(
+	issuer uri.URI,
+	endpoints Endpoints,
+	registeredScopes []coredata.OAuth2Scope,
+	cimdSupported bool,
+) *ServerMetadata {
 	return &ServerMetadata{
 		Issuer:                      issuer,
 		AuthorizationEndpoint:       endpoints.Authorization,
@@ -124,7 +132,7 @@ func NewMetadata(issuer uri.URI, endpoints Endpoints, registeredScopes []coredat
 			coredata.OAuth2ClaimEmailVerified,
 			coredata.OAuth2ClaimName,
 		},
-		ClientIDMetadataDocumentSupported:             true,
+		ClientIDMetadataDocumentSupported:             cimdSupported,
 		AuthorizationResponseIssuerParameterSupported: true,
 	}
 }

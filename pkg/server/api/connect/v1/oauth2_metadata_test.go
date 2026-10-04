@@ -28,7 +28,7 @@ func TestOAuth2ServerMetadata(t *testing.T) {
 	t.Parallel()
 
 	baseURL := baseurl.MustParse("https://auth.example.com")
-	metadata := connect_v1.OAuth2ServerMetadata(baseURL, nil)
+	metadata := connect_v1.OAuth2ServerMetadata(baseURL, nil, false)
 
 	assert.Equal(t, uri.URI("https://auth.example.com"), metadata.Issuer)
 	assert.Equal(
@@ -42,4 +42,14 @@ func TestOAuth2ServerMetadata(t *testing.T) {
 		metadata.TokenEndpoint,
 	)
 	assert.Contains(t, metadata.ScopesSupported, coredata.OAuth2Scope("openid"))
+	assert.False(t, metadata.ClientIDMetadataDocumentSupported)
+}
+
+func TestOAuth2ServerMetadata_CIMDSupported(t *testing.T) {
+	t.Parallel()
+
+	baseURL := baseurl.MustParse("https://auth.example.com")
+	metadata := connect_v1.OAuth2ServerMetadata(baseURL, nil, true)
+
+	assert.True(t, metadata.ClientIDMetadataDocumentSupported)
 }
