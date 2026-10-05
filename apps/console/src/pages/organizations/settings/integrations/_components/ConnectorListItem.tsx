@@ -43,7 +43,6 @@ import { connectorCard } from "../variants";
 
 import { ConnectorConnectionBadge } from "./ConnectorConnectionBadge";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
-import { ConnectorMethodIcon } from "./ConnectorMethodIcon";
 import { ConnectorNameHeading } from "./ConnectorNameHeading";
 import { ConnectorOrganizationSelect } from "./ConnectorOrganizationSelect";
 import { ConnectorProbeError } from "./ConnectorProbeError";
@@ -54,7 +53,6 @@ const connectorListItemFragment = graphql`
     id
     name
     provider
-    displayName
     connectionStatus
     canReconnect
     protocol
@@ -67,8 +65,10 @@ const connectorListItemFragment = graphql`
     }
     createdAt
     canGet: permission(action: "core:connector:get")
-    canUpdate: permission(action: "core:connector:update")
     canDelete: permission(action: "core:connector:delete")
+    ...ConnectorNameHeading_connector
+    ...ConnectorTypeMark_connector
+    ...ConnectorProbeError_connector
     ...ConnectorOrganizationSelect_connector
     ...ConnectorDeleteDialog_connector
   }
@@ -133,19 +133,12 @@ export function ConnectorListItem({
             )
           : undefined}
         icon={(
-          <ConnectorTypeMark
-            protocol={connector.protocol}
-            canReconnect={connector.canReconnect}
-          />
+          <ConnectorTypeMark connectorKey={connector} />
         )}
         lead={(
           <div className={identity()}>
             <div className={name()}>
-              <ConnectorNameHeading
-                connectorId={connector.id}
-                name={connector.name}
-                canUpdate={connector.canUpdate}
-              />
+              <ConnectorNameHeading connectorKey={connector} />
             </div>
           </div>
         )}
@@ -194,8 +187,8 @@ export function ConnectorListItem({
         </Text>
         {connectionIssues.length > 0 && (
           <ConnectorProbeError
+            connectorKey={connector}
             issues={connectionIssues}
-            provider={connector.displayName}
           />
         )}
         {connector.canDelete && (

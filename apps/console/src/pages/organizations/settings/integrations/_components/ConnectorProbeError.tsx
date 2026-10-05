@@ -18,68 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CopyIcon } from "@phosphor-icons/react";
-import { IconWarning, useToast } from "@probo/ui";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useToast } from "@probo/ui";
+import { ErrorNotice } from "@probo/ui/src/v2/ErrorNotice/ErrorNotice";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
+import type { ConnectorProbeError_connector$key } from "#/__generated__/core/ConnectorProbeError_connector.graphql";
 import type { ConnectionIssueKey } from "#/pages/organizations/_lib/connectorStatus";
 
-import { connectorCard } from "../variants";
+const connectorProbeErrorFragment = graphql`
+  fragment ConnectorProbeError_connector on Connector {
+    displayName
+  }
+`;
 
 interface ConnectorProbeErrorProps {
+  connectorKey: ConnectorProbeError_connector$key;
   issues: readonly ConnectionIssueKey[];
-  provider: string;
 }
 
 export function ConnectorProbeError({
+  connectorKey,
   issues,
-  provider,
 }: ConnectorProbeErrorProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const connector = useFragment(connectorProbeErrorFragment, connectorKey);
   const { toast } = useToast();
-  const { probeError, probeErrorHeader, probeErrorRow, probeErrorText } = connectorCard();
-
-  async function copyError(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      return;
-    }
-    toast({
-      title: t("detailsPage.probeError.copied"),
-      description: t("detailsPage.probeError.copied"),
-      variant: "success",
-    });
-  }
+  const provider = connector.displayName;
 
   return (
-    <div className={probeError()}>
-      <div className={probeErrorHeader()}>
-        <span className="text-red-11" aria-hidden>
-          <IconWarning size={16} className="shrink-0" />
-        </span>
-      </div>
-      {issues.map((issue) => {
-        const message = t(`listPage.connectionIssues.${issue}`, { provider });
-        return (
-          <div key={issue} className={probeErrorRow()}>
-            <Text size={2} color="neutral" className={probeErrorText()}>
-              {message}
-            </Text>
-            <IconButton
-              size={1}
-              variant="soft"
-              color="neutral"
-              aria-label={t("detailsPage.probeError.copy")}
-              onClick={() => void copyError(message)}
-            >
-              <CopyIcon />
-            </IconButton>
-          </div>
-        );
-      })}
-    </div>
+    <ErrorNotice
+      className="pointer-events-auto relative z-1"
+      messages={issues.map(issue => t(`listPage.connectionIssues.${issue}`, { provider }))}
+      copyLabel={t("detailsPage.probeError.copy")}
+      onCopied={() => {
+        toast({
+          title: t("detailsPage.probeError.copied"),
+          description: t("detailsPage.probeError.copied"),
+          variant: "success",
+        });
+      }}
+    />
   );
 }

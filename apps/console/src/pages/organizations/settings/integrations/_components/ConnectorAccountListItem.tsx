@@ -38,6 +38,7 @@ import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, useFragment } from "react-relay";
 
 import type { ConnectorAccountListItem_account$key } from "#/__generated__/core/ConnectorAccountListItem_account.graphql";
+import type { ConnectorAccountListItem_connector$key } from "#/__generated__/core/ConnectorAccountListItem_connector.graphql";
 import type { ConnectorAccountListItemDisconnectMutation } from "#/__generated__/core/ConnectorAccountListItemDisconnectMutation.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useMutation } from "#/lib/relay/useMutation";
@@ -53,6 +54,15 @@ const connectorAccountListItemFragment = graphql`
   }
 `;
 
+const connectorAccountListItemConnectorFragment = graphql`
+  fragment ConnectorAccountListItem_connector on Connector {
+    id
+    provider
+    canDelete: permission(action: "core:connector:delete")
+    initialAccountExternalId
+  }
+`;
+
 const disconnectConnectorAccountMutation = graphql`
   mutation ConnectorAccountListItemDisconnectMutation(
     $input: DisableConnectorAccountInput!
@@ -65,21 +75,22 @@ const disconnectConnectorAccountMutation = graphql`
 
 interface ConnectorAccountListItemProps {
   accountKey: ConnectorAccountListItem_account$key;
-  provider: string;
-  connectorId: string;
-  canDisconnect: boolean;
+  connectorKey: ConnectorAccountListItem_connector$key;
+  unknown: boolean;
   onDisconnected: (externalAccountId: string) => void;
 }
 
 export function ConnectorAccountListItem({
   accountKey,
-  provider,
-  connectorId,
-  canDisconnect,
+  connectorKey,
+  unknown,
   onDisconnected,
 }: ConnectorAccountListItemProps) {
   const { t, i18n } = useTranslation("organizations/settings/integrations");
   const account = useFragment(connectorAccountListItemFragment, accountKey);
+  const connector = useFragment(connectorAccountListItemConnectorFragment, connectorKey);
+  const canDisconnect = connector.canDelete
+    && account.externalAccountId !== connector.initialAccountExternalId;
   const { identity, name, title } = connectorCard();
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [disconnectAccount, isDisconnecting]
@@ -104,7 +115,7 @@ export function ConnectorAccountListItem({
 
         const connection = store.get(
           ConnectionHandler.getConnectionID(
-            connectorId,
+            connector.id,
             "ConnectorAccountsDrawer_accounts",
           ),
         );
@@ -132,10 +143,10 @@ export function ConnectorAccountListItem({
   return (
     <>
       <TonedCard
-        tone="green"
+        tone={unknown ? "sand" : "green"}
         size={2}
         icon={(
-          <ThirdPartyLogo thirdParty={provider} />
+          <ThirdPartyLogo thirdParty={connector.provider} />
         )}
         lead={(
           <div className={identity()}>
@@ -148,8 +159,8 @@ export function ConnectorAccountListItem({
                 {account.externalAccountId}
               </Text>
             </div>
-            <Badge variant="soft" color="green" size={1}>
-              {t("detailsPage.status.CONNECTED")}
+            <Badge variant="soft" color={unknown ? "neutral" : "green"} size={1}>
+              {t(unknown ? "detailsPage.accounts.unknown" : "detailsPage.status.CONNECTED")}
             </Badge>
           </div>
         )}

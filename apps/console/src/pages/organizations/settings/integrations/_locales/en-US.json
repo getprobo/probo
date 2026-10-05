@@ -174,6 +174,7 @@
       "empty": "No account is enabled on this credential yet.",
       "discoveryFailed": "Probo cannot list accounts with these credentials.",
       "pending": "Pending",
+      "unknown": "Unknown",
       "selectAll": "Select all",
       "enable": "Enable",
       "disconnect": "Disconnect",

@@ -22,24 +22,31 @@ import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
-import type { ConnectorProtocol } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
+import type { ConnectorTypeMark_connector$key } from "#/__generated__/core/ConnectorTypeMark_connector.graphql";
 
 import { connectMethodFromConnector } from "../_lib/connectMethods";
 
 import { ConnectorMethodIcon } from "./ConnectorMethodIcon";
 
+const connectorTypeMarkFragment = graphql`
+  fragment ConnectorTypeMark_connector on Connector {
+    protocol
+    canReconnect
+  }
+`;
+
 interface ConnectorTypeMarkProps {
-  protocol: ConnectorProtocol;
-  canReconnect: boolean;
+  connectorKey: ConnectorTypeMark_connector$key;
 }
 
 export function ConnectorTypeMark({
-  protocol,
-  canReconnect,
+  connectorKey,
 }: ConnectorTypeMarkProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const method = connectMethodFromConnector(protocol, canReconnect);
+  const connector = useFragment(connectorTypeMarkFragment, connectorKey);
+  const method = connectMethodFromConnector(connector.protocol, connector.canReconnect);
   const label = t(`marketplacePage.methods.${method}`);
 
   return (

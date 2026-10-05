@@ -34,12 +34,14 @@ import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
+  useFragment,
   usePreloadedQuery,
   useRefetchableFragment,
 } from "react-relay";
 import { useSearchParams } from "react-router";
 
 import type { IntegrationsPage_organization$key } from "#/__generated__/core/IntegrationsPage_organization.graphql";
+import type { IntegrationsPageConnectors_query$key } from "#/__generated__/core/IntegrationsPageConnectors_query.graphql";
 import type { IntegrationsPageQuery } from "#/__generated__/core/IntegrationsPageQuery.graphql";
 import type { IntegrationsPageRefetchQuery } from "#/__generated__/core/IntegrationsPageRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -60,12 +62,18 @@ import {
 import { useIntegrationsListSearch } from "./_lib/useIntegrationsListSearch";
 import { integrationsList, integrationsPage } from "./variants";
 
-export const integrationsPageQuery = graphql`
-  query IntegrationsPageQuery($organizationId: ID!, $filter: ConnectorFilter) {
+const integrationsConnectorsFragment = graphql`
+  fragment IntegrationsPageConnectors_query on Query {
     connectorProviders {
       provider
-      ...ConnectorProviderListItem_provider
+      ...ConnectorGroupListItem_provider
     }
+  }
+`;
+
+export const integrationsPageQuery = graphql`
+  query IntegrationsPageQuery($organizationId: ID!, $filter: ConnectorFilter) {
+    ...IntegrationsPageConnectors_query
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
@@ -100,8 +108,8 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const organizationId = useOrganizationId();
-  const { organization, connectorProviders }
-    = usePreloadedQuery<IntegrationsPageQuery>(integrationsPageQuery, queryRef);
+  const data = usePreloadedQuery<IntegrationsPageQuery>(integrationsPageQuery, queryRef);
+  const { organization } = data;
 
   usePageTitle(t("listPage.title"));
 
@@ -152,23 +160,24 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
 
   return (
     <IntegrationsConnectors
+      queryKey={data}
       organizationKey={organization}
-      connectorProviders={connectorProviders}
       organizationId={organizationId}
     />
   );
 }
 
 function IntegrationsConnectors({
+  queryKey,
   organizationKey,
-  connectorProviders,
   organizationId,
 }: {
+  queryKey: IntegrationsPageConnectors_query$key;
   organizationKey: IntegrationsPage_organization$key;
-  connectorProviders: IntegrationsPageQuery["response"]["connectorProviders"];
   organizationId: string;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const { connectorProviders } = useFragment(integrationsConnectorsFragment, queryKey);
   const { query, status, setStatus } = useIntegrationsListFilters();
   const [searchInput, setSearchInput] = useIntegrationsListSearch();
   const [organization, refetch] = useRefetchableFragment<

@@ -23,10 +23,19 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 
+import type { ConnectorNameHeading_connector$key } from "#/__generated__/core/ConnectorNameHeading_connector.graphql";
 import type { ConnectorNameHeadingUpdateNameMutation } from "#/__generated__/core/ConnectorNameHeadingUpdateNameMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+
+const connectorNameHeadingFragment = graphql`
+  fragment ConnectorNameHeading_connector on Connector {
+    id
+    name
+    canUpdate: permission(action: "core:connector:update")
+  }
+`;
 
 const updateConnectorNameMutation = graphql`
   mutation ConnectorNameHeadingUpdateNameMutation($input: UpdateConnectorInput!) {
@@ -40,17 +49,15 @@ const updateConnectorNameMutation = graphql`
 `;
 
 interface ConnectorNameHeadingProps {
-  connectorId: string;
-  name: string;
-  canUpdate: boolean;
+  connectorKey: ConnectorNameHeading_connector$key;
 }
 
 export function ConnectorNameHeading({
-  connectorId,
-  name,
-  canUpdate,
+  connectorKey,
 }: ConnectorNameHeadingProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const connector = useFragment(connectorNameHeadingFragment, connectorKey);
+  const { id: connectorId, name, canUpdate } = connector;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);
   const [error, setError] = useState<string | undefined>();

@@ -41,45 +41,72 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { Suspense, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, type PreloadedQuery, usePaginationFragment, usePreloadedQuery } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, usePaginationFragment, usePreloadedQuery } from "react-relay";
 
 import type { ConnectorAccountsDrawer_accounts$key } from "#/__generated__/core/ConnectorAccountsDrawer_accounts.graphql";
+import type { ConnectorAccountsDrawer_connector$key } from "#/__generated__/core/ConnectorAccountsDrawer_connector.graphql";
 import type { ConnectorAccountsDrawerAccountsQuery } from "#/__generated__/core/ConnectorAccountsDrawerAccountsQuery.graphql";
 import type { ConnectorAccountsDrawerEnableMutation } from "#/__generated__/core/ConnectorAccountsDrawerEnableMutation.graphql";
+import type { ConnectorAccountsDrawerPendingAccount_account$key } from "#/__generated__/core/ConnectorAccountsDrawerPendingAccount_account.graphql";
+import type { ConnectorAccountsDrawerPendingAccount_connector$key } from "#/__generated__/core/ConnectorAccountsDrawerPendingAccount_connector.graphql";
 import type { ConnectorAccountsDrawerQuery } from "#/__generated__/core/ConnectorAccountsDrawerQuery.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
 import {
+  connectionIssueKeys,
   connectionSignalFrom,
-  type ConnectorConnectionStatus,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
 
 import { connectorAccountsDrawer, connectorCard } from "../variants";
 
 import { ConnectorAccountListItem } from "./ConnectorAccountListItem";
+import { ConnectorProbeError } from "./ConnectorProbeError";
 
 const PAGE_SIZE = 50;
+
+const connectorAccountsDrawerFragment = graphql`
+  fragment ConnectorAccountsDrawer_connector on Connector {
+    id
+    canEnable: permission(action: "core:connector:create")
+    canReconnect
+    connectionStatus
+    providerOrganizations {
+      status
+    }
+    discoveredAccounts {
+      externalAccountId
+      name
+      enabled
+      ...ConnectorAccountsDrawerPendingAccount_account
+    }
+    ...ConnectorAccountsDrawer_accounts
+    ...ConnectorAccountsDrawerPendingAccount_connector
+    ...ConnectorProbeError_connector
+    ...ConnectorAccountListItem_connector
+  }
+`;
+
+const pendingAccountFragment = graphql`
+  fragment ConnectorAccountsDrawerPendingAccount_account on DiscoveredConnectorAccount {
+    externalAccountId
+    name
+  }
+`;
+
+const pendingAccountConnectorFragment = graphql`
+  fragment ConnectorAccountsDrawerPendingAccount_connector on Connector {
+    provider
+  }
+`;
 
 export const connectorAccountsDrawerQuery = graphql`
   query ConnectorAccountsDrawerQuery($connectorId: ID!) {
     connector: node(id: $connectorId) {
       __typename
       ... on Connector {
-        id
-        canEnable: permission(action: "core:connector:create")
-        canDelete: permission(action: "core:connector:delete")
-        provider
-        displayName
-        initialAccountExternalId
-        connectionStatus
-        discoveredAccounts {
-          externalAccountId
-          name
-          enabled
-        }
-        ...ConnectorAccountsDrawer_accounts
+        ...ConnectorAccountsDrawer_connector
       }
     }
   }
@@ -101,7 +128,6 @@ const connectorAccountsDrawerAccountsFragment = graphql`
       edges {
         node {
           id
-          externalAccountId
           ...ConnectorAccountListItem_account
         }
       }
@@ -118,12 +144,6 @@ const enableConnectorAccountsMutation = graphql`
     }
   }
 `;
-
-interface DiscoveredAccount {
-  externalAccountId: string;
-  name: string;
-  enabled: boolean;
-}
 
 interface ConnectorAccountsDrawerProps {
   handle: ReturnType<typeof Drawer.createHandle<string>>;
@@ -170,11 +190,6 @@ export function ConnectorAccountsDrawer({
   );
 }
 
-type DrawerConnector = Extract<
-  ConnectorAccountsDrawerQuery["response"]["connector"],
-  { __typename: "Connector" }
->;
-
 function Accounts({
   queryRef,
   onReload,
@@ -192,17 +207,18 @@ function Accounts({
     throw new NotFoundError(t("detailsPage.notFound"));
   }
 
-  return <AccountList connector={data.connector} onReload={onReload} />;
+  return <AccountList connectorKey={data.connector} onReload={onReload} />;
 }
 
 function AccountList({
-  connector,
+  connectorKey,
   onReload,
 }: {
-  connector: DrawerConnector;
+  connectorKey: ConnectorAccountsDrawer_connector$key;
   onReload: (connectorId: string) => void;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const connector = useFragment(connectorAccountsDrawerFragment, connectorKey);
   const {
     data: accountsData,
     loadNext,
@@ -217,9 +233,17 @@ function AccountList({
     enableConnectorAccountsMutation,
   );
   const [, startTransition] = useTransition();
-  const failure = connectionFailure(connector.connectionStatus, t, connector.displayName);
+  const signal = connectionSignalFrom({
+    connectionStatus: connector.connectionStatus,
+    canReconnect: connector.canReconnect,
+    providerOrganizations: {
+      status: connector.providerOrganizations.status,
+    },
+  });
+  const presented = signal == null ? null : presentConnection(signal);
+  const issues = connectionIssueKeys(presented == null ? [] : [presented]);
   const stored = accountsData.accounts.edges;
-  const pending = failure == null
+  const pending = issues.length === 0
     ? connector.discoveredAccounts.filter(account => !account.enabled)
     : [];
   const selectedAccounts = pending.filter(account => selected.has(account.externalAccountId));
@@ -291,17 +315,8 @@ function AccountList({
           )}
         />
       </DrawerHeader>
-      <DrawerBody className={failure == null && connector.canEnable && pending.length > 0 ? "pb-16" : undefined}>
-        {failure != null && (
-          <Card variant="soft" size={2}>
-            <div className={empty()}>
-              <Text size={2} color="faint">
-                {failure}
-              </Text>
-            </div>
-          </Card>
-        )}
-        {failure == null && pending.length === 0 && stored.length === 0
+      <DrawerBody className={issues.length === 0 && connector.canEnable && pending.length > 0 ? "pb-16" : undefined}>
+        {issues.length === 0 && pending.length === 0 && stored.length === 0
           ? (
               <Card variant="soft" size={2}>
                 <div className={empty()}>
@@ -311,26 +326,28 @@ function AccountList({
                 </div>
               </Card>
             )
-          : (pending.length > 0 || stored.length > 0) && (
+          : (
               <div className={list()}>
+                {issues.length > 0 && (
+                  <ConnectorProbeError
+                    connectorKey={connector}
+                    issues={issues}
+                  />
+                )}
                 {stored.map(({ node }) => (
                   <ConnectorAccountListItem
                     key={node.id}
                     accountKey={node}
-                    provider={connector.provider}
-                    connectorId={connector.id}
-                    canDisconnect={
-                      connector.canDelete
-                      && node.externalAccountId !== connector.initialAccountExternalId
-                    }
+                    connectorKey={connector}
+                    unknown={issues.length > 0}
                     onDisconnected={reload}
                   />
                 ))}
                 {pending.map(account => (
                   <PendingAccountRow
                     key={account.externalAccountId}
-                    account={account}
-                    provider={connector.provider}
+                    accountKey={account}
+                    connectorKey={connector}
                     selected={selected.has(account.externalAccountId)}
                     selectable={connector.canEnable}
                     onSelectedChange={(checked) => {
@@ -360,7 +377,7 @@ function AccountList({
           </Button>
         )}
       </DrawerBody>
-      {failure == null && connector.canEnable && pending.length > 0 && (
+      {issues.length === 0 && connector.canEnable && pending.length > 0 && (
         <DrawerFooter className="absolute inset-x-4 bottom-4">
           <div className={actions()}>
             <Button
@@ -389,19 +406,21 @@ function AccountList({
 }
 
 function PendingAccountRow({
-  account,
-  provider,
+  accountKey,
+  connectorKey,
   selected,
   selectable,
   onSelectedChange,
 }: {
-  account: DiscoveredAccount;
-  provider: string;
+  accountKey: ConnectorAccountsDrawerPendingAccount_account$key;
+  connectorKey: ConnectorAccountsDrawerPendingAccount_connector$key;
   selected: boolean;
   selectable: boolean;
   onSelectedChange: (checked: boolean) => void;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const account = useFragment(pendingAccountFragment, accountKey);
+  const connector = useFragment(pendingAccountConnectorFragment, connectorKey);
   const { identity, name, title } = connectorCard();
 
   return (
@@ -409,7 +428,7 @@ function PendingAccountRow({
       tone="sand"
       size={2}
       icon={(
-        <ThirdPartyLogo thirdParty={provider} />
+        <ThirdPartyLogo thirdParty={connector.provider} />
       )}
       lead={(
         <div className={identity()}>
@@ -487,18 +506,4 @@ function DrawerLoadFailed() {
       </DrawerBody>
     </>
   );
-}
-
-function connectionFailure(
-  status: ConnectorConnectionStatus,
-  t: (key: string, options: { provider: string }) => string,
-  providerName: string,
-): string | null {
-  const signal = connectionSignalFrom({ connectionStatus: status });
-  const issue = signal == null ? null : presentConnection(signal).issue;
-  if (issue == null) {
-    return null;
-  }
-
-  return t(`listPage.connectionIssues.${issue}`, { provider: providerName });
 }
