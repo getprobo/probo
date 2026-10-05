@@ -4,6 +4,15 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.241.0] - 2026-10-05
+
+### Added
+
+- Organization `Create` and `Update` accept a `Legal Name`, and `Update`
+  can remove it with `Clear Legal Name`. `Get` and `Get Many` return it
+- Cookie banner operations return the `corsless` capability
+- Cookie consent record `Get` and `Get Many` return the `origin`
+
 ## [0.240.0] - 2026-10-05
 
 ### Added
