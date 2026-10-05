@@ -173,7 +173,19 @@ var (
 	)
 )
 
-func (req CreateOrganizationRequest) Validate() error {
+func trimLegalName(legalName *string) *string {
+	if legalName == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*legalName)
+
+	return &trimmed
+}
+
+func (req *CreateOrganizationRequest) Validate() error {
+	req.LegalName = trimLegalName(req.LegalName)
+
 	v := validator.New()
 
 	if req.LogoFile != nil {
@@ -200,7 +212,12 @@ func (req CreateOrganizationRequest) Validate() error {
 	return v.Error()
 }
 
-func (req UpdateOrganizationRequest) Validate() error {
+func (req *UpdateOrganizationRequest) Validate() error {
+	if req.LegalName != nil {
+		trimmed := trimLegalName(*req.LegalName)
+		req.LegalName = &trimmed
+	}
+
 	v := validator.New()
 
 	v.Check(req.Name, "name", validator.SafeTextNoNewLine(organizationNameMaxLen))
@@ -592,36 +609,11 @@ func (s *OrganizationService) InviteUser(
 	return invitation, nil
 }
 
-func normalizeLegalName(legalName *string) *string {
-	if legalName == nil {
-		return nil
-	}
-
-	trimmed := strings.TrimSpace(*legalName)
-	if trimmed == "" {
-		return nil
-	}
-
-	return &trimmed
-}
-
-func normalizeOptionalLegalName(legalName **string) **string {
-	if legalName == nil {
-		return nil
-	}
-
-	normalized := normalizeLegalName(*legalName)
-
-	return &normalized
-}
-
 func (s *OrganizationService) CreateOrganization(
 	ctx context.Context,
 	identityID gid.GID,
 	req *CreateOrganizationRequest,
 ) (*coredata.Organization, *coredata.MembershipProfile, error) {
-	req.LegalName = normalizeLegalName(req.LegalName)
-
 	if err := req.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -828,8 +820,6 @@ func (s *OrganizationService) CreateOrganization(
 }
 
 func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizationID gid.GID, req *UpdateOrganizationRequest) (*coredata.Organization, error) {
-	req.LegalName = normalizeOptionalLegalName(req.LegalName)
-
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}

@@ -50,6 +50,19 @@ export const description: INodeProperties[] = [
 		description: 'The operating name of the organization. Leave empty to keep the current name.',
 	},
 	{
+		displayName: 'Clear Legal Name',
+		name: 'clearLegalName',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['organization'],
+				operation: ['update'],
+			},
+		},
+		default: false,
+		description: 'Whether to remove the registered legal name',
+	},
+	{
 		displayName: 'Legal Name',
 		name: 'legalName',
 		type: 'string',
@@ -57,6 +70,7 @@ export const description: INodeProperties[] = [
 			show: {
 				resource: ['organization'],
 				operation: ['update'],
+				clearLegalName: [false],
 			},
 		},
 		default: '',
@@ -70,7 +84,10 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const legalName = this.getNodeParameter('legalName', itemIndex, '') as string;
+	const clearLegalName = this.getNodeParameter('clearLegalName', itemIndex, false) as boolean;
+	const legalName = clearLegalName
+		? ''
+		: this.getNodeParameter('legalName', itemIndex, '') as string;
 
 	const query = `
 		mutation UpdateOrganization($input: UpdateOrganizationInput!) {
@@ -96,9 +113,13 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = { organizationId };
+	const input: Record<string, string | null> = { organizationId };
 	if (name) input.name = name;
-	if (legalName) input.legalName = legalName;
+	if (clearLegalName) {
+		input.legalName = null;
+	} else if (legalName) {
+		input.legalName = legalName;
+	}
 
 	const responseData = await proboConnectApiRequest.call(this, query, { input });
 

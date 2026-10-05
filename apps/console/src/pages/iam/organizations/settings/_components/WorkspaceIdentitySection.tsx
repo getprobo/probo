@@ -263,7 +263,9 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
         input: {
           organizationId: organization.id,
           name: nextName,
-          legalName: nextLegalName.length > 0 ? nextLegalName : null,
+          ...(legalNameDirty
+            ? { legalName: nextLegalName.length > 0 ? nextLegalName : null }
+            : {}),
         },
       },
       onCompleted(_response, payloadErrors) {
