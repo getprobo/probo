@@ -64,6 +64,9 @@
       "trustedBy": "Vertrouwd door",
       "recentUpdates": "Recente updates"
     },
+    "compliance": {
+      "viewDocuments": "Documenten bekijken"
+    },
     "recentUpdates": {
       "viewAll": "Alles bekijken"
     }

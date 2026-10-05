@@ -54,6 +54,9 @@
       "trustedBy": "Bize güvenenler",
       "recentUpdates": "Son güncellemeler"
     },
+    "compliance": {
+      "viewDocuments": "Belgeleri görüntüle"
+    },
     "recentUpdates": {
       "viewAll": "Tümünü görüntüle"
     }
