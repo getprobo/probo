@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"maps"
 	"strings"
 	"testing"
 	"time"
@@ -292,9 +293,7 @@ func TestMeasure_InternalControlValidation(t *testing.T) {
 				"name":           factory.SafeName("Control"),
 				"category":       "ACCESS",
 			}
-			for key, value := range tt.input {
-				input[key] = value
-			}
+			maps.Copy(input, tt.input)
 
 			err := owner.Execute(createMeasureControlQuery, map[string]any{"input": input}, &struct{}{})
 			testutil.RequireErrorCode(t, err, "INVALID")
@@ -388,9 +387,7 @@ func createMeasureControl(t *testing.T, owner *testutil.Client, fields map[strin
 	input := map[string]any{
 		"organizationId": owner.GetOrganizationID().String(),
 	}
-	for key, value := range fields {
-		input[key] = value
-	}
+	maps.Copy(input, fields)
 
 	var result struct {
 		CreateMeasure struct {
