@@ -418,6 +418,32 @@ func TestRenderMarkdown_ImageWithoutTitle(t *testing.T) {
 	assert.Equal(t, "![A photo](https://example.com/img.png)\n", got)
 }
 
+func TestRenderMarkdown_Attachment(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"attachment","attrs":{"href":"https://example.com/notes.pdf","fileName":"notes.pdf","mimeType":"application/pdf"}}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "[notes.pdf](https://example.com/notes.pdf)\n", got)
+}
+
+func TestRenderMarkdown_AttachmentSanitizesDangerousHref(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"attachment","attrs":{"href":"javascript:alert(1)","fileName":"notes.pdf","mimeType":"application/pdf"}}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "[notes.pdf](#)\n", got)
+}
+
 func TestRenderMarkdown_ImageSanitizesDangerousSrc(t *testing.T) {
 	t.Parallel()
 

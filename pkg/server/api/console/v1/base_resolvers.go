@@ -101,6 +101,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewTaskComment(taskComment), nil
 		}
+	case coredata.TaskPictureEntityType:
+		action = task.ActionTaskPictureGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			taskPicture, err := r.task.GetPicture(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewTaskPicture(taskPicture), nil
+		}
 	case coredata.TaskActivityEntityType:
 		action = task.ActionTaskActivityGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {

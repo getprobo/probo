@@ -99,6 +99,13 @@
       "update": "Bijwerken van taak mislukt",
       "content": "Deze beschrijving kon niet worden weergegeven"
     },
+    "attachments": {
+      "errors": {
+        "upload": "Uploaden van bijlage mislukt",
+        "type": "Dit bestandstype wordt niet ondersteund",
+        "size": "Bijlage mag maximaal 10 MB zijn"
+      }
+    },
     "comments": {
       "title": "Opmerkingen",
       "empty": "Nog geen opmerkingen",

@@ -151,7 +151,7 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 		return nil, gqlutils.Invalid(ctx, tasksync.ErrLinearTeamIDRequired)
 	}
 
-	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
+	link, err := r.task.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
@@ -446,6 +446,36 @@ func (r *taskResolver) ExternalLink(ctx context.Context, obj *types.Task) (*type
 	}
 
 	return types.NewTaskExternalLink(link), nil
+}
+
+// Pictures is the resolver for the pictures field.
+func (r *taskResolver) Pictures(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskPictureOrderBy) (*types.TaskPictureConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskPictureList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskPictureOrderField]{
+		Field:     coredata.TaskPictureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionAsc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskPictureOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	picturePage, err := r.task.ListPicturesForTaskID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list task pictures", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskPictureConnection(picturePage, r, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.

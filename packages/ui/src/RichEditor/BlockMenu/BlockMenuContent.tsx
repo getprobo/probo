@@ -16,6 +16,7 @@ import {
   ListBulletsIcon,
   ListNumbersIcon,
   MinusIcon,
+  PaperclipIcon,
   QuotesIcon,
   TextHFourIcon,
   TextHOneIcon,
@@ -41,7 +42,8 @@ type ChainCommands = ReturnType<Editor["chain"]>;
 type BlockItem = {
   label: string;
   icon: Icon;
-  action: (chain: ChainCommands) => ChainCommands;
+  action?: (chain: ChainCommands) => ChainCommands;
+  select?: () => void;
 };
 
 const BLOCK_ITEMS: BlockItem[] = [
@@ -62,9 +64,14 @@ const BLOCK_ITEMS: BlockItem[] = [
 type BlockMenuContentProps = {
   editor: Editor;
   slashState: { active: boolean; query: string; from: number };
+  onInsertAttachment?: () => void;
 };
 
-export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) {
+export function BlockMenuContent({
+  editor,
+  slashState,
+  onInsertAttachment,
+}: BlockMenuContentProps) {
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,12 +79,34 @@ export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) 
     ? slashNav.index
     : 0;
 
+  const items = useMemo(() => {
+    if (!onInsertAttachment) {
+      return BLOCK_ITEMS;
+    }
+
+    const attachment: BlockItem = {
+      label: "Attachment",
+      icon: PaperclipIcon,
+      select: onInsertAttachment,
+    };
+    const tableIndex = BLOCK_ITEMS.findIndex(item => item.label === "Table");
+    if (tableIndex < 0) {
+      return [...BLOCK_ITEMS, attachment];
+    }
+
+    return [
+      ...BLOCK_ITEMS.slice(0, tableIndex),
+      attachment,
+      ...BLOCK_ITEMS.slice(tableIndex),
+    ];
+  }, [onInsertAttachment]);
+
   const filteredItems = useMemo(() => {
-    if (!slashState.active) return BLOCK_ITEMS;
+    if (!slashState.active) return items;
     const q = slashState.query.toLowerCase();
-    if (q.length === 0) return BLOCK_ITEMS;
-    return BLOCK_ITEMS.filter(item => item.label.toLowerCase().includes(q));
-  }, [slashState.active, slashState.query]);
+    if (q.length === 0) return items;
+    return items.filter(item => item.label.toLowerCase().includes(q));
+  }, [items, slashState.active, slashState.query]);
 
   const {
     refs: slashMenuRefs,
@@ -128,7 +157,11 @@ export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) 
           .deleteRange({ from, to: cursorPos })
           .run();
 
-        item.action(editor.chain().focus()).run();
+        if (item.select) {
+          item.select();
+        } else if (item.action) {
+          item.action(editor.chain().focus()).run();
+        }
       } catch {
         // Block may no longer be in the document
       }

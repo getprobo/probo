@@ -136,6 +136,32 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		}
 
 		buf.WriteByte('>')
+	case NodeAttachment:
+		attrs, err := n.AttachmentAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render attachment node: %w", err)
+		}
+
+		label := attrs.FileName
+		if label == "" {
+			label = "Attachment"
+		}
+
+		buf.WriteString("<a")
+		writeAttr(buf, "class", "attachment")
+		writeAttr(buf, "href", safeLinkHref(attrs.Href))
+
+		if attrs.FileName != "" {
+			writeAttr(buf, "data-file-name", attrs.FileName)
+		}
+
+		if attrs.MimeType != "" {
+			writeAttr(buf, "data-mime-type", attrs.MimeType)
+		}
+
+		buf.WriteByte('>')
+		buf.WriteString(html.EscapeString(label))
+		buf.WriteString("</a>")
 	case NodeBulletList:
 		buf.WriteString("<ul>")
 

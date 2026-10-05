@@ -88,6 +88,14 @@ type Task implements Node {
 
     externalLink: TaskExternalLink @goField(forceResolver: true)
 
+    pictures(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskPictureOrder
+    ): TaskPictureConnection! @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 

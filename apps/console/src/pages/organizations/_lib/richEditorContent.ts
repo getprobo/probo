@@ -52,6 +52,7 @@ function isEmptyBlock(node: JSONContent): boolean {
   switch (node.type) {
     case "horizontalRule":
     case "image":
+    case "attachment":
       return false;
     case "hardBreak":
       return true;

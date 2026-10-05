@@ -37,4 +37,9 @@ const (
 
 	ActionTaskActivityGet  = "core:task-activity:get"
 	ActionTaskActivityList = "core:task-activity:list"
+
+	ActionTaskPictureGet    = "core:task-picture:get"
+	ActionTaskPictureList   = "core:task-picture:list"
+	ActionTaskPictureCreate = "core:task-picture:create"
+	ActionTaskPictureDelete = "core:task-picture:delete"
 )
