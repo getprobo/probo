@@ -22,6 +22,7 @@ package console_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1537,7 +1538,182 @@ func TestTask_Recurrence(t *testing.T) {
 		assert.Contains(t, err.Error(), "recurrence_interval")
 	})
 
-	t.Run("completing clones the next occurrence", func(t *testing.T) {
+	t.Run("clones the next occurrence once the deadline has passed", func(t *testing.T) {
+		t.Parallel()
+
+		deadline := time.Now().UTC().Truncate(time.Second).Add(-time.Hour)
+
+		name := factory.SafeName("Due Recurring Task")
+		description := "Carry this description"
+		assigneeID := factory.CreateUser(owner)
+
+		var created struct {
+			CreateTask struct {
+				TaskEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"taskEdge"`
+			} `json:"createTask"`
+		}
+
+		err := owner.Execute(createQuery, map[string]any{
+			"input": map[string]any{
+				"organizationId":     owner.GetOrganizationID().String(),
+				"measureId":          measureID,
+				"name":               name,
+				"content":            factory.ProseMirrorPlainText(description),
+				"priority":           "HIGH",
+				"timeEstimate":       "PT1H",
+				"assignedToId":       assigneeID,
+				"deadline":           deadline.Format(time.RFC3339),
+				"recurrenceInterval": "P21D",
+			},
+		}, &created)
+		require.NoError(t, err)
+
+		sourceID := created.CreateTask.TaskEdge.Node.ID
+
+		require.NotEmpty(t, sourceID)
+
+		expectedDeadline := deadline.Add(21 * 24 * time.Hour)
+
+		type recurringTask struct {
+			ID                 string  `json:"id"`
+			Name               string  `json:"name"`
+			Content            string  `json:"content"`
+			State              string  `json:"state"`
+			Priority           string  `json:"priority"`
+			TimeEstimate       *string `json:"timeEstimate"`
+			Deadline           *string `json:"deadline"`
+			RecurrenceInterval *string `json:"recurrenceInterval"`
+			AssignedTo         *struct {
+				ID string `json:"id"`
+			} `json:"assignedTo"`
+		}
+
+		var (
+			source recurringTask
+			next   recurringTask
+		)
+
+		ok := testutil.Poll(
+			t,
+			30*time.Second,
+			200*time.Millisecond,
+			func() bool {
+				var listed struct {
+					Node struct {
+						Tasks struct {
+							Edges []struct {
+								Node recurringTask `json:"node"`
+							} `json:"edges"`
+						} `json:"tasks"`
+					} `json:"node"`
+				}
+
+				err := owner.Execute(`
+					query DueRecurringTasks($id: ID!, $filter: TaskFilter) {
+						node(id: $id) {
+							... on Organization {
+								tasks(first: 10, filter: $filter) {
+									edges {
+										node {
+											id
+											name
+											content
+											state
+											priority
+											timeEstimate
+											deadline
+											recurrenceInterval
+											assignedTo {
+												id
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				`, map[string]any{
+					"id": owner.GetOrganizationID().String(),
+					"filter": map[string]any{
+						"query": name,
+					},
+				}, &listed)
+				if err != nil {
+					return false
+				}
+
+				var (
+					current   recurringTask
+					candidate recurringTask
+				)
+
+				for _, edge := range listed.Node.Tasks.Edges {
+					node := edge.Node
+					if node.ID == sourceID {
+						current = node
+
+						continue
+					}
+
+					if node.RecurrenceInterval != nil && *node.RecurrenceInterval == "P21D" {
+						candidate = node
+					}
+				}
+
+				if current.ID == "" || current.RecurrenceInterval != nil || candidate.ID == "" {
+					return false
+				}
+
+				if candidate.Deadline == nil {
+					return false
+				}
+
+				parsed, err := time.Parse(time.RFC3339Nano, *candidate.Deadline)
+				if err != nil || !parsed.Equal(expectedDeadline) {
+					return false
+				}
+
+				source = current
+
+				next = candidate
+
+				return true
+			},
+		)
+		require.True(t, ok, "next occurrence did not appear")
+
+		assert.Equal(t, name, next.Name)
+		assert.Equal(t, "TODO", next.State)
+		assert.Equal(t, "HIGH", next.Priority)
+		factory.AssertProseMirrorPlainText(t, description, next.Content)
+		require.NotNil(t, next.TimeEstimate)
+		assert.Equal(t, "PT1H", *next.TimeEstimate)
+		require.NotNil(t, next.AssignedTo)
+		assert.Equal(t, assigneeID, next.AssignedTo.ID)
+
+		require.NotNil(t, next.RecurrenceInterval)
+		assert.Equal(t, "P21D", *next.RecurrenceInterval)
+
+		require.NotNil(t, next.Deadline)
+
+		parsedNext, err := time.Parse(time.RFC3339Nano, *next.Deadline)
+		require.NoError(t, err)
+		assert.True(t, parsedNext.Equal(expectedDeadline))
+
+		assert.Nil(t, source.RecurrenceInterval)
+
+		require.NotNil(t, source.Deadline)
+
+		parsedSource, err := time.Parse(time.RFC3339Nano, *source.Deadline)
+		require.NoError(t, err)
+		assert.True(t, parsedSource.Equal(deadline))
+	})
+
+	t.Run("completing before the deadline does not clone", func(t *testing.T) {
 		t.Parallel()
 
 		var created struct {
@@ -1573,15 +1749,6 @@ func TestTask_Recurrence(t *testing.T) {
 					Deadline           *string `json:"deadline"`
 					RecurrenceInterval *string `json:"recurrenceInterval"`
 				} `json:"task"`
-				NextTaskEdge *struct {
-					Node struct {
-						ID                 string  `json:"id"`
-						Name               string  `json:"name"`
-						State              string  `json:"state"`
-						Deadline           *string `json:"deadline"`
-						RecurrenceInterval *string `json:"recurrenceInterval"`
-					} `json:"node"`
-				} `json:"nextTaskEdge"`
 			} `json:"updateTask"`
 		}
 
@@ -1593,15 +1760,6 @@ func TestTask_Recurrence(t *testing.T) {
 						state
 						deadline
 						recurrenceInterval
-					}
-					nextTaskEdge {
-						node {
-							id
-							name
-							state
-							deadline
-							recurrenceInterval
-						}
 					}
 				}
 			}
@@ -1615,22 +1773,13 @@ func TestTask_Recurrence(t *testing.T) {
 
 		completed := updated.UpdateTask.Task
 		assert.Equal(t, "DONE", completed.State)
-		assert.Nil(t, completed.RecurrenceInterval)
+		require.NotNil(t, completed.RecurrenceInterval)
+		assert.Equal(t, "P21D", *completed.RecurrenceInterval)
 		require.NotNil(t, completed.Deadline)
 		assert.Equal(t, "2027-01-15T00:00:00Z", *completed.Deadline)
-
-		require.NotNil(t, updated.UpdateTask.NextTaskEdge)
-		next := updated.UpdateTask.NextTaskEdge.Node
-		assert.NotEqual(t, completed.ID, next.ID)
-		assert.Equal(t, created.CreateTask.TaskEdge.Node.Name, next.Name)
-		assert.Equal(t, "TODO", next.State)
-		require.NotNil(t, next.RecurrenceInterval)
-		assert.Equal(t, "P21D", *next.RecurrenceInterval)
-		require.NotNil(t, next.Deadline)
-		assert.Equal(t, "2027-02-05T00:00:00Z", *next.Deadline)
 	})
 
-	t.Run("completing a monthly task advances a calendar month", func(t *testing.T) {
+	t.Run("completing a monthly task does not clone", func(t *testing.T) {
 		t.Parallel()
 
 		var created struct {
@@ -1658,26 +1807,20 @@ func TestTask_Recurrence(t *testing.T) {
 		var updated struct {
 			UpdateTask struct {
 				Task struct {
-					State string `json:"state"`
+					State              string  `json:"state"`
+					Deadline           *string `json:"deadline"`
+					RecurrenceInterval *string `json:"recurrenceInterval"`
 				} `json:"task"`
-				NextTaskEdge *struct {
-					Node struct {
-						Deadline           *string `json:"deadline"`
-						RecurrenceInterval *string `json:"recurrenceInterval"`
-					} `json:"node"`
-				} `json:"nextTaskEdge"`
 			} `json:"updateTask"`
 		}
 
 		err = owner.Execute(`
 			mutation UpdateTask($input: UpdateTaskInput!) {
 				updateTask(input: $input) {
-					task { state }
-					nextTaskEdge {
-						node {
-							deadline
-							recurrenceInterval
-						}
+					task {
+						state
+						deadline
+						recurrenceInterval
 					}
 				}
 			}
@@ -1689,11 +1832,10 @@ func TestTask_Recurrence(t *testing.T) {
 		}, &updated)
 		require.NoError(t, err)
 		assert.Equal(t, "DONE", updated.UpdateTask.Task.State)
-		require.NotNil(t, updated.UpdateTask.NextTaskEdge)
-		require.NotNil(t, updated.UpdateTask.NextTaskEdge.Node.RecurrenceInterval)
-		assert.Equal(t, "P1M", *updated.UpdateTask.NextTaskEdge.Node.RecurrenceInterval)
-		require.NotNil(t, updated.UpdateTask.NextTaskEdge.Node.Deadline)
-		assert.Equal(t, "2027-02-28T00:00:00Z", *updated.UpdateTask.NextTaskEdge.Node.Deadline)
+		require.NotNil(t, updated.UpdateTask.Task.RecurrenceInterval)
+		assert.Equal(t, "P1M", *updated.UpdateTask.Task.RecurrenceInterval)
+		require.NotNil(t, updated.UpdateTask.Task.Deadline)
+		assert.Equal(t, "2027-01-31T00:00:00Z", *updated.UpdateTask.Task.Deadline)
 	})
 
 	t.Run("canceling a recurring task does not clone", func(t *testing.T) {
@@ -1728,11 +1870,6 @@ func TestTask_Recurrence(t *testing.T) {
 					State              string  `json:"state"`
 					RecurrenceInterval *string `json:"recurrenceInterval"`
 				} `json:"task"`
-				NextTaskEdge *struct {
-					Node struct {
-						ID string `json:"id"`
-					} `json:"node"`
-				} `json:"nextTaskEdge"`
 			} `json:"updateTask"`
 		}
 
@@ -1743,9 +1880,6 @@ func TestTask_Recurrence(t *testing.T) {
 						id
 						state
 						recurrenceInterval
-					}
-					nextTaskEdge {
-						node { id }
 					}
 				}
 			}
@@ -1759,7 +1893,6 @@ func TestTask_Recurrence(t *testing.T) {
 		assert.Equal(t, "CANCELED", updated.UpdateTask.Task.State)
 		require.NotNil(t, updated.UpdateTask.Task.RecurrenceInterval)
 		assert.Equal(t, "P21D", *updated.UpdateTask.Task.RecurrenceInterval)
-		assert.Nil(t, updated.UpdateTask.NextTaskEdge)
 	})
 
 	t.Run("clearing the deadline also clears recurrence", func(t *testing.T) {

@@ -207,6 +207,9 @@ func New() *Implm {
 					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x; weekend reminders → Monday)
 				},
 			},
+			TaskRecurrence: TaskRecurrenceConfig{
+				Interval: 300, // 5 minutes
+			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
@@ -1310,6 +1313,30 @@ func (impl *Implm) Run(
 		},
 	)
 
+	taskRecurrenceInterval := time.Duration(impl.cfg.TaskRecurrence.Interval) * time.Second
+	if taskRecurrenceInterval <= 0 {
+		taskRecurrenceInterval = 5 * time.Minute
+	}
+
+	taskRecurrenceWorker := task.NewRecurrenceWorker(
+		pgClient,
+		l.Named("task-recurrence"),
+		worker.WithInterval(taskRecurrenceInterval),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	taskRecurrenceWorkerCtx, stopTaskRecurrenceWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := taskRecurrenceWorker.Run(taskRecurrenceWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task recurrence worker crashed: %w", err))
+			}
+		},
+	)
+
 	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
 		taskService.Sync,
 		l.Named("task-sync-outbound"),
@@ -1687,6 +1714,7 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
+	stopTaskRecurrenceWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
 	stopLinearWebhookRetentionWorker()

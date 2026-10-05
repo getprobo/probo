@@ -352,6 +352,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
+	assert.Equal(t, 300, cfg.Probod.TaskRecurrence.Interval)
 
 	// Agents tools — Firecrawl empty by default
 	assert.Empty(t, cfg.Probod.Agents.Tools.FirecrawlAPIKey)
@@ -496,6 +497,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_WEBHOOK_MAX_CONCURRENCY"] = "8"
 	env["PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
 	env["PROBOD_DOCUMENT_NOTIFICATION_INTERVAL"] = "120"
+	env["PROBOD_TASK_RECURRENCE_INTERVAL"] = "600"
 	env["PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
 	env["PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL"] = "43200"
 	// Firecrawl
@@ -644,6 +646,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 7200, cfg.Probod.Notifications.Webhook.RetryMax)
 	assert.Equal(t, 8, cfg.Probod.Notifications.Webhook.MaxConcurrency)
 	assert.Equal(t, 120, cfg.Probod.Notifications.Document.Interval)
+	assert.Equal(t, 600, cfg.Probod.TaskRecurrence.Interval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)
 	// Agents tools — Firecrawl

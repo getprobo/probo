@@ -7679,9 +7679,6 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
-        next_task:
-          $ref: "#/components/schemas/Task"
-          description: Next occurrence created when a recurring task is marked done
 
     AssignTaskInput:
       type: object

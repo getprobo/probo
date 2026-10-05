@@ -27,7 +27,7 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
-import { insertNextTaskEdge, moveTaskNodeSorted } from "./taskConnectionOrder";
+import { moveTaskNodeSorted } from "./taskConnectionOrder";
 import {
   measureTasksConnectionKey,
   organizationTasksConnectionKey,
@@ -54,15 +54,6 @@ const updateTaskMutation = graphql`
         ...TaskDetailsPage_task
         ...TasksCard_task
         ...TaskListItem_task
-      }
-      nextTaskEdge {
-        node {
-          ...TasksCard_task
-          ...TaskListItem_task
-          measure {
-            id
-          }
-        }
       }
     }
   }
@@ -113,10 +104,6 @@ export function useUpdateTask() {
               : undefined,
             createIfMissing: measureChanged,
           });
-        }
-        const spawnedMeasureId = insertNextTaskEdge(store, organizationId);
-        if (spawnedMeasureId) {
-          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
         }
         config.updater?.(store, data);
       },

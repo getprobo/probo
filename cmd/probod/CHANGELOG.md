@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- Recurring tasks repeat when their deadline passes. The next deadline
+  is the previous deadline plus the interval, and the series stays on
+  the current task until that deadline. A worker creates the next
+  occurrence. `PROBOD_TASK_RECURRENCE_INTERVAL` sets how often it scans
+  and defaults to 5 minutes
+
 ## [0.303.0] - 2026-10-05
 
 ### Added

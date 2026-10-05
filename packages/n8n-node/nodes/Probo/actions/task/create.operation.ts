@@ -196,7 +196,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set.',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline. The next task is created when that deadline passes.',
 	},
 ];
 

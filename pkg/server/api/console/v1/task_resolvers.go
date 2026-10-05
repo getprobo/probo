@@ -82,8 +82,9 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 	identity := authn.IdentityFromContext(ctx)
 
-	result, err := r.task.Update(
-		ctx, scope,
+	updated, err := r.task.Update(
+		ctx,
+		scope,
 		task.UpdateTaskRequest{
 			TaskID:             input.TaskID,
 			Name:               input.Name,
@@ -113,14 +114,9 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	payload := &types.UpdateTaskPayload{
-		Task: types.NewTask(result.Task),
-	}
-	if result.NextTask != nil {
-		payload.NextTaskEdge = types.NewTaskEdge(result.NextTask, coredata.TaskOrderFieldCreatedAt)
-	}
-
-	return payload, nil
+	return &types.UpdateTaskPayload{
+		Task: types.NewTask(updated),
+	}, nil
 }
 
 // DeleteTask is the resolver for the deleteTask field.

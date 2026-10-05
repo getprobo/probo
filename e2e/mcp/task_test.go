@@ -287,7 +287,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		assert.Contains(t, errText, "deadline")
 	})
 
-	t.Run("completing clones the next occurrence", func(t *testing.T) {
+	t.Run("completing before the deadline does not clone", func(t *testing.T) {
 		t.Parallel()
 
 		mc := testutil.NewMCPClient(t, owner)
@@ -312,30 +312,14 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 				State              string  `json:"state"`
 				RecurrenceInterval *string `json:"recurrence_interval"`
 			} `json:"task"`
-			NextTask *struct {
-				ID                 string  `json:"id"`
-				Name               string  `json:"name"`
-				State              string  `json:"state"`
-				Deadline           *string `json:"deadline"`
-				RecurrenceInterval *string `json:"recurrence_interval"`
-			} `json:"next_task"`
 		}
 		mc.CallToolInto("updateTask", map[string]any{
 			"id":    addResult.Task.ID,
 			"state": "DONE",
 		}, &updateResult)
 		assert.Equal(t, "DONE", updateResult.Task.State)
-		assert.Nil(t, updateResult.Task.RecurrenceInterval)
-
-		require.NotNil(t, updateResult.NextTask)
-		next := updateResult.NextTask
-		assert.NotEqual(t, addResult.Task.ID, next.ID)
-		assert.Equal(t, addResult.Task.Name, next.Name)
-		assert.Equal(t, "TODO", next.State)
-		require.NotNil(t, next.RecurrenceInterval)
-		assert.Equal(t, "P21D", *next.RecurrenceInterval)
-		require.NotNil(t, next.Deadline)
-		assert.Equal(t, "2027-02-05T00:00:00Z", *next.Deadline)
+		require.NotNil(t, updateResult.Task.RecurrenceInterval)
+		assert.Equal(t, "P21D", *updateResult.Task.RecurrenceInterval)
 	})
 
 	t.Run("clearing the deadline also clears recurrence", func(t *testing.T) {

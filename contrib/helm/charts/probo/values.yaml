@@ -343,6 +343,10 @@ probo:
 #      tlsRequired: false
 #      helloName: ""
 
+  # Recurring task worker. Interval is seconds between scans for due tasks.
+  taskRecurrence:
+    interval: 300
+
   # Outbound webhook delivery
   webhook:
     senderInterval: 5

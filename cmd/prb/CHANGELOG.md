@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- The next occurrence of a recurring task is created when its deadline
+  passes, not when the task is marked done. `task update` no longer
+  prints "Created next task <id> (<name>)". The interval stays on the
+  task until the deadline passes
+
 ## [0.240.0] - 2026-10-05
 
 ### Added

@@ -2221,8 +2221,9 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	identity := authn.IdentityFromContext(ctx)
 
-	result, err := r.task.Update(
-		ctx, scope,
+	updated, err := r.task.Update(
+		ctx,
+		scope,
 		task.UpdateTaskRequest{
 			TaskID:             input.ID,
 			Name:               input.Name,
@@ -2242,27 +2243,15 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("failed to update task: %w", err)
 	}
 
-	taskWithLink, err := r.taskWithExternalLink(ctx, scope, result.Task)
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, updated)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
 		return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
 	}
 
-	output := types.UpdateTaskOutput{
+	return nil, types.UpdateTaskOutput{
 		Task: taskWithLink,
-	}
-
-	if result.NextTask != nil {
-		nextWithLink, err := r.taskWithExternalLink(ctx, scope, result.NextTask)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot load next task external link", log.Error(err))
-			return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal error")
-		}
-
-		output.NextTask = nextWithLink
-	}
-
-	return nil, output, nil
+	}, nil
 }
 
 func (r *Resolver) AssignTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AssignTaskInput) (*mcp.CallToolResult, types.AssignTaskOutput, error) {

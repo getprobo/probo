@@ -216,7 +216,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set. Leave empty and enable Clear Recurrence to remove it.',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline. The next task is created when that deadline passes. Leave empty and enable Clear Recurrence to remove it.',
 	},
 	{
 		displayName: 'Clear Recurrence',
@@ -265,20 +265,6 @@ export async function execute(
 					createdAt
 					updatedAt
 				}
-				nextTaskEdge {
-					node {
-						id
-						name
-						content
-						state
-						priority
-						timeEstimate
-						deadline
-						recurrenceInterval
-						createdAt
-						updatedAt
-					}
-				}
 			}
 		}
 	`;
@@ -305,11 +291,6 @@ export async function execute(
 	const task = payload?.task as IDataObject | undefined;
 	if (payload && task) {
 		payload.task = withPlainTextContent(task);
-	}
-	const nextEdge = payload?.nextTaskEdge as IDataObject | undefined;
-	const nextTask = nextEdge?.node as IDataObject | undefined;
-	if (nextEdge && nextTask) {
-		nextEdge.node = withPlainTextContent(nextTask);
 	}
 
 	return {

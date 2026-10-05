@@ -274,6 +274,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL", 86400),
 				},
 			},
+			TaskRecurrence: probodconfig.TaskRecurrenceConfig{
+				Interval: b.resolver.getEnvIntOrDefault("PROBOD_TASK_RECURRENCE_INTERVAL", 300),
+			},
 			Agents: func() probodconfig.AgentsConfig {
 				defaultProvider := b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_PROVIDER", "openai")
 

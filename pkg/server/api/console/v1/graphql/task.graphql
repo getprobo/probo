@@ -213,7 +213,6 @@ type CreateTaskPayload {
 
 type UpdateTaskPayload {
     task: Task!
-    nextTaskEdge: TaskEdge
 }
 
 type DeleteTaskPayload {

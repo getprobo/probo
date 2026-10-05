@@ -228,8 +228,8 @@ LIMIT 1;
 	return nil
 }
 
-// LoadByIDForUpdate is LoadByID under FOR UPDATE so completing a recurring
-// task cannot race another complete and insert two next occurrences.
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent updates of
+// the same task cannot overwrite each other.
 func (t *Task) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
@@ -280,6 +280,66 @@ FOR UPDATE;
 		}
 
 		return fmt.Errorf("cannot collect tasks: %w", err)
+	}
+
+	*t = task
+
+	return nil
+}
+
+// LoadNextDueRecurringForUpdateSkipLocked locks the earliest recurring task
+// whose deadline is at or before now. It scans every tenant. State is
+// ignored: the deadline is what moves the series forward.
+func (t *Task) LoadNextDueRecurringForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+	now time.Time,
+) error {
+	q := `
+SELECT
+    id,
+	organization_id,
+    measure_id,
+    name,
+    content,
+    state,
+    priority,
+    reference_id,
+    time_estimate,
+    assigned_to_profile_id,
+    deadline,
+    recurrence,
+    rank,
+    priority_rank,
+    created_at,
+    updated_at
+FROM
+    tasks
+WHERE
+    recurrence IS NOT NULL
+    AND deadline IS NOT NULL
+    AND deadline <= @now
+ORDER BY
+    deadline,
+    id
+LIMIT 1
+FOR UPDATE SKIP LOCKED
+`
+
+	args := pgx.StrictNamedArgs{"now": now}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query due recurring tasks: %w", err)
+	}
+
+	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect due recurring task: %w", err)
 	}
 
 	*t = task

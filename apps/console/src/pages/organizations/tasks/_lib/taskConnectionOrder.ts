@@ -21,11 +21,6 @@
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
-import {
-  measureTasksConnectionKey,
-  organizationTasksConnectionKey,
-  taskConnectionId,
-} from "./taskPath";
 import { taskPriorities, type TaskPriority } from "./taskState";
 
 type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
@@ -115,31 +110,6 @@ export function insertTaskEdgeSorted(
   if (edge) {
     insertExistingTaskEdgeSorted(store, edge, connectionIds);
   }
-}
-
-export function insertNextTaskEdge(
-  store: RecordSourceSelectorProxy,
-  organizationId: string,
-  extraConnectionIds: readonly string[] = [],
-): string | undefined {
-  const nextEdge = store.getRootField("updateTask")?.getLinkedRecord("nextTaskEdge");
-  if (!nextEdge) {
-    return undefined;
-  }
-
-  const measureId = nextEdge.getLinkedRecord("node")
-    ?.getLinkedRecord("measure")
-    ?.getDataID();
-  const connectionIds = [
-    taskConnectionId(organizationId, organizationTasksConnectionKey),
-    ...extraConnectionIds,
-  ];
-  if (measureId) {
-    connectionIds.push(taskConnectionId(measureId, measureTasksConnectionKey));
-  }
-
-  insertExistingTaskEdgeSorted(store, nextEdge, connectionIds);
-  return measureId;
 }
 
 export function insertExistingTaskEdgeSorted(

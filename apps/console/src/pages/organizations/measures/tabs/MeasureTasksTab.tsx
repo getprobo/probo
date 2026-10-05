@@ -100,7 +100,6 @@ function MeasureTasksPanel({ measureKey, measureId }: MeasureTasksPanelProps) {
         </CreateTaskDialog>
       )}
       <TasksCard
-        connectionId={connectionId}
         tasks={measure.tasks.edges}
         refetch={refetch}
       />

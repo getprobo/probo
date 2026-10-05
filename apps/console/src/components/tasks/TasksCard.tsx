@@ -36,7 +36,6 @@ import {
   graphql,
   readInlineData,
   useRefetchableFragment,
-  useRelayEnvironment,
 } from "react-relay";
 
 import type { TasksCard_task$key } from "#/__generated__/core/TasksCard_task.graphql";
@@ -46,11 +45,8 @@ import type {
 } from "#/__generated__/core/TasksCardOrganizationFragment.graphql";
 import type { TasksCardOrganizationQuery } from "#/__generated__/core/TasksCardOrganizationQuery.graphql";
 import type { TasksCardUpdateRankMutation } from "#/__generated__/core/TasksCardUpdateRankMutation.graphql";
-import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
-import { insertNextTaskEdge } from "#/pages/organizations/tasks/_lib/taskConnectionOrder";
 import {
   taskPriorities,
   type TaskPriority,
@@ -94,7 +90,6 @@ function resolveDropPriority(
 
 interface TasksCardProps {
   tasks: TasksCardOrganizationFragment$data["tasks"]["edges"];
-  connectionId: string;
   canReorder?: boolean;
   refetch?: (
     vars: { filter: TasksCardFilterInput },
@@ -170,7 +165,6 @@ export function OrganizationTasksCard({ organizationRef, header }: OrganizationT
       {header?.({ connectionId: data.tasks.__id, canCreateTask: data.canCreateTask, refetch: handleRefetch })}
       <TasksCard
         tasks={data.tasks.edges}
-        connectionId={data.tasks.__id}
         canReorder={data.canUpdateTask}
         refetch={refetch}
       />
@@ -190,23 +184,12 @@ const updateRankMutation = graphql`
         ...TasksCard_task
         ...TaskListItem_task
       }
-      nextTaskEdge {
-        node {
-          ...TasksCard_task
-          ...TaskListItem_task
-          measure {
-            id
-          }
-        }
-      }
     }
   }
 `;
 
-export function TasksCard({ tasks, connectionId, canReorder, refetch }: TasksCardProps) {
+export function TasksCard({ tasks, canReorder, refetch }: TasksCardProps) {
   const { t } = useTranslation();
-  const organizationId = useOrganizationId();
-  const relayEnv = useRelayEnvironment();
   const {
     query,
     state: selectedState,
@@ -379,12 +362,6 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: TasksCar
           ...(newState && { state: newState }),
         },
       },
-      updater: (store) => {
-        const spawnedMeasureId = insertNextTaskEdge(store, organizationId, [connectionId]);
-        if (spawnedMeasureId) {
-          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
-        }
-      },
       onCompleted: (_, errors) => {
         if (errors?.length) {
           toast({
@@ -446,7 +423,6 @@ export function TasksCard({ tasks, connectionId, canReorder, refetch }: TasksCar
       <TaskListItem
         key={task.id}
         taskKey={node}
-        connectionId={connectionId}
         sectionState={sectionState}
         canDrag={canDrag}
         isDragging={draggedId === task.id}

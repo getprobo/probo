@@ -106,11 +106,6 @@ type (
 		IdentityID         *gid.GID
 		RecurrenceInterval **timespan.TimeSpan
 	}
-
-	UpdateTaskResult struct {
-		Task     *coredata.Task
-		NextTask *coredata.Task
-	}
 )
 
 func (ctr *CreateTaskRequest) Validate() error {
@@ -495,16 +490,15 @@ func (s *Service) Unassign(
 }
 
 func (s *Service) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	req UpdateTaskRequest,
-) (*UpdateTaskResult, error) {
+) (*coredata.Task, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	task := &coredata.Task{}
-
-	var nextTask *coredata.Task
 
 	err := s.pg.WithTx(
 		ctx,
@@ -599,16 +593,6 @@ func (s *Service) Update(
 			}
 
 			now := time.Now()
-			if shouldCloneRecurringTask(oldTask.State, task.State, task) {
-				next, err := insertNextRecurringTask(ctx, conn, scope, task, now)
-				if err != nil {
-					return err
-				}
-
-				task.Recurrence = nil
-				nextTask = next
-			}
-
 			task.UpdatedAt = now
 
 			targetRank := req.Rank
@@ -659,12 +643,6 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
-			if nextTask != nil {
-				if err := emitTaskCreated(ctx, conn, scope, nextTask); err != nil {
-					return fmt.Errorf("cannot emit next task created webhook: %w", err)
-				}
-			}
-
 			if s.Sync != nil && syncedTaskFieldsChanged(
 				oldTask.Name,
 				oldTask.Content,
@@ -692,10 +670,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	return &UpdateTaskResult{
-		Task:     task,
-		NextTask: nextTask,
-	}, nil
+	return task, nil
 }
 
 func (s *Service) Delete(

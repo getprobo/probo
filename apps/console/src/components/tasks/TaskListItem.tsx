@@ -36,17 +36,15 @@ import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useRelayEnvironment } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
-import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskPriorityIcon } from "#/pages/organizations/tasks/_components/TaskPriorityIcon";
 import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
-import { insertNextTaskEdge } from "#/pages/organizations/tasks/_lib/taskConnectionOrder";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
 import {
   type TaskState,
@@ -89,15 +87,6 @@ const updateStateMutation = graphql`
         ...TaskListItem_task
         ...TaskDetailsPage_task
       }
-      nextTaskEdge {
-        node {
-          ...TasksCard_task
-          ...TaskListItem_task
-          measure {
-            id
-          }
-        }
-      }
     }
   }
 `;
@@ -121,7 +110,6 @@ function rowInteraction(
 
 interface TaskListItemProps {
   taskKey: TaskListItem_task$key;
-  connectionId: string;
   sectionState?: TaskState;
   canDrag?: boolean;
   isDragging?: boolean;
@@ -137,7 +125,6 @@ interface TaskListItemProps {
 export function TaskListItem(props: TaskListItemProps) {
   const organizationId = useOrganizationId();
   const { t, i18n } = useTranslation();
-  const relayEnv = useRelayEnvironment();
   const { canUpdate, ...task } = useFragment(taskListItemFragment, props.taskKey);
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
     updateStateMutation,
@@ -152,16 +139,6 @@ export function TaskListItem(props: TaskListItemProps) {
           taskId: task.id,
           state,
         },
-      },
-      updater: (store) => {
-        const spawnedMeasureId = insertNextTaskEdge(
-          store,
-          organizationId,
-          [props.connectionId],
-        );
-        if (spawnedMeasureId) {
-          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
-        }
       },
       onCompleted: () => {
         props.onStateChange?.();
