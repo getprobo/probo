@@ -169,7 +169,54 @@ The order field passed to `page.LoadAll` / `page.WalkAll` must have a `CursorKey
 
 ## No cross-entity JOINs
 
-Each entity file queries only its own table. When data from multiple entities is needed, the caller orchestrates separate calls. Never write a JOIN between two entity tables inside an entity method, and never return a raw ID belonging to a different entity — return the full entity and let the caller read the foreign key field.
+Each entity file in `pkg/coredata` queries its own table. Never JOIN another entity table to **return its columns** — the caller orchestrates separate calls instead. Using the other table only to narrow a `WHERE` clause is allowed.
+
+**Subqueries for filtering are OK.** When the only purpose of the other table is to narrow a `WHERE` clause (e.g. `IN (SELECT id FROM ...)`), keep it in the query rather than loading that table's IDs in Go and passing them as an `ANY(@ids)` parameter. A subquery keeps the filtering in the database and eliminates an extra round trip. Passing values already loaded from the first entity into the second entity's own filter is the separate-calls case, not this shortcut.
+
+```go
+// BAD — JOIN that returns a column from the joined table
+q := `
+SELECT ctpd.common_third_party_id
+FROM detected_trackers dt
+JOIN common_third_party_domains ctpd ON ctpd.domain = dt.initiator_domain
+WHERE dt.tracker_pattern_id = @tracker_pattern_id
+`
+
+// GOOD — two entity calls. domains come from detected_trackers, not from pre-loading the other table's IDs.
+var trackers coredata.DetectedTrackers
+domains, err := trackers.LoadInitiatorDomainsByTrackerPatternID(ctx, conn, patternID, 10)
+if err != nil {
+	return nil, fmt.Errorf("cannot load initiator domains: %w", err)
+}
+
+if len(domains) == 0 {
+	return nil, nil
+}
+
+filter := coredata.NewCommonThirdPartyDomainFilter(domains)
+
+var matched coredata.CommonThirdPartyDomains
+if err := matched.Load(ctx, conn, 1, filter); err != nil {
+	return nil, fmt.Errorf("cannot load common third party domains: %w", err)
+}
+
+if len(matched) == 0 {
+	return nil, nil
+}
+
+thirdPartyID := matched[0].CommonThirdPartyID
+return &thirdPartyID, nil
+
+// GOOD — subquery only used for filtering, no columns returned from it
+q := `
+SELECT id, pattern, tracker_type, ...
+FROM tracker_patterns
+WHERE common_tracker_pattern_id IN (
+    SELECT id FROM common_tracker_patterns
+    WHERE common_third_party_id = @filter_common_third_party_id
+)
+`
+```
 
 ## Row collection
 
