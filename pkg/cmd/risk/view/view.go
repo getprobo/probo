@@ -40,14 +40,7 @@ query($id: ID!) {
       name
       description
       category
-      treatment
       note
-      inherentLikelihood
-      inherentImpact
-      inherentRiskScore
-      residualLikelihood
-      residualImpact
-      residualRiskScore
       createdAt
       updatedAt
     }
@@ -57,22 +50,15 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename           string  `json:"__typename"`
-		ID                 string  `json:"id"`
-		ReferenceID        string  `json:"referenceId"`
-		Name               string  `json:"name"`
-		Description        *string `json:"description"`
-		Category           string  `json:"category"`
-		Treatment          *string `json:"treatment"`
-		Note               string  `json:"note"`
-		InherentLikelihood *int    `json:"inherentLikelihood"`
-		InherentImpact     *int    `json:"inherentImpact"`
-		InherentRiskScore  *int    `json:"inherentRiskScore"`
-		ResidualLikelihood *int    `json:"residualLikelihood"`
-		ResidualImpact     *int    `json:"residualImpact"`
-		ResidualRiskScore  *int    `json:"residualRiskScore"`
-		CreatedAt          string  `json:"createdAt"`
-		UpdatedAt          string  `json:"updatedAt"`
+		Typename    string  `json:"__typename"`
+		ID          string  `json:"id"`
+		ReferenceID string  `json:"referenceId"`
+		Name        string  `json:"name"`
+		Description *string `json:"description"`
+		Category    string  `json:"category"`
+		Note        string  `json:"note"`
+		CreatedAt   string  `json:"createdAt"`
+		UpdatedAt   string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -142,7 +128,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Reference ID:"), r.ReferenceID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Category:"), r.Category)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Treatment:"), formatOptionalString(r.Treatment))
 
 			if r.Description != nil && *r.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *r.Description)
@@ -151,20 +136,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			if r.Note != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Note:"), r.Note)
 			}
-
-			_, _ = fmt.Fprintln(out)
-			_, _ = fmt.Fprintf(
-				out,
-				"%s%s\n",
-				label.Render("Initial Risk Score:"),
-				formatRiskScore(r.InherentRiskScore, r.InherentLikelihood, r.InherentImpact),
-			)
-			_, _ = fmt.Fprintf(
-				out,
-				"%s%s\n",
-				label.Render("Residual Risk Score:"),
-				formatRiskScore(r.ResidualRiskScore, r.ResidualLikelihood, r.ResidualImpact),
-			)
 
 			_, _ = fmt.Fprintln(out)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(r.CreatedAt))
@@ -177,33 +148,4 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
-}
-
-func formatOptionalString(v *string) string {
-	if v == nil || *v == "" {
-		return "-"
-	}
-
-	return *v
-}
-
-func formatRiskScore(score, likelihood, impact *int) string {
-	if score == nil && likelihood == nil && impact == nil {
-		return "-"
-	}
-
-	return fmt.Sprintf(
-		"%s (likelihood: %s, impact: %s)",
-		formatOptionalInt(score),
-		formatOptionalInt(likelihood),
-		formatOptionalInt(impact),
-	)
-}
-
-func formatOptionalInt(v *int) string {
-	if v == nil {
-		return "-"
-	}
-
-	return fmt.Sprintf("%d", *v)
 }

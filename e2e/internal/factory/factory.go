@@ -530,12 +530,9 @@ func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	`
 
 	input := map[string]any{
-		"organizationId":     c.GetOrganizationID().String(),
-		"name":               a.getString("name", SafeName("Risk")),
-		"category":           a.getString("category", "SECURITY"),
-		"treatment":          a.getString("treatment", "MITIGATED"),
-		"inherentLikelihood": a.getInt("inherentLikelihood", 2),
-		"inherentImpact":     a.getInt("inherentImpact", 2),
+		"organizationId": c.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("Risk")),
+		"category":       a.getString("category", "SECURITY"),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc
@@ -806,21 +803,6 @@ func (b *RiskBuilder) WithDescription(desc string) *RiskBuilder {
 
 func (b *RiskBuilder) WithCategory(category string) *RiskBuilder {
 	b.attrs["category"] = category
-	return b
-}
-
-func (b *RiskBuilder) WithTreatment(treatment string) *RiskBuilder {
-	b.attrs["treatment"] = treatment
-	return b
-}
-
-func (b *RiskBuilder) WithLikelihood(likelihood int) *RiskBuilder {
-	b.attrs["inherentLikelihood"] = likelihood
-	return b
-}
-
-func (b *RiskBuilder) WithImpact(impact int) *RiskBuilder {
-	b.attrs["inherentImpact"] = impact
 	return b
 }
 

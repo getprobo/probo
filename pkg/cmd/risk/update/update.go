@@ -37,9 +37,6 @@ mutation($input: UpdateRiskInput!) {
       referenceId
       name
       category
-      treatment
-      inherentRiskScore
-      residualRiskScore
     }
   }
 }
@@ -48,29 +45,20 @@ mutation($input: UpdateRiskInput!) {
 type updateResponse struct {
 	UpdateRisk struct {
 		Risk struct {
-			ID                string `json:"id"`
-			ReferenceID       string `json:"referenceId"`
-			Name              string `json:"name"`
-			Category          string `json:"category"`
-			Treatment         string `json:"treatment"`
-			InherentRiskScore int    `json:"inherentRiskScore"`
-			ResidualRiskScore int    `json:"residualRiskScore"`
+			ID          string `json:"id"`
+			ReferenceID string `json:"referenceId"`
+			Name        string `json:"name"`
+			Category    string `json:"category"`
 		} `json:"risk"`
 	} `json:"updateRisk"`
 }
 
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagName               string
-		flagCategory           string
-		flagTreatment          string
-		flagInherentLikelihood int
-		flagInherentImpact     int
-		flagResidualLikelihood int
-		flagResidualImpact     int
-		flagDescription        string
-		flagNote               string
-		flagOwner              string
+		flagName        string
+		flagCategory    string
+		flagDescription string
+		flagNote        string
 	)
 
 	cmd := &cobra.Command{
@@ -108,40 +96,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				input["category"] = flagCategory
 			}
 
-			if cmd.Flags().Changed("treatment") {
-				input["treatment"] = flagTreatment
-			}
-
-			if cmd.Flags().Changed("inherent-likelihood") {
-				input["inherentLikelihood"] = flagInherentLikelihood
-			}
-
-			if cmd.Flags().Changed("inherent-impact") {
-				input["inherentImpact"] = flagInherentImpact
-			}
-
-			if cmd.Flags().Changed("residual-likelihood") {
-				input["residualLikelihood"] = flagResidualLikelihood
-			}
-
-			if cmd.Flags().Changed("residual-impact") {
-				input["residualImpact"] = flagResidualImpact
-			}
-
 			if cmd.Flags().Changed("description") {
 				input["description"] = flagDescription
 			}
 
 			if cmd.Flags().Changed("note") {
 				input["note"] = flagNote
-			}
-
-			if cmd.Flags().Changed("owner") {
-				if flagOwner == "" {
-					input["ownerId"] = nil
-				} else {
-					input["ownerId"] = flagOwner
-				}
 			}
 
 			if len(input) == 1 {
@@ -176,14 +136,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Risk name")
 	cmd.Flags().StringVar(&flagCategory, "category", "", "Risk category")
-	cmd.Flags().StringVar(&flagTreatment, "treatment", "", "Risk treatment: MITIGATED, ACCEPTED, AVOIDED, TRANSFERRED")
-	cmd.Flags().IntVar(&flagInherentLikelihood, "inherent-likelihood", 0, "Initial likelihood 1-5")
-	cmd.Flags().IntVar(&flagInherentImpact, "inherent-impact", 0, "Initial impact 1-5")
-	cmd.Flags().IntVar(&flagResidualLikelihood, "residual-likelihood", 0, "Residual likelihood 1-5")
-	cmd.Flags().IntVar(&flagResidualImpact, "residual-impact", 0, "Residual impact 1-5")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk description")
 	cmd.Flags().StringVar(&flagNote, "note", "", "Risk note")
-	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID")
 
 	return cmd
 }
