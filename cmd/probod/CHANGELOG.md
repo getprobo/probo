@@ -4,6 +4,28 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.303.0] - 2026-10-05
+
+### Added
+
+- Organizations have an optional registered legal name, separate from the
+  operating name. It is editable from the workspace general settings and
+  exposed on the GraphQL, MCP, CLI and n8n surfaces. Blank values are
+  rejected; only an explicit null clears it
+- Cookie banners can be made CORSless (ops-only) so one banner can be
+  shared by deployments whose origins are not known ahead of time. The
+  tracker policy names the banner instead of an origin
+- Every consent record stores and shows the request origin
+
+### Changed
+
+- The publisher country setting is hidden on cookie banners without TCF
+
+### Fixed
+
+- Listing risks ordered by `UPDATED_AT` no longer panics when building the
+  next-page cursor
+
 ## [0.302.0] - 2026-10-05
 
 ### Added
