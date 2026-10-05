@@ -16,7 +16,7 @@ jobs:
       contents: "read"
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
-      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310" # v5.0.1
         with:
           version: "3.17.3"
@@ -58,7 +58,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
         with:
           name: "helm-chart"

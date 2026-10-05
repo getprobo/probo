@@ -18,7 +18,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - name: "Validate template version"
         run: |
           VERSION="${GITHUB_REF_NAME##*/v}"

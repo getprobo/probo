@@ -18,7 +18,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           fetch-depth: 0
-      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e" # v4.0.1
         with:
           terraform_wrapper: false
@@ -77,7 +77,7 @@ jobs:
       contents: "read"
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
-      - uses: "runs-on/action@efac073ea2507ec18797de3a81704201ade11d9d" # v2
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - name: "Update getprobo/terraform-azurerm-audit-role"
         env:
           GH_TOKEN: ${{ secrets.TERRAFORM_MODULE_GITHUB_TOKEN }}
