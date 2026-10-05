@@ -1140,7 +1140,11 @@
       "status": "Status",
       "allStatuses": "Alle statussen",
       "user": "Gebruiker",
-      "allUsers": "Alle gebruikers"
+      "allUsers": "Alle gebruikers",
+      "internalControl": "Interne controle",
+      "allInternalControls": "Alle interne controles",
+      "searchInternalControls": "Interne controles zoeken",
+      "noInternalControls": "Geen interne controles"
     },
     "error": {
       "title": "Fout",
@@ -4060,8 +4064,27 @@
     }
   },
   "internalControlTasksTab": {
+    "empty": "Geen taken",
+    "columns": {
+      "name": "Naam",
+      "state": "Status"
+    },
     "actions": {
-      "newTask": "Nieuwe taak"
+      "newTask": "Nieuwe taak",
+      "link": "Taak koppelen",
+      "unlink": "Ontkoppelen",
+      "retry": "Opnieuw proberen",
+      "showMore": "{{count}} meer tonen"
+    },
+    "dialog": {
+      "title": "Taken koppelen",
+      "searchPlaceholder": "Taken zoeken",
+      "empty": "Geen taken",
+      "actions": {
+        "close": "Sluiten",
+        "link": "Koppelen",
+        "unlink": "Ontkoppelen"
+      }
     }
   },
   "obligationDetailsPage": {

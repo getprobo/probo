@@ -23,6 +23,16 @@ import { tv } from "tailwind-variants/lite";
 export const internalControlTasksTab = tv({
   slots: {
     root: "flex flex-col gap-4",
-    create: "self-end",
+    state: "flex items-center gap-2",
+    actions: "flex",
+    actionCell: [
+      "flex min-w-0 flex-1 not-first:border-l not-first:border-border-low",
+      "[&>*]:flex [&>*]:min-w-0 [&>*]:w-full [&>*]:flex-1",
+    ],
+    action: [
+      "flex w-full cursor-pointer items-center justify-center gap-2 py-2",
+      "bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed",
+      "disabled:cursor-default disabled:opacity-50",
+    ],
   },
 });

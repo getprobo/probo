@@ -45,6 +45,7 @@ input TaskFilter {
     query: String
     state: TaskState
     assignedToId: ID
+    internalControlId: ID
 }
 
 type Task implements Node {
@@ -60,7 +61,14 @@ type Task implements Node {
     assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
-    internalControl: InternalControl @goField(forceResolver: true)
+    internalControls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     evidences(
         first: Int
@@ -178,7 +186,7 @@ extend type Mutation {
 
 input CreateTaskInput {
     organizationId: ID!
-    internalControlId: ID
+    internalControlIds: [ID!]
     name: String!
     content: String
     state: TaskState
@@ -199,7 +207,7 @@ input UpdateTaskInput {
     timeEstimate: TimeSpan @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
-    internalControlId: ID @goField(omittable: true)
+    internalControlIds: [ID!] @goField(omittable: true)
     recurrenceInterval: TimeSpan @goField(omittable: true)
 }
 

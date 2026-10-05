@@ -21,6 +21,7 @@
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
+import { taskInternalControlIdsConnectionKey } from "./taskPath";
 import { taskPriorities, type TaskPriority } from "./taskState";
 
 type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
@@ -135,8 +136,8 @@ export function moveTaskNodeSorted(
   node: TaskRecord,
   connections: {
     organizationConnectionId: string;
-    previousInternalControlConnectionId?: string;
-    nextInternalControlConnectionId?: string;
+    previousInternalControlConnectionIds?: readonly string[];
+    nextInternalControlConnectionIds?: readonly string[];
     createIfMissing?: boolean;
   },
 ) {
@@ -149,32 +150,76 @@ export function moveTaskNodeSorted(
     }
   }
 
-  const previousId = connections.previousInternalControlConnectionId;
-  const nextId = connections.nextInternalControlConnectionId;
-  if (previousId && previousId !== nextId) {
+  const nextIds = new Set(connections.nextInternalControlConnectionIds ?? []);
+  for (const previousId of connections.previousInternalControlConnectionIds ?? []) {
+    if (nextIds.has(previousId)) {
+      continue;
+    }
+
     const previous = store.get(previousId);
     if (previous) {
       ConnectionHandler.deleteNode(previous, nodeId);
     }
   }
 
-  if (!nextId) {
-    return;
-  }
+  for (const nextId of nextIds) {
+    const next = store.get(nextId);
+    if (!next) {
+      continue;
+    }
 
-  const next = store.get(nextId);
-  if (!next) {
-    return;
-  }
+    const edge = findEdge(next, nodeId);
+    if (!edge && !connections.createIfMissing) {
+      continue;
+    }
 
-  const edge = findEdge(next, nodeId);
-  if (!edge && !connections.createIfMissing) {
-    return;
+    placeEdgeSorted(
+      next,
+      edge ?? ConnectionHandler.createEdge(store, next, node, "TaskEdge"),
+      node,
+    );
   }
+}
 
-  placeEdgeSorted(
-    next,
-    edge ?? ConnectionHandler.createEdge(store, next, node, "TaskEdge"),
-    node,
+export function syncTaskInternalControlIds(
+  store: RecordSourceSelectorProxy,
+  task: TaskRecord,
+  previousIds: readonly string[],
+  nextIds: readonly string[],
+) {
+  const connection = ConnectionHandler.getConnection(
+    task,
+    taskInternalControlIdsConnectionKey,
   );
+  if (!connection) {
+    return;
+  }
+
+  const next = new Set(nextIds);
+  for (const id of previousIds) {
+    if (!next.has(id)) {
+      ConnectionHandler.deleteNode(connection, id);
+    }
+  }
+
+  const previous = new Set(previousIds);
+  for (const id of nextIds) {
+    if (previous.has(id) || connectionHasNode(connection, id)) {
+      continue;
+    }
+
+    const control = store.get(id) ?? store.create(id, "InternalControl");
+    if (control.getValue("id") == null) {
+      control.setValue(id, "id");
+    }
+    ConnectionHandler.insertEdgeBefore(
+      connection,
+      ConnectionHandler.createEdge(store, connection, control, "InternalControlEdge"),
+    );
+  }
+}
+
+function connectionHasNode(connection: TaskRecord, nodeId: string) {
+  return (connection.getLinkedRecords("edges") ?? [])
+    .some(edge => edge?.getLinkedRecord("node")?.getDataID() === nodeId);
 }

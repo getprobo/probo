@@ -28,6 +28,7 @@ export const tasksCard = tv({
     filters: "flex flex-wrap items-center justify-end gap-2",
     filter: "w-40 shrink-0",
     userFilter: "w-52 shrink-0 max-sm:w-full",
+    internalControlFilter: "w-56 shrink-0 max-sm:w-full",
     list: "divide-y divide-sand-6",
     sectionHeader: "flex items-center gap-2 bg-sand-3 px-6 py-3",
     stateOption: "flex items-center gap-2",

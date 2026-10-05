@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -38,21 +37,20 @@ import (
 
 type (
 	Task struct {
-		ID                gid.GID            `db:"id"`
-		OrganizationID    gid.GID            `db:"organization_id"`
-		InternalControlID *gid.GID           `db:"internal_control_id"`
-		Name              string             `db:"name"`
-		Content           string             `db:"content"`
-		State             TaskState          `db:"state"`
-		Priority          TaskPriority       `db:"priority"`
-		ReferenceID       string             `db:"reference_id"`
-		TimeEstimate      *timespan.TimeSpan `db:"time_estimate"`
-		AssignedToID      *gid.GID           `db:"assigned_to_profile_id"`
-		Deadline          *time.Time         `db:"deadline"`
-		Recurrence        *timespan.TimeSpan `db:"recurrence"`
-		Rank              int                `db:"rank"`
-		CreatedAt         time.Time          `db:"created_at"`
-		UpdatedAt         time.Time          `db:"updated_at"`
+		ID             gid.GID            `db:"id"`
+		OrganizationID gid.GID            `db:"organization_id"`
+		Name           string             `db:"name"`
+		Content        string             `db:"content"`
+		State          TaskState          `db:"state"`
+		Priority       TaskPriority       `db:"priority"`
+		ReferenceID    string             `db:"reference_id"`
+		TimeEstimate   *timespan.TimeSpan `db:"time_estimate"`
+		AssignedToID   *gid.GID           `db:"assigned_to_profile_id"`
+		Deadline       *time.Time         `db:"deadline"`
+		Recurrence     *timespan.TimeSpan `db:"recurrence"`
+		Rank           int                `db:"rank"`
+		CreatedAt      time.Time          `db:"created_at"`
+		UpdatedAt      time.Time          `db:"updated_at"`
 
 		// ordering only
 		PriorityRank int `db:"priority_rank"`
@@ -121,7 +119,6 @@ func (t *Task) LoadByID(
 SELECT
     id,
 	organization_id,
-    internal_control_id,
     name,
     content,
     state,
@@ -175,10 +172,35 @@ func (t *Task) LoadByInternalControlIDAndReferenceID(
 	referenceID string,
 ) error {
 	q := `
+WITH linked AS (
+    SELECT
+        t.id,
+        t.organization_id,
+        t.name,
+        t.content,
+        t.state,
+        t.priority,
+        t.reference_id,
+        t.time_estimate,
+        t.assigned_to_profile_id,
+        t.deadline,
+        t.recurrence,
+        t.rank,
+        t.priority_rank,
+        t.created_at,
+        t.updated_at,
+        t.tenant_id
+    FROM
+        tasks t
+    INNER JOIN
+        internal_controls_tasks ict ON ict.task_id = t.id
+    WHERE
+        ict.internal_control_id = @internal_control_id
+        AND t.reference_id = @reference_id
+)
 SELECT
     id,
-	organization_id,
-    internal_control_id,
+    organization_id,
     name,
     content,
     state,
@@ -193,11 +215,9 @@ SELECT
     created_at,
     updated_at
 FROM
-    tasks
+    linked
 WHERE
     %s
-    AND internal_control_id = @internal_control_id
-    AND reference_id = @reference_id
 LIMIT 1;
 `
 
@@ -228,8 +248,6 @@ LIMIT 1;
 	return nil
 }
 
-// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent updates of
-// the same task cannot overwrite each other.
 func (t *Task) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,
@@ -240,7 +258,6 @@ func (t *Task) LoadByIDForUpdate(
 SELECT
     id,
 	organization_id,
-    internal_control_id,
     name,
     content,
     state,
@@ -299,7 +316,6 @@ func (t *Task) LoadNextDueRecurringForUpdateSkipLocked(
 SELECT
     id,
 	organization_id,
-    internal_control_id,
     name,
     content,
     state,
@@ -357,7 +373,6 @@ func (t *Tasks) LoadByIDs(
 SELECT
     id,
     organization_id,
-    internal_control_id,
     name,
     content,
     state,
@@ -448,7 +463,6 @@ INSERT INTO
         tenant_id,
         id,
 		organization_id,
-        internal_control_id,
         name,
         content,
         reference_id,
@@ -466,7 +480,6 @@ VALUES (
     @tenant_id,
     @task_id,
 	@organization_id,
-    @internal_control_id,
     @name,
     @content,
     @reference_id,
@@ -487,7 +500,6 @@ RETURNING rank, priority_rank;
 		"tenant_id":              scope.GetTenantID(),
 		"task_id":                t.ID,
 		"organization_id":        t.OrganizationID,
-		"internal_control_id":    t.InternalControlID,
 		"name":                   t.Name,
 		"content":                t.Content,
 		"reference_id":           t.ReferenceID,
@@ -503,123 +515,8 @@ RETURNING rank, priority_rank;
 
 	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank, &t.PriorityRank)
 	if err != nil {
-		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "tasks_reference_id_unique" {
-				return ErrResourceAlreadyExists
-			}
-		}
-
 		return fmt.Errorf("cannot insert task: %w", err)
 	}
-
-	return nil
-}
-
-func (t *Task) Upsert(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-) error {
-	if err := lockTaskRank(ctx, conn, t.OrganizationID, t.State, t.Priority); err != nil {
-		return fmt.Errorf("cannot upsert task: %w", err)
-	}
-
-	q := `
-WITH next_rank AS (
-    SELECT COALESCE(MAX(rank), 0) + 1 AS value
-    FROM tasks
-    WHERE organization_id = @organization_id AND state = @state AND priority = @priority
-)
-INSERT INTO
-    tasks (
-        tenant_id,
-        id,
-		organization_id,
-        internal_control_id,
-        name,
-        content,
-        reference_id,
-        state,
-        priority,
-        time_estimate,
-        assigned_to_profile_id,
-        deadline,
-        recurrence,
-        rank,
-        created_at,
-        updated_at
-    )
-VALUES (
-    @tenant_id,
-    @task_id,
-	@organization_id,
-    @internal_control_id,
-    @name,
-    @content,
-    @reference_id,
-    @state,
-    @priority,
-    @time_estimate,
-    @assigned_to_profile_id,
-    @deadline,
-    @recurrence,
-    (SELECT value FROM next_rank),
-    @created_at,
-    @updated_at
-)
-ON CONFLICT (internal_control_id, reference_id) DO UPDATE SET
-    name = @name,
-    content = @content,
-    updated_at = @updated_at,
-    deadline = @deadline
-RETURNING
-    id,
-    organization_id,
-    internal_control_id,
-    name,
-    content,
-    reference_id,
-    state,
-    priority,
-    time_estimate,
-    assigned_to_profile_id,
-    deadline,
-    recurrence,
-    rank,
-    priority_rank,
-    created_at,
-    updated_at
-`
-
-	args := pgx.StrictNamedArgs{
-		"tenant_id":              scope.GetTenantID(),
-		"task_id":                t.ID,
-		"organization_id":        t.OrganizationID,
-		"internal_control_id":    t.InternalControlID,
-		"name":                   t.Name,
-		"content":                t.Content,
-		"reference_id":           t.ReferenceID,
-		"state":                  t.State,
-		"priority":               t.Priority,
-		"time_estimate":          t.TimeEstimate,
-		"assigned_to_profile_id": t.AssignedToID,
-		"deadline":               t.Deadline,
-		"recurrence":             t.Recurrence,
-		"created_at":             t.CreatedAt,
-		"updated_at":             t.UpdatedAt,
-	}
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot upsert task: %w", err)
-	}
-
-	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
-	if err != nil {
-		return fmt.Errorf("cannot collect tasks: %w", err)
-	}
-
-	*t = task
 
 	return nil
 }
@@ -671,7 +568,6 @@ func (t *Tasks) LoadByOrganizationID(
 	q := `
 	SELECT
 		id,
-		internal_control_id,
 		organization_id,
 		name,
 		content,
@@ -724,13 +620,26 @@ func (t *Tasks) CountByInternalControlID(
 	filter *TaskFilter,
 ) (int, error) {
 	q := `
+WITH linked_tasks AS (
+    SELECT
+        t.id,
+        t.tenant_id,
+        t.name,
+        t.state,
+        t.assigned_to_profile_id
+    FROM
+        tasks t
+    INNER JOIN
+        internal_controls_tasks ict ON ict.task_id = t.id
+    WHERE
+        ict.internal_control_id = @internal_control_id
+)
 SELECT
     COUNT(id)
 FROM
-    tasks
+    linked_tasks
 WHERE
     %s
-    AND internal_control_id = @internal_control_id
     AND %s
 `
 
@@ -761,10 +670,34 @@ func (t *Tasks) LoadByInternalControlID(
 	filter *TaskFilter,
 ) error {
 	q := `
+WITH linked_tasks AS (
+    SELECT
+        t.id,
+        t.organization_id,
+        t.name,
+        t.content,
+        t.state,
+        t.priority,
+        t.reference_id,
+        t.time_estimate,
+        t.assigned_to_profile_id,
+        t.deadline,
+        t.recurrence,
+        t.rank,
+        t.priority_rank,
+        t.created_at,
+        t.updated_at,
+        t.tenant_id
+    FROM
+        tasks t
+    INNER JOIN
+        internal_controls_tasks ict ON ict.task_id = t.id
+    WHERE
+        ict.internal_control_id = @internal_control_id
+)
 SELECT
     id,
-    internal_control_id,
-	organization_id,
+    organization_id,
     name,
     content,
     state,
@@ -779,10 +712,9 @@ SELECT
     created_at,
     updated_at
 FROM
-    tasks
+    linked_tasks
 WHERE
     %s
-    AND internal_control_id = @internal_control_id
     AND %s
     AND %s
 `
@@ -825,7 +757,6 @@ SET
   updated_at = @updated_at,
   assigned_to_profile_id = @assigned_to_profile_id,
   deadline = @deadline,
-  internal_control_id = @internal_control_id,
   recurrence = @recurrence
 WHERE %s
     AND id = @task_id
@@ -843,7 +774,6 @@ WHERE %s
 		"updated_at":             t.UpdatedAt,
 		"assigned_to_profile_id": t.AssignedToID,
 		"deadline":               t.Deadline,
-		"internal_control_id":    t.InternalControlID,
 		"recurrence":             t.Recurrence,
 	}
 
@@ -852,6 +782,40 @@ WHERE %s
 	_, err := conn.Exec(ctx, q, args)
 
 	return err
+}
+
+func (t *Task) UpdateNameAndContent(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE
+    tasks
+SET
+    name = @name,
+    content = @content,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @task_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"task_id":    t.ID,
+		"name":       t.Name,
+		"content":    t.Content,
+		"updated_at": t.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot update task name and content: %w", err)
+	}
+
+	return nil
 }
 
 func (t *Task) NextRankForStatePriority(

@@ -217,13 +217,36 @@ func InsertUpdateActivities(
 		}
 	}
 
-	if !gidPtrEqual(oldTask.InternalControlID, task.InternalControlID) {
-		oldInternalControlName, err := taskActivityInternalControlName(ctx, tx, scope, oldTask.InternalControlID)
+	return nil
+}
+
+func InsertInternalControlActivities(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	actorID *gid.GID,
+	now time.Time,
+	oldInternalControlIDs []gid.GID,
+	newInternalControlIDs []gid.GID,
+) error {
+	removed, added := diffInternalControlIDs(oldInternalControlIDs, newInternalControlIDs)
+	if len(removed) == 0 && len(added) == 0 {
+		return nil
+	}
+
+	names, err := taskActivityInternalControlNames(ctx, tx, scope, removed, added)
+	if err != nil {
+		return err
+	}
+
+	if len(removed) == 1 && len(added) == 1 {
+		oldInternalControlName, err := internalControlActivityName(names, removed[0])
 		if err != nil {
 			return fmt.Errorf("cannot load previous internal control name: %w", err)
 		}
 
-		newInternalControlName, err := taskActivityInternalControlName(ctx, tx, scope, task.InternalControlID)
+		newInternalControlName, err := internalControlActivityName(names, added[0])
 		if err != nil {
 			return fmt.Errorf("cannot load internal control name: %w", err)
 		}
@@ -241,9 +264,80 @@ func InsertUpdateActivities(
 		); err != nil {
 			return fmt.Errorf("cannot record internal control activity: %w", err)
 		}
+
+		return nil
+	}
+
+	for _, internalControlID := range removed {
+		oldInternalControlName, err := internalControlActivityName(names, internalControlID)
+		if err != nil {
+			return fmt.Errorf("cannot load previous internal control name: %w", err)
+		}
+
+		if err := insertFieldActivity(
+			ctx,
+			tx,
+			scope,
+			task,
+			actorID,
+			coredata.TaskActivityFieldInternalControl,
+			oldInternalControlName,
+			nil,
+			now,
+		); err != nil {
+			return fmt.Errorf("cannot record internal control activity: %w", err)
+		}
+	}
+
+	for _, internalControlID := range added {
+		newInternalControlName, err := internalControlActivityName(names, internalControlID)
+		if err != nil {
+			return fmt.Errorf("cannot load internal control name: %w", err)
+		}
+
+		if err := insertFieldActivity(
+			ctx,
+			tx,
+			scope,
+			task,
+			actorID,
+			coredata.TaskActivityFieldInternalControl,
+			nil,
+			newInternalControlName,
+			now,
+		); err != nil {
+			return fmt.Errorf("cannot record internal control activity: %w", err)
+		}
 	}
 
 	return nil
+}
+
+func diffInternalControlIDs(oldInternalControlIDs []gid.GID, newInternalControlIDs []gid.GID) (removed []gid.GID, added []gid.GID) {
+	oldSet := make(map[gid.GID]struct{}, len(oldInternalControlIDs))
+	newSet := make(map[gid.GID]struct{}, len(newInternalControlIDs))
+
+	for _, id := range oldInternalControlIDs {
+		oldSet[id] = struct{}{}
+	}
+
+	for _, id := range newInternalControlIDs {
+		newSet[id] = struct{}{}
+	}
+
+	for _, id := range oldInternalControlIDs {
+		if _, ok := newSet[id]; !ok {
+			removed = append(removed, id)
+		}
+	}
+
+	for _, id := range newInternalControlIDs {
+		if _, ok := oldSet[id]; !ok {
+			added = append(added, id)
+		}
+	}
+
+	return removed, added
 }
 
 func ResolveActivityActorID(
@@ -293,22 +387,37 @@ func taskActivityProfileName(
 	return &profile.FullName, nil
 }
 
-func taskActivityInternalControlName(
+func taskActivityInternalControlNames(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	internalControlID *gid.GID,
-) (*string, error) {
-	if internalControlID == nil {
-		return nil, nil
+	removed []gid.GID,
+	added []gid.GID,
+) (map[gid.GID]string, error) {
+	ids := make([]gid.GID, 0, len(removed)+len(added))
+	ids = append(ids, removed...)
+	ids = append(ids, added...)
+
+	internalControls := coredata.InternalControls{}
+	if err := internalControls.LoadByIDs(ctx, conn, scope, ids); err != nil {
+		return nil, fmt.Errorf("cannot load internal controls: %w", err)
 	}
 
-	internalControl := &coredata.InternalControl{}
-	if err := internalControl.LoadByID(ctx, conn, scope, *internalControlID); err != nil {
-		return nil, fmt.Errorf("cannot load internalControl: %w", err)
+	names := make(map[gid.GID]string, len(internalControls))
+	for _, internalControl := range internalControls {
+		names[internalControl.ID] = internalControl.Name
 	}
 
-	return &internalControl.Name, nil
+	return names, nil
+}
+
+func internalControlActivityName(names map[gid.GID]string, id gid.GID) (*string, error) {
+	name, ok := names[id]
+	if !ok {
+		return nil, fmt.Errorf("cannot load internal control: %w", coredata.ErrResourceNotFound)
+	}
+
+	return new(name), nil
 }
 
 func timespanValue(value *timespan.TimeSpan) *string {

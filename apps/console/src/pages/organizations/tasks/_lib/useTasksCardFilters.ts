@@ -27,6 +27,7 @@ export interface TasksCardFilterInput {
   query: string | null;
   state: TaskState | null;
   assignedToId: string | null;
+  internalControlId: string | null;
 }
 
 function taskStateFromParam(value: string | null): TaskState | null {
@@ -36,13 +37,24 @@ function taskStateFromParam(value: string | null): TaskState | null {
 }
 
 export function taskMatchesFilter(
-  task: { name: string; state: TaskState; assignedToId?: string | null },
+  task: {
+    name: string;
+    state: TaskState;
+    assignedToId?: string | null;
+    internalControlIds?: readonly string[];
+  },
   filter: TasksCardFilterInput,
 ): boolean {
   if (filter.state != null && task.state !== filter.state) {
     return false;
   }
   if (filter.assignedToId != null && task.assignedToId !== filter.assignedToId) {
+    return false;
+  }
+  if (
+    filter.internalControlId != null
+    && !task.internalControlIds?.includes(filter.internalControlId)
+  ) {
     return false;
   }
   if (filter.query == null) {
@@ -58,11 +70,14 @@ export function useTasksCardFilters() {
   const state = taskStateFromParam(searchParams.get("status"));
   const assignedToParam = searchParams.get("assignee");
   const assignedToId = assignedToParam === "" ? null : assignedToParam;
+  const internalControlParam = searchParams.get("internalControl");
+  const internalControlId = internalControlParam === "" ? null : internalControlParam;
   const graphqlFilter = useMemo<TasksCardFilterInput>(() => ({
     query: query === "" ? null : query,
     state,
     assignedToId,
-  }), [assignedToId, query, state]);
+    internalControlId,
+  }), [assignedToId, internalControlId, query, state]);
 
   const setQuery = useCallback((value: string) => {
     setSearchParams((previous) => {
@@ -100,13 +115,27 @@ export function useTasksCardFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setInternalControlId = useCallback((value: string | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value == null || value === "") {
+        next.delete("internalControl");
+      } else {
+        next.set("internalControl", value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return {
     query,
     state,
     assignedToId,
+    internalControlId,
     graphqlFilter,
     setQuery,
     setState,
     setAssignedToId,
+    setInternalControlId,
   };
 }

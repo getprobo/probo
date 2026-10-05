@@ -68,19 +68,22 @@ export function useCreateTask() {
       content?: string | null;
       state?: TaskState;
       priority: TaskPriority;
-      internalControlId?: string | null;
+      internalControlIds?: readonly string[] | null;
     },
     connectionId: string,
   ) {
-    const internalControlId = input.internalControlId ?? undefined;
+    const internalControlIds = [...new Set(input.internalControlIds ?? [])];
     const state = input.state ?? "TODO";
     const connections = new Set([
       taskConnectionId(organizationId, organizationTasksConnectionKey),
     ]);
-    if (internalControlId) {
+    for (const internalControlId of internalControlIds) {
       connections.add(taskConnectionId(internalControlId, internalControlTasksConnectionKey));
     }
-    if (taskMatchesFilter({ name: input.name, state }, graphqlFilter)) {
+    if (taskMatchesFilter(
+      { name: input.name, state, internalControlIds },
+      graphqlFilter,
+    )) {
       connections.add(connectionId);
     }
 
@@ -92,13 +95,13 @@ export function useCreateTask() {
           content: input.content || null,
           state: input.state,
           priority: input.priority,
-          internalControlId,
+          internalControlIds: internalControlIds.length > 0 ? [...internalControlIds] : undefined,
         },
       },
       updater: store => insertTaskEdgeSorted(store, [...connections]),
     });
 
-    if (internalControlId) {
+    for (const internalControlId of internalControlIds) {
       updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", 1);
     }
 

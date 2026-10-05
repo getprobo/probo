@@ -26,23 +26,36 @@ import { tv } from "tailwind-variants/lite";
 export const selectTrigger = tv({
   slots: {
     trigger: [
-      "flex w-full items-center justify-between rounded-2 text-sand-12",
+      "flex w-full justify-between rounded-2 text-sand-12",
       "cursor-pointer outline-none transition-colors",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
       "data-disabled:pointer-events-none data-disabled:opacity-50 data-placeholder:text-sand-a10",
     ],
-    value: "min-w-0 flex-1 truncate text-left",
+    value: "min-w-0 flex-1 text-left",
     icon: "flex shrink-0 items-center justify-center text-sand-a10",
   },
   variants: {
     size: {
       1: {
-        trigger: "h-6 gap-1 px-1.5 text-1",
+        trigger: "gap-1 px-1.5 text-1",
         icon: "size-3.5 [&_svg]:size-3.5",
       },
       2: {
-        trigger: "h-8 gap-2 px-3 text-2",
+        trigger: "gap-2 px-3 text-2",
         icon: "size-4 [&_svg]:size-4",
+      },
+    },
+    // Single keeps the closed value on one line. Stack lets every selected
+    // name wrap onto its own line instead of collapsing into an ellipsis.
+    layout: {
+      single: {
+        trigger: "items-center",
+        value: "truncate",
+      },
+      stack: {
+        trigger: "h-auto items-start",
+        value: "flex flex-col gap-1 break-words whitespace-normal [&>*]:min-w-0",
+        icon: "mt-0.5",
       },
     },
     // Surface treatment. Only the accent (gold) color ships, matching Figma;
@@ -55,9 +68,16 @@ export const selectTrigger = tv({
       ghost: { trigger: "hover:bg-sand-2" },
     },
   },
+  compoundVariants: [
+    { layout: "single", size: 1, class: { trigger: "h-6" } },
+    { layout: "single", size: 2, class: { trigger: "h-8" } },
+    { layout: "stack", size: 1, class: { trigger: "min-h-6 py-1" } },
+    { layout: "stack", size: 2, class: { trigger: "min-h-8 py-1.5" } },
+  ],
   defaultVariants: {
     size: 2,
     variant: "surface",
+    layout: "single",
   },
 });
 

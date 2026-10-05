@@ -110,7 +110,7 @@ func (h *recurrenceHandler) claimNext(ctx context.Context) (coredata.Task, bool,
 					return fmt.Errorf("cannot stop recurring task %q: %w", source.ID, err)
 				}
 
-				if err := emitTaskUpdated(ctx, tx, scope, &previous, &source); err != nil {
+				if err := emitTaskUpdated(ctx, tx, scope, &previous, &source, nil); err != nil {
 					return fmt.Errorf("cannot emit stopped recurring task updated webhook: %w", err)
 				}
 

@@ -27,25 +27,12 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
-import { moveTaskNodeSorted } from "./taskConnectionOrder";
+import { moveTaskNodeSorted, syncTaskInternalControlIds } from "./taskConnectionOrder";
 import {
   internalControlTasksConnectionKey,
   organizationTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
-
-function linkedRecordId(record: unknown, field: string) {
-  if (record == null || typeof record !== "object") {
-    return undefined;
-  }
-
-  const value = (record as Record<string, unknown>)[field];
-  if (value == null || typeof value !== "object" || !("__ref" in value)) {
-    return undefined;
-  }
-
-  return typeof value.__ref === "string" ? value.__ref : undefined;
-}
 
 const updateTaskMutation = graphql`
   mutation useUpdateTaskMutation($input: UpdateTaskInput!) {
@@ -72,21 +59,22 @@ export function useUpdateTask() {
   );
 
   function updateTask(
-    config: UseMutationConfig<useUpdateTaskMutation>,
+    config: UseMutationConfig<useUpdateTaskMutation> & {
+      previousInternalControlIds?: readonly string[];
+    },
     feedback?: MutationFeedback,
   ) {
-    const previousInternalControlId = linkedRecordId(
-      relayEnv.getStore().getSource().get(config.variables.input.taskId),
-      "internalControl",
-    );
-    const inputInternalControlId = config.variables.input.internalControlId;
-    const internalControlChanged = inputInternalControlId !== undefined;
-    const nextInternalControlId = internalControlChanged
-      ? inputInternalControlId ?? undefined
-      : previousInternalControlId;
+    const { previousInternalControlIds = [], ...relayConfig } = config;
+    const inputInternalControlIds = relayConfig.variables.input.internalControlIds;
+    const internalControlsChanged = inputInternalControlIds !== undefined;
+    const nextInternalControlIds = internalControlsChanged
+      ? inputInternalControlIds ?? []
+      : previousInternalControlIds;
+    const previousSet = new Set(previousInternalControlIds);
+    const nextSet = new Set(nextInternalControlIds);
 
     return commit({
-      ...config,
+      ...relayConfig,
       updater: (store, data) => {
         const payload = store.getRootField("updateTask");
         const node = payload?.getLinkedRecord("task");
@@ -96,24 +84,38 @@ export function useUpdateTask() {
               organizationId,
               organizationTasksConnectionKey,
             ),
-            previousInternalControlConnectionId: internalControlChanged && previousInternalControlId
-              ? taskConnectionId(previousInternalControlId, internalControlTasksConnectionKey)
+            previousInternalControlConnectionIds: internalControlsChanged
+              ? previousInternalControlIds.map(internalControlId =>
+                  taskConnectionId(internalControlId, internalControlTasksConnectionKey),
+                )
               : undefined,
-            nextInternalControlConnectionId: nextInternalControlId
-              ? taskConnectionId(nextInternalControlId, internalControlTasksConnectionKey)
-              : undefined,
-            createIfMissing: internalControlChanged,
+            nextInternalControlConnectionIds: nextInternalControlIds.map(internalControlId =>
+              taskConnectionId(internalControlId, internalControlTasksConnectionKey),
+            ),
+            createIfMissing: internalControlsChanged,
           });
+          if (internalControlsChanged) {
+            syncTaskInternalControlIds(
+              store,
+              node,
+              previousInternalControlIds,
+              nextInternalControlIds,
+            );
+          }
         }
-        config.updater?.(store, data);
+        relayConfig.updater?.(store, data);
       },
     }, feedback).then((result) => {
-      if (internalControlChanged && previousInternalControlId !== nextInternalControlId) {
-        if (previousInternalControlId) {
-          updateStoreCounter(relayEnv, previousInternalControlId, "tasks(first:0)", -1);
+      if (internalControlsChanged) {
+        for (const internalControlId of previousSet) {
+          if (!nextSet.has(internalControlId)) {
+            updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", -1);
+          }
         }
-        if (nextInternalControlId) {
-          updateStoreCounter(relayEnv, nextInternalControlId, "tasks(first:0)", 1);
+        for (const internalControlId of nextSet) {
+          if (!previousSet.has(internalControlId)) {
+            updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", 1);
+          }
         }
       }
       return result;

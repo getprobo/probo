@@ -793,7 +793,12 @@ func (s *Service) finishLinearLink(
 				}
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current); err != nil {
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, current.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -907,7 +912,12 @@ func (s *Service) restoreLinkedTask(
 				}
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current); err != nil {
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, current.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 

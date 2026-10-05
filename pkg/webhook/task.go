@@ -26,6 +26,7 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
@@ -35,6 +36,8 @@ func InsertTaskUpdated(
 	scope coredata.Scoper,
 	previous *coredata.Task,
 	task *coredata.Task,
+	previousInternalControlIDs []gid.GID,
+	internalControlIDs []gid.GID,
 ) error {
 	if err := InsertUpdateData(
 		ctx,
@@ -42,8 +45,8 @@ func InsertTaskUpdated(
 		scope,
 		task.OrganizationID,
 		coredata.WebhookEventTypeTaskUpdated,
-		webhooktypes.NewTask(task),
-		webhooktypes.NewTask(previous),
+		webhooktypes.NewTask(task, internalControlIDs),
+		webhooktypes.NewTask(previous, previousInternalControlIDs),
 	); err != nil {
 		return fmt.Errorf("cannot insert task updated webhook event: %w", err)
 	}

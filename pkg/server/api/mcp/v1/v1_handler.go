@@ -40,6 +40,7 @@ import (
 	"go.probo.inc/probo/pkg/cookiebanner"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
@@ -141,6 +142,22 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	value, _ := field.Value()
 
 	return &value
+}
+
+// replaceInternalControlIDs turns an omittable nullable internal control list
+// into the task service's replace-or-omit pointer. An unset field leaves links
+// unchanged. A null or empty list clears them.
+func replaceInternalControlIDs(ids **[]gid.GID) *[]gid.GID {
+	if ids == nil {
+		return nil
+	}
+
+	if *ids == nil {
+		empty := []gid.GID{}
+		return &empty
+	}
+
+	return *ids
 }
 
 func optionalIntSlice(values *[]any) (*[]int, error) {

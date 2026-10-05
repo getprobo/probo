@@ -175,7 +175,12 @@ func (s *Service) ApplyInboundIssue(
 				return err
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task); err != nil {
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, task.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 

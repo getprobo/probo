@@ -488,7 +488,7 @@ func CreateTask(c *testutil.Client, internalControlID *string, attrs ...Attrs) s
 		"priority":       a.getString("priority", "MEDIUM"),
 	}
 	if internalControlID != nil {
-		input["internalControlId"] = *internalControlID
+		input["internalControlIds"] = []string{*internalControlID}
 	}
 
 	if content := a.getStringPtr("content"); content != nil {

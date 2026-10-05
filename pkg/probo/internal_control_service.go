@@ -561,16 +561,15 @@ func (s InternalControlService) Import(
 
 					taskDescription := req.InternalControls[i].Tasks[j].Description
 					task := &coredata.Task{
-						ID:                taskID,
-						OrganizationID:    organizationID,
-						InternalControlID: &internalControl.ID,
-						Name:              req.InternalControls[i].Tasks[j].Name,
-						Content:           prosemirror.FromPlainText(taskDescription),
-						ReferenceID:       req.InternalControls[i].Tasks[j].ReferenceID,
-						State:             coredata.TaskStateTodo,
-						Priority:          coredata.TaskPriorityMedium,
-						CreatedAt:         now,
-						UpdatedAt:         now,
+						ID:             taskID,
+						OrganizationID: organizationID,
+						Name:           req.InternalControls[i].Tasks[j].Name,
+						Content:        prosemirror.FromPlainText(taskDescription),
+						ReferenceID:    req.InternalControls[i].Tasks[j].ReferenceID,
+						State:          coredata.TaskStateTodo,
+						Priority:       coredata.TaskPriorityMedium,
+						CreatedAt:      now,
+						UpdatedAt:      now,
 					}
 
 					existingTask := &coredata.Task{}
@@ -586,12 +585,22 @@ func (s InternalControlService) Import(
 						return fmt.Errorf("cannot load task: %w", existingErr)
 					}
 
-					originalTaskID := task.ID
-					if err := task.Upsert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot upsert task: %w", err)
-					}
+					if errors.Is(existingErr, coredata.ErrResourceNotFound) {
+						if err := task.Insert(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot insert task: %w", err)
+						}
 
-					if originalTaskID == task.ID {
+						link := coredata.InternalControlTask{
+							InternalControlID: internalControl.ID,
+							TaskID:            task.ID,
+							OrganizationID:    internalControl.OrganizationID,
+							ReferenceID:       task.ReferenceID,
+							CreatedAt:         task.CreatedAt,
+						}
+						if err := link.Upsert(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot link task to internal control: %w", err)
+						}
+
 						if err := taskpkg.InsertCreatedActivity(
 							ctx,
 							tx,
@@ -602,18 +611,29 @@ func (s InternalControlService) Import(
 						); err != nil {
 							return fmt.Errorf("cannot record task created event: %w", err)
 						}
-					} else if existingErr == nil {
+					} else {
+						previous := *existingTask
+						existingTask.Name = task.Name
+						existingTask.Content = task.Content
+						existingTask.UpdatedAt = task.UpdatedAt
+
+						if err := existingTask.UpdateNameAndContent(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot update imported task: %w", err)
+						}
+
 						if err := taskpkg.InsertUpdateActivities(
 							ctx,
 							tx,
 							scope,
+							&previous,
 							existingTask,
-							task,
 							actorID,
 							now,
 						); err != nil {
 							return fmt.Errorf("cannot record task update events: %w", err)
 						}
+
+						task = existingTask
 					}
 
 					for k := range req.InternalControls[i].Tasks[j].RequestedEvidences {
@@ -985,6 +1005,65 @@ func (s InternalControlService) ListForThirdPartyID(
 			err := internalControls.LoadByThirdPartyID(ctx, conn, scope, thirdParty.ID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load internalControls: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(internalControls, cursor), nil
+}
+
+func (s InternalControlService) CountForTaskID(
+	ctx context.Context, scope coredata.Scoper,
+	taskID gid.GID,
+	filter *coredata.InternalControlFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) (err error) {
+			internalControls := &coredata.InternalControls{}
+
+			count, err = internalControls.CountByTaskID(ctx, conn, scope, taskID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count internal controls: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s InternalControlService) ListForTaskID(
+	ctx context.Context, scope coredata.Scoper,
+	taskID gid.GID,
+	cursor *page.Cursor[coredata.InternalControlOrderField],
+	filter *coredata.InternalControlFilter,
+) (*page.Page[*coredata.InternalControl, coredata.InternalControlOrderField], error) {
+	var internalControls coredata.InternalControls
+
+	task := &coredata.Task{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task: %w", err)
+			}
+
+			err := internalControls.LoadByTaskID(ctx, conn, scope, task.ID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load internal controls: %w", err)
 			}
 
 			return nil

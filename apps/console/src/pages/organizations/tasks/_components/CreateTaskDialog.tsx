@@ -231,7 +231,7 @@ export function CreateTaskDialog({
         content: isRichEditorContentEmpty(content) ? null : content,
         state,
         priority,
-        internalControlId,
+        internalControlIds: internalControlId ? [internalControlId] : undefined,
       },
       connectionId,
     ).then(

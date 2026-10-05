@@ -32,7 +32,7 @@ func TestTaskFilter_SQLArguments_EscapesLikeWildcards(t *testing.T) {
 	t.Parallel()
 
 	query := `a%b_c\`
-	filter := coredata.NewTaskFilter(&query, nil, nil)
+	filter := coredata.NewTaskFilter(&query, nil, nil, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, `a\%b\_c\\`, args["filter_query"])
@@ -43,7 +43,7 @@ func TestTaskFilter_SQLArguments_LeavesPlainQueryUnchanged(t *testing.T) {
 	t.Parallel()
 
 	query := "access"
-	filter := coredata.NewTaskFilter(&query, nil, nil)
+	filter := coredata.NewTaskFilter(&query, nil, nil, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, "access", args["filter_query"])
@@ -53,11 +53,27 @@ func TestTaskFilter_SQLArguments_SetsAssignedToID(t *testing.T) {
 	t.Parallel()
 
 	assignedToID := gid.New(gid.NilTenant, 1)
-	filter := coredata.NewTaskFilter(nil, nil, &assignedToID)
+	filter := coredata.NewTaskFilter(nil, nil, &assignedToID, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, assignedToID, args["filter_assigned_to_id"])
 	assert.Nil(t, args["filter_query"])
 	assert.Nil(t, args["filter_state"])
+	assert.Nil(t, args["filter_internal_control_id"])
 	assert.Contains(t, filter.SQLFragment(), "assigned_to_profile_id = @filter_assigned_to_id::text")
+}
+
+func TestTaskFilter_SQLArguments_SetsInternalControlID(t *testing.T) {
+	t.Parallel()
+
+	internalControlID := gid.New(gid.NilTenant, 2)
+	filter := coredata.NewTaskFilter(nil, nil, nil, &internalControlID)
+	args := filter.SQLArguments()
+
+	assert.Equal(t, internalControlID, args["filter_internal_control_id"])
+	assert.Nil(t, args["filter_query"])
+	assert.Nil(t, args["filter_state"])
+	assert.Nil(t, args["filter_assigned_to_id"])
+	assert.Contains(t, filter.SQLFragment(), "filter_ict.internal_control_id = @filter_internal_control_id")
+	assert.Contains(t, filter.SQLFragment(), "filter_ict.tenant_id = @tenant_id")
 }

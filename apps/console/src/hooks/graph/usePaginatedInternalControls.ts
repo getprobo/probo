@@ -31,11 +31,12 @@ const internalControlsQuery = graphql`
     $organizationId: ID!
     $first: Int = 20
     $order: InternalControlOrder
+    $filter: InternalControlFilter
   ) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        ...usePaginatedInternalControlsFragment @arguments(first: $first, order: $order)
+        ...usePaginatedInternalControlsFragment @arguments(first: $first, order: $order, filter: $filter)
       }
     }
   }
@@ -47,6 +48,7 @@ const internalControlsFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 20 }
     order: { type: "InternalControlOrder", defaultValue: null }
+    filter: { type: "InternalControlFilter", defaultValue: null }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
@@ -57,7 +59,8 @@ const internalControlsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "usePaginatedInternalControlsQuery_internalControls") {
+      filter: $filter
+    ) @connection(key: "usePaginatedInternalControlsQuery_internalControls", filters: ["orderBy", "filter"]) {
       edges {
         node {
           id
@@ -79,6 +82,7 @@ export function usePaginatedInternalControls(
   options?: {
     first?: number;
     order?: { field: "CREATED_AT" | "NAME"; direction: "ASC" | "DESC" };
+    filter?: { query?: string | null } | null;
   },
 ) {
   const query = useLazyLoadQuery<usePaginatedInternalControlsQuery>(
@@ -87,6 +91,7 @@ export function usePaginatedInternalControls(
       organizationId,
       first: options?.first,
       order: options?.order,
+      filter: options?.filter,
     },
     { fetchPolicy: "network-only" },
   );

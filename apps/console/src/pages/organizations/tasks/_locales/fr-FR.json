@@ -3,6 +3,8 @@
     "notFound": "Tâche introuvable",
     "empty": "—",
     "none": "Aucun",
+    "searchInternalControls": "Rechercher des contrôles internes",
+    "noInternalControls": "Aucun contrôle interne",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
     "overdue": "En retard",
@@ -13,7 +15,7 @@
       "priority": "Priorité",
       "assignedTo": "Assigné à",
       "linear": "Linear",
-      "internalControl": "Contrôle interne",
+      "internalControls": "Contrôles internes",
       "timeEstimate": "Estimation de temps",
       "timeEstimateUnit": "Unité d'estimation",
       "deadline": "Échéance",
@@ -56,11 +58,14 @@
       "clearRecurrence": "Effacer l'intervalle",
       "delete": "Supprimer",
       "cancel": "Annuler",
-      "more": "Plus d'actions"
+      "more": "Plus d'actions",
+      "loadMoreInternalControls": "Charger plus",
+      "retry": "Réessayer"
     },
     "delete": {
       "title": "Supprimer la tâche",
       "description": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+      "loadError": "Les contrôles internes restants n'ont pas pu être chargés.",
       "confirm": "Supprimer"
     },
     "messages": {

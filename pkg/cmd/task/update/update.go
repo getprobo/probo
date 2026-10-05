@@ -63,7 +63,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagTimeEstimate       string
 		flagDeadline           string
 		flagAssignedTo         string
-		flagInternalControl    string
+		flagInternalControls   []string
 		flagRecurrenceInterval string
 	)
 
@@ -135,11 +135,14 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("internal-control") {
-				if flagInternalControl == "" {
-					input["internalControlId"] = nil
-				} else {
-					input["internalControlId"] = flagInternalControl
+				internalControlIDs := make([]string, 0, len(flagInternalControls))
+				for _, internalControlID := range flagInternalControls {
+					if internalControlID != "" {
+						internalControlIDs = append(internalControlIDs, internalControlID)
+					}
 				}
+
+				input["internalControlIds"] = internalControlIDs
 			}
 
 			if cmd.Flags().Changed("recurrence-interval") {
@@ -187,7 +190,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
-	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID")
+	cmd.Flags().StringArrayVar(&flagInternalControls, "internal-control", nil, "Internal control ID (repeatable, empty value clears all)")
 	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (empty clears recurrence). The next task is created when the deadline passes")
 
 	return cmd

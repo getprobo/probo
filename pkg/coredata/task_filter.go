@@ -26,16 +26,18 @@ import (
 )
 
 type TaskFilter struct {
-	query        *string
-	state        *TaskState
-	assignedToID *gid.GID
+	query             *string
+	state             *TaskState
+	assignedToID      *gid.GID
+	internalControlID *gid.GID
 }
 
-func NewTaskFilter(query *string, state *TaskState, assignedToID *gid.GID) *TaskFilter {
+func NewTaskFilter(query *string, state *TaskState, assignedToID *gid.GID, internalControlID *gid.GID) *TaskFilter {
 	return &TaskFilter{
-		query:        query,
-		state:        state,
-		assignedToID: assignedToID,
+		query:             query,
+		state:             state,
+		assignedToID:      assignedToID,
+		internalControlID: internalControlID,
 	}
 }
 
@@ -57,14 +59,26 @@ func (f *TaskFilter) SQLFragment() string {
 			assigned_to_profile_id = @filter_assigned_to_id::text
 		ELSE TRUE
 	END
+	AND CASE
+		WHEN @filter_internal_control_id::text IS NOT NULL THEN
+			EXISTS (
+				SELECT 1
+				FROM internal_controls_tasks AS filter_ict
+				WHERE filter_ict.task_id = id
+					AND filter_ict.internal_control_id = @filter_internal_control_id
+					AND filter_ict.tenant_id = @tenant_id
+			)
+		ELSE TRUE
+	END
 )`
 }
 
 func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"filter_query":          nil,
-		"filter_state":          nil,
-		"filter_assigned_to_id": nil,
+		"filter_query":               nil,
+		"filter_state":               nil,
+		"filter_assigned_to_id":      nil,
+		"filter_internal_control_id": nil,
 	}
 
 	if f.query != nil && *f.query != "" {
@@ -77,6 +91,10 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.assignedToID != nil {
 		args["filter_assigned_to_id"] = *f.assignedToID
+	}
+
+	if f.internalControlID != nil {
+		args["filter_internal_control_id"] = *f.internalControlID
 	}
 
 	return args

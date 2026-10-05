@@ -18,114 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
 
-import type { TaskInternalControlField_task$key } from "#/__generated__/core/TaskInternalControlField_task.graphql";
-import { usePaginatedInternalControls } from "#/hooks/graph/usePaginatedInternalControls";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-
-const noneValue = "__NONE__";
-const internalControlPageSize = 20;
-const loadMoreScrollThresholdPx = 48;
-
-const taskInternalControlFieldFragment = graphql`
-  fragment TaskInternalControlField_task on Task {
-    internalControl {
-      id
-      name
-    }
-  }
-`;
+import { InternalControlSelect } from "#/components/form/InternalControlSelect";
 
 interface TaskInternalControlFieldProps {
-  taskKey: TaskInternalControlField_task$key;
+  internalControls: readonly { id: string; name: string }[];
   disabled?: boolean;
-  onValueChange: (value: string | null) => void;
+  onValueChange: (value: string[]) => void;
 }
 
 export function TaskInternalControlField({
-  taskKey,
+  internalControls,
   disabled,
   onValueChange,
 }: TaskInternalControlFieldProps) {
   const { t } = useTranslation("organizations/tasks");
-  const task = useFragment(taskInternalControlFieldFragment, taskKey);
-  const organizationId = useOrganizationId();
-  const { data, hasNext, isLoadingNext, loadNext } = usePaginatedInternalControls(
-    organizationId,
-    {
-      first: internalControlPageSize,
-      order: { field: "NAME", direction: "ASC" },
-    },
-  );
-
-  const internalControls = useMemo(
-    () => data?.internalControls.edges.map(edge => edge.node) ?? [],
-    [data?.internalControls.edges],
-  );
-  const value = task.internalControl?.id ?? null;
-  const names = new Map(internalControls.map(internalControl => [internalControl.id, internalControl.name]));
-  const linkedInternalControl = task.internalControl;
-  if (linkedInternalControl) {
-    names.set(linkedInternalControl.id, linkedInternalControl.name);
-  }
-  const linkedInternalControlMissing = linkedInternalControl != null
-    && !internalControls.some(internalControl => internalControl.id === linkedInternalControl.id);
-
-  function loadMore() {
-    if (hasNext && !isLoadingNext) {
-      loadNext(internalControlPageSize);
-    }
-  }
+  const value = internalControls.map(internalControl => ({
+    id: internalControl.id,
+    name: internalControl.name,
+  }));
 
   return (
-    <Select
-      value={value ?? noneValue}
+    <InternalControlSelect
+      multiple
+      value={value}
       disabled={disabled}
-      onValueChange={(next: string | null) => {
-        if (next == null || next === value || (next === noneValue && value == null)) {
-          return;
-        }
-        onValueChange(next === noneValue ? null : next);
-      }}
-    >
-      <SelectTrigger
-        size={1}
-        aria-label={t("detailsPage.fields.internalControl")}
-        placeholder={t("detailsPage.none")}
-      >
-        {(selected: string | null) => {
-          if (selected == null || selected === noneValue) {
-            return t("detailsPage.none");
-          }
-          return names.get(selected) ?? selected;
-        }}
-      </SelectTrigger>
-      <SelectPopup
-        onScroll={(event) => {
-          const popup = event.currentTarget;
-          const remaining = popup.scrollHeight - popup.scrollTop - popup.clientHeight;
-          if (remaining <= loadMoreScrollThresholdPx) {
-            loadMore();
-          }
-        }}
-      >
-        <SelectItem value={noneValue}>{t("detailsPage.none")}</SelectItem>
-        {linkedInternalControlMissing && linkedInternalControl && (
-          <SelectItem value={linkedInternalControl.id}>{linkedInternalControl.name}</SelectItem>
-        )}
-        {internalControls.map(internalControl => (
-          <SelectItem key={internalControl.id} value={internalControl.id}>
-            {internalControl.name}
-          </SelectItem>
-        ))}
-      </SelectPopup>
-    </Select>
+      size={1}
+      placeholder={t("detailsPage.none")}
+      searchPlaceholder={t("detailsPage.searchInternalControls")}
+      emptyLabel={t("detailsPage.noInternalControls")}
+      ariaLabel={t("detailsPage.fields.internalControls")}
+      onValueChange={next => onValueChange(next.map(internalControl => internalControl.id))}
+    />
   );
 }

@@ -85,9 +85,14 @@ func (r *internalControlResolver) Tasks(ctx context.Context, obj *types.Internal
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil)
 	if filter != nil {
-		taskFilter = coredata.NewTaskFilter(filter.Query, filter.State, filter.AssignedToID)
+		taskFilter = coredata.NewTaskFilter(
+			filter.Query,
+			filter.State,
+			filter.AssignedToID,
+			filter.InternalControlID,
+		)
 	}
 
 	page, err := r.task.ListForInternalControlID(ctx, scope, obj.ID, cursor, taskFilter)
@@ -365,6 +370,14 @@ func (r *internalControlConnectionResolver) TotalCount(ctx context.Context, obj 
 		return count, nil
 	case *treatmentPlanResolver:
 		count, err := r.probo.InternalControls.CountForTreatmentPlanID(ctx, scope, obj.ParentID, obj.Filters)
+		if err != nil {
+			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
+			return 0, gqlutils.Internal(ctx)
+		}
+
+		return count, nil
+	case *taskResolver:
+		count, err := r.probo.InternalControls.CountForTaskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count internal controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

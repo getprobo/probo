@@ -88,12 +88,6 @@ func NewTask(t *coredata.Task) *Task {
 		UpdatedAt:          t.UpdatedAt,
 	}
 
-	if t.InternalControlID != nil {
-		node.InternalControl = &InternalControl{
-			ID: *t.InternalControlID,
-		}
-	}
-
 	if t.AssignedToID != nil {
 		node.AssignedTo = &Profile{
 			ID: *t.AssignedToID,

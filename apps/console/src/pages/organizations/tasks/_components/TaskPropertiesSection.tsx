@@ -20,6 +20,7 @@
 
 import { formatDatetime, toDateInput } from "@probo/helpers";
 import { dateFormat, dateTimeFormat, formatDuration } from "@probo/i18n";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
@@ -32,9 +33,10 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, usePaginationFragment } from "react-relay";
 
 import type { TaskPropertiesSection_task$key } from "#/__generated__/core/TaskPropertiesSection_task.graphql";
+import type { TaskPropertiesSectionInternalControlsQuery } from "#/__generated__/core/TaskPropertiesSectionInternalControlsQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { taskRecurrenceDurationUnits } from "../_lib/taskDuration";
@@ -54,8 +56,15 @@ import { TaskLinearField } from "./TaskLinearField";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
 import { TaskStateIcon } from "./TaskStateIcon";
 
+const taskInternalControlsPageSize = 50;
+
 const taskPropertiesSectionFragment = graphql`
-  fragment TaskPropertiesSection_task on Task {
+  fragment TaskPropertiesSection_task on Task
+    @refetchable(queryName: "TaskPropertiesSectionInternalControlsQuery")
+    @argumentDefinitions(
+      first: { type: "Int", defaultValue: 50 }
+      after: { type: "CursorKey" }
+    ) {
     id
     state
     priority
@@ -69,13 +78,17 @@ const taskPropertiesSectionFragment = graphql`
       id
       fullName
     }
-    internalControl {
-      id
-      name
+    internalControls(first: $first, after: $after)
+      @connection(key: "TaskPropertiesSection_internalControls") {
+      edges {
+        node {
+          id
+          name
+        }
+      }
     }
     ...TaskAssigneeField_task
     ...TaskLinearField_task
-    ...TaskInternalControlField_task
   }
 `;
 
@@ -87,23 +100,33 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
   const { t, i18n } = useTranslation("organizations/tasks");
   const { t: tApp } = useTranslation();
   const organizationId = useOrganizationId();
-  const task = useFragment(taskPropertiesSectionFragment, taskKey);
+  const {
+    data: task,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+  } = usePaginationFragment<
+    TaskPropertiesSectionInternalControlsQuery,
+    TaskPropertiesSection_task$key
+  >(taskPropertiesSectionFragment, taskKey);
   const [updateTask, isUpdating] = useUpdateTask();
-  const { root, value } = taskPropertiesSection();
+  const { root, value, names } = taskPropertiesSection();
   const empty = t("detailsPage.empty");
+  const internalControls = task.internalControls.edges.map(edge => edge.node);
 
   function save(
     input: {
       state?: TaskState;
       priority?: TaskPriority;
       assignedToId?: string | null;
-      internalControlId?: string | null;
+      internalControlIds?: string[];
       timeEstimate?: string | null;
       deadline?: string | null;
       recurrenceInterval?: string | null;
     },
   ) {
     const result = updateTask({
+      previousInternalControlIds: internalControls.map(internalControl => internalControl.id),
       variables: {
         input: {
           taskId: task.id,
@@ -237,31 +260,51 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
         <Suspense fallback={null}>
           <TaskLinearField taskKey={task} />
         </Suspense>
-        <PropertyRow label={t("detailsPage.fields.internalControl")}>
-          {task.canUpdate
-            ? (
-                <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
-                  <TaskInternalControlField
-                    taskKey={task}
-                    disabled={isUpdating}
-                    onValueChange={(internalControlId) => {
-                      void save({ internalControlId });
-                    }}
-                  />
-                </Suspense>
-              )
-            : task.internalControl
+        <PropertyRow
+          label={t("detailsPage.fields.internalControls")}
+          align={internalControls.length > 0 || hasNext ? "start" : "center"}
+        >
+          <span className={names()}>
+            {task.canUpdate
               ? (
-                  <Link
-                    size={2}
-                    to={`/organizations/${organizationId}/governance/internal-controls/${task.internalControl.id}`}
-                  >
-                    {task.internalControl.name}
-                  </Link>
+                  <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
+                    <TaskInternalControlField
+                      internalControls={internalControls}
+                      disabled={isUpdating || hasNext || isLoadingNext}
+                      onValueChange={(internalControlIds) => {
+                        void save({ internalControlIds });
+                      }}
+                    />
+                  </Suspense>
                 )
-              : (
-                  <Text size={2} color="faint">{empty}</Text>
-                )}
+              : internalControls.length > 0
+                ? (
+                    internalControls.map(internalControl => (
+                      <Link
+                        key={internalControl.id}
+                        size={2}
+                        to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}
+                      >
+                        {internalControl.name}
+                      </Link>
+                    ))
+                  )
+                : (
+                    <Text size={2} color="faint">{t("detailsPage.none")}</Text>
+                  )}
+            {hasNext && (
+              <Button
+                variant="ghost"
+                color="neutral"
+                size={1}
+                className="self-start"
+                loading={isLoadingNext}
+                onClick={() => loadNext(taskInternalControlsPageSize)}
+              >
+                {t("detailsPage.actions.loadMoreInternalControls")}
+              </Button>
+            )}
+          </span>
         </PropertyRow>
         <PropertyRow label={t("detailsPage.fields.timeEstimate")}>
           {task.canUpdate
@@ -358,12 +401,20 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
   );
 }
 
-function PropertyRow({ label, children }: { label: string; children: ReactNode }) {
-  const { row } = taskPropertiesSection();
+function PropertyRow({
+  label,
+  children,
+  align = "center",
+}: {
+  label: string;
+  children: ReactNode;
+  align?: "center" | "start";
+}) {
+  const { row, label: labelClassName } = taskPropertiesSection({ align });
 
   return (
     <div className={row()}>
-      <Text size={2} color="faint">{label}</Text>
+      <Text size={2} color="faint" className={labelClassName()}>{label}</Text>
       {children}
     </div>
   );

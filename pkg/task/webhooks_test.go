@@ -78,7 +78,7 @@ func TestEmitTaskUpdated_InsertsUpdatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskUpdated(ctx, tx, scope, previous, &current)
+			return emitTaskUpdated(ctx, tx, scope, previous, &current, nil)
 		},
 	)
 	require.NoError(t, err)

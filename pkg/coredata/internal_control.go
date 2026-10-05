@@ -1496,3 +1496,141 @@ WHERE %s
 
 	return nil
 }
+
+func (m *InternalControls) CountByTaskID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskID gid.GID,
+	filter *InternalControlFilter,
+) (int, error) {
+	q := `
+WITH linked AS (
+		SELECT
+			m.id,
+			m.tenant_id,
+			m.search_vector,
+			m.state,
+			m.category
+		FROM
+			internal_controls m
+		INNER JOIN
+			internal_controls_tasks ict ON m.id = ict.internal_control_id
+		WHERE
+			ict.task_id = @task_id
+	)
+	SELECT
+		COUNT(id)
+	FROM
+		linked
+	WHERE %s
+		AND %s
+	`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"task_id": taskID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (m *InternalControls) LoadByTaskID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskID gid.GID,
+	cursor *page.Cursor[InternalControlOrderField],
+	filter *InternalControlFilter,
+) error {
+	q := `
+WITH linked AS (
+	SELECT
+		m.id,
+		m.tenant_id,
+		m.organization_id,
+		m.category,
+		m.name,
+		m.description,
+		m.state,
+		m.reference_id,
+		m.code,
+		m.control_type,
+		m.nature,
+		m.operating_mode,
+		m.operating_frequency,
+		m.operating_event,
+		m.evidence_cadence,
+		m.testing_cadence,
+		m.next_evidence_due,
+		m.next_test_due,
+		m.implementation_status,
+		m.owner_profile_id,
+		m.reviewer_profile_id,
+		m.search_vector,
+		m.created_at,
+		m.updated_at
+	FROM
+		internal_controls m
+	INNER JOIN
+		internal_controls_tasks ict ON m.id = ict.internal_control_id
+	WHERE
+		ict.task_id = @task_id
+)
+SELECT
+	id,
+	organization_id,
+	category,
+	name,
+	description,
+	state,
+	reference_id,
+	code,
+	control_type,
+	nature,
+	operating_mode,
+	operating_frequency,
+	operating_event,
+	evidence_cadence,
+	testing_cadence,
+	next_evidence_due,
+	next_test_due,
+	implementation_status,
+	owner_profile_id,
+	reviewer_profile_id,
+	created_at,
+	updated_at
+FROM
+	linked
+WHERE %s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"task_id": taskID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query internal controls: %w", err)
+	}
+
+	internalControls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[InternalControl])
+	if err != nil {
+		return fmt.Errorf("cannot collect internal controls: %w", err)
+	}
+
+	*m = internalControls
+
+	return nil
+}

@@ -37,7 +37,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	task, err := r.task.Create(
 		ctx, scope,
 		task.CreateTaskRequest{
-			InternalControlID:  input.InternalControlID,
+			InternalControlIDs: input.InternalControlIds,
 			OrganizationID:     input.OrganizationID,
 			Name:               input.Name,
 			Content:            input.Content,
@@ -95,7 +95,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 			TimeEstimate:       gqlutils.UnwrapOmittable(input.TimeEstimate),
 			Deadline:           gqlutils.UnwrapOmittable(input.Deadline),
 			AssignedToID:       gqlutils.UnwrapOmittable(input.AssignedToID),
-			InternalControlID:  gqlutils.UnwrapOmittable(input.InternalControlID),
+			InternalControlIDs: gqlutils.UnwrapOmittable(input.InternalControlIds),
 			IdentityID:         &identity.ID,
 			RecurrenceInterval: gqlutils.UnwrapOmittable(input.RecurrenceInterval),
 		},
@@ -308,30 +308,44 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 	return types.NewOrganization(organization), nil
 }
 
-// Internal control is the resolver for the internal control field.
-func (r *taskResolver) InternalControl(ctx context.Context, obj *types.Task) (*types.InternalControl, error) {
-	if obj.InternalControl == nil {
-		return nil, nil
-	}
-
-	if _, err := r.authorize(ctx, obj.InternalControl.ID, probo.ActionInternalControlGet); err != nil {
+// InternalControls is the resolver for the internalControls field.
+func (r *taskResolver) InternalControls(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InternalControlOrderBy, filter *types.InternalControlFilter) (*types.InternalControlConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionInternalControlList)
+	if err != nil {
 		return nil, err
 	}
 
-	loaders := dataloader.FromContext(ctx)
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
 
-	internalControl, err := loaders.InternalControl.Load(ctx, obj.InternalControl.ID)
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	internalControlFilter := coredata.NewInternalControlFilter(nil, nil, nil)
+	if filter != nil {
+		internalControlFilter = coredata.NewInternalControlFilter(filter.Query, filter.State, filter.Category)
+	}
+
+	internalControlPage, err := r.probo.InternalControls.ListForTaskID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get internal control", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list task internal controls", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewInternalControl(internalControl), nil
+	return types.NewInternalControlConnection(internalControlPage, r, obj.ID, internalControlFilter), nil
 }
 
 // Evidences is the resolver for the evidences field.

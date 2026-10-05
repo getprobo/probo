@@ -28,16 +28,20 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewTask(t *coredata.Task) *Task {
+func NewTask(t *coredata.Task, internalControlIDs []gid.GID) *Task {
 	content, err := richTextToMarkdown(t.Content)
 	if err != nil {
 		panic(fmt.Errorf("cannot convert task content to markdown: %w", err))
 	}
 
+	if internalControlIDs == nil {
+		internalControlIDs = []gid.GID{}
+	}
+
 	return &Task{
 		ID:                 t.ID,
 		OrganizationID:     t.OrganizationID,
-		InternalControlID:  t.InternalControlID,
+		InternalControlIds: internalControlIDs,
 		Name:               t.Name,
 		Content:            content,
 		State:              t.State,
@@ -61,8 +65,8 @@ func NewTaskExternalLink(link *coredata.TaskExternalLink) *TaskExternalLink {
 	}
 }
 
-func NewTaskWithLink(t *coredata.Task, link *coredata.TaskExternalLink) *Task {
-	result := NewTask(t)
+func NewTaskWithLink(t *coredata.Task, link *coredata.TaskExternalLink, internalControlIDs []gid.GID) *Task {
+	result := NewTask(t, internalControlIDs)
 	if link != nil {
 		result.ExternalLink = NewTaskExternalLink(link)
 	}
@@ -73,10 +77,11 @@ func NewTaskWithLink(t *coredata.Task, link *coredata.TaskExternalLink) *Task {
 func NewListInternalControlTasksOutput(
 	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
 	links map[gid.GID]*coredata.TaskExternalLink,
+	internalControlIDs map[gid.GID][]gid.GID,
 ) ListInternalControlTasksOutput {
 	tasks := make([]*Task, 0, len(taskPage.Data))
 	for _, v := range taskPage.Data {
-		tasks = append(tasks, NewTaskWithLink(v, links[v.ID]))
+		tasks = append(tasks, NewTaskWithLink(v, links[v.ID], internalControlIDs[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey
@@ -95,10 +100,11 @@ func NewListInternalControlTasksOutput(
 func NewListTasksOutput(
 	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
 	links map[gid.GID]*coredata.TaskExternalLink,
+	internalControlIDs map[gid.GID][]gid.GID,
 ) ListTasksOutput {
 	tasks := make([]*Task, 0, len(taskPage.Data))
 	for _, v := range taskPage.Data {
-		tasks = append(tasks, NewTaskWithLink(v, links[v.ID]))
+		tasks = append(tasks, NewTaskWithLink(v, links[v.ID], internalControlIDs[v.ID]))
 	}
 
 	var nextCursor *page.CursorKey

@@ -50,12 +50,34 @@ func (r *Resolver) taskExternalLinksByTasks(
 	return r.task.Sync.GetLinksByTaskIDs(ctx, scope, ids)
 }
 
+func (r *Resolver) internalControlIDsByTasks(
+	ctx context.Context,
+	scope coredata.Scoper,
+	tasks []*coredata.Task,
+) (map[gid.GID][]gid.GID, error) {
+	if len(tasks) == 0 {
+		return map[gid.GID][]gid.GID{}, nil
+	}
+
+	ids := make([]gid.GID, 0, len(tasks))
+	for _, task := range tasks {
+		ids = append(ids, task.ID)
+	}
+
+	return r.task.InternalControlIDsByTaskIDs(ctx, scope, ids)
+}
+
 func (r *Resolver) taskWithExternalLink(
 	ctx context.Context,
 	scope coredata.Scoper,
 	task *coredata.Task,
 ) (*types.Task, error) {
-	result := types.NewTask(task)
+	internalControlIDs, err := r.task.InternalControlIDsByTaskIDs(ctx, scope, []gid.GID{task.ID})
+	if err != nil {
+		return nil, err
+	}
+
+	result := types.NewTask(task, internalControlIDs[task.ID])
 	if r.task.Sync == nil {
 		return result, nil
 	}

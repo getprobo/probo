@@ -2113,9 +2113,14 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil)
 	if input.Filter != nil {
-		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State, input.Filter.AssignedToID)
+		taskFilter = coredata.NewTaskFilter(
+			input.Filter.Query,
+			input.Filter.State,
+			input.Filter.AssignedToID,
+			nil,
+		)
 	}
 
 	page, err := r.task.ListForOrganizationID(
@@ -2135,7 +2140,13 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
 	}
 
-	return nil, types.NewListTasksOutput(page, links), nil
+	internalControlIDs, err := r.internalControlIDsByTasks(ctx, scope, page.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+		return nil, types.ListTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListTasksOutput(page, links, internalControlIDs), nil
 }
 
 func (r *Resolver) GetTaskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetTaskInput) (*mcp.CallToolResult, types.GetTaskOutput, error) {
@@ -2182,7 +2193,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		ctx, scope,
 		task.CreateTaskRequest{
 			OrganizationID:     input.OrganizationID,
-			InternalControlID:  input.InternalControlID,
+			InternalControlIDs: input.InternalControlIds,
 			Name:               input.Name,
 			Content:            content,
 			State:              input.State,
@@ -2235,7 +2246,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 			TimeEstimate:       UnwrapOmittable(input.TimeEstimate),
 			Deadline:           UnwrapOmittable(input.Deadline),
 			AssignedToID:       UnwrapOmittable(input.AssignedToID),
-			InternalControlID:  UnwrapOmittable(input.InternalControlID),
+			InternalControlIDs: replaceInternalControlIDs(UnwrapOmittable(input.InternalControlIds)),
 			IdentityID:         &identity.ID,
 			RecurrenceInterval: UnwrapOmittable(input.RecurrenceInterval),
 		},
@@ -2775,9 +2786,14 @@ func (r *Resolver) ListInternalControlTasksTool(ctx context.Context, req *mcp.Ca
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil)
 	if input.Filter != nil {
-		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State, input.Filter.AssignedToID)
+		taskFilter = coredata.NewTaskFilter(
+			input.Filter.Query,
+			input.Filter.State,
+			input.Filter.AssignedToID,
+			nil,
+		)
 	}
 
 	taskPage, err := r.task.ListForInternalControlID(
@@ -2797,7 +2813,13 @@ func (r *Resolver) ListInternalControlTasksTool(ctx context.Context, req *mcp.Ca
 		return nil, types.ListInternalControlTasksOutput{}, fmt.Errorf("internal error")
 	}
 
-	return nil, types.NewListInternalControlTasksOutput(taskPage, links), nil
+	internalControlIDs, err := r.internalControlIDsByTasks(ctx, scope, taskPage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load task internal controls", log.Error(err))
+		return nil, types.ListInternalControlTasksOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListInternalControlTasksOutput(taskPage, links, internalControlIDs), nil
 }
 
 func (r *Resolver) ListInternalControlEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlEvidencesInput) (*mcp.CallToolResult, types.ListInternalControlEvidencesOutput, error) {

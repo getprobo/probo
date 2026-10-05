@@ -26,6 +26,7 @@ import (
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/webhook"
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
@@ -36,13 +37,18 @@ func emitTaskCreated(
 	scope coredata.Scoper,
 	task *coredata.Task,
 ) error {
+	internalControlIDs, err := loadTaskInternalControlIDs(ctx, tx, scope, task.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load task internal controls: %w", err)
+	}
+
 	if err := webhook.InsertData(
 		ctx,
 		tx,
 		scope,
 		task.OrganizationID,
 		coredata.WebhookEventTypeTaskCreated,
-		webhooktypes.NewTask(task),
+		webhooktypes.NewTask(task, internalControlIDs),
 	); err != nil {
 		return fmt.Errorf("cannot insert task created webhook event: %w", err)
 	}
@@ -56,8 +62,22 @@ func emitTaskUpdated(
 	scope coredata.Scoper,
 	previous *coredata.Task,
 	task *coredata.Task,
+	previousInternalControlIDs []gid.GID,
 ) error {
-	return webhook.InsertTaskUpdated(ctx, tx, scope, previous, task)
+	currentInternalControlIDs, err := loadTaskInternalControlIDs(ctx, tx, scope, task.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load task internal controls: %w", err)
+	}
+
+	if previousInternalControlIDs == nil {
+		previousInternalControlIDs = currentInternalControlIDs
+	}
+
+	if err := webhook.InsertTaskUpdated(ctx, tx, scope, previous, task, previousInternalControlIDs, currentInternalControlIDs); err != nil {
+		return fmt.Errorf("cannot insert task updated webhook event: %w", err)
+	}
+
+	return nil
 }
 
 func emitTaskDeleted(
@@ -66,13 +86,18 @@ func emitTaskDeleted(
 	scope coredata.Scoper,
 	task *coredata.Task,
 ) error {
+	internalControlIDs, err := loadTaskInternalControlIDs(ctx, tx, scope, task.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load task internal controls: %w", err)
+	}
+
 	if err := webhook.InsertData(
 		ctx,
 		tx,
 		scope,
 		task.OrganizationID,
 		coredata.WebhookEventTypeTaskDeleted,
-		webhooktypes.NewTask(task),
+		webhooktypes.NewTask(task, internalControlIDs),
 	); err != nil {
 		return fmt.Errorf("cannot insert task deleted webhook event: %w", err)
 	}

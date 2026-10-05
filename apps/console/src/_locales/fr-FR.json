@@ -1140,7 +1140,11 @@
       "status": "Statut",
       "allStatuses": "Tous les statuts",
       "user": "Utilisateur",
-      "allUsers": "Tous les utilisateurs"
+      "allUsers": "Tous les utilisateurs",
+      "internalControl": "Contrôle interne",
+      "allInternalControls": "Tous les contrôles internes",
+      "searchInternalControls": "Rechercher des contrôles internes",
+      "noInternalControls": "Aucun contrôle interne"
     },
     "error": {
       "title": "Erreur",
@@ -4064,8 +4068,27 @@
     }
   },
   "internalControlTasksTab": {
+    "empty": "Aucune tâche",
+    "columns": {
+      "name": "Nom",
+      "state": "État"
+    },
     "actions": {
-      "newTask": "Nouvelle tâche"
+      "newTask": "Nouvelle tâche",
+      "link": "Lier une tâche",
+      "unlink": "Délier",
+      "retry": "Réessayer",
+      "showMore": "Afficher {{count}} de plus"
+    },
+    "dialog": {
+      "title": "Lier des tâches",
+      "searchPlaceholder": "Rechercher des tâches",
+      "empty": "Aucune tâche",
+      "actions": {
+        "close": "Fermer",
+        "link": "Lier",
+        "unlink": "Délier"
+      }
     }
   },
   "obligationDetailsPage": {

@@ -21,11 +21,19 @@
 import { ConnectionHandler } from "react-relay";
 
 export const organizationTasksConnectionKey = "TasksCardOrganization_tasks";
-export const internalControlTasksConnectionKey = "Measure__tasks";
+export const internalControlTasksConnectionKey = "InternalControl__tasks";
+export const taskInternalControlIdsConnectionKey = "useTaskInternalControlIds_internalControls";
+
+export const emptyTaskListFilter = {
+  query: null,
+  state: null,
+  assignedToId: null,
+  internalControlId: null,
+};
 
 const taskListConnectionFilters = {
   orderBy: { field: "PRIORITY_RANK" as const, direction: "ASC" as const },
-  filter: { query: null, state: null, assignedToId: null },
+  filter: emptyTaskListFilter,
 };
 
 export function taskListPath(organizationId: string) {

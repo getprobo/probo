@@ -692,10 +692,10 @@ func rbacVariables(
 
 			return map[string]any{
 				"input": map[string]any{
-					"organizationId":    shared.orgID,
-					"internalControlId": internalControlID,
-					"name":              factory.SafeName("Task"),
-					"priority":          "MEDIUM",
+					"organizationId":     shared.orgID,
+					"internalControlIds": []any{internalControlID},
+					"name":               factory.SafeName("Task"),
+					"priority":           "MEDIUM",
 				},
 			}
 		case "update":

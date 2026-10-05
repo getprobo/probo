@@ -55,12 +55,12 @@ export function useDeleteTask() {
     },
   );
 
-  async function deleteTask(taskId: string, internalControlId?: string) {
+  async function deleteTask(taskId: string, internalControlIds: readonly string[] = []) {
     const connections = [
       taskConnectionId(organizationId, organizationTasksConnectionKey),
-      ...(internalControlId
-        ? [taskConnectionId(internalControlId, internalControlTasksConnectionKey)]
-        : []),
+      ...internalControlIds.map(internalControlId =>
+        taskConnectionId(internalControlId, internalControlTasksConnectionKey),
+      ),
     ];
 
     await commit({
@@ -70,7 +70,7 @@ export function useDeleteTask() {
       },
     });
 
-    if (internalControlId) {
+    for (const internalControlId of internalControlIds) {
       updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", -1);
     }
   }

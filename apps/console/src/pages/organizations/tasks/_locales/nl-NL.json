@@ -3,6 +3,8 @@
     "notFound": "Taak niet gevonden",
     "empty": "—",
     "none": "Geen",
+    "searchInternalControls": "Interne controles zoeken",
+    "noInternalControls": "Geen interne controles",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
     "overdue": "Te laat",
@@ -13,7 +15,7 @@
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
       "linear": "Linear",
-      "internalControl": "Interne controle",
+      "internalControls": "Interne controles",
       "timeEstimate": "Tijdsinschatting",
       "timeEstimateUnit": "Eenheid van inschatting",
       "deadline": "Deadline",
@@ -56,11 +58,14 @@
       "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
       "cancel": "Annuleren",
-      "more": "Meer acties"
+      "more": "Meer acties",
+      "loadMoreInternalControls": "Meer laden",
+      "retry": "Opnieuw proberen"
     },
     "delete": {
       "title": "Taak verwijderen",
       "description": "Weet u zeker dat u deze taak wilt verwijderen?",
+      "loadError": "De resterende interne controles konden niet worden geladen.",
       "confirm": "Verwijderen"
     },
     "messages": {

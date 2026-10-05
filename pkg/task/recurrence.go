@@ -74,7 +74,7 @@ func repeatLockedRecurringTask(
 		return nil, fmt.Errorf("cannot emit next task created webhook: %w", err)
 	}
 
-	if err := emitTaskUpdated(ctx, conn, scope, &previous, source); err != nil {
+	if err := emitTaskUpdated(ctx, conn, scope, &previous, source, nil); err != nil {
 		return nil, fmt.Errorf("cannot emit recurring task updated webhook: %w", err)
 	}
 
@@ -105,24 +105,27 @@ func insertNextRecurringTask(
 	}
 
 	next := &coredata.Task{
-		ID:                gid.New(source.OrganizationID.TenantID(), coredata.TaskEntityType),
-		OrganizationID:    source.OrganizationID,
-		InternalControlID: source.InternalControlID,
-		Name:              source.Name,
-		Content:           source.Content,
-		Priority:          source.Priority,
-		ReferenceID:       "custom-task-" + referenceID.String(),
-		TimeEstimate:      source.TimeEstimate,
-		AssignedToID:      source.AssignedToID,
-		Deadline:          &deadline,
-		Recurrence:        &interval,
-		State:             coredata.TaskStateTodo,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:             gid.New(source.OrganizationID.TenantID(), coredata.TaskEntityType),
+		OrganizationID: source.OrganizationID,
+		Name:           source.Name,
+		Content:        source.Content,
+		Priority:       source.Priority,
+		ReferenceID:    "custom-task-" + referenceID.String(),
+		TimeEstimate:   source.TimeEstimate,
+		AssignedToID:   source.AssignedToID,
+		Deadline:       &deadline,
+		Recurrence:     &interval,
+		State:          coredata.TaskStateTodo,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := next.Insert(ctx, conn, scope); err != nil {
 		return nil, fmt.Errorf("cannot insert next recurring task: %w", err)
+	}
+
+	if err := (coredata.InternalControlTask{}).CopyFromTask(ctx, conn, scope, source.ID, next.ID, next.ReferenceID, now); err != nil {
+		return nil, fmt.Errorf("cannot copy task internal controls: %w", err)
 	}
 
 	return next, nil

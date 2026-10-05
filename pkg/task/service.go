@@ -80,7 +80,7 @@ func NewService(
 type (
 	CreateTaskRequest struct {
 		OrganizationID     gid.GID
-		InternalControlID  *gid.GID
+		InternalControlIDs []gid.GID
 		Name               string
 		Content            *string
 		State              *coredata.TaskState
@@ -101,7 +101,7 @@ type (
 		TimeEstimate       **timespan.TimeSpan
 		Deadline           **time.Time
 		AssignedToID       **gid.GID
-		InternalControlID  **gid.GID
+		InternalControlIDs *[]gid.GID
 		Rank               *int
 		IdentityID         *gid.GID
 		RecurrenceInterval **timespan.TimeSpan
@@ -112,7 +112,7 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ctr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(ctr.InternalControlID, "internal_control_id", validator.GID(coredata.InternalControlEntityType))
+	checkInternalControlIDs(v, "internal_control_ids", ctr.InternalControlIDs)
 	v.Check(ctr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(
 		ctr.Content,
@@ -178,7 +178,11 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(utr.InternalControlID, "internal_control_id", validator.GID(coredata.InternalControlEntityType))
+
+	if utr.InternalControlIDs != nil {
+		checkInternalControlIDs(v, "internal_control_ids", *utr.InternalControlIDs)
+	}
+
 	v.Check(utr.Rank, "rank", validator.Min(1))
 	v.Check(utr.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 	v.Check(utr.RecurrenceInterval, "recurrence_interval", validator.RangeDuration(time.Nanosecond, maxRecurrenceInterval))
@@ -213,30 +217,32 @@ func (s *Service) Create(
 	}
 
 	task := &coredata.Task{
-		ID:                taskID,
-		OrganizationID:    req.OrganizationID,
-		InternalControlID: req.InternalControlID,
-		Name:              req.Name,
-		Content:           content,
-		Priority:          req.Priority,
-		TimeEstimate:      req.TimeEstimate,
-		AssignedToID:      req.AssignedToID,
-		Deadline:          req.Deadline,
-		Recurrence:        req.RecurrenceInterval,
-		State:             state,
-		ReferenceID:       "custom-task-" + referenceID.String(),
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:             taskID,
+		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
+		Content:        content,
+		Priority:       req.Priority,
+		TimeEstimate:   req.TimeEstimate,
+		AssignedToID:   req.AssignedToID,
+		Deadline:       req.Deadline,
+		Recurrence:     req.RecurrenceInterval,
+		State:          state,
+		ReferenceID:    "custom-task-" + referenceID.String(),
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if req.InternalControlID != nil {
-				internalControl := &coredata.InternalControl{}
-				if err := internalControl.LoadByID(ctx, conn, scope, *req.InternalControlID); err != nil {
-					return fmt.Errorf("cannot load internalControl: %w", err)
-				}
+			if err := ensureInternalControlsBelongToOrganization(
+				ctx,
+				conn,
+				scope,
+				req.OrganizationID,
+				uniqueInternalControlIDs(req.InternalControlIDs),
+			); err != nil {
+				return fmt.Errorf("cannot check internal controls: %w", err)
 			}
 
 			if req.AssignedToID != nil {
@@ -248,6 +254,10 @@ func (s *Service) Create(
 
 			if err := task.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert task: %w", err)
+			}
+
+			if err := replaceTaskInternalControls(ctx, conn, scope, task, req.InternalControlIDs); err != nil {
+				return fmt.Errorf("cannot replace task internal controls: %w", err)
 			}
 
 			actorID, err := ResolveActivityActorID(
@@ -391,7 +401,7 @@ func (s *Service) Assign(
 				return fmt.Errorf("cannot record task assignee event: %w", err)
 			}
 
-			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, nil); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -475,7 +485,7 @@ func (s *Service) Unassign(
 				return fmt.Errorf("cannot record task unassign event: %w", err)
 			}
 
-			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, nil); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -547,19 +557,6 @@ func (s *Service) Update(
 				}
 			}
 
-			if req.InternalControlID != nil {
-				if *req.InternalControlID == nil {
-					task.InternalControlID = nil
-				} else {
-					internalControl := &coredata.InternalControl{}
-					if err := internalControl.LoadByID(ctx, conn, scope, **req.InternalControlID); err != nil {
-						return fmt.Errorf("cannot load internalControl: %w", err)
-					}
-
-					task.InternalControlID = *req.InternalControlID
-				}
-			}
-
 			if req.Priority != nil {
 				task.Priority = *req.Priority
 			}
@@ -593,6 +590,29 @@ func (s *Service) Update(
 			}
 
 			now := time.Now()
+
+			var previousInternalControlIDs []gid.GID
+
+			var nextInternalControlIDs []gid.GID
+
+			internalControlsReplaced := false
+
+			if req.InternalControlIDs != nil {
+				loaded, err := loadTaskInternalControlIDs(ctx, conn, scope, task.ID)
+				if err != nil {
+					return fmt.Errorf("cannot load task internal controls: %w", err)
+				}
+
+				previousInternalControlIDs = loaded
+
+				nextInternalControlIDs = uniqueInternalControlIDs(*req.InternalControlIDs)
+				if err := replaceTaskInternalControls(ctx, conn, scope, task, nextInternalControlIDs); err != nil {
+					return fmt.Errorf("cannot replace task internal controls: %w", err)
+				}
+
+				internalControlsReplaced = true
+			}
+
 			task.UpdatedAt = now
 
 			targetRank := req.Rank
@@ -639,7 +659,27 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot record task update events: %w", err)
 			}
 
-			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+			if internalControlsReplaced {
+				if err := InsertInternalControlActivities(
+					ctx,
+					conn,
+					scope,
+					task,
+					actorID,
+					now,
+					previousInternalControlIDs,
+					nextInternalControlIDs,
+				); err != nil {
+					return fmt.Errorf("cannot record internal control activity: %w", err)
+				}
+			}
+
+			var previousForWebhook []gid.GID
+			if internalControlsReplaced {
+				previousForWebhook = previousInternalControlIDs
+			}
+
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, previousForWebhook); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 

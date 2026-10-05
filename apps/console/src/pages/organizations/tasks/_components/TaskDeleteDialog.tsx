@@ -36,13 +36,11 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { taskListPath } from "../_lib/taskPath";
 import { useDeleteTask } from "../_lib/useDeleteTask";
+import { useTaskInternalControlIds } from "../_lib/useTaskInternalControlIds";
 
 const taskDeleteDialogFragment = graphql`
   fragment TaskDeleteDialog_task on Task {
-    id
-    internalControl {
-      id
-    }
+    ...useTaskInternalControlIds_task
   }
 `;
 
@@ -61,10 +59,15 @@ export function TaskDeleteDialog({
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const task = useFragment(taskDeleteDialogFragment, taskKey);
+  const { taskId, ids, pending, failed, retry } = useTaskInternalControlIds(task);
   const [deleteTask, isDeleting] = useDeleteTask();
 
   function handleDelete() {
-    void deleteTask(task.id, task.internalControl?.id ?? undefined).then(
+    if (pending || failed) {
+      return;
+    }
+
+    void deleteTask(taskId, ids).then(
       () => {
         onOpenChange(false);
         void navigate(taskListPath(organizationId));
@@ -81,7 +84,9 @@ export function TaskDeleteDialog({
         <DialogHeader>
           <DialogTitle>{t("detailsPage.delete.title")}</DialogTitle>
           <DialogDescription>
-            {t("detailsPage.delete.description")}
+            {failed
+              ? t("detailsPage.delete.loadError")
+              : t("detailsPage.delete.description")}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -92,12 +97,18 @@ export function TaskDeleteDialog({
               </Button>
             )}
           />
+          {failed && (
+            <Button type="button" variant="soft" color="neutral" onClick={retry}>
+              {t("detailsPage.actions.retry")}
+            </Button>
+          )}
           <Button
             type="button"
             variant="solid"
             color="red"
             iconStart={<TrashIcon />}
-            loading={isDeleting}
+            disabled={failed}
+            loading={isDeleting || pending}
             onClick={handleDelete}
           >
             {t("detailsPage.delete.confirm")}

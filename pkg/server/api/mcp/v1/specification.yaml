@@ -7193,6 +7193,7 @@ components:
       required:
         - id
         - organization_id
+        - internal_control_ids
         - name
         - content
         - state
@@ -7207,13 +7208,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        internal_control_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Internal control ID
-            - type: "null"
-              description: No internal control
-          description: Internal control ID
+        internal_control_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Internal control IDs
         name:
           type: string
           description: Task name
@@ -7553,13 +7552,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        internal_control_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Internal control ID
-            - type: "null"
-              description: No internal control
-          description: Internal control ID
+        internal_control_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Internal control IDs
         name:
           type: string
           description: Task name
@@ -7663,13 +7660,13 @@ components:
               description: Not assigned
           description: Assigned to person ID
           go.probo.inc/mcpgen/omittable: true
-        internal_control_id:
+        internal_control_ids:
           anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Internal control ID
+            - type: array
+              items:
+                $ref: "#/components/schemas/GID"
             - type: "null"
-              description: No internal control
-          description: Internal control ID
+          description: Internal control IDs. Replaces the internal controls linked to the task. An empty list clears every link.
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskOutput:

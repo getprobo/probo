@@ -66,7 +66,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagContent            string
 		flagState              string
 		flagPriority           string
-		flagInternalControl    string
+		flagInternalControls   []string
 		flagTimeEstimate       string
 		flagAssignedTo         string
 		flagDeadline           string
@@ -161,8 +161,17 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["priority"] = flagPriority
 			}
 
-			if flagInternalControl != "" {
-				input["internalControlId"] = flagInternalControl
+			if len(flagInternalControls) > 0 {
+				internalControlIDs := make([]string, 0, len(flagInternalControls))
+				for _, internalControlID := range flagInternalControls {
+					if internalControlID != "" {
+						internalControlIDs = append(internalControlIDs, internalControlID)
+					}
+				}
+
+				if len(internalControlIDs) > 0 {
+					input["internalControlIds"] = internalControlIDs
+				}
 			}
 
 			if flagTimeEstimate != "" {
@@ -215,7 +224,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
-	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID")
+	cmd.Flags().StringArrayVar(&flagInternalControls, "internal-control", nil, "Internal control ID (repeatable)")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")

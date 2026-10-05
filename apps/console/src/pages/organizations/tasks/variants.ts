@@ -64,8 +64,19 @@ export const taskEngagementSection = tv({
 export const taskPropertiesSection = tv({
   slots: {
     root: "flex flex-col",
-    row: "grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-3 border-b border-sand-6 py-2.5 last:border-b-0",
+    row: "grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 border-b border-sand-6 py-2.5 last:border-b-0",
+    label: "",
+    names: "flex min-w-0 flex-col gap-1 break-words",
     value: "flex min-w-0 items-center gap-2",
+  },
+  variants: {
+    align: {
+      center: { row: "items-center" },
+      start: { row: "items-start", label: "pt-1" },
+    },
+  },
+  defaultVariants: {
+    align: "center",
   },
 });
 

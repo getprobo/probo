@@ -63,11 +63,11 @@ func TestTask_Create(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"organizationId":    owner.GetOrganizationID().String(),
-			"internalControlId": internalControlID,
-			"name":              "Owner Task",
-			"content":           factory.ProseMirrorPlainText("Created by owner"),
-			"priority":          "MEDIUM",
+			"organizationId":     owner.GetOrganizationID().String(),
+			"internalControlIds": []any{internalControlID},
+			"name":               "Owner Task",
+			"content":            factory.ProseMirrorPlainText("Created by owner"),
+			"priority":           "MEDIUM",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -89,8 +89,12 @@ func TestTask_CreateWithoutInternalControl(t *testing.T) {
 					node {
 						id
 						name
-						internalControl {
-							id
+						internalControls(first: 10) {
+							edges {
+								node {
+									id
+								}
+							}
 						}
 					}
 				}
@@ -102,11 +106,15 @@ func TestTask_CreateWithoutInternalControl(t *testing.T) {
 		CreateTask struct {
 			TaskEdge struct {
 				Node struct {
-					ID              string `json:"id"`
-					Name            string `json:"name"`
-					InternalControl *struct {
-						ID string `json:"id"`
-					} `json:"internalControl"`
+					ID               string `json:"id"`
+					Name             string `json:"name"`
+					InternalControls struct {
+						Edges []struct {
+							Node struct {
+								ID string `json:"id"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"internalControls"`
 				} `json:"node"`
 			} `json:"taskEdge"`
 		} `json:"createTask"`
@@ -125,7 +133,7 @@ func TestTask_CreateWithoutInternalControl(t *testing.T) {
 	task := result.CreateTask.TaskEdge.Node
 	assert.NotEmpty(t, task.ID)
 	assert.Equal(t, "Task without internal control", task.Name)
-	assert.Nil(t, task.InternalControl)
+	assert.Empty(t, task.InternalControls.Edges)
 }
 
 func TestTask_Update(t *testing.T) {
@@ -168,6 +176,153 @@ func TestTask_Update(t *testing.T) {
 
 	assert.Equal(t, taskID, result.UpdateTask.Task.ID)
 	assert.Equal(t, "Updated by Owner", result.UpdateTask.Task.Name)
+}
+
+func TestTask_InternalControlLinks(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	firstInternalControlID := factory.NewInternalControl(owner).WithName("First linked internal control").Create()
+	secondInternalControlID := factory.NewInternalControl(owner).WithName("Second linked internal control").Create()
+
+	createQuery := `
+		mutation CreateTask($input: CreateTaskInput!) {
+			createTask(input: $input) {
+				taskEdge {
+					node {
+						id
+						internalControls(first: 10) {
+							edges {
+								node {
+									id
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var created struct {
+		CreateTask struct {
+			TaskEdge struct {
+				Node struct {
+					ID               string `json:"id"`
+					InternalControls struct {
+						Edges []struct {
+							Node struct {
+								ID string `json:"id"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"internalControls"`
+				} `json:"node"`
+			} `json:"taskEdge"`
+		} `json:"createTask"`
+	}
+
+	err := owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId":     owner.GetOrganizationID().String(),
+			"internalControlIds": []any{firstInternalControlID, secondInternalControlID},
+			"name":               "Task linked to two internal controls",
+			"priority":           "MEDIUM",
+		},
+	}, &created)
+	require.NoError(t, err)
+
+	taskID := created.CreateTask.TaskEdge.Node.ID
+	require.NotEmpty(t, taskID)
+	assert.ElementsMatch(
+		t,
+		[]string{firstInternalControlID, secondInternalControlID},
+		internalControlIDsFromEdges(created.CreateTask.TaskEdge.Node.InternalControls.Edges),
+	)
+
+	updateQuery := `
+		mutation UpdateTask($input: UpdateTaskInput!) {
+			updateTask(input: $input) {
+				task {
+					id
+					name
+					internalControls(first: 10) {
+						edges {
+							node {
+								id
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var updated struct {
+		UpdateTask struct {
+			Task struct {
+				ID               string `json:"id"`
+				Name             string `json:"name"`
+				InternalControls struct {
+					Edges []struct {
+						Node struct {
+							ID string `json:"id"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"internalControls"`
+			} `json:"task"`
+		} `json:"updateTask"`
+	}
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId": taskID,
+			"name":   "Renamed without changing links",
+		},
+	}, &updated)
+	require.NoError(t, err)
+	assert.Equal(t, taskID, updated.UpdateTask.Task.ID)
+	assert.Equal(t, "Renamed without changing links", updated.UpdateTask.Task.Name)
+	assert.ElementsMatch(
+		t,
+		[]string{firstInternalControlID, secondInternalControlID},
+		internalControlIDsFromEdges(updated.UpdateTask.Task.InternalControls.Edges),
+	)
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId":             taskID,
+			"internalControlIds": []any{secondInternalControlID},
+		},
+	}, &updated)
+	require.NoError(t, err)
+	assert.Equal(t, taskID, updated.UpdateTask.Task.ID)
+	assert.Equal(
+		t,
+		[]string{secondInternalControlID},
+		internalControlIDsFromEdges(updated.UpdateTask.Task.InternalControls.Edges),
+	)
+
+	err = owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"taskId":             taskID,
+			"internalControlIds": []any{},
+		},
+	}, &updated)
+	require.NoError(t, err)
+	assert.Equal(t, taskID, updated.UpdateTask.Task.ID)
+	assert.Empty(t, updated.UpdateTask.Task.InternalControls.Edges)
+}
+
+func internalControlIDsFromEdges(edges []struct {
+	Node struct {
+		ID string `json:"id"`
+	} `json:"node"`
+}) []string {
+	ids := make([]string, 0, len(edges))
+	for _, edge := range edges {
+		ids = append(ids, edge.Node.ID)
+	}
+
+	return ids
 }
 
 func TestTask_Delete(t *testing.T) {
@@ -707,11 +862,11 @@ func TestTask_StateEnum(t *testing.T) {
 
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{
-					"organizationId":    owner.GetOrganizationID().String(),
-					"internalControlId": internalControlID,
-					"name":              "Create State " + state,
-					"priority":          "MEDIUM",
-					"state":             state,
+					"organizationId":     owner.GetOrganizationID().String(),
+					"internalControlIds": []any{internalControlID},
+					"name":               "Create State " + state,
+					"priority":           "MEDIUM",
+					"state":              state,
 				},
 			}, &result)
 			require.NoError(t, err, "State %s should be valid on create", state)
@@ -796,15 +951,19 @@ func TestTask_SubResolvers(t *testing.T) {
 		assert.Equal(t, "SubResolver Test Task", result.Node.Name)
 	})
 
-	t.Run("internal control sub-resolver", func(t *testing.T) {
+	t.Run("internal controls sub-resolver", func(t *testing.T) {
 		query := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on Task {
 						id
-						internalControl {
-							id
-							name
+						internalControls(first: 10) {
+							edges {
+								node {
+									id
+									name
+								}
+							}
 						}
 					}
 				}
@@ -813,18 +972,23 @@ func TestTask_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID              string `json:"id"`
-				InternalControl struct {
-					ID   string `json:"id"`
-					Name string `json:"name"`
-				} `json:"internalControl"`
+				ID               string `json:"id"`
+				InternalControls struct {
+					Edges []struct {
+						Node struct {
+							ID   string `json:"id"`
+							Name string `json:"name"`
+						} `json:"node"`
+					} `json:"edges"`
+				} `json:"internalControls"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": taskID}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, internalControlID, result.Node.InternalControl.ID)
-		assert.NotEmpty(t, result.Node.InternalControl.Name)
+		require.Len(t, result.Node.InternalControls.Edges, 1)
+		assert.Equal(t, internalControlID, result.Node.InternalControls.Edges[0].Node.ID)
+		assert.NotEmpty(t, result.Node.InternalControls.Edges[0].Node.Name)
 	})
 
 	t.Run("assignedTo sub-resolver (null)", func(t *testing.T) {
@@ -1171,11 +1335,11 @@ func TestTask_OmittableDeadline(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"organizationId":    owner.GetOrganizationID().String(),
-			"internalControlId": internalControlID,
-			"name":              "Deadline Test Task",
-			"priority":          "MEDIUM",
-			"deadline":          "2025-12-31T00:00:00Z",
+			"organizationId":     owner.GetOrganizationID().String(),
+			"internalControlIds": []any{internalControlID},
+			"name":               "Deadline Test Task",
+			"priority":           "MEDIUM",
+			"deadline":           "2025-12-31T00:00:00Z",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -1280,11 +1444,11 @@ func TestTask_TimeEstimate(t *testing.T) {
 
 	err := owner.Execute(createQuery, map[string]any{
 		"input": map[string]any{
-			"organizationId":    owner.GetOrganizationID().String(),
-			"internalControlId": internalControlID,
-			"name":              factory.SafeName("Estimate"),
-			"priority":          "MEDIUM",
-			"timeEstimate":      "PT1H",
+			"organizationId":     owner.GetOrganizationID().String(),
+			"internalControlIds": []any{internalControlID},
+			"name":               factory.SafeName("Estimate"),
+			"priority":           "MEDIUM",
+			"timeEstimate":       "PT1H",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -1360,11 +1524,11 @@ func TestTask_TimeEstimate(t *testing.T) {
 
 		err := owner.ExecuteShouldFail(createQuery, map[string]any{
 			"input": map[string]any{
-				"organizationId":    owner.GetOrganizationID().String(),
-				"internalControlId": internalControlID,
-				"name":              factory.SafeName("Overlong estimate"),
-				"priority":          "MEDIUM",
-				"timeEstimate":      "P2M",
+				"organizationId":     owner.GetOrganizationID().String(),
+				"internalControlIds": []any{internalControlID},
+				"name":               factory.SafeName("Overlong estimate"),
+				"priority":           "MEDIUM",
+				"timeEstimate":       "P2M",
 			},
 		})
 		require.Error(t, err)
@@ -1375,11 +1539,11 @@ func TestTask_TimeEstimate(t *testing.T) {
 
 		err := owner.ExecuteShouldFail(createQuery, map[string]any{
 			"input": map[string]any{
-				"organizationId":    owner.GetOrganizationID().String(),
-				"internalControlId": internalControlID,
-				"name":              factory.SafeName("Incomplete estimate"),
-				"priority":          "MEDIUM",
-				"timeEstimate":      "P1YT",
+				"organizationId":     owner.GetOrganizationID().String(),
+				"internalControlIds": []any{internalControlID},
+				"name":               factory.SafeName("Incomplete estimate"),
+				"priority":           "MEDIUM",
+				"timeEstimate":       "P1YT",
 			},
 		})
 		require.Error(t, err)
@@ -1424,7 +1588,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-15T00:00:00Z",
@@ -1458,7 +1622,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Monthly Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-31T00:00:00Z",
@@ -1476,7 +1640,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"recurrenceInterval": "P21D",
@@ -1492,7 +1656,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"state":              "DONE",
@@ -1510,7 +1674,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-15T00:00:00Z",
@@ -1527,7 +1691,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-31T12:00:00Z",
@@ -1560,7 +1724,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               name,
 				"content":            factory.ProseMirrorPlainText(description),
 				"priority":           "HIGH",
@@ -1732,7 +1896,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-15T00:00:00Z",
@@ -1795,7 +1959,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Monthly Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-31T00:00:00Z",
@@ -1854,7 +2018,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-15T00:00:00Z",
@@ -1911,7 +2075,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"internalControlId":  internalControlID,
+				"internalControlIds": []any{internalControlID},
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-15T00:00:00Z",

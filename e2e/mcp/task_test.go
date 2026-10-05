@@ -44,9 +44,9 @@ func TestMCP_Task_CRUD(t *testing.T) {
 		} `json:"task"`
 	}
 	mc.CallToolInto("addTask", map[string]any{
-		"organization_id":     orgID,
-		"internal_control_id": internalControlID,
-		"name":                factory.SafeName("Task"),
+		"organization_id":      orgID,
+		"internal_control_ids": []any{internalControlID},
+		"name":                 factory.SafeName("Task"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Task.ID)
 
@@ -225,11 +225,11 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 			} `json:"task"`
 		}
 		mc.CallToolInto("addTask", map[string]any{
-			"organization_id":     owner.GetOrganizationID().String(),
-			"internal_control_id": internalControlID,
-			"name":                factory.SafeName("Recurring Task"),
-			"deadline":            "2026-01-15T00:00:00Z",
-			"recurrence_interval": "P21D",
+			"organization_id":      owner.GetOrganizationID().String(),
+			"internal_control_ids": []any{internalControlID},
+			"name":                 factory.SafeName("Recurring Task"),
+			"deadline":             "2026-01-15T00:00:00Z",
+			"recurrence_interval":  "P21D",
 		}, &addResult)
 		require.NotEmpty(t, addResult.Task.ID)
 		assert.Equal(t, "P21D", addResult.Task.RecurrenceInterval)
@@ -247,11 +247,11 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 			} `json:"task"`
 		}
 		mc.CallToolInto("addTask", map[string]any{
-			"organization_id":     owner.GetOrganizationID().String(),
-			"internal_control_id": internalControlID,
-			"name":                factory.SafeName("Monthly Task"),
-			"deadline":            "2026-01-31T00:00:00Z",
-			"recurrence_interval": "P1M",
+			"organization_id":      owner.GetOrganizationID().String(),
+			"internal_control_ids": []any{internalControlID},
+			"name":                 factory.SafeName("Monthly Task"),
+			"deadline":             "2026-01-31T00:00:00Z",
+			"recurrence_interval":  "P1M",
 		}, &addResult)
 		require.NotEmpty(t, addResult.Task.ID)
 		assert.Equal(t, "P1M", addResult.Task.RecurrenceInterval)
@@ -263,12 +263,12 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		mc := testutil.NewMCPClient(t, owner)
 
 		errText := mc.CallToolExpectToolError("addTask", map[string]any{
-			"organization_id":     owner.GetOrganizationID().String(),
-			"internal_control_id": internalControlID,
-			"name":                factory.SafeName("Recurring Task"),
-			"state":               "DONE",
-			"deadline":            "2026-01-15T00:00:00Z",
-			"recurrence_interval": "P21D",
+			"organization_id":      owner.GetOrganizationID().String(),
+			"internal_control_ids": []any{internalControlID},
+			"name":                 factory.SafeName("Recurring Task"),
+			"state":                "DONE",
+			"deadline":             "2026-01-15T00:00:00Z",
+			"recurrence_interval":  "P21D",
 		})
 		assert.Contains(t, errText, "state")
 	})
@@ -279,10 +279,10 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		mc := testutil.NewMCPClient(t, owner)
 
 		errText := mc.CallToolExpectToolError("addTask", map[string]any{
-			"organization_id":     owner.GetOrganizationID().String(),
-			"internal_control_id": internalControlID,
-			"name":                factory.SafeName("Recurring Task"),
-			"recurrence_interval": "P21D",
+			"organization_id":      owner.GetOrganizationID().String(),
+			"internal_control_ids": []any{internalControlID},
+			"name":                 factory.SafeName("Recurring Task"),
+			"recurrence_interval":  "P21D",
 		})
 		assert.Contains(t, errText, "deadline")
 	})
@@ -299,11 +299,11 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 			} `json:"task"`
 		}
 		mc.CallToolInto("addTask", map[string]any{
-			"organization_id":     owner.GetOrganizationID().String(),
-			"internal_control_id": internalControlID,
-			"name":                factory.SafeName("Recurring Task"),
-			"deadline":            "2027-01-15T00:00:00Z",
-			"recurrence_interval": "P21D",
+			"organization_id":      owner.GetOrganizationID().String(),
+			"internal_control_ids": []any{internalControlID},
+			"name":                 factory.SafeName("Recurring Task"),
+			"deadline":             "2027-01-15T00:00:00Z",
+			"recurrence_interval":  "P21D",
 		}, &addResult)
 
 		var updateResult struct {
@@ -333,11 +333,11 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 			} `json:"task"`
 		}
 		mc.CallToolInto("addTask", map[string]any{
-			"organization_id":     owner.GetOrganizationID().String(),
-			"internal_control_id": internalControlID,
-			"name":                factory.SafeName("Recurring Task"),
-			"deadline":            "2027-01-15T00:00:00Z",
-			"recurrence_interval": "P21D",
+			"organization_id":      owner.GetOrganizationID().String(),
+			"internal_control_ids": []any{internalControlID},
+			"name":                 factory.SafeName("Recurring Task"),
+			"deadline":             "2027-01-15T00:00:00Z",
+			"recurrence_interval":  "P21D",
 		}, &addResult)
 
 		var updateResult struct {

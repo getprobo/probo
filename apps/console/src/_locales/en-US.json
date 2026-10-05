@@ -715,7 +715,7 @@
     "empty": "No tasks",
     "noResults": "No tasks match your filters",
     "searchPlaceholder": "Search tasks",
-    "filters": { "status": "Status", "allStatuses": "All statuses", "user": "User", "allUsers": "All users" },
+    "filters": { "status": "Status", "allStatuses": "All statuses", "user": "User", "allUsers": "All users", "internalControl": "Internal control", "allInternalControls": "All internal controls", "searchInternalControls": "Search internal controls", "noInternalControls": "No internal controls" },
     "error": { "title": "Error", "reorder": "Failed to reorder task." },
     "dragInstructions": {
       "all": "Drag and drop to reorder tasks or move them between states",
@@ -2392,7 +2392,10 @@
     "actions": { "add": "Add evidence", "download": "Download", "delete": "Delete" }
   },
   "internalControlTasksTab": {
-    "actions": { "newTask": "New task" }
+    "empty": "No tasks",
+    "columns": { "name": "Name", "state": "State" },
+    "actions": { "newTask": "New task", "link": "Link task", "unlink": "Unlink", "retry": "Retry", "showMore": "Show {{count}} more" },
+    "dialog": { "title": "Link tasks", "searchPlaceholder": "Search tasks", "empty": "No tasks", "actions": { "close": "Close", "link": "Link", "unlink": "Unlink" } }
   },
   "obligationDetailsPage": {
     "title": "Obligation",
