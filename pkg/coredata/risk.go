@@ -174,6 +174,8 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskOrderFieldCreatedAt:
 		return page.CursorKey{ID: r.ID, Value: r.CreatedAt}
+	case RiskOrderFieldUpdatedAt:
+		return page.CursorKey{ID: r.ID, Value: r.UpdatedAt}
 	case RiskOrderFieldReferenceID:
 		return page.CursorKey{ID: r.ID, Value: r.ReferenceID}
 	case RiskOrderFieldName:
