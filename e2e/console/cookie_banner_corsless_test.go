@@ -212,7 +212,7 @@ func TestCookieBanner_Corsless(t *testing.T) {
 	)
 
 	t.Run(
-		"stores a null origin on a normal banner consent",
+		"stores the request origin on a normal banner consent",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -227,7 +227,8 @@ func TestCookieBanner_Corsless(t *testing.T) {
 			)
 
 			record := loadConsentRecord(t, fixture.Owner, created.ID)
-			assert.Nil(t, record.Origin)
+			require.NotNil(t, record.Origin)
+			assert.Equal(t, fixture.Origin, *record.Origin)
 		},
 	)
 

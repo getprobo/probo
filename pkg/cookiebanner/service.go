@@ -2647,11 +2647,6 @@ func (s *Service) RecordConsent(
 				return fmt.Errorf("invalid request: %w", err)
 			}
 
-			var origin *string
-			if banner.Capabilities.Corsless {
-				origin = storedConsentOrigin(req.Origin)
-			}
-
 			record = &coredata.CookieConsentRecord{
 				ID:                    gid.New(scope.GetTenantID(), coredata.CookieConsentRecordEntityType),
 				OrganizationID:        banner.OrganizationID,
@@ -2669,7 +2664,7 @@ func (s *Service) RecordConsent(
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
 				TC:                    optionalNonEmptyString(req.TC),
-				Origin:                origin,
+				Origin:                storedConsentOrigin(req.Origin),
 				CreatedAt:             time.Now(),
 			}
 
