@@ -37,12 +37,12 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TasksSettingsDialog_organization$key } from "#/__generated__/core/TasksSettingsDialog_organization.graphql";
-import { ConnectorNameField } from "#/pages/organizations/settings/integrations/_components/ConnectorNameField";
-import { useConnectorName } from "#/pages/organizations/settings/integrations/_lib/useConnectorName";
 
 import { linearInitiateUrl } from "../_lib/linearInitiateUrl";
 import { taskListPath } from "../_lib/taskPath";
 import { tasksSettingsDialog } from "../variants";
+
+const linearSyncConnectorName = "tasks";
 
 const tasksSettingsDialogFragment = graphql`
   fragment TasksSettingsDialog_organization on Organization {
@@ -66,16 +66,12 @@ export function TasksSettingsDialog({
   const { sections, section, intro, list, row, identity, heading } = tasksSettingsDialog();
   const connectorId = organization.connectors[0]?.id;
   const connected = connectorId != null;
-  const connectorName = useConnectorName();
 
   function connect() {
-    if (!connected && connectorName.rejectIfEmpty()) {
-      return;
-    }
     window.location.assign(
       linearInitiateUrl(organization.id, {
         connectorId,
-        name: connected ? undefined : connectorName.trimmed,
+        name: connected ? undefined : linearSyncConnectorName,
         continuePath: taskListPath(organization.id),
       }),
     );
@@ -130,14 +126,6 @@ export function TasksSettingsDialog({
                       <Text size={2} color="faint">
                         {t("settingsDialog.linear.description")}
                       </Text>
-                      {!connected && organization.canInitiateConnector && (
-                        <ConnectorNameField
-                          name={connectorName.name}
-                          error={connectorName.error}
-                          onChange={connectorName.onChange}
-                          onEmpty={connectorName.rejectIfEmpty}
-                        />
-                      )}
                     </div>
                     {organization.canInitiateConnector
                       ? (
