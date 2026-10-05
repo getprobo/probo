@@ -4,6 +4,15 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.240.0] - 2026-10-05
+
+### Added
+
+- `org list` shows the organization legal name
+- `cookie-banner view` shows whether the banner is CORSless
+- `consent-record list` and `consent-record view` show the origin the
+  consent was recorded from
+
 ## [0.239.0] - 2026-10-05
 
 ### Added
