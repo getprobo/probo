@@ -10,11 +10,11 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@tiptap/pm": "^3.30.5",
+    "@tiptap/pm": "^3.31.4",
     "dompurify": "^3.4.16",
-    "marked": "^18.0.11"
+    "marked": "^18.0.14"
   },
   "devDependencies": {
-    "typescript": "6.0.2"
+    "typescript": "7.0.2"
   }
 }

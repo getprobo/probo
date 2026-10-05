@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "react": "^19.2.7",
-    "react-dom": "^19.2.8",
-    "react-email": "^6.9.3"
+    "react-dom": "^19.3.0",
+    "react-email": "^6.11.0"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.6.4",
     "@types/react": "^19.2.18",
-    "tsx": "^4.23.12",
-    "typescript": "6.0.2"
+    "tsx": "^4.23.15",
+    "typescript": "7.0.2"
   }
 }

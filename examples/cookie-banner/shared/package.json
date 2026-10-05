@@ -14,11 +14,11 @@
   "dependencies": {
     "@probo/cookie-banner": "*",
     "loglevel": "^1.9.2",
-    "posthog-js": "^1.422.5"
+    "posthog-js": "^1.435.7"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "typescript": "6.0.2"
+    "@types/react-dom": "^19.3.0",
+    "typescript": "7.0.2"
   }
 }
