@@ -41,6 +41,7 @@ const bannerSettingsFormFragment = graphql`
     capabilities {
       resourceReporting
       corsless
+      tcf
     }
   }
 `;
@@ -118,7 +119,9 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           privacyPolicyUrl: data.privacyPolicyUrl || undefined,
           consentExpiryDays: parseInt(data.consentExpiryDays, 10),
           defaultLanguage: data.defaultLanguage,
-          publisherCountryCode: data.publisherCountryCode.trim().toUpperCase() || "AA",
+          publisherCountryCode: banner.capabilities.tcf
+            ? (data.publisherCountryCode.trim().toUpperCase() || "AA")
+            : undefined,
           capabilities: { resourceReporting: data.resourceReportingEnabled },
         },
       },
@@ -182,33 +185,35 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>{t("bannerSettingsForm.fields.publisherCountryCode")}</Label>
-            <p className="text-sm text-txt-tertiary">
-              {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
-            </p>
-            <Input
-              {...register("publisherCountryCode", {
-                required: true,
-                minLength: 2,
-                maxLength: 2,
-                pattern: /^[A-Za-z]{2}$/,
-                validate: value =>
-                  isPublisherCountryCode(value) || t("bannerSettingsForm.errors.publisherCountryCode"),
-              })}
-              required
-              minLength={2}
-              maxLength={2}
-              pattern="[A-Za-z]{2}"
-              className="uppercase"
-              placeholder="AA"
-            />
-            {errors.publisherCountryCode
-              ? (
-                  <p className="text-sm text-txt-danger">{t("bannerSettingsForm.errors.publisherCountryCode")}</p>
-                )
-              : null}
-          </div>
+          {banner.capabilities.tcf && (
+            <div className="space-y-2">
+              <Label>{t("bannerSettingsForm.fields.publisherCountryCode")}</Label>
+              <p className="text-sm text-txt-tertiary">
+                {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
+              </p>
+              <Input
+                {...register("publisherCountryCode", {
+                  required: true,
+                  minLength: 2,
+                  maxLength: 2,
+                  pattern: /^[A-Za-z]{2}$/,
+                  validate: value =>
+                    isPublisherCountryCode(value) || t("bannerSettingsForm.errors.publisherCountryCode"),
+                })}
+                required
+                minLength={2}
+                maxLength={2}
+                pattern="[A-Za-z]{2}"
+                className="uppercase"
+                placeholder="AA"
+              />
+              {errors.publisherCountryCode
+                ? (
+                    <p className="text-sm text-txt-danger">{t("bannerSettingsForm.errors.publisherCountryCode")}</p>
+                  )
+                : null}
+            </div>
+          )}
 
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
