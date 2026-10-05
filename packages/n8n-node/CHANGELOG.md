@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.240.0] - 2026-10-05
+
+### Added
+
+- Measure `Create`, `Update`, `Get` and `Get Many` support the internal
+  control fields: `Code`, `Control Type`, `Nature`, `Operating Mode`,
+  `Operating Interval`, `Operating Event`, `Evidence Cadence`,
+  `Testing Cadence`, `Implementation Status`, `Owner ID` and
+  `Reviewer ID`
+
 ## [0.239.0] - 2026-09-30
 
 ### Added
