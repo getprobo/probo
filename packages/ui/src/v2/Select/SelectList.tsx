@@ -18,26 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
+import { Select as BaseSelect } from "@base-ui/react/select";
+import type { ComponentProps } from "react";
 
-import { UserSelect } from "#/components/form/UserSelect";
+export type SelectListProps
+  = & Omit<ComponentProps<typeof BaseSelect.List>, "className">
+    & { className?: string };
 
-interface TaskUserFilterProps {
-  value: string | null;
-  onValueChange: (value: string | null) => void;
-}
+// Listbox for the options. Mounting it makes the popup `role="presentation"`
+// and this element the listbox, so a control in the popup (pagination) can sit
+// outside the listbox and stay reachable by keyboard.
+export function SelectList(props: SelectListProps) {
+  const { className, ...rest } = props;
 
-export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
-  const { t } = useTranslation();
-  const emptyLabel = t("tasksCard.filters.allUsers");
-
-  return (
-    <UserSelect
-      value={value}
-      onValueChange={onValueChange}
-      emptyLabel={emptyLabel}
-      ariaLabel={t("tasksCard.filters.user")}
-      placeholder={emptyLabel}
-    />
-  );
+  return <BaseSelect.List className={className} {...rest} />;
 }

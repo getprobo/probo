@@ -971,6 +971,9 @@
     "empty": "Aucune personne disponible",
     "remove": "Retirer {{name}}"
   },
+  "userSelect": {
+    "loadMore": "Charger plus"
+  },
   "peopleSelectField": {
     "placeholder": "Sélectionner un propriétaire",
     "none": "Aucun"

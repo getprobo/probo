@@ -18,26 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useTranslation } from "react-i18next";
+import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 
-import { UserSelect } from "#/components/form/UserSelect";
-
-interface TaskUserFilterProps {
-  value: string | null;
-  onValueChange: (value: string | null) => void;
+interface UserSelectOptionProps {
+  fullName: string;
+  emailAddress?: string | null;
+  avatarUrl?: string | null;
+  // Matches the select trigger. Size 1 is a 24px control, so the avatar is
+  // 16px; size 2 is 32px, so the avatar stays 24px.
+  size?: 1 | 2;
 }
 
-export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
-  const { t } = useTranslation();
-  const emptyLabel = t("tasksCard.filters.allUsers");
-
+export function UserSelectOption({
+  fullName,
+  emailAddress,
+  avatarUrl,
+  size = 2,
+}: UserSelectOptionProps) {
   return (
-    <UserSelect
-      value={value}
-      onValueChange={onValueChange}
-      emptyLabel={emptyLabel}
-      ariaLabel={t("tasksCard.filters.user")}
-      placeholder={emptyLabel}
-    />
+    <span className={size === 1
+      ? "flex min-w-0 items-center gap-1"
+      : "flex min-w-0 items-center gap-2"}
+    >
+      <Avatar
+        size={1}
+        radius="full"
+        name={fullName}
+        email={emailAddress ?? undefined}
+        src={avatarUrl}
+        alt=""
+        // Avatar size 1 is 24px. The important utility wins over that class
+        // so the compact trigger can inset the picture.
+        className={size === 1 ? "size-4!" : undefined}
+      />
+      <span className="truncate">{fullName}</span>
+    </span>
   );
 }

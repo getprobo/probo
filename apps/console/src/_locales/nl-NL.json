@@ -971,6 +971,9 @@
     "empty": "Geen personen beschikbaar",
     "remove": "{{name}} verwijderen"
   },
+  "userSelect": {
+    "loadMore": "Meer laden"
+  },
   "peopleSelectField": {
     "placeholder": "Selecteer een eigenaar",
     "none": "Geen"

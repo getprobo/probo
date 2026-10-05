@@ -31,7 +31,6 @@ export const tasksCard = tv({
     list: "divide-y divide-sand-6",
     sectionHeader: "flex items-center gap-2 bg-sand-3 px-6 py-3",
     stateOption: "flex items-center gap-2",
-    userOption: "flex min-w-0 items-center gap-2",
     empty: "py-6",
   },
   variants: {

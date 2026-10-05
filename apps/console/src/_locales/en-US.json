@@ -584,6 +584,9 @@
     "empty": "No people available",
     "remove": "Remove {{name}}"
   },
+  "userSelect": {
+    "loadMore": "Load more"
+  },
   "peopleSelectField": {
     "placeholder": "Select an owner",
     "none": "None"
