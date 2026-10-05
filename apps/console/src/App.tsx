@@ -18,17 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
 import { ConfirmDialog, Toasts } from "@probo/ui";
+import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
 import { RouterProvider } from "react-router";
 
 import { router } from "./routes";
 
 export function App() {
   return (
-    <>
+    <Toast.Provider>
       <RouterProvider router={router} />
       <Toasts />
+      <Toaster />
       <ConfirmDialog />
-    </>
+    </Toast.Provider>
   );
 }

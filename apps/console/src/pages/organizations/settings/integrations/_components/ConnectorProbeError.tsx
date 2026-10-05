@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
+import { Toast } from "@base-ui/react/toast";
 import { ErrorNotice } from "@probo/ui/src/v2/ErrorNotice/ErrorNotice";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -43,7 +43,7 @@ export function ConnectorProbeError({
 }: ConnectorProbeErrorProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const connector = useFragment(connectorProbeErrorFragment, connectorKey);
-  const { toast } = useToast();
+  const toast = Toast.useToastManager();
   const provider = connector.displayName;
 
   return (
@@ -52,10 +52,9 @@ export function ConnectorProbeError({
       messages={issues.map(issue => t(`listPage.connectionIssues.${issue}`, { provider }))}
       copyLabel={t("detailsPage.probeError.copy")}
       onCopied={() => {
-        toast({
+        toast.add({
           title: t("detailsPage.probeError.copied"),
-          description: t("detailsPage.probeError.copied"),
-          variant: "success",
+          type: "success",
         });
       }}
     />

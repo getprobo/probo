@@ -18,27 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
+import { Toast } from "@base-ui/react/toast";
+import { useTranslation } from "react-i18next";
 
 export type CopyValue = (
   value: string,
-  title: string,
+  message: string,
   failure: string,
 ) => void;
 
 export function useCopyValue(): CopyValue {
-  const { toast } = useToast();
+  const toast = Toast.useToastManager();
+  const { t } = useTranslation();
 
-  return (value, title, failure) => {
+  return (value, message, failure) => {
     const onCopyFailure = () => {
-      toast({ title: failure, description: failure, variant: "error" });
+      toast.add({
+        title: t("common.error"),
+        description: failure,
+        type: "error",
+      });
     };
     if (!navigator.clipboard?.writeText) {
       onCopyFailure();
       return;
     }
     navigator.clipboard.writeText(value).then(
-      () => toast({ title, description: title, variant: "success" }),
+      () => toast.add({ title: message, type: "success" }),
       onCopyFailure,
     );
   };

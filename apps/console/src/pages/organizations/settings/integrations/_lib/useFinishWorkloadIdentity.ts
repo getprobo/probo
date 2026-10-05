@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
+import { Toast } from "@base-ui/react/toast";
 import { graphql } from "react-relay";
 
 import type { useFinishWorkloadIdentityCreateMutation } from "#/__generated__/core/useFinishWorkloadIdentityCreateMutation.graphql";
@@ -52,7 +52,7 @@ const deleteConnectorMutation = graphql`
 `;
 
 export function useFinishWorkloadIdentity(organizationId: string) {
-  const { toast } = useToast();
+  const toast = Toast.useToastManager();
   const [createConnector] = useMutation<useFinishWorkloadIdentityCreateMutation>(
     createWorkloadIdentityConnectorMutation,
   );
@@ -69,10 +69,10 @@ export function useFinishWorkloadIdentity(organizationId: string) {
     }, { errorToast: errors.create });
     const connector = created.createWorkloadIdentityConnector.connector;
     if (connector.connectionStatus !== "CONNECTED") {
-      toast({
+      toast.add({
         title: errors.errorTitle,
         description: errors.disconnected,
-        variant: "error",
+        type: "error",
       });
       await deleteConnector({
         variables: { input: { connectorId: connector.id } },
