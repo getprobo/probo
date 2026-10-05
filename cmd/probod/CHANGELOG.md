@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.302.0] - 2026-10-05
+
+### Added
+
+- Measures are presented as internal controls. A control has a stable
+  code, a type, an implementation status, an owner and a reviewer. It
+  runs continuously, when an event happens, or on a positive interval,
+  and has its own evidence and testing cadences (ISO-8601 durations)
+  that set the next due dates. Only the manual nature is accepted for
+  now. The GraphQL and MCP APIs keep the Measure names
+- A shared, paginated user selector loads organization profiles 200 at a
+  time. The task list filter and the task assignee field use it
+
+### Changed
+
+- A control-scoped token can read the owner and reviewer profiles of a
+  control
+
 ## [0.301.0] - 2026-10-02
 
 ### Added
