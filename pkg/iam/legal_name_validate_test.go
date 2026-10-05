@@ -118,6 +118,7 @@ func TestUpdateOrganizationRequest_Validate_LegalName(t *testing.T) {
 		t.Parallel()
 
 		var legalName *string
+
 		req := &iam.UpdateOrganizationRequest{LegalName: &legalName}
 		require.NoError(t, req.Validate())
 		require.NotNil(t, req.LegalName)
