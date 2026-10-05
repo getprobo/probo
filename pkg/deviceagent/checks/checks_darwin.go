@@ -23,6 +23,7 @@ package checks
 import (
 	"context"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -37,6 +38,7 @@ func init() {
 	Register(KeyPasswordPolicy, darwinPasswordPolicy)
 	Register(KeyRemoteLogin, darwinRemoteLogin)
 	Register(KeyMalwareProtection, darwinMalwareProtection)
+	Register(KeyLoginPassword, darwinLoginPassword)
 }
 
 func darwinDiskEncryption(ctx context.Context) Result {
@@ -526,25 +528,39 @@ func darwinPrefIndicatesEnabled(value string) bool {
 	return false
 }
 
+// darwinPasswordPolicy reads the global account policies, where both local
+// pwpolicy rules and configuration profile passcode payloads land.
 func darwinPasswordPolicy(ctx context.Context) Result {
 	out := RunCommand(ctx, "pwpolicy", "-getaccountpolicies")
 	if out.Err != nil {
 		return unknown(
 			map[string]any{
-				"error":  out.Err.Error(),
-				"stderr": out.Stderr,
+				"backend": passwordSourcePwpolicy,
+				"error":   out.Err.Error(),
+				"stderr":  out.Stderr,
 			},
 		)
 	}
 
-	lower := strings.ToLower(out.Stdout)
-
-	ev := map[string]any{"raw_truncated": truncate(out.Stdout, 400)}
-	if strings.Contains(lower, "no account policies") || lower == "" {
-		return fail(ev)
+	lengths, err := parsePwpolicyMinLengths(out.Stdout)
+	if err != nil {
+		return unknown(
+			map[string]any{
+				"backend": passwordSourcePwpolicy,
+				"error":   "cannot parse pwpolicy output: " + err.Error(),
+			},
+		)
 	}
 
-	return pass(ev)
+	found := passwordLengths{}
+	if len(lengths) > 0 {
+		found[passwordSourcePwpolicy] = slices.Max(lengths)
+	}
+
+	ev, length := passwordPolicyEvidence(found)
+	ev["pwpolicy_lengths"] = lengths
+
+	return passwordPolicyResult(ev, length)
 }
 
 func darwinRemoteLogin(ctx context.Context) Result {
@@ -605,4 +621,47 @@ func darwinMalwareProtection(ctx context.Context) Result {
 // needsAdmin checks systemsetup's stdout for privilege errors.
 func needsAdmin(stdout string) bool {
 	return strings.Contains(strings.ToLower(stdout), "administrator access")
+}
+
+// darwinLoginPassword reads loginwindow preferences. Automatic login needs
+// both autoLoginUser and the /etc/kcpassword file holding the obfuscated
+// password; FileVault refuses to enable while it is set. The guest account
+// opens a password-less, wiped-at-logout session and is reported only.
+func darwinLoginPassword(ctx context.Context) Result {
+	out := RunCommand(ctx, "defaults", "export", "/Library/Preferences/com.apple.loginwindow", "-")
+	if out.Err != nil {
+		return unknown(
+			map[string]any{
+				"backend": autoLoginSourceLoginwindow,
+				"error":   out.Err.Error(),
+				"stderr":  out.Stderr,
+			},
+		)
+	}
+
+	strs, bools, err := parsePlistTopLevel(out.Stdout)
+	if err != nil {
+		return unknown(
+			map[string]any{
+				"backend": autoLoginSourceLoginwindow,
+				"error":   "cannot parse loginwindow preferences: " + err.Error(),
+			},
+		)
+	}
+
+	_, kcErr := os.Stat("/etc/kcpassword")
+	kcpassword := kcErr == nil
+
+	var sources []string
+	if strs["autoLoginUser"] != "" && kcpassword {
+		sources = append(sources, autoLoginSourceLoginwindow)
+	}
+
+	ev := loginPasswordEvidence(sources, -1)
+	ev["backend"] = autoLoginSourceLoginwindow
+	ev["auto_login_user_set"] = strs["autoLoginUser"] != ""
+	ev["kcpassword_present"] = kcpassword
+	ev["guest_account_enabled"] = bools["GuestEnabled"]
+
+	return loginPasswordResult(ev, sources, 0)
 }

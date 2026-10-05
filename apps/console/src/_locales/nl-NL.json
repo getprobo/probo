@@ -6219,7 +6219,8 @@
         "autoUpdate": "Automatische update",
         "passwordPolicy": "Wachtwoordbeleid",
         "remoteLogin": "Extern inloggen",
-        "malwareProtection": "Malwarebescherming"
+        "malwareProtection": "Malwarebescherming",
+        "loginPasswordRequired": "Wachtwoord vereist bij aanmelden"
       }
     },
     "history": {

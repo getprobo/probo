@@ -3319,7 +3319,7 @@
       "currentTitle": "Current postures",
       "empty": "No posture checks recorded",
       "values": { "on": "On", "off": "Off", "immediate": "Immediate", "seconds": "{{seconds}}s", "minPasswordLength": "Min length {{length}}", "configured": "Configured", "none": "None", "unknown": "Unknown" },
-      "checks": { "diskEncryption": "Disk encryption", "screenLock": "Screen lock", "firewallEnabled": "Firewall enabled", "timeSync": "Time sync", "osVersion": "OS version", "autoUpdate": "Auto update", "passwordPolicy": "Password policy", "remoteLogin": "Remote login", "malwareProtection": "Malware protection" }
+      "checks": { "diskEncryption": "Disk encryption", "screenLock": "Screen lock", "firewallEnabled": "Firewall enabled", "timeSync": "Time sync", "osVersion": "OS version", "autoUpdate": "Auto update", "passwordPolicy": "Password policy", "remoteLogin": "Remote login", "malwareProtection": "Malware protection", "loginPasswordRequired": "Login password required" }
     },
     "history": {
       "title": "Report history",
