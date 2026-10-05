@@ -308,7 +308,7 @@ func (s *Service) createStampedDocument(
 		return gid.GID{}, fmt.Errorf("cannot download original file: %w", err)
 	}
 
-	stampedData, err := StampSignatureID(pdfData, signatureID.String())
+	stampedData, err := StampSignatureID(ctx, pdfData, signatureID.String())
 	if err != nil {
 		return gid.GID{}, fmt.Errorf("cannot stamp signature ID: %w", err)
 	}

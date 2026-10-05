@@ -2742,7 +2742,7 @@ func exportDocumentPDF(
 		}
 
 		if signaturePagePDF != nil {
-			pdfData, err = pdfutils.MergePDFs(pdfData, signaturePagePDF)
+			pdfData, err = pdfutils.MergePDFs(ctx, pdfData, signaturePagePDF)
 			if err != nil {
 				return nil, fmt.Errorf("cannot merge signature page: %w", err)
 			}
@@ -2755,6 +2755,7 @@ func exportDocumentPDF(
 		}
 
 		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			pdfData,
 			version.Classification.String(),
 			*options.WatermarkText,
@@ -2793,7 +2794,7 @@ func exportStoredPDF(
 		}
 
 		if signaturePagePDF != nil {
-			pdfData, err = pdfutils.MergePDFs(pdfData, signaturePagePDF)
+			pdfData, err = pdfutils.MergePDFs(ctx, pdfData, signaturePagePDF)
 			if err != nil {
 				return nil, fmt.Errorf("cannot merge signature page: %w", err)
 			}
@@ -2806,6 +2807,7 @@ func exportStoredPDF(
 		}
 
 		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			pdfData,
 			version.Classification.String(),
 			*options.WatermarkText,
@@ -3072,6 +3074,7 @@ func renderDocumentPDF(
 		}
 
 		watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			pdfData,
 			version.Classification.String(),
 			*options.WatermarkText,

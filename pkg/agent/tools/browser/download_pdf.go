@@ -127,7 +127,7 @@ func DownloadPDFTool() agent.Tool {
 			// Get page count.
 			conf := model.NewDefaultConfiguration()
 
-			pageCount, err := api.PageCountFile(tmpFile)
+			pageCount, err := api.PageCountFile(ctx, tmpFile)
 			if err != nil {
 				return agent.ResultJSON(
 					downloadPDFResult{
@@ -152,7 +152,7 @@ func DownloadPDFTool() agent.Tool {
 				return nil
 			}
 
-			if err := api.ExtractContent(reader, nil, digest, conf); err != nil {
+			if err := api.ExtractContent(ctx, reader, nil, digest, conf); err != nil {
 				return agent.ResultJSON(
 					downloadPDFResult{
 						ErrorDetail: fmt.Sprintf("cannot extract PDF content: %s", err),
