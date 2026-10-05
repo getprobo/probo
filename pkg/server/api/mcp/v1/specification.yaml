@@ -626,6 +626,30 @@ components:
       format: string
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
 
+    DocumentID:
+      type: string
+      format: string
+      description: Document id from listDocuments or getDocument. Pass it as id or document_id. Not a document version id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    DocumentVersionID:
+      type: string
+      format: string
+      description: Document version id from readDocument (document_version.id) or listDocumentVersions. Not a document id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    DocumentVersionSignatureID:
+      type: string
+      format: string
+      description: Signature request id from listDocumentVersionSignatures. Not a document id or a document version id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
+    ProfileID:
+      type: string
+      format: string
+      description: Profile id. Not a document id or a document version id.
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/gid.GID
+
     CursorKey:
       type: string
       format: string
@@ -8200,20 +8224,29 @@ components:
 
     Document:
       type: object
+      description: Document metadata. title and document_type come from the latest version (highest major.minor). This object has no markdown body; call readDocument for the text.
       required:
         - id
         - organization_id
+        - title
+        - document_type
         - write_mode
         - status
         - created_at
         - updated_at
       properties:
         id:
-          $ref: "#/components/schemas/GID"
-          description: Document ID
+          $ref: "#/components/schemas/DocumentID"
+          description: Document ID. Pass this value as id or document_id. Never pass a document version ID here.
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        title:
+          type: string
+          description: Title of the latest version. Search with listDocuments filter.query.
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Type of the latest version
         current_published_major:
           type:
             - integer
@@ -8263,13 +8296,13 @@ components:
         - updated_at
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         title:
           type: string
@@ -8327,7 +8360,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         status:
           $ref: "#/components/schemas/DocumentVersionApprovalQuorumStatus"
@@ -8400,13 +8433,13 @@ components:
         - updated_at
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Document version signature ID
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         state:
           $ref: "#/components/schemas/DocumentVersionSignatureState"
@@ -8455,7 +8488,7 @@ components:
           properties:
             query:
               type: string
-              description: Search query
+              description: Search the latest version title and body. Use this to find a document by name before calling readDocument.
             write_modes:
               type: array
               items:
@@ -8465,7 +8498,7 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/DocumentType"
-              description: Document types
+              description: Document types, for example POLICY. This field is inside filter, not a top-level argument.
             classifications:
               type: array
               items:
@@ -8475,10 +8508,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/DocumentStatus"
-              description: Document statuses
+              description: Document statuses. Omit this field to return ACTIVE documents only. ["ARCHIVED"] returns archived documents only.
             published:
               type: boolean
-              description: Filter by whether a document has a published version
+              description: When true, only documents that already have a published version.
 
     ListDocumentsOutput:
       type: object
@@ -8499,7 +8532,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     GetDocumentOutput:
@@ -8509,6 +8542,39 @@ components:
       properties:
         document:
           $ref: "#/components/schemas/Document"
+
+    DocumentReadVersion:
+      type: string
+      description: LATEST is the tip revision that updateDocument edits. PUBLISHED is the current published revision and fails when nothing is published. DRAFT returns the tip only when its status is DRAFT.
+      enum:
+        - LATEST
+        - PUBLISHED
+        - DRAFT
+
+    ReadDocumentInput:
+      type: object
+      required:
+        - document_id
+        - version
+      properties:
+        document_id:
+          $ref: "#/components/schemas/DocumentID"
+          description: Document ID from listDocuments or getDocument. Not a document version ID.
+        version:
+          $ref: "#/components/schemas/DocumentReadVersion"
+          description: LATEST returns the tip revision (the one updateDocument edits). PUBLISHED returns current_published_major.minor and fails when nothing is published. DRAFT returns the tip only when its status is DRAFT.
+
+    ReadDocumentOutput:
+      type: object
+      description: document is metadata; document_version.content is the markdown body
+      required:
+        - document
+        - document_version
+      properties:
+        document:
+          $ref: "#/components/schemas/Document"
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
 
     AddDocumentInput:
       type: object
@@ -8558,7 +8624,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         title:
           type: string
@@ -8594,7 +8660,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     DeleteDocumentDraftOutput:
@@ -8611,7 +8677,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     ArchiveDocumentOutput:
@@ -8628,7 +8694,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     UnarchiveDocumentOutput:
@@ -8645,7 +8711,7 @@ components:
         - document_id
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         order_by:
           $ref: "#/components/schemas/DocumentVersionOrderBy"
@@ -8685,7 +8751,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
 
     GetDocumentVersionOutput:
@@ -8705,7 +8771,7 @@ components:
         - changelog
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
         minor:
           type: boolean
@@ -8735,7 +8801,7 @@ components:
         - document_id
       properties:
         document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Document ID
 
     DeleteDocumentOutput:
@@ -8744,7 +8810,7 @@ components:
         - deleted_document_id
       properties:
         deleted_document_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentID"
           description: Deleted document ID
 
     ListDocumentVersionSignaturesInput:
@@ -8753,7 +8819,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         order_by:
           $ref: "#/components/schemas/DocumentVersionSignatureOrderBy"
@@ -8800,7 +8866,7 @@ components:
         - id
       properties:
         id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Document version signature ID
 
     GetDocumentVersionSignatureOutput:
@@ -8818,10 +8884,10 @@ components:
         - signatory_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         signatory_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/ProfileID"
           description: Signatory ID (Profile ID)
 
     RequestDocumentVersionSignatureOutput:
@@ -8838,7 +8904,7 @@ components:
         - document_version_signature_id
       properties:
         document_version_signature_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Document version signature ID
 
     CancelSignatureRequestOutput:
@@ -8847,7 +8913,7 @@ components:
         - deleted_document_version_signature_id
       properties:
         deleted_document_version_signature_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionSignatureID"
           description: Deleted document version signature ID
 
     VoidDocumentVersionApprovalInput:
@@ -8856,7 +8922,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
 
     VoidDocumentVersionApprovalOutput:
@@ -8873,7 +8939,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         comment:
           type: string
@@ -8893,7 +8959,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         comment:
           type: string
@@ -8913,7 +8979,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
 
     SignDocumentOutput:
@@ -8930,7 +8996,7 @@ components:
         - document_version_id
       properties:
         document_version_id:
-          $ref: "#/components/schemas/GID"
+          $ref: "#/components/schemas/DocumentVersionID"
           description: Document version ID
         order_by:
           $ref: "#/components/schemas/DocumentVersionApprovalQuorumOrderBy"
@@ -18606,7 +18672,7 @@ tools:
       $ref: "#/components/schemas/GetTaskActivityOutput"
   - name: listDocuments
     title: List Documents
-    description: List documents for the organization. By default only ACTIVE documents are returned; pass status filter to include ARCHIVED.
+    description: Find documents by title. Each result is metadata only (id, title, document_type, status, current_published_major, current_published_minor) and has no text. Use filter.query to search the latest version title. By default only ACTIVE documents are returned; pass filter.status to include ARCHIVED. Then call readDocument with the document id for the text. Do not use this to list revisions; call listDocumentVersions.
     hints:
       readonly: true
       destructive: false
@@ -18618,7 +18684,7 @@ tools:
       $ref: "#/components/schemas/ListDocumentsOutput"
   - name: getDocument
     title: Get Document
-    description: Get a document by ID
+    description: Get document metadata by document id (field name id). Returns title, document_type, status, and the published version numbers. To read the text, call readDocument. To edit, call updateDocument. Do not pass a document version id.
     hints:
       readonly: true
       destructive: false
@@ -18628,9 +18694,21 @@ tools:
       $ref: "#/components/schemas/GetDocumentInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentOutput"
+  - name: readDocument
+    title: Read Document
+    description: Read a document's markdown body together with its metadata. Pass the document id in document_id (never a version id) and version=LATEST, PUBLISHED, or DRAFT. LATEST is the tip revision that updateDocument edits. PUBLISHED is the current published revision. DRAFT returns the tip only when it is still a draft. Use this instead of getDocument whenever the user wants the text. Use getDocumentVersion only when you already have a version id.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ReadDocumentInput"
+    outputSchema:
+      $ref: "#/components/schemas/ReadDocumentOutput"
   - name: addDocument
     title: Add Document
-    description: Add a new document to the organization
+    description: Create a new authored document and its first draft version. content is markdown. Returns both document and document_version. Use this only to create a document, not to edit an existing one (updateDocument) or to publish it (publishDocument).
     hints:
       readonly: false
       destructive: false
@@ -18642,7 +18720,7 @@ tools:
       $ref: "#/components/schemas/AddDocumentOutput"
   - name: updateDocument
     title: Update Document
-    description: Update an existing document
+    description: Edit the draft of an existing document. Pass the document id in id, not a version id. title, content (markdown), classification, and document_type update the draft, creating one from the published version when the tip is already published. default_approver_ids replaces the profiles who approve the next major publish. Do not use publishDocument to change wording, and do not use readDocument to save edits.
     hints:
       readonly: false
       destructive: false
@@ -18654,7 +18732,7 @@ tools:
       $ref: "#/components/schemas/UpdateDocumentOutput"
   - name: deleteDocumentDraft
     title: Delete Document Draft
-    description: Delete the latest draft version of a document, reverting to the last published version. Cannot delete the initial v0.1 draft.
+    description: Discard the latest draft and revert the document to its last published version. Pass the document id in id. The document remains. Cannot delete the initial v0.1 draft. To delete the document and every version, call deleteDocument. Do not use this to unpublish a version that is already published.
     hints:
       readonly: false
       destructive: true
@@ -18666,7 +18744,7 @@ tools:
       $ref: "#/components/schemas/DeleteDocumentDraftOutput"
   - name: archiveDocument
     title: Archive Document
-    description: Archive a document to prevent further modifications
+    description: Archive a document so it can no longer be edited or published. Pass the document id in id. The document is kept. To reverse this, call unarchiveDocument. To delete it, call deleteDocument.
     hints:
       readonly: false
       destructive: false
@@ -18678,7 +18756,7 @@ tools:
       $ref: "#/components/schemas/ArchiveDocumentOutput"
   - name: unarchiveDocument
     title: Unarchive Document
-    description: Unarchive a document to allow modifications again
+    description: Restore an archived document so it can be edited again. Pass the document id in id. Do not use this to discard a draft (deleteDocumentDraft) or to publish (publishDocument).
     hints:
       readonly: false
       destructive: false
@@ -18690,7 +18768,7 @@ tools:
       $ref: "#/components/schemas/UnarchiveDocumentOutput"
   - name: listDocumentVersions
     title: List Document Versions
-    description: List all versions for a document
+    description: List revisions of one document. Pass the document id in document_id. Each item is a document version (version id, major, minor, status, markdown content). Use filter.statuses such as DRAFT, PENDING_APPROVAL, or PUBLISHED to narrow. To read one known revision without listing, call readDocument. Do not pass a version id as document_id.
     hints:
       readonly: true
       destructive: false
@@ -18702,7 +18780,7 @@ tools:
       $ref: "#/components/schemas/ListDocumentVersionsOutput"
   - name: getDocumentVersion
     title: Get Document Version
-    description: Get a document version by ID
+    description: Get one revision when you already have its document version id (field name id). Returns markdown in document_version.content. If you only have a document id, call readDocument or listDocumentVersions instead. Do not pass a document id.
     hints:
       readonly: true
       destructive: false
@@ -18714,7 +18792,7 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
   - name: publishDocument
     title: Publish Document
-    description: Publish the latest draft of a document. Set minor=true to publish a minor version (no approval flow). When minor=false, providing approver_ids triggers an approval request as a new major version; otherwise the draft is published immediately as a new major version.
+    description: Publish the latest draft. Pass the document id in document_id, plus minor and changelog. minor=true publishes a minor version and requires an existing published major. minor=false publishes a new major version, or sends an email to the document's default approvers when those are set. This tool has no approver_ids argument; set approvers with updateDocument default_approver_ids. Do not use this to edit markdown (updateDocument) or to cast an approval vote (approveDocumentVersion).
     hints:
       readonly: false
       destructive: false
@@ -18726,7 +18804,7 @@ tools:
       $ref: "#/components/schemas/PublishDocumentOutput"
   - name: deleteDocument
     title: Delete Document
-    description: Delete a document
+    description: Permanently delete a document and every version. Pass the document id in document_id. To drop only the unpublished draft and keep the document, call deleteDocumentDraft. To take it off a compliance portal without deleting it, call deleteCompliancePortalDocument.
     hints:
       readonly: false
       destructive: true
@@ -18738,7 +18816,7 @@ tools:
       $ref: "#/components/schemas/DeleteDocumentOutput"
   - name: listDocumentVersionSignatures
     title: List Document Version Signatures
-    description: List all signatures for a document version
+    description: List who still needs to sign one published revision, including outstanding requests. Pass the document version id in document_version_id, not the document id. filter.states REQUESTED returns missing signatures. To read the document body, call readDocument. To send a new request, call requestDocumentVersionSignature.
     hints:
       readonly: true
       destructive: false
@@ -18750,7 +18828,7 @@ tools:
       $ref: "#/components/schemas/ListDocumentVersionSignaturesOutput"
   - name: getDocumentVersionSignature
     title: Get Document Version Signature
-    description: Get a document version signature by ID
+    description: Get one signature row by its signature id (field name id). To list missing signatures for a revision, call listDocumentVersionSignatures with the document version id.
     hints:
       readonly: true
       destructive: false
@@ -18762,7 +18840,7 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionSignatureOutput"
   - name: requestDocumentVersionSignature
     title: Request Document Version Signature
-    description: Request a signature for a document version
+    description: Ask one profile to sign a published revision. Pass the document version id in document_version_id and the profile id in signatory_id. This does not sign on their behalf; the signatory uses signDocument. To see who has not signed, call listDocumentVersionSignatures.
     hints:
       readonly: false
       destructive: false
@@ -18774,7 +18852,7 @@ tools:
       $ref: "#/components/schemas/RequestDocumentVersionSignatureOutput"
   - name: cancelSignatureRequest
     title: Cancel Signature Request
-    description: Cancel a document version signature request
+    description: Cancel an outstanding signature request. Pass the signature id in document_version_signature_id, not the document id or version id. Do not use this to void an approval quorum (voidDocumentVersionApproval) or to delete a draft (deleteDocumentDraft).
     hints:
       readonly: false
       destructive: true
@@ -18786,7 +18864,7 @@ tools:
       $ref: "#/components/schemas/CancelSignatureRequestOutput"
   - name: voidDocumentVersionApproval
     title: Void Document Version Approval
-    description: Void a pending document version approval request
+    description: Cancel a pending approval quorum so the draft is no longer waiting on approvers. Pass the document version id in document_version_id. Do not use this to reject as an approver (rejectDocumentVersion) or to cancel a signature request (cancelSignatureRequest).
     hints:
       readonly: false
       destructive: true
@@ -18798,7 +18876,7 @@ tools:
       $ref: "#/components/schemas/VoidDocumentVersionApprovalOutput"
   - name: approveDocumentVersion
     title: Approve Document Version
-    description: Approve a document version pending approval as the authenticated user
+    description: Cast an approval vote on a revision that is already pending approval, as the authenticated user. Pass the document version id in document_version_id. This does not publish and does not email approvers.
     hints:
       readonly: false
       destructive: false
@@ -18810,7 +18888,7 @@ tools:
       $ref: "#/components/schemas/ApproveDocumentVersionOutput"
   - name: rejectDocumentVersion
     title: Reject Document Version
-    description: Reject a document version pending approval as the authenticated user
+    description: Reject a revision that is pending approval, as the authenticated user. Pass the document version id in document_version_id. To withdraw the request instead of voting, call voidDocumentVersionApproval.
     hints:
       readonly: false
       destructive: false
@@ -18822,7 +18900,7 @@ tools:
       $ref: "#/components/schemas/RejectDocumentVersionOutput"
   - name: signDocument
     title: Sign Document
-    description: Sign a document version as the authenticated user
+    description: Sign a published revision as the authenticated user. Pass the document version id in document_version_id. This records your signature; it does not ask someone else to sign (requestDocumentVersionSignature) and it does not publish (publishDocument).
     hints:
       readonly: false
       destructive: false
@@ -19794,7 +19872,7 @@ tools:
       $ref: "#/components/schemas/UpdateCompliancePortalDocumentVisibilityOutput"
   - name: deleteCompliancePortalDocument
     title: Delete Compliance Portal Document
-    description: Remove a document from a compliance portal
+    description: Remove a policy or other document from a compliance portal without deleting the document itself.
     hints:
       readonly: false
       destructive: true
