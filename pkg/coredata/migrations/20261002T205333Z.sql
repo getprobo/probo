@@ -24,26 +24,28 @@
 
 ALTER TABLE measures
     ADD COLUMN code TEXT,
-    ADD COLUMN control_type TEXT,
-    ADD COLUMN nature TEXT,
-    ADD COLUMN operating_mode TEXT,
+    ADD COLUMN control_type internal_control_type,
+    ADD COLUMN nature internal_control_nature,
+    ADD COLUMN operating_mode internal_control_operating_mode,
     ADD COLUMN operating_frequency INTERVAL,
     ADD COLUMN operating_event TEXT,
     ADD COLUMN evidence_cadence INTERVAL,
     ADD COLUMN testing_cadence INTERVAL,
     ADD COLUMN next_evidence_due TIMESTAMP WITH TIME ZONE,
     ADD COLUMN next_test_due TIMESTAMP WITH TIME ZONE,
-    ADD COLUMN implementation_status TEXT,
+    ADD COLUMN implementation_status internal_control_implementation_status,
     ADD COLUMN owner_profile_id TEXT,
     ADD COLUMN reviewer_profile_id TEXT;
 
 UPDATE measures
-SET implementation_status = CASE state::text
-    WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
-    WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
-    WHEN 'NOT_IMPLEMENTED' THEN 'NOT_IMPLEMENTED'
-    ELSE 'NOT_IMPLEMENTED'
-END;
+SET implementation_status = (
+    CASE state
+        WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+        WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+        WHEN 'NOT_IMPLEMENTED' THEN 'NOT_IMPLEMENTED'
+        ELSE 'NOT_IMPLEMENTED'
+    END
+)::internal_control_implementation_status;
 
 ALTER TABLE measures
     ALTER COLUMN implementation_status SET DEFAULT 'NOT_IMPLEMENTED';
@@ -55,21 +57,6 @@ ALTER TABLE measures
     ALTER COLUMN implementation_status DROP DEFAULT;
 
 ALTER TABLE measures
-    ADD CONSTRAINT measures_control_type_check
-        CHECK (
-            control_type IS NULL
-            OR control_type IN ('PREVENTIVE', 'DETECTIVE', 'CORRECTIVE')
-        ),
-    ADD CONSTRAINT measures_nature_check
-        CHECK (
-            nature IS NULL
-            OR nature IN ('MANUAL')
-        ),
-    ADD CONSTRAINT measures_operating_mode_check
-        CHECK (
-            operating_mode IS NULL
-            OR operating_mode IN ('CONTINUOUS', 'EVENT', 'PERIODIC')
-        ),
     ADD CONSTRAINT measures_operating_frequency_shape_check
         CHECK (
             (
@@ -93,15 +80,6 @@ ALTER TABLE measures
                 AND operating_mode = 'PERIODIC'
                 AND operating_frequency IS NOT NULL
                 AND operating_event IS NULL
-            )
-        ),
-    ADD CONSTRAINT measures_implementation_status_check
-        CHECK (
-            implementation_status IN (
-                'NOT_IMPLEMENTED',
-                'IN_PROGRESS',
-                'IMPLEMENTED',
-                'OPERATING'
             )
         ),
     ADD CONSTRAINT measures_owner_reviewer_distinct_check
@@ -143,23 +121,14 @@ CREATE INDEX measures_search_idx ON measures USING gin(search_vector);
 -- rollout finishes. NULL means "derive the status from state". NOT NULL
 -- belongs in a later migration, after every event writer sends the column.
 ALTER TABLE measure_events
-    ADD COLUMN implementation_status TEXT;
+    ADD COLUMN implementation_status internal_control_implementation_status;
 
 UPDATE measure_events
-SET implementation_status = CASE state
-    WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
-    WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
-    ELSE 'NOT_IMPLEMENTED'
-END
+SET implementation_status = (
+    CASE state
+        WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+        WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+        ELSE 'NOT_IMPLEMENTED'
+    END
+)::internal_control_implementation_status
 WHERE implementation_status IS NULL;
-
-ALTER TABLE measure_events
-    ADD CONSTRAINT measure_events_implementation_status_check
-        CHECK (
-            implementation_status IN (
-                'NOT_IMPLEMENTED',
-                'IN_PROGRESS',
-                'IMPLEMENTED',
-                'OPERATING'
-            )
-        );

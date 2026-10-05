@@ -487,11 +487,13 @@ msrs AS (
 		CAST(NULL AS timestamptz) AS next_test_due,
 		COALESCE(
 			latest.implementation_status,
-			CASE latest.state
-				WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
-				WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
-				ELSE 'NOT_IMPLEMENTED'
-			END
+			(
+				CASE latest.state
+					WHEN 'IN_PROGRESS' THEN 'IN_PROGRESS'
+					WHEN 'IMPLEMENTED' THEN 'IMPLEMENTED'
+					ELSE 'NOT_IMPLEMENTED'
+				END
+			)::internal_control_implementation_status
 		) AS implementation_status,
 		CAST(NULL AS text) AS owner_profile_id,
 		CAST(NULL AS text) AS reviewer_profile_id,
