@@ -4,6 +4,18 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.239.0] - 2026-10-05
+
+### Added
+
+- `measure create` and `measure update` accept the internal control
+  fields: `--code`, `--control-type`, `--nature`, `--operating-mode`,
+  `--operating-frequency`, `--operating-event`, `--evidence-cadence`,
+  `--testing-cadence`, `--implementation-status`, `--owner-id` and
+  `--reviewer-id`. Cadences are ISO-8601 durations, and flags that do not
+  belong to the selected operating mode are rejected. `measure view` and
+  `measure list` show the owner and reviewer
+
 ## [0.238.0] - 2026-09-30
 
 ### Added
