@@ -32,19 +32,30 @@ export interface DecodedTcString {
   vendorConsentCount: number;
 }
 
+function vectorIds(vector: { maxId: number; has(id: number): boolean }): number[] {
+  const ids: number[] = [];
+  for (let id = 1; id <= vector.maxId; id++) {
+    if (vector.has(id)) {
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
 export function decodeTcString(encoded: string): DecodedTcString | null {
   try {
     const model = TCString.decode(encoded);
+    const purposeIds = vectorIds(model.purposeConsents);
     return {
       created: model.created,
       lastUpdated: model.lastUpdated,
       cmpId: String(model.cmpId),
       cmpVersion: String(model.cmpVersion),
       tcfPolicyVersion: String(model.policyVersion),
-      gvlVersion: String(model.vendorListVersion),
+      gvlVersion: model.vendorListVersion === 0 ? "-" : String(model.vendorListVersion),
       language: model.consentLanguage,
-      purposeIds: [...model.purposeConsents.values()],
-      vendorConsentCount: model.vendorConsents.size,
+      purposeIds,
+      vendorConsentCount: vectorIds(model.vendorConsents).length,
     };
   } catch {
     return null;

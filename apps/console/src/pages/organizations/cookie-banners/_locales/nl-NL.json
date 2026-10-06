@@ -258,7 +258,7 @@
       "gvlVersion": "GVL-versie",
       "language": "Taal",
       "purposes": "Doel-ID's",
-      "vendorConsentCount": "Vendor-toestemmingen",
+      "vendorConsentCount": "Toestemmingen van leveranciers",
       "decodeError": "Deze TC-string kon niet worden gedecodeerd."
     },
     "unknownLocation": "Onbekende locatie",
@@ -282,6 +282,12 @@
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
     "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" }
+  },
+  "cookieBannersIndex": {
+    "empty": {
+      "title": "Geen cookiebanners",
+      "description": "Deze werkruimte heeft nog geen cookiebanners."
+    }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nieuwe cookiebanner",

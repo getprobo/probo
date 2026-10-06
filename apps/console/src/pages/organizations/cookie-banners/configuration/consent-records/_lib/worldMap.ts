@@ -51,12 +51,19 @@ interface FocusBox {
   minY: number;
   maxX: number;
   maxY: number;
+  minLon: number;
+  maxLon: number;
+  minLat: number;
+  maxLat: number;
 }
 
 // Extra space around the highlighted region, and a floor so a small
 // state still shows its neighbors instead of a cropped blob.
 const FOCUS_PAD_RATIO = 0.25;
 const FOCUS_MIN_SPAN = 56;
+// Nearby islands stay in frame (Hawaii, Michigan) without pulling in
+// overseas territories that sit tens of degrees away (Guiana, Alaska).
+const FOCUS_CLUSTER_DEG = 15;
 
 // ISO 3166-1 alpha-2 + 3-digit numeric, concatenated in 5-character groups.
 const ISO_3166_1_NUMERIC_PACKED
@@ -153,6 +160,16 @@ function splitRingAtAntimeridian(ring: Position[]): Position[][] {
     current.push(next);
   }
 
+  const origin = points[0] ?? [0, 0];
+  const lastPoint = current[current.length - 1] ?? origin;
+  if (current.length > 0 && crossesAntimeridian(lastPoint[0] ?? 0, origin[0] ?? 0)) {
+    const lat = latitudeAtAntimeridian(lastPoint, origin);
+    const lastEdge = (lastPoint[0] ?? 0) > 0 ? 180 : -180;
+    current.push([lastEdge, lat]);
+    segments.push(current);
+    current = [[-lastEdge, lat]];
+  }
+
   if (current.length > 0) {
     segments.push(current);
   }
@@ -198,6 +215,8 @@ function geometryPath(geometry: Polygon | MultiPolygon): string {
 function polygonFocus(rings: Position[][]): FocusBox | null {
   let minLon = Infinity;
   let maxLon = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -210,6 +229,8 @@ function polygonFocus(rings: Position[][]): FocusBox | null {
       const [x, y] = project(lon, lat);
       minLon = Math.min(minLon, lon);
       maxLon = Math.max(maxLon, lon);
+      minLat = Math.min(minLat, lat);
+      maxLat = Math.max(maxLat, lat);
       minX = Math.min(minX, x);
       minY = Math.min(minY, y);
       maxX = Math.max(maxX, x);
@@ -221,31 +242,72 @@ function polygonFocus(rings: Position[][]): FocusBox | null {
     return null;
   }
 
-  return { minX, minY, maxX, maxY };
+  return { minX, minY, maxX, maxY, minLon, maxLon, minLat, maxLat };
 }
 
-// Overseas pieces sit in the same feature. Framing the largest piece
-// keeps Alaska or Hawaii from pulling a California view across the map.
+function focusArea(box: FocusBox): number {
+  return (box.maxX - box.minX) * (box.maxY - box.minY);
+}
+
+function boxGapDeg(a: FocusBox, b: FocusBox): number {
+  const lon = a.maxLon < b.minLon
+    ? b.minLon - a.maxLon
+    : b.maxLon < a.minLon
+      ? a.minLon - b.maxLon
+      : 0;
+  const lat = a.maxLat < b.minLat
+    ? b.minLat - a.maxLat
+    : b.maxLat < a.minLat
+      ? a.minLat - b.maxLat
+      : 0;
+  return Math.max(lon, lat);
+}
+
+function unionFocus(a: FocusBox, b: FocusBox): FocusBox {
+  return {
+    minX: Math.min(a.minX, b.minX),
+    minY: Math.min(a.minY, b.minY),
+    maxX: Math.max(a.maxX, b.maxX),
+    maxY: Math.max(a.maxY, b.maxY),
+    minLon: Math.min(a.minLon, b.minLon),
+    maxLon: Math.max(a.maxLon, b.maxLon),
+    minLat: Math.min(a.minLat, b.minLat),
+    maxLat: Math.max(a.maxLat, b.maxLat),
+  };
+}
+
+// Overseas pieces sit in the same feature. Frame the largest piece
+// plus nearby islands so Hawaii or Michigan stay whole, without
+// pulling Guiana or Alaska into the same crop.
 function geometryFocus(geometry: Polygon | MultiPolygon): FocusBox | null {
   const polygons = geometry.type === "Polygon"
     ? [geometry.coordinates]
     : geometry.coordinates;
-  let best: FocusBox | null = null;
-  let bestArea = -1;
+  const boxes: FocusBox[] = [];
 
   for (const polygon of polygons) {
     const box = polygonFocus(polygon);
-    if (box == null) {
-      continue;
-    }
-    const area = (box.maxX - box.minX) * (box.maxY - box.minY);
-    if (area > bestArea) {
-      best = box;
-      bestArea = area;
+    if (box != null) {
+      boxes.push(box);
     }
   }
 
-  return best;
+  const largest = boxes.reduce<FocusBox | null>((best, box) => {
+    if (best == null || focusArea(box) > focusArea(best)) {
+      return box;
+    }
+    return best;
+  }, null);
+  if (largest == null) {
+    return null;
+  }
+
+  return boxes.reduce((union, box) => {
+    if (box === largest || boxGapDeg(largest, box) > FOCUS_CLUSTER_DEG) {
+      return union;
+    }
+    return unionFocus(union, box);
+  }, largest);
 }
 
 function paddedViewBox(focus: FocusBox): string {

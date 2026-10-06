@@ -53,6 +53,7 @@ export const consentRecordVersionFilterFragment = graphql`
         node {
           id
           version
+          state
         }
       }
     }
@@ -78,7 +79,7 @@ export function ConsentRecordVersionFilter({
   const allVersionsLabel = t("consentRecordsPage.filters.all");
   const versions = (data.versions?.edges ?? []).flatMap((edge) => {
     const node = edge?.node;
-    if (node == null) {
+    if (node == null || node.state !== "PUBLISHED") {
       return [];
     }
     return [node];

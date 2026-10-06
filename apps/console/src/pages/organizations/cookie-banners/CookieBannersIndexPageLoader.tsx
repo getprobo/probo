@@ -40,13 +40,18 @@ export default function CookieBannersIndexPageLoader() {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <PageSkeleton />;
   }
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <CookieBannersIndexPage queryRef={queryRef} />
+      <CookieBannersIndexPage queryRef={currentQueryRef} />
     </Suspense>
   );
 }

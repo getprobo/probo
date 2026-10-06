@@ -19,8 +19,9 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { toFieldErrors } from "@probo/helpers";
+import { formatError, toFieldErrors } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
+import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
@@ -56,6 +57,7 @@ const createCookieBannerMutation = graphql`
 
 export default function NewCookieBannerPage() {
   const { t } = useTranslation("organizations/cookie-banners");
+  const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const { card, fields, pair, actions } = cookieBannerSettingsSection();
@@ -65,15 +67,27 @@ export default function NewCookieBannerPage() {
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("");
   const [consentExpiryDays, setConsentExpiryDays] = useState("365");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const createError = t("newCookieBannerPage.errors.create");
   const [createCookieBanner, isCreating] = useMutation<NewCookieBannerPageMutation>(
     createCookieBannerMutation,
     {
       successMessage: t("newCookieBannerPage.messages.created"),
-      errorToast: t("newCookieBannerPage.errors.create"),
+      errorToast: false,
     },
   );
 
   usePageTitle(t("newCookieBannerPage.pageTitle"));
+
+  function clearFieldError(field: string) {
+    setErrors((current) => {
+      if (current[field] == null) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
@@ -97,13 +111,28 @@ export default function NewCookieBannerPage() {
         const fieldErrors = toFieldErrors(payloadErrors);
         if (fieldErrors != null) {
           setErrors(fieldErrors);
+          return;
         }
+        if (payloadErrors != null && payloadErrors.length > 0) {
+          toast({
+            title: t("newCookieBannerPage.errors.title"),
+            description: formatError(createError, payloadErrors),
+            variant: "error",
+          });
+        }
+      },
+      onError(error) {
+        toast({
+          title: t("newCookieBannerPage.errors.title"),
+          description: formatError(createError, error),
+          variant: "error",
+        });
       },
     }).then((response) => {
       const bannerId = response.createCookieBanner.cookieBannerEdge.node.id;
       void navigate(cookieBannerInstallPath(organizationId, bannerId));
     }).catch(() => {
-      // Field errors are mapped in onCompleted; other failures toast.
+      // Field errors stay on the form; other failures toast above.
     });
   }
 
@@ -125,7 +154,7 @@ export default function NewCookieBannerPage() {
                 placeholder={t("newCookieBannerPage.fields.namePlaceholder")}
                 onValueChange={(value) => {
                   setName(value);
-                  setErrors({});
+                  clearFieldError("name");
                 }}
               />
             </Field>
@@ -143,7 +172,7 @@ export default function NewCookieBannerPage() {
                 disabled={isCreating}
                 onValueChange={(value) => {
                   setConsentExpiryDays(value);
-                  setErrors({});
+                  clearFieldError("consentExpiryDays");
                 }}
               />
             </Field>
@@ -157,7 +186,7 @@ export default function NewCookieBannerPage() {
               placeholder={t("newCookieBannerPage.fields.originPlaceholder")}
               onValueChange={(value) => {
                 setOrigin(value);
-                setErrors({});
+                clearFieldError("origin");
               }}
             />
           </Field>
@@ -176,7 +205,7 @@ export default function NewCookieBannerPage() {
                 placeholder={t("newCookieBannerPage.fields.cookiePolicyUrlPlaceholder")}
                 onValueChange={(value) => {
                   setCookiePolicyUrl(value);
-                  setErrors({});
+                  clearFieldError("cookiePolicyUrl");
                 }}
               />
             </Field>
@@ -192,7 +221,7 @@ export default function NewCookieBannerPage() {
                 placeholder={t("newCookieBannerPage.fields.privacyPolicyUrlPlaceholder")}
                 onValueChange={(value) => {
                   setPrivacyPolicyUrl(value);
-                  setErrors({});
+                  clearFieldError("privacyPolicyUrl");
                 }}
               />
             </Field>

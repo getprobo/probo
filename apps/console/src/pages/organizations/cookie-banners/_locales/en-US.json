@@ -283,6 +283,12 @@
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" }
   },
+  "cookieBannersIndex": {
+    "empty": {
+      "title": "No cookie banners",
+      "description": "There are no cookie banners in this workspace yet."
+    }
+  },
   "newCookieBannerPage": {
     "pageTitle": "New cookie banner",
     "title": "Create cookie banner",

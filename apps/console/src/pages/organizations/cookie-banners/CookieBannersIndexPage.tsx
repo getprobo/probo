@@ -18,17 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Navigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannersIndexPageQuery } from "#/__generated__/core/CookieBannersIndexPageQuery.graphql";
 
+import { CookieBannerPageHeader } from "./_components/CookieBannerPageHeader";
+import { cookieBannerPage } from "./variants";
+
 export const cookieBannersIndexPageQuery = graphql`
   query CookieBannersIndexPageQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
+        canCreateCookieBanner: permission(action: "core:cookie-banner:create")
         cookieBanners(first: 1, orderBy: { field: CREATED_AT, direction: DESC })
           @required(action: THROW) {
           edges {
@@ -47,6 +52,7 @@ interface CookieBannersIndexPageProps {
 }
 
 export function CookieBannersIndexPage({ queryRef }: CookieBannersIndexPageProps) {
+  const { t } = useTranslation("organizations/cookie-banners");
   const { organization } = usePreloadedQuery<CookieBannersIndexPageQuery>(
     cookieBannersIndexPageQuery,
     queryRef,
@@ -57,6 +63,16 @@ export function CookieBannersIndexPage({ queryRef }: CookieBannersIndexPageProps
 
   const cookieBannerId = organization.cookieBanners.edges[0]?.node.id;
   if (cookieBannerId == null) {
+    if (!organization.canCreateCookieBanner) {
+      return (
+        <div className={cookieBannerPage()}>
+          <CookieBannerPageHeader
+            title={t("cookieBannersIndex.empty.title")}
+            description={t("cookieBannersIndex.empty.description")}
+          />
+        </div>
+      );
+    }
     return <Navigate to="new" replace />;
   }
 

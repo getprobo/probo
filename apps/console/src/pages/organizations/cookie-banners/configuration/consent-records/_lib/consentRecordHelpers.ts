@@ -43,7 +43,11 @@ export function formatLocation(
   if (subdivisionCode == null || subdivisionCode === "") {
     return countryCode;
   }
-  return `${countryCode} · ${subdivisionCode}`;
+  const prefix = `${countryCode.toUpperCase()}-`;
+  const region = subdivisionCode.toUpperCase().startsWith(prefix)
+    ? subdivisionCode.slice(prefix.length)
+    : subdivisionCode;
+  return `${countryCode} · ${region}`;
 }
 
 export function formatAnonymizedIp(ip: string): string {

@@ -258,7 +258,7 @@
       "gvlVersion": "Version de la GVL",
       "language": "Langue",
       "purposes": "IDs des finalités",
-      "vendorConsentCount": "Consentements vendeurs",
+      "vendorConsentCount": "Consentements des fournisseurs",
       "decodeError": "Impossible de décoder cette chaîne TC."
     },
     "unknownLocation": "Localisation inconnue",
@@ -282,6 +282,12 @@
     "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" }
+  },
+  "cookieBannersIndex": {
+    "empty": {
+      "title": "Aucune bannière de cookies",
+      "description": "Cet espace de travail n’a pas encore de bannière de cookies."
+    }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nouvelle bannière de cookies",

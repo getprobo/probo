@@ -45,6 +45,18 @@ const consentRecordCategoriesCardFragment = graphql`
   }
 `;
 
+function parseConsentMap(consentData: string): Record<string, boolean> {
+  try {
+    const parsed: unknown = JSON.parse(consentData);
+    if (parsed == null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return parsed as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+
 interface ConsentRecordCategoriesCardProps {
   className?: string;
   cookieConsentRecordKey: ConsentRecordCategoriesCard_cookieConsentRecord$key;
@@ -56,13 +68,7 @@ export function ConsentRecordCategoriesCard({
 }: ConsentRecordCategoriesCardProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const record = useFragment(consentRecordCategoriesCardFragment, cookieConsentRecordKey);
-  const consentMap = useMemo(() => {
-    try {
-      return JSON.parse(record.consentData) as Record<string, boolean>;
-    } catch {
-      return {};
-    }
-  }, [record.consentData]);
+  const consentMap = useMemo(() => parseConsentMap(record.consentData), [record.consentData]);
   const { card, title, titleIcon, category } = consentRecordPage();
 
   if (record.action !== "CUSTOMIZE") {
