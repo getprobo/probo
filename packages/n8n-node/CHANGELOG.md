@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.242.0] - 2026-10-06
+
 ### Changed
 
 - **Breaking**: the `Measure` resource is renamed to `Internal Control`
@@ -12,6 +14,9 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
   and default to empty. `Get Many` returns `internalControls` instead
   of `measures`. Existing workflows must reselect the resource and
   parameters, and update expressions that read `measures`.
+- Task `Update` no longer returns the next occurrence. A recurring
+  task's next occurrence is created when its deadline passes, and the
+  interval stays on the current task until then
 
 ## [0.241.0] - 2026-10-05
 
