@@ -18,26 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { Form } from "@base-ui/react/form";
+import { toFieldErrors } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import {
-  Button,
-  Card,
-  Field,
-  Input,
-  PageHeader,
-  useToast,
-} from "@probo/ui";
-import { type FormEvent, useState } from "react";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
 import { useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { NewCookieBannerPageMutation } from "#/__generated__/core/NewCookieBannerPageMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { useMutation } from "#/lib/relay/useMutation";
 
+import { CookieBannerPageHeader } from "./_components/CookieBannerPageHeader";
 import { cookieBannerInstallPath } from "./_lib/cookieBannerPaths";
+import { cookieBannerPage, cookieBannerSettingsSection } from "./variants";
 
 const createCookieBannerMutation = graphql`
   mutation NewCookieBannerPageMutation(
@@ -57,117 +56,160 @@ const createCookieBannerMutation = graphql`
 
 export default function NewCookieBannerPage() {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
-
-  usePageTitle(t("newCookieBannerPage.pageTitle"));
-
-  const [createCookieBanner, isCreating]
-    = useMutation<NewCookieBannerPageMutation>(createCookieBannerMutation);
-
+  const { card, fields, pair, actions } = cookieBannerSettingsSection();
   const [name, setName] = useState("");
   const [origin, setOrigin] = useState("");
   const [cookiePolicyUrl, setCookiePolicyUrl] = useState("");
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("");
   const [consentExpiryDays, setConsentExpiryDays] = useState("365");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [createCookieBanner, isCreating] = useMutation<NewCookieBannerPageMutation>(
+    createCookieBannerMutation,
+    {
+      successMessage: t("newCookieBannerPage.messages.created"),
+      errorToast: t("newCookieBannerPage.errors.create"),
+    },
+  );
+
+  usePageTitle(t("newCookieBannerPage.pageTitle"));
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
     "CookieBannerSwitcherMenu_cookieBanners",
   );
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    createCookieBanner({
-      variables: {
-        input: {
-          organizationId,
-          name,
-          origin,
-          cookiePolicyUrl,
-          privacyPolicyUrl: privacyPolicyUrl || undefined,
-          consentExpiryDays: parseInt(consentExpiryDays, 10),
+  async function handleSubmit() {
+    try {
+      const response = await createCookieBanner({
+        variables: {
+          input: {
+            organizationId,
+            name: name.trim(),
+            origin: origin.trim(),
+            cookiePolicyUrl: cookiePolicyUrl.trim(),
+            privacyPolicyUrl: privacyPolicyUrl.trim() || undefined,
+            consentExpiryDays: Number.parseInt(consentExpiryDays, 10),
+          },
+          connections: [connectionId],
         },
-        connections: [connectionId],
-      },
-      onCompleted(data) {
-        toast({
-          title: t("newCookieBannerPage.messages.successTitle"),
-          description: t("newCookieBannerPage.messages.created"),
-          variant: "success",
-        });
-        const bannerId = data.createCookieBanner.cookieBannerEdge.node.id;
-        void navigate(cookieBannerInstallPath(organizationId, bannerId));
-      },
-      onError(error) {
-        toast({
-          title: t("newCookieBannerPage.errors.title"),
-          description: formatError(t("newCookieBannerPage.errors.create"), error),
-          variant: "error",
-        });
-      },
-    });
-  };
+        onCompleted(_response, payloadErrors) {
+          const fieldErrors = toFieldErrors(payloadErrors);
+          if (fieldErrors != null) {
+            setErrors(fieldErrors);
+          }
+        },
+      });
+      const bannerId = response.createCookieBanner.cookieBannerEdge.node.id;
+      void navigate(cookieBannerInstallPath(organizationId, bannerId));
+    } catch {
+      // Field errors are mapped in onCompleted; other failures toast.
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className={cookieBannerPage()}>
+      <CookieBannerPageHeader
         title={t("newCookieBannerPage.title")}
         description={t("newCookieBannerPage.description")}
       />
-      <Card padded asChild>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label={t("newCookieBannerPage.fields.name")}>
-            <Input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={t("newCookieBannerPage.fields.namePlaceholder")}
+      <Card size={2} variant="soft" className={card()}>
+        <Form className={fields()} errors={errors} onFormSubmit={handleSubmit}>
+          <div className={pair()}>
+            <Field required label={t("newCookieBannerPage.fields.name")} error={errors.name}>
+              <TextField
+                name="name"
+                required
+                value={name}
+                disabled={isCreating}
+                placeholder={t("newCookieBannerPage.fields.namePlaceholder")}
+                onValueChange={(value) => {
+                  setName(value);
+                  setErrors({});
+                }}
+              />
+            </Field>
+            <Field
               required
-            />
-          </Field>
-
-          <Field label={t("newCookieBannerPage.fields.origin")}>
-            <Input
+              label={t("newCookieBannerPage.fields.consentExpiryDays")}
+              error={errors.consentExpiryDays}
+            >
+              <TextField
+                name="consentExpiryDays"
+                type="number"
+                required
+                min={1}
+                value={consentExpiryDays}
+                disabled={isCreating}
+                onValueChange={(value) => {
+                  setConsentExpiryDays(value);
+                  setErrors({});
+                }}
+              />
+            </Field>
+          </div>
+          <Field required label={t("newCookieBannerPage.fields.origin")} error={errors.origin}>
+            <TextField
+              name="origin"
+              required
               value={origin}
-              onChange={e => setOrigin(e.target.value)}
+              disabled={isCreating}
               placeholder={t("newCookieBannerPage.fields.originPlaceholder")}
+              onValueChange={(value) => {
+                setOrigin(value);
+                setErrors({});
+              }}
+            />
+          </Field>
+          <div className={pair()}>
+            <Field
               required
-            />
-          </Field>
-
-          <Field label={t("newCookieBannerPage.fields.cookiePolicyUrl")}>
-            <Input
-              value={cookiePolicyUrl}
-              onChange={e => setCookiePolicyUrl(e.target.value)}
-              placeholder={t("newCookieBannerPage.fields.cookiePolicyUrlPlaceholder")}
-              required
-            />
-          </Field>
-
-          <Field label={t("newCookieBannerPage.fields.privacyPolicyUrl")}>
-            <Input
-              value={privacyPolicyUrl}
-              onChange={e => setPrivacyPolicyUrl(e.target.value)}
-              placeholder={t("newCookieBannerPage.fields.privacyPolicyUrlPlaceholder")}
-            />
-          </Field>
-
-          <Field label={t("newCookieBannerPage.fields.consentExpiryDays")}>
-            <Input
-              type="number"
-              value={consentExpiryDays}
-              onChange={e => setConsentExpiryDays(e.target.value)}
-              min="1"
-              required
-            />
-          </Field>
-
-          <Button type="submit" disabled={isCreating}>
-            {isCreating ? t("newCookieBannerPage.actions.creating") : t("newCookieBannerPage.actions.create")}
-          </Button>
-        </form>
+              label={t("newCookieBannerPage.fields.cookiePolicyUrl")}
+              error={errors.cookiePolicyUrl}
+            >
+              <TextField
+                name="cookiePolicyUrl"
+                type="url"
+                required
+                value={cookiePolicyUrl}
+                disabled={isCreating}
+                placeholder={t("newCookieBannerPage.fields.cookiePolicyUrlPlaceholder")}
+                onValueChange={(value) => {
+                  setCookiePolicyUrl(value);
+                  setErrors({});
+                }}
+              />
+            </Field>
+            <Field
+              label={t("newCookieBannerPage.fields.privacyPolicyUrl")}
+              error={errors.privacyPolicyUrl}
+            >
+              <TextField
+                name="privacyPolicyUrl"
+                type="url"
+                value={privacyPolicyUrl}
+                disabled={isCreating}
+                placeholder={t("newCookieBannerPage.fields.privacyPolicyUrlPlaceholder")}
+                onValueChange={(value) => {
+                  setPrivacyPolicyUrl(value);
+                  setErrors({});
+                }}
+              />
+            </Field>
+          </div>
+          <div className={actions()}>
+            <Button
+              type="submit"
+              variant="solid"
+              color="neutral"
+              highContrast
+              loading={isCreating}
+            >
+              {t("newCookieBannerPage.actions.create")}
+            </Button>
+          </div>
+        </Form>
       </Card>
     </div>
   );
