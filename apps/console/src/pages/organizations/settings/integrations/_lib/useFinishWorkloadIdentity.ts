@@ -35,9 +35,6 @@ const createWorkloadIdentityConnectorMutation = graphql`
       connector {
         id
         connectionStatus
-        discoveredAccounts {
-          externalAccountId
-        }
       }
     }
   }
@@ -82,9 +79,7 @@ export function useFinishWorkloadIdentity(organizationId: string) {
 
     return {
       to: connectorDetailsPath(organizationId, input.provider),
-      state: connector.discoveredAccounts.length === 0
-        ? undefined
-        : createdConnectorState(connector.id),
+      state: createdConnectorState(connector.id),
     };
   };
 }

@@ -35,11 +35,13 @@ const connectorProbeErrorFragment = graphql`
 interface ConnectorProbeErrorProps {
   connectorKey: ConnectorProbeError_connector$key;
   issues: readonly ConnectionIssueKey[];
+  messages?: readonly string[];
 }
 
 export function ConnectorProbeError({
   connectorKey,
   issues,
+  messages = [],
 }: ConnectorProbeErrorProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const connector = useFragment(connectorProbeErrorFragment, connectorKey);
@@ -49,7 +51,10 @@ export function ConnectorProbeError({
   return (
     <ErrorNotice
       className="pointer-events-auto relative z-1"
-      messages={issues.map(issue => t(`listPage.connectionIssues.${issue}`, { provider }))}
+      messages={[
+        ...issues.map(issue => t(`listPage.connectionIssues.${issue}`, { provider })),
+        ...messages,
+      ]}
       copyLabel={t("detailsPage.probeError.copy")}
       onCopied={() => {
         toast.add({
