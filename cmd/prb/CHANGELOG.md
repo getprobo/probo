@@ -4,8 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.241.0] - 2026-10-06
+
 ### Changed
 
+- The `measure` command is renamed to `internal-control`. `--measure`
+  and `--measure-id` are now `--internal-control` and
+  `--internal-control-id` on evidence, task, and the link commands
 - The next occurrence of a recurring task is created when its deadline
   passes, not when the task is marked done. `task update` no longer
   prints "Created next task <id> (<name>)". The interval stays on the
