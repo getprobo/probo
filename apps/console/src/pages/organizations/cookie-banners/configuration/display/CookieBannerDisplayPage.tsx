@@ -18,37 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, IconPlusSmall } from "@probo/ui";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerDisplayPageQuery } from "#/__generated__/core/CookieBannerDisplayPageQuery.graphql";
 
-import { CategoryDialog } from "./_components/CategoryDialog";
-import { CategorySection } from "./_components/CategorySection";
-import { ThemePreview } from "./_components/ThemePreview";
+import { cookieBannerPage } from "../../variants";
+
+import { CategoryList } from "./_components/CategoryList";
+import { ThemeSection } from "./_components/ThemeSection";
 
 export const cookieBannerDisplayPageQuery = graphql`
   query CookieBannerDisplayPageQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
-        id
-        categories(first: 50, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED })
-          @connection(key: "CookieBannerDisplayPage_categories")
-          @required(action: THROW) {
-          __id
-          edges {
-            node {
-              id
-              rank
-              ...CategorySectionFragment
-            }
-          }
-        }
-        ...ThemePreview_cookieBanner
+        ...CategoryList_cookieBanner
+        ...ThemeSection_cookieBanner
       }
     }
   }
@@ -58,60 +44,22 @@ interface CookieBannerDisplayPageProps {
   queryRef: PreloadedQuery<CookieBannerDisplayPageQuery>;
 }
 
-export default function CookieBannerDisplayPage({
+export function CookieBannerDisplayPage({
   queryRef,
 }: CookieBannerDisplayPageProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
-  const data = usePreloadedQuery<CookieBannerDisplayPageQuery>(cookieBannerDisplayPageQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerDisplayPageQuery>(
+    cookieBannerDisplayPageQuery,
+    queryRef,
+  );
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
   }
 
-  const banner = data.node;
-  const connectionId = banner.categories.__id;
-  const categories = banner.categories.edges.map(e => e.node);
-
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-
   return (
-    <div className="space-y-8">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {t("displayPage.description")}
-          </p>
-          <Button variant="secondary" onClick={() => setShowCreateDialog(true)}>
-            <IconPlusSmall size={16} />
-            {t("displayPage.actions.addCategory")}
-          </Button>
-        </div>
-
-        {categories.length === 0 && (
-          <Card className="border p-8 text-center text-muted-foreground">
-            {t("displayPage.empty")}
-          </Card>
-        )}
-
-        {categories.map(category => (
-          <CategorySection
-            key={category.id}
-            categoryKey={category}
-            connectionId={connectionId}
-          />
-        ))}
-
-        {showCreateDialog && (
-          <CategoryDialog
-            cookieBannerId={banner.id}
-            connectionId={connectionId}
-            nextRank={categories.length > 0 ? categories[categories.length - 1].rank + 1 : 0}
-            onOpenChange={setShowCreateDialog}
-          />
-        )}
-      </div>
-
-      <ThemePreview cookieBannerKey={data.node} />
+    <div className={cookieBannerPage()}>
+      <CategoryList cookieBannerKey={data.node} />
+      <ThemeSection cookieBannerKey={data.node} />
     </div>
   );
 }

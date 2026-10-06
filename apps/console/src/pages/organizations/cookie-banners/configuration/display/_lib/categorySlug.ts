@@ -18,9 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export interface CookieEntry {
-  name: string;
-  maxAgeSeconds: number | null;
-  description: string;
-  excluded: boolean;
+export const CATEGORY_NAME_MAX_LENGTH = 255;
+export const CATEGORY_SLUG_MAX_LENGTH = 100;
+export const CATEGORY_DESCRIPTION_MAX_LENGTH = 1000;
+export const CATEGORY_SLUG_PATTERN = "[a-z0-9]+(-[a-z0-9]+)*";
+
+export function slugFromName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, CATEGORY_SLUG_MAX_LENGTH);
 }

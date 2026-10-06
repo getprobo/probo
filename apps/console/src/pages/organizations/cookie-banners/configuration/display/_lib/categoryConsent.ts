@@ -18,36 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+export const GCM_CONSENT_TYPES = [
+  "analytics_storage",
+  "ad_storage",
+  "ad_user_data",
+  "ad_personalization",
+  "functionality_storage",
+  "personalization_storage",
+  "security_storage",
+] as const;
 
-import type { CookieBannerDisplayPageQuery } from "#/__generated__/core/CookieBannerDisplayPageQuery.graphql";
+export const TCF_PURPOSE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
 
-import { CookieBannerDisplayPage, cookieBannerDisplayPageQuery } from "./CookieBannerDisplayPage";
-import { CookieBannerDisplayPageSkeleton } from "./CookieBannerDisplayPageSkeleton";
-
-export default function CookieBannerDisplayPageLoader() {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (typeof cookieBannerId !== "string") {
-    throw new Error("Missing cookieBannerId parameter");
+export function setIncluded<T>(values: readonly T[], value: T, included: boolean): T[] {
+  if (included) {
+    return values.includes(value) ? [...values] : [...values, value];
   }
 
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerDisplayPageQuery>(
-    cookieBannerDisplayPageQuery,
-  );
-
-  useEffect(() => {
-    loadQuery({ cookieBannerId });
-  }, [loadQuery, cookieBannerId]);
-
-  if (!queryRef) {
-    return <CookieBannerDisplayPageSkeleton />;
-  }
-
-  return (
-    <Suspense fallback={<CookieBannerDisplayPageSkeleton />}>
-      <CookieBannerDisplayPage queryRef={queryRef} />
-    </Suspense>
-  );
+  return values.filter(item => item !== value);
 }

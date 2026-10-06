@@ -157,52 +157,51 @@
     "empty": { "title": "Aucune ressource non catégorisée", "description": "Toutes les ressources détectées ont été catégorisées. Les nouvelles ressources apparaîtront ici lorsqu’elles seront détectées." },
     "emptyFiltered": "Aucune ressource correspondante"
   },
-  "themePreview": {
-    "title": "Thème", "defaultSnippet": "/* Thème par défaut utilisé — aucune surcharge nécessaire */",
-    "messages": { "copiedTitle": "Copié", "copied": "Extrait CSS copié dans le presse-papiers" },
-    "actions": { "reset": "Réinitialiser les valeurs par défaut", "copy": "Copier" },
-    "variables": { "bg": "Arrière-plan", "text": "Texte", "textsecondary": "Texte secondaire", "border": "Bordure", "accent": "Accent", "accenttext": "Texte d’accent", "radius": "Rayon de bordure", "btnradius": "Rayon des boutons", "fontsize": "Taille de police", "fontfamily": "Famille de police", "shadow": "Ombre" },
-    "banner": { "title": "Préférences de cookies", "description": "Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic du site. <policy>Politique de confidentialité</policy>", "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "privacyBy": "Confidentialité par" }
+  "categoryList": {
+    "title": "Catégories",
+    "description": "Définissez l’ordre d’affichage des catégories sur la bannière. Modifiez une catégorie pour changer son nom, son identifiant et ses correspondances de consentement.",
+    "actions": { "add": "Ajouter une catégorie" },
+    "empty": { "title": "Aucune catégorie", "description": "Ajoutez une catégorie pour regrouper les choix de consentement sur la bannière." }
   },
-  "editCookieRow": {
-    "includeTitle": "Inclure ce cookie dans la bannière",
-    "fields": { "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Enregistrer", "cancel": "Annuler" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" }
+  "categoryListItem": {
+    "required": "Obligatoire",
+    "actions": { "moveUp": "Monter", "moveDown": "Descendre", "edit": "Modifier la catégorie", "delete": "Supprimer la catégorie" },
+    "errors": { "reorder": "Échec du réordonnancement de la catégorie" }
   },
-  "editCategoryForm": {
-    "fields": { "namePlaceholder": "Nom de la catégorie", "slugPlaceholder": "Identifiant de la catégorie", "descriptionPlaceholder": "Description de la catégorie" },
+  "categoryDrawer": {
+    "title": "Modifier la catégorie",
+    "description": "Nom, identifiant et correspondances de consentement de cette catégorie.",
+    "fields": { "name": "Nom", "slug": "Identifiant", "slugHelp": "Utilisé comme valeur de l’attribut data-cookie-consent", "description": "Description" },
     "googleConsentMode": { "title": "Mode de consentement Google", "description": "Sélectionnez les signaux Google Consent Mode contrôlés par cette catégorie." },
     "tcfPurposes": { "title": "Finalités TCF", "description": "Lorsque TCF est activé, cette catégorie n’est accordée que si chaque finalité sélectionnée est consentie ou couverte par un intérêt légitime." },
     "posthog": { "title": "PostHog", "description": "Contrôlez le consentement au suivi PostHog selon cette catégorie.", "checkbox": "Activer ou désactiver le suivi PostHog" },
-    "actions": { "saving": "Enregistrement...", "save": "Enregistrer", "cancel": "Annuler" }
+    "messages": { "updated": "Catégorie mise à jour" },
+    "errors": { "update": "Échec de la mise à jour de la catégorie" },
+    "actions": { "save": "Enregistrer", "cancel": "Annuler", "close": "Fermer" }
   },
-  "categorySection": {
-    "messages": { "successTitle": "Succès", "updated": "Catégorie mise à jour", "cookieAdded": "Cookie ajouté", "cookieUpdated": "Cookie mis à jour", "cookieDeleted": "Cookie supprimé", "categoryDeleted": "Catégorie supprimée", "cookieMoved": "Cookie déplacé" },
-    "errors": { "title": "Erreur", "updateCategory": "Échec de la mise à jour de la catégorie", "duplicateCookie": "Un cookie portant ce nom existe déjà dans cette bannière", "addCookie": "Échec de l’ajout du cookie", "updateCookie": "Échec de la mise à jour du cookie", "deleteCookie": "Échec de la suppression du cookie", "deleteCategory": "Échec de la suppression de la catégorie", "reorder": "Échec du réordonnancement", "moveCookie": "Échec du déplacement du cookie" },
-    "deleteCookieConfirmation": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
-    "deleteCategoryConfirmation": "Voulez-vous vraiment supprimer la catégorie \"{{name}}\" ? Tous les cookies de cette catégorie seront déplacés vers Non catégorisé.",
-    "required": "Obligatoire", "blockHint": "Bloquer les éléments jusqu’à l’obtention du consentement :", "googleConsentMode": "Mode de consentement Google :", "tcfPurposes": "Finalités TCF :", "posthog": "PostHog :", "trackingConsent": "Consentement au suivi",
-    "columns": { "name": "Nom", "type": "Type", "duration": "Durée" },
-    "actions": { "edit": "Modifier", "delete": "Supprimer", "include": "Inclure", "exclude": "Exclure", "addCookie": "Ajouter un cookie" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Stockage en cache" },
-    "duration": { "session": "Session", "persistent": "Persistant", "year_one": "{{count}} an", "year_other": "{{count}} ans", "month_one": "{{count}} mois", "month_other": "{{count}} mois", "week_one": "{{count}} semaine", "week_other": "{{count}} semaines", "day_one": "{{count}} jour", "day_other": "{{count}} jours", "hour_one": "{{count}} heure", "hour_other": "{{count}} heures", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} seconde", "second_other": "{{count}} secondes" }
-  },
-  "categoryDialog": {
+  "categoryCreateDialog": {
     "title": "Ajouter une catégorie",
-    "messages": { "successTitle": "Succès", "created": "Catégorie créée" },
-    "errors": { "title": "Erreur", "create": "Échec de la création de la catégorie" },
     "fields": { "name": "Nom", "slug": "Identifiant", "slugHelp": "Utilisé comme valeur de l’attribut data-cookie-consent", "description": "Description" },
-    "actions": { "saving": "Enregistrement...", "create": "Créer" }
+    "messages": { "created": "Catégorie créée" },
+    "errors": { "create": "Échec de la création de la catégorie" },
+    "actions": { "create": "Créer", "cancel": "Annuler" }
   },
-  "addCookieRow": {
-    "fields": { "namePlaceholder": "Nom du cookie", "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
+  "deleteCategoryDialog": {
+    "title": "Supprimer la catégorie",
+    "description": "Supprimer la catégorie « {{name}} » ? Les traceurs de cette catégorie seront déplacés vers Non catégorisé.",
+    "messages": { "deleted": "Catégorie supprimée" },
+    "errors": { "delete": "Échec de la suppression de la catégorie" },
+    "actions": { "delete": "Supprimer", "cancel": "Annuler" }
   },
-  "displayPage": {
-    "description": "Organisez les cookies en catégories et déclarez les cookies utilisés par votre site.",
-    "actions": { "addCategory": "Ajouter une catégorie" },
-    "empty": "Aucune catégorie pour le moment. Ajoutez une catégorie pour commencer à gérer les cookies."
+  "themeSection": {
+    "title": "Thème",
+    "description": "Ces contrôles prévisualisent uniquement un thème et génèrent un extrait CSS. Ils n’enregistrent pas le style sur la bannière. Ajoutez l’extrait vous-même sur votre site.",
+    "defaultSnippet": "/* Thème par défaut utilisé — aucune surcharge nécessaire */",
+    "messages": { "copiedTitle": "Copié", "copied": "Extrait CSS copié dans le presse-papiers" },
+    "errors": { "title": "Erreur", "copy": "Échec de la copie de l’extrait CSS" },
+    "actions": { "reset": "Réinitialiser les valeurs par défaut", "copy": "Copier l’extrait" },
+    "variables": { "bg": "Arrière-plan", "text": "Texte", "textsecondary": "Texte secondaire", "border": "Bordure", "accent": "Accent", "accenttext": "Texte d’accent", "radius": "Rayon de bordure", "btnradius": "Rayon des boutons", "fontsize": "Taille de police", "fontfamily": "Famille de police", "shadow": "Ombre" },
+    "banner": { "title": "Préférences de cookies", "description": "Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic du site. <policy>Politique de confidentialité</policy>", "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "privacyBy": "Confidentialité par" }
   },
   "consentRecordsPage": {
     "title": "Journal",

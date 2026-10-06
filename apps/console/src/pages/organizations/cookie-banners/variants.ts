@@ -166,3 +166,52 @@ export const detectedTrackerListItem = tv({
     date: "whitespace-nowrap",
   },
 });
+
+export const cookieBannerDisplaySection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex items-start justify-between gap-4",
+    heading: "flex flex-col gap-1",
+    empty: "flex flex-col items-center gap-1 py-8 text-center",
+    title: "flex min-w-0 items-center gap-2",
+    description: "min-w-0 line-clamp-2",
+    actions: "flex shrink-0 items-center gap-1",
+  },
+});
+
+export const cookieBannerThemeSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex items-start justify-between gap-4",
+    heading: "flex flex-col gap-1",
+    fields: "flex flex-col gap-4",
+    colors: "grid grid-cols-3 gap-4 max-sm:grid-cols-1",
+    color: "flex flex-col gap-1.5",
+    colorRow: "flex items-center gap-2",
+    swatch: "h-8 w-10 shrink-0 cursor-pointer rounded-2 border border-sand-6 bg-transparent p-0.5",
+    texts: "grid grid-cols-2 gap-4 max-sm:grid-cols-1",
+    preview: "flex min-h-70 items-end justify-center bg-sand-3 p-8",
+    snippet: "overflow-x-auto font-mono text-2 text-sand-12",
+    snippetBar: "flex items-center justify-between",
+  },
+});
+
+export const categoryDrawer = tv({
+  slots: {
+    form: "flex min-h-0 flex-1 flex-col",
+    fields: "flex flex-col gap-4",
+    field: "flex flex-col gap-1",
+    checks: "flex flex-col gap-2",
+    check: "flex items-center gap-2",
+    checkLabel: "font-mono",
+    footerActions: "flex flex-row justify-end gap-2",
+  },
+});
+
+export const categoryCreateDialog = tv({
+  slots: {
+    form: "flex flex-col",
+    fields: "flex flex-col gap-4",
+    field: "flex flex-col gap-1",
+  },
+});

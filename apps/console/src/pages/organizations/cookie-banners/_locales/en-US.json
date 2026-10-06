@@ -157,52 +157,51 @@
     "empty": { "title": "No uncategorised resources", "description": "All detected resources have been categorised. New resources will appear here when detected." },
     "emptyFiltered": "No matching resources"
   },
-  "themePreview": {
-    "title": "Theme", "defaultSnippet": "/* Using default theme — no overrides needed */",
-    "messages": { "copiedTitle": "Copied", "copied": "CSS snippet copied to clipboard" },
-    "actions": { "reset": "Reset to defaults", "copy": "Copy" },
-    "variables": { "bg": "Background", "text": "Text", "textsecondary": "Text secondary", "border": "Border", "accent": "Accent", "accenttext": "Accent text", "radius": "Border radius", "btnradius": "Button radius", "fontsize": "Font size", "fontfamily": "Font family", "shadow": "Shadow" },
-    "banner": { "title": "Cookie preferences", "description": "We use cookies to improve your experience and analyze site traffic. <policy>Privacy policy</policy>", "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "privacyBy": "Privacy by" }
+  "categoryList": {
+    "title": "Categories",
+    "description": "Set the order categories appear on the banner. Edit a category to change its name, slug, and consent mappings.",
+    "actions": { "add": "Add category" },
+    "empty": { "title": "No categories", "description": "Add a category to group consent choices on the banner." }
   },
-  "editCookieRow": {
-    "includeTitle": "Include this cookie in the banner",
-    "fields": { "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Save", "cancel": "Cancel" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" }
+  "categoryListItem": {
+    "required": "Required",
+    "actions": { "moveUp": "Move up", "moveDown": "Move down", "edit": "Edit category", "delete": "Delete category" },
+    "errors": { "reorder": "Failed to reorder category" }
   },
-  "editCategoryForm": {
-    "fields": { "namePlaceholder": "Category name", "slugPlaceholder": "Category slug", "descriptionPlaceholder": "Category description" },
+  "categoryDrawer": {
+    "title": "Edit category",
+    "description": "Name, slug, and consent mappings for this category.",
+    "fields": { "name": "Name", "slug": "Slug", "slugHelp": "Used as the data-cookie-consent attribute value", "description": "Description" },
     "googleConsentMode": { "title": "Google Consent Mode", "description": "Select the Google Consent Mode signals this category controls." },
     "tcfPurposes": { "title": "TCF purposes", "description": "When TCF is on, this category is granted only if every selected purpose is consented or under legitimate interest." },
     "posthog": { "title": "PostHog", "description": "Control PostHog tracking consent based on this category.", "checkbox": "Opt in/out of PostHog tracking" },
-    "actions": { "saving": "Saving...", "save": "Save", "cancel": "Cancel" }
+    "messages": { "updated": "Category updated" },
+    "errors": { "update": "Failed to update category" },
+    "actions": { "save": "Save", "cancel": "Cancel", "close": "Close" }
   },
-  "categorySection": {
-    "messages": { "successTitle": "Success", "updated": "Category updated", "cookieAdded": "Cookie added", "cookieUpdated": "Cookie updated", "cookieDeleted": "Cookie deleted", "categoryDeleted": "Category deleted", "cookieMoved": "Cookie moved" },
-    "errors": { "title": "Error", "updateCategory": "Failed to update category", "duplicateCookie": "A cookie with this name already exists in this banner", "addCookie": "Failed to add cookie", "updateCookie": "Failed to update cookie", "deleteCookie": "Failed to delete cookie", "deleteCategory": "Failed to delete category", "reorder": "Failed to reorder", "moveCookie": "Failed to move cookie" },
-    "deleteCookieConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "deleteCategoryConfirmation": "Are you sure you want to delete the category \"{{name}}\"? Any cookies in this category will be moved to Uncategorised.",
-    "required": "Required", "blockHint": "Block elements until consent is given:", "googleConsentMode": "Google Consent Mode:", "tcfPurposes": "TCF purposes:", "posthog": "PostHog:", "trackingConsent": "Tracking consent",
-    "columns": { "name": "Name", "type": "Type", "duration": "Duration" },
-    "actions": { "edit": "Edit", "delete": "Delete", "include": "Include", "exclude": "Exclude", "addCookie": "Add cookie" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
-    "duration": { "session": "Session", "persistent": "Persistent", "year_one": "{{count}} year", "year_other": "{{count}} years", "month_one": "{{count}} month", "month_other": "{{count}} months", "week_one": "{{count}} week", "week_other": "{{count}} weeks", "day_one": "{{count}} day", "day_other": "{{count}} days", "hour_one": "{{count}} hour", "hour_other": "{{count}} hours", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
-  },
-  "categoryDialog": {
+  "categoryCreateDialog": {
     "title": "Add category",
-    "messages": { "successTitle": "Success", "created": "Category created" },
-    "errors": { "title": "Error", "create": "Failed to create category" },
     "fields": { "name": "Name", "slug": "Slug", "slugHelp": "Used as the data-cookie-consent attribute value", "description": "Description" },
-    "actions": { "saving": "Saving...", "create": "Create" }
+    "messages": { "created": "Category created" },
+    "errors": { "create": "Failed to create category" },
+    "actions": { "create": "Create", "cancel": "Cancel" }
   },
-  "addCookieRow": {
-    "fields": { "namePlaceholder": "Cookie name", "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Save", "cancel": "Cancel" }
+  "deleteCategoryDialog": {
+    "title": "Delete category",
+    "description": "Delete the category \"{{name}}\"? Trackers in this category move to Uncategorised.",
+    "messages": { "deleted": "Category deleted" },
+    "errors": { "delete": "Failed to delete category" },
+    "actions": { "delete": "Delete", "cancel": "Cancel" }
   },
-  "displayPage": {
-    "description": "Organize cookies into categories and declare which cookies your site uses.",
-    "actions": { "addCategory": "Add category" },
-    "empty": "No categories yet. Add a category to start managing cookies."
+  "themeSection": {
+    "title": "Theme",
+    "description": "These controls only preview a theme and build a CSS snippet. They do not save styles on the banner. Add the snippet to your site yourself.",
+    "defaultSnippet": "/* Using default theme — no overrides needed */",
+    "messages": { "copiedTitle": "Copied", "copied": "CSS snippet copied to clipboard" },
+    "errors": { "title": "Error", "copy": "Failed to copy CSS snippet" },
+    "actions": { "reset": "Reset to defaults", "copy": "Copy snippet" },
+    "variables": { "bg": "Background", "text": "Text", "textsecondary": "Text secondary", "border": "Border", "accent": "Accent", "accenttext": "Accent text", "radius": "Border radius", "btnradius": "Button radius", "fontsize": "Font size", "fontfamily": "Font family", "shadow": "Shadow" },
+    "banner": { "title": "Cookie preferences", "description": "We use cookies to improve your experience and analyze site traffic. <policy>Privacy policy</policy>", "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "privacyBy": "Privacy by" }
   },
   "consentRecordsPage": {
     "title": "Trail",
