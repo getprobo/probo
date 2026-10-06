@@ -21,7 +21,6 @@
 import { TrashIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -98,7 +97,7 @@ export function BannerLifecycleSection({
   const isActive = banner.state === "ACTIVE";
 
   return (
-    <section className={root()}>
+    <div className={root()}>
       <div className={intro()}>
         <Heading level={2} size={4} weight="medium" highContrast>
           {t("bannerLifecycleSection.title")}
@@ -107,54 +106,52 @@ export function BannerLifecycleSection({
           {t("bannerLifecycleSection.description")}
         </Text>
       </div>
-      <Card size={2} variant="soft">
-        <div className={row()}>
-          <div className={status()}>
-            <Badge color={isActive ? "green" : "red"} variant="soft">
-              {isActive
-                ? t("configLayout.status.active")
-                : t("configLayout.status.inactive")}
-            </Badge>
-          </div>
-          <div className={actions()}>
+      <div className={row()}>
+        <div className={status()}>
+          <Badge color={isActive ? "green" : "red"} variant="soft">
+            {isActive
+              ? t("configLayout.status.active")
+              : t("configLayout.status.inactive")}
+          </Badge>
+        </div>
+        <div className={actions()}>
+          <Button
+            size={2}
+            variant="soft"
+            color="neutral"
+            disabled={isActivating || isDeactivating}
+            onClick={() => {
+              const mutate = isActive ? deactivate : activate;
+              void mutate({
+                variables: { input: { cookieBannerId: banner.id } },
+              }).catch(() => {
+                // Error toast is already shown by useMutation.
+              });
+            }}
+          >
+            {isActive
+              ? t("configLayout.actions.deactivate")
+              : t("configLayout.actions.activate")}
+          </Button>
+          {banner.canDelete && !isActive && (
             <Button
               size={2}
               variant="soft"
-              color="neutral"
-              disabled={isActivating || isDeactivating}
-              onClick={() => {
-                const mutate = isActive ? deactivate : activate;
-                void mutate({
-                  variables: { input: { cookieBannerId: banner.id } },
-                }).catch(() => {
-                  // Error toast is already shown by useMutation.
-                });
-              }}
+              color="red"
+              iconStart={<TrashIcon />}
+              onClick={() => setDeleteOpen(true)}
             >
-              {isActive
-                ? t("configLayout.actions.deactivate")
-                : t("configLayout.actions.activate")}
+              {t("configLayout.actions.delete")}
             </Button>
-            {banner.canDelete && !isActive && (
-              <Button
-                size={2}
-                variant="soft"
-                color="red"
-                iconStart={<TrashIcon />}
-                onClick={() => setDeleteOpen(true)}
-              >
-                {t("configLayout.actions.delete")}
-              </Button>
-            )}
-          </div>
+          )}
         </div>
-      </Card>
+      </div>
       <DeleteCookieBannerDialog
         cookieBannerId={banner.id}
         name={banner.name}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
       />
-    </section>
+    </div>
   );
 }

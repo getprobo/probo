@@ -64,11 +64,13 @@ export const cookieBannerInstallSection = tv({
 export const cookieBannerSettingsSection = tv({
   slots: {
     root: "flex flex-col gap-4",
+    card: "flex flex-col gap-6",
+    block: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
     fields: "flex flex-col gap-4",
     field: "flex flex-col gap-1",
     pair: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 *:min-w-0",
-    toggle: "flex items-start justify-between gap-4",
+    toggle: "flex items-start gap-3",
     toggleCopy: "flex flex-col gap-1",
     actions: "flex justify-end",
   },

@@ -123,7 +123,7 @@
     "description": "Settings, categories, and theme for this cookie banner."
   },
   "bannerLifecycleSection": {
-    "title": "Banner status",
+    "title": "Banner Status",
     "description": "Activate the banner to show it to visitors, or deactivate it to take it down."
   },
   "codeSnippets": {

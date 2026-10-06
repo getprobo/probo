@@ -27,7 +27,6 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
 import {
   cookieBannerDisplaySection,
-  cookieBannerLifecycleSection,
   cookieBannerPage,
   cookieBannerSettingsSection,
   cookieBannerThemeSection,
@@ -35,7 +34,6 @@ import {
 
 export function CookieBannerConfigurePageSkeleton() {
   const settings = cookieBannerSettingsSection();
-  const lifecycle = cookieBannerLifecycleSection();
   const categories = cookieBannerDisplaySection();
   const theme = cookieBannerThemeSection();
 
@@ -43,17 +41,7 @@ export function CookieBannerConfigurePageSkeleton() {
     <div className={cookieBannerPage()}>
       <CookieBannerPageHeaderSkeleton titleClassName="w-32" />
       <section className={settings.root()}>
-        <div className={settings.intro()}>
-          <HeadingSkeleton size={4} className="w-24" />
-        </div>
-        <CardSkeleton size={2} className="h-80" />
-      </section>
-      <section className={lifecycle.root()}>
-        <div className={lifecycle.intro()}>
-          <HeadingSkeleton size={4} className="w-32" />
-          <TextSkeleton size={2} className="w-80" />
-        </div>
-        <CardSkeleton size={2} className="h-16" />
+        <CardSkeleton size={2} className="h-96" />
       </section>
       <section className={categories.root()}>
         <div className={categories.intro()}>

@@ -28,7 +28,6 @@ import type { CookieBannerConfigurePageQuery } from "#/__generated__/core/Cookie
 import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
 import { cookieBannerPage } from "../../variants";
 
-import { BannerLifecycleSection } from "./_components/BannerLifecycleSection";
 import { BannerSettingsForm } from "./_components/BannerSettingsForm";
 import { CategoryList } from "./_components/CategoryList";
 import { ThemeSection } from "./_components/ThemeSection";
@@ -39,7 +38,6 @@ export const cookieBannerConfigurePageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...BannerSettingsForm_cookieBanner
-        ...BannerLifecycleSection_cookieBanner
         ...CategoryList_cookieBanner
         ...ThemeSection_cookieBanner
       }
@@ -73,7 +71,6 @@ export function CookieBannerConfigurePage({
         description={t("configurePage.description")}
       />
       <BannerSettingsForm cookieBannerKey={data.node} />
-      <BannerLifecycleSection cookieBannerKey={data.node} />
       <CategoryList cookieBannerKey={data.node} />
       <ThemeSection cookieBannerKey={data.node} />
     </div>

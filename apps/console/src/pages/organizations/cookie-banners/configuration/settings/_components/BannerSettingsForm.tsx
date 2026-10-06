@@ -42,6 +42,8 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerSettingsSection } from "../../../variants";
 
+import { BannerLifecycleSection } from "./BannerLifecycleSection";
+
 const LANGUAGES = ["en", "fr", "de", "es", "nl"] as const;
 
 const LANGUAGE_KEYS = {
@@ -67,6 +69,7 @@ const bannerSettingsFormFragment = graphql`
       corsless
       tcf
     }
+    ...BannerLifecycleSection_cookieBanner
   }
 `;
 
@@ -106,7 +109,7 @@ function isPublisherCountryCode(value: string): boolean {
 export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(bannerSettingsFormFragment, cookieBannerKey);
-  const { root, intro, fields, field, pair, toggle, toggleCopy, actions } = cookieBannerSettingsSection();
+  const { root, card, block, intro, fields, field, pair, toggle, toggleCopy, actions } = cookieBannerSettingsSection();
   const [name, setName] = useState(banner.name);
   const [cookiePolicyUrl, setCookiePolicyUrl] = useState(banner.cookiePolicyUrl);
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState(banner.privacyPolicyUrl ?? "");
@@ -161,170 +164,177 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
 
   return (
     <section className={root()}>
-      <div className={intro()}>
-        <Heading level={2} size={4} weight="medium" highContrast>
-          {t("bannerSettingsForm.title")}
-        </Heading>
-      </div>
-      <Card size={2} variant="soft">
-        <Form className={fields()} errors={errors} onFormSubmit={handleSubmit}>
-          <Field required label={t("bannerSettingsForm.fields.name")} error={errors.name}>
-            <TextField
-              name="name"
-              required
-              value={name}
-              disabled={isUpdating}
-              onValueChange={(value) => {
-                setName(value);
-                setErrors({});
-              }}
-            />
-          </Field>
-          {!banner.capabilities.corsless && (
-            <Field label={t("bannerSettingsForm.fields.origin")}>
-              <TextField name="origin" value={banner.origin} disabled />
-            </Field>
-          )}
-          <Field
-            required
-            label={t("bannerSettingsForm.fields.cookiePolicyUrl")}
-            error={errors.cookiePolicyUrl}
-          >
-            <TextField
-              name="cookiePolicyUrl"
-              type="url"
-              required
-              value={cookiePolicyUrl}
-              disabled={isUpdating}
-              onValueChange={(value) => {
-                setCookiePolicyUrl(value);
-                setErrors({});
-              }}
-            />
-          </Field>
-          <Field
-            label={t("bannerSettingsForm.fields.privacyPolicyUrl")}
-            error={errors.privacyPolicyUrl}
-          >
-            <TextField
-              name="privacyPolicyUrl"
-              type="url"
-              value={privacyPolicyUrl}
-              disabled={isUpdating}
-              onValueChange={(value) => {
-                setPrivacyPolicyUrl(value);
-                setErrors({});
-              }}
-            />
-          </Field>
-          <div className={pair()}>
-            <Field
-              required
-              label={t("bannerSettingsForm.fields.consentExpiryDays")}
-              error={errors.consentExpiryDays}
-            >
-              <TextField
-                name="consentExpiryDays"
-                type="number"
-                required
-                min={1}
-                value={consentExpiryDays}
-                disabled={isUpdating}
-                onValueChange={(value) => {
-                  setConsentExpiryDays(value);
-                  setErrors({});
-                }}
-              />
-            </Field>
-            <Field
-              required
-              label={t("bannerSettingsForm.fields.defaultLanguage")}
-              error={errors.defaultLanguage}
-            >
-              <Select
-                name="defaultLanguage"
-                value={defaultLanguage}
-                disabled={isUpdating}
-                onValueChange={(value: string | null) => {
-                  if (value != null) {
-                    setDefaultLanguage(value);
-                    setErrors({});
-                  }
-                }}
-              >
-                <SelectTrigger size={2}>
-                  {(value: string | null) => (
-                    value != null
-                      ? t(`bannerSettingsForm.languages.${LANGUAGE_KEYS[value as keyof typeof LANGUAGE_KEYS]}`)
-                      : ""
-                  )}
-                </SelectTrigger>
-                <SelectPopup>
-                  {LANGUAGES.map(code => (
-                    <SelectItem key={code} value={code}>
-                      {t(`bannerSettingsForm.languages.${LANGUAGE_KEYS[code]}`)}
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
-            </Field>
+      <Card size={2} variant="soft" className={card()}>
+        <BannerLifecycleSection cookieBannerKey={banner} />
+        <div className={block()}>
+          <div className={intro()}>
+            <Heading level={2} size={4} weight="medium" highContrast>
+              {t("bannerSettingsForm.title")}
+            </Heading>
           </div>
-          {banner.capabilities.tcf && (
-            <div className={field()}>
-              <Field
-                required
-                label={t("bannerSettingsForm.fields.publisherCountryCode")}
-                error={errors.publisherCountryCode}
-              >
+          <Form className={fields()} errors={errors} onFormSubmit={handleSubmit}>
+            <div className={pair()}>
+              <Field required label={t("bannerSettingsForm.fields.name")} error={errors.name}>
                 <TextField
-                  name="publisherCountryCode"
+                  name="name"
                   required
-                  minLength={2}
-                  maxLength={2}
-                  pattern="[A-Za-z]{2}"
-                  value={publisherCountryCode}
+                  value={name}
                   disabled={isUpdating}
                   onValueChange={(value) => {
-                    setPublisherCountryCode(value.toUpperCase());
+                    setName(value);
                     setErrors({});
                   }}
                 />
               </Field>
-              <Text size={1} color="faint">
-                {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
-              </Text>
+              <Field
+                required
+                label={t("bannerSettingsForm.fields.consentExpiryDays")}
+                error={errors.consentExpiryDays}
+              >
+                <TextField
+                  name="consentExpiryDays"
+                  type="number"
+                  required
+                  min={1}
+                  value={consentExpiryDays}
+                  disabled={isUpdating}
+                  onValueChange={(value) => {
+                    setConsentExpiryDays(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
             </div>
-          )}
-          <div className={toggle()}>
-            <div className={toggleCopy()}>
-              <Text size={2} weight="medium" highContrast>
-                {t("bannerSettingsForm.fields.resourceReportingEnabled")}
-              </Text>
-              <Text size={1} color="faint">
-                {t("bannerSettingsForm.fields.resourceReportingEnabledHelp")}
-              </Text>
+            {!banner.capabilities.corsless && (
+              <Field label={t("bannerSettingsForm.fields.origin")}>
+                <TextField name="origin" value={banner.origin} disabled />
+              </Field>
+            )}
+            <div className={pair()}>
+              <Field
+                required
+                label={t("bannerSettingsForm.fields.cookiePolicyUrl")}
+                error={errors.cookiePolicyUrl}
+              >
+                <TextField
+                  name="cookiePolicyUrl"
+                  type="url"
+                  required
+                  value={cookiePolicyUrl}
+                  disabled={isUpdating}
+                  onValueChange={(value) => {
+                    setCookiePolicyUrl(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
+              <Field
+                label={t("bannerSettingsForm.fields.privacyPolicyUrl")}
+                error={errors.privacyPolicyUrl}
+              >
+                <TextField
+                  name="privacyPolicyUrl"
+                  type="url"
+                  value={privacyPolicyUrl}
+                  disabled={isUpdating}
+                  onValueChange={(value) => {
+                    setPrivacyPolicyUrl(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
             </div>
-            <Switch
-              checked={resourceReportingEnabled}
-              disabled={isUpdating}
-              aria-label={t("bannerSettingsForm.fields.resourceReportingEnabled")}
-              onCheckedChange={(checked) => {
-                setResourceReportingEnabled(checked);
-              }}
-            />
-          </div>
-          <div className={actions()}>
-            <Button
-              type="submit"
-              variant="solid"
-              color="neutral"
-              highContrast
-              loading={isUpdating}
-            >
-              {t("bannerSettingsForm.actions.save")}
-            </Button>
-          </div>
-        </Form>
+            <div className={pair()}>
+              <Field
+                required
+                label={t("bannerSettingsForm.fields.defaultLanguage")}
+                error={errors.defaultLanguage}
+              >
+                <Select
+                  name="defaultLanguage"
+                  value={defaultLanguage}
+                  disabled={isUpdating}
+                  onValueChange={(value: string | null) => {
+                    if (value != null) {
+                      setDefaultLanguage(value);
+                      setErrors({});
+                    }
+                  }}
+                >
+                  <SelectTrigger size={2}>
+                    {(value: string | null) => (
+                      value != null
+                        ? t(`bannerSettingsForm.languages.${LANGUAGE_KEYS[value as keyof typeof LANGUAGE_KEYS]}`)
+                        : ""
+                    )}
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {LANGUAGES.map(code => (
+                      <SelectItem key={code} value={code}>
+                        {t(`bannerSettingsForm.languages.${LANGUAGE_KEYS[code]}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
+              </Field>
+              {banner.capabilities.tcf && (
+                <div className={field()}>
+                  <Field
+                    required
+                    label={t("bannerSettingsForm.fields.publisherCountryCode")}
+                    error={errors.publisherCountryCode}
+                  >
+                    <TextField
+                      name="publisherCountryCode"
+                      required
+                      minLength={2}
+                      maxLength={2}
+                      pattern="[A-Za-z]{2}"
+                      value={publisherCountryCode}
+                      disabled={isUpdating}
+                      onValueChange={(value) => {
+                        setPublisherCountryCode(value.toUpperCase());
+                        setErrors({});
+                      }}
+                    />
+                  </Field>
+                  <Text size={1} color="faint">
+                    {t("bannerSettingsForm.fields.publisherCountryCodeHelp")}
+                  </Text>
+                </div>
+              )}
+            </div>
+            <div className={toggle()}>
+              <Switch
+                checked={resourceReportingEnabled}
+                disabled={isUpdating}
+                aria-label={t("bannerSettingsForm.fields.resourceReportingEnabled")}
+                onCheckedChange={(checked) => {
+                  setResourceReportingEnabled(checked);
+                }}
+              />
+              <div className={toggleCopy()}>
+                <Text size={2} weight="medium" highContrast>
+                  {t("bannerSettingsForm.fields.resourceReportingEnabled")}
+                </Text>
+                <Text size={1} color="faint">
+                  {t("bannerSettingsForm.fields.resourceReportingEnabledHelp")}
+                </Text>
+              </div>
+            </div>
+            <div className={actions()}>
+              <Button
+                type="submit"
+                variant="solid"
+                color="neutral"
+                highContrast
+                loading={isUpdating}
+              >
+                {t("bannerSettingsForm.actions.save")}
+              </Button>
+            </div>
+          </Form>
+        </div>
       </Card>
     </section>
   );
