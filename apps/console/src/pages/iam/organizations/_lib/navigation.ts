@@ -20,6 +20,7 @@
 
 import {
   BooksIcon,
+  CookieIcon,
   GearIcon,
   type Icon,
   KeyIcon,
@@ -95,6 +96,11 @@ export const NAV_GROUPS = [
     key: "privacy",
     segment: "privacy",
     icon: LockIcon,
+  },
+  {
+    key: "cmp",
+    segment: "cmp",
+    icon: CookieIcon,
   },
   {
     key: "itam",

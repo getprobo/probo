@@ -78,8 +78,11 @@ function isPrivacyVisible(permissions: NavPermissions): boolean {
   return permissions.canListRightsRequests
     || permissions.canListProcessingActivities
     || permissions.canListDataProtectionImpactAssessments
-    || permissions.canListTransferImpactAssessments
-    || permissions.canListCookieBanners;
+    || permissions.canListTransferImpactAssessments;
+}
+
+function isCmpVisible(permissions: NavPermissions): boolean {
+  return permissions.canListCookieBanners;
 }
 
 function isItamVisible(permissions: NavPermissions): boolean {
@@ -129,6 +132,8 @@ function navGroupIsVisible(
       return isTprmVisible(permissions);
     case "privacy":
       return isPrivacyVisible(permissions);
+    case "cmp":
+      return isCmpVisible(permissions);
     case "itam":
       return isItamVisible(permissions);
     case "registries":
@@ -198,10 +203,7 @@ function privacyHref(organizationId: string, permissions: NavPermissions): strin
   if (permissions.canListDataProtectionImpactAssessments) {
     return groupHref(organizationId, "privacy", "dpias");
   }
-  if (permissions.canListTransferImpactAssessments) {
-    return groupHref(organizationId, "privacy", "tias");
-  }
-  return groupHref(organizationId, "privacy", "cookie-banners/new");
+  return groupHref(organizationId, "privacy", "tias");
 }
 
 function registriesHref(organizationId: string, permissions: NavPermissions): string {
@@ -311,6 +313,14 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
               label={t("nav.groups.privacy")}
               to={privacyHref(organizationId, permissions)}
               active={activeKey === "privacy"}
+            />
+          )}
+          {isCmpVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("cmp").icon}
+              label={t("nav.groups.cmp")}
+              to={groupHref(organizationId, "cmp", "cookie-banners")}
+              active={activeKey === "cmp"}
             />
           )}
           {isItamVisible(permissions) && (

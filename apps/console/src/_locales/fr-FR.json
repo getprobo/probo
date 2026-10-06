@@ -2211,6 +2211,7 @@
     "groups": {
       "governance": "Gouvernance",
       "privacy": "Confidentialité",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "Gestion des actifs informatiques",
       "riskManagement": "Gestion des risques",

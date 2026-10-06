@@ -239,8 +239,11 @@ const routes = [
             children: [
               ...rightsRequestRoutes,
               ...processingActivityRoutes,
-              ...cookieBannerRoutes,
             ],
+          },
+          {
+            path: "cmp",
+            children: [...cookieBannerRoutes],
           },
           {
             path: "tprm",

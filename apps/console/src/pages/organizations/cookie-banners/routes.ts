@@ -34,6 +34,11 @@ import { CookieBannerTranslationsPageSkeleton } from "./configuration/translatio
 
 export const cookieBannerRoutes = [
   {
+    path: "cookie-banners",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("#/pages/organizations/cookie-banners/CookieBannersIndexPageLoader")),
+  },
+  {
     path: "cookie-banners/new",
     Fallback: PageSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/NewCookieBannerPage")),

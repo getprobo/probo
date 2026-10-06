@@ -21,9 +21,9 @@
 import { navGroupByKey, navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 // Cookie banners live under whichever product segment NAV_GROUPS assigns to the
-// privacy group, so the segment is read from there rather than spelled out.
+// cmp group, so the segment is read from there rather than spelled out.
 export function cookieBannersBasePath(organizationId: string): string {
-  return navHref(organizationId, navGroupByKey("privacy"), "cookie-banners");
+  return navHref(organizationId, navGroupByKey("cmp"), "cookie-banners");
 }
 
 export function cookieBannerPath(organizationId: string, cookieBannerId: string): string {

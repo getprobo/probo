@@ -1409,6 +1409,7 @@
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "IT Asset Management",
       "riskManagement": "Risk Management",
