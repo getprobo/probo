@@ -29,7 +29,7 @@ import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useRef, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
@@ -93,7 +93,6 @@ const integrationsPageFragment = graphql`
     connectors(filter: $filter) {
       id
       provider
-      connectionStatus
       ...ConnectorGroupListItem_connector
     }
   }
@@ -203,9 +202,26 @@ function IntegrationsConnectors({
 
   const isSearching = query.trim() !== "";
   const isFiltering = isSearching || status != null;
-  const connectors = organization.connectors.filter(connector =>
-    status == null || connector.connectionStatus === status,
-  );
+  const [reported, setReported] = useState<
+    Readonly<Record<string, ConnectorConnectionStatus>>
+  >({});
+  const reportStatus = useCallback((id: string, next: ConnectorConnectionStatus) => {
+    setReported((current) => {
+      if (current[id] === next) {
+        return current;
+      }
+      return { ...current, [id]: next };
+    });
+  }, []);
+  // Search is applied by the server. Status arrives on a deferred fragment,
+  // so every connector stays mounted until it reports.
+  const connectors = organization.connectors;
+  const awaitingStatus = status != null
+    && connectors.some(connector => reported[connector.id] == null);
+  const visibleCount = status == null
+    ? connectors.length
+    : connectors.filter(connector => reported[connector.id] === status).length;
+  const showEmptySearch = !awaitingStatus && visibleCount === 0 && isFiltering;
 
   const { root, header, intro } = integrationsPage();
   const {
@@ -287,9 +303,9 @@ function IntegrationsConnectors({
               <Heading level={2} size={3} weight="medium">
                 {t("listPage.sections.connected")}
               </Heading>
-              <Text size={2} color="faint">{connectors.length}</Text>
+              <Text size={2} color="faint">{visibleCount}</Text>
             </div>
-            {connectors.length === 0 && isFiltering
+            {showEmptySearch
               ? (
                   <Card variant="soft" size={2}>
                     <div className={empty()}>
@@ -317,6 +333,8 @@ function IntegrationsConnectors({
                           providerKey={providerKey}
                           organizationId={organizationId}
                           canConnect={organization.canCreateConnector}
+                          statusFilter={status}
+                          onStatus={reportStatus}
                         />
                       );
                     })}
