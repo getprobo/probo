@@ -179,6 +179,37 @@ func (r *cookieBannerResolver) PublishedVersion(ctx context.Context, obj *types.
 	}, nil
 }
 
+// Versions is the resolver for the versions field.
+func (r *cookieBannerResolver) Versions(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerVersionOrderBy) (*types.CookieBannerVersionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerVersionList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.CookieBannerVersionOrderField]{
+		Field:     coredata.CookieBannerVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieBannerVersionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	versions, err := r.cookieBanner.ListCookieBannerVersionsForBanner(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner versions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	p := page.NewPage(versions, cursor)
+
+	return types.NewCookieBannerVersionConnection(p, r, obj.ID), nil
+}
+
 // PolicyDocument is the resolver for the policyDocument field.
 func (r *cookieBannerResolver) PolicyDocument(ctx context.Context, obj *types.CookieBanner) (*types.Document, error) {
 	if obj.PolicyDocument == nil {
@@ -544,6 +575,22 @@ func (r *cookieBannerVersionResolver) GvlVendorIds(ctx context.Context, obj *typ
 	}
 
 	return snapshot.IABVendorIDs, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *cookieBannerVersionConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerVersionConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerVersionList)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.cookieBanner.CountCookieBannerVersionsForBanner(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count cookie banner versions", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
 }
 
 // CookieBanner is the resolver for the cookieBanner field.
@@ -1840,6 +1887,11 @@ func (r *Resolver) CookieBannerVersion() schema.CookieBannerVersionResolver {
 	return &cookieBannerVersionResolver{r}
 }
 
+// CookieBannerVersionConnection returns schema.CookieBannerVersionConnectionResolver implementation.
+func (r *Resolver) CookieBannerVersionConnection() schema.CookieBannerVersionConnectionResolver {
+	return &cookieBannerVersionConnectionResolver{r}
+}
+
 // CookieCategory returns schema.CookieCategoryResolver implementation.
 func (r *Resolver) CookieCategory() schema.CookieCategoryResolver { return &cookieCategoryResolver{r} }
 
@@ -1872,14 +1924,15 @@ func (r *Resolver) TrackerResourceConnection() schema.TrackerResourceConnectionR
 }
 
 type (
-	cookieBannerResolver              struct{ *Resolver }
-	cookieBannerConnectionResolver    struct{ *Resolver }
-	cookieBannerVersionResolver       struct{ *Resolver }
-	cookieCategoryResolver            struct{ *Resolver }
-	cookieCategoryConnectionResolver  struct{ *Resolver }
-	detectedTrackerConnectionResolver struct{ *Resolver }
-	trackerPatternResolver            struct{ *Resolver }
-	trackerPatternConnectionResolver  struct{ *Resolver }
-	trackerResourceResolver           struct{ *Resolver }
-	trackerResourceConnectionResolver struct{ *Resolver }
+	cookieBannerResolver                  struct{ *Resolver }
+	cookieBannerConnectionResolver        struct{ *Resolver }
+	cookieBannerVersionResolver           struct{ *Resolver }
+	cookieBannerVersionConnectionResolver struct{ *Resolver }
+	cookieCategoryResolver                struct{ *Resolver }
+	cookieCategoryConnectionResolver      struct{ *Resolver }
+	detectedTrackerConnectionResolver     struct{ *Resolver }
+	trackerPatternResolver                struct{ *Resolver }
+	trackerPatternConnectionResolver      struct{ *Resolver }
+	trackerResourceResolver               struct{ *Resolver }
+	trackerResourceConnectionResolver     struct{ *Resolver }
 )

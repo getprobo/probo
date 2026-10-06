@@ -221,10 +221,12 @@
   "consentRecordsPage": {
     "title": "Journal",
     "description": "Choix de consentement effectués par les visiteurs sur cette bannière.",
-    "filters": { "allActions": "Toutes les actions", "visitorId": "ID du visiteur", "bannerVersion": "Version de la bannière" },
-    "actions": { "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
-    "columns": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "origin": "Origine", "ipAddress": "Adresse IP", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "source": "Source", "country": "Pays", "subdivision": "Subdivision", "date": "Date" },
-    "empty": { "title": "Aucun enregistrement de consentement", "description": "Les enregistrements de consentement apparaîtront ici dès que des visiteurs interagiront avec votre bannière de cookies." }
+    "filters": { "all": "Toutes les versions", "allActions": "Toutes les actions", "bannerVersion": "Version de la bannière", "seeMore": "Voir plus" },
+    "actions": { "acceptAll": "Tout accepter", "rejectAll": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception", "previous": "Précédent", "next": "Suivant" },
+    "columns": { "action": "Action", "bannerVersion": "Version", "origin": "Origine", "regulation": "Réglementation", "location": "Localisation", "date": "Date" },
+    "sort": { "date": "Trier par date" },
+    "empty": { "title": "Aucun enregistrement de consentement", "description": "Les enregistrements de consentement apparaîtront ici dès que des visiteurs interagiront avec votre bannière de cookies." },
+    "emptyFiltered": "Aucun enregistrement de consentement ne correspond aux filtres"
   },
   "consentRecordPage": {
     "title": "Enregistrement de consentement",

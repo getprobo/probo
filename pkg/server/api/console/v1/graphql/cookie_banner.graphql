@@ -76,6 +76,16 @@ enum CookieBannerOrderField
         )
 }
 
+enum CookieBannerVersionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerVersionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerVersionOrderFieldCreatedAt"
+        )
+}
+
 enum CookieCategoryOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField"
@@ -110,6 +120,14 @@ input CookieBannerOrder
     ) {
     direction: OrderDirection!
     field: CookieBannerOrderField!
+}
+
+input CookieBannerVersionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerVersionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerVersionOrderField!
 }
 
 input CookieCategoryOrder
@@ -169,6 +187,14 @@ type CookieBanner implements Node {
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
     publishedVersion: CookieBannerVersion @goField(forceResolver: true)
+
+    versions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerVersionOrder
+    ): CookieBannerVersionConnection @goField(forceResolver: true)
 
     policyDocument: Document @goField(forceResolver: true)
 
@@ -607,6 +633,20 @@ type CookieBannerVersionCookie {
     trackerType: TrackerType!
     maxAgeSeconds: Int
     description: String!
+}
+
+type CookieBannerVersionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerVersionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerVersionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerVersionEdge {
+    cursor: CursorKey!
+    node: CookieBannerVersion!
 }
 
 type CookieBannerConnection

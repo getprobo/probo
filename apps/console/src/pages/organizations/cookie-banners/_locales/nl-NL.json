@@ -221,10 +221,12 @@
   "consentRecordsPage": {
     "title": "Logboek",
     "description": "Toestemmingskeuzes die bezoekers op deze banner hebben gemaakt.",
-    "filters": { "allActions": "Alle acties", "visitorId": "Bezoekers-ID", "bannerVersion": "Bannerversie" },
-    "actions": { "acceptAll": "Alles accepteren", "rejectAll": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
-    "columns": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "origin": "Origin", "ipAddress": "IP-adres", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "source": "Bron", "country": "Land", "subdivision": "Subdivisie", "date": "Datum" },
-    "empty": { "title": "Geen toestemmingsregistraties", "description": "Toestemmingsregistraties verschijnen hier zodra bezoekers interactie hebben met uw cookiebanner." }
+    "filters": { "all": "Alle versies", "allActions": "Alle acties", "bannerVersion": "Bannerversie", "seeMore": "Meer zien" },
+    "actions": { "acceptAll": "Alles accepteren", "rejectAll": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen", "previous": "Vorige", "next": "Volgende" },
+    "columns": { "action": "Actie", "bannerVersion": "Versie", "origin": "Origin", "regulation": "Regelgeving", "location": "Locatie", "date": "Datum" },
+    "sort": { "date": "Sorteren op datum" },
+    "empty": { "title": "Geen toestemmingsregistraties", "description": "Toestemmingsregistraties verschijnen hier zodra bezoekers interactie hebben met uw cookiebanner." },
+    "emptyFiltered": "Geen toestemmingsregistraties komen overeen met de filters"
   },
   "consentRecordPage": {
     "title": "Toestemmingsregistratie",

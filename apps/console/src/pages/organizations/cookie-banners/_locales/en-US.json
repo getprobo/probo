@@ -221,10 +221,12 @@
   "consentRecordsPage": {
     "title": "Trail",
     "description": "Consent choices visitors made on this banner.",
-    "filters": { "allActions": "All actions", "visitorId": "Visitor ID", "bannerVersion": "Banner version" },
-    "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
-    "columns": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "origin": "Origin", "ipAddress": "IP address", "sdkVersion": "SDK version", "regulation": "Regulation", "source": "Source", "country": "Country", "subdivision": "Subdivision", "date": "Date" },
-    "empty": { "title": "No consent records", "description": "Consent records will appear here once visitors interact with your cookie banner." }
+    "filters": { "all": "All versions", "allActions": "All actions", "bannerVersion": "Banner version", "seeMore": "See more" },
+    "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge", "previous": "Previous", "next": "Next" },
+    "columns": { "action": "Action", "bannerVersion": "Version", "origin": "Origin", "regulation": "Regulation", "location": "Location", "date": "Date" },
+    "sort": { "date": "Sort by date" },
+    "empty": { "title": "No consent records", "description": "Consent records will appear here once visitors interact with your cookie banner." },
+    "emptyFiltered": "No matching consent records"
   },
   "consentRecordPage": {
     "title": "Consent record",

@@ -80,32 +80,31 @@ export default function NewCookieBannerPage() {
     "CookieBannerSwitcherMenu_cookieBanners",
   );
 
-  async function handleSubmit() {
-    try {
-      const response = await createCookieBanner({
-        variables: {
-          input: {
-            organizationId,
-            name: name.trim(),
-            origin: origin.trim(),
-            cookiePolicyUrl: cookiePolicyUrl.trim(),
-            privacyPolicyUrl: privacyPolicyUrl.trim() || undefined,
-            consentExpiryDays: Number.parseInt(consentExpiryDays, 10),
-          },
-          connections: [connectionId],
+  function handleSubmit() {
+    void createCookieBanner({
+      variables: {
+        input: {
+          organizationId,
+          name: name.trim(),
+          origin: origin.trim(),
+          cookiePolicyUrl: cookiePolicyUrl.trim(),
+          privacyPolicyUrl: privacyPolicyUrl.trim() || undefined,
+          consentExpiryDays: Number.parseInt(consentExpiryDays, 10),
         },
-        onCompleted(_response, payloadErrors) {
-          const fieldErrors = toFieldErrors(payloadErrors);
-          if (fieldErrors != null) {
-            setErrors(fieldErrors);
-          }
-        },
-      });
+        connections: [connectionId],
+      },
+      onCompleted(_response, payloadErrors) {
+        const fieldErrors = toFieldErrors(payloadErrors);
+        if (fieldErrors != null) {
+          setErrors(fieldErrors);
+        }
+      },
+    }).then((response) => {
       const bannerId = response.createCookieBanner.cookieBannerEdge.node.id;
       void navigate(cookieBannerInstallPath(organizationId, bannerId));
-    } catch {
+    }).catch(() => {
       // Field errors are mapped in onCompleted; other failures toast.
-    }
+    });
   }
 
   return (

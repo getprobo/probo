@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 
 import type { CookieBannerConsentRecordsPageQuery } from "#/__generated__/core/CookieBannerConsentRecordsPageQuery.graphql";
 
+import { CONSENT_RECORDS_DEFAULT_ORDER, CONSENT_RECORDS_PAGE_SIZE } from "./_lib/pageSize";
 import { CookieBannerConsentRecordsPage, cookieBannerConsentRecordsPageQuery } from "./CookieBannerConsentRecordsPage";
 import { CookieBannerConsentRecordsPageSkeleton } from "./CookieBannerConsentRecordsPageSkeleton";
 
@@ -38,16 +39,25 @@ export default function CookieBannerConsentRecordsPageLoader() {
   );
 
   useEffect(() => {
-    loadQuery({ cookieBannerId });
+    loadQuery({
+      cookieBannerId,
+      first: CONSENT_RECORDS_PAGE_SIZE,
+      order: CONSENT_RECORDS_DEFAULT_ORDER,
+    });
   }, [loadQuery, cookieBannerId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.cookieBannerId === cookieBannerId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <CookieBannerConsentRecordsPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<CookieBannerConsentRecordsPageSkeleton />}>
-      <CookieBannerConsentRecordsPage queryRef={queryRef} />
+      <CookieBannerConsentRecordsPage key={cookieBannerId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

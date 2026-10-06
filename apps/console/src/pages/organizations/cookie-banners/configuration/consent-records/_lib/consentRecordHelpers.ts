@@ -37,6 +37,34 @@ export function getActionVariant(
   }
 }
 
+export function getActionBadgeColor(
+  action: string,
+): "green" | "red" | "amber" | "neutral" {
+  switch (action) {
+    case "ACCEPT_ALL":
+      return "green";
+    case "REJECT_ALL":
+      return "red";
+    case "CUSTOMIZE":
+      return "amber";
+    default:
+      return "neutral";
+  }
+}
+
+export function formatLocation(
+  countryCode: string | null | undefined,
+  subdivisionCode: string | null | undefined,
+): string {
+  if (countryCode == null || countryCode === "") {
+    return "";
+  }
+  if (subdivisionCode == null || subdivisionCode === "") {
+    return countryCode;
+  }
+  return `${countryCode} · ${subdivisionCode}`;
+}
+
 export function formatAnonymizedIp(ip: string): string {
   if (ip.includes(".")) {
     return ip.replace(/\.0$/, ".*");
