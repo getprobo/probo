@@ -54,12 +54,12 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
 
   return (
     <TableRow align="center">
-      <TableRowHeaderCell>
+      <TableRowHeaderCell overflow="truncate">
         <Text size={2} className={identifier()}>
           {tracker.identifier}
         </Text>
       </TableRowHeaderCell>
-      <TableCell>
+      <TableCell overflow="truncate">
         {tracker.initiatorUrl == null
           ? <Text size={2} color="faint">-</Text>
           : (

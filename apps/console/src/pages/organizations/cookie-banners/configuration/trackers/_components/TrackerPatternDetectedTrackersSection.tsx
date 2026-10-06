@@ -136,26 +136,28 @@ export function TrackerPatternDetectedTrackersSection({
         ? (
             <>
               <div aria-busy={isPending} className={results()}>
-                <Table variant="surface">
+                <Table variant="surface" layout="fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell overflow="truncate">
                         {t("detectedTrackersSection.columns.identifier")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        overflow="truncate"
                         sort={detectedTrackersHeaderSort("INITIATOR_URL", order)}
                         onSort={() => handleSort("INITIATOR_URL")}
                         aria-label={t("detectedTrackersSection.sort.initiatorUrl")}
                       >
                         {t("detectedTrackersSection.columns.initiatorUrl")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem">
                         {t("detectedTrackersSection.columns.maxAge")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem">
                         {t("detectedTrackersSection.columns.source")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        width="10rem"
                         sort={detectedTrackersHeaderSort("LAST_DETECTED_AT", order)}
                         onSort={() => handleSort("LAST_DETECTED_AT")}
                         aria-label={t("detectedTrackersSection.sort.detectionTime")}

@@ -193,40 +193,43 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
         : (
             <>
               <div aria-busy={isPending} className={results()}>
-                <Table variant="surface">
+                <Table variant="surface" layout="fixed">
                   <TableHeader>
                     <TableRow>
                       <TableColumnHeaderCell
+                        overflow="break"
                         sort={trackersListHeaderSort("NAME", graphqlOrder)}
                         onSort={() => setOrder("NAME")}
                         aria-label={t("trackersPage.sort.name")}
                       >
                         {t("trackersPage.columns.name")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.attribution")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        width="7rem"
                         sort={trackersListHeaderSort("SOURCE", graphqlOrder)}
                         onSort={() => setOrder("SOURCE")}
                         aria-label={t("trackersPage.sort.source")}
                       >
                         {t("trackersPage.columns.source")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.category")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem">
                         {t("trackersPage.columns.maxAge")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        width="10rem"
                         sort={trackersListHeaderSort("LAST_MATCHED_AT", graphqlOrder)}
                         onSort={() => setOrder("LAST_MATCHED_AT")}
                         aria-label={t("trackersPage.sort.lastMatched")}
                       >
                         {t("trackersPage.columns.lastMatched")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell />
+                      <TableColumnHeaderCell width="3rem" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>

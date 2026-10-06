@@ -42,7 +42,7 @@ export function CookieBannerResourcesPageSkeleton() {
             </div>
           </div>
         </div>
-        <TableSkeleton variant="surface" columns={6} count={8} />
+        <TableSkeleton variant="surface" layout="fixed" columns={6} count={8} />
       </div>
     </div>
   );

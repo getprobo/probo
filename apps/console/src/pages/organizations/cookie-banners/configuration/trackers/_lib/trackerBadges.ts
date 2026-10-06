@@ -19,11 +19,11 @@
 // SOFTWARE.
 
 export const trackerTypeBadges = {
-  COOKIE: { color: "amber" as const, labelKey: "cookie", variant: "soft" as const },
-  LOCAL_STORAGE: { color: "sky" as const, labelKey: "localStorage", variant: "soft" as const },
-  SESSION_STORAGE: { color: "indigo" as const, labelKey: "sessionStorage", variant: "soft" as const },
-  INDEXED_DB: { color: "green" as const, labelKey: "indexedDb", variant: "soft" as const },
-  CACHE_STORAGE: { color: "neutral" as const, labelKey: "cacheStorage", variant: "outline" as const },
+  COOKIE: { color: "amber" as const, labelKey: "cookie", shortKey: "cookieShort", variant: "soft" as const },
+  LOCAL_STORAGE: { color: "sky" as const, labelKey: "localStorage", shortKey: "localStorageShort", variant: "soft" as const },
+  SESSION_STORAGE: { color: "indigo" as const, labelKey: "sessionStorage", shortKey: "sessionStorageShort", variant: "soft" as const },
+  INDEXED_DB: { color: "green" as const, labelKey: "indexedDb", shortKey: "indexedDbShort", variant: "soft" as const },
+  CACHE_STORAGE: { color: "neutral" as const, labelKey: "cacheStorage", shortKey: "cacheStorageShort", variant: "outline" as const },
 };
 
 export const cookieSourceBadges = {

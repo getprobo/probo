@@ -55,6 +55,7 @@ import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
 
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
 import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
+import { TrackerTypeBadge } from "./TrackerTypeBadge";
 
 const trackerPatternFragment = graphql`
   fragment TrackerPatternListItem_trackerPattern on TrackerPattern {
@@ -146,7 +147,7 @@ export function TrackerPatternListItem({
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { name, heading, title, info, detail, date, actions } = trackerPatternListItem({
+  const { name, heading, title, type, info, detail, date, actions } = trackerPatternListItem({
     excluded: pattern.excluded,
   });
   const description = pattern.description.trim();
@@ -215,16 +216,13 @@ export function TrackerPatternListItem({
   return (
     <>
       <TableRow align="center" interactive>
-        <TableRowHeaderCell>
+        <TableRowHeaderCell overflow="break">
           <div className={name()}>
             <div className={heading()}>
               {typeBadge != null && (
-                <Badge
-                  variant={typeBadge.variant}
-                  color={typeBadge.color}
-                >
-                  {t(`trackerPatternRow.types.${typeBadge.labelKey}`)}
-                </Badge>
+                <span className={type()}>
+                  <TrackerTypeBadge trackerType={pattern.trackerType} />
+                </span>
               )}
               <TableLink to={{ pathname: detailPath, search: location.search }}>
                 <Text size={2} weight="medium" highContrast className={title()}>

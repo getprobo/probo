@@ -43,6 +43,7 @@ import {
   useTrackersListFilters,
 } from "../_lib/useTrackersListFilters";
 
+import { TrackerTypeOption } from "./TrackerTypeBadge";
 import { TrackersListSearch } from "./TrackersListSearch";
 
 const trackersListFiltersFragment = graphql`
@@ -70,14 +71,6 @@ const sourceLabels = {
   EXTENSION: "extension",
 } as const;
 
-const typeLabels = {
-  COOKIE: "cookie",
-  LOCAL_STORAGE: "localStorage",
-  SESSION_STORAGE: "sessionStorage",
-  INDEXED_DB: "indexedDb",
-  CACHE_STORAGE: "cacheStorage",
-} as const;
-
 interface TrackersListFiltersProps {
   cookieBannerKey: TrackersListFilters_cookieBanner$key;
 }
@@ -97,7 +90,7 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
     setCategory,
     setParty,
   } = useTrackersListFilters();
-  const { views, tools, filters, filter } = cookieBannerList();
+  const { views, tools, filters, filter, typeFilter } = cookieBannerList();
   const allSourcesLabel = t("trackersPage.sources.all");
   const allTypesLabel = t("trackersPage.types.all");
   const allCategoriesLabel = t("trackersPage.filters.allCategories");
@@ -192,7 +185,7 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
               </SelectPopup>
             </Select>
           </div>
-          <div className={filter()}>
+          <div className={typeFilter()}>
             <Select
               value={type}
               onValueChange={(value: string | null) => {
@@ -211,14 +204,14 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
                 aria-label={t("trackersPage.filters.type")}
               >
                 {(value: TrackerType | null) => (
-                  value != null ? t(`trackersPage.types.${typeLabels[value]}`) : allTypesLabel
+                  value != null ? <TrackerTypeOption trackerType={value} /> : allTypesLabel
                 )}
               </SelectTrigger>
               <SelectPopup align="start">
                 <SelectItem value={null}>{allTypesLabel}</SelectItem>
                 {trackerTypes.map(trackerType => (
                   <SelectItem key={trackerType} value={trackerType}>
-                    {t(`trackersPage.types.${typeLabels[trackerType]}`)}
+                    <TrackerTypeOption trackerType={trackerType} />
                   </SelectItem>
                 ))}
               </SelectPopup>

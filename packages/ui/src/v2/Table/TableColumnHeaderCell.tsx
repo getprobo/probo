@@ -30,7 +30,7 @@ export type TableColumnHeaderSort = "ascending" | "descending" | "none";
 
 export type TableColumnHeaderCellProps
   = Omit<ComponentProps<"th">, "width">
-    & Pick<VariantProps<typeof table>, "justify">
+    & Pick<VariantProps<typeof table>, "justify" | "overflow">
     & {
       width?: string;
       minWidth?: string;
@@ -46,6 +46,7 @@ export type TableColumnHeaderCellProps
 export function TableColumnHeaderCell(props: TableColumnHeaderCellProps) {
   const {
     justify,
+    overflow,
     width,
     minWidth,
     maxWidth,
@@ -62,6 +63,7 @@ export function TableColumnHeaderCell(props: TableColumnHeaderCellProps) {
   const { cell, columnHeader, sortButton, sortIcon } = table({
     size,
     justify,
+    overflow,
     sort: sortState,
   });
   const Icon = sortState === "ascending"

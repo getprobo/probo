@@ -100,6 +100,8 @@ export const cookieBannerList = tv({
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     filters: "flex flex-wrap items-center justify-end gap-2",
     filter: "w-40 shrink-0",
+    typeFilter: "w-52 shrink-0",
+    typeOption: "flex min-w-0 items-center gap-2",
     results: "transition-opacity",
     pager: "flex justify-center",
     empty: "flex flex-col items-center gap-1 py-8 text-center",
@@ -128,8 +130,9 @@ export const cookieBannerListSkeleton = tv({
 export const trackerPatternListItem = tv({
   slots: {
     name: "flex min-w-0 flex-col gap-0.5",
-    heading: "flex min-w-0 items-center gap-2",
-    title: "min-w-0 truncate font-mono",
+    heading: "flex min-w-0 items-start gap-2",
+    title: "min-w-0 break-all font-mono",
+    type: "relative z-1 shrink-0 pointer-events-auto",
     info: "relative z-1 shrink-0 pointer-events-auto",
     detail: "flex flex-col gap-1",
     date: "whitespace-nowrap",
@@ -226,8 +229,8 @@ export const trackerPatternDetectedTrackersSection = tv({
 
 export const detectedTrackerListItem = tv({
   slots: {
-    identifier: "min-w-0 max-w-xs break-all font-mono",
-    url: "min-w-0 max-w-xs break-all font-mono",
+    identifier: "min-w-0 truncate font-mono",
+    url: "min-w-0 truncate font-mono",
     date: "whitespace-nowrap",
   },
 });

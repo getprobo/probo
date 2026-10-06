@@ -186,7 +186,7 @@ export function TrackerResourceListItem({
                 </Badge>
               )}
         </TableCell>
-        <TableCell>
+        <TableCell overflow="truncate">
           <div className={origin()}>
             <Text size={2} weight="medium" highContrast className={title()}>
               {resource.origin}
@@ -200,7 +200,7 @@ export function TrackerResourceListItem({
               : null}
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell overflow="truncate">
           <Text size={1} className={path()}>
             {resource.path}
           </Text>

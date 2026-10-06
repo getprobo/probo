@@ -74,7 +74,18 @@ export const table = tv({
         table: "table-auto",
       },
       fixed: {
+        root: "overflow-x-hidden",
         table: "table-fixed",
+      },
+    },
+    // Fluid column under `layout="fixed"`: max-w-0 lets the cell shrink
+    // below its content so the table stays at container width.
+    overflow: {
+      truncate: {
+        cell: "min-w-0 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+      },
+      break: {
+        cell: "min-w-0 max-w-0 break-all",
       },
     },
     align: {
