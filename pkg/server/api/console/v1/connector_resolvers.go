@@ -169,12 +169,32 @@ func (r *connectorResolver) DistinctAccountCount(ctx context.Context, obj *types
 
 // DiscoveredAccounts is the resolver for the discoveredAccounts field.
 func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.Connector) ([]*types.DiscoveredConnectorAccount, error) {
+	discovery, err := r.AccountDiscovery(ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+
+	// A failed listing and a missing permission stay an empty list so this
+	// field does not fail connector creation. accountDiscovery has the status.
+	if discovery.Status == types.AccountDiscoveryStatusUnavailable ||
+		discovery.Status == types.AccountDiscoveryStatusNotPermitted {
+		return []*types.DiscoveredConnectorAccount{}, nil
+	}
+
+	return discovery.Nodes, nil
+}
+
+// AccountDiscovery is the resolver for the accountDiscovery field.
+func (r *connectorResolver) AccountDiscovery(ctx context.Context, obj *types.Connector) (*types.AccountDiscovery, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorDiscover)
 	if err != nil {
 		// The field sits on Connector next to data the caller can already
 		// read. A missing permission must not fail that query. Skip the probe.
 		if gqlutils.IsForbidden(err) {
-			return []*types.DiscoveredConnectorAccount{}, nil
+			return &types.AccountDiscovery{
+				Status: types.AccountDiscoveryStatusNotPermitted,
+				Nodes:  []*types.DiscoveredConnectorAccount{},
+			}, nil
 		}
 
 		return nil, err
@@ -195,7 +215,10 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 			log.Error(err),
 		)
 
-		return []*types.DiscoveredConnectorAccount{}, nil
+		return &types.AccountDiscovery{
+			Status: types.AccountDiscoveryStatusUnavailable,
+			Nodes:  []*types.DiscoveredConnectorAccount{},
+		}, nil
 	}
 
 	labeled, err := labelDiscoveredAccounts(ctx, r.probo.Connectors, scope, obj.ID, accounts)
@@ -210,7 +233,15 @@ func (r *connectorResolver) DiscoveredAccounts(ctx context.Context, obj *types.C
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return labeled, nil
+	status := types.AccountDiscoveryStatusEmpty
+	if len(labeled) > 0 {
+		status = types.AccountDiscoveryStatusAvailable
+	}
+
+	return &types.AccountDiscovery{
+		Status: status,
+		Nodes:  labeled,
+	}, nil
 }
 
 // ProviderOrganizations is the resolver for the providerOrganizations field.

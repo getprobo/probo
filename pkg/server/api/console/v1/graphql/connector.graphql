@@ -403,10 +403,18 @@ type Connector implements Node {
     discoveredAccounts probes the provider live on every read, so selecting it
     across a list of connectors costs one outbound call per connector. Select
     it on a single connector, or on the one a mutation just returned. A caller
-    without permission to discover gets an empty list and no probe.
+    without permission to discover gets an empty list and no probe. A failed
+    listing is also an empty list. accountDiscovery separates that failure
+    from a real empty result. Do not select both fields: each one probes.
     """
     discoveredAccounts: [DiscoveredConnectorAccount!]!
         @goField(forceResolver: true)
+    """
+    accountDiscovery is the live account listing and why the list is empty.
+    It probes the provider on every read. Select it on one connector at a
+    time, and not together with discoveredAccounts.
+    """
+    accountDiscovery: AccountDiscovery! @goField(forceResolver: true)
     createdAt: Datetime!
     """
     providerOrganizations lists the orgs a picker connector can be scoped to.
@@ -442,6 +450,41 @@ type DiscoveredConnectorAccount {
     connector.
     """
     enabled: Boolean!
+}
+
+enum AccountDiscoveryStatus {
+    """
+    The provider returned at least one account.
+    """
+    AVAILABLE
+
+    """
+    The call succeeded and returned no account. This includes a provider
+    with no organization-account listing.
+    """
+    EMPTY
+
+    """
+    The call failed. nodes is empty. connectionStatus can still be
+    CONNECTED. The underlying error stays server-side.
+    """
+    UNAVAILABLE
+
+    """
+    The caller cannot discover accounts. No probe was made.
+    """
+    NOT_PERMITTED
+}
+
+"""
+Live accounts this connector can enable, and why the list looks empty.
+
+EMPTY and UNAVAILABLE both leave nodes empty. EMPTY means the provider
+answered. UNAVAILABLE means the listing failed.
+"""
+type AccountDiscovery {
+    status: AccountDiscoveryStatus!
+    nodes: [DiscoveredConnectorAccount!]!
 }
 
 enum ConnectorAccountOrderField

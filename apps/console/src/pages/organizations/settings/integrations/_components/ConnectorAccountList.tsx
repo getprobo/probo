@@ -63,11 +63,14 @@ const connectorAccountListFragment = graphql`
     providerOrganizations {
       status
     }
-    discoveredAccounts {
-      externalAccountId
-      name
-      enabled
-      ...DiscoveredConnectorAccountListItem_account
+    accountDiscovery {
+      status
+      nodes {
+        externalAccountId
+        name
+        enabled
+        ...DiscoveredConnectorAccountListItem_account
+      }
     }
     ...ConnectorAccountList_accounts
     ...DiscoveredConnectorAccountListItem_connector
@@ -182,9 +185,10 @@ function ConnectorAccountListContent({
   const presented = signal == null ? null : presentConnection(signal);
   const issues = connectionIssueKeys(presented == null ? [] : [presented]);
   const stored = accountsData.accounts.edges;
-  const discoveryEmpty = issues.length === 0 && connector.discoveredAccounts.length === 0;
-  const pending = issues.length === 0
-    ? connector.discoveredAccounts.filter(account => !account.enabled)
+  const discoveryFailed = issues.length === 0
+    && connector.accountDiscovery.status === "UNAVAILABLE";
+  const pending = issues.length === 0 && !discoveryFailed
+    ? connector.accountDiscovery.nodes.filter(account => !account.enabled)
     : [];
   const selectedAccounts = pending.filter(account => selected.has(account.externalAccountId));
   const allPendingSelected = pending.length > 0 && selectedAccounts.length === pending.length;
@@ -256,7 +260,7 @@ function ConnectorAccountListContent({
         />
       </DrawerHeader>
       <DrawerBody className={issues.length === 0 && connector.canEnable && pending.length > 0 ? "pb-16" : undefined}>
-        {issues.length === 0 && !discoveryEmpty && pending.length === 0 && stored.length === 0
+        {issues.length === 0 && !discoveryFailed && pending.length === 0 && stored.length === 0
           ? (
               <Card variant="soft" size={2}>
                 <div className={empty()}>
@@ -268,11 +272,11 @@ function ConnectorAccountListContent({
             )
           : (
               <div className={list()}>
-                {(issues.length > 0 || discoveryEmpty) && (
+                {(issues.length > 0 || discoveryFailed) && (
                   <ConnectorProbeError
                     connectorKey={connector}
                     issues={issues}
-                    messages={discoveryEmpty
+                    messages={discoveryFailed
                       ? [t("detailsPage.accounts.discoveryFailed")]
                       : undefined}
                   />

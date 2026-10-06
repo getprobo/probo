@@ -383,6 +383,12 @@ func TestDiscoveredAccounts_ViewerGetsNone(t *testing.T) {
 				ExternalAccountID string `json:"externalAccountId"`
 				Enabled           bool   `json:"enabled"`
 			} `json:"discoveredAccounts"`
+			AccountDiscovery struct {
+				Status string `json:"status"`
+				Nodes  []struct {
+					ExternalAccountID string `json:"externalAccountId"`
+				} `json:"nodes"`
+			} `json:"accountDiscovery"`
 		} `json:"node"`
 	}
 
@@ -394,6 +400,12 @@ func TestDiscoveredAccounts_ViewerGetsNone(t *testing.T) {
 						externalAccountId
 						enabled
 					}
+					accountDiscovery {
+						status
+						nodes {
+							externalAccountId
+						}
+					}
 				}
 			}
 		}
@@ -401,4 +413,6 @@ func TestDiscoveredAccounts_ViewerGetsNone(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result.Node)
 	assert.Empty(t, result.Node.DiscoveredAccounts)
+	assert.Equal(t, "NOT_PERMITTED", result.Node.AccountDiscovery.Status)
+	assert.Empty(t, result.Node.AccountDiscovery.Nodes)
 }
