@@ -31,6 +31,7 @@ export const WORLD_VIEW_BOX = `0 0 ${WORLD_MAP_WIDTH} ${WORLD_MAP_HEIGHT}`;
 export interface CountryPath {
   id: string;
   d: string;
+  viewBox: string | null;
 }
 
 export interface SubdivisionPath {
@@ -191,7 +192,12 @@ function countryPath(featureObject: Feature): CountryPath | null {
   if (d === "") {
     return null;
   }
-  return { id: String(featureObject.id), d };
+  const focus = geometryFocus(geometry);
+  return {
+    id: String(featureObject.id),
+    d,
+    viewBox: focus == null ? null : paddedViewBox(focus),
+  };
 }
 
 function subdivisionPath(featureObject: Feature): SubdivisionPath | null {
@@ -220,6 +226,31 @@ const countryPaths: CountryPath[] = feature(
 
 export function worldCountryPaths(): CountryPath[] {
   return countryPaths;
+}
+
+// Largest-landmass framing crops a real part of these countries
+// (date line, archipelagos, or a large sibling like Alaska / Zealand).
+const WORLD_FRAME_COUNTRY_IDS = new Set([
+  "010", // Antarctica
+  "044", // Bahamas
+  "090", // Solomon Islands
+  "208", // Denmark
+  "360", // Indonesia
+  "392", // Japan
+  "458", // Malaysia
+  "548", // Vanuatu
+  "554", // New Zealand
+  "608", // Philippines
+  "643", // Russia
+  "840", // United States
+]);
+
+export function countryViewBox(id: string | null): string {
+  if (id == null || WORLD_FRAME_COUNTRY_IDS.has(id)) {
+    return WORLD_VIEW_BOX;
+  }
+  const country = countryPaths.find(path => path.id === id);
+  return country?.viewBox ?? WORLD_VIEW_BOX;
 }
 
 export function subdivisionPaths(topology: SubdivisionTopology): SubdivisionPath[] {

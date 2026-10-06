@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { SubdivisionPath } from "./worldMap";
-import { WORLD_VIEW_BOX, worldCountryPaths } from "./worldMap";
+import { countryViewBox, WORLD_VIEW_BOX, worldCountryPaths } from "./worldMap";
 
 export interface SubdivisionMap {
   paths: SubdivisionPath[];
@@ -36,6 +36,33 @@ export function wantsSubdivisionMap(
     && subdivisionCode !== "";
 }
 
+function paintedPaths<T extends { id: string }>(paths: T[], activeId: string | null): T[] {
+  if (activeId == null) {
+    return paths;
+  }
+  return [...paths].sort((left, right) => (
+    Number(left.id === activeId) - Number(right.id === activeId)
+  ));
+}
+
+function regionPath(
+  path: { id: string; d: string },
+  activeId: string | null,
+  country: string,
+  countryActive: string,
+) {
+  return (
+    <path
+      key={path.id}
+      d={path.d}
+      className={path.id === activeId ? countryActive : country}
+      fillRule="evenodd"
+      strokeWidth={1}
+      vectorEffect="non-scaling-stroke"
+    />
+  );
+}
+
 export function locationMapSvg(
   subdivision: SubdivisionMap | null,
   loading: boolean,
@@ -50,28 +77,16 @@ export function locationMapSvg(
   if (subdivision != null) {
     return (
       <svg className={mapSvg} viewBox={subdivision.viewBox} aria-hidden>
-        {subdivision.paths.map(path => (
-          <path
-            key={path.id}
-            d={path.d}
-            className={path.id === subdivision.activeId ? countryActive : country}
-            fillRule="evenodd"
-            strokeWidth={0.5}
-          />
+        {paintedPaths(subdivision.paths, subdivision.activeId).map(path => (
+          regionPath(path, subdivision.activeId, country, countryActive)
         ))}
       </svg>
     );
   }
   return (
-    <svg className={mapSvg} viewBox={WORLD_VIEW_BOX} aria-hidden>
-      {worldCountryPaths().map(path => (
-        <path
-          key={path.id}
-          d={path.d}
-          className={path.id === countryId ? countryActive : country}
-          fillRule="evenodd"
-          strokeWidth={0.5}
-        />
+    <svg className={mapSvg} viewBox={countryViewBox(countryId)} aria-hidden>
+      {paintedPaths(worldCountryPaths(), countryId).map(path => (
+        regionPath(path, countryId, country, countryActive)
       ))}
     </svg>
   );

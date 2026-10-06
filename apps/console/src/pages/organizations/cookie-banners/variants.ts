@@ -308,6 +308,6 @@ export const consentRecordPage = tv({
     map: "bg-sand-3",
     mapSvg: "block h-auto w-full",
     country: "fill-sand-5 stroke-sand-6",
-    countryActive: "fill-gold-8 stroke-gold-11",
+    countryActive: "fill-indigo-5 stroke-indigo-8",
   },
 });
