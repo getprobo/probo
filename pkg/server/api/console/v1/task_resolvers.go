@@ -37,7 +37,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	task, err := r.task.Create(
 		ctx, scope,
 		task.CreateTaskRequest{
-			MeasureID:          input.MeasureID,
+			InternalControlID:  input.InternalControlID,
 			OrganizationID:     input.OrganizationID,
 			Name:               input.Name,
 			Content:            input.Content,
@@ -95,7 +95,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 			TimeEstimate:       gqlutils.UnwrapOmittable(input.TimeEstimate),
 			Deadline:           gqlutils.UnwrapOmittable(input.Deadline),
 			AssignedToID:       gqlutils.UnwrapOmittable(input.AssignedToID),
-			MeasureID:          gqlutils.UnwrapOmittable(input.MeasureID),
+			InternalControlID:  gqlutils.UnwrapOmittable(input.InternalControlID),
 			IdentityID:         &identity.ID,
 			RecurrenceInterval: gqlutils.UnwrapOmittable(input.RecurrenceInterval),
 		},
@@ -308,30 +308,30 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 	return types.NewOrganization(organization), nil
 }
 
-// Measure is the resolver for the measure field.
-func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
-	if obj.Measure == nil {
+// Internal control is the resolver for the internal control field.
+func (r *taskResolver) InternalControl(ctx context.Context, obj *types.Task) (*types.InternalControl, error) {
+	if obj.InternalControl == nil {
 		return nil, nil
 	}
 
-	if _, err := r.authorize(ctx, obj.Measure.ID, probo.ActionMeasureGet); err != nil {
+	if _, err := r.authorize(ctx, obj.InternalControl.ID, probo.ActionInternalControlGet); err != nil {
 		return nil, err
 	}
 
 	loaders := dataloader.FromContext(ctx)
 
-	measure, err := loaders.Measure.Load(ctx, obj.Measure.ID)
+	internalControl, err := loaders.InternalControl.Load(ctx, obj.InternalControl.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot get measure", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot get internal control", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMeasure(measure), nil
+	return types.NewInternalControl(internalControl), nil
 }
 
 // Evidences is the resolver for the evidences field.
@@ -457,8 +457,8 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 	}
 
 	switch obj.Resolver.(type) {
-	case *measureResolver:
-		count, err := r.task.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filter)
+	case *internalControlResolver:
+		count, err := r.task.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

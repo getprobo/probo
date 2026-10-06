@@ -21,7 +21,7 @@
 import { ConnectionHandler } from "react-relay";
 
 export const organizationTasksConnectionKey = "TasksCardOrganization_tasks";
-export const measureTasksConnectionKey = "Measure__tasks";
+export const internalControlTasksConnectionKey = "Measure__tasks";
 
 const taskListConnectionFilters = {
   orderBy: { field: "PRIORITY_RANK" as const, direction: "ASC" as const },

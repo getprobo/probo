@@ -31,51 +31,51 @@ func NewTreatmentPlan(tp *coredata.TreatmentPlan, progress riskmanagement.Treatm
 	netLikelihood, netImpact, netRiskScore := riskmanagement.NetScores(tp, progress)
 
 	return &TreatmentPlan{
-		ID:                     tp.ID,
-		OrganizationID:         tp.OrganizationID,
-		RiskID:                 tp.RiskID,
-		RiskAnalysisID:         tp.RiskAnalysisID,
-		Treatment:              tp.Treatment,
-		Category:               tp.Category,
-		OwnerID:                tp.OwnerID,
-		InherentLikelihood:     tp.InherentLikelihood,
-		InherentImpact:         tp.InherentImpact,
-		InherentRiskScore:      tp.InherentRiskScore,
-		ResidualLikelihood:     tp.ResidualLikelihood,
-		ResidualImpact:         tp.ResidualImpact,
-		ResidualRiskScore:      tp.ResidualRiskScore,
-		NetLikelihood:          netLikelihood,
-		NetImpact:              netImpact,
-		NetRiskScore:           netRiskScore,
-		MeasuresTotal:          progress.Total,
-		MeasuresDone:           progress.Done,
-		MeasuresInProgress:     progress.InProgress,
-		MeasuresNotImplemented: progress.NotImplemented,
-		CreatedAt:              tp.CreatedAt,
-		UpdatedAt:              tp.UpdatedAt,
+		ID:                             tp.ID,
+		OrganizationID:                 tp.OrganizationID,
+		RiskID:                         tp.RiskID,
+		RiskAnalysisID:                 tp.RiskAnalysisID,
+		Treatment:                      tp.Treatment,
+		Category:                       tp.Category,
+		OwnerID:                        tp.OwnerID,
+		InherentLikelihood:             tp.InherentLikelihood,
+		InherentImpact:                 tp.InherentImpact,
+		InherentRiskScore:              tp.InherentRiskScore,
+		ResidualLikelihood:             tp.ResidualLikelihood,
+		ResidualImpact:                 tp.ResidualImpact,
+		ResidualRiskScore:              tp.ResidualRiskScore,
+		NetLikelihood:                  netLikelihood,
+		NetImpact:                      netImpact,
+		NetRiskScore:                   netRiskScore,
+		InternalControlsTotal:          progress.Total,
+		InternalControlsDone:           progress.Done,
+		InternalControlsInProgress:     progress.InProgress,
+		InternalControlsNotImplemented: progress.NotImplemented,
+		CreatedAt:                      tp.CreatedAt,
+		UpdatedAt:                      tp.UpdatedAt,
 	}
 }
 
 func NewTreatmentPlanAsOf(
 	tp *coredata.TreatmentPlan,
 	progress riskmanagement.TreatmentProgress,
-	measures []riskmanagement.RiskAnalysisMatrixMeasure,
+	internalControls []riskmanagement.RiskAnalysisMatrixInternalControl,
 ) *TreatmentPlan {
 	plan := NewTreatmentPlan(tp, progress)
-	plan.Measures = newTreatmentPlanMeasures(measures)
+	plan.InternalControls = newTreatmentPlanInternalControls(internalControls)
 
 	return plan
 }
 
-func newTreatmentPlanMeasures(
-	measures []riskmanagement.RiskAnalysisMatrixMeasure,
-) []*TreatmentPlanMeasure {
-	items := make([]*TreatmentPlanMeasure, 0, len(measures))
-	for _, measure := range measures {
-		items = append(items, &TreatmentPlanMeasure{
-			ID:    measure.ID,
-			Name:  measure.Name,
-			State: measure.State,
+func newTreatmentPlanInternalControls(
+	internalControls []riskmanagement.RiskAnalysisMatrixInternalControl,
+) []*TreatmentPlanInternalControl {
+	items := make([]*TreatmentPlanInternalControl, 0, len(internalControls))
+	for _, internalControl := range internalControls {
+		items = append(items, &TreatmentPlanInternalControl{
+			ID:    internalControl.ID,
+			Name:  internalControl.Name,
+			State: internalControl.State,
 		})
 	}
 
@@ -92,12 +92,12 @@ func NewListTreatmentPlansOutput(
 func NewListTreatmentPlansAsOfOutput(
 	p *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField],
 	progressByID map[gid.GID]riskmanagement.TreatmentProgress,
-	measuresByID map[gid.GID][]riskmanagement.RiskAnalysisMatrixMeasure,
+	internalControlsByID map[gid.GID][]riskmanagement.RiskAnalysisMatrixInternalControl,
 ) ListTreatmentPlansOutput {
 	items := make([]*TreatmentPlan, 0, len(p.Data))
 	for _, v := range p.Data {
-		if measuresByID != nil {
-			items = append(items, NewTreatmentPlanAsOf(v, progressByID[v.ID], measuresByID[v.ID]))
+		if internalControlsByID != nil {
+			items = append(items, NewTreatmentPlanAsOf(v, progressByID[v.ID], internalControlsByID[v.ID]))
 			continue
 		}
 

@@ -108,7 +108,7 @@ type (
 		Identity                                   *dataloadgen.Loader[gid.GID, *coredata.Identity]
 		Risk                                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
-		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
+		InternalControl                            *dataloadgen.Loader[gid.GID, *coredata.InternalControl]
 		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
 		TaskExternalLink                           *dataloadgen.Loader[gid.GID, *coredata.TaskExternalLink]
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
@@ -187,7 +187,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Identity:                                 dataloadgen.NewMappedLoader(f.fetchIdentities),
 		Risk:                                     dataloadgen.NewMappedLoader(f.fetchRisks),
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
-		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
+		InternalControl:                          dataloadgen.NewMappedLoader(f.fetchInternalControls),
 		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
 		TaskExternalLink:                         dataloadgen.NewMappedLoader(f.fetchTaskExternalLinks),
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
@@ -787,16 +787,16 @@ func (f *batchFetcher) fetchTreatmentProgress(
 	return progress, nil
 }
 
-func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Measure, error) {
+func (f *batchFetcher) fetchInternalControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.InternalControl, error) {
 	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	measures, err := f.probo.Measures.GetByIDs(ctx, scope, keys...)
+	internalControls, err := f.probo.InternalControls.GetByIDs(ctx, scope, keys...)
 	if err != nil {
-		return nil, fmt.Errorf("cannot batch load measures: %w", err)
+		return nil, fmt.Errorf("cannot batch load internalControls: %w", err)
 	}
 
-	result := make(map[gid.GID]*coredata.Measure, len(measures))
-	for _, v := range measures {
+	result := make(map[gid.GID]*coredata.InternalControl, len(internalControls))
+	for _, v := range internalControls {
 		result[v.ID] = v
 	}
 

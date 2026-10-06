@@ -425,13 +425,13 @@ func (s *Service) UpdateTreatmentPlan(
 			}
 
 			if tp.Treatment == coredata.RiskTreatmentAccepted && previousTreatment != coredata.RiskTreatmentAccepted {
-				var mappings coredata.TreatmentPlanMeasures
+				var mappings coredata.TreatmentPlanInternalControls
 				if err := mappings.LoadByTreatmentPlanIDs(ctx, tx, scope, []gid.GID{tp.ID}); err != nil {
-					return fmt.Errorf("cannot load treatment plan measures: %w", err)
+					return fmt.Errorf("cannot load treatment plan internal controls: %w", err)
 				}
 
 				if len(mappings) > 0 {
-					return fmt.Errorf("cannot accept treatment plan with measures: %w", errMeasuresNotAllowedForAccepted())
+					return fmt.Errorf("cannot accept treatment plan with internal controls: %w", errInternalControlsNotAllowedForAccepted())
 				}
 			}
 
@@ -440,9 +440,9 @@ func (s *Service) UpdateTreatmentPlan(
 				return fmt.Errorf("cannot persist treatment plan: %w", err)
 			}
 
-			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			internalControlIDs, err := loadTreatmentPlanInternalControlIDs(ctx, tx, scope, tp.ID)
 			if err != nil {
-				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+				return fmt.Errorf("cannot load treatment plan internal control ids: %w", err)
 			}
 
 			if err := insertTreatmentPlanEvent(
@@ -451,7 +451,7 @@ func (s *Service) UpdateTreatmentPlan(
 				scope,
 				tp,
 				coredata.TreatmentPlanEventTypeUpdated,
-				measureIDs,
+				internalControlIDs,
 				tp.UpdatedAt,
 			); err != nil {
 				return fmt.Errorf("cannot record treatment plan updated event: %w", err)
@@ -480,9 +480,9 @@ func (s *Service) DeleteTreatmentPlan(ctx context.Context, scope coredata.Scoper
 				return fmt.Errorf("cannot load treatment plan: %w", err)
 			}
 
-			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			internalControlIDs, err := loadTreatmentPlanInternalControlIDs(ctx, tx, scope, tp.ID)
 			if err != nil {
-				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+				return fmt.Errorf("cannot load treatment plan internal control ids: %w", err)
 			}
 
 			if err := insertTreatmentPlanEvent(
@@ -491,7 +491,7 @@ func (s *Service) DeleteTreatmentPlan(ctx context.Context, scope coredata.Scoper
 				scope,
 				tp,
 				coredata.TreatmentPlanEventTypeDeleted,
-				measureIDs,
+				internalControlIDs,
 				time.Now(),
 			); err != nil {
 				return fmt.Errorf("cannot record treatment plan deleted event: %w", err)
@@ -703,24 +703,24 @@ func (s *Service) CountTreatmentPlansForRiskAnalysisID(
 	return count, nil
 }
 
-func errMeasuresNotAllowedForAccepted() error {
+func errInternalControlsNotAllowedForAccepted() error {
 	return validator.ValidationErrors{
 		{
-			Field:   "measure_id",
+			Field:   "internal_control_id",
 			Code:    validator.ErrorCodeCustom,
 			Message: "cannot be linked to an accepted treatment plan",
 		},
 	}
 }
 
-func (s *Service) CreateMeasureMapping(
+func (s *Service) CreateInternalControlMapping(
 	ctx context.Context,
 	scope coredata.Scoper,
 	treatmentPlanID gid.GID,
-	measureID gid.GID,
-) (*coredata.TreatmentPlan, *coredata.Measure, error) {
+	internalControlID gid.GID,
+) (*coredata.TreatmentPlan, *coredata.InternalControl, error) {
 	tp := &coredata.TreatmentPlan{}
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.pg.WithTx(
 		ctx,
@@ -730,32 +730,32 @@ func (s *Service) CreateMeasureMapping(
 			}
 
 			if tp.Treatment == coredata.RiskTreatmentAccepted {
-				return fmt.Errorf("cannot link measures to accepted treatment plan: %w", errMeasuresNotAllowedForAccepted())
+				return fmt.Errorf("cannot link internal controls to accepted treatment plan: %w", errInternalControlsNotAllowedForAccepted())
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, tx, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internal control: %w", err)
 			}
 
-			if measure.OrganizationID != tp.OrganizationID {
-				return fmt.Errorf("cannot verify measure organization: %w", coredata.ErrResourceNotFound)
+			if internalControl.OrganizationID != tp.OrganizationID {
+				return fmt.Errorf("cannot verify internal control organization: %w", coredata.ErrResourceNotFound)
 			}
 
 			now := time.Now()
-			mapping := &coredata.TreatmentPlanMeasure{
-				TreatmentPlanID: tp.ID,
-				MeasureID:       measure.ID,
-				OrganizationID:  tp.OrganizationID,
-				CreatedAt:       now,
+			mapping := &coredata.TreatmentPlanInternalControl{
+				TreatmentPlanID:   tp.ID,
+				InternalControlID: internalControl.ID,
+				OrganizationID:    tp.OrganizationID,
+				CreatedAt:         now,
 			}
 
 			if err := mapping.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert treatment plan measure: %w", err)
+				return fmt.Errorf("cannot insert treatment plan internal control: %w", err)
 			}
 
-			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			internalControlIDs, err := loadTreatmentPlanInternalControlIDs(ctx, tx, scope, tp.ID)
 			if err != nil {
-				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+				return fmt.Errorf("cannot load treatment plan internal control ids: %w", err)
 			}
 
 			if err := insertTreatmentPlanEvent(
@@ -763,31 +763,31 @@ func (s *Service) CreateMeasureMapping(
 				tx,
 				scope,
 				tp,
-				coredata.TreatmentPlanEventTypeMeasureLinked,
-				measureIDs,
+				coredata.TreatmentPlanEventTypeInternalControlLinked,
+				internalControlIDs,
 				now,
 			); err != nil {
-				return fmt.Errorf("cannot record treatment plan measure linked event: %w", err)
+				return fmt.Errorf("cannot record treatment plan internal control linked event: %w", err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create treatment plan measure: %w", err)
+		return nil, nil, fmt.Errorf("cannot create treatment plan internal control: %w", err)
 	}
 
-	return tp, measure, nil
+	return tp, internalControl, nil
 }
 
-func (s *Service) DeleteMeasureMapping(
+func (s *Service) DeleteInternalControlMapping(
 	ctx context.Context,
 	scope coredata.Scoper,
 	treatmentPlanID gid.GID,
-	measureID gid.GID,
-) (*coredata.TreatmentPlan, *coredata.Measure, error) {
+	internalControlID gid.GID,
+) (*coredata.TreatmentPlan, *coredata.InternalControl, error) {
 	tp := &coredata.TreatmentPlan{}
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.pg.WithTx(
 		ctx,
@@ -796,24 +796,24 @@ func (s *Service) DeleteMeasureMapping(
 				return fmt.Errorf("cannot load treatment plan: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, tx, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internal control: %w", err)
 			}
 
-			mapping := coredata.TreatmentPlanMeasure{}
+			mapping := coredata.TreatmentPlanInternalControl{}
 
-			deleted, err := mapping.Delete(ctx, tx, scope, tp.ID, measure.ID)
+			deleted, err := mapping.Delete(ctx, tx, scope, tp.ID, internalControl.ID)
 			if err != nil {
-				return fmt.Errorf("cannot delete treatment plan measure: %w", err)
+				return fmt.Errorf("cannot delete treatment plan internal control: %w", err)
 			}
 
 			if !deleted {
 				return nil
 			}
 
-			measureIDs, err := loadTreatmentPlanMeasureIDs(ctx, tx, scope, tp.ID)
+			internalControlIDs, err := loadTreatmentPlanInternalControlIDs(ctx, tx, scope, tp.ID)
 			if err != nil {
-				return fmt.Errorf("cannot load treatment plan measure ids: %w", err)
+				return fmt.Errorf("cannot load treatment plan internal control ids: %w", err)
 			}
 
 			if err := insertTreatmentPlanEvent(
@@ -821,27 +821,27 @@ func (s *Service) DeleteMeasureMapping(
 				tx,
 				scope,
 				tp,
-				coredata.TreatmentPlanEventTypeMeasureUnlinked,
-				measureIDs,
+				coredata.TreatmentPlanEventTypeInternalControlUnlinked,
+				internalControlIDs,
 				time.Now(),
 			); err != nil {
-				return fmt.Errorf("cannot record treatment plan measure unlinked event: %w", err)
+				return fmt.Errorf("cannot record treatment plan internal control unlinked event: %w", err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot remove treatment plan measure: %w", err)
+		return nil, nil, fmt.Errorf("cannot remove treatment plan internal control: %w", err)
 	}
 
-	return tp, measure, nil
+	return tp, internalControl, nil
 }
 
-func (s *Service) ListTreatmentPlansForMeasureID(
+func (s *Service) ListTreatmentPlansForInternalControlID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.TreatmentPlanOrderField],
 	filter *coredata.TreatmentPlanFilter,
 ) (*page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField], error) {
@@ -855,7 +855,7 @@ func (s *Service) ListTreatmentPlansForMeasureID(
 	err = s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := results.LoadByMeasureID(ctx, conn, scope, measureID, cursor, filter); err != nil {
+			if err := results.LoadByInternalControlID(ctx, conn, scope, internalControlID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot list treatment plans: %w", err)
 			}
 
@@ -863,16 +863,16 @@ func (s *Service) ListTreatmentPlansForMeasureID(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure treatment plans: %w", err)
+		return nil, fmt.Errorf("cannot list internal control treatment plans: %w", err)
 	}
 
 	return page.NewPage(results, cursor), nil
 }
 
-func (s *Service) CountTreatmentPlansForMeasureID(
+func (s *Service) CountTreatmentPlansForInternalControlID(
 	ctx context.Context,
 	scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *coredata.TreatmentPlanFilter,
 ) (int, error) {
 	var count int
@@ -887,7 +887,7 @@ func (s *Service) CountTreatmentPlansForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tps := &coredata.TreatmentPlans{}
 
-			count, err = tps.CountByMeasureID(ctx, conn, scope, measureID, filter)
+			count, err = tps.CountByInternalControlID(ctx, conn, scope, internalControlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count treatment plans: %w", err)
 			}
@@ -896,7 +896,7 @@ func (s *Service) CountTreatmentPlansForMeasureID(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count measure treatment plans: %w", err)
+		return 0, fmt.Errorf("cannot count internal control treatment plans: %w", err)
 	}
 
 	return count, nil
@@ -1094,50 +1094,50 @@ func (s *Service) loadTreatmentProgress(
 		return progress, nil
 	}
 
-	mappings := coredata.TreatmentPlanMeasures{}
+	mappings := coredata.TreatmentPlanInternalControls{}
 	if err := mappings.LoadByTreatmentPlanIDs(ctx, conn, scope, treatmentPlanIDs); err != nil {
-		return nil, fmt.Errorf("cannot load treatment plan measures: %w", err)
+		return nil, fmt.Errorf("cannot load treatment plan internal controls: %w", err)
 	}
 
-	measureIDs := make([]gid.GID, 0, len(mappings))
-	seenMeasures := make(map[gid.GID]struct{}, len(mappings))
+	internalControlIDs := make([]gid.GID, 0, len(mappings))
+	seenInternalControls := make(map[gid.GID]struct{}, len(mappings))
 
 	for _, mapping := range mappings {
-		if _, seen := seenMeasures[mapping.MeasureID]; seen {
+		if _, seen := seenInternalControls[mapping.InternalControlID]; seen {
 			continue
 		}
 
-		seenMeasures[mapping.MeasureID] = struct{}{}
-		measureIDs = append(measureIDs, mapping.MeasureID)
+		seenInternalControls[mapping.InternalControlID] = struct{}{}
+		internalControlIDs = append(internalControlIDs, mapping.InternalControlID)
 	}
 
-	measures := coredata.Measures{}
-	if len(measureIDs) > 0 {
-		if err := measures.LoadByIDs(ctx, conn, scope, measureIDs); err != nil {
-			return nil, fmt.Errorf("cannot load measures: %w", err)
+	internalControls := coredata.InternalControls{}
+	if len(internalControlIDs) > 0 {
+		if err := internalControls.LoadByIDs(ctx, conn, scope, internalControlIDs); err != nil {
+			return nil, fmt.Errorf("cannot load internal controls: %w", err)
 		}
 	}
 
-	byID := make(map[gid.GID]*coredata.Measure, len(measures))
-	for _, measure := range measures {
-		byID[measure.ID] = measure
+	byID := make(map[gid.GID]*coredata.InternalControl, len(internalControls))
+	for _, internalControl := range internalControls {
+		byID[internalControl.ID] = internalControl
 	}
 
 	for _, mapping := range mappings {
 		planProgress := progress[mapping.TreatmentPlanID]
 		planProgress.Total++
 
-		measure := byID[mapping.MeasureID]
-		if measure == nil {
-			return nil, fmt.Errorf("cannot load measure %q for treatment plan", mapping.MeasureID)
+		internalControl := byID[mapping.InternalControlID]
+		if internalControl == nil {
+			return nil, fmt.Errorf("cannot load internal control %q for treatment plan", mapping.InternalControlID)
 		}
 
-		switch measure.State {
-		case coredata.MeasureStateImplemented:
+		switch internalControl.State {
+		case coredata.InternalControlStateImplemented:
 			planProgress.Done++
-		case coredata.MeasureStateInProgress:
+		case coredata.InternalControlStateInProgress:
 			planProgress.InProgress++
-		case coredata.MeasureStateNotImplemented:
+		case coredata.InternalControlStateNotImplemented:
 			planProgress.NotImplemented++
 		}
 

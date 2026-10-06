@@ -429,21 +429,21 @@ func (r *Resolver) UpdateRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 	}, nil
 }
 
-func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasuresInput) (*mcp.CallToolResult, types.ListMeasuresOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionMeasureList)
+func (r *Resolver) ListInternalControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlsInput) (*mcp.CallToolResult, types.ListInternalControlsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionInternalControlList)
 	if err != nil {
-		return nil, types.ListMeasuresOutput{}, err
+		return nil, types.ListInternalControlsOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -451,48 +451,48 @@ func (r *Resolver) ListMeasuresTool(ctx context.Context, req *mcp.CallToolReques
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil)
 	if input.Filter != nil {
-		measureFilter = coredata.NewMeasureFilter(input.Filter.Query, input.Filter.State, input.Filter.Category)
+		internalControlFilter = coredata.NewInternalControlFilter(input.Filter.Query, input.Filter.State, input.Filter.Category)
 	}
 
-	page, err := prb.Measures.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, measureFilter)
+	page, err := prb.InternalControls.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor, internalControlFilter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization measures: %w", err))
+		panic(fmt.Errorf("cannot list organization internal_controls: %w", err))
 	}
 
-	return nil, types.NewListMeasuresOutput(page), nil
+	return nil, types.NewListInternalControlsOutput(page), nil
 }
 
-func (r *Resolver) GetMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetMeasureInput) (*mcp.CallToolResult, types.GetMeasureOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionMeasureGet)
+func (r *Resolver) GetInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetInternalControlInput) (*mcp.CallToolResult, types.GetInternalControlOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionInternalControlGet)
 	if err != nil {
-		return nil, types.GetMeasureOutput{}, err
+		return nil, types.GetInternalControlOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	measure, err := prb.Measures.Get(ctx, scope, input.ID)
+	internalControl, err := prb.InternalControls.Get(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.GetMeasureOutput{}, fmt.Errorf("failed to get measure: %w", err)
+		return nil, types.GetInternalControlOutput{}, fmt.Errorf("failed to get internal_control: %w", err)
 	}
 
-	return nil, types.GetMeasureOutput{
-		Measure: types.NewMeasure(measure),
+	return nil, types.GetInternalControlOutput{
+		InternalControl: types.NewInternalControl(internalControl),
 	}, nil
 }
 
-func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddMeasureInput) (*mcp.CallToolResult, types.AddMeasureOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionMeasureCreate)
+func (r *Resolver) AddInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddInternalControlInput) (*mcp.CallToolResult, types.AddInternalControlOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionInternalControlCreate)
 	if err != nil {
-		return nil, types.AddMeasureOutput{}, err
+		return nil, types.AddInternalControlOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	measure, err := svc.Measures.Create(
+	internalControl, err := svc.InternalControls.Create(
 		ctx, scope,
-		probo.CreateMeasureRequest{
+		probo.CreateInternalControlRequest{
 			OrganizationID:       input.OrganizationID,
 			Name:                 input.Name,
 			Description:          input.Description,
@@ -509,25 +509,25 @@ func (r *Resolver) AddMeasureTool(ctx context.Context, req *mcp.CallToolRequest,
 		},
 	)
 	if err != nil {
-		return nil, types.AddMeasureOutput{}, fmt.Errorf("failed to create measure: %w", err)
+		return nil, types.AddInternalControlOutput{}, fmt.Errorf("failed to create internal_control: %w", err)
 	}
 
-	return nil, types.AddMeasureOutput{
-		Measure: types.NewMeasure(measure),
+	return nil, types.AddInternalControlOutput{
+		InternalControl: types.NewInternalControl(internalControl),
 	}, nil
 }
 
-func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMeasureInput) (*mcp.CallToolResult, types.UpdateMeasureOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionMeasureUpdate)
+func (r *Resolver) UpdateInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateInternalControlInput) (*mcp.CallToolResult, types.UpdateInternalControlOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionInternalControlUpdate)
 	if err != nil {
-		return nil, types.UpdateMeasureOutput{}, err
+		return nil, types.UpdateInternalControlOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	measure, err := svc.Measures.Update(
+	internalControl, err := svc.InternalControls.Update(
 		ctx, scope,
-		probo.UpdateMeasureRequest{
+		probo.UpdateInternalControlRequest{
 			ID:                   input.ID,
 			Name:                 input.Name,
 			Description:          UnwrapOmittable(input.Description),
@@ -545,11 +545,11 @@ func (r *Resolver) UpdateMeasureTool(ctx context.Context, req *mcp.CallToolReque
 		},
 	)
 	if err != nil {
-		return nil, types.UpdateMeasureOutput{}, fmt.Errorf("failed to update measure: %w", err)
+		return nil, types.UpdateInternalControlOutput{}, fmt.Errorf("failed to update internal_control: %w", err)
 	}
 
-	return nil, types.UpdateMeasureOutput{
-		Measure: types.NewMeasure(measure),
+	return nil, types.UpdateInternalControlOutput{
+		InternalControl: types.NewInternalControl(internalControl),
 	}, nil
 }
 
@@ -1746,14 +1746,14 @@ func (r *Resolver) LinkControlTool(ctx context.Context, req *mcp.CallToolRequest
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
-	case coredata.MeasureEntityType:
-		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
+	case coredata.InternalControlEntityType:
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlInternalControlMappingCreate)
 		if err != nil {
 			return nil, types.LinkControlOutput{}, err
 		}
 
-		if _, _, err := svc.Controls.CreateMeasureMapping(ctx, scope, input.ControlID, input.ResourceID); err != nil {
-			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to measure: %w", err)
+		if _, _, err := svc.Controls.CreateInternalControlMapping(ctx, scope, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.LinkControlOutput{}, fmt.Errorf("failed to link control to internal_control: %w", err)
 		}
 	case coredata.DocumentEntityType:
 		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingCreate)
@@ -1793,14 +1793,14 @@ func (r *Resolver) UnlinkControlTool(ctx context.Context, req *mcp.CallToolReque
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
-	case coredata.MeasureEntityType:
-		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
+	case coredata.InternalControlEntityType:
+		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlInternalControlMappingDelete)
 		if err != nil {
 			return nil, types.UnlinkControlOutput{}, err
 		}
 
-		if _, _, err := svc.Controls.DeleteMeasureMapping(ctx, scope, input.ControlID, input.ResourceID); err != nil {
-			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from measure: %w", err)
+		if _, _, err := svc.Controls.DeleteInternalControlMapping(ctx, scope, input.ControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkControlOutput{}, fmt.Errorf("failed to unlink control from internal_control: %w", err)
 		}
 	case coredata.DocumentEntityType:
 		scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlDocumentMappingDelete)
@@ -1866,21 +1866,21 @@ func (r *Resolver) ListControlObligationsTool(ctx context.Context, req *mcp.Call
 	return nil, types.NewListControlObligationsOutput(obligationPage), nil
 }
 
-func (r *Resolver) ListControlMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlMeasuresInput) (*mcp.CallToolResult, types.ListControlMeasuresOutput, error) {
+func (r *Resolver) ListControlInternalControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlInternalControlsInput) (*mcp.CallToolResult, types.ListControlInternalControlsOutput, error) {
 	scope, err := r.Authorize(ctx, input.ControlID, probo.ActionControlGet)
 	if err != nil {
-		return nil, types.ListControlMeasuresOutput{}, err
+		return nil, types.ListControlInternalControlsOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -1888,12 +1888,12 @@ func (r *Resolver) ListControlMeasuresTool(ctx context.Context, req *mcp.CallToo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	measurePage, err := prb.Measures.ListForControlID(ctx, scope, input.ControlID, cursor, coredata.NewMeasureFilter(nil, nil, nil))
+	internalControlPage, err := prb.InternalControls.ListForControlID(ctx, scope, input.ControlID, cursor, coredata.NewInternalControlFilter(nil, nil, nil))
 	if err != nil {
-		return nil, types.ListControlMeasuresOutput{}, fmt.Errorf("failed to list control measures: %w", err)
+		return nil, types.ListControlInternalControlsOutput{}, fmt.Errorf("failed to list control internal_controls: %w", err)
 	}
 
-	return nil, types.NewListControlMeasuresOutput(measurePage), nil
+	return nil, types.NewListControlInternalControlsOutput(internalControlPage), nil
 }
 
 func (r *Resolver) ListControlDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListControlDocumentsInput) (*mcp.CallToolResult, types.ListControlDocumentsOutput, error) {
@@ -1986,21 +1986,21 @@ func (r *Resolver) ListRiskObligationsTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.NewListRiskObligationsOutput(obligationPage), nil
 }
 
-func (r *Resolver) ListRiskMeasuresTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskMeasuresInput) (*mcp.CallToolResult, types.ListRiskMeasuresOutput, error) {
+func (r *Resolver) ListRiskInternalControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListRiskInternalControlsInput) (*mcp.CallToolResult, types.ListRiskInternalControlsOutput, error) {
 	scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskGet)
 	if err != nil {
-		return nil, types.ListRiskMeasuresOutput{}, err
+		return nil, types.ListRiskInternalControlsOutput{}, err
 	}
 
 	prb := r.proboSvc
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -2008,12 +2008,12 @@ func (r *Resolver) ListRiskMeasuresTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	measurePage, err := prb.Measures.ListForRiskID(ctx, scope, input.RiskID, cursor, coredata.NewMeasureFilter(nil, nil, nil))
+	internalControlPage, err := prb.InternalControls.ListForRiskID(ctx, scope, input.RiskID, cursor, coredata.NewInternalControlFilter(nil, nil, nil))
 	if err != nil {
-		return nil, types.ListRiskMeasuresOutput{}, fmt.Errorf("failed to list risk measures: %w", err)
+		return nil, types.ListRiskInternalControlsOutput{}, fmt.Errorf("failed to list risk internal_controls: %w", err)
 	}
 
-	return nil, types.NewListRiskMeasuresOutput(measurePage), nil
+	return nil, types.NewListRiskInternalControlsOutput(internalControlPage), nil
 }
 
 func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkRiskInput) (*mcp.CallToolResult, types.LinkRiskOutput, error) {
@@ -2029,14 +2029,14 @@ func (r *Resolver) LinkRiskTool(ctx context.Context, req *mcp.CallToolRequest, i
 		if _, _, err := svc.Risks.CreateDocumentMapping(ctx, scope, input.RiskID, input.ResourceID); err != nil {
 			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to document: %w", err)
 		}
-	case coredata.MeasureEntityType:
-		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+	case coredata.InternalControlEntityType:
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskInternalControlMappingCreate)
 		if err != nil {
 			return nil, types.LinkRiskOutput{}, err
 		}
 
-		if _, _, err := svc.Risks.CreateMeasureMapping(ctx, scope, input.RiskID, input.ResourceID); err != nil {
-			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to measure: %w", err)
+		if _, _, err := svc.Risks.CreateInternalControlMapping(ctx, scope, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.LinkRiskOutput{}, fmt.Errorf("failed to link risk to internal_control: %w", err)
 		}
 	case coredata.ObligationEntityType:
 		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingCreate)
@@ -2067,14 +2067,14 @@ func (r *Resolver) UnlinkRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 		if _, _, err := svc.Risks.DeleteDocumentMapping(ctx, scope, input.RiskID, input.ResourceID); err != nil {
 			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from document: %w", err)
 		}
-	case coredata.MeasureEntityType:
-		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+	case coredata.InternalControlEntityType:
+		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskInternalControlMappingDelete)
 		if err != nil {
 			return nil, types.UnlinkRiskOutput{}, err
 		}
 
-		if _, _, err := svc.Risks.DeleteMeasureMapping(ctx, scope, input.RiskID, input.ResourceID); err != nil {
-			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from measure: %w", err)
+		if _, _, err := svc.Risks.DeleteInternalControlMapping(ctx, scope, input.RiskID, input.ResourceID); err != nil {
+			return nil, types.UnlinkRiskOutput{}, fmt.Errorf("failed to unlink risk from internal_control: %w", err)
 		}
 	case coredata.ObligationEntityType:
 		scope, err := r.Authorize(ctx, input.RiskID, probo.ActionRiskObligationMappingDelete)
@@ -2181,7 +2181,7 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		ctx, scope,
 		task.CreateTaskRequest{
 			OrganizationID:     input.OrganizationID,
-			MeasureID:          input.MeasureID,
+			InternalControlID:  input.InternalControlID,
 			Name:               input.Name,
 			Content:            content,
 			State:              input.State,
@@ -2234,7 +2234,7 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 			TimeEstimate:       UnwrapOmittable(input.TimeEstimate),
 			Deadline:           UnwrapOmittable(input.Deadline),
 			AssignedToID:       UnwrapOmittable(input.AssignedToID),
-			MeasureID:          UnwrapOmittable(input.MeasureID),
+			InternalControlID:  UnwrapOmittable(input.InternalControlID),
 			IdentityID:         &identity.ID,
 			RecurrenceInterval: UnwrapOmittable(input.RecurrenceInterval),
 		},
@@ -2676,28 +2676,28 @@ func (r *Resolver) DeleteRiskTool(ctx context.Context, req *mcp.CallToolRequest,
 	}, nil
 }
 
-func (r *Resolver) DeleteMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteMeasureInput) (*mcp.CallToolResult, types.DeleteMeasureOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, probo.ActionMeasureDelete)
+func (r *Resolver) DeleteInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteInternalControlInput) (*mcp.CallToolResult, types.DeleteInternalControlOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionInternalControlDelete)
 	if err != nil {
-		return nil, types.DeleteMeasureOutput{}, err
+		return nil, types.DeleteInternalControlOutput{}, err
 	}
 
 	svc := r.proboSvc
 
-	err = svc.Measures.Delete(ctx, scope, input.ID)
+	err = svc.InternalControls.Delete(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.DeleteMeasureOutput{}, fmt.Errorf("failed to delete measure: %w", err)
+		return nil, types.DeleteInternalControlOutput{}, fmt.Errorf("failed to delete internal_control: %w", err)
 	}
 
-	return nil, types.DeleteMeasureOutput{
-		DeletedMeasureID: input.ID,
+	return nil, types.DeleteInternalControlOutput{
+		DeletedInternalControlID: input.ID,
 	}, nil
 }
 
-func (r *Resolver) ListMeasureRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureRisksInput) (*mcp.CallToolResult, types.ListMeasureRisksOutput, error) {
-	scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+func (r *Resolver) ListInternalControlRisksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlRisksInput) (*mcp.CallToolResult, types.ListInternalControlRisksOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlGet)
 	if err != nil {
-		return nil, types.ListMeasureRisksOutput{}, err
+		return nil, types.ListInternalControlRisksOutput{}, err
 	}
 
 	prb := r.proboSvc
@@ -2716,18 +2716,18 @@ func (r *Resolver) ListMeasureRisksTool(ctx context.Context, req *mcp.CallToolRe
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	riskPage, err := prb.Risks.ListForMeasureID(ctx, scope, input.MeasureID, cursor, coredata.NewRiskFilter(nil))
+	riskPage, err := prb.Risks.ListForInternalControlID(ctx, scope, input.InternalControlID, cursor, coredata.NewRiskFilter(nil))
 	if err != nil {
-		return nil, types.ListMeasureRisksOutput{}, fmt.Errorf("failed to list measure risks: %w", err)
+		return nil, types.ListInternalControlRisksOutput{}, fmt.Errorf("failed to list internal control risks: %w", err)
 	}
 
-	return nil, types.NewListMeasureRisksOutput(riskPage), nil
+	return nil, types.NewListInternalControlRisksOutput(riskPage), nil
 }
 
-func (r *Resolver) ListMeasureControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureControlsInput) (*mcp.CallToolResult, types.ListMeasureControlsOutput, error) {
-	scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+func (r *Resolver) ListInternalControlControlsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlControlsInput) (*mcp.CallToolResult, types.ListInternalControlControlsOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlGet)
 	if err != nil {
-		return nil, types.ListMeasureControlsOutput{}, err
+		return nil, types.ListInternalControlControlsOutput{}, err
 	}
 
 	prb := r.proboSvc
@@ -2746,18 +2746,18 @@ func (r *Resolver) ListMeasureControlsTool(ctx context.Context, req *mcp.CallToo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	controlPage, err := prb.Controls.ListForMeasureID(ctx, scope, input.MeasureID, cursor, coredata.NewControlFilter(nil))
+	controlPage, err := prb.Controls.ListForInternalControlID(ctx, scope, input.InternalControlID, cursor, coredata.NewControlFilter(nil))
 	if err != nil {
-		return nil, types.ListMeasureControlsOutput{}, fmt.Errorf("failed to list measure controls: %w", err)
+		return nil, types.ListInternalControlControlsOutput{}, fmt.Errorf("failed to list internal control controls: %w", err)
 	}
 
-	return nil, types.NewListMeasureControlsOutput(controlPage), nil
+	return nil, types.NewListInternalControlControlsOutput(controlPage), nil
 }
 
-func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureTasksInput) (*mcp.CallToolResult, types.ListMeasureTasksOutput, error) {
-	scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+func (r *Resolver) ListInternalControlTasksTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlTasksInput) (*mcp.CallToolResult, types.ListInternalControlTasksOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlGet)
 	if err != nil {
-		return nil, types.ListMeasureTasksOutput{}, err
+		return nil, types.ListInternalControlTasksOutput{}, err
 	}
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
@@ -2779,30 +2779,30 @@ func (r *Resolver) ListMeasureTasksTool(ctx context.Context, req *mcp.CallToolRe
 		taskFilter = coredata.NewTaskFilter(input.Filter.Query, input.Filter.State, input.Filter.AssignedToID)
 	}
 
-	taskPage, err := r.task.ListForMeasureID(
+	taskPage, err := r.task.ListForInternalControlID(
 		ctx,
 		scope,
-		input.MeasureID,
+		input.InternalControlID,
 		cursor,
 		taskFilter,
 	)
 	if err != nil {
-		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("failed to list measure tasks: %w", err)
+		return nil, types.ListInternalControlTasksOutput{}, fmt.Errorf("failed to list internal control tasks: %w", err)
 	}
 
 	links, err := r.taskExternalLinksByTasks(ctx, scope, taskPage.Data)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load task external links", log.Error(err))
-		return nil, types.ListMeasureTasksOutput{}, fmt.Errorf("internal error")
+		return nil, types.ListInternalControlTasksOutput{}, fmt.Errorf("internal error")
 	}
 
-	return nil, types.NewListMeasureTasksOutput(taskPage, links), nil
+	return nil, types.NewListInternalControlTasksOutput(taskPage, links), nil
 }
 
-func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureEvidencesInput) (*mcp.CallToolResult, types.ListMeasureEvidencesOutput, error) {
-	scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+func (r *Resolver) ListInternalControlEvidencesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlEvidencesInput) (*mcp.CallToolResult, types.ListInternalControlEvidencesOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlGet)
 	if err != nil {
-		return nil, types.ListMeasureEvidencesOutput{}, err
+		return nil, types.ListInternalControlEvidencesOutput{}, err
 	}
 
 	prb := r.proboSvc
@@ -2814,124 +2814,124 @@ func (r *Resolver) ListMeasureEvidencesTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	evidencePage, err := prb.Evidences.ListForMeasureID(ctx, scope, input.MeasureID, cursor)
+	evidencePage, err := prb.Evidences.ListForInternalControlID(ctx, scope, input.InternalControlID, cursor)
 	if err != nil {
-		return nil, types.ListMeasureEvidencesOutput{}, fmt.Errorf("failed to list measure evidences: %w", err)
+		return nil, types.ListInternalControlEvidencesOutput{}, fmt.Errorf("failed to list internal control evidences: %w", err)
 	}
 
-	return nil, types.NewListMeasureEvidencesOutput(evidencePage), nil
+	return nil, types.NewListInternalControlEvidencesOutput(evidencePage), nil
 }
 
-func (r *Resolver) LinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkMeasureInput) (*mcp.CallToolResult, types.LinkMeasureOutput, error) {
+func (r *Resolver) LinkInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkInternalControlInput) (*mcp.CallToolResult, types.LinkInternalControlOutput, error) {
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.ControlEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingCreate)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionControlInternalControlMappingCreate)
 		if err != nil {
-			return nil, types.LinkMeasureOutput{}, err
+			return nil, types.LinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Controls.CreateMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
-			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to control: %w", err)
+		if _, _, err := svc.Controls.CreateInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.LinkInternalControlOutput{}, fmt.Errorf("failed to link internal control to control: %w", err)
 		}
 	case coredata.RiskEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingCreate)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionRiskInternalControlMappingCreate)
 		if err != nil {
-			return nil, types.LinkMeasureOutput{}, err
+			return nil, types.LinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Risks.CreateMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
-			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to risk: %w", err)
+		if _, _, err := svc.Risks.CreateInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.LinkInternalControlOutput{}, fmt.Errorf("failed to link internal control to risk: %w", err)
 		}
 	case coredata.DocumentEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingCreate)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlDocumentMappingCreate)
 		if err != nil {
-			return nil, types.LinkMeasureOutput{}, err
+			return nil, types.LinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Measures.CreateDocumentMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
-			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to document: %w", err)
+		if _, _, err := svc.InternalControls.CreateDocumentMapping(ctx, scope, input.InternalControlID, input.ResourceID); err != nil {
+			return nil, types.LinkInternalControlOutput{}, fmt.Errorf("failed to link internal control to document: %w", err)
 		}
 	case coredata.ThirdPartyEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingCreate)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlThirdPartyMappingCreate)
 		if err != nil {
-			return nil, types.LinkMeasureOutput{}, err
+			return nil, types.LinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Measures.CreateThirdPartyMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
-			return nil, types.LinkMeasureOutput{}, fmt.Errorf("failed to link measure to third party: %w", err)
+		if _, _, err := svc.InternalControls.CreateThirdPartyMapping(ctx, scope, input.InternalControlID, input.ResourceID); err != nil {
+			return nil, types.LinkInternalControlOutput{}, fmt.Errorf("failed to link internal control to third party: %w", err)
 		}
 	case coredata.TreatmentPlanEntityType:
 		scope, err := r.Authorize(ctx, input.ResourceID, riskmanagement.ActionTreatmentPlanUpdate)
 		if err != nil {
-			return nil, types.LinkMeasureOutput{}, err
+			return nil, types.LinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := r.riskManagement.CreateMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
-			return nil, types.LinkMeasureOutput{}, mapTreatmentPlanError(ctx, r.logger, "link measure on", err)
+		if _, _, err := r.riskManagement.CreateInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.LinkInternalControlOutput{}, mapTreatmentPlanError(ctx, r.logger, "link internal control on", err)
 		}
 	default:
-		return nil, types.LinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure linking: entity type %d", input.ResourceID.EntityType())
+		return nil, types.LinkInternalControlOutput{}, fmt.Errorf("unsupported resource type for internal control linking: entity type %d", input.ResourceID.EntityType())
 	}
 
-	return nil, types.LinkMeasureOutput{}, nil
+	return nil, types.LinkInternalControlOutput{}, nil
 }
 
-func (r *Resolver) UnlinkMeasureTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkMeasureInput) (*mcp.CallToolResult, types.UnlinkMeasureOutput, error) {
+func (r *Resolver) UnlinkInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UnlinkInternalControlInput) (*mcp.CallToolResult, types.UnlinkInternalControlOutput, error) {
 	svc := r.proboSvc
 
 	switch input.ResourceID.EntityType() {
 	case coredata.ControlEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionControlMeasureMappingDelete)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionControlInternalControlMappingDelete)
 		if err != nil {
-			return nil, types.UnlinkMeasureOutput{}, err
+			return nil, types.UnlinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Controls.DeleteMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
-			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from control: %w", err)
+		if _, _, err := svc.Controls.DeleteInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, fmt.Errorf("failed to unlink internal control from control: %w", err)
 		}
 	case coredata.RiskEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionRiskMeasureMappingDelete)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionRiskInternalControlMappingDelete)
 		if err != nil {
-			return nil, types.UnlinkMeasureOutput{}, err
+			return nil, types.UnlinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Risks.DeleteMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
-			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from risk: %w", err)
+		if _, _, err := svc.Risks.DeleteInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, fmt.Errorf("failed to unlink internal control from risk: %w", err)
 		}
 	case coredata.DocumentEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureDocumentMappingDelete)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlDocumentMappingDelete)
 		if err != nil {
-			return nil, types.UnlinkMeasureOutput{}, err
+			return nil, types.UnlinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Measures.DeleteDocumentMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
-			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from document: %w", err)
+		if _, _, err := svc.InternalControls.DeleteDocumentMapping(ctx, scope, input.InternalControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, fmt.Errorf("failed to unlink internal control from document: %w", err)
 		}
 	case coredata.ThirdPartyEntityType:
-		scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureThirdPartyMappingDelete)
+		scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlThirdPartyMappingDelete)
 		if err != nil {
-			return nil, types.UnlinkMeasureOutput{}, err
+			return nil, types.UnlinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := svc.Measures.DeleteThirdPartyMapping(ctx, scope, input.MeasureID, input.ResourceID); err != nil {
-			return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("failed to unlink measure from third party: %w", err)
+		if _, _, err := svc.InternalControls.DeleteThirdPartyMapping(ctx, scope, input.InternalControlID, input.ResourceID); err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, fmt.Errorf("failed to unlink internal control from third party: %w", err)
 		}
 	case coredata.TreatmentPlanEntityType:
 		scope, err := r.Authorize(ctx, input.ResourceID, riskmanagement.ActionTreatmentPlanUpdate)
 		if err != nil {
-			return nil, types.UnlinkMeasureOutput{}, err
+			return nil, types.UnlinkInternalControlOutput{}, err
 		}
 
-		if _, _, err := r.riskManagement.DeleteMeasureMapping(ctx, scope, input.ResourceID, input.MeasureID); err != nil {
-			return nil, types.UnlinkMeasureOutput{}, mapTreatmentPlanError(ctx, r.logger, "unlink measure from", err)
+		if _, _, err := r.riskManagement.DeleteInternalControlMapping(ctx, scope, input.ResourceID, input.InternalControlID); err != nil {
+			return nil, types.UnlinkInternalControlOutput{}, mapTreatmentPlanError(ctx, r.logger, "unlink internal control from", err)
 		}
 	default:
-		return nil, types.UnlinkMeasureOutput{}, fmt.Errorf("unsupported resource type for measure unlinking: entity type %d", input.ResourceID.EntityType())
+		return nil, types.UnlinkInternalControlOutput{}, fmt.Errorf("unsupported resource type for internal control unlinking: entity type %d", input.ResourceID.EntityType())
 	}
 
-	return nil, types.UnlinkMeasureOutput{}, nil
+	return nil, types.UnlinkInternalControlOutput{}, nil
 }
 
 func (r *Resolver) ListUsersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListUsersInput) (*mcp.CallToolResult, types.ListUsersOutput, error) {
@@ -4343,10 +4343,10 @@ func (r *Resolver) ListAuditLogEntriesTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.NewListAuditLogEntriesOutput(p), nil
 }
 
-func (r *Resolver) ListMeasureDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListMeasureDocumentsInput) (*mcp.CallToolResult, types.ListMeasureDocumentsOutput, error) {
-	scope, err := r.Authorize(ctx, input.MeasureID, probo.ActionMeasureGet)
+func (r *Resolver) ListInternalControlDocumentsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListInternalControlDocumentsInput) (*mcp.CallToolResult, types.ListInternalControlDocumentsOutput, error) {
+	scope, err := r.Authorize(ctx, input.InternalControlID, probo.ActionInternalControlGet)
 	if err != nil {
-		return nil, types.ListMeasureDocumentsOutput{}, err
+		return nil, types.ListInternalControlDocumentsOutput{}, err
 	}
 
 	prb := r.proboSvc
@@ -4365,12 +4365,12 @@ func (r *Resolver) ListMeasureDocumentsTool(ctx context.Context, req *mcp.CallTo
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	docPage, err := prb.Documents.ListForMeasureID(ctx, scope, input.MeasureID, cursor, coredata.NewDocumentFilter(nil))
+	docPage, err := prb.Documents.ListForInternalControlID(ctx, scope, input.InternalControlID, cursor, coredata.NewDocumentFilter(nil))
 	if err != nil {
-		return nil, types.ListMeasureDocumentsOutput{}, fmt.Errorf("failed to list measure documents: %w", err)
+		return nil, types.ListInternalControlDocumentsOutput{}, fmt.Errorf("failed to list internal control documents: %w", err)
 	}
 
-	return nil, types.NewListMeasureDocumentsOutput(docPage), nil
+	return nil, types.NewListInternalControlDocumentsOutput(docPage), nil
 }
 
 func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.VoidDocumentVersionApprovalInput) (*mcp.CallToolResult, types.VoidDocumentVersionApprovalOutput, error) {
@@ -9393,7 +9393,7 @@ func (r *Resolver) ListTreatmentPlansTool(ctx context.Context, req *mcp.CallTool
 		return nil, types.NewListTreatmentPlansAsOfOutput(
 			asOfPage.Page,
 			asOfPage.ProgressByID,
-			asOfPage.MeasuresByID,
+			asOfPage.InternalControlsByID,
 		), nil
 	case input.RiskAnalysisID != nil:
 		p, err = r.riskManagement.ListTreatmentPlansForRiskAnalysisID(ctx, scope, *input.RiskAnalysisID, cursor, planFilter)

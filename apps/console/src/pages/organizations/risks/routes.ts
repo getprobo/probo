@@ -68,9 +68,9 @@ export const riskRoutes = [
         Component: lazy(() => import("./overview/RiskOverviewPageLoader")),
       },
       {
-        path: "measures",
+        path: "internal-controls",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./measures/RiskMeasuresPageLoader")),
+        Component: lazy(() => import("./internal-controls/RiskInternalControlsPageLoader")),
       },
       {
         path: "documents",

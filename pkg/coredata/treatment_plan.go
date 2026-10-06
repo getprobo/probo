@@ -474,11 +474,11 @@ WHERE %s
 	return nil
 }
 
-func (tps *TreatmentPlans) CountByMeasureID(
+func (tps *TreatmentPlans) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *TreatmentPlanFilter,
 ) (int, error) {
 	q := `
@@ -493,9 +493,9 @@ WITH tps AS (
 	FROM
 		treatment_plans tp
 	INNER JOIN
-		treatment_plans_measures tpm ON tpm.treatment_plan_id = tp.id
+		treatment_plans_internal_controls tpm ON tpm.treatment_plan_id = tp.id
 	WHERE
-		tpm.measure_id = @measure_id
+		tpm.internal_control_id = @internal_control_id
 )
 SELECT COUNT(id)
 FROM tps
@@ -504,7 +504,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	args := pgx.StrictNamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -516,11 +516,11 @@ WHERE %s
 	return count, nil
 }
 
-func (tps *TreatmentPlans) LoadByMeasureID(
+func (tps *TreatmentPlans) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[TreatmentPlanOrderField],
 	filter *TreatmentPlanFilter,
 ) error {
@@ -548,9 +548,9 @@ WITH tps AS (
 	INNER JOIN
 		risks r ON r.id = tp.risk_id
 	INNER JOIN
-		treatment_plans_measures tpm ON tpm.treatment_plan_id = tp.id
+		treatment_plans_internal_controls tpm ON tpm.treatment_plan_id = tp.id
 	WHERE
-		tpm.measure_id = @measure_id
+		tpm.internal_control_id = @internal_control_id
 )
 SELECT
 	id,
@@ -575,7 +575,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	args := pgx.StrictNamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -595,11 +595,11 @@ WHERE %s
 	return nil
 }
 
-func (tps *TreatmentPlans) CountByMeasureIDAsOf(
+func (tps *TreatmentPlans) CountByInternalControlIDAsOf(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	asOf time.Time,
 	filter *TreatmentPlanFilter,
 ) (int, error) {
@@ -612,7 +612,7 @@ WITH candidates AS (
 	WHERE
 		%s
 		AND created_at < @as_of
-		AND @measure_id::text = ANY(measure_ids)
+		AND @internal_control_id::text = ANY(internal_control_ids)
 ),
 latest AS (
 	SELECT DISTINCT ON (treatment_plan_id)
@@ -628,7 +628,7 @@ latest AS (
 		inherent_impact,
 		residual_likelihood,
 		residual_impact,
-		measure_ids,
+		internal_control_ids,
 		category,
 		treatment_plan_created_at,
 		treatment_plan_updated_at,
@@ -661,12 +661,12 @@ tps AS (
 		latest.treatment_plan_created_at AS created_at,
 		latest.treatment_plan_updated_at AS updated_at,
 		latest.category,
-		latest.measure_ids
+		latest.internal_control_ids
 	FROM
 		latest
 	WHERE
 		latest.event_type <> @deleted
-		AND @measure_id::text = ANY(latest.measure_ids)
+		AND @internal_control_id::text = ANY(latest.internal_control_ids)
 )
 SELECT
 	COUNT(id)
@@ -688,22 +688,22 @@ WHERE
 				AND residual_impact = @filter_impact
 			WHEN @filter_score_type::text = @filter_score_type_net::text THEN
 				CASE
-					WHEN cardinality(measure_ids) > 0
+					WHEN cardinality(internal_control_ids) > 0
 					AND NOT EXISTS (
 						SELECT 1
-						FROM unnest(measure_ids) AS mid
+						FROM unnest(internal_control_ids) AS mid
 						LEFT JOIN LATERAL (
 							SELECT latest_event.state
 							FROM (
 								SELECT me.state, me.event_type
-								FROM measure_events me
-								WHERE me.measure_id = mid
+								FROM internal_control_events me
+								WHERE me.internal_control_id = mid
 									AND me.created_at < @as_of
 									AND me.tenant_id = tps.tenant_id
 								ORDER BY me.created_at DESC
 								LIMIT 1
 							) latest_event
-							WHERE latest_event.event_type <> @measure_deleted
+							WHERE latest_event.event_type <> @internal_control_deleted
 						) latest_state ON TRUE
 						WHERE latest_state.state IS DISTINCT FROM @filter_net_implemented::text
 					)
@@ -721,10 +721,10 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"measure_id":      measureID,
-		"as_of":           asOf,
-		"deleted":         TreatmentPlanEventTypeDeleted,
-		"measure_deleted": MeasureEventTypeDeleted,
+		"internal_control_id":      internalControlID,
+		"as_of":                    asOf,
+		"deleted":                  TreatmentPlanEventTypeDeleted,
+		"internal_control_deleted": InternalControlEventTypeDeleted,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -737,11 +737,11 @@ WHERE
 	return count, nil
 }
 
-func (tps *TreatmentPlans) LoadByMeasureIDAsOf(
+func (tps *TreatmentPlans) LoadByInternalControlIDAsOf(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	asOf time.Time,
 	cursor *page.Cursor[TreatmentPlanOrderField],
 	filter *TreatmentPlanFilter,
@@ -755,7 +755,7 @@ WITH candidates AS (
 	WHERE
 		%s
 		AND created_at < @as_of
-		AND @measure_id::text = ANY(measure_ids)
+		AND @internal_control_id::text = ANY(internal_control_ids)
 ),
 latest AS (
 	SELECT DISTINCT ON (treatment_plan_id)
@@ -771,7 +771,7 @@ latest AS (
 		inherent_impact,
 		residual_likelihood,
 		residual_impact,
-		measure_ids,
+		internal_control_ids,
 		category,
 		treatment_plan_created_at,
 		treatment_plan_updated_at,
@@ -804,12 +804,12 @@ tps AS (
 		latest.treatment_plan_created_at AS created_at,
 		latest.treatment_plan_updated_at AS updated_at,
 		latest.category,
-		latest.measure_ids
+		latest.internal_control_ids
 	FROM
 		latest
 	WHERE
 		latest.event_type <> @deleted
-		AND @measure_id::text = ANY(latest.measure_ids)
+		AND @internal_control_id::text = ANY(latest.internal_control_ids)
 )
 SELECT
 	id,
@@ -845,22 +845,22 @@ WHERE
 				AND residual_impact = @filter_impact
 			WHEN @filter_score_type::text = @filter_score_type_net::text THEN
 				CASE
-					WHEN cardinality(measure_ids) > 0
+					WHEN cardinality(internal_control_ids) > 0
 					AND NOT EXISTS (
 						SELECT 1
-						FROM unnest(measure_ids) AS mid
+						FROM unnest(internal_control_ids) AS mid
 						LEFT JOIN LATERAL (
 							SELECT latest_event.state
 							FROM (
 								SELECT me.state, me.event_type
-								FROM measure_events me
-								WHERE me.measure_id = mid
+								FROM internal_control_events me
+								WHERE me.internal_control_id = mid
 									AND me.created_at < @as_of
 									AND me.tenant_id = tps.tenant_id
 								ORDER BY me.created_at DESC
 								LIMIT 1
 							) latest_event
-							WHERE latest_event.event_type <> @measure_deleted
+							WHERE latest_event.event_type <> @internal_control_deleted
 						) latest_state ON TRUE
 						WHERE latest_state.state IS DISTINCT FROM @filter_net_implemented::text
 					)
@@ -886,10 +886,10 @@ WHERE
 	)
 
 	args := pgx.StrictNamedArgs{
-		"measure_id":      measureID,
-		"as_of":           asOf,
-		"deleted":         TreatmentPlanEventTypeDeleted,
-		"measure_deleted": MeasureEventTypeDeleted,
+		"internal_control_id":      internalControlID,
+		"as_of":                    asOf,
+		"deleted":                  TreatmentPlanEventTypeDeleted,
+		"internal_control_deleted": InternalControlEventTypeDeleted,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -1037,7 +1037,7 @@ WITH latest AS (
 		inherent_impact,
 		residual_likelihood,
 		residual_impact,
-		measure_ids,
+		internal_control_ids,
 		category,
 		treatment_plan_created_at,
 		treatment_plan_updated_at,
@@ -1070,7 +1070,7 @@ tps AS (
 		latest.treatment_plan_created_at AS created_at,
 		latest.treatment_plan_updated_at AS updated_at,
 		latest.category,
-		latest.measure_ids
+		latest.internal_control_ids
 	FROM
 		latest
 	WHERE
@@ -1096,22 +1096,22 @@ WHERE
 				AND residual_impact = @filter_impact
 			WHEN @filter_score_type::text = @filter_score_type_net::text THEN
 				CASE
-					WHEN cardinality(measure_ids) > 0
+					WHEN cardinality(internal_control_ids) > 0
 					AND NOT EXISTS (
 						SELECT 1
-						FROM unnest(measure_ids) AS mid
+						FROM unnest(internal_control_ids) AS mid
 						LEFT JOIN LATERAL (
 							SELECT latest_event.state
 							FROM (
 								SELECT me.state, me.event_type
-								FROM measure_events me
-								WHERE me.measure_id = mid
+								FROM internal_control_events me
+								WHERE me.internal_control_id = mid
 									AND me.created_at < @as_of
 									AND me.tenant_id = tps.tenant_id
 								ORDER BY me.created_at DESC
 								LIMIT 1
 							) latest_event
-							WHERE latest_event.event_type <> @measure_deleted
+							WHERE latest_event.event_type <> @internal_control_deleted
 						) latest_state ON TRUE
 						WHERE latest_state.state IS DISTINCT FROM @filter_net_implemented::text
 					)
@@ -1130,10 +1130,10 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"risk_analysis_id": riskAnalysisID,
-		"as_of":            asOf,
-		"deleted":          TreatmentPlanEventTypeDeleted,
-		"measure_deleted":  MeasureEventTypeDeleted,
+		"risk_analysis_id":         riskAnalysisID,
+		"as_of":                    asOf,
+		"deleted":                  TreatmentPlanEventTypeDeleted,
+		"internal_control_deleted": InternalControlEventTypeDeleted,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -1170,7 +1170,7 @@ WITH latest AS (
 		inherent_impact,
 		residual_likelihood,
 		residual_impact,
-		measure_ids,
+		internal_control_ids,
 		category,
 		treatment_plan_created_at,
 		treatment_plan_updated_at,
@@ -1203,7 +1203,7 @@ tps AS (
 		latest.treatment_plan_created_at AS created_at,
 		latest.treatment_plan_updated_at AS updated_at,
 		latest.category,
-		latest.measure_ids
+		latest.internal_control_ids
 	FROM
 		latest
 	WHERE
@@ -1243,22 +1243,22 @@ WHERE
 				AND residual_impact = @filter_impact
 			WHEN @filter_score_type::text = @filter_score_type_net::text THEN
 				CASE
-					WHEN cardinality(measure_ids) > 0
+					WHEN cardinality(internal_control_ids) > 0
 					AND NOT EXISTS (
 						SELECT 1
-						FROM unnest(measure_ids) AS mid
+						FROM unnest(internal_control_ids) AS mid
 						LEFT JOIN LATERAL (
 							SELECT latest_event.state
 							FROM (
 								SELECT me.state, me.event_type
-								FROM measure_events me
-								WHERE me.measure_id = mid
+								FROM internal_control_events me
+								WHERE me.internal_control_id = mid
 									AND me.created_at < @as_of
 									AND me.tenant_id = tps.tenant_id
 								ORDER BY me.created_at DESC
 								LIMIT 1
 							) latest_event
-							WHERE latest_event.event_type <> @measure_deleted
+							WHERE latest_event.event_type <> @internal_control_deleted
 						) latest_state ON TRUE
 						WHERE latest_state.state IS DISTINCT FROM @filter_net_implemented::text
 					)
@@ -1283,10 +1283,10 @@ WHERE
 	)
 
 	args := pgx.StrictNamedArgs{
-		"risk_analysis_id": riskAnalysisID,
-		"as_of":            asOf,
-		"deleted":          TreatmentPlanEventTypeDeleted,
-		"measure_deleted":  MeasureEventTypeDeleted,
+		"risk_analysis_id":         riskAnalysisID,
+		"as_of":                    asOf,
+		"deleted":                  TreatmentPlanEventTypeDeleted,
+		"internal_control_deleted": InternalControlEventTypeDeleted,
 	}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
@@ -1348,13 +1348,13 @@ FROM (
 		CASE
 			WHEN EXISTS (
 				SELECT 1
-				FROM treatment_plans_measures tpm
+				FROM treatment_plans_internal_controls tpm
 				WHERE tpm.treatment_plan_id = treatment_plans.id
 			)
 			AND NOT EXISTS (
 				SELECT 1
-				FROM treatment_plans_measures tpm
-				INNER JOIN measures m ON m.id = tpm.measure_id
+				FROM treatment_plans_internal_controls tpm
+				INNER JOIN internal_controls m ON m.id = tpm.internal_control_id
 				WHERE tpm.treatment_plan_id = treatment_plans.id
 					AND m.state::text IS DISTINCT FROM @filter_net_implemented::text
 			)
@@ -1364,13 +1364,13 @@ FROM (
 		CASE
 			WHEN EXISTS (
 				SELECT 1
-				FROM treatment_plans_measures tpm
+				FROM treatment_plans_internal_controls tpm
 				WHERE tpm.treatment_plan_id = treatment_plans.id
 			)
 			AND NOT EXISTS (
 				SELECT 1
-				FROM treatment_plans_measures tpm
-				INNER JOIN measures m ON m.id = tpm.measure_id
+				FROM treatment_plans_internal_controls tpm
+				INNER JOIN internal_controls m ON m.id = tpm.internal_control_id
 				WHERE tpm.treatment_plan_id = treatment_plans.id
 					AND m.state::text IS DISTINCT FROM @filter_net_implemented::text
 			)
@@ -1390,7 +1390,7 @@ GROUP BY likelihood, impact
 		"score_type_inherent":    TreatmentPlanScoreTypeInherent,
 		"score_type_residual":    TreatmentPlanScoreTypeResidual,
 		"score_type_net":         TreatmentPlanScoreTypeNet,
-		"filter_net_implemented": MeasureStateImplemented,
+		"filter_net_implemented": InternalControlStateImplemented,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

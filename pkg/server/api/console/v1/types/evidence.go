@@ -79,8 +79,8 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 		State: e.State,
 		Type:  e.Type,
 		URL:   urlPtr,
-		Measure: &Measure{
-			ID: e.MeasureID,
+		InternalControl: &InternalControl{
+			ID: e.InternalControlID,
 		},
 		Description: e.Description,
 		CreatedAt:   e.CreatedAt,

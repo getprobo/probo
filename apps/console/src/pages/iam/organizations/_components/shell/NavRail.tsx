@@ -58,7 +58,7 @@ export interface NavRailProps {
 
 function isGovernanceVisible(permissions: NavPermissions): boolean {
   return permissions.canListTasks
-    || permissions.canListMeasures
+    || permissions.canListInternalControls
     || permissions.canListFrameworks
     || permissions.canListAudits
     || permissions.canListFindings
@@ -163,8 +163,8 @@ function governanceHref(organizationId: string, permissions: NavPermissions): st
   if (permissions.canListTasks) {
     return groupHref(organizationId, "governance", "tasks");
   }
-  if (permissions.canListMeasures) {
-    return groupHref(organizationId, "governance", "measures");
+  if (permissions.canListInternalControls) {
+    return groupHref(organizationId, "governance", "internal-controls");
   }
   if (permissions.canListFrameworks) {
     return groupHref(organizationId, "governance", "frameworks");

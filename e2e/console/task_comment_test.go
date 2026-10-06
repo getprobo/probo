@@ -34,7 +34,7 @@ import (
 func TestTaskComment_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).WithName("Task for comments").Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).WithName("Task for comments").Create()
 
 	query := `
 		mutation CreateTaskComment($input: CreateTaskCommentInput!) {
@@ -84,7 +84,7 @@ func TestTaskComment_CreateWithOwner(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	assignee := testutil.NewClientInOrg(t, testutil.RoleOwner, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).WithName("Task for owned comments").Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).WithName("Task for owned comments").Create()
 	ownerID := assignee.GetProfileID().String()
 
 	commentID := factory.NewTaskComment(owner, taskID).
@@ -120,7 +120,7 @@ func TestTaskComment_CreateWithOwner(t *testing.T) {
 func TestTaskComment_ListOldestFirst(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	firstID := factory.NewTaskComment(owner, taskID).WithContent("Oldest comment").Create()
 	secondID := factory.NewTaskComment(owner, taskID).WithContent("Newest comment").Create()
 
@@ -170,7 +170,7 @@ func TestTaskComment_ListOldestFirst(t *testing.T) {
 func TestTaskComment_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	commentID := factory.NewTaskComment(owner, taskID).WithContent("Original comment").Create()
 
 	query := `
@@ -208,7 +208,7 @@ func TestTaskComment_Update(t *testing.T) {
 func TestTaskComment_OmittableContent(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	const query = `
 		mutation UpdateTaskComment($input: UpdateTaskCommentInput!) {
@@ -291,7 +291,7 @@ func TestTaskComment_OmittableContent(t *testing.T) {
 func TestTaskComment_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	commentID := factory.NewTaskComment(owner, taskID).Create()
 
 	query := `
@@ -321,7 +321,7 @@ func TestTaskComment_ViewerCannotCreate(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	query := `
 		mutation CreateTaskComment($input: CreateTaskCommentInput!) {
@@ -345,7 +345,7 @@ func TestTaskComment_ViewerCannotCreate(t *testing.T) {
 func TestTaskComment_CreateValidation(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	const query = `
 		mutation CreateTaskComment($input: CreateTaskCommentInput!) {
@@ -410,7 +410,7 @@ func TestTaskComment_AuditorCannotAccess(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	auditor := testutil.NewClientInOrg(t, testutil.RoleAuditor, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	commentID := factory.NewTaskComment(owner, taskID).Create()
 
 	t.Run("cannot create", func(t *testing.T) {
@@ -485,7 +485,7 @@ func TestTaskComment_ViewerCanList(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	commentID := factory.NewTaskComment(owner, taskID).WithContent("Visible comment").Create()
 
 	query := `
@@ -531,7 +531,7 @@ func TestTaskComment_TenantIsolation(t *testing.T) {
 
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(org1Owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(org1Owner).Create()
 	commentID := factory.NewTaskComment(org1Owner, taskID).Create()
 
 	t.Run("cannot read comment from another organization", func(t *testing.T) {

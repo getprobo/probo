@@ -28,7 +28,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { insertTaskEdgeSorted } from "./taskConnectionOrder";
 import {
-  measureTasksConnectionKey,
+  internalControlTasksConnectionKey,
   organizationTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
@@ -68,17 +68,17 @@ export function useCreateTask() {
       content?: string | null;
       state?: TaskState;
       priority: TaskPriority;
-      measureId?: string | null;
+      internalControlId?: string | null;
     },
     connectionId: string,
   ) {
-    const measureId = input.measureId ?? undefined;
+    const internalControlId = input.internalControlId ?? undefined;
     const state = input.state ?? "TODO";
     const connections = new Set([
       taskConnectionId(organizationId, organizationTasksConnectionKey),
     ]);
-    if (measureId) {
-      connections.add(taskConnectionId(measureId, measureTasksConnectionKey));
+    if (internalControlId) {
+      connections.add(taskConnectionId(internalControlId, internalControlTasksConnectionKey));
     }
     if (taskMatchesFilter({ name: input.name, state }, graphqlFilter)) {
       connections.add(connectionId);
@@ -92,14 +92,14 @@ export function useCreateTask() {
           content: input.content || null,
           state: input.state,
           priority: input.priority,
-          measureId,
+          internalControlId,
         },
       },
       updater: store => insertTaskEdgeSorted(store, [...connections]),
     });
 
-    if (measureId) {
-      updateStoreCounter(relayEnv, measureId, "tasks(first:0)", 1);
+    if (internalControlId) {
+      updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", 1);
     }
 
     return payload.createTask.taskEdge.node.id;

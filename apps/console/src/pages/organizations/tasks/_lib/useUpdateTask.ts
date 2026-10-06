@@ -29,7 +29,7 @@ import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
 import { moveTaskNodeSorted } from "./taskConnectionOrder";
 import {
-  measureTasksConnectionKey,
+  internalControlTasksConnectionKey,
   organizationTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
@@ -75,15 +75,15 @@ export function useUpdateTask() {
     config: UseMutationConfig<useUpdateTaskMutation>,
     feedback?: MutationFeedback,
   ) {
-    const previousMeasureId = linkedRecordId(
+    const previousInternalControlId = linkedRecordId(
       relayEnv.getStore().getSource().get(config.variables.input.taskId),
-      "measure",
+      "internalControl",
     );
-    const inputMeasureId = config.variables.input.measureId;
-    const measureChanged = inputMeasureId !== undefined;
-    const nextMeasureId = measureChanged
-      ? inputMeasureId ?? undefined
-      : previousMeasureId;
+    const inputInternalControlId = config.variables.input.internalControlId;
+    const internalControlChanged = inputInternalControlId !== undefined;
+    const nextInternalControlId = internalControlChanged
+      ? inputInternalControlId ?? undefined
+      : previousInternalControlId;
 
     return commit({
       ...config,
@@ -96,24 +96,24 @@ export function useUpdateTask() {
               organizationId,
               organizationTasksConnectionKey,
             ),
-            previousMeasureConnectionId: measureChanged && previousMeasureId
-              ? taskConnectionId(previousMeasureId, measureTasksConnectionKey)
+            previousInternalControlConnectionId: internalControlChanged && previousInternalControlId
+              ? taskConnectionId(previousInternalControlId, internalControlTasksConnectionKey)
               : undefined,
-            nextMeasureConnectionId: nextMeasureId
-              ? taskConnectionId(nextMeasureId, measureTasksConnectionKey)
+            nextInternalControlConnectionId: nextInternalControlId
+              ? taskConnectionId(nextInternalControlId, internalControlTasksConnectionKey)
               : undefined,
-            createIfMissing: measureChanged,
+            createIfMissing: internalControlChanged,
           });
         }
         config.updater?.(store, data);
       },
     }, feedback).then((result) => {
-      if (measureChanged && previousMeasureId !== nextMeasureId) {
-        if (previousMeasureId) {
-          updateStoreCounter(relayEnv, previousMeasureId, "tasks(first:0)", -1);
+      if (internalControlChanged && previousInternalControlId !== nextInternalControlId) {
+        if (previousInternalControlId) {
+          updateStoreCounter(relayEnv, previousInternalControlId, "tasks(first:0)", -1);
         }
-        if (nextMeasureId) {
-          updateStoreCounter(relayEnv, nextMeasureId, "tasks(first:0)", 1);
+        if (nextInternalControlId) {
+          updateStoreCounter(relayEnv, nextInternalControlId, "tasks(first:0)", 1);
         }
       }
       return result;

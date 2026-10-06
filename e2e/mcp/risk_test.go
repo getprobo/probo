@@ -124,7 +124,7 @@ func TestMCP_Risk_PermissionDenied(t *testing.T) {
 	assert.Contains(t, msg, "permission denied")
 }
 
-func TestMCP_Risk_ListMeasures(t *testing.T) {
+func TestMCP_Risk_ListInternalControls(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
@@ -145,52 +145,52 @@ func TestMCP_Risk_ListMeasures(t *testing.T) {
 	}, &riskResult)
 	require.NotEmpty(t, riskResult.Risk.ID)
 
-	var measureResult struct {
-		Measure struct {
+	var internalControlResult struct {
+		InternalControl struct {
 			ID string `json:"id"`
-		} `json:"measure"`
+		} `json:"internal_control"`
 	}
-	mc.CallToolInto("addMeasure", map[string]any{
+	mc.CallToolInto("addInternalControl", map[string]any{
 		"organization_id": orgID,
 		"name":            factory.SafeName("Measure"),
 		"category":        "POLICY",
-	}, &measureResult)
-	require.NotEmpty(t, measureResult.Measure.ID)
+	}, &internalControlResult)
+	require.NotEmpty(t, internalControlResult.InternalControl.ID)
 
 	var emptyList struct {
-		Measures []struct {
+		InternalControls []struct {
 			ID string `json:"id"`
-		} `json:"measures"`
+		} `json:"internal_controls"`
 	}
-	mc.CallToolInto("listRiskMeasures", map[string]any{
+	mc.CallToolInto("listRiskInternalControls", map[string]any{
 		"risk_id": riskResult.Risk.ID,
 	}, &emptyList)
-	assert.Empty(t, emptyList.Measures)
+	assert.Empty(t, emptyList.InternalControls)
 
-	mc.CallToolInto("linkMeasure", map[string]any{
-		"measure_id":  measureResult.Measure.ID,
-		"resource_id": riskResult.Risk.ID,
+	mc.CallToolInto("linkInternalControl", map[string]any{
+		"internal_control_id": internalControlResult.InternalControl.ID,
+		"resource_id":         riskResult.Risk.ID,
 	}, &struct{}{})
 
 	var linkedList struct {
-		Measures []struct {
+		InternalControls []struct {
 			ID string `json:"id"`
-		} `json:"measures"`
+		} `json:"internal_controls"`
 	}
-	mc.CallToolInto("listRiskMeasures", map[string]any{
+	mc.CallToolInto("listRiskInternalControls", map[string]any{
 		"risk_id": riskResult.Risk.ID,
 	}, &linkedList)
-	require.Len(t, linkedList.Measures, 1)
-	assert.Equal(t, measureResult.Measure.ID, linkedList.Measures[0].ID)
+	require.Len(t, linkedList.InternalControls, 1)
+	assert.Equal(t, internalControlResult.InternalControl.ID, linkedList.InternalControls[0].ID)
 
 	msg := mc.CallToolExpectToolError("deleteRisk", map[string]any{
 		"id": riskResult.Risk.ID,
 	})
 	assert.Equal(t, "resource is in use", msg)
 
-	mc.CallToolInto("unlinkMeasure", map[string]any{
-		"measure_id":  measureResult.Measure.ID,
-		"resource_id": riskResult.Risk.ID,
+	mc.CallToolInto("unlinkInternalControl", map[string]any{
+		"internal_control_id": internalControlResult.InternalControl.ID,
+		"resource_id":         riskResult.Risk.ID,
 	}, &struct{}{})
 
 	var deleteResult struct {

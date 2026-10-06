@@ -27,7 +27,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import {
-  measureTasksConnectionKey,
+  internalControlTasksConnectionKey,
   organizationTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
@@ -55,11 +55,11 @@ export function useDeleteTask() {
     },
   );
 
-  async function deleteTask(taskId: string, measureId?: string) {
+  async function deleteTask(taskId: string, internalControlId?: string) {
     const connections = [
       taskConnectionId(organizationId, organizationTasksConnectionKey),
-      ...(measureId
-        ? [taskConnectionId(measureId, measureTasksConnectionKey)]
+      ...(internalControlId
+        ? [taskConnectionId(internalControlId, internalControlTasksConnectionKey)]
         : []),
     ];
 
@@ -70,8 +70,8 @@ export function useDeleteTask() {
       },
     });
 
-    if (measureId) {
-      updateStoreCounter(relayEnv, measureId, "tasks(first:0)", -1);
+    if (internalControlId) {
+      updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", -1);
     }
   }
 

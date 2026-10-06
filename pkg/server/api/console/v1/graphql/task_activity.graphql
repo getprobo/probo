@@ -50,9 +50,9 @@ enum TaskActivityField @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskActi
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TaskActivityFieldAssignedTo"
         )
-    MEASURE
+    INTERNAL_CONTROL
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TaskActivityFieldMeasure"
+            value: "go.probo.inc/probo/pkg/coredata.TaskActivityFieldInternalControl"
         )
     DEADLINE
         @goEnum(

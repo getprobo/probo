@@ -33,9 +33,9 @@ func TestTask_Assign(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create measure and task
-	measureID := factory.NewMeasure(owner).Create()
-	taskID := factory.NewTask(owner, measureID).Create()
+	// Create internal control and task
+	internalControlID := factory.NewInternalControl(owner).Create()
+	taskID := factory.NewTask(owner, internalControlID).Create()
 	profileID := factory.CreateUser(owner)
 
 	query := `
@@ -80,9 +80,9 @@ func TestTask_Unassign(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	// Create measure, task, people and assign
-	measureID := factory.NewMeasure(owner).Create()
-	taskID := factory.NewTask(owner, measureID).Create()
+	// Create internal control, task, people and assign
+	internalControlID := factory.NewInternalControl(owner).Create()
+	taskID := factory.NewTask(owner, internalControlID).Create()
 	profileID := factory.CreateUser(owner)
 
 	// First assign the task

@@ -185,7 +185,7 @@ export class Probo implements INodeType {
 					},
 					{
 						name: 'Internal Control',
-						value: 'measure',
+						value: 'internalControl',
 						description: 'Manage internal controls',
 					},
 					{

@@ -962,7 +962,7 @@
       "add": "Ajouter un e-mail"
     }
   },
-  "measureSelectField": {
+  "internalControlSelectField": {
     "placeholder": "Sélectionner une mesure",
     "none": "Aucune"
   },
@@ -1028,7 +1028,7 @@
     "empty": "Aucun tiers disponible",
     "remove": "Retirer {{name}}"
   },
-  "linkedMeasuresCard": {
+  "linkedInternalControlsCard": {
     "title": "Mesures",
     "columns": {
       "name": "Nom",
@@ -1041,7 +1041,7 @@
       "showMore": "Afficher {{count}} de plus"
     }
   },
-  "linkedMeasuresDialog": {
+  "linkedInternalControlsDialog": {
     "title": "Associer des mesures",
     "searchPlaceholder": "Rechercher des mesures...",
     "allCategories": "Toutes les catégories",
@@ -1267,7 +1267,7 @@
       "delete": "Échec de la suppression du référentiel"
     }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
       "deleted": "Contrôle interne supprimé avec succès.",
       "updated": "Contrôle interne mis à jour avec succès."
@@ -1402,6 +1402,13 @@
       "secret": "Secret"
     },
     "measureState": {
+      "implemented": "Mise en œuvre",
+      "inProgress": "En cours",
+      "notApplicable": "Non applicable",
+      "notStarted": "Non commencée",
+      "notImplemented": "Non mise en œuvre"
+    },
+    "internalControlState": {
       "implemented": "Mise en œuvre",
       "inProgress": "En cours",
       "notApplicable": "Non applicable",
@@ -1575,6 +1582,14 @@
       "unknown": "Inconnu",
       "not_implemented": "Non mise en œuvre"
     },
+    "internalControlState": {
+      "implemented": "Mise en œuvre",
+      "in_progress": "En cours",
+      "not_applicable": "Non applicable",
+      "not_started": "Non commencée",
+      "unknown": "Inconnu",
+      "not_implemented": "Non mise en œuvre"
+    },
     "confirmDialog": {
       "defaultTitle": "Êtes-vous sûr ?"
     },
@@ -1592,6 +1607,10 @@
       }
     },
     "measureImplementation": {
+      "title": "Mise en œuvre de la mesure",
+      "complete": "Terminée"
+    },
+    "internalControlImplementation": {
       "title": "Mise en œuvre de la mesure",
       "complete": "Terminée"
     },
@@ -2206,7 +2225,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTÉGRATIONS",
     "tasks": "Tâches",
-    "measures": "Contrôles internes",
+    "internalControls": "Contrôles internes",
     "risks": "Risques",
     "allRisks": "Tous les risques",
     "riskAnalyses": "Analyses des risques",
@@ -2228,7 +2247,7 @@
     "thirdPartyServices": "Services",
     "thirdPartySupplyChain": "Chaîne d’approvisionnement",
     "thirdPartyRisks": "Évaluations des risques",
-    "thirdPartyMeasures": "Mesures",
+    "thirdPartyInternalControls": "Contrôles internes",
     "documents": "Documents",
     "assets": "Actifs",
     "devices": "Appareils",
@@ -3677,8 +3696,8 @@
       "optimizing": "5 - Optimisé"
     },
     "errors": {
-      "linkMeasure": "Échec de l’association de la mesure",
-      "unlinkMeasure": "Échec de la dissociation de la mesure",
+      "linkInternalControl": "Échec de l’association du contrôle interne",
+      "unlinkInternalControl": "Échec de la dissociation du contrôle interne",
       "linkDocument": "Échec de l’association du document",
       "unlinkDocument": "Échec de la dissociation du document",
       "linkAudit": "Échec de l’association de l’audit",
@@ -3766,7 +3785,7 @@
       "update": "Mettre à jour le référentiel"
     }
   },
-  "measureDetailPage": {
+  "internalControlDetailPage": {
     "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Elle est irréversible.",
     "fields": {
       "selectState": "Sélectionner un statut",
@@ -3810,7 +3829,7 @@
       "thirdParties": "Tiers"
     }
   },
-  "measuresPage": {
+  "internalControlsPage": {
     "title": "Contrôles internes",
     "description": "Les contrôles internes sont des dispositifs nommés, avec un responsable, qui tournent selon une cadence, produisent des preuves et couvrent plusieurs exigences de référentiel.",
     "messages": {
@@ -3826,7 +3845,7 @@
     "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Cette action est irréversible.",
     "actions": {
       "import": "Importer",
-      "newMeasure": "Nouveau contrôle interne",
+      "newInternalControl": "Nouveau contrôle interne",
       "loading": "Chargement...",
       "loadMore": "Charger plus",
       "edit": "Modifier",
@@ -3844,7 +3863,7 @@
       "not_started": "Non commencé"
     },
     "columns": {
-      "measure": "Contrôle interne",
+      "internalControl": "Contrôle interne",
       "code": "Code",
       "category": "Catégorie",
       "state": "État",
@@ -3876,7 +3895,7 @@
   },
   "createEvidenceDialog": {
     "breadcrumb": {
-      "measureDetail": "Détail de la mesure",
+      "internalControlDetail": "Détails du contrôle interne",
       "createEvidence": "Créer une preuve"
     },
     "tabs": {
@@ -3937,11 +3956,11 @@
       "download": "Télécharger le fichier"
     }
   },
-  "measureFormDialog": {
+  "internalControlFormDialog": {
     "breadcrumb": {
-      "measures": "Contrôles internes",
-      "editMeasure": "Modifier le contrôle interne",
-      "newMeasure": "Nouveau contrôle interne"
+      "internalControls": "Contrôles internes",
+      "editInternalControl": "Modifier le contrôle interne",
+      "newInternalControl": "Nouveau contrôle interne"
     },
     "messages": {
       "created": "Contrôle interne créé avec succès."
@@ -4013,7 +4032,7 @@
       "clearDuration": "Effacer la durée"
     }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Preuves",
     "columns": {
       "name": "Nom",
@@ -4036,7 +4055,7 @@
       "delete": "Supprimer"
     }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
     "actions": {
       "newTask": "Nouvelle tâche"
     }
@@ -4511,7 +4530,7 @@
     },
     "tabs": {
       "overview": "Vue d’ensemble",
-      "measures": "Mesures",
+      "internalControls": "Contrôles internes",
       "documents": "Documents",
       "controls": "Contrôles",
       "obligations": "Obligations",
@@ -5079,12 +5098,12 @@
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "actions": {
-      "measures": "Mesures",
+      "internalControls": "Contrôles internes",
       "edit": "Modifier",
       "delete": "Supprimer"
     }
   },
-  "treatmentPlanMeasureList": {
+  "treatmentPlanInternalControlList": {
     "title": "Mesures",
     "empty": "Aucune mesure liée pour le moment.",
     "deleted": "Mesure supprimée",
@@ -5096,7 +5115,7 @@
       "showMore": "Afficher plus"
     }
   },
-  "treatmentPlanMeasuresDialog": {
+  "treatmentPlanInternalControlsDialog": {
     "title": "Mesures du plan de traitement",
     "loading": "Chargement des mesures…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"

@@ -43,7 +43,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { type MatrixSize } from "../../_components/matrixSize";
 
-import { TreatmentPlanMeasureList } from "./TreatmentPlanMeasureList";
+import { TreatmentPlanInternalControlList } from "./TreatmentPlanInternalControlList";
 import { TreatmentPlanProgressBar } from "./TreatmentPlanProgressBar";
 import { TreatmentPlanScoreTags } from "./TreatmentPlanScoreTags";
 import { UpdateTreatmentPlanDialog } from "./UpdateTreatmentPlanDialog";
@@ -74,8 +74,8 @@ export const treatmentPlanListItemFragment = graphql`
       notImplemented
       total
     }
-    ...TreatmentPlanMeasureList_meta
-    ...TreatmentPlanMeasureList_treatmentPlan @arguments(asOf: $asOf)
+    ...TreatmentPlanInternalControlList_meta
+    ...TreatmentPlanInternalControlList_treatmentPlan @arguments(asOf: $asOf)
     ...UpdateTreatmentPlanDialog_treatmentPlan
   }
 `;
@@ -238,7 +238,7 @@ export function TreatmentPlanListItem({
         <Tr>
           <Td colSpan={7} className="bg-subtle !py-3">
             <div className="pl-6">
-              <TreatmentPlanMeasureList
+              <TreatmentPlanInternalControlList
                 treatmentPlanKey={treatmentPlan}
                 onChanged={onChanged}
               />

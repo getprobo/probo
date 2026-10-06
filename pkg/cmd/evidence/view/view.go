@@ -46,7 +46,7 @@ query($id: ID!) {
         filename
         contentType
       }
-      measure {
+      internalControl {
         id
       }
       task {
@@ -73,9 +73,9 @@ type viewResponse struct {
 			Filename    string `json:"filename"`
 			ContentType string `json:"contentType"`
 		} `json:"file"`
-		Measure struct {
+		InternalControl struct {
 			ID string `json:"id"`
-		} `json:"measure"`
+		} `json:"internalControl"`
 		Task *struct {
 			ID string `json:"id"`
 		} `json:"task"`
@@ -149,7 +149,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Type:"), n.Type)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("State:"), n.State)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Measure:"), n.Measure.ID)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Internal control:"), n.InternalControl.ID)
 
 			if n.File != nil {
 				_, _ = fmt.Fprintf(out, "%s%s (%s)\n", label.Render("File:"), n.File.Filename, n.File.ContentType)

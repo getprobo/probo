@@ -405,7 +405,7 @@ func TestBuildDocuments_ProduceParseableProseMirror(t *testing.T) {
 								ResidualLikelihood: hostileText,
 								ResidualImpact:     hostileText,
 								ResidualRiskScore:  hostileText,
-								Measures: []docgen.RiskAnalysisMeasure{
+								InternalControls: []docgen.RiskAnalysisInternalControl{
 									{Name: hostileText, State: hostileText},
 								},
 							},

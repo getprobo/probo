@@ -38,7 +38,7 @@ import {
 export type NavPermission
   = | "canGetContext"
     | "canListTasks"
-    | "canListMeasures"
+    | "canListInternalControls"
     | "canListRisks"
     | "canListRiskAnalyses"
     | "canListFrameworks"

@@ -2219,10 +2219,10 @@ components:
         - net_likelihood
         - net_impact
         - net_risk_score
-        - measures_total
-        - measures_done
-        - measures_in_progress
-        - measures_not_implemented
+        - internal_controls_total
+        - internal_controls_done
+        - internal_controls_in_progress
+        - internal_controls_not_implemented
         - owner_id
         - created_at
         - updated_at
@@ -2268,30 +2268,30 @@ components:
           description: Residual risk score
         net_likelihood:
           type: integer
-          description: Net likelihood after linked measures
+          description: Net likelihood after linked internal controls
         net_impact:
           type: integer
-          description: Net impact after linked measures
+          description: Net impact after linked internal controls
         net_risk_score:
           type: integer
-          description: Net risk score after linked measures
-        measures_total:
+          description: Net risk score after linked internal controls
+        internal_controls_total:
           type: integer
-          description: Number of linked measures
-        measures_done:
+          description: Number of linked internal controls
+        internal_controls_done:
           type: integer
-          description: Number of completed linked measures
-        measures_in_progress:
+          description: Number of completed linked internal controls
+        internal_controls_in_progress:
           type: integer
-          description: Number of in-progress linked measures
-        measures_not_implemented:
+          description: Number of in-progress linked internal controls
+        internal_controls_not_implemented:
           type: integer
-          description: Number of not-implemented linked measures
-        measures:
+          description: Number of not-implemented linked internal controls
+        internal_controls:
           type: array
-          description: Linked measures as of the requested instant. Present when listing with as_of.
+          description: Linked internal controls as of the requested instant. Present when listing with as_of.
           items:
-            $ref: "#/components/schemas/TreatmentPlanMeasure"
+            $ref: "#/components/schemas/TreatmentPlanInternalControl"
         created_at:
           type: string
           format: date-time
@@ -2463,7 +2463,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted treatment plan ID
 
-    TreatmentPlanMeasure:
+    TreatmentPlanInternalControl:
       type: object
       required:
         - id
@@ -2471,13 +2471,13 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         name:
           type: string
-          description: Measure name. Absent when the measure has been deleted.
+          description: Internal control name. Absent when the internal control has been deleted.
         state:
-          $ref: "#/components/schemas/MeasureState"
-          description: Measure state as of the requested instant
+          $ref: "#/components/schemas/InternalControlState"
+          description: Internal control state as of the requested instant
 
     InternalControlType:
       type: string
@@ -2566,7 +2566,7 @@ components:
         - OPERATING
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus
 
-    MeasureState:
+    InternalControlState:
       type: string
       enum:
         - NOT_STARTED
@@ -2575,29 +2575,29 @@ components:
         - IMPLEMENTED
         - UNKNOWN
         - NOT_IMPLEMENTED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeasureState
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlState
 
-    MeasureOrderField:
+    InternalControlOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeasureOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOrderField
 
-    MeasureOrderBy:
+    InternalControlOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/MeasureOrderField"
-          description: Measure order field
+          $ref: "#/components/schemas/InternalControlOrderField"
+          description: Internal control order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Measure order direction
+          description: Internal control order direction
 
-    Measure:
+    InternalControl:
       type: object
       required:
         - id
@@ -2610,21 +2610,21 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         category:
           type: string
-          description: Measure category
+          description: Internal control category
         name:
           type: string
-          description: Measure name
+          description: Internal control name
         description:
           type:
             - string
             - "null"
-          description: Measure description
+          description: Internal control description
         state:
-          $ref: "#/components/schemas/MeasureState"
-          description: Measure state
+          $ref: "#/components/schemas/InternalControlState"
+          description: Internal control state
         code:
           type:
             - string
@@ -2691,7 +2691,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListMeasuresInput:
+    ListInternalControlsInput:
       type: object
       required:
         - organization_id
@@ -2700,8 +2700,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/MeasureOrderBy"
-          description: Measure order by
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
         size:
           type: integer
           description: Page size
@@ -2715,33 +2715,33 @@ components:
               type: string
               description: Search query
             state:
-              $ref: "#/components/schemas/MeasureState"
-              description: Measure state filter
+              $ref: "#/components/schemas/InternalControlState"
+              description: Internal control state filter
             category:
               type: string
-              description: Filter by measure category
+              description: Filter by internal control category
 
-    ListMeasuresOutput:
+    ListInternalControlsOutput:
       type: object
       required:
-        - measures
+        - internal_controls
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        measures:
+        internal_controls:
           type: array
           items:
-            $ref: "#/components/schemas/Measure"
+            $ref: "#/components/schemas/InternalControl"
 
-    ListMeasureRisksInput:
+    ListInternalControlRisksInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2752,7 +2752,7 @@ components:
           $ref: "#/components/schemas/RiskOrderBy"
           description: Risk order by
 
-    ListMeasureRisksOutput:
+    ListInternalControlRisksOutput:
       type: object
       required:
         - risks
@@ -2765,14 +2765,14 @@ components:
           items:
             $ref: "#/components/schemas/Risk"
 
-    ListMeasureControlsInput:
+    ListInternalControlControlsInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2783,7 +2783,7 @@ components:
           $ref: "#/components/schemas/ControlOrderBy"
           description: Control order by
 
-    ListMeasureControlsOutput:
+    ListInternalControlControlsOutput:
       type: object
       required:
         - controls
@@ -2796,14 +2796,14 @@ components:
           items:
             $ref: "#/components/schemas/Control"
 
-    ListMeasureDocumentsInput:
+    ListInternalControlDocumentsInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2814,7 +2814,7 @@ components:
           $ref: "#/components/schemas/DocumentOrderBy"
           description: Document order by
 
-    ListMeasureDocumentsOutput:
+    ListInternalControlDocumentsOutput:
       type: object
       required:
         - documents
@@ -2827,14 +2827,14 @@ components:
           items:
             $ref: "#/components/schemas/Document"
 
-    ListMeasureTasksInput:
+    ListInternalControlTasksInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2859,7 +2859,7 @@ components:
                 - type: "null"
               description: Filter by assigned profile ID. Defaults to null which returns every assignee.
 
-    ListMeasureTasksOutput:
+    ListInternalControlTasksOutput:
       type: object
       required:
         - tasks
@@ -2872,14 +2872,14 @@ components:
           items:
             $ref: "#/components/schemas/Task"
 
-    ListMeasureEvidencesInput:
+    ListInternalControlEvidencesInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2887,7 +2887,7 @@ components:
           type: integer
           description: Page size
 
-    ListMeasureEvidencesOutput:
+    ListInternalControlEvidencesOutput:
       type: object
       required:
         - evidences
@@ -2905,7 +2905,7 @@ components:
       required:
         - id
         - organization_id
-        - measure_id
+        - internal_control_id
         - state
         - reference_id
         - type
@@ -2917,7 +2917,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
         task_id:
           $ref: "#/components/schemas/GID"
@@ -2972,56 +2972,56 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted evidence ID
 
-    LinkMeasureInput:
+    LinkInternalControlInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
         - resource_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the resource to link (control, risk, document, third party, or treatment plan)
 
-    LinkMeasureOutput:
+    LinkInternalControlOutput:
       type: object
 
-    UnlinkMeasureInput:
+    UnlinkInternalControlInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
         - resource_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the resource to unlink (control, risk, document, third party, or treatment plan)
 
-    UnlinkMeasureOutput:
+    UnlinkInternalControlOutput:
       type: object
 
-    GetMeasureInput:
+    GetInternalControlInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
 
-    GetMeasureOutput:
+    GetInternalControlOutput:
       type: object
       required:
-        - measure
+        - internal_control
       properties:
-        measure:
-          $ref: "#/components/schemas/Measure"
+        internal_control:
+          $ref: "#/components/schemas/InternalControl"
 
-    AddMeasureInput:
+    AddInternalControlInput:
       type: object
       required:
         - organization_id
@@ -3033,13 +3033,13 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Measure name
+          description: Internal control name
         description:
           type: string
-          description: Measure description
+          description: Internal control description
         category:
           type: string
-          description: Measure category
+          description: Internal control category
         code:
           type: string
           description: Stable human reference, for example IC-ACCESS-01
@@ -3068,35 +3068,35 @@ components:
           $ref: "#/components/schemas/GID"
           description: Reviewer profile ID
 
-    AddMeasureOutput:
+    AddInternalControlOutput:
       type: object
       required:
-        - measure
+        - internal_control
       properties:
-        measure:
-          $ref: "#/components/schemas/Measure"
+        internal_control:
+          $ref: "#/components/schemas/InternalControl"
 
-    UpdateMeasureInput:
+    UpdateInternalControlInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         name:
           type: string
-          description: Measure name
+          description: Internal control name
         description:
           type: ["string", "null"]
-          description: Measure description
+          description: Internal control description
           go.probo.inc/mcpgen/omittable: true
         category:
           type: string
-          description: Measure category
+          description: Internal control category
         state:
-          $ref: "#/components/schemas/MeasureState"
-          description: Measure state
+          $ref: "#/components/schemas/InternalControlState"
+          description: Internal control state
         code:
           type: ["string", "null"]
           description: Stable human reference, for example IC-ACCESS-01
@@ -3149,31 +3149,31 @@ components:
           description: Reviewer profile ID
           go.probo.inc/mcpgen/omittable: true
 
-    UpdateMeasureOutput:
+    UpdateInternalControlOutput:
       type: object
       required:
-        - measure
+        - internal_control
       properties:
-        measure:
-          $ref: "#/components/schemas/Measure"
+        internal_control:
+          $ref: "#/components/schemas/InternalControl"
 
-    DeleteMeasureInput:
+    DeleteInternalControlInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
 
-    DeleteMeasureOutput:
+    DeleteInternalControlOutput:
       type: object
       required:
-        - deleted_measure_id
+        - deleted_internal_control_id
       properties:
-        deleted_measure_id:
+        deleted_internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted measure ID
+          description: Deleted internal control ID
 
     FrameworkOrderField:
       type: string
@@ -5704,7 +5704,7 @@ components:
           type:
             - string
             - "null"
-          description: Security measures
+          description: Security internal controls
         data_protection_impact_assessment_needed:
           $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
           description: DPIA needed
@@ -5843,7 +5843,7 @@ components:
           description: Retention period
         security_measures:
           type: string
-          description: Security measures
+          description: Security internal controls
         data_protection_impact_assessment_needed:
           $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
           description: DPIA needed
@@ -6909,7 +6909,7 @@ components:
           description: Control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (measure, document, audit, or obligation)
+          description: ID of the resource to link (internal control, document, audit, or obligation)
 
     LinkControlOutput:
       type: object
@@ -6925,7 +6925,7 @@ components:
           description: Control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (measure, document, audit, or obligation)
+          description: ID of the resource to unlink (internal control, document, audit, or obligation)
 
     UnlinkControlOutput:
       type: object
@@ -6961,7 +6961,7 @@ components:
           items:
             $ref: "#/components/schemas/Obligation"
 
-    ListControlMeasuresInput:
+    ListControlInternalControlsInput:
       type: object
       required:
         - control_id
@@ -6976,21 +6976,21 @@ components:
           type: integer
           description: Page size
         order_by:
-          $ref: "#/components/schemas/MeasureOrderBy"
-          description: Measure order by
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
 
-    ListControlMeasuresOutput:
+    ListControlInternalControlsOutput:
       type: object
       required:
-        - measures
+        - internal_controls
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        measures:
+        internal_controls:
           type: array
           items:
-            $ref: "#/components/schemas/Measure"
+            $ref: "#/components/schemas/InternalControl"
 
     ListControlDocumentsInput:
       type: object
@@ -7085,7 +7085,7 @@ components:
           items:
             $ref: "#/components/schemas/Obligation"
 
-    ListRiskMeasuresInput:
+    ListRiskInternalControlsInput:
       type: object
       required:
         - risk_id
@@ -7100,21 +7100,21 @@ components:
           type: integer
           description: Page size
         order_by:
-          $ref: "#/components/schemas/MeasureOrderBy"
-          description: Measure order by
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
 
-    ListRiskMeasuresOutput:
+    ListRiskInternalControlsOutput:
       type: object
       required:
-        - measures
+        - internal_controls
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        measures:
+        internal_controls:
           type: array
           items:
-            $ref: "#/components/schemas/Measure"
+            $ref: "#/components/schemas/InternalControl"
 
     LinkRiskInput:
       type: object
@@ -7127,7 +7127,7 @@ components:
           description: Risk ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (document, measure, or obligation)
+          description: ID of the resource to link (document, internal control, or obligation)
 
     LinkRiskOutput:
       type: object
@@ -7143,7 +7143,7 @@ components:
           description: Risk ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (document, measure, or obligation)
+          description: ID of the resource to unlink (document, internal control, or obligation)
 
     UnlinkRiskOutput:
       type: object
@@ -7207,13 +7207,13 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        measure_id:
+        internal_control_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
-              description: Measure ID
+              description: Internal control ID
             - type: "null"
-              description: No measure
-          description: Measure ID
+              description: No internal control
+          description: Internal control ID
         name:
           type: string
           description: Task name
@@ -7484,9 +7484,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         order_by:
           $ref: "#/components/schemas/TaskOrderBy"
           description: Task order by
@@ -7553,13 +7553,13 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        measure_id:
+        internal_control_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
-              description: Measure ID
+              description: Internal control ID
             - type: "null"
-              description: No measure
-          description: Measure ID
+              description: No internal control
+          description: Internal control ID
         name:
           type: string
           description: Task name
@@ -7663,13 +7663,13 @@ components:
               description: Not assigned
           description: Assigned to person ID
           go.probo.inc/mcpgen/omittable: true
-        measure_id:
+        internal_control_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
-              description: Measure ID
+              description: Internal control ID
             - type: "null"
-              description: No measure
-          description: Measure ID
+              description: No internal control
+          description: Internal control ID
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskOutput:
@@ -7922,7 +7922,7 @@ components:
         - STATE
         - PRIORITY
         - ASSIGNED_TO
-        - MEASURE
+        - INTERNAL_CONTROL
         - DEADLINE
         - TIME_ESTIMATE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityField
@@ -17245,114 +17245,114 @@ tools:
       $ref: "#/components/schemas/DeleteRiskInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskOutput"
-  - name: listMeasures
-    title: List Measures
-    description: List all measures for the organization
+  - name: listInternalControls
+    title: List Internal controls
+    description: List all internal controls for the organization
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasuresInput"
+      $ref: "#/components/schemas/ListInternalControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasuresOutput"
-  - name: getMeasure
-    title: Get Measure
-    description: Get a measure by ID
+      $ref: "#/components/schemas/ListInternalControlsOutput"
+  - name: getInternalControl
+    title: Get Internal control
+    description: Get an internal control by ID
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetMeasureInput"
+      $ref: "#/components/schemas/GetInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/GetMeasureOutput"
-  - name: addMeasure
-    title: Add Measure
-    description: Add a new measure to the organization
+      $ref: "#/components/schemas/GetInternalControlOutput"
+  - name: addInternalControl
+    title: Add Internal control
+    description: Add a new internal control to the organization
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddMeasureInput"
+      $ref: "#/components/schemas/AddInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/AddMeasureOutput"
-  - name: updateMeasure
-    title: Update Measure
-    description: Update an existing measure
+      $ref: "#/components/schemas/AddInternalControlOutput"
+  - name: updateInternalControl
+    title: Update Internal control
+    description: Update an existing internal control
     hints:
       readonly: false
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateMeasureInput"
+      $ref: "#/components/schemas/UpdateInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateMeasureOutput"
-  - name: deleteMeasure
-    title: Delete Measure
-    description: Delete a measure
+      $ref: "#/components/schemas/UpdateInternalControlOutput"
+  - name: deleteInternalControl
+    title: Delete Internal control
+    description: Delete an internal control
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteMeasureInput"
+      $ref: "#/components/schemas/DeleteInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteMeasureOutput"
-  - name: listMeasureRisks
-    title: List Measure Risks
-    description: List risks linked to a measure
+      $ref: "#/components/schemas/DeleteInternalControlOutput"
+  - name: listInternalControlRisks
+    title: List Internal control Risks
+    description: List risks linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureRisksInput"
+      $ref: "#/components/schemas/ListInternalControlRisksInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureRisksOutput"
-  - name: listMeasureControls
-    title: List Measure Controls
-    description: List controls linked to a measure
+      $ref: "#/components/schemas/ListInternalControlRisksOutput"
+  - name: listInternalControlControls
+    title: List Internal control Controls
+    description: List controls linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureControlsInput"
+      $ref: "#/components/schemas/ListInternalControlControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureControlsOutput"
-  - name: listMeasureTasks
-    title: List Measure Tasks
-    description: List tasks linked to a measure
+      $ref: "#/components/schemas/ListInternalControlControlsOutput"
+  - name: listInternalControlTasks
+    title: List Internal control Tasks
+    description: List tasks linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureTasksInput"
+      $ref: "#/components/schemas/ListInternalControlTasksInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureTasksOutput"
-  - name: listMeasureEvidences
-    title: List Measure Evidences
-    description: List evidences linked to a measure
+      $ref: "#/components/schemas/ListInternalControlTasksOutput"
+  - name: listInternalControlEvidences
+    title: List Internal control Evidences
+    description: List evidences linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureEvidencesInput"
+      $ref: "#/components/schemas/ListInternalControlEvidencesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureEvidencesOutput"
+      $ref: "#/components/schemas/ListInternalControlEvidencesOutput"
   - name: deleteEvidence
     title: Delete Evidence
     description: Delete an evidence
@@ -17365,42 +17365,42 @@ tools:
       $ref: "#/components/schemas/DeleteEvidenceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteEvidenceOutput"
-  - name: linkMeasure
-    title: Link Measure
-    description: Link a measure to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
+  - name: linkInternalControl
+    title: Link Internal control
+    description: Link an internal control to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/LinkMeasureInput"
+      $ref: "#/components/schemas/LinkInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkMeasureOutput"
-  - name: unlinkMeasure
-    title: Unlink Measure
-    description: Unlink a measure from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
+      $ref: "#/components/schemas/LinkInternalControlOutput"
+  - name: unlinkInternalControl
+    title: Unlink Internal control
+    description: Unlink an internal control from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UnlinkMeasureInput"
+      $ref: "#/components/schemas/UnlinkInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkMeasureOutput"
-  - name: listMeasureDocuments
-    title: List Measure Documents
-    description: List documents linked to a measure
+      $ref: "#/components/schemas/UnlinkInternalControlOutput"
+  - name: listInternalControlDocuments
+    title: List Internal control Documents
+    description: List documents linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureDocumentsInput"
+      $ref: "#/components/schemas/ListInternalControlDocumentsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureDocumentsOutput"
+      $ref: "#/components/schemas/ListInternalControlDocumentsOutput"
   - name: listFrameworks
     title: List Frameworks
     description: List all frameworks for the organization
@@ -18255,7 +18255,7 @@ tools:
       $ref: "#/components/schemas/DeleteControlOutput"
   - name: linkControl
     title: Link Control
-    description: Link a resource to a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
+    description: Link a resource to a control (internal control, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -18267,7 +18267,7 @@ tools:
       $ref: "#/components/schemas/LinkControlOutput"
   - name: unlinkControl
     title: Unlink Control
-    description: Unlink a resource from a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
+    description: Unlink a resource from a control (internal control, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -18289,18 +18289,18 @@ tools:
       $ref: "#/components/schemas/ListControlObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListControlObligationsOutput"
-  - name: listControlMeasures
-    title: List Control Measures
-    description: List measures linked to a control
+  - name: listControlInternalControls
+    title: List Control Internal controls
+    description: List internal controls linked to a control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListControlMeasuresInput"
+      $ref: "#/components/schemas/ListControlInternalControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListControlMeasuresOutput"
+      $ref: "#/components/schemas/ListControlInternalControlsOutput"
   - name: listControlDocuments
     title: List Control Documents
     description: List documents linked to a control
@@ -18337,21 +18337,21 @@ tools:
       $ref: "#/components/schemas/ListRiskObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListRiskObligationsOutput"
-  - name: listRiskMeasures
-    title: List Risk Measures
-    description: List measures linked to a risk
+  - name: listRiskInternalControls
+    title: List Risk Internal controls
+    description: List internal controls linked to a risk
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskMeasuresInput"
+      $ref: "#/components/schemas/ListRiskInternalControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskMeasuresOutput"
+      $ref: "#/components/schemas/ListRiskInternalControlsOutput"
   - name: linkRisk
     title: Link Risk
-    description: Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
+    description: Link a risk to a resource (document, internal control, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -18363,7 +18363,7 @@ tools:
       $ref: "#/components/schemas/LinkRiskOutput"
   - name: unlinkRisk
     title: Unlink Risk
-    description: Unlink a risk from a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
+    description: Unlink a risk from a resource (document, internal control, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -18375,7 +18375,7 @@ tools:
       $ref: "#/components/schemas/UnlinkRiskOutput"
   - name: listTasks
     title: List Tasks
-    description: List all tasks for the organization or measure
+    description: List all tasks for the organization or internal control
     hints:
       readonly: true
       destructive: false

@@ -71,15 +71,15 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewFramework(framework), nil
 		}
-	case coredata.MeasureEntityType:
-		action = probo.ActionMeasureGet
+	case coredata.InternalControlEntityType:
+		action = probo.ActionInternalControlGet
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
-			measure, err := r.probo.Measures.Get(ctx, scope, id)
+			internalControl, err := r.probo.InternalControls.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err
 			}
 
-			return types.NewMeasure(measure), nil
+			return types.NewInternalControl(internalControl), nil
 		}
 	case coredata.TaskEntityType:
 		action = task.ActionTaskGet

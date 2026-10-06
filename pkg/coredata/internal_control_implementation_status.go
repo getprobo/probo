@@ -81,32 +81,32 @@ func (v *InternalControlImplementationStatus) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MeasureStateForImplementationStatus maps the operational status onto the
-// legacy measure state used by treatment-plan progress. Operating counts as
+// InternalControlStateForImplementationStatus maps the operational status onto the
+// legacy internal control state used by treatment-plan progress. Operating counts as
 // implemented because the control is in place and running.
-func MeasureStateForImplementationStatus(
+func InternalControlStateForImplementationStatus(
 	status InternalControlImplementationStatus,
-) (MeasureState, bool) {
+) (InternalControlState, bool) {
 	switch status {
 	case InternalControlImplementationStatusNotImplemented:
-		return MeasureStateNotImplemented, true
+		return InternalControlStateNotImplemented, true
 	case InternalControlImplementationStatusInProgress:
-		return MeasureStateInProgress, true
+		return InternalControlStateInProgress, true
 	case InternalControlImplementationStatusImplemented,
 		InternalControlImplementationStatusOperating:
-		return MeasureStateImplemented, true
+		return InternalControlStateImplemented, true
 	default:
 		return "", false
 	}
 }
 
-// ImplementationStatusForMeasureState maps a legacy measure state onto the
+// ImplementationStatusForInternalControlState maps a legacy internal control state onto the
 // operational status. States with no operational equivalent stay not implemented.
-func ImplementationStatusForMeasureState(state MeasureState) InternalControlImplementationStatus {
+func ImplementationStatusForInternalControlState(state InternalControlState) InternalControlImplementationStatus {
 	switch state {
-	case MeasureStateInProgress:
+	case InternalControlStateInProgress:
 		return InternalControlImplementationStatusInProgress
-	case MeasureStateImplemented:
+	case InternalControlStateImplemented:
 		return InternalControlImplementationStatusImplemented
 	default:
 		return InternalControlImplementationStatusNotImplemented

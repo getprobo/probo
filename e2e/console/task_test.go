@@ -33,7 +33,7 @@ import (
 func TestTask_Create(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).WithName("Measure for Task Tests").Create()
+	internalControlID := factory.NewInternalControl(owner).WithName("Internal control for Task Tests").Create()
 
 	query := `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -63,11 +63,11 @@ func TestTask_Create(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"measureId":      measureID,
-			"name":           "Owner Task",
-			"content":        factory.ProseMirrorPlainText("Created by owner"),
-			"priority":       "MEDIUM",
+			"organizationId":    owner.GetOrganizationID().String(),
+			"internalControlId": internalControlID,
+			"name":              "Owner Task",
+			"content":           factory.ProseMirrorPlainText("Created by owner"),
+			"priority":          "MEDIUM",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestTask_Create(t *testing.T) {
 	assert.Equal(t, "TODO", task.State)
 }
 
-func TestTask_CreateWithoutMeasure(t *testing.T) {
+func TestTask_CreateWithoutInternalControl(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
@@ -89,7 +89,7 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 					node {
 						id
 						name
-						measure {
+						internalControl {
 							id
 						}
 					}
@@ -102,11 +102,11 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 		CreateTask struct {
 			TaskEdge struct {
 				Node struct {
-					ID      string `json:"id"`
-					Name    string `json:"name"`
-					Measure *struct {
+					ID              string `json:"id"`
+					Name            string `json:"name"`
+					InternalControl *struct {
 						ID string `json:"id"`
-					} `json:"measure"`
+					} `json:"internalControl"`
 				} `json:"node"`
 			} `json:"taskEdge"`
 		} `json:"createTask"`
@@ -115,8 +115,8 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"name":           "Task without measure",
-			"content":        factory.ProseMirrorPlainText("Created without a measure"),
+			"name":           "Task without internal control",
+			"content":        factory.ProseMirrorPlainText("Created without an internal control"),
 			"priority":       "HIGH",
 		},
 	}, &result)
@@ -124,15 +124,15 @@ func TestTask_CreateWithoutMeasure(t *testing.T) {
 
 	task := result.CreateTask.TaskEdge.Node
 	assert.NotEmpty(t, task.ID)
-	assert.Equal(t, "Task without measure", task.Name)
-	assert.Nil(t, task.Measure)
+	assert.Equal(t, "Task without internal control", task.Name)
+	assert.Nil(t, task.InternalControl)
 }
 
 func TestTask_Update(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).Create()
-	taskID := factory.NewTask(owner, measureID).
+	internalControlID := factory.NewInternalControl(owner).Create()
+	taskID := factory.NewTask(owner, internalControlID).
 		WithName("Task to Update").
 		WithContent("Original description").
 		Create()
@@ -173,8 +173,8 @@ func TestTask_Update(t *testing.T) {
 func TestTask_Delete(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).Create()
-	taskID := factory.NewTask(owner, measureID).
+	internalControlID := factory.NewInternalControl(owner).Create()
+	taskID := factory.NewTask(owner, internalControlID).
 		WithName("Task to Delete").
 		Create()
 
@@ -201,21 +201,21 @@ func TestTask_Delete(t *testing.T) {
 	assert.Equal(t, taskID, result.DeleteTask.DeletedTaskID)
 }
 
-func TestTask_ListByMeasure(t *testing.T) {
+func TestTask_ListByInternalControl(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).Create()
+	internalControlID := factory.NewInternalControl(owner).Create()
 
 	// Create multiple tasks
 	taskNames := []string{"Task A", "Task B", "Task C"}
 	for _, name := range taskNames {
-		factory.NewTask(owner, measureID).WithName(name).Create()
+		factory.NewTask(owner, internalControlID).WithName(name).Create()
 	}
 
 	query := `
-		query GetMeasureTasks($id: ID!) {
+		query GetInternalControlTasks($id: ID!) {
 			node(id: $id) {
-				... on Measure {
+				... on InternalControl {
 					id
 					tasks(first: 10) {
 						edges {
@@ -246,7 +246,7 @@ func TestTask_ListByMeasure(t *testing.T) {
 		} `json:"node"`
 	}
 
-	err := owner.Execute(query, map[string]any{"id": measureID}, &result)
+	err := owner.Execute(query, map[string]any{"id": internalControlID}, &result)
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, result.Node.Tasks.TotalCount, 3)
 }
@@ -254,14 +254,14 @@ func TestTask_ListByMeasure(t *testing.T) {
 func TestTask_Filter(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).Create()
-	matchingTaskID := factory.NewTask(owner, measureID).
+	internalControlID := factory.NewInternalControl(owner).Create()
+	matchingTaskID := factory.NewTask(owner, internalControlID).
 		WithName("Quarterly access review").
 		Create()
-	inProgressDecoyID := factory.NewTask(owner, measureID).
+	inProgressDecoyID := factory.NewTask(owner, internalControlID).
 		WithName("Prepare security training").
 		Create()
-	factory.NewTask(owner, measureID).
+	factory.NewTask(owner, internalControlID).
 		WithName("Annual access review").
 		Create()
 
@@ -336,16 +336,16 @@ func TestTask_Filter(t *testing.T) {
 func TestTask_FilterByAssignee(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).Create()
+	internalControlID := factory.NewInternalControl(owner).Create()
 	assigneeID := factory.CreateUser(owner)
 	otherAssigneeID := factory.CreateUser(owner)
-	assignedTaskID := factory.NewTask(owner, measureID).
+	assignedTaskID := factory.NewTask(owner, internalControlID).
 		WithName("Collect assigned evidence").
 		Create()
-	otherTaskID := factory.NewTask(owner, measureID).
+	otherTaskID := factory.NewTask(owner, internalControlID).
 		WithName("Collect other evidence").
 		Create()
-	factory.NewTask(owner, measureID).
+	factory.NewTask(owner, internalControlID).
 		WithName("Collect unassigned evidence").
 		Create()
 
@@ -446,10 +446,10 @@ func TestTask_FilterByAssignee(t *testing.T) {
 	assert.Empty(t, result.Node.Tasks.Edges)
 	assert.Equal(t, 0, result.Node.Tasks.TotalCount)
 
-	measureQuery := `
-		query FilterMeasureTasks($measureId: ID!, $filter: TaskFilter) {
-			node(id: $measureId) {
-				... on Measure {
+	internalControlQuery := `
+		query FilterInternalControlTasks($internalControlId: ID!, $filter: TaskFilter) {
+			node(id: $internalControlId) {
+				... on InternalControl {
 					tasks(first: 10, filter: $filter) {
 						edges {
 							node {
@@ -463,7 +463,7 @@ func TestTask_FilterByAssignee(t *testing.T) {
 		}
 	`
 
-	var measureResult struct {
+	var internalControlResult struct {
 		Node struct {
 			Tasks struct {
 				Edges []struct {
@@ -476,53 +476,53 @@ func TestTask_FilterByAssignee(t *testing.T) {
 		} `json:"node"`
 	}
 
-	err = owner.Execute(measureQuery, map[string]any{
-		"measureId": measureID,
+	err = owner.Execute(internalControlQuery, map[string]any{
+		"internalControlId": internalControlID,
 		"filter": map[string]any{
 			"assignedToId": assigneeID,
 		},
-	}, &measureResult)
+	}, &internalControlResult)
 	require.NoError(t, err)
-	require.Len(t, measureResult.Node.Tasks.Edges, 1)
-	assert.Equal(t, assignedTaskID, measureResult.Node.Tasks.Edges[0].Node.ID)
-	assert.Equal(t, 1, measureResult.Node.Tasks.TotalCount)
+	require.Len(t, internalControlResult.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, internalControlResult.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, internalControlResult.Node.Tasks.TotalCount)
 
-	err = owner.Execute(measureQuery, map[string]any{
-		"measureId": measureID,
+	err = owner.Execute(internalControlQuery, map[string]any{
+		"internalControlId": internalControlID,
 		"filter": map[string]any{
 			"assignedToId": assigneeID,
 			"query":        "assigned",
 			"state":        "TODO",
 		},
-	}, &measureResult)
+	}, &internalControlResult)
 	require.NoError(t, err)
-	require.Len(t, measureResult.Node.Tasks.Edges, 1)
-	assert.Equal(t, assignedTaskID, measureResult.Node.Tasks.Edges[0].Node.ID)
-	assert.Equal(t, 1, measureResult.Node.Tasks.TotalCount)
+	require.Len(t, internalControlResult.Node.Tasks.Edges, 1)
+	assert.Equal(t, assignedTaskID, internalControlResult.Node.Tasks.Edges[0].Node.ID)
+	assert.Equal(t, 1, internalControlResult.Node.Tasks.TotalCount)
 
-	err = owner.Execute(measureQuery, map[string]any{
-		"measureId": measureID,
+	err = owner.Execute(internalControlQuery, map[string]any{
+		"internalControlId": internalControlID,
 		"filter": map[string]any{
 			"assignedToId": assigneeID,
 			"state":        "IN_PROGRESS",
 		},
-	}, &measureResult)
+	}, &internalControlResult)
 	require.NoError(t, err)
-	assert.Empty(t, measureResult.Node.Tasks.Edges)
-	assert.Equal(t, 0, measureResult.Node.Tasks.TotalCount)
+	assert.Empty(t, internalControlResult.Node.Tasks.Edges)
+	assert.Equal(t, 0, internalControlResult.Node.Tasks.TotalCount)
 }
 
 func TestTask_Filter_LiteralWildcards(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).Create()
-	percentTaskID := factory.NewTask(owner, measureID).
+	internalControlID := factory.NewInternalControl(owner).Create()
+	percentTaskID := factory.NewTask(owner, internalControlID).
 		WithName("Quarterly 100% review").
 		Create()
-	underscoreTaskID := factory.NewTask(owner, measureID).
+	underscoreTaskID := factory.NewTask(owner, internalControlID).
 		WithName("Q3_access review").
 		Create()
-	factory.NewTask(owner, measureID).
+	factory.NewTask(owner, internalControlID).
 		WithName("Quarterly access review").
 		Create()
 
@@ -666,7 +666,7 @@ func TestTask_StateEnum(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	measureID := factory.NewMeasure(owner).
+	internalControlID := factory.NewInternalControl(owner).
 		WithName("Task State Test").
 		Create()
 
@@ -707,11 +707,11 @@ func TestTask_StateEnum(t *testing.T) {
 
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{
-					"organizationId": owner.GetOrganizationID().String(),
-					"measureId":      measureID,
-					"name":           "Create State " + state,
-					"priority":       "MEDIUM",
-					"state":          state,
+					"organizationId":    owner.GetOrganizationID().String(),
+					"internalControlId": internalControlID,
+					"name":              "Create State " + state,
+					"priority":          "MEDIUM",
+					"state":             state,
 				},
 			}, &result)
 			require.NoError(t, err, "State %s should be valid on create", state)
@@ -719,7 +719,7 @@ func TestTask_StateEnum(t *testing.T) {
 		})
 
 		t.Run("update to state "+state, func(t *testing.T) {
-			taskID := factory.NewTask(owner, measureID).
+			taskID := factory.NewTask(owner, internalControlID).
 				WithName("State Test " + state).
 				Create()
 
@@ -759,11 +759,11 @@ func TestTask_SubResolvers(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	measureID := factory.NewMeasure(owner).
+	internalControlID := factory.NewInternalControl(owner).
 		WithName("Task SubResolver Test").
 		Create()
 
-	taskID := factory.NewTask(owner, measureID).
+	taskID := factory.NewTask(owner, internalControlID).
 		WithName("SubResolver Test Task").
 		Create()
 
@@ -796,13 +796,13 @@ func TestTask_SubResolvers(t *testing.T) {
 		assert.Equal(t, "SubResolver Test Task", result.Node.Name)
 	})
 
-	t.Run("measure sub-resolver", func(t *testing.T) {
+	t.Run("internal control sub-resolver", func(t *testing.T) {
 		query := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on Task {
 						id
-						measure {
+						internalControl {
 							id
 							name
 						}
@@ -813,18 +813,18 @@ func TestTask_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID      string `json:"id"`
-				Measure struct {
+				ID              string `json:"id"`
+				InternalControl struct {
 					ID   string `json:"id"`
 					Name string `json:"name"`
-				} `json:"measure"`
+				} `json:"internalControl"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": taskID}, &result)
 		require.NoError(t, err)
-		assert.Equal(t, measureID, result.Node.Measure.ID)
-		assert.NotEmpty(t, result.Node.Measure.Name)
+		assert.Equal(t, internalControlID, result.Node.InternalControl.ID)
+		assert.NotEmpty(t, result.Node.InternalControl.Name)
 	})
 
 	t.Run("assignedTo sub-resolver (null)", func(t *testing.T) {
@@ -924,11 +924,11 @@ func TestTask_OmittableContent(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	measureID := factory.NewMeasure(owner).
+	internalControlID := factory.NewInternalControl(owner).
 		WithName("Task Description Test").
 		Create()
 
-	taskID := factory.NewTask(owner, measureID).
+	taskID := factory.NewTask(owner, internalControlID).
 		WithName("Description Test Task").
 		WithContent("Initial description").
 		Create()
@@ -1055,11 +1055,11 @@ func TestTask_OmittableAssignee(t *testing.T) {
 
 	// Create a profile for assignee
 	profileID := factory.CreateUser(owner)
-	measureID := factory.NewMeasure(owner).
+	internalControlID := factory.NewInternalControl(owner).
 		WithName("Task Assignee Test").
 		Create()
 
-	taskID := factory.NewTask(owner, measureID).
+	taskID := factory.NewTask(owner, internalControlID).
 		WithName("Assignee Test Task").
 		Create()
 
@@ -1140,7 +1140,7 @@ func TestTask_OmittableDeadline(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	measureID := factory.NewMeasure(owner).
+	internalControlID := factory.NewInternalControl(owner).
 		WithName("Task Deadline Test").
 		Create()
 
@@ -1171,11 +1171,11 @@ func TestTask_OmittableDeadline(t *testing.T) {
 
 	err := owner.Execute(query, map[string]any{
 		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"measureId":      measureID,
-			"name":           "Deadline Test Task",
-			"priority":       "MEDIUM",
-			"deadline":       "2025-12-31T00:00:00Z",
+			"organizationId":    owner.GetOrganizationID().String(),
+			"internalControlId": internalControlID,
+			"name":              "Deadline Test Task",
+			"priority":          "MEDIUM",
+			"deadline":          "2025-12-31T00:00:00Z",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -1250,7 +1250,7 @@ func TestTask_OmittableDeadline(t *testing.T) {
 func TestTask_TimeEstimate(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).
+	internalControlID := factory.NewInternalControl(owner).
 		WithName("Task Time Estimate Test").
 		Create()
 
@@ -1280,11 +1280,11 @@ func TestTask_TimeEstimate(t *testing.T) {
 
 	err := owner.Execute(createQuery, map[string]any{
 		"input": map[string]any{
-			"organizationId": owner.GetOrganizationID().String(),
-			"measureId":      measureID,
-			"name":           factory.SafeName("Estimate"),
-			"priority":       "MEDIUM",
-			"timeEstimate":   "PT1H",
+			"organizationId":    owner.GetOrganizationID().String(),
+			"internalControlId": internalControlID,
+			"name":              factory.SafeName("Estimate"),
+			"priority":          "MEDIUM",
+			"timeEstimate":      "PT1H",
 		},
 	}, &createResult)
 	require.NoError(t, err)
@@ -1360,11 +1360,11 @@ func TestTask_TimeEstimate(t *testing.T) {
 
 		err := owner.ExecuteShouldFail(createQuery, map[string]any{
 			"input": map[string]any{
-				"organizationId": owner.GetOrganizationID().String(),
-				"measureId":      measureID,
-				"name":           factory.SafeName("Overlong estimate"),
-				"priority":       "MEDIUM",
-				"timeEstimate":   "P2M",
+				"organizationId":    owner.GetOrganizationID().String(),
+				"internalControlId": internalControlID,
+				"name":              factory.SafeName("Overlong estimate"),
+				"priority":          "MEDIUM",
+				"timeEstimate":      "P2M",
 			},
 		})
 		require.Error(t, err)
@@ -1375,11 +1375,11 @@ func TestTask_TimeEstimate(t *testing.T) {
 
 		err := owner.ExecuteShouldFail(createQuery, map[string]any{
 			"input": map[string]any{
-				"organizationId": owner.GetOrganizationID().String(),
-				"measureId":      measureID,
-				"name":           factory.SafeName("Incomplete estimate"),
-				"priority":       "MEDIUM",
-				"timeEstimate":   "P1YT",
+				"organizationId":    owner.GetOrganizationID().String(),
+				"internalControlId": internalControlID,
+				"name":              factory.SafeName("Incomplete estimate"),
+				"priority":          "MEDIUM",
+				"timeEstimate":      "P1YT",
 			},
 		})
 		require.Error(t, err)
@@ -1389,7 +1389,7 @@ func TestTask_TimeEstimate(t *testing.T) {
 func TestTask_Recurrence(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.NewMeasure(owner).WithName("Task Recurrence Test").Create()
+	internalControlID := factory.NewInternalControl(owner).WithName("Task Recurrence Test").Create()
 
 	createQuery := `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -1424,7 +1424,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-15T00:00:00Z",
@@ -1458,7 +1458,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Monthly Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-31T00:00:00Z",
@@ -1476,7 +1476,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"recurrenceInterval": "P21D",
@@ -1492,7 +1492,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"state":              "DONE",
@@ -1510,7 +1510,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-15T00:00:00Z",
@@ -1527,7 +1527,7 @@ func TestTask_Recurrence(t *testing.T) {
 		_, err := owner.Do(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2026-01-31T12:00:00Z",
@@ -1560,7 +1560,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               name,
 				"content":            factory.ProseMirrorPlainText(description),
 				"priority":           "HIGH",
@@ -1732,7 +1732,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-15T00:00:00Z",
@@ -1795,7 +1795,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Monthly Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-31T00:00:00Z",
@@ -1854,7 +1854,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-15T00:00:00Z",
@@ -1911,7 +1911,7 @@ func TestTask_Recurrence(t *testing.T) {
 		err := owner.Execute(createQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId":     owner.GetOrganizationID().String(),
-				"measureId":          measureID,
+				"internalControlId":  internalControlID,
 				"name":               factory.SafeName("Recurring Task"),
 				"priority":           "MEDIUM",
 				"deadline":           "2027-01-15T00:00:00Z",
@@ -1952,7 +1952,7 @@ func TestTask_Recurrence(t *testing.T) {
 	t.Run("update to add recurrence without a deadline fails", func(t *testing.T) {
 		t.Parallel()
 
-		taskID := factory.NewTask(owner, measureID).
+		taskID := factory.NewTask(owner, internalControlID).
 			WithName(factory.SafeName("Task without deadline")).
 			Create()
 

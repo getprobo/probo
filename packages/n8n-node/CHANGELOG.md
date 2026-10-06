@@ -4,6 +4,15 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Changed
+
+- **Breaking**: the `Measure` resource is renamed to `Internal Control`
+  (resource value `measure` -> `internalControl`). Parameters named
+  `measureId` are now `internalControlId`, so saved values are dropped
+  and default to empty. `Get Many` returns `internalControls` instead
+  of `measures`. Existing workflows must reselect the resource and
+  parameters, and update expressions that read `measures`.
+
 ## [0.241.0] - 2026-10-05
 
 ### Added

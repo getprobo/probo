@@ -962,7 +962,7 @@
       "add": "E-mailadres toevoegen"
     }
   },
-  "measureSelectField": {
+  "internalControlSelectField": {
     "placeholder": "Selecteer een maatregel",
     "none": "Geen"
   },
@@ -1028,7 +1028,7 @@
     "empty": "Geen derde partijen beschikbaar",
     "remove": "{{name}} verwijderen"
   },
-  "linkedMeasuresCard": {
+  "linkedInternalControlsCard": {
     "title": "Maatregelen",
     "columns": {
       "name": "Naam",
@@ -1041,7 +1041,7 @@
       "showMore": "{{count}} meer tonen"
     }
   },
-  "linkedMeasuresDialog": {
+  "linkedInternalControlsDialog": {
     "title": "Maatregelen koppelen",
     "searchPlaceholder": "Maatregelen zoeken...",
     "allCategories": "Alle categorieën",
@@ -1267,7 +1267,7 @@
       "delete": "Verwijderen van framework mislukt"
     }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
       "deleted": "Interne controle succesvol verwijderd.",
       "updated": "Interne controle succesvol bijgewerkt."
@@ -1402,6 +1402,13 @@
       "secret": "Geheim"
     },
     "measureState": {
+      "implemented": "Geïmplementeerd",
+      "inProgress": "In uitvoering",
+      "notApplicable": "Niet van toepassing",
+      "notStarted": "Niet gestart",
+      "notImplemented": "Niet geïmplementeerd"
+    },
+    "internalControlState": {
       "implemented": "Geïmplementeerd",
       "inProgress": "In uitvoering",
       "notApplicable": "Niet van toepassing",
@@ -1575,6 +1582,14 @@
       "unknown": "Onbekend",
       "not_implemented": "Niet geïmplementeerd"
     },
+    "internalControlState": {
+      "implemented": "Geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "not_applicable": "Niet van toepassing",
+      "not_started": "Niet gestart",
+      "unknown": "Onbekend",
+      "not_implemented": "Niet geïmplementeerd"
+    },
     "confirmDialog": {
       "defaultTitle": "Weet u het zeker?"
     },
@@ -1592,6 +1607,10 @@
       }
     },
     "measureImplementation": {
+      "title": "Implementatie van maatregel",
+      "complete": "Voltooien"
+    },
+    "internalControlImplementation": {
       "title": "Implementatie van maatregel",
       "complete": "Voltooien"
     },
@@ -2206,7 +2225,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTEGRATIES",
     "tasks": "Taken",
-    "measures": "Interne controles",
+    "internalControls": "Interne controles",
     "risks": "Risico's",
     "allRisks": "Alle risico's",
     "riskAnalyses": "Risicobeoordelingen",
@@ -2228,7 +2247,7 @@
     "thirdPartyServices": "Diensten",
     "thirdPartySupplyChain": "Toeleveringsketen",
     "thirdPartyRisks": "Risicobeoordelingen",
-    "thirdPartyMeasures": "Maatregelen",
+    "thirdPartyInternalControls": "Interne controles",
     "documents": "Documenten",
     "assets": "Assets",
     "devices": "Apparaten",
@@ -3673,8 +3692,8 @@
       "optimizing": "5 - Optimaliserend"
     },
     "errors": {
-      "linkMeasure": "Koppelen van maatregel mislukt",
-      "unlinkMeasure": "Ontkoppelen van maatregel mislukt",
+      "linkInternalControl": "Koppelen van interne controle mislukt",
+      "unlinkInternalControl": "Ontkoppelen van interne controle mislukt",
       "linkDocument": "Koppelen van document mislukt",
       "unlinkDocument": "Ontkoppelen van document mislukt",
       "linkAudit": "Koppelen van audit mislukt",
@@ -3762,7 +3781,7 @@
       "update": "Framework bijwerken"
     }
   },
-  "measureDetailPage": {
+  "internalControlDetailPage": {
     "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "fields": {
       "selectState": "Selecteer status",
@@ -3806,7 +3825,7 @@
       "thirdParties": "Derde partijen"
     }
   },
-  "measuresPage": {
+  "internalControlsPage": {
     "title": "Interne controles",
     "description": "Interne controles zijn benoemde, toegewezen waarborgen die op een cadans draaien, bewijs opleveren en meerdere raamwerkeisen tegelijk dekken.",
     "messages": {
@@ -3822,7 +3841,7 @@
     "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "import": "Importeren",
-      "newMeasure": "Nieuwe interne controle",
+      "newInternalControl": "Nieuwe interne controle",
       "loading": "Laden...",
       "loadMore": "Meer laden",
       "edit": "Bewerken",
@@ -3840,7 +3859,7 @@
       "not_started": "Niet gestart"
     },
     "columns": {
-      "measure": "Interne controle",
+      "internalControl": "Interne controle",
       "code": "Code",
       "category": "Categorie",
       "state": "Status",
@@ -3872,7 +3891,7 @@
   },
   "createEvidenceDialog": {
     "breadcrumb": {
-      "measureDetail": "Maatregelen detail",
+      "internalControlDetail": "Details van de interne controle",
       "createEvidence": "Bewijs aanmaken"
     },
     "tabs": {
@@ -3933,11 +3952,11 @@
       "download": "Bestand downloaden"
     }
   },
-  "measureFormDialog": {
+  "internalControlFormDialog": {
     "breadcrumb": {
-      "measures": "Interne controles",
-      "editMeasure": "Interne controle bewerken",
-      "newMeasure": "Nieuwe interne controle"
+      "internalControls": "Interne controles",
+      "editInternalControl": "Interne controle bewerken",
+      "newInternalControl": "Nieuwe interne controle"
     },
     "messages": {
       "created": "Interne controle succesvol aangemaakt."
@@ -4009,7 +4028,7 @@
       "clearDuration": "Duur wissen"
     }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Bewijsstukken",
     "columns": {
       "name": "Naam",
@@ -4032,7 +4051,7 @@
       "delete": "Verwijderen"
     }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
     "actions": {
       "newTask": "Nieuwe taak"
     }
@@ -4497,7 +4516,7 @@
     },
     "tabs": {
       "overview": "Overzicht",
-      "measures": "Maatregelen",
+      "internalControls": "Interne controles",
       "documents": "Documenten",
       "controls": "Controls",
       "obligations": "Verplichtingen",
@@ -5065,12 +5084,12 @@
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "actions": {
-      "measures": "Maatregelen",
+      "internalControls": "Interne controles",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     }
   },
-  "treatmentPlanMeasureList": {
+  "treatmentPlanInternalControlList": {
     "title": "Maatregelen",
     "empty": "Nog geen maatregelen gekoppeld.",
     "deleted": "Verwijderde maatregel",
@@ -5082,7 +5101,7 @@
       "showMore": "Meer tonen"
     }
   },
-  "treatmentPlanMeasuresDialog": {
+  "treatmentPlanInternalControlsDialog": {
     "title": "Maatregelen van het behandelplan",
     "loading": "Maatregelen laden…",
     "netScore": "Netto {{score}} ({{likelihood}} × {{impact}})"

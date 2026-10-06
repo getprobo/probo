@@ -128,7 +128,7 @@ type Organization implements Node {
         filter: ProfileFilter
     ): ProfileConnection! @goField(forceResolver: true)
 
-    measureCategories: [String!]! @goField(forceResolver: true)
+    internalControlCategories: [String!]! @goField(forceResolver: true)
 
     accessReviewSources(
         first: Int
@@ -269,14 +269,14 @@ type Organization implements Node {
         orderBy: FrameworkOrder
     ): FrameworkConnection! @goField(forceResolver: true)
 
-    measures(
+    internalControls(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
-    ): MeasureConnection! @goField(forceResolver: true)
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     obligationsDocument: Document @goField(forceResolver: true)
 

@@ -246,8 +246,8 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		}
 
 		return count, nil
-	case *measureResolver:
-		count, err := r.probo.Documents.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
+	case *internalControlResolver:
+		count, err := r.probo.Documents.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

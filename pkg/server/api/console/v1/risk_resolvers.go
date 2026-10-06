@@ -125,41 +125,41 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 	}, nil
 }
 
-// CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
-func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingCreate)
+// CreateRiskInternalControlMapping is the resolver for the createRiskInternalControlMapping field.
+func (r *mutationResolver) CreateRiskInternalControlMapping(ctx context.Context, input types.CreateRiskInternalControlMappingInput) (*types.CreateRiskInternalControlMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskInternalControlMappingCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	risk, measure, err := r.probo.Risks.CreateMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
+	risk, internalControl, err := r.probo.Risks.CreateInternalControlMapping(ctx, scope, input.RiskID, input.InternalControlID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create risk measure mapping", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot create risk internal control mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateRiskMeasureMappingPayload{
-		RiskEdge:    types.NewRiskEdge(risk, coredata.RiskOrderFieldCreatedAt),
-		MeasureEdge: types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt),
+	return &types.CreateRiskInternalControlMappingPayload{
+		RiskEdge:            types.NewRiskEdge(risk, coredata.RiskOrderFieldCreatedAt),
+		InternalControlEdge: types.NewInternalControlEdge(internalControl, coredata.InternalControlOrderFieldCreatedAt),
 	}, nil
 }
 
-// DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
-func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskMeasureMappingDelete)
+// DeleteRiskInternalControlMapping is the resolver for the deleteRiskInternalControlMapping field.
+func (r *mutationResolver) DeleteRiskInternalControlMapping(ctx context.Context, input types.DeleteRiskInternalControlMappingInput) (*types.DeleteRiskInternalControlMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.RiskID, probo.ActionRiskInternalControlMappingDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	risk, measure, err := r.probo.Risks.DeleteMeasureMapping(ctx, scope, input.RiskID, input.MeasureID)
+	risk, internalControl, err := r.probo.Risks.DeleteInternalControlMapping(ctx, scope, input.RiskID, input.InternalControlID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete risk measure mapping", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot delete risk internal control mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteRiskMeasureMappingPayload{
-		DeletedRiskID:    risk.ID,
-		DeletedMeasureID: measure.ID,
+	return &types.DeleteRiskInternalControlMappingPayload{
+		DeletedRiskID:            risk.ID,
+		DeletedInternalControlID: internalControl.ID,
 	}, nil
 }
 
@@ -311,20 +311,20 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 	return types.NewOrganization(organization), nil
 }
 
-// Measures is the resolver for the measures field.
-func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+// Internal controls is the resolver for the internal controls field.
+func (r *riskResolver) InternalControls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InternalControlOrderBy, filter *types.InternalControlFilter) (*types.InternalControlConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionInternalControlList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -332,18 +332,18 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
+		internalControlFilter = coredata.NewInternalControlFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := r.probo.Measures.ListForRiskID(ctx, scope, obj.ID, cursor, measureFilter)
+	page, err := r.probo.InternalControls.ListForRiskID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list risk measures", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list risk internal controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
+	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
 }
 
 // Documents is the resolver for the documents field.
@@ -545,8 +545,8 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 	}
 
 	switch obj.Resolver.(type) {
-	case *measureResolver:
-		count, err := r.probo.Risks.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
+	case *internalControlResolver:
+		count, err := r.probo.Risks.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

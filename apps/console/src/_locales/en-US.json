@@ -575,7 +575,7 @@
       "add": "Add email"
     }
   },
-  "measureSelectField": {
+  "internalControlSelectField": {
     "placeholder": "Select a measure",
     "none": "None"
   },
@@ -641,7 +641,7 @@
     "empty": "No third parties available",
     "remove": "Remove {{name}}"
   },
-  "linkedMeasuresCard": {
+  "linkedInternalControlsCard": {
     "title": "Measures",
     "columns": { "name": "Name", "state": "State" },
     "empty": "No measures linked",
@@ -651,7 +651,7 @@
       "showMore": "Show {{count}} more"
     }
   },
-  "linkedMeasuresDialog": {
+  "linkedInternalControlsDialog": {
     "title": "Link measures",
     "searchPlaceholder": "Search measures...",
     "allCategories": "All categories",
@@ -797,7 +797,7 @@
     "messages": { "deleted": "Framework deleted successfully" },
     "errors": { "delete": "Failed to delete framework" }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
       "deleted": "Internal control deleted successfully.",
       "updated": "Internal control updated successfully."
@@ -920,6 +920,13 @@
       "secret": "Secret"
     },
     "measureState": {
+      "implemented": "Implemented",
+      "inProgress": "In Progress",
+      "notApplicable": "Not Applicable",
+      "notStarted": "Not Started",
+      "notImplemented": "Not Implemented"
+    },
+    "internalControlState": {
       "implemented": "Implemented",
       "inProgress": "In Progress",
       "notApplicable": "Not Applicable",
@@ -1058,6 +1065,14 @@
       "unknown": "Unknown",
       "not_implemented": "Not Implemented"
     },
+    "internalControlState": {
+      "implemented": "Implemented",
+      "in_progress": "In Progress",
+      "not_applicable": "Not Applicable",
+      "not_started": "Not Started",
+      "unknown": "Unknown",
+      "not_implemented": "Not Implemented"
+    },
     "confirmDialog": { "defaultTitle": "Are you sure?" },
     "durationPicker": {
       "minutes": "Minutes",
@@ -1070,6 +1085,7 @@
       "custom": { "title": "Custom framework", "description": "Start from scratch" }
     },
     "measureImplementation": { "title": "Measure implementation", "complete": "Complete" },
+    "internalControlImplementation": { "title": "Measure implementation", "complete": "Complete" },
     "impactOptions": {
       "low": "Minimal impact on business",
       "medium": "Moderate impact on business",
@@ -1406,7 +1422,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTEGRATIONS",
     "tasks": "Tasks",
-    "measures": "Internal controls",
+    "internalControls": "Internal controls",
     "risks": "Risks",
     "allRisks": "All Risks",
     "riskAnalyses": "Risk Analyses",
@@ -1428,7 +1444,7 @@
     "thirdPartyServices": "Services",
     "thirdPartySupplyChain": "Supply chain",
     "thirdPartyRisks": "Risk assessments",
-    "thirdPartyMeasures": "Measures",
+    "thirdPartyInternalControls": "Internal controls",
     "documents": "Documents",
     "assets": "Assets",
     "devices": "Devices",
@@ -2252,7 +2268,7 @@
     "fields": { "bestPractice": "Best Practice", "maturityLevel": "Maturity level", "notImplementedJustification": "Justification for non-implementation" },
     "answers": { "yes": "Yes", "no": "No" },
     "maturityLevels": { "none": "0 - None", "initial": "1 - Initial", "managed": "2 - Managed", "defined": "3 - Defined", "quantitatively_managed": "4 - Quantitatively Managed", "optimizing": "5 - Optimizing" },
-    "errors": { "linkMeasure": "Failed to link measure", "unlinkMeasure": "Failed to unlink measure", "linkDocument": "Failed to link document", "unlinkDocument": "Failed to unlink document", "linkAudit": "Failed to link audit", "unlinkAudit": "Failed to unlink audit", "linkObligation": "Failed to link obligation", "unlinkObligation": "Failed to unlink obligation" }
+    "errors": { "linkInternalControl": "Failed to link internal control", "unlinkInternalControl": "Failed to unlink internal control", "linkDocument": "Failed to link document", "unlinkDocument": "Failed to unlink document", "linkAudit": "Failed to link audit", "unlinkAudit": "Failed to unlink audit", "linkObligation": "Failed to link obligation", "unlinkObligation": "Failed to unlink obligation" }
   },
   "frameworkDetailPage": {
     "errors": { "export": "Failed to export framework" },
@@ -2281,7 +2297,7 @@
     "fields": { "title": "Framework title", "description": "Add description" },
     "actions": { "create": "Create framework", "update": "Update framework" }
   },
-  "measureDetailPage": {
+  "internalControlDetailPage": {
     "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
     "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
     "operatingModes": { "continuous": "Continuous", "event": "On event" },
@@ -2290,16 +2306,16 @@
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "tabs": { "evidences": "Evidences", "tasks": "Tasks", "controls": "Controls", "risks": "Risks", "documents": "Documents", "thirdParties": "Third parties" }
   },
-  "measuresPage": {
+  "internalControlsPage": {
     "title": "Internal controls",
     "description": "Internal controls are owned safeguards that run on a cadence, produce evidence, and cover many framework requirements at once.",
     "messages": { "imported": "Internal controls imported successfully.", "error": "Error", "success": "Success", "deleted": "Internal control deleted successfully" },
     "errors": { "import": "Failed to import internal controls", "delete": "Failed to delete internal control" },
     "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
-    "actions": { "import": "Import", "newMeasure": "New internal control", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
+    "actions": { "import": "Import", "newInternalControl": "New internal control", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
     "filters": { "searchPlaceholder": "Search internal controls...", "allStates": "All states", "allCategories": "All categories" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started" },
-    "columns": { "measure": "Internal control", "code": "Code", "category": "Category", "state": "State", "status": "Status" },
+    "columns": { "internalControl": "Internal control", "code": "Code", "category": "Category", "state": "State", "status": "Status" },
     "empty": { "title": "No internal controls yet", "description": "Create your first internal control to get started." }
   },
   "linkedThirdPartiesCard": {
@@ -2313,7 +2329,7 @@
     "actions": { "link": "Link", "unlink": "Unlink" }
   },
   "createEvidenceDialog": {
-    "breadcrumb": { "measureDetail": "Measures detail", "createEvidence": "Create Evidence" },
+    "breadcrumb": { "internalControlDetail": "Internal control details", "createEvidence": "Create Evidence" },
     "tabs": { "upload": "Upload", "link": "Link" },
     "messages": { "uploaded": "Evidence uploaded successfully", "created": "Evidence created successfully" },
     "errors": { "create": "Failed to create evidence" },
@@ -2345,8 +2361,8 @@
     "previewUnavailable": "Preview not available for this file type: {{mimeType}}",
     "actions": { "download": "Download File" }
   },
-  "measureFormDialog": {
-    "breadcrumb": { "measures": "Internal controls", "editMeasure": "Edit internal control", "newMeasure": "New internal control" },
+  "internalControlFormDialog": {
+    "breadcrumb": { "internalControls": "Internal controls", "editInternalControl": "Edit internal control", "newInternalControl": "New internal control" },
     "messages": { "created": "Internal control created successfully." },
     "errors": { "create": "Failed to create internal control" },
     "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "reviewerDistinct": "Reviewer must be a different person from the owner", "operatingIntervalRequired": "Enter how often the control runs" },
@@ -2359,7 +2375,7 @@
     "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "actions": { "create": "Create internal control", "update": "Update internal control", "addDuration": "Add duration", "clearDuration": "Clear duration" }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Evidences",
     "columns": { "name": "Name", "description": "Description", "fileType": "File type", "fileSize": "File size", "createdAt": "Created at" },
     "messages": { "deleted": "Evidence \"{{name}}\" has been deleted successfully" },
@@ -2368,7 +2384,7 @@
     "linkEvidence": "Link evidence",
     "actions": { "add": "Add evidence", "download": "Download", "delete": "Delete" }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
     "actions": { "newTask": "New task" }
   },
   "obligationDetailsPage": {
@@ -2526,7 +2542,7 @@
     "deleteConfirmationWithHistory_one": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analysis. Deleting it will remove that history.",
     "deleteConfirmationWithHistory_other": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analyses. Deleting it will remove that history.",
     "actions": { "edit": "Edit", "delete": "Delete" },
-    "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
+    "tabs": { "overview": "Overview", "internalControls": "Internal controls", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
   },
   "risksPage": {
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
@@ -2779,16 +2795,16 @@
   "riskTreatmentPlanListItem": {
     "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
-    "actions": { "measures": "Measures", "edit": "Edit", "delete": "Delete" }
+    "actions": { "internalControls": "Internal controls", "edit": "Edit", "delete": "Delete" }
   },
-  "treatmentPlanMeasureList": {
+  "treatmentPlanInternalControlList": {
     "title": "Measures",
     "empty": "No measures linked yet.",
     "deleted": "Deleted measure",
     "acceptedEmpty": "Accepted risks cannot have linked measures.",
     "actions": { "create": "New measure", "link": "Link measure", "unlink": "Unlink", "showMore": "Show more" }
   },
-  "treatmentPlanMeasuresDialog": {
+  "treatmentPlanInternalControlsDialog": {
     "title": "Treatment plan measures",
     "loading": "Loading measures…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"

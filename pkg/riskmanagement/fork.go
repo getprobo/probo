@@ -603,30 +603,30 @@ func copyTreatmentPlans(
 		}
 	}
 
-	var mappings coredata.TreatmentPlanMeasures
+	var mappings coredata.TreatmentPlanInternalControls
 	if err := mappings.LoadByTreatmentPlanIDs(ctx, tx, scope, sourcePlanIDs); err != nil {
-		return fmt.Errorf("cannot load treatment plan measures: %w", err)
+		return fmt.Errorf("cannot load treatment plan internal controls: %w", err)
 	}
 
-	measureIDsByPlan := make(map[gid.GID][]gid.GID, len(copiedPlans))
+	internalControlIDsByPlan := make(map[gid.GID][]gid.GID, len(copiedPlans))
 
 	for _, mapping := range mappings {
 		planID, err := remapID(idMap, mapping.TreatmentPlanID)
 		if err != nil {
-			return fmt.Errorf("cannot remap treatment plan measure: %w", err)
+			return fmt.Errorf("cannot remap treatment plan internal control: %w", err)
 		}
 
-		copied := coredata.TreatmentPlanMeasure{
-			TreatmentPlanID: planID,
-			MeasureID:       mapping.MeasureID,
-			OrganizationID:  forked.OrganizationID,
-			CreatedAt:       now,
+		copied := coredata.TreatmentPlanInternalControl{
+			TreatmentPlanID:   planID,
+			InternalControlID: mapping.InternalControlID,
+			OrganizationID:    forked.OrganizationID,
+			CreatedAt:         now,
 		}
 		if err := copied.Insert(ctx, tx, scope); err != nil {
-			return fmt.Errorf("cannot insert treatment plan measure: %w", err)
+			return fmt.Errorf("cannot insert treatment plan internal control: %w", err)
 		}
 
-		measureIDsByPlan[planID] = append(measureIDsByPlan[planID], copied.MeasureID)
+		internalControlIDsByPlan[planID] = append(internalControlIDsByPlan[planID], copied.InternalControlID)
 	}
 
 	for planID, copied := range copiedPlans {
@@ -636,7 +636,7 @@ func copyTreatmentPlans(
 			scope,
 			copied,
 			coredata.TreatmentPlanEventTypeCreated,
-			measureIDsByPlan[planID],
+			internalControlIDsByPlan[planID],
 			now,
 		); err != nil {
 			return fmt.Errorf("cannot record forked treatment plan created event: %w", err)

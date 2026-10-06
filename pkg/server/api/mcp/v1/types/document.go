@@ -98,7 +98,7 @@ func NewListControlDocumentsOutput(documentPage *page.Page[*coredata.Document, c
 	}
 }
 
-func NewListMeasureDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField]) ListMeasureDocumentsOutput {
+func NewListInternalControlDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField]) ListInternalControlDocumentsOutput {
 	documents := make([]*Document, 0, len(documentPage.Data))
 	for _, d := range documentPage.Data {
 		documents = append(documents, NewDocument(d))
@@ -111,7 +111,7 @@ func NewListMeasureDocumentsOutput(documentPage *page.Page[*coredata.Document, c
 		nextCursor = &cursorKey
 	}
 
-	return ListMeasureDocumentsOutput{
+	return ListInternalControlDocumentsOutput{
 		NextCursor: nextCursor,
 		Documents:  documents,
 	}

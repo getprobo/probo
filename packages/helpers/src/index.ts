@@ -44,13 +44,13 @@ export {
 export { times, groupBy, isEmpty } from "./array";
 export { randomInt } from "./number";
 export {
-  getMeasureStateLabel,
+  getInternalControlStateLabel,
   internalControlImplementationStatuses,
   internalControlNatures,
   internalControlOperatingModes,
   internalControlTypes,
-  measureStates,
-} from "./measure";
+  internalControlStates,
+} from "./internalControl";
 export { getRole, getRoles, peopleRoles } from "./people";
 export { certificationCategoryLabel, certifications } from "./certifications";
 export {

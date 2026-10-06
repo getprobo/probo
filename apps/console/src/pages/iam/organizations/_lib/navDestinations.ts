@@ -40,11 +40,11 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListTasks,
   },
   {
-    id: "measures",
+    id: "internalControls",
     group: "governance",
-    labelKey: "nav.measures",
-    path: "measures",
-    isVisible: permissions => permissions.canListMeasures,
+    labelKey: "nav.internalControls",
+    path: "internal-controls",
+    isVisible: permissions => permissions.canListInternalControls,
   },
   {
     id: "frameworks",

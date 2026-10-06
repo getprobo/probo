@@ -144,14 +144,14 @@ function isFloatingDismiss(details: DialogOpenChangeDetails) {
 
 interface CreateTaskDialogProps {
   connectionId: string;
-  measureId?: string;
+  internalControlId?: string;
   children: ReactElement;
   onCompleted?: () => void;
 }
 
 export function CreateTaskDialog({
   connectionId,
-  measureId,
+  internalControlId,
   children,
   onCompleted,
 }: CreateTaskDialogProps) {
@@ -231,7 +231,7 @@ export function CreateTaskDialog({
         content: isRichEditorContentEmpty(content) ? null : content,
         state,
         priority,
-        measureId,
+        internalControlId,
       },
       connectionId,
     ).then(

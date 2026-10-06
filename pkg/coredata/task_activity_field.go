@@ -30,14 +30,14 @@ type (
 )
 
 const (
-	TaskActivityFieldName         TaskActivityField = "NAME"
-	TaskActivityFieldDescription  TaskActivityField = "DESCRIPTION"
-	TaskActivityFieldState        TaskActivityField = "STATE"
-	TaskActivityFieldPriority     TaskActivityField = "PRIORITY"
-	TaskActivityFieldAssignedTo   TaskActivityField = "ASSIGNED_TO"
-	TaskActivityFieldMeasure      TaskActivityField = "MEASURE"
-	TaskActivityFieldDeadline     TaskActivityField = "DEADLINE"
-	TaskActivityFieldTimeEstimate TaskActivityField = "TIME_ESTIMATE"
+	TaskActivityFieldName            TaskActivityField = "NAME"
+	TaskActivityFieldDescription     TaskActivityField = "DESCRIPTION"
+	TaskActivityFieldState           TaskActivityField = "STATE"
+	TaskActivityFieldPriority        TaskActivityField = "PRIORITY"
+	TaskActivityFieldAssignedTo      TaskActivityField = "ASSIGNED_TO"
+	TaskActivityFieldInternalControl TaskActivityField = "INTERNAL_CONTROL"
+	TaskActivityFieldDeadline        TaskActivityField = "DEADLINE"
+	TaskActivityFieldTimeEstimate    TaskActivityField = "TIME_ESTIMATE"
 )
 
 var (
@@ -54,7 +54,7 @@ func (v TaskActivityField) IsValid() bool {
 		TaskActivityFieldState,
 		TaskActivityFieldPriority,
 		TaskActivityFieldAssignedTo,
-		TaskActivityFieldMeasure,
+		TaskActivityFieldInternalControl,
 		TaskActivityFieldDeadline,
 		TaskActivityFieldTimeEstimate:
 		return true

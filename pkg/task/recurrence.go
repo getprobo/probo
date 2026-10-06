@@ -105,20 +105,20 @@ func insertNextRecurringTask(
 	}
 
 	next := &coredata.Task{
-		ID:             gid.New(source.OrganizationID.TenantID(), coredata.TaskEntityType),
-		OrganizationID: source.OrganizationID,
-		MeasureID:      source.MeasureID,
-		Name:           source.Name,
-		Content:        source.Content,
-		Priority:       source.Priority,
-		ReferenceID:    "custom-task-" + referenceID.String(),
-		TimeEstimate:   source.TimeEstimate,
-		AssignedToID:   source.AssignedToID,
-		Deadline:       &deadline,
-		Recurrence:     &interval,
-		State:          coredata.TaskStateTodo,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                gid.New(source.OrganizationID.TenantID(), coredata.TaskEntityType),
+		OrganizationID:    source.OrganizationID,
+		InternalControlID: source.InternalControlID,
+		Name:              source.Name,
+		Content:           source.Content,
+		Priority:          source.Priority,
+		ReferenceID:       "custom-task-" + referenceID.String(),
+		TimeEstimate:      source.TimeEstimate,
+		AssignedToID:      source.AssignedToID,
+		Deadline:          &deadline,
+		Recurrence:        &interval,
+		State:             coredata.TaskStateTodo,
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 
 	if err := next.Insert(ctx, conn, scope); err != nil {

@@ -30,20 +30,20 @@ import (
 
 type (
 	Task struct {
-		ID             gid.GID               `json:"id"`
-		OrganizationID gid.GID               `json:"organizationId"`
-		MeasureID      *gid.GID              `json:"measureId"`
-		Name           string                `json:"name"`
-		Content        string                `json:"content"`
-		State          coredata.TaskState    `json:"state"`
-		Priority       coredata.TaskPriority `json:"priority"`
-		Rank           int                   `json:"rank"`
-		TimeEstimate   *timespan.TimeSpan    `json:"timeEstimate"`
-		AssignedToID   *gid.GID              `json:"assignedToId"`
-		Deadline       *time.Time            `json:"deadline"`
-		Recurrence     *timespan.TimeSpan    `json:"recurrence"`
-		CreatedAt      time.Time             `json:"createdAt"`
-		UpdatedAt      time.Time             `json:"updatedAt"`
+		ID                gid.GID               `json:"id"`
+		OrganizationID    gid.GID               `json:"organizationId"`
+		InternalControlID *gid.GID              `json:"internalControlId"`
+		Name              string                `json:"name"`
+		Content           string                `json:"content"`
+		State             coredata.TaskState    `json:"state"`
+		Priority          coredata.TaskPriority `json:"priority"`
+		Rank              int                   `json:"rank"`
+		TimeEstimate      *timespan.TimeSpan    `json:"timeEstimate"`
+		AssignedToID      *gid.GID              `json:"assignedToId"`
+		Deadline          *time.Time            `json:"deadline"`
+		Recurrence        *timespan.TimeSpan    `json:"recurrence"`
+		CreatedAt         time.Time             `json:"createdAt"`
+		UpdatedAt         time.Time             `json:"updatedAt"`
 	}
 
 	TaskComment struct {
@@ -59,20 +59,20 @@ type (
 
 func NewTask(t *coredata.Task) *Task {
 	return &Task{
-		ID:             t.ID,
-		OrganizationID: t.OrganizationID,
-		MeasureID:      t.MeasureID,
-		Name:           t.Name,
-		Content:        t.Content,
-		State:          t.State,
-		Priority:       t.Priority,
-		Rank:           t.Rank,
-		TimeEstimate:   t.TimeEstimate,
-		AssignedToID:   t.AssignedToID,
-		Deadline:       t.Deadline,
-		Recurrence:     t.Recurrence,
-		CreatedAt:      t.CreatedAt,
-		UpdatedAt:      t.UpdatedAt,
+		ID:                t.ID,
+		OrganizationID:    t.OrganizationID,
+		InternalControlID: t.InternalControlID,
+		Name:              t.Name,
+		Content:           t.Content,
+		State:             t.State,
+		Priority:          t.Priority,
+		Rank:              t.Rank,
+		TimeEstimate:      t.TimeEstimate,
+		AssignedToID:      t.AssignedToID,
+		Deadline:          t.Deadline,
+		Recurrence:        t.Recurrence,
+		CreatedAt:         t.CreatedAt,
+		UpdatedAt:         t.UpdatedAt,
 	}
 }
 

@@ -279,14 +279,14 @@ type ThirdParty implements Node {
         orderBy: ThirdPartyRiskAssessmentOrder
     ): ThirdPartyRiskAssessmentConnection! @goField(forceResolver: true)
 
-    measures(
+    internalControls(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
-    ): MeasureConnection! @goField(forceResolver: true)
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     administrators: [Profile!]! @goField(forceResolver: true)
 

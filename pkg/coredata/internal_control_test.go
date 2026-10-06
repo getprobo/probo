@@ -151,19 +151,19 @@ func TestImplementationStatusMapping(t *testing.T) {
 	t.Run("operating counts as implemented for treatment progress", func(t *testing.T) {
 		t.Parallel()
 
-		state, ok := MeasureStateForImplementationStatus(InternalControlImplementationStatusOperating)
+		state, ok := InternalControlStateForImplementationStatus(InternalControlImplementationStatusOperating)
 		require.True(t, ok)
-		assert.Equal(t, MeasureStateImplemented, state)
+		assert.Equal(t, InternalControlStateImplemented, state)
 
-		state, ok = MeasureStateForImplementationStatus(InternalControlImplementationStatusInProgress)
+		state, ok = InternalControlStateForImplementationStatus(InternalControlImplementationStatusInProgress)
 		require.True(t, ok)
-		assert.Equal(t, MeasureStateInProgress, state)
+		assert.Equal(t, InternalControlStateInProgress, state)
 
-		state, ok = MeasureStateForImplementationStatus(InternalControlImplementationStatusNotImplemented)
+		state, ok = InternalControlStateForImplementationStatus(InternalControlImplementationStatusNotImplemented)
 		require.True(t, ok)
-		assert.Equal(t, MeasureStateNotImplemented, state)
+		assert.Equal(t, InternalControlStateNotImplemented, state)
 
-		_, ok = MeasureStateForImplementationStatus("WEEKLY")
+		_, ok = InternalControlStateForImplementationStatus("WEEKLY")
 		assert.False(t, ok)
 	})
 
@@ -173,27 +173,27 @@ func TestImplementationStatusMapping(t *testing.T) {
 		assert.Equal(
 			t,
 			InternalControlImplementationStatusNotImplemented,
-			ImplementationStatusForMeasureState(MeasureStateNotStarted),
+			ImplementationStatusForInternalControlState(InternalControlStateNotStarted),
 		)
 		assert.Equal(
 			t,
 			InternalControlImplementationStatusNotImplemented,
-			ImplementationStatusForMeasureState(MeasureStateNotApplicable),
+			ImplementationStatusForInternalControlState(InternalControlStateNotApplicable),
 		)
 		assert.Equal(
 			t,
 			InternalControlImplementationStatusImplemented,
-			ImplementationStatusForMeasureState(MeasureStateImplemented),
+			ImplementationStatusForInternalControlState(InternalControlStateImplemented),
 		)
 		assert.Equal(
 			t,
 			InternalControlImplementationStatusInProgress,
-			ImplementationStatusForMeasureState(MeasureStateInProgress),
+			ImplementationStatusForInternalControlState(InternalControlStateInProgress),
 		)
 		assert.Equal(
 			t,
 			InternalControlImplementationStatusNotImplemented,
-			ImplementationStatusForMeasureState(MeasureStateNotImplemented),
+			ImplementationStatusForInternalControlState(InternalControlStateNotImplemented),
 		)
 	})
 }

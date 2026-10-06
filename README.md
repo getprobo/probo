@@ -48,9 +48,9 @@ prb auth login
 # List open risks
 prb risk list
 
-# Create a measure and link evidence
-prb measure create --name "MFA enforced on all production systems"
-prb evidence create --measure <id> --file screenshot.png
+# Create an internal control and link evidence
+prb internal-control create --name "MFA enforced on all production systems" --category "Security"
+prb evidence upload ./screenshot.png --internal-control <id>
 
 # Manage vendor compliance
 prb thirdpartymgmt vendor list

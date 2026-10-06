@@ -88,7 +88,7 @@ type (
 		connectorRegistry                     *connector.Registry
 		invitationTokenValidity               time.Duration
 		Frameworks                            *FrameworkService
-		Measures                              *MeasureService
+		InternalControls                      *InternalControlService
 		Evidences                             *EvidenceService
 		Organizations                         *OrganizationService
 		ThirdParties                          *ThirdPartyService
@@ -167,7 +167,7 @@ func NewService(
 		svc:               svc,
 		html2pdfConverter: html2pdfConverter,
 	}
-	svc.Measures = &MeasureService{svc: svc}
+	svc.InternalControls = &InternalControlService{svc: svc}
 	svc.Evidences = &EvidenceService{
 		svc: svc,
 		fileValidator: filevalidation.NewValidator(

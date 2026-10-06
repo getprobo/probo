@@ -44,17 +44,17 @@ type (
 		ResidualImpact     int
 	}
 
-	RiskAnalysisMatrixMeasure struct {
+	RiskAnalysisMatrixInternalControl struct {
 		ID    gid.GID
 		Name  *string
-		State coredata.MeasureState
+		State coredata.InternalControlState
 	}
 
 	TreatmentPlansAsOfPage struct {
-		Page         *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField]
-		TotalCount   int
-		ProgressByID map[gid.GID]TreatmentProgress
-		MeasuresByID map[gid.GID][]RiskAnalysisMatrixMeasure
+		Page                 *page.Page[*coredata.TreatmentPlan, coredata.TreatmentPlanOrderField]
+		TotalCount           int
+		ProgressByID         map[gid.GID]TreatmentProgress
+		InternalControlsByID map[gid.GID][]RiskAnalysisMatrixInternalControl
 	}
 )
 
@@ -81,16 +81,16 @@ func (s *Service) loadMatrixCellsAsOf(
 
 			entries := make([]RiskAnalysisMatrixEntry, 0, len(folded))
 			for _, event := range folded {
-				measureIDs, err := event.LinkedMeasureIDs()
+				internalControlIDs, err := event.LinkedInternalControlIDs()
 				if err != nil {
-					return fmt.Errorf("cannot parse treatment plan measure ids: %w", err)
+					return fmt.Errorf("cannot parse treatment plan internal control ids: %w", err)
 				}
 
 				entries = append(
 					entries,
 					matrixEntryFromPlan(
 						event.TreatmentPlan(),
-						progressFromStates(measureIDs, states),
+						progressFromStates(internalControlIDs, states),
 					),
 				)
 			}
@@ -113,103 +113,103 @@ func loadTreatmentPlansAsOf(
 	scope coredata.Scoper,
 	analysisID gid.GID,
 	asOf time.Time,
-) ([]*coredata.TreatmentPlanEvent, map[gid.GID]coredata.MeasureState, error) {
+) ([]*coredata.TreatmentPlanEvent, map[gid.GID]coredata.InternalControlState, error) {
 	var events coredata.TreatmentPlanEvents
 	if err := events.LoadLatestByRiskAnalysisIDAsOf(ctx, conn, scope, analysisID, asOf); err != nil {
 		return nil, nil, fmt.Errorf("cannot load treatment plan events: %w", err)
 	}
 
-	measureIDs, err := uniqueEventMeasureIDs(events)
+	internalControlIDs, err := uniqueEventInternalControlIDs(events)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot collect treatment plan measure ids: %w", err)
+		return nil, nil, fmt.Errorf("cannot collect treatment plan internal control ids: %w", err)
 	}
 
-	measureEvents, err := loadMeasureEventsAsOf(ctx, conn, scope, measureIDs, asOf)
+	internalControlEvents, err := loadInternalControlEventsAsOf(ctx, conn, scope, internalControlIDs, asOf)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return events, measureStatesFromEvents(measureEvents), nil
+	return events, internalControlStatesFromEvents(internalControlEvents), nil
 }
 
-func uniqueEventMeasureIDs(events []*coredata.TreatmentPlanEvent) ([]gid.GID, error) {
+func uniqueEventInternalControlIDs(events []*coredata.TreatmentPlanEvent) ([]gid.GID, error) {
 	seen := make(map[gid.GID]struct{})
 	ids := make([]gid.GID, 0)
 
 	for _, event := range events {
-		measureIDs, err := event.LinkedMeasureIDs()
+		internalControlIDs, err := event.LinkedInternalControlIDs()
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse treatment plan measure ids: %w", err)
+			return nil, fmt.Errorf("cannot parse treatment plan internal control ids: %w", err)
 		}
 
-		for _, measureID := range measureIDs {
-			if _, ok := seen[measureID]; ok {
+		for _, internalControlID := range internalControlIDs {
+			if _, ok := seen[internalControlID]; ok {
 				continue
 			}
 
-			seen[measureID] = struct{}{}
-			ids = append(ids, measureID)
+			seen[internalControlID] = struct{}{}
+			ids = append(ids, internalControlID)
 		}
 	}
 
 	return ids, nil
 }
 
-func loadMeasureEventsAsOf(
+func loadInternalControlEventsAsOf(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	measureIDs []gid.GID,
+	internalControlIDs []gid.GID,
 	asOf time.Time,
-) (coredata.MeasureEvents, error) {
-	var events coredata.MeasureEvents
-	if err := events.LoadLatestByMeasureIDsAsOf(
+) (coredata.InternalControlEvents, error) {
+	var events coredata.InternalControlEvents
+	if err := events.LoadLatestByInternalControlIDsAsOf(
 		ctx,
 		conn,
 		scope,
-		measureIDs,
+		internalControlIDs,
 		asOf,
-		coredata.NewMeasureFilter(nil, nil, nil),
+		coredata.NewInternalControlFilter(nil, nil, nil),
 	); err != nil {
-		return nil, fmt.Errorf("cannot load measure events: %w", err)
+		return nil, fmt.Errorf("cannot load internal control events: %w", err)
 	}
 
 	return events, nil
 }
 
-func measureStatesFromEvents(events coredata.MeasureEvents) map[gid.GID]coredata.MeasureState {
-	states := make(map[gid.GID]coredata.MeasureState, len(events))
+func internalControlStatesFromEvents(events coredata.InternalControlEvents) map[gid.GID]coredata.InternalControlState {
+	states := make(map[gid.GID]coredata.InternalControlState, len(events))
 	for _, event := range events {
-		states[event.MeasureID] = event.State
+		states[event.InternalControlID] = event.State
 	}
 
 	return states
 }
 
-func measureNamesFromEvents(events coredata.MeasureEvents) map[gid.GID]string {
+func internalControlNamesFromEvents(events coredata.InternalControlEvents) map[gid.GID]string {
 	names := make(map[gid.GID]string, len(events))
 	for _, event := range events {
-		names[event.MeasureID] = event.Name
+		names[event.InternalControlID] = event.Name
 	}
 
 	return names
 }
 
 func progressFromStates(
-	measureIDs []gid.GID,
-	states map[gid.GID]coredata.MeasureState,
+	internalControlIDs []gid.GID,
+	states map[gid.GID]coredata.InternalControlState,
 ) TreatmentProgress {
 	progress := TreatmentProgress{}
 
-	for _, measureID := range measureIDs {
+	for _, internalControlID := range internalControlIDs {
 		progress.Total++
 
-		switch states[measureID] {
-		case coredata.MeasureStateImplemented:
+		switch states[internalControlID] {
+		case coredata.InternalControlStateImplemented:
 			progress.Done++
-		case coredata.MeasureStateInProgress:
+		case coredata.InternalControlStateInProgress:
 			progress.InProgress++
-		case coredata.MeasureStateNotImplemented:
+		case coredata.InternalControlStateNotImplemented:
 			progress.NotImplemented++
 		}
 	}
@@ -233,34 +233,34 @@ func matrixEntryFromPlan(
 	}
 }
 
-func measuresFromIDs(
-	measureIDs []gid.GID,
+func internalControlsFromIDs(
+	internalControlIDs []gid.GID,
 	names map[gid.GID]string,
-	states map[gid.GID]coredata.MeasureState,
-) []RiskAnalysisMatrixMeasure {
-	items := make([]RiskAnalysisMatrixMeasure, 0, len(measureIDs))
-	for _, measureID := range measureIDs {
-		item := RiskAnalysisMatrixMeasure{
-			ID:    measureID,
-			State: coredata.MeasureStateUnknown,
+	states map[gid.GID]coredata.InternalControlState,
+) []RiskAnalysisMatrixInternalControl {
+	items := make([]RiskAnalysisMatrixInternalControl, 0, len(internalControlIDs))
+	for _, internalControlID := range internalControlIDs {
+		item := RiskAnalysisMatrixInternalControl{
+			ID:    internalControlID,
+			State: coredata.InternalControlStateUnknown,
 		}
-		if name, ok := names[measureID]; ok {
+		if name, ok := names[internalControlID]; ok {
 			item.Name = &name
 		}
 
-		if state, ok := states[measureID]; ok {
+		if state, ok := states[internalControlID]; ok {
 			item.State = state
 		}
 
 		items = append(items, item)
 	}
 
-	slices.SortFunc(items, compareMatrixMeasures)
+	slices.SortFunc(items, compareMatrixInternalControls)
 
 	return items
 }
 
-func compareMatrixMeasures(a, b RiskAnalysisMatrixMeasure) int {
+func compareMatrixInternalControls(a, b RiskAnalysisMatrixInternalControl) int {
 	aName := ""
 	if a.Name != nil {
 		aName = *a.Name
@@ -324,7 +324,7 @@ func (s *Service) ListTreatmentPlansAsOf(
 	asOf time.Time,
 	cursor *page.Cursor[coredata.TreatmentPlanOrderField],
 	filter *coredata.TreatmentPlanFilter,
-	includeMeasures bool,
+	includeInternalControls bool,
 ) (*TreatmentPlansAsOfPage, error) {
 	filter, err := prepareTreatmentPlanFilter(filter)
 	if err != nil {
@@ -368,14 +368,14 @@ func (s *Service) ListTreatmentPlansAsOf(
 
 			paged := page.NewPage(plans, cursor)
 
-			progressByID, measuresByID, err := loadAsOfPlanExtras(
+			progressByID, internalControlsByID, err := loadAsOfPlanExtras(
 				ctx,
 				conn,
 				scope,
 				analysisID,
 				asOf,
 				paged.Data,
-				includeMeasures,
+				includeInternalControls,
 			)
 			if err != nil {
 				return err
@@ -384,7 +384,7 @@ func (s *Service) ListTreatmentPlansAsOf(
 			result.Page = paged
 			result.TotalCount = total
 			result.ProgressByID = progressByID
-			result.MeasuresByID = measuresByID
+			result.InternalControlsByID = internalControlsByID
 
 			return nil
 		},
@@ -396,10 +396,10 @@ func (s *Service) ListTreatmentPlansAsOf(
 	return result, nil
 }
 
-func (s *Service) ListTreatmentPlansForMeasureIDAsOf(
+func (s *Service) ListTreatmentPlansForInternalControlIDAsOf(
 	ctx context.Context,
 	scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	asOf time.Time,
 	cursor *page.Cursor[coredata.TreatmentPlanOrderField],
 	filter *coredata.TreatmentPlanFilter,
@@ -415,11 +415,11 @@ func (s *Service) ListTreatmentPlansForMeasureIDAsOf(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var plans coredata.TreatmentPlans
-			if err := plans.LoadByMeasureIDAsOf(
+			if err := plans.LoadByInternalControlIDAsOf(
 				ctx,
 				conn,
 				scope,
-				measureID,
+				internalControlID,
 				asOf,
 				cursor,
 				filter,
@@ -427,11 +427,11 @@ func (s *Service) ListTreatmentPlansForMeasureIDAsOf(
 				return fmt.Errorf("cannot load treatment plans as of: %w", err)
 			}
 
-			total, err := plans.CountByMeasureIDAsOf(
+			total, err := plans.CountByInternalControlIDAsOf(
 				ctx,
 				conn,
 				scope,
-				measureID,
+				internalControlID,
 				asOf,
 				filter,
 			)
@@ -472,7 +472,7 @@ func (s *Service) ListTreatmentPlansForMeasureIDAsOf(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure treatment plans as of: %w", err)
+		return nil, fmt.Errorf("cannot list internal control treatment plans as of: %w", err)
 	}
 
 	return result, nil
@@ -485,13 +485,13 @@ func loadAsOfPlanExtras(
 	analysisID gid.GID,
 	asOf time.Time,
 	plans []*coredata.TreatmentPlan,
-	includeMeasures bool,
-) (map[gid.GID]TreatmentProgress, map[gid.GID][]RiskAnalysisMatrixMeasure, error) {
+	includeInternalControls bool,
+) (map[gid.GID]TreatmentProgress, map[gid.GID][]RiskAnalysisMatrixInternalControl, error) {
 	progressByID := make(map[gid.GID]TreatmentProgress, len(plans))
-	measuresByID := make(map[gid.GID][]RiskAnalysisMatrixMeasure, len(plans))
+	internalControlsByID := make(map[gid.GID][]RiskAnalysisMatrixInternalControl, len(plans))
 
 	if len(plans) == 0 {
-		return progressByID, measuresByID, nil
+		return progressByID, internalControlsByID, nil
 	}
 
 	planIDs := make([]gid.GID, 0, len(plans))
@@ -511,53 +511,53 @@ func loadAsOfPlanExtras(
 		return nil, nil, fmt.Errorf("cannot load treatment plan events: %w", err)
 	}
 
-	measureIDs, err := uniqueEventMeasureIDs(events)
+	internalControlIDs, err := uniqueEventInternalControlIDs(events)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot collect treatment plan measure ids: %w", err)
+		return nil, nil, fmt.Errorf("cannot collect treatment plan internal control ids: %w", err)
 	}
 
-	measureEvents, err := loadMeasureEventsAsOf(ctx, conn, scope, measureIDs, asOf)
+	internalControlEvents, err := loadInternalControlEventsAsOf(ctx, conn, scope, internalControlIDs, asOf)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	states := measureStatesFromEvents(measureEvents)
+	states := internalControlStatesFromEvents(internalControlEvents)
 
 	var names map[gid.GID]string
-	if includeMeasures {
-		names = measureNamesFromEvents(measureEvents)
+	if includeInternalControls {
+		names = internalControlNamesFromEvents(internalControlEvents)
 	}
 
 	for _, event := range events {
-		linked, err := event.LinkedMeasureIDs()
+		linked, err := event.LinkedInternalControlIDs()
 		if err != nil {
-			return nil, nil, fmt.Errorf("cannot parse treatment plan measure ids: %w", err)
+			return nil, nil, fmt.Errorf("cannot parse treatment plan internal control ids: %w", err)
 		}
 
 		progressByID[event.TreatmentPlanID] = progressFromStates(linked, states)
-		if includeMeasures {
-			measuresByID[event.TreatmentPlanID] = measuresFromIDs(linked, names, states)
+		if includeInternalControls {
+			internalControlsByID[event.TreatmentPlanID] = internalControlsFromIDs(linked, names, states)
 		}
 	}
 
-	return progressByID, measuresByID, nil
+	return progressByID, internalControlsByID, nil
 }
 
-func (s *Service) ListMeasuresAsOf(
+func (s *Service) ListInternalControlsAsOf(
 	ctx context.Context,
 	scope coredata.Scoper,
 	analysisID gid.GID,
 	planID gid.GID,
 	asOf time.Time,
-	cursor *page.Cursor[coredata.MeasureOrderField],
-	filter *coredata.MeasureFilter,
-) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], int, error) {
+	cursor *page.Cursor[coredata.InternalControlOrderField],
+	filter *coredata.InternalControlFilter,
+) (*page.Page[*coredata.InternalControl, coredata.InternalControlOrderField], int, error) {
 	if filter == nil {
-		filter = coredata.NewMeasureFilter(nil, nil, nil)
+		filter = coredata.NewInternalControlFilter(nil, nil, nil)
 	}
 
 	var (
-		paged *page.Page[*coredata.Measure, coredata.MeasureOrderField]
+		paged *page.Page[*coredata.InternalControl, coredata.InternalControlOrderField]
 		total int
 	)
 
@@ -582,17 +582,17 @@ func (s *Service) ListMeasuresAsOf(
 			}
 
 			if len(events) == 0 {
-				paged = page.NewPage([]*coredata.Measure{}, cursor)
+				paged = page.NewPage([]*coredata.InternalControl{}, cursor)
 				return nil
 			}
 
-			linked, err := events[0].LinkedMeasureIDs()
+			linked, err := events[0].LinkedInternalControlIDs()
 			if err != nil {
-				return fmt.Errorf("cannot parse treatment plan measure ids: %w", err)
+				return fmt.Errorf("cannot parse treatment plan internal control ids: %w", err)
 			}
 
-			var measures coredata.Measures
-			if err := measures.LoadByIDsAsOf(
+			var internalControls coredata.InternalControls
+			if err := internalControls.LoadByIDsAsOf(
 				ctx,
 				conn,
 				scope,
@@ -601,10 +601,10 @@ func (s *Service) ListMeasuresAsOf(
 				cursor,
 				filter,
 			); err != nil {
-				return fmt.Errorf("cannot load measures as of: %w", err)
+				return fmt.Errorf("cannot load internal controls as of: %w", err)
 			}
 
-			count, err := measures.CountByIDsAsOf(
+			count, err := internalControls.CountByIDsAsOf(
 				ctx,
 				conn,
 				scope,
@@ -613,17 +613,17 @@ func (s *Service) ListMeasuresAsOf(
 				filter,
 			)
 			if err != nil {
-				return fmt.Errorf("cannot count measures as of: %w", err)
+				return fmt.Errorf("cannot count internal controls as of: %w", err)
 			}
 
 			total = count
-			paged = page.NewPage(measures, cursor)
+			paged = page.NewPage(internalControls, cursor)
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, 0, fmt.Errorf("cannot list measures as of: %w", err)
+		return nil, 0, fmt.Errorf("cannot list internal controls as of: %w", err)
 	}
 
 	return paged, total, nil

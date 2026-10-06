@@ -54,7 +54,7 @@ import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
 import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
-import { measureRoutes } from "./routes/measureRoutes";
+import { internalControlRoutes } from "./routes/internalControlRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
@@ -208,7 +208,7 @@ const routes = [
                 case Role.EMPLOYEE:
                   return <RedirectToEmployeePortal />;
                 case Role.AUDITOR:
-                  return <Navigate to="governance/measures" />;
+                  return <Navigate to="governance/internal-controls" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
@@ -228,7 +228,7 @@ const routes = [
               ...frameworkRoutes,
               ...auditRoutes,
               ...findingRoutes,
-              ...measureRoutes,
+              ...internalControlRoutes,
               ...documentsRoutes,
               ...taskRoutes,
               ...statementsOfApplicabilityRoutes,

@@ -180,20 +180,20 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 	return types.NewFramework(framework), nil
 }
 
-// Measures is the resolver for the measures field.
-func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+// Internal controls is the resolver for the internal controls field.
+func (r *controlResolver) InternalControls(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InternalControlOrderBy, filter *types.InternalControlFilter) (*types.InternalControlConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionInternalControlList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -201,18 +201,18 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
+		internalControlFilter = coredata.NewInternalControlFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := r.probo.Measures.ListForControlID(ctx, scope, obj.ID, cursor, measureFilter)
+	page, err := r.probo.InternalControls.ListForControlID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list measures", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list internal controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
+	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
 }
 
 // Documents is the resolver for the documents field.
@@ -350,8 +350,8 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 		}
 
 		return count, nil
-	case *measureResolver:
-		count, err := r.probo.Controls.CountForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
+	case *internalControlResolver:
+		count, err := r.probo.Controls.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
 			return 0, gqlutils.Internal(ctx)
@@ -474,22 +474,22 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 	}, nil
 }
 
-// CreateControlMeasureMapping is the resolver for the createControlMeasureMapping field.
-func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingCreate)
+// CreateControlInternalControlMapping is the resolver for the createControlInternalControlMapping field.
+func (r *mutationResolver) CreateControlInternalControlMapping(ctx context.Context, input types.CreateControlInternalControlMappingInput) (*types.CreateControlInternalControlMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlInternalControlMappingCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	control, measure, err := r.probo.Controls.CreateMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
+	control, internalControl, err := r.probo.Controls.CreateInternalControlMapping(ctx, scope, input.ControlID, input.InternalControlID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot create control measure mapping", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot create control internal control mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.CreateControlMeasureMappingPayload{
-		ControlEdge: types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
-		MeasureEdge: types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt),
+	return &types.CreateControlInternalControlMappingPayload{
+		ControlEdge:         types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
+		InternalControlEdge: types.NewInternalControlEdge(internalControl, coredata.InternalControlOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -517,22 +517,22 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 	}, nil
 }
 
-// DeleteControlMeasureMapping is the resolver for the deleteControlMeasureMapping field.
-func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error) {
-	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlMeasureMappingDelete)
+// DeleteControlInternalControlMapping is the resolver for the deleteControlInternalControlMapping field.
+func (r *mutationResolver) DeleteControlInternalControlMapping(ctx context.Context, input types.DeleteControlInternalControlMappingInput) (*types.DeleteControlInternalControlMappingPayload, error) {
+	scope, err := r.authorize(ctx, input.ControlID, probo.ActionControlInternalControlMappingDelete)
 	if err != nil {
 		return nil, err
 	}
 
-	control, measure, err := r.probo.Controls.DeleteMeasureMapping(ctx, scope, input.ControlID, input.MeasureID)
+	control, internalControl, err := r.probo.Controls.DeleteInternalControlMapping(ctx, scope, input.ControlID, input.InternalControlID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete control measure mapping", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot delete control internal control mapping", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteControlMeasureMappingPayload{
-		DeletedControlID: control.ID,
-		DeletedMeasureID: measure.ID,
+	return &types.DeleteControlInternalControlMappingPayload{
+		DeletedControlID:         control.ID,
+		DeletedInternalControlID: internalControl.ID,
 	}, nil
 }
 

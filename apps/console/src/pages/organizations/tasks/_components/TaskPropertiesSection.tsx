@@ -49,8 +49,8 @@ import { taskPropertiesSection } from "../variants";
 
 import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskDurationField } from "./TaskDurationField";
+import { TaskInternalControlField } from "./TaskInternalControlField";
 import { TaskLinearField } from "./TaskLinearField";
-import { TaskMeasureField } from "./TaskMeasureField";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
 import { TaskStateIcon } from "./TaskStateIcon";
 
@@ -69,13 +69,13 @@ const taskPropertiesSectionFragment = graphql`
       id
       fullName
     }
-    measure {
+    internalControl {
       id
       name
     }
     ...TaskAssigneeField_task
     ...TaskLinearField_task
-    ...TaskMeasureField_task
+    ...TaskInternalControlField_task
   }
 `;
 
@@ -97,7 +97,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
       state?: TaskState;
       priority?: TaskPriority;
       assignedToId?: string | null;
-      measureId?: string | null;
+      internalControlId?: string | null;
       timeEstimate?: string | null;
       deadline?: string | null;
       recurrenceInterval?: string | null;
@@ -237,26 +237,26 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
         <Suspense fallback={null}>
           <TaskLinearField taskKey={task} />
         </Suspense>
-        <PropertyRow label={t("detailsPage.fields.measure")}>
+        <PropertyRow label={t("detailsPage.fields.internalControl")}>
           {task.canUpdate
             ? (
                 <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
-                  <TaskMeasureField
+                  <TaskInternalControlField
                     taskKey={task}
                     disabled={isUpdating}
-                    onValueChange={(measureId) => {
-                      void save({ measureId });
+                    onValueChange={(internalControlId) => {
+                      void save({ internalControlId });
                     }}
                   />
                 </Suspense>
               )
-            : task.measure
+            : task.internalControl
               ? (
                   <Link
                     size={2}
-                    to={`/organizations/${organizationId}/governance/measures/${task.measure.id}`}
+                    to={`/organizations/${organizationId}/governance/internal-controls/${task.internalControl.id}`}
                   >
-                    {task.measure.name}
+                    {task.internalControl.name}
                   </Link>
                 )
               : (

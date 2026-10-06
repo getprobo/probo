@@ -49,7 +49,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear sync source").
 		Create()
 
@@ -315,7 +315,7 @@ func TestTaskLinearSync_CommentRemoveDeletesProboComment(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear comment remove").
 		Create()
 
@@ -353,7 +353,7 @@ func TestTaskLinearSync_IssueRemoveUnlinksTask(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear issue remove").
 		Create()
 
@@ -762,7 +762,7 @@ func TestTask_UnlinkExternalWhenNotLinked(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	const mutation = `
 		mutation($input: UnlinkTaskExternalInput!) {

@@ -161,16 +161,16 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 	return types.NewProfileConnection(page, r, obj.ID, filters), nil
 }
 
-// MeasureCategories is the resolver for the measureCategories field.
-func (r *organizationResolver) MeasureCategories(ctx context.Context, obj *types.Organization) ([]string, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+// InternalControlCategories is the resolver for the internalControlCategories field.
+func (r *organizationResolver) InternalControlCategories(ctx context.Context, obj *types.Organization) ([]string, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionInternalControlList)
 	if err != nil {
 		return nil, err
 	}
 
-	categories, err := r.probo.Measures.ListDistinctCategoriesForOrganizationID(ctx, scope, obj.ID)
+	categories, err := r.probo.InternalControls.ListDistinctCategoriesForOrganizationID(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list measure categories", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list internal control categories", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1014,20 +1014,20 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 	return types.NewFrameworkConnection(page, r, obj.ID), nil
 }
 
-// Measures is the resolver for the measures field.
-func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionMeasureList)
+// Internal controls is the resolver for the internal controls field.
+func (r *organizationResolver) InternalControls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InternalControlOrderBy, filter *types.InternalControlFilter) (*types.InternalControlConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionInternalControlList)
 	if err != nil {
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1035,18 +1035,18 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
+		internalControlFilter = coredata.NewInternalControlFilter(filter.Query, filter.State, filter.Category)
 	}
 
-	page, err := r.probo.Measures.ListForOrganizationID(ctx, scope, obj.ID, cursor, measureFilter)
+	page, err := r.probo.InternalControls.ListForOrganizationID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list organization measures", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list organization internal controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
+	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
 }
 
 // ObligationsDocument is the resolver for the obligationsDocument field.

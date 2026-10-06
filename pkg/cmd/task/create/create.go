@@ -66,7 +66,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagContent            string
 		flagState              string
 		flagPriority           string
-		flagMeasure            string
+		flagInternalControl    string
 		flagTimeEstimate       string
 		flagAssignedTo         string
 		flagDeadline           string
@@ -161,8 +161,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["priority"] = flagPriority
 			}
 
-			if flagMeasure != "" {
-				input["measureId"] = flagMeasure
+			if flagInternalControl != "" {
+				input["internalControlId"] = flagInternalControl
 			}
 
 			if flagTimeEstimate != "" {
@@ -215,7 +215,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
+	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")

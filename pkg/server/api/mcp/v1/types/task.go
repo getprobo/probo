@@ -37,7 +37,7 @@ func NewTask(t *coredata.Task) *Task {
 	return &Task{
 		ID:                 t.ID,
 		OrganizationID:     t.OrganizationID,
-		MeasureID:          t.MeasureID,
+		InternalControlID:  t.InternalControlID,
 		Name:               t.Name,
 		Content:            content,
 		State:              t.State,
@@ -70,10 +70,10 @@ func NewTaskWithLink(t *coredata.Task, link *coredata.TaskExternalLink) *Task {
 	return result
 }
 
-func NewListMeasureTasksOutput(
+func NewListInternalControlTasksOutput(
 	taskPage *page.Page[*coredata.Task, coredata.TaskOrderField],
 	links map[gid.GID]*coredata.TaskExternalLink,
-) ListMeasureTasksOutput {
+) ListInternalControlTasksOutput {
 	tasks := make([]*Task, 0, len(taskPage.Data))
 	for _, v := range taskPage.Data {
 		tasks = append(tasks, NewTaskWithLink(v, links[v.ID]))
@@ -86,7 +86,7 @@ func NewListMeasureTasksOutput(
 		nextCursor = &cursorKey
 	}
 
-	return ListMeasureTasksOutput{
+	return ListInternalControlTasksOutput{
 		NextCursor: nextCursor,
 		Tasks:      tasks,
 	}

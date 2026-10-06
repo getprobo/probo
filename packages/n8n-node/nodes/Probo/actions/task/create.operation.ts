@@ -37,8 +37,8 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure this task belongs to',
+		description: 'The ID of the internal control this task belongs to',
 	},
 	{
 		displayName: 'Name',
@@ -205,7 +205,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
@@ -240,7 +240,7 @@ export async function execute(
 		input: {
 			organizationId,
 			name,
-			...(measureId && { measureId }),
+			...(internalControlId && { internalControlId }),
 			...(content && { content: plainTextToProseMirrorJSON(content) }),
 			...(state && { state }),
 			...(priority && { priority }),

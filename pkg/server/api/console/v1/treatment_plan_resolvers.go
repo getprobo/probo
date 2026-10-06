@@ -126,18 +126,18 @@ func (r *mutationResolver) DeleteTreatmentPlan(ctx context.Context, input types.
 	return &types.DeleteTreatmentPlanPayload{DeletedTreatmentPlanID: input.TreatmentPlanID}, nil
 }
 
-// CreateTreatmentPlanMeasureMapping is the resolver for the createTreatmentPlanMeasureMapping field.
-func (r *mutationResolver) CreateTreatmentPlanMeasureMapping(ctx context.Context, input types.CreateTreatmentPlanMeasureMappingInput) (*types.CreateTreatmentPlanMeasureMappingPayload, error) {
+// CreateTreatmentPlanInternalControlMapping is the resolver for the createTreatmentPlanInternalControlMapping field.
+func (r *mutationResolver) CreateTreatmentPlanInternalControlMapping(ctx context.Context, input types.CreateTreatmentPlanInternalControlMappingInput) (*types.CreateTreatmentPlanInternalControlMappingPayload, error) {
 	scope, err := r.authorize(ctx, input.TreatmentPlanID, riskmanagement.ActionTreatmentPlanUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	tp, measure, err := r.riskManagement.CreateMeasureMapping(ctx, scope, input.TreatmentPlanID, input.MeasureID)
+	tp, internalControl, err := r.riskManagement.CreateInternalControlMapping(ctx, scope, input.TreatmentPlanID, input.InternalControlID)
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceAlreadyExists):
-			return nil, gqlutils.Conflictf(ctx, "measure already linked to this treatment plan")
+			return nil, gqlutils.Conflictf(ctx, "internal control already linked to this treatment plan")
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 		default:
@@ -145,40 +145,40 @@ func (r *mutationResolver) CreateTreatmentPlanMeasureMapping(ctx context.Context
 				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot create treatment plan measure mapping", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot create treatment plan internal control mapping", log.Error(err))
 
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
 
-	return &types.CreateTreatmentPlanMeasureMappingPayload{
-		TreatmentPlanEdge: types.NewTreatmentPlanEdge(tp, coredata.TreatmentPlanOrderFieldCreatedAt),
-		MeasureEdge:       types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt),
+	return &types.CreateTreatmentPlanInternalControlMappingPayload{
+		TreatmentPlanEdge:   types.NewTreatmentPlanEdge(tp, coredata.TreatmentPlanOrderFieldCreatedAt),
+		InternalControlEdge: types.NewInternalControlEdge(internalControl, coredata.InternalControlOrderFieldCreatedAt),
 	}, nil
 }
 
-// DeleteTreatmentPlanMeasureMapping is the resolver for the deleteTreatmentPlanMeasureMapping field.
-func (r *mutationResolver) DeleteTreatmentPlanMeasureMapping(ctx context.Context, input types.DeleteTreatmentPlanMeasureMappingInput) (*types.DeleteTreatmentPlanMeasureMappingPayload, error) {
+// DeleteTreatmentPlanInternalControlMapping is the resolver for the deleteTreatmentPlanInternalControlMapping field.
+func (r *mutationResolver) DeleteTreatmentPlanInternalControlMapping(ctx context.Context, input types.DeleteTreatmentPlanInternalControlMappingInput) (*types.DeleteTreatmentPlanInternalControlMappingPayload, error) {
 	scope, err := r.authorize(ctx, input.TreatmentPlanID, riskmanagement.ActionTreatmentPlanUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	tp, measure, err := r.riskManagement.DeleteMeasureMapping(ctx, scope, input.TreatmentPlanID, input.MeasureID)
+	tp, internalControl, err := r.riskManagement.DeleteInternalControlMapping(ctx, scope, input.TreatmentPlanID, input.InternalControlID)
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 		default:
-			r.logger.ErrorCtx(ctx, "cannot delete treatment plan measure mapping", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot delete treatment plan internal control mapping", log.Error(err))
 			return nil, gqlutils.Internal(ctx)
 		}
 	}
 
-	return &types.DeleteTreatmentPlanMeasureMappingPayload{
-		DeletedTreatmentPlanID: tp.ID,
-		DeletedMeasureID:       measure.ID,
-		TreatmentPlan:          types.NewTreatmentPlan(tp),
+	return &types.DeleteTreatmentPlanInternalControlMappingPayload{
+		DeletedTreatmentPlanID:   tp.ID,
+		DeletedInternalControlID: internalControl.ID,
+		TreatmentPlan:            types.NewTreatmentPlan(tp),
 	}, nil
 }
 
@@ -339,14 +339,14 @@ func (r *treatmentPlanResolver) Organization(ctx context.Context, obj *types.Tre
 	return types.NewOrganization(organization), nil
 }
 
-// Measures is the resolver for the measures field.
-func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.TreatmentPlan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter, asOf *time.Time) (*types.MeasureConnection, error) {
+// Internal controls is the resolver for the internal controls field.
+func (r *treatmentPlanResolver) InternalControls(ctx context.Context, obj *types.TreatmentPlan, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InternalControlOrderBy, filter *types.InternalControlFilter, asOf *time.Time) (*types.InternalControlConnection, error) {
 	if asOf == nil {
 		asOf = obj.AsOf
 	}
 
 	resourceID := obj.ID
-	action := probo.ActionMeasureList
+	action := probo.ActionInternalControlList
 
 	if asOf != nil {
 		resourceID = obj.RiskAnalysis.ID
@@ -358,13 +358,13 @@ func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.Treatme
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
-		Field:     coredata.MeasureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.InternalControlOrderField]{
+		Field:     coredata.InternalControlOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.InternalControlOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -372,43 +372,43 @@ func (r *treatmentPlanResolver) Measures(ctx context.Context, obj *types.Treatme
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil, nil, nil)
+	var internalControlFilter = coredata.NewInternalControlFilter(nil, nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query, filter.State, filter.Category)
+		internalControlFilter = coredata.NewInternalControlFilter(filter.Query, filter.State, filter.Category)
 	}
 
 	if asOf != nil {
-		page, total, err := r.riskManagement.ListMeasuresAsOf(
+		page, total, err := r.riskManagement.ListInternalControlsAsOf(
 			ctx,
 			scope,
 			obj.RiskAnalysis.ID,
 			obj.ID,
 			*asOf,
 			cursor,
-			measureFilter,
+			internalControlFilter,
 		)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
 				return nil, gqlutils.NotFound(ctx, err)
 			}
 
-			r.logger.ErrorCtx(ctx, "cannot list treatment plan measures as of", log.Error(err))
+			r.logger.ErrorCtx(ctx, "cannot list treatment plan internal controls as of", log.Error(err))
 
 			return nil, gqlutils.Internal(ctx)
 		}
 
-		connection := types.NewMeasureConnectionAsOf(page, r, obj.ID, measureFilter, *asOf, total)
+		connection := types.NewInternalControlConnectionAsOf(page, r, obj.ID, internalControlFilter, *asOf, total)
 
 		return connection, nil
 	}
 
-	page, err := r.probo.Measures.ListForTreatmentPlanID(ctx, scope, obj.ID, cursor, measureFilter)
+	page, err := r.probo.InternalControls.ListForTreatmentPlanID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list treatment plan measures", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list treatment plan internal controls", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
+	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -471,8 +471,8 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 		}
 
 		return count, nil
-	case *measureResolver:
-		count, err := r.riskManagement.CountTreatmentPlansForMeasureID(ctx, scope, obj.ParentID, obj.Filters)
+	case *internalControlResolver:
+		count, err := r.riskManagement.CountTreatmentPlansForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 				return 0, gqlutils.InvalidValidationErrors(ctx, validationErrors)

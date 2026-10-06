@@ -130,9 +130,9 @@ func requireScorePair(v *validator.Validator, likelihood, impact *int, likelihoo
 	)
 }
 
-func (s RiskService) CountForMeasureID(
+func (s RiskService) CountForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *coredata.RiskFilter,
 ) (int, error) {
 	var count int
@@ -142,7 +142,7 @@ func (s RiskService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			risks := &coredata.Risks{}
 
-			count, err = risks.CountByMeasureID(ctx, conn, scope, measureID, filter)
+			count, err = risks.CountByInternalControlID(ctx, conn, scope, internalControlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count risks: %w", err)
 			}
@@ -157,9 +157,9 @@ func (s RiskService) CountForMeasureID(
 	return count, nil
 }
 
-func (s RiskService) ListForMeasureID(
+func (s RiskService) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.RiskOrderField],
 	filter *coredata.RiskFilter,
 ) (*page.Page[*coredata.Risk, coredata.RiskOrderField], error) {
@@ -168,7 +168,7 @@ func (s RiskService) ListForMeasureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return risks.LoadByMeasureID(ctx, conn, scope, measureID, cursor, filter)
+			return risks.LoadByInternalControlID(ctx, conn, scope, internalControlID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -301,12 +301,12 @@ func (s RiskService) DeleteDocumentMapping(
 	return risk, document, nil
 }
 
-func (s RiskService) CreateMeasureMapping(
+func (s RiskService) CreateInternalControlMapping(
 	ctx context.Context, scope coredata.Scoper,
 	riskID gid.GID,
-	measureID gid.GID,
-) (*coredata.Risk, *coredata.Measure, error) {
-	measure := &coredata.Measure{}
+	internalControlID gid.GID,
+) (*coredata.Risk, *coredata.InternalControl, error) {
+	internalControl := &coredata.InternalControl{}
 	risk := &coredata.Risk{}
 
 	err := s.svc.pg.WithTx(
@@ -316,34 +316,34 @@ func (s RiskService) CreateMeasureMapping(
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, tx, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internalControl: %w", err)
 			}
 
-			riskMeasure := &coredata.RiskMeasure{
-				RiskID:         risk.ID,
-				MeasureID:      measure.ID,
-				OrganizationID: risk.OrganizationID,
-				CreatedAt:      time.Now(),
+			riskInternalControl := &coredata.RiskInternalControl{
+				RiskID:            risk.ID,
+				InternalControlID: internalControl.ID,
+				OrganizationID:    risk.OrganizationID,
+				CreatedAt:         time.Now(),
 			}
 
-			return riskMeasure.Insert(ctx, tx, scope)
+			return riskInternalControl.Insert(ctx, tx, scope)
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create risk measure mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot create risk internal control mapping: %w", err)
 	}
 
-	return risk, measure, nil
+	return risk, internalControl, nil
 }
 
-func (s RiskService) DeleteMeasureMapping(
+func (s RiskService) DeleteInternalControlMapping(
 	ctx context.Context, scope coredata.Scoper,
 	riskID gid.GID,
-	measureID gid.GID,
-) (*coredata.Risk, *coredata.Measure, error) {
+	internalControlID gid.GID,
+) (*coredata.Risk, *coredata.InternalControl, error) {
 	risk := &coredata.Risk{}
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -352,25 +352,25 @@ func (s RiskService) DeleteMeasureMapping(
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, tx, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internalControl: %w", err)
 			}
 
-			riskMeasure := &coredata.RiskMeasure{
-				RiskID:         riskID,
-				MeasureID:      measureID,
-				OrganizationID: risk.OrganizationID,
-				CreatedAt:      time.Now(),
+			riskInternalControl := &coredata.RiskInternalControl{
+				RiskID:            riskID,
+				InternalControlID: internalControlID,
+				OrganizationID:    risk.OrganizationID,
+				CreatedAt:         time.Now(),
 			}
 
-			return riskMeasure.Delete(ctx, tx, scope, risk.ID, measure.ID)
+			return riskInternalControl.Delete(ctx, tx, scope, risk.ID, internalControl.ID)
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot delete risk measure mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot delete risk internal control mapping: %w", err)
 	}
 
-	return risk, measure, nil
+	return risk, internalControl, nil
 }
 
 func (s RiskService) CreateObligationMapping(

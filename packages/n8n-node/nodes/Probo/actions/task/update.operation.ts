@@ -193,8 +193,8 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the user assigned to this task',
 	},
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -203,7 +203,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure this task belongs to',
+		description: 'The ID of the internal control this task belongs to',
 	},
 	{
 		displayName: 'Recurrence Interval',
@@ -246,7 +246,7 @@ export async function execute(
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
-	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 	const clearRecurrenceInterval = this.getNodeParameter('clearRecurrenceInterval', itemIndex, false) as boolean;
 
@@ -278,7 +278,7 @@ export async function execute(
 	if (timeEstimate) input.timeEstimate = timeEstimate;
 	if (deadline) input.deadline = deadline;
 	if (assignedToId) input.assignedToId = assignedToId;
-	if (measureId) input.measureId = measureId;
+	if (internalControlId) input.internalControlId = internalControlId;
 	if (clearRecurrenceInterval) {
 		input.recurrenceInterval = null;
 	} else if (recurrenceInterval) {

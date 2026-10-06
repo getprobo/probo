@@ -330,10 +330,10 @@ type (
 		ResidualLikelihood string
 		ResidualImpact     string
 		ResidualRiskScore  string
-		Measures           []RiskAnalysisMeasure
+		InternalControls   []RiskAnalysisInternalControl
 	}
 
-	RiskAnalysisMeasure struct {
+	RiskAnalysisInternalControl struct {
 		Name  string
 		State string
 	}

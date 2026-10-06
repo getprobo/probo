@@ -135,8 +135,8 @@ export function moveTaskNodeSorted(
   node: TaskRecord,
   connections: {
     organizationConnectionId: string;
-    previousMeasureConnectionId?: string;
-    nextMeasureConnectionId?: string;
+    previousInternalControlConnectionId?: string;
+    nextInternalControlConnectionId?: string;
     createIfMissing?: boolean;
   },
 ) {
@@ -149,8 +149,8 @@ export function moveTaskNodeSorted(
     }
   }
 
-  const previousId = connections.previousMeasureConnectionId;
-  const nextId = connections.nextMeasureConnectionId;
+  const previousId = connections.previousInternalControlConnectionId;
+  const nextId = connections.nextInternalControlConnectionId;
   if (previousId && previousId !== nextId) {
     const previous = store.get(previousId);
     if (previous) {

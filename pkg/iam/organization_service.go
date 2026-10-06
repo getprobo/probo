@@ -994,7 +994,7 @@ func deleteOrganizationDependencies(
 	organizationID gid.GID,
 ) error {
 	// These tables restrict deleting a membership profile that still owns
-	// them, a risk that is still linked to a scenario or measure, or a
+	// them, a risk that is still linked to a scenario or internal control, or a
 	// document that is still linked from a mapping table. They must be
 	// removed before organizations cascade-deletes those rows.
 	if err := new(coredata.ControlDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
@@ -1005,12 +1005,12 @@ func deleteOrganizationDependencies(
 		return fmt.Errorf("cannot delete risk document mappings: %w", err)
 	}
 
-	if err := new(coredata.MeasureDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot delete measure document mappings: %w", err)
+	if err := new(coredata.InternalControlDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete internal control document mappings: %w", err)
 	}
 
-	if err := new(coredata.RiskMeasures).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot delete risk measure mappings: %w", err)
+	if err := new(coredata.RiskInternalControls).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete risk internal control mappings: %w", err)
 	}
 
 	if err := new(coredata.TreatmentPlanEvents).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {

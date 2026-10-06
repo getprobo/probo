@@ -88,9 +88,9 @@ func NewTask(t *coredata.Task) *Task {
 		UpdatedAt:          t.UpdatedAt,
 	}
 
-	if t.MeasureID != nil {
-		node.Measure = &Measure{
-			ID: *t.MeasureID,
+	if t.InternalControlID != nil {
+		node.InternalControl = &InternalControl{
+			ID: *t.InternalControlID,
 		}
 	}
 
