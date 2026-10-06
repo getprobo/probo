@@ -4,6 +4,17 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.26.0] - 2026-10-06
+
+### Added
+
+- `probo.taskRecurrence.interval` sets `PROBOD_TASK_RECURRENCE_INTERVAL`,
+  how often the recurring-task worker scans. Defaults to 300 seconds
+
+### Changed
+
+- Default `appVersion` is now `0.304.0`
+
 ## [0.25.0] - 2026-09-24
 
 ### Added
