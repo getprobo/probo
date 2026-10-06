@@ -235,7 +235,7 @@ export const detectedTrackerListItem = tv({
   },
 });
 
-export const cookieBannerDisplaySection = tv({
+export const cookieBannerCategoriesSection = tv({
   slots: {
     root: "flex flex-col gap-4",
     intro: "flex items-start justify-between gap-4",

@@ -24,6 +24,7 @@ import { useParams, useSearchParams } from "react-router";
 
 import type { CookieBannerTCFPageQuery } from "#/__generated__/core/CookieBannerTCFPageQuery.graphql";
 
+import { TCF_VENDORS_PAGE_SIZE } from "./_lib/pageSize";
 import {
   gvlVendorGraphqlFilter,
   type GVLVendorMembership,
@@ -46,6 +47,7 @@ export default function CookieBannerTCFPageLoader() {
     if (cookieBannerId) {
       loadQuery({
         cookieBannerId,
+        first: TCF_VENDORS_PAGE_SIZE,
         filter: gvlVendorGraphqlFilter(
           initialQuery.current,
           initialMembership.current,

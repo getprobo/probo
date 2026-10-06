@@ -39,6 +39,7 @@ import { tcfPage, tcfSection } from "./variants";
 export const cookieBannerTCFPageQuery = graphql`
   query CookieBannerTCFPageQuery(
     $cookieBannerId: ID!
+    $first: Int
     $filter: CommonGVLVendorFilter
   ) {
     node(id: $cookieBannerId) {
@@ -51,7 +52,7 @@ export const cookieBannerTCFPageQuery = graphql`
         ...GVLVendorStats_cookieBanner
       }
     }
-    ...GVLVendorList_query @arguments(first: 15, filter: $filter)
+    ...GVLVendorList_query @arguments(first: $first, filter: $filter)
     ...GVLVendorStats_query
   }
 `;

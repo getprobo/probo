@@ -20,19 +20,17 @@
 
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
-import { Fragment } from "react";
-import { redirect } from "react-router";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
+import { CookieBannerConfigurePageSkeleton } from "./configuration/configure/CookieBannerConfigurePageSkeleton";
 import { CookieBannerConsentRecordsPageSkeleton } from "./configuration/consent-records/CookieBannerConsentRecordsPageSkeleton";
 import { CookieBannerConfigLayoutSkeleton } from "./configuration/CookieBannerConfigLayoutSkeleton";
 import { CookieBannerInstallPageSkeleton } from "./configuration/install/CookieBannerInstallPageSkeleton";
 import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/CookieBannerResourcesPageSkeleton";
-import { CookieBannerConfigurePageSkeleton } from "./configuration/settings/CookieBannerConfigurePageSkeleton";
+import { CookieBannerTCFPageSkeleton } from "./configuration/tcf/CookieBannerTCFPageSkeleton";
 import { CookieBannerTrackersPageSkeleton } from "./configuration/trackers/CookieBannerTrackersPageSkeleton";
 import { CookieBannerTranslationsPageSkeleton } from "./configuration/translations/CookieBannerTranslationsPageSkeleton";
-import { CookieBannerTCFPageSkeleton } from "./tcf/CookieBannerTCFPageSkeleton";
 
 export const cookieBannerRoutes = [
   {
@@ -53,7 +51,7 @@ export const cookieBannerRoutes = [
       {
         path: "configure",
         Fallback: CookieBannerConfigurePageSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerConfigurePageLoader")),
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/configure/CookieBannerConfigurePageLoader")),
       },
       {
         path: "translations",
@@ -78,25 +76,9 @@ export const cookieBannerRoutes = [
       {
         path: "tcf",
         Fallback: CookieBannerTCFPageSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/tcf/CookieBannerTCFPageLoader")),
       },
     ],
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/discovery",
-    loader: () => {
-      // eslint-disable-next-line
-      throw redirect("../trackers");
-    },
-    Component: Fragment,
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/discovery/resources",
-    loader: () => {
-      // eslint-disable-next-line
-      throw redirect("../../resources");
-    },
-    Component: Fragment,
   },
   {
     path: "cookie-banners/:cookieBannerId/consent-records/:consentRecordId",

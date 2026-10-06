@@ -31,12 +31,12 @@ import { graphql } from "relay-runtime";
 
 import type { CategoryList_cookieBanner$key } from "#/__generated__/core/CategoryList_cookieBanner.graphql";
 
-import { cookieBannerDisplaySection } from "../../../variants";
+import { cookieBannerCategoriesSection } from "../../../variants";
 
 import { CategoryCreateDialog } from "./CategoryCreateDialog";
 import { CategoryListItem } from "./CategoryListItem";
 
-export const categoryListFragment = graphql`
+const categoryListFragment = graphql`
   fragment CategoryList_cookieBanner on CookieBanner {
     id
     canCreate: permission(action: "core:cookie-category:create")
@@ -62,7 +62,7 @@ interface CategoryListProps {
 export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(categoryListFragment, cookieBannerKey);
-  const { root, intro, heading, empty } = cookieBannerDisplaySection();
+  const { root, intro, heading, empty } = cookieBannerCategoriesSection();
   const [createOpen, setCreateOpen] = useState(false);
   const connectionId = banner.categories.__id;
   const categories = banner.categories.edges.map(edge => edge.node);

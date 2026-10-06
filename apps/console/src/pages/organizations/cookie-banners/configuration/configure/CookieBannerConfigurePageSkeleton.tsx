@@ -26,7 +26,7 @@ import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
 import {
-  cookieBannerDisplaySection,
+  cookieBannerCategoriesSection,
   cookieBannerPage,
   cookieBannerSettingsSection,
   cookieBannerThemeSection,
@@ -34,7 +34,7 @@ import {
 
 export function CookieBannerConfigurePageSkeleton() {
   const settings = cookieBannerSettingsSection();
-  const categories = cookieBannerDisplaySection();
+  const categories = cookieBannerCategoriesSection();
   const theme = cookieBannerThemeSection();
 
   return (

@@ -78,7 +78,7 @@ function buildCSSSnippet(values: Record<string, string>, defaultComment: string)
   return `probo-cookie-banner {\n${overrides.join("\n")}\n}`;
 }
 
-export const themeSectionFragment = graphql`
+const themeSectionFragment = graphql`
   fragment ThemeSection_cookieBanner on CookieBanner {
     showBranding
   }

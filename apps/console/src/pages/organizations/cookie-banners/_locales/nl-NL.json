@@ -128,7 +128,6 @@
     "description": "Activeer de banner om hem aan bezoekers te tonen, of deactiveer hem om hem uit te schakelen."
   },
   "codeSnippets": {
-    "title": "JavaScript-snippet",
     "messages": { "copiedTitle": "Gekopieerd", "copied": "Code gekopieerd naar klembord" },
     "errors": { "title": "Fout", "copy": "Kopiëren naar klembord mislukt" },
     "actions": { "copy": "Kopiëren" },

@@ -128,7 +128,6 @@
     "description": "Activate the banner to show it to visitors, or deactivate it to take it down."
   },
   "codeSnippets": {
-    "title": "JavaScript snippet",
     "messages": { "copiedTitle": "Copied", "copied": "Code copied to clipboard" },
     "errors": { "title": "Error", "copy": "Failed to copy to clipboard" },
     "actions": { "copy": "Copy" },

@@ -128,7 +128,6 @@
     "description": "Activez la bannière pour l’afficher aux visiteurs, ou désactivez-la pour la retirer."
   },
   "codeSnippets": {
-    "title": "Extrait JavaScript",
     "messages": { "copiedTitle": "Copié", "copied": "Code copié dans le presse-papiers" },
     "errors": { "title": "Erreur", "copy": "Échec de la copie dans le presse-papiers" },
     "actions": { "copy": "Copier" },

@@ -46,6 +46,26 @@ export function cookieBannerTranslationsPath(organizationId: string, cookieBanne
   return `${cookieBannerPath(organizationId, cookieBannerId)}/translations`;
 }
 
+export function cookieBannerTrackersPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`;
+}
+
+export function cookieBannerResourcesPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/resources`;
+}
+
+export function cookieBannerTrailPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/trail`;
+}
+
+export function cookieBannerConsentRecordPath(
+  organizationId: string,
+  cookieBannerId: string,
+  consentRecordId: string,
+): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/consent-records/${consentRecordId}`;
+}
+
 export function cookieBannerTCFPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannerPath(organizationId, cookieBannerId)}/tcf`;
 }

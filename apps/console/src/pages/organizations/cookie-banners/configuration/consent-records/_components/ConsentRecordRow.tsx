@@ -27,6 +27,7 @@ import { useParams } from "react-router";
 import type { ConsentRecordRowFragment$key } from "#/__generated__/core/ConsentRecordRowFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { cookieBannerConsentRecordPath } from "../../../_lib/cookieBannerPaths";
 import {
   formatAnonymizedIp,
   getActionVariant,
@@ -62,7 +63,11 @@ export function ConsentRecordRow({ recordKey }: ConsentRecordRowProps) {
   const record = useFragment(consentRecordFragment, recordKey);
 
   return (
-    <Tr to={`/organizations/${organizationId}/privacy/cookie-banners/${cookieBannerId}/consent-records/${record.id}`}>
+    <Tr
+      to={cookieBannerId == null
+        ? undefined
+        : cookieBannerConsentRecordPath(organizationId, cookieBannerId, record.id)}
+    >
       <Td>
         <span className="font-mono text-sm">{record.visitorId}</span>
       </Td>

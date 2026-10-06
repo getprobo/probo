@@ -33,7 +33,7 @@ import type { CategoryListItem_cookieCategory$key } from "#/__generated__/core/C
 import type { CategoryListItemReorderMutation } from "#/__generated__/core/CategoryListItemReorderMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { cookieBannerDisplaySection } from "../../../variants";
+import { cookieBannerCategoriesSection } from "../../../variants";
 
 import { CategoryDrawer } from "./CategoryDrawer";
 import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
@@ -95,7 +95,7 @@ export function CategoryListItem({
 }: CategoryListItemProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const category = useFragment(fragment, categoryKey);
-  const { title, description, actions } = cookieBannerDisplaySection();
+  const { title, description, actions } = cookieBannerCategoriesSection();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reorderCategory, isReordering] = useMutation<CategoryListItemReorderMutation>(
