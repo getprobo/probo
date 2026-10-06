@@ -24,7 +24,9 @@ import type { GeometryCollection, Topology } from "topojson-specification";
 import countriesTopology from "world-atlas/countries-110m.json";
 
 export const WORLD_MAP_WIDTH = 960;
-export const WORLD_MAP_HEIGHT = 480;
+export const WORLD_MAP_HEIGHT = 960;
+
+const MERCATOR_MAX_LAT = 85.051129;
 
 export const WORLD_VIEW_BOX = `0 0 ${WORLD_MAP_WIDTH} ${WORLD_MAP_HEIGHT}`;
 
@@ -94,17 +96,96 @@ export function isoNumericId(alpha2: string): string | null {
 }
 
 function project(lon: number, lat: number): [number, number] {
+  const clamped = Math.min(MERCATOR_MAX_LAT, Math.max(-MERCATOR_MAX_LAT, lat));
+  const latRad = (clamped * Math.PI) / 180;
   return [
     ((lon + 180) / 360) * WORLD_MAP_WIDTH,
-    ((90 - lat) / 180) * WORLD_MAP_HEIGHT,
+    (1 - Math.log(Math.tan(Math.PI / 4 + latRad / 2)) / Math.PI) / 2 * WORLD_MAP_HEIGHT,
   ];
 }
 
-function ringPath(ring: Position[]): string {
+function crossesAntimeridian(fromLon: number, toLon: number): boolean {
+  return Math.abs(toLon - fromLon) > 180;
+}
+
+function latitudeAtAntimeridian(from: Position, to: Position): number {
+  const fromLon = from[0] ?? 0;
+  const toLon = to[0] ?? 0;
+  const fromLat = from[1] ?? 0;
+  const toLat = to[1] ?? 0;
+  let delta = toLon - fromLon;
+  if (delta > 180) {
+    delta -= 360;
+  }
+  if (delta < -180) {
+    delta += 360;
+  }
+  const remaining = 180 - Math.abs(fromLon);
+  const t = delta === 0 ? 0 : remaining / Math.abs(delta);
+  return fromLat + t * (toLat - fromLat);
+}
+
+// A ring that jumps from 179° to −179° would otherwise draw a line
+// across the whole map (Russia, Fiji). Cut it on the date line.
+function splitRingAtAntimeridian(ring: Position[]): Position[][] {
+  if (ring.length < 2) {
+    return [ring];
+  }
+  const closed = ring[0]?.[0] === ring[ring.length - 1]?.[0]
+    && ring[0]?.[1] === ring[ring.length - 1]?.[1];
+  const points = closed ? ring.slice(0, -1) : ring;
+  const segments: Position[][] = [];
+  let current: Position[] = [points[0] ?? [0, 0]];
+
+  for (let i = 1; i < points.length; i++) {
+    const prev = current[current.length - 1] ?? [0, 0];
+    const next = points[i] ?? [0, 0];
+    const prevLon = prev[0] ?? 0;
+    const nextLon = next[0] ?? 0;
+    if (crossesAntimeridian(prevLon, nextLon)) {
+      const lat = latitudeAtAntimeridian(prev, next);
+      const prevEdge = prevLon > 0 ? 180 : -180;
+      current.push([prevEdge, lat]);
+      segments.push(current);
+      current = [[-prevEdge, lat], next];
+      continue;
+    }
+    current.push(next);
+  }
+
+  if (current.length > 0) {
+    segments.push(current);
+  }
+
+  if (segments.length > 1) {
+    const first = segments[0];
+    const last = segments[segments.length - 1];
+    const firstLon = first[0]?.[0] ?? 0;
+    const lastLon = last[last.length - 1]?.[0] ?? 0;
+    if (!crossesAntimeridian(lastLon, firstLon)) {
+      segments[0] = last.concat(first);
+      segments.pop();
+    }
+  }
+
+  return segments.map((segment) => {
+    const start = segment[0];
+    if (start == null) {
+      return segment;
+    }
+    return [...segment, start];
+  });
+}
+
+function pathCommands(ring: Position[]): string {
   return `${ring.map((position, index) => {
     const [x, y] = project(position[0] ?? 0, position[1] ?? 0);
     return `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
   }).join(" ")}Z`;
+}
+
+function ringPath(ring: Position[]): string {
+  return splitRingAtAntimeridian(ring).map(pathCommands).join("");
 }
 
 function geometryPath(geometry: Polygon | MultiPolygon): string {
