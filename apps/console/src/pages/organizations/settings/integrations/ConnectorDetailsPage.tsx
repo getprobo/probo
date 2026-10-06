@@ -30,15 +30,13 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useLocation, useNavigate } from "react-router";
 
-import type { ConnectorAccountsDrawerQuery } from "#/__generated__/core/ConnectorAccountsDrawerQuery.graphql";
+import type { ConnectorAccountListQuery } from "#/__generated__/core/ConnectorAccountListQuery.graphql";
 import type { ConnectorDetailsPageQuery } from "#/__generated__/core/ConnectorDetailsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
-import {
-  ConnectorAccountsDrawer,
-  connectorAccountsDrawerQuery,
-} from "./_components/ConnectorAccountsDrawer";
+import { connectorAccountListQuery } from "./_components/ConnectorAccountList";
+import { ConnectorAccountsDrawer } from "./_components/ConnectorAccountsDrawer";
 import { ConnectorDocumentationLink } from "./_components/ConnectorDocumentationLink";
 import { ConnectorListItem } from "./_components/ConnectorListItem";
 import { createdConnectorId } from "./_lib/discoveredAccounts";
@@ -78,8 +76,8 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
   const createdId = createdConnectorId(location.state);
   const accountsHandle = useMemo(() => Drawer.createHandle<string>(), []);
   const openedId = useRef<string | null>(null);
-  const [shellRef, loadShell] = useQueryLoader<ConnectorAccountsDrawerQuery>(
-    connectorAccountsDrawerQuery,
+  const [shellRef, loadShell] = useQueryLoader<ConnectorAccountListQuery>(
+    connectorAccountListQuery,
   );
   const { organization } = usePreloadedQuery<ConnectorDetailsPageQuery>(
     connectorDetailsPageQuery,

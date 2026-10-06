@@ -170,13 +170,9 @@
     },
     "accounts": {
       "title": "Accounts",
-      "subtitle": "Pending accounts still have to be created before other modules of the platform can use them.",
       "empty": "No account is enabled on this credential yet.",
       "discoveryFailed": "Probo cannot list accounts with these credentials.",
-      "pending": "Pending",
       "unknown": "Unknown",
-      "selectAll": "Select all",
-      "enable": "Enable",
       "disconnect": "Disconnect",
       "disconnectTitle": "Disconnect account",
       "disconnectDescription": "Disconnecting removes {{name}}. Anything still using it has to be removed first.",
@@ -206,7 +202,6 @@
     },
     "errors": {
       "delete": "Failed to disconnect integration",
-      "enable": "Failed to enable accounts",
       "disable": "Failed to disconnect account"
     }
   }

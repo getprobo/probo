@@ -170,13 +170,9 @@
     },
     "accounts": {
       "title": "Comptes",
-      "subtitle": "Les comptes en attente doivent encore être créés avant que les autres modules de la plateforme puissent les utiliser.",
       "empty": "Aucun compte n'est encore activé sur cet identifiant.",
       "discoveryFailed": "Probo ne peut pas lister les comptes avec ces identifiants.",
-      "pending": "En attente",
       "unknown": "Inconnu",
-      "selectAll": "Tout sélectionner",
-      "enable": "Activer",
       "disconnect": "Déconnecter",
       "disconnectTitle": "Déconnecter le compte",
       "disconnectDescription": "La déconnexion retire {{name}}. Tout ce qui l'utilise encore doit d'abord être supprimé.",
@@ -206,7 +202,6 @@
     },
     "errors": {
       "delete": "Échec de la déconnexion de l'intégration",
-      "enable": "Échec de l'activation des comptes",
       "disable": "Échec de la déconnexion du compte"
     }
   }

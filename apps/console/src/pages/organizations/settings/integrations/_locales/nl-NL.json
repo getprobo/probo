@@ -170,13 +170,9 @@
     },
     "accounts": {
       "title": "Accounts",
-      "subtitle": "Accounts in behandeling moeten nog worden aangemaakt voordat andere modules van het platform ze kunnen gebruiken.",
       "empty": "Er is nog geen account ingeschakeld op deze credential.",
       "discoveryFailed": "Probo kan met deze credentials geen accounts opvragen.",
-      "pending": "In behandeling",
       "unknown": "Onbekend",
-      "selectAll": "Alles selecteren",
-      "enable": "Inschakelen",
       "disconnect": "Verbinding verbreken",
       "disconnectTitle": "Account loskoppelen",
       "disconnectDescription": "Loskoppelen verwijdert {{name}}. Alles wat dit account nog gebruikt moet eerst worden verwijderd.",
@@ -206,7 +202,6 @@
     },
     "errors": {
       "delete": "Verbreken van de integratie mislukt",
-      "enable": "Inschakelen van accounts mislukt",
       "disable": "Loskoppelen van het account mislukt"
     }
   }

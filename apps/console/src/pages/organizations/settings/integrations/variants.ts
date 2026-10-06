@@ -81,7 +81,6 @@ export const connectorAccountsDrawer = tv({
     title: "flex min-w-0 items-center gap-2.5",
     list: "flex flex-col gap-3",
     empty: "flex flex-col items-center py-8 text-center",
-    actions: "flex items-center gap-2",
   },
 });
 

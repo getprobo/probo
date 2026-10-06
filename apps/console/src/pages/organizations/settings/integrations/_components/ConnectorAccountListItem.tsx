@@ -116,7 +116,7 @@ export function ConnectorAccountListItem({
         const connection = store.get(
           ConnectionHandler.getConnectionID(
             connector.id,
-            "ConnectorAccountsDrawer_accounts",
+            "ConnectorAccountList_accounts",
           ),
         );
         if (connection != null) {
