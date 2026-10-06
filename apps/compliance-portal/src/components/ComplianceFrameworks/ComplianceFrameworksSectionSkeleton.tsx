@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { homeSection } from "#/components/HomeSection/variants";
@@ -35,6 +36,9 @@ export function ComplianceFrameworksSectionSkeleton() {
         {Array.from({ length: 4 }, (_, index) => (
           <MediaTileSkeleton key={index} />
         ))}
+      </div>
+      <div className="flex justify-center">
+        <ButtonSkeleton size={2} className="w-32" />
       </div>
     </section>
   );

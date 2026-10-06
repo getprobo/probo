@@ -77,17 +77,15 @@ function ComplianceFrameworksSectionContent({ compliancePortalKey }: ComplianceF
   const data = useFragment(complianceFrameworksSectionFragment, compliancePortalKey);
   const frameworks = data.complianceFrameworks.edges.map(edge => edge.node);
 
-  if (frameworks.length === 0) {
-    return null;
-  }
-
   return (
     <HomeSection title={t("home.sections.compliance")}>
-      <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
-        {frameworks.map(framework => (
-          <ComplianceFrameworkListItem key={framework.id} complianceFrameworkKey={framework} />
-        ))}
-      </div>
+      {frameworks.length > 0 && (
+        <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
+          {frameworks.map(framework => (
+            <ComplianceFrameworkListItem key={framework.id} complianceFrameworkKey={framework} />
+          ))}
+        </div>
+      )}
       <div className="flex justify-center">
         <ButtonLink
           to={localizedPath("/documents")}
