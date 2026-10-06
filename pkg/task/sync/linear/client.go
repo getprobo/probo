@@ -675,10 +675,23 @@ query TaskSyncLinearTeamSearch($first: Int!, $after: String, $filter: TeamFilter
 }
 
 func (c *Client) HasTeam(ctx context.Context, teamID string) (bool, error) {
+	team, err := c.TeamByID(ctx, teamID)
+	if err != nil {
+		return false, err
+	}
+
+	return team != nil, nil
+}
+
+func (c *Client) TeamByID(ctx context.Context, teamID string) (*Team, error) {
 	const request = `
 query TaskSyncLinearTeamByID($id: ID!) {
   teams(first: 1, filter: { id: { eq: $id } }) {
-    nodes { id }
+    nodes {
+      id
+      name
+      key
+    }
   }
 }
 `
@@ -687,7 +700,9 @@ query TaskSyncLinearTeamByID($id: ID!) {
 		Data struct {
 			Teams struct {
 				Nodes []struct {
-					ID string `json:"id"`
+					ID   string `json:"id"`
+					Name string `json:"name"`
+					Key  string `json:"key"`
 				} `json:"nodes"`
 			} `json:"teams"`
 		} `json:"data"`
@@ -695,10 +710,20 @@ query TaskSyncLinearTeamByID($id: ID!) {
 	}
 
 	if err := c.do(ctx, request, map[string]any{"id": teamID}, &resp); err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return len(resp.Data.Teams.Nodes) > 0, nil
+	if len(resp.Data.Teams.Nodes) == 0 {
+		return nil, nil
+	}
+
+	node := resp.Data.Teams.Nodes[0]
+
+	return &Team{
+		ID:   node.ID,
+		Name: node.Name,
+		Key:  node.Key,
+	}, nil
 }
 
 func teamSearchFilter(query string) any {

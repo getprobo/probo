@@ -602,6 +602,31 @@ func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organ
 	}, nil
 }
 
+// LinearDefaultTeam is the resolver for the linearDefaultTeam field.
+func (r *organizationResolver) LinearDefaultTeam(ctx context.Context, obj *types.Organization) (*types.LinearTeam, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, err
+	}
+
+	team, err := r.task.Sync.LinearDefaultTeam(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load default Linear team", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if team == nil {
+		return nil, nil
+	}
+
+	return &types.LinearTeam{
+		ID:   team.ID,
+		Name: team.Name,
+		Key:  team.Key,
+	}, nil
+}
+
 // LinearIssues is the resolver for the linearIssues field.
 func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Organization, teamID string, first *int, after *string, query *string) (*types.LinearIssueConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)

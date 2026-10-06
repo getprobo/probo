@@ -26,10 +26,8 @@ import (
 	"fmt"
 
 	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -43,50 +41,24 @@ func (s *Service) linearAccountsForOrganization(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 ) ([]linearAccount, error) {
-	var metas []*coredata.Connector
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			provider := coredata.ConnectorProviderLinearSync
-
-			filter := coredata.NewConnectorProviderFilter(&provider)
-
-			loaded, err := page.LoadAll(
-				ctx,
-				page.OrderBy[coredata.ConnectorOrderField]{
-					Field:     coredata.ConnectorOrderFieldCreatedAt,
-					Direction: page.OrderDirectionAsc,
-				},
-				func(ctx context.Context, cursor *page.Cursor[coredata.ConnectorOrderField]) ([]*coredata.Connector, error) {
-					var batch coredata.Connectors
-					if err := batch.LoadByOrganizationIDWithoutDecryptedConnection(
-						ctx,
-						conn,
-						scope,
-						organizationID,
-						cursor,
-						filter,
-					); err != nil {
-						return nil, err
-					}
-
-					return batch, nil
-				},
-			)
-			if err != nil {
-				return err
-			}
-
-			metas = loaded
-
-			return nil
-		},
-	)
+	metas, err := s.loadLinearSyncConnectors(ctx, scope, organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load Linear connectors: %w", err)
 	}
 
+	accounts, err := s.linearAccountsFromConnectors(ctx, scope, metas)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load Linear accounts: %w", err)
+	}
+
+	return accounts, nil
+}
+
+func (s *Service) linearAccountsFromConnectors(
+	ctx context.Context,
+	scope coredata.Scoper,
+	metas []*coredata.Connector,
+) ([]linearAccount, error) {
 	if len(metas) == 0 {
 		return nil, ErrLinearNotConnected
 	}

@@ -7591,6 +7591,14 @@ components:
           $ref: "#/components/schemas/TaskPriority"
           description: Task priority level (defaults to MEDIUM if not specified)
           default: MEDIUM
+        linear_team_id:
+          anyOf:
+            - type: string
+              description: Linear team ID
+            - type: "null"
+              description: No Linear team
+          description: Linear team to publish the new task to. Omit this field to use the organization's default Linear team when one is set. Pass null to create the task with no Linear team. If publishing fails, the task still exists and the tool returns an error.
+          go.probo.inc/mcpgen/omittable: true
 
     AddTaskOutput:
       type: object
@@ -18405,7 +18413,7 @@ tools:
       $ref: "#/components/schemas/GetTaskOutput"
   - name: addTask
     title: Add Task
-    description: Add a new task to the organization
+    description: Add a new task to the organization. Omit linear_team_id to publish the task to the organization's default Linear team when one is set. Pass null to create the task with no Linear team. If publishing fails, the task still exists and the tool returns an error.
     hints:
       readonly: false
       destructive: false

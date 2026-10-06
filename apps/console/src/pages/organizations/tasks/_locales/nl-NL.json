@@ -69,12 +69,12 @@
     },
     "linear": {
       "connect": "Linear Sync verbinden",
-      "reconnect": "Linear Sync opnieuw verbinden",
       "publish": "Publiceren",
       "link": "Koppelen",
       "unlink": "Ontkoppelen",
       "team": "Linear-team",
       "chooseTeam": "Kies een team",
+      "noTeam": "Geen team",
       "chooseIssue": "Kies een issue",
       "newIssue": "Nieuwe issue",
       "searchTeam": "Zoek een team",
@@ -170,7 +170,23 @@
     },
     "linear": {
       "name": "Linear Sync",
-      "description": "Publiceer een taak naar Linear en synchroniseer naam, inhoud, status, prioriteit, deadline en toegewezene wanneer e-mails overeenkomen."
+      "description": "Publiceer een taak naar Linear en synchroniseer naam, inhoud, status, prioriteit, deadline en toegewezene wanneer e-mails overeenkomen.",
+      "defaultTeam": "Standaardteam",
+      "defaultTeamDescription": "Nieuwe taken gebruiken dit Linear-team, tenzij een ander team wordt gekozen.",
+      "noDefaultTeam": "Geen standaardteam",
+      "disconnect": {
+        "title": "Linear Sync ontkoppelen?",
+        "description": "Taken worden niet meer gesynchroniseerd met Linear. Je kunt later opnieuw verbinden.",
+        "confirm": "Ontkoppelen"
+      },
+      "messages": {
+        "disconnected": "Linear Sync ontkoppeld.",
+        "defaultTeamSaved": "Standaardteam opgeslagen."
+      },
+      "errors": {
+        "disconnect": "Ontkoppelen van Linear Sync mislukt",
+        "defaultTeam": "Opslaan van het standaardteam mislukt"
+      }
     },
     "status": {
       "connected": "Verbonden",
@@ -178,7 +194,7 @@
     },
     "actions": {
       "connect": "Verbinden",
-      "reconnect": "Opnieuw verbinden",
+      "disconnect": "Ontkoppelen",
       "close": "Sluiten"
     }
   },
