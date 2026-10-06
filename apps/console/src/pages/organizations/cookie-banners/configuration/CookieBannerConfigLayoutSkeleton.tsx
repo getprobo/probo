@@ -18,36 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { BadgeSkeleton } from "@probo/ui/src/v2/Badge/BadgeSkeleton";
-import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { Outlet } from "react-router";
 
 import { cookieBannerConfigLayout } from "../variants";
 
 export function CookieBannerConfigLayoutSkeleton() {
-  const { root, header, titleRow, title, meta, actions } = cookieBannerConfigLayout();
+  const { root } = cookieBannerConfigLayout();
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <HeadingSkeleton size={6} className="w-48" />
-            <TextSkeleton size={2} className="w-16" />
-            <BadgeSkeleton />
-          </div>
-          <div className={actions()}>
-            <ButtonSkeleton size={2} className="w-28" />
-            <ButtonSkeleton size={2} className="w-24" />
-          </div>
-        </div>
-        <div className={meta()}>
-          <TextSkeleton size={2} className="w-56" />
-          <TextSkeleton size={2} className="w-72" />
-        </div>
-      </div>
+      <CardSkeleton size={3} />
       <Outlet />
     </div>
   );

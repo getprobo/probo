@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -30,6 +31,7 @@ import { graphql } from "relay-runtime";
 
 import type { CookieBannerTranslationsPageQuery } from "#/__generated__/core/CookieBannerTranslationsPageQuery.graphql";
 
+import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
 import { cookieBannerTranslationsPage } from "../../variants";
 
 import { TranslationEditor } from "./_components/TranslationEditor";
@@ -72,6 +74,8 @@ export function CookieBannerTranslationsPage({
   queryRef,
 }: CookieBannerTranslationsPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("translationsPage.title");
+  usePageTitle(title);
   const { root, toolbar, language } = cookieBannerTranslationsPage();
   const data = usePreloadedQuery<CookieBannerTranslationsPageQuery>(
     cookieBannerTranslationsPageQuery,
@@ -134,6 +138,10 @@ export function CookieBannerTranslationsPage({
 
   return (
     <div className={root()}>
+      <CookieBannerPageHeader
+        title={title}
+        description={t("translationsPage.description")}
+      />
       <div className={toolbar()}>
         <div className={language()}>
           <Select

@@ -19,23 +19,15 @@
 // SOFTWARE.
 
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
-import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
-import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { cookieBannerInstallSection, cookieBannerPage } from "../../variants";
+import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
+import { cookieBannerPage } from "../../variants";
 
 export function CookieBannerInstallPageSkeleton() {
-  const { root, intro } = cookieBannerInstallSection();
-
   return (
     <div className={cookieBannerPage()}>
-      <section className={root()}>
-        <div className={intro()}>
-          <HeadingSkeleton size={4} className="w-40" />
-          <TextSkeleton size={2} className="w-full max-w-xl" />
-        </div>
-        <CardSkeleton size={2} className="h-40" />
-      </section>
+      <CookieBannerPageHeaderSkeleton titleClassName="w-24" />
+      <CardSkeleton size={2} className="h-40" />
     </div>
   );
 }

@@ -23,7 +23,6 @@ import { useToast } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -82,19 +81,13 @@ export function InstallSnippetSection({
 
   return (
     <section className={root()}>
-      <div className={intro()}>
-        <Heading level={2} size={4} weight="medium" highContrast>
-          {t("installPage.title")}
-        </Heading>
-        <Text size={2} color="faint">
-          {t("installPage.description")}
-        </Text>
-        {banner.capabilities.tcf && (
+      {banner.capabilities.tcf && (
+        <div className={intro()}>
           <Text size={2} color="faint">
             {t("codeSnippets.tcfNote")}
           </Text>
-        )}
-      </div>
+        </div>
+      )}
       <Card size={2} variant="soft">
         <div className={snippetWrap()}>
           <IconButton

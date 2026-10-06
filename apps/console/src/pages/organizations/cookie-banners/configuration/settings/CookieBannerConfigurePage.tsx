@@ -18,13 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerConfigurePageQuery } from "#/__generated__/core/CookieBannerConfigurePageQuery.graphql";
 
+import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
 import { cookieBannerPage } from "../../variants";
 
+import { BannerLifecycleSection } from "./_components/BannerLifecycleSection";
 import { BannerSettingsForm } from "./_components/BannerSettingsForm";
 import { CategoryList } from "./_components/CategoryList";
 import { ThemeSection } from "./_components/ThemeSection";
@@ -35,6 +39,7 @@ export const cookieBannerConfigurePageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...BannerSettingsForm_cookieBanner
+        ...BannerLifecycleSection_cookieBanner
         ...CategoryList_cookieBanner
         ...ThemeSection_cookieBanner
       }
@@ -49,6 +54,9 @@ interface CookieBannerConfigurePageProps {
 export function CookieBannerConfigurePage({
   queryRef,
 }: CookieBannerConfigurePageProps) {
+  const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("configurePage.title");
+  usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerConfigurePageQuery>(
     cookieBannerConfigurePageQuery,
     queryRef,
@@ -60,7 +68,12 @@ export function CookieBannerConfigurePage({
 
   return (
     <div className={cookieBannerPage()}>
+      <CookieBannerPageHeader
+        title={title}
+        description={t("configurePage.description")}
+      />
       <BannerSettingsForm cookieBannerKey={data.node} />
+      <BannerLifecycleSection cookieBannerKey={data.node} />
       <CategoryList cookieBannerKey={data.node} />
       <ThemeSection cookieBannerKey={data.node} />
     </div>

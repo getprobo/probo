@@ -22,6 +22,7 @@ import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
+import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
 import { cookieBannerTranslationsPage } from "../../variants";
 
 export function CookieBannerTranslationsPageSkeleton() {
@@ -29,6 +30,7 @@ export function CookieBannerTranslationsPageSkeleton() {
 
   return (
     <div className={root()}>
+      <CookieBannerPageHeaderSkeleton titleClassName="w-36" />
       <div className={toolbar()}>
         <div className={language()}>
           <SelectSkeleton size={2} />

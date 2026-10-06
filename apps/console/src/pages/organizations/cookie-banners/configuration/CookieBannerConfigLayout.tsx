@@ -18,36 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CopyIcon, DotsThreeVerticalIcon, TrashIcon } from "@phosphor-icons/react";
+import { CheckCircleIcon, CopyIcon, WarningIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerConfigLayoutActivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutActivateMutation.graphql";
-import type { CookieBannerConfigLayoutDeactivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeactivateMutation.graphql";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useMutation } from "#/lib/relay/useMutation";
-import { navGroupByKey, navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 import { cookieBannerConfigLayout } from "../variants";
-
-import { DeleteCookieBannerDialog } from "./_components/DeleteCookieBannerDialog";
 
 export const cookieBannerConfigLayoutQuery = graphql`
   query CookieBannerConfigLayoutQuery($cookieBannerId: ID!) {
@@ -56,42 +44,12 @@ export const cookieBannerConfigLayoutQuery = graphql`
       ... on CookieBanner {
         id
         name
-        origin
         state
-        capabilities {
-          corsless
-        }
-        canDelete: permission(action: "core:cookie-banner:delete")
         latestVersion {
           id
           version
           state
         }
-        policyDocument {
-          id
-        }
-      }
-    }
-  }
-`;
-
-const activateMutation = graphql`
-  mutation CookieBannerConfigLayoutActivateMutation($input: ActivateCookieBannerInput!) {
-    activateCookieBanner(input: $input) {
-      cookieBanner {
-        id
-        state
-      }
-    }
-  }
-`;
-
-const deactivateMutation = graphql`
-  mutation CookieBannerConfigLayoutDeactivateMutation($input: DeactivateCookieBannerInput!) {
-    deactivateCookieBanner(input: $input) {
-      cookieBanner {
-        id
-        state
       }
     }
   }
@@ -126,9 +84,7 @@ export function CookieBannerConfigLayout({
 }: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
-  const organizationId = useOrganizationId();
-  const { root, header, titleRow, title, version, meta, id, actions } = cookieBannerConfigLayout();
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { root, copy, title, meta, id, version: versionClass } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
     cookieBannerConfigLayoutQuery,
@@ -141,20 +97,6 @@ export function CookieBannerConfigLayout({
   const banner = data.node;
   usePageTitle(banner.name);
 
-  const [activate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(
-    activateMutation,
-    {
-      successMessage: t("configLayout.messages.activated"),
-      errorToast: t("configLayout.errors.activate"),
-    },
-  );
-  const [deactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(
-    deactivateMutation,
-    {
-      successMessage: t("configLayout.messages.deactivated"),
-      errorToast: t("configLayout.errors.deactivate"),
-    },
-  );
   const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(
     publishMutation,
     {
@@ -164,7 +106,26 @@ export function CookieBannerConfigLayout({
   );
 
   const hasDraft = banner.latestVersion?.state === "DRAFT";
-  const policyDocumentId = banner.policyDocument?.id;
+  const isDeactivated = banner.state !== "ACTIVE";
+  const version = banner.latestVersion?.version;
+
+  let message: string;
+  if (isDeactivated && hasDraft && version != null) {
+    message = t("configLayout.callout.deactivatedDraft", { version });
+  } else if (isDeactivated) {
+    message = t("configLayout.callout.deactivated");
+  } else if (hasDraft && version != null) {
+    message = t("configLayout.callout.draft", { version });
+  } else if (version != null) {
+    message = t("configLayout.callout.published", { version });
+  } else {
+    message = t("configLayout.callout.publishedUnknown");
+  }
+
+  const tone = isDeactivated || hasDraft ? "amber" : "green";
+  const icon = isDeactivated || hasDraft
+    ? <WarningIcon size={24} weight="duotone" />
+    : <CheckCircleIcon size={24} weight="duotone" />;
 
   function handleCopyId() {
     void navigator.clipboard.writeText(banner.id).then(
@@ -187,29 +148,22 @@ export function CookieBannerConfigLayout({
 
   return (
     <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <Heading level={1} size={6} weight="medium" highContrast>
-              {banner.name}
-            </Heading>
-            {banner.latestVersion?.version != null && (
-              <Text size={2} color="faint" className={version()}>
-                {t("configLayout.version", { version: banner.latestVersion.version })}
-                {banner.latestVersion.state === "DRAFT" && t("configLayout.draft")}
-              </Text>
-            )}
-            <Badge
-              color={banner.state === "ACTIVE" ? "green" : "red"}
-              variant="soft"
-            >
-              {banner.state === "ACTIVE"
-                ? t("configLayout.status.active")
-                : t("configLayout.status.inactive")}
-            </Badge>
-          </div>
-          <div className={actions()}>
-            {hasDraft && (
+      <TonedCard
+        tone={tone}
+        icon={icon}
+        lead={(
+          <Heading
+            level={2}
+            size={4}
+            weight="medium"
+            highContrast
+            className={title()}
+          >
+            {banner.name}
+          </Heading>
+        )}
+        control={hasDraft
+          ? (
               <Button
                 size={2}
                 variant="solid"
@@ -226,64 +180,12 @@ export function CookieBannerConfigLayout({
               >
                 {t("configLayout.actions.publish")}
               </Button>
-            )}
-            <Button
-              size={2}
-              variant="soft"
-              color="neutral"
-              disabled={isActivating || isDeactivating}
-              onClick={() => {
-                const mutate = banner.state === "ACTIVE" ? deactivate : activate;
-                void mutate({
-                  variables: { input: { cookieBannerId: banner.id } },
-                }).catch(() => {
-                  // Error toast is already shown by useMutation.
-                });
-              }}
-            >
-              {banner.state === "ACTIVE"
-                ? t("configLayout.actions.deactivate")
-                : t("configLayout.actions.activate")}
-            </Button>
-            {banner.canDelete && banner.state !== "ACTIVE" && (
-              <Dropdown>
-                <DropdownTrigger
-                  render={(
-                    <IconButton
-                      size={2}
-                      variant="ghost"
-                      color="neutral"
-                      aria-label={t("configLayout.actions.more")}
-                    >
-                      <DotsThreeVerticalIcon />
-                    </IconButton>
-                  )}
-                />
-                <DropdownPopup>
-                  <DropdownItem
-                    color="error"
-                    iconStart={<TrashIcon />}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    {t("configLayout.actions.delete")}
-                  </DropdownItem>
-                </DropdownPopup>
-              </Dropdown>
-            )}
-          </div>
-        </div>
-        <div className={meta()}>
-          {!banner.capabilities.corsless && (
-            <Text size={2} color="faint">
-              {t("configLayout.metadata.origin")}
-              {" "}
-              {banner.origin}
-            </Text>
-          )}
-          <div className={id()}>
-            <Text size={2} color="faint">
-              {t("configLayout.metadata.id")}
-              {" "}
+            )
+          : undefined}
+      >
+        <div className={copy()}>
+          <div className={meta()}>
+            <Text size={2} color="neutral" className={id()}>
               {banner.id}
             </Text>
             <IconButton
@@ -295,28 +197,16 @@ export function CookieBannerConfigLayout({
             >
               <CopyIcon />
             </IconButton>
+            {version != null && (
+              <Text size={2} color="neutral" className={versionClass()}>
+                {t("configLayout.callout.version", { version })}
+              </Text>
+            )}
           </div>
-          {policyDocumentId != null && (
-            <Link
-              size={2}
-              to={navHref(
-                organizationId,
-                navGroupByKey("governance"),
-                `documents/${encodeURIComponent(policyDocumentId)}`,
-              )}
-            >
-              {t("configLayout.metadata.cookiePolicy")}
-            </Link>
-          )}
+          <Text size={2} color="neutral">{message}</Text>
         </div>
-      </div>
+      </TonedCard>
       <Outlet />
-      <DeleteCookieBannerDialog
-        cookieBannerId={banner.id}
-        name={banner.name}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
     </div>
   );
 }

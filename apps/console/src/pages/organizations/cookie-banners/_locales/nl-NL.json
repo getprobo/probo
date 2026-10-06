@@ -50,6 +50,8 @@
     }
   },
   "translationsPage": {
+    "title": "Vertalingen",
+    "description": "Bewerk de teksten van de banner, het voorkeurenpaneel en de placeholder per taal.",
     "language": "Taal",
     "necessaryFallback": "Noodzakelijk",
     "languageDefault": "{{language}} (standaard)",
@@ -115,6 +117,14 @@
   "installPage": {
     "title": "Installeren",
     "description": "Voeg deze snippet toe aan je site zodat de banner kan laden en toestemming kan vastleggen."
+  },
+  "configurePage": {
+    "title": "Configureren",
+    "description": "Instellingen, categorieën en thema voor deze cookiebanner."
+  },
+  "bannerLifecycleSection": {
+    "title": "Bannerstatus",
+    "description": "Activeer de banner om hem aan bezoekers te tonen, of deactiveer hem om hem uit te schakelen."
   },
   "codeSnippets": {
     "title": "JavaScript-snippet",
@@ -226,15 +236,20 @@
     "cookies": { "columns": { "cookie": "Cookie", "duration": "Duur", "description": "Beschrijving" } }
   },
   "configLayout": {
-    "version": "v{{version}}",
-    "draft": " (concept)",
-    "metadata": { "origin": "Origin", "id": "ID", "cookiePolicy": "Cookiebeleid" },
-    "messages": { "successTitle": "Gelukt", "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
-    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
+    "callout": {
+      "version": "v{{version}}",
+      "deactivated": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers.",
+      "deactivatedDraft": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers. Deze versie heeft ongepubliceerde wijzigingen.",
+      "draft": "Deze versie heeft ongepubliceerde wijzigingen.",
+      "published": "Deze versie is gepubliceerd en live.",
+      "publishedUnknown": "Deze banner is gepubliceerd en live."
+    },
+    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
+    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" }
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties", "copyId": "Banner-ID kopiëren" }
+    "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nieuwe cookiebanner",

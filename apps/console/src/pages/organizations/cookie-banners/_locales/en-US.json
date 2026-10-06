@@ -50,6 +50,8 @@
     }
   },
   "translationsPage": {
+    "title": "Translations",
+    "description": "Edit the banner, preferences panel, and placeholder copy for each language.",
     "language": "Language",
     "necessaryFallback": "Necessary",
     "languageDefault": "{{language}} (default)",
@@ -115,6 +117,14 @@
   "installPage": {
     "title": "Install",
     "description": "Add this snippet to your site so the banner can load and record consent."
+  },
+  "configurePage": {
+    "title": "Configure",
+    "description": "Settings, categories, and theme for this cookie banner."
+  },
+  "bannerLifecycleSection": {
+    "title": "Banner status",
+    "description": "Activate the banner to show it to visitors, or deactivate it to take it down."
   },
   "codeSnippets": {
     "title": "JavaScript snippet",
@@ -226,15 +236,20 @@
     "cookies": { "columns": { "cookie": "Cookie", "duration": "Duration", "description": "Description" } }
     },
   "configLayout": {
-    "version": "v{{version}}",
-    "draft": " (draft)",
-    "metadata": { "origin": "Origin", "id": "ID", "cookiePolicy": "Cookie policy" },
-    "messages": { "successTitle": "Success", "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
+    "callout": {
+      "version": "v{{version}}",
+      "deactivated": "This banner is deactivated and is not shown to visitors.",
+      "deactivatedDraft": "This banner is deactivated and is not shown to visitors. This version has unpublished changes.",
+      "draft": "This version has unpublished changes.",
+      "published": "This version is published and live.",
+      "publishedUnknown": "This banner is published and live."
+    },
+    "messages": { "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
     "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish", "delete": "Failed to delete cookie banner", "copy": "Failed to copy banner ID" },
     "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
     "dialogs": { "deleteTitle": "Delete cookie banner" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publishing": "Publishing...", "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "copyId": "Copy banner ID" }
+    "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" }
   },
   "newCookieBannerPage": {
     "pageTitle": "New cookie banner",

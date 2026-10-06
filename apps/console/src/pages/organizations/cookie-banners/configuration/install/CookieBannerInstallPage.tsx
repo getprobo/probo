@@ -18,11 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usePageTitle } from "@probo/hooks";
+import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerInstallPageQuery } from "#/__generated__/core/CookieBannerInstallPageQuery.graphql";
 
+import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
 import { cookieBannerPage } from "../../variants";
 
 import { InstallSnippetSection } from "./_components/InstallSnippetSection";
@@ -45,6 +48,9 @@ interface CookieBannerInstallPageProps {
 export function CookieBannerInstallPage({
   queryRef,
 }: CookieBannerInstallPageProps) {
+  const { t } = useTranslation("organizations/cookie-banners");
+  const title = t("installPage.title");
+  usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerInstallPageQuery>(
     cookieBannerInstallPageQuery,
     queryRef,
@@ -56,6 +62,10 @@ export function CookieBannerInstallPage({
 
   return (
     <div className={cookieBannerPage()}>
+      <CookieBannerPageHeader
+        title={title}
+        description={t("installPage.description")}
+      />
       <InstallSnippetSection cookieBannerKey={data.node} />
     </div>
   );

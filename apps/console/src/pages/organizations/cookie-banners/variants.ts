@@ -33,13 +33,21 @@ export const cookieBannerPageHeader = tv({
 export const cookieBannerConfigLayout = tv({
   slots: {
     root: "flex flex-col gap-6",
-    header: "flex flex-col gap-3",
-    titleRow: "flex items-start justify-between gap-4",
-    title: "flex min-w-0 flex-wrap items-baseline gap-2",
-    version: "font-mono",
-    meta: "flex flex-wrap items-center gap-x-3 gap-y-1",
-    id: "flex items-center gap-1",
-    actions: "flex shrink-0 flex-wrap items-center justify-end gap-2",
+    copy: "flex min-w-0 flex-col gap-1",
+    title: "min-w-0 truncate",
+    meta: "flex min-w-0 flex-wrap items-center gap-1.5",
+    id: "min-w-0 break-all font-mono",
+    version: "shrink-0 font-mono",
+  },
+});
+
+export const cookieBannerLifecycleSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    row: "flex flex-wrap items-center justify-between gap-3",
+    status: "flex items-center gap-2",
+    actions: "flex flex-wrap items-center justify-end gap-2",
   },
 });
 

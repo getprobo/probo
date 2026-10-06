@@ -60,22 +60,27 @@ export const cookieBannerRoutes = [
         Fallback: CookieBannerTranslationsPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/translations/CookieBannerTranslationsPageLoader")),
       },
+      {
+        path: "trackers",
+        Fallback: CookieBannerTrackersPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/CookieBannerTrackersPageLoader")),
+      },
+      {
+        path: "resources",
+        Fallback: CookieBannerResourcesPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/resources/CookieBannerResourcesPageLoader")),
+      },
+      {
+        path: "trail",
+        Fallback: CookieBannerConsentRecordsPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
+      },
+      {
+        path: "tcf",
+        Fallback: CookieBannerTCFPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
+      },
     ],
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/trackers",
-    Fallback: CookieBannerTrackersPageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/CookieBannerTrackersPageLoader")),
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/resources",
-    Fallback: CookieBannerResourcesPageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/resources/CookieBannerResourcesPageLoader")),
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/trail",
-    Fallback: CookieBannerConsentRecordsPageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
   },
   {
     path: "cookie-banners/:cookieBannerId/discovery",
@@ -92,11 +97,6 @@ export const cookieBannerRoutes = [
       throw redirect("../../resources");
     },
     Component: Fragment,
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/tcf",
-    Fallback: CookieBannerTCFPageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
   },
   {
     path: "cookie-banners/:cookieBannerId/consent-records/:consentRecordId",
