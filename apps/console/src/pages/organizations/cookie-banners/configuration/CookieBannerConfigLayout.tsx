@@ -84,7 +84,7 @@ export function CookieBannerConfigLayout({
 }: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
-  const { root, copy, title, meta, id, version: versionClass } = cookieBannerConfigLayout();
+  const { root, lead, title, meta, id, version: versionClass } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
     cookieBannerConfigLayoutQuery,
@@ -152,15 +152,36 @@ export function CookieBannerConfigLayout({
         tone={tone}
         icon={icon}
         lead={(
-          <Heading
-            level={2}
-            size={4}
-            weight="medium"
-            highContrast
-            className={title()}
-          >
-            {banner.name}
-          </Heading>
+          <div className={lead()}>
+            <Heading
+              level={2}
+              size={4}
+              weight="medium"
+              highContrast
+              className={title()}
+            >
+              {banner.name}
+            </Heading>
+            <div className={meta()}>
+              <Text size={2} color="neutral" className={id()}>
+                {banner.id}
+              </Text>
+              <IconButton
+                size={1}
+                variant="ghost"
+                color="neutral"
+                aria-label={t("configLayout.actions.copyId")}
+                onClick={handleCopyId}
+              >
+                <CopyIcon />
+              </IconButton>
+              {version != null && (
+                <Text size={2} color="neutral" className={versionClass()}>
+                  {t("configLayout.callout.version", { version })}
+                </Text>
+              )}
+            </div>
+          </div>
         )}
         control={hasDraft
           ? (
@@ -183,28 +204,7 @@ export function CookieBannerConfigLayout({
             )
           : undefined}
       >
-        <div className={copy()}>
-          <div className={meta()}>
-            <Text size={2} color="neutral" className={id()}>
-              {banner.id}
-            </Text>
-            <IconButton
-              size={1}
-              variant="ghost"
-              color="neutral"
-              aria-label={t("configLayout.actions.copyId")}
-              onClick={handleCopyId}
-            >
-              <CopyIcon />
-            </IconButton>
-            {version != null && (
-              <Text size={2} color="neutral" className={versionClass()}>
-                {t("configLayout.callout.version", { version })}
-              </Text>
-            )}
-          </div>
-          <Text size={2} color="neutral">{message}</Text>
-        </div>
+        <Text size={2} color="neutral">{message}</Text>
       </TonedCard>
       <Outlet />
     </div>

@@ -33,10 +33,10 @@ export const cookieBannerPageHeader = tv({
 export const cookieBannerConfigLayout = tv({
   slots: {
     root: "flex flex-col gap-6",
-    copy: "flex min-w-0 flex-col gap-1",
+    lead: "flex min-w-0 items-center gap-2 whitespace-normal",
     title: "min-w-0 truncate",
-    meta: "flex min-w-0 flex-wrap items-center gap-1.5",
-    id: "min-w-0 break-all font-mono",
+    meta: "flex shrink-0 items-center gap-1.5",
+    id: "font-mono",
     version: "shrink-0 font-mono",
   },
 });
