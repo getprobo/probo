@@ -157,6 +157,9 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           setErrors(fieldErrors);
           return;
         }
+        if (payloadErrors != null && payloadErrors.length > 0) {
+          return;
+        }
         const saved = response.updateCookieBanner.cookieBanner;
         setName(saved.name);
         setCookiePolicyUrl(saved.cookiePolicyUrl);
