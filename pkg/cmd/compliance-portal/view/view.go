@@ -38,10 +38,16 @@ query($id: ID!) {
       id
       active
       searchEngineIndexing
-      logoFileUrl
-      darkLogoFileUrl
-      ndaFileName
-      ndaFileUrl
+      logo {
+        downloadUrl
+      }
+      darkLogo {
+        downloadUrl
+      }
+      nda {
+        fileName
+        downloadUrl
+      }
       createdAt
       updatedAt
     }
@@ -51,16 +57,22 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename             string  `json:"__typename"`
-		ID                   string  `json:"id"`
-		Active               bool    `json:"active"`
-		SearchEngineIndexing string  `json:"searchEngineIndexing"`
-		LogoFileUrl          *string `json:"logoFileUrl"`
-		DarkLogoFileUrl      *string `json:"darkLogoFileUrl"`
-		NdaFileName          *string `json:"ndaFileName"`
-		NdaFileUrl           *string `json:"ndaFileUrl"`
-		CreatedAt            string  `json:"createdAt"`
-		UpdatedAt            string  `json:"updatedAt"`
+		Typename             string `json:"__typename"`
+		ID                   string `json:"id"`
+		Active               bool   `json:"active"`
+		SearchEngineIndexing string `json:"searchEngineIndexing"`
+		Logo                 *struct {
+			DownloadURL string `json:"downloadUrl"`
+		} `json:"logo"`
+		DarkLogo *struct {
+			DownloadURL string `json:"downloadUrl"`
+		} `json:"darkLogo"`
+		Nda *struct {
+			FileName    string `json:"fileName"`
+			DownloadURL string `json:"downloadUrl"`
+		} `json:"nda"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -137,16 +149,16 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Active:"), tc.Active)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Search Engine Indexing:"), tc.SearchEngineIndexing)
 
-			if tc.NdaFileName != nil && *tc.NdaFileName != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("NDA File:"), *tc.NdaFileName)
+			if tc.Nda != nil && tc.Nda.FileName != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("NDA File:"), tc.Nda.FileName)
 			}
 
-			if tc.LogoFileUrl != nil && *tc.LogoFileUrl != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Logo URL:"), *tc.LogoFileUrl)
+			if tc.Logo != nil && tc.Logo.DownloadURL != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Logo URL:"), tc.Logo.DownloadURL)
 			}
 
-			if tc.DarkLogoFileUrl != nil && *tc.DarkLogoFileUrl != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Dark Logo URL:"), *tc.DarkLogoFileUrl)
+			if tc.DarkLogo != nil && tc.DarkLogo.DownloadURL != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Dark Logo URL:"), tc.DarkLogo.DownloadURL)
 			}
 
 			_, _ = fmt.Fprintln(out)
