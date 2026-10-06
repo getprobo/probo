@@ -22,7 +22,7 @@ import { lazy } from "@probo/react-lazy";
 import { startTransition, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { type PreloadedQuery, usePreloadedQuery, useQueryLoader } from "react-relay";
-import { useLocation } from "react-router";
+import { useLocation, useParams } from "react-router";
 
 import type { CookieBannerSwitcherValueQuery } from "#/__generated__/core/CookieBannerSwitcherValueQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -32,8 +32,6 @@ import {
   cookieBannerSwitcherValueQuery,
 } from "#/pages/organizations/cookie-banners/_components/CookieBannerSwitcherValue";
 import { cookieBannersBasePath } from "#/pages/organizations/cookie-banners/_lib/cookieBannerPaths";
-import type { SelectedCookieBanner } from "#/pages/organizations/cookie-banners/_lib/useSelectedCookieBanner";
-import { useSelectedCookieBanner } from "#/pages/organizations/cookie-banners/_lib/useSelectedCookieBanner";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import type { NavPanelBodyProps } from "./navPanels";
@@ -57,7 +55,7 @@ export function CmpNavPanel(_: NavPanelBodyProps) {
 function CookieBannerNavSection() {
   const organizationId = useOrganizationId();
   const { pathname } = useLocation();
-  const { routeId, remembered, remember } = useSelectedCookieBanner();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
   );
@@ -66,43 +64,28 @@ function CookieBannerNavSection() {
   const fallback = <span className={slots.groupFallback()} aria-hidden />;
   const switcher = (
     <Suspense fallback={fallback}>
-      <CookieBannerSwitcher banner={remembered} />
+      <CookieBannerSwitcher banner={null} />
     </Suspense>
   );
 
-  // Off a banner route the selection is decoration, so it is replayed from
-  // memory rather than looked up. A banner deleted meanwhile then costs a
-  // stale label and links that 404 once clicked, instead of a lookup that
-  // takes the whole section down with it.
-  const isReplayed = !isNew && routeId == null && remembered != null;
-
   useEffect(() => {
-    if (isNew || isReplayed) {
+    if (isNew) {
       return;
     }
     startTransition(() => {
       loadQuery(
         {
           organizationId,
-          cookieBannerId: routeId ?? "",
-          hasCookieBannerId: routeId != null,
+          cookieBannerId: cookieBannerId ?? "",
+          hasCookieBannerId: cookieBannerId != null,
         },
         { fetchPolicy: "store-or-network" },
       );
     });
-  }, [isNew, isReplayed, loadQuery, organizationId, routeId]);
+  }, [cookieBannerId, isNew, loadQuery, organizationId]);
 
   if (isNew) {
     return switcher;
-  }
-
-  if (isReplayed) {
-    return (
-      <>
-        {switcher}
-        <CookieBannerNavItems cookieBannerId={remembered.id} tcf={remembered.tcf} />
-      </>
-    );
   }
 
   // loadQuery runs in an effect, so right after a banner-to-banner navigation
@@ -110,7 +93,7 @@ function CookieBannerNavSection() {
   // old name in the switcher and point the nav items at the old banner.
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
-    && queryRef.variables.cookieBannerId === (routeId ?? "")
+    && queryRef.variables.cookieBannerId === (cookieBannerId ?? "")
     ? queryRef
     : null;
 
@@ -119,12 +102,9 @@ function CookieBannerNavSection() {
   }
 
   return (
-    <ErrorBoundary key={routeId ?? organizationId} fallbackRender={() => switcher}>
+    <ErrorBoundary key={cookieBannerId ?? organizationId} fallbackRender={() => switcher}>
       <Suspense fallback={switcher}>
-        <CookieBannerNavSelection
-          queryRef={currentQueryRef}
-          onResolve={routeId == null ? undefined : remember}
-        />
+        <CookieBannerNavSelection queryRef={currentQueryRef} />
       </Suspense>
     </ErrorBoundary>
   );
@@ -132,10 +112,9 @@ function CookieBannerNavSection() {
 
 interface CookieBannerNavSelectionProps {
   queryRef: PreloadedQuery<CookieBannerSwitcherValueQuery>;
-  onResolve?: (banner: SelectedCookieBanner) => void;
 }
 
-function CookieBannerNavSelection({ queryRef, onResolve }: CookieBannerNavSelectionProps) {
+function CookieBannerNavSelection({ queryRef }: CookieBannerNavSelectionProps) {
   const organizationId = useOrganizationId();
   const data = usePreloadedQuery<CookieBannerSwitcherValueQuery>(
     cookieBannerSwitcherValueQuery,
@@ -143,14 +122,7 @@ function CookieBannerNavSelection({ queryRef, onResolve }: CookieBannerNavSelect
   );
   const banner = cookieBannerFromSwitcherValueQuery(data, organizationId);
   const id = banner?.id ?? null;
-  const name = banner?.name ?? null;
   const tcf = banner?.capabilities.tcf ?? false;
-
-  useEffect(() => {
-    if (id != null && name != null) {
-      onResolve?.({ id, name, tcf });
-    }
-  }, [id, name, onResolve, tcf]);
 
   return (
     <>

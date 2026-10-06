@@ -33,7 +33,6 @@ import {
 } from "#/pages/organizations/_components/NavPanelSwitcher";
 
 import { cookieBannersBasePath } from "../_lib/cookieBannerPaths";
-import type { SelectedCookieBanner } from "../_lib/useSelectedCookieBanner";
 
 import {
   CookieBannerSwitcherMenu,
@@ -42,7 +41,7 @@ import {
 import { CookieBannerSwitcherValue } from "./CookieBannerSwitcherValue";
 
 export interface CookieBannerSwitcherProps {
-  banner: Pick<SelectedCookieBanner, "id" | "name"> | null;
+  banner: { id: string; name: string } | null;
 }
 
 export function CookieBannerSwitcher({ banner }: CookieBannerSwitcherProps) {
