@@ -230,12 +230,42 @@
   },
   "consentRecordPage": {
     "title": "Toestemmingsregistratie",
-    "properties": { "visitorId": "Bezoekers-ID", "action": "Actie", "bannerVersion": "Bannerversie", "origin": "Origin", "ipAddress": "IP-adres", "userAgent": "User agent", "sdkVersion": "SDK-versie", "regulation": "Regelgeving", "regulationSource": "Bron van regelgeving", "country": "Land", "subdivision": "Subdivisie", "tc": "TC-string", "date": "Datum" },
-    "actions": { "accept_all": "Alles accepteren", "reject_all": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
-    "consentData": "Toestemmingsgegevens",
-    "required": "(Verplicht)",
-    "consent": { "accepted": "Geaccepteerd", "rejected": "Geweigerd" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Duur", "description": "Beschrijving" } }
+    "description": "Details van deze bezoekerskeuze voor toestemming.",
+    "cards": {
+      "action": "Actie",
+      "request": "Verzoek",
+      "tcf": "TCF",
+      "categories": "Categorieën",
+      "location": "Locatie"
+    },
+    "properties": {
+      "visitorId": "Bezoekers-ID",
+      "action": "Actie",
+      "bannerVersion": "Versie",
+      "origin": "Origin",
+      "ipAddress": "IP-adres",
+      "userAgent": "User agent",
+      "sdkVersion": "SDK-versie",
+      "regulation": "Regelgeving",
+      "date": "Datum"
+    },
+    "tcf": {
+      "created": "Aangemaakt",
+      "lastUpdated": "Laatst bijgewerkt",
+      "cmp": "CMP-ID / versie",
+      "cmpValue": "{{id}} / {{version}}",
+      "tcfPolicyVersion": "TCF-beleidversie",
+      "gvlVersion": "GVL-versie",
+      "language": "Taal",
+      "purposes": "Doel-ID's",
+      "vendorConsentCount": "Vendor-toestemmingen",
+      "decodeError": "Deze TC-string kon niet worden gedecodeerd."
+    },
+    "unknownLocation": "Onbekende locatie",
+    "messages": { "copiedTitle": "Gekopieerd" },
+    "errors": { "copyTitle": "Fout", "copy": "Kopiëren naar klembord mislukt" },
+    "actions": { "copy": "{{label}} kopiëren", "accept_all": "Alles accepteren", "reject_all": "Alles weigeren", "customize": "Aanpassen", "gpc": "GPC", "acknowledge": "Bevestigen" },
+    "consent": { "accepted": "Geaccepteerd", "rejected": "Geweigerd" }
   },
   "configLayout": {
     "callout": {

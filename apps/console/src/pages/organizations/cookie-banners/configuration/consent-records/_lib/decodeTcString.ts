@@ -18,40 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function getActionBadgeColor(
-  action: string,
-): "green" | "red" | "amber" | "neutral" {
-  switch (action) {
-    case "ACCEPT_ALL":
-      return "green";
-    case "REJECT_ALL":
-      return "red";
-    case "CUSTOMIZE":
-      return "amber";
-    default:
-      return "neutral";
-  }
+import { TCString } from "@iabtechlabtcf/core";
+
+export interface DecodedTcString {
+  created: Date;
+  lastUpdated: Date;
+  cmpId: string;
+  cmpVersion: string;
+  tcfPolicyVersion: string;
+  gvlVersion: string;
+  language: string;
+  purposeIds: number[];
+  vendorConsentCount: number;
 }
 
-export function formatLocation(
-  countryCode: string | null | undefined,
-  subdivisionCode: string | null | undefined,
-): string {
-  if (countryCode == null || countryCode === "") {
-    return "";
+export function decodeTcString(encoded: string): DecodedTcString | null {
+  try {
+    const model = TCString.decode(encoded);
+    return {
+      created: model.created,
+      lastUpdated: model.lastUpdated,
+      cmpId: String(model.cmpId),
+      cmpVersion: String(model.cmpVersion),
+      tcfPolicyVersion: String(model.policyVersion),
+      gvlVersion: String(model.vendorListVersion),
+      language: model.consentLanguage,
+      purposeIds: [...model.purposeConsents.values()],
+      vendorConsentCount: model.vendorConsents.size,
+    };
+  } catch {
+    return null;
   }
-  if (subdivisionCode == null || subdivisionCode === "") {
-    return countryCode;
-  }
-  return `${countryCode} · ${subdivisionCode}`;
-}
-
-export function formatAnonymizedIp(ip: string): string {
-  if (ip.includes(".")) {
-    return ip.replace(/\.0$/, ".*");
-  }
-  if (ip.endsWith("::")) {
-    return ip + "*";
-  }
-  return ip;
 }

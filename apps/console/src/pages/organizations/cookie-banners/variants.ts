@@ -283,3 +283,31 @@ export const categoryCreateDialog = tv({
     field: "flex flex-col gap-1",
   },
 });
+
+export const consentRecordPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex flex-col gap-4",
+    back: "self-start",
+    body: "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]",
+    column: "flex min-w-0 flex-col gap-6 max-lg:contents",
+    actionCard: "max-lg:order-1",
+    locationCard: "max-lg:order-2",
+    requestCard: "max-lg:order-3",
+    tcfCard: "max-lg:order-4",
+    categoriesCard: "max-lg:order-5",
+    card: "flex flex-col gap-4",
+    title: "flex items-center gap-2",
+    titleIcon: "shrink-0 text-sand-11",
+    fields: "grid grid-cols-2 gap-4 max-sm:grid-cols-1 *:min-w-0",
+    property: "flex min-w-0 flex-col gap-1",
+    span: "col-span-2 max-sm:col-span-1",
+    value: "min-w-0 break-all select-text",
+    copyRow: "flex min-w-0 items-center gap-1",
+    category: "flex items-center justify-between gap-3",
+    map: "bg-sand-3",
+    mapSvg: "block h-auto w-full",
+    country: "fill-sand-5 stroke-sand-6",
+    countryActive: "fill-gold-8 stroke-gold-11",
+  },
+});

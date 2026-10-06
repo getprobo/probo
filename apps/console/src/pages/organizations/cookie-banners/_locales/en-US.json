@@ -230,13 +230,43 @@
   },
   "consentRecordPage": {
     "title": "Consent record",
-    "properties": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "origin": "Origin", "ipAddress": "IP address", "userAgent": "User agent", "sdkVersion": "SDK version", "regulation": "Regulation", "regulationSource": "Regulation source", "country": "Country", "subdivision": "Subdivision", "tc": "TC string", "date": "Date" },
-    "actions": { "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
-    "consentData": "Consent data",
-    "required": "(Required)",
-    "consent": { "accepted": "Accepted", "rejected": "Rejected" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Duration", "description": "Description" } }
+    "description": "Details of this visitor consent choice.",
+    "cards": {
+      "action": "Action",
+      "request": "Request",
+      "tcf": "TCF",
+      "categories": "Categories",
+      "location": "Location"
     },
+    "properties": {
+      "visitorId": "Visitor ID",
+      "action": "Action",
+      "bannerVersion": "Version",
+      "origin": "Origin",
+      "ipAddress": "IP address",
+      "userAgent": "User agent",
+      "sdkVersion": "SDK version",
+      "regulation": "Regulation",
+      "date": "Date"
+    },
+    "tcf": {
+      "created": "Created",
+      "lastUpdated": "Last updated",
+      "cmp": "CMP ID / version",
+      "cmpValue": "{{id}} / {{version}}",
+      "tcfPolicyVersion": "TCF policy version",
+      "gvlVersion": "GVL version",
+      "language": "Language",
+      "purposes": "Purpose IDs",
+      "vendorConsentCount": "Vendor consents",
+      "decodeError": "Could not decode this TC string."
+    },
+    "unknownLocation": "Unknown location",
+    "messages": { "copiedTitle": "Copied" },
+    "errors": { "copyTitle": "Error", "copy": "Failed to copy to clipboard" },
+    "actions": { "copy": "Copy {{label}}", "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
+    "consent": { "accepted": "Accepted", "rejected": "Rejected" }
+  },
   "configLayout": {
     "callout": {
       "version": "v{{version}}",

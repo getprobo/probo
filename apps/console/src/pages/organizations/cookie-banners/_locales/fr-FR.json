@@ -230,13 +230,43 @@
   },
   "consentRecordPage": {
     "title": "Enregistrement de consentement",
-    "properties": { "visitorId": "ID du visiteur", "action": "Action", "bannerVersion": "Version de la bannière", "origin": "Origine", "ipAddress": "Adresse IP", "userAgent": "Agent utilisateur", "sdkVersion": "Version du SDK", "regulation": "Réglementation", "regulationSource": "Source réglementaire", "country": "Pays", "subdivision": "Subdivision", "tc": "Chaîne TC", "date": "Date" },
-    "actions": { "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
-    "consentData": "Données de consentement",
-    "required": "(Obligatoire)",
-    "consent": { "accepted": "Accepté", "rejected": "Refusé" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Durée", "description": "Description" } }
+    "description": "Détails du choix de consentement de ce visiteur.",
+    "cards": {
+      "action": "Action",
+      "request": "Requête",
+      "tcf": "TCF",
+      "categories": "Catégories",
+      "location": "Localisation"
     },
+    "properties": {
+      "visitorId": "ID du visiteur",
+      "action": "Action",
+      "bannerVersion": "Version",
+      "origin": "Origine",
+      "ipAddress": "Adresse IP",
+      "userAgent": "Agent utilisateur",
+      "sdkVersion": "Version du SDK",
+      "regulation": "Réglementation",
+      "date": "Date"
+    },
+    "tcf": {
+      "created": "Créé",
+      "lastUpdated": "Dernière mise à jour",
+      "cmp": "ID / version du CMP",
+      "cmpValue": "{{id}} / {{version}}",
+      "tcfPolicyVersion": "Version de la politique TCF",
+      "gvlVersion": "Version de la GVL",
+      "language": "Langue",
+      "purposes": "IDs des finalités",
+      "vendorConsentCount": "Consentements vendeurs",
+      "decodeError": "Impossible de décoder cette chaîne TC."
+    },
+    "unknownLocation": "Localisation inconnue",
+    "messages": { "copiedTitle": "Copié" },
+    "errors": { "copyTitle": "Erreur", "copy": "Échec de la copie dans le presse-papiers" },
+    "actions": { "copy": "Copier {{label}}", "accept_all": "Tout accepter", "reject_all": "Tout refuser", "customize": "Personnaliser", "gpc": "GPC", "acknowledge": "Accusé de réception" },
+    "consent": { "accepted": "Accepté", "rejected": "Refusé" }
+  },
   "configLayout": {
     "callout": {
       "version": "v{{version}}",
