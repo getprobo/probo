@@ -89,6 +89,10 @@ const addVendorMutation = graphql`
       cookieBanner {
         id
         gvlVendorIds
+        latestVersion {
+          id
+          state
+        }
       }
     }
   }
@@ -100,6 +104,10 @@ const removeVendorMutation = graphql`
       cookieBanner {
         id
         gvlVendorIds
+        latestVersion {
+          id
+          state
+        }
       }
     }
   }

@@ -70,6 +70,11 @@ const publishMutation = graphql`
           version
           state
         }
+        publishedVersion {
+          id
+          gvlVendorCount
+          gvlVendorIds
+        }
       }
     }
   }

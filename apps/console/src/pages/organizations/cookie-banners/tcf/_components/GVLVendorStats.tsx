@@ -47,7 +47,12 @@ const queryFragment = graphql`
 const cookieBannerFragment = graphql`
   fragment GVLVendorStats_cookieBanner on CookieBanner {
     gvlVendorIds
+    latestVersion {
+      id
+      state
+    }
     publishedVersion {
+      id
       gvlVendorCount
       gvlVendorIds
     }
@@ -68,10 +73,14 @@ export function GVLVendorStats({ queryKey, cookieBannerKey }: GVLVendorStatsProp
   );
   const { root } = gvlVendorStats();
   const missing = t("tcfPage.stats.empty");
-  const draftCount = banner.gvlVendorIds.length;
+  const hasDraft = banner.latestVersion?.state === "DRAFT";
+  const draftIDs = hasDraft
+    ? banner.gvlVendorIds
+    : banner.publishedVersion?.gvlVendorIds ?? [];
+  const draftCount = hasDraft ? banner.gvlVendorIds.length : 0;
   const liveCount = banner.publishedVersion?.gvlVendorCount;
   const status = vendorStatus(
-    banner.gvlVendorIds,
+    draftIDs,
     banner.publishedVersion?.gvlVendorIds,
   );
 
