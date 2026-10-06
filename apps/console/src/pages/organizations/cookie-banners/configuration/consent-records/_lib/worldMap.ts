@@ -20,15 +20,40 @@
 
 import type { Feature, MultiPolygon, Polygon, Position } from "geojson";
 import { feature } from "topojson-client";
+import type { GeometryCollection, Topology } from "topojson-specification";
 import countriesTopology from "world-atlas/countries-110m.json";
 
 export const WORLD_MAP_WIDTH = 960;
 export const WORLD_MAP_HEIGHT = 480;
 
+export const WORLD_VIEW_BOX = `0 0 ${WORLD_MAP_WIDTH} ${WORLD_MAP_HEIGHT}`;
+
 export interface CountryPath {
   id: string;
   d: string;
 }
+
+export interface SubdivisionPath {
+  id: string;
+  d: string;
+  viewBox: string;
+}
+
+export type SubdivisionTopology = Topology<{
+  subdivisions: GeometryCollection;
+}>;
+
+interface FocusBox {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+// Extra space around the highlighted region, and a floor so a small
+// state still shows its neighbors instead of a cropped blob.
+const FOCUS_PAD_RATIO = 0.25;
+const FOCUS_MIN_SPAN = 56;
 
 // ISO 3166-1 alpha-2 + 3-digit numeric, concatenated in 5-character groups.
 const ISO_3166_1_NUMERIC_PACKED
@@ -88,6 +113,72 @@ function geometryPath(geometry: Polygon | MultiPolygon): string {
   return geometry.coordinates.flatMap(polygon => polygon.map(ringPath)).join("");
 }
 
+function polygonFocus(rings: Position[][]): FocusBox | null {
+  let minLon = Infinity;
+  let maxLon = -Infinity;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const ring of rings) {
+    for (const position of ring) {
+      const lon = position[0] ?? 0;
+      const lat = position[1] ?? 0;
+      const [x, y] = project(lon, lat);
+      minLon = Math.min(minLon, lon);
+      maxLon = Math.max(maxLon, lon);
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  if (!Number.isFinite(minX) || maxLon - minLon >= 180) {
+    return null;
+  }
+
+  return { minX, minY, maxX, maxY };
+}
+
+// Overseas pieces sit in the same feature. Framing the largest piece
+// keeps Alaska or Hawaii from pulling a California view across the map.
+function geometryFocus(geometry: Polygon | MultiPolygon): FocusBox | null {
+  const polygons = geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.coordinates;
+  let best: FocusBox | null = null;
+  let bestArea = -1;
+
+  for (const polygon of polygons) {
+    const box = polygonFocus(polygon);
+    if (box == null) {
+      continue;
+    }
+    const area = (box.maxX - box.minX) * (box.maxY - box.minY);
+    if (area > bestArea) {
+      best = box;
+      bestArea = area;
+    }
+  }
+
+  return best;
+}
+
+function paddedViewBox(focus: FocusBox): string {
+  const spanX = focus.maxX - focus.minX;
+  const spanY = focus.maxY - focus.minY;
+  const padX = Math.max(spanX * FOCUS_PAD_RATIO, (FOCUS_MIN_SPAN - spanX) / 2);
+  const padY = Math.max(spanY * FOCUS_PAD_RATIO, (FOCUS_MIN_SPAN - spanY) / 2);
+  const width = Math.min(spanX + padX * 2, WORLD_MAP_WIDTH);
+  const height = Math.min(spanY + padY * 2, WORLD_MAP_HEIGHT);
+  const x = Math.min(Math.max(0, focus.minX - padX), WORLD_MAP_WIDTH - width);
+  const y = Math.min(Math.max(0, focus.minY - padY), WORLD_MAP_HEIGHT - height);
+
+  return `${x.toFixed(1)} ${y.toFixed(1)} ${width.toFixed(1)} ${height.toFixed(1)}`;
+}
+
 function countryPath(featureObject: Feature): CountryPath | null {
   if (featureObject.id == null || featureObject.geometry == null) {
     return null;
@@ -103,6 +194,22 @@ function countryPath(featureObject: Feature): CountryPath | null {
   return { id: String(featureObject.id), d };
 }
 
+function subdivisionPath(featureObject: Feature): SubdivisionPath | null {
+  if (featureObject.id == null || featureObject.geometry == null) {
+    return null;
+  }
+  const geometry = featureObject.geometry;
+  if (geometry.type !== "Polygon" && geometry.type !== "MultiPolygon") {
+    return null;
+  }
+  const d = geometryPath(geometry);
+  const focus = geometryFocus(geometry);
+  if (d === "" || focus == null) {
+    return null;
+  }
+  return { id: String(featureObject.id), d, viewBox: paddedViewBox(focus) };
+}
+
 const countryPaths: CountryPath[] = feature(
   countriesTopology,
   countriesTopology.objects.countries,
@@ -113,4 +220,11 @@ const countryPaths: CountryPath[] = feature(
 
 export function worldCountryPaths(): CountryPath[] {
   return countryPaths;
+}
+
+export function subdivisionPaths(topology: SubdivisionTopology): SubdivisionPath[] {
+  return feature(topology, topology.objects.subdivisions).features.flatMap((featureObject) => {
+    const path = subdivisionPath(featureObject);
+    return path == null ? [] : [path];
+  });
 }

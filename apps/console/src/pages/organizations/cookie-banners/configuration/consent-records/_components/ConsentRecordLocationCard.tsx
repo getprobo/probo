@@ -23,6 +23,7 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { CardInset } from "@probo/ui/src/v2/Card/CardInset";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -31,12 +32,10 @@ import type { ConsentRecordLocationCard_cookieConsentRecord$key } from "#/__gene
 
 import { consentRecordPage } from "../../../variants";
 import { formatLocation } from "../_lib/consentRecordHelpers";
-import {
-  isoNumericId,
-  WORLD_MAP_HEIGHT,
-  WORLD_MAP_WIDTH,
-  worldCountryPaths,
-} from "../_lib/worldMap";
+import { loadSubdivisionMap } from "../_lib/loadSubdivisionMap";
+import type { SubdivisionMap } from "../_lib/locationMap";
+import { locationMapSvg, wantsSubdivisionMap } from "../_lib/locationMap";
+import { isoNumericId, subdivisionPaths } from "../_lib/worldMap";
 
 const consentRecordLocationCardFragment = graphql`
   fragment ConsentRecordLocationCard_cookieConsentRecord on CookieConsentRecord {
@@ -58,33 +57,61 @@ export function ConsentRecordLocationCard({
   const { t } = useTranslation("organizations/cookie-banners");
   const record = useFragment(consentRecordLocationCardFragment, cookieConsentRecordKey);
   const location = formatLocation(record.countryCode, record.subdivisionCode);
-  const activeId = record.countryCode == null ? null : isoNumericId(record.countryCode);
-  const showMap = record.countryCode != null;
+  const countryId = record.countryCode == null ? null : isoNumericId(record.countryCode);
+  const subdivisionKey = wantsSubdivisionMap(record.countryCode, record.subdivisionCode)
+    ? `${record.countryCode}:${record.subdivisionCode}`
+    : null;
+  const [loaded, setLoaded] = useState<{ key: string; map: SubdivisionMap | null } | null>(null);
   const { card, title, titleIcon, fields, property, map, mapSvg, country, countryActive } = consentRecordPage();
+  const matched = loaded != null && loaded.key === subdivisionKey;
+  const subdivision = matched ? loaded.map : null;
+  const loading = subdivisionKey != null && !matched;
+
+  useEffect(() => {
+    if (subdivisionKey == null || record.countryCode == null || record.subdivisionCode == null) {
+      return;
+    }
+
+    const countryCode = record.countryCode;
+    const subdivisionCode = record.subdivisionCode;
+    let cancelled = false;
+
+    void loadSubdivisionMap(countryCode)
+      .then((topology) => {
+        if (cancelled) {
+          return;
+        }
+        if (topology == null) {
+          setLoaded({ key: subdivisionKey, map: null });
+          return;
+        }
+        const paths = subdivisionPaths(topology);
+        const active = paths.find(path => path.id === subdivisionCode);
+        if (active == null) {
+          setLoaded({ key: subdivisionKey, map: null });
+          return;
+        }
+        setLoaded({
+          key: subdivisionKey,
+          map: { paths, activeId: active.id, viewBox: active.viewBox },
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoaded({ key: subdivisionKey, map: null });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [record.countryCode, record.subdivisionCode, subdivisionKey]);
 
   return (
     <Card size={2} variant="soft" className={className}>
-      {showMap
-        ? (
-            <CardInset side="top" className={map()}>
-              <svg
-                className={mapSvg()}
-                viewBox={`0 0 ${WORLD_MAP_WIDTH} ${WORLD_MAP_HEIGHT}`}
-                aria-hidden
-              >
-                {worldCountryPaths().map(path => (
-                  <path
-                    key={path.id}
-                    d={path.d}
-                    className={path.id === activeId ? countryActive() : country()}
-                    fillRule="evenodd"
-                    strokeWidth={0.5}
-                  />
-                ))}
-              </svg>
-            </CardInset>
-          )
-        : null}
+      <CardInset side="top" className={map()}>
+        {locationMapSvg(subdivision, loading, countryId, mapSvg(), country(), countryActive())}
+      </CardInset>
       <div className={card()}>
         <div className={title()}>
           <MapPinIcon size={20} weight="duotone" className={titleIcon()} />
