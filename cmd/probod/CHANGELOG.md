@@ -4,13 +4,31 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.304.0] - 2026-10-06
+
+### Added
+
+- Cookie banner trackers have On banner and All detected views. The
+  choice is stored in the URL and defaults to On banner
+- The trust center home page links to the documents catalog, including
+  when the portal has no framework badges
+
 ### Changed
 
+- Measures are renamed to internal controls on GraphQL, MCP, the CLI,
+  the console, and in the database. The migration renames the measure
+  tables, columns, constraints, indexes, and enum values. Security and
+  supplementary measures are unchanged
 - Recurring tasks repeat when their deadline passes. The next deadline
   is the previous deadline plus the interval, and the series stays on
   the current task until that deadline. A worker creates the next
   occurrence. `PROBOD_TASK_RECURRENCE_INTERVAL` sets how often it scans
   and defaults to 5 minutes
+- Cookie banner configuration is split into Install, Configure, and
+  Translations pages. Display is rebuilt in UI kit v2: category edit
+  opens in a drawer, cookie rows stay on the Trackers page, and theme
+  controls only build a CSS snippet. Each configuration page shows
+  draft, deactivated, and live state on a status card
 
 ## [0.303.0] - 2026-10-05
 
