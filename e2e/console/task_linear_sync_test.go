@@ -798,3 +798,39 @@ func TestTaskLinearSync_InvalidSignatureRejected(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 }
+
+func TestTask_UpdateLinearSettingsWhenNotConnected(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	const mutation = `
+		mutation($input: UpdateLinearSettingsInput!) {
+			updateLinearSettings(input: $input) {
+				organization {
+					linearSettings {
+						issueImport
+					}
+				}
+			}
+		}
+	`
+
+	ownerErr := owner.ExecuteShouldFail(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"defaultTeamId":  "team-id",
+			"issueImport":    "ACTIVE",
+		},
+	})
+	testutil.RequireErrorCode(t, ownerErr, "INVALID")
+
+	viewerErr := viewer.ExecuteShouldFail(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"issueImport":    "ACTIVE",
+		},
+	})
+	testutil.RequireForbiddenError(t, viewerErr)
+}

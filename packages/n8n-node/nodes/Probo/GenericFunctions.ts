@@ -39,9 +39,17 @@ type ApiRequestFn = (
 
 type ApiRequestContext = IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions;
 
-function graphqlBodyOrThrow(this: ApiRequestContext, response: unknown): IDataObject {
+function graphqlBodyOrThrow(
+	this: ApiRequestContext,
+	response: unknown,
+	options?: { keepPartialResult?: boolean },
+): IDataObject {
 	const parsed = readGraphQLBody(response);
 	if (!parsed.ok) {
+		if (options?.keepPartialResult && parsed.body?.data != null) {
+			return parsed.body as IDataObject;
+		}
+
 		throw new NodeApiError(this.getNode(), (parsed.body ?? { message: parsed.message }) as JsonObject, {
 			message: parsed.message,
 			level: 'error',
@@ -64,6 +72,7 @@ async function proboGraphQLRequest(
 	apiPath: string,
 	query: string,
 	variables: IDataObject = {},
+	resultOptions?: { keepPartialResult?: boolean },
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
@@ -93,15 +102,16 @@ async function proboGraphQLRequest(
 		rethrowRequestError.call(this, error);
 	}
 
-	return graphqlBodyOrThrow.call(this, response);
+	return graphqlBodyOrThrow.call(this, response, resultOptions);
 }
 
 export async function proboApiRequest(
 	this: ApiRequestContext,
 	query: string,
 	variables: IDataObject = {},
+	options?: { keepPartialResult?: boolean },
 ): Promise<IDataObject> {
-	return proboGraphQLRequest.call(this, '/api/console/v1/graphql', query, variables);
+	return proboGraphQLRequest.call(this, '/api/console/v1/graphql', query, variables, options);
 }
 
 export async function proboConnectApiRequest(

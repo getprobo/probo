@@ -39,6 +39,15 @@ type (
 		ChannelID string `json:"channel_id,omitempty"`
 	}
 
+	LinearSyncConnectorSettings struct {
+		DefaultTeamID        string `json:"default_team_id,omitempty"`
+		DefaultTeamName      string `json:"default_team_name,omitempty"`
+		DefaultTeamKey       string `json:"default_team_key,omitempty"`
+		LinearOrganizationID string `json:"linear_organization_id,omitempty"`
+		LinearAppActorID     string `json:"linear_app_actor_id,omitempty"`
+		ImportNewIssues      bool   `json:"import_new_issues,omitempty"`
+	}
+
 	TallyConnectorSettings struct {
 		OrganizationID string `json:"organization_id"`
 	}

@@ -73,19 +73,22 @@
       "deleted": "Tâche supprimée avec succès."
     },
     "linear": {
-      "connect": "Connecter Linear Sync",
-      "reconnect": "Reconnecter Linear Sync",
+      "connect": "Connecter Linear",
       "publish": "Publier",
       "link": "Lier",
       "unlink": "Dissocier",
       "team": "Équipe Linear",
+      "issue": "Issue Linear",
       "chooseTeam": "Choisir une équipe",
+      "noTeam": "Aucune équipe",
       "chooseIssue": "Choisir une issue",
       "newIssue": "Nouvelle issue",
       "searchTeam": "Rechercher une équipe",
       "searchIssue": "Rechercher une issue",
       "noResults": "Aucun résultat",
       "loadMore": "Charger plus",
+      "retry": "Réessayer",
+      "createWithoutTeam": "Créer sans équipe Linear",
       "published": "Tâche publiée sur Linear.",
       "linked": "Tâche liée à Linear.",
       "confirmLink": {
@@ -174,8 +177,36 @@
       "description": "Connectez des outils pour publier les tâches et les synchroniser."
     },
     "linear": {
-      "name": "Linear Sync",
-      "description": "Publiez une tâche sur Linear et synchronisez le nom, le contenu, l'état, la priorité, l'échéance et l'assigné lorsque les e-mails correspondent."
+      "name": "Linear",
+      "description": "Publiez une tâche sur Linear et synchronisez le nom, le contenu, l'état, la priorité, l'échéance, l'assigné et les commentaires lorsque les e-mails correspondent.",
+      "defaultTeam": "Équipe par défaut",
+      "defaultTeamDescription": "Les nouvelles tâches utilisent cette équipe Linear, sauf si une autre équipe est choisie.",
+      "defaultTeamReadOnly": "Vous n'avez pas l'autorisation de modifier l'équipe par défaut.",
+      "noDefaultTeam": "Aucune équipe par défaut",
+      "issueImport": "Importer les nouvelles issues",
+      "issueImportDescription": "Actif crée une tâche Probo pour chaque nouvelle issue de l'équipe par défaut et la garde synchronisée.",
+      "issueImportReadOnly": "Vous n'avez pas l'autorisation de modifier l'import des issues.",
+      "issueImportNeedsTeam": "Choisissez une équipe par défaut avant d'activer l'import des issues.",
+      "issueImportStatus": {
+        "active": "Actif",
+        "inactive": "Inactif"
+      },
+      "disconnect": {
+        "title": "Déconnecter Linear ?",
+        "description": "Les tâches ne seront plus synchronisées avec Linear. Vous pourrez vous reconnecter plus tard.",
+        "confirm": "Déconnecter"
+      },
+      "messages": {
+        "disconnected": "Linear déconnecté.",
+        "defaultTeamSaved": "Équipe par défaut enregistrée.",
+        "issueImportSaved": "Import des issues enregistré."
+      },
+      "errors": {
+        "connect": "Échec de la connexion à Linear",
+        "disconnect": "Échec de la déconnexion de Linear",
+        "defaultTeam": "Échec de l'enregistrement de l'équipe par défaut",
+        "issueImport": "Échec de l'enregistrement de l'import des issues"
+      }
     },
     "status": {
       "connected": "Connecté",
@@ -183,7 +214,7 @@
     },
     "actions": {
       "connect": "Connecter",
-      "reconnect": "Reconnecter",
+      "disconnect": "Déconnecter",
       "close": "Fermer"
     }
   },

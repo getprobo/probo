@@ -609,6 +609,40 @@ func (r *organizationResolver) LinearTeams(ctx context.Context, obj *types.Organ
 	}, nil
 }
 
+// LinearSettings is the resolver for the linearSettings field.
+func (r *organizationResolver) LinearSettings(ctx context.Context, obj *types.Organization) (*types.LinearSettings, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorList)
+	if err != nil {
+		return nil, err
+	}
+
+	settings, err := r.task.Sync.LinearSettings(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load Linear settings", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	issueImport := types.LinearIssueImportInactive
+	if settings.ImportNewIssues {
+		issueImport = types.LinearIssueImportActive
+	}
+
+	var team *types.LinearTeam
+	if settings.DefaultTeam != nil {
+		team = &types.LinearTeam{
+			ID:   settings.DefaultTeam.ID,
+			Name: settings.DefaultTeam.Name,
+			Key:  settings.DefaultTeam.Key,
+		}
+	}
+
+	return &types.LinearSettings{
+		DefaultTeam: team,
+		IssueImport: issueImport,
+	}, nil
+}
+
 // LinearIssues is the resolver for the linearIssues field.
 func (r *organizationResolver) LinearIssues(ctx context.Context, obj *types.Organization, teamID string, first *int, after *string, query *string) (*types.LinearIssueConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, task.ActionTaskUpdate)

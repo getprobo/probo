@@ -789,6 +789,50 @@ WHERE
 	return nil
 }
 
+// UpdateSettings writes only settings. Update also writes name and
+// encrypted_connection from the loaded row, so a settings save cannot revert
+// a concurrent rename or token refresh.
+func (c *Connector) UpdateSettings(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE connectors
+SET
+    settings = @settings,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	var settingsArg any
+	if len(c.RawSettings) > 0 {
+		settingsArg = []byte(c.RawSettings)
+	}
+
+	args := pgx.StrictNamedArgs{
+		"id":         c.ID,
+		"settings":   settingsArg,
+		"updated_at": c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update connector settings: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 // DecryptConnection hydrates Connection from EncryptedConnection already
 // present on the struct. Call it after a metadata or list load instead of
 // LoadByID, which would query the same row again.
@@ -814,6 +858,59 @@ func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error 
 			slackConn.Settings.ChannelID = settings.ChannelID
 		}
 	}
+
+	return nil
+}
+
+func (c *Connectors) LoadByProviderAndSettings(
+	ctx context.Context,
+	conn pg.Querier,
+	provider ConnectorProvider,
+	settings map[string]any,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    name,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    provider = @provider
+    AND settings @> @settings::jsonb
+ORDER BY
+    created_at, id
+`
+
+	if len(settings) == 0 {
+		return fmt.Errorf("connector settings filter is empty")
+	}
+
+	encoded, err := json.Marshal(settings)
+	if err != nil {
+		return fmt.Errorf("cannot encode connector settings filter: %w", err)
+	}
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
+		"provider": provider,
+		"settings": string(encoded),
+	})
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	connectors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Connector])
+	if err != nil {
+		return fmt.Errorf("cannot collect connectors: %w", err)
+	}
+
+	*c = connectors
 
 	return nil
 }

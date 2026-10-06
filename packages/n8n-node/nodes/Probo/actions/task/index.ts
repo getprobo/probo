@@ -28,6 +28,7 @@ import * as linkToLinearOp from './linkToLinear.operation';
 import * as listLinearIssuesOp from './listLinearIssues.operation';
 import * as listLinearTeamsOp from './listLinearTeams.operation';
 import * as publishToLinearOp from './publishToLinear.operation';
+import * as updateLinearSettingsOp from './updateLinearSettings.operation';
 import * as unlinkExternalOp from './unlinkExternal.operation';
 
 export const description: INodeProperties[] = [
@@ -102,6 +103,12 @@ export const description: INodeProperties[] = [
 				description: 'Update an existing task',
 				action: 'Update a task',
 			},
+			{
+				name: 'Update Linear Settings',
+				value: 'updateLinearSettings',
+				description: 'Update the organization default Linear team and issue import',
+				action: 'Update linear settings',
+			},
 		],
 		default: 'create',
 	},
@@ -114,6 +121,7 @@ export const description: INodeProperties[] = [
 	...listLinearIssuesOp.description,
 	...listLinearTeamsOp.description,
 	...publishToLinearOp.description,
+	...updateLinearSettingsOp.description,
 	...unlinkExternalOp.description,
 ];
 
@@ -127,5 +135,6 @@ export {
 	listLinearIssuesOp as listLinearIssues,
 	listLinearTeamsOp as listLinearTeams,
 	publishToLinearOp as publishToLinear,
+	updateLinearSettingsOp as updateLinearSettings,
 	unlinkExternalOp as unlinkExternal,
 };

@@ -77,7 +77,11 @@ func (s *Service) ApplyInboundIssue(
 
 			link, ok := PickLinkForLinearOrganization(links, envelope.OrganizationID)
 			if !ok {
-				return nil
+				if envelope.Action != "create" {
+					return nil
+				}
+
+				return s.importCreatedLinearIssue(ctx, tx, envelope, data)
 			}
 
 			if isAppActor(link.Metadata, envelope.Actor.ID) {

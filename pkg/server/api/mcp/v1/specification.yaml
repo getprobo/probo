@@ -7427,6 +7427,54 @@ components:
             - type: "null"
           description: Next page cursor. Null when this is the last page.
 
+    LinearIssueImport:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+
+    LinearSettings:
+      type: object
+      required:
+        - issue_import
+      properties:
+        default_team:
+          anyOf:
+            - $ref: "#/components/schemas/LinearTeam"
+            - type: "null"
+          description: Default Linear team. Null when no default team is set.
+        issue_import:
+          $ref: "#/components/schemas/LinearIssueImport"
+          description: Whether new issues on the default Linear team are imported.
+
+    UpdateLinearSettingsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        default_team_id:
+          anyOf:
+            - type: string
+              description: Linear team ID
+            - type: "null"
+              description: Clear the default Linear team
+          description: Linear team ID. Omit it to keep the current team. Null clears the team and turns issue import off.
+        issue_import:
+          $ref: "#/components/schemas/LinearIssueImport"
+          description: Issue import status. Omit it to keep the current status. Active requires a default team.
+
+    UpdateLinearSettingsOutput:
+      type: object
+      required:
+        - settings
+      properties:
+        settings:
+          $ref: "#/components/schemas/LinearSettings"
+          description: Linear settings after the update.
+
     ListLinearIssuesInput:
       type: object
       required:
@@ -7641,6 +7689,14 @@ components:
           $ref: "#/components/schemas/TaskPriority"
           description: Task priority level (defaults to MEDIUM if not specified)
           default: MEDIUM
+        linear_team_id:
+          anyOf:
+            - type: string
+              description: Linear team ID
+            - type: "null"
+              description: No Linear team
+          description: Linear team to publish the new task to. Omit this field to use the organization's default Linear team when one is set. Pass null to create the task with no Linear team. If the Linear publish attempt fails after the task is created, linear_publish_error explains why.
+          go.probo.inc/mcpgen/omittable: true
 
     AddTaskOutput:
       type: object
@@ -7649,6 +7705,9 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+        linear_publish_error:
+          type: string
+          description: Set when the task was created but publishing it to Linear failed. The task exists; publish that task again instead of creating another one.
 
     UpdateTaskInput:
       type: object
@@ -18639,7 +18698,7 @@ tools:
       $ref: "#/components/schemas/GetTaskOutput"
   - name: addTask
     title: Add Task
-    description: Add a new task to the organization
+    description: Add a new task to the organization. Omit linear_team_id to publish the task to the organization's default Linear team when one is set. Pass null to create the task with no Linear team. If the Linear publish attempt fails after the task is created, linear_publish_error explains why. Publish that task again instead of creating another one.
     hints:
       readonly: false
       destructive: false
@@ -18709,6 +18768,18 @@ tools:
       $ref: "#/components/schemas/ListLinearTeamsInput"
     outputSchema:
       $ref: "#/components/schemas/ListLinearTeamsOutput"
+  - name: updateLinearSettings
+    title: Update Linear Settings
+    description: Update the organization's Linear settings. Omit a field to leave it unchanged. Null default_team_id clears the default team and turns issue import off.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UpdateLinearSettingsInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateLinearSettingsOutput"
   - name: listLinearIssues
     title: List Linear Issues
     description: Search Linear issues in a team

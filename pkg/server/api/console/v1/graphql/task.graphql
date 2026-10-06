@@ -102,6 +102,16 @@ type Task implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
+enum LinearIssueImport {
+    ACTIVE
+    INACTIVE
+}
+
+type LinearSettings {
+    defaultTeam: LinearTeam
+    issueImport: LinearIssueImport!
+}
+
 enum TaskExternalLinkOrigin
     @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskExternalLinkOrigin") {
     PROBO
@@ -182,6 +192,9 @@ extend type Mutation {
     publishTaskToLinear(input: PublishTaskToLinearInput!): PublishTaskToLinearPayload!
     linkTaskToLinear(input: LinkTaskToLinearInput!): LinkTaskToLinearPayload!
     unlinkTaskExternal(input: UnlinkTaskExternalInput!): UnlinkTaskExternalPayload!
+    updateLinearSettings(
+        input: UpdateLinearSettingsInput!
+    ): UpdateLinearSettingsPayload!
 }
 
 input CreateTaskInput {
@@ -195,6 +208,17 @@ input CreateTaskInput {
     assignedToId: ID
     deadline: Datetime
     recurrenceInterval: TimeSpan
+    linearTeamId: String @goField(omittable: true)
+}
+
+input UpdateLinearSettingsInput {
+    organizationId: ID!
+    defaultTeamId: String @goField(omittable: true)
+    issueImport: LinearIssueImport @goField(omittable: true)
+}
+
+type UpdateLinearSettingsPayload {
+    organization: Organization!
 }
 
 input UpdateTaskInput {

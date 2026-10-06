@@ -146,6 +146,8 @@ export const createTaskDialog = tv({
       "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
     ],
     value: "flex items-center gap-2",
+    linearFallback: "flex flex-col items-start gap-2",
+    linearFallbackChoice: "flex items-center gap-2",
   },
 });
 
@@ -166,8 +168,11 @@ export const tasksSettingsDialog = tv({
     sections: "flex flex-col gap-6",
     section: "flex flex-col gap-3",
     intro: "flex flex-col gap-1",
-    list: "flex flex-col",
+    list: "flex flex-col gap-3",
     row: "flex items-start justify-between gap-4",
+    defaultTeam: "flex flex-col gap-2 border-t border-sand-6 pt-3",
+    defaultTeamControl: "block w-full",
+    issueImport: "flex flex-col gap-2",
     identity: "flex min-w-0 flex-col gap-1",
     heading: "flex flex-wrap items-center gap-2",
   },

@@ -4,6 +4,19 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Task `Create` accepts a Linear team ID. Leave it empty to use the
+  organization's default Linear team. Enter `none` to create the task
+  with no Linear team
+- Task `Update Linear Settings` sets the organization's default Linear
+  team and whether new issues on that team are imported
+
+### Changed
+
+- Task `Create` still returns the created task when the Linear publish
+  attempt fails. The GraphQL error is included in the node output
+
 ## [0.251.0] - 2026-10-15
 
 ### Added

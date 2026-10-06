@@ -75,6 +75,7 @@ func NewService(
 			linearAPIBaseURL,
 			logger,
 			InsertUpdateActivities,
+			recordImportedTask,
 			&attachmentReader{pg: pgClient, files: files},
 		),
 	}

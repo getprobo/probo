@@ -614,6 +614,22 @@ func sortedDeviceIDs(deviceIDs []gid.GID) []gid.GID {
 	return sorted
 }
 
+func uniqueDeviceIDs(deviceIDs []gid.GID) []gid.GID {
+	seen := make(map[gid.GID]struct{}, len(deviceIDs))
+	unique := make([]gid.GID, 0, len(deviceIDs))
+
+	for _, deviceID := range deviceIDs {
+		if _, ok := seen[deviceID]; ok {
+			continue
+		}
+
+		seen[deviceID] = struct{}{}
+		unique = append(unique, deviceID)
+	}
+
+	return unique
+}
+
 func (s *Service) RevokeDevices(
 	ctx context.Context,
 	scope coredata.Scoper,
@@ -623,7 +639,7 @@ func (s *Service) RevokeDevices(
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	deviceIDs = gid.NewSet(deviceIDs...).Values()
+	deviceIDs = uniqueDeviceIDs(deviceIDs)
 
 	revoked := make(map[gid.GID]*coredata.Device, len(deviceIDs))
 
@@ -668,7 +684,7 @@ func (s *Service) DeleteDevices(
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	deviceIDs = gid.NewSet(deviceIDs...).Values()
+	deviceIDs = uniqueDeviceIDs(deviceIDs)
 
 	deleted := make(map[gid.GID]*coredata.Device, len(deviceIDs))
 

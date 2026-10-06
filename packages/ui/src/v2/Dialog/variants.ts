@@ -45,7 +45,9 @@ export const dialog = tv({
     description: "text-2 text-sand-11",
     body: "px-6",
     footer: "flex flex-wrap items-center justify-end gap-3 px-6 max-sm:flex-col-reverse max-sm:items-stretch",
-    overlayRoot: "relative z-5",
+    // Fixed to the viewport so absolute menus inside it do not grow the page
+    // and shift the dialog. Clicks pass through the empty layer.
+    overlayRoot: "pointer-events-none fixed inset-0 z-5 [&>*]:pointer-events-auto",
   },
   variants: {
     lockScroll: {

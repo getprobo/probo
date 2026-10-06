@@ -73,19 +73,22 @@
       "deleted": "Task deleted successfully."
     },
     "linear": {
-      "connect": "Connect Linear Sync",
-      "reconnect": "Reconnect Linear Sync",
+      "connect": "Connect Linear",
       "publish": "Publish",
       "link": "Link",
       "unlink": "Unlink",
       "team": "Linear team",
+      "issue": "Linear issue",
       "chooseTeam": "Choose team",
+      "noTeam": "No team",
       "chooseIssue": "Choose issue",
       "newIssue": "New issue",
       "searchTeam": "Search teams",
       "searchIssue": "Search issues",
       "noResults": "No results",
       "loadMore": "Load more",
+      "retry": "Try again",
+      "createWithoutTeam": "Create without a Linear team",
       "published": "Task published to Linear.",
       "linked": "Task linked to Linear.",
       "confirmLink": {
@@ -174,8 +177,36 @@
       "description": "Connect tools to publish tasks and keep them in sync."
     },
     "linear": {
-      "name": "Linear Sync",
-      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, and assignee when emails match."
+      "name": "Linear",
+      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, assignee, and comments when emails match.",
+      "defaultTeam": "Default team",
+      "defaultTeamDescription": "New tasks use this Linear team unless another team is chosen.",
+      "defaultTeamReadOnly": "You don't have permission to change the default team.",
+      "noDefaultTeam": "No default team",
+      "issueImport": "Import new issues",
+      "issueImportDescription": "Active creates a Probo task for each new issue on the default team and keeps it in sync.",
+      "issueImportReadOnly": "You don't have permission to change issue import.",
+      "issueImportNeedsTeam": "Choose a default team before activating issue import.",
+      "issueImportStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "disconnect": {
+        "title": "Disconnect Linear?",
+        "description": "Tasks will no longer sync with Linear. You can connect again later.",
+        "confirm": "Disconnect"
+      },
+      "messages": {
+        "disconnected": "Linear disconnected.",
+        "defaultTeamSaved": "Default team saved.",
+        "issueImportSaved": "Issue import saved."
+      },
+      "errors": {
+        "connect": "Failed to connect Linear",
+        "disconnect": "Failed to disconnect Linear",
+        "defaultTeam": "Failed to save the default team",
+        "issueImport": "Failed to save issue import"
+      }
     },
     "status": {
       "connected": "Connected",
@@ -183,7 +214,7 @@
     },
     "actions": {
       "connect": "Connect",
-      "reconnect": "Reconnect",
+      "disconnect": "Disconnect",
       "close": "Close"
     }
   },

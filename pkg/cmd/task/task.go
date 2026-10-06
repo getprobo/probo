@@ -34,6 +34,7 @@ import (
 	publishlinear "go.probo.inc/probo/pkg/cmd/task/publish-linear"
 	unlinkexternal "go.probo.inc/probo/pkg/cmd/task/unlink-external"
 	"go.probo.inc/probo/pkg/cmd/task/update"
+	updatelinearsettings "go.probo.inc/probo/pkg/cmd/task/update-linear-settings"
 	"go.probo.inc/probo/pkg/cmd/task/view"
 )
 
@@ -51,6 +52,7 @@ func NewCmdTask(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(comment.NewCmdComment(f))
 	cmd.AddCommand(activity.NewCmdActivity(f))
 	cmd.AddCommand(listlinearteams.NewCmdListLinearTeams(f))
+	cmd.AddCommand(updatelinearsettings.NewCmdUpdateLinearSettings(f))
 	cmd.AddCommand(listlinearissues.NewCmdListLinearIssues(f))
 	cmd.AddCommand(publishlinear.NewCmdPublishLinear(f))
 	cmd.AddCommand(linklinear.NewCmdLinkLinear(f))

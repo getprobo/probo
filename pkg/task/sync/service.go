@@ -54,6 +54,17 @@ type (
 		now time.Time,
 	) error
 
+	// RecordImportedTaskFunc writes the created activity and webhook for a
+	// task imported from a new Linear issue.
+	RecordImportedTaskFunc func(
+		ctx context.Context,
+		tx pg.Tx,
+		scope coredata.Scoper,
+		task *coredata.Task,
+		actorID *gid.GID,
+		now time.Time,
+	) error
+
 	Service struct {
 		pg                *pg.Client
 		encryptionKey     cipher.EncryptionKey
@@ -66,6 +77,7 @@ type (
 		linearAPIBaseURL       string
 		logger                 *log.Logger
 		recordUpdateActivities RecordUpdateActivitiesFunc
+		recordImportedTask     RecordImportedTaskFunc
 		attachments            AttachmentReader
 		linearAssets           linearAssetCache
 	}
@@ -87,6 +99,7 @@ func NewService(
 	linearAPIBaseURL string,
 	logger *log.Logger,
 	recordUpdateActivities RecordUpdateActivitiesFunc,
+	recordImportedTask RecordImportedTaskFunc,
 	attachments AttachmentReader,
 ) *Service {
 	return &Service{
@@ -97,6 +110,7 @@ func NewService(
 		linearAPIBaseURL:       linearAPIBaseURL,
 		logger:                 logger,
 		recordUpdateActivities: recordUpdateActivities,
+		recordImportedTask:     recordImportedTask,
 		attachments:            attachments,
 		linearAssets:           linearAssetCache{urls: map[string]string{}},
 	}

@@ -54,6 +54,20 @@ func TestValidateDeviceIDs(t *testing.T) {
 	})
 }
 
+func TestUniqueDeviceIDs(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	first := gid.New(tenantID, coredata.DeviceEntityType)
+	second := gid.New(tenantID, coredata.DeviceEntityType)
+
+	require.Equal(
+		t,
+		[]gid.GID{first, second},
+		uniqueDeviceIDs([]gid.GID{first, second, first}),
+	)
+}
+
 func deviceIDsOverEveryLimit(max int) []gid.GID {
 	tenantID := gid.NewTenantID()
 

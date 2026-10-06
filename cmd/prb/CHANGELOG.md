@@ -4,6 +4,20 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- `task create` accepts `--linear-team` to publish the task to a Linear
+  team. Omit it to use the organization's default Linear team.
+  `--no-linear-team` creates the task with no Linear team
+- `task update-linear-settings` sets the organization's default Linear
+  team and whether new issues on that team are imported
+
+### Changed
+
+- `task create` prints the created task and reports a failed Linear
+  publish on stderr. The command still exits successfully because the
+  task exists
+
 ## [0.249.0] - 2026-10-15
 
 ### Added

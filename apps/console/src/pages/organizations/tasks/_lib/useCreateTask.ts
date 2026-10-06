@@ -69,6 +69,7 @@ export function useCreateTask() {
       state?: TaskState;
       priority: TaskPriority;
       internalControlIds?: readonly string[] | null;
+      linearTeamId?: string | null;
     },
     connectionId: string,
   ) {
@@ -96,6 +97,9 @@ export function useCreateTask() {
           state: input.state,
           priority: input.priority,
           internalControlIds: internalControlIds.length > 0 ? [...internalControlIds] : undefined,
+          ...(input.linearTeamId !== undefined
+            ? { linearTeamId: input.linearTeamId }
+            : {}),
         },
       },
       updater: store => insertTaskEdgeSorted(store, [...connections]),
