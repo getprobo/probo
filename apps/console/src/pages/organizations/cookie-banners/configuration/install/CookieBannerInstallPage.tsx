@@ -21,40 +21,42 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
+import type { CookieBannerInstallPageQuery } from "#/__generated__/core/CookieBannerInstallPageQuery.graphql";
 
-import { BannerSettingsForm } from "./_components/BannerSettingsForm";
-import { CodeSnippets } from "./_components/CodeSnippets";
+import { cookieBannerPage } from "../../variants";
 
-export const cookieBannerSettingsPageQuery = graphql`
-  query CookieBannerSettingsPageQuery($cookieBannerId: ID!) {
-    node(id: $cookieBannerId) {
+import { InstallSnippetSection } from "./_components/InstallSnippetSection";
+
+export const cookieBannerInstallPageQuery = graphql`
+  query CookieBannerInstallPageQuery($cookieBannerId: ID!) {
+    node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
-        ...BannerSettingsForm_cookieBanner
-        ...CodeSnippets_cookieBanner
+        ...InstallSnippetSection_cookieBanner
       }
     }
   }
 `;
 
-interface CookieBannerSettingsPageProps {
-  queryRef: PreloadedQuery<CookieBannerSettingsPageQuery>;
+interface CookieBannerInstallPageProps {
+  queryRef: PreloadedQuery<CookieBannerInstallPageQuery>;
 }
 
-export default function CookieBannerSettingsPage({
+export function CookieBannerInstallPage({
   queryRef,
-}: CookieBannerSettingsPageProps) {
-  const data = usePreloadedQuery<CookieBannerSettingsPageQuery>(cookieBannerSettingsPageQuery, queryRef);
+}: CookieBannerInstallPageProps) {
+  const data = usePreloadedQuery<CookieBannerInstallPageQuery>(
+    cookieBannerInstallPageQuery,
+    queryRef,
+  );
 
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
   }
 
   return (
-    <div className="space-y-8">
-      <BannerSettingsForm cookieBannerKey={data.node} />
-      <CodeSnippets cookieBannerKey={data.node} />
+    <div className={cookieBannerPage()}>
+      <InstallSnippetSection cookieBannerKey={data.node} />
     </div>
   );
 }

@@ -18,17 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, useToast } from "@probo/ui";
+import { CopyIcon } from "@phosphor-icons/react";
+import { useToast } from "@probo/ui";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CodeSnippets_cookieBanner$key } from "#/__generated__/core/CodeSnippets_cookieBanner.graphql";
+import type { InstallSnippetSection_cookieBanner$key } from "#/__generated__/core/InstallSnippetSection_cookieBanner.graphql";
 
+import { cookieBannerInstallSection } from "../../../variants";
 import { cookieBannerEmbedSnippet } from "../_lib/embedSnippet";
 
-const codeSnippetsFragment = graphql`
-  fragment CodeSnippets_cookieBanner on CookieBanner {
+const fragment = graphql`
+  fragment InstallSnippetSection_cookieBanner on CookieBanner {
     id
     capabilities {
       tcf
@@ -36,14 +43,17 @@ const codeSnippetsFragment = graphql`
   }
 `;
 
-interface CodeSnippetsProps {
-  cookieBannerKey: CodeSnippets_cookieBanner$key;
+interface InstallSnippetSectionProps {
+  cookieBannerKey: InstallSnippetSection_cookieBanner$key;
 }
 
-export function CodeSnippets({ cookieBannerKey }: CodeSnippetsProps) {
+export function InstallSnippetSection({
+  cookieBannerKey,
+}: InstallSnippetSectionProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
-  const banner = useFragment(codeSnippetsFragment, cookieBannerKey);
+  const { root, intro, snippetWrap, snippet, snippetCopy } = cookieBannerInstallSection();
+  const banner = useFragment(fragment, cookieBannerKey);
   const baseUrl = new URL("/api/cookie-banner/v1", window.location.origin).href;
   const code = cookieBannerEmbedSnippet({
     bannerId: banner.id,
@@ -51,8 +61,8 @@ export function CodeSnippets({ cookieBannerKey }: CodeSnippetsProps) {
     tcf: banner.capabilities.tcf,
   });
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code).then(
+  function handleCopy() {
+    void navigator.clipboard.writeText(code).then(
       () => {
         toast({
           title: t("codeSnippets.messages.copiedTitle"),
@@ -68,43 +78,55 @@ export function CodeSnippets({ cookieBannerKey }: CodeSnippetsProps) {
         });
       },
     );
-  };
+  }
 
   return (
-    <div className="space-y-3">
-      <h3 className="font-medium">{t("codeSnippets.title")}</h3>
-      {banner.capabilities.tcf
-        ? (
-            <p className="text-sm text-txt-secondary">{t("codeSnippets.tcfNote")}</p>
-          )
-        : null}
-      <Card className="rounded-lg border">
-        <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
-          <Button variant="secondary" onClick={handleCopy}>
-            {t("codeSnippets.actions.copy")}
-          </Button>
+    <section className={root()}>
+      <div className={intro()}>
+        <Heading level={2} size={4} weight="medium" highContrast>
+          {t("installPage.title")}
+        </Heading>
+        <Text size={2} color="faint">
+          {t("installPage.description")}
+        </Text>
+        {banner.capabilities.tcf && (
+          <Text size={2} color="faint">
+            {t("codeSnippets.tcfNote")}
+          </Text>
+        )}
+      </div>
+      <Card size={2} variant="soft">
+        <div className={snippetWrap()}>
+          <IconButton
+            variant="surface"
+            color="neutral"
+            size={1}
+            className={snippetCopy()}
+            aria-label={t("codeSnippets.actions.copy")}
+            onClick={handleCopy}
+          >
+            <CopyIcon />
+          </IconButton>
+          <pre className={snippet()}>
+            <code>{code}</code>
+          </pre>
         </div>
-        <pre className="overflow-x-auto p-4 text-sm font-mono rounded-b-lg text-invert bg-accent">
-          <code>{code}</code>
-        </pre>
       </Card>
-
-      <p className="text-sm text-txt-secondary">
+      <Text size={2} color="faint">
         <Trans
           ns="organizations/cookie-banners"
           i18nKey="codeSnippets.documentation"
           components={{
             link: (
-              <a
+              <Anchor
                 href="https://www.probo.com/docs/product/cookie-banner/javascript-sdk"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-txt-primary underline hover:no-underline"
               />
             ),
           }}
         />
-      </p>
-    </div>
+      </Text>
+    </section>
   );
 }

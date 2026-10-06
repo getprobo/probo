@@ -18,36 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
+import { cookieBannerInstallSection, cookieBannerPage } from "../../variants";
 
-import { CookieBannerConfigLayout, cookieBannerConfigLayoutQuery } from "./CookieBannerConfigLayout";
-import { CookieBannerConfigLayoutSkeleton } from "./CookieBannerConfigLayoutSkeleton";
-
-export default function CookieBannerConfigLayoutLoader() {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (typeof cookieBannerId !== "string") {
-    throw new Error("Missing cookieBannerId parameter");
-  }
-
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerConfigLayoutQuery>(
-    cookieBannerConfigLayoutQuery,
-  );
-
-  useEffect(() => {
-    loadQuery({ cookieBannerId });
-  }, [loadQuery, cookieBannerId]);
-
-  if (!queryRef) {
-    return <CookieBannerConfigLayoutSkeleton />;
-  }
+export function CookieBannerInstallPageSkeleton() {
+  const { root, intro } = cookieBannerInstallSection();
 
   return (
-    <Suspense fallback={<CookieBannerConfigLayoutSkeleton />}>
-      <CookieBannerConfigLayout queryRef={queryRef} />
-    </Suspense>
+    <div className={cookieBannerPage()}>
+      <section className={root()}>
+        <div className={intro()}>
+          <HeadingSkeleton size={4} className="w-40" />
+          <TextSkeleton size={2} className="w-full max-w-xl" />
+        </div>
+        <CardSkeleton size={2} className="h-40" />
+      </section>
+    </div>
   );
 }

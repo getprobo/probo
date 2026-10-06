@@ -23,12 +23,15 @@ import type { AppRoute } from "@probo/routes";
 import { Fragment } from "react";
 import { redirect } from "react-router";
 
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
 import { CookieBannerConsentRecordsPageSkeleton } from "./configuration/consent-records/CookieBannerConsentRecordsPageSkeleton";
+import { CookieBannerConfigLayoutSkeleton } from "./configuration/CookieBannerConfigLayoutSkeleton";
+import { CookieBannerInstallPageSkeleton } from "./configuration/install/CookieBannerInstallPageSkeleton";
 import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/CookieBannerResourcesPageSkeleton";
+import { CookieBannerConfigurePageSkeleton } from "./configuration/settings/CookieBannerConfigurePageSkeleton";
 import { CookieBannerTrackersPageSkeleton } from "./configuration/trackers/CookieBannerTrackersPageSkeleton";
+import { CookieBannerTranslationsPageSkeleton } from "./configuration/translations/CookieBannerTranslationsPageSkeleton";
 import { CookieBannerTCFPageSkeleton } from "./tcf/CookieBannerTCFPageSkeleton";
 
 export const cookieBannerRoutes = [
@@ -38,29 +41,24 @@ export const cookieBannerRoutes = [
     Component: lazy(() => import("#/pages/organizations/cookie-banners/NewCookieBannerPage")),
   },
   {
-    path: "cookie-banners/:cookieBannerId/configure",
-    Fallback: PageSkeleton,
+    path: "cookie-banners/:cookieBannerId",
+    Fallback: CookieBannerConfigLayoutSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigLayoutLoader")),
     children: [
       {
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigureLayout")),
-        children: [
-          {
-            path: "",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerSettingsPageLoader")),
-          },
-          {
-            path: "display",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/display/CookieBannerDisplayPageLoader")),
-          },
-          {
-            path: "translations",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/translations/CookieBannerTranslationsPageLoader")),
-          },
-        ],
+        path: "install",
+        Fallback: CookieBannerInstallPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/install/CookieBannerInstallPageLoader")),
+      },
+      {
+        path: "configure",
+        Fallback: CookieBannerConfigurePageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerConfigurePageLoader")),
+      },
+      {
+        path: "translations",
+        Fallback: CookieBannerTranslationsPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/translations/CookieBannerTranslationsPageLoader")),
       },
     ],
   },

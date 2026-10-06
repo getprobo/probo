@@ -50,6 +50,7 @@
     }
   },
   "translationsPage": {
+    "language": "Taal",
     "necessaryFallback": "Noodzakelijk",
     "languageDefault": "{{language}} (standaard)",
     "defaultLanguageDescription": "Dit is de standaardtaal. Deze vertalingen worden getoond wanneer de taal van een bezoeker niet beschikbaar is."
@@ -110,6 +111,10 @@
     "actions": { "previous": "Vorige", "next": "Volgende" },
     "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd." },
     "emptyFiltered": "Geen overeenkomende trackers"
+  },
+  "installPage": {
+    "title": "Installeren",
+    "description": "Voeg deze snippet toe aan je site zodat de banner kan laden en toestemming kan vastleggen."
   },
   "codeSnippets": {
     "title": "JavaScript-snippet",
@@ -225,11 +230,11 @@
     "draft": " (concept)",
     "metadata": { "origin": "Origin", "id": "ID", "cookiePolicy": "Cookiebeleid" },
     "messages": { "successTitle": "Gelukt", "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
-    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt" },
+    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen" },
-    "tabs": { "display": "Weergave", "settings": "Instellingen", "translations": "Vertalingen" }
+    "actions": { "publishing": "Bezig met publiceren...", "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "more": "Meer acties", "copyId": "Banner-ID kopiëren" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nieuwe cookiebanner",

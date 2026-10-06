@@ -50,6 +50,7 @@
     }
   },
   "translationsPage": {
+    "language": "Langue",
     "necessaryFallback": "Nécessaire",
     "languageDefault": "{{language}} (par défaut)",
     "defaultLanguageDescription": "Il s’agit de la langue par défaut. Ces traductions sont affichées lorsque la langue d’un visiteur n’est pas disponible."
@@ -110,6 +111,10 @@
     "actions": { "previous": "Précédent", "next": "Suivant" },
     "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés." },
     "emptyFiltered": "Aucun traceur correspondant"
+  },
+  "installPage": {
+    "title": "Installer",
+    "description": "Ajoutez cet extrait à votre site pour que la bannière puisse se charger et enregistrer le consentement."
   },
   "codeSnippets": {
     "title": "Extrait JavaScript",
@@ -225,11 +230,11 @@
     "draft": " (brouillon)",
     "metadata": { "origin": "Origine", "id": "ID", "cookiePolicy": "Politique de cookies" },
     "messages": { "successTitle": "Succès", "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
-    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "delete": "Échec de la suppression de la bannière de cookies" },
+    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
+    "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publishing": "Publication...", "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer" },
-    "tabs": { "display": "Affichage", "settings": "Paramètres", "translations": "Traductions" }
+    "actions": { "publishing": "Publication...", "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "more": "Plus d’actions", "copyId": "Copier l’ID de la bannière" }
   },
   "newCookieBannerPage": {
     "pageTitle": "Nouvelle bannière de cookies",

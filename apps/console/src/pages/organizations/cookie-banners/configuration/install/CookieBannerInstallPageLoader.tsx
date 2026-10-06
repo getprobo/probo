@@ -18,42 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconGlobe, IconPageTextLine, IconSettingsGear2, TabLink, Tabs } from "@probo/ui";
-import { useTranslation } from "react-i18next";
-import { Outlet, useParams } from "react-router";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
+import { useParams } from "react-router";
 
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { CookieBannerInstallPageQuery } from "#/__generated__/core/CookieBannerInstallPageQuery.graphql";
 
-import { cookieBannerPath } from "../_lib/cookieBannerPaths";
+import { CookieBannerInstallPage, cookieBannerInstallPageQuery } from "./CookieBannerInstallPage";
+import { CookieBannerInstallPageSkeleton } from "./CookieBannerInstallPageSkeleton";
 
-export default function CookieBannerConfigureLayout() {
-  const { t } = useTranslation("organizations/cookie-banners");
-  const organizationId = useOrganizationId();
+export default function CookieBannerInstallPageLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-
-  if (cookieBannerId == null) {
-    throw new Error(":cookieBannerId missing in route params");
+  if (typeof cookieBannerId !== "string") {
+    throw new Error("Missing cookieBannerId parameter");
   }
 
-  const prefix = cookieBannerPath(organizationId, cookieBannerId);
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerInstallPageQuery>(
+    cookieBannerInstallPageQuery,
+  );
+
+  useEffect(() => {
+    loadQuery({ cookieBannerId });
+  }, [loadQuery, cookieBannerId]);
+
+  if (!queryRef) {
+    return <CookieBannerInstallPageSkeleton />;
+  }
 
   return (
-    <>
-      <Tabs>
-        <TabLink to={`${prefix}/configure`} end>
-          <IconSettingsGear2 size={20} />
-          {t("configLayout.tabs.settings")}
-        </TabLink>
-        <TabLink to={`${prefix}/configure/display`}>
-          <IconPageTextLine size={20} />
-          {t("configLayout.tabs.display")}
-        </TabLink>
-        <TabLink to={`${prefix}/configure/translations`}>
-          <IconGlobe size={20} />
-          {t("configLayout.tabs.translations")}
-        </TabLink>
-      </Tabs>
-      <Outlet />
-    </>
+    <Suspense fallback={<CookieBannerInstallPageSkeleton />}>
+      <CookieBannerInstallPage queryRef={queryRef} />
+    </Suspense>
   );
 }

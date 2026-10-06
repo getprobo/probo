@@ -37,6 +37,8 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import type { NewCookieBannerPageMutation } from "#/__generated__/core/NewCookieBannerPageMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { cookieBannerInstallPath } from "./_lib/cookieBannerPaths";
+
 const createCookieBannerMutation = graphql`
   mutation NewCookieBannerPageMutation(
     $input: CreateCookieBannerInput!
@@ -97,7 +99,7 @@ export default function NewCookieBannerPage() {
           variant: "success",
         });
         const bannerId = data.createCookieBanner.cookieBannerEdge.node.id;
-        void navigate(`/organizations/${organizationId}/privacy/cookie-banners/${bannerId}/configure`);
+        void navigate(cookieBannerInstallPath(organizationId, bannerId));
       },
       onError(error) {
         toast({

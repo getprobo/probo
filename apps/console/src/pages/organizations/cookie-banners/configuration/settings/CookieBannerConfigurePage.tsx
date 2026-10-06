@@ -21,18 +21,20 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerDisplayPageQuery } from "#/__generated__/core/CookieBannerDisplayPageQuery.graphql";
+import type { CookieBannerConfigurePageQuery } from "#/__generated__/core/CookieBannerConfigurePageQuery.graphql";
 
 import { cookieBannerPage } from "../../variants";
 
+import { BannerSettingsForm } from "./_components/BannerSettingsForm";
 import { CategoryList } from "./_components/CategoryList";
 import { ThemeSection } from "./_components/ThemeSection";
 
-export const cookieBannerDisplayPageQuery = graphql`
-  query CookieBannerDisplayPageQuery($cookieBannerId: ID!) {
+export const cookieBannerConfigurePageQuery = graphql`
+  query CookieBannerConfigurePageQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
+        ...BannerSettingsForm_cookieBanner
         ...CategoryList_cookieBanner
         ...ThemeSection_cookieBanner
       }
@@ -40,15 +42,15 @@ export const cookieBannerDisplayPageQuery = graphql`
   }
 `;
 
-interface CookieBannerDisplayPageProps {
-  queryRef: PreloadedQuery<CookieBannerDisplayPageQuery>;
+interface CookieBannerConfigurePageProps {
+  queryRef: PreloadedQuery<CookieBannerConfigurePageQuery>;
 }
 
-export function CookieBannerDisplayPage({
+export function CookieBannerConfigurePage({
   queryRef,
-}: CookieBannerDisplayPageProps) {
-  const data = usePreloadedQuery<CookieBannerDisplayPageQuery>(
-    cookieBannerDisplayPageQuery,
+}: CookieBannerConfigurePageProps) {
+  const data = usePreloadedQuery<CookieBannerConfigurePageQuery>(
+    cookieBannerConfigurePageQuery,
     queryRef,
   );
 
@@ -58,6 +60,7 @@ export function CookieBannerDisplayPage({
 
   return (
     <div className={cookieBannerPage()}>
+      <BannerSettingsForm cookieBannerKey={data.node} />
       <CategoryList cookieBannerKey={data.node} />
       <ThemeSection cookieBannerKey={data.node} />
     </div>

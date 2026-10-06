@@ -24,14 +24,26 @@ import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { cookieBannerDisplaySection, cookieBannerPage, cookieBannerThemeSection } from "../../variants";
+import {
+  cookieBannerDisplaySection,
+  cookieBannerPage,
+  cookieBannerSettingsSection,
+  cookieBannerThemeSection,
+} from "../../variants";
 
-export function CookieBannerDisplayPageSkeleton() {
+export function CookieBannerConfigurePageSkeleton() {
+  const settings = cookieBannerSettingsSection();
   const categories = cookieBannerDisplaySection();
   const theme = cookieBannerThemeSection();
 
   return (
     <div className={cookieBannerPage()}>
+      <section className={settings.root()}>
+        <div className={settings.intro()}>
+          <HeadingSkeleton size={4} className="w-24" />
+        </div>
+        <CardSkeleton size={2} className="h-80" />
+      </section>
       <section className={categories.root()}>
         <div className={categories.intro()}>
           <div className={categories.heading()}>

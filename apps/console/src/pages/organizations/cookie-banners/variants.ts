@@ -30,6 +30,58 @@ export const cookieBannerPageHeader = tv({
   },
 });
 
+export const cookieBannerConfigLayout = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex flex-col gap-3",
+    titleRow: "flex items-start justify-between gap-4",
+    title: "flex min-w-0 flex-wrap items-baseline gap-2",
+    version: "font-mono",
+    meta: "flex flex-wrap items-center gap-x-3 gap-y-1",
+    id: "flex items-center gap-1",
+    actions: "flex shrink-0 flex-wrap items-center justify-end gap-2",
+  },
+});
+
+export const cookieBannerInstallSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    snippetWrap: "relative",
+    snippet: "overflow-x-auto pr-9 font-mono text-2 text-sand-12",
+    snippetCopy: "absolute top-0 right-0",
+  },
+});
+
+export const cookieBannerSettingsSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    fields: "flex flex-col gap-4",
+    field: "flex flex-col gap-1",
+    pair: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 *:min-w-0",
+    toggle: "flex items-start justify-between gap-4",
+    toggleCopy: "flex flex-col gap-1",
+    actions: "flex justify-end",
+  },
+});
+
+export const cookieBannerTranslationsPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    toolbar: "flex items-center gap-3",
+    language: "w-64 max-sm:w-full",
+    form: "flex flex-col gap-8",
+    section: "flex flex-col gap-4",
+    split: "grid grid-cols-2 gap-6 max-lg:grid-cols-1",
+    fields: "flex flex-col gap-4",
+    pair: "grid grid-cols-2 gap-3 max-sm:grid-cols-1 *:min-w-0",
+    preview: "flex items-start justify-center rounded-3 bg-sand-3 p-6",
+    categoryGrid: "grid grid-cols-2 gap-4 max-sm:grid-cols-1",
+    actions: "flex justify-end",
+  },
+});
+
 export const cookieBannerList = tv({
   slots: {
     root: "flex flex-col gap-4",

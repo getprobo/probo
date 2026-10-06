@@ -30,6 +30,22 @@ export function cookieBannerPath(organizationId: string, cookieBannerId: string)
   return `${cookieBannersBasePath(organizationId)}/${cookieBannerId}`;
 }
 
+export function cookieBannersNewPath(organizationId: string): string {
+  return `${cookieBannersBasePath(organizationId)}/new`;
+}
+
+export function cookieBannerInstallPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/install`;
+}
+
+export function cookieBannerConfigurePath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/configure`;
+}
+
+export function cookieBannerTranslationsPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/translations`;
+}
+
 export function cookieBannerTCFPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannerPath(organizationId, cookieBannerId)}/tcf`;
 }

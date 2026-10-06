@@ -18,32 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
-import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 
-import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { cookieBannerTranslationsPage } from "../../variants";
 
-import CookieBannerSettingsPage, { cookieBannerSettingsPageQuery } from "./CookieBannerSettingsPage";
-
-export default function CookieBannerSettingsPageLoader() {
-  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerSettingsPageQuery>(cookieBannerSettingsPageQuery);
-
-  useEffect(() => {
-    if (cookieBannerId) {
-      loadQuery({ cookieBannerId });
-    }
-  }, [loadQuery, cookieBannerId]);
-
-  if (!queryRef) {
-    return <PageSkeleton />;
-  }
+export function CookieBannerTranslationsPageSkeleton() {
+  const { root, toolbar, language, section, split } = cookieBannerTranslationsPage();
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
-      <CookieBannerSettingsPage queryRef={queryRef} />
-    </Suspense>
+    <div className={root()}>
+      <div className={toolbar()}>
+        <div className={language()}>
+          <SelectSkeleton size={2} />
+        </div>
+      </div>
+      <section className={section()}>
+        <HeadingSkeleton size={4} className="w-24" />
+        <div className={split()}>
+          <CardSkeleton size={2} className="h-72" />
+          <CardSkeleton size={2} className="h-72" />
+        </div>
+      </section>
+      <section className={section()}>
+        <HeadingSkeleton size={4} className="w-40" />
+        <div className={split()}>
+          <CardSkeleton size={2} className="h-72" />
+          <CardSkeleton size={2} className="h-72" />
+        </div>
+      </section>
+    </div>
   );
 }
