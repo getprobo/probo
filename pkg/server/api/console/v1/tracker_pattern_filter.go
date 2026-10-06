@@ -18,25 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toggle as BaseToggle } from "@base-ui/react/toggle";
-import type { ComponentProps } from "react";
+package console_v1
 
-import { useSegmentedControlContext } from "./context";
-import { segmentedControl } from "./variants";
+import (
+	"context"
 
-export type SegmentedControlItemProps
-  = & Omit<ComponentProps<typeof BaseToggle>, "className">
-    & {
-      className?: string;
-      // Identifies this item within the group; matched against the group value.
-      value: string;
-    };
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/gqlutils"
+)
 
-// A single segment. Pressed state is driven by Base UI (`data-pressed`).
-export function SegmentedControlItem(props: SegmentedControlItemProps) {
-  const { className, ...rest } = props;
-  const size = useSegmentedControlContext();
-  const { item } = segmentedControl({ size });
+func trackerPatternCoredataFilter(
+	ctx context.Context,
+	filter *types.TrackerPatternFilter,
+) (*coredata.TrackerPatternFilter, error) {
+	coredataFilter := types.NewCoredataTrackerPatternFilter(filter)
+	if filter == nil || filter.ThirdPartyID == nil {
+		return coredataFilter, nil
+	}
 
-  return <BaseToggle className={item({ className })} {...rest} />;
+	if filter.ThirdPartyID.EntityType() != coredata.CommonThirdPartyEntityType {
+		return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a CommonThirdParty")
+	}
+
+	return coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID), nil
 }

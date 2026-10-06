@@ -90,7 +90,7 @@ interface TrackerPatternListProps {
 
 export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { graphqlFilter, graphqlOrder, hasActiveFilters, setOrder } = useTrackersListFilters();
+  const { view, graphqlFilter, graphqlOrder, hasActiveFilters, setOrder } = useTrackersListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const [cookieBanner, refetch] = useRefetchableFragment<
@@ -131,7 +131,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
     startRefetchTransition(() => {
       refetch(
         { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
-        { fetchPolicy: "store-or-network" },
+        { fetchPolicy: "network-only" },
       );
     });
   }, [graphqlFilter, graphqlOrder, refetch]);
@@ -171,16 +171,22 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                         {t("trackersPage.emptyFiltered")}
                       </Text>
                     )
-                  : (
-                      <>
-                        <Text size={3} weight="medium" highContrast>
-                          {t("trackersPage.empty.title")}
-                        </Text>
+                  : view === "on-banner"
+                    ? (
                         <Text size={2} color="faint">
-                          {t("trackersPage.empty.description")}
+                          {t("trackersPage.empty.onBanner")}
                         </Text>
-                      </>
-                    )}
+                      )
+                    : (
+                        <>
+                          <Text size={3} weight="medium" highContrast>
+                            {t("trackersPage.empty.title")}
+                          </Text>
+                          <Text size={2} color="faint">
+                            {t("trackersPage.empty.description")}
+                          </Text>
+                        </>
+                      )}
               </div>
             </Card>
           )

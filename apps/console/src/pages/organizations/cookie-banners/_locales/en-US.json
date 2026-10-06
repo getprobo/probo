@@ -111,7 +111,8 @@
     "columns": { "name": "Name", "attribution": "Attribution", "source": "Source", "category": "Category", "maxAge": "Max age", "lastMatched": "Last matched" },
     "sort": { "name": "Sort by name", "source": "Sort by source", "lastMatched": "Sort by last matched" },
     "actions": { "previous": "Previous", "next": "Next" },
-    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected." },
+    "views": { "onBanner": "On banner", "allDetected": "All detected", "ariaLabel": "Tracker list view" },
+    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "onBanner": "No categorized trackers are shown on the banner." },
     "emptyFiltered": "No matching trackers"
   },
   "installPage": {

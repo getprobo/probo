@@ -111,7 +111,8 @@
     "columns": { "name": "Nom", "attribution": "Attribution", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal", "lastMatched": "Dernière correspondance" },
     "sort": { "name": "Trier par nom", "source": "Trier par source", "lastMatched": "Trier par dernière correspondance" },
     "actions": { "previous": "Précédent", "next": "Suivant" },
-    "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés." },
+    "views": { "onBanner": "Sur la bannière", "allDetected": "Tous les détectés", "ariaLabel": "Vue de la liste des traceurs" },
+    "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés.", "onBanner": "Aucun traceur catégorisé n’est affiché sur la bannière." },
     "emptyFiltered": "Aucun traceur correspondant"
   },
   "installPage": {

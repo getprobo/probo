@@ -18,25 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toggle as BaseToggle } from "@base-ui/react/toggle";
-import type { ComponentProps } from "react";
+import { createContext, useContext } from "react";
 
-import { useSegmentedControlContext } from "./context";
-import { segmentedControl } from "./variants";
+export type SegmentedControlSize = 1 | 2;
 
-export type SegmentedControlItemProps
-  = & Omit<ComponentProps<typeof BaseToggle>, "className">
-    & {
-      className?: string;
-      // Identifies this item within the group; matched against the group value.
-      value: string;
-    };
+const SegmentedControlContext = createContext<SegmentedControlSize>(2);
 
-// A single segment. Pressed state is driven by Base UI (`data-pressed`).
-export function SegmentedControlItem(props: SegmentedControlItemProps) {
-  const { className, ...rest } = props;
-  const size = useSegmentedControlContext();
-  const { item } = segmentedControl({ size });
+export const SegmentedControlProvider = SegmentedControlContext.Provider;
 
-  return <BaseToggle className={item({ className })} {...rest} />;
+export function useSegmentedControlContext() {
+  return useContext(SegmentedControlContext);
 }

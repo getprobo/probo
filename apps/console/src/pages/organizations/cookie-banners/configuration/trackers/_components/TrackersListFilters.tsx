@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CookieIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
+import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -33,6 +36,7 @@ import {
   type CookieSource,
   cookieSources,
   isCookieSource,
+  isTrackersListView,
   isTrackerType,
   type TrackerType,
   trackerTypes,
@@ -82,16 +86,18 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
   const { t } = useTranslation("organizations/cookie-banners");
   const cookieBanner = useFragment(trackersListFiltersFragment, cookieBannerKey);
   const {
+    view,
     source,
     type,
     category,
     party,
+    setView,
     setSource,
     setType,
     setCategory,
     setParty,
   } = useTrackersListFilters();
-  const { tools, filters, filter } = cookieBannerList();
+  const { views, tools, filters, filter } = cookieBannerList();
   const allSourcesLabel = t("trackersPage.sources.all");
   const allTypesLabel = t("trackersPage.types.all");
   const allCategoriesLabel = t("trackersPage.filters.allCategories");
@@ -99,131 +105,156 @@ export function TrackersListFilters({ cookieBannerKey }: TrackersListFiltersProp
   const categories = cookieBanner.categories.edges.map(edge => edge.node);
 
   return (
-    <div className={tools()}>
-      <TrackersListSearch />
-      <div className={filters()}>
-        <div className={filter()}>
-          <Select
-            value={party}
-            onValueChange={(value: string | null) => {
-              setParty(value);
-            }}
-          >
-            <SelectTrigger
-              size={2}
-              placeholder={allThirdPartiesLabel}
-              aria-label={t("trackersPage.filters.thirdParty")}
+    <>
+      <div className={views()}>
+        <SegmentedControl
+          size={1}
+          value={view}
+          aria-label={t("trackersPage.views.ariaLabel")}
+          onValueChange={(value) => {
+            if (isTrackersListView(value)) {
+              setView(value);
+            }
+          }}
+        >
+          <SegmentedControlItem value="on-banner">
+            <CookieIcon />
+            {t("trackersPage.views.onBanner")}
+          </SegmentedControlItem>
+          <SegmentedControlItem value="all">
+            <MagnifyingGlassIcon />
+            {t("trackersPage.views.allDetected")}
+          </SegmentedControlItem>
+        </SegmentedControl>
+      </div>
+      <div className={tools()}>
+        <TrackersListSearch />
+        <div className={filters()}>
+          {view === "all" && (
+            <div className={filter()}>
+              <Select
+                value={category}
+                onValueChange={(value: string | null) => {
+                  setCategory(value);
+                }}
+              >
+                <SelectTrigger
+                  size={2}
+                  placeholder={allCategoriesLabel}
+                  aria-label={t("trackersPage.filters.category")}
+                >
+                  {(value: string | null) => (
+                    value != null
+                      ? categories.find(item => item.id === value)?.name ?? allCategoriesLabel
+                      : allCategoriesLabel
+                  )}
+                </SelectTrigger>
+                <SelectPopup align="start">
+                  <SelectItem value={null}>{allCategoriesLabel}</SelectItem>
+                  {categories.map(item => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            </div>
+          )}
+          <div className={filter()}>
+            <Select
+              value={source}
+              onValueChange={(value: string | null) => {
+                if (value == null) {
+                  setSource(null);
+                  return;
+                }
+                if (isCookieSource(value)) {
+                  setSource(value);
+                }
+              }}
             >
-              {(value: string | null) => (
-                value != null
-                  ? cookieBanner.linkedThirdParties.find(item => item.id === value)?.name
-                  ?? allThirdPartiesLabel
-                  : allThirdPartiesLabel
-              )}
-            </SelectTrigger>
-            <SelectPopup align="start">
-              <SelectItem value={null}>{allThirdPartiesLabel}</SelectItem>
-              {cookieBanner.linkedThirdParties.map(item => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
-        </div>
-        <div className={filter()}>
-          <Select
-            value={type}
-            onValueChange={(value: string | null) => {
-              if (value == null) {
-                setType(null);
-                return;
-              }
-              if (isTrackerType(value)) {
-                setType(value);
-              }
-            }}
-          >
-            <SelectTrigger
-              size={2}
-              placeholder={allTypesLabel}
-              aria-label={t("trackersPage.filters.type")}
+              <SelectTrigger
+                size={2}
+                placeholder={allSourcesLabel}
+                aria-label={t("trackersPage.filters.source")}
+              >
+                {(value: CookieSource | null) => (
+                  value != null ? t(`trackersPage.sources.${sourceLabels[value]}`) : allSourcesLabel
+                )}
+              </SelectTrigger>
+              <SelectPopup align="start">
+                <SelectItem value={null}>{allSourcesLabel}</SelectItem>
+                {cookieSources.map(cookieSource => (
+                  <SelectItem key={cookieSource} value={cookieSource}>
+                    {t(`trackersPage.sources.${sourceLabels[cookieSource]}`)}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+          </div>
+          <div className={filter()}>
+            <Select
+              value={type}
+              onValueChange={(value: string | null) => {
+                if (value == null) {
+                  setType(null);
+                  return;
+                }
+                if (isTrackerType(value)) {
+                  setType(value);
+                }
+              }}
             >
-              {(value: TrackerType | null) => (
-                value != null ? t(`trackersPage.types.${typeLabels[value]}`) : allTypesLabel
-              )}
-            </SelectTrigger>
-            <SelectPopup align="start">
-              <SelectItem value={null}>{allTypesLabel}</SelectItem>
-              {trackerTypes.map(trackerType => (
-                <SelectItem key={trackerType} value={trackerType}>
-                  {t(`trackersPage.types.${typeLabels[trackerType]}`)}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
-        </div>
-        <div className={filter()}>
-          <Select
-            value={source}
-            onValueChange={(value: string | null) => {
-              if (value == null) {
-                setSource(null);
-                return;
-              }
-              if (isCookieSource(value)) {
-                setSource(value);
-              }
-            }}
-          >
-            <SelectTrigger
-              size={2}
-              placeholder={allSourcesLabel}
-              aria-label={t("trackersPage.filters.source")}
+              <SelectTrigger
+                size={2}
+                placeholder={allTypesLabel}
+                aria-label={t("trackersPage.filters.type")}
+              >
+                {(value: TrackerType | null) => (
+                  value != null ? t(`trackersPage.types.${typeLabels[value]}`) : allTypesLabel
+                )}
+              </SelectTrigger>
+              <SelectPopup align="start">
+                <SelectItem value={null}>{allTypesLabel}</SelectItem>
+                {trackerTypes.map(trackerType => (
+                  <SelectItem key={trackerType} value={trackerType}>
+                    {t(`trackersPage.types.${typeLabels[trackerType]}`)}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+          </div>
+          <div className={filter()}>
+            <Select
+              value={party}
+              onValueChange={(value: string | null) => {
+                setParty(value);
+              }}
             >
-              {(value: CookieSource | null) => (
-                value != null ? t(`trackersPage.sources.${sourceLabels[value]}`) : allSourcesLabel
-              )}
-            </SelectTrigger>
-            <SelectPopup align="start">
-              <SelectItem value={null}>{allSourcesLabel}</SelectItem>
-              {cookieSources.map(cookieSource => (
-                <SelectItem key={cookieSource} value={cookieSource}>
-                  {t(`trackersPage.sources.${sourceLabels[cookieSource]}`)}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
-        </div>
-        <div className={filter()}>
-          <Select
-            value={category}
-            onValueChange={(value: string | null) => {
-              setCategory(value);
-            }}
-          >
-            <SelectTrigger
-              size={2}
-              placeholder={allCategoriesLabel}
-              aria-label={t("trackersPage.filters.category")}
-            >
-              {(value: string | null) => (
-                value != null
-                  ? categories.find(item => item.id === value)?.name ?? allCategoriesLabel
-                  : allCategoriesLabel
-              )}
-            </SelectTrigger>
-            <SelectPopup align="start">
-              <SelectItem value={null}>{allCategoriesLabel}</SelectItem>
-              {categories.map(item => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
+              <SelectTrigger
+                size={2}
+                placeholder={allThirdPartiesLabel}
+                aria-label={t("trackersPage.filters.thirdParty")}
+              >
+                {(value: string | null) => (
+                  value != null
+                    ? cookieBanner.linkedThirdParties.find(item => item.id === value)?.name
+                    ?? allThirdPartiesLabel
+                    : allThirdPartiesLabel
+                )}
+              </SelectTrigger>
+              <SelectPopup align="start">
+                <SelectItem value={null}>{allThirdPartiesLabel}</SelectItem>
+                {cookieBanner.linkedThirdParties.map(item => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

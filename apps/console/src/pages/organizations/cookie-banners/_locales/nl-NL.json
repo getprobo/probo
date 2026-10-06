@@ -111,7 +111,8 @@
     "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "lastMatched": "Laatst overeengekomen" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron", "lastMatched": "Sorteren op laatst overeengekomen" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
-    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd." },
+    "views": { "onBanner": "Op banner", "allDetected": "Alle gedetecteerde", "ariaLabel": "Trackerlijstweergave" },
+    "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "onBanner": "Er worden geen gecategoriseerde trackers op de banner getoond." },
     "emptyFiltered": "Geen overeenkomende trackers"
   },
   "installPage": {

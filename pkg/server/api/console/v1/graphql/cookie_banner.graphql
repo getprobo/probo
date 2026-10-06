@@ -417,6 +417,16 @@ input TrackerPatternFilter
     common_tracker_patterns.
     """
     thirdPartyId: ID
+    """
+    When true, only excluded patterns. When false, only patterns
+    shown on the banner.
+    """
+    excluded: Boolean
+    """
+    When true, only patterns in a non-uncategorised category.
+    When false, only uncategorised patterns.
+    """
+    categorized: Boolean
 }
 
 type DetectedTracker implements Node {

@@ -269,18 +269,9 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	coredataFilter := coredata.NewTrackerPatternFilter(nil, nil, nil)
-	if filter != nil {
-		coredataFilter = coredata.NewTrackerPatternFilter(nil, filter.CookieCategoryID, nil)
-		coredataFilter = coredataFilter.WithQuery(filter.Query).WithSource(filter.Source).WithTrackerType(filter.TrackerType)
-
-		if filter.ThirdPartyID != nil {
-			if filter.ThirdPartyID.EntityType() != coredata.CommonThirdPartyEntityType {
-				return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a CommonThirdParty")
-			}
-
-			coredataFilter = coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID)
-		}
+	coredataFilter, err := trackerPatternCoredataFilter(ctx, filter)
+	if err != nil {
+		return nil, err
 	}
 
 	patterns, err := r.cookieBanner.ListTrackerPatternsForBanner(ctx, scope, obj.ID, cursor, coredataFilter)
@@ -1764,10 +1755,9 @@ func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *
 	case *cookieCategoryResolver:
 		count, err = r.cookieBanner.CountTrackerPatternsForCategory(ctx, scope, obj.ParentID)
 	default:
-		filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
-		if obj.Filter != nil {
-			filter = coredata.NewTrackerPatternFilter(nil, obj.Filter.CookieCategoryID, nil)
-			filter = filter.WithQuery(obj.Filter.Query).WithSource(obj.Filter.Source).WithTrackerType(obj.Filter.TrackerType)
+		filter, filterErr := trackerPatternCoredataFilter(ctx, obj.Filter)
+		if filterErr != nil {
+			return 0, filterErr
 		}
 
 		count, err = r.cookieBanner.CountTrackerPatternsForBanner(ctx, scope, obj.ParentID, filter)

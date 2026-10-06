@@ -95,6 +95,7 @@ export const cookieBannerTranslationsPage = tv({
 export const cookieBannerList = tv({
   slots: {
     root: "flex flex-col gap-4",
+    views: "flex flex-wrap items-center",
     tools: "flex flex-wrap items-center justify-between gap-2",
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     filters: "flex flex-wrap items-center justify-end gap-2",
@@ -115,6 +116,8 @@ export const cookieBannerList = tv({
 export const cookieBannerListSkeleton = tv({
   slots: {
     root: "flex flex-col gap-4",
+    views: "flex flex-wrap items-center gap-2",
+    view: "h-8 w-28 animate-pulse rounded-2 bg-sand-3",
     tools: "flex flex-wrap items-center justify-between gap-2",
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     filters: "flex flex-wrap items-center justify-end gap-2",
