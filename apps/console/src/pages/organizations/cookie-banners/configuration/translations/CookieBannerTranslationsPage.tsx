@@ -186,9 +186,11 @@ export function CookieBannerTranslationsPage({
         necessaryCategoryName={necessaryCategoryName}
       />
       {selectedLanguage === banner.defaultLanguage && (
-        <Text size={2} color="faint">
-          {t("translationsPage.defaultLanguageDescription")}
-        </Text>
+        <p>
+          <Text size={2} color="faint">
+            {t("translationsPage.defaultLanguageDescription")}
+          </Text>
+        </p>
       )}
     </div>
   );

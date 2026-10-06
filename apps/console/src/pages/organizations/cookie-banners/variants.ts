@@ -56,7 +56,7 @@ export const cookieBannerInstallSection = tv({
     root: "flex flex-col gap-4",
     intro: "flex flex-col gap-1",
     snippetWrap: "relative",
-    snippet: "overflow-x-auto pr-9 font-mono text-2 text-sand-12",
+    snippet: "h-80 overflow-auto pr-9 font-mono text-2 text-sand-12",
     snippetCopy: "absolute top-0 right-0",
   },
 });

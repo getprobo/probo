@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
@@ -26,7 +27,7 @@ import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPa
 import { cookieBannerTranslationsPage } from "../../variants";
 
 export function CookieBannerTranslationsPageSkeleton() {
-  const { root, toolbar, language, section, split } = cookieBannerTranslationsPage();
+  const { root, toolbar, language, section, split, actions } = cookieBannerTranslationsPage();
 
   return (
     <div className={root()}>
@@ -50,6 +51,16 @@ export function CookieBannerTranslationsPageSkeleton() {
           <CardSkeleton size={2} className="h-72" />
         </div>
       </section>
+      <section className={section()}>
+        <HeadingSkeleton size={4} className="w-36" />
+        <div className={split()}>
+          <CardSkeleton size={2} className="h-56" />
+          <CardSkeleton size={2} className="h-56" />
+        </div>
+      </section>
+      <div className={actions()}>
+        <ButtonSkeleton size={2} className="w-24" />
+      </div>
     </div>
   );
 }

@@ -197,7 +197,12 @@ export function TrackerPatternListItem({
           excluded: !pattern.excluded,
         },
       },
-    }).catch(() => undefined);
+    }).then(
+      () => {
+        onMoved();
+      },
+      () => undefined,
+    );
   }
 
   const typeBadge = trackerTypeBadges[pattern.trackerType];

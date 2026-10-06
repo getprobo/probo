@@ -28,5 +28,6 @@ export function slugFromName(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, CATEGORY_SLUG_MAX_LENGTH);
+    .slice(0, CATEGORY_SLUG_MAX_LENGTH)
+    .replace(/-$/, "");
 }

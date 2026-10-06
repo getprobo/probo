@@ -27,7 +27,7 @@ export function CookieBannerInstallPageSkeleton() {
   return (
     <div className={cookieBannerPage()}>
       <CookieBannerPageHeaderSkeleton titleClassName="w-24" />
-      <CardSkeleton size={2} className="h-40" />
+      <CardSkeleton size={2} className="h-80" />
     </div>
   );
 }

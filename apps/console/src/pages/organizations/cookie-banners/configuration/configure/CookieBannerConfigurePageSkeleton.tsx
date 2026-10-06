@@ -63,6 +63,10 @@ export function CookieBannerConfigurePageSkeleton() {
         </div>
         <CardSkeleton size={2} className="h-56" />
         <CardSkeleton size={2} className="h-70" />
+        <div className={theme.snippetBar()}>
+          <ButtonSkeleton size={2} className="w-28" />
+        </div>
+        <CardSkeleton size={2} className="h-40" />
       </section>
     </div>
   );

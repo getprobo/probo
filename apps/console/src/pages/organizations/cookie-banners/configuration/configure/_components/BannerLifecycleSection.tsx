@@ -41,6 +41,8 @@ const bannerLifecycleSectionFragment = graphql`
     id
     name
     state
+    canActivate: permission(action: "core:cookie-banner:activate")
+    canDeactivate: permission(action: "core:cookie-banner:deactivate")
     canDelete: permission(action: "core:cookie-banner:delete")
   }
 `;
@@ -95,6 +97,7 @@ export function BannerLifecycleSection({
   );
 
   const isActive = banner.state === "ACTIVE";
+  const canToggle = isActive ? banner.canDeactivate : banner.canActivate;
 
   return (
     <div className={root()}>
@@ -115,24 +118,26 @@ export function BannerLifecycleSection({
           </Badge>
         </div>
         <div className={actions()}>
-          <Button
-            size={2}
-            variant="soft"
-            color="neutral"
-            disabled={isActivating || isDeactivating}
-            onClick={() => {
-              const mutate = isActive ? deactivate : activate;
-              void mutate({
-                variables: { input: { cookieBannerId: banner.id } },
-              }).catch(() => {
-                // Error toast is already shown by useMutation.
-              });
-            }}
-          >
-            {isActive
-              ? t("configLayout.actions.deactivate")
-              : t("configLayout.actions.activate")}
-          </Button>
+          {canToggle && (
+            <Button
+              size={2}
+              variant="soft"
+              color="neutral"
+              disabled={isActivating || isDeactivating}
+              onClick={() => {
+                const mutate = isActive ? deactivate : activate;
+                void mutate({
+                  variables: { input: { cookieBannerId: banner.id } },
+                }).catch(() => {
+                  // Error toast is already shown by useMutation.
+                });
+              }}
+            >
+              {isActive
+                ? t("configLayout.actions.deactivate")
+                : t("configLayout.actions.activate")}
+            </Button>
+          )}
           {banner.canDelete && !isActive && (
             <Button
               size={2}

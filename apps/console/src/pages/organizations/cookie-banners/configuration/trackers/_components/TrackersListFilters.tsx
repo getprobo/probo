@@ -43,8 +43,8 @@ import {
   useTrackersListFilters,
 } from "../_lib/useTrackersListFilters";
 
-import { TrackerTypeOption } from "./TrackerTypeBadge";
 import { TrackersListSearch } from "./TrackersListSearch";
+import { TrackerTypeOption } from "./TrackerTypeBadge";
 
 const trackersListFiltersFragment = graphql`
   fragment TrackersListFilters_cookieBanner on CookieBanner {

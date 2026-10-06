@@ -85,6 +85,14 @@ const updateMutation = graphql`
       }
       cookieBanner {
         id
+        categories(first: 100, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED }) {
+          edges {
+            node {
+              id
+              posthogConsent
+            }
+          }
+        }
         latestVersion {
           id
           version

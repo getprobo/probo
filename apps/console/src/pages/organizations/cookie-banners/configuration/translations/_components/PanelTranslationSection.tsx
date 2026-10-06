@@ -120,9 +120,9 @@ export function PanelTranslationSection({
                 </Field>
               )}
             />
-            <Text size={2} weight="medium" highContrast>
+            <Heading level={3} size={2} weight="medium" highContrast>
               {t("panelTranslationSection.accessibilityLabels")}
-            </Text>
+            </Heading>
             <div className={pair()}>
               <Controller
                 control={control}
@@ -193,9 +193,9 @@ export function PanelTranslationSection({
       </div>
       {categories.length > 0 && (
         <div className={fields()}>
-          <Text size={2} weight="medium" highContrast>
+          <Heading level={3} size={2} weight="medium" highContrast>
             {t("panelTranslationSection.categoryNames")}
-          </Text>
+          </Heading>
           <div className={categoryGrid()}>
             {categories.map(category => (
               <Card key={category.id} size={2} variant="soft">

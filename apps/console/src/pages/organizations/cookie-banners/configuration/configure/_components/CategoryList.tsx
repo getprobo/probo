@@ -24,12 +24,13 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { List } from "@probo/ui/src/v2/List/List";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment } from "react-relay";
+import { usePaginationFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CategoryList_cookieBanner$key } from "#/__generated__/core/CategoryList_cookieBanner.graphql";
+import type { CategoryListRefetchQuery } from "#/__generated__/core/CategoryListRefetchQuery.graphql";
 
 import { cookieBannerCategoriesSection } from "../../../variants";
 
@@ -37,10 +38,20 @@ import { CategoryCreateDialog } from "./CategoryCreateDialog";
 import { CategoryListItem } from "./CategoryListItem";
 
 const categoryListFragment = graphql`
-  fragment CategoryList_cookieBanner on CookieBanner {
+  fragment CategoryList_cookieBanner on CookieBanner
+  @argumentDefinitions(
+    first: { type: Int, defaultValue: 50 }
+    after: { type: CursorKey, defaultValue: null }
+  )
+  @refetchable(queryName: "CategoryListRefetchQuery") {
     id
     canCreate: permission(action: "core:cookie-category:create")
-    categories(first: 50, orderBy: { field: RANK, direction: ASC }, filter: { excludeKind: UNCATEGORISED })
+    categories(
+      first: $first
+      after: $after
+      orderBy: { field: RANK, direction: ASC }
+      filter: { excludeKind: UNCATEGORISED }
+    )
       @connection(key: "CategoryList_categories")
       @required(action: THROW) {
       __id
@@ -61,9 +72,20 @@ interface CategoryListProps {
 
 export function CategoryList({ cookieBannerKey }: CategoryListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const banner = useFragment(categoryListFragment, cookieBannerKey);
+  const { data: banner, hasNext, loadNext, isLoadingNext } = usePaginationFragment<
+    CategoryListRefetchQuery,
+    CategoryList_cookieBanner$key
+  >(categoryListFragment, cookieBannerKey);
   const { root, intro, heading, empty } = cookieBannerCategoriesSection();
   const [createOpen, setCreateOpen] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
+
+  useEffect(() => {
+    if (hasNext && !isLoadingNext) {
+      loadNext(50);
+    }
+  }, [hasNext, isLoadingNext, loadNext]);
+
   const connectionId = banner.categories.__id;
   const categories = banner.categories.edges.map(edge => edge.node);
   const lastRank = categories.length > 0 ? categories[categories.length - 1].rank : -1;
@@ -116,6 +138,8 @@ export function CategoryList({ cookieBannerKey }: CategoryListProps) {
                   isLast={index === categories.length - 1}
                   aboveRank={index > 0 ? categories[index - 1].rank : undefined}
                   belowRank={index < categories.length - 1 ? categories[index + 1].rank : undefined}
+                  isReordering={isReordering}
+                  onReorderingChange={setIsReordering}
                 />
               ))}
             </List>

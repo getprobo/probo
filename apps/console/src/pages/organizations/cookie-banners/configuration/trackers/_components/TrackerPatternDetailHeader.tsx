@@ -23,6 +23,7 @@ import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { useLocation, useParams } from "react-router";
@@ -35,7 +36,8 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerPath } from "../../../_lib/cookieBannerPaths";
 import { trackerPatternDetailHeader } from "../../../variants";
-import { cookieSourceBadges } from "../_lib/trackerBadges";
+import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
+
 import { TrackerTypeBadge } from "./TrackerTypeBadge";
 
 const trackerPatternDetailHeaderFragment = graphql`
@@ -128,7 +130,10 @@ export function TrackerPatternDetailHeader({
             {pattern.displayName}
           </Heading>
           <div className={badges()}>
-            <TrackerTypeBadge trackerType={pattern.trackerType} />
+            <TrackerTypeBadge trackerType={pattern.trackerType} tooltip={false} />
+            <Text size={2}>
+              {t(`trackerPatternRow.types.${trackerTypeBadges[pattern.trackerType].labelKey}`)}
+            </Text>
             {sourceBadge != null && (
               <Badge variant={sourceBadge.variant} color={sourceBadge.color}>
                 {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}

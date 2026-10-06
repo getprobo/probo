@@ -181,6 +181,7 @@ export function ThemeSection({ cookieBannerKey }: ThemeSectionProps) {
                   <TextField
                     size={2}
                     value={values[variable.key]}
+                    aria-label={t(`themeSection.variables.${variableLabelKey(variable.key)}`)}
                     onValueChange={value => setValue(variable.key, value)}
                   />
                 </div>

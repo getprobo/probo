@@ -83,6 +83,8 @@ interface CategoryListItemProps {
   isLast: boolean;
   aboveRank?: number;
   belowRank?: number;
+  isReordering: boolean;
+  onReorderingChange: (pending: boolean) => void;
 }
 
 export function CategoryListItem({
@@ -92,13 +94,15 @@ export function CategoryListItem({
   isLast,
   aboveRank,
   belowRank,
+  isReordering,
+  onReorderingChange,
 }: CategoryListItemProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const category = useFragment(fragment, categoryKey);
   const { title, description, actions } = cookieBannerCategoriesSection();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [reorderCategory, isReordering] = useMutation<CategoryListItemReorderMutation>(
+  const [reorderCategory] = useMutation<CategoryListItemReorderMutation>(
     reorderMutation,
     {
       errorToast: t("categoryListItem.errors.reorder"),
@@ -111,6 +115,7 @@ export function CategoryListItem({
       return;
     }
 
+    onReorderingChange(true);
     void reorderCategory({
       variables: {
         input: {
@@ -118,9 +123,14 @@ export function CategoryListItem({
           rank,
         },
       },
-    }).catch(() => {
-      // Error toast is already shown by useMutation.
-    });
+    }).then(
+      () => {
+        onReorderingChange(false);
+      },
+      () => {
+        onReorderingChange(false);
+      },
+    );
   }
 
   return (

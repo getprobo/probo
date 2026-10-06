@@ -151,11 +151,17 @@ export function BannerSettingsForm({ cookieBannerKey }: BannerSettingsFormProps)
           capabilities: { resourceReporting: resourceReportingEnabled },
         },
       },
-      onCompleted(_response, payloadErrors) {
+      onCompleted(response, payloadErrors) {
         const fieldErrors = toFieldErrors(payloadErrors);
         if (fieldErrors != null) {
           setErrors(fieldErrors);
+          return;
         }
+        const saved = response.updateCookieBanner.cookieBanner;
+        setName(saved.name);
+        setCookiePolicyUrl(saved.cookiePolicyUrl);
+        setPrivacyPolicyUrl(saved.privacyPolicyUrl ?? "");
+        setPublisherCountryCode(saved.publisherCountryCode);
       },
     }).catch(() => {
       // Field errors are mapped in onCompleted; other failures toast.

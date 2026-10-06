@@ -75,6 +75,7 @@ func TestTrackerPatternFilter_CategorizedAndExcluded(t *testing.T) {
 	uncategorisedID := gid.New(fx.scope.GetTenantID(), coredata.CookieCategoryEntityType)
 	now := time.Now().UTC()
 	uncategorisedSource := coredata.CookieSourceScript
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		category := &coredata.CookieCategory{
 			ID:              uncategorisedID,
@@ -122,13 +123,14 @@ func TestTrackerPatternFilter_CategorizedAndExcluded(t *testing.T) {
 		},
 	)
 
-	load := func(apply func(*coredata.TrackerPatternFilter)) []string {
+	load := func(t *testing.T, apply func(*coredata.TrackerPatternFilter)) []string {
 		t.Helper()
 
 		filter := coredata.NewTrackerPatternFilter(nil, nil, nil)
 		apply(filter)
 
 		var patterns coredata.TrackerPatterns
+
 		require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 			return patterns.LoadByCookieBannerID(
 				ctx,
@@ -151,7 +153,7 @@ func TestTrackerPatternFilter_CategorizedAndExcluded(t *testing.T) {
 	t.Run("on banner is categorized and not excluded", func(t *testing.T) {
 		t.Parallel()
 
-		names := load(func(filter *coredata.TrackerPatternFilter) {
+		names := load(t, func(filter *coredata.TrackerPatternFilter) {
 			filter.WithExcluded(new(false)).WithCategorized(new(true))
 		})
 
@@ -161,7 +163,7 @@ func TestTrackerPatternFilter_CategorizedAndExcluded(t *testing.T) {
 	t.Run("uncategorised only", func(t *testing.T) {
 		t.Parallel()
 
-		names := load(func(filter *coredata.TrackerPatternFilter) {
+		names := load(t, func(filter *coredata.TrackerPatternFilter) {
 			filter.WithCategorized(new(false))
 		})
 

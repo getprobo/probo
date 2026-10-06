@@ -419,7 +419,7 @@ input TrackerPatternFilter
     thirdPartyId: ID
     """
     When true, only excluded patterns. When false, only patterns
-    shown on the banner.
+    that are not excluded.
     """
     excluded: Boolean
     """

@@ -28,10 +28,12 @@ import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useTranslation } from "react-i18next";
+import { useRelayEnvironment } from "react-relay";
 import { useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { ConnectionHandler, fetchQuery, graphql } from "relay-runtime";
 
 import type { DeleteCookieBannerDialogMutation } from "#/__generated__/core/DeleteCookieBannerDialogMutation.graphql";
+import type { DeleteCookieBannerDialogRemainingQuery } from "#/__generated__/core/DeleteCookieBannerDialogRemainingQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -51,6 +53,23 @@ const deleteMutation = graphql`
   }
 `;
 
+const remainingBannersQuery = graphql`
+  query DeleteCookieBannerDialogRemainingQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      __typename
+      ... on Organization {
+        cookieBanners(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 interface DeleteCookieBannerDialogProps {
   cookieBannerId: string;
   name: string;
@@ -66,6 +85,7 @@ export function DeleteCookieBannerDialog({
 }: DeleteCookieBannerDialogProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const navigate = useNavigate();
+  const environment = useRelayEnvironment();
   const organizationId = useOrganizationId();
   const [deleteCookieBanner, isDeleting] = useMutation<DeleteCookieBannerDialogMutation>(
     deleteMutation,
@@ -80,30 +100,33 @@ export function DeleteCookieBannerDialog({
   );
 
   function handleDelete() {
-    let nextPath = cookieBannersNewPath(organizationId);
     void deleteCookieBanner({
       variables: {
         input: { cookieBannerId },
         connections: [connectionId],
       },
-      updater(store) {
-        const connection = store.get(connectionId);
-        if (connection == null) {
-          return;
-        }
-        const edges = connection.getLinkedRecords("edges") ?? [];
-        for (const edge of edges) {
-          const id = edge?.getLinkedRecord("node")?.getDataID();
-          if (typeof id === "string" && id !== cookieBannerId) {
-            nextPath = cookieBannerConfigurePath(organizationId, id);
-            return;
-          }
-        }
-      },
     }).then(
-      () => {
+      async () => {
         onOpenChange(false);
-        void navigate(nextPath);
+        const fallbackPath = cookieBannersNewPath(organizationId);
+        try {
+          const data = await fetchQuery<DeleteCookieBannerDialogRemainingQuery>(
+            environment,
+            remainingBannersQuery,
+            { organizationId },
+            { fetchPolicy: "network-only" },
+          ).toPromise();
+          const remainingId = data?.organization?.__typename === "Organization"
+            ? data.organization.cookieBanners?.edges[0]?.node.id
+            : undefined;
+          void navigate(
+            remainingId != null
+              ? cookieBannerConfigurePath(organizationId, remainingId)
+              : fallbackPath,
+          );
+        } catch {
+          void navigate(fallbackPath);
+        }
       },
       () => {
         // Error toast is already shown by useMutation.
