@@ -18,7 +18,6 @@ import (
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
-	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -9572,41 +9571,6 @@ func (r *Resolver) AwsConnectorSetupTool(ctx context.Context, req *mcp.CallToolR
 	}, nil
 }
 
-func (r *Resolver) CreateWorkloadIdentityConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateWorkloadIdentityConnectorInput) (*mcp.CallToolResult, types.CreateWorkloadIdentityConnectorOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
-	if err != nil {
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
-	}
-
-	if r.identityFederation == nil {
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
-	}
-
-	raw, err := r.workloadIdentitySettings(ctx, input)
-	if err != nil {
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, err
-	}
-
-	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
-		OrganizationID: input.OrganizationID,
-		Name:           input.Name,
-		Provider:       input.Provider,
-		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
-		Connection:     &connector.WorkloadIdentityConnection{},
-		RawSettings:    raw,
-	})
-	if err != nil {
-		return nil, types.CreateWorkloadIdentityConnectorOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create workload identity connector", err)
-	}
-
-	return nil, types.CreateWorkloadIdentityConnectorOutput{
-		Connector: types.NewConnector(
-			cnnctr,
-			r.connectorConnectionStatus(ctx, scope, cnnctr.ID),
-		),
-	}, nil
-}
-
 func (r *Resolver) GcpConnectorSetupTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GcpConnectorSetupInput) (*mcp.CallToolResult, types.GcpConnectorSetupOutput, error) {
 	if _, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate); err != nil {
 		return nil, types.GcpConnectorSetupOutput{}, err
@@ -10347,62 +10311,6 @@ func (r *Resolver) GetConnectorTool(ctx context.Context, req *mcp.CallToolReques
 	}, nil
 }
 
-func (r *Resolver) CreateOrganizationConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateOrganizationConnectorInput) (*mcp.CallToolResult, types.CreateOrganizationConnectorOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, probo.ActionConnectorCreate)
-	if err != nil {
-		return nil, types.CreateOrganizationConnectorOutput{}, err
-	}
-
-	if r.identityFederation == nil {
-		return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("identity federation is not configured in this deployment")
-	}
-
-	raw, err := r.organizationConnectorSettings(ctx, input)
-	if err != nil {
-		return nil, types.CreateOrganizationConnectorOutput{}, err
-	}
-
-	cnnctr, err := r.proboSvc.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
-		OrganizationID: input.OrganizationID,
-		Name:           input.Name,
-		Provider:       input.Provider,
-		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
-		Connection:     &connector.WorkloadIdentityConnection{},
-		RawSettings:    raw,
-	})
-	if err != nil {
-		return nil, types.CreateOrganizationConnectorOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create organization connector", err)
-	}
-
-	discovered := []*types.DiscoveredConnectorAccount{}
-
-	if err := r.accessReview.ProbeConnector(ctx, scope, cnnctr.ID); err != nil {
-		r.logger.WarnCtx(ctx, "organization connector probe failed", log.String("connector_id", cnnctr.ID.String()))
-	} else {
-		accounts, err := r.accessReview.DiscoverAccounts(ctx, scope, cnnctr.ID)
-		if err != nil {
-			r.logger.WarnCtx(ctx, "cannot discover organization connector accounts", log.String("connector_id", cnnctr.ID.String()))
-		} else {
-			discovered, err = labelDiscoveredAccounts(ctx, r.proboSvc.Connectors, scope, cnnctr.ID, accounts)
-			if err != nil {
-				r.logger.ErrorCtx(
-					ctx,
-					"cannot list connector account ids",
-					log.String("connector_id", cnnctr.ID.String()),
-					log.Error(err),
-				)
-
-				return nil, types.CreateOrganizationConnectorOutput{}, fmt.Errorf("internal server error")
-			}
-		}
-	}
-
-	return nil, types.CreateOrganizationConnectorOutput{
-		Connector:          types.NewConnector(cnnctr, r.connectorConnectionStatus(ctx, scope, cnnctr.ID)),
-		DiscoveredAccounts: discovered,
-	}, nil
-}
-
 func (r *Resolver) DiscoverConnectorAccountsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DiscoverConnectorAccountsInput) (*mcp.CallToolResult, types.DiscoverConnectorAccountsOutput, error) {
 	scope, err := r.Authorize(ctx, input.ConnectorID, probo.ActionConnectorDiscover)
 	if err != nil {
@@ -10787,7 +10695,7 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 
 	ensured, err := r.accessReview.EnsureSources(ctx, scope, input.OrganizationID, reqs)
 	if err != nil {
-		return nil, types.CreateAccessReviewSourcesOutput{}, fmt.Errorf("cannot create access source: %w", err)
+		return nil, types.CreateAccessReviewSourcesOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create access source", err)
 	}
 
 	rows := make([]*coredata.AccessReviewSource, len(ensured))
@@ -10808,8 +10716,12 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 	}
 
 	if err := r.fillSourceConnectorIDs(ctx, scope, rows, mapped); err != nil {
-		return nil, types.CreateAccessReviewSourcesOutput{}, err
+		return nil, types.CreateAccessReviewSourcesOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot load source connectors", err)
 	}
 
 	return nil, types.CreateAccessReviewSourcesOutput{Results: results}, nil
+}
+
+func (r *Resolver) ListConnectorProvidersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConnectorProvidersInput) (*mcp.CallToolResult, types.ListConnectorProvidersOutput, error) {
+	return r.listConnectorProviders(ctx)
 }

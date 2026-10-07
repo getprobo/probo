@@ -10805,6 +10805,83 @@ components:
           format: date-time
           description: Creation timestamp
 
+    ConnectorProviderSetting:
+      type: object
+      required:
+        - key
+        - label
+        - required
+      properties:
+        key:
+          type: string
+          description: Catalog key for an extra setting
+        label:
+          type: string
+          description: Label shown on the connect form
+        required:
+          type: boolean
+          description: Whether the connect form requires this setting
+
+    ConnectorProviderCatalogEntry:
+      type: object
+      required:
+        - provider
+        - display_name
+        - api_key_supported
+        - api_key_managed
+        - install_supported
+        - api_key_extra_settings
+        - client_credentials_supported
+        - client_credentials_extra_settings
+      properties:
+        provider:
+          type: string
+          description: Connector provider
+        display_name:
+          type: string
+          description: Provider name shown to a user
+        api_key_supported:
+          type: boolean
+          description: Whether the customer can connect this provider with an API key
+        api_key_managed:
+          type: boolean
+          description: Whether Probo supplies the API key
+        install_supported:
+          type: boolean
+          description: Whether this provider connects through an install ceremony
+        api_key_extra_settings:
+          type: array
+          description: Extra settings the API-key form requires. Empty when the console form needs no extra setting.
+          items:
+            $ref: "#/components/schemas/ConnectorProviderSetting"
+        client_credentials_supported:
+          type: boolean
+          description: Whether the customer can connect this provider with client credentials
+        client_credentials_token_url:
+          type:
+            - string
+            - "null"
+          description: Token URL the provider pins. Null when the customer supplies it.
+        client_credentials_extra_settings:
+          type: array
+          description: Extra settings the client-credentials form requires. Empty when the console form needs no extra setting.
+          items:
+            $ref: "#/components/schemas/ConnectorProviderSetting"
+
+    ListConnectorProvidersMCPInput:
+      type: object
+      properties: {}
+
+    ListConnectorProvidersMCPOutput:
+      type: object
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorProviderCatalogEntry"
+
     AWSConnectorSetup:
       type: object
       required:
@@ -10893,16 +10970,6 @@ components:
         setup:
           $ref: "#/components/schemas/GCPConnectorSetup"
 
-    AzureEnvironment:
-      type: string
-      enum:
-        - AZURE_PUBLIC
-        - AZURE_GOVERNMENT
-        - AZURE_GOVERNMENT_DOD
-        - AZURE_CHINA
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cloud/azure.Environment
-      description: Azure cloud environment. Defaults to AZURE_PUBLIC. GCC uses AZURE_PUBLIC; only GCC High and DoD use Government.
-
     AzureConnectorSetup:
       type: object
       required:
@@ -10944,91 +11011,6 @@ components:
       properties:
         setup:
           $ref: "#/components/schemas/AzureConnectorSetup"
-
-    WorkloadIdentityConnectorProvider:
-      type: string
-      enum:
-        - AWS
-        - GCP
-        - AZURE
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
-      description: Connector provider that supports workload identity
-
-    CreateWorkloadIdentityConnectorMCPInput:
-      type: object
-      required:
-        - organization_id
-        - name
-        - provider
-      oneOf:
-        - title: AWS
-          properties:
-            provider:
-              type: string
-              enum:
-                - AWS
-          required:
-            - aws_role_arn
-        - title: GCP
-          properties:
-            provider:
-              type: string
-              enum:
-                - GCP
-          required:
-            - gcp_workload_identity_provider
-            - gcp_service_account_email
-        - title: Azure
-          properties:
-            provider:
-              type: string
-              enum:
-                - AZURE
-          required:
-            - azure_tenant_id
-            - azure_client_id
-            - azure_subscription_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        name:
-          type: string
-          description: >-
-            A name that distinguishes this credential from other credentials
-            for the same provider. For example, production or main.
-        provider:
-          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
-          description: Connector provider (AWS, GCP, or Azure)
-        aws_role_arn:
-          type: string
-          description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
-        gcp_workload_identity_provider:
-          type: string
-          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
-        gcp_service_account_email:
-          type: string
-          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
-        azure_tenant_id:
-          type: string
-          description: Entra directory (tenant) ID. Required when provider is Azure.
-        azure_client_id:
-          type: string
-          description: Entra application (client) ID. Required when provider is Azure.
-        azure_subscription_id:
-          type: string
-          description: Azure subscription ID. Required when provider is Azure.
-        azure_environment:
-          $ref: "#/components/schemas/AzureEnvironment"
-          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
-
-    CreateWorkloadIdentityConnectorMCPOutput:
-      type: object
-      required:
-        - connector
-      properties:
-        connector:
-          $ref: "#/components/schemas/Connector"
 
     ConnectorAccount:
       type: object
@@ -11133,88 +11115,6 @@ components:
       properties:
         connector:
           $ref: "#/components/schemas/Connector"
-
-    CreateOrganizationConnectorMCPInput:
-      type: object
-      required:
-        - organization_id
-        - name
-        - provider
-      oneOf:
-        - title: AWS
-          properties:
-            provider:
-              type: string
-              enum:
-                - AWS
-          required:
-            - aws_role_arn
-        - title: GCP
-          properties:
-            provider:
-              type: string
-              enum:
-                - GCP
-          required:
-            - gcp_workload_identity_provider
-            - gcp_service_account_email
-        - title: Azure
-          properties:
-            provider:
-              type: string
-              enum:
-                - AZURE
-          required:
-            - azure_tenant_id
-            - azure_client_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        name:
-          type: string
-          description: >-
-            A name that distinguishes this credential from other credentials
-            for the same provider. For example, production or main.
-        provider:
-          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
-          description: Connector provider (AWS, GCP, or Azure)
-        aws_role_arn:
-          type: string
-          description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
-        aws_member_role_name:
-          type: string
-        gcp_workload_identity_provider:
-          type: string
-          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
-        gcp_service_account_email:
-          type: string
-          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
-        gcp_parent:
-          type: string
-          description: Cloud Asset parent (organizations/{number} or folders/{number})
-        azure_tenant_id:
-          type: string
-          description: Entra directory (tenant) ID. Required when provider is Azure.
-        azure_client_id:
-          type: string
-          description: Entra application (client) ID. Required when provider is Azure.
-        azure_environment:
-          $ref: "#/components/schemas/AzureEnvironment"
-          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
-
-    CreateOrganizationConnectorMCPOutput:
-      type: object
-      required:
-        - connector
-        - discovered_accounts
-      properties:
-        connector:
-          $ref: "#/components/schemas/Connector"
-        discovered_accounts:
-          type: array
-          items:
-            $ref: "#/components/schemas/DiscoveredConnectorAccount"
 
     DiscoverConnectorAccountsMCPInput:
       type: object
@@ -19455,7 +19355,11 @@ tools:
       $ref: "#/components/schemas/ListAccessReviewSourcesOutput"
   - name: createAccessReviewSources
     title: Create Access Review Sources
-    description: Create access sources for an organization. One call accepts the whole list and skips an account that already has a source.
+    description: >-
+      Create access sources for an organization. Connect the provider in the
+      console first, then pass that connector id here. This operation does not
+      collect credentials. A CSV source is the path with no provider. One call
+      accepts the whole list and skips an account that already has a source.
     hints:
       readonly: false
       destructive: false
@@ -19525,18 +19429,21 @@ tools:
       $ref: "#/components/schemas/AzureConnectorSetupMCPInput"
     outputSchema:
       $ref: "#/components/schemas/AzureConnectorSetupMCPOutput"
-  - name: createWorkloadIdentityConnector
-    title: Create Workload Identity Connector
-    description: Create a workload-identity connector (AWS, GCP, or Azure) and report whether the audit identity can be assumed
+  - name: listConnectorProviders
+    title: List Connector Providers
+    description: >-
+      List connector providers and which connection methods each one supports.
+      Creating a connector is not available on this API. Connect the provider
+      in the console.
     hints:
-      readonly: false
+      readonly: true
       destructive: false
-      idempotent: false
-      openWorld: true
+      idempotent: true
+      openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPInput"
+      $ref: "#/components/schemas/ListConnectorProvidersMCPInput"
     outputSchema:
-      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPOutput"
+      $ref: "#/components/schemas/ListConnectorProvidersMCPOutput"
   - name: listConnectors
     title: List Connectors
     description: List connectors for an organization
@@ -19573,18 +19480,6 @@ tools:
       $ref: "#/components/schemas/UpdateConnectorMCPInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateConnectorMCPOutput"
-  - name: createOrganizationConnector
-    title: Create Organization Connector
-    description: Create an organization-scoped workload-identity connector and list discovered accounts
-    hints:
-      readonly: false
-      destructive: false
-      idempotent: false
-      openWorld: true
-    inputSchema:
-      $ref: "#/components/schemas/CreateOrganizationConnectorMCPInput"
-    outputSchema:
-      $ref: "#/components/schemas/CreateOrganizationConnectorMCPOutput"
   - name: discoverConnectorAccounts
     title: Discover Connector Accounts
     description: List vendor accounts a connector can enable

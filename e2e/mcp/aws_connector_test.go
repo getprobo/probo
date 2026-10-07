@@ -21,20 +21,15 @@
 package mcp_test
 
 import (
-	"encoding/json"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/identityfederation"
 )
-
-const awsFixtureRoleARN = "arn:aws:iam::123456789012:role/ProboAudit"
 
 func TestMCP_AWSConnector(t *testing.T) {
 	t.Parallel()
@@ -64,42 +59,6 @@ func TestMCP_AWSConnector(t *testing.T) {
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, coredata.DefaultAWSRoleName)
 	assert.Contains(t, setupResult.Setup.CloudFormationQuickCreateURL, url.QueryEscape(setupResult.Setup.Issuer))
 	assert.Contains(t, setupResult.Setup.CloudFormationQuickCreateURL, url.QueryEscape(coredata.DefaultAWSRoleName))
-
-	// MCP has no lazy field resolution, so the create tool probes the role and
-	// reports the verdict on the connector it returns. A role Probo cannot
-	// assume is DISCONNECTED, not a tool error, so the payload reaches the
-	// client on the failure path and has to stay free of AWS detail.
-	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
-		"organization_id": orgID,
-		"name":            "Test",
-		"provider":        "AWS",
-		"aws_role_arn":    awsFixtureRoleARN,
-	})
-	require.False(t, tr.IsError, "createWorkloadIdentityConnector returned error: %v", tr.Content)
-	require.NotEmpty(t, tr.Content)
-
-	var payload string
-
-	require.NoError(t, json.Unmarshal(tr.Content[0].Text, &payload))
-
-	var createResult struct {
-		Connector struct {
-			ID               string `json:"id"`
-			Provider         string `json:"provider"`
-			Protocol         string `json:"protocol"`
-			ConnectionStatus string `json:"connection_status"`
-		} `json:"connector"`
-	}
-
-	require.NoError(t, json.Unmarshal([]byte(payload), &createResult))
-	require.NotEmpty(t, createResult.Connector.ID)
-	assert.Equal(t, "AWS", createResult.Connector.Provider)
-	assert.Equal(t, "WORKLOAD_IDENTITY", createResult.Connector.Protocol)
-	assert.Equal(t, "DISCONNECTED", createResult.Connector.ConnectionStatus)
-
-	assert.NotContains(t, payload, awsFixtureRoleARN)
-	assert.NotContains(t, payload, "arn:aws")
-	assert.NotContains(t, strings.ToLower(payload), "accessdenied")
 }
 
 func TestMCP_AWSConnector_RBAC(t *testing.T) {
@@ -111,16 +70,6 @@ func TestMCP_AWSConnector_RBAC(t *testing.T) {
 
 	msg := viewerMC.CallToolExpectToolError("awsConnectorSetup", map[string]any{
 		"organization_id": orgID,
-	})
-	assert.Contains(t, msg, "permission denied")
-
-	// Create stays denied on its own. A viewer can list and get connectors,
-	// and connection status is on those reads.
-	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
-		"organization_id": orgID,
-		"name":            "Test",
-		"provider":        "AWS",
-		"aws_role_arn":    awsFixtureRoleARN,
 	})
 	assert.Contains(t, msg, "permission denied")
 }
@@ -135,14 +84,6 @@ func TestMCP_AWSConnector_TenantIsolation(t *testing.T) {
 
 	msg := org2MC.CallToolExpectToolError("awsConnectorSetup", map[string]any{
 		"organization_id": org1ID,
-	})
-	assert.NotEmpty(t, msg)
-
-	msg = org2MC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
-		"organization_id": org1ID,
-		"name":            "Test",
-		"provider":        "AWS",
-		"aws_role_arn":    awsFixtureRoleARN,
 	})
 	assert.NotEmpty(t, msg)
 }

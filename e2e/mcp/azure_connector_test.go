@@ -21,24 +21,12 @@
 package mcp_test
 
 import (
-	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	"go.probo.inc/probo/pkg/identityfederation"
-)
-
-const (
-	azureFixtureTenantID       = "a1111111-1111-4111-8111-111111111111"
-	azureFixtureClientID       = "b2222222-2222-4222-8222-222222222222"
-	azureFixtureSubscriptionID = "c3333333-3333-4333-8333-333333333333"
-	azureGovTenantID           = "aa111111-1111-4111-8111-111111111111"
-	azureGovClientID           = "bb222222-2222-4222-8222-222222222222"
-	azureGovSubscriptionID     = "cc333333-3333-4333-8333-333333333333"
 )
 
 func TestMCP_AzureConnector(t *testing.T) {
@@ -66,88 +54,6 @@ func TestMCP_AzureConnector(t *testing.T) {
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, setupResult.Setup.Issuer)
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, cloudazure.DefaultTerraformModuleSource)
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, cloudazure.DefaultApplicationName)
-
-	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":       orgID,
-		"name":                  "Test",
-		"provider":              "AZURE",
-		"azure_tenant_id":       azureFixtureTenantID,
-		"azure_client_id":       azureFixtureClientID,
-		"azure_subscription_id": azureFixtureSubscriptionID,
-	})
-	require.False(t, tr.IsError, "createWorkloadIdentityConnector returned error: %v", tr.Content)
-	require.NotEmpty(t, tr.Content)
-
-	var payload string
-
-	require.NoError(t, json.Unmarshal(tr.Content[0].Text, &payload))
-
-	var createResult struct {
-		Connector struct {
-			ID               string `json:"id"`
-			Provider         string `json:"provider"`
-			Protocol         string `json:"protocol"`
-			ConnectionStatus string `json:"connection_status"`
-		} `json:"connector"`
-	}
-
-	require.NoError(t, json.Unmarshal([]byte(payload), &createResult))
-	require.NotEmpty(t, createResult.Connector.ID)
-	assert.Equal(t, "AZURE", createResult.Connector.Provider)
-	assert.Equal(t, "WORKLOAD_IDENTITY", createResult.Connector.Protocol)
-	assert.Equal(t, "DISCONNECTED", createResult.Connector.ConnectionStatus)
-
-	assert.NotContains(t, payload, azureFixtureTenantID)
-	assert.NotContains(t, payload, azureFixtureClientID)
-	assert.NotContains(t, payload, azureFixtureSubscriptionID)
-	assert.NotContains(t, strings.ToLower(payload), "aadsts")
-	assert.NotContains(t, strings.ToLower(payload), "unauthorized")
-	assert.NotContains(t, strings.ToLower(payload), "forbidden")
-}
-
-func TestMCP_AzureConnector_Government(t *testing.T) {
-	t.Parallel()
-	owner := testutil.NewClient(t, testutil.RoleOwner)
-	mc := testutil.NewMCPClient(t, owner)
-	orgID := owner.GetOrganizationID().String()
-
-	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":       orgID,
-		"name":                  "Test",
-		"provider":              "AZURE",
-		"azure_tenant_id":       azureGovTenantID,
-		"azure_client_id":       azureGovClientID,
-		"azure_subscription_id": azureGovSubscriptionID,
-		"azure_environment":     "AZURE_GOVERNMENT",
-	})
-	require.False(t, tr.IsError, "createWorkloadIdentityConnector returned error: %v", tr.Content)
-	require.NotEmpty(t, tr.Content)
-
-	var payload string
-
-	require.NoError(t, json.Unmarshal(tr.Content[0].Text, &payload))
-
-	var createResult struct {
-		Connector struct {
-			ID               string `json:"id"`
-			Provider         string `json:"provider"`
-			Protocol         string `json:"protocol"`
-			ConnectionStatus string `json:"connection_status"`
-		} `json:"connector"`
-	}
-
-	require.NoError(t, json.Unmarshal([]byte(payload), &createResult))
-	require.NotEmpty(t, createResult.Connector.ID)
-	assert.Equal(t, "AZURE", createResult.Connector.Provider)
-	assert.Equal(t, "WORKLOAD_IDENTITY", createResult.Connector.Protocol)
-	assert.Equal(t, "DISCONNECTED", createResult.Connector.ConnectionStatus)
-
-	assert.NotContains(t, payload, azureGovTenantID)
-	assert.NotContains(t, payload, azureGovClientID)
-	assert.NotContains(t, payload, azureGovSubscriptionID)
-	assert.NotContains(t, strings.ToLower(payload), "aadsts")
-	assert.NotContains(t, strings.ToLower(payload), "unauthorized")
-	assert.NotContains(t, strings.ToLower(payload), "forbidden")
 }
 
 func TestMCP_AzureConnector_RBAC(t *testing.T) {
@@ -159,16 +65,6 @@ func TestMCP_AzureConnector_RBAC(t *testing.T) {
 
 	msg := viewerMC.CallToolExpectToolError("azureConnectorSetup", map[string]any{
 		"organization_id": orgID,
-	})
-	assert.Contains(t, msg, "permission denied")
-
-	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":       orgID,
-		"name":                  "Test",
-		"provider":              "AZURE",
-		"azure_tenant_id":       azureFixtureTenantID,
-		"azure_client_id":       azureFixtureClientID,
-		"azure_subscription_id": azureFixtureSubscriptionID,
 	})
 	assert.Contains(t, msg, "permission denied")
 }
@@ -183,16 +79,6 @@ func TestMCP_AzureConnector_TenantIsolation(t *testing.T) {
 
 	msg := org2MC.CallToolExpectToolError("azureConnectorSetup", map[string]any{
 		"organization_id": org1ID,
-	})
-	assert.NotEmpty(t, msg)
-
-	msg = org2MC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":       org1ID,
-		"name":                  "Test",
-		"provider":              "AZURE",
-		"azure_tenant_id":       azureFixtureTenantID,
-		"azure_client_id":       azureFixtureClientID,
-		"azure_subscription_id": azureFixtureSubscriptionID,
 	})
 	assert.NotEmpty(t, msg)
 }

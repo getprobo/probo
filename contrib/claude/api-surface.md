@@ -11,6 +11,10 @@ If you add a mutation in GraphQL, add the corresponding MCP tool, CLI command, a
 
 Every new Go API endpoint must have end-to-end tests in `e2e/`.
 
+## Exception — no credentials on MCP
+
+The MCP API does not accept credentials. Do not add an MCP tool whose input is a customer secret or a connector binding (API key, client secret, workload-identity role, or the same material on an organization connector). Connector create stays on GraphQL, the CLI, and n8n. An agent connects the provider in the console, then uses the connector id with the remaining MCP tools.
+
 ## Error handling — never leak internal details
 
 By default every error returned to the end user **must be an opaque internal error**. Only errors that are explicitly matched and mapped to a known category may surface a meaningful message. Unrecognized or unexpected errors are always replaced with a generic "internal server error" response — never expose stack traces, SQL errors, file paths, or any implementation detail.

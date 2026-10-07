@@ -21,19 +21,11 @@
 package mcp_test
 
 import (
-	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
-)
-
-const (
-	gcpFixtureProviderResource = "projects/123456789012/locations/global/workloadIdentityPools/probo-pool/providers/probo"
-	gcpFixtureServiceAccount   = "probo-audit@example-project.iam.gserviceaccount.com"
 )
 
 func TestMCP_GCPConnector(t *testing.T) {
@@ -61,40 +53,6 @@ func TestMCP_GCPConnector(t *testing.T) {
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, setupResult.Setup.Issuer)
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, cloudgcp.DefaultTerraformModuleSource)
 	assert.Contains(t, setupResult.Setup.TerraformSnippet, cloudgcp.DefaultServiceAccountName)
-
-	tr := mc.CallTool("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":                orgID,
-		"name":                           "Test",
-		"provider":                       "GCP",
-		"gcp_workload_identity_provider": gcpFixtureProviderResource,
-		"gcp_service_account_email":      gcpFixtureServiceAccount,
-	})
-	require.False(t, tr.IsError, "createWorkloadIdentityConnector returned error: %v", tr.Content)
-	require.NotEmpty(t, tr.Content)
-
-	var payload string
-
-	require.NoError(t, json.Unmarshal(tr.Content[0].Text, &payload))
-
-	var createResult struct {
-		Connector struct {
-			ID               string `json:"id"`
-			Provider         string `json:"provider"`
-			Protocol         string `json:"protocol"`
-			ConnectionStatus string `json:"connection_status"`
-		} `json:"connector"`
-	}
-
-	require.NoError(t, json.Unmarshal([]byte(payload), &createResult))
-	require.NotEmpty(t, createResult.Connector.ID)
-	assert.Equal(t, "GCP", createResult.Connector.Provider)
-	assert.Equal(t, "WORKLOAD_IDENTITY", createResult.Connector.Protocol)
-	assert.Equal(t, "DISCONNECTED", createResult.Connector.ConnectionStatus)
-
-	assert.NotContains(t, payload, gcpFixtureProviderResource)
-	assert.NotContains(t, payload, gcpFixtureServiceAccount)
-	assert.NotContains(t, strings.ToLower(payload), "permissiondenied")
-	assert.NotContains(t, strings.ToLower(payload), "accessdenied")
 }
 
 func TestMCP_GCPConnector_RBAC(t *testing.T) {
@@ -106,15 +64,6 @@ func TestMCP_GCPConnector_RBAC(t *testing.T) {
 
 	msg := viewerMC.CallToolExpectToolError("gcpConnectorSetup", map[string]any{
 		"organization_id": orgID,
-	})
-	assert.Contains(t, msg, "permission denied")
-
-	msg = viewerMC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":                orgID,
-		"name":                           "Test",
-		"provider":                       "GCP",
-		"gcp_workload_identity_provider": gcpFixtureProviderResource,
-		"gcp_service_account_email":      gcpFixtureServiceAccount,
 	})
 	assert.Contains(t, msg, "permission denied")
 }
@@ -129,15 +78,6 @@ func TestMCP_GCPConnector_TenantIsolation(t *testing.T) {
 
 	msg := org2MC.CallToolExpectToolError("gcpConnectorSetup", map[string]any{
 		"organization_id": org1ID,
-	})
-	assert.NotEmpty(t, msg)
-
-	msg = org2MC.CallToolExpectToolError("createWorkloadIdentityConnector", map[string]any{
-		"organization_id":                org1ID,
-		"name":                           "Test",
-		"provider":                       "GCP",
-		"gcp_workload_identity_provider": gcpFixtureProviderResource,
-		"gcp_service_account_email":      gcpFixtureServiceAccount,
 	})
 	assert.NotEmpty(t, msg)
 }

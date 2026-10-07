@@ -185,6 +185,10 @@ func (s *ConnectorService) organizationInstall(c *coredata.Connector) bool {
 	return reg.SupportsOrganizationInstall()
 }
 
+func (s *ConnectorService) ProviderRegistry() *provider.Registry {
+	return s.providerRegistry
+}
+
 func (s *ConnectorService) implicitAccountName(c *coredata.Connector) string {
 	if s.providerRegistry != nil {
 		if reg, ok := s.providerRegistry.Get(c.Provider); ok && reg.DisplayName != "" {

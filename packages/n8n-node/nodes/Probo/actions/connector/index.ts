@@ -19,6 +19,11 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
+import * as createApiKeyOp from './createApiKey.operation';
+import * as createAwsOp from './createAws.operation';
+import * as createAzureOp from './createAzure.operation';
+import * as createClientCredentialsOp from './createClientCredentials.operation';
+import * as createGcpOp from './createGcp.operation';
 import * as createOrgOp from './createOrg.operation';
 import * as discoverOp from './discover.operation';
 import * as enableOp from './enable.operation';
@@ -39,7 +44,37 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create Organization Connector',
+				name: 'Create API Key',
+				value: 'createApiKey',
+				description: 'Create an API-key connector that needs no extra setting',
+				action: 'Create an API key connector',
+			},
+			{
+				name: 'Create AWS Workload Identity Federation',
+				value: 'createAwsWorkloadIdentity',
+				description: 'Create an AWS workload-identity connector',
+				action: 'Create an AWS workload identity connector',
+			},
+			{
+				name: 'Create Azure Workload Identity Federation',
+				value: 'createAzureWorkloadIdentity',
+				description: 'Create an Azure workload-identity connector',
+				action: 'Create an azure workload identity connector',
+			},
+			{
+				name: 'Create Client Credentials',
+				value: 'createClientCredentials',
+				description: 'Create a client-credentials connector that needs no extra setting',
+				action: 'Create a client credentials connector',
+			},
+			{
+				name: 'Create GCP Workload Identity Federation',
+				value: 'createGcpWorkloadIdentity',
+				description: 'Create a GCP workload-identity connector',
+				action: 'Create a GCP workload identity connector',
+			},
+			{
+				name: 'Create Organization Connector (Deprecated)',
 				value: 'createOrg',
 				description: 'Create an organization-scoped workload-identity connector',
 				action: 'Create an organization connector',
@@ -77,6 +112,11 @@ export const description: INodeProperties[] = [
 		],
 		default: 'getAll',
 	},
+	...createApiKeyOp.description,
+	...createClientCredentialsOp.description,
+	...createAwsOp.description,
+	...createGcpOp.description,
+	...createAzureOp.description,
 	...createOrgOp.description,
 	...discoverOp.description,
 	...enableOp.description,
@@ -86,6 +126,11 @@ export const description: INodeProperties[] = [
 ];
 
 export {
+	createApiKeyOp as createApiKey,
+	createClientCredentialsOp as createClientCredentials,
+	createAwsOp as createAwsWorkloadIdentity,
+	createGcpOp as createGcpWorkloadIdentity,
+	createAzureOp as createAzureWorkloadIdentity,
 	createOrgOp as createOrg,
 	discoverOp as discover,
 	enableOp as enable,
