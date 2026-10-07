@@ -5704,7 +5704,7 @@ components:
           type:
             - string
             - "null"
-          description: Security internal controls
+          description: Security measures
         data_protection_impact_assessment_needed:
           $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
           description: DPIA needed
@@ -5843,7 +5843,7 @@ components:
           description: Retention period
         security_measures:
           type: string
-          description: Security internal controls
+          description: Security measures
         data_protection_impact_assessment_needed:
           $ref: "#/components/schemas/ProcessingActivityDataProtectionImpactAssessmentNeeded"
           description: DPIA needed

@@ -963,7 +963,7 @@
     }
   },
   "internalControlSelectField": {
-    "placeholder": "Selecteer een maatregel",
+    "placeholder": "Selecteer een interne controle",
     "none": "Geen"
   },
   "peopleMultiSelectField": {
@@ -1029,21 +1029,21 @@
     "remove": "{{name}} verwijderen"
   },
   "linkedInternalControlsCard": {
-    "title": "Maatregelen",
+    "title": "Interne controles",
     "columns": {
       "name": "Naam",
       "state": "Status"
     },
-    "empty": "Geen maatregelen gekoppeld",
+    "empty": "Geen interne controles gekoppeld",
     "actions": {
-      "link": "Maatregel koppelen",
+      "link": "Interne controle koppelen",
       "unlink": "Ontkoppelen",
       "showMore": "{{count}} meer tonen"
     }
   },
   "linkedInternalControlsDialog": {
-    "title": "Maatregelen koppelen",
-    "searchPlaceholder": "Maatregelen zoeken...",
+    "title": "Interne controles koppelen",
+    "searchPlaceholder": "Interne controles zoeken...",
     "allCategories": "Alle categorieën",
     "actions": {
       "close": "Sluiten",
@@ -1612,7 +1612,7 @@
       "complete": "Voltooien"
     },
     "internalControlImplementation": {
-      "title": "Implementatie van maatregel",
+      "title": "Implementatie van interne controle",
       "complete": "Voltooien"
     },
     "impactOptions": {
@@ -5064,13 +5064,13 @@
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "Geen maatregelen",
+    "progressEmpty": "Geen interne controles",
     "actions": {
       "tasks": "Taken",
       "edit": "Bewerken",
       "delete": "Verwijderen",
-      "expand": "Maatregelen tonen",
-      "collapse": "Maatregelen verbergen"
+      "expand": "Interne controles tonen",
+      "collapse": "Interne controles verbergen"
     }
   },
   "riskTreatmentPlansPage": {
@@ -5092,20 +5092,20 @@
     }
   },
   "treatmentPlanInternalControlList": {
-    "title": "Maatregelen",
-    "empty": "Nog geen maatregelen gekoppeld.",
-    "deleted": "Verwijderde maatregel",
-    "acceptedEmpty": "Geaccepteerde risico's kunnen geen maatregelen hebben.",
+    "title": "Interne controles",
+    "empty": "Nog geen interne controles gekoppeld.",
+    "deleted": "Verwijderde interne controle",
+    "acceptedEmpty": "Geaccepteerde risico's kunnen geen interne controles hebben.",
     "actions": {
-      "create": "Nieuwe maatregel",
-      "link": "Maatregel koppelen",
+      "create": "Nieuwe interne controle",
+      "link": "Interne controle koppelen",
       "unlink": "Ontkoppelen",
       "showMore": "Meer tonen"
     }
   },
   "treatmentPlanInternalControlsDialog": {
-    "title": "Maatregelen van het behandelplan",
-    "loading": "Maatregelen laden…",
+    "title": "Interne controles van het behandelplan",
+    "loading": "Interne controles laden…",
     "netScore": "Netto {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {

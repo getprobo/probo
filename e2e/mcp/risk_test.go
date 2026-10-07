@@ -152,7 +152,7 @@ func TestMCP_Risk_ListInternalControls(t *testing.T) {
 	}
 	mc.CallToolInto("addInternalControl", map[string]any{
 		"organization_id": orgID,
-		"name":            factory.SafeName("Measure"),
+		"name":            factory.SafeName("Internal control"),
 		"category":        "POLICY",
 	}, &internalControlResult)
 	require.NotEmpty(t, internalControlResult.InternalControl.ID)

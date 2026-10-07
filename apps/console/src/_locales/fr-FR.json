@@ -963,7 +963,7 @@
     }
   },
   "internalControlSelectField": {
-    "placeholder": "Sélectionner une mesure",
+    "placeholder": "Sélectionner un contrôle interne",
     "none": "Aucune"
   },
   "peopleMultiSelectField": {
@@ -1029,21 +1029,21 @@
     "remove": "Retirer {{name}}"
   },
   "linkedInternalControlsCard": {
-    "title": "Mesures",
+    "title": "Contrôles internes",
     "columns": {
       "name": "Nom",
       "state": "État"
     },
-    "empty": "Aucune mesure associée",
+    "empty": "Aucun contrôle interne associé",
     "actions": {
-      "link": "Associer une mesure",
+      "link": "Associer un contrôle interne",
       "unlink": "Dissocier",
       "showMore": "Afficher {{count}} de plus"
     }
   },
   "linkedInternalControlsDialog": {
-    "title": "Associer des mesures",
-    "searchPlaceholder": "Rechercher des mesures...",
+    "title": "Associer des contrôles internes",
+    "searchPlaceholder": "Rechercher des contrôles internes...",
     "allCategories": "Toutes les catégories",
     "actions": {
       "close": "Fermer",
@@ -1612,7 +1612,7 @@
       "complete": "Terminée"
     },
     "internalControlImplementation": {
-      "title": "Mise en œuvre de la mesure",
+      "title": "Mise en œuvre du contrôle interne",
       "complete": "Terminée"
     },
     "impactOptions": {
@@ -5078,13 +5078,13 @@
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "Aucune mesure",
+    "progressEmpty": "Aucun contrôle interne",
     "actions": {
       "tasks": "Tâches",
       "edit": "Modifier",
       "delete": "Supprimer",
-      "expand": "Afficher les mesures",
-      "collapse": "Masquer les mesures"
+      "expand": "Afficher les contrôles internes",
+      "collapse": "Masquer les contrôles internes"
     }
   },
   "riskTreatmentPlansPage": {
@@ -5106,20 +5106,20 @@
     }
   },
   "treatmentPlanInternalControlList": {
-    "title": "Mesures",
-    "empty": "Aucune mesure liée pour le moment.",
-    "deleted": "Mesure supprimée",
-    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de mesures liées.",
+    "title": "Contrôles internes",
+    "empty": "Aucun contrôle interne lié pour le moment.",
+    "deleted": "Contrôle interne supprimé",
+    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de contrôles internes liés.",
     "actions": {
-      "create": "Nouvelle mesure",
-      "link": "Lier une mesure",
+      "create": "Nouveau contrôle interne",
+      "link": "Lier un contrôle interne",
       "unlink": "Délier",
       "showMore": "Afficher plus"
     }
   },
   "treatmentPlanInternalControlsDialog": {
-    "title": "Mesures du plan de traitement",
-    "loading": "Chargement des mesures…",
+    "title": "Contrôles internes du plan de traitement",
+    "loading": "Chargement des contrôles internes…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {

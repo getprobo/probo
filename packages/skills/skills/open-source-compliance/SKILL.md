@@ -35,7 +35,7 @@ first.
 
 ### Control and obligation tracking
 
-1. List controls, measures, or obligations relevant to the user's question.
+1. List controls, internal controls, or obligations relevant to the user's question.
 2. Link evidence (documents, audits) where appropriate.
 3. Report gaps between required and implemented controls.
 

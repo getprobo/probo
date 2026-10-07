@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestMCP_Measure_CRUD(t *testing.T) {
+func TestMCP_InternalControl_CRUD(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
@@ -44,7 +44,7 @@ func TestMCP_Measure_CRUD(t *testing.T) {
 	}
 	mc.CallToolInto("addInternalControl", map[string]any{
 		"organization_id": orgID,
-		"name":            factory.SafeName("Measure"),
+		"name":            factory.SafeName("Internal control"),
 		"category":        "POLICY",
 	}, &addResult)
 	require.NotEmpty(t, addResult.InternalControl.ID)

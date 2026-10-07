@@ -576,7 +576,7 @@
     }
   },
   "internalControlSelectField": {
-    "placeholder": "Select a measure",
+    "placeholder": "Select an internal control",
     "none": "None"
   },
   "peopleMultiSelectField": {
@@ -642,18 +642,18 @@
     "remove": "Remove {{name}}"
   },
   "linkedInternalControlsCard": {
-    "title": "Measures",
+    "title": "Internal controls",
     "columns": { "name": "Name", "state": "State" },
-    "empty": "No measures linked",
+    "empty": "No internal controls linked",
     "actions": {
-      "link": "Link measure",
+      "link": "Link internal control",
       "unlink": "Unlink",
       "showMore": "Show {{count}} more"
     }
   },
   "linkedInternalControlsDialog": {
-    "title": "Link measures",
-    "searchPlaceholder": "Search measures...",
+    "title": "Link internal controls",
+    "searchPlaceholder": "Search internal controls...",
     "allCategories": "All categories",
     "actions": { "close": "Close", "link": "Link", "unlink": "Unlink" }
   },
@@ -1085,7 +1085,7 @@
       "custom": { "title": "Custom framework", "description": "Start from scratch" }
     },
     "measureImplementation": { "title": "Measure implementation", "complete": "Complete" },
-    "internalControlImplementation": { "title": "Measure implementation", "complete": "Complete" },
+    "internalControlImplementation": { "title": "Internal control implementation", "complete": "Complete" },
     "impactOptions": {
       "low": "Minimal impact on business",
       "medium": "Moderate impact on business",
@@ -2780,13 +2780,13 @@
     "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "No measures",
+    "progressEmpty": "No internal controls",
     "actions": {
       "tasks": "Tasks",
       "edit": "Edit",
       "delete": "Delete",
-      "expand": "Show measures",
-      "collapse": "Hide measures"
+      "expand": "Show internal controls",
+      "collapse": "Hide internal controls"
     }
   },
   "riskTreatmentPlansPage": {
@@ -2799,15 +2799,15 @@
     "actions": { "internalControls": "Internal controls", "edit": "Edit", "delete": "Delete" }
   },
   "treatmentPlanInternalControlList": {
-    "title": "Measures",
-    "empty": "No measures linked yet.",
-    "deleted": "Deleted measure",
-    "acceptedEmpty": "Accepted risks cannot have linked measures.",
-    "actions": { "create": "New measure", "link": "Link measure", "unlink": "Unlink", "showMore": "Show more" }
+    "title": "Internal controls",
+    "empty": "No internal controls linked yet.",
+    "deleted": "Deleted internal control",
+    "acceptedEmpty": "Accepted risks cannot have linked internal controls.",
+    "actions": { "create": "New internal control", "link": "Link internal control", "unlink": "Unlink", "showMore": "Show more" }
   },
   "treatmentPlanInternalControlsDialog": {
-    "title": "Treatment plan measures",
-    "loading": "Loading measures…",
+    "title": "Treatment plan internal controls",
+    "loading": "Loading internal controls…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
