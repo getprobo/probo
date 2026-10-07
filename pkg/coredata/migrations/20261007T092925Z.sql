@@ -19,5 +19,5 @@
 -- SOFTWARE.
 
 ALTER TABLE detected_trackers
-    ADD COLUMN cookie_domain CITEXT,
-    ADD COLUMN host_only BOOLEAN;
+    ADD COLUMN IF NOT EXISTS cookie_domain CITEXT,
+    ADD COLUMN IF NOT EXISTS host_only BOOLEAN;

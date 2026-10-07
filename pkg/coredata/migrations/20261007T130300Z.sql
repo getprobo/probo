@@ -18,26 +18,6 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
--- A host-only cookie and a Domain-scoped cookie can share a name.
--- COALESCE treats a missing domain as one host-only/unknown bucket so
--- NULL cookie_domain does not bypass the unique index.
---
--- IF NOT EXISTS / IF EXISTS so an operator can build the new index
--- CONCURRENTLY and drop the old one CONCURRENTLY ahead of deploy:
---
---   CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS
---       idx_detected_trackers_unique_identifier_domain_per_banner
---       ON detected_trackers (
---           cookie_banner_id,
---           tracker_type,
---           identifier,
---           COALESCE(cookie_domain, '')
---       );
---   DROP INDEX CONCURRENTLY IF EXISTS
---       idx_detected_trackers_unique_identifier_per_banner;
---
--- CONCURRENTLY cannot be used here: the migration runner wraps each
--- file in a transaction, and CONCURRENTLY is not allowed inside one.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_detected_trackers_unique_identifier_domain_per_banner
     ON detected_trackers (
         cookie_banner_id,
