@@ -89,7 +89,7 @@
   },
   "detectedTrackersSection": {
     "title": "Detections",
-    "columns": { "identifier": "Identifier", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "detectionTime": "Detection time" },
+    "columns": { "identifier": "Identifier", "domain": "Domain", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "detectionTime": "Detection time" },
     "empty": "No detections for this tracker yet.",
     "sort": { "initiatorUrl": "Sort by initiator URL", "detectionTime": "Sort by detection time" },
     "actions": { "showMore": "Show more" },
@@ -100,6 +100,7 @@
   },
   "moveToCategorySelect": { "empty": "No categories" },
   "detectedTrackerRow": {
+    "hostOnly": "Host-only",
     "duration": { "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
   },
   "trackersPage": {

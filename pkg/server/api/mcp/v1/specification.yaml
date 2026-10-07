@@ -16720,6 +16720,12 @@ components:
         initiator_url:
           type: string
           nullable: true
+        cookie_domain:
+          type: string
+          nullable: true
+        host_only:
+          type: boolean
+          nullable: true
         max_age_seconds:
           type: integer
           nullable: true

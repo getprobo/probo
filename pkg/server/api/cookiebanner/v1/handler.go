@@ -264,6 +264,8 @@ type detectedCookieEntry struct {
 	MaxAgeSeconds *int    `json:"max_age_seconds"`
 	Source        string  `json:"source"`
 	InitiatorURL  *string `json:"initiator_url,omitempty"`
+	CookieDomain  *string `json:"cookie_domain,omitempty"`
+	HostOnly      *bool   `json:"host_only,omitempty"`
 }
 
 type reportDetectedCookiesBody struct {
@@ -303,6 +305,45 @@ func sanitizeInitiatorURL(raw *string) *string {
 	}
 
 	return &s
+}
+
+// sanitizeCookieDomain lowercases and strips a leading dot, then
+// accepts the value only when it is a hostname. A missing or invalid
+// domain is dropped so one bad report cannot fail the batch.
+func sanitizeCookieDomain(raw *string) *string {
+	if raw == nil {
+		return nil
+	}
+
+	s := strings.ToLower(strings.TrimSpace(*raw))
+	s = strings.TrimPrefix(s, ".")
+	if s == "" {
+		return nil
+	}
+
+	if err := validator.Domain()(s); err != nil {
+		return nil
+	}
+
+	return &s
+}
+
+// sanitizeCookieDomainFields keeps a hostname Domain attribute or a
+// confirmed host-only flag. A Domain value that is not a hostname is
+// dropped, and host_only is cleared with it so a false (Domain-seen)
+// flag cannot land without a domain.
+func sanitizeCookieDomainFields(rawDomain *string, hostOnly *bool) (*string, *bool) {
+	domain := sanitizeCookieDomain(rawDomain)
+	if rawDomain != nil && strings.TrimSpace(*rawDomain) != "" && domain == nil {
+		return nil, nil
+	}
+
+	if domain != nil && hostOnly == nil {
+		notHostOnly := false
+		hostOnly = &notHostOnly
+	}
+
+	return domain, hostOnly
 }
 
 func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Request) {
@@ -359,6 +400,8 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			source = coredata.CookieSourceScript
 		}
 
+		cookieDomain, hostOnly := sanitizeCookieDomainFields(c.CookieDomain, c.HostOnly)
+
 		detected = append(
 			detected,
 			cookiebanner.DetectedCookie{
@@ -366,6 +409,8 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 				MaxAgeSeconds: c.MaxAgeSeconds,
 				Source:        source,
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
+				CookieDomain:  cookieDomain,
+				HostOnly:      hostOnly,
 			},
 		)
 	}
@@ -481,6 +526,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			source = coredata.CookieSourceScript
 		}
 
+		cookieDomain, hostOnly := sanitizeCookieDomainFields(c.CookieDomain, c.HostOnly)
+
 		req.Cookies = append(
 			req.Cookies,
 			cookiebanner.DetectedCookie{
@@ -488,6 +535,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				MaxAgeSeconds: c.MaxAgeSeconds,
 				Source:        source,
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
+				CookieDomain:  cookieDomain,
+				HostOnly:      hostOnly,
 			},
 		)
 	}

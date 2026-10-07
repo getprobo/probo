@@ -44,6 +44,8 @@ type (
 		ValueSize        *int          `db:"value_size"`
 		InitiatorURL     *string       `db:"initiator_url"`
 		InitiatorDomain  *string       `db:"initiator_domain"`
+		CookieDomain     *string       `db:"cookie_domain"`
+		HostOnly         *bool         `db:"host_only"`
 		LastDetectedAt   time.Time     `db:"last_detected_at"`
 		CreatedAt        time.Time     `db:"created_at"`
 		UpdatedAt        time.Time     `db:"updated_at"`
@@ -85,6 +87,8 @@ INSERT INTO detected_trackers (
 	value_size,
 	initiator_url,
 	initiator_domain,
+	cookie_domain,
+	host_only,
 	last_detected_at,
 	created_at,
 	updated_at
@@ -100,19 +104,49 @@ INSERT INTO detected_trackers (
 	@value_size,
 	@initiator_url,
 	@initiator_domain,
+	@cookie_domain,
+	@host_only,
 	@last_detected_at,
 	@created_at,
 	@updated_at
 )
 ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 	SET last_detected_at = EXCLUDED.last_detected_at,
-		source = CASE WHEN detected_trackers.source IS NULL OR (
-				detected_trackers.source != @source_script AND EXCLUDED.source = @source_script
+		source = CASE
+			WHEN detected_trackers.source IS NULL THEN EXCLUDED.source
+			WHEN (
+				CASE EXCLUDED.source
+					WHEN 'SCRIPT' THEN 3
+					WHEN 'EXTENSION' THEN 2
+					WHEN 'HTTP' THEN 1
+					ELSE 0
+				END
+			) > (
+				CASE detected_trackers.source
+					WHEN 'SCRIPT' THEN 3
+					WHEN 'EXTENSION' THEN 2
+					WHEN 'HTTP' THEN 1
+					ELSE 0
+				END
 			) THEN EXCLUDED.source
 			ELSE detected_trackers.source
 		END,
 		initiator_url = COALESCE(EXCLUDED.initiator_url, detected_trackers.initiator_url),
 		initiator_domain = COALESCE(EXCLUDED.initiator_domain, detected_trackers.initiator_domain),
+		cookie_domain = CASE
+			WHEN EXCLUDED.host_only IS FALSE AND EXCLUDED.cookie_domain IS NOT NULL THEN EXCLUDED.cookie_domain
+			WHEN detected_trackers.host_only IS FALSE AND detected_trackers.cookie_domain IS NOT NULL THEN detected_trackers.cookie_domain
+			WHEN EXCLUDED.host_only IS NOT NULL THEN EXCLUDED.cookie_domain
+			ELSE detected_trackers.cookie_domain
+		END,
+		host_only = CASE
+			WHEN EXCLUDED.host_only IS FALSE THEN FALSE
+			WHEN detected_trackers.host_only IS FALSE THEN FALSE
+			WHEN EXCLUDED.host_only IS NOT NULL THEN EXCLUDED.host_only
+			ELSE detected_trackers.host_only
+		END,
+		max_age_seconds = COALESCE(detected_trackers.max_age_seconds, EXCLUDED.max_age_seconds),
+		value_size = COALESCE(detected_trackers.value_size, EXCLUDED.value_size),
 		updated_at = EXCLUDED.updated_at
 `
 
@@ -125,10 +159,11 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 		"identifier":         dt.Identifier,
 		"max_age_seconds":    dt.MaxAgeSeconds,
 		"source":             dt.Source,
-		"source_script":      CookieSourceScript,
 		"value_size":         dt.ValueSize,
 		"initiator_url":      dt.InitiatorURL,
 		"initiator_domain":   dt.InitiatorDomain,
+		"cookie_domain":      dt.CookieDomain,
+		"host_only":          dt.HostOnly,
 		"last_detected_at":   dt.LastDetectedAt,
 		"created_at":         dt.CreatedAt,
 		"updated_at":         dt.UpdatedAt,
@@ -140,6 +175,65 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 	}
 
 	return result.RowsAffected() > 0, nil
+}
+
+func (dt *DetectedTracker) LoadByBannerIDTypeAndIdentifier(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	trackerType TrackerType,
+	identifier string,
+) error {
+	q := `
+SELECT
+	id,
+	cookie_banner_id,
+	tracker_pattern_id,
+	tracker_type,
+	identifier,
+	max_age_seconds,
+	source,
+	value_size,
+	initiator_url,
+	initiator_domain,
+	cookie_domain,
+	host_only,
+	last_detected_at,
+	created_at,
+	updated_at
+FROM
+	detected_trackers
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND tracker_type = @tracker_type
+	AND identifier = @identifier
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+		"tracker_type":     trackerType,
+		"identifier":       identifier,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query detected tracker: %w", err)
+	}
+
+	tracker, err := pgx.CollectExactlyOneRow(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
+	if err != nil {
+		return fmt.Errorf("cannot collect detected tracker: %w", err)
+	}
+
+	*dt = *tracker
+
+	return nil
 }
 
 func (dts *DetectedTrackers) CountByTrackerPatternID(
@@ -224,6 +318,8 @@ SELECT
 	value_size,
 	initiator_url,
 	initiator_domain,
+	cookie_domain,
+	host_only,
 	last_detected_at,
 	created_at,
 	updated_at

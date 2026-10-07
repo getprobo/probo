@@ -1720,9 +1720,17 @@ func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *type
 
 // Attribution is the resolver for the attribution field.
 //
-// The verdict lives on the linked common catalog row, not the org
-// pattern. A missing catalog link is a real null, not UNDETERMINED.
+// EXTENSION is visitor-installed software, so the badge is
+// NOT_ATTRIBUTABLE even when a catalog row is already linked. Other
+// sources read the verdict from the linked common catalog row. A
+// missing catalog link is a real null, not UNDETERMINED.
 func (r *trackerPatternResolver) Attribution(ctx context.Context, obj *types.TrackerPattern) (*coredata.CommonTrackerPatternAttribution, error) {
+	if obj.Source != nil && *obj.Source == coredata.CookieSourceExtension {
+		attribution := coredata.CommonTrackerPatternAttributionNotAttributable
+
+		return &attribution, nil
+	}
+
 	if obj.CommonTrackerPatternID == nil {
 		return nil, nil
 	}

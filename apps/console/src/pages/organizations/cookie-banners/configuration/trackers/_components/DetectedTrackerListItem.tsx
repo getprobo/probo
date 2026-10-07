@@ -35,6 +35,8 @@ import { cookieSourceBadges } from "../_lib/trackerBadges";
 const detectedTrackerFragment = graphql`
   fragment DetectedTrackerListItem_detectedTracker on DetectedTracker {
     identifier
+    cookieDomain
+    hostOnly
     initiatorUrl
     maxAgeSeconds
     source
@@ -59,6 +61,17 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
           {tracker.identifier}
         </Text>
       </TableRowHeaderCell>
+      <TableCell overflow="truncate">
+        {tracker.hostOnly === true
+          ? <Text size={2}>{t("detectedTrackerRow.hostOnly")}</Text>
+          : tracker.cookieDomain == null
+            ? <Text size={2} color="faint">-</Text>
+            : (
+                <Text size={2} className={url()}>
+                  {tracker.cookieDomain}
+                </Text>
+              )}
+      </TableCell>
       <TableCell overflow="truncate">
         {tracker.initiatorUrl == null
           ? <Text size={2} color="faint">-</Text>

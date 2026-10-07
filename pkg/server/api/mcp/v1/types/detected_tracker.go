@@ -37,6 +37,8 @@ func NewDetectedTracker(dt *coredata.DetectedTracker) *DetectedTracker {
 		ID:             dt.ID,
 		Identifier:     dt.Identifier,
 		InitiatorURL:   dt.InitiatorURL,
+		CookieDomain:   dt.CookieDomain,
+		HostOnly:       dt.HostOnly,
 		MaxAgeSeconds:  dt.MaxAgeSeconds,
 		Source:         source,
 		LastDetectedAt: dt.LastDetectedAt,

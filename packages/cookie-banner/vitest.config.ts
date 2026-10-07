@@ -18,27 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-declare const __SDK_VERSION__: string;
+import { defineConfig } from "vitest/config";
 
-interface CookieListItem {
-  name: string;
-  value: string;
-  domain: string | null;
-  path: string;
-  expires: number | null;
-  secure: boolean;
-  sameSite: "strict" | "lax" | "none";
-}
-
-interface CookieChangeEvent extends Event {
-  changed: readonly CookieListItem[];
-  deleted: readonly CookieListItem[];
-}
-
-interface CookieStoreEventTarget extends EventTarget {
-  addEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
-  removeEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
-  getAll(options?: { name?: string }): Promise<CookieListItem[]>;
-}
-
-declare const cookieStore: CookieStoreEventTarget | undefined;
+export default defineConfig({
+  define: {
+    __SDK_VERSION__: JSON.stringify("test"),
+  },
+});

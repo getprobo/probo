@@ -58,6 +58,7 @@ const trackerPatternPropertiesSectionFragment = graphql`
     maxAgeSeconds
     description
     attribution
+    source
     commonTrackerPatternId
     canUpdate: permission(action: "core:tracker-pattern:update")
     cookieCategory {
@@ -173,6 +174,7 @@ export function TrackerPatternPropertiesSection({
     t,
     pattern.attribution,
     pattern.commonThirdParty?.name ?? null,
+    pattern.source,
   );
   const currentMaxAge = pattern.maxAgeSeconds == null || pattern.maxAgeSeconds <= 0
     ? null

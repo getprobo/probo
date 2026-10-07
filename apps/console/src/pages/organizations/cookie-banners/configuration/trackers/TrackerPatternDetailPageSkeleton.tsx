@@ -50,7 +50,7 @@ export function TrackerPatternDetailPageSkeleton() {
       <div className="flex flex-col gap-4">
         <div className="h-5 w-28 rounded bg-sand-a4" />
         <div className="h-4 w-56 rounded bg-sand-a4" />
-        <TableSkeleton variant="surface" columns={5} count={4} />
+        <TableSkeleton variant="surface" columns={6} count={4} />
       </div>
     </div>
   );

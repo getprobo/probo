@@ -170,6 +170,46 @@ export function parseCookieName(raw: string): string {
   return raw.substring(0, eqIdx).trim();
 }
 
+export function normalizeCookieDomain(raw: string): string | null {
+  const value = raw.trim().replace(/^\./, "").toLowerCase();
+  return value === "" ? null : value;
+}
+
+export interface CookieDomainFields {
+  cookie_domain?: string;
+  host_only: boolean;
+}
+
+// parseCookieSetDomain reads the Domain= attribute from a document.cookie
+// assignment. No attribute means the cookie is host-only.
+export function parseCookieSetDomain(raw: string): CookieDomainFields {
+  const parts = raw.split(";").map((s) => s.trim());
+
+  for (const part of parts) {
+    if (!part.toLowerCase().startsWith("domain=")) continue;
+
+    const normalized = normalizeCookieDomain(part.substring(7));
+    if (normalized == null) return { host_only: true };
+
+    return { cookie_domain: normalized, host_only: false };
+  }
+
+  return { host_only: true };
+}
+
+// cookieListItemDomain maps a Cookie Store item. A null domain is
+// host-only; a string is the Domain attribute.
+export function cookieListItemDomain(domain: string | null): CookieDomainFields {
+  if (domain == null || domain === "") {
+    return { host_only: true };
+  }
+
+  const normalized = normalizeCookieDomain(domain);
+  if (normalized == null) return { host_only: true };
+
+  return { cookie_domain: normalized, host_only: false };
+}
+
 export function parseMaxAgeSeconds(raw: string): number | null {
   const parts = raw.split(";").map((s) => s.trim());
 

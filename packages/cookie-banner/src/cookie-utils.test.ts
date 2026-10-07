@@ -18,27 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-declare const __SDK_VERSION__: string;
+import { describe, expect, it } from "vitest";
 
-interface CookieListItem {
-  name: string;
-  value: string;
-  domain: string | null;
-  path: string;
-  expires: number | null;
-  secure: boolean;
-  sameSite: "strict" | "lax" | "none";
-}
+import { cookieListItemDomain, parseCookieSetDomain } from "./cookie-utils";
 
-interface CookieChangeEvent extends Event {
-  changed: readonly CookieListItem[];
-  deleted: readonly CookieListItem[];
-}
+describe("parseCookieSetDomain", () => {
+  it("treats a missing Domain attribute as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; path=/; max-age=3600")).toEqual({
+      host_only: true,
+    });
+  });
 
-interface CookieStoreEventTarget extends EventTarget {
-  addEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
-  removeEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
-  getAll(options?: { name?: string }): Promise<CookieListItem[]>;
-}
+  it("strips a leading dot and lowercases the Domain attribute", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=.Example.COM")).toEqual({
+      cookie_domain: "example.com",
+      host_only: false,
+    });
+  });
 
-declare const cookieStore: CookieStoreEventTarget | undefined;
+  it("treats an empty Domain attribute as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=")).toEqual({
+      host_only: true,
+    });
+  });
+});
+
+describe("cookieListItemDomain", () => {
+  it("treats a null domain as host-only", () => {
+    expect(cookieListItemDomain(null)).toEqual({ host_only: true });
+  });
+
+  it("normalizes a Cookie Store Domain attribute", () => {
+    expect(cookieListItemDomain(".Example.COM")).toEqual({
+      cookie_domain: "example.com",
+      host_only: false,
+    });
+  });
+});

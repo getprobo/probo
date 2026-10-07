@@ -49,6 +49,8 @@ export interface DetectedCookieEntry {
   max_age_seconds: number | null;
   source: CookieSource;
   initiator_url?: string;
+  cookie_domain?: string;
+  host_only?: boolean;
 }
 
 export interface DetectedStorageEntry {

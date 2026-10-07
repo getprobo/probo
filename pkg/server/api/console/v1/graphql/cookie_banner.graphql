@@ -459,6 +459,8 @@ type DetectedTracker implements Node {
     id: ID!
     identifier: String!
     initiatorUrl: String
+    cookieDomain: String
+    hostOnly: Boolean
     maxAgeSeconds: Int
     source: CookieSource
     lastDetectedAt: Datetime!

@@ -142,6 +142,9 @@ export function TrackerPatternDetectedTrackersSection({
                       <TableColumnHeaderCell overflow="truncate">
                         {t("detectedTrackersSection.columns.identifier")}
                       </TableColumnHeaderCell>
+                      <TableColumnHeaderCell overflow="truncate">
+                        {t("detectedTrackersSection.columns.domain")}
+                      </TableColumnHeaderCell>
                       <TableColumnHeaderCell
                         overflow="truncate"
                         sort={detectedTrackersHeaderSort("INITIATOR_URL", order)}

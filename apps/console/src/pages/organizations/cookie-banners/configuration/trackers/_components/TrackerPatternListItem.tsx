@@ -268,13 +268,15 @@ export function TrackerPatternListItem({
           </div>
         </TableRowHeaderCell>
         <TableCell>
-          {pattern.commonThirdParty
-            ? (
-                <Text size={2} highContrast>
-                  {pattern.commonThirdParty.name}
-                </Text>
-              )
-            : <TrackerAttributionLabel attribution={pattern.attribution} />}
+          {pattern.source === "EXTENSION"
+            ? <TrackerAttributionLabel attribution="NOT_ATTRIBUTABLE" />
+            : pattern.commonThirdParty
+              ? (
+                  <Text size={2} highContrast>
+                    {pattern.commonThirdParty.name}
+                  </Text>
+                )
+              : <TrackerAttributionLabel attribution={pattern.attribution} />}
         </TableCell>
         <TableCell>
           {sourceBadge == null

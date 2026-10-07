@@ -746,15 +746,14 @@ func globMatch(pattern, name string) bool {
 }
 
 // sourceRank converts a CookieSource into a comparable rank that
-// reflects signal strength: SCRIPT > HTTP > EXTENSION > PRE_EXISTING.
-// SCRIPT is a real page tracker observed being written by page JS;
-// HTTP is a real server-set cookie (a Set-Cookie response header),
-// which is page evidence just like SCRIPT and so must outrank both
-// browser-extension state and the PRE_EXISTING catch-all — otherwise a
-// cookie first enumerated as PRE_EXISTING and later re-observed only
-// via Set-Cookie would stay PRE_EXISTING and remain agent-skipped.
-// EXTENSION is high-confidence extension state; PRE_EXISTING (and nil)
-// is the low-signal catch-all.
+// reflects signal strength: SCRIPT > EXTENSION > HTTP > PRE_EXISTING.
+// SCRIPT is a real page tracker observed being written by page JS.
+// EXTENSION is a confirmed page-world extension write; HTTP must sit
+// below it because cookieStore echoes those writes as HTTP and would
+// otherwise replace a confirmed extension with that echo. HTTP is still
+// stronger than PRE_EXISTING so a cookie first enumerated on load and
+// later seen via Set-Cookie can advance. PRE_EXISTING (and nil) is the
+// low-signal catch-all.
 func sourceRank(s *coredata.CookieSource) int {
 	if s == nil {
 		return 0
@@ -763,9 +762,9 @@ func sourceRank(s *coredata.CookieSource) int {
 	switch *s {
 	case coredata.CookieSourceScript:
 		return 3
-	case coredata.CookieSourceHTTP:
-		return 2
 	case coredata.CookieSourceExtension:
+		return 2
+	case coredata.CookieSourceHTTP:
 		return 1
 	default:
 		return 0
@@ -773,22 +772,19 @@ func sourceRank(s *coredata.CookieSource) int {
 }
 
 // shouldPromoteSource reports whether candidate represents a stronger
-// signal than existing under the SCRIPT > EXTENSION > PRE_EXISTING
-// precedence used across the cookie-banner pipeline. Equal ranks do
-// not promote so we avoid pointless writes.
+// signal than existing under the SCRIPT > EXTENSION > HTTP >
+// PRE_EXISTING precedence used across the cookie-banner pipeline. Equal
+// ranks do not promote so we avoid pointless writes.
 func shouldPromoteSource(existing, candidate *coredata.CookieSource) bool {
 	return sourceRank(candidate) > sourceRank(existing)
 }
 
 // bestSource rolls up the source values of a group of exact patterns
-// being merged into a single glob. Precedence is SCRIPT > HTTP >
-// EXTENSION > PRE_EXISTING, mirroring the asymmetric signal strength of
-// each bucket: SCRIPT is high-confidence page evidence (a real page
-// tracker), HTTP is a real server-set cookie (a Set-Cookie response
-// header) and is page evidence too, EXTENSION is high-confidence
-// extension state, and PRE_EXISTING is the catch-all that may include
-// extension state injected before SDK load. nil collapses into
-// PRE_EXISTING.
+// being merged into a single glob. Precedence is SCRIPT > EXTENSION >
+// HTTP > PRE_EXISTING, mirroring sourceRank: SCRIPT is high-confidence
+// page evidence, EXTENSION is a confirmed extension write, HTTP is a
+// Set-Cookie or cookieStore echo (and must not outrank EXTENSION), and
+// PRE_EXISTING is the catch-all. nil collapses into PRE_EXISTING.
 func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 	var (
 		hasHTTP      bool
@@ -803,19 +799,19 @@ func bestSource(patterns []*coredata.TrackerPattern) *coredata.CookieSource {
 		switch *p.Source {
 		case coredata.CookieSourceScript:
 			return p.Source
-		case coredata.CookieSourceHTTP:
-			hasHTTP = true
 		case coredata.CookieSourceExtension:
 			hasExtension = true
+		case coredata.CookieSourceHTTP:
+			hasHTTP = true
 		}
 	}
 
 	switch {
-	case hasHTTP:
-		src := coredata.CookieSourceHTTP
-		return &src
 	case hasExtension:
 		src := coredata.CookieSourceExtension
+		return &src
+	case hasHTTP:
+		src := coredata.CookieSourceHTTP
 		return &src
 	default:
 		src := coredata.CookieSourcePreExisting

@@ -147,6 +147,8 @@ type (
 		MaxAgeSeconds *int
 		Source        coredata.CookieSource
 		InitiatorURL  *string
+		CookieDomain  *string
+		HostOnly      *bool
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -2746,6 +2748,8 @@ func (s *Service) ReportDetectedTrackers(
 						MaxAgeSeconds: dc.MaxAgeSeconds,
 						Source:        &dc.Source,
 						InitiatorURL:  dc.InitiatorURL,
+						CookieDomain:  dc.CookieDomain,
+						HostOnly:      dc.HostOnly,
 					},
 					&inserted,
 					&matchedPatternIDs,
@@ -2820,6 +2824,8 @@ type detectedTrackerInfo struct {
 	Source        *coredata.CookieSource
 	ValueSize     *int
 	InitiatorURL  *string
+	CookieDomain  *string
+	HostOnly      *bool
 }
 
 func (s *Service) reportDetectedTracker(
@@ -2867,8 +2873,17 @@ func (s *Service) reportDetectedTracker(
 		// no-op when info.Source is nil or weaker, so storage
 		// items without a source and weaker re-detections cost
 		// nothing.
-		if shouldPromoteSource(matchedPattern.Source, info.Source) {
+		promoted := shouldPromoteSource(matchedPattern.Source, info.Source)
+		if promoted {
 			matchedPattern.Source = info.Source
+		}
+
+		filledMaxAge := matchedPattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
+		if filledMaxAge {
+			matchedPattern.MaxAgeSeconds = info.MaxAgeSeconds
+		}
+
+		if promoted || filledMaxAge {
 			matchedPattern.UpdatedAt = now
 
 			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
@@ -2879,11 +2894,18 @@ func (s *Service) reportDetectedTracker(
 			// upserted below carries a fresh initiator domain that
 			// matchByDomain/matchBySiblingOrigin can now use. Re-arm
 			// mapping so the worker revisits the pattern.
-			if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
-				return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
+			if promoted {
+				if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
+				}
 			}
 		}
 	} else {
+		var mappingRequestedAt *time.Time
+		if info.Source == nil || *info.Source != coredata.CookieSourceExtension {
+			mappingRequestedAt = &now
+		}
+
 		newPattern := &coredata.TrackerPattern{
 			ID:                 gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
 			OrganizationID:     banner.OrganizationID,
@@ -2897,7 +2919,7 @@ func (s *Service) reportDetectedTracker(
 			MaxAgeSeconds:      info.MaxAgeSeconds,
 			Source:             info.Source,
 			LastMatchedAt:      &now,
-			MappingRequestedAt: &now,
+			MappingRequestedAt: mappingRequestedAt,
 			CreatedAt:          now,
 			UpdatedAt:          now,
 		}
@@ -2939,6 +2961,8 @@ func (s *Service) reportDetectedTracker(
 		ValueSize:        info.ValueSize,
 		InitiatorURL:     info.InitiatorURL,
 		InitiatorDomain:  initiatorDomain,
+		CookieDomain:     info.CookieDomain,
+		HostOnly:         info.HostOnly,
 		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,

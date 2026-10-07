@@ -327,3 +327,133 @@ func TestReportDetectedTrackers_ResourceReportingEnabled(t *testing.T) {
 	assert.Equal(t, "https://cdn.example.com", resource.Origin)
 	assert.Equal(t, "/pixel.js", resource.Path)
 }
+
+// TestReportDetectedTrackers_FillsDomainWithoutDemotingSource asserts
+// that a later PRE_EXISTING report can fill cookie_domain on a row
+// already stored as SCRIPT, and that the stored source stays SCRIPT.
+func TestReportDetectedTrackers_FillsDomainWithoutDemotingSource(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:   "_ga",
+						Source: coredata.CookieSourceScript,
+					},
+				},
+			},
+		),
+	)
+
+	domain := "example.com"
+	hostOnly := false
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:         "_ga",
+						Source:       coredata.CookieSourcePreExisting,
+						CookieDomain: &domain,
+						HostOnly:     &hostOnly,
+					},
+				},
+			},
+		),
+	)
+
+	var tracker coredata.DetectedTracker
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return tracker.LoadByBannerIDTypeAndIdentifier(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					"_ga",
+				)
+			},
+		),
+	)
+
+	require.NotNil(t, tracker.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *tracker.Source)
+	require.NotNil(t, tracker.CookieDomain)
+	assert.Equal(t, domain, *tracker.CookieDomain)
+	require.NotNil(t, tracker.HostOnly)
+	assert.False(t, *tracker.HostOnly)
+}
+
+// TestReportDetectedTrackers_ExtensionSkipsMappingRequest asserts that
+// a new EXTENSION pattern stays uncategorised and does not arm the
+// mapping worker.
+func TestReportDetectedTrackers_ExtensionSkipsMappingRequest(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:   "ext_session",
+						Source: coredata.CookieSourceExtension,
+					},
+				},
+			},
+		),
+	)
+
+	var pattern coredata.TrackerPattern
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return pattern.LoadByBannerIDTypeAndPattern(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					"ext_session",
+					nil,
+				)
+			},
+		),
+	)
+
+	require.NotNil(t, pattern.Source)
+	assert.Equal(t, coredata.CookieSourceExtension, *pattern.Source)
+	assert.Equal(t, fx.uncategorisedID, pattern.CookieCategoryID)
+	assert.False(t, pattern.Excluded)
+	assert.Nil(t, pattern.MappingRequestedAt)
+	assert.Nil(t, pattern.CommonTrackerPatternID)
+}

@@ -269,6 +269,51 @@ func TestProcess_ExtensionPatternKeepsCatalogLink(t *testing.T) {
 	assert.Equal(t, fx.commonPatternID, *reloaded.CommonTrackerPatternID)
 }
 
+// TestProcess_UnlinkedExtensionPatternStaysUnlinked asserts that an
+// EXTENSION pattern with no catalog link does not gain one. Process
+// returns before deterministic matching so a name collision cannot
+// write a shared catalog row.
+func TestProcess_UnlinkedExtensionPatternStaysUnlinked(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	source := coredata.CookieSourceExtension
+	patternName := "ext_unlinked_" + fx.scope.GetTenantID().String()
+
+	pattern := coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.banner.ID,
+		CookieCategoryID: fx.uncategorisedID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          patternName,
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      patternName,
+		Source:           &source,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return pattern.Insert(ctx, tx, fx.scope)
+	}))
+
+	h := newMappingHandler(client)
+	require.NoError(t, h.Process(ctx, pattern))
+
+	var reloaded coredata.TrackerPattern
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return reloaded.LoadByID(ctx, conn, fx.scope, pattern.ID)
+	}))
+
+	assert.Nil(t, reloaded.CommonTrackerPatternID)
+}
+
 func TestMatchBySiblingOrigin_SiblingWithCatalogVendor(t *testing.T) {
 	t.Parallel()
 

@@ -21,9 +21,11 @@
 import { NotFoundError } from "../errors";
 import { fetchJSON } from "../http";
 import type {
+  CookieSource,
   DetectedCookieEntry,
   DetectedResourceEntry,
   DetectedStorageEntry,
+  StorageSource,
 } from "./types";
 
 const DEBOUNCE_MS = 2_000;
@@ -45,18 +47,89 @@ interface Batch {
   resources?: DetectedResourceEntry[];
 }
 
+function sourceRank(source: CookieSource | StorageSource): number {
+  switch (source) {
+    case "script":
+      return 3;
+    case "extension":
+      return 2;
+    case "http":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function cookieRicher(next: DetectedCookieEntry, prev: DetectedCookieEntry): boolean {
+  if (sourceRank(next.source) > sourceRank(prev.source)) return true;
+  if (next.cookie_domain != null && prev.cookie_domain == null) return true;
+  if (next.host_only != null && prev.host_only == null) return true;
+  if (next.host_only === false && prev.host_only === true) return true;
+  if (next.initiator_url != null && prev.initiator_url == null) return true;
+  if (next.max_age_seconds != null && prev.max_age_seconds == null) return true;
+  return false;
+}
+
+function mergeCookie(prev: DetectedCookieEntry, next: DetectedCookieEntry): DetectedCookieEntry {
+  const merged: DetectedCookieEntry = {
+    name: prev.name,
+    max_age_seconds: next.max_age_seconds ?? prev.max_age_seconds,
+    source: sourceRank(next.source) > sourceRank(prev.source) ? next.source : prev.source,
+  };
+
+  const initiator = next.initiator_url ?? prev.initiator_url;
+  if (initiator != null) merged.initiator_url = initiator;
+
+  if (next.host_only === false && next.cookie_domain != null) {
+    merged.cookie_domain = next.cookie_domain;
+    merged.host_only = false;
+  } else if (prev.host_only === false && prev.cookie_domain != null) {
+    merged.cookie_domain = prev.cookie_domain;
+    merged.host_only = false;
+  } else if (next.host_only != null) {
+    if (next.cookie_domain != null) merged.cookie_domain = next.cookie_domain;
+    merged.host_only = next.host_only;
+  } else if (prev.host_only != null) {
+    if (prev.cookie_domain != null) merged.cookie_domain = prev.cookie_domain;
+    merged.host_only = prev.host_only;
+  }
+
+  return merged;
+}
+
+function storageRicher(next: DetectedStorageEntry, prev: DetectedStorageEntry): boolean {
+  if (sourceRank(next.source) > sourceRank(prev.source)) return true;
+  if (next.initiator_url != null && prev.initiator_url == null) return true;
+  if (next.value_size != null && prev.value_size == null) return true;
+  return false;
+}
+
+function mergeStorage(prev: DetectedStorageEntry, next: DetectedStorageEntry): DetectedStorageEntry {
+  const merged: DetectedStorageEntry = {
+    key: prev.key,
+    storage_type: prev.storage_type,
+    value_size: next.value_size ?? prev.value_size,
+    source: sourceRank(next.source) > sourceRank(prev.source) ? next.source : prev.source,
+  };
+
+  const initiator = next.initiator_url ?? prev.initiator_url;
+  if (initiator != null) merged.initiator_url = initiator;
+
+  return merged;
+}
+
 // ReportQueue centralises debounce, batching, retry, dedup and the
 // page-lifecycle drain for the three tracker detectors. Every reported
 // item lives in a single `pending` Map keyed with a type-namespaced
 // dedup key (`c:`, `s:`, `r:`) so that, e.g., a cookie literally named
 // `s:local_storage:foo` cannot collide with a localStorage entry whose
-// key is `foo`. The queue owns the only `reported` Set; detectors are
-// pure producers that call `reportCookie/Storage/Resource` and don't
-// track what they've already sent.
+// key is `foo`. `accepted` holds the richest payload already taken for
+// each key; a later observation replaces it only when it is stronger or
+// more detailed. Resources stay first-write-wins.
 export class ReportQueue {
   private readonly reportUrl: URL;
   private readonly pending: Map<string, QueuedItem> = new Map();
-  private readonly reported: Set<string> = new Set();
+  private readonly accepted: Map<string, QueuedItem> = new Map();
   private readonly notFoundListeners: Set<() => void> = new Set();
   private timer: ReturnType<typeof setTimeout> | null = null;
   private flushing = false;
@@ -103,11 +176,42 @@ export class ReportQueue {
 
   private enqueue(key: string, item: QueuedItem): void {
     if (this.stopped) return;
-    if (this.reported.has(key)) return;
 
-    this.reported.add(key);
-    this.pending.set(key, item);
+    if (item.kind === "resource") {
+      if (this.accepted.has(key)) return;
+      this.accepted.set(key, item);
+      this.pending.set(key, item);
+      this.scheduleFlush();
+      return;
+    }
+
+    const previous = this.accepted.get(key);
+    const next = previous == null ? item : this.mergeItem(previous, item);
+    if (previous != null && !this.itemRicher(next, previous)) return;
+
+    this.accepted.set(key, next);
+    this.pending.set(key, next);
     this.scheduleFlush();
+  }
+
+  private mergeItem(previous: QueuedItem, incoming: QueuedItem): QueuedItem {
+    if (previous.kind === "cookie" && incoming.kind === "cookie") {
+      return { kind: "cookie", entry: mergeCookie(previous.entry, incoming.entry) };
+    }
+    if (previous.kind === "storage" && incoming.kind === "storage") {
+      return { kind: "storage", entry: mergeStorage(previous.entry, incoming.entry) };
+    }
+    return incoming;
+  }
+
+  private itemRicher(next: QueuedItem, previous: QueuedItem): boolean {
+    if (next.kind === "cookie" && previous.kind === "cookie") {
+      return cookieRicher(next.entry, previous.entry);
+    }
+    if (next.kind === "storage" && previous.kind === "storage") {
+      return storageRicher(next.entry, previous.entry);
+    }
+    return false;
   }
 
   private scheduleFlush(): void {
@@ -127,7 +231,7 @@ export class ReportQueue {
     if (this.flushing || this.stopped) return;
     if (this.pending.size === 0) return;
 
-    const { keys, body } = this.takeBatch();
+    const { sent, body } = this.takeBatch();
 
     this.flushing = true;
     void fetchJSON(this.reportUrl, {
@@ -135,7 +239,7 @@ export class ReportQueue {
       body,
     })
       .then(() => {
-        for (const key of keys) this.pending.delete(key);
+        this.releaseSent(sent);
       })
       .catch((err) => {
         if (err instanceof NotFoundError) {
@@ -155,14 +259,14 @@ export class ReportQueue {
   // order (Map preserves it) and partitions them into the three arrays
   // the server expects. Insertion-order is naturally fair: items are
   // sent in the order the detectors observed them.
-  private takeBatch(): { keys: string[]; body: Batch } {
-    const keys: string[] = [];
+  private takeBatch(): { sent: Map<string, QueuedItem>; body: Batch } {
+    const sent: Map<string, QueuedItem> = new Map();
     const cookies: DetectedCookieEntry[] = [];
     const storage: DetectedStorageEntry[] = [];
     const resources: DetectedResourceEntry[] = [];
 
     for (const [key, item] of this.pending) {
-      keys.push(key);
+      sent.set(key, item);
       switch (item.kind) {
         case "cookie":
           cookies.push(item.entry);
@@ -174,7 +278,7 @@ export class ReportQueue {
           resources.push(item.entry);
           break;
       }
-      if (keys.length >= MAX_ITEMS_PER_REQUEST) break;
+      if (sent.size >= MAX_ITEMS_PER_REQUEST) break;
     }
 
     const body: Batch = {};
@@ -182,7 +286,18 @@ export class ReportQueue {
     if (storage.length > 0) body.storage = storage;
     if (resources.length > 0) body.resources = resources;
 
-    return { keys, body };
+    return { sent, body };
+  }
+
+  // releaseSent drops a pending key only when the queued value is still
+  // the snapshot that was sent. A richer replacement that arrived
+  // mid-request stays queued for the next flush.
+  private releaseSent(sent: Map<string, QueuedItem>): void {
+    for (const [key, item] of sent) {
+      if (this.pending.get(key) === item) {
+        this.pending.delete(key);
+      }
+    }
   }
 
   private notifyNotFound(): void {
@@ -262,7 +377,7 @@ export class ReportQueue {
   private flushSync(): void {
     if (this.pending.size === 0) return;
 
-    const { keys, body } = this.takeBatch();
+    const { sent, body } = this.takeBatch();
     const payload = JSON.stringify(body);
 
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
@@ -276,7 +391,7 @@ export class ReportQueue {
         queued = false;
       }
       if (queued) {
-        for (const key of keys) this.pending.delete(key);
+        this.releaseSent(sent);
         return;
       }
     }
@@ -302,7 +417,7 @@ export class ReportQueue {
         })
           .then((res) => {
             if (res.ok) {
-              for (const key of keys) this.pending.delete(key);
+              this.releaseSent(sent);
             }
           })
           .catch(() => {
