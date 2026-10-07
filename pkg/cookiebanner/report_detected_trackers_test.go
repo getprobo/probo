@@ -377,45 +377,24 @@ func TestReportDetectedTrackers_SeparatesHostOnlyAndDomain(t *testing.T) {
 		),
 	)
 
-	var (
-		hostOnlyTracker coredata.DetectedTracker
-		domainTracker   coredata.DetectedTracker
-	)
+	trackers := loadDetectedTrackersByPattern(t, ctx, client, fx, "_ga")
+	require.Len(t, trackers, 2)
 
-	require.NoError(
-		t,
-		client.WithConn(
-			ctx,
-			func(ctx context.Context, conn pg.Querier) error {
-				if err := hostOnlyTracker.LoadByBannerIDTypeAndIdentifier(
-					ctx,
-					conn,
-					fx.scope,
-					fx.banner.ID,
-					coredata.TrackerTypeCookie,
-					"_ga",
-					nil,
-				); err != nil {
-					return err
-				}
+	var hostOnlyTracker, domainTracker *coredata.DetectedTracker
+	for _, tracker := range trackers {
+		if tracker.CookieDomain == nil {
+			hostOnlyTracker = tracker
+			continue
+		}
 
-				return domainTracker.LoadByBannerIDTypeAndIdentifier(
-					ctx,
-					conn,
-					fx.scope,
-					fx.banner.ID,
-					coredata.TrackerTypeCookie,
-					"_ga",
-					&domain,
-				)
-			},
-		),
-	)
+		domainTracker = tracker
+	}
 
+	require.NotNil(t, hostOnlyTracker)
 	require.NotNil(t, hostOnlyTracker.Source)
 	assert.Equal(t, coredata.CookieSourceScript, *hostOnlyTracker.Source)
-	assert.Nil(t, hostOnlyTracker.CookieDomain)
 
+	require.NotNil(t, domainTracker)
 	require.NotNil(t, domainTracker.Source)
 	assert.Equal(t, coredata.CookieSourcePreExisting, *domainTracker.Source)
 	require.NotNil(t, domainTracker.CookieDomain)
@@ -530,27 +509,62 @@ func TestReportDetectedTrackers_DropsOversizedMaxAge(t *testing.T) {
 		),
 	)
 
-	var tracker coredata.DetectedTracker
+	trackers := loadDetectedTrackersByPattern(t, ctx, client, fx, "_ga")
+	require.Len(t, trackers, 1)
 
-	require.NoError(
-		t,
-		client.WithConn(
+	assert.Nil(t, trackers[0].MaxAgeSeconds)
+	require.NotNil(t, trackers[0].Source)
+	assert.Equal(t, coredata.CookieSourceScript, *trackers[0].Source)
+}
+
+func loadDetectedTrackersByPattern(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx workerFixture,
+	pattern string,
+) []*coredata.DetectedTracker {
+	t.Helper()
+
+	var trackers []*coredata.DetectedTracker
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var tp coredata.TrackerPattern
+		if err := tp.LoadByBannerIDTypeAndPattern(
 			ctx,
-			func(ctx context.Context, conn pg.Querier) error {
-				return tracker.LoadByBannerIDTypeAndIdentifier(
-					ctx,
-					conn,
-					fx.scope,
-					fx.banner.ID,
-					coredata.TrackerTypeCookie,
-					"_ga",
-					nil,
-				)
-			},
-		),
-	)
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.TrackerTypeCookie,
+			pattern,
+			nil,
+		); err != nil {
+			return err
+		}
 
-	assert.Nil(t, tracker.MaxAgeSeconds)
-	require.NotNil(t, tracker.Source)
-	assert.Equal(t, coredata.CookieSourceScript, *tracker.Source)
+		loaded, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.DetectedTrackerOrderField]{
+				Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+				var batch coredata.DetectedTrackers
+				if err := batch.LoadByTrackerPatternID(ctx, conn, fx.scope, tp.ID, cursor); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		trackers = loaded
+
+		return nil
+	}))
+
+	return trackers
 }

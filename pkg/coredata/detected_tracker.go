@@ -166,68 +166,6 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain,
 	return result.RowsAffected() > 0, nil
 }
 
-func (dt *DetectedTracker) LoadByBannerIDTypeAndIdentifier(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	cookieBannerID gid.GID,
-	trackerType TrackerType,
-	identifier string,
-	cookieDomain *string,
-) error {
-	q := `
-SELECT
-	id,
-	cookie_banner_id,
-	tracker_pattern_id,
-	tracker_type,
-	identifier,
-	max_age_seconds,
-	source,
-	value_size,
-	initiator_url,
-	initiator_domain,
-	cookie_domain,
-	host_only,
-	last_detected_at,
-	created_at,
-	updated_at
-FROM
-	detected_trackers
-WHERE
-	%s
-	AND cookie_banner_id = @cookie_banner_id
-	AND tracker_type = @tracker_type
-	AND identifier = @identifier
-	AND COALESCE(cookie_domain, '') = COALESCE(@cookie_domain, '')
-LIMIT 1
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"cookie_banner_id": cookieBannerID,
-		"tracker_type":     trackerType,
-		"identifier":       identifier,
-		"cookie_domain":    cookieDomain,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query detected tracker: %w", err)
-	}
-
-	tracker, err := pgx.CollectExactlyOneRow(rows, pgx.RowToAddrOfStructByName[DetectedTracker])
-	if err != nil {
-		return fmt.Errorf("cannot collect detected tracker: %w", err)
-	}
-
-	*dt = *tracker
-
-	return nil
-}
-
 func (dts *DetectedTrackers) CountByTrackerPatternID(
 	ctx context.Context,
 	conn pg.Querier,
