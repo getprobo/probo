@@ -377,8 +377,10 @@ func TestReportDetectedTrackers_SeparatesHostOnlyAndDomain(t *testing.T) {
 		),
 	)
 
-	var hostOnlyTracker coredata.DetectedTracker
-	var domainTracker coredata.DetectedTracker
+	var (
+		hostOnlyTracker coredata.DetectedTracker
+		domainTracker   coredata.DetectedTracker
+	)
 
 	require.NoError(
 		t,
