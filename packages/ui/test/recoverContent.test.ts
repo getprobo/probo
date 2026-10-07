@@ -75,8 +75,8 @@ function plainTextDocument(text: string): string {
   });
 }
 
-describe("recoverRichContent", () => {
-  it("renders a document stored as paragraphs of json", () => {
+void describe("recoverRichContent", () => {
+  void it("renders a document stored as paragraphs of json", () => {
     const pretty = JSON.stringify(diagramRequest, null, 2);
     const recovered = recoverRichContent(plainTextDocument(pretty));
 
@@ -93,7 +93,7 @@ describe("recoverRichContent", () => {
     );
   });
 
-  it("unwraps a json string around the document", () => {
+  void it("unwraps a json string around the document", () => {
     const recovered = recoverRichContent(JSON.stringify(JSON.stringify(diagramRequest)));
 
     assert.equal(recovered?.content?.[1]?.type, "bulletList");
@@ -107,7 +107,7 @@ describe("recoverRichContent", () => {
     );
   });
 
-  it("keeps a real bullet list", () => {
+  void it("keeps a real bullet list", () => {
     const stored = JSON.stringify(diagramRequest);
     const recovered = recoverRichContent(stored);
 
@@ -118,13 +118,13 @@ describe("recoverRichContent", () => {
     );
   });
 
-  it("keeps prose", () => {
+  void it("keeps prose", () => {
     const recovered = recoverRichContent(plainTextDocument("Keep this sentence"));
 
     assert.equal(recovered?.content?.[0]?.content?.[0]?.text, "Keep this sentence");
   });
 
-  it("returns null for plain text", () => {
+  void it("returns null for plain text", () => {
     assert.equal(recoverRichContent("not json"), null);
   });
 });
