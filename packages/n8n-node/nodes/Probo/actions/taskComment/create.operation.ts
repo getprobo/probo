@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -41,7 +41,7 @@ export const description: INodeProperties[] = [
 		name: 'content',
 		type: 'string',
 		typeOptions: {
-			rows: 4,
+			rows: 6,
 		},
 		displayOptions: {
 			show: {
@@ -50,7 +50,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The comment content',
+		description: 'The comment content as a ProseMirror document JSON string',
 		required: true,
 	},
 	{
@@ -95,19 +95,12 @@ export async function execute(
 		}
 	`;
 
-	const input: Record<string, string> = { taskId, content: plainTextToProseMirrorJSON(content) };
+	const input: Record<string, string> = { taskId, content };
 	if (ownerId) {
 		input.ownerId = ownerId;
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
-	const data = responseData.data as IDataObject | undefined;
-	const payload = data?.createTaskComment as IDataObject | undefined;
-	const edge = payload?.taskCommentEdge as IDataObject | undefined;
-	const node = edge?.node as IDataObject | undefined;
-	if (edge && node) {
-		edge.node = withPlainTextContent(node);
-	}
 
 	return {
 		json: responseData,
