@@ -92,7 +92,7 @@ const sourcesFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "AccessReviewSourcesPage_accessReviewSources") {
+    ) @connection(key: "AccessReviewSourcesPage_accessReviewSources", filters: []) {
       __id
       totalCount
       edges {
