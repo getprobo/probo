@@ -66,3 +66,12 @@ export function parseDate(dateString: string): Date {
     parts[2] ? parseInt(parts[2], 10) : 1,
   );
 }
+
+/** True when the calendar day of `dateString` is strictly before today. */
+export function isPastDueDate(dateString?: string | null): boolean {
+  const day = toDateInput(dateString);
+  if (!day) {
+    return false;
+  }
+  return day < todayAsDateInput();
+}

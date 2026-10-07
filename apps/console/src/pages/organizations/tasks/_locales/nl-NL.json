@@ -5,6 +5,7 @@
     "none": "Geen",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
+    "overdue": "Te laat",
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",

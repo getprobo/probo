@@ -1160,7 +1160,8 @@
     },
     "metadata": {
       "timeEstimate": "Estimation de temps",
-      "deadline": "Échéance"
+      "deadline": "Échéance",
+      "overdue": "En retard"
     },
     "recurringBadge": {
       "tooltip": "Se répète avec un intervalle de {{interval}}"

@@ -5,6 +5,7 @@
     "none": "Aucun",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
+    "overdue": "En retard",
     "fields": {
       "name": "Nom",
       "description": "Description",

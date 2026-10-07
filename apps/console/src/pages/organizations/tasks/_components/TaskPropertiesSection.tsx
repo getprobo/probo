@@ -278,26 +278,28 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
         <PropertyRow label={t("detailsPage.fields.deadline")}>
           {task.canUpdate
             ? (
-                <TextField
-                  size={1}
-                  type="date"
-                  value={toDateInput(task.deadline)}
-                  disabled={isUpdating}
-                  aria-label={t("detailsPage.fields.deadline")}
-                  onChange={(event) => {
-                    const next = event.currentTarget.value;
-                    const deadline = next ? formatDatetime(next) ?? null : null;
-                    const current = task.deadline ? toDateInput(task.deadline) : "";
-                    if (next === current) {
-                      return;
-                    }
-                    if (!deadline && task.recurrenceInterval) {
-                      void save({ deadline, recurrenceInterval: null });
-                      return;
-                    }
-                    void save({ deadline });
-                  }}
-                />
+                <>
+                  <TextField
+                    size={1}
+                    type="date"
+                    value={toDateInput(task.deadline)}
+                    disabled={isUpdating}
+                    aria-label={t("detailsPage.fields.deadline")}
+                    onChange={(event) => {
+                      const next = event.currentTarget.value;
+                      const deadline = next ? formatDatetime(next) ?? null : null;
+                      const current = task.deadline ? toDateInput(task.deadline) : "";
+                      if (next === current) {
+                        return;
+                      }
+                      if (!deadline && task.recurrenceInterval) {
+                        void save({ deadline, recurrenceInterval: null });
+                        return;
+                      }
+                      void save({ deadline });
+                    }}
+                  />
+                </>
               )
             : task.deadline
               ? (

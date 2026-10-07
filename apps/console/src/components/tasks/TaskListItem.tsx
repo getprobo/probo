@@ -25,6 +25,7 @@ import {
 } from "@phosphor-icons/react";
 import { dateFormat, formatDuration } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -45,6 +46,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskPriorityIcon } from "#/pages/organizations/tasks/_components/TaskPriorityIcon";
 import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
+import { isOverdueTask } from "#/pages/organizations/tasks/_lib/isOverdueTask";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
 import {
   type TaskState,
@@ -149,6 +151,7 @@ export function TaskListItem(props: TaskListItemProps) {
   }
 
   const { canDrag } = props;
+  const isOverdue = isOverdueTask(task.deadline, displayState);
   const slots = taskListItem({ interaction: rowInteraction(props, isMouseDown) });
   const detailsUrl = taskDetailsPath(organizationId, task.id);
 
@@ -229,27 +232,36 @@ export function TaskListItem(props: TaskListItemProps) {
             </Text>
           </span>
         )}
-        {task.assignedTo?.fullName && (
-          <Tooltip>
-            <TooltipTrigger
-              render={(
-                <Link
-                  className={slots.assignee()}
-                  to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
-                  aria-label={task.assignedTo.fullName}
-                >
-                  <Avatar
-                    size={1}
-                    radius="full"
-                    name={task.assignedTo.fullName}
-                    email={task.assignedTo.emailAddress}
-                    src={task.assignedTo.avatar?.downloadUrl}
-                  />
-                </Link>
-              )}
-            />
-            <TooltipPopup>{task.assignedTo.fullName}</TooltipPopup>
-          </Tooltip>
+        {(isOverdue || task.assignedTo?.fullName) && (
+          <div className={slots.trailing()}>
+            {isOverdue && (
+              <Badge variant="soft" color="red" size={1}>
+                {t("tasksCard.metadata.overdue")}
+              </Badge>
+            )}
+            {task.assignedTo?.fullName && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={(
+                    <Link
+                      className={slots.assignee()}
+                      to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
+                      aria-label={task.assignedTo.fullName}
+                    >
+                      <Avatar
+                        size={1}
+                        radius="full"
+                        name={task.assignedTo.fullName}
+                        email={task.assignedTo.emailAddress}
+                        src={task.assignedTo.avatar?.downloadUrl}
+                      />
+                    </Link>
+                  )}
+                />
+                <TooltipPopup>{task.assignedTo.fullName}</TooltipPopup>
+              </Tooltip>
+            )}
+          </div>
         )}
       </div>
       <div className={slots.state()}>

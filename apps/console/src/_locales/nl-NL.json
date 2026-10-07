@@ -1160,7 +1160,8 @@
     },
     "metadata": {
       "timeEstimate": "Tijdsinschatting",
-      "deadline": "Deadline"
+      "deadline": "Deadline",
+      "overdue": "Te laat"
     },
     "recurringBadge": {
       "tooltip": "Herhaalt elke {{interval}}"

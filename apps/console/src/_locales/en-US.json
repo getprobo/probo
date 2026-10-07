@@ -723,7 +723,7 @@
     },
     "deleteConfirmation": "Are you sure you want to delete this task?",
     "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" },
-    "metadata": { "timeEstimate": "Time estimate", "deadline": "Deadline" },
+    "metadata": { "timeEstimate": "Time estimate", "deadline": "Deadline", "overdue": "Overdue" },
     "recurringBadge": {
       "tooltip": "Repeats every {{interval}}"
     }

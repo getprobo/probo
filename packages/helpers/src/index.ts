@@ -120,6 +120,7 @@ export {
   toDateInput,
   todayAsDateInput,
   parseDate,
+  isPastDueDate,
   type Period,
 } from "./date";
 export {
