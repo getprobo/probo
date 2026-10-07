@@ -98,7 +98,7 @@ export class CookieDetector implements Detector {
     const maxAgeSeconds = parseMaxAgeSeconds(raw);
     const { url: initiatorUrl, fromExtension } = getInitiatorURL(this.apiOrigin);
 
-    const domain = parseCookieSetDomain(raw);
+    const domain = parseCookieSetDomain(raw, location.hostname);
     const entry: DetectedCookieEntry = {
       name,
       max_age_seconds: maxAgeSeconds,
@@ -111,21 +111,26 @@ export class CookieDetector implements Detector {
   }
 
   private scanExisting(): void {
-    if (typeof cookieStore !== "undefined" && typeof cookieStore.getAll === "function") {
-      cookieStore
-        .getAll()
-        .then((cookies) => {
-          for (const cookie of cookies) {
-            this.reportExistingCookie(cookie.name, cookie.expires, cookieListItemDomain(cookie.domain));
-          }
-        })
-        .catch(() => {
-          this.scanDocumentCookie();
-        });
+    // Queue names from document.cookie immediately so a tab close
+    // during getAll() still reports pre-existing cookies. getAll is
+    // an enrichment pass that re-sends the same names with a domain.
+    this.scanDocumentCookie();
+
+    if (typeof cookieStore === "undefined" || typeof cookieStore.getAll !== "function") {
       return;
     }
 
-    this.scanDocumentCookie();
+    cookieStore
+      .getAll()
+      .then((cookies) => {
+        for (const cookie of cookies) {
+          this.reportExistingCookie(cookie.name, cookie.expires, cookieListItemDomain(cookie.domain));
+        }
+      })
+      .catch(() => {
+        // document.cookie already ran; a rejected getAll must not
+        // drop those names or scan them twice.
+      });
   }
 
   private scanDocumentCookie(): void {

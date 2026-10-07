@@ -284,6 +284,10 @@ func TestProcess_UnlinkedExtensionPatternStaysUnlinked(t *testing.T) {
 	source := coredata.CookieSourceExtension
 	patternName := "ext_unlinked_" + fx.scope.GetTenantID().String()
 
+	// A catalog row with the same name would be linked if Process
+	// ran deterministic matching. The early return must skip it.
+	seedCommonTrackerPattern(t, ctx, client, patternName)
+
 	pattern := coredata.TrackerPattern{
 		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
 		OrganizationID:   fx.organizationID,

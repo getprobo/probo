@@ -391,7 +391,9 @@ type TrackerPattern implements Node
 
     """
     Catalog verdict inherited from the linked common tracker pattern.
-    Null when the org pattern has no catalog link.
+    Null when the org pattern has no catalog link, except when source
+    is EXTENSION: that is always NOT_ATTRIBUTABLE (visitor software),
+    even if a catalog row is already linked.
     """
     attribution: CommonTrackerPatternAttribution
         @goField(forceResolver: true)

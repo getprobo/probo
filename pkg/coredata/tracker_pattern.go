@@ -1143,9 +1143,12 @@ WHERE id = @id
 // ResetStaleMappings re-arms mapping_requested_at on rows whose mapping
 // was claimed but never completed (no common_tracker_pattern_id) and
 // have been idle longer than staleAfter, so a crashed or timed-out
-// mapping run is retried. A successful Process always assigns a catalog
-// row (the unmatched fallback in createUnmatchedPattern), so a missing
-// common_tracker_pattern_id on a dequeued row marks an interrupted run.
+// mapping run is retried. EXTENSION rows never request mapping, so they
+// stay unlinked and are excluded from this sweep — re-arming them would
+// loop with a no-op Process. A successful Process always assigns a
+// catalog row (the unmatched fallback in createUnmatchedPattern), so a
+// missing common_tracker_pattern_id on a dequeued row marks an
+// interrupted run.
 //
 // Like the claim query, this sweep is intentionally cross-tenant: the
 // mapping worker is a system worker that drains the queue regardless of
@@ -1163,6 +1166,7 @@ SET
 WHERE
     mapping_requested_at IS NULL
     AND common_tracker_pattern_id IS NULL
+    AND (source IS NULL OR source <> 'EXTENSION')
     AND updated_at < @stale_before
 `
 

@@ -86,6 +86,22 @@ func TestSanitizeCookieDomainFields(t *testing.T) {
 		require.NotNil(t, hostOnly)
 		assert.True(t, *hostOnly)
 	})
+
+	t.Run("drops host_only false without a domain", func(t *testing.T) {
+		t.Parallel()
+
+		notHostOnly := false
+		domain, hostOnly := sanitizeCookieDomainFields(nil, &notHostOnly)
+		assert.Nil(t, domain)
+		assert.Nil(t, hostOnly)
+	})
+
+	t.Run("drops a trailing-dot Domain", func(t *testing.T) {
+		t.Parallel()
+
+		raw := "example.com."
+		assert.Nil(t, sanitizeCookieDomain(&raw))
+	})
 }
 
 func TestSanitizeInt4(t *testing.T) {

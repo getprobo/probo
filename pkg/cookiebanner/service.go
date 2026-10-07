@@ -2885,7 +2885,8 @@ func (s *Service) reportDetectedTracker(
 			matchedPattern.Source = info.Source
 		}
 
-		filledMaxAge := matchedPattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
+		filledMaxAge := matchedPattern.MatchType == coredata.TrackerPatternMatchTypeExact &&
+			matchedPattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
 		if filledMaxAge {
 			matchedPattern.MaxAgeSeconds = info.MaxAgeSeconds
 		}

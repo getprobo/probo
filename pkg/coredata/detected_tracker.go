@@ -136,12 +136,13 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 		cookie_domain = CASE
 			WHEN EXCLUDED.host_only IS FALSE AND EXCLUDED.cookie_domain IS NOT NULL THEN EXCLUDED.cookie_domain
 			WHEN detected_trackers.host_only IS FALSE AND detected_trackers.cookie_domain IS NOT NULL THEN detected_trackers.cookie_domain
-			WHEN EXCLUDED.host_only IS NOT NULL THEN EXCLUDED.cookie_domain
+			WHEN EXCLUDED.host_only IS TRUE THEN EXCLUDED.cookie_domain
 			ELSE detected_trackers.cookie_domain
 		END,
 		host_only = CASE
-			WHEN EXCLUDED.host_only IS FALSE THEN FALSE
-			WHEN detected_trackers.host_only IS FALSE THEN FALSE
+			WHEN EXCLUDED.host_only IS FALSE AND EXCLUDED.cookie_domain IS NOT NULL THEN FALSE
+			WHEN detected_trackers.host_only IS FALSE AND detected_trackers.cookie_domain IS NOT NULL THEN FALSE
+			WHEN EXCLUDED.host_only IS TRUE THEN TRUE
 			WHEN EXCLUDED.host_only IS NOT NULL THEN EXCLUDED.host_only
 			ELSE detected_trackers.host_only
 		END,

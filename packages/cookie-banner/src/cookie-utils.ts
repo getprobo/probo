@@ -171,8 +171,23 @@ export function parseCookieName(raw: string): string {
 }
 
 export function normalizeCookieDomain(raw: string): string | null {
-  const value = raw.trim().replace(/^\./, "").toLowerCase();
+  const trimmed = raw.trim().toLowerCase();
+  // A trailing dot is ignored by cookie parsers, so the cookie is
+  // host-only. Do not strip it and treat the rest as a Domain.
+  if (trimmed === "" || trimmed.endsWith(".")) return null;
+
+  const value = trimmed.replace(/^\./, "");
   return value === "" ? null : value;
+}
+
+// domainAppliesToHost reports whether a Domain attribute would be
+// accepted for this host. The browser drops a Domain that is not a
+// suffix of the current hostname (dot-boundary), leaving the cookie
+// host-only.
+export function domainAppliesToHost(domain: string, hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (host === domain) return true;
+  return host.endsWith("." + domain);
 }
 
 export interface CookieDomainFields {
@@ -182,7 +197,7 @@ export interface CookieDomainFields {
 
 // parseCookieSetDomain reads the Domain= attribute from a document.cookie
 // assignment. No attribute means the cookie is host-only.
-export function parseCookieSetDomain(raw: string): CookieDomainFields {
+export function parseCookieSetDomain(raw: string, hostname?: string): CookieDomainFields {
   const parts = raw.split(";").map((s) => s.trim());
 
   for (const part of parts) {
@@ -190,6 +205,10 @@ export function parseCookieSetDomain(raw: string): CookieDomainFields {
 
     const normalized = normalizeCookieDomain(part.substring(7));
     if (normalized == null) return { host_only: true };
+
+    if (hostname != null && !domainAppliesToHost(normalized, hostname)) {
+      return { host_only: true };
+    }
 
     return { cookie_domain: normalized, host_only: false };
   }

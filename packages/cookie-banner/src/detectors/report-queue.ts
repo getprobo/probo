@@ -71,10 +71,13 @@ function cookieRicher(next: DetectedCookieEntry, prev: DetectedCookieEntry): boo
 }
 
 function mergeCookie(prev: DetectedCookieEntry, next: DetectedCookieEntry): DetectedCookieEntry {
+  const nextStronger = sourceRank(next.source) > sourceRank(prev.source);
   const merged: DetectedCookieEntry = {
     name: prev.name,
-    max_age_seconds: next.max_age_seconds ?? prev.max_age_seconds,
-    source: sourceRank(next.source) > sourceRank(prev.source) ? next.source : prev.source,
+    max_age_seconds: nextStronger
+      ? next.max_age_seconds
+      : next.max_age_seconds ?? prev.max_age_seconds,
+    source: nextStronger ? next.source : prev.source,
   };
 
   const initiator = next.initiator_url ?? prev.initiator_url;

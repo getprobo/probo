@@ -46,6 +46,31 @@ describe("parseCookieSetDomain", () => {
       host_only: true,
     });
   });
+
+  it("treats a trailing-dot Domain as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=example.com.")).toEqual({
+      host_only: true,
+    });
+  });
+
+  it("keeps a Domain that is a suffix of the host", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=example.com", "app.example.com")).toEqual({
+      cookie_domain: "example.com",
+      host_only: false,
+    });
+  });
+
+  it("treats a Domain that is not a host suffix as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=other.com", "app.example.com")).toEqual({
+      host_only: true,
+    });
+  });
+
+  it("requires a dot boundary for a Domain suffix", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=example.com", "notexample.com")).toEqual({
+      host_only: true,
+    });
+  });
 });
 
 describe("clampMaxAgeSeconds", () => {
@@ -83,5 +108,9 @@ describe("cookieListItemDomain", () => {
       cookie_domain: "example.com",
       host_only: false,
     });
+  });
+
+  it("treats a trailing-dot Cookie Store domain as host-only", () => {
+    expect(cookieListItemDomain("example.com.")).toEqual({ host_only: true });
   });
 });

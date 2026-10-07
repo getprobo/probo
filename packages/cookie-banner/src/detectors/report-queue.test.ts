@@ -69,11 +69,22 @@ describe("ReportQueue", () => {
   it("re-sends when a later observation adds a domain", async () => {
     vi.useFakeTimers();
 
-    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
-    vi.stubGlobal("navigator", { sendBeacon });
+    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+    vi.stubGlobal("fetch", fetch);
 
     const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
     queue.reportCookie({ name: "sid", max_age_seconds: null, source: "pre-existing" });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const firstBody = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body)) as {
+      cookies: Array<{ cookie_domain?: string }>;
+    };
+    expect(firstBody.cookies[0]?.cookie_domain).toBeUndefined();
+
     queue.reportCookie({
       name: "sid",
       max_age_seconds: null,
@@ -81,6 +92,28 @@ describe("ReportQueue", () => {
       cookie_domain: "example.com",
       host_only: false,
     });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const secondBody = JSON.parse(String(fetch.mock.calls[1]?.[1]?.body)) as {
+      cookies: Array<{ cookie_domain?: string; source: string }>;
+    };
+    expect(secondBody.cookies[0]?.source).toBe("pre-existing");
+    expect(secondBody.cookies[0]?.cookie_domain).toBe("example.com");
+  });
+
+  it("replaces a weaker observation's max-age when source promotes", async () => {
+    vi.useFakeTimers();
+
+    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
+    vi.stubGlobal("navigator", { sendBeacon });
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.reportCookie({ name: "sid", max_age_seconds: 3600, source: "pre-existing" });
+    queue.reportCookie({ name: "sid", max_age_seconds: null, source: "script" });
     queue.stop();
 
     expect(sendBeacon).toHaveBeenCalledOnce();
@@ -90,10 +123,10 @@ describe("ReportQueue", () => {
       throw new Error("expected sendBeacon to receive a Blob");
     }
     const body = JSON.parse(await sentData.text()) as {
-      cookies: Array<{ cookie_domain?: string; source: string }>;
+      cookies: Array<{ source: string; max_age_seconds: number | null }>;
     };
-    expect(body.cookies[0]?.source).toBe("pre-existing");
-    expect(body.cookies[0]?.cookie_domain).toBe("example.com");
+    expect(body.cookies[0]?.source).toBe("script");
+    expect(body.cookies[0]?.max_age_seconds).toBeNull();
   });
 
   it("promotes a pre-existing cookie to script", async () => {

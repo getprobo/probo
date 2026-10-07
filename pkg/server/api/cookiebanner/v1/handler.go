@@ -309,7 +309,8 @@ func sanitizeInitiatorURL(raw *string) *string {
 }
 
 // sanitizeCookieDomain lowercases and strips a leading dot, then
-// accepts the value only when it is a hostname. A missing or invalid
+// accepts the value only when it is a hostname. A trailing-dot Domain
+// is ignored by cookie parsers, so it is dropped. A missing or invalid
 // domain is dropped so one bad report cannot fail the batch.
 func sanitizeCookieDomain(raw *string) *string {
 	if raw == nil {
@@ -317,6 +318,10 @@ func sanitizeCookieDomain(raw *string) *string {
 	}
 
 	s := strings.ToLower(strings.TrimSpace(*raw))
+	if s == "" || strings.HasSuffix(s, ".") {
+		return nil
+	}
+
 	s = strings.TrimPrefix(s, ".")
 	if s == "" {
 		return nil
@@ -342,6 +347,17 @@ func sanitizeCookieDomainFields(rawDomain *string, hostOnly *bool) (*string, *bo
 	if domain != nil && hostOnly == nil {
 		notHostOnly := false
 		hostOnly = &notHostOnly
+	}
+
+	// host_only=false means a Domain attribute was seen. Without a
+	// hostname that claim is incomplete and must not wipe a stored
+	// domain on upsert.
+	if domain == nil && hostOnly != nil && !*hostOnly {
+		hostOnly = nil
+	}
+
+	if hostOnly != nil && *hostOnly {
+		domain = nil
 	}
 
 	return domain, hostOnly
