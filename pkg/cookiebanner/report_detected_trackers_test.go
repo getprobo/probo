@@ -381,6 +381,7 @@ func TestReportDetectedTrackers_SeparatesHostOnlyAndDomain(t *testing.T) {
 	require.Len(t, trackers, 2)
 
 	var hostOnlyTracker, domainTracker *coredata.DetectedTracker
+
 	for _, tracker := range trackers {
 		if tracker.CookieDomain == nil {
 			hostOnlyTracker = tracker
