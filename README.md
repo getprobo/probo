@@ -1,5 +1,6 @@
 # Probo
 
+[![Docs](https://img.shields.io/badge/docs-probo.com%2Fdocs-blue)](https://www.probo.com/docs)
 [![License](https://img.shields.io/github/license/getprobo/probo)](LICENSE)
 [![Build](https://img.shields.io/github/actions/workflow/status/getprobo/probo/make.yaml)](https://github.com/getprobo/probo/actions)
 [![Discord](https://img.shields.io/discord/1326589224811757568?color=7289da&label=Discord&logo=discord&logoColor=ffffff)](https://discord.gg/8qfdJYfvpY)
@@ -7,6 +8,8 @@
 **Open-source GRC platform for engineers.**
 
 Probo is a self-hostable governance, risk, and compliance (GRC) platform built for engineering and security teams. It covers the full GRC lifecycle: risk identification, control tracking, vendor risk, data privacy, access reviews, audit programs, and document approval workflows. Every entity is accessible through a web console, a CLI, a [Model Context Protocol (MCP)](https://modelcontextprotocol.io) API, and a GraphQL API, so you can automate compliance work from code, scripts, or any LLM agent.
+
+📖 **Documentation: [probo.com/docs](https://www.probo.com/docs)**
 
 ## Why Probo?
 
@@ -57,19 +60,21 @@ prb thirdpartymgmt vendor list
 prb thirdpartymgmt risk-assessment create --vendor <id>
 ```
 
-Run `prb help` for the full command reference.
+Run `prb help` or see the [CLI documentation](https://www.probo.com/docs/developers/cli/overview) for the full command reference.
 
 ### MCP API
 
 Probo exposes 270+ [MCP](https://modelcontextprotocol.io) tools covering every entity and operation in the platform. Any MCP-compatible LLM agent (Claude, Cursor, Continue, and others) can connect directly and interact with your compliance data.
 
-The full MCP specification is at [`pkg/server/api/mcp/v1/specification.yaml`](pkg/server/api/mcp/v1/specification.yaml).
+See the [MCP documentation](https://www.probo.com/docs/developers/api/mcp/overview) for setup guides per client. The full MCP specification is at [`pkg/server/api/mcp/v1/specification.yaml`](pkg/server/api/mcp/v1/specification.yaml).
 
 ### n8n node
 
-The [`@probo/n8n-nodes-probo`](packages/n8n-node/) community node brings Probo into n8n workflows for no-code automation of compliance tasks over the GraphQL API.
+The [`@probo/n8n-nodes-probo`](packages/n8n-node/) community node brings Probo into n8n workflows for no-code automation of compliance tasks over the GraphQL API. See the [n8n documentation](https://www.probo.com/docs/developers/api/n8n/overview).
 
 ## Quick Start
+
+To run Probo in production, follow the [self-hosting guide](https://www.probo.com/docs/deployment/self-hosting) (Docker Compose or Kubernetes). The steps below set up a local development environment.
 
 **Prerequisites**
 
@@ -127,8 +132,8 @@ To report a security vulnerability, email [security@probo.com](mailto:security@p
 
 ## Community
 
+- [Documentation](https://www.probo.com/docs) - Product guides, self-hosting, CLI, MCP, and API reference
 - [Discord](https://discord.gg/8qfdJYfvpY) - Get help, share feedback, and talk to the team
-- [Documentation](https://www.probo.com/docs)
 - [Blog](https://www.probo.com/blog)
 - [Twitter / X](https://twitter.com/getprobo)
 - [LinkedIn](https://www.linkedin.com/company/getprobo)
