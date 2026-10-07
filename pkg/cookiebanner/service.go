@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"net/url"
 	"slices"
 	"strings"
@@ -2843,6 +2844,12 @@ func (s *Service) reportDetectedTracker(
 		return nil
 	}
 
+	// PostgreSQL INTEGER (int4) is the column type. A cookie Max-Age
+	// like 251610986978 decodes into Go's 64-bit int and then fails
+	// the upsert for the whole batch. Drop the field and keep the row.
+	info.MaxAgeSeconds = int4OrNil(info.MaxAgeSeconds)
+	info.ValueSize = int4OrNil(info.ValueSize)
+
 	var matchedPattern coredata.TrackerPattern
 
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
@@ -2973,6 +2980,17 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	return nil
+}
+
+// int4OrNil keeps a value only when it fits in PostgreSQL INTEGER.
+// Zero and negative durations are treated as unknown, same as the
+// SDK omitting Max-Age.
+func int4OrNil(v *int) *int {
+	if v == nil || *v <= 0 || *v > math.MaxInt32 {
+		return nil
+	}
+
+	return v
 }
 
 func (s *Service) reportDetectedResource(

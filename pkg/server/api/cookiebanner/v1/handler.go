@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -346,6 +347,17 @@ func sanitizeCookieDomainFields(rawDomain *string, hostOnly *bool) (*string, *bo
 	return domain, hostOnly
 }
 
+// sanitizeInt4 drops a value that cannot be stored as PostgreSQL
+// INTEGER. A cookie Max-Age of 251610986978 otherwise decodes into
+// Go's 64-bit int and fails the upsert for every item in the batch.
+func sanitizeInt4(raw *int) *int {
+	if raw == nil || *raw <= 0 || *raw > math.MaxInt32 {
+		return nil
+	}
+
+	return raw
+}
+
 func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
 	if err != nil {
@@ -406,7 +418,7 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			detected,
 			cookiebanner.DetectedCookie{
 				Name:          name,
-				MaxAgeSeconds: c.MaxAgeSeconds,
+				MaxAgeSeconds: sanitizeInt4(c.MaxAgeSeconds),
 				Source:        source,
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
 				CookieDomain:  cookieDomain,
@@ -532,7 +544,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			req.Cookies,
 			cookiebanner.DetectedCookie{
 				Name:          name,
-				MaxAgeSeconds: c.MaxAgeSeconds,
+				MaxAgeSeconds: sanitizeInt4(c.MaxAgeSeconds),
 				Source:        source,
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
 				CookieDomain:  cookieDomain,
@@ -591,7 +603,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			cookiebanner.DetectedStorageItem{
 				Key:          key,
 				StorageType:  storageType,
-				ValueSize:    s.ValueSize,
+				ValueSize:    sanitizeInt4(s.ValueSize),
 				Source:       &source,
 				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
 			},

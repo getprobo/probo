@@ -22,6 +22,7 @@ package cookiebanner
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 
@@ -456,4 +457,74 @@ func TestReportDetectedTrackers_ExtensionSkipsMappingRequest(t *testing.T) {
 	assert.False(t, pattern.Excluded)
 	assert.Nil(t, pattern.MappingRequestedAt)
 	assert.Nil(t, pattern.CommonTrackerPatternID)
+}
+
+func TestInt4OrNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, int4OrNil(nil))
+	assert.Nil(t, int4OrNil(new(0)))
+	assert.Nil(t, int4OrNil(new(-1)))
+	assert.Nil(t, int4OrNil(new(251610986978)))
+
+	got := int4OrNil(new(math.MaxInt32))
+	require.NotNil(t, got)
+	assert.Equal(t, math.MaxInt32, *got)
+
+	got = int4OrNil(new(3600))
+	require.NotNil(t, got)
+	assert.Equal(t, 3600, *got)
+}
+
+// TestReportDetectedTrackers_DropsOversizedMaxAge asserts that a
+// cookie Max-Age larger than PostgreSQL INTEGER does not fail the
+// upsert. The tracker is stored and the duration is omitted.
+func TestReportDetectedTrackers_DropsOversizedMaxAge(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+	oversized := 251610986978
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:          "_ga",
+						MaxAgeSeconds: &oversized,
+						Source:        coredata.CookieSourceScript,
+					},
+				},
+			},
+		),
+	)
+
+	var tracker coredata.DetectedTracker
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return tracker.LoadByBannerIDTypeAndIdentifier(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					"_ga",
+				)
+			},
+		),
+	)
+
+	assert.Nil(t, tracker.MaxAgeSeconds)
+	require.NotNil(t, tracker.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *tracker.Source)
 }

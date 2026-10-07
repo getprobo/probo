@@ -87,3 +87,15 @@ func TestSanitizeCookieDomainFields(t *testing.T) {
 		assert.True(t, *hostOnly)
 	})
 }
+
+func TestSanitizeInt4(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, sanitizeInt4(nil))
+	assert.Nil(t, sanitizeInt4(new(0)))
+	assert.Nil(t, sanitizeInt4(new(251610986978)))
+
+	got := sanitizeInt4(new(3600))
+	require.NotNil(t, got)
+	assert.Equal(t, 3600, *got)
+}

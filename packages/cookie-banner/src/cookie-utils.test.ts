@@ -20,7 +20,12 @@
 
 import { describe, expect, it } from "vitest";
 
-import { cookieListItemDomain, parseCookieSetDomain } from "./cookie-utils";
+import {
+  clampMaxAgeSeconds,
+  cookieListItemDomain,
+  parseCookieSetDomain,
+  parseMaxAgeSeconds,
+} from "./cookie-utils";
 
 describe("parseCookieSetDomain", () => {
   it("treats a missing Domain attribute as host-only", () => {
@@ -40,6 +45,31 @@ describe("parseCookieSetDomain", () => {
     expect(parseCookieSetDomain("sid=abc; Domain=")).toEqual({
       host_only: true,
     });
+  });
+});
+
+describe("clampMaxAgeSeconds", () => {
+  it("keeps a representable duration", () => {
+    expect(clampMaxAgeSeconds(3600)).toBe(3600);
+  });
+
+  it("drops a Max-Age that does not fit PostgreSQL INTEGER", () => {
+    expect(clampMaxAgeSeconds(251610986978)).toBeNull();
+  });
+
+  it("drops zero and negative durations", () => {
+    expect(clampMaxAgeSeconds(0)).toBeNull();
+    expect(clampMaxAgeSeconds(-1)).toBeNull();
+  });
+});
+
+describe("parseMaxAgeSeconds", () => {
+  it("reads a Max-Age attribute", () => {
+    expect(parseMaxAgeSeconds("sid=abc; Max-Age=3600")).toBe(3600);
+  });
+
+  it("omits a Max-Age larger than int4", () => {
+    expect(parseMaxAgeSeconds("sid=abc; Max-Age=251610986978")).toBeNull();
   });
 });
 

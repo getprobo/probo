@@ -23,6 +23,7 @@ import {
   isDeletion,
   parseCookieName,
   parseCookieSetDomain,
+  clampMaxAgeSeconds,
   parseMaxAgeSeconds,
 } from "../cookie-utils";
 import type { Detector } from "./detector";
@@ -146,11 +147,11 @@ export class CookieDetector implements Detector {
 
     const maxAge = expires == null
       ? null
-      : Math.round((expires - Date.now()) / 1000);
+      : clampMaxAgeSeconds((expires - Date.now()) / 1000);
 
     const entry: DetectedCookieEntry = {
       name,
-      max_age_seconds: maxAge != null && maxAge > 0 ? maxAge : null,
+      max_age_seconds: maxAge,
       source: "pre-existing",
     };
     if (domain != null) {
@@ -171,13 +172,13 @@ export class CookieDetector implements Detector {
         if (this.knownNames.has(cookie.name)) continue;
 
         const maxAge = cookie.expires
-          ? Math.round((cookie.expires - Date.now()) / 1000)
+          ? clampMaxAgeSeconds((cookie.expires - Date.now()) / 1000)
           : null;
 
         const domain = cookieListItemDomain(cookie.domain);
         const entry: DetectedCookieEntry = {
           name: cookie.name,
-          max_age_seconds: maxAge && maxAge > 0 ? maxAge : null,
+          max_age_seconds: maxAge,
           source: "http",
           host_only: domain.host_only,
         };

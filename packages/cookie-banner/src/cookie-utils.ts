@@ -210,15 +210,25 @@ export function cookieListItemDomain(domain: string | null): CookieDomainFields 
   return { cookie_domain: normalized, host_only: false };
 }
 
+// PostgreSQL INTEGER (int4) is the server column. Values above this
+// are omitted so a far-future Max-Age cannot fail the report batch.
+const MAX_INT4 = 2_147_483_647;
+
+export function clampMaxAgeSeconds(seconds: number | null): number | null {
+  if (seconds == null || !Number.isFinite(seconds) || seconds <= 0 || seconds > MAX_INT4) {
+    return null;
+  }
+
+  return Math.round(seconds);
+}
+
 export function parseMaxAgeSeconds(raw: string): number | null {
   const parts = raw.split(";").map((s) => s.trim());
 
   for (const part of parts) {
     const lower = part.toLowerCase();
     if (lower.startsWith("max-age=")) {
-      const val = parseInt(part.substring(8), 10);
-      if (isNaN(val) || val <= 0) return null;
-      return val;
+      return clampMaxAgeSeconds(parseInt(part.substring(8), 10));
     }
   }
 
@@ -228,11 +238,9 @@ export function parseMaxAgeSeconds(raw: string): number | null {
       const dateStr = part.substring(8);
       const expires = new Date(dateStr);
       if (isNaN(expires.getTime())) return null;
-      const deltaSeconds = Math.round(
+      return clampMaxAgeSeconds(
         (expires.getTime() - Date.now()) / 1000,
       );
-      if (deltaSeconds <= 0) return null;
-      return deltaSeconds;
     }
   }
 
