@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2"
@@ -151,6 +152,17 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewSCIMEvent(scimEvent), nil
+		}
+	case coredata.EmployeePortalEntityType:
+		action = employeeportalmgmt.ActionEmployeePortalGet
+		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
+			scope := coredata.NewScopeFromObjectID(id)
+			employeePortal, err := r.employeePortal.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewEmployeePortal(employeePortal), nil
 		}
 	default:
 		return nil, fmt.Errorf("unsupported entity type: %d", id.EntityType())

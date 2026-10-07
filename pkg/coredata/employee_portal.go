@@ -147,6 +147,58 @@ LIMIT 1;
 	return nil
 }
 
+func (p *EmployeePortal) LoadOldestByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	name,
+	active,
+	capabilities,
+	logo_file_id,
+	dark_logo_file_id,
+	created_at,
+	updated_at
+FROM
+	employee_portals
+WHERE
+	%s
+	AND organization_id = @organization_id
+ORDER BY
+	created_at ASC,
+	id ASC
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query employee portal: %w", err)
+	}
+
+	portal, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[EmployeePortal])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect employee portal: %w", err)
+	}
+
+	*p = portal
+
+	return nil
+}
+
 func (ps *EmployeePortals) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Querier,

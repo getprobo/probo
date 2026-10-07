@@ -32,7 +32,7 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { NotFoundError } from "#/lib/relay/errors";
 import type { DocumentQueueKind } from "#/pages/_lib/documentQueue";
@@ -54,7 +54,7 @@ export function DashboardCard({
   wash = false,
 }: DashboardCardProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const slots = dashboardCard({ wash });
 
   if (organizationId == null) {
@@ -62,8 +62,8 @@ export function DashboardCard({
   }
 
   const listPath = kind === "signatures"
-    ? `/${organizationId}/signatures`
-    : `/${organizationId}/approvals`;
+    ? `/${employeePortalId}/signatures`
+    : `/${employeePortalId}/approvals`;
 
   let bodyState: "empty" | "pending" | "allDone" = "empty";
   if (pendingCount > 0) {

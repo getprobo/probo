@@ -21,11 +21,10 @@
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
-import { useParams } from "react-router";
 
 import type { useEnrollDeviceManuallyMutation } from "#/__generated__/core/useEnrollDeviceManuallyMutation.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const enrollDeviceMutation = graphql`
   mutation useEnrollDeviceManuallyMutation($input: EnrollDeviceInput!) {
@@ -46,7 +45,7 @@ export type ManualEnrollment = {
 
 export function useEnrollDeviceManually() {
   const { t } = useTranslation("devices");
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [enrollDevice, isCreating] = useMutation<useEnrollDeviceManuallyMutation>(
     enrollDeviceMutation,
     { successMessage: t("addManually.created"), errorToast: false },
@@ -54,10 +53,6 @@ export function useEnrollDeviceManually() {
   const [enrollment, setEnrollment] = useState<ManualEnrollment | null>(null);
   const [failed, setFailed] = useState(false);
   const startedRef = useRef(false);
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const enrolledOrganizationId = organizationId;
 

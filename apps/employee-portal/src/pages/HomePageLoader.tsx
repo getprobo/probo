@@ -20,35 +20,31 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
 import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { HomePage, homePageQuery } from "./HomePage";
 import { HomePageSkeleton } from "./HomePageSkeleton";
 
 export default function HomePageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId, employeePortalId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<HomePageQuery>(homePageQuery);
 
   useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
-    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
-  }, [organizationId, loadQuery]);
+    loadQuery({ organizationId, employeePortalId }, { fetchPolicy: "network-only" });
+  }, [employeePortalId, organizationId, loadQuery]);
 
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
-
-  if (queryRef == null || queryRef.variables.organizationId !== organizationId) {
+  if (
+    queryRef == null
+    || queryRef.variables.organizationId !== organizationId
+    || queryRef.variables.employeePortalId !== employeePortalId
+  ) {
     return <HomePageSkeleton />;
   }
 
   return (
-    <Suspense key={organizationId} fallback={<HomePageSkeleton />}>
+    <Suspense key={employeePortalId} fallback={<HomePageSkeleton />}>
       <HomePage queryRef={queryRef} />
     </Suspense>
   );

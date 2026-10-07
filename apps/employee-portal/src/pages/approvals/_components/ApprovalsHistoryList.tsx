@@ -23,7 +23,7 @@ import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { ApprovalsHistoryList_viewer$key } from "#/__generated__/core/ApprovalsHistoryList_viewer.graphql";
 import type { ApprovalsHistoryListRefetchQuery } from "#/__generated__/core/ApprovalsHistoryListRefetchQuery.graphql";
@@ -79,7 +79,7 @@ export interface ApprovalsHistoryListProps {
 export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsHistoryListRefetchQuery,
     ApprovalsHistoryList_viewer$key
@@ -123,7 +123,7 @@ export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/approvals/${node.id}`}
+          to={`/${employeePortalId}/approvals/${node.id}`}
           trailing="chevron"
           badge={node.approvalState === "REJECTED"
             ? (

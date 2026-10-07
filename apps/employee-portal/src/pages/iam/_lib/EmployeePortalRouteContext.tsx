@@ -18,16 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function employeePortalHref(
-  employeePortalId: string,
-  ...segments: string[]
-): string {
-  const url = new URL(window.location.origin);
-  url.pathname = [
-    "",
-    "employee-portal",
-    encodeURIComponent(employeePortalId),
-    ...segments.map(segment => encodeURIComponent(segment)),
-  ].join("/");
-  return url.pathname;
+import { createContext, type ReactNode, useContext } from "react";
+
+type EmployeePortalRouteValue = {
+  employeePortalId: string;
+  organizationId: string;
+};
+
+const EmployeePortalRouteContext = createContext<EmployeePortalRouteValue | null>(
+  null,
+);
+
+export function EmployeePortalRouteProvider({
+  employeePortalId,
+  organizationId,
+  children,
+}: EmployeePortalRouteValue & { children: ReactNode }) {
+  return (
+    <EmployeePortalRouteContext.Provider
+      value={{ employeePortalId, organizationId }}
+    >
+      {children}
+    </EmployeePortalRouteContext.Provider>
+  );
+}
+
+export function useOptionalEmployeePortalRoute(): EmployeePortalRouteValue | null {
+  return useContext(EmployeePortalRouteContext);
+}
+
+export function useEmployeePortalRoute(): EmployeePortalRouteValue {
+  const value = useContext(EmployeePortalRouteContext);
+  if (value == null) {
+    throw new Error("useEmployeePortalRoute must be used within EmployeePortalRouteProvider");
+  }
+  return value;
 }

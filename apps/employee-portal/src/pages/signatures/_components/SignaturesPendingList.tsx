@@ -22,7 +22,7 @@ import { SignatureIcon } from "@phosphor-icons/react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { SignaturesPendingList_viewer$key } from "#/__generated__/core/SignaturesPendingList_viewer.graphql";
 import type { SignaturesPendingListRefetchQuery } from "#/__generated__/core/SignaturesPendingListRefetchQuery.graphql";
@@ -86,7 +86,7 @@ export interface SignaturesPendingListProps {
 export function SignaturesPendingList({ viewerKey }: SignaturesPendingListProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const { advancing, startQueue } = useDocumentQueue();
   const [data, refetch] = useRefetchableFragment<
     SignaturesPendingListRefetchQuery,
@@ -147,7 +147,7 @@ export function SignaturesPendingList({ viewerKey }: SignaturesPendingListProps)
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/signatures/${node.id}`}
+          to={`/${employeePortalId}/signatures/${node.id}`}
           trailing="action"
           actionLabel={t("pending.itemAction")}
         />

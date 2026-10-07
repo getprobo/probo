@@ -22,7 +22,7 @@ import { CaretLeftIcon, CaretRightIcon, CheckCircleIcon, CheckIcon, MinusCircleI
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
@@ -82,7 +82,7 @@ export function ApprovalRequestPanel({
   onFinish,
 }: ApprovalRequestPanelProps) {
   const { t } = useTranslation("approvals");
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const decided = state === "APPROVED" || state === "REJECTED" || state === "VOIDED";
   const status = approvalStatus[state === "REJECTED" || state === "VOIDED" ? state : "APPROVED"];
   const slots = documentRequestPanel({ tone: status.tone });
@@ -111,7 +111,7 @@ export function ApprovalRequestPanel({
   return (
     <DocumentRequestPanel
       backLabel={t("title")}
-      backTo={`/${organizationId}/approvals`}
+      backTo={`/${employeePortalId}/approvals`}
       title={title}
       detail={detail}
     >

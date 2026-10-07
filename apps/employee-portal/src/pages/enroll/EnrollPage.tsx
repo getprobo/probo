@@ -281,7 +281,7 @@ function EnrollOpenAgent({ organizationId }: { organizationId: string }) {
   return (
     <OpenAgentStep
       enrollment={enrollment}
-      organizationId={organizationId}
+      homeTo="/"
     />
   );
 }

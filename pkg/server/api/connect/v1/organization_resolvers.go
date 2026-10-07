@@ -11,6 +11,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/googleworkspace"
 	"go.probo.inc/probo/pkg/iam/scim/bridge/provider/microsoft365"
@@ -423,6 +424,41 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 	}
 
 	return types.NewProfile(profile), nil
+}
+
+// EmployeePortals is the resolver for the employeePortals field.
+func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EmployeePortalOrderBy) (*types.EmployeePortalConnection, error) {
+	scope, err := r.authorize(
+		ctx,
+		obj.ID,
+		employeeportalmgmt.ActionEmployeePortalList,
+		authz.WithSkipAssumptionCheck(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.EmployeePortalOrderField]{
+		Field:     coredata.EmployeePortalOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.EmployeePortalOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	c := cursor.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.employeePortal.ListForOrganizationID(ctx, scope, obj.ID, c)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list employee portals", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewEmployeePortalConnection(p, obj.ID), nil
 }
 
 // Permission is the resolver for the permission field.

@@ -34,6 +34,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
+
 import {
   appendQueuePage,
   type DocumentQueueDirection,
@@ -79,7 +81,8 @@ const queueNavigateOpts = {
 // Holds the frozen pending-document snapshot for the signing / approval flow.
 export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { organizationId, documentId } = useParams();
+  const { organizationId, employeePortalId } = useEmployeePortalRoute();
+  const { documentId } = useParams();
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
   const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(null);
@@ -144,10 +147,10 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     }
     setQueueDirection(direction);
     void navigate(
-      `/${organizationId}/${snapshot.kind}/${targetId}`,
+      `/${employeePortalId}/${snapshot.kind}/${targetId}`,
       queueNavigateOpts,
     );
-  }, [navigate, organizationId, snapshot]);
+  }, [employeePortalId, navigate, organizationId, snapshot]);
 
   const goForward = useCallback(() => {
     if (
@@ -186,7 +189,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       if (firstNew != null) {
         setQueueDirection("forward");
         void navigate(
-          `/${organizationId}/${snapshot.kind}/${firstNew}`,
+          `/${employeePortalId}/${snapshot.kind}/${firstNew}`,
           queueNavigateOpts,
         );
       }
@@ -205,7 +208,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       }
       setAdvancing(false);
     });
-  }, [advancing, documentId, goTo, navigate, organizationId, snapshot, t, toast]);
+  }, [advancing, documentId, employeePortalId, goTo, navigate, organizationId, snapshot, t, toast]);
 
   const startQueue = useCallback((kind: DocumentQueueKind) => {
     if (organizationId == null || advancing) {
@@ -230,7 +233,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
         return;
       }
       enter(kind, page, firstId);
-      void navigate(`/${organizationId}/${kind}/${firstId}`);
+      void navigate(`/${employeePortalId}/${kind}/${firstId}`);
     }).catch((error: unknown) => {
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -246,7 +249,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       }
       setAdvancing(false);
     });
-  }, [advancing, enter, navigate, organizationId, t, toast]);
+  }, [advancing, employeePortalId, enter, navigate, organizationId, t, toast]);
 
   const close = useCallback((kind?: DocumentQueueKind) => {
     const dest = snapshot?.kind ?? kind;
@@ -254,8 +257,8 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     if (organizationId == null || dest == null) {
       return;
     }
-    void navigate(`/${organizationId}/${dest}`);
-  }, [leave, navigate, organizationId, snapshot?.kind]);
+    void navigate(`/${employeePortalId}/${dest}`);
+  }, [employeePortalId, leave, navigate, organizationId, snapshot?.kind]);
 
   const scopedSnapshot = snapshot != null
     && organizationId != null

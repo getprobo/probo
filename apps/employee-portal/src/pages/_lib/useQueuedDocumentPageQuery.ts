@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
 
 import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DOCUMENT_QUEUE_ID_PAGE_SIZE } from "./documentQueue";
 import { DOCUMENT_VERSION_PAGE_SIZE } from "./documentVersion";
@@ -54,7 +55,8 @@ function matchesRoute<TQuery extends OperationType>(
 export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
   query: GraphQLTaggedNode,
 ): PreloadedQuery<TQuery> | null {
-  const { organizationId, documentId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
+  const { documentId } = useParams();
   const [queryRef, loadQuery] = useQueryLoader<TQuery>(query);
 
   useEffect(() => {

@@ -20,7 +20,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -30,7 +30,7 @@ import { DevicesPage, devicesPageQuery } from "./DevicesPage";
 import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
 
 export default function DevicesPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<DevicesPageQuery>(
     devicesPageQuery,
   );

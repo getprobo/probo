@@ -604,6 +604,44 @@ func (s SessionService) OpenOIDCChildSessionForOrganization(
 	return childSession, membership, nil
 }
 
+func (s SessionService) AssumeEmployeePortalSession(
+	ctx context.Context,
+	sessionID gid.GID,
+	employeePortalID gid.GID,
+	continueURL string,
+) (*coredata.Session, *coredata.Membership, gid.GID, error) {
+	var organizationID gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			scope := coredata.NewScopeFromObjectID(employeePortalID)
+			portal := &coredata.EmployeePortal{}
+			if err := portal.LoadByID(ctx, conn, scope, employeePortalID); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return err
+				}
+
+				return fmt.Errorf("cannot load employee portal: %w", err)
+			}
+
+			organizationID = portal.OrganizationID
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, gid.Nil, err
+	}
+
+	childSession, membership, err := s.AssumeOrganizationSession(ctx, sessionID, organizationID, continueURL)
+	if err != nil {
+		return nil, nil, organizationID, err
+	}
+
+	return childSession, membership, organizationID, nil
+}
+
 func (s SessionService) AssumeOrganizationSession(
 	ctx context.Context,
 	sessionID gid.GID,

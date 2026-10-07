@@ -37,6 +37,14 @@ type Organization implements Node {
 
   viewer: Profile @goField(forceResolver: true)
 
+  employeePortals(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: EmployeePortalOrder
+  ): EmployeePortalConnection! @goField(forceResolver: true)
+
   permission(action: String!, attributes: Map): Boolean!
     @goField(forceResolver: true)
     @authentication(required: PRESENT)

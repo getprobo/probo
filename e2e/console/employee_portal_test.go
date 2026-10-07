@@ -397,3 +397,211 @@ func TestEmployeePortal_Node(t *testing.T) {
 		assert.True(t, result.Node.Capabilities.DeviceAgent)
 	})
 }
+
+func TestEmployeePortal_CreatedWithOrganization(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					employeePortals(first: 10) {
+						totalCount
+						edges {
+							node {
+								id
+								name
+								organization { id }
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			EmployeePortals struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID           string `json:"id"`
+						Name         string `json:"name"`
+						Organization struct {
+							ID string `json:"id"`
+						} `json:"organization"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"employeePortals"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"id": owner.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+	require.Equal(t, 1, result.Node.EmployeePortals.TotalCount)
+	require.Len(t, result.Node.EmployeePortals.Edges, 1)
+	assert.Equal(t, owner.GetOrganizationID().String(), result.Node.EmployeePortals.Edges[0].Node.Organization.ID)
+}
+
+func TestEmployeePortal_EmployeeCanGetDefaultPortal(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	portalID := factory.DefaultEmployeePortalID(owner)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on EmployeePortal {
+					id
+					organization { id }
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			ID           string `json:"id"`
+			Organization struct {
+				ID string `json:"id"`
+			} `json:"organization"`
+		} `json:"node"`
+	}
+
+	err := employee.Execute(query, map[string]any{"id": portalID}, &result)
+	require.NoError(t, err)
+	assert.Equal(t, portalID, result.Node.ID)
+	assert.Equal(t, owner.GetOrganizationID().String(), result.Node.Organization.ID)
+}
+
+func TestEmployeePortal_ConnectAssumeAndList(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	portalID := factory.DefaultEmployeePortalID(owner)
+	root := testutil.NewClientWithNewSession(t, owner)
+
+	const listQuery = `
+		query {
+			viewer {
+				profiles(first: 100, filter: { states: [ACTIVE] }) {
+					edges {
+						node {
+							organization {
+								id
+								employeePortals(
+									first: 1
+									orderBy: { field: CREATED_AT, direction: ASC }
+								) {
+									edges {
+										node { id }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var listResult struct {
+		Viewer struct {
+			Profiles struct {
+				Edges []struct {
+					Node struct {
+						Organization struct {
+							ID              string `json:"id"`
+							EmployeePortals struct {
+								Edges []struct {
+									Node struct {
+										ID string `json:"id"`
+									} `json:"node"`
+								} `json:"edges"`
+							} `json:"employeePortals"`
+						} `json:"organization"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"profiles"`
+		} `json:"viewer"`
+	}
+
+	err := root.ExecuteConnect(listQuery, nil, &listResult)
+	require.NoError(t, err)
+
+	var listedPortalID string
+	for _, edge := range listResult.Viewer.Profiles.Edges {
+		if edge.Node.Organization.ID == owner.GetOrganizationID().String() {
+			require.NotEmpty(t, edge.Node.Organization.EmployeePortals.Edges)
+			listedPortalID = edge.Node.Organization.EmployeePortals.Edges[0].Node.ID
+			break
+		}
+	}
+	require.NotEmpty(t, listedPortalID)
+	assert.Equal(t, portalID, listedPortalID)
+
+	const assumeMutation = `
+		mutation($input: AssumeEmployeePortalSessionInput!) {
+			assumeEmployeePortalSession(input: $input) {
+				organizationId
+				result {
+					__typename
+					... on OrganizationSessionCreated {
+						session { id }
+					}
+				}
+			}
+		}
+	`
+
+	var assumeResult struct {
+		AssumeEmployeePortalSession struct {
+			OrganizationID string `json:"organizationId"`
+			Result         struct {
+				Typename string `json:"__typename"`
+			} `json:"result"`
+		} `json:"assumeEmployeePortalSession"`
+	}
+
+	err = root.ExecuteConnect(assumeMutation, map[string]any{
+		"input": map[string]any{
+			"employeePortalId": portalID,
+			"continue":         testutil.GetBaseURL(),
+		},
+	}, &assumeResult)
+	require.NoError(t, err)
+	assert.Equal(t, owner.GetOrganizationID().String(), assumeResult.AssumeEmployeePortalSession.OrganizationID)
+	assert.Equal(t, "OrganizationSessionCreated", assumeResult.AssumeEmployeePortalSession.Result.Typename)
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on EmployeePortal {
+					id
+					organization { id }
+				}
+			}
+		}
+	`
+
+	var nodeResult struct {
+		Node struct {
+			ID           string `json:"id"`
+			Organization struct {
+				ID string `json:"id"`
+			} `json:"organization"`
+		} `json:"node"`
+	}
+
+	err = root.Execute(nodeQuery, map[string]any{"id": portalID}, &nodeResult)
+	require.NoError(t, err)
+	assert.Equal(t, portalID, nodeResult.Node.ID)
+	assert.Equal(t, owner.GetOrganizationID().String(), nodeResult.Node.Organization.ID)
+}

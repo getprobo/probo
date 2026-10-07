@@ -809,6 +809,21 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert thirdParty: %w", err)
 			}
 
+			employeePortal := &coredata.EmployeePortal{
+				ID:             gid.New(scope.GetTenantID(), coredata.EmployeePortalEntityType),
+				OrganizationID: organization.ID,
+				Name:           organization.Name,
+				Active:         true,
+				Capabilities:   coredata.DefaultEmployeePortalCapabilities(),
+				LogoFileID:     organization.LogoFileID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := employeePortal.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert employee portal: %w", err)
+			}
+
 			return nil
 		},
 	)

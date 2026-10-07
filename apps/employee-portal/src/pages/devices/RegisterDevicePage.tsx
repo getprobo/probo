@@ -23,7 +23,7 @@ import { ErrorState } from "@probo/ui/src/v2/ErrorState/ErrorState";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useParams, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 
 import type { RegisterDevicePageQuery } from "#/__generated__/core/RegisterDevicePageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -41,6 +41,7 @@ import {
   registerDeviceStepIndex,
 } from "#/pages/devices/_lib/registerDeviceSteps";
 import { useEnrollDevice } from "#/pages/devices/_lib/useEnrollDevice";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 export const registerDevicePageQuery = graphql`
   query RegisterDevicePageQuery($organizationId: ID!) @throwOnFieldError {
@@ -60,7 +61,7 @@ interface RegisterDevicePageProps {
 export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const [searchParams, setSearchParams] = useSearchParams();
   const slots = registerDevicePage();
   const { organization } = usePreloadedQuery<RegisterDevicePageQuery>(
@@ -128,7 +129,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
       homeLabel={tApp("homePage.breadcrumb")}
       parent={{
         label: t("breadcrumb"),
-        to: `/${organizationId}/devices`,
+        to: `/${employeePortalId}/devices`,
       }}
       currentLabel={t("registerBreadcrumb")}
       title={t("title")}
@@ -144,7 +145,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
           description={t("unavailable.description")}
           actions={(
             <ButtonLink
-              to={`/${organizationId}`}
+              to={`/${employeePortalId}`}
               size={3}
               variant="solid"
               color="neutral"
@@ -193,7 +194,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
           {step === "enroll" && (
             <OpenAgentStep
               enrollment={enrollment}
-              organizationId={organizationId}
+              homeTo={`/${employeePortalId}`}
             />
           )}
         </div>

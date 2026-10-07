@@ -24,7 +24,7 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { NotFoundError } from "#/lib/relay/errors";
 
@@ -49,7 +49,7 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const slots = pageHeader();
 
   if (organizationId === undefined) {
@@ -60,7 +60,7 @@ export function PageHeader({
     <div className={slots.root()}>
       <nav className={slots.crumbs()} aria-label={t("breadcrumb.nav")}>
         <Link
-          to={`/${organizationId}`}
+          to={`/${employeePortalId}`}
           size={2}
           color="neutral"
           underline={false}

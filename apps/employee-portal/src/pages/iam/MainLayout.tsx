@@ -28,17 +28,22 @@ import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organiz
 import { NotFoundError } from "#/lib/relay/errors";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { QueueTopBar } from "#/pages/_components/QueueTopBar";
-import { useDocumentQueueActive } from "#/pages/_lib/DocumentQueueContext";
+import { DocumentQueueProvider, useDocumentQueueActive } from "#/pages/_lib/DocumentQueueContext";
 import { TopBar } from "#/pages/iam/_components/TopBar/TopBar";
+import { EmployeePortalRouteProvider } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { ViewerIdentityProvider } from "#/pages/iam/_lib/ViewerIdentityContext";
 
 export const mainLayoutQuery = graphql`
-  query MainLayoutQuery($organizationId: ID!) @throwOnFieldError {
-    organization: node(id: $organizationId) {
+  query MainLayoutQuery($employeePortalId: ID!) @throwOnFieldError {
+    employeePortal: node(id: $employeePortalId) {
       __typename
-      ... on Organization {
-        ...TopBar_organization
-        ...MainLayout_organization
+      ... on EmployeePortal {
+        id
+        organization {
+          id
+          ...TopBar_organization
+          ...MainLayout_organization
+        }
       }
     }
   }
@@ -61,19 +66,26 @@ interface MainLayoutProps {
 export function MainLayout({ queryRef }: MainLayoutProps) {
   const data = usePreloadedQuery<MainLayoutQuery>(mainLayoutQuery, queryRef);
 
-  if (data.organization == null || data.organization.__typename !== "Organization") {
-    throw new NotFoundError("invalid type for organization node");
+  if (data.employeePortal == null || data.employeePortal.__typename !== "EmployeePortal") {
+    throw new NotFoundError("invalid type for employee portal node");
   }
 
   const organization = useFragment<MainLayout_organization$key>(
     mainLayoutFragment,
-    data.organization,
+    data.employeePortal.organization,
   );
 
   return (
-    <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
-      <MainLayoutChrome organizationKey={data.organization} />
-    </ViewerIdentityProvider>
+    <EmployeePortalRouteProvider
+      employeePortalId={data.employeePortal.id}
+      organizationId={data.employeePortal.organization.id}
+    >
+      <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
+        <DocumentQueueProvider>
+          <MainLayoutChrome organizationKey={data.employeePortal.organization} />
+        </DocumentQueueProvider>
+      </ViewerIdentityProvider>
+    </EmployeePortalRouteProvider>
   );
 }
 

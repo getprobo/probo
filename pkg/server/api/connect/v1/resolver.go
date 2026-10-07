@@ -50,6 +50,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -71,6 +72,7 @@ type (
 		iam               *iam.Service
 		scopeRegistry     *oauth2scope.Registry
 		fileManager       *filemanager.Service
+		employeePortal    *employeeportalmgmt.Service
 		baseURL           *baseurl.BaseURL
 		sessionCookie     *authn.Cookie
 		slackbotAvailable bool
@@ -84,6 +86,7 @@ func NewMux(
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
+	employeePortalSvc *employeeportalmgmt.Service,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
 	graphqlLimits gqlutils.Limits,
@@ -99,6 +102,7 @@ func NewMux(
 		svc,
 		logger,
 		fileManagerSvc,
+		employeePortalSvc,
 		baseURL,
 		cookieConfig,
 		graphqlLimits,

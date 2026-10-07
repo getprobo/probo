@@ -21,7 +21,7 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { SignaturesHistoryList_viewer$key } from "#/__generated__/core/SignaturesHistoryList_viewer.graphql";
 import type { SignaturesHistoryListRefetchQuery } from "#/__generated__/core/SignaturesHistoryListRefetchQuery.graphql";
@@ -76,7 +76,7 @@ export interface SignaturesHistoryListProps {
 export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const [data, refetch] = useRefetchableFragment<
     SignaturesHistoryListRefetchQuery,
     SignaturesHistoryList_viewer$key
@@ -119,7 +119,7 @@ export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps)
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/signatures/${node.id}`}
+          to={`/${employeePortalId}/signatures/${node.id}`}
           trailing="chevron"
         />
       ))}

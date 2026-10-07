@@ -23,9 +23,9 @@ import { formatError, type GraphQLError } from "@probo/helpers";
 import { createUseMutation, type MutationNotifier, UnAuthenticatedError } from "@probo/relay";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
 
 import { redirectToLogin } from "#/lib/auth/redirectToLogin";
+import { useOptionalEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 /**
  * Binds the shared awaitable useMutation (`@probo/relay`) to this app's
@@ -39,7 +39,7 @@ import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 function useMutationNotifier(): MutationNotifier {
   const toast = Toast.useToastManager();
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const organizationId = useOptionalEmployeePortalRoute()?.organizationId;
 
   return useMemo<MutationNotifier>(
     () => ({

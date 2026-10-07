@@ -22,7 +22,7 @@ import { CaretLeftIcon, CaretRightIcon, CheckIcon } from "@phosphor-icons/react"
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
@@ -58,7 +58,7 @@ export function SignatureRequestPanel({
   onFinish,
 }: SignatureRequestPanelProps) {
   const { t } = useTranslation("signatures");
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const slots = documentRequestPanel({ tone: "signed" });
 
   if (organizationId == null) {
@@ -83,7 +83,7 @@ export function SignatureRequestPanel({
   return (
     <DocumentRequestPanel
       backLabel={t("title")}
-      backTo={`/${organizationId}/signatures`}
+      backTo={`/${employeePortalId}/signatures`}
       title={title}
       detail={detail}
     >

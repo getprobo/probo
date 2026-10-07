@@ -20,7 +20,7 @@
 
 import { AssumptionRequiredError, UnAuthenticatedError } from "@probo/relay";
 import { Suspense } from "react";
-import { useParams, useRouteError } from "react-router";
+import { useRouteError } from "react-router";
 
 import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
@@ -33,10 +33,8 @@ import { GlobalError } from "./GlobalError";
 // the error renders inside the app chrome (TopBar survives).
 export function PageErrorBoundary() {
   const error = useRouteError();
-  const { organizationId } = useParams();
-
   if (error instanceof UnAuthenticatedError) {
-    redirectToLogin({ organizationId });
+    redirectToLogin();
     return null;
   }
 

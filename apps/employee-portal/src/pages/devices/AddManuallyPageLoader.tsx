@@ -20,7 +20,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { AddManuallyPageQuery } from "#/__generated__/core/AddManuallyPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -29,7 +29,7 @@ import { AddManuallyPage, addManuallyPageQuery } from "./AddManuallyPage";
 import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
 
 export default function AddManuallyPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<AddManuallyPageQuery>(
     addManuallyPageQuery,
   );

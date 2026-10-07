@@ -1560,6 +1560,47 @@ func CreateCompliancePortal(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateCompliancePortal.CompliancePortalEdge.Node.ID
 }
 
+func DefaultEmployeePortalID(c *testutil.Client) string {
+	c.T.Helper()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					employeePortals(
+						first: 1
+						orderBy: { field: CREATED_AT, direction: ASC }
+					) {
+						edges {
+							node { id }
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			EmployeePortals struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"employeePortals"`
+		} `json:"node"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"id": c.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(c.T, err, "list default employee portal failed")
+	require.NotEmpty(c.T, result.Node.EmployeePortals.Edges, "organization has no employee portal")
+
+	return result.Node.EmployeePortals.Edges[0].Node.ID
+}
+
 func CreateEmployeePortal(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 

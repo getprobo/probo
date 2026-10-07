@@ -23,12 +23,12 @@ import type { ReactNode } from "react";
 import { Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryLoader } from "react-relay";
-import { useParams, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 
 import type { BindPageQuery } from "#/__generated__/core/BindPageQuery.graphql";
 import { GlobalError } from "#/components/errors/GlobalError";
-import { NotFoundError } from "#/lib/relay/errors";
 import { PageHeader } from "#/pages/_components/PageHeader";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { BindTokenError } from "./_components/BindTokenError";
 import { bindingsPage } from "./_components/variants";
@@ -61,12 +61,8 @@ interface BindPageShellProps {
 function BindPageShell({ children }: BindPageShellProps) {
   const { t } = useTranslation();
   const { t: tBindings } = useTranslation("bindings");
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = bindingsPage();
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   return (
     <main className={slots.main()}>
@@ -74,7 +70,7 @@ function BindPageShell({ children }: BindPageShellProps) {
         homeLabel={t("homePage.breadcrumb")}
         parent={{
           label: tBindings("list.breadcrumb"),
-          to: `/${organizationId}/bindings`,
+          to: `/${employeePortalId}/bindings`,
         }}
         currentLabel={tBindings("bind.breadcrumb")}
         title={tBindings("bind.title")}

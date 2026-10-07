@@ -42,7 +42,7 @@ const routes = [
   },
   ...enrollRoutes,
   {
-    path: ":organizationId",
+    path: ":employeePortalId",
     Fallback: MainLayoutSkeleton,
     Component: lazy(() => import("#/pages/iam/MainLayoutLoader")),
     ErrorBoundary: RootErrorBoundary,

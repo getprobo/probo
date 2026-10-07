@@ -44,6 +44,16 @@ const organizationListItemFragment = graphql`
       logo {
         downloadUrl
       }
+      employeePortals(
+        first: 1
+        orderBy: { field: CREATED_AT, direction: ASC }
+      ) {
+        edges {
+          node {
+            id
+          }
+        }
+      }
     }
   }
 `;
@@ -64,6 +74,7 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
       ? null
       : { expiresAt: membership.lastSession.expiresAt },
   );
+  const employeePortalId = organization.employeePortals.edges[0]?.node.id;
   const isAssuming = sessionStatus === "authenticated";
 
   let statusBadge = (
@@ -101,16 +112,18 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
         </Text>
         {statusBadge}
       </ListItemContent>
-      <ButtonLink
-        to={`/${organization.id}`}
-        size={2}
-        variant={isAssuming ? "soft" : "solid"}
-        color={isAssuming ? "neutral" : "gold"}
-      >
-        {isAssuming
-          ? t("organizationsPage.actions.continue")
-          : t("organizationsPage.actions.open")}
-      </ButtonLink>
+      {employeePortalId != null && (
+        <ButtonLink
+          to={`/${employeePortalId}`}
+          size={2}
+          variant={isAssuming ? "soft" : "solid"}
+          color={isAssuming ? "neutral" : "gold"}
+        >
+          {isAssuming
+            ? t("organizationsPage.actions.continue")
+            : t("organizationsPage.actions.open")}
+        </ButtonLink>
+      )}
     </ListItem>
   );
 }

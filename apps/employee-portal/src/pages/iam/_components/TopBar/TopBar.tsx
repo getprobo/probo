@@ -25,6 +25,7 @@ import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organization.graphql";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { TopBarUserMenu } from "./TopBarUserMenu";
 import { useTopBarWide } from "./useTopBarWide";
@@ -32,7 +33,6 @@ import { topBar } from "./variants";
 
 const topBarFragment = graphql`
   fragment TopBar_organization on Organization {
-    id
     name
     logo {
       downloadUrl
@@ -51,6 +51,7 @@ interface TopBarProps {
 
 export function TopBar({ organizationKey }: TopBarProps) {
   const { t } = useTranslation();
+  const { employeePortalId } = useEmployeePortalRoute();
   const organization = useFragment<TopBar_organization$key>(
     topBarFragment,
     organizationKey,
@@ -62,7 +63,7 @@ export function TopBar({ organizationKey }: TopBarProps) {
     <header className={slots.bar()}>
       <div className={slots.inner()}>
         <Link
-          to={`/${organization.id}`}
+          to={`/${employeePortalId}`}
           className={slots.brand()}
           aria-label={`${organization.name} ${tagline}`}
         >

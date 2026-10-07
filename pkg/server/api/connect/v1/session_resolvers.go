@@ -11,6 +11,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -456,6 +457,57 @@ func (r *mutationResolver) AssumeOrganizationSession(ctx context.Context, input 
 	}
 
 	return &types.AssumeOrganizationSessionPayload{
+		Result: types.OrganizationSessionCreated{
+			Session:    types.NewSession(childSession),
+			Membership: types.NewMembership(membership),
+		},
+	}, nil
+}
+
+// AssumeEmployeePortalSession is the resolver for the assumeEmployeePortalSession field.
+func (r *mutationResolver) AssumeEmployeePortalSession(ctx context.Context, input types.AssumeEmployeePortalSessionInput) (*types.AssumeEmployeePortalSessionPayload, error) {
+	rootSession := authn.SessionFromContext(ctx)
+
+	childSession, membership, organizationID, err := r.iam.SessionService.AssumeEmployeePortalSession(
+		ctx,
+		rootSession.ID,
+		input.EmployeePortalID,
+		input.Continue,
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		if errPasswordAuthenticationRequired, ok := errors.AsType[*iam.ErrPasswordAuthenticationRequired](err); ok {
+			return &types.AssumeEmployeePortalSessionPayload{
+				OrganizationID: organizationID,
+				Result: types.PasswordRequired{
+					Reason: types.ReauthenticationReason(errPasswordAuthenticationRequired.Reason),
+				},
+			}, nil
+		}
+
+		if errSAMLAuthenticationRequired, ok := errors.AsType[*iam.ErrSAMLAuthenticationRequired](err); ok {
+			return &types.AssumeEmployeePortalSessionPayload{
+				OrganizationID: organizationID,
+				Result: types.SAMLAuthenticationRequired{
+					Reason: types.ReauthenticationReason(errSAMLAuthenticationRequired.Reason),
+				},
+			}, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot assume employee portal session", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.AssumeEmployeePortalSessionPayload{
+		OrganizationID: organizationID,
 		Result: types.OrganizationSessionCreated{
 			Session:    types.NewSession(childSession),
 			Membership: types.NewMembership(membership),

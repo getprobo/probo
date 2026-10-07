@@ -41,6 +41,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
@@ -93,6 +94,7 @@ type Config struct {
 	ProbotCapabilities      *probot.CapabilityRegistry
 	Mailman                 *mailman.Service
 	CookieBanner            *cookiebanner.Service
+	EmployeePortal          *employeeportalmgmt.Service
 	Geoloc                  *geoloc.Service
 	ThirdParty              *thirdparty.Service
 	RiskManagement          *riskmanagement.Service
@@ -127,6 +129,7 @@ type Server struct {
 	consoleSecurityPolicy        string
 	employeePortalWebServer      *employeeportal_web.Server
 	employeePortalSecurityPolicy string
+	employeePortal               *employeeportalmgmt.Service
 	router                       *chi.Mux
 	extraHeaderFields            map[string]string
 	baseURL                      string
@@ -159,6 +162,7 @@ func NewServer(cfg Config) (*Server, error) {
 		ProbotCapabilities:       cfg.ProbotCapabilities,
 		Mailman:                  cfg.Mailman,
 		CookieBanner:             cfg.CookieBanner,
+		EmployeePortal:           cfg.EmployeePortal,
 		Geoloc:                   cfg.Geoloc,
 		ThirdParty:               cfg.ThirdParty,
 		RiskManagement:           cfg.RiskManagement,
@@ -240,6 +244,7 @@ func NewServer(cfg Config) (*Server, error) {
 		consoleSecurityPolicy:        consoleCSP,
 		employeePortalWebServer:      employeePortalWebServer,
 		employeePortalSecurityPolicy: employeePortalCSP,
+		employeePortal:               cfg.EmployeePortal,
 		router:                       router,
 		extraHeaderFields:            cfg.ExtraHeaderFields,
 		baseURL:                      cfg.BaseURL.String(),
@@ -277,6 +282,14 @@ func (s *Server) setupRoutes() {
 		)
 	}
 
+	employeePortalHandler := http.Handler(s.employeePortalWebServer)
+	if s.employeePortal != nil {
+		employeePortalHandler = employeeportal_web.OrganizationGIDRedirectMiddleware(
+			s.employeePortal.OldestIDForOrganization,
+			employeePortalHandler,
+		)
+	}
+
 	s.router.Mount(
 		employeeportal_web.PathPrefix,
 		NewSecurityHeadersMiddleware(
@@ -284,7 +297,7 @@ func (s *Server) setupRoutes() {
 				ExtraHeaderFields:     s.extraHeaderFields,
 				ContentSecurityPolicy: s.employeePortalSecurityPolicy,
 			},
-		)(http.StripPrefix(employeeportal_web.PathPrefix, s.employeePortalWebServer)),
+		)(http.StripPrefix(employeeportal_web.PathPrefix, employeePortalHandler)),
 	)
 
 	s.router.Mount(

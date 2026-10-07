@@ -18,16 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function employeePortalHref(
-  employeePortalId: string,
-  ...segments: string[]
-): string {
-  const url = new URL(window.location.origin);
-  url.pathname = [
-    "",
-    "employee-portal",
-    encodeURIComponent(employeePortalId),
-    ...segments.map(segment => encodeURIComponent(segment)),
-  ].join("/");
-  return url.pathname;
+import { graphql, useLazyLoadQuery } from "react-relay";
+
+import type { useDefaultEmployeePortalIdQuery } from "#/__generated__/core/useDefaultEmployeePortalIdQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+const defaultEmployeePortalQuery = graphql`
+  query useDefaultEmployeePortalIdQuery($organizationId: ID!) {
+    node(id: $organizationId) {
+      ... on Organization {
+        employeePortals(
+          first: 1
+          orderBy: { field: CREATED_AT, direction: ASC }
+        ) {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export function useDefaultEmployeePortalId(): string | null {
+  const organizationId = useOrganizationId();
+  const data = useLazyLoadQuery<useDefaultEmployeePortalIdQuery>(
+    defaultEmployeePortalQuery,
+    { organizationId },
+  );
+
+  if (data.node == null || !("employeePortals" in data.node)) {
+    return null;
+  }
+
+  return data.node.employeePortals?.edges[0]?.node.id ?? null;
 }

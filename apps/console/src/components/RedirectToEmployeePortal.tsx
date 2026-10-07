@@ -19,11 +19,15 @@
 // SOFTWARE.
 
 import { ExternalRedirect } from "#/components/ExternalRedirect";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { employeePortalHref } from "#/lib/employeePortalHref";
+import { useDefaultEmployeePortalId } from "#/lib/useDefaultEmployeePortalId";
 
 export function RedirectToEmployeePortal() {
-  const organizationId = useOrganizationId();
+  const employeePortalId = useDefaultEmployeePortalId();
 
-  return <ExternalRedirect to={employeePortalHref(organizationId)} />;
+  if (employeePortalId == null) {
+    return null;
+  }
+
+  return <ExternalRedirect to={employeePortalHref(employeePortalId)} />;
 }

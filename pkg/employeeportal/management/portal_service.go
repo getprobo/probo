@@ -109,6 +109,33 @@ func (req *UpdateBrandRequest) Validate() error {
 	return nil
 }
 
+func (s *Service) OldestIDForOrganization(
+	ctx context.Context,
+	organizationID gid.GID,
+) (gid.GID, error) {
+	var portalID gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			scope := coredata.NewScopeFromObjectID(organizationID)
+			portal := &coredata.EmployeePortal{}
+			if err := portal.LoadOldestByOrganizationID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load employee portal: %w", err)
+			}
+
+			portalID = portal.ID
+
+			return nil
+		},
+	)
+	if err != nil {
+		return gid.Nil, err
+	}
+
+	return portalID, nil
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	scope coredata.Scoper,

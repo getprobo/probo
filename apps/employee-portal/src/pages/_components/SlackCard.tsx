@@ -27,7 +27,7 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { SlackCard_organization$key } from "#/__generated__/core/SlackCard_organization.graphql";
 import type { SlackCard_viewer$key } from "#/__generated__/core/SlackCard_viewer.graphql";
@@ -58,7 +58,7 @@ export interface SlackCardProps {
 
 export function SlackCard({ viewerKey, organizationKey }: SlackCardProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const slots = dashboardCard();
   const status = deviceCard();
   const viewer = useFragment(slackCardViewerFragment, viewerKey);
@@ -87,7 +87,7 @@ export function SlackCard({ viewerKey, organizationKey }: SlackCardProps) {
           </Text>
         </div>
         <Link
-          to={`/${organizationId}/bindings`}
+          to={`/${employeePortalId}/bindings`}
           size={2}
           color="neutral"
           underline={false}

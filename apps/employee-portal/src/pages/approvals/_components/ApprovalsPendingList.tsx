@@ -22,7 +22,7 @@ import { StampIcon } from "@phosphor-icons/react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { ApprovalsPendingList_viewer$key } from "#/__generated__/core/ApprovalsPendingList_viewer.graphql";
 import type { ApprovalsPendingListRefetchQuery } from "#/__generated__/core/ApprovalsPendingListRefetchQuery.graphql";
@@ -85,7 +85,7 @@ export interface ApprovalsPendingListProps {
 export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const { advancing, startQueue } = useDocumentQueue();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsPendingListRefetchQuery,
@@ -146,7 +146,7 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/approvals/${node.id}`}
+          to={`/${employeePortalId}/approvals/${node.id}`}
           trailing="action"
           actionLabel={t("pending.itemAction")}
         />

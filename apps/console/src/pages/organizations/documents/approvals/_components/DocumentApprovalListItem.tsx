@@ -31,8 +31,8 @@ import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { DocumentApprovalListItemFragment$key } from "#/__generated__/core/DocumentApprovalListItemFragment.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { employeePortalHref } from "#/lib/employeePortalHref";
+import { useDefaultEmployeePortalId } from "#/lib/useDefaultEmployeePortalId";
 
 const fragment = graphql`
   fragment DocumentApprovalListItemFragment on DocumentVersionApprovalDecision {
@@ -60,7 +60,7 @@ export function DocumentApprovalListItem(props: {
 }) {
   const { fragmentRef } = props;
   const { t, i18n } = useTranslation();
-  const organizationId = useOrganizationId();
+  const employeePortalId = useDefaultEmployeePortalId();
 
   const decision = useFragment(fragment, fragmentRef);
 
@@ -69,11 +69,13 @@ export function DocumentApprovalListItem(props: {
   const isRejected = decision.state === "REJECTED";
   const isVoided = decision.state === "VOIDED";
 
-  const reviewUrl = employeePortalHref(
-    organizationId,
-    "approvals",
-    decision.documentVersion.document.id,
-  );
+  const reviewUrl = employeePortalId == null
+    ? null
+    : employeePortalHref(
+        employeePortalId,
+        "approvals",
+        decision.documentVersion.document.id,
+      );
 
   return (
     <div className="flex gap-3 items-center py-3">
@@ -118,7 +120,7 @@ export function DocumentApprovalListItem(props: {
             {t("documentApprovalListItem.status.rejected")}
           </Badge>
         )}
-        {isPending && (decision.canApprove || decision.canReject) && (
+        {isPending && (decision.canApprove || decision.canReject) && reviewUrl != null && (
           <Button variant="secondary" asChild>
             <a href={reviewUrl} target="_blank" rel="noreferrer">
               {t("documentApprovalListItem.actions.review")}

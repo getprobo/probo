@@ -20,7 +20,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { ApprovalsPageQuery } from "#/__generated__/core/ApprovalsPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -30,7 +30,7 @@ import { ApprovalsPage, approvalsPageQuery } from "./ApprovalsPage";
 import { ApprovalsPageSkeleton } from "./ApprovalsPageSkeleton";
 
 export default function ApprovalsPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<ApprovalsPageQuery>(
     approvalsPageQuery,
   );

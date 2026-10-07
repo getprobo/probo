@@ -20,7 +20,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { SignaturesPageQuery } from "#/__generated__/core/SignaturesPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -30,7 +30,7 @@ import { SignaturesPage, signaturesPageQuery } from "./SignaturesPage";
 import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
 
 export default function SignaturesPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<SignaturesPageQuery>(
     signaturesPageQuery,
   );

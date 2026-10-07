@@ -29,7 +29,7 @@ import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { DevicesList_organization$key } from "#/__generated__/core/DevicesList_organization.graphql";
 import type { DevicesList_viewer$key } from "#/__generated__/core/DevicesList_viewer.graphql";
@@ -96,7 +96,7 @@ export function DevicesList({
 }: DevicesListProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const organization = useFragment(devicesListOrganizationFragment, organizationKey);
   const [data, refetch] = useRefetchableFragment<
     DevicesListRefetchQuery,
@@ -122,8 +122,8 @@ export function DevicesList({
   const empty = enrolledDevices.edges.length === 0
     && !enrolledDevices.pageInfo.hasPreviousPage;
   const canEnroll = organization.canEnrollDevice;
-  const registerTo = `/${organizationId}/devices/register`;
-  const addManuallyTo = `/${organizationId}/devices/add-manually`;
+  const registerTo = `/${employeePortalId}/devices/register`;
+  const addManuallyTo = `/${employeePortalId}/devices/add-manually`;
   const addManuallyLink = (
     <ButtonLink
       to={addManuallyTo}
