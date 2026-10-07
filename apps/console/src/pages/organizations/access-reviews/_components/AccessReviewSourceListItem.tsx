@@ -39,6 +39,7 @@ import type { AccessReviewSourceListItem_source$key } from "#/__generated__/core
 import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated__/core/AccessReviewSourceListItemConfigureMutation.graphql";
 import type { AccessReviewSourceListItemDeleteMutation } from "#/__generated__/core/AccessReviewSourceListItemDeleteMutation.graphql";
 import type { InlineOrgSelectQuery } from "#/__generated__/core/InlineOrgSelectQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { buildConnectorInitiateURL } from "#/pages/organizations/settings/integrations/_lib/connectorInitiate";
 
@@ -96,15 +97,14 @@ const configureMutation = graphql`
 type Props = {
   sourceKey: AccessReviewSourceListItem_source$key;
   connectionId: string;
-  organizationId: string;
 };
 
 export function AccessReviewSourceListItem({
   sourceKey,
   connectionId,
-  organizationId,
 }: Props) {
   const { i18n, t } = useTranslation();
+  const organizationId = useOrganizationId();
   const confirm = useConfirm();
 
   const accessSource = useFragment(fragment, sourceKey);

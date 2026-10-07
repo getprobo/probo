@@ -35,7 +35,6 @@ import { useSearchParams } from "react-router";
 import type { AccessReviewSourcesPageFragment$key } from "#/__generated__/core/AccessReviewSourcesPageFragment.graphql";
 import type { AccessReviewSourcesPagePaginationQuery } from "#/__generated__/core/AccessReviewSourcesPagePaginationQuery.graphql";
 import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 import { groupByProvider } from "#/pages/organizations/_lib/connectorStatus";
 
@@ -116,7 +115,6 @@ interface AccessReviewSourcesPageProps {
 export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const organizationId = useOrganizationId();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -270,7 +268,6 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
                       key={node.id}
                       sourceKey={node}
                       connectionId={accessReviewSources.__id}
-                      organizationId={organizationId}
                     />
                   ))}
                 </div>
@@ -297,7 +294,6 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
           <AddableConnectorGroups
             groups={vendorGroups}
             normalizedSearch={normalizedSearch}
-            organizationId={organizationId}
             connectionId={accessReviewSources.__id}
           >
             {cards => (
@@ -305,7 +301,6 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
                 cards={cards}
                 showCSV={showCSV}
                 canCreateConnector={organization.canCreateConnector}
-                organizationId={organizationId}
               />
             )}
           </AddableConnectorGroups>

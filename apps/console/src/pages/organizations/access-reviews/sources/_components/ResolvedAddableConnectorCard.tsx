@@ -39,6 +39,7 @@ import type {
   ResolvedAddableConnectorCard_connector$key,
 } from "#/__generated__/core/ResolvedAddableConnectorCard_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   aggregateConnectionTone,
   connectionSignalFrom,
@@ -81,7 +82,6 @@ interface ResolvedAddableConnectorCardProps {
   pages: readonly LoadedConnectorAccounts[];
   connectorKeys: ResolvedAddableConnectorCard_connector$key;
   normalizedSearch: string;
-  organizationId: string;
   busy: boolean;
   onAdd: (accounts: { id: string; name: string }[]) => void;
   children: (card: AddableConnectorCard | null) => ReactNode;
@@ -100,12 +100,12 @@ export function ResolvedAddableConnectorCard({
   pages,
   connectorKeys,
   normalizedSearch,
-  organizationId,
   busy,
   onAdd,
   children,
 }: ResolvedAddableConnectorCardProps) {
   const { t } = useTranslation();
+  const organizationId = useOrganizationId();
   const { t: tConnector } = useTranslation("organizations/settings/integrations");
   const connectors = useFragment(connectorFragment, connectorKeys);
   const accountKeys: ResolvedAddableConnectorCard_account$key = pages.flatMap(

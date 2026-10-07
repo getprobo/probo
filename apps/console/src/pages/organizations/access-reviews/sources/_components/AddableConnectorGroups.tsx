@@ -28,7 +28,6 @@ import type { AddableConnectorCard } from "./ResolvedAddableConnectorCard";
 interface AddableConnectorGroupsProps {
   groups: readonly AddableConnectorListItem_connector$key[];
   normalizedSearch: string;
-  organizationId: string;
   connectionId: string;
   children: (cards: readonly AddableConnectorCard[]) => ReactNode;
 }
@@ -36,7 +35,6 @@ interface AddableConnectorGroupsProps {
 export function AddableConnectorGroups({
   groups,
   normalizedSearch,
-  organizationId,
   connectionId,
   children,
 }: AddableConnectorGroupsProps) {
@@ -46,7 +44,6 @@ export function AddableConnectorGroups({
       index={0}
       cards={[]}
       normalizedSearch={normalizedSearch}
-      organizationId={organizationId}
       connectionId={connectionId}
     >
       {children}

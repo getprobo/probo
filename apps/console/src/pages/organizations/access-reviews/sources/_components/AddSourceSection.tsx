@@ -34,14 +34,12 @@ interface AddSourceSectionProps {
   cards: readonly AddableConnectorCard[];
   showCSV: boolean;
   canCreateConnector: boolean;
-  organizationId: string;
 }
 
 export function AddSourceSection({
   cards,
   showCSV,
   canCreateConnector,
-  organizationId,
 }: AddSourceSectionProps) {
   const { t } = useTranslation();
   const { section, sectionTitle, grid, empty } = sourcesPage();
@@ -76,7 +74,7 @@ export function AddSourceSection({
                 <Fragment key={provider}>{card}</Fragment>
               ))}
               {showCSV && (
-                <CsvSourceCard organizationId={organizationId} />
+                <CsvSourceCard />
               )}
             </div>
           )}

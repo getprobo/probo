@@ -30,7 +30,6 @@ interface ResolveAddableConnectorGroupsProps {
   index: number;
   cards: readonly AddableConnectorCard[];
   normalizedSearch: string;
-  organizationId: string;
   connectionId: string;
   children: (cards: readonly AddableConnectorCard[]) => ReactNode;
 }
@@ -40,7 +39,6 @@ export function ResolveAddableConnectorGroups({
   index,
   cards,
   normalizedSearch,
-  organizationId,
   connectionId,
   children,
 }: ResolveAddableConnectorGroupsProps) {
@@ -52,7 +50,6 @@ export function ResolveAddableConnectorGroups({
   return (
     <AddableConnectorListItem
       connectorKeys={group}
-      organizationId={organizationId}
       connectionId={connectionId}
       normalizedSearch={normalizedSearch}
     >
@@ -62,7 +59,6 @@ export function ResolveAddableConnectorGroups({
           index={index + 1}
           cards={card == null ? cards : [...cards, card]}
           normalizedSearch={normalizedSearch}
-          organizationId={organizationId}
           connectionId={connectionId}
         >
           {children}

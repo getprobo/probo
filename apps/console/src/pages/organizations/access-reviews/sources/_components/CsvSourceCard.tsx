@@ -25,13 +25,11 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-interface CsvSourceCardProps {
-  organizationId: string;
-}
-
-export function CsvSourceCard({ organizationId }: CsvSourceCardProps) {
+export function CsvSourceCard() {
   const { t } = useTranslation();
+  const organizationId = useOrganizationId();
 
   return (
     <TonedCard

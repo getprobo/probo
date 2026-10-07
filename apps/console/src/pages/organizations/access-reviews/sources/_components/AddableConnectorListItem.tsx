@@ -24,6 +24,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import {
@@ -48,7 +49,6 @@ const fragment = graphql`
 
 interface AddableConnectorListItemProps {
   connectorKeys: AddableConnectorListItem_connector$key;
-  organizationId: string;
   connectionId: string;
   normalizedSearch: string;
   children: (card: AddableConnectorCard | null) => ReactNode;
@@ -56,12 +56,12 @@ interface AddableConnectorListItemProps {
 
 export function AddableConnectorListItem({
   connectorKeys,
-  organizationId,
   connectionId,
   normalizedSearch,
   children,
 }: AddableConnectorListItemProps) {
   const { t } = useTranslation();
+  const organizationId = useOrganizationId();
   const connectors = useFragment(fragment, connectorKeys);
   const [isAdding, setIsAdding] = useState(false);
   const [createAccessReviewSources, isCreating]
@@ -110,7 +110,6 @@ export function AddableConnectorListItem({
           pages={pages}
           connectorKeys={connectors}
           normalizedSearch={normalizedSearch}
-          organizationId={organizationId}
           busy={busy}
           onAdd={(accounts) => {
             void addSources(accounts);
