@@ -333,6 +333,7 @@ func TestResetStaleMappings(t *testing.T) {
 		CreatedAt:        old,
 		UpdatedAt:        old,
 	}
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return staleExtension.Insert(ctx, tx, fx.scope)
 	}))
