@@ -4,6 +4,27 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.305.0] - 2026-10-07
+
+### Added
+
+- Consent records open as detail cards for the action, request, TCF
+  string, categories, and location, with a link back to the trail. The
+  location card draws the record on a map cropped to the country, with
+  state or province shapes for US and Canadian records
+- Cookie banners expose a GraphQL connection of their versions
+
+### Changed
+
+- Cookie banners move out of Privacy onto their own CMP navigation
+  group. Opening CMP lands on the latest banner, or on the create page
+  when none exist
+- The cookie banner consent trail is rebuilt in UI kit v2 with
+  previous/next pagination and a select of recent banner versions in
+  place of the free-text version filter
+- The new cookie banner page is rebuilt in UI kit v2, matching the
+  configure settings form
+
 ## [0.304.0] - 2026-10-06
 
 ### Added
