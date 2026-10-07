@@ -110,7 +110,7 @@ INSERT INTO detected_trackers (
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
+ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, '')) DO UPDATE
 	SET last_detected_at = EXCLUDED.last_detected_at,
 		source = CASE
 			WHEN detected_trackers.source IS NULL THEN EXCLUDED.source
@@ -133,19 +133,7 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier) DO UPDATE
 		END,
 		initiator_url = COALESCE(EXCLUDED.initiator_url, detected_trackers.initiator_url),
 		initiator_domain = COALESCE(EXCLUDED.initiator_domain, detected_trackers.initiator_domain),
-		cookie_domain = CASE
-			WHEN EXCLUDED.host_only IS FALSE AND EXCLUDED.cookie_domain IS NOT NULL THEN EXCLUDED.cookie_domain
-			WHEN detected_trackers.host_only IS FALSE AND detected_trackers.cookie_domain IS NOT NULL THEN detected_trackers.cookie_domain
-			WHEN EXCLUDED.host_only IS TRUE THEN EXCLUDED.cookie_domain
-			ELSE detected_trackers.cookie_domain
-		END,
-		host_only = CASE
-			WHEN EXCLUDED.host_only IS FALSE AND EXCLUDED.cookie_domain IS NOT NULL THEN FALSE
-			WHEN detected_trackers.host_only IS FALSE AND detected_trackers.cookie_domain IS NOT NULL THEN FALSE
-			WHEN EXCLUDED.host_only IS TRUE THEN TRUE
-			WHEN EXCLUDED.host_only IS NOT NULL THEN EXCLUDED.host_only
-			ELSE detected_trackers.host_only
-		END,
+		host_only = COALESCE(detected_trackers.host_only, EXCLUDED.host_only),
 		max_age_seconds = COALESCE(detected_trackers.max_age_seconds, EXCLUDED.max_age_seconds),
 		value_size = COALESCE(detected_trackers.value_size, EXCLUDED.value_size),
 		updated_at = EXCLUDED.updated_at
@@ -185,6 +173,7 @@ func (dt *DetectedTracker) LoadByBannerIDTypeAndIdentifier(
 	cookieBannerID gid.GID,
 	trackerType TrackerType,
 	identifier string,
+	cookieDomain *string,
 ) error {
 	q := `
 SELECT
@@ -210,6 +199,7 @@ WHERE
 	AND cookie_banner_id = @cookie_banner_id
 	AND tracker_type = @tracker_type
 	AND identifier = @identifier
+	AND COALESCE(cookie_domain, '') = COALESCE(@cookie_domain, '')
 LIMIT 1
 `
 
@@ -219,6 +209,7 @@ LIMIT 1
 		"cookie_banner_id": cookieBannerID,
 		"tracker_type":     trackerType,
 		"identifier":       identifier,
+		"cookie_domain":    cookieDomain,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

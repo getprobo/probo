@@ -60,11 +60,17 @@ function sourceRank(source: CookieSource | StorageSource): number {
   }
 }
 
+function cookieScopeKey(entry: DetectedCookieEntry): string {
+  if (entry.host_only === false && entry.cookie_domain != null) {
+    return `c:${entry.name}@${entry.cookie_domain}`;
+  }
+
+  return `c:${entry.name}@`;
+}
+
 function cookieRicher(next: DetectedCookieEntry, prev: DetectedCookieEntry): boolean {
   if (sourceRank(next.source) > sourceRank(prev.source)) return true;
-  if (next.cookie_domain != null && prev.cookie_domain == null) return true;
   if (next.host_only != null && prev.host_only == null) return true;
-  if (next.host_only === false && prev.host_only === true) return true;
   if (next.initiator_url != null && prev.initiator_url == null) return true;
   if (next.max_age_seconds != null && prev.max_age_seconds == null) return true;
   return false;
@@ -83,19 +89,11 @@ function mergeCookie(prev: DetectedCookieEntry, next: DetectedCookieEntry): Dete
   const initiator = next.initiator_url ?? prev.initiator_url;
   if (initiator != null) merged.initiator_url = initiator;
 
-  if (next.host_only === false && next.cookie_domain != null) {
-    merged.cookie_domain = next.cookie_domain;
-    merged.host_only = false;
-  } else if (prev.host_only === false && prev.cookie_domain != null) {
-    merged.cookie_domain = prev.cookie_domain;
-    merged.host_only = false;
-  } else if (next.host_only != null) {
-    if (next.cookie_domain != null) merged.cookie_domain = next.cookie_domain;
-    merged.host_only = next.host_only;
-  } else if (prev.host_only != null) {
-    if (prev.cookie_domain != null) merged.cookie_domain = prev.cookie_domain;
-    merged.host_only = prev.host_only;
-  }
+  const domain = next.cookie_domain ?? prev.cookie_domain;
+  if (domain != null) merged.cookie_domain = domain;
+
+  const hostOnly = next.host_only ?? prev.host_only;
+  if (hostOnly != null) merged.host_only = hostOnly;
 
   return merged;
 }
@@ -126,9 +124,11 @@ function mergeStorage(prev: DetectedStorageEntry, next: DetectedStorageEntry): D
 // item lives in a single `pending` Map keyed with a type-namespaced
 // dedup key (`c:`, `s:`, `r:`) so that, e.g., a cookie literally named
 // `s:local_storage:foo` cannot collide with a localStorage entry whose
-// key is `foo`. `accepted` holds the richest payload already taken for
-// each key; a later observation replaces it only when it is stronger or
-// more detailed. Resources stay first-write-wins.
+// key is `foo`. Cookie keys include the Domain (`c:name@example.com`)
+// or an empty scope (`c:name@`) for host-only/unknown, matching the
+// server unique index. `accepted` holds the richest payload already
+// taken for each key; a later observation replaces it only when it is
+// stronger or more detailed. Resources stay first-write-wins.
 export class ReportQueue {
   private readonly reportUrl: URL;
   private readonly pending: Map<string, QueuedItem> = new Map();
@@ -146,7 +146,7 @@ export class ReportQueue {
   }
 
   reportCookie(entry: DetectedCookieEntry): void {
-    this.enqueue(`c:${entry.name}`, { kind: "cookie", entry });
+    this.enqueue(cookieScopeKey(entry), { kind: "cookie", entry });
   }
 
   reportStorage(entry: DetectedStorageEntry): void {

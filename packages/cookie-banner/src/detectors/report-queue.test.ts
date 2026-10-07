@@ -66,25 +66,19 @@ describe("ReportQueue", () => {
     );
   });
 
-  it("re-sends when a later observation adds a domain", async () => {
+  it("keeps host-only and domain-scoped cookies as separate reports", async () => {
     vi.useFakeTimers();
 
-    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 });
-    vi.stubGlobal("fetch", fetch);
+    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
+    vi.stubGlobal("navigator", { sendBeacon });
 
     const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
-    queue.reportCookie({ name: "sid", max_age_seconds: null, source: "pre-existing" });
-
-    await vi.advanceTimersByTimeAsync(2_000);
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(fetch).toHaveBeenCalledTimes(1);
-    const firstBody = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body)) as {
-      cookies: Array<{ cookie_domain?: string }>;
-    };
-    expect(firstBody.cookies[0]?.cookie_domain).toBeUndefined();
-
+    queue.reportCookie({
+      name: "sid",
+      max_age_seconds: null,
+      source: "pre-existing",
+      host_only: true,
+    });
     queue.reportCookie({
       name: "sid",
       max_age_seconds: null,
@@ -92,17 +86,24 @@ describe("ReportQueue", () => {
       cookie_domain: "example.com",
       host_only: false,
     });
+    queue.stop();
 
-    await vi.advanceTimersByTimeAsync(2_000);
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(fetch).toHaveBeenCalledTimes(2);
-    const secondBody = JSON.parse(String(fetch.mock.calls[1]?.[1]?.body)) as {
-      cookies: Array<{ cookie_domain?: string; source: string }>;
+    expect(sendBeacon).toHaveBeenCalledOnce();
+    const sentData: unknown = sendBeacon.mock.calls[0]?.[1];
+    expect(sentData).toBeInstanceOf(Blob);
+    if (!(sentData instanceof Blob)) {
+      throw new Error("expected sendBeacon to receive a Blob");
+    }
+    const body = JSON.parse(await sentData.text()) as {
+      cookies: Array<{ cookie_domain?: string; host_only?: boolean }>;
     };
-    expect(secondBody.cookies[0]?.source).toBe("pre-existing");
-    expect(secondBody.cookies[0]?.cookie_domain).toBe("example.com");
+    expect(body.cookies).toHaveLength(2);
+    expect(body.cookies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ host_only: true }),
+        expect.objectContaining({ cookie_domain: "example.com", host_only: false }),
+      ]),
+    );
   });
 
   it("replaces a weaker observation's max-age when source promotes", async () => {

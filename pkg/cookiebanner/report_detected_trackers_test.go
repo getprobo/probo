@@ -329,10 +329,10 @@ func TestReportDetectedTrackers_ResourceReportingEnabled(t *testing.T) {
 	assert.Equal(t, "/pixel.js", resource.Path)
 }
 
-// TestReportDetectedTrackers_FillsDomainWithoutDemotingSource asserts
-// that a later PRE_EXISTING report can fill cookie_domain on a row
-// already stored as SCRIPT, and that the stored source stays SCRIPT.
-func TestReportDetectedTrackers_FillsDomainWithoutDemotingSource(t *testing.T) {
+// TestReportDetectedTrackers_SeparatesHostOnlyAndDomain asserts that
+// a host-only (or unknown-domain) cookie and a Domain-scoped cookie
+// with the same name are stored as two detections under one pattern.
+func TestReportDetectedTrackers_SeparatesHostOnlyAndDomain(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -377,31 +377,54 @@ func TestReportDetectedTrackers_FillsDomainWithoutDemotingSource(t *testing.T) {
 		),
 	)
 
-	var tracker coredata.DetectedTracker
+	var hostOnlyTracker coredata.DetectedTracker
+	var domainTracker coredata.DetectedTracker
 
 	require.NoError(
 		t,
 		client.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
-				return tracker.LoadByBannerIDTypeAndIdentifier(
+				if err := hostOnlyTracker.LoadByBannerIDTypeAndIdentifier(
 					ctx,
 					conn,
 					fx.scope,
 					fx.banner.ID,
 					coredata.TrackerTypeCookie,
 					"_ga",
+					nil,
+				); err != nil {
+					return err
+				}
+
+				return domainTracker.LoadByBannerIDTypeAndIdentifier(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					"_ga",
+					&domain,
 				)
 			},
 		),
 	)
 
-	require.NotNil(t, tracker.Source)
-	assert.Equal(t, coredata.CookieSourceScript, *tracker.Source)
-	require.NotNil(t, tracker.CookieDomain)
-	assert.Equal(t, domain, *tracker.CookieDomain)
-	require.NotNil(t, tracker.HostOnly)
-	assert.False(t, *tracker.HostOnly)
+	require.NotNil(t, hostOnlyTracker.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *hostOnlyTracker.Source)
+	assert.Nil(t, hostOnlyTracker.CookieDomain)
+
+	require.NotNil(t, domainTracker.Source)
+	assert.Equal(t, coredata.CookieSourcePreExisting, *domainTracker.Source)
+	require.NotNil(t, domainTracker.CookieDomain)
+	assert.Equal(t, domain, *domainTracker.CookieDomain)
+	require.NotNil(t, domainTracker.HostOnly)
+	assert.False(t, *domainTracker.HostOnly)
+
+	assert.NotEqual(t, hostOnlyTracker.ID, domainTracker.ID)
+	require.NotNil(t, hostOnlyTracker.TrackerPatternID)
+	require.NotNil(t, domainTracker.TrackerPatternID)
+	assert.Equal(t, *hostOnlyTracker.TrackerPatternID, *domainTracker.TrackerPatternID)
 }
 
 // TestReportDetectedTrackers_ExtensionSkipsMappingRequest asserts that
@@ -519,6 +542,7 @@ func TestReportDetectedTrackers_DropsOversizedMaxAge(t *testing.T) {
 					fx.banner.ID,
 					coredata.TrackerTypeCookie,
 					"_ga",
+					nil,
 				)
 			},
 		),

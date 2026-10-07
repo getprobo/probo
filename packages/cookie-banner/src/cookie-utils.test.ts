@@ -71,6 +71,27 @@ describe("parseCookieSetDomain", () => {
       host_only: true,
     });
   });
+
+  it("treats a single-label Domain as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=com", "foo.com")).toEqual({
+      host_only: true,
+    });
+  });
+
+  it("treats a Domain on an IPv4 host as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=0.113.5", "203.0.113.5")).toEqual({
+      host_only: true,
+    });
+    expect(parseCookieSetDomain("sid=abc; Domain=203.0.113.5", "203.0.113.5")).toEqual({
+      host_only: true,
+    });
+  });
+
+  it("treats a Domain on an IPv6 host as host-only", () => {
+    expect(parseCookieSetDomain("sid=abc; Domain=example.com", "2001:db8::1")).toEqual({
+      host_only: true,
+    });
+  });
 });
 
 describe("clampMaxAgeSeconds", () => {
@@ -85,6 +106,14 @@ describe("clampMaxAgeSeconds", () => {
   it("drops zero and negative durations", () => {
     expect(clampMaxAgeSeconds(0)).toBeNull();
     expect(clampMaxAgeSeconds(-1)).toBeNull();
+  });
+
+  it("drops a duration that rounds to zero", () => {
+    expect(clampMaxAgeSeconds(0.4)).toBeNull();
+  });
+
+  it("keeps a duration that rounds up to one second", () => {
+    expect(clampMaxAgeSeconds(0.5)).toBe(1);
   });
 });
 

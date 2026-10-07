@@ -182,12 +182,21 @@ export function normalizeCookieDomain(raw: string): string | null {
 
 // domainAppliesToHost reports whether a Domain attribute would be
 // accepted for this host. The browser drops a Domain that is not a
-// suffix of the current hostname (dot-boundary), leaving the cookie
-// host-only.
+// suffix of the current hostname (dot-boundary), a single-label
+// domain (e.g. Domain=com), or any Domain on an IP-literal host,
+// leaving the cookie host-only. Multi-label public suffixes (co.uk)
+// still need the PSL; this file does not ship one.
 export function domainAppliesToHost(domain: string, hostname: string): boolean {
-  const host = hostname.toLowerCase();
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (isIPLiteralHost(host)) return false;
+  if (!domain.includes(".")) return false;
   if (host === domain) return true;
   return host.endsWith("." + domain);
+}
+
+function isIPLiteralHost(host: string): boolean {
+  if (host.includes(":")) return true;
+  return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host);
 }
 
 export interface CookieDomainFields {
@@ -234,11 +243,16 @@ export function cookieListItemDomain(domain: string | null): CookieDomainFields 
 const MAX_INT4 = 2_147_483_647;
 
 export function clampMaxAgeSeconds(seconds: number | null): number | null {
-  if (seconds == null || !Number.isFinite(seconds) || seconds <= 0 || seconds > MAX_INT4) {
+  if (seconds == null || !Number.isFinite(seconds)) {
     return null;
   }
 
-  return Math.round(seconds);
+  const rounded = Math.round(seconds);
+  if (rounded <= 0 || rounded > MAX_INT4) {
+    return null;
+  }
+
+  return rounded;
 }
 
 export function parseMaxAgeSeconds(raw: string): number | null {
