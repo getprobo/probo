@@ -38,6 +38,7 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/identityfederation"
@@ -63,6 +64,7 @@ func NewMux(
 	iamSvc *iam.Service,
 	accessReviewSvc *accessreview.Service,
 	cookieBannerSvc *cookiebanner.Service,
+	employeePortalSvc *employeeportalmgmt.Service,
 	riskManagementSvc *riskmanagement.Service,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
@@ -88,6 +90,7 @@ func NewMux(
 		iamSvc:                iamSvc,
 		accessReview:          accessReviewSvc,
 		cookieBanner:          cookieBannerSvc,
+		employeePortal:        employeePortalSvc,
 		riskManagement:        riskManagementSvc,
 		itamSvc:               itamSvc,
 		task:                  taskSvc,

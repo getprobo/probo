@@ -35,6 +35,7 @@ import * as datum from './datum';
 import * as device from './device';
 import * as document from './document';
 import * as dpia from './dpia';
+import * as employeePortal from './employeePortal';
 import * as evidence from './evidence';
 import * as execute from './execute';
 import * as finding from './finding';
@@ -87,6 +88,7 @@ export const resources: Record<string, ResourceModule> = {
 	device: device as ResourceModule,
 	document: document as ResourceModule,
 	dpia: dpia as ResourceModule,
+	employeePortal: employeePortal as ResourceModule,
 	evidence: evidence as ResourceModule,
 	execute: execute as ResourceModule,
 	finding: finding as ResourceModule,

@@ -68,6 +68,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -625,6 +626,7 @@ func (impl *Implm) Run(
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(management.OAuth2ScopeMappings).
+		Register(employeeportalmgmt.OAuth2ScopeMappings).
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
@@ -791,6 +793,12 @@ func (impl *Implm) Run(
 		impl.cfg.CookieBanner.TCFCMPID,
 	)
 
+	employeePortalService := employeeportalmgmt.NewService(
+		pgClient,
+		s3Client,
+		impl.cfg.AWS.Bucket,
+	)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -861,6 +869,7 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(employeeportalmgmt.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(task.PolicySet())
 
@@ -993,6 +1002,7 @@ func (impl *Implm) Run(
 			AgentExecution:          agentExecutionService,
 			Mailman:                 mailmanService,
 			CookieBanner:            cookieBannerService,
+			EmployeePortal:          employeePortalService,
 			Geoloc:                  geolocService,
 			ThirdParty:              thirdPartyService,
 			RiskManagement:          riskManagementService,

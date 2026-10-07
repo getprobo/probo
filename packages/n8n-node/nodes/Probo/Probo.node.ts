@@ -164,6 +164,11 @@ export class Probo implements INodeType {
 						description: 'Manage data protection impact assessments',
 					},
 					{
+						name: 'Employee Portal',
+						value: 'employeePortal',
+						description: 'Manage employee portals',
+					},
+					{
 						name: 'Evidence',
 						value: 'evidence',
 						description: 'Manage evidences',

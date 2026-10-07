@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
@@ -10598,4 +10599,124 @@ func linearMCPIssue(issue tasksync.LinearIssue) (*types.LinearIssue, error) {
 	}
 
 	return node, nil
+}
+
+func (r *Resolver) ListEmployeePortalsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListEmployeePortalsInput) (*mcp.CallToolResult, types.ListEmployeePortalsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, employeeportalmgmt.ActionEmployeePortalList)
+	if err != nil {
+		return nil, types.ListEmployeePortalsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.EmployeePortalOrderField]{
+		Field:     coredata.EmployeePortalOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.EmployeePortalOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	portalPage, err := r.employeePortal.ListForOrganizationID(ctx, scope, input.OrganizationID, cursor)
+	if err != nil {
+		return nil, types.ListEmployeePortalsOutput{}, fmt.Errorf("cannot list employee portals: %w", err)
+	}
+
+	portals := make([]*types.EmployeePortal, 0, len(portalPage.Data))
+	for _, portal := range portalPage.Data {
+		portals = append(portals, types.NewEmployeePortal(portal))
+	}
+
+	return nil, types.NewListEmployeePortalsOutput(portals, portalPage), nil
+}
+
+func (r *Resolver) CreateEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateEmployeePortalInput) (*mcp.CallToolResult, types.CreateEmployeePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, employeeportalmgmt.ActionEmployeePortalCreate)
+	if err != nil {
+		return nil, types.CreateEmployeePortalOutput{}, err
+	}
+
+	portal, err := r.employeePortal.Create(
+		ctx,
+		scope,
+		&employeeportalmgmt.CreateEmployeePortalRequest{
+			OrganizationID: input.OrganizationID,
+			Name:           input.Name,
+		},
+	)
+	if err != nil {
+		return nil, types.CreateEmployeePortalOutput{}, fmt.Errorf("cannot create employee portal: %w", err)
+	}
+
+	return nil, types.CreateEmployeePortalOutput{
+		EmployeePortal: types.NewEmployeePortal(portal),
+	}, nil
+}
+
+func (r *Resolver) GetEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetEmployeePortalInput) (*mcp.CallToolResult, types.GetEmployeePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalGet)
+	if err != nil {
+		return nil, types.GetEmployeePortalOutput{}, err
+	}
+
+	portal, err := r.employeePortal.Get(ctx, scope, input.EmployeePortalID)
+	if err != nil {
+		return nil, types.GetEmployeePortalOutput{}, fmt.Errorf("cannot get employee portal: %w", err)
+	}
+
+	return nil, types.GetEmployeePortalOutput{
+		EmployeePortal: types.NewEmployeePortal(portal),
+	}, nil
+}
+
+func (r *Resolver) UpdateEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateEmployeePortalInput) (*mcp.CallToolResult, types.UpdateEmployeePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalUpdate)
+	if err != nil {
+		return nil, types.UpdateEmployeePortalOutput{}, err
+	}
+
+	updateReq := &employeeportalmgmt.UpdateRequest{
+		ID: input.EmployeePortalID,
+	}
+
+	if v := UnwrapOmittable(input.Name); v != nil && *v != nil {
+		updateReq.Name = *v
+	}
+
+	if v := UnwrapOmittable(input.Active); v != nil && *v != nil {
+		updateReq.Active = *v
+	}
+
+	if v := UnwrapOmittable(input.Capabilities); v != nil && *v != nil {
+		updateReq.Capabilities = &coredata.EmployeePortalCapabilitiesPatch{
+			DeviceAgent: (*v).DeviceAgent,
+		}
+	}
+
+	portal, err := r.employeePortal.Update(ctx, scope, updateReq)
+	if err != nil {
+		return nil, types.UpdateEmployeePortalOutput{}, fmt.Errorf("cannot update employee portal: %w", err)
+	}
+
+	return nil, types.UpdateEmployeePortalOutput{
+		EmployeePortal: types.NewEmployeePortal(portal),
+	}, nil
+}
+
+func (r *Resolver) DeleteEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteEmployeePortalInput) (*mcp.CallToolResult, types.DeleteEmployeePortalOutput, error) {
+	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalDelete)
+	if err != nil {
+		return nil, types.DeleteEmployeePortalOutput{}, err
+	}
+
+	if err := r.employeePortal.Delete(ctx, scope, input.EmployeePortalID); err != nil {
+		return nil, types.DeleteEmployeePortalOutput{}, fmt.Errorf("cannot delete employee portal: %w", err)
+	}
+
+	return nil, types.DeleteEmployeePortalOutput{
+		DeletedEmployeePortalID: input.EmployeePortalID,
+	}, nil
 }

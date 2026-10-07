@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
@@ -1594,6 +1595,36 @@ func (r *organizationResolver) CompliancePortals(ctx context.Context, obj *types
 	}
 
 	return types.NewCompliancePortalConnection(p, obj.ID), nil
+}
+
+// EmployeePortals is the resolver for the employeePortals field.
+func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EmployeePortalOrderBy) (*types.EmployeePortalConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.EmployeePortalOrderField]{
+		Field:     coredata.EmployeePortalOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.EmployeePortalOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	p, err := r.employeePortal.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list employee portals", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewEmployeePortalConnection(p, obj.ID), nil
 }
 
 // CookieBanners is the resolver for the cookieBanners field.

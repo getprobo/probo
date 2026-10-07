@@ -27,6 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/oauth2scope"
 	"go.probo.inc/probo/pkg/itam"
@@ -42,6 +43,7 @@ func allRegisteredOAuth2ScopeRegistries() *oauth2scope.Registry {
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(itam.OAuth2ScopeMappings).
+		Register(employeeportalmgmt.OAuth2ScopeMappings).
 		Register(riskmanagement.OAuth2ScopeMappings).
 		Register(task.OAuth2ScopeMappings)
 }
@@ -67,6 +69,16 @@ func TestRegisteredOAuth2ScopeRegistries_UnmappedActionDenies(t *testing.T) {
 	}
 
 	assert.False(t, reg.Allows(tokenScopes, "core:unmapped:action"))
+}
+
+func TestRegisteredOAuth2ScopeRegistries_EmployeePortal(t *testing.T) {
+	t.Parallel()
+
+	reg := allRegisteredOAuth2ScopeRegistries()
+
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortal}, employeeportalmgmt.ActionEmployeePortalCreate))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortalRead}, employeeportalmgmt.ActionEmployeePortalCreate))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortalRead}, employeeportalmgmt.ActionEmployeePortalGet))
 }
 
 func TestRegisteredOAuth2ScopeRegistries_ITAMDeviceDelete(t *testing.T) {

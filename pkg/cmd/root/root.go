@@ -45,6 +45,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/device"
 	"go.probo.inc/probo/pkg/cmd/document"
 	"go.probo.inc/probo/pkg/cmd/dpia"
+	employeeportal "go.probo.inc/probo/pkg/cmd/employee-portal"
 	"go.probo.inc/probo/pkg/cmd/evidence"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
@@ -124,6 +125,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(device.NewCmdDevice(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
 	cmd.AddCommand(dpia.NewCmdDPIA(f))
+	cmd.AddCommand(employeeportal.NewCmdEmployeePortal(f))
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))

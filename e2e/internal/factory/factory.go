@@ -1560,6 +1560,45 @@ func CreateCompliancePortal(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateCompliancePortal.CompliancePortalEdge.Node.ID
 }
 
+func CreateEmployeePortal(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateEmployeePortalInput!) {
+			createEmployeePortal(input: $input) {
+				employeePortalEdge {
+					node { id }
+				}
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": c.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("Employee Portal")),
+	}
+
+	var result struct {
+		CreateEmployeePortal struct {
+			EmployeePortalEdge struct {
+				Node struct {
+					ID string `json:"id"`
+				} `json:"node"`
+			} `json:"employeePortalEdge"`
+		} `json:"createEmployeePortal"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createEmployeePortal mutation failed")
+
+	return result.CreateEmployeePortal.EmployeePortalEdge.Node.ID
+}
+
 type CookieBannerBuilder struct {
 	client *testutil.Client
 	attrs  Attrs

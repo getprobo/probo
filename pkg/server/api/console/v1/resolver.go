@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
@@ -88,6 +89,7 @@ type (
 		agentExecution          *agentexecution.Service
 		mailman                 *mailman.Service
 		cookieBanner            *cookiebanner.Service
+		employeePortal          *employeeportalmgmt.Service
 		connectorRegistry       *connector.Registry
 		providerRegistry        *provider.Registry
 		riskManagement          *riskmanagement.Service
@@ -121,6 +123,7 @@ func NewMux(
 	agentExecutionSvc *agentexecution.Service,
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
+	employeePortalSvc *employeeportalmgmt.Service,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
 	installStateKey string,
@@ -158,6 +161,7 @@ func NewMux(
 		agentExecutionSvc,
 		mailmanSvc,
 		cookieBannerSvc,
+		employeePortalSvc,
 		connectorRegistry,
 		providerRegistry,
 		customDomainCname,

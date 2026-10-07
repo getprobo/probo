@@ -19,6 +19,7 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
@@ -412,6 +413,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewCompliancePortal(compliancePortal), nil
+		}
+	case coredata.EmployeePortalEntityType:
+		action = employeeportalmgmt.ActionEmployeePortalGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			employeePortal, err := r.employeePortal.Get(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewEmployeePortal(employeePortal), nil
 		}
 	case coredata.CompliancePortalAccessEntityType:
 		action = management.ActionCompliancePortalAccessGet

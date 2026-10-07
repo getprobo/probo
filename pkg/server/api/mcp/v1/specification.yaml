@@ -12445,6 +12445,192 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted compliance portal ID
 
+    EmployeePortalCapabilities:
+      type: object
+      required:
+        - device_agent
+      properties:
+        device_agent:
+          type: boolean
+          description: Whether the employee app offers the device agent
+
+    EmployeePortalCapabilitiesInput:
+      type: object
+      description: Partial update; an omitted capability keeps its current value
+      properties:
+        device_agent:
+          type:
+            - boolean
+            - "null"
+          description: Whether the employee app offers the device agent
+
+    EmployeePortal:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - active
+        - capabilities
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        active:
+          type: boolean
+        capabilities:
+          $ref: "#/components/schemas/EmployeePortalCapabilities"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EmployeePortalOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EmployeePortalOrderField
+
+    EmployeePortalOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/EmployeePortalOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    ListEmployeePortalsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/EmployeePortalOrderBy"
+          description: Employee portal order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListEmployeePortalsOutput:
+      type: object
+      required:
+        - employee_portals
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        employee_portals:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmployeePortal"
+
+    CreateEmployeePortalInput:
+      type: object
+      required:
+        - organization_id
+        - name
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: Display name of the employee portal
+
+    CreateEmployeePortalOutput:
+      type: object
+      required:
+        - employee_portal
+      properties:
+        employee_portal:
+          $ref: "#/components/schemas/EmployeePortal"
+
+    GetEmployeePortalInput:
+      type: object
+      required:
+        - employee_portal_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+
+    GetEmployeePortalOutput:
+      type: object
+      required:
+        - employee_portal
+      properties:
+        employee_portal:
+          $ref: "#/components/schemas/EmployeePortal"
+
+    UpdateEmployeePortalInput:
+      type: object
+      required:
+        - employee_portal_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+        name:
+          type:
+            - string
+            - "null"
+          description: Display name of the employee portal
+          go.probo.inc/mcpgen/omittable: true
+        active:
+          type:
+            - boolean
+            - "null"
+          description: Whether the employee portal is active
+          go.probo.inc/mcpgen/omittable: true
+        capabilities:
+          anyOf:
+            - $ref: "#/components/schemas/EmployeePortalCapabilitiesInput"
+            - type: "null"
+          description: Capabilities to change on the employee portal
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateEmployeePortalOutput:
+      type: object
+      required:
+        - employee_portal
+      properties:
+        employee_portal:
+          $ref: "#/components/schemas/EmployeePortal"
+
+    DeleteEmployeePortalInput:
+      type: object
+      required:
+        - employee_portal_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+
+    DeleteEmployeePortalOutput:
+      type: object
+      required:
+        - deleted_employee_portal_id
+      properties:
+        deleted_employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Deleted employee portal ID
+
     UpdateCompliancePortalDocumentVisibilityInput:
       type: object
       required:
@@ -19783,6 +19969,66 @@ tools:
       $ref: "#/components/schemas/DeleteCompliancePortalInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalOutput"
+  - name: listEmployeePortals
+    title: List Employee Portals
+    description: List employee portals for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListEmployeePortalsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListEmployeePortalsOutput"
+  - name: createEmployeePortal
+    title: Create Employee Portal
+    description: Create an employee portal for an organization
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/CreateEmployeePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateEmployeePortalOutput"
+  - name: getEmployeePortal
+    title: Get Employee Portal
+    description: Get an employee portal by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetEmployeePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetEmployeePortalOutput"
+  - name: updateEmployeePortal
+    title: Update Employee Portal
+    description: Update an employee portal's settings
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateEmployeePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateEmployeePortalOutput"
+  - name: deleteEmployeePortal
+    title: Delete Employee Portal
+    description: Delete an employee portal
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DeleteEmployeePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/DeleteEmployeePortalOutput"
   - name: updateCompliancePortalDocumentVisibility
     title: Update Compliance Portal Document Visibility
     description: Update a document's visibility on a compliance portal

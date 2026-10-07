@@ -85,6 +85,7 @@ func NewMCPClient(t require.TestingT, owner *Client) *MCPClient {
 		"v1:control",
 		"v1:datum",
 		"v1:document",
+		"v1:employee-portal",
 		"v1:iam",
 		"v1:itam",
 		"v1:org",
