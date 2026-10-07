@@ -104,6 +104,11 @@ type (
 		UserEmail string
 	}
 
+	CommentAuthor struct {
+		Name      string
+		AvatarURL string
+	}
+
 	graphqlRequest struct {
 		Query     string `json:"query"`
 		Variables any    `json:"variables"`
@@ -984,7 +989,12 @@ query TaskSyncLinearIssueComments($id: String!, $first: Int!, $after: String) {
 	return nil, fmt.Errorf("cannot list Linear comments: pagination limit reached")
 }
 
-func (c *Client) CreateComment(ctx context.Context, issueID, body string) (*Comment, error) {
+func (c *Client) CreateComment(
+	ctx context.Context,
+	issueID string,
+	body string,
+	author CommentAuthor,
+) (*Comment, error) {
 	const query = `
 mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
   commentCreate(input: $input) {
@@ -1015,10 +1025,7 @@ mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
 	}
 
 	if err := c.do(ctx, query, map[string]any{
-		"input": map[string]any{
-			"issueId": issueID,
-			"body":    body,
-		},
+		"input": commentCreateInput(issueID, body, author),
 	}, &resp); err != nil {
 		return nil, err
 	}
@@ -1029,6 +1036,26 @@ mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
 	}
 
 	return commentFromPayload(created.Comment.ID, created.Comment.Body, created.Comment.CreatedAt, created.Comment.UpdatedAt, ""), nil
+}
+
+func commentCreateInput(issueID, body string, author CommentAuthor) map[string]any {
+	input := map[string]any{
+		"issueId": issueID,
+		"body":    body,
+	}
+
+	name := strings.TrimSpace(author.Name)
+	if name == "" {
+		return input
+	}
+
+	input["createAsUser"] = name
+
+	if avatarURL := strings.TrimSpace(author.AvatarURL); avatarURL != "" {
+		input["displayIconUrl"] = avatarURL
+	}
+
+	return input
 }
 
 func (c *Client) UpdateComment(ctx context.Context, commentID, body string) (*Comment, error) {

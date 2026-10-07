@@ -1053,3 +1053,129 @@ func TestClient_SearchTeamsAndIssues(t *testing.T) {
 	assert.Equal(t, "team-1", issue.TeamID)
 	assert.Equal(t, "ENG-12", issue.Identifier)
 }
+
+func TestClient_CreateComment_SetsAuthor(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		author         CommentAuthor
+		createAsUser   string
+		displayIconURL string
+	}{
+		{
+			name: "name and avatar",
+			author: CommentAuthor{
+				Name:      "  Ada Lovelace  ",
+				AvatarURL: "  https://app.example.com/api/files/v1/public/avatar  ",
+			},
+			createAsUser:   "Ada Lovelace",
+			displayIconURL: "https://app.example.com/api/files/v1/public/avatar",
+		},
+		{
+			name: "name only",
+			author: CommentAuthor{
+				Name: "Ada Lovelace",
+			},
+			createAsUser: "Ada Lovelace",
+		},
+		{
+			name: "avatar without a name",
+			author: CommentAuthor{
+				AvatarURL: "https://app.example.com/avatar",
+			},
+		},
+		{
+			name: "empty author",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				var (
+					handlerErr error
+					input      map[string]any
+				)
+
+				server := newLinearGraphQLServer(
+					t,
+					func(w http.ResponseWriter, r *http.Request) {
+						req, ok := serveDecodedGraphQL(w, r, &handlerErr)
+						if !ok {
+							return
+						}
+
+						vars, err := graphQLObjectVariables(req)
+						if err != nil {
+							handlerErr = err
+							http.Error(w, err.Error(), http.StatusBadRequest)
+
+							return
+						}
+
+						decoded, ok := vars["input"].(map[string]any)
+						if !ok {
+							handlerErr = fmt.Errorf("cannot decode comment input")
+
+							http.Error(w, "cannot decode comment input", http.StatusBadRequest)
+
+							return
+						}
+
+						input = decoded
+
+						writeJSON(
+							w,
+							map[string]any{
+								"data": map[string]any{
+									"commentCreate": map[string]any{
+										"success": true,
+										"comment": map[string]any{
+											"id":        "comment-1",
+											"body":      "Hello",
+											"createdAt": "2026-09-14T12:00:00Z",
+											"updatedAt": "2026-09-14T12:00:00Z",
+										},
+									},
+								},
+							},
+						)
+					},
+				)
+
+				client := NewClient(server.Client(), server.URL)
+				comment, err := client.CreateComment(
+					context.Background(),
+					"issue-1",
+					"Hello",
+					tt.author,
+				)
+
+				require.NoError(t, handlerErr)
+				require.NoError(t, err)
+				require.NotNil(t, comment)
+				assert.Equal(t, "comment-1", comment.ID)
+				assert.Equal(t, "issue-1", input["issueId"])
+				assert.Equal(t, "Hello", input["body"])
+
+				if tt.createAsUser == "" {
+					_, exists := input["createAsUser"]
+					assert.False(t, exists)
+				} else {
+					assert.Equal(t, tt.createAsUser, input["createAsUser"])
+				}
+
+				if tt.displayIconURL == "" {
+					_, exists := input["displayIconUrl"]
+					assert.False(t, exists)
+				} else {
+					assert.Equal(t, tt.displayIconURL, input["displayIconUrl"])
+				}
+			},
+		)
+	}
+}

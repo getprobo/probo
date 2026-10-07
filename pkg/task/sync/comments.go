@@ -32,6 +32,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -79,7 +80,12 @@ func (s *Service) copyTaskCommentsToLinear(
 			continue
 		}
 
-		created, err := client.CreateComment(ctx, link.ExternalID, markdown)
+		author, err := s.commentAuthor(ctx, scope, comment.OwnerID)
+		if err != nil {
+			return createdIDs, fmt.Errorf("cannot load Linear comment author for %q: %w", comment.ID, err)
+		}
+
+		created, err := client.CreateComment(ctx, link.ExternalID, markdown, author)
 		if err != nil {
 			return createdIDs, fmt.Errorf("cannot create Linear comment for %q: %w", comment.ID, err)
 		}
@@ -775,7 +781,12 @@ func (h *outboundHandler) processCommentUpsert(
 		var remote *linear.Comment
 
 		if created {
-			remote, err = client.CreateComment(ctx, payload.ExternalID, markdown)
+			author, err := h.svc.commentAuthor(ctx, scope, comment.OwnerID)
+			if err != nil {
+				return fmt.Errorf("cannot load Linear comment author: %w", err)
+			}
+
+			remote, err = client.CreateComment(ctx, payload.ExternalID, markdown, author)
 			if err != nil {
 				return fmt.Errorf("cannot create Linear comment: %w", err)
 			}
@@ -1230,6 +1241,111 @@ func newCommentLink(
 	}
 
 	return commentLink
+}
+
+func (s *Service) commentAuthor(
+	ctx context.Context,
+	scope coredata.Scoper,
+	ownerID *gid.GID,
+) (linear.CommentAuthor, error) {
+	if ownerID == nil {
+		return linear.CommentAuthor{}, nil
+	}
+
+	var author linear.CommentAuthor
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			resolved, err := loadCommentAuthor(ctx, conn, scope, s.baseURL, *ownerID)
+			if err != nil {
+				return err
+			}
+
+			author = resolved
+
+			return nil
+		},
+	)
+	if err != nil {
+		return linear.CommentAuthor{}, fmt.Errorf("cannot load comment author: %w", err)
+	}
+
+	return author, nil
+}
+
+func loadCommentAuthor(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	baseURL string,
+	ownerID gid.GID,
+) (linear.CommentAuthor, error) {
+	profile := &coredata.MembershipProfile{}
+	if err := profile.LoadByID(ctx, conn, scope, ownerID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return linear.CommentAuthor{}, nil
+		}
+
+		return linear.CommentAuthor{}, fmt.Errorf("cannot load comment author profile: %w", err)
+	}
+
+	name := strings.TrimSpace(profile.FullName)
+	if name == "" {
+		return linear.CommentAuthor{}, nil
+	}
+
+	author := linear.CommentAuthor{Name: name}
+
+	identity := &coredata.Identity{}
+	if err := identity.LoadByID(ctx, conn, profile.IdentityID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return author, nil
+		}
+
+		return linear.CommentAuthor{}, fmt.Errorf("cannot load comment author identity: %w", err)
+	}
+
+	if identity.AvatarFileID == nil {
+		return author, nil
+	}
+
+	file := &coredata.File{}
+	if err := file.LoadPublicByID(ctx, conn, *identity.AvatarFileID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return author, nil
+		}
+
+		return linear.CommentAuthor{}, fmt.Errorf("cannot load comment author avatar: %w", err)
+	}
+
+	avatarURL, err := publicAvatarURL(baseURL, file.ID)
+	if err != nil {
+		return linear.CommentAuthor{}, fmt.Errorf("cannot resolve comment author avatar URL: %w", err)
+	}
+
+	author.AvatarURL = avatarURL
+
+	return author, nil
+}
+
+func publicAvatarURL(baseURL string, fileID gid.GID) (string, error) {
+	baseURL = strings.TrimSpace(baseURL)
+	if baseURL == "" {
+		return "", nil
+	}
+
+	base, err := baseurl.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse comment author avatar base URL: %w", err)
+	}
+
+	avatarURL, err := base.WithPath("/api/files/v1/public/" + fileID.String()).String()
+	if err != nil {
+		return "", fmt.Errorf("cannot build comment author avatar URL: %w", err)
+	}
+
+	return avatarURL, nil
 }
 
 func (s *Service) resolveCommentOwner(
