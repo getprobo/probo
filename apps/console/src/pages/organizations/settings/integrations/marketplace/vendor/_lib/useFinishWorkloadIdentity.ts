@@ -23,6 +23,7 @@ import { graphql } from "react-relay";
 
 import type { useFinishWorkloadIdentityCreateMutation } from "#/__generated__/core/useFinishWorkloadIdentityCreateMutation.graphql";
 import type { useFinishWorkloadIdentityDeleteMutation } from "#/__generated__/core/useFinishWorkloadIdentityDeleteMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { createdConnectorState } from "../../../_lib/discoveredAccounts";
@@ -48,7 +49,8 @@ const deleteConnectorMutation = graphql`
   }
 `;
 
-export function useFinishWorkloadIdentity(organizationId: string) {
+export function useFinishWorkloadIdentity() {
+  const organizationId = useOrganizationId();
   const toast = Toast.useToastManager();
   const [createConnector] = useMutation<useFinishWorkloadIdentityCreateMutation>(
     createWorkloadIdentityConnectorMutation,

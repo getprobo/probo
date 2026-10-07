@@ -25,6 +25,7 @@ import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { ConnectorConnectMore_provider$key } from "#/__generated__/core/ConnectorConnectMore_provider.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { connectMethods } from "../_lib/connectMethods";
 import { connectVendorPath } from "../_lib/integrationPath";
@@ -43,14 +44,13 @@ const connectorConnectMoreFragment = graphql`
 
 interface ConnectorConnectMoreProps {
   providerKey: ConnectorConnectMore_provider$key;
-  organizationId: string;
 }
 
 export function ConnectorConnectMore({
   providerKey,
-  organizationId,
 }: ConnectorConnectMoreProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(connectorConnectMoreFragment, providerKey);
   const methods = connectMethods({
     configuredProtocols: provider.configuredProtocols,

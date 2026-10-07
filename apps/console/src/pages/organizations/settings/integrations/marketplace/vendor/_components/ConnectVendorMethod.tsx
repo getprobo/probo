@@ -32,6 +32,7 @@ import type {
   ConnectVendorMethod_provider$key,
 } from "#/__generated__/core/ConnectVendorMethod_provider.graphql";
 import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import type { ConnectMethod } from "../../../_lib/connectMethods";
@@ -65,7 +66,6 @@ const connectVendorMethodFragment = graphql`
 `;
 
 interface ConnectVendorMethodProps {
-  organizationId: string;
   providerKey: ConnectVendorMethod_provider$key;
   method: ConnectMethod;
   awsSetupKey: ConnectVendorPageQuery["response"]["awsConnectorSetup"];
@@ -74,7 +74,6 @@ interface ConnectVendorMethodProps {
 }
 
 export function ConnectVendorMethod({
-  organizationId,
   providerKey,
   method,
   awsSetupKey,
@@ -82,9 +81,9 @@ export function ConnectVendorMethod({
   gcpSetupKey,
 }: ConnectVendorMethodProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const driver = useFragment(connectVendorMethodFragment, providerKey);
   const cloud = workloadIdentityCloud({
-    organizationId,
     providerKey: driver,
     provider: driver.provider,
     method,
@@ -94,7 +93,6 @@ export function ConnectVendorMethod({
     notFoundMessage: t("listPage.notFound"),
   });
   const oauth = oauthConnectForm({
-    organizationId,
     providerKey: driver,
     provider: driver.provider,
     method,
@@ -126,15 +124,14 @@ export function ConnectVendorMethod({
       <Card variant="soft" size={2}>
         {cloud?.form}
         {method === "API_KEY" && (
-          <APIKeyConnectForm organizationId={organizationId} providerKey={driver} />
+          <APIKeyConnectForm providerKey={driver} />
         )}
         {method === "CLIENT_CREDENTIALS" && (
-          <ClientCredentialsConnectForm organizationId={organizationId} providerKey={driver} />
+          <ClientCredentialsConnectForm providerKey={driver} />
         )}
         {oauth}
         {(method === "GITHUB_APP" || method === "INSTALL") && (
           <StartConnectForm
-            organizationId={organizationId}
             providerKey={driver}
             method={method}
           />
@@ -145,12 +142,10 @@ export function ConnectVendorMethod({
 }
 
 function oauthConnectForm({
-  organizationId,
   providerKey,
   provider,
   method,
 }: {
-  organizationId: string;
   providerKey: ConnectVendorMethod_provider$data;
   provider: ConnectVendorMethod_provider$data["provider"];
   method: ConnectMethod;
@@ -159,32 +154,16 @@ function oauthConnectForm({
     return null;
   }
   if (provider === "DATADOG") {
-    return (
-      <DatadogConnectForm
-        organizationId={organizationId}
-        providerKey={providerKey}
-      />
-    );
+    return <DatadogConnectForm providerKey={providerKey} />;
   }
   if (provider === "ZENDESK") {
-    return (
-      <ZendeskConnectForm
-        organizationId={organizationId}
-        providerKey={providerKey}
-      />
-    );
+    return <ZendeskConnectForm providerKey={providerKey} />;
   }
 
-  return (
-    <OAuthConnectForm
-      organizationId={organizationId}
-      providerKey={providerKey}
-    />
-  );
+  return <OAuthConnectForm providerKey={providerKey} />;
 }
 
 function workloadIdentityCloud({
-  organizationId,
   providerKey,
   provider,
   method,
@@ -193,7 +172,6 @@ function workloadIdentityCloud({
   gcpSetupKey,
   notFoundMessage,
 }: {
-  organizationId: string;
   providerKey: ConnectVendorMethod_provider$data;
   provider: ConnectVendorMethod_provider$data["provider"];
   method: ConnectMethod;
@@ -214,7 +192,6 @@ function workloadIdentityCloud({
       actions: <AWSConnectInstallActions installKey={awsSetupKey} />,
       form: (
         <AWSConnectForm
-          organizationId={organizationId}
           providerKey={providerKey}
           setupKey={awsSetupKey}
         />
@@ -230,7 +207,6 @@ function workloadIdentityCloud({
       actions: <GCPConnectInstallActions installKey={gcpSetupKey} />,
       form: (
         <GCPConnectForm
-          organizationId={organizationId}
           providerKey={providerKey}
           setupKey={gcpSetupKey}
         />
@@ -246,7 +222,6 @@ function workloadIdentityCloud({
       actions: <AzureConnectInstallActions installKey={azureSetupKey} />,
       form: (
         <AzureConnectForm
-          organizationId={organizationId}
           providerKey={providerKey}
           setupKey={azureSetupKey}
         />

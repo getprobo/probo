@@ -172,7 +172,6 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
                     <ConnectorProviderListItem
                       key={provider.provider}
                       providerKey={provider}
-                      organizationId={organizationId}
                       credentialCount={credentialCounts.get(provider.provider) ?? 0}
                     />
                   ))}

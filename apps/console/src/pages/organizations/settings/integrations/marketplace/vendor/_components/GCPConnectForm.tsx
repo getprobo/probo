@@ -27,6 +27,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { GCPConnectForm_provider$key } from "#/__generated__/core/GCPConnectForm_provider.graphql";
 import type { GCPConnectForm_setup$key } from "#/__generated__/core/GCPConnectForm_setup.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { useCopyValue } from "../_lib/useCopyValue";
 import { useFinishWorkloadIdentity } from "../_lib/useFinishWorkloadIdentity";
@@ -52,19 +53,18 @@ const gcpConnectFormSetupFragment = graphql`
 const pageKey = "marketplacePage.workloadIdentity";
 
 export function GCPConnectForm({
-  organizationId,
   providerKey,
   setupKey,
 }: {
-  organizationId: string;
   providerKey: GCPConnectForm_provider$key;
   setupKey: GCPConnectForm_setup$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(gcpConnectFormProviderFragment, providerKey);
   const setup = useFragment(gcpConnectFormSetupFragment, setupKey);
   const copyValue = useCopyValue();
-  const finish = useFinishWorkloadIdentity(organizationId);
+  const finish = useFinishWorkloadIdentity();
   const [providerResource, setProviderResource] = useState("");
   const [serviceAccountEmail, setServiceAccountEmail] = useState("");
   const providerValid = isGCPWorkloadIdentityProvider(providerResource);

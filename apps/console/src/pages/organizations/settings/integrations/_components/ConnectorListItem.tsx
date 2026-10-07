@@ -31,6 +31,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorListItem_connector$key } from "#/__generated__/core/ConnectorListItem_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   connectionIssueKeys,
   connectionSignalFrom,
@@ -76,18 +77,17 @@ const connectorListItemFragment = graphql`
 
 interface ConnectorListItemProps {
   connectorKey: ConnectorListItem_connector$key;
-  organizationId: string;
   onSelect: (connectorId: string) => void;
   onDeleted?: () => void;
 }
 
 export function ConnectorListItem({
   connectorKey,
-  organizationId,
   onSelect,
   onDeleted,
 }: ConnectorListItemProps) {
   const { t, i18n } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const connector = useFragment(connectorListItemFragment, connectorKey);
   const { card, controls, identity, metaRow, name, tags } = connectorCard();

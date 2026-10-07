@@ -28,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorProviderListItem_provider$key } from "#/__generated__/core/ConnectorProviderListItem_provider.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ConnectorDocumentationLink } from "../../_components/ConnectorDocumentationLink";
 import { connectMethods } from "../../_lib/connectMethods";
@@ -50,16 +51,15 @@ const connectorProviderListItemFragment = graphql`
 
 interface ConnectorProviderListItemProps {
   providerKey: ConnectorProviderListItem_provider$key;
-  organizationId: string;
   credentialCount: number;
 }
 
 export function ConnectorProviderListItem({
   providerKey,
-  organizationId,
   credentialCount,
 }: ConnectorProviderListItemProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(connectorProviderListItemFragment, providerKey);
   const { card, title } = connectorCard();
   const methods = connectMethods({

@@ -32,6 +32,7 @@ import { graphql, useFragment } from "react-relay";
 import type { AzureConnectForm_provider$key } from "#/__generated__/core/AzureConnectForm_provider.graphql";
 import type { AzureConnectForm_setup$key } from "#/__generated__/core/AzureConnectForm_setup.graphql";
 import type { AzureEnvironment } from "#/__generated__/core/useFinishWorkloadIdentityCreateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { useCopyValue } from "../_lib/useCopyValue";
 import { useFinishWorkloadIdentity } from "../_lib/useFinishWorkloadIdentity";
@@ -64,19 +65,18 @@ const azureConnectFormSetupFragment = graphql`
 const pageKey = "marketplacePage.workloadIdentity";
 
 export function AzureConnectForm({
-  organizationId,
   providerKey,
   setupKey,
 }: {
-  organizationId: string;
   providerKey: AzureConnectForm_provider$key;
   setupKey: AzureConnectForm_setup$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(azureConnectFormProviderFragment, providerKey);
   const setup = useFragment(azureConnectFormSetupFragment, setupKey);
   const copyValue = useCopyValue();
-  const finish = useFinishWorkloadIdentity(organizationId);
+  const finish = useFinishWorkloadIdentity();
   const [tenantId, setTenantId] = useState("");
   const [clientId, setClientId] = useState("");
   const [subscriptionId, setSubscriptionId] = useState("");

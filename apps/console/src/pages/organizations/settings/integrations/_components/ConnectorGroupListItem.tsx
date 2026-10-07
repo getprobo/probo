@@ -34,6 +34,7 @@ import { graphql, useFragment } from "react-relay";
 import type { ConnectorGroupListItem_connector$key } from "#/__generated__/core/ConnectorGroupListItem_connector.graphql";
 import type { ConnectorGroupListItem_provider$key } from "#/__generated__/core/ConnectorGroupListItem_provider.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   aggregateConnectionTone,
   connectionIssueKeys,
@@ -86,17 +87,16 @@ const connectorGroupListItemFragment = graphql`
 interface ConnectorGroupListItemProps {
   connectorKeys: ConnectorGroupListItem_connector$key;
   providerKey?: ConnectorGroupListItem_provider$key | null;
-  organizationId: string;
   canConnect: boolean;
 }
 
 export function ConnectorGroupListItem({
   connectorKeys,
   providerKey,
-  organizationId,
   canConnect,
 }: ConnectorGroupListItemProps) {
   const { t, i18n } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const connectors = useFragment(connectorGroupListItemFragment, connectorKeys);
   const provider = useFragment(connectorGroupListItemProviderFragment, providerKey ?? null);
@@ -132,10 +132,7 @@ export function ConnectorGroupListItem({
     ? (
         <div className={controls({ className: "pointer-events-auto" })}>
           {canConnect && provider != null && (
-            <ConnectorConnectMore
-              providerKey={provider}
-              organizationId={organizationId}
-            />
+            <ConnectorConnectMore providerKey={provider} />
           )}
           {showDelete && (
             <IconButton

@@ -26,6 +26,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { APIKeyConnectForm_provider$key } from "#/__generated__/core/APIKeyConnectForm_provider.graphql";
 import type { APIKeyConnectFormCreateMutation } from "#/__generated__/core/APIKeyConnectFormCreateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { integrationListPath } from "../../../_lib/integrationPath";
@@ -63,13 +64,12 @@ const createAPIKeyConnectorMutation = graphql`
 `;
 
 export function APIKeyConnectForm({
-  organizationId,
   providerKey,
 }: {
-  organizationId: string;
   providerKey: APIKeyConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(apiKeyConnectFormFragment, providerKey);
   const extraSettings = provider.apiKeyExtraSettings.map(setting => ({
     key: setting.key,

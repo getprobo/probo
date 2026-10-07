@@ -27,6 +27,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { AWSConnectForm_provider$key } from "#/__generated__/core/AWSConnectForm_provider.graphql";
 import type { AWSConnectForm_setup$key } from "#/__generated__/core/AWSConnectForm_setup.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { useCopyValue } from "../_lib/useCopyValue";
 import { useFinishWorkloadIdentity } from "../_lib/useFinishWorkloadIdentity";
@@ -52,19 +53,18 @@ const awsConnectFormSetupFragment = graphql`
 const pageKey = "marketplacePage.workloadIdentity";
 
 export function AWSConnectForm({
-  organizationId,
   providerKey,
   setupKey,
 }: {
-  organizationId: string;
   providerKey: AWSConnectForm_provider$key;
   setupKey: AWSConnectForm_setup$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(awsConnectFormProviderFragment, providerKey);
   const setup = useFragment(awsConnectFormSetupFragment, setupKey);
   const copyValue = useCopyValue();
-  const finish = useFinishWorkloadIdentity(organizationId);
+  const finish = useFinishWorkloadIdentity();
   const [roleArn, setRoleArn] = useState("");
   const roleArnValid = isAWSRoleARN(roleArn);
 

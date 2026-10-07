@@ -26,6 +26,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { ClientCredentialsConnectForm_provider$key } from "#/__generated__/core/ClientCredentialsConnectForm_provider.graphql";
 import type { ClientCredentialsConnectFormCreateMutation } from "#/__generated__/core/ClientCredentialsConnectFormCreateMutation.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { integrationListPath } from "../../../_lib/integrationPath";
@@ -63,13 +64,12 @@ const createClientCredentialsConnectorMutation = graphql`
 `;
 
 export function ClientCredentialsConnectForm({
-  organizationId,
   providerKey,
 }: {
-  organizationId: string;
   providerKey: ClientCredentialsConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const provider = useFragment(clientCredentialsConnectFormFragment, providerKey);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");

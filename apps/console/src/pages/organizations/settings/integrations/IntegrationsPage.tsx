@@ -26,7 +26,6 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
 
 import type { IntegrationsPageQuery } from "#/__generated__/core/IntegrationsPageQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { IntegrationsConnectors } from "./_components/IntegrationsConnectors";
@@ -51,7 +50,6 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
-  const organizationId = useOrganizationId();
   const data = usePreloadedQuery<IntegrationsPageQuery>(integrationsPageQuery, queryRef);
   const { organization } = data;
 
@@ -106,7 +104,6 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
     <IntegrationsConnectors
       queryKey={data}
       organizationKey={organization}
-      organizationId={organizationId}
     />
   );
 }

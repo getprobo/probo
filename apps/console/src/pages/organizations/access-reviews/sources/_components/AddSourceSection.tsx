@@ -70,7 +70,7 @@ export function AddSourceSection({
         : (
             <div className={grid()}>
               {showAddMore && (
-                <MarketplaceEntryCard organizationId={organizationId} />
+                <MarketplaceEntryCard />
               )}
               {cards.map(({ provider, card }) => (
                 <Fragment key={provider}>{card}</Fragment>

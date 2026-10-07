@@ -24,16 +24,13 @@ import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+
 import { marketplacePath } from "../_lib/integrationPath";
 
-interface MarketplaceEntryCardProps {
-  organizationId: string;
-}
-
-export function MarketplaceEntryCard({
-  organizationId,
-}: MarketplaceEntryCardProps) {
+export function MarketplaceEntryCard() {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const label = t("listPage.addMore");
 
   return (

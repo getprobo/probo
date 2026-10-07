@@ -139,16 +139,12 @@ export function ConnectVendorPage({ queryRef }: ConnectVendorPageProps) {
     }
 
     return (
-      <ConnectVendorChooser
-        organizationId={organizationId}
-        providerKey={driver}
-      />
+      <ConnectVendorChooser providerKey={driver} />
     );
   }
 
   return (
     <ConnectVendorMethod
-      organizationId={organizationId}
       providerKey={driver}
       method={method}
       awsSetupKey={awsConnectorSetup}

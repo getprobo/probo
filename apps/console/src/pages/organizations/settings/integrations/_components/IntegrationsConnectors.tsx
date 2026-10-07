@@ -79,13 +79,11 @@ const integrationsConnectorsOrganizationFragment = graphql`
 interface IntegrationsConnectorsProps {
   queryKey: IntegrationsConnectors_query$key;
   organizationKey: IntegrationsConnectors_organization$key;
-  organizationId: string;
 }
 
 export function IntegrationsConnectors({
   queryKey,
   organizationKey,
-  organizationId,
 }: IntegrationsConnectorsProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const { connectorProviders } = useFragment(integrationsConnectorsFragment, queryKey);
@@ -213,7 +211,7 @@ export function IntegrationsConnectors({
               : (
                   <div className={grid()}>
                     {organization.canCreateConnector && (
-                      <MarketplaceEntryCard organizationId={organizationId} />
+                      <MarketplaceEntryCard />
                     )}
                     {groupByProvider(connectors).map((group) => {
                       const face = group[0];
@@ -226,7 +224,6 @@ export function IntegrationsConnectors({
                           key={group.length > 1 ? face.provider : face.id}
                           connectorKeys={group}
                           providerKey={providerKey}
-                          organizationId={organizationId}
                           canConnect={organization.canCreateConnector}
                         />
                       );

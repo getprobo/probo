@@ -38,10 +38,8 @@ function cleanZendeskSubdomain(raw: string): string {
 }
 
 export function ZendeskConnectForm({
-  organizationId,
   providerKey,
 }: {
-  organizationId: string;
   providerKey: OAuthConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
@@ -50,7 +48,6 @@ export function ZendeskConnectForm({
 
   return (
     <OAuthConnectForm
-      organizationId={organizationId}
       providerKey={providerKey}
       extras={{ site }}
       canSubmit={site !== ""}

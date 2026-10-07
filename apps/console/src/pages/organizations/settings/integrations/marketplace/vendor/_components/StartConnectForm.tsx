@@ -21,6 +21,7 @@
 import { graphql, useFragment } from "react-relay";
 
 import type { StartConnectForm_provider$key } from "#/__generated__/core/StartConnectForm_provider.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import {
   connectProviderInstall,
@@ -37,14 +38,13 @@ const startConnectFormFragment = graphql`
 `;
 
 export function StartConnectForm({
-  organizationId,
   providerKey,
   method,
 }: {
-  organizationId: string;
   providerKey: StartConnectForm_provider$key;
   method: "GITHUB_APP" | "INSTALL";
 }) {
+  const organizationId = useOrganizationId();
   const provider = useFragment(startConnectFormFragment, providerKey);
 
   return (

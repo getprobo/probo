@@ -42,10 +42,8 @@ const DATADOG_SITES: { value: string; label: string }[] = [
 ];
 
 export function DatadogConnectForm({
-  organizationId,
   providerKey,
 }: {
-  organizationId: string;
   providerKey: OAuthConnectForm_provider$key;
 }) {
   const { t } = useTranslation("organizations/settings/integrations");
@@ -53,7 +51,6 @@ export function DatadogConnectForm({
 
   return (
     <OAuthConnectForm
-      organizationId={organizationId}
       providerKey={providerKey}
       extras={{ site }}
     >

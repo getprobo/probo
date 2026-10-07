@@ -28,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectVendorChooser_provider$key } from "#/__generated__/core/ConnectVendorChooser_provider.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ConnectorMethodIcon } from "../../../_components/ConnectorMethodIcon";
 import { connectMethods, connectVendorMethodPath } from "../../../_lib/connectMethods";
@@ -47,15 +48,14 @@ const connectVendorChooserFragment = graphql`
 `;
 
 interface ConnectVendorChooserProps {
-  organizationId: string;
   providerKey: ConnectVendorChooser_provider$key;
 }
 
 export function ConnectVendorChooser({
-  organizationId,
   providerKey,
 }: ConnectVendorChooserProps) {
   const { t } = useTranslation("organizations/settings/integrations");
+  const organizationId = useOrganizationId();
   const driver = useFragment(connectVendorChooserFragment, providerKey);
   const methods = connectMethods({
     configuredProtocols: driver.configuredProtocols,

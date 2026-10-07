@@ -22,6 +22,7 @@ import { type ReactNode } from "react";
 import { graphql, useFragment } from "react-relay";
 
 import type { OAuthConnectForm_provider$key } from "#/__generated__/core/OAuthConnectForm_provider.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { connectOAuthProvider } from "../_lib/startConnect";
 
@@ -36,18 +37,17 @@ const oauthConnectFormFragment = graphql`
 `;
 
 export function OAuthConnectForm({
-  organizationId,
   providerKey,
   extras,
   canSubmit = true,
   children,
 }: {
-  organizationId: string;
   providerKey: OAuthConnectForm_provider$key;
   extras?: Record<string, string>;
   canSubmit?: boolean;
   children?: ReactNode;
 }) {
+  const organizationId = useOrganizationId();
   const provider = useFragment(oauthConnectFormFragment, providerKey);
 
   return (

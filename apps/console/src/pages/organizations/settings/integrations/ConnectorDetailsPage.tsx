@@ -168,7 +168,6 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
           <ConnectorListItem
             key={connector.id}
             connectorKey={connector}
-            organizationId={organizationId}
             onSelect={openAccounts}
             onDeleted={() => {
               if (connector.id === openedId.current) {
