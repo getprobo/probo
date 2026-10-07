@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.243.0] - 2026-10-07
+
 ### Changed
 
 - **Breaking**: Task `Create`, `Update`, `Get`, and `Get Many` treat `content` as a ProseMirror document JSON string, matching Document content. Plain text is no longer wrapped into a document, and reads return the stored JSON
