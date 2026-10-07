@@ -33,7 +33,7 @@ import { TableKit } from "@tiptap/extension-table";
 import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
-import { type Content, Editor, EditorContent, useEditor } from "@tiptap/react";
+import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
 import { type ComponentProps, useCallback, useEffect, useLayoutEffect } from "react";
 import { tv } from "tailwind-variants";
 
@@ -92,6 +92,11 @@ const richEditorVariants = tv({
   },
 });
 
+function stripNonTextMarks(node: JSONContent) {
+  if (node.type !== "text") delete node.marks;
+  node.content?.forEach(stripNonTextMarks);
+}
+
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
@@ -127,7 +132,10 @@ export function RichEditor(props: RichEditorProps) {
         return;
       }
 
-      onChangeContent?.(JSON.stringify(editor.getJSON()));
+      const json = editor.getJSON();
+      stripNonTextMarks(json);
+
+      onChangeContent?.(JSON.stringify(json));
     },
     [onChangeContent],
   );

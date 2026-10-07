@@ -170,15 +170,98 @@ export function parseCookieName(raw: string): string {
   return raw.substring(0, eqIdx).trim();
 }
 
+export function normalizeCookieDomain(raw: string): string | null {
+  const trimmed = raw.trim().toLowerCase();
+  // A trailing dot is ignored by cookie parsers, so the cookie is
+  // host-only. Do not strip it and treat the rest as a Domain.
+  if (trimmed === "" || trimmed.endsWith(".")) return null;
+
+  const value = trimmed.replace(/^\./, "");
+  return value === "" ? null : value;
+}
+
+// domainAppliesToHost reports whether a Domain attribute would be
+// accepted for this host. The browser drops a Domain that is not a
+// suffix of the current hostname (dot-boundary), a single-label
+// domain (e.g. Domain=com), or any Domain on an IP-literal host,
+// leaving the cookie host-only. Multi-label public suffixes (co.uk)
+// still need the PSL; this file does not ship one.
+export function domainAppliesToHost(domain: string, hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (isIPLiteralHost(host)) return false;
+  if (!domain.includes(".")) return false;
+  if (host === domain) return true;
+  return host.endsWith("." + domain);
+}
+
+function isIPLiteralHost(host: string): boolean {
+  if (host.includes(":")) return true;
+  return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host);
+}
+
+export interface CookieDomainFields {
+  cookie_domain?: string;
+  host_only: boolean;
+}
+
+// parseCookieSetDomain reads the Domain= attribute from a document.cookie
+// assignment. No attribute means the cookie is host-only.
+export function parseCookieSetDomain(raw: string, hostname?: string): CookieDomainFields {
+  const parts = raw.split(";").map((s) => s.trim());
+
+  for (const part of parts) {
+    if (!part.toLowerCase().startsWith("domain=")) continue;
+
+    const normalized = normalizeCookieDomain(part.substring(7));
+    if (normalized == null) return { host_only: true };
+
+    if (hostname != null && !domainAppliesToHost(normalized, hostname)) {
+      return { host_only: true };
+    }
+
+    return { cookie_domain: normalized, host_only: false };
+  }
+
+  return { host_only: true };
+}
+
+// cookieListItemDomain maps a Cookie Store item. A null domain is
+// host-only; a string is the Domain attribute.
+export function cookieListItemDomain(domain: string | null): CookieDomainFields {
+  if (domain == null || domain === "") {
+    return { host_only: true };
+  }
+
+  const normalized = normalizeCookieDomain(domain);
+  if (normalized == null) return { host_only: true };
+
+  return { cookie_domain: normalized, host_only: false };
+}
+
+// PostgreSQL INTEGER (int4) is the server column. Values above this
+// are omitted so a far-future Max-Age cannot fail the report batch.
+const MAX_INT4 = 2_147_483_647;
+
+export function clampMaxAgeSeconds(seconds: number | null): number | null {
+  if (seconds == null || !Number.isFinite(seconds)) {
+    return null;
+  }
+
+  const rounded = Math.round(seconds);
+  if (rounded <= 0 || rounded > MAX_INT4) {
+    return null;
+  }
+
+  return rounded;
+}
+
 export function parseMaxAgeSeconds(raw: string): number | null {
   const parts = raw.split(";").map((s) => s.trim());
 
   for (const part of parts) {
     const lower = part.toLowerCase();
     if (lower.startsWith("max-age=")) {
-      const val = parseInt(part.substring(8), 10);
-      if (isNaN(val) || val <= 0) return null;
-      return val;
+      return clampMaxAgeSeconds(parseInt(part.substring(8), 10));
     }
   }
 
@@ -188,11 +271,9 @@ export function parseMaxAgeSeconds(raw: string): number | null {
       const dateStr = part.substring(8);
       const expires = new Date(dateStr);
       if (isNaN(expires.getTime())) return null;
-      const deltaSeconds = Math.round(
+      return clampMaxAgeSeconds(
         (expires.getTime() - Date.now()) / 1000,
       );
-      if (deltaSeconds <= 0) return null;
-      return deltaSeconds;
     }
   }
 

@@ -54,6 +54,9 @@
       "trustedBy": "신뢰하는 기업",
       "recentUpdates": "최근 업데이트"
     },
+    "compliance": {
+      "viewDocuments": "문서 보기"
+    },
     "recentUpdates": {
       "viewAll": "전체 보기"
     }

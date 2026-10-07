@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { isDeletion, parseCookieName, parseMaxAgeSeconds } from "../cookie-utils";
+import {
+  cookieListItemDomain,
+  isDeletion,
+  parseCookieName,
+  parseCookieSetDomain,
+  clampMaxAgeSeconds,
+  parseMaxAgeSeconds,
+} from "../cookie-utils";
 import type { Detector } from "./detector";
 import { isExtensionContext } from "./extension-context";
 import { getInitiatorURL } from "./initiator";
@@ -91,25 +98,72 @@ export class CookieDetector implements Detector {
     const maxAgeSeconds = parseMaxAgeSeconds(raw);
     const { url: initiatorUrl, fromExtension } = getInitiatorURL(this.apiOrigin);
 
+    const domain = parseCookieSetDomain(raw, location.hostname);
     const entry: DetectedCookieEntry = {
       name,
       max_age_seconds: maxAgeSeconds,
       source: fromExtension ? "extension" : "script",
+      host_only: domain.host_only,
     };
+    if (domain.cookie_domain != null) entry.cookie_domain = domain.cookie_domain;
     if (initiatorUrl) entry.initiator_url = initiatorUrl;
     this.queue.reportCookie(entry);
   }
 
   private scanExisting(): void {
+    // Queue names from document.cookie immediately so a tab close
+    // during getAll() still reports pre-existing cookies. getAll is
+    // an enrichment pass that re-sends the same names with a domain.
+    this.scanDocumentCookie();
+
+    if (typeof cookieStore === "undefined" || typeof cookieStore.getAll !== "function") {
+      return;
+    }
+
+    cookieStore
+      .getAll()
+      .then((cookies) => {
+        for (const cookie of cookies) {
+          this.reportExistingCookie(cookie.name, cookie.expires, cookieListItemDomain(cookie.domain));
+        }
+      })
+      .catch(() => {
+        // document.cookie already ran; a rejected getAll must not
+        // drop those names or scan them twice.
+      });
+  }
+
+  private scanDocumentCookie(): void {
     const cookieStr = document.cookie;
     if (!cookieStr) return;
 
     for (const pair of cookieStr.split(";")) {
       const name = pair.split("=")[0]?.trim();
-      if (!name || this.knownNames.has(name)) continue;
-
-      this.queue.reportCookie({ name, max_age_seconds: null, source: "pre-existing" });
+      this.reportExistingCookie(name, null, null);
     }
+  }
+
+  private reportExistingCookie(
+    name: string | undefined,
+    expires: number | null,
+    domain: ReturnType<typeof cookieListItemDomain> | null,
+  ): void {
+    if (!name || this.knownNames.has(name)) return;
+
+    const maxAge = expires == null
+      ? null
+      : clampMaxAgeSeconds((expires - Date.now()) / 1000);
+
+    const entry: DetectedCookieEntry = {
+      name,
+      max_age_seconds: maxAge,
+      source: "pre-existing",
+    };
+    if (domain != null) {
+      entry.host_only = domain.host_only;
+      if (domain.cookie_domain != null) entry.cookie_domain = domain.cookie_domain;
+    }
+    this.queue.reportCookie(entry);
   }
 
   private observeCookieStore(): void {
@@ -123,14 +177,18 @@ export class CookieDetector implements Detector {
         if (this.knownNames.has(cookie.name)) continue;
 
         const maxAge = cookie.expires
-          ? Math.round((cookie.expires - Date.now()) / 1000)
+          ? clampMaxAgeSeconds((cookie.expires - Date.now()) / 1000)
           : null;
 
-        this.queue.reportCookie({
+        const domain = cookieListItemDomain(cookie.domain);
+        const entry: DetectedCookieEntry = {
           name: cookie.name,
-          max_age_seconds: maxAge && maxAge > 0 ? maxAge : null,
+          max_age_seconds: maxAge,
           source: "http",
-        });
+          host_only: domain.host_only,
+        };
+        if (domain.cookie_domain != null) entry.cookie_domain = domain.cookie_domain;
+        this.queue.reportCookie(entry);
       }
     };
 

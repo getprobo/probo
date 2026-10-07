@@ -66,7 +66,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagContent            string
 		flagState              string
 		flagPriority           string
-		flagMeasure            string
+		flagInternalControl    string
 		flagTimeEstimate       string
 		flagAssignedTo         string
 		flagDeadline           string
@@ -161,8 +161,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["priority"] = flagPriority
 			}
 
-			if flagMeasure != "" {
-				input["measureId"] = flagMeasure
+			if flagInternalControl != "" {
+				input["internalControlId"] = flagInternalControl
 			}
 
 			if flagTimeEstimate != "" {
@@ -215,11 +215,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
+	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
-	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline)")
+	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline). The next task is created when the deadline passes")
 
 	return cmd
 }

@@ -26,7 +26,7 @@ export const navPermissionsFragment = graphql`
   fragment navPermissions_organization on Organization {
     canGetContext: permission(action: "core:organization-context:get")
     canListTasks: permission(action: "core:task:list")
-    canListMeasures: permission(action: "core:measure:list")
+    canListInternalControls: permission(action: "core:internal-control:list")
     canListRisks: permission(action: "risk-management:risk:list")
     canListRiskAnalyses: permission(action: "risk-management:risk-analysis:list")
     canListFrameworks: permission(action: "core:framework:list")
@@ -54,6 +54,7 @@ export const navPermissionsFragment = graphql`
     canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")
     canConnectSlack: permission(action: "core:connector:initiate")
     canUninstallSlack: permission(action: "core:connector:delete")
+    canListConnectors: permission(action: "core:connector:list")
     canUpdateOrganization: permission(action: "iam:organization:update")
   }
 `;

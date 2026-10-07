@@ -37,11 +37,11 @@ import (
 )
 
 type PortalAccessRequest struct {
-	CompliancePortalID      gid.GID
-	IdentityID              gid.GID
-	DocumentIDs             []gid.GID
-	ReportIDs               []gid.GID
-	CompliancePortalFileIDs []gid.GID
+	CompliancePortalID          gid.GID
+	IdentityID                  gid.GID
+	CompliancePortalDocumentIDs []gid.GID
+	CompliancePortalAuditIDs    []gid.GID
+	CompliancePortalFileIDs     []gid.GID
 }
 
 func accessMessageParams(
@@ -67,24 +67,24 @@ func accessMessageParams(
 func accessMutationEventKey(
 	action string,
 	operationKey string,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 ) string {
 	if operationKey != "" {
 		return action + ":" + operationKey
 	}
 
-	components := make([]string, 0, len(documentIDs)+len(reportIDs)+len(fileIDs))
-	for _, id := range documentIDs {
+	components := make([]string, 0, len(compliancePortalDocumentIDs)+len(compliancePortalAuditIDs)+len(compliancePortalFileIDs))
+	for _, id := range compliancePortalDocumentIDs {
 		components = append(components, "document:"+id.String())
 	}
 
-	for _, id := range reportIDs {
+	for _, id := range compliancePortalAuditIDs {
 		components = append(components, "report:"+id.String())
 	}
 
-	for _, id := range fileIDs {
+	for _, id := range compliancePortalFileIDs {
 		components = append(components, "file:"+id.String())
 	}
 
@@ -92,30 +92,32 @@ func accessMutationEventKey(
 }
 
 func requestPortalAccessBotEnqueue(
-	existingDocumentIDs []gid.GID,
-	existingReportIDs []gid.GID,
-	existingFileIDs []gid.GID,
-	newDocumentIDs []gid.GID,
-	newReportIDs []gid.GID,
-	newFileIDs []gid.GID,
+	existingCompliancePortalDocumentIDs []gid.GID,
+	existingCompliancePortalAuditIDs []gid.GID,
+	existingCompliancePortalFileIDs []gid.GID,
+	newCompliancePortalDocumentIDs []gid.GID,
+	newCompliancePortalAuditIDs []gid.GID,
+	newCompliancePortalFileIDs []gid.GID,
 ) (eventKey string, purpose coredata.BotMessagePurpose, enqueue bool) {
-	if len(newDocumentIDs) == 0 && len(newReportIDs) == 0 && len(newFileIDs) == 0 {
+	if len(newCompliancePortalDocumentIDs) == 0 &&
+		len(newCompliancePortalAuditIDs) == 0 &&
+		len(newCompliancePortalFileIDs) == 0 {
 		return "", "", false
 	}
 
 	purpose = coredata.BotMessagePurposePost
-	if len(existingDocumentIDs) > 0 ||
-		len(existingReportIDs) > 0 ||
-		len(existingFileIDs) > 0 {
+	if len(existingCompliancePortalDocumentIDs) > 0 ||
+		len(existingCompliancePortalAuditIDs) > 0 ||
+		len(existingCompliancePortalFileIDs) > 0 {
 		purpose = coredata.BotMessagePurposeUpdate
 	}
 
 	return accessMutationEventKey(
 		"request",
 		"",
-		newDocumentIDs,
-		newReportIDs,
-		newFileIDs,
+		newCompliancePortalDocumentIDs,
+		newCompliancePortalAuditIDs,
+		newCompliancePortalFileIDs,
 	), purpose, true
 }
 
@@ -128,7 +130,9 @@ func (s *Service) RequestPortalAccess(
 	scope coredata.Scoper,
 	req *PortalAccessRequest,
 ) (*coredata.CompliancePortalAccess, error) {
-	if len(req.DocumentIDs) == 0 && len(req.ReportIDs) == 0 && len(req.CompliancePortalFileIDs) == 0 {
+	if len(req.CompliancePortalDocumentIDs) == 0 &&
+		len(req.CompliancePortalAuditIDs) == 0 &&
+		len(req.CompliancePortalFileIDs) == 0 {
 		return nil, ErrNoAccessTargets
 	}
 
@@ -173,14 +177,26 @@ func (s *Service) RequestPortalAccess(
 				return err
 			}
 
-			existingDocumentIDs, existingReportIDs, existingCompliancePortalFileIDs := extractExistingIDs(existingAccesses)
-			newDocumentIDs := filterExistingIDs(req.DocumentIDs, existingDocumentIDs)
-			newReportIDs := filterExistingIDs(req.ReportIDs, existingReportIDs)
+			existingCompliancePortalDocumentIDs, existingCompliancePortalAuditIDs, existingCompliancePortalFileIDs := extractExistingIDs(existingAccesses)
+			newCompliancePortalDocumentIDs := filterExistingIDs(
+				req.CompliancePortalDocumentIDs,
+				existingCompliancePortalDocumentIDs,
+			)
+			newCompliancePortalAuditIDs := filterExistingIDs(
+				req.CompliancePortalAuditIDs,
+				existingCompliancePortalAuditIDs,
+			)
 			newCompliancePortalFileIDs := filterExistingIDs(req.CompliancePortalFileIDs, existingCompliancePortalFileIDs)
 			// IDs that already have a row: REJECTED/REVOKED retries need a status
 			// reset and a requested_at stamp (BulkInsert skips them via ON CONFLICT).
-			rerequestDocumentIDs := filterPresentIDs(req.DocumentIDs, existingDocumentIDs)
-			rerequestReportIDs := filterPresentIDs(req.ReportIDs, existingReportIDs)
+			rerequestCompliancePortalDocumentIDs := filterPresentIDs(
+				req.CompliancePortalDocumentIDs,
+				existingCompliancePortalDocumentIDs,
+			)
+			rerequestCompliancePortalAuditIDs := filterPresentIDs(
+				req.CompliancePortalAuditIDs,
+				existingCompliancePortalAuditIDs,
+			)
 			rerequestCompliancePortalFileIDs := filterPresentIDs(
 				req.CompliancePortalFileIDs,
 				existingCompliancePortalFileIDs,
@@ -194,20 +210,20 @@ func (s *Service) RequestPortalAccess(
 				scope,
 				access.ID,
 				access.OrganizationID,
-				newDocumentIDs,
+				newCompliancePortalDocumentIDs,
 				coredata.CompliancePortalDocumentAccessStatusRequested,
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot bulk insert compliance page document accesses: %w", err)
 			}
 
-			if err := accesses.BulkInsertReportFileAccesses(
+			if err := accesses.BulkInsertCompliancePortalAuditAccesses(
 				ctx,
 				tx,
 				scope,
 				access.ID,
 				access.OrganizationID,
-				newReportIDs,
+				newCompliancePortalAuditIDs,
 				coredata.CompliancePortalDocumentAccessStatusRequested,
 				now,
 			); err != nil {
@@ -227,23 +243,23 @@ func (s *Service) RequestPortalAccess(
 				return fmt.Errorf("cannot bulk insert compliance page file accesses: %w", err)
 			}
 
-			if err := coredata.RerequestByDocumentIDs(
+			if err := coredata.RerequestByCompliancePortalDocumentIDs(
 				ctx,
 				tx,
 				scope,
 				access.ID,
-				rerequestDocumentIDs,
+				rerequestCompliancePortalDocumentIDs,
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot rerequest compliance page document accesses: %w", err)
 			}
 
-			if err := coredata.RerequestByReportFileIDs(
+			if err := coredata.RerequestByCompliancePortalAuditIDs(
 				ctx,
 				tx,
 				scope,
 				access.ID,
-				rerequestReportIDs,
+				rerequestCompliancePortalAuditIDs,
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot rerequest compliance page report accesses: %w", err)
@@ -261,11 +277,11 @@ func (s *Service) RequestPortalAccess(
 			}
 
 			eventKey, purpose, enqueue := requestPortalAccessBotEnqueue(
-				existingDocumentIDs,
-				existingReportIDs,
+				existingCompliancePortalDocumentIDs,
+				existingCompliancePortalAuditIDs,
 				existingCompliancePortalFileIDs,
-				newDocumentIDs,
-				newReportIDs,
+				newCompliancePortalDocumentIDs,
+				newCompliancePortalAuditIDs,
 				newCompliancePortalFileIDs,
 			)
 			if enqueue {
@@ -389,9 +405,18 @@ func (s *Service) GetPortalDocumentAccess(
 				return ErrUserInactive
 			}
 
+			link := &coredata.CompliancePortalDocument{}
+			if err := link.LoadByCompliancePortalIDAndDocumentID(ctx, conn, scope, compliancePageID, documentID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrDocumentAccessNotFound
+				}
+
+				return fmt.Errorf("cannot load portal document: %w", err)
+			}
+
 			documentAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			if err := documentAccess.LoadByCompliancePortalAccessIDAndDocumentID(ctx, conn, scope, access.ID, documentID); err != nil {
+			if err := documentAccess.LoadByCompliancePortalAccessIDAndCompliancePortalDocumentID(ctx, conn, scope, access.ID, link.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
 				}
@@ -435,9 +460,18 @@ func (s *Service) GetPortalReportFileAccess(
 				return ErrUserInactive
 			}
 
+			link := &coredata.CompliancePortalAudit{}
+			if err := link.LoadByCompliancePortalIDAndReportFileID(ctx, conn, scope, compliancePageID, reportFileID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrDocumentAccessNotFound
+				}
+
+				return fmt.Errorf("cannot load portal audit: %w", err)
+			}
+
 			reportAccess = &coredata.CompliancePortalDocumentAccess{}
 
-			if err := reportAccess.LoadByCompliancePortalAccessIDAndReportFileID(ctx, conn, scope, access.ID, reportFileID); err != nil {
+			if err := reportAccess.LoadByCompliancePortalAccessIDAndCompliancePortalAuditID(ctx, conn, scope, access.ID, link.ID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrDocumentAccessNotFound
 				}
@@ -506,18 +540,18 @@ func (s *Service) GrantPortalAccessByIDs(
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	email mail.Addr,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 ) error {
 	return s.GrantPortalAccessByIDsIdempotently(
 		ctx,
 		scope,
 		compliancePortalID,
 		email,
-		documentIDs,
-		reportIDs,
-		fileIDs,
+		compliancePortalDocumentIDs,
+		compliancePortalAuditIDs,
+		compliancePortalFileIDs,
 		"",
 	)
 }
@@ -527,9 +561,9 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	email mail.Addr,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 	operationKey string,
 ) error {
 	return s.pg.WithTx(
@@ -580,26 +614,47 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 			now := time.Now()
 			shouldSendEmail := false
 
-			if len(documentIDs) > 0 {
+			if len(compliancePortalDocumentIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.GrantByDocumentIDs(ctx, tx, scope, access.ID, documentIDs, now); err != nil {
+				if err := coredata.GrantByCompliancePortalDocumentIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalDocumentIDs,
+					now,
+				); err != nil {
 					return fmt.Errorf("cannot grant document accesses: %w", err)
 				}
 			}
 
-			if len(reportIDs) > 0 {
+			if len(compliancePortalAuditIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.GrantByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+				if err := coredata.GrantByCompliancePortalAuditIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalAuditIDs,
+					now,
+				); err != nil {
 					return fmt.Errorf("cannot grant report accesses: %w", err)
 				}
 			}
 
-			if len(fileIDs) > 0 {
+			if len(compliancePortalFileIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.GrantByCompliancePortalFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
+				if err := coredata.GrantByCompliancePortalFileIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalFileIDs,
+					now,
+				); err != nil {
 					return fmt.Errorf("cannot grant compliance page file accesses: %w", err)
 				}
 			}
@@ -619,9 +674,9 @@ func (s *Service) GrantPortalAccessByIDsIdempotently(
 						accessMutationEventKey(
 							"grant",
 							operationKey,
-							documentIDs,
-							reportIDs,
-							fileIDs,
+							compliancePortalDocumentIDs,
+							compliancePortalAuditIDs,
+							compliancePortalFileIDs,
 						),
 						coredata.BotMessagePurposeUpdate,
 					),
@@ -689,18 +744,18 @@ func (s *Service) RejectOrRevokePortalAccessByIDs(
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	email mail.Addr,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 ) error {
 	return s.RejectOrRevokePortalAccessByIDsIdempotently(
 		ctx,
 		scope,
 		compliancePortalID,
 		email,
-		documentIDs,
-		reportIDs,
-		fileIDs,
+		compliancePortalDocumentIDs,
+		compliancePortalAuditIDs,
+		compliancePortalFileIDs,
 		"",
 	)
 }
@@ -710,9 +765,9 @@ func (s *Service) RejectOrRevokePortalAccessByIDsIdempotently(
 	scope coredata.Scoper,
 	compliancePortalID gid.GID,
 	email mail.Addr,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 	operationKey string,
 ) error {
 	return s.pg.WithTx(
@@ -753,32 +808,62 @@ func (s *Service) RejectOrRevokePortalAccessByIDsIdempotently(
 			shouldSendEmail := false
 			now := time.Now()
 
-			if len(documentIDs) > 0 {
+			if len(compliancePortalDocumentIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.RejectOrRevokeByDocumentIDs(ctx, tx, scope, access.ID, documentIDs, now); err != nil {
+				if err := coredata.RejectOrRevokeByCompliancePortalDocumentIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalDocumentIDs,
+					now,
+				); err != nil {
 					return fmt.Errorf("cannot reject/revoke document accesses: %w", err)
 				}
 			}
 
-			if len(reportIDs) > 0 {
+			if len(compliancePortalAuditIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.RejectOrRevokeByReportFileIDs(ctx, tx, scope, access.ID, reportIDs, now); err != nil {
+				if err := coredata.RejectOrRevokeByCompliancePortalAuditIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalAuditIDs,
+					now,
+				); err != nil {
 					return fmt.Errorf("cannot reject/revoke report accesses: %w", err)
 				}
 			}
 
-			if len(fileIDs) > 0 {
+			if len(compliancePortalFileIDs) > 0 {
 				shouldSendEmail = true
 
-				if err := coredata.RejectOrRevokeByCompliancePortalFileIDs(ctx, tx, scope, access.ID, fileIDs, now); err != nil {
+				if err := coredata.RejectOrRevokeByCompliancePortalFileIDs(
+					ctx,
+					tx,
+					scope,
+					access.ID,
+					compliancePortalFileIDs,
+					now,
+				); err != nil {
 					return fmt.Errorf("cannot reject/revoke compliance page file accesses: %w", err)
 				}
 			}
 
 			if shouldSendEmail {
-				if err := s.sendPortalDocumentAccessRejectedEmail(ctx, tx, scope, access, identity, documentIDs, reportIDs, fileIDs); err != nil {
+				if err := s.sendPortalDocumentAccessRejectedEmail(
+					ctx,
+					tx,
+					scope,
+					access,
+					identity,
+					compliancePortalDocumentIDs,
+					compliancePortalAuditIDs,
+					compliancePortalFileIDs,
+				); err != nil {
 					return fmt.Errorf("cannot send access email: %w", err)
 				}
 
@@ -792,9 +877,9 @@ func (s *Service) RejectOrRevokePortalAccessByIDsIdempotently(
 						accessMutationEventKey(
 							"reject-or-revoke",
 							operationKey,
-							documentIDs,
-							reportIDs,
-							fileIDs,
+							compliancePortalDocumentIDs,
+							compliancePortalAuditIDs,
+							compliancePortalFileIDs,
 						),
 						coredata.BotMessagePurposeUpdate,
 					),
@@ -814,32 +899,33 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 	scope coredata.Scoper,
 	access *coredata.CompliancePortalAccess,
 	identity *coredata.Identity,
-	documentIDs []gid.GID,
-	reportIDs []gid.GID,
-	fileIDs []gid.GID,
+	compliancePortalDocumentIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
+	compliancePortalFileIDs []gid.GID,
 ) error {
 	organization := &coredata.Organization{}
 	if err := organization.LoadByID(ctx, tx, scope, access.OrganizationID); err != nil {
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
-	var (
-		fileNames []string
-		documents coredata.Documents
-	)
+	var fileNames []string
 
-	if len(documentIDs) > 0 {
-		if err := documents.LoadByIDs(ctx, tx, scope, documentIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return fmt.Errorf("cannot load documents by IDs: %w", err)
+	for _, documentLinkID := range compliancePortalDocumentIDs {
+		var link coredata.CompliancePortalDocument
+		if err := link.LoadByID(ctx, tx, scope, documentLinkID); err != nil {
+			return fmt.Errorf("cannot load compliance portal document: %w", err)
 		}
 
-		for _, d := range documents {
-			fileNames = append(fileNames, d.Title)
+		var document coredata.Document
+		if err := document.LoadByID(ctx, tx, scope, link.DocumentID); err != nil {
+			return fmt.Errorf("cannot load document: %w", err)
 		}
+
+		fileNames = append(fileNames, document.Title)
 	}
 
-	if len(reportIDs) > 0 {
-		reportLabels, err := reportAccessLabels(ctx, tx, scope, reportIDs)
+	if len(compliancePortalAuditIDs) > 0 {
+		reportLabels, err := reportAccessLabels(ctx, tx, scope, compliancePortalAuditIDs)
 		if err != nil {
 			return fmt.Errorf("cannot build report access labels: %w", err)
 		}
@@ -848,8 +934,8 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 	}
 
 	var files coredata.CompliancePortalFiles
-	if len(fileIDs) > 0 {
-		if err := files.LoadByIDs(ctx, tx, scope, fileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+	if len(compliancePortalFileIDs) > 0 {
+		if err := files.LoadByIDs(ctx, tx, scope, compliancePortalFileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 			return fmt.Errorf("cannot load files by IDs: %w", err)
 		}
 
@@ -894,18 +980,18 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 
 func extractExistingIDs(accesses coredata.CompliancePortalDocumentAccesses) ([]gid.GID, []gid.GID, []gid.GID) {
 	var (
-		documentIDs             []gid.GID
-		reportIDs               []gid.GID
-		compliancePortalFileIDs []gid.GID
+		compliancePortalDocumentIDs []gid.GID
+		compliancePortalAuditIDs    []gid.GID
+		compliancePortalFileIDs     []gid.GID
 	)
 
 	for _, access := range accesses {
-		if access.DocumentID != nil {
-			documentIDs = append(documentIDs, *access.DocumentID)
+		if access.CompliancePortalDocumentID != nil {
+			compliancePortalDocumentIDs = append(compliancePortalDocumentIDs, *access.CompliancePortalDocumentID)
 		}
 
-		if access.ReportFileID != nil {
-			reportIDs = append(reportIDs, *access.ReportFileID)
+		if access.CompliancePortalAuditID != nil {
+			compliancePortalAuditIDs = append(compliancePortalAuditIDs, *access.CompliancePortalAuditID)
 		}
 
 		if access.CompliancePortalFileID != nil {
@@ -913,7 +999,7 @@ func extractExistingIDs(accesses coredata.CompliancePortalDocumentAccesses) ([]g
 		}
 	}
 
-	return documentIDs, reportIDs, compliancePortalFileIDs
+	return compliancePortalDocumentIDs, compliancePortalAuditIDs, compliancePortalFileIDs
 }
 
 func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
@@ -955,75 +1041,24 @@ func reportAccessLabels(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	reportFileIDs []gid.GID,
+	compliancePortalAuditIDs []gid.GID,
 ) ([]string, error) {
-	var reportFiles coredata.Files
-	if err := reportFiles.LoadByIDs(ctx, conn, scope, reportFileIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-		return nil, fmt.Errorf("cannot load report files by IDs: %w", err)
-	}
+	labels := make([]string, 0, len(compliancePortalAuditIDs))
 
-	fileByID := make(map[gid.GID]*coredata.File, len(reportFiles))
-	for _, f := range reportFiles {
-		fileByID[f.ID] = f
-	}
-
-	var audits coredata.Audits
-	if err := audits.LoadByReportFileIDs(ctx, conn, scope, reportFileIDs); err != nil {
-		return nil, fmt.Errorf("cannot load audits by report file IDs: %w", err)
-	}
-
-	auditByFileID := make(map[gid.GID]*coredata.Audit, len(audits))
-	frameworkIDSet := make(map[gid.GID]struct{})
-
-	for _, audit := range audits {
-		if audit.ReportFileID == nil {
-			continue
+	for _, portalAuditID := range compliancePortalAuditIDs {
+		var portalAudit coredata.CompliancePortalAudit
+		if err := portalAudit.LoadByID(ctx, conn, scope, portalAuditID); err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal audit: %w", err)
 		}
 
-		if _, exists := auditByFileID[*audit.ReportFileID]; exists {
-			continue
+		var audit coredata.Audit
+		if err := audit.LoadByID(ctx, conn, scope, portalAudit.AuditID); err != nil {
+			return nil, fmt.Errorf("cannot load audit: %w", err)
 		}
 
-		auditByFileID[*audit.ReportFileID] = audit
-		frameworkIDSet[audit.FrameworkID] = struct{}{}
-	}
-
-	frameworkIDs := make([]gid.GID, 0, len(frameworkIDSet))
-	for frameworkID := range frameworkIDSet {
-		frameworkIDs = append(frameworkIDs, frameworkID)
-	}
-
-	frameworkByID := make(map[gid.GID]*coredata.Framework, len(frameworkIDs))
-
-	if len(frameworkIDs) > 0 {
-		var frameworks coredata.Frameworks
-		if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, fmt.Errorf("cannot load frameworks by IDs: %w", err)
-		}
-
-		for _, framework := range frameworks {
-			frameworkByID[framework.ID] = framework
-		}
-	}
-
-	labels := make([]string, 0, len(reportFileIDs))
-
-	for _, fileID := range reportFileIDs {
-		file, ok := fileByID[fileID]
-		if !ok {
-			return nil, fmt.Errorf("cannot load report file %q: %w", fileID, coredata.ErrResourceNotFound)
-		}
-
-		audit, ok := auditByFileID[fileID]
-		if !ok {
-			labels = append(labels, file.FileName)
-			continue
-		}
-
-		framework, ok := frameworkByID[audit.FrameworkID]
-		if !ok {
-			labels = append(labels, file.FileName)
-			continue
+		var framework coredata.Framework
+		if err := framework.LoadByID(ctx, conn, scope, audit.FrameworkID); err != nil {
+			return nil, fmt.Errorf("cannot load framework: %w", err)
 		}
 
 		if audit.Name != nil && *audit.Name != "" {

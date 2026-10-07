@@ -421,7 +421,7 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 	return result.CreateControl.ControlEdge.Node.ID
 }
 
-func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
+func CreateInternalControl(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -430,9 +430,9 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	}
 
 	const query = `
-		mutation($input: CreateMeasureInput!) {
-			createMeasure(input: $input) {
-				measureEdge {
+		mutation($input: CreateInternalControlInput!) {
+			createInternalControl(input: $input) {
+				internalControlEdge {
 					node { id }
 				}
 			}
@@ -441,7 +441,7 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"name":           a.getString("name", SafeName("Measure")),
+		"name":           a.getString("name", SafeName("Internal control")),
 		"category":       a.getString("category", "POLICY"),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
@@ -449,22 +449,22 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	}
 
 	var result struct {
-		CreateMeasure struct {
-			MeasureEdge struct {
+		CreateInternalControl struct {
+			InternalControlEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"measureEdge"`
-		} `json:"createMeasure"`
+			} `json:"internalControlEdge"`
+		} `json:"createInternalControl"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createMeasure mutation failed")
+	require.NoError(c.T, err, "createInternalControl mutation failed")
 
-	return result.CreateMeasure.MeasureEdge.Node.ID
+	return result.CreateInternalControl.InternalControlEdge.Node.ID
 }
 
-func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
+func CreateTask(c *testutil.Client, internalControlID *string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -487,8 +487,8 @@ func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 		"name":           a.getString("name", SafeName("Task")),
 		"priority":       a.getString("priority", "MEDIUM"),
 	}
-	if measureID != nil {
-		input["measureId"] = *measureID
+	if internalControlID != nil {
+		input["internalControlId"] = *internalControlID
 	}
 
 	if content := a.getStringPtr("content"); content != nil {
@@ -662,46 +662,46 @@ func (b *ControlBuilder) Create() string {
 	return CreateControl(b.client, b.frameworkID, b.attrs)
 }
 
-type MeasureBuilder struct {
+type InternalControlBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-func NewMeasure(c *testutil.Client) *MeasureBuilder {
-	return &MeasureBuilder{client: c, attrs: Attrs{}}
+func NewInternalControl(c *testutil.Client) *InternalControlBuilder {
+	return &InternalControlBuilder{client: c, attrs: Attrs{}}
 }
 
-func (b *MeasureBuilder) WithName(name string) *MeasureBuilder {
+func (b *InternalControlBuilder) WithName(name string) *InternalControlBuilder {
 	b.attrs["name"] = name
 	return b
 }
 
-func (b *MeasureBuilder) WithDescription(desc string) *MeasureBuilder {
+func (b *InternalControlBuilder) WithDescription(desc string) *InternalControlBuilder {
 	b.attrs["description"] = desc
 	return b
 }
 
-func (b *MeasureBuilder) WithCategory(category string) *MeasureBuilder {
+func (b *InternalControlBuilder) WithCategory(category string) *InternalControlBuilder {
 	b.attrs["category"] = category
 	return b
 }
 
-func (b *MeasureBuilder) Create() string {
-	return CreateMeasure(b.client, b.attrs)
+func (b *InternalControlBuilder) Create() string {
+	return CreateInternalControl(b.client, b.attrs)
 }
 
 type TaskBuilder struct {
-	client    *testutil.Client
-	measureID *string
-	attrs     Attrs
+	client            *testutil.Client
+	internalControlID *string
+	attrs             Attrs
 }
 
-func NewTask(c *testutil.Client, measureID string) *TaskBuilder {
-	return &TaskBuilder{client: c, measureID: &measureID, attrs: Attrs{}}
+func NewTask(c *testutil.Client, internalControlID string) *TaskBuilder {
+	return &TaskBuilder{client: c, internalControlID: &internalControlID, attrs: Attrs{}}
 }
 
-func NewTaskWithoutMeasure(c *testutil.Client) *TaskBuilder {
-	return &TaskBuilder{client: c, measureID: nil, attrs: Attrs{}}
+func NewTaskWithoutInternalControl(c *testutil.Client) *TaskBuilder {
+	return &TaskBuilder{client: c, internalControlID: nil, attrs: Attrs{}}
 }
 
 func (b *TaskBuilder) WithName(name string) *TaskBuilder {
@@ -715,7 +715,7 @@ func (b *TaskBuilder) WithContent(content string) *TaskBuilder {
 }
 
 func (b *TaskBuilder) Create() string {
-	return CreateTask(b.client, b.measureID, b.attrs)
+	return CreateTask(b.client, b.internalControlID, b.attrs)
 }
 
 func CreateTaskComment(c *testutil.Client, taskID string, attrs ...Attrs) string {
@@ -1175,6 +1175,10 @@ func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs .
 		input["connectorId"] = *connectorID
 	}
 
+	if connectorAccountID := a.getStringPtr("connectorAccountId"); connectorAccountID != nil {
+		input["connectorAccountId"] = *connectorAccountID
+	}
+
 	var result struct {
 		CreateAccessReviewSource struct {
 			AccessReviewSourceEdge struct {
@@ -1208,6 +1212,16 @@ func (b *AccessReviewSourceBuilder) WithName(name string) *AccessReviewSourceBui
 
 func (b *AccessReviewSourceBuilder) WithCsvData(csvData string) *AccessReviewSourceBuilder {
 	b.attrs["csvData"] = csvData
+	return b
+}
+
+func (b *AccessReviewSourceBuilder) WithConnectorID(connectorID string) *AccessReviewSourceBuilder {
+	b.attrs["connectorId"] = connectorID
+	return b
+}
+
+func (b *AccessReviewSourceBuilder) WithConnectorAccountID(connectorAccountID string) *AccessReviewSourceBuilder {
+	b.attrs["connectorAccountId"] = connectorAccountID
 	return b
 }
 
@@ -1831,60 +1845,60 @@ func CreateTreatmentPlan(c *testutil.Client, riskID, riskAnalysisID string, attr
 	return result.CreateTreatmentPlan.TreatmentPlanEdge.Node.ID
 }
 
-func LinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID string) {
+func LinkTreatmentPlanInternalControl(c *testutil.Client, treatmentPlanID, internalControlID string) {
 	c.T.Helper()
 
 	const query = `
-		mutation($input: CreateTreatmentPlanMeasureMappingInput!) {
-			createTreatmentPlanMeasureMapping(input: $input) {
-				measureEdge { node { id } }
+		mutation($input: CreateTreatmentPlanInternalControlMappingInput!) {
+			createTreatmentPlanInternalControlMapping(input: $input) {
+				internalControlEdge { node { id } }
 			}
 		}
 	`
 
 	var result struct {
-		CreateTreatmentPlanMeasureMapping struct {
-			MeasureEdge struct {
+		CreateTreatmentPlanInternalControlMapping struct {
+			InternalControlEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"measureEdge"`
-		} `json:"createTreatmentPlanMeasureMapping"`
+			} `json:"internalControlEdge"`
+		} `json:"createTreatmentPlanInternalControlMapping"`
 	}
 
 	err := c.Execute(query, map[string]any{
 		"input": map[string]any{
-			"treatmentPlanId": treatmentPlanID,
-			"measureId":       measureID,
+			"treatmentPlanId":   treatmentPlanID,
+			"internalControlId": internalControlID,
 		},
 	}, &result)
-	require.NoError(c.T, err, "createTreatmentPlanMeasureMapping mutation failed")
+	require.NoError(c.T, err, "createTreatmentPlanInternalControlMapping mutation failed")
 }
 
-func UnlinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID string) {
+func UnlinkTreatmentPlanInternalControl(c *testutil.Client, treatmentPlanID, internalControlID string) {
 	c.T.Helper()
 
 	const query = `
-		mutation($input: DeleteTreatmentPlanMeasureMappingInput!) {
-			deleteTreatmentPlanMeasureMapping(input: $input) {
-				deletedMeasureId
+		mutation($input: DeleteTreatmentPlanInternalControlMappingInput!) {
+			deleteTreatmentPlanInternalControlMapping(input: $input) {
+				deletedInternalControlId
 			}
 		}
 	`
 
 	var result struct {
-		DeleteTreatmentPlanMeasureMapping struct {
-			DeletedMeasureID string `json:"deletedMeasureId"`
-		} `json:"deleteTreatmentPlanMeasureMapping"`
+		DeleteTreatmentPlanInternalControlMapping struct {
+			DeletedInternalControlID string `json:"deletedInternalControlId"`
+		} `json:"deleteTreatmentPlanInternalControlMapping"`
 	}
 
 	err := c.Execute(query, map[string]any{
 		"input": map[string]any{
-			"treatmentPlanId": treatmentPlanID,
-			"measureId":       measureID,
+			"treatmentPlanId":   treatmentPlanID,
+			"internalControlId": internalControlID,
 		},
 	}, &result)
-	require.NoError(c.T, err, "deleteTreatmentPlanMeasureMapping mutation failed")
+	require.NoError(c.T, err, "deleteTreatmentPlanInternalControlMapping mutation failed")
 }
 
 func CreateRiskAnalysisDiagram(c *testutil.Client, riskAnalysisID string, attrs ...Attrs) string {
@@ -2170,4 +2184,155 @@ func LinkRiskAnalysisScenarioRisk(c *testutil.Client, scenarioID, riskID string)
 		},
 	})
 	require.NoError(c.T, err, "linkRiskAnalysisScenarioRisk mutation failed")
+}
+
+func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: CreateWorkloadIdentityConnectorInput!) {
+			createWorkloadIdentityConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`
+
+	input := map[string]any{
+		"organizationId": a.getString("organizationId", c.GetOrganizationID().String()),
+		"provider":       a.getString("provider", "AWS"),
+		"awsRoleArn":     a.getString("awsRoleArn", "arn:aws:iam::123456789012:role/ProboAudit"),
+	}
+
+	if provider := a.getString("provider", "AWS"); provider == "GCP" {
+		input = map[string]any{
+			"organizationId":              a.getString("organizationId", c.GetOrganizationID().String()),
+			"provider":                    "GCP",
+			"gcpWorkloadIdentityProvider": a.getString("gcpWorkloadIdentityProvider", "projects/123456789012/locations/global/workloadIdentityPools/probo-pool/providers/probo"),
+			"gcpServiceAccountEmail":      a.getString("gcpServiceAccountEmail", "probo-audit@example-project.iam.gserviceaccount.com"),
+		}
+	}
+
+	if provider := a.getString("provider", "AWS"); provider == "AZURE" {
+		input = map[string]any{
+			"organizationId":      a.getString("organizationId", c.GetOrganizationID().String()),
+			"provider":            "AZURE",
+			"azureTenantId":       a.getString("azureTenantId", "a1111111-1111-4111-8111-111111111111"),
+			"azureClientId":       a.getString("azureClientId", "b2222222-2222-4222-8222-222222222222"),
+			"azureSubscriptionId": a.getString("azureSubscriptionId", "c3333333-3333-4333-8333-333333333333"),
+			"azureEnvironment":    a.getString("azureEnvironment", "AZURE_PUBLIC"),
+		}
+	}
+
+	var result struct {
+		CreateWorkloadIdentityConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createWorkloadIdentityConnector"`
+	}
+
+	err := c.Execute(query, map[string]any{"input": input}, &result)
+	require.NoError(c.T, err, "createWorkloadIdentityConnector mutation failed")
+
+	return result.CreateWorkloadIdentityConnector.Connector.ID
+}
+
+type ConnectorBuilder struct {
+	client *testutil.Client
+	attrs  Attrs
+}
+
+func NewConnector(c *testutil.Client) *ConnectorBuilder {
+	return &ConnectorBuilder{client: c, attrs: Attrs{}}
+}
+
+func (b *ConnectorBuilder) WithProvider(provider string) *ConnectorBuilder {
+	b.attrs["provider"] = provider
+	return b
+}
+
+func (b *ConnectorBuilder) WithAWSRoleARN(roleARN string) *ConnectorBuilder {
+	b.attrs["awsRoleArn"] = roleARN
+	return b
+}
+
+func (b *ConnectorBuilder) Create() string {
+	return CreateConnector(b.client, b.attrs)
+}
+
+func CreateConnectorAccount(c *testutil.Client, connectorID string, attrs ...Attrs) string {
+	c.T.Helper()
+
+	var a Attrs
+	if len(attrs) > 0 {
+		a = attrs[0]
+	}
+
+	const query = `
+		mutation($input: EnableConnectorAccountsInput!) {
+			enableConnectorAccounts(input: $input) {
+				connectorAccounts {
+					id
+					externalAccountId
+				}
+			}
+		}
+	`
+
+	externalID := a.getString("externalAccountId", SafeName("account"))
+	name := a.getString("name", externalID)
+
+	var result struct {
+		EnableConnectorAccounts struct {
+			ConnectorAccounts []struct {
+				ID                string `json:"id"`
+				ExternalAccountID string `json:"externalAccountId"`
+			} `json:"connectorAccounts"`
+		} `json:"enableConnectorAccounts"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"connectorId": connectorID,
+			"accounts": []map[string]string{
+				{
+					"externalAccountId": externalID,
+					"name":              name,
+				},
+			},
+		},
+	}, &result)
+	require.NoError(c.T, err, "enableConnectorAccounts mutation failed")
+	require.NotEmpty(c.T, result.EnableConnectorAccounts.ConnectorAccounts)
+
+	return result.EnableConnectorAccounts.ConnectorAccounts[0].ID
+}
+
+type ConnectorAccountBuilder struct {
+	client      *testutil.Client
+	connectorID string
+	attrs       Attrs
+}
+
+func NewConnectorAccount(c *testutil.Client, connectorID string) *ConnectorAccountBuilder {
+	return &ConnectorAccountBuilder{client: c, connectorID: connectorID, attrs: Attrs{}}
+}
+
+func (b *ConnectorAccountBuilder) WithExternalAccountID(externalAccountID string) *ConnectorAccountBuilder {
+	b.attrs["externalAccountId"] = externalAccountID
+	return b
+}
+
+func (b *ConnectorAccountBuilder) WithName(name string) *ConnectorAccountBuilder {
+	b.attrs["name"] = name
+	return b
+}
+
+func (b *ConnectorAccountBuilder) Create() string {
+	return CreateConnectorAccount(b.client, b.connectorID, b.attrs)
 }

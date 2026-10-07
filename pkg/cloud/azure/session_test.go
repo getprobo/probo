@@ -67,6 +67,22 @@ func TestNewSession(t *testing.T) {
 	assert.Equal(t, cloud.AzurePublic, session.ARMClientOptions().Cloud)
 }
 
+func TestNewSession_EmptySubscription(t *testing.T) {
+	t.Parallel()
+
+	session, err := cloudazure.NewSession(
+		testIssuer(t),
+		testOrganizationID(),
+		testTenantID,
+		testClientID,
+		"",
+		cloudazure.EnvironmentPublic,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "", session.AccountID())
+	assert.Equal(t, testTenantID, session.TenantID())
+}
+
 func TestAudienceAzure_IsCarriedOnAssertion(t *testing.T) {
 	t.Parallel()
 

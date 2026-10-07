@@ -32,35 +32,39 @@ import (
 )
 
 const uploadMutation = `
-mutation($input: UploadMeasureEvidenceInput!) {
-  uploadMeasureEvidence(input: $input) {
-    evidence {
-      id
-      state
-      type
+mutation($input: UploadInternalControlEvidenceInput!) {
+  uploadInternalControlEvidence(input: $input) {
+    evidenceEdge {
+      node {
+        id
+        state
+        type
+      }
     }
   }
 }
 `
 
 type uploadResponse struct {
-	UploadMeasureEvidence struct {
-		Evidence struct {
-			ID    string `json:"id"`
-			State string `json:"state"`
-			Type  string `json:"type"`
-		} `json:"evidence"`
-	} `json:"uploadMeasureEvidence"`
+	UploadInternalControlEvidence struct {
+		EvidenceEdge struct {
+			Node struct {
+				ID    string `json:"id"`
+				State string `json:"state"`
+				Type  string `json:"type"`
+			} `json:"node"`
+		} `json:"evidenceEdge"`
+	} `json:"uploadInternalControlEvidence"`
 }
 
 func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
-	var flagMeasure string
+	var flagInternalControl string
 
 	cmd := &cobra.Command{
 		Use:   "upload <file>",
-		Short: "Upload evidence for a measure",
-		Example: `  # Upload a file as evidence for a measure
-  prb evidence upload ./report.pdf --measure <measure-id>`,
+		Short: "Upload evidence for an internal control",
+		Example: `  # Upload a file as evidence for an internal control
+  prb evidence upload ./report.pdf --internal-control <internal-control-id>`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]
@@ -92,8 +96,8 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{
 				"input": map[string]any{
-					"measureId": flagMeasure,
-					"file":      nil,
+					"internalControlId": flagInternalControl,
+					"file":              nil,
 				},
 			}
 
@@ -113,14 +117,14 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Uploaded evidence %s\n", resp.UploadMeasureEvidence.Evidence.ID)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Uploaded evidence %s\n", resp.UploadInternalControlEvidence.EvidenceEdge.Node.ID)
 
 			return nil
 		},
 	}
 
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID (required)")
-	_ = cmd.MarkFlagRequired("measure")
+	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID (required)")
+	_ = cmd.MarkFlagRequired("internal-control")
 
 	return cmd
 }

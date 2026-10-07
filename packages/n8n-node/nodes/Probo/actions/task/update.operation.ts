@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -53,6 +53,9 @@ export const description: INodeProperties[] = [
 		displayName: 'Content',
 		name: 'content',
 		type: 'string',
+		typeOptions: {
+			rows: 6,
+		},
 		displayOptions: {
 			show: {
 				resource: ['task'],
@@ -60,7 +63,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The content of the task',
+		description: 'The content of the task as a ProseMirror document JSON string',
 	},
 	{
 		displayName: 'State',
@@ -193,8 +196,8 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the user assigned to this task',
 	},
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -203,7 +206,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure this task belongs to',
+		description: 'The ID of the internal control this task belongs to',
 	},
 	{
 		displayName: 'Recurrence Interval',
@@ -216,7 +219,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set. Leave empty and enable Clear Recurrence to remove it.',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline. The next task is created when that deadline passes. Leave empty and enable Clear Recurrence to remove it.',
 	},
 	{
 		displayName: 'Clear Recurrence',
@@ -246,7 +249,7 @@ export async function execute(
 	const timeEstimate = this.getNodeParameter('timeEstimate', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
-	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
 	const clearRecurrenceInterval = this.getNodeParameter('clearRecurrenceInterval', itemIndex, false) as boolean;
 
@@ -265,34 +268,20 @@ export async function execute(
 					createdAt
 					updatedAt
 				}
-				nextTaskEdge {
-					node {
-						id
-						name
-						content
-						state
-						priority
-						timeEstimate
-						deadline
-						recurrenceInterval
-						createdAt
-						updatedAt
-					}
-				}
 			}
 		}
 	`;
 
 	const input: Record<string, string | null> = { taskId };
 	if (name) input.name = name;
-	if (content) input.content = plainTextToProseMirrorJSON(content);
+	if (content) input.content = content;
 	if (state) input.state = state;
 	if (priority) input.priority = priority;
 	if (rank) input.rank = rank;
 	if (timeEstimate) input.timeEstimate = timeEstimate;
 	if (deadline) input.deadline = deadline;
 	if (assignedToId) input.assignedToId = assignedToId;
-	if (measureId) input.measureId = measureId;
+	if (internalControlId) input.internalControlId = internalControlId;
 	if (clearRecurrenceInterval) {
 		input.recurrenceInterval = null;
 	} else if (recurrenceInterval) {
@@ -300,17 +289,6 @@ export async function execute(
 	}
 
 	const responseData = await proboApiRequest.call(this, query, { input });
-	const data = responseData.data as IDataObject | undefined;
-	const payload = data?.updateTask as IDataObject | undefined;
-	const task = payload?.task as IDataObject | undefined;
-	if (payload && task) {
-		payload.task = withPlainTextContent(task);
-	}
-	const nextEdge = payload?.nextTaskEdge as IDataObject | undefined;
-	const nextTask = nextEdge?.node as IDataObject | undefined;
-	if (nextEdge && nextTask) {
-		nextEdge.node = withPlainTextContent(nextTask);
-	}
 
 	return {
 		json: responseData,

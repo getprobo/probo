@@ -43,7 +43,7 @@ func TestMCP_TaskActivity_ListNewestFirst(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	mc.CallToolInto("updateTask", map[string]any{
 		"id":    taskID,
@@ -93,7 +93,7 @@ func TestMCP_TaskActivity_Get(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	var listResult struct {
 		TaskActivities []mcpTaskActivity `json:"task_activities"`

@@ -23,6 +23,7 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -47,11 +48,14 @@ import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskEngagementSection } from "./_components/TaskEngagementSection";
 import { TaskNameField } from "./_components/TaskNameField";
 import { TaskPropertiesSection } from "./_components/TaskPropertiesSection";
+import { isOverdueTask } from "./_lib/isOverdueTask";
 import { taskDetailsPage } from "./variants";
 
 export const taskDetailsPageFragment = graphql`
   fragment TaskDetailsPage_task on Task {
     name
+    state
+    deadline
     canDelete: permission(action: "core:task:delete")
     organization {
       id
@@ -99,6 +103,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
   }
 
   const { root, header, titleRow, title, actions, body, main } = taskDetailsPage();
+  const isOverdue = isOverdueTask(task.deadline, task.state);
 
   return (
     <div className={root()}>
@@ -106,6 +111,11 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
         <div className={titleRow()}>
           <div className={title()}>
             <TaskNameField taskKey={task} />
+            {isOverdue && (
+              <Badge variant="soft" color="red" size={1}>
+                {t("detailsPage.overdue")}
+              </Badge>
+            )}
           </div>
           {task.canDelete && (
             <div className={actions()}>

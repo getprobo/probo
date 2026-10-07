@@ -825,7 +825,7 @@ func tryCreateCompliancePortalCMSPortalFile(
 				"name":                       "rbac.pdf",
 				"category":                   "Security",
 				"file":                       nil,
-				"compliancePortalVisibility": "NONE",
+				"compliancePortalVisibility": "RESTRICTED",
 			},
 		},
 		"input.file",

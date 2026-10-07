@@ -621,7 +621,8 @@
       "allKinds": "Alle soorten",
       "allStatuses": "Alle statussen",
       "allPriorities": "Alle prioriteiten",
-      "allOwners": "Alle eigenaren"
+      "allOwners": "Alle eigenaren",
+      "allAudits": "Alle audits"
     },
     "kinds": {
       "minor_nonconformity": "Kleine non-conformiteit",
@@ -751,7 +752,7 @@
     "title": "Taken",
     "description": "Houd uw toegewezen compliancetaken bij en houd de voortgang op koers.",
     "actions": {
-      "create": "Nieuwe taak"
+      "create": "Taak toevoegen"
     }
   },
   "pageError": {
@@ -961,14 +962,17 @@
       "add": "E-mailadres toevoegen"
     }
   },
-  "measureSelectField": {
-    "placeholder": "Selecteer een maatregel",
+  "internalControlSelectField": {
+    "placeholder": "Selecteer een interne controle",
     "none": "Geen"
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Personen toevoegen...",
     "empty": "Geen personen beschikbaar",
     "remove": "{{name}} verwijderen"
+  },
+  "userSelect": {
+    "loadMore": "Meer laden"
   },
   "peopleSelectField": {
     "placeholder": "Selecteer een eigenaar",
@@ -1024,22 +1028,22 @@
     "empty": "Geen derde partijen beschikbaar",
     "remove": "{{name}} verwijderen"
   },
-  "linkedMeasuresCard": {
-    "title": "Maatregelen",
+  "linkedInternalControlsCard": {
+    "title": "Interne controles",
     "columns": {
       "name": "Naam",
       "state": "Status"
     },
-    "empty": "Geen maatregelen gekoppeld",
+    "empty": "Geen interne controles gekoppeld",
     "actions": {
-      "link": "Maatregel koppelen",
+      "link": "Interne controle koppelen",
       "unlink": "Ontkoppelen",
       "showMore": "{{count}} meer tonen"
     }
   },
-  "linkedMeasuresDialog": {
-    "title": "Maatregelen koppelen",
-    "searchPlaceholder": "Maatregelen zoeken...",
+  "linkedInternalControlsDialog": {
+    "title": "Interne controles koppelen",
+    "searchPlaceholder": "Interne controles zoeken...",
     "allCategories": "Alle categorieën",
     "actions": {
       "close": "Sluiten",
@@ -1130,6 +1134,14 @@
       "duplicate": "Duplicaat"
     },
     "empty": "Geen taken",
+    "noResults": "Geen taken komen overeen met uw filters",
+    "searchPlaceholder": "Taken zoeken",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "Alle statussen",
+      "user": "Gebruiker",
+      "allUsers": "Alle gebruikers"
+    },
     "error": {
       "title": "Fout",
       "reorder": "Herordenen van taak mislukt."
@@ -1145,6 +1157,11 @@
       "moveToDone": "Verplaatsen naar Voltooid",
       "edit": "Bewerken",
       "delete": "Verwijderen"
+    },
+    "metadata": {
+      "timeEstimate": "Tijdsinschatting",
+      "deadline": "Deadline",
+      "overdue": "Te laat"
     },
     "recurringBadge": {
       "tooltip": "Herhaalt elke {{interval}}"
@@ -1251,14 +1268,14 @@
       "delete": "Verwijderen van framework mislukt"
     }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
-      "deleted": "Maatregel succesvol verwijderd.",
-      "updated": "Maatregel succesvol bijgewerkt."
+      "deleted": "Interne controle succesvol verwijderd.",
+      "updated": "Interne controle succesvol bijgewerkt."
     },
     "errors": {
-      "delete": "Verwijderen van maatregel mislukt",
-      "update": "Bijwerken van maatregel mislukt"
+      "delete": "Verwijderen van interne controle mislukt",
+      "update": "Bijwerken van interne controle mislukt"
     }
   },
   "obligationGraph": {
@@ -1335,7 +1352,6 @@
       "revoked": "Ingetrokken"
     },
     "compliancePortalVisibility": {
-      "none": "Geen",
       "restricted": "Beperkt",
       "public": "Openbaar"
     },
@@ -1387,6 +1403,13 @@
       "secret": "Geheim"
     },
     "measureState": {
+      "implemented": "Geïmplementeerd",
+      "inProgress": "In uitvoering",
+      "notApplicable": "Niet van toepassing",
+      "notStarted": "Niet gestart",
+      "notImplemented": "Niet geïmplementeerd"
+    },
+    "internalControlState": {
       "implemented": "Geïmplementeerd",
       "inProgress": "In uitvoering",
       "notApplicable": "Niet van toepassing",
@@ -1560,6 +1583,14 @@
       "unknown": "Onbekend",
       "not_implemented": "Niet geïmplementeerd"
     },
+    "internalControlState": {
+      "implemented": "Geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "not_applicable": "Niet van toepassing",
+      "not_started": "Niet gestart",
+      "unknown": "Onbekend",
+      "not_implemented": "Niet geïmplementeerd"
+    },
     "confirmDialog": {
       "defaultTitle": "Weet u het zeker?"
     },
@@ -1578,6 +1609,10 @@
     },
     "measureImplementation": {
       "title": "Implementatie van maatregel",
+      "complete": "Voltooien"
+    },
+    "internalControlImplementation": {
+      "title": "Implementatie van interne controle",
       "complete": "Voltooien"
     },
     "impactOptions": {
@@ -2169,9 +2204,15 @@
     "help": "Help",
     "switchToDarkMode": "Overschakelen naar donkere modus",
     "switchToLightMode": "Overschakelen naar lichte modus",
+    "spotlight": {
+      "title": "Ga naar",
+      "placeholder": "Ga naar…",
+      "empty": "Geen overeenkomende pagina's"
+    },
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "IT-assetbeheer",
       "riskManagement": "Risicobeheer",
@@ -2184,8 +2225,9 @@
     "context": "Context",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "integrations": "INTEGRATIES",
     "tasks": "Taken",
-    "measures": "Maatregelen",
+    "internalControls": "Interne controles",
     "risks": "Risico's",
     "allRisks": "Alle risico's",
     "riskAnalyses": "Risicobeoordelingen",
@@ -2193,6 +2235,8 @@
     "iam": "IAM",
     "users": "Gebruikers",
     "authProvisioning": "Auth & provisioning",
+    "samlSso": "SAML SSO",
+    "scim": "SCIM",
     "auditLog": "Auditlogboek",
     "allThirdParties": "Alle derde partijen",
     "thirdParties": "Derde partijen",
@@ -2205,7 +2249,7 @@
     "thirdPartyServices": "Diensten",
     "thirdPartySupplyChain": "Toeleveringsketen",
     "thirdPartyRisks": "Risicobeoordelingen",
-    "thirdPartyMeasures": "Maatregelen",
+    "thirdPartyInternalControls": "Interne controles",
     "documents": "Documenten",
     "assets": "Assets",
     "devices": "Apparaten",
@@ -2234,8 +2278,11 @@
     "compliancePortalsUpdates": "Updates",
     "compliancePortalsRightRequests": "Rechtenverzoeken",
     "cookieBanners": "Cookiebanners",
+    "cookieBannersInstall": "Installeren",
     "cookieBannersConfigure": "Configureren",
-    "cookieBannersDiscovery": "Ontdekking",
+    "cookieBannersTranslations": "Vertalingen",
+    "cookieBannersTrackers": "Trackers",
+    "cookieBannersResources": "Resources",
     "cookieBannersTrail": "Logboek",
     "cookieBannersTCF": "TCF",
     "cookieBannerSwitcher": {
@@ -2277,43 +2324,38 @@
       "logout": "Uitloggen"
     }
   },
-  "peoplePage": {
+  "usersPage": {
+    "empty": "Geen gebruikers",
+    "emptyFiltered": "Geen gebruikers komen overeen met de huidige filters.",
     "actions": {
-      "add": "Persoon toevoegen"
+      "add": "Gebruiker toevoegen",
+      "cancel": "Annuleren",
+      "previous": "Vorige",
+      "next": "Volgende"
     }
   },
-  "personPage": {
-    "messages": {
-      "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd"
-    },
-    "errors": {
-      "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt"
-    },
-    "confirmations": {
-      "deactivate": "Weet u zeker dat u {{name}} wilt deactiveren?",
-      "remove": "Weet u zeker dat u {{name}} wilt verwijderen?"
-    },
-    "actions": {
-      "deactivate": "Deactiveren",
-      "remove": "Verwijderen"
+  "userPage": {
+    "back": "Gebruikers",
+    "empty": "—",
+    "deactivatedCallout": "Deze gebruiker is gedeactiveerd.",
+    "notFound": "Gebruiker niet gevonden",
+    "details": {
+      "title": "Details",
+      "description": "Functie, extra e-mails en contractdata."
     }
   },
-  "addPersonDialog": {
-    "title": "Persoon toevoegen"
+  "newUserPage": {
+    "title": "Gebruiker toevoegen",
+    "description": "Nodig iemand uit voor deze organisatie.",
+    "notFound": "U kunt geen gebruikers toevoegen aan deze organisatie"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Naam",
-      "status": "Status",
-      "email": "E-mail",
-      "role": "Rol",
-      "createdOn": "Aangemaakt op",
-      "contractEndDate": "Einddatum contract"
+  "usersList": {
+    "searchPlaceholder": "Gebruikers zoeken...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
     },
-    "empty": "Geen personen",
-    "searchPlaceholder": "Personen zoeken...",
+    "created": "Aangemaakt op {{date}}",
     "filters": {
       "allStatuses": "Alle statussen",
       "status": "Status",
@@ -2321,51 +2363,62 @@
       "active": "Actief",
       "deactivated": "Gedeactiveerd",
       "allRoles": "Alle rollen",
-      "allTypes": "Alle typen"
+      "allTypes": "Alle gebruikerstypen",
+      "role": "Probo-rol",
+      "type": "Gebruikertype"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Uitnodiging succesvol verzonden",
-      "roleUpdated": "Rol succesvol bijgewerkt",
-      "deactivated": "Persoon succesvol gedeactiveerd",
-      "removed": "Persoon succesvol verwijderd"
+      "deactivated": "Gebruiker succesvol gedeactiveerd",
+      "removed": "Gebruiker succesvol verwijderd",
+      "roleUpdated": "Rol bijgewerkt"
     },
     "errors": {
       "sendInvitation": "Verzenden van uitnodiging mislukt",
-      "updateRole": "Bijwerken van rol mislukt",
-      "deactivate": "Deactiveren van persoon mislukt",
-      "remove": "Verwijderen van persoon mislukt"
+      "deactivate": "Deactiveren van gebruiker mislukt",
+      "remove": "Verwijderen van gebruiker mislukt",
+      "updateRole": "Rol bijwerken mislukt"
     },
     "confirmations": {
       "sendActivationEmail": "Activeringsmail verzenden naar {{name}}?",
       "deactivate": "Weet u zeker dat u {{name}} wilt deactiveren?",
       "remove": "Weet u zeker dat u {{name}} wilt verwijderen?"
     },
+    "dialogs": {
+      "sendTitle": "Activeringsmail verzenden",
+      "deactivateTitle": "Gebruiker deactiveren",
+      "removeTitle": "Gebruiker verwijderen"
+    },
     "actions": {
+      "more": "Meer acties",
       "send": "Verzenden",
       "sendActivationMail": "Activeringsmail verzenden",
       "resendActivationMail": "Activeringsmail opnieuw verzenden",
-      "deactivatePerson": "Persoon deactiveren",
-      "removePerson": "Persoon verwijderen"
+      "deactivatePerson": "Gebruiker deactiveren",
+      "removePerson": "Gebruiker verwijderen"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Persoon succesvol aangemaakt.",
-      "updated": "Persoon succesvol bijgewerkt."
+      "created": "Gebruiker succesvol aangemaakt.",
+      "updated": "Gebruiker succesvol bijgewerkt."
     },
     "errors": {
-      "create": "Aanmaken van persoon mislukt",
-      "update": "Bijwerken van persoon mislukt"
+      "create": "Aanmaken van gebruiker mislukt",
+      "update": "Bijwerken van gebruiker mislukt"
     },
     "fields": {
-      "fullName": "Volledige naam *",
-      "emailAddress": "E-mailadres *",
-      "role": "Rol *",
-      "type": "Type",
+      "fullName": "Volledige naam",
+      "emailAddress": "E-mailadres",
+      "role": "Probo-rol",
+      "type": "Gebruikertype",
       "position": "Functie",
       "positionPlaceholder": "bijv. CEO, CFO, enz.",
+      "additionalEmails": "Extra e-mailadressen",
+      "additionalEmail": "Extra e-mailadres {{index}}",
+      "additionalEmailPlaceholder": "naam@voorbeeld.com",
       "contractStartDate": "Startdatum contract",
       "contractEndDate": "Einddatum contract"
     },
@@ -2384,8 +2437,9 @@
       "SERVICE_ACCOUNT": "Service-account"
     },
     "actions": {
-      "update": "Bijwerken",
-      "create": "Aanmaken"
+      "create": "Aanmaken",
+      "addEmail": "E-mail toevoegen",
+      "removeEmail": "E-mail verwijderen"
     }
   },
   "auditLogPage": {
@@ -2409,29 +2463,43 @@
   },
   "samlSsoPage": {
     "title": "SAML Single Sign-On",
-    "actions": { "addConfiguration": "Configuratie toevoegen" },
-    "breadcrumb": {
-      "settings": "SAML-instellingen",
-      "configure": "Configureren",
-      "verifyDomain": "Domein verifiëren"
-    }
+    "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein.",
+    "actions": { "add": "SAML SSO toevoegen", "previous": "Vorige", "next": "Volgende" }
   },
   "scimPage": {
-    "manualScim": {
-      "title": "Handmatige SCIM",
-      "description": "Configureer SCIM handmatig als uw identity provider niet hierboven vermeld staat. Hiervoor moet u de SCIM-eindpunt-URL en de bearer-token instellen in uw identity provider."
+    "title": "SCIM",
+    "description": "Verbind uw identity provider om gebruikers automatisch te synchroniseren met uw organisatie.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Verbind Google Workspace of Google Cloud Identity om gebruikers automatisch te synchroniseren via SCIM.",
+        "action": "Verbinden"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Verbind Microsoft 365 om gebruikers automatisch te synchroniseren via SCIM.",
+        "action": "Verbinden"
+      },
+      "manual": {
+        "title": "Handmatige SCIM",
+        "description": "Configureer SCIM handmatig als uw identity provider niet vermeld staat.",
+        "action": "Configureren"
+      }
     },
-    "provisioningEventHistory": "Geschiedenis van provisioning-gebeurtenissen",
+    "eventHistory": "Gebeurtenisgeschiedenis",
+    "connecting": "Identity provider verbinden",
     "export": {
       "title": "SCIM-gebeurtenissen exporteren",
       "description": "Selecteer een datumbereik om SCIM-gebeurtenissen te exporteren als CSV. U ontvangt een e-mail met een downloadlink.",
       "fields": { "from": "Van", "to": "Tot" },
-      "actions": { "export": "Exporteren", "exporting": "Bezig met exporteren..." },
+      "actions": { "export": "Exporteren", "cancel": "Annuleren" },
       "messages": {
-        "successTitle": "Succes",
         "success": "Export gestart. U ontvangt een e-mail met een downloadlink zodra deze gereed is."
       },
-      "errors": { "title": "Fout", "request": "Aanvragen van SCIM-gebeurtenisexport mislukt" }
+      "errors": {
+        "request": "Aanvragen van SCIM-gebeurtenisexport mislukt",
+        "range": "Het datumbereik mag niet langer zijn dan één jaar"
+      }
     }
   },
   "authLayout": {
@@ -2457,10 +2525,6 @@
       "uninstalling": "Verwijderen..."
     }
   },
-  "connectorList": {
-    "title": "Identity provider",
-    "description": "Verbind uw identity provider om gebruikers automatisch te synchroniseren met uw organisatie. Eenmaal verbonden hoeft u SCIM niet meer handmatig te configureren."
-  },
   "editSamlConfigurationForm": {
     "messages": {
       "updated": "SAML-configuratie succesvol bijgewerkt."
@@ -2471,7 +2535,6 @@
   },
   "googleWorkspaceConnector": {
     "name": "Google Workspace / Cloud Identity",
-    "connectDescription": "Verbind Google Workspace of Google Cloud Identity om gebruikers automatisch te synchroniseren via SCIM.",
     "connectedOn": "Verbonden op {{date}}",
     "status": {
       "disabled": "Uitgeschakeld",
@@ -2484,23 +2547,26 @@
       "excludedUsersUpdated": "Uitgesloten gebruikersnamen succesvol bijgewerkt"
     },
     "errors": {
-      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de geschiedenis van provisioning-gebeurtenissen voor meer details.",
+      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
       "bridgeDisabled": "Bridge is uitgeschakeld",
-      "bridgeFailed": "Bridge bevindt zich in een foutstatus"
+      "bridgeFailed": "Bridge bevindt zich in een foutstatus",
+      "update": "Bijwerken van uitgesloten gebruikers mislukt",
+      "disconnect": "Verbinding met Google Workspace / Cloud Identity verbreken mislukt"
     },
     "actions": {
-      "connect": "Verbinden",
       "settings": "Instellingen",
       "add": "Toevoegen",
       "remove": "Verwijderen",
-      "disconnect": "Verbinding verbreken",
-      "disconnecting": "Verbinding verbreken..."
+      "disconnect": "Verbinding verbreken"
     },
+    "excludedCount_one": "{{count}} uitgesloten gebruiker",
+    "excludedCount_other": "{{count}} uitgesloten gebruikers",
     "settings": {
       "title": "Instellingen Google Workspace / Cloud Identity",
       "excludedUserNames": "Uitgesloten gebruikersnamen",
       "excludedUserNamesDescription": "Gebruikers met deze gebruikersnamen worden niet gesynchroniseerd vanuit Google Workspace / Cloud Identity.",
-      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Google Workspace / Cloud Identity-gebruikers worden gesynchroniseerd."
+      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Google Workspace / Cloud Identity-gebruikers worden gesynchroniseerd.",
+      "invalidEmail": "Voer een geldig e-mailadres in"
     },
     "disconnect": {
       "title": "Verbinding met Google Workspace / Cloud Identity verbreken",
@@ -2510,7 +2576,6 @@
   },
   "microsoft365Connector": {
     "name": "Microsoft 365",
-    "connectDescription": "Verbind Microsoft 365 om gebruikers automatisch te synchroniseren via SCIM.",
     "connectedOn": "Verbonden op {{date}}",
     "status": {
       "disabled": "Uitgeschakeld",
@@ -2523,29 +2588,43 @@
       "excludedUsersUpdated": "Uitgesloten gebruikersnamen succesvol bijgewerkt"
     },
     "errors": {
-      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de geschiedenis van provisioning-gebeurtenissen voor meer details.",
+      "bridgeSync": "De bridge kan momenteel niet synchroniseren. Bekijk de gebeurtenisgeschiedenis voor meer details.",
       "bridgeDisabled": "Bridge is uitgeschakeld",
-      "bridgeFailed": "Bridge bevindt zich in een foutstatus"
+      "bridgeFailed": "Bridge bevindt zich in een foutstatus",
+      "update": "Bijwerken van uitgesloten gebruikers mislukt",
+      "disconnect": "Verbinding met Microsoft 365 verbreken mislukt"
     },
     "actions": {
-      "connect": "Verbinden",
       "settings": "Instellingen",
       "add": "Toevoegen",
       "remove": "Verwijderen",
-      "disconnect": "Verbinding verbreken",
-      "disconnecting": "Verbinding verbreken..."
+      "disconnect": "Verbinding verbreken"
     },
+    "excludedCount_one": "{{count}} uitgesloten gebruiker",
+    "excludedCount_other": "{{count}} uitgesloten gebruikers",
     "settings": {
       "title": "Instellingen Microsoft 365",
       "excludedUserNames": "Uitgesloten gebruikersnamen",
       "excludedUserNamesDescription": "Gebruikers met deze gebruikersnamen worden niet gesynchroniseerd vanuit Microsoft 365.",
-      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Microsoft 365-gebruikers worden gesynchroniseerd."
+      "noExcludedUserNames": "Geen uitgesloten gebruikersnamen. Alle Microsoft 365-gebruikers worden gesynchroniseerd.",
+      "invalidEmail": "Voer een geldig e-mailadres in"
     },
     "disconnect": {
       "title": "Verbinding met Microsoft 365 verbreken",
       "description": "Hiermee wordt uw Microsoft 365-integratie ontkoppeld. Gebruikers worden niet meer automatisch gesynchroniseerd via SCIM.",
       "warning": "Deze actie kan niet ongedaan worden gemaakt."
     }
+  },
+  "newSamlSsoPage": {
+    "title": "SAML SSO toevoegen",
+    "description": "Stel SAML 2.0 single sign-on in voor een e-maildomein.",
+    "back": "SAML SSO",
+    "notFound": "U kunt geen SAML SSO toevoegen aan deze organisatie"
+  },
+  "samlConfigurationPage": {
+    "title": "SAML SSO",
+    "back": "SAML SSO",
+    "notFound": "SAML-configuratie niet gevonden"
   },
   "newSamlConfigurationForm": {
     "messages": {
@@ -2557,18 +2636,17 @@
   },
   "samlConfigurationForm": {
     "sections": {
-      "basic": "Basisconfiguratie",
-      "identityProvider": "Identity provider-configuratie",
+      "identityProvider": "Identity provider",
       "attributeMapping": "Attribuuttoewijzing"
     },
     "fields": {
-      "emailDomain": "E-maildomein *",
+      "emailDomain": "E-maildomein",
       "emailDomainLocked": "E-maildomein kan na aanmaak niet meer worden gewijzigd",
       "emailDomainHelp": "Het e-maildomein waarop deze SAML-configuratie van toepassing is (bijv. example.com)",
-      "enforcementPolicy": "Handhavingsbeleid *",
-      "idpEntityId": "IdP Entity ID *",
-      "idpSsoUrl": "IdP SSO-URL *",
-      "idpCertificate": "IdP X.509-certificaat *",
+      "enforcementPolicy": "Handhavingsbeleid",
+      "idpEntityId": "IdP Entity ID",
+      "idpSsoUrl": "IdP SSO-URL",
+      "idpCertificate": "IdP X.509-certificaat",
       "emailAttribute": "E-mailattribuut",
       "firstNameAttribute": "Voornaamattribuut",
       "lastNameAttribute": "Achternaamattribuut",
@@ -2586,108 +2664,85 @@
       "optional": "Uw teamleden kunnen inloggen met single sign-on of met hun wachtwoord"
     },
     "actions": {
-      "update": "Configuratie bijwerken",
-      "create": "Configuratie aanmaken"
+      "update": "Configuratie bijwerken"
     }
   },
   "samlConfigurationList": {
     "messages": {
-      "deleted": "SAML-configuratie succesvol verwijderd."
+      "deleted": "SAML-configuratie succesvol verwijderd.",
+      "copied": "Gekopieerd naar klembord"
     },
     "errors": {
-      "delete": "Verwijderen van SAML-configuratie mislukt. Probeer het opnieuw."
+      "delete": "Verwijderen van SAML-configuratie mislukt. Probeer het opnieuw.",
+      "copy": "Kopiëren naar klembord mislukt"
     },
     "delete": {
       "title": "SAML-configuratie verwijderen",
       "description": "Weet u zeker dat u de SAML-configuratie voor {{domain}} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt."
     },
     "empty": {
-      "title": "Geen SAML-configuraties",
-      "description": "Stel SAML 2.0 single sign-on in voor uw organisatie door voor elk e-maildomein een configuratie toe te voegen."
+      "description": "Stel SAML 2.0 single sign-on in voor elk e-maildomein."
     },
-    "columns": {
-      "configurationId": "Configuratie-ID",
-      "emailDomain": "E-maildomein",
-      "domainStatus": "Domeinstatus",
-      "samlStatus": "SAML-status",
-      "enforcement": "Handhaving",
+    "pending": {
+      "description": "Voeg een DNS-<type>TXT</type>-record toe om te verifiëren dat u dit domein beheert."
+    },
+    "dns": {
+      "name": "Naam",
+      "value": "Waarde",
+      "copyName": "Naam kopiëren",
+      "copyValue": "Waarde kopiëren",
+      "note": "Het kan tot 48 uur duren voordat DNS-wijzigingen zijn doorgevoerd, maar dit is meestal binnen enkele minuten voltooid."
+    },
+    "enforcement": {
+      "optional": "SSO is <policy>optioneel</policy>. Leden kunnen single sign-on of een wachtwoord gebruiken.",
+      "required": "SSO is <policy>verplicht</policy>. Leden moeten single sign-on gebruiken om in te loggen.",
+      "off": "SSO is <policy>uit</policy>. Leden moeten hun wachtwoord gebruiken."
+    },
+    "signup": {
+      "enabled": "Registratie via SAML is <policy>aan</policy>. Nieuwe gebruikers van dit domein kunnen automatisch lid worden.",
+      "disabled": "Registratie via SAML is <policy>uit</policy>. Alleen bestaande gebruikers kunnen inloggen."
+    },
+    "fields": {
       "ssoUrl": "SSO-URL"
     },
-    "status": {
-      "verified": "Geverifieerd",
-      "pendingVerification": "In afwachting van verificatie",
-      "enabled": "Ingeschakeld",
-      "disabled": "Uitgeschakeld"
+    "title": {
+      "pending": "Verifieer dit domein",
+      "active": "SSO is actief",
+      "off": "SSO is uit"
     },
     "actions": {
       "delete": "Verwijderen",
-      "clickToCopy": "Klik om te kopiëren",
-      "copied": "Gekopieerd!",
+      "cancel": "Annuleren",
       "copyUrl": "URL kopiëren",
-      "edit": "Bewerken",
-      "verifyDomain": "Domein verifiëren"
-    }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Domeineigendom verifiëren",
-    "description": "Voeg het volgende TXT-record toe aan de DNS-configuratie van uw domein om eigendom te verifiëren:",
-    "fields": {
-      "hostName": "Host/Naam:",
-      "type": "Type:",
-      "value": "Waarde:"
-    },
-    "hostHint": "of gebruik uw domeinnaam",
-    "actions": {
-      "copy": "Kopiëren",
-      "copied": "Gekopieerd!"
-    },
-    "note": {
-      "label": "Opmerking:",
-      "description": "Het kan tot 48 uur duren voordat DNS-wijzigingen zijn doorgevoerd, maar dit is meestal binnen enkele minuten voltooid."
+      "open": "Openen"
     }
   },
   "scimConfiguration": {
     "errors": {
-      "title": "Fout",
-      "create": "Handmatige SCIM-configuratie mislukt"
+      "create": "Handmatige SCIM-configuratie mislukt",
+      "copy": "Kon niet naar klembord kopiëren",
+      "regenerate": "Bearer-token opnieuw genereren mislukt",
+      "delete": "Verwijderen van SCIM-configuratie mislukt"
     },
     "messages": {
-      "configured": {
-        "title": "Handmatige SCIM geconfigureerd"
-      },
       "copyToken": "Kopieer de bearer-token nu. Deze wordt niet opnieuw getoond.",
-      "deleted": {
-        "title": "Handmatige SCIM-configuratie verwijderd",
-        "description": "Alle via SCIM aangemaakte lidmaatschappen zijn gewijzigd naar handmatige bron."
-      },
-      "regenerated": {
-        "title": "Bearer-token opnieuw gegenereerd",
-        "description": "Kopieer de nieuwe bearer-token nu. Deze wordt niet opnieuw getoond."
-      },
+      "deleted": "Alle via SCIM aangemaakte lidmaatschappen zijn gewijzigd naar handmatige bron.",
+      "regenerated": "Kopieer de nieuwe bearer-token nu. Deze wordt niet opnieuw getoond.",
       "copied": "Gekopieerd naar klembord"
     },
-    "empty": {
-      "title": "Handmatige SCIM is niet geconfigureerd",
-      "description": "Genereer een SCIM-eindpunt en bearer-token om uw identity provider handmatig te configureren."
-    },
-    "active": {
-      "title": "Handmatige SCIM actief",
-      "description": "Gebruik deze gegevens om SCIM te configureren in uw identity provider."
-    },
+    "configuredOn": "Geconfigureerd op {{date}}",
     "fields": {
       "endpointUrl": "SCIM-eindpunt-URL",
       "bearerToken": "Bearer-token"
     },
     "tokenWarning": "Deze token wordt maar één keer getoond. Kopieer deze nu.",
     "actions": {
-      "enable": "SCIM inschakelen",
-      "enabling": "Inschakelen...",
       "regenerateToken": "Token opnieuw genereren",
-      "regenerating": "Opnieuw genereren...",
       "deleteConfiguration": "Configuratie verwijderen",
       "cancel": "Annuleren",
       "delete": "Verwijderen",
-      "deleting": "Verwijderen..."
+      "copyEndpointUrl": "SCIM-eindpunt-URL kopiëren",
+      "copyBearerToken": "Bearer-token kopiëren"
     },
     "delete": {
       "title": "Handmatige SCIM-configuratie verwijderen",
@@ -2701,13 +2756,19 @@
     }
   },
   "scimEventList": {
-    "columns": {
-      "time": "Tijd",
-      "method": "Methode",
-      "path": "Pad",
-      "result": "Resultaat"
+    "details": {
+      "user": "Gebruiker",
+      "ipAddress": "IP-adres",
+      "statusCode": "Statuscode",
+      "error": "Fout"
     },
-    "empty": "Nog geen SCIM-gebeurtenissen geregistreerd."
+    "request": "Verzoek",
+    "response": "Antwoord",
+    "empty": "Nog geen SCIM-gebeurtenissen geregistreerd.",
+    "copiedToClipboard": "Gekopieerd naar klembord",
+    "copy": "Kopiëren",
+    "copyFailed": "Kon niet naar klembord kopiëren",
+    "actions": { "previous": "Vorige", "next": "Volgende" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campagnes",
@@ -2787,7 +2848,7 @@
         "reconnectDescription": "Verbind deze bron opnieuw om de toegang tot organisaties te herstellen.",
         "credentialsDescription": "Probo kan deze bron niet lezen met de huidige inloggegevens. Controleer de inloggegevens en de rechten die ze bij {{provider}} hebben.",
         "notAuthorizedTitle": "{{provider}} heeft dit verzoek geweigerd",
-        "notAuthorizedDescription": "{{provider}} accepteert de inloggegevens, maar weigerde het verzoek van Probo. Controleer de rechten die ze bij {{provider}} hebben en of uw abonnement de API bevat die Probo gebruikt."
+        "notAuthorizedDescription": "{{provider}} accepteert de inloggegevens, maar weigerde het verzoek van Probo. Controleer de instellingen die voor deze bron zijn ingevoerd, de rechten die deze inloggegevens bij {{provider}} hebben en of uw abonnement de API bevat die Probo gebruikt."
       }
     }
   },
@@ -3062,7 +3123,12 @@
     "errors": {
       "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en probeer het opnieuw.",
       "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
-      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}"
+      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
+      "rejected": {
+        "better_stack_team_not_found": "Better Stack heeft geen team met deze naam voor dit API-token. Teamnamen zijn hoofdlettergevoelig: kopieer de exacte naam uit Settings > Teams in Better Stack, of gebruik een teamgebonden API-token.",
+        "supabase_organization_not_found": "Supabase heeft geen organisatie met deze slug. Kopieer deze uit de URL van de organisatie in het Supabase-dashboard (supabase.com/dashboard/org/<slug>).",
+        "supabase_organization_not_accessible": "Dit toegangstoken kan de leden van deze organisatie niet lezen. Maak een token aan met Organization-resourcetoegang die deze organisatie omvat, en Organization Members ingesteld op Read."
+      }
     },
     "actions": {
       "connect": "Verbinden",
@@ -3628,8 +3694,8 @@
       "optimizing": "5 - Optimaliserend"
     },
     "errors": {
-      "linkMeasure": "Koppelen van maatregel mislukt",
-      "unlinkMeasure": "Ontkoppelen van maatregel mislukt",
+      "linkInternalControl": "Koppelen van interne controle mislukt",
+      "unlinkInternalControl": "Ontkoppelen van interne controle mislukt",
       "linkDocument": "Koppelen van document mislukt",
       "unlinkDocument": "Ontkoppelen van document mislukt",
       "linkAudit": "Koppelen van audit mislukt",
@@ -3717,10 +3783,28 @@
       "update": "Framework bijwerken"
     }
   },
-  "measureDetailPage": {
-    "deleteConfirmation": "Hiermee wordt de maatregel \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+  "internalControlDetailPage": {
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "fields": {
-      "selectState": "Selecteer status"
+      "selectState": "Selecteer status",
+      "code": "Code",
+      "owner": "Eigenaar",
+      "reviewer": "Beoordelaar",
+      "operatingFrequency": "Uitvoeringsfrequentie",
+      "evidenceCadence": "Bewijscadans",
+      "testingCadence": "Testcadans",
+      "nextEvidenceDue": "Bewijsdeadline",
+      "nextTestDue": "Testdeadline"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Bij een gebeurtenis"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
     },
     "actions": {
       "edit": "Bewerken",
@@ -3743,30 +3827,30 @@
       "thirdParties": "Derde partijen"
     }
   },
-  "measuresPage": {
-    "title": "Maatregelen",
-    "description": "Maatregelen zijn acties die worden genomen om het risico te verminderen. Voeg ze toe om de implementatiestatus bij te houden.",
+  "internalControlsPage": {
+    "title": "Interne controles",
+    "description": "Interne controles zijn benoemde, toegewezen waarborgen die op een cadans draaien, bewijs opleveren en meerdere raamwerkeisen tegelijk dekken.",
     "messages": {
-      "imported": "Maatregelen succesvol geïmporteerd.",
+      "imported": "Interne controles succesvol geïmporteerd.",
       "error": "Fout",
       "success": "Succes",
-      "deleted": "Maatregel succesvol verwijderd"
+      "deleted": "Interne controle succesvol verwijderd"
     },
     "errors": {
-      "import": "Importeren van maatregelen mislukt",
-      "delete": "Verwijderen van maatregel mislukt"
+      "import": "Importeren van interne controles mislukt",
+      "delete": "Verwijderen van interne controle mislukt"
     },
-    "deleteConfirmation": "Hiermee wordt de maatregel \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "import": "Importeren",
-      "newMeasure": "Nieuwe maatregel",
+      "newInternalControl": "Nieuwe interne controle",
       "loading": "Laden...",
       "loadMore": "Meer laden",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     },
     "filters": {
-      "searchPlaceholder": "Maatregelen zoeken...",
+      "searchPlaceholder": "Interne controles zoeken...",
       "allStates": "Alle statussen",
       "allCategories": "Alle categorieën"
     },
@@ -3777,13 +3861,15 @@
       "not_started": "Niet gestart"
     },
     "columns": {
-      "measure": "Maatregel",
+      "internalControl": "Interne controle",
+      "code": "Code",
       "category": "Categorie",
-      "state": "Status"
+      "state": "Status",
+      "status": "Implementatie"
     },
     "empty": {
-      "title": "Nog geen maatregelen",
-      "description": "Maak uw eerste maatregel aan om te beginnen."
+      "title": "Nog geen interne controles",
+      "description": "Maak uw eerste interne controle aan om te beginnen."
     }
   },
   "linkedThirdPartiesCard": {
@@ -3807,7 +3893,7 @@
   },
   "createEvidenceDialog": {
     "breadcrumb": {
-      "measureDetail": "Maatregelen detail",
+      "internalControlDetail": "Details van de interne controle",
       "createEvidence": "Bewijs aanmaken"
     },
     "tabs": {
@@ -3868,31 +3954,46 @@
       "download": "Bestand downloaden"
     }
   },
-  "measureFormDialog": {
+  "internalControlFormDialog": {
     "breadcrumb": {
-      "measures": "Maatregelen",
-      "editMeasure": "Maatregel bewerken",
-      "newMeasure": "Nieuwe maatregel"
+      "internalControls": "Interne controles",
+      "editInternalControl": "Interne controle bewerken",
+      "newInternalControl": "Nieuwe interne controle"
     },
     "messages": {
-      "created": "Maatregel succesvol aangemaakt."
+      "created": "Interne controle succesvol aangemaakt."
     },
     "errors": {
-      "create": "Aanmaken van maatregel mislukt"
+      "create": "Aanmaken van interne controle mislukt"
     },
     "validation": {
       "nameRequired": "Naam is verplicht",
-      "categoryRequired": "Categorie is verplicht"
+      "categoryRequired": "Categorie is verplicht",
+      "reviewerDistinct": "De beoordelaar moet een andere persoon zijn dan de eigenaar",
+      "operatingIntervalRequired": "Geef aan hoe vaak de controle wordt uitgevoerd"
     },
     "fields": {
-      "name": "Naam van maatregel",
-      "namePlaceholder": "Titel van maatregel",
+      "name": "Naam",
+      "namePlaceholder": "Titel van de controle",
       "description": "Beschrijving",
       "descriptionPlaceholder": "Beschrijving toevoegen",
       "category": "Categorie",
       "categoryPlaceholder": "Selecteer categorie",
       "state": "Status",
-      "statePlaceholder": "Selecteer status"
+      "statePlaceholder": "Selecteer status",
+      "code": "Code",
+      "codePlaceholder": "IC-ACCESS-01",
+      "notSet": "Niet ingesteld",
+      "controlType": "Type",
+      "nature": "Aard",
+      "operatingFrequency": "Uitvoeringsfrequentie",
+      "operatingEvent": "Gebeurtenis",
+      "operatingEventPlaceholder": "wanneer iemand vertrekt",
+      "evidenceCadence": "Bewijscadans",
+      "testingCadence": "Testcadans",
+      "implementationStatus": "Implementatiestatus",
+      "owner": "Eigenaar",
+      "reviewer": "Beoordelaar"
     },
     "properties": "Eigenschappen",
     "states": {
@@ -3903,12 +4004,33 @@
       "unknown": "Onbekend",
       "not_implemented": "Niet geïmplementeerd"
     },
+    "controlTypes": {
+      "preventive": "Preventief",
+      "detective": "Detectief",
+      "corrective": "Correctief"
+    },
+    "natures": {
+      "manual": "Handmatig"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Bij een gebeurtenis",
+      "periodic": "Elke"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
+    },
     "actions": {
-      "create": "Maatregel aanmaken",
-      "update": "Maatregel bijwerken"
+      "create": "Interne controle aanmaken",
+      "update": "Interne controle bijwerken",
+      "addDuration": "Duur toevoegen",
+      "clearDuration": "Duur wissen"
     }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Bewijsstukken",
     "columns": {
       "name": "Naam",
@@ -3931,7 +4053,7 @@
       "delete": "Verwijderen"
     }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
     "actions": {
       "newTask": "Nieuwe taak"
     }
@@ -4396,7 +4518,7 @@
     },
     "tabs": {
       "overview": "Overzicht",
-      "measures": "Maatregelen",
+      "internalControls": "Interne controles",
       "documents": "Documenten",
       "controls": "Controls",
       "obligations": "Verplichtingen",
@@ -4942,13 +5064,13 @@
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "Geen maatregelen",
+    "progressEmpty": "Geen interne controles",
     "actions": {
       "tasks": "Taken",
       "edit": "Bewerken",
       "delete": "Verwijderen",
-      "expand": "Maatregelen tonen",
-      "collapse": "Maatregelen verbergen"
+      "expand": "Interne controles tonen",
+      "collapse": "Interne controles verbergen"
     }
   },
   "riskTreatmentPlansPage": {
@@ -4964,26 +5086,26 @@
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "actions": {
-      "measures": "Maatregelen",
+      "internalControls": "Interne controles",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     }
   },
-  "treatmentPlanMeasureList": {
-    "title": "Maatregelen",
-    "empty": "Nog geen maatregelen gekoppeld.",
-    "deleted": "Verwijderde maatregel",
-    "acceptedEmpty": "Geaccepteerde risico's kunnen geen maatregelen hebben.",
+  "treatmentPlanInternalControlList": {
+    "title": "Interne controles",
+    "empty": "Nog geen interne controles gekoppeld.",
+    "deleted": "Verwijderde interne controle",
+    "acceptedEmpty": "Geaccepteerde risico's kunnen geen interne controles hebben.",
     "actions": {
-      "create": "Nieuwe maatregel",
-      "link": "Maatregel koppelen",
+      "create": "Nieuwe interne controle",
+      "link": "Interne controle koppelen",
       "unlink": "Ontkoppelen",
       "showMore": "Meer tonen"
     }
   },
-  "treatmentPlanMeasuresDialog": {
-    "title": "Maatregelen van het behandelplan",
-    "loading": "Maatregelen laden…",
+  "treatmentPlanInternalControlsDialog": {
+    "title": "Interne controles van het behandelplan",
+    "loading": "Interne controles laden…",
     "netScore": "Netto {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
@@ -5443,6 +5565,7 @@
   },
   "thirdPartiesPage": {
     "description": "Derde partijen zijn externe diensten en leveranciers die uw bedrijf gebruikt. Voeg ze toe om hun risico- en compliancestatus bij te houden.",
+    "searchPlaceholder": "Zoek derde partijen...",
     "actions": {
       "document": "Document",
       "publish": "Publiceren",
@@ -6162,9 +6285,10 @@
     "notes": "Opmerkingen"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Opnieuw activeren", "reactivating": "Bezig met activeren..." },
+    "actions": { "reactivate": "Opnieuw activeren" },
     "dialog": { "title": "SCIM-brug opnieuw activeren", "description": "De volgende synchronisatie wordt nu ingepland. Opeenvolgende fouten worden gewist, en een mislukte, uitgeschakelde of vastgelopen brug wordt weer actief." },
-    "messages": { "success": "De SCIM-brug is opnieuw geactiveerd. De volgende run is nu ingepland." }
+    "messages": { "success": "De SCIM-brug is opnieuw geactiveerd. De volgende run is nu ingepland." },
+    "errors": { "reactivate": "SCIM-brug opnieuw activeren mislukt" }
   },
   "country": {
     "GLOBAL": "Wereldwijd",

@@ -4,6 +4,8 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.19.0] - 2026-09-24
+
 ### Fixed
 
 - `<probo-settings-link>` re-resolves the banner root on click so a

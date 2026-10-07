@@ -60,7 +60,8 @@ func NewCmdPublishLinear(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "publish-linear <id>",
-		Short: "Publish a task to Linear",
+		Short: "Publish a task as a new Linear issue",
+		Long:  "Publish a task as a new Linear issue. The Probo task status and content are left unchanged.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

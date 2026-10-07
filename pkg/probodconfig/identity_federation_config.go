@@ -46,6 +46,10 @@ type (
 		// AzureTerraformModuleSource is the module address copied into the Azure
 		// Terraform install snippet.
 		AzureTerraformModuleSource string `json:"azure-terraform-module-source,omitempty"`
+		// AWSEndpoint is an optional base URL for every AWS API the workload
+		// identity session calls. Empty uses the SDK's regional hosts. A local
+		// emulator sets http://127.0.0.1:4566, and only that URL may dial loopback.
+		AWSEndpoint string `json:"aws-endpoint,omitempty"`
 	}
 
 	// IdentityFederationSigningKeyConfig is one RSA key published in the identity federation

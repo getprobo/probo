@@ -375,6 +375,45 @@ FOR UPDATE
 	return nil
 }
 
+// LockByID locks the connector row for the rest of the caller's transaction.
+// It does not load the row into the receiver. SyncStandaloneAccount calls it
+// before the account check, because FOR UPDATE on a missing account row locks
+// nothing and two syncs would both insert.
+func (c *Connector) LockByID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+SELECT
+    id
+FROM
+    connectors
+WHERE
+    %s
+    AND id = @id
+FOR UPDATE
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"id": c.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var id gid.GID
+
+	err := conn.QueryRow(ctx, q, args).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	return nil
+}
+
 // LockConnectorInstallResource serializes concurrent install completions that
 // target the same (organization, provider, vendor tenant id) for the rest of the
 // transaction. It must be taken BEFORE the find-or-create load: two states are

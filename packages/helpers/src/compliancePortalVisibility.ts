@@ -20,18 +20,15 @@
 
 type Translator = (s: string) => string;
 
-export type CompliancePortalVisibility = "NONE" | "RESTRICTED" | "PUBLIC";
+export type CompliancePortalVisibility = "RESTRICTED" | "PUBLIC";
 
 export const compliancePortalVisibilities = [
-  "NONE",
   "RESTRICTED",
   "PUBLIC",
 ] as const;
 
 export const getCompliancePortalVisibilityVariant = (visibility: CompliancePortalVisibility) => {
   switch (visibility) {
-    case "NONE":
-      return "danger" as const;
     case "RESTRICTED":
       return "warning" as const;
     case "PUBLIC":
@@ -43,8 +40,6 @@ export const getCompliancePortalVisibilityVariant = (visibility: CompliancePorta
 
 export const getCompliancePortalVisibilityLabel = (visibility: CompliancePortalVisibility) => {
   switch (visibility) {
-    case "NONE":
-      return "None";
     case "RESTRICTED":
       return "Restricted";
     case "PUBLIC":
@@ -76,7 +71,6 @@ export function getCompliancePortalVisibilityOptions(t: Translator) {
   return compliancePortalVisibilities.map((visibility) => ({
     value: visibility,
     label: t({
-      "NONE": "helpers.compliancePortalVisibility.none",
       "RESTRICTED": "helpers.compliancePortalVisibility.restricted",
       "PUBLIC": "helpers.compliancePortalVisibility.public",
     }[visibility]),

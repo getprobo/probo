@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/task/sync/linear"
+	"go.probo.inc/probo/pkg/webhook"
 )
 
 func (s *Service) ApplyInboundIssue(
@@ -41,6 +42,10 @@ func (s *Service) ApplyInboundIssue(
 ) error {
 	if envelope.Type != "Issue" {
 		return nil
+	}
+
+	if envelope.Action == "remove" {
+		return s.unlinkRemovedIssue(ctx, envelope)
 	}
 
 	if envelope.Action != "update" && envelope.Action != "create" {
@@ -64,7 +69,7 @@ func (s *Service) ApplyInboundIssue(
 				ctx,
 				tx,
 				coredata.NewNoScope(),
-				coredata.ConnectorProviderLinear,
+				coredata.ConnectorProviderLinearSync,
 				data.ID,
 			); err != nil {
 				return fmt.Errorf("cannot load task external links: %w", err)
@@ -170,7 +175,45 @@ func (s *Service) ApplyInboundIssue(
 				return err
 			}
 
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
 			return touchInboundLink(ctx, tx, scope, link, data, remoteUpdatedAt, hash, mapped.Priority)
+		},
+	)
+}
+
+func (s *Service) unlinkRemovedIssue(
+	ctx context.Context,
+	envelope *linear.WebhookEnvelope,
+) error {
+	data, err := envelope.IssueData()
+	if err != nil {
+		return err
+	}
+
+	if data.ID == "" {
+		return nil
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			link, scope, ok, err := lockedLinearLink(ctx, tx, data.ID, envelope.OrganizationID)
+			if err != nil || !ok {
+				return err
+			}
+
+			if err := link.Delete(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot delete task external link: %w", err)
+			}
+
+			if err := deleteCommentLinks(ctx, tx, scope, link.TaskID); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	)
 }
@@ -233,6 +276,44 @@ func mapInboundIssue(task *coredata.Task, data *linear.IssueWebhookData) (inboun
 	}
 
 	return mapped, nil
+}
+
+func lockedLinearLink(
+	ctx context.Context,
+	tx pg.Tx,
+	issueID string,
+	linearOrganizationID string,
+) (*coredata.TaskExternalLink, coredata.Scoper, bool, error) {
+	links := coredata.TaskExternalLinks{}
+	if err := links.LoadByExternalID(
+		ctx,
+		tx,
+		coredata.NewNoScope(),
+		coredata.ConnectorProviderLinearSync,
+		issueID,
+	); err != nil {
+		return nil, nil, false, fmt.Errorf("cannot load task external links: %w", err)
+	}
+
+	link, ok := PickLinkForLinearOrganization(links, linearOrganizationID)
+	if !ok {
+		return nil, nil, false, nil
+	}
+
+	scope := coredata.NewScope(link.OrganizationID.TenantID())
+	if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, link.TaskID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil, false, nil
+		}
+
+		return nil, nil, false, fmt.Errorf("cannot lock task external link: %w", err)
+	}
+
+	if link.ExternalID != issueID {
+		return nil, nil, false, nil
+	}
+
+	return link, scope, true, nil
 }
 
 func PickLinkForLinearOrganization(

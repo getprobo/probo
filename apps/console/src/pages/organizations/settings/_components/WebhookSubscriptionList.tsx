@@ -165,7 +165,6 @@ export function WebhookSubscriptionList({ organizationKey }: WebhookSubscription
                   previousLabel={t("webhooksSettingsPage.actions.previous")}
                   nextLabel={t("webhooksSettingsPage.actions.next")}
                   showLabels
-                  variant="surface"
                   disabled={isPending}
                   onPrevious={goPrevious}
                   onNext={goNext}

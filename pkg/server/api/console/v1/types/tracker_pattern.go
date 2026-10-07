@@ -79,11 +79,26 @@ type (
 		TrackerType      *coredata.TrackerType
 		CookieCategoryID *gid.GID
 		ThirdPartyID     *gid.GID
+		Excluded         *bool
+		Categorized      *bool
 	}
 )
 
 func (TrackerPattern) IsNode()          {}
 func (t TrackerPattern) GetID() gid.GID { return t.ID }
+
+func NewCoredataTrackerPatternFilter(filter *TrackerPatternFilter) *coredata.TrackerPatternFilter {
+	if filter == nil {
+		return coredata.NewTrackerPatternFilter(nil, nil, nil)
+	}
+
+	return coredata.NewTrackerPatternFilter(nil, filter.CookieCategoryID, nil).
+		WithExcluded(filter.Excluded).
+		WithCategorized(filter.Categorized).
+		WithQuery(filter.Query).
+		WithSource(filter.Source).
+		WithTrackerType(filter.TrackerType)
+}
 
 func NewTrackerPatternConnection(
 	p *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField],

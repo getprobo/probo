@@ -42,6 +42,7 @@ func stubNewCloudSession(
 	context.Context,
 	*identityfederation.Issuer,
 	*coredata.Connector,
+	string,
 ) (cloud.Session, error) {
 	return nil, nil
 }
@@ -305,6 +306,36 @@ func TestRegistry_Register(t *testing.T) {
 				})
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.want)
+			})
+		}
+	})
+
+	t.Run("CheckSettings needs a Probe closure and ExtraSettings", func(t *testing.T) {
+		t.Parallel()
+
+		probe := func(context.Context, *http.Client, *coredata.Connector, provider.Endpoints) error {
+			return nil
+		}
+		settings := []provider.ExtraSetting{{Key: "teamName", Label: "Team Name", Required: true}}
+
+		for name, reg := range map[string]*provider.Registration{
+			"no probe closure": {
+				APIKey: &provider.APIKeyConfig{ExtraSettings: settings, CheckSettings: true},
+			},
+			"no extra settings": {
+				APIKey: &provider.APIKeyConfig{CheckSettings: true},
+				Probe:  probe,
+			},
+		} {
+			t.Run(name, func(t *testing.T) {
+				t.Parallel()
+
+				reg.Provider = coredata.ConnectorProviderSlack
+				reg.DisplayName = "Slack"
+
+				err := provider.NewRegistry().Register(reg)
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "CheckSettings needs a Probe closure and ExtraSettings")
 			})
 		}
 	})
@@ -785,13 +816,13 @@ func TestRegistry_ProviderOAuth2Scopes(t *testing.T) {
 }
 
 // TestRegistry_ProbeURL covers the registered and unregistered paths.
-// Slack ships a probe URL in its Registration; an unknown provider
+// HubSpot ships a probe URL in its Registration; an unknown provider
 // returns the empty string.
 func TestRegistry_ProbeURL(t *testing.T) {
 	t.Parallel()
 
 	r := provider.NewBuiltinRegistry()
-	assert.NotEmpty(t, r.ProbeURL("SLACK"))
+	assert.NotEmpty(t, r.ProbeURL("HUBSPOT"))
 	assert.Empty(t, r.ProbeURL("UNKNOWN"))
 }
 

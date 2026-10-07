@@ -20,7 +20,6 @@
 
 import { formatDatetime, toDateInput } from "@probo/helpers";
 import { dateFormat, dateTimeFormat, formatDuration } from "@probo/i18n";
-import { PriorityLevel, TaskStateIcon } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
@@ -50,8 +49,10 @@ import { taskPropertiesSection } from "../variants";
 
 import { TaskAssigneeField } from "./TaskAssigneeField";
 import { TaskDurationField } from "./TaskDurationField";
+import { TaskInternalControlField } from "./TaskInternalControlField";
 import { TaskLinearField } from "./TaskLinearField";
-import { TaskMeasureField } from "./TaskMeasureField";
+import { TaskPriorityIcon } from "./TaskPriorityIcon";
+import { TaskStateIcon } from "./TaskStateIcon";
 
 const taskPropertiesSectionFragment = graphql`
   fragment TaskPropertiesSection_task on Task {
@@ -68,13 +69,13 @@ const taskPropertiesSectionFragment = graphql`
       id
       fullName
     }
-    measure {
+    internalControl {
       id
       name
     }
     ...TaskAssigneeField_task
     ...TaskLinearField_task
-    ...TaskMeasureField_task
+    ...TaskInternalControlField_task
   }
 `;
 
@@ -96,7 +97,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
       state?: TaskState;
       priority?: TaskPriority;
       assignedToId?: string | null;
-      measureId?: string | null;
+      internalControlId?: string | null;
       timeEstimate?: string | null;
       deadline?: string | null;
       recurrenceInterval?: string | null;
@@ -180,7 +181,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                       priority
                         ? (
                             <span className={value()}>
-                              <PriorityLevel level={priority} />
+                              <TaskPriorityIcon priority={priority} />
                               {t(`detailsPage.priorities.${priority.toLowerCase()}`)}
                             </span>
                           )
@@ -190,7 +191,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                     {taskPriorities.map(priority => (
                       <SelectItem key={priority} value={priority}>
                         <span className={value()}>
-                          <PriorityLevel level={priority} />
+                          <TaskPriorityIcon priority={priority} />
                           {t(`detailsPage.priorities.${priority.toLowerCase()}`)}
                         </span>
                       </SelectItem>
@@ -200,7 +201,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
               )
             : (
                 <span className={value()}>
-                  <PriorityLevel level={task.priority} />
+                  <TaskPriorityIcon priority={task.priority} />
                   <Text size={2}>
                     {t(`detailsPage.priorities.${task.priority.toLowerCase()}`)}
                   </Text>
@@ -224,7 +225,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
               ? (
                   <Link
                     size={2}
-                    to={`/organizations/${organizationId}/settings/people/${task.assignedTo.id}`}
+                    to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
                   >
                     {task.assignedTo.fullName}
                   </Link>
@@ -236,26 +237,26 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
         <Suspense fallback={null}>
           <TaskLinearField taskKey={task} />
         </Suspense>
-        <PropertyRow label={t("detailsPage.fields.measure")}>
+        <PropertyRow label={t("detailsPage.fields.internalControl")}>
           {task.canUpdate
             ? (
                 <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
-                  <TaskMeasureField
+                  <TaskInternalControlField
                     taskKey={task}
                     disabled={isUpdating}
-                    onValueChange={(measureId) => {
-                      void save({ measureId });
+                    onValueChange={(internalControlId) => {
+                      void save({ internalControlId });
                     }}
                   />
                 </Suspense>
               )
-            : task.measure
+            : task.internalControl
               ? (
                   <Link
                     size={2}
-                    to={`/organizations/${organizationId}/governance/measures/${task.measure.id}`}
+                    to={`/organizations/${organizationId}/governance/internal-controls/${task.internalControl.id}`}
                   >
-                    {task.measure.name}
+                    {task.internalControl.name}
                   </Link>
                 )
               : (
@@ -277,26 +278,28 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
         <PropertyRow label={t("detailsPage.fields.deadline")}>
           {task.canUpdate
             ? (
-                <TextField
-                  size={1}
-                  type="date"
-                  value={toDateInput(task.deadline)}
-                  disabled={isUpdating}
-                  aria-label={t("detailsPage.fields.deadline")}
-                  onChange={(event) => {
-                    const next = event.currentTarget.value;
-                    const deadline = next ? formatDatetime(next) ?? null : null;
-                    const current = task.deadline ? toDateInput(task.deadline) : "";
-                    if (next === current) {
-                      return;
-                    }
-                    if (!deadline && task.recurrenceInterval) {
-                      void save({ deadline, recurrenceInterval: null });
-                      return;
-                    }
-                    void save({ deadline });
-                  }}
-                />
+                <>
+                  <TextField
+                    size={1}
+                    type="date"
+                    value={toDateInput(task.deadline)}
+                    disabled={isUpdating}
+                    aria-label={t("detailsPage.fields.deadline")}
+                    onChange={(event) => {
+                      const next = event.currentTarget.value;
+                      const deadline = next ? formatDatetime(next) ?? null : null;
+                      const current = task.deadline ? toDateInput(task.deadline) : "";
+                      if (next === current) {
+                        return;
+                      }
+                      if (!deadline && task.recurrenceInterval) {
+                        void save({ deadline, recurrenceInterval: null });
+                        return;
+                      }
+                      void save({ deadline });
+                    }}
+                  />
+                </>
               )
             : task.deadline
               ? (

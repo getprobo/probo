@@ -5,6 +5,7 @@
     "none": "Aucun",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
+    "overdue": "En retard",
     "fields": {
       "name": "Nom",
       "description": "Description",
@@ -12,7 +13,7 @@
       "priority": "Priorité",
       "assignedTo": "Assigné à",
       "linear": "Linear",
-      "measure": "Mesure",
+      "internalControl": "Contrôle interne",
       "timeEstimate": "Estimation de temps",
       "timeEstimateUnit": "Unité d'estimation",
       "deadline": "Échéance",
@@ -70,13 +71,26 @@
       "connect": "Connecter Linear Sync",
       "reconnect": "Reconnecter Linear Sync",
       "publish": "Publier",
+      "link": "Lier",
       "unlink": "Dissocier",
       "team": "Équipe Linear",
       "chooseTeam": "Choisir une équipe",
+      "chooseIssue": "Choisir une issue",
+      "newIssue": "Nouvelle issue",
+      "searchTeam": "Rechercher une équipe",
+      "searchIssue": "Rechercher une issue",
+      "noResults": "Aucun résultat",
+      "loadMore": "Charger plus",
       "published": "Tâche publiée sur Linear.",
+      "linked": "Tâche liée à Linear.",
+      "confirmLink": {
+        "title": "Lier l'issue Linear",
+        "description": "Cela mettra à jour la tâche Probo avec l'issue Linear."
+      },
       "unlinked": "Issue Linear dissociée.",
       "errors": {
         "publish": "Échec de la publication vers Linear",
+        "link": "Échec de la liaison vers Linear",
         "unlink": "Échec de la dissociation de l'issue Linear",
         "load": "Impossible d'afficher Linear"
       }
@@ -89,6 +103,7 @@
     "comments": {
       "title": "Commentaires",
       "empty": "Aucun commentaire pour le moment",
+      "authorFallback": "Quelqu'un",
       "fields": {
         "comment": "Commentaire",
         "leaveAComment": "Laisser un commentaire"
@@ -134,9 +149,9 @@
         "assigned": "{{actor}} a assigné {{newValue}}",
         "reassigned": "{{actor}} a réassigné de {{oldValue}} à {{newValue}}",
         "unassigned": "{{actor}} a retiré l'assignation de {{oldValue}}",
-        "measureLinked": "{{actor}} a lié {{newValue}}",
-        "measureChanged": "{{actor}} a déplacé de {{oldValue}} à {{newValue}}",
-        "measureUnlinked": "{{actor}} a délié {{oldValue}}",
+        "internalControlLinked": "{{actor}} a lié {{newValue}}",
+        "internalControlChanged": "{{actor}} a déplacé de {{oldValue}} à {{newValue}}",
+        "internalControlUnlinked": "{{actor}} a délié {{oldValue}}",
         "deadlineSet": "{{actor}} a défini l'échéance au {{newValue}}",
         "deadlineChanged": "{{actor}} a changé l'échéance de {{oldValue}} à {{newValue}}",
         "deadlineRemoved": "{{actor}} a retiré l'échéance",
@@ -168,7 +183,7 @@
     }
   },
   "createDialog": {
-    "title": "Nouvelle tâche",
+    "title": "Ajouter une tâche",
     "fields": {
       "namePlaceholder": "Nom de la tâche"
     },

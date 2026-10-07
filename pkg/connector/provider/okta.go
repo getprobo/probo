@@ -39,7 +39,12 @@ import (
 // and no OAuth metadata. BuildProbeURL targets the org's own API host.
 func oktaRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderOkta,
+		Provider: coredata.ConnectorProviderOkta,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.OktaConnectorSettings) string {
+				return s.Domain
+			},
+		),
 		DisplayName:      "Okta",
 		DocumentationURL: accessReviewDocsURL("okta"),
 		APIKey: &APIKeyConfig{

@@ -21,11 +21,6 @@
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
-import {
-  measureTasksConnectionKey,
-  organizationTasksConnectionKey,
-  taskConnectionId,
-} from "./taskPath";
 import { taskPriorities, type TaskPriority } from "./taskState";
 
 type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
@@ -117,31 +112,6 @@ export function insertTaskEdgeSorted(
   }
 }
 
-export function insertNextTaskEdge(
-  store: RecordSourceSelectorProxy,
-  organizationId: string,
-  extraConnectionIds: readonly string[] = [],
-): string | undefined {
-  const nextEdge = store.getRootField("updateTask")?.getLinkedRecord("nextTaskEdge");
-  if (!nextEdge) {
-    return undefined;
-  }
-
-  const measureId = nextEdge.getLinkedRecord("node")
-    ?.getLinkedRecord("measure")
-    ?.getDataID();
-  const connectionIds = [
-    taskConnectionId(organizationId, organizationTasksConnectionKey),
-    ...extraConnectionIds,
-  ];
-  if (measureId) {
-    connectionIds.push(taskConnectionId(measureId, measureTasksConnectionKey));
-  }
-
-  insertExistingTaskEdgeSorted(store, nextEdge, connectionIds);
-  return measureId;
-}
-
 export function insertExistingTaskEdgeSorted(
   store: RecordSourceSelectorProxy,
   edge: TaskRecord,
@@ -165,8 +135,8 @@ export function moveTaskNodeSorted(
   node: TaskRecord,
   connections: {
     organizationConnectionId: string;
-    previousMeasureConnectionId?: string;
-    nextMeasureConnectionId?: string;
+    previousInternalControlConnectionId?: string;
+    nextInternalControlConnectionId?: string;
     createIfMissing?: boolean;
   },
 ) {
@@ -179,8 +149,8 @@ export function moveTaskNodeSorted(
     }
   }
 
-  const previousId = connections.previousMeasureConnectionId;
-  const nextId = connections.nextMeasureConnectionId;
+  const previousId = connections.previousInternalControlConnectionId;
+  const nextId = connections.nextInternalControlConnectionId;
   if (previousId && previousId !== nextId) {
     const previous = store.get(previousId);
     if (previous) {

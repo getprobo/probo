@@ -47,7 +47,7 @@ func NewRisk(r *coredata.Risk) *Risk {
 	}
 }
 
-func NewListMeasureRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.RiskOrderField]) ListMeasureRisksOutput {
+func NewListInternalControlRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.RiskOrderField]) ListInternalControlRisksOutput {
 	risks := make([]*Risk, 0, len(riskPage.Data))
 	for _, v := range riskPage.Data {
 		risks = append(risks, NewRisk(v))
@@ -60,7 +60,7 @@ func NewListMeasureRisksOutput(riskPage *page.Page[*coredata.Risk, coredata.Risk
 		nextCursor = &cursorKey
 	}
 
-	return ListMeasureRisksOutput{
+	return ListInternalControlRisksOutput{
 		NextCursor: nextCursor,
 		Risks:      risks,
 	}

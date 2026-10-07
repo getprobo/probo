@@ -101,16 +101,12 @@ func (d *SupabaseDriver) ListAccounts(ctx context.Context) ([]AccountRecord, err
 }
 
 func (d *SupabaseDriver) queryMembers(ctx context.Context) ([]supabaseMember, error) {
-	// Kept on (*url.URL).JoinPath so the org slug keeps being escaped exactly
-	// as before: each element is treated as an already-escaped path segment.
-	base, err := url.Parse(d.baseURL)
+	endpoint, err := SupabaseMembersURL(d.baseURL, d.orgSlug)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse supabase base URL: %w", err)
+		return nil, fmt.Errorf("cannot build supabase members URL: %w", err)
 	}
 
-	u := base.JoinPath(supabaseOrganizationsPath, d.orgSlug, supabaseMembersPath)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create supabase members request: %w", err)
 	}
@@ -126,6 +122,10 @@ func (d *SupabaseDriver) queryMembers(ctx context.Context) ([]supabaseMember, er
 		_ = httpResp.Body.Close()
 	}()
 
+	if rejected := SupabaseMembersRejection(httpResp); rejected != nil {
+		return nil, rejected
+	}
+
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return nil, fmt.Errorf(
 			"cannot fetch supabase members: unexpected status %d",
@@ -139,6 +139,48 @@ func (d *SupabaseDriver) queryMembers(ctx context.Context) ([]supabaseMember, er
 	}
 
 	return members, nil
+}
+
+// SupabaseMembersURL returns the members URL of the organization orgSlug.
+func SupabaseMembersURL(baseURL, orgSlug string) (string, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse supabase base URL: %w", err)
+	}
+
+	return base.JoinPath(supabaseOrganizationsPath, url.PathEscape(orgSlug), supabaseMembersPath).String(), nil
+}
+
+// Codes for the organization members refusals: a slug no organization has, and
+// an organization the token cannot reach.
+const (
+	SupabaseOrganizationNotFound      = "supabase_organization_not_found"
+	SupabaseOrganizationNotAccessible = "supabase_organization_not_accessible"
+)
+
+// SupabaseMembersRejection returns the refusal a members response carries, or
+// nil.
+func SupabaseMembersRejection(resp *http.Response) *SettingRejectedError {
+	if !respondsWithJSON(resp) {
+		return nil
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNotFound:
+		return &SettingRejectedError{
+			Code:       SupabaseOrganizationNotFound,
+			StatusCode: resp.StatusCode,
+			Message:    "Supabase has no organization with this slug. Copy it from the organization URL in the Supabase dashboard (supabase.com/dashboard/org/<slug>).",
+		}
+	case http.StatusForbidden:
+		return &SettingRejectedError{
+			Code:       SupabaseOrganizationNotAccessible,
+			StatusCode: resp.StatusCode,
+			Message:    "This access token cannot read the members of this organization. Create a token with Organization resource access that includes this organization, and Organization Members set to Read.",
+		}
+	default:
+		return nil
+	}
 }
 
 // supabaseNameResolver returns the Supabase organization slug as the name.

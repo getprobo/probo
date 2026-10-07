@@ -21,21 +21,35 @@
 import { tv } from "tailwind-variants/lite";
 
 // Segmented control (single-select radio-cards over Base UI's ToggleGroup).
-// There is no surrounding track: the items are standalone bordered cards laid
-// out on an equal-width grid that wraps to new rows. Using a grid (rather than
-// flex-wrap) keeps every card the same width and prevents a lone wrapped item
-// from stretching across its row. Each card keeps a 1px border at all sizes
-// (the pressed state only darkens the border, so selection never shifts layout).
+// There is no surrounding track: items are standalone bordered pills. Size 2
+// uses an equal-width card grid so a lone wrapped item does not stretch.
+// Size 1 is a compact icon+label row with a gap. Each item keeps a 1px
+// border at all sizes (the pressed state only darkens the border).
 export const segmentedControl = tv({
   slots: {
-    root: "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1",
+    root: "",
     item: [
-      "min-w-0 cursor-pointer select-none rounded-3 border border-sand-a6 bg-sand-1 px-4 py-3.5",
-      "text-center text-2 font-medium text-sand-12 outline-none transition-colors",
+      "min-w-0 cursor-pointer select-none border border-sand-a6 bg-sand-1",
+      "font-medium text-sand-12 outline-none transition-colors",
       "hover:border-sand-a8",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
       "data-pressed:border-sand-a12",
       "data-disabled:pointer-events-none data-disabled:opacity-50",
     ],
+  },
+  variants: {
+    size: {
+      1: {
+        root: "flex flex-wrap gap-2",
+        item: "inline-flex items-center gap-2 rounded-2 px-3 py-1.5 text-left text-2 [&_svg]:size-4",
+      },
+      2: {
+        root: "grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-1",
+        item: "rounded-3 px-4 py-3.5 text-center text-2",
+      },
+    },
+  },
+  defaultVariants: {
+    size: 2,
   },
 });

@@ -131,6 +131,57 @@ LIMIT 1;
 	return nil
 }
 
+func (cpas *CompliancePortalAudits) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	auditLinkIDs []gid.GID,
+) error {
+	if len(auditLinkIDs) == 0 {
+		*cpas = CompliancePortalAudits{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	compliance_portal_id,
+	audit_id,
+	visibility,
+	created_at,
+	updated_at
+FROM
+	cp_audits
+WHERE
+	%s
+	AND id = ANY(@ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": auditLinkIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalAudit])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal audits: %w", err)
+	}
+
+	*cpas = audits
+
+	if len(audits) != len(gid.NewSet(auditLinkIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (cpa *CompliancePortalAudit) LoadByCompliancePortalIDAndAuditID(
 	ctx context.Context,
 	conn pg.Querier,

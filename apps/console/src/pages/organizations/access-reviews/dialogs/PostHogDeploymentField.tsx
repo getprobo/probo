@@ -28,11 +28,13 @@ import { useTranslation } from "react-i18next";
 type PostHogDeploymentFieldProps = {
   values: Record<string, string>;
   onChange: (values: Record<string, string>) => void;
+  disabled?: boolean;
 };
 
 export function PostHogDeploymentField({
   values,
   onChange,
+  disabled,
 }: PostHogDeploymentFieldProps) {
   const { t } = useTranslation();
 
@@ -55,6 +57,7 @@ export function PostHogDeploymentField({
           onValueChange={(val: string) =>
             onChange(val === "SELF_HOSTED" ? { instanceUrl: "" } : { region: val })}
           placeholder={t("postHogDeploymentField.deployment.placeholder")}
+          disabled={disabled}
         >
           <Option value="US">
             {t("postHogDeploymentField.deployment.usCloud")}
@@ -73,6 +76,7 @@ export function PostHogDeploymentField({
           value={values.instanceUrl ?? ""}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onChange({ instanceUrl: e.target.value })}
+          disabled={disabled}
           required
         />
       )}

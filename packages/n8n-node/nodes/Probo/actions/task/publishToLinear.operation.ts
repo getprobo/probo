@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the task to publish',
+		description: 'The ID of the task to publish as a new Linear issue',
 		required: true,
 	},
 	{

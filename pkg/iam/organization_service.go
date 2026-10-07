@@ -62,12 +62,14 @@ type (
 
 	CreateOrganizationRequest struct {
 		Name               string
+		LegalName          *string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
 	}
 
 	UpdateOrganizationRequest struct {
 		Name               *string
+		LegalName          **string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
 	}
@@ -82,6 +84,7 @@ type (
 		AttributeLastname  *string
 		AttributeRole      *string
 		AutoSignupEnabled  bool
+		EnforcementPolicy  *coredata.SAMLEnforcementPolicy
 	}
 
 	UpdateSAMLConfigurationRequest struct {
@@ -150,9 +153,10 @@ var (
 const (
 	TokenTypeAPIKey = "api_key"
 
-	NameMaxLength    = 100
-	TitleMaxLength   = 1000
-	ContentMaxLength = 5000
+	NameMaxLength          = 100
+	TitleMaxLength         = 1000
+	ContentMaxLength       = 5000
+	organizationNameMaxLen = 255
 
 	maxOrganizationLogoFileSize = 5 << 20
 
@@ -169,7 +173,19 @@ var (
 	)
 )
 
-func (req CreateOrganizationRequest) Validate() error {
+func trimLegalName(legalName *string) *string {
+	if legalName == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*legalName)
+
+	return &trimmed
+}
+
+func (req *CreateOrganizationRequest) Validate() error {
+	req.LegalName = trimLegalName(req.LegalName)
+
 	v := validator.New()
 
 	if req.LogoFile != nil {
@@ -190,15 +206,22 @@ func (req CreateOrganizationRequest) Validate() error {
 		}
 	}
 
-	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(organizationNameMaxLen))
+	v.Check(req.LegalName, "legalName", validator.SafeTextNoNewLine(organizationNameMaxLen))
 
 	return v.Error()
 }
 
-func (req UpdateOrganizationRequest) Validate() error {
+func (req *UpdateOrganizationRequest) Validate() error {
+	if req.LegalName != nil {
+		trimmed := trimLegalName(*req.LegalName)
+		req.LegalName = &trimmed
+	}
+
 	v := validator.New()
 
-	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
+	v.Check(req.Name, "name", validator.SafeTextNoNewLine(organizationNameMaxLen))
+	v.Check(req.LegalName, "legalName", validator.SafeTextNoNewLine(organizationNameMaxLen))
 	v.Check(req.LogoFile, "logo_file", validator.NotEmpty())
 
 	if req.LogoFile != nil {
@@ -603,6 +626,7 @@ func (s *OrganizationService) CreateOrganization(
 			ID:        organizationID,
 			TenantID:  tenantID,
 			Name:      req.Name,
+			LegalName: req.LegalName,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -900,6 +924,10 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				organization.Name = *req.Name
 			}
 
+			if req.LegalName != nil {
+				organization.LegalName = *req.LegalName
+			}
+
 			if logoFile != nil {
 				if err := logoFile.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
@@ -966,7 +994,7 @@ func deleteOrganizationDependencies(
 	organizationID gid.GID,
 ) error {
 	// These tables restrict deleting a membership profile that still owns
-	// them, a risk that is still linked to a scenario or measure, or a
+	// them, a risk that is still linked to a scenario or internal control, or a
 	// document that is still linked from a mapping table. They must be
 	// removed before organizations cascade-deletes those rows.
 	if err := new(coredata.ControlDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
@@ -977,12 +1005,12 @@ func deleteOrganizationDependencies(
 		return fmt.Errorf("cannot delete risk document mappings: %w", err)
 	}
 
-	if err := new(coredata.MeasureDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot delete measure document mappings: %w", err)
+	if err := new(coredata.InternalControlDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete internal control document mappings: %w", err)
 	}
 
-	if err := new(coredata.RiskMeasures).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot delete risk measure mappings: %w", err)
+	if err := new(coredata.RiskInternalControls).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete risk internal control mappings: %w", err)
 	}
 
 	if err := new(coredata.TreatmentPlanEvents).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
@@ -2080,10 +2108,11 @@ func (s OrganizationService) CreateSAMLConfiguration(
 		now                     = time.Now()
 		scope                   = coredata.NewScopeFromObjectID(organizationID)
 		domainVerificationToken = uuid.MustNewV4().String()
+		enforcementPolicy       = coredata.SAMLEnforcementPolicyOptional
 		config                  = &coredata.SAMLConfiguration{
 			ID:                      gid.New(scope.GetTenantID(), coredata.SAMLConfigurationEntityType),
 			OrganizationID:          organizationID,
-			EnforcementPolicy:       coredata.SAMLEnforcementPolicyOff,
+			EnforcementPolicy:       enforcementPolicy,
 			IdPEntityID:             req.IdPEntityID,
 			IdPSsoURL:               req.IdPSsoURL,
 			IdPCertificate:          req.IdPCertificate,
@@ -2098,6 +2127,10 @@ func (s OrganizationService) CreateSAMLConfiguration(
 			UpdatedAt:               now,
 		}
 	)
+
+	if req.EnforcementPolicy != nil {
+		config.EnforcementPolicy = *req.EnforcementPolicy
+	}
 
 	if req.AttributeEmail != nil {
 		config.AttributeEmail = *req.AttributeEmail
@@ -2173,10 +2206,6 @@ func (s OrganizationService) UpdateSAMLConfiguration(
 			}
 
 			if req.EnforcementPolicy != nil {
-				if config.DomainVerifiedAt == nil {
-					return NewSAMLConfigurationDomainNotVerifiedError(configID)
-				}
-
 				config.EnforcementPolicy = *req.EnforcementPolicy
 			}
 

@@ -5,6 +5,7 @@
     "none": "None",
     "noDescription": "No description",
     "unassigned": "Unassigned",
+    "overdue": "Overdue",
     "fields": {
       "name": "Name",
       "description": "Description",
@@ -12,7 +13,7 @@
       "priority": "Priority",
       "assignedTo": "Assigned to",
       "linear": "Linear",
-      "measure": "Measure",
+      "internalControl": "Internal control",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
       "deadline": "Deadline",
@@ -70,13 +71,26 @@
       "connect": "Connect Linear Sync",
       "reconnect": "Reconnect Linear Sync",
       "publish": "Publish",
+      "link": "Link",
       "unlink": "Unlink",
       "team": "Linear team",
-      "chooseTeam": "Choose a team",
+      "chooseTeam": "Choose team",
+      "chooseIssue": "Choose issue",
+      "newIssue": "New issue",
+      "searchTeam": "Search teams",
+      "searchIssue": "Search issues",
+      "noResults": "No results",
+      "loadMore": "Load more",
       "published": "Task published to Linear.",
+      "linked": "Task linked to Linear.",
+      "confirmLink": {
+        "title": "Link Linear issue",
+        "description": "This will update the Probo task with the Linear issue."
+      },
       "unlinked": "Linear issue unlinked.",
       "errors": {
         "publish": "Failed to publish task to Linear",
+        "link": "Failed to link task to Linear",
         "unlink": "Failed to unlink Linear issue",
         "load": "Could not display Linear"
       }
@@ -89,6 +103,7 @@
     "comments": {
       "title": "Comments",
       "empty": "No comments yet",
+      "authorFallback": "Someone",
       "fields": {
         "comment": "Comment",
         "leaveAComment": "Leave a comment"
@@ -134,9 +149,9 @@
         "assigned": "{{actor}} assigned {{newValue}}",
         "reassigned": "{{actor}} reassigned from {{oldValue}} to {{newValue}}",
         "unassigned": "{{actor}} unassigned {{oldValue}}",
-        "measureLinked": "{{actor}} linked {{newValue}}",
-        "measureChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
-        "measureUnlinked": "{{actor}} unlinked {{oldValue}}",
+        "internalControlLinked": "{{actor}} linked {{newValue}}",
+        "internalControlChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
+        "internalControlUnlinked": "{{actor}} unlinked {{oldValue}}",
         "deadlineSet": "{{actor}} set the deadline to {{newValue}}",
         "deadlineChanged": "{{actor}} changed the deadline from {{oldValue}} to {{newValue}}",
         "deadlineRemoved": "{{actor}} removed the deadline",
@@ -168,7 +183,7 @@
     }
   },
   "createDialog": {
-    "title": "New task",
+    "title": "Add Task",
     "fields": {
       "namePlaceholder": "Task name"
     },

@@ -5,6 +5,7 @@
     "none": "Geen",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
+    "overdue": "Te laat",
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
@@ -12,7 +13,7 @@
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
       "linear": "Linear",
-      "measure": "Maatregel",
+      "internalControl": "Interne controle",
       "timeEstimate": "Tijdsinschatting",
       "timeEstimateUnit": "Eenheid van inschatting",
       "deadline": "Deadline",
@@ -70,13 +71,26 @@
       "connect": "Linear Sync verbinden",
       "reconnect": "Linear Sync opnieuw verbinden",
       "publish": "Publiceren",
+      "link": "Koppelen",
       "unlink": "Ontkoppelen",
       "team": "Linear-team",
       "chooseTeam": "Kies een team",
+      "chooseIssue": "Kies een issue",
+      "newIssue": "Nieuwe issue",
+      "searchTeam": "Zoek een team",
+      "searchIssue": "Zoek een issue",
+      "noResults": "Geen resultaten",
+      "loadMore": "Meer laden",
       "published": "Taak gepubliceerd naar Linear.",
+      "linked": "Taak gekoppeld aan Linear.",
+      "confirmLink": {
+        "title": "Linear-issue koppelen",
+        "description": "Dit werkt de Probo-taak bij met de Linear-issue."
+      },
       "unlinked": "Linear-issue ontkoppeld.",
       "errors": {
         "publish": "Publiceren naar Linear mislukt",
+        "link": "Koppelen aan Linear mislukt",
         "unlink": "Ontkoppelen van Linear-issue mislukt",
         "load": "Linear kon niet worden weergegeven"
       }
@@ -89,6 +103,7 @@
     "comments": {
       "title": "Opmerkingen",
       "empty": "Nog geen opmerkingen",
+      "authorFallback": "Iemand",
       "fields": {
         "comment": "Opmerking",
         "leaveAComment": "Laat een opmerking achter"
@@ -134,9 +149,9 @@
         "assigned": "{{actor}} heeft {{newValue}} toegewezen",
         "reassigned": "{{actor}} heeft opnieuw toegewezen van {{oldValue}} naar {{newValue}}",
         "unassigned": "{{actor}} heeft de toewijzing van {{oldValue}} verwijderd",
-        "measureLinked": "{{actor}} heeft {{newValue}} gekoppeld",
-        "measureChanged": "{{actor}} heeft verplaatst van {{oldValue}} naar {{newValue}}",
-        "measureUnlinked": "{{actor}} heeft {{oldValue}} ontkoppeld",
+        "internalControlLinked": "{{actor}} heeft {{newValue}} gekoppeld",
+        "internalControlChanged": "{{actor}} heeft verplaatst van {{oldValue}} naar {{newValue}}",
+        "internalControlUnlinked": "{{actor}} heeft {{oldValue}} ontkoppeld",
         "deadlineSet": "{{actor}} heeft de deadline ingesteld op {{newValue}}",
         "deadlineChanged": "{{actor}} heeft de deadline gewijzigd van {{oldValue}} naar {{newValue}}",
         "deadlineRemoved": "{{actor}} heeft de deadline verwijderd",
@@ -168,7 +183,7 @@
     }
   },
   "createDialog": {
-    "title": "Nieuwe taak",
+    "title": "Taak toevoegen",
     "fields": {
       "namePlaceholder": "Taaknaam"
     },

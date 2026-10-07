@@ -93,6 +93,69 @@ func (s *Service) GetAuditLinks(
 	return rows, nil
 }
 
+func (s *Service) GetAuditLinksByReportFileIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	compliancePortalID gid.GID,
+	reportFileIDs []gid.GID,
+) (map[gid.GID][]*coredata.CompliancePortalAudit, error) {
+	if len(reportFileIDs) == 0 {
+		return map[gid.GID][]*coredata.CompliancePortalAudit{}, nil
+	}
+
+	var rowsByReportFileID map[gid.GID][]*coredata.CompliancePortalAudit
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var audits coredata.Audits
+			if err := audits.LoadByReportFileIDs(ctx, conn, scope, reportFileIDs); err != nil {
+				return err
+			}
+
+			auditIDs := make([]gid.GID, 0, len(audits))
+
+			reportFileIDByAuditID := make(map[gid.GID]gid.GID, len(audits))
+			for _, audit := range audits {
+				if audit.ReportFileID == nil {
+					continue
+				}
+
+				auditIDs = append(auditIDs, audit.ID)
+				reportFileIDByAuditID[audit.ID] = *audit.ReportFileID
+			}
+
+			linksByAuditID, err := coredata.LoadCompliancePortalAuditsByCompliancePortalIDAndAuditIDs(
+				ctx,
+				conn,
+				scope,
+				compliancePortalID,
+				auditIDs,
+			)
+			if err != nil {
+				return err
+			}
+
+			rowsByReportFileID = make(map[gid.GID][]*coredata.CompliancePortalAudit, len(linksByAuditID))
+			for auditID, link := range linksByAuditID {
+				reportFileID, ok := reportFileIDByAuditID[auditID]
+				if !ok {
+					continue
+				}
+
+				rowsByReportFileID[reportFileID] = append(rowsByReportFileID[reportFileID], link)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load portal audit links: %w", err)
+	}
+
+	return rowsByReportFileID, nil
+}
+
 func (s *Service) GetThirdPartyLinks(
 	ctx context.Context,
 	scope coredata.Scoper,

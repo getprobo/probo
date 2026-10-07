@@ -1016,7 +1016,7 @@ func (s *GeneratedDocumentService) buildFindingListDocumentData(
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.FindingOrderField]) ([]*coredata.Finding, error) {
 			var batch coredata.Findings
-			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil)); err != nil {
+			if err := batch.LoadByOrganizationID(ctx, conn, scope, organization.ID, cursor, coredata.NewFindingFilter(nil, nil, nil, nil, nil)); err != nil {
 				return nil, fmt.Errorf("cannot load findings: %w", err)
 			}
 
@@ -3336,6 +3336,8 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 		return docgen.ThirdPartyListData{}, fmt.Errorf("cannot load thirdParty risk assessments: %w", err)
 	}
 
+	now := time.Now()
+
 	assessmentsByThirdParty := make(map[gid.GID]coredata.ThirdPartyRiskAssessments, len(thirdParties))
 	for _, ra := range allAssessments {
 		assessmentsByThirdParty[ra.ThirdPartyID] = append(assessmentsByThirdParty[ra.ThirdPartyID], ra)
@@ -3415,7 +3417,7 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 			})
 		}
 
-		for _, ra := range assessmentsByThirdParty[v.ID] {
+		if ra := latestActiveThirdPartyRiskAssessment(assessmentsByThirdParty[v.ID], now); ra != nil {
 			row.RiskAnalyses = append(row.RiskAnalyses, docgen.ThirdPartyListRiskAssessment{
 				AssessedAt:      ra.CreatedAt.Format("2006-01-02"),
 				ExpiresAt:       ra.ExpiresAt.Format("2006-01-02"),
@@ -3453,10 +3455,31 @@ func (s *GeneratedDocumentService) buildThirdPartyListDocumentData(
 	return docgen.ThirdPartyListData{
 		Title:             "ThirdParties",
 		OrganizationName:  organization.Name,
-		CreatedAt:         time.Now(),
+		CreatedAt:         now,
 		TotalThirdParties: len(thirdParties),
 		Rows:              rows,
 	}, nil
+}
+
+func latestActiveThirdPartyRiskAssessment(
+	assessments coredata.ThirdPartyRiskAssessments,
+	now time.Time,
+) *coredata.ThirdPartyRiskAssessment {
+	var latest *coredata.ThirdPartyRiskAssessment
+
+	for _, ra := range assessments {
+		if ra == nil || !ra.ExpiresAt.After(now) {
+			continue
+		}
+
+		if latest == nil ||
+			ra.CreatedAt.After(latest.CreatedAt) ||
+			(ra.CreatedAt.Equal(latest.CreatedAt) && bytes.Compare(ra.ID[:], latest.ID[:]) > 0) {
+			latest = ra
+		}
+	}
+
+	return latest
 }
 
 func stringOrNotSpecified(s string) string {
@@ -4343,7 +4366,7 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 		}
 	}
 
-	measuresByPlan, err := s.loadRiskAnalysisMeasuresByPlan(ctx, scope, conn, planIDs)
+	internalControlsByPlan, err := s.loadRiskAnalysisInternalControlsByPlan(ctx, scope, conn, planIDs)
 	if err != nil {
 		return docgen.RiskAnalysisData{}, err
 	}
@@ -4381,7 +4404,7 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDocumentData(
 			ResidualLikelihood: sanitizeTrackerCell(formatScoreCell(&residualLikelihood, riskLikelihoodLabel(residualLikelihood))),
 			ResidualImpact:     sanitizeTrackerCell(formatScoreCell(&residualImpact, riskImpactLabel(residualImpact))),
 			ResidualRiskScore:  sanitizeTrackerCell(formatScoreCell(&residualRiskScore, riskSeverityLabel(residualRiskScore))),
-			Measures:           measuresByPlan[tp.ID],
+			InternalControls:   internalControlsByPlan[tp.ID],
 		})
 	}
 
@@ -4416,59 +4439,59 @@ func riskAnalysisDescriptionMarkdown(raw *string) (string, error) {
 	return strings.TrimSpace(markdown), nil
 }
 
-func (s *GeneratedDocumentService) loadRiskAnalysisMeasuresByPlan(
+func (s *GeneratedDocumentService) loadRiskAnalysisInternalControlsByPlan(
 	ctx context.Context,
 	scope coredata.Scoper,
 	conn pg.Querier,
 	planIDs []gid.GID,
-) (map[gid.GID][]docgen.RiskAnalysisMeasure, error) {
-	var mappings coredata.TreatmentPlanMeasures
+) (map[gid.GID][]docgen.RiskAnalysisInternalControl, error) {
+	var mappings coredata.TreatmentPlanInternalControls
 	if err := mappings.LoadByTreatmentPlanIDs(ctx, conn, scope, planIDs); err != nil {
-		return nil, fmt.Errorf("cannot load treatment plan measures: %w", err)
+		return nil, fmt.Errorf("cannot load treatment plan internalControls: %w", err)
 	}
 
-	measureIDs := make([]gid.GID, 0, len(mappings))
-	measureIDSet := make(map[gid.GID]struct{}, len(mappings))
+	internalControlIDs := make([]gid.GID, 0, len(mappings))
+	internalControlIDSet := make(map[gid.GID]struct{}, len(mappings))
 
 	for _, mapping := range mappings {
-		if _, ok := measureIDSet[mapping.MeasureID]; !ok {
-			measureIDs = append(measureIDs, mapping.MeasureID)
-			measureIDSet[mapping.MeasureID] = struct{}{}
+		if _, ok := internalControlIDSet[mapping.InternalControlID]; !ok {
+			internalControlIDs = append(internalControlIDs, mapping.InternalControlID)
+			internalControlIDSet[mapping.InternalControlID] = struct{}{}
 		}
 	}
 
-	measureMap := make(map[gid.GID]*coredata.Measure, len(measureIDs))
+	internalControlMap := make(map[gid.GID]*coredata.InternalControl, len(internalControlIDs))
 
-	if len(measureIDs) > 0 {
-		var measures coredata.Measures
-		if err := measures.LoadByIDs(ctx, conn, scope, measureIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, fmt.Errorf("cannot load measures: %w", err)
+	if len(internalControlIDs) > 0 {
+		var internalControls coredata.InternalControls
+		if err := internalControls.LoadByIDs(ctx, conn, scope, internalControlIDs); err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("cannot load internalControls: %w", err)
 		}
 
-		for _, measure := range measures {
-			measureMap[measure.ID] = measure
+		for _, internalControl := range internalControls {
+			internalControlMap[internalControl.ID] = internalControl
 		}
 	}
 
-	measuresByPlan := make(map[gid.GID][]docgen.RiskAnalysisMeasure, len(planIDs))
+	internalControlsByPlan := make(map[gid.GID][]docgen.RiskAnalysisInternalControl, len(planIDs))
 
 	for _, mapping := range mappings {
-		measure, ok := measureMap[mapping.MeasureID]
+		internalControl, ok := internalControlMap[mapping.InternalControlID]
 		if !ok {
 			continue
 		}
 
-		measuresByPlan[mapping.TreatmentPlanID] = append(
-			measuresByPlan[mapping.TreatmentPlanID],
-			docgen.RiskAnalysisMeasure{
-				Name:  sanitizeTrackerCell(measure.Name),
-				State: sanitizeTrackerCell(formatMeasureState(measure.State)),
+		internalControlsByPlan[mapping.TreatmentPlanID] = append(
+			internalControlsByPlan[mapping.TreatmentPlanID],
+			docgen.RiskAnalysisInternalControl{
+				Name:  sanitizeTrackerCell(internalControl.Name),
+				State: sanitizeTrackerCell(formatInternalControlState(internalControl.State)),
 			},
 		)
 	}
 
-	for _, measures := range measuresByPlan {
-		slices.SortFunc(measures, func(a, b docgen.RiskAnalysisMeasure) int {
+	for _, internalControls := range internalControlsByPlan {
+		slices.SortFunc(internalControls, func(a, b docgen.RiskAnalysisInternalControl) int {
 			if cmp := strings.Compare(a.Name, b.Name); cmp != 0 {
 				return cmp
 			}
@@ -4477,7 +4500,7 @@ func (s *GeneratedDocumentService) loadRiskAnalysisMeasuresByPlan(
 		})
 	}
 
-	return measuresByPlan, nil
+	return internalControlsByPlan, nil
 }
 
 func (s *GeneratedDocumentService) buildRiskAnalysisDiagrams(
@@ -4761,19 +4784,19 @@ func (s *GeneratedDocumentService) buildRiskAnalysisDiagramScenarios(
 	return rows, nil
 }
 
-func formatMeasureState(state coredata.MeasureState) string {
+func formatInternalControlState(state coredata.InternalControlState) string {
 	switch state {
-	case coredata.MeasureStateNotStarted:
+	case coredata.InternalControlStateNotStarted:
 		return "Not started"
-	case coredata.MeasureStateInProgress:
+	case coredata.InternalControlStateInProgress:
 		return "In progress"
-	case coredata.MeasureStateNotApplicable:
+	case coredata.InternalControlStateNotApplicable:
 		return "Not applicable"
-	case coredata.MeasureStateImplemented:
+	case coredata.InternalControlStateImplemented:
 		return "Implemented"
-	case coredata.MeasureStateUnknown:
+	case coredata.InternalControlStateUnknown:
 		return "Unknown"
-	case coredata.MeasureStateNotImplemented:
+	case coredata.InternalControlStateNotImplemented:
 		return "Not implemented"
 	default:
 		return stringOrNotSpecified(string(state))

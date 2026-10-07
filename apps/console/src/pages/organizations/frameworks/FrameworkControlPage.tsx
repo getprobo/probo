@@ -47,36 +47,36 @@ import type { FrameworkDetailPageFragment$data } from "#/__generated__/core/Fram
 import type { FrameworkGraphControlNodeQuery } from "#/__generated__/core/FrameworkGraphControlNodeQuery.graphql";
 import { LinkedAuditsCard } from "#/components/audits/LinkedAuditsCard";
 import { LinkedDocumentsCard } from "#/components/documents/LinkedDocumentsCard";
-import { LinkedMeasuresCard } from "#/components/measures/LinkedMeasuresCard";
+import { LinkedInternalControlsCard } from "#/components/internal-controls/LinkedInternalControlsCard";
 import { LinkedObligationsCard } from "#/components/obligations/LinkedObligationsCard";
 import { frameworkControlNodeQuery } from "#/hooks/graph/FrameworkGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 
-const attachMeasureMutation = graphql`
+const attachInternalControlMutation = graphql`
   mutation FrameworkControlPageAttachMutation(
-      $input: CreateControlMeasureMappingInput!
+      $input: CreateControlInternalControlMappingInput!
       $connections: [ID!]!
   ) {
-      createControlMeasureMapping(input: $input) {
-          measureEdge @prependEdge(connections: $connections) {
+      createControlInternalControlMapping(input: $input) {
+          internalControlEdge @prependEdge(connections: $connections) {
               node {
                   id
-                  ...LinkedMeasuresCardFragment
+                  ...LinkedInternalControlsCardFragment
               }
           }
       }
   }
 `;
 
-const detachMeasureMutation = graphql`
+const detachInternalControlMutation = graphql`
   mutation FrameworkControlPageDetachMutation(
-      $input: DeleteControlMeasureMappingInput!
+      $input: DeleteControlInternalControlMappingInput!
       $connections: [ID!]!
   ) {
-      deleteControlMeasureMapping(input: $input) {
-          deletedMeasureId @deleteEdge(connections: $connections)
+      deleteControlInternalControlMapping(input: $input) {
+          deletedInternalControlId @deleteEdge(connections: $connections)
       }
   }
 `;
@@ -192,12 +192,12 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const confirm = useConfirm();
   const navigate = useNavigate();
   // eslint-disable-next-line relay/generated-typescript-types
-  const [detachMeasure, isDetachingMeasure] = useMutation(
-    detachMeasureMutation,
+  const [detachInternalControl, isDetachingInternalControl] = useMutation(
+    detachInternalControlMutation,
   );
   // eslint-disable-next-line relay/generated-typescript-types
-  const [attachMeasure, isAttachingMeasure] = useMutation(
-    attachMeasureMutation,
+  const [attachInternalControl, isAttachingInternalControl] = useMutation(
+    attachInternalControlMutation,
   );
   // eslint-disable-next-line relay/generated-typescript-types
   const [detachDocument, isDetachingDocument] = useMutation(
@@ -223,9 +223,9 @@ export default function FrameworkControlPage({ queryRef }: Props) {
     detachObligationMutation,
   );
 
-  const canLinkMeasure = control.canCreateMeasureMapping;
-  const canUnlinkMeasure = control.canDeleteMeasureMapping;
-  const measuresReadOnly = !canLinkMeasure && !canUnlinkMeasure;
+  const canLinkInternalControl = control.canCreateInternalControlMapping;
+  const canUnlinkInternalControl = control.canDeleteInternalControlMapping;
+  const internalControlsReadOnly = !canLinkInternalControl && !canUnlinkInternalControl;
 
   const canLinkDocument = control.canCreateDocumentMapping;
   const canUnlinkDocument = control.canDeleteDocumentMapping;
@@ -361,24 +361,24 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           </div>
         </Card>
         <div className="mb-4">
-          <LinkedMeasuresCard
+          <LinkedInternalControlsCard
             variant="card"
-            measures={
-              control.measures?.edges.map(edge => edge.node)
+            internalControls={
+              control.internalControls?.edges.map(edge => edge.node)
               ?? []
             }
             params={{ controlId: control.id }}
-            connectionId={control.measures?.__id ?? ""}
+            connectionId={control.internalControls?.__id ?? ""}
             onAttach={withErrorHandling(
-              attachMeasure,
-              t("frameworkControlPage.errors.linkMeasure"),
+              attachInternalControl,
+              t("frameworkControlPage.errors.linkInternalControl"),
             )}
             onDetach={withErrorHandling(
-              detachMeasure,
-              t("frameworkControlPage.errors.unlinkMeasure"),
+              detachInternalControl,
+              t("frameworkControlPage.errors.unlinkInternalControl"),
             )}
-            disabled={isAttachingMeasure || isDetachingMeasure}
-            readOnly={measuresReadOnly}
+            disabled={isAttachingInternalControl || isDetachingInternalControl}
+            readOnly={internalControlsReadOnly}
           />
         </div>
         <div className="mb-4">

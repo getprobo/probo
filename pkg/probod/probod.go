@@ -207,6 +207,9 @@ func New() *Implm {
 					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x; weekend reminders → Monday)
 				},
 			},
+			TaskRecurrence: TaskRecurrenceConfig{
+				Interval: 300, // 5 minutes
+			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
@@ -387,7 +390,17 @@ func (impl *Implm) Run(
 		}
 	}
 
-	providerRegistry, err := provider.NewBuiltinRegistryWith(provider.WithEndpointOverrides(endpointOverrides))
+	registryOpts := []provider.Option{
+		provider.WithEndpointOverrides(endpointOverrides),
+	}
+	if impl.cfg.IdentityFederation.AWSEndpoint != "" {
+		registryOpts = append(
+			registryOpts,
+			provider.WithAWSAPIEndpoint(impl.cfg.IdentityFederation.AWSEndpoint),
+		)
+	}
+
+	providerRegistry, err := provider.NewBuiltinRegistryWith(registryOpts...)
 	if err != nil {
 		return fmt.Errorf("cannot configure connector providers: %w", err)
 	}
@@ -799,6 +812,7 @@ func (impl *Implm) Run(
 		iamService,
 		esignService,
 		defaultConnectorRegistry,
+		providerRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {
@@ -1300,6 +1314,30 @@ func (impl *Implm) Run(
 		},
 	)
 
+	taskRecurrenceInterval := time.Duration(impl.cfg.TaskRecurrence.Interval) * time.Second
+	if taskRecurrenceInterval <= 0 {
+		taskRecurrenceInterval = 5 * time.Minute
+	}
+
+	taskRecurrenceWorker := task.NewRecurrenceWorker(
+		pgClient,
+		l.Named("task-recurrence"),
+		worker.WithInterval(taskRecurrenceInterval),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	taskRecurrenceWorkerCtx, stopTaskRecurrenceWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := taskRecurrenceWorker.Run(taskRecurrenceWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task recurrence worker crashed: %w", err))
+			}
+		},
+	)
+
 	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
 		taskService.Sync,
 		l.Named("task-sync-outbound"),
@@ -1677,6 +1715,7 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
+	stopTaskRecurrenceWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
 	stopLinearWebhookRetentionWorker()

@@ -47,13 +47,14 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	now := time.Now()
 
 	var (
-		portalAID       gid.GID
-		accessID        gid.GID
-		keptReportID    gid.GID
-		skippedReportID gid.GID
-		keptFileID      gid.GID
-		skippedFileID   gid.GID
-		identityID      gid.GID
+		portalAID        gid.GID
+		accessID         gid.GID
+		keptAuditLinkID  gid.GID
+		keptReportFileID gid.GID
+		skippedReportID  gid.GID
+		skippedFileID    gid.GID
+		keptFileID       gid.GID
+		identityID       gid.GID
 	)
 
 	require.NoError(
@@ -121,7 +122,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 
 				accessID = access.ID
 
-				keptReportID, err = insertTestReport(
+				keptReportFileID, keptAuditLinkID, err = insertTestReport(
 					ctx,
 					tx,
 					scope,
@@ -133,7 +134,9 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					return err
 				}
 
-				skippedReportID, err = insertTestReport(
+				var skippedAuditLinkID gid.GID
+
+				skippedReportID, skippedAuditLinkID, err = insertTestReport(
 					ctx,
 					tx,
 					scope,
@@ -152,6 +155,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					organizationID,
 					portalA,
 					"kept-file",
+					coredata.CompliancePortalVisibilityPublic,
 				)
 				if err != nil {
 					return err
@@ -164,19 +168,20 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 					organizationID,
 					portalB,
 					"skipped-file",
+					coredata.CompliancePortalVisibilityPublic,
 				)
 				if err != nil {
 					return err
 				}
 
-				for _, reportID := range []gid.GID{keptReportID, skippedReportID} {
-					id := reportID
+				for _, auditLinkID := range []gid.GID{keptAuditLinkID, skippedAuditLinkID} {
+					id := auditLinkID
 
 					row := coredata.CompliancePortalDocumentAccess{
 						ID:                       gid.New(tenantID, coredata.CompliancePortalDocumentAccessEntityType),
 						OrganizationID:           organizationID,
 						CompliancePortalAccessID: access.ID,
-						ReportFileID:             &id,
+						CompliancePortalAuditID:  &id,
 						Status:                   coredata.CompliancePortalDocumentAccessStatusRequested,
 						CreatedAt:                now,
 						UpdatedAt:                now,
@@ -241,11 +246,220 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	)
 
 	require.Len(t, reports, 1)
-	assert.Equal(t, keptReportID.String(), reports[0].ID)
+	assert.Equal(t, keptReportFileID.String(), reports[0].ID)
 	require.Len(t, files, 1)
 	assert.Equal(t, keptFileID.String(), files[0].ID)
 	assert.NotEqual(t, skippedReportID.String(), reports[0].ID)
 	assert.NotEqual(t, skippedFileID.String(), files[0].ID)
+}
+
+func TestResolveAccessResourceIDs_MapsPortalIDsAndDropsForeignRows(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+	scope := coredata.NewScope(tenantID)
+	now := time.Now()
+
+	var (
+		portalID              gid.GID
+		documentID            gid.GID
+		documentLinkID        gid.GID
+		reportFileID          gid.GID
+		auditLinkID           gid.GID
+		portalFileID          gid.GID
+		missingCatalogDoc     gid.GID
+		foreignDocumentID     gid.GID
+		foreignDocumentLinkID gid.GID
+		foreignReportFileID   gid.GID
+		foreignPortalFileID   gid.GID
+	)
+
+	require.NoError(
+		t,
+		client.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				organization := coredata.Organization{
+					ID:        organizationID,
+					TenantID:  tenantID,
+					Name:      "resolve-ids-" + organizationID.String(),
+					CreatedAt: now,
+					UpdatedAt: now,
+				}
+				if err := organization.Insert(ctx, tx); err != nil {
+					return err
+				}
+
+				var err error
+
+				portalID, err = insertTestPortal(ctx, tx, scope, organizationID, "resolve-portal")
+				if err != nil {
+					return err
+				}
+
+				documentID = gid.New(tenantID, coredata.DocumentEntityType)
+
+				document := coredata.Document{
+					ID:             documentID,
+					OrganizationID: organizationID,
+					WriteMode:      coredata.DocumentWriteModeAuthored,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+				if err := document.Insert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				portalDocument := coredata.CompliancePortalDocument{
+					ID:                 gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
+					OrganizationID:     organizationID,
+					CompliancePortalID: portalID,
+					DocumentID:         documentID,
+					Visibility:         coredata.CompliancePortalVisibilityRestricted,
+					CreatedAt:          now,
+					UpdatedAt:          now,
+				}
+				if err := portalDocument.Upsert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				documentLinkID = portalDocument.ID
+				missingCatalogDoc = gid.New(tenantID, coredata.CompliancePortalDocumentEntityType)
+
+				reportFileID, auditLinkID, err = insertTestReport(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					portalID,
+					"resolve-report",
+				)
+				if err != nil {
+					return err
+				}
+
+				portalFileID, err = insertTestPortalFile(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					portalID,
+					"resolve-file",
+					coredata.CompliancePortalVisibilityRestricted,
+				)
+				if err != nil {
+					return err
+				}
+
+				otherPortalID, err := insertTestPortal(ctx, tx, scope, organizationID, "resolve-other-portal")
+				if err != nil {
+					return err
+				}
+
+				foreignDocumentID = gid.New(tenantID, coredata.DocumentEntityType)
+
+				foreignDocument := coredata.Document{
+					ID:             foreignDocumentID,
+					OrganizationID: organizationID,
+					WriteMode:      coredata.DocumentWriteModeAuthored,
+					Status:         coredata.DocumentStatusActive,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+				if err := foreignDocument.Insert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				foreignPortalDocument := coredata.CompliancePortalDocument{
+					ID:                 gid.New(tenantID, coredata.CompliancePortalDocumentEntityType),
+					OrganizationID:     organizationID,
+					CompliancePortalID: otherPortalID,
+					DocumentID:         foreignDocumentID,
+					Visibility:         coredata.CompliancePortalVisibilityRestricted,
+					CreatedAt:          now,
+					UpdatedAt:          now,
+				}
+				if err := foreignPortalDocument.Upsert(ctx, tx, scope); err != nil {
+					return err
+				}
+
+				foreignDocumentLinkID = foreignPortalDocument.ID
+
+				foreignReportFileID, _, err = insertTestReport(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					otherPortalID,
+					"resolve-foreign-report",
+				)
+				if err != nil {
+					return err
+				}
+
+				foreignPortalFileID, err = insertTestPortalFile(
+					ctx,
+					tx,
+					scope,
+					organizationID,
+					otherPortalID,
+					"resolve-foreign-file",
+					coredata.CompliancePortalVisibilityRestricted,
+				)
+
+				return err
+			},
+		),
+	)
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			return (&coredata.Organization{}).Delete(ctx, tx, organizationID)
+		})
+	})
+
+	var (
+		documentIDs []gid.GID
+		auditIDs    []gid.GID
+		fileIDs     []gid.GID
+	)
+
+	require.NoError(
+		t,
+		client.WithConn(
+			t.Context(),
+			func(ctx context.Context, conn pg.Querier) error {
+				var err error
+
+				documentIDs, auditIDs, fileIDs, err = resolveAccessResourceIDs(
+					ctx,
+					conn,
+					scope,
+					portalID,
+					[]gid.GID{
+						documentID,
+						documentLinkID,
+						missingCatalogDoc,
+						foreignDocumentID,
+						foreignDocumentLinkID,
+						reportFileID,
+						foreignReportFileID,
+						portalFileID,
+						foreignPortalFileID,
+					},
+				)
+
+				return err
+			},
+		),
+	)
+
+	assert.ElementsMatch(t, []gid.GID{documentLinkID}, documentIDs)
+	assert.Equal(t, []gid.GID{auditLinkID}, auditIDs)
+	assert.Equal(t, []gid.GID{portalFileID}, fileIDs)
 }
 
 func insertTestPortal(
@@ -328,6 +542,7 @@ func insertTestPortalFile(
 	organizationID gid.GID,
 	portalID gid.GID,
 	name string,
+	visibility coredata.CompliancePortalVisibility,
 ) (gid.GID, error) {
 	now := time.Now()
 
@@ -349,7 +564,7 @@ func insertTestPortalFile(
 		Name:                       name,
 		Category:                   "OTHER",
 		FileID:                     blobID,
-		CompliancePortalVisibility: coredata.CompliancePortalVisibilityPublic,
+		CompliancePortalVisibility: visibility,
 		CreatedAt:                  now,
 		UpdatedAt:                  now,
 	}
@@ -367,7 +582,7 @@ func insertTestReport(
 	organizationID gid.GID,
 	portalID gid.GID,
 	name string,
-) (gid.GID, error) {
+) (gid.GID, gid.GID, error) {
 	now := time.Now()
 
 	reportFileID, err := insertTestBlobFile(
@@ -378,7 +593,7 @@ func insertTestReport(
 		name+"-report",
 	)
 	if err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
 	framework := coredata.Framework{
@@ -390,7 +605,7 @@ func insertTestReport(
 		UpdatedAt:      now,
 	}
 	if err := framework.Insert(ctx, tx, scope); err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
 	audit := coredata.Audit{
@@ -403,7 +618,7 @@ func insertTestReport(
 		UpdatedAt:      now,
 	}
 	if err := audit.Insert(ctx, tx, scope); err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
 	portalAudit := coredata.CompliancePortalAudit{
@@ -416,8 +631,8 @@ func insertTestReport(
 		UpdatedAt:          now,
 	}
 	if err := portalAudit.Upsert(ctx, tx, scope); err != nil {
-		return gid.Nil, err
+		return gid.Nil, gid.Nil, err
 	}
 
-	return reportFileID, nil
+	return reportFileID, portalAudit.ID, nil
 }

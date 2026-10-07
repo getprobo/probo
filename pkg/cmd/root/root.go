@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/completion"
 	complianceportal "go.probo.inc/probo/pkg/cmd/compliance-portal"
 	cmdconfig "go.probo.inc/probo/pkg/cmd/config"
+	"go.probo.inc/probo/pkg/cmd/connector"
 	consentrecord "go.probo.inc/probo/pkg/cmd/consent-record"
 	cmdcontext "go.probo.inc/probo/pkg/cmd/context"
 	"go.probo.inc/probo/pkg/cmd/control"
@@ -47,7 +48,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/evidence"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
-	"go.probo.inc/probo/pkg/cmd/measure"
+	internalcontrol "go.probo.inc/probo/pkg/cmd/internal-control"
 	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
@@ -113,6 +114,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	cmd.AddCommand(consentrecord.NewCmdConsentRecord(f))
 	cmd.AddCommand(cmdcontext.NewCmdContext(f))
+	cmd.AddCommand(connector.NewCmdConnector(f))
 	cmd.AddCommand(control.NewCmdControl(f))
 	cmd.AddCommand(cookiebanner.NewCmdCookieBanner(f))
 	cmd.AddCommand(cookiecategory.NewCmdCookieCategory(f))
@@ -125,7 +127,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
-	cmd.AddCommand(measure.NewCmdMeasure(f))
+	cmd.AddCommand(internalcontrol.NewCmdInternalControl(f))
 	cmd.AddCommand(obligation.NewCmdObligation(f))
 	cmd.AddCommand(org.NewCmdOrg(f))
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))

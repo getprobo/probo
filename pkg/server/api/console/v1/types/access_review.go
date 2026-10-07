@@ -106,11 +106,11 @@ func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
 		Organization: &Organization{
 			ID: s.OrganizationID,
 		},
-		ConnectorID: s.ConnectorID,
-		Name:        s.Name,
-		CSVData:     s.CsvData,
-		CreatedAt:   s.CreatedAt,
-		UpdatedAt:   s.UpdatedAt,
+		ConnectorAccountID: s.ConnectorAccountID,
+		Name:               s.Name,
+		CSVData:            s.CsvData,
+		CreatedAt:          s.CreatedAt,
+		UpdatedAt:          s.UpdatedAt,
 	}
 }
 

@@ -34,8 +34,8 @@ import { AuthLayoutSkeleton } from "./pages/iam/auth/AuthLayoutSkeleton";
 import { ViewerLayoutLoading } from "./pages/iam/memberships/ViewerLayoutLoading";
 import { auditLogRoutes } from "./pages/iam/organizations/audit-log/routes";
 import { authRoutes } from "./pages/iam/organizations/auth/routes";
-import { peopleRoutes } from "./pages/iam/organizations/people/routes";
 import { settingsRoutes } from "./pages/iam/organizations/settings/routes";
+import { usersRoutes } from "./pages/iam/organizations/users/routes";
 import { accessReviewRoutes } from "./pages/organizations/access-reviews/routes";
 import { aiSystemRoutes } from "./pages/organizations/aiSystems/routes";
 import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/routes";
@@ -43,6 +43,7 @@ import { compliancePortalRoutes } from "./pages/organizations/compliance-portals
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
+import { integrationRoutes } from "./pages/organizations/settings/integrations/routes";
 import { taskRoutes } from "./pages/organizations/tasks/routes";
 import { thirdPartyRoutes } from "./pages/organizations/third-parties/routes";
 import { CurrentUser } from "./providers/CurrentUser";
@@ -53,7 +54,7 @@ import { dataRoutes } from "./routes/dataRoutes";
 import { documentsRoutes } from "./routes/documentsRoutes";
 import { findingRoutes } from "./routes/findingRoutes";
 import { frameworkRoutes } from "./routes/frameworkRoutes";
-import { measureRoutes } from "./routes/measureRoutes";
+import { internalControlRoutes } from "./routes/internalControlRoutes";
 import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
@@ -207,7 +208,7 @@ const routes = [
                 case Role.EMPLOYEE:
                   return <RedirectToEmployeePortal />;
                 case Role.AUDITOR:
-                  return <Navigate to="governance/measures" />;
+                  return <Navigate to="governance/internal-controls" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:
                   return <Navigate to="compliance-portals" />;
                 case Role.COMPLIANCE_PORTAL_ACCESS_MANAGER:
@@ -227,7 +228,7 @@ const routes = [
               ...frameworkRoutes,
               ...auditRoutes,
               ...findingRoutes,
-              ...measureRoutes,
+              ...internalControlRoutes,
               ...documentsRoutes,
               ...taskRoutes,
               ...statementsOfApplicabilityRoutes,
@@ -238,8 +239,11 @@ const routes = [
             children: [
               ...rightsRequestRoutes,
               ...processingActivityRoutes,
-              ...cookieBannerRoutes,
             ],
+          },
+          {
+            path: "cmp",
+            children: [...cookieBannerRoutes],
           },
           {
             path: "tprm",
@@ -324,7 +328,8 @@ const routes = [
                     import("./pages/organizations/settings/SlackBotSettingsPageLoader"),
                 ),
               },
-              ...peopleRoutes,
+              ...integrationRoutes,
+              ...usersRoutes,
               ...authRoutes,
               ...auditLogRoutes,
             ],

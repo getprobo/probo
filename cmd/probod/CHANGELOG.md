@@ -4,6 +4,285 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.305.0] - 2026-10-07
+
+### Added
+
+- Consent records open as detail cards for the action, request, TCF
+  string, categories, and location, with a link back to the trail. The
+  location card draws the record on a map cropped to the country, with
+  state or province shapes for US and Canadian records
+- Cookie banners expose a GraphQL connection of their versions
+
+### Changed
+
+- Cookie banners move out of Privacy onto their own CMP navigation
+  group. Opening CMP lands on the latest banner, or on the create page
+  when none exist
+- The cookie banner consent trail is rebuilt in UI kit v2 with
+  previous/next pagination and a select of recent banner versions in
+  place of the free-text version filter
+- The new cookie banner page is rebuilt in UI kit v2, matching the
+  configure settings form
+
+## [0.304.0] - 2026-10-06
+
+### Added
+
+- Cookie banner trackers have On banner and All detected views. The
+  choice is stored in the URL and defaults to On banner
+- The trust center home page links to the documents catalog, including
+  when the portal has no framework badges
+
+### Changed
+
+- Measures are renamed to internal controls on GraphQL, MCP, the CLI,
+  the console, and in the database. The migration renames the measure
+  tables, columns, constraints, indexes, and enum values. Security and
+  supplementary measures are unchanged
+- Recurring tasks repeat when their deadline passes. The next deadline
+  is the previous deadline plus the interval, and the series stays on
+  the current task until that deadline. A worker creates the next
+  occurrence. `PROBOD_TASK_RECURRENCE_INTERVAL` sets how often it scans
+  and defaults to 5 minutes
+- Cookie banner configuration is split into Install, Configure, and
+  Translations pages. Display is rebuilt in UI kit v2: category edit
+  opens in a drawer, cookie rows stay on the Trackers page, and theme
+  controls only build a CSS snippet. Each configuration page shows
+  draft, deactivated, and live state on a status card
+
+## [0.303.0] - 2026-10-05
+
+### Added
+
+- Organizations have an optional registered legal name, separate from the
+  operating name. It is editable from the workspace general settings and
+  exposed on the GraphQL, MCP, CLI and n8n surfaces. Blank values are
+  rejected; only an explicit null clears it
+- Cookie banners can be made CORSless (ops-only) so one banner can be
+  shared by deployments whose origins are not known ahead of time. The
+  tracker policy names the banner instead of an origin
+- Every consent record stores and shows the request origin
+
+### Changed
+
+- The publisher country setting is hidden on cookie banners without TCF
+
+### Fixed
+
+- Listing risks ordered by `UPDATED_AT` no longer panics when building the
+  next-page cursor
+
+## [0.302.0] - 2026-10-05
+
+### Added
+
+- Measures are presented as internal controls. A control has a stable
+  code, a type, an implementation status, an owner and a reviewer. It
+  runs continuously, when an event happens, or on a positive interval,
+  and has its own evidence and testing cadences (ISO-8601 durations)
+  that set the next due dates. Only the manual nature is accepted for
+  now. The GraphQL and MCP APIs keep the Measure names
+- A shared, paginated user selector loads organization profiles 200 at a
+  time. The task list filter and the task assignee field use it
+
+### Changed
+
+- A control-scoped token can read the owner and reviewer profiles of a
+  control
+
+## [0.301.0] - 2026-10-02
+
+### Added
+
+- Settings > Integrations lists the vendors Probo holds a connector for
+  and the ones it can still connect to. A connector opens to the accounts
+  recorded against it and can be disconnected there; disconnect is
+  refused while an access review source or SCIM configuration still uses
+  the credential, and the message names which one
+
+### Changed
+
+- Trust center files no longer have a hidden (`NONE`) visibility; delete
+  the file instead. Unlinking a document or audit from a trust center now
+  clears its visitor access requests, and the console asks for
+  confirmation first
+
+### Fixed
+
+- Back links from tracker, visitor, and user detail pages keep the list's
+  filters instead of resetting them
+
+## [0.300.0] - 2026-10-02
+
+### Changed
+
+- Cookie banner Discovery is split into separate Trackers and Resources
+  pages in the nav, and Discovery and Trail no longer show the banner
+  header and publish actions, which stay on Configure
+- Trackers and Resources lists are rebuilt on the v2 kit, with filters,
+  pagination, and column sort kept in the URL so views are shareable
+- Tracker edits (description, category, max age, inclusion) move from
+  inline row forms to the tracker detail page, which also lists
+  detections in a table. Row actions follow update and delete
+  permissions
+
+## [0.299.1] - 2026-10-01
+
+### Fixed
+
+- Cookie pattern analysis collapses a hyphen-delimited UUID embedded in a
+  cookie name into a single token, so keys like
+  `community-form-<uuid>-creation` merge under one pattern instead of
+  shredding into several fixed anchors
+
+## [0.299.0] - 2026-09-30
+
+### Added
+
+- OVHcloud access review connector, on both the authorization-code and
+  client-credentials paths (EU regions). The roster merges local users,
+  the account owner, client-credentials service accounts, and the audit
+  log for last login, the MFA a session used, and federated identities.
+  Classic API credentials (consumer keys) are reported too, named by the
+  application they belong to, with support-created ones called out. An
+  identity whose group does not resolve to a role reports an unknown
+  admin state rather than "not an admin"
+- SAML SSO and SCIM are separate settings sections. SAML configurations
+  are created and edited on their own pages instead of dialogs, with
+  Optional or Required enforcement chosen up front, and cards show
+  verification status and the DNS TXT record directly. SCIM starts from
+  Google, Microsoft, or manual choice cards, and the configured page
+  shows one provider card with a paginated event history over Relay
+- Organization and measure tasks can be filtered by assignee in the
+  console, GraphQL, MCP, CLI, and n8n. Former members stay selectable so
+  tasks assigned to people whose contracts ended remain filterable
+- Third parties can be searched by name
+
+### Changed
+
+- The OpenAI gateway uses the Responses API so current models work for
+  both regular and streaming requests. Reasoning items replay on the
+  next turn, tagged by provider. Frequency and presence penalties,
+  caller-provided stop sequences, and invalid schemas are now rejected
+  explicitly rather than silently ignored
+- Third-party register documents export only the latest active risk
+  assessment instead of every past one. Ties on created time break by
+  the greater ID so the choice is stable
+- SCIM provider overlays, manual SCIM credentials, and their export
+  dialogs use the v2 UI kit. Export range and excluded emails are
+  validated in the form instead of at the API
+- The tasks page create action is a solid "Add Task" button and task
+  list state headers sit on a darker background
+
+### Fixed
+
+- Connecting Supabase or Better Stack now checks the connector's
+  settings before saving. A Better Stack global token whose team name
+  matches none of its teams, or a Supabase token that cannot reach the
+  organization, was saved, shown as connected, and then failed every
+  campaign fetch with a generic message. The refusal is now reported
+  under the setting's own field
+- Slack MFA is read with an admin user token, since Slack returns
+  `has_2fa` only to a workspace admin or owner. Members listed through a
+  bot token were all reported MFA Disabled; unknown is now reported
+  instead, and bot-token connections are flagged for reconnect. A
+  revoked token, which Slack answers with HTTP 200 and `ok=false`, is
+  reported as disconnected rather than connected
+- The compliance portal `/llms.txt` crashed after the framework list and
+  appended "internal server error" to a partial page
+- Applying a mark across a hard break, or pasting styled HTML with an
+  image inside a link, put marks on nodes that cannot carry them. The
+  server rejected the document and every later edit failed until the
+  page was reloaded, losing unsaved work
+- `reset-trackers` no longer fails on banners with more than 10,000
+  uncategorised globs, and no longer deadlocks against live detection
+  reporting. Globs are walked page by page, claimed with
+  `SKIP LOCKED`, committed one at a time, and deadlock retries are
+  capped
+- The brand form's dark-mode logo preview stayed white, hiding a light
+  logo
+
+## [0.298.0] - 2026-09-25
+
+### Added
+
+- Task comments stay in sync with a linked Linear issue. Publishing or
+  linking copies existing comments, and later edits and deletes follow
+  on both sides. A Linear comment whose author is not a Probo member
+  is stored without an owner
+- Organization and measure tasks can be filtered by name and state
+  (`TaskFilter`) in the console, GraphQL, and MCP (`listTasks`,
+  `listMeasureTasks`). Search matches `%` and `_` literally
+
+### Changed
+
+- Organization and measure task lists use the v2 UI kit. Each row shows
+  a status select, the linked Linear issue, the assignee, and time
+  estimate, deadline, and recurrence when set. Deleting a task is on
+  the detail page; drag-and-drop reordering stays. Search and status
+  live in the `q` and `status` URL params
+
+### Fixed
+
+- Cookie-banner tracker patterns treat slash-delimited keys as paths, so
+  a trailing id collapses to one token (`clientSourceId/*`) instead of
+  a separate glob per identifier. Short segments such as `2024` and
+  `v1` stay in the pattern
+
+## [0.297.0] - 2026-09-25
+
+### Added
+
+- Tasks can link to an existing Linear issue. Console, GraphQL, and MCP
+  can search Linear issues in a team and link a task to one. The
+  new-task dialog offers the same choice when Linear Sync is connected
+- SigNoz access reviews list service accounts and their API keys,
+  including admin accounts. Deleted accounts stay in the listing as
+  inactive, and last login is the latest real use of an account's
+  current keys
+
+### Changed
+
+- Linear teams are a paginated, searchable connection (`linearTeams` /
+  `listLinearTeams`). The unpaginated team list is gone
+
+### Fixed
+
+- Status and priority menus in the task dialog open in the dialog
+  overlay, so they no longer break the layout
+
+## [0.296.0] - 2026-09-24
+
+### Added
+
+- Connector installs can hold several accounts under one credential.
+  Creating a connector records the initial account from its settings;
+  discover and enable add the rest for AWS, GCP, and Azure. Available
+  in console, GraphQL, MCP, the CLI, and the n8n node
+- Task and task comment webhook events (created, updated, deleted) let
+  automations follow task work, including task updates synced in from
+  linked Linear issues
+- Cmd+K (Ctrl+K) opens a page search listing the pages the viewer can
+  open, without hunting the side nav
+- Settings people page is rebuilt as a v2 Users page (`/settings/users`):
+  a grid list with deactivated users sorted last, inline create and
+  detail edit, contract dates through a new typed date field, and
+  self-service avatar upload
+- Findings can be filtered by audit: `FindingFilter.auditId` in the
+  console GraphQL API, `filter.audit_id` on the `list_findings` MCP
+  tool, and an audit select on the console findings page
+
+### Fixed
+
+- Access review reports Linear workspace owners as owners (not members)
+  and uses Qovery's actual member role instead of the API token
+  holder's role
+- Rich text links (tasks, risks) open on a plain click instead of
+  requiring Cmd/Ctrl+click
+- Required now renders `required`/`aria-required` on Select and other
+  non-native form controls, not just text inputs
+
 ## [0.295.0] - 2026-09-23
 
 ### Added

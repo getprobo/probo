@@ -22,17 +22,18 @@ package esign
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
-func StampSignatureID(pdfData []byte, signatureID string) ([]byte, error) {
+func StampSignatureID(ctx context.Context, pdfData []byte, signatureID string) ([]byte, error) {
 	text := fmt.Sprintf("Electronic Signature ID: %s", signatureID)
 	desc := "fontname:Helvetica, points:9, pos:tl, rot:0, op:1.0, scale:1.0 abs, color:0.3 0.3 0.3, offset:10 -10"
 
-	wm, err := api.TextWatermark(text, desc, true, false, types.POINTS)
+	wm, err := api.TextWatermark(ctx, text, desc, true, false, types.POINTS, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create signature ID stamp: %w", err)
 	}
@@ -41,7 +42,7 @@ func StampSignatureID(pdfData []byte, signatureID string) ([]byte, error) {
 
 	var buf bytes.Buffer
 
-	if err := api.AddWatermarks(reader, &buf, nil, wm, nil); err != nil {
+	if err := api.AddWatermarks(ctx, reader, &buf, nil, wm, nil); err != nil {
 		return nil, fmt.Errorf("cannot stamp signature ID on PDF: %w", err)
 	}
 

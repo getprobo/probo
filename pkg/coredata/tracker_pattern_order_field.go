@@ -81,7 +81,9 @@ func (p TrackerPatternOrderField) Column() string {
 	case TrackerPatternOrderFieldUpdatedAt:
 		return "updated_at"
 	case TrackerPatternOrderFieldSource:
-		return "COALESCE(source, '')"
+		// source is cookie_source; '' is not a valid enum value, so
+		// COALESCE must compare text (NULL sources sort as empty).
+		return "COALESCE(source::text, '')"
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))

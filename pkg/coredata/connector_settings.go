@@ -270,6 +270,9 @@ type (
 		// RoleARN is the IAM role the customer created for Probo. The account
 		// is the one that ARN names; it is not stored separately.
 		RoleARN string `json:"role_arn"`
+		// MemberRoleName is the IAM role assumed in each member account of an
+		// organization install. Empty on a standalone connector.
+		MemberRoleName string `json:"member_role_name,omitempty"`
 	}
 
 	// GCPConnectorSettings names the workload identity provider and the
@@ -280,6 +283,10 @@ type (
 	GCPConnectorSettings struct {
 		WorkloadIdentityProvider string `json:"workload_identity_provider"`
 		ServiceAccountEmail      string `json:"service_account_email"`
+		// Parent is the Cloud Asset scope of an organization install
+		// (`organizations/{number}` or `folders/{number}`). Empty on a
+		// standalone connector.
+		Parent string `json:"parent,omitempty"`
 	}
 
 	// AzureConnectorSettings names the Entra application Probo federates

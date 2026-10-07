@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -37,8 +37,8 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure this task belongs to',
+		description: 'The ID of the internal control this task belongs to',
 	},
 	{
 		displayName: 'Name',
@@ -67,6 +67,9 @@ export const description: INodeProperties[] = [
 		displayName: 'Content',
 		name: 'content',
 		type: 'string',
+		typeOptions: {
+			rows: 6,
+		},
 		displayOptions: {
 			show: {
 				resource: ['task'],
@@ -74,7 +77,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The content of the task',
+		description: 'The content of the task as a ProseMirror document JSON string',
 	},
 	{
 		displayName: 'State',
@@ -196,7 +199,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set.',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline. The next task is created when that deadline passes.',
 	},
 ];
 
@@ -205,7 +208,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
@@ -240,8 +243,8 @@ export async function execute(
 		input: {
 			organizationId,
 			name,
-			...(measureId && { measureId }),
-			...(content && { content: plainTextToProseMirrorJSON(content) }),
+			...(internalControlId && { internalControlId }),
+			...(content && { content }),
 			...(state && { state }),
 			...(priority && { priority }),
 			...(timeEstimate && { timeEstimate }),
@@ -252,13 +255,6 @@ export async function execute(
 	};
 
 	const responseData = await proboApiRequest.call(this, query, variables);
-	const data = responseData.data as IDataObject | undefined;
-	const payload = data?.createTask as IDataObject | undefined;
-	const edge = payload?.taskEdge as IDataObject | undefined;
-	const node = edge?.node as IDataObject | undefined;
-	if (edge && node) {
-		edge.node = withPlainTextContent(node);
-	}
 
 	return {
 		json: responseData,

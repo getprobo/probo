@@ -661,3 +661,78 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		assert.Equal(t, "DRAFT", got.State)
 	})
 }
+
+func TestCookieBanner_ListVersions(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+
+	bannerID := factory.CreateCookieBanner(owner, factory.Attrs{
+		"cookiePolicyUrl": "https://example.com/cookies",
+	})
+
+	first := publishBanner(t, owner, bannerID)
+	require.Equal(t, 1, first.Version)
+
+	const updateQuery = `
+		mutation UpdateCookieBanner($input: UpdateCookieBannerInput!) {
+			updateCookieBanner(input: $input) { cookieBanner { id } }
+		}
+	`
+
+	var updateResult struct{}
+
+	require.NoError(t, owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"cookieBannerId":  bannerID,
+			"cookiePolicyUrl": "https://example.com/cookies-v2",
+		},
+	}, &updateResult))
+
+	second := publishBanner(t, owner, bannerID)
+	require.Equal(t, 2, second.Version)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on CookieBanner {
+					versions(first: 10, orderBy: { field: CREATED_AT, direction: DESC }) {
+						totalCount
+						edges {
+							node {
+								version
+								state
+							}
+						}
+						pageInfo {
+							hasNextPage
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			Versions struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						Version int    `json:"version"`
+						State   string `json:"state"`
+					} `json:"node"`
+				} `json:"edges"`
+				PageInfo struct {
+					HasNextPage bool `json:"hasNextPage"`
+				} `json:"pageInfo"`
+			} `json:"versions"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+	require.Len(t, result.Node.Versions.Edges, 2)
+	assert.Equal(t, 2, result.Node.Versions.TotalCount)
+	assert.False(t, result.Node.Versions.PageInfo.HasNextPage)
+	assert.Equal(t, 2, result.Node.Versions.Edges[0].Node.Version)
+	assert.Equal(t, 1, result.Node.Versions.Edges[1].Node.Version)
+}

@@ -22,6 +22,7 @@ package tasksync
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -213,6 +214,34 @@ func TestMissingTaskSyncScopes(t *testing.T) {
 	assert.Equal(t, []string{"write", "issues:create"}, missingTaskSyncScopes([]string{"read"}))
 	assert.Equal(t, []string{"read", "issues:create"}, missingTaskSyncScopes([]string{"write"}))
 	assert.Equal(t, []string{"read"}, missingTaskSyncScopes([]string{"write", "issues:create"}))
+}
+
+func TestMarkdownToContent_Empty(t *testing.T) {
+	t.Parallel()
+
+	for _, markdown := range []string{"", "   ", "\n"} {
+		content, err := MarkdownToContent(markdown)
+		require.NoError(t, err)
+		assert.NotEmpty(t, content)
+
+		roundTrip, err := ContentToMarkdown(content)
+		require.NoError(t, err)
+		assert.Empty(t, strings.TrimSpace(roundTrip))
+	}
+}
+
+func TestMarkdownToContent_DropsUnsupported(t *testing.T) {
+	t.Parallel()
+
+	content, err := MarkdownToContent("Hello ![alt](https://example.com/a.png) world")
+	require.NoError(t, err)
+	assert.NotContains(t, content, "image")
+	assert.Contains(t, content, "Hello")
+	assert.Contains(t, content, "world")
+
+	onlyImage, err := MarkdownToContent("![alt](https://example.com/a.png)")
+	require.NoError(t, err)
+	assert.NotContains(t, onlyImage, "image")
 }
 
 func TestMarkdownRoundTrip(t *testing.T) {

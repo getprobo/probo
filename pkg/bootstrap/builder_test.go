@@ -352,6 +352,7 @@ func TestBuilder_Build_Defaults(t *testing.T) {
 	assert.Equal(t, 300, cfg.Probod.Notifications.Document.Interval)
 	assert.Equal(t, 900, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 86400, cfg.Probod.Notifications.Document.ReminderInterval)
+	assert.Equal(t, 300, cfg.Probod.TaskRecurrence.Interval)
 
 	// Agents tools — Firecrawl empty by default
 	assert.Empty(t, cfg.Probod.Agents.Tools.FirecrawlAPIKey)
@@ -496,6 +497,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	env["PROBOD_WEBHOOK_MAX_CONCURRENCY"] = "8"
 	env["PROBOD_CONNECTOR_SLACK_SIGNING_SECRET"] = "slack-signing-secret"
 	env["PROBOD_DOCUMENT_NOTIFICATION_INTERVAL"] = "120"
+	env["PROBOD_TASK_RECURRENCE_INTERVAL"] = "600"
 	env["PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY"] = "60"
 	env["PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL"] = "43200"
 	// Firecrawl
@@ -644,6 +646,7 @@ func TestBuilder_Build_CustomValues(t *testing.T) {
 	assert.Equal(t, 7200, cfg.Probod.Notifications.Webhook.RetryMax)
 	assert.Equal(t, 8, cfg.Probod.Notifications.Webhook.MaxConcurrency)
 	assert.Equal(t, 120, cfg.Probod.Notifications.Document.Interval)
+	assert.Equal(t, 600, cfg.Probod.TaskRecurrence.Interval)
 	assert.Equal(t, 60, cfg.Probod.Notifications.Document.DebounceDelay)
 	assert.Equal(t, 43200, cfg.Probod.Notifications.Document.ReminderInterval)
 	// Agents tools — Firecrawl
@@ -811,6 +814,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
 		"CAL_COM", "CALENDLY", "ATTIO",
+		"OVHCLOUD",
 	}
 
 	env := requiredEnv()
@@ -1105,6 +1109,7 @@ func TestBuilder_Build_IdentityFederationDisabledByDefault(t *testing.T) {
 	assert.Equal(t, cloudaws.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, cloudgcp.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
 	assert.Equal(t, cloudazure.DefaultTerraformModuleSource, cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+	assert.Empty(t, cfg.Probod.IdentityFederation.AWSEndpoint)
 }
 
 func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
@@ -1113,6 +1118,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	env["PROBOD_IDENTITY_FEDERATION_TERRAFORM_MODULE_SOURCE"] = "example/terraform-aws-audit-role"
 	env["PROBOD_IDENTITY_FEDERATION_GCP_TERRAFORM_MODULE_SOURCE"] = "example/terraform-gcp-audit-role"
 	env["PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE"] = "example/terraform-azurerm-audit-role"
+	env["PROBOD_IDENTITY_FEDERATION_AWS_ENDPOINT"] = "http://127.0.0.1:4566"
 
 	b := NewBuilder(NewResolver(mockEnv(env)))
 
@@ -1123,6 +1129,7 @@ func TestBuilder_Build_IdentityFederationInstallArtifactsFromEnv(t *testing.T) {
 	assert.Equal(t, "example/terraform-aws-audit-role", cfg.Probod.IdentityFederation.TerraformModuleSource)
 	assert.Equal(t, "example/terraform-gcp-audit-role", cfg.Probod.IdentityFederation.GCPTerraformModuleSource)
 	assert.Equal(t, "example/terraform-azurerm-audit-role", cfg.Probod.IdentityFederation.AzureTerraformModuleSource)
+	assert.Equal(t, "http://127.0.0.1:4566", cfg.Probod.IdentityFederation.AWSEndpoint)
 }
 
 func TestBuilder_Build_IdentityFederationDisabledSkipsSigningKey(t *testing.T) {

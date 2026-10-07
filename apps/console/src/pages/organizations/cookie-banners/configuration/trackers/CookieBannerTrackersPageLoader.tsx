@@ -18,13 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerTrackersPageQuery } from "#/__generated__/core/CookieBannerTrackersPageQuery.graphql";
 
-import CookieBannerTrackersPage, { cookieBannerTrackersPageQuery } from "./CookieBannerTrackersPage";
+import { TRACKERS_PAGE_SIZE } from "./_lib/pageSize";
+import { useTrackersListFilters } from "./_lib/useTrackersListFilters";
+import { CookieBannerTrackersPage, cookieBannerTrackersPageQuery } from "./CookieBannerTrackersPage";
 import { CookieBannerTrackersPageSkeleton } from "./CookieBannerTrackersPageSkeleton";
 
 export default function CookieBannerTrackersPageLoader() {
@@ -33,21 +35,42 @@ export default function CookieBannerTrackersPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
+  const { graphqlFilter, graphqlOrder } = useTrackersListFilters();
+  const filterRef = useRef(graphqlFilter);
+  const orderRef = useRef(graphqlOrder);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerTrackersPageQuery>(
     cookieBannerTrackersPageQuery,
   );
 
   useEffect(() => {
-    loadQuery({ cookieBannerId });
+    filterRef.current = graphqlFilter;
+  }, [graphqlFilter]);
+
+  useEffect(() => {
+    orderRef.current = graphqlOrder;
+  }, [graphqlOrder]);
+
+  useEffect(() => {
+    loadQuery({
+      cookieBannerId,
+      first: TRACKERS_PAGE_SIZE,
+      filter: filterRef.current,
+      order: orderRef.current,
+    });
   }, [loadQuery, cookieBannerId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.cookieBannerId === cookieBannerId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <CookieBannerTrackersPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<CookieBannerTrackersPageSkeleton />}>
-      <CookieBannerTrackersPage queryRef={queryRef} />
+      <CookieBannerTrackersPage key={cookieBannerId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

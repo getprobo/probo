@@ -30,11 +30,79 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/validator"
 )
+
+func (s *ConnectorService) initialAccount(c *coredata.Connector) (string, string, error) {
+	if s.providerRegistry == nil || c == nil {
+		return "", "", nil
+	}
+
+	reg, ok := s.providerRegistry.Get(c.Provider)
+	if !ok {
+		return "", "", nil
+	}
+
+	externalID, name, err := reg.ResolveInitialAccount(c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot resolve initial account: %w", err)
+	}
+
+	return externalID, name, nil
+}
+
+// recordInitialAccount stores the account present at create time. A connector
+// with no tenant in settings is still that one account. Organization installs
+// wait for discover.
+func (s *ConnectorService) recordInitialAccount(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) error {
+	externalID, name, err := s.initialAccount(cnnctr)
+	if err != nil {
+		return err
+	}
+
+	if externalID == "" && !s.organizationInstall(cnnctr) {
+		externalID = cnnctr.ID.String()
+		name = s.implicitAccountName(cnnctr)
+	}
+
+	if _, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ConnectorService) organizationInstall(c *coredata.Connector) bool {
+	if s.providerRegistry == nil || c == nil {
+		return false
+	}
+
+	reg, ok := s.providerRegistry.Get(c.Provider)
+	if !ok {
+		return false
+	}
+
+	return reg.SupportsOrganizationInstall()
+}
+
+func (s *ConnectorService) implicitAccountName(c *coredata.Connector) string {
+	if s.providerRegistry != nil {
+		if reg, ok := s.providerRegistry.Get(c.Provider); ok && reg.DisplayName != "" {
+			return reg.DisplayName
+		}
+	}
+
+	return string(c.Provider)
+}
 
 // ErrInstallStateAlreadyUsed is returned when an install callback replays a
 // state another request already claimed or completed. The vendor's proof stays
@@ -46,7 +114,8 @@ var ErrInstallStateAlreadyUsed = errors.New("connector install state already use
 
 type (
 	ConnectorService struct {
-		svc *Service
+		svc              *Service
+		providerRegistry *provider.Registry
 	}
 
 	CreateConnectorRequest struct {
@@ -240,10 +309,51 @@ func (s *ConnectorService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
+			if err := refuseReferencedConnector(ctx, tx, scope, connectorID); err != nil {
+				return err
+			}
+
 			cnnctr := &coredata.Connector{ID: connectorID}
+
 			return cnnctr.Delete(ctx, tx, scope)
 		},
 	)
+}
+
+// refuseReferencedConnector names the module still holding the credential.
+// The foreign key that fires first names the account, because connector_accounts
+// cascades while the source restricts. Accounts are not counted: a source on an
+// account also names that connector, and refusing on accounts would strand the
+// connector access review deletes when a source insert fails.
+func refuseReferencedConnector(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	sources := &coredata.AccessReviewSources{}
+
+	sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count access review sources for connector: %w", err)
+	}
+
+	if sourceCount > 0 {
+		return fmt.Errorf("cannot delete connector: it is used by an access review source: %w", coredata.ErrResourceInUse)
+	}
+
+	bridges := &coredata.SCIMBridges{}
+
+	bridgeCount, err := bridges.CountByConnectorID(ctx, tx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count SCIM bridges for connector: %w", err)
+	}
+
+	if bridgeCount > 0 {
+		return fmt.Errorf("cannot delete connector: it is used by a SCIM configuration: %w", coredata.ErrResourceInUse)
+	}
+
+	return nil
 }
 
 func (s *ConnectorService) Create(
@@ -278,7 +388,7 @@ func (s *ConnectorService) Create(
 				return fmt.Errorf("cannot create connector: %w", err)
 			}
 
-			return nil
+			return s.recordInitialAccount(ctx, tx, scope, newConnector)
 		},
 	)
 	if err != nil {
@@ -508,6 +618,10 @@ func (s *ConnectorService) CompleteInstall(
 
 				if err := cnnctr.Insert(ctx, tx, scope, s.svc.encryptionKey); err != nil {
 					return fmt.Errorf("cannot create connector: %w", err)
+				}
+
+				if err := s.recordInitialAccount(ctx, tx, scope, cnnctr); err != nil {
+					return err
 				}
 			default:
 				return fmt.Errorf("cannot load connector: %w", err)

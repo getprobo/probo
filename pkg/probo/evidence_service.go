@@ -40,17 +40,17 @@ type (
 		fileValidator *filevalidation.FileValidator
 	}
 
-	UploadMeasureEvidenceRequest struct {
-		MeasureID gid.GID
-		URL       *string
-		File      FileUpload
+	UploadInternalControlEvidenceRequest struct {
+		InternalControlID gid.GID
+		URL               *string
+		File              FileUpload
 	}
 )
 
-func (umer *UploadMeasureEvidenceRequest) Validate() error {
+func (umer *UploadInternalControlEvidenceRequest) Validate() error {
 	v := validator.New()
 
-	v.Check(umer.MeasureID, "measure_id", validator.Required(), validator.GID(coredata.MeasureEntityType))
+	v.Check(umer.InternalControlID, "internal_control_id", validator.Required(), validator.GID(coredata.InternalControlEntityType))
 	v.Check(umer.URL, "url", validator.URL())
 	v.Check(umer.File, "file", validator.Required())
 	v.Check(umer.File.Size, "file.size", validator.Min(1))
@@ -81,9 +81,9 @@ func (s EvidenceService) Get(
 	return evidence, nil
 }
 
-func (s EvidenceService) UploadMeasureEvidence(
+func (s EvidenceService) UploadInternalControlEvidence(
 	ctx context.Context, scope coredata.Scoper,
-	req UploadMeasureEvidenceRequest,
+	req UploadInternalControlEvidenceRequest,
 ) (*coredata.Evidence, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -99,7 +99,7 @@ func (s EvidenceService) UploadMeasureEvidence(
 
 	evidence := &coredata.Evidence{
 		ID:                evidenceID,
-		MeasureID:         req.MeasureID,
+		InternalControlID: req.InternalControlID,
 		State:             coredata.EvidenceStateFulfilled,
 		ReferenceID:       "custom-evidence-" + referenceID.String(),
 		Type:              coredata.EvidenceTypeFile,
@@ -111,15 +111,15 @@ func (s EvidenceService) UploadMeasureEvidence(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			measure := &coredata.Measure{}
+			internalControl := &coredata.InternalControl{}
 
 			var (
 				file *coredata.File
 				err  error
 			)
 
-			if err := measure.LoadByID(ctx, conn, scope, req.MeasureID); err != nil {
-				return fmt.Errorf("cannot load measure %q: %w", req.MeasureID, err)
+			if err := internalControl.LoadByID(ctx, conn, scope, req.InternalControlID); err != nil {
+				return fmt.Errorf("cannot load internal control %q: %w", req.InternalControlID, err)
 			}
 
 			file, err = s.svc.Files.UploadAndSaveFile(
@@ -129,16 +129,16 @@ func (s EvidenceService) UploadMeasureEvidence(
 				map[string]string{
 					"type":            "evidence",
 					"evidence-id":     evidenceID.String(),
-					"organization-id": measure.OrganizationID.String(),
+					"organization-id": internalControl.OrganizationID.String(),
 				},
 				&req.File)
 			if err != nil {
 				return fmt.Errorf("cannot upload or file: %w", err)
 			}
 
-			evidence.OrganizationID = measure.OrganizationID
+			evidence.OrganizationID = internalControl.OrganizationID
 			evidence.EvidenceFileId = &file.ID
-			evidence.MeasureID = req.MeasureID
+			evidence.InternalControlID = req.InternalControlID
 
 			if err := evidence.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert evidence: %w", err)
@@ -155,9 +155,9 @@ func (s EvidenceService) UploadMeasureEvidence(
 	return evidence, nil
 }
 
-func (s EvidenceService) CountForMeasureID(
+func (s EvidenceService) CountForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -166,7 +166,7 @@ func (s EvidenceService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			evidences := coredata.Evidences{}
 
-			count, err = evidences.CountByMeasureID(ctx, conn, scope, measureID)
+			count, err = evidences.CountByInternalControlID(ctx, conn, scope, internalControlID)
 			if err != nil {
 				return fmt.Errorf("cannot count evidences: %w", err)
 			}
@@ -181,9 +181,9 @@ func (s EvidenceService) CountForMeasureID(
 	return count, nil
 }
 
-func (s EvidenceService) ListForMeasureID(
+func (s EvidenceService) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.EvidenceOrderField],
 ) (*page.Page[*coredata.Evidence, coredata.EvidenceOrderField], error) {
 	var evidences coredata.Evidences
@@ -191,11 +191,11 @@ func (s EvidenceService) ListForMeasureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return evidences.LoadByMeasureID(
+			return evidences.LoadByInternalControlID(
 				ctx,
 				conn,
 				scope,
-				measureID,
+				internalControlID,
 				cursor,
 			)
 		},

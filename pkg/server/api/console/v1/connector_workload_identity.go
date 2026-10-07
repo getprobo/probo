@@ -93,3 +93,33 @@ func (r *Resolver) workloadIdentitySettings(
 
 	return raw, nil
 }
+
+func (r *Resolver) organizationConnectorSettings(
+	ctx context.Context,
+	input types.CreateOrganizationConnectorInput,
+) ([]byte, error) {
+	raw, err := probo.MarshalWorkloadIdentitySettings(
+		probo.WorkloadIdentitySettingsInput{
+			Provider:                    input.Provider,
+			AWSRoleARN:                  ref.UnrefOrZero(input.AWSRoleArn),
+			AWSMemberRoleName:           ref.UnrefOrZero(input.AWSMemberRoleName),
+			GCPWorkloadIdentityProvider: ref.UnrefOrZero(input.GCPWorkloadIdentityProvider),
+			GCPServiceAccountEmail:      ref.UnrefOrZero(input.GCPServiceAccountEmail),
+			GCPParent:                   ref.UnrefOrZero(input.GCPParent),
+			AzureTenantID:               ref.UnrefOrZero(input.AzureTenantID),
+			AzureClientID:               ref.UnrefOrZero(input.AzureClientID),
+			AzureEnvironment:            ref.UnrefOrZero(input.AzureEnvironment),
+		},
+	)
+	if err != nil {
+		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
+			r.logger.ErrorCtx(ctx, "cannot marshal organization connector settings", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	return raw, nil
+}

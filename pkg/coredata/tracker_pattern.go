@@ -181,6 +181,77 @@ LIMIT 1;
 	return nil
 }
 
+// LoadUncategorisedGlobsForUpdateSkipLocked locks a batch of
+// uncategorised, non-excluded glob patterns for a banner reset. SKIP
+// LOCKED skips rows a mapping worker already holds so the reset does
+// not wait out the worker's statement timeout.
+func (tps *TrackerPatterns) LoadUncategorisedGlobsForUpdateSkipLocked(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	cookieBannerID gid.GID,
+	cookieCategoryID gid.GID,
+	keyword *string,
+	limit int,
+) error {
+	globMatchType := TrackerPatternMatchTypeGlob
+	notExcluded := false
+	filter := NewTrackerPatternFilter(&globMatchType, &cookieCategoryID, &notExcluded).WithPatternKeyword(keyword)
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	cookie_banner_id,
+	cookie_category_id,
+	common_tracker_pattern_id,
+	tracker_type,
+	pattern,
+	match_type,
+	display_name,
+	description,
+	excluded,
+	max_age_seconds,
+	source,
+	last_matched_at,
+	mapping_requested_at,
+	created_at,
+	updated_at
+FROM
+	tracker_patterns
+WHERE
+	%s
+	AND cookie_banner_id = @cookie_banner_id
+	AND %s
+ORDER BY
+	id
+FOR UPDATE SKIP LOCKED
+LIMIT %d
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), limit)
+
+	args := pgx.StrictNamedArgs{
+		"cookie_banner_id": cookieBannerID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := tx.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query tracker patterns: %w", err)
+	}
+
+	patterns, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TrackerPattern])
+	if err != nil {
+		return fmt.Errorf("cannot collect tracker patterns: %w", err)
+	}
+
+	*tps = patterns
+
+	return nil
+}
+
 func (tp *TrackerPattern) LoadByBannerIDTypeAndPattern(
 	ctx context.Context,
 	conn pg.Querier,
@@ -1072,9 +1143,12 @@ WHERE id = @id
 // ResetStaleMappings re-arms mapping_requested_at on rows whose mapping
 // was claimed but never completed (no common_tracker_pattern_id) and
 // have been idle longer than staleAfter, so a crashed or timed-out
-// mapping run is retried. A successful Process always assigns a catalog
-// row (the unmatched fallback in createUnmatchedPattern), so a missing
-// common_tracker_pattern_id on a dequeued row marks an interrupted run.
+// mapping run is retried. EXTENSION rows never request mapping, so they
+// stay unlinked and are excluded from this sweep — re-arming them would
+// loop with a no-op Process. A successful Process always assigns a
+// catalog row (the unmatched fallback in createUnmatchedPattern), so a
+// missing common_tracker_pattern_id on a dequeued row marks an
+// interrupted run.
 //
 // Like the claim query, this sweep is intentionally cross-tenant: the
 // mapping worker is a system worker that drains the queue regardless of
@@ -1092,6 +1166,7 @@ SET
 WHERE
     mapping_requested_at IS NULL
     AND common_tracker_pattern_id IS NULL
+    AND (source IS NULL OR source <> 'EXTENSION')
     AND updated_at < @stale_before
 `
 

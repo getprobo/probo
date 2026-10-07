@@ -21,8 +21,15 @@
 package provider
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
@@ -42,18 +49,20 @@ import (
 // whole check, so there is no grant readback beside Probe.
 func gcpRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderGCP,
-		DisplayName:      "Google Cloud",
-		DocumentationURL: accessReviewDocsURL("gcp"),
+		Provider:           coredata.ConnectorProviderGCP,
+		InitialAccountFunc: gcpInitialAccount,
+		DisplayName:        "Google Cloud",
+		DocumentationURL:   accessReviewDocsURL("gcp"),
 		// See Registration.EndpointOverrideUnsupported: Google API clients
 		// resolve every host they dial themselves, so there is no host in
 		// Endpoints for an override to move.
 		EndpointOverrideUnsupported: "the GCP APIs resolve their own hosts, not values in Endpoints",
 		WorkloadIdentity: &WorkloadIdentityConfig{
-			NewSession:      newGCPSession,
-			NewDriver:       newGCPDriver,
-			Probe:           probeGCP,
-			NewNameResolver: newGCPNameResolver,
+			NewSession:       newGCPSession,
+			NewDriver:        newGCPDriver,
+			Probe:            probeGCP,
+			DiscoverAccounts: discoverGCPAccounts,
+			NewNameResolver:  newGCPNameResolver,
 			ExtraSettings: []ExtraSetting{
 				{Key: "workloadIdentityProvider", Label: "Workload identity provider", Required: true},
 				{Key: "serviceAccountEmail", Label: "Service account email", Required: true},
@@ -73,6 +82,7 @@ func newGCPSession(
 	_ context.Context,
 	issuer *identityfederation.Issuer,
 	conn *coredata.Connector,
+	accountID string,
 ) (cloud.Session, error) {
 	settings, err := coredata.ConnectorSettings[coredata.GCPConnectorSettings](conn)
 	if err != nil {
@@ -84,12 +94,29 @@ func newGCPSession(
 		conn.OrganizationID,
 		settings.WorkloadIdentityProvider,
 		settings.ServiceAccountEmail,
+		accountID,
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return session, nil
+}
+
+var gcpProjectFromProvider = regexp.MustCompile(`projects/([1-9][0-9]*)/`)
+
+func gcpInitialAccount(c *coredata.Connector) (string, string, error) {
+	settings, err := coredata.ConnectorSettings[coredata.GCPConnectorSettings](c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot read connector settings: %w", err)
+	}
+
+	matches := gcpProjectFromProvider.FindStringSubmatch(settings.WorkloadIdentityProvider)
+	if len(matches) != 2 {
+		return "", "", nil
+	}
+
+	return matches[1], matches[1], nil
 }
 
 func newGCPNameResolver(
@@ -139,4 +166,116 @@ func probeGCP(ctx context.Context, session cloud.Session, _ *coredata.Connector)
 	}
 
 	return gcpSession.CheckAccess(ctx)
+}
+
+func discoverGCPAccounts(
+	ctx context.Context,
+	session cloud.Session,
+	conn *coredata.Connector,
+) ([]DiscoveredAccount, error) {
+	gcpSession, ok := session.(*cloudgcp.Session)
+	if !ok {
+		return nil, fmt.Errorf("cannot discover gcp accounts: session is for %s", session.Cloud())
+	}
+
+	settings, err := coredata.ConnectorSettings[coredata.GCPConnectorSettings](conn)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read gcp connector settings: %w", err)
+	}
+
+	if settings.Parent == "" {
+		return []DiscoveredAccount{}, nil
+	}
+
+	endpoint, err := url.JoinPath(
+		"https://cloudasset."+gcpSession.UniverseDomain(),
+		"v1",
+		settings.Parent+":searchAllResources",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build gcp discover URL: %w", err)
+	}
+
+	var accounts []DiscoveredAccount
+
+	pageToken := ""
+
+	for {
+		body := map[string]any{
+			"assetTypes": []string{"cloudresourcemanager.googleapis.com/Project"},
+			"pageSize":   100,
+		}
+		if pageToken != "" {
+			body["pageToken"] = pageToken
+		}
+
+		payload, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("cannot marshal gcp discover request: %w", err)
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(payload))
+		if err != nil {
+			return nil, fmt.Errorf("cannot create gcp discover request: %w", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := gcpSession.HTTPClient().Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("cannot list gcp projects: %w", err)
+		}
+
+		raw, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+
+		if err != nil {
+			return nil, fmt.Errorf("cannot read gcp discover response: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("cannot list gcp projects: unexpected status %d", resp.StatusCode)
+		}
+
+		var page struct {
+			Results []struct {
+				DisplayName string `json:"displayName"`
+				Project     string `json:"project"`
+			} `json:"results"`
+			NextPageToken string `json:"nextPageToken"`
+		}
+		if err := json.Unmarshal(raw, &page); err != nil {
+			return nil, fmt.Errorf("cannot decode gcp discover response: %w", err)
+		}
+
+		for _, result := range page.Results {
+			projectNumber := strings.TrimPrefix(result.Project, "projects/")
+			if projectNumber == "" || projectNumber == result.Project {
+				continue
+			}
+
+			name := result.DisplayName
+			if name == "" {
+				name = projectNumber
+			}
+
+			accounts = append(accounts, DiscoveredAccount{
+				ExternalAccountID: projectNumber,
+				Name:              name,
+			})
+		}
+
+		if page.NextPageToken == "" {
+			break
+		}
+
+		pageToken = page.NextPageToken
+	}
+
+	if accounts == nil {
+		return []DiscoveredAccount{}, nil
+	}
+
+	return accounts, nil
 }

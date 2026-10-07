@@ -18,12 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import { InlineErrorCard } from "#/components/errors/InlineErrorCard";
 import { HomeSection } from "#/components/HomeSection/HomeSection";
+import { useLocalizedPath } from "#/lib/i18n/useLocale";
 
 import type { ComplianceFrameworksSection_compliancePortal$key } from "./__generated__/ComplianceFrameworksSection_compliancePortal.graphql";
 import { ComplianceFrameworkListItem } from "./ComplianceFrameworkListItem";
@@ -71,19 +73,29 @@ export function ComplianceFrameworksSection({ compliancePortalKey }: ComplianceF
 
 function ComplianceFrameworksSectionContent({ compliancePortalKey }: ComplianceFrameworksSectionProps) {
   const { t } = useTranslation();
+  const localizedPath = useLocalizedPath();
   const data = useFragment(complianceFrameworksSectionFragment, compliancePortalKey);
   const frameworks = data.complianceFrameworks.edges.map(edge => edge.node);
 
-  if (frameworks.length === 0) {
-    return null;
-  }
-
   return (
     <HomeSection title={t("home.sections.compliance")}>
-      <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
-        {frameworks.map(framework => (
-          <ComplianceFrameworkListItem key={framework.id} complianceFrameworkKey={framework} />
-        ))}
+      {frameworks.length > 0 && (
+        <div className="grid grid-cols-6 gap-4 max-lg:grid-cols-3 max-sm:grid-cols-2">
+          {frameworks.map(framework => (
+            <ComplianceFrameworkListItem key={framework.id} complianceFrameworkKey={framework} />
+          ))}
+        </div>
+      )}
+      <div className="flex justify-center">
+        <ButtonLink
+          to={localizedPath("/documents")}
+          variant="soft"
+          color="neutral"
+          highContrast
+          size={2}
+        >
+          {t("home.compliance.viewDocuments")}
+        </ButtonLink>
       </div>
     </HomeSection>
   );

@@ -232,6 +232,7 @@ func newExchangeTestSession(t *testing.T) *exchangeProbe {
 		gid.New(gid.NewTenantID(), coredata.OrganizationEntityType),
 		exchangeProviderResource,
 		exchangeServiceAccount,
+		"",
 	)
 	require.NoError(t, err)
 

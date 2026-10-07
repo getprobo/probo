@@ -90,6 +90,35 @@ func insertConnector(
 	return id, err
 }
 
+func insertConnectorAccount(
+	ctx context.Context,
+	client *pg.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	connectorID gid.GID,
+	externalID string,
+	name string,
+) (*coredata.ConnectorAccount, error) {
+	now := time.Now().UTC()
+	account := &coredata.ConnectorAccount{
+		ID:                gid.New(scope.GetTenantID(), coredata.ConnectorAccountEntityType),
+		OrganizationID:    organizationID,
+		ConnectorID:       connectorID,
+		ExternalAccountID: externalID,
+		Name:              name,
+		CreatedAt:         now,
+		UpdatedAt:         now,
+	}
+
+	err := client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		_, err := account.Upsert(ctx, tx, scope)
+
+		return err
+	})
+
+	return account, err
+}
+
 // TestConnectorInsert_MultipleConnectionsPerProvider pins the relaxed
 // uniqueness: an organization may hold several connectors of the same
 // provider — including Slack, whose messaging pipeline now picks its

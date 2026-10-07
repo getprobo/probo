@@ -21,6 +21,7 @@
 package console_test
 
 import (
+	"encoding/json"
 	"errors"
 	"net/url"
 	"testing"
@@ -311,6 +312,72 @@ func requireWebhookEventsEventually(
 	}
 
 	return last
+}
+
+func loadWebhookSubscriptionNode(
+	t *testing.T,
+	client *testutil.Client,
+	subscriptionID string,
+) webhookSubscriptionNodeResponse {
+	t.Helper()
+
+	var result webhookSubscriptionNodeResponse
+
+	err := client.Execute(
+		webhookSubscriptionNodeQuery,
+		map[string]any{"id": subscriptionID},
+		&result,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result.Node)
+
+	return result
+}
+
+func webhookEventPayloads(
+	t *testing.T,
+	result webhookSubscriptionNodeResponse,
+) ([]string, []map[string]any) {
+	t.Helper()
+
+	require.NotNil(t, result.Node)
+	require.NotEmpty(t, result.Node.Events.Edges)
+
+	eventTypes := make([]string, 0, len(result.Node.Events.Edges))
+	payloads := make([]map[string]any, 0, len(result.Node.Events.Edges))
+
+	for _, edge := range result.Node.Events.Edges {
+		require.NotNil(t, edge.Node.Payload)
+
+		var payload map[string]any
+		require.NoError(t, json.Unmarshal([]byte(*edge.Node.Payload), &payload))
+
+		eventType, ok := payload["eventType"].(string)
+		require.True(t, ok, "webhook payload eventType must be a string")
+
+		eventTypes = append(eventTypes, eventType)
+		payloads = append(payloads, payload)
+	}
+
+	return eventTypes, payloads
+}
+
+func webhookPayloadByEventType(
+	t *testing.T,
+	payloads []map[string]any,
+	eventType string,
+) map[string]any {
+	t.Helper()
+
+	for _, payload := range payloads {
+		if payload["eventType"] == eventType {
+			return payload
+		}
+	}
+
+	require.FailNow(t, "webhook event payload not found", "event type: %s", eventType)
+
+	return nil
 }
 
 func organizationContainsWebhookSubscription(

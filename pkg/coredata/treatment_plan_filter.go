@@ -84,7 +84,7 @@ func (f *TreatmentPlanFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_score_type_inherent": TreatmentPlanScoreTypeInherent,
 		"filter_score_type_net":      TreatmentPlanScoreTypeNet,
 		"filter_score_type_residual": TreatmentPlanScoreTypeResidual,
-		"filter_net_implemented":     MeasureStateImplemented,
+		"filter_net_implemented":     InternalControlStateImplemented,
 	}
 	if f.scoreType != nil {
 		args["filter_score_type"] = string(*f.scoreType)
@@ -119,17 +119,17 @@ func (f *TreatmentPlanFilter) SQLFragment() string {
 			CASE
 				WHEN EXISTS (
 					SELECT 1
-					FROM treatment_plans_measures tpm
+					FROM treatment_plans_internal_controls tpm
 					WHERE tpm.treatment_plan_id = id
 				)
 				AND NOT EXISTS (
 					SELECT 1
-					FROM treatment_plans_measures tpm
+					FROM treatment_plans_internal_controls tpm
 					WHERE tpm.treatment_plan_id = id
 						AND EXISTS (
 							SELECT 1
-							FROM measures m
-							WHERE m.id = tpm.measure_id
+							FROM internal_controls m
+							WHERE m.id = tpm.internal_control_id
 								AND m.state::text IS DISTINCT FROM @filter_net_implemented::text
 						)
 				)

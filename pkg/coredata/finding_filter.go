@@ -31,6 +31,7 @@ type (
 		status   *FindingStatus
 		priority *FindingPriority
 		ownerID  *gid.GID
+		auditID  *gid.GID
 	}
 )
 
@@ -39,12 +40,14 @@ func NewFindingFilter(
 	status *FindingStatus,
 	priority *FindingPriority,
 	ownerID *gid.GID,
+	auditID *gid.GID,
 ) *FindingFilter {
 	return &FindingFilter{
 		kind:     kind,
 		status:   status,
 		priority: priority,
 		ownerID:  ownerID,
+		auditID:  auditID,
 	}
 }
 
@@ -58,6 +61,8 @@ func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_priority":     nil,
 		"has_owner_filter":    false,
 		"filter_owner_id":     nil,
+		"has_audit_filter":    false,
+		"filter_audit_id":     nil,
 	}
 
 	if f.kind != nil {
@@ -78,6 +83,11 @@ func (f *FindingFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.ownerID != nil {
 		args["has_owner_filter"] = true
 		args["filter_owner_id"] = *f.ownerID
+	}
+
+	if f.auditID != nil {
+		args["has_audit_filter"] = true
+		args["filter_audit_id"] = *f.auditID
 	}
 
 	return args
@@ -111,6 +121,17 @@ func (f *FindingFilter) SQLFragment() string {
         WHEN @has_owner_filter::boolean = false THEN TRUE
         WHEN @has_owner_filter::boolean = true THEN
             owner_id = @filter_owner_id::text
+        ELSE TRUE
+    END
+    AND
+    CASE
+        WHEN @has_audit_filter::boolean = false THEN TRUE
+        WHEN @has_audit_filter::boolean = true THEN
+            id IN (
+                SELECT finding_id
+                FROM findings_audits
+                WHERE audit_id = @filter_audit_id::text
+            )
         ELSE TRUE
     END
 )`

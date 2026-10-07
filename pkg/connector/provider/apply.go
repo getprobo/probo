@@ -64,6 +64,7 @@ func (r *Registry) ApplyOAuth2Defaults(p string, redirectURI string, c *connecto
 	c.RegisteredScopes = oauth2.Scopes
 	c.ScopeSeparator = oauth2.ScopeSeparator
 	c.RequiresPKCE = oauth2.RequiresPKCE
+	c.ScopeParam = oauth2.ScopeParam
 	c.BuildAuthURLForSite = oauth2.BuildAuthURLForSite
 	c.BuildTokenURLForDomain = oauth2.BuildTokenURLForDomain
 	c.BuildTokenURLForSite = oauth2.BuildTokenURLForSite

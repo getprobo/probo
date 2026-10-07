@@ -30,37 +30,49 @@ import (
 )
 
 const listQuery = `
-query($id: ID!) {
+query($id: ID!, $first: Int, $after: String, $query: String) {
   node(id: $id) {
     __typename
     ... on Organization {
-      linearTeams {
-        id
-        name
-        key
+      linearTeams(first: $first, after: $after, query: $query) {
+        edges {
+          node {
+            id
+            name
+            key
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
       }
     }
   }
 }
 `
 
-type listResponse struct {
-	Node *struct {
-		Typename    string `json:"__typename"`
-		LinearTeams []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-			Key  string `json:"key"`
-		} `json:"linearTeams"`
-	} `json:"node"`
+type linearTeam struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Key  string `json:"key"`
 }
 
 func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagQuery string
+		flagLimit int
+	)
+
 	cmd := &cobra.Command{
 		Use:   "list-linear-teams <organization-id>",
-		Short: "List Linear teams for an organization",
+		Short: "Search Linear teams for an organization",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateLimit(flagLimit); err != nil {
+				return err
+			}
+
 			cfg, err := f.Config()
 			if err != nil {
 				return err
@@ -79,37 +91,60 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			data, err := client.Do(listQuery, map[string]any{"id": args[0]})
+			variables := map[string]any{
+				"id": args[0],
+			}
+			if flagQuery != "" {
+				variables["query"] = flagQuery
+			}
+
+			teams, _, err := api.Paginate(
+				client,
+				listQuery,
+				variables,
+				flagLimit,
+				func(data json.RawMessage) (*api.Connection[linearTeam], error) {
+					var resp struct {
+						Node *struct {
+							Typename    string                     `json:"__typename"`
+							LinearTeams api.Connection[linearTeam] `json:"linearTeams"`
+						} `json:"node"`
+					}
+					if err := json.Unmarshal(data, &resp); err != nil {
+						return nil, fmt.Errorf("cannot parse Linear teams: %w", err)
+					}
+
+					if resp.Node == nil {
+						return nil, fmt.Errorf("organization %s not found", args[0])
+					}
+
+					if resp.Node.Typename != "Organization" {
+						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
+					}
+
+					return &resp.Node.LinearTeams, nil
+				},
+			)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot list Linear teams: %w", err)
 			}
 
-			var resp listResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
-				return fmt.Errorf("cannot parse response: %w", err)
-			}
-
-			if resp.Node == nil {
-				return fmt.Errorf("organization %s not found", args[0])
-			}
-
-			if resp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-			}
-
-			if len(resp.Node.LinearTeams) == 0 {
+			if len(teams) == 0 {
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "No Linear teams found.")
 
 				return nil
 			}
 
-			for _, team := range resp.Node.LinearTeams {
+			for _, team := range teams {
 				_, _ = fmt.Fprintf(f.IOStreams.Out, "%s\t%s\t%s\n", team.ID, team.Key, team.Name)
 			}
 
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVar(&flagQuery, "query", "", "Search teams by name or key")
+	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of teams to list")
 
 	return cmd
 }

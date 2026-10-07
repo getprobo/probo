@@ -29,6 +29,7 @@ type TrackerPatternFilter struct {
 	matchType          *TrackerPatternMatchType
 	cookieCategoryID   *gid.GID
 	excluded           *bool
+	categorized        *bool
 	query              *string
 	patternKeyword     *string
 	source             *CookieSource
@@ -46,6 +47,19 @@ func NewTrackerPatternFilter(
 		cookieCategoryID: cookieCategoryID,
 		excluded:         excluded,
 	}
+}
+
+func (f *TrackerPatternFilter) WithExcluded(excluded *bool) *TrackerPatternFilter {
+	f.excluded = excluded
+	return f
+}
+
+// WithCategorized restricts results to patterns whose category kind is
+// not UNCATEGORISED when categorized is true, or only uncategorised
+// patterns when false. A nil value disables the filter.
+func (f *TrackerPatternFilter) WithCategorized(categorized *bool) *TrackerPatternFilter {
+	f.categorized = categorized
+	return f
 }
 
 func (f *TrackerPatternFilter) WithQuery(query *string) *TrackerPatternFilter {
@@ -107,6 +121,20 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 	END
 	AND
 	CASE
+		WHEN @has_categorized_filter::boolean = false THEN TRUE
+		WHEN @filter_categorized::boolean = true THEN
+			cookie_category_id IN (
+				SELECT id FROM cookie_categories
+				WHERE kind <> @uncategorised_kind::cookie_category_kind
+			)
+		ELSE
+			cookie_category_id IN (
+				SELECT id FROM cookie_categories
+				WHERE kind = @uncategorised_kind::cookie_category_kind
+			)
+	END
+	AND
+	CASE
 		WHEN @filter_query::text IS NOT NULL AND @filter_query::text != '' THEN
 			(display_name ILIKE '%' || @filter_query || '%'
 			 OR description ILIKE '%' || @filter_query || '%')
@@ -158,6 +186,9 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_cookie_category_id":        nil,
 		"has_excluded_filter":              false,
 		"filter_excluded":                  nil,
+		"has_categorized_filter":           false,
+		"filter_categorized":               nil,
+		"uncategorised_kind":               CookieCategoryKindUncategorised,
 		"filter_query":                     nil,
 		"filter_pattern_keyword":           nil,
 		"has_source_filter":                false,
@@ -181,6 +212,11 @@ func (f *TrackerPatternFilter) SQLArguments() pgx.StrictNamedArgs {
 	if f.excluded != nil {
 		args["has_excluded_filter"] = true
 		args["filter_excluded"] = *f.excluded
+	}
+
+	if f.categorized != nil {
+		args["has_categorized_filter"] = true
+		args["filter_categorized"] = *f.categorized
 	}
 
 	if f.query != nil {

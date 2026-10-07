@@ -136,23 +136,12 @@ func (d *BetterStackDriver) fetchTeamMembersPage(
 	ctx context.Context,
 	page int,
 ) (*betterStackTeamMembersResponse, error) {
-	base, err := url.Parse(d.baseURL)
+	endpoint, err := BetterStackTeamMembersURL(d.baseURL, d.teamName, page)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse better stack base URL: %w", err)
+		return nil, fmt.Errorf("cannot build better stack team members URL: %w", err)
 	}
 
-	endpoint := base.JoinPath(betterStackTeamMembersPath)
-
-	q := endpoint.Query()
-	q.Set("page", strconv.Itoa(page))
-
-	if d.teamName != "" {
-		q.Set("team_name", d.teamName)
-	}
-
-	endpoint.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create better stack team members request: %w", err)
 	}
@@ -166,6 +155,10 @@ func (d *BetterStackDriver) fetchTeamMembersPage(
 
 	defer func() { _ = httpResp.Body.Close() }()
 
+	if rejected := BetterStackTeamMembersRejection(httpResp); rejected != nil {
+		return nil, rejected
+	}
+
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
 		return nil, fmt.Errorf("cannot fetch better stack team members: unexpected status %d", httpResp.StatusCode)
 	}
@@ -176,6 +169,46 @@ func (d *BetterStackDriver) fetchTeamMembersPage(
 	}
 
 	return &resp, nil
+}
+
+// BetterStackTeamMembersURL returns the team-members URL for page, scoped to
+// teamName when set.
+func BetterStackTeamMembersURL(baseURL, teamName string, page int) (string, error) {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse better stack base URL: %w", err)
+	}
+
+	endpoint := base.JoinPath(betterStackTeamMembersPath)
+
+	q := endpoint.Query()
+	q.Set("page", strconv.Itoa(page))
+
+	if teamName != "" {
+		q.Set("team_name", teamName)
+	}
+
+	endpoint.RawQuery = q.Encode()
+
+	return endpoint.String(), nil
+}
+
+// BetterStackTeamNotFound is the code for a team_name that names none of the
+// token's teams.
+const BetterStackTeamNotFound = "better_stack_team_not_found"
+
+// BetterStackTeamMembersRejection returns the refusal a team-members response
+// carries, or nil.
+func BetterStackTeamMembersRejection(resp *http.Response) *SettingRejectedError {
+	if resp.StatusCode != http.StatusUnprocessableEntity || !respondsWithJSON(resp) {
+		return nil
+	}
+
+	return &SettingRejectedError{
+		Code:       BetterStackTeamNotFound,
+		StatusCode: resp.StatusCode,
+		Message:    "Better Stack has no team with this name for this API token. Team names are case-sensitive: copy the exact name from Settings > Teams in Better Stack, or use a team-based API token.",
+	}
 }
 
 // betterStackRoles maps a Better Stack role token to a human-readable label.

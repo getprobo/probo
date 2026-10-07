@@ -28,19 +28,21 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { insertTaskEdgeSorted } from "./taskConnectionOrder";
 import {
-  measureTasksConnectionKey,
+  internalControlTasksConnectionKey,
   organizationTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
 import type { TaskPriority, TaskState } from "./taskState";
+import { taskMatchesFilter, useTasksCardFilters } from "./useTasksCardFilters";
 
 const createTaskMutation = graphql`
   mutation useCreateTaskMutation($input: CreateTaskInput!) {
     createTask(input: $input) {
       taskEdge {
         node {
+          id
           ...TasksCard_task
-          ...TasksCard_TaskRowFragment
+          ...TaskListItem_task
         }
       }
     }
@@ -51,6 +53,7 @@ export function useCreateTask() {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const relayEnv = useRelayEnvironment();
+  const { graphqlFilter } = useTasksCardFilters();
   const [commit, isCreating] = useMutation<useCreateTaskMutation>(
     createTaskMutation,
     {
@@ -65,20 +68,23 @@ export function useCreateTask() {
       content?: string | null;
       state?: TaskState;
       priority: TaskPriority;
-      measureId?: string | null;
+      internalControlId?: string | null;
     },
     connectionId: string,
   ) {
-    const measureId = input.measureId ?? undefined;
-    const connections = [...new Set([
-      connectionId,
+    const internalControlId = input.internalControlId ?? undefined;
+    const state = input.state ?? "TODO";
+    const connections = new Set([
       taskConnectionId(organizationId, organizationTasksConnectionKey),
-      ...(measureId
-        ? [taskConnectionId(measureId, measureTasksConnectionKey)]
-        : []),
-    ])];
+    ]);
+    if (internalControlId) {
+      connections.add(taskConnectionId(internalControlId, internalControlTasksConnectionKey));
+    }
+    if (taskMatchesFilter({ name: input.name, state }, graphqlFilter)) {
+      connections.add(connectionId);
+    }
 
-    await commit({
+    const payload = await commit({
       variables: {
         input: {
           organizationId,
@@ -86,15 +92,17 @@ export function useCreateTask() {
           content: input.content || null,
           state: input.state,
           priority: input.priority,
-          measureId,
+          internalControlId,
         },
       },
-      updater: store => insertTaskEdgeSorted(store, connections),
+      updater: store => insertTaskEdgeSorted(store, [...connections]),
     });
 
-    if (measureId) {
-      updateStoreCounter(relayEnv, measureId, "tasks(first:0)", 1);
+    if (internalControlId) {
+      updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", 1);
     }
+
+    return payload.createTask.taskEdge.node.id;
   }
 
   return [createTask, isCreating] as const;

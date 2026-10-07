@@ -149,6 +149,54 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
 }
 
+// settingRejectedError shows a setting the provider refused on the Connect
+// dialog field it concerns: the setting's own, or the key's when the
+// credential cannot reach what the setting names.
+func settingRejectedError(ctx context.Context, rejected *drivers.SettingRejectedError) error {
+	field := rejected.Setting
+	if field == "" {
+		field = "apiKey"
+	}
+
+	return gqlutils.InvalidField(ctx, field, rejected.Code, rejected.Message)
+}
+
+// instanceBaseURL trims space and one trailing slash. A query or fragment
+// is refused: those are not the same instance URL the user typed.
+func instanceBaseURL(raw *string, provider, field string, required bool) (string, error) {
+	value := ""
+	if raw != nil {
+		value = strings.TrimSpace(*raw)
+	}
+
+	if value == "" {
+		if !required {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("cannot create %s connector: %s is required", provider, field)
+	}
+
+	u, err := url.Parse(value)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+		return "", fmt.Errorf("cannot create %s connector: %s must be an http(s) URL", provider, field)
+	}
+
+	hasQuery := strings.Contains(value, "?") || u.RawQuery != "" || u.ForceQuery
+	hasFragment := strings.Contains(value, "#") || u.Fragment != ""
+
+	switch {
+	case hasQuery && hasFragment:
+		return "", fmt.Errorf("cannot create %s connector: %s must not include a query or a fragment", provider, field)
+	case hasQuery:
+		return "", fmt.Errorf("cannot create %s connector: %s must not include a query", provider, field)
+	case hasFragment:
+		return "", fmt.Errorf("cannot create %s connector: %s must not include a fragment", provider, field)
+	}
+
+	return strings.TrimSuffix(value, "/"), nil
+}
+
 // apiKeyConnectorSettings marshals the provider-specific extra settings
 // for an API-key connector from the typed gqlgen input into the JSON
 // blob persisted on coredata.Connector.RawSettings. It returns (nil,
@@ -178,27 +226,19 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 
 		return json.Marshal(&coredata.GitHubConnectorSettings{Organization: *input.GithubOrganization})
 	case coredata.ConnectorProviderGrafana:
-		if input.GrafanaBaseURL == nil || *input.GrafanaBaseURL == "" {
-			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.GrafanaBaseURL, "grafana", "grafanaBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.GrafanaBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create grafana connector: grafanaBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: *input.GrafanaBaseURL})
+		return json.Marshal(&coredata.GrafanaConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderSigNoz:
-		if input.SignozBaseURL == nil || *input.SignozBaseURL == "" {
-			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.SignozBaseURL, "signoz", "signozBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.SignozBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create signoz connector: signozBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: *input.SignozBaseURL})
+		return json.Marshal(&coredata.SigNozConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderNewRelic:
 		if input.NewRelicRegion == nil || *input.NewRelicRegion == "" {
 			return nil, fmt.Errorf("cannot create new relic connector: newRelicRegion is required")
@@ -233,27 +273,19 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		// Optional: Retool Cloud routes every organization through the shared
 		// api.retool.com gateway, so only a self-hosted customer has a URL to
 		// give. An empty setting is the cloud case, not a missing field.
-		if input.RetoolBaseURL == nil || *input.RetoolBaseURL == "" {
-			return json.Marshal(&coredata.RetoolConnectorSettings{})
+		baseURL, err := instanceBaseURL(input.RetoolBaseURL, "retool", "retoolBaseUrl", false)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.RetoolBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
-			return nil, fmt.Errorf("cannot create retool connector: retoolBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.RetoolConnectorSettings{BaseURL: *input.RetoolBaseURL})
+		return json.Marshal(&coredata.RetoolConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderAuthentik:
-		if input.AuthentikBaseURL == nil || *input.AuthentikBaseURL == "" {
-			return nil, fmt.Errorf("cannot create authentik connector: authentikBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.AuthentikBaseURL, "authentik", "authentikBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.AuthentikBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
-			return nil, fmt.Errorf("cannot create authentik connector: authentikBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.AuthentikConnectorSettings{BaseURL: *input.AuthentikBaseURL})
+		return json.Marshal(&coredata.AuthentikConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordScimBridgeURL == nil || *input.OnePasswordScimBridgeURL == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordScimBridgeURL is required")
@@ -349,16 +381,12 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 
 		return json.Marshal(&coredata.NeonConnectorSettings{OrganizationID: *input.NeonOrganizationID})
 	case coredata.ConnectorProviderLangfuse:
-		if input.LangfuseBaseURL == nil || *input.LangfuseBaseURL == "" {
-			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl is required")
+		baseURL, err := instanceBaseURL(input.LangfuseBaseURL, "langfuse", "langfuseBaseUrl", true)
+		if err != nil {
+			return nil, err
 		}
 
-		u, err := url.Parse(*input.LangfuseBaseURL)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("cannot create langfuse connector: langfuseBaseUrl must be an http(s) URL")
-		}
-
-		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: *input.LangfuseBaseURL})
+		return json.Marshal(&coredata.LangfuseConnectorSettings{BaseURL: baseURL})
 	case coredata.ConnectorProviderScaleway:
 		if input.ScalewayOrganizationID == nil || *input.ScalewayOrganizationID == "" {
 			return nil, fmt.Errorf("cannot create scaleway connector: scalewayOrganizationId is required")
@@ -420,6 +448,29 @@ func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
 	}
 
 	return reg.Endpoints.Token
+}
+
+// clientCredentialsScope decides which scope a client-credentials connector
+// requests. A provider that declares scopes wins outright: the registration
+// already knows what the grant needs, and the customer has no way to know
+// better. Only a provider that declares none falls back to the input.
+// A token endpoint may require one: OVHcloud answers invalid_scope with none.
+func clientCredentialsScope(
+	registry *provider.Registry,
+	p coredata.ConnectorProvider,
+	supplied *string,
+) string {
+	if reg, ok := registry.Get(p); ok && reg.OAuth2 != nil {
+		if scope := connector.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
+			return scope
+		}
+	}
+
+	if supplied == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(*supplied)
 }
 
 // clientCredentialsTokenURL decides which token endpoint a client-credentials

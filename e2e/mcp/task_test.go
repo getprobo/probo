@@ -34,7 +34,7 @@ func TestMCP_Task_CRUD(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
 	orgID := owner.GetOrganizationID().String()
-	measureID := factory.CreateMeasure(owner)
+	internalControlID := factory.CreateInternalControl(owner)
 
 	// Create
 	var addResult struct {
@@ -44,9 +44,9 @@ func TestMCP_Task_CRUD(t *testing.T) {
 		} `json:"task"`
 	}
 	mc.CallToolInto("addTask", map[string]any{
-		"organization_id": orgID,
-		"measure_id":      measureID,
-		"name":            factory.SafeName("Task"),
+		"organization_id":     orgID,
+		"internal_control_id": internalControlID,
+		"name":                factory.SafeName("Task"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Task.ID)
 
@@ -85,8 +85,8 @@ func TestMCP_Task_CRUD(t *testing.T) {
 		} `json:"tasks"`
 	}
 	mc.CallToolInto("listTasks", map[string]any{
-		"organization_id": orgID,
-		"measure_id":      measureID,
+		"organization_id":     orgID,
+		"internal_control_id": internalControlID,
 	}, &listResult)
 	assert.NotEmpty(t, listResult.Tasks)
 
@@ -100,10 +100,118 @@ func TestMCP_Task_CRUD(t *testing.T) {
 	assert.Equal(t, addResult.Task.ID, deleteResult.DeletedTaskID)
 }
 
+func TestMCP_Task_Filter(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	internalControlID := factory.NewInternalControl(owner).Create()
+	matchingID := factory.NewTask(owner, internalControlID).
+		WithName("Quarterly access review").
+		Create()
+	inProgressDecoyID := factory.NewTask(owner, internalControlID).
+		WithName("Prepare security training").
+		Create()
+	factory.NewTask(owner, internalControlID).
+		WithName("Annual access review").
+		Create()
+
+	for _, taskID := range []string{matchingID, inProgressDecoyID} {
+		mc.CallToolInto("updateTask", map[string]any{
+			"id":    taskID,
+			"state": "IN_PROGRESS",
+		}, &struct{}{})
+	}
+
+	var listResult struct {
+		Tasks []struct {
+			ID    string `json:"id"`
+			Name  string `json:"name"`
+			State string `json:"state"`
+		} `json:"tasks"`
+	}
+
+	mc.CallToolInto("listTasks", map[string]any{
+		"organization_id": orgID,
+		"filter": map[string]any{
+			"query": "access",
+			"state": "IN_PROGRESS",
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, matchingID, listResult.Tasks[0].ID)
+	assert.Equal(t, "Quarterly access review", listResult.Tasks[0].Name)
+	assert.Equal(t, "IN_PROGRESS", listResult.Tasks[0].State)
+
+	mc.CallToolInto("listInternalControlTasks", map[string]any{
+		"internal_control_id": internalControlID,
+		"filter": map[string]any{
+			"query": "access",
+			"state": "IN_PROGRESS",
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, matchingID, listResult.Tasks[0].ID)
+}
+
+func TestMCP_Task_FilterByAssignee(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	internalControlID := factory.NewInternalControl(owner).Create()
+	assigneeID := factory.CreateUser(owner)
+	otherAssigneeID := factory.CreateUser(owner)
+	assignedID := factory.NewTask(owner, internalControlID).
+		WithName("Assigned evidence task").
+		Create()
+	otherID := factory.NewTask(owner, internalControlID).
+		WithName("Other assignee task").
+		Create()
+	factory.NewTask(owner, internalControlID).
+		WithName("Unassigned evidence task").
+		Create()
+
+	mc.CallToolInto("updateTask", map[string]any{
+		"id":             assignedID,
+		"assigned_to_id": assigneeID,
+	}, &struct{}{})
+	mc.CallToolInto("updateTask", map[string]any{
+		"id":             otherID,
+		"assigned_to_id": otherAssigneeID,
+	}, &struct{}{})
+
+	var listResult struct {
+		Tasks []struct {
+			ID           string `json:"id"`
+			AssignedToID string `json:"assigned_to_id"`
+		} `json:"tasks"`
+	}
+
+	mc.CallToolInto("listTasks", map[string]any{
+		"organization_id": orgID,
+		"filter": map[string]any{
+			"assigned_to_id": assigneeID,
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, assignedID, listResult.Tasks[0].ID)
+	assert.Equal(t, assigneeID, listResult.Tasks[0].AssignedToID)
+
+	mc.CallToolInto("listInternalControlTasks", map[string]any{
+		"internal_control_id": internalControlID,
+		"filter": map[string]any{
+			"assigned_to_id": assigneeID,
+		},
+	}, &listResult)
+	require.Len(t, listResult.Tasks, 1)
+	assert.Equal(t, assignedID, listResult.Tasks[0].ID)
+}
+
 func TestMCP_Task_Recurrence(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureID := factory.CreateMeasure(owner)
+	internalControlID := factory.CreateInternalControl(owner)
 
 	t.Run("add with recurrence and deadline round-trips", func(t *testing.T) {
 		t.Parallel()
@@ -118,7 +226,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		}
 		mc.CallToolInto("addTask", map[string]any{
 			"organization_id":     owner.GetOrganizationID().String(),
-			"measure_id":          measureID,
+			"internal_control_id": internalControlID,
 			"name":                factory.SafeName("Recurring Task"),
 			"deadline":            "2026-01-15T00:00:00Z",
 			"recurrence_interval": "P21D",
@@ -140,7 +248,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		}
 		mc.CallToolInto("addTask", map[string]any{
 			"organization_id":     owner.GetOrganizationID().String(),
-			"measure_id":          measureID,
+			"internal_control_id": internalControlID,
 			"name":                factory.SafeName("Monthly Task"),
 			"deadline":            "2026-01-31T00:00:00Z",
 			"recurrence_interval": "P1M",
@@ -156,7 +264,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 
 		errText := mc.CallToolExpectToolError("addTask", map[string]any{
 			"organization_id":     owner.GetOrganizationID().String(),
-			"measure_id":          measureID,
+			"internal_control_id": internalControlID,
 			"name":                factory.SafeName("Recurring Task"),
 			"state":               "DONE",
 			"deadline":            "2026-01-15T00:00:00Z",
@@ -172,14 +280,14 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 
 		errText := mc.CallToolExpectToolError("addTask", map[string]any{
 			"organization_id":     owner.GetOrganizationID().String(),
-			"measure_id":          measureID,
+			"internal_control_id": internalControlID,
 			"name":                factory.SafeName("Recurring Task"),
 			"recurrence_interval": "P21D",
 		})
 		assert.Contains(t, errText, "deadline")
 	})
 
-	t.Run("completing clones the next occurrence", func(t *testing.T) {
+	t.Run("completing before the deadline does not clone", func(t *testing.T) {
 		t.Parallel()
 
 		mc := testutil.NewMCPClient(t, owner)
@@ -192,7 +300,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		}
 		mc.CallToolInto("addTask", map[string]any{
 			"organization_id":     owner.GetOrganizationID().String(),
-			"measure_id":          measureID,
+			"internal_control_id": internalControlID,
 			"name":                factory.SafeName("Recurring Task"),
 			"deadline":            "2027-01-15T00:00:00Z",
 			"recurrence_interval": "P21D",
@@ -204,30 +312,14 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 				State              string  `json:"state"`
 				RecurrenceInterval *string `json:"recurrence_interval"`
 			} `json:"task"`
-			NextTask *struct {
-				ID                 string  `json:"id"`
-				Name               string  `json:"name"`
-				State              string  `json:"state"`
-				Deadline           *string `json:"deadline"`
-				RecurrenceInterval *string `json:"recurrence_interval"`
-			} `json:"next_task"`
 		}
 		mc.CallToolInto("updateTask", map[string]any{
 			"id":    addResult.Task.ID,
 			"state": "DONE",
 		}, &updateResult)
 		assert.Equal(t, "DONE", updateResult.Task.State)
-		assert.Nil(t, updateResult.Task.RecurrenceInterval)
-
-		require.NotNil(t, updateResult.NextTask)
-		next := updateResult.NextTask
-		assert.NotEqual(t, addResult.Task.ID, next.ID)
-		assert.Equal(t, addResult.Task.Name, next.Name)
-		assert.Equal(t, "TODO", next.State)
-		require.NotNil(t, next.RecurrenceInterval)
-		assert.Equal(t, "P21D", *next.RecurrenceInterval)
-		require.NotNil(t, next.Deadline)
-		assert.Equal(t, "2027-02-05T00:00:00Z", *next.Deadline)
+		require.NotNil(t, updateResult.Task.RecurrenceInterval)
+		assert.Equal(t, "P21D", *updateResult.Task.RecurrenceInterval)
 	})
 
 	t.Run("clearing the deadline also clears recurrence", func(t *testing.T) {
@@ -242,7 +334,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		}
 		mc.CallToolInto("addTask", map[string]any{
 			"organization_id":     owner.GetOrganizationID().String(),
-			"measure_id":          measureID,
+			"internal_control_id": internalControlID,
 			"name":                factory.SafeName("Recurring Task"),
 			"deadline":            "2027-01-15T00:00:00Z",
 			"recurrence_interval": "P21D",
@@ -266,7 +358,7 @@ func TestMCP_Task_Recurrence(t *testing.T) {
 		t.Parallel()
 
 		mc := testutil.NewMCPClient(t, owner)
-		taskID := factory.CreateTask(owner, &measureID, factory.Attrs{"name": factory.SafeName("Task")})
+		taskID := factory.CreateTask(owner, &internalControlID, factory.Attrs{"name": factory.SafeName("Task")})
 
 		errText := mc.CallToolExpectToolError("updateTask", map[string]any{
 			"id":                  taskID,

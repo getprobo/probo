@@ -23,3 +23,20 @@ import { createContext } from "react";
 // Dialog popups provide a host here so floating menus can leave the
 // transformed, overflow-clipped popup without becoming inert outside the modal.
 export const OverlayPortalRootContext = createContext<HTMLElement | null>(null);
+
+// Base UI waits while container is null. undefined portals to document.body,
+// which menus need when no dialog host is mounted yet.
+export function overlayPortalContainer<Container>(
+  container: Container | null | undefined,
+  overlayRoot: HTMLElement | null,
+): Container | HTMLElement | undefined {
+  if (container != null) {
+    return container;
+  }
+
+  if (overlayRoot) {
+    return overlayRoot;
+  }
+
+  return undefined;
+}

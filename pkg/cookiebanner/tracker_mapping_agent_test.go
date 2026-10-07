@@ -621,3 +621,14 @@ func TestIsExtensionSource(t *testing.T) {
 	assert.False(t, isExtensionSource(coredata.TrackerPattern{Source: &script}))
 	assert.False(t, isExtensionSource(coredata.TrackerPattern{}), "an unknown source must not be treated as an extension")
 }
+
+func TestIsHTTPSource(t *testing.T) {
+	t.Parallel()
+
+	http := coredata.CookieSourceHTTP
+	script := coredata.CookieSourceScript
+
+	assert.True(t, isHTTPSource(coredata.TrackerPattern{Source: &http}))
+	assert.False(t, isHTTPSource(coredata.TrackerPattern{Source: &script}))
+	assert.False(t, isHTTPSource(coredata.TrackerPattern{}), "an unknown source must not be treated as HTTP")
+}

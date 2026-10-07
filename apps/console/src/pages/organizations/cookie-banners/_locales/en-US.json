@@ -50,6 +50,9 @@
     }
   },
   "translationsPage": {
+    "title": "Translations",
+    "description": "Edit the banner, preferences panel, and placeholder copy for each language.",
+    "language": "Language",
     "necessaryFallback": "Necessary",
     "languageDefault": "{{language}} (default)",
     "defaultLanguageDescription": "This is the default language. These translations are shown when a visitor's language is not available."
@@ -60,48 +63,72 @@
     "visitorSoftware": "Visitor software",
     "undetermined": "Undetermined"
   },
-  "trackerPatternRowEdit": {
-    "fields": { "description": "Description", "descriptionPlaceholder": "Description", "maxAge": "Max age" },
-    "actions": { "save": "Save", "cancel": "Cancel" }
-  },
   "trackerPatternRow": {
-    "messages": { "successTitle": "Success", "cookieDeleted": "Cookie deleted", "cookieMoved": "Cookie moved", "cookieUpdated": "Cookie updated" },
-    "errors": { "title": "Error", "deleteCookie": "Failed to delete cookie", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
+    "messages": { "trackerDeleted": "Tracker deleted", "cookieMoved": "Cookie moved" },
+    "errors": { "deleteTracker": "Failed to delete tracker", "moveCookie": "Failed to move cookie", "updateCookie": "Failed to update cookie" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
-    "types": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
+    "dialogs": { "deleteTitle": "Delete tracker" },
+    "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions", "description": "Show description" },
+    "types": { "cookie": "Cookie", "cookieShort": "C", "localStorage": "localStorage", "localStorageShort": "LS", "sessionStorage": "sessionStorage", "sessionStorageShort": "SS", "indexedDb": "IndexedDB", "indexedDbShort": "IDB", "cacheStorage": "Cache storage", "cacheStorageShort": "CS" },
     "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "duration": { "session": "Session", "persistent": "Persistent" }
   },
   "trackerProperties": {
-    "messages": { "successTitle": "Success", "moved": "Cookie moved", "copiedTitle": "Copied", "idCopied": "Common tracker ID copied to clipboard" },
-    "errors": { "title": "Error", "move": "Failed to move cookie", "copy": "Failed to copy common tracker ID" },
-    "properties": { "pattern": "Pattern", "matchType": "Match type", "type": "Type", "source": "Source", "category": "Category", "thirdParty": "Third party", "maxAge": "Max age", "description": "Description", "descriptionSource": "Description source", "excluded": "Excluded", "detectedCount": "Distinct trackers detected", "lastMatched": "Last matched" },
-    "matchTypes": { "exact": "Exact", "glob": "Glob" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
-    "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "manual": "Manual", "boolean": { "yes": "Yes", "no": "No" }
+    "messages": { "moved": "Cookie moved", "updated": "Tracker updated", "copiedTitle": "Copied", "idCopied": "Common tracker ID copied to clipboard" },
+    "errors": { "title": "Error", "move": "Failed to move cookie", "update": "Failed to update tracker", "copy": "Failed to copy common tracker ID" },
+    "properties": { "attribution": "Attribution", "sourceId": "Source", "category": "Category", "maxAge": "Max age", "maxAgeUnit": "Unit", "description": "Description", "descriptionPlaceholder": "Description" },
+    "actions": { "back": "Trackers", "copyId": "Copy common tracker ID" },
+    "attribution": {
+      "firstParty": "This is a first-party tracker.",
+      "visitorSoftware": "This tracker is set by visitor software.",
+      "thirdParty": "This is a third-party tracker from {{name}}.",
+      "thirdPartyUnnamed": "This is a third-party tracker.",
+      "undetermined": "This tracker's attribution is undetermined."
+    },
+    "manual": "Manual"
   },
   "detectedTrackersSection": {
-    "title": "Detected trackers",
-    "columns": { "identifier": "Identifier", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "detectionTime": "Detection time" },
-    "empty": "No detected trackers for this pattern yet."
+    "title": "Detections",
+    "columns": { "identifier": "Identifier", "domain": "Domain", "initiatorUrl": "Initiator URL", "maxAge": "Max age (seconds)", "source": "Source", "detectionTime": "Detection time" },
+    "empty": "No detections for this tracker yet.",
+    "sort": { "initiatorUrl": "Sort by initiator URL", "detectionTime": "Sort by detection time" },
+    "actions": { "showMore": "Show more" },
+    "summary_one": "{{count}} detection · Last matched {{date}}",
+    "summary_other": "{{count}} detections · Last matched {{date}}",
+    "summaryNever_one": "{{count}} detection · Not matched yet",
+    "summaryNever_other": "{{count}} detections · Not matched yet"
   },
   "moveToCategorySelect": { "empty": "No categories" },
-  "moveToCategoryDropdown": { "empty": "No categories" },
   "detectedTrackerRow": {
-    "sources": { "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
+    "hostOnly": "Host-only",
     "duration": { "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
   },
   "trackersPage": {
-    "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories" },
+    "title": "Trackers",
+    "description": "Trackers detected by this banner and the category each one belongs to.",
+    "filters": { "search": "Search by name or description...", "allThirdParties": "All third parties", "allCategories": "All categories", "source": "Source", "type": "Type", "category": "Category", "thirdParty": "Third party" },
     "types": { "all": "All types", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
-    "columns": { "name": "Name", "thirdParty": "Third party", "source": "Source", "category": "Category", "maxAge": "Max age", "lastMatched": "Last matched" },
-    "empty": { "title": "No tracker patterns", "description": "No cookie patterns have been detected yet. Patterns will appear here when detected." }
+    "columns": { "name": "Name", "attribution": "Attribution", "source": "Source", "category": "Category", "maxAge": "Max age", "lastMatched": "Last matched" },
+    "sort": { "name": "Sort by name", "source": "Sort by source", "lastMatched": "Sort by last matched" },
+    "actions": { "previous": "Previous", "next": "Next" },
+    "views": { "onBanner": "On banner", "allDetected": "All detected", "ariaLabel": "Tracker list view" },
+    "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "onBanner": "No categorized trackers are shown on the banner." },
+    "emptyFiltered": "No matching trackers"
+  },
+  "installPage": {
+    "title": "Install",
+    "description": "Add this snippet to your site so the banner can load and record consent."
+  },
+  "configurePage": {
+    "title": "Configure",
+    "description": "Settings, categories, and theme for this cookie banner."
+  },
+  "bannerLifecycleSection": {
+    "title": "Banner Status",
+    "description": "Activate the banner to show it to visitors, or deactivate it to take it down."
   },
   "codeSnippets": {
-    "title": "JavaScript snippet",
     "messages": { "copiedTitle": "Copied", "copied": "Code copied to clipboard" },
     "errors": { "title": "Error", "copy": "Failed to copy to clipboard" },
     "actions": { "copy": "Copy" },
@@ -127,95 +154,141 @@
     "languages": { "english": "English", "french": "French", "german": "German", "spanish": "Spanish", "dutch": "Dutch" },
     "actions": { "saving": "Saving...", "save": "Save" }
   },
-  "trackerResourceRowEdit": {
-    "fields": { "displayNamePlaceholder": "Display name", "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Save", "cancel": "Cancel" }
-  },
   "trackerResourceRow": {
-    "messages": { "successTitle": "Success", "deleted": "Resource deleted", "moved": "Resource moved", "updated": "Resource updated" },
-    "errors": { "title": "Error", "delete": "Failed to delete resource", "move": "Failed to move resource", "update": "Failed to update resource" },
+    "messages": { "deleted": "Resource deleted", "moved": "Resource moved" },
+    "errors": { "delete": "Failed to delete resource", "move": "Failed to move resource", "update": "Failed to update resource" },
     "deleteConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "actions": { "edit": "Edit", "include": "Include", "exclude": "Exclude", "delete": "Delete" },
+    "dialogs": { "deleteTitle": "Delete resource" },
+    "actions": { "include": "Include", "exclude": "Exclude", "delete": "Delete", "cancel": "Cancel", "more": "More actions" },
     "types": { "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" }
   },
   "resourcesPage": {
-    "filters": { "search": "Search by origin or path..." },
+    "title": "Resources",
+    "description": "Scripts, iframes, and other resources detected by this banner.",
+    "filters": { "search": "Search by origin or path...", "type": "Type" },
     "types": { "all": "All types", "script": "Script", "iframe": "Iframe", "image": "Image", "stylesheet": "Stylesheet", "font": "Font", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
     "columns": { "type": "Type", "origin": "Origin", "path": "Path", "category": "Category", "lastDetected": "Last detected" },
-    "empty": { "title": "No uncategorised resources", "description": "All detected resources have been categorised. New resources will appear here when detected." }
+    "sort": { "origin": "Sort by origin", "lastDetected": "Sort by last detected" },
+    "actions": { "previous": "Previous", "next": "Next" },
+    "empty": { "title": "No uncategorised resources", "description": "All detected resources have been categorised. New resources will appear here when detected." },
+    "emptyFiltered": "No matching resources"
   },
-  "themePreview": {
-    "title": "Theme", "defaultSnippet": "/* Using default theme — no overrides needed */",
-    "messages": { "copiedTitle": "Copied", "copied": "CSS snippet copied to clipboard" },
-    "actions": { "reset": "Reset to defaults", "copy": "Copy" },
-    "variables": { "bg": "Background", "text": "Text", "textsecondary": "Text secondary", "border": "Border", "accent": "Accent", "accenttext": "Accent text", "radius": "Border radius", "btnradius": "Button radius", "fontsize": "Font size", "fontfamily": "Font family", "shadow": "Shadow" },
-    "banner": { "title": "Cookie preferences", "description": "We use cookies to improve your experience and analyze site traffic. <policy>Privacy policy</policy>", "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "privacyBy": "Privacy by" }
+  "categoryList": {
+    "title": "Categories",
+    "description": "Set the order categories appear on the banner. Edit a category to change its name, slug, and consent mappings.",
+    "actions": { "add": "Add category" },
+    "empty": { "title": "No categories", "description": "Add a category to group consent choices on the banner." }
   },
-  "editCookieRow": {
-    "includeTitle": "Include this cookie in the banner",
-    "fields": { "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Save", "cancel": "Cancel" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" }
+  "categoryListItem": {
+    "required": "Required",
+    "actions": { "moveUp": "Move up", "moveDown": "Move down", "edit": "Edit category", "delete": "Delete category" },
+    "errors": { "reorder": "Failed to reorder category" }
   },
-  "editCategoryForm": {
-    "fields": { "namePlaceholder": "Category name", "slugPlaceholder": "Category slug", "descriptionPlaceholder": "Category description" },
+  "categoryDrawer": {
+    "title": "Edit category",
+    "description": "Name, slug, and consent mappings for this category.",
+    "fields": { "name": "Name", "slug": "Slug", "slugHelp": "Used as the data-cookie-consent attribute value", "description": "Description" },
     "googleConsentMode": { "title": "Google Consent Mode", "description": "Select the Google Consent Mode signals this category controls." },
     "tcfPurposes": { "title": "TCF purposes", "description": "When TCF is on, this category is granted only if every selected purpose is consented or under legitimate interest." },
     "posthog": { "title": "PostHog", "description": "Control PostHog tracking consent based on this category.", "checkbox": "Opt in/out of PostHog tracking" },
-    "actions": { "saving": "Saving...", "save": "Save", "cancel": "Cancel" }
+    "messages": { "updated": "Category updated" },
+    "errors": { "update": "Failed to update category" },
+    "actions": { "save": "Save", "cancel": "Cancel", "close": "Close" }
   },
-  "categorySection": {
-    "messages": { "successTitle": "Success", "updated": "Category updated", "cookieAdded": "Cookie added", "cookieUpdated": "Cookie updated", "cookieDeleted": "Cookie deleted", "categoryDeleted": "Category deleted", "cookieMoved": "Cookie moved" },
-    "errors": { "title": "Error", "updateCategory": "Failed to update category", "duplicateCookie": "A cookie with this name already exists in this banner", "addCookie": "Failed to add cookie", "updateCookie": "Failed to update cookie", "deleteCookie": "Failed to delete cookie", "deleteCategory": "Failed to delete category", "reorder": "Failed to reorder", "moveCookie": "Failed to move cookie" },
-    "deleteCookieConfirmation": "Are you sure you want to delete \"{{name}}\"?",
-    "deleteCategoryConfirmation": "Are you sure you want to delete the category \"{{name}}\"? Any cookies in this category will be moved to Uncategorised.",
-    "required": "Required", "blockHint": "Block elements until consent is given:", "googleConsentMode": "Google Consent Mode:", "tcfPurposes": "TCF purposes:", "posthog": "PostHog:", "trackingConsent": "Tracking consent",
-    "columns": { "name": "Name", "type": "Type", "duration": "Duration" },
-    "actions": { "edit": "Edit", "delete": "Delete", "include": "Include", "exclude": "Exclude", "addCookie": "Add cookie" },
-    "trackerTypes": { "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache storage" },
-    "duration": { "session": "Session", "persistent": "Persistent", "year_one": "{{count}} year", "year_other": "{{count}} years", "month_one": "{{count}} month", "month_other": "{{count}} months", "week_one": "{{count}} week", "week_other": "{{count}} weeks", "day_one": "{{count}} day", "day_other": "{{count}} days", "hour_one": "{{count}} hour", "hour_other": "{{count}} hours", "minute_one": "{{count}} minute", "minute_other": "{{count}} minutes", "second_one": "{{count}} second", "second_other": "{{count}} seconds" }
-  },
-  "categoryDialog": {
+  "categoryCreateDialog": {
     "title": "Add category",
-    "messages": { "successTitle": "Success", "created": "Category created" },
-    "errors": { "title": "Error", "create": "Failed to create category" },
     "fields": { "name": "Name", "slug": "Slug", "slugHelp": "Used as the data-cookie-consent attribute value", "description": "Description" },
-    "actions": { "saving": "Saving...", "create": "Create" }
+    "messages": { "created": "Category created" },
+    "errors": { "create": "Failed to create category" },
+    "actions": { "create": "Create", "cancel": "Cancel" }
   },
-  "addCookieRow": {
-    "fields": { "namePlaceholder": "Cookie name", "descriptionPlaceholder": "Description" },
-    "actions": { "save": "Save", "cancel": "Cancel" }
+  "deleteCategoryDialog": {
+    "title": "Delete category",
+    "description": "Delete the category \"{{name}}\"? Trackers in this category move to Uncategorised.",
+    "messages": { "deleted": "Category deleted" },
+    "errors": { "delete": "Failed to delete category" },
+    "actions": { "delete": "Delete", "cancel": "Cancel" }
   },
-  "displayPage": {
-    "description": "Organize cookies into categories and declare which cookies your site uses.",
-    "actions": { "addCategory": "Add category" },
-    "empty": "No categories yet. Add a category to start managing cookies."
+  "themeSection": {
+    "title": "Theme",
+    "description": "These controls only preview a theme and build a CSS snippet. They do not save styles on the banner. Add the snippet to your site yourself.",
+    "defaultSnippet": "/* Using default theme — no overrides needed */",
+    "messages": { "copiedTitle": "Copied", "copied": "CSS snippet copied to clipboard" },
+    "errors": { "title": "Error", "copy": "Failed to copy CSS snippet" },
+    "actions": { "reset": "Reset to defaults", "copy": "Copy snippet" },
+    "variables": { "bg": "Background", "text": "Text", "textsecondary": "Text secondary", "border": "Border", "accent": "Accent", "accenttext": "Accent text", "radius": "Border radius", "btnradius": "Button radius", "fontsize": "Font size", "fontfamily": "Font family", "shadow": "Shadow" },
+    "banner": { "title": "Cookie preferences", "description": "We use cookies to improve your experience and analyze site traffic. <policy>Privacy policy</policy>", "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "privacyBy": "Privacy by" }
   },
   "consentRecordsPage": {
-    "filters": { "allActions": "All actions", "visitorId": "Visitor ID", "bannerVersion": "Banner version" },
-    "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
-    "columns": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "sdkVersion": "SDK version", "regulation": "Regulation", "source": "Source", "country": "Country", "subdivision": "Subdivision", "date": "Date" },
-    "empty": { "title": "No consent records", "description": "Consent records will appear here once visitors interact with your cookie banner." }
+    "title": "Trail",
+    "description": "Consent choices visitors made on this banner.",
+    "filters": { "all": "All versions", "allActions": "All actions", "bannerVersion": "Banner version", "seeMore": "See more" },
+    "actions": { "acceptAll": "Accept all", "rejectAll": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge", "previous": "Previous", "next": "Next" },
+    "columns": { "action": "Action", "bannerVersion": "Version", "origin": "Origin", "regulation": "Regulation", "location": "Location", "date": "Date" },
+    "sort": { "date": "Sort by date" },
+    "empty": { "title": "No consent records", "description": "Consent records will appear here once visitors interact with your cookie banner." },
+    "emptyFiltered": "No matching consent records"
   },
   "consentRecordPage": {
     "title": "Consent record",
-    "properties": { "visitorId": "Visitor ID", "action": "Action", "bannerVersion": "Banner version", "ipAddress": "IP address", "userAgent": "User agent", "sdkVersion": "SDK version", "regulation": "Regulation", "regulationSource": "Regulation source", "country": "Country", "subdivision": "Subdivision", "tc": "TC string", "date": "Date" },
-    "actions": { "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
-    "consentData": "Consent data",
-    "required": "(Required)",
-    "consent": { "accepted": "Accepted", "rejected": "Rejected" },
-    "cookies": { "columns": { "cookie": "Cookie", "duration": "Duration", "description": "Description" } }
+    "description": "Details of this visitor consent choice.",
+    "cards": {
+      "action": "Action",
+      "request": "Request",
+      "tcf": "TCF",
+      "categories": "Categories",
+      "location": "Location"
     },
+    "properties": {
+      "visitorId": "Visitor ID",
+      "action": "Action",
+      "bannerVersion": "Version",
+      "origin": "Origin",
+      "ipAddress": "IP address",
+      "userAgent": "User agent",
+      "sdkVersion": "SDK version",
+      "regulation": "Regulation",
+      "date": "Date"
+    },
+    "tcf": {
+      "created": "Created",
+      "lastUpdated": "Last updated",
+      "cmp": "CMP ID / version",
+      "cmpValue": "{{id}} / {{version}}",
+      "tcfPolicyVersion": "TCF policy version",
+      "gvlVersion": "GVL version",
+      "language": "Language",
+      "purposes": "Purpose IDs",
+      "vendorConsentCount": "Vendor consents",
+      "decodeError": "Could not decode this TC string."
+    },
+    "unknownLocation": "Unknown location",
+    "messages": { "copiedTitle": "Copied" },
+    "errors": { "copyTitle": "Error", "copy": "Failed to copy to clipboard" },
+    "actions": { "copy": "Copy {{label}}", "accept_all": "Accept all", "reject_all": "Reject all", "customize": "Customize", "gpc": "GPC", "acknowledge": "Acknowledge" },
+    "consent": { "accepted": "Accepted", "rejected": "Rejected" }
+  },
   "configLayout": {
-    "version": "v{{version}}",
-    "draft": " (draft)",
-    "metadata": { "origin": "Origin", "id": "ID", "cookiePolicy": "Cookie policy" },
-    "messages": { "successTitle": "Success", "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
-    "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish", "delete": "Failed to delete cookie banner" },
+    "callout": {
+      "version": "v{{version}}",
+      "deactivated": "This banner is deactivated and is not shown to visitors.",
+      "deactivatedDraft": "This banner is deactivated and is not shown to visitors. This version has unpublished changes.",
+      "draft": "This version has unpublished changes.",
+      "published": "This version is published and live.",
+      "publishedUnknown": "This banner is published and live."
+    },
+    "messages": { "copiedTitle": "Copied", "activated": "Banner activated", "deactivated": "Banner deactivated", "published": "Version published", "idCopied": "Banner ID copied to clipboard", "deleted": "Cookie banner deleted successfully" },
+    "errors": { "title": "Error", "activate": "Failed to activate", "deactivate": "Failed to deactivate", "publish": "Failed to publish", "delete": "Failed to delete cookie banner", "copy": "Failed to copy banner ID" },
     "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
+    "dialogs": { "deleteTitle": "Delete cookie banner" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publishing": "Publishing...", "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete" },
-    "tabs": { "display": "Display", "settings": "Settings", "translations": "Translations", "trackers": "Trackers", "resources": "Resources" }
+    "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" }
+  },
+  "cookieBannersIndex": {
+    "empty": {
+      "title": "No cookie banners",
+      "description": "There are no cookie banners in this workspace yet."
+    }
   },
   "newCookieBannerPage": {
     "pageTitle": "New cookie banner",

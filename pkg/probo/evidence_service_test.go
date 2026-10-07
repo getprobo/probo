@@ -28,11 +28,11 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestUploadMeasureEvidenceRequest_ValidateRejectsEmptyFile(t *testing.T) {
+func TestUploadInternalControlEvidenceRequest_ValidateRejectsEmptyFile(t *testing.T) {
 	t.Parallel()
 
-	req := UploadMeasureEvidenceRequest{
-		MeasureID: gid.New(gid.NewTenantID(), coredata.MeasureEntityType),
+	req := UploadInternalControlEvidenceRequest{
+		InternalControlID: gid.New(gid.NewTenantID(), coredata.InternalControlEntityType),
 		File: FileUpload{
 			Filename:    "empty.pdf",
 			ContentType: "application/pdf",

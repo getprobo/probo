@@ -27,21 +27,21 @@ import (
 
 func NewEvidence(e *coredata.Evidence) *Evidence {
 	return &Evidence{
-		ID:             e.ID,
-		OrganizationID: e.OrganizationID,
-		MeasureID:      e.MeasureID,
-		TaskID:         e.TaskID,
-		State:          EvidenceState(e.State.String()),
-		ReferenceID:    e.ReferenceID,
-		Type:           EvidenceType(e.Type.String()),
-		URL:            e.URL,
-		Description:    e.Description,
-		CreatedAt:      e.CreatedAt,
-		UpdatedAt:      e.UpdatedAt,
+		ID:                e.ID,
+		OrganizationID:    e.OrganizationID,
+		InternalControlID: e.InternalControlID,
+		TaskID:            e.TaskID,
+		State:             EvidenceState(e.State.String()),
+		ReferenceID:       e.ReferenceID,
+		Type:              EvidenceType(e.Type.String()),
+		URL:               e.URL,
+		Description:       e.Description,
+		CreatedAt:         e.CreatedAt,
+		UpdatedAt:         e.UpdatedAt,
 	}
 }
 
-func NewListMeasureEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField]) ListMeasureEvidencesOutput {
+func NewListInternalControlEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField]) ListInternalControlEvidencesOutput {
 	evidences := make([]*Evidence, 0, len(evidencePage.Data))
 	for _, v := range evidencePage.Data {
 		evidences = append(evidences, NewEvidence(v))
@@ -54,7 +54,7 @@ func NewListMeasureEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, c
 		nextCursor = &cursorKey
 	}
 
-	return ListMeasureEvidencesOutput{
+	return ListInternalControlEvidencesOutput{
 		NextCursor: nextCursor,
 		Evidences:  evidences,
 	}

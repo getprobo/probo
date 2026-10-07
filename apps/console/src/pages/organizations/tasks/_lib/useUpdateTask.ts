@@ -27,9 +27,9 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
-import { insertNextTaskEdge, moveTaskNodeSorted } from "./taskConnectionOrder";
+import { moveTaskNodeSorted } from "./taskConnectionOrder";
 import {
-  measureTasksConnectionKey,
+  internalControlTasksConnectionKey,
   organizationTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
@@ -53,16 +53,7 @@ const updateTaskMutation = graphql`
       task {
         ...TaskDetailsPage_task
         ...TasksCard_task
-        ...TasksCard_TaskRowFragment
-      }
-      nextTaskEdge {
-        node {
-          ...TasksCard_task
-          ...TasksCard_TaskRowFragment
-          measure {
-            id
-          }
-        }
+        ...TaskListItem_task
       }
     }
   }
@@ -84,15 +75,15 @@ export function useUpdateTask() {
     config: UseMutationConfig<useUpdateTaskMutation>,
     feedback?: MutationFeedback,
   ) {
-    const previousMeasureId = linkedRecordId(
+    const previousInternalControlId = linkedRecordId(
       relayEnv.getStore().getSource().get(config.variables.input.taskId),
-      "measure",
+      "internalControl",
     );
-    const inputMeasureId = config.variables.input.measureId;
-    const measureChanged = inputMeasureId !== undefined;
-    const nextMeasureId = measureChanged
-      ? inputMeasureId ?? undefined
-      : previousMeasureId;
+    const inputInternalControlId = config.variables.input.internalControlId;
+    const internalControlChanged = inputInternalControlId !== undefined;
+    const nextInternalControlId = internalControlChanged
+      ? inputInternalControlId ?? undefined
+      : previousInternalControlId;
 
     return commit({
       ...config,
@@ -105,28 +96,24 @@ export function useUpdateTask() {
               organizationId,
               organizationTasksConnectionKey,
             ),
-            previousMeasureConnectionId: measureChanged && previousMeasureId
-              ? taskConnectionId(previousMeasureId, measureTasksConnectionKey)
+            previousInternalControlConnectionId: internalControlChanged && previousInternalControlId
+              ? taskConnectionId(previousInternalControlId, internalControlTasksConnectionKey)
               : undefined,
-            nextMeasureConnectionId: nextMeasureId
-              ? taskConnectionId(nextMeasureId, measureTasksConnectionKey)
+            nextInternalControlConnectionId: nextInternalControlId
+              ? taskConnectionId(nextInternalControlId, internalControlTasksConnectionKey)
               : undefined,
-            createIfMissing: measureChanged,
+            createIfMissing: internalControlChanged,
           });
-        }
-        const spawnedMeasureId = insertNextTaskEdge(store, organizationId);
-        if (spawnedMeasureId) {
-          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
         }
         config.updater?.(store, data);
       },
     }, feedback).then((result) => {
-      if (measureChanged && previousMeasureId !== nextMeasureId) {
-        if (previousMeasureId) {
-          updateStoreCounter(relayEnv, previousMeasureId, "tasks(first:0)", -1);
+      if (internalControlChanged && previousInternalControlId !== nextInternalControlId) {
+        if (previousInternalControlId) {
+          updateStoreCounter(relayEnv, previousInternalControlId, "tasks(first:0)", -1);
         }
-        if (nextMeasureId) {
-          updateStoreCounter(relayEnv, nextMeasureId, "tasks(first:0)", 1);
+        if (nextInternalControlId) {
+          updateStoreCounter(relayEnv, nextInternalControlId, "tasks(first:0)", 1);
         }
       }
       return result;

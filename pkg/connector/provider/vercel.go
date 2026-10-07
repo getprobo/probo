@@ -39,7 +39,12 @@ func vercelRegistration() *Registration {
 	// scopes — capabilities are pinned on the integration registration
 	// in the Vercel dashboard.
 	return &Registration{
-		Provider:    coredata.ConnectorProviderVercel,
+		Provider: coredata.ConnectorProviderVercel,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.VercelConnectorSettings) string {
+				return s.TeamID
+			},
+		),
 		DisplayName: "Vercel",
 		// See Registration.EndpointOverrideUnsupported: BuildAuthURL builds the
 		// authorize URL from an operator slug and FetchVercelUserID resolves the

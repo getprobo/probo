@@ -34,8 +34,8 @@ func TestTask_TenantIsolation(t *testing.T) {
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	measureID := factory.NewMeasure(org1Owner).WithName("Org1 Measure").Create()
-	taskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task").Create()
+	internalControlID := factory.NewInternalControl(org1Owner).WithName("Org1 Internal control").Create()
+	taskID := factory.NewTask(org1Owner, internalControlID).WithName("Org1 Task").Create()
 
 	t.Run("cannot read task from another organization", func(t *testing.T) {
 		query := `
@@ -95,8 +95,8 @@ func TestTask_TenantIsolation(t *testing.T) {
 		require.Error(t, err, "Should not be able to delete task from another org")
 	})
 
-	t.Run("cannot create task referencing a measure from another organization", func(t *testing.T) {
-		org2MeasureID := factory.NewMeasure(org2Owner).WithName("Org2 Measure").Create()
+	t.Run("cannot create task referencing an internal control from another organization", func(t *testing.T) {
+		org2MeasureID := factory.NewInternalControl(org2Owner).WithName("Org2 Internal control").Create()
 
 		_, err := org1Owner.Do(`
 			mutation($input: CreateTaskInput!) {
@@ -106,13 +106,13 @@ func TestTask_TenantIsolation(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"organizationId": org1Owner.GetOrganizationID().String(),
-				"measureId":      org2MeasureID,
-				"name":           factory.SafeName("Task"),
-				"priority":       "MEDIUM",
+				"organizationId":    org1Owner.GetOrganizationID().String(),
+				"internalControlId": org2MeasureID,
+				"name":              factory.SafeName("Task"),
+				"priority":          "MEDIUM",
 			},
 		})
-		require.Error(t, err, "must not accept a measureId belonging to another organization")
+		require.Error(t, err, "must not accept a internalControlId belonging to another organization")
 	})
 
 	t.Run("cannot create task referencing an assignee from another organization", func(t *testing.T) {
@@ -126,19 +126,19 @@ func TestTask_TenantIsolation(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"organizationId": org1Owner.GetOrganizationID().String(),
-				"measureId":      measureID,
-				"name":           factory.SafeName("Task"),
-				"priority":       "MEDIUM",
-				"assignedToId":   org2ProfileID,
+				"organizationId":    org1Owner.GetOrganizationID().String(),
+				"internalControlId": internalControlID,
+				"name":              factory.SafeName("Task"),
+				"priority":          "MEDIUM",
+				"assignedToId":      org2ProfileID,
 			},
 		})
 		require.Error(t, err, "must not accept an assignedToId belonging to another organization")
 	})
 
-	t.Run("cannot update task to reference a measure from another organization", func(t *testing.T) {
-		org2MeasureID := factory.NewMeasure(org2Owner).WithName("Org2 Measure for Update").Create()
-		otherTaskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task for MeasureID").Create()
+	t.Run("cannot update task to reference an internal control from another organization", func(t *testing.T) {
+		org2MeasureID := factory.NewInternalControl(org2Owner).WithName("Org2 Internal control for Update").Create()
+		otherTaskID := factory.NewTask(org1Owner, internalControlID).WithName("Org1 Task for InternalControlID").Create()
 
 		_, err := org1Owner.Do(`
 			mutation($input: UpdateTaskInput!) {
@@ -148,16 +148,16 @@ func TestTask_TenantIsolation(t *testing.T) {
 			}
 		`, map[string]any{
 			"input": map[string]any{
-				"taskId":    otherTaskID,
-				"measureId": org2MeasureID,
+				"taskId":            otherTaskID,
+				"internalControlId": org2MeasureID,
 			},
 		})
-		require.Error(t, err, "must not accept a measureId belonging to another organization")
+		require.Error(t, err, "must not accept a internalControlId belonging to another organization")
 	})
 
 	t.Run("cannot update task to reference an assignee from another organization", func(t *testing.T) {
 		org2ProfileID := factory.CreateUser(org2Owner)
-		otherTaskID := factory.NewTask(org1Owner, measureID).WithName("Org1 Task for AssignedToID").Create()
+		otherTaskID := factory.NewTask(org1Owner, internalControlID).WithName("Org1 Task for AssignedToID").Create()
 
 		_, err := org1Owner.Do(`
 			mutation($input: UpdateTaskInput!) {

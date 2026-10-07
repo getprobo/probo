@@ -55,10 +55,10 @@ export function Pagination(props: PaginationProps) {
   const {
     hasPrevious, hasNext, label,
     previousLabel = "Previous page", nextLabel = "Next page",
-    showLabels = false, variant = "ghost", disabled = false,
+    showLabels = false, variant = "outline", disabled = false,
     onPrevious, onNext, className, ...rest
   } = props;
-  const { root, label: labelSlot } = pagination();
+  const { root, label: labelSlot, button: buttonSlot } = pagination();
 
   if (!hasPrevious && !hasNext) {
     return null;
@@ -72,7 +72,7 @@ export function Pagination(props: PaginationProps) {
         size={2}
         iconStart={<CaretLeftIcon />}
         aria-label={previousLabel}
-        className={hasPrevious ? undefined : "invisible"}
+        className={buttonSlot({ className: hasPrevious ? undefined : "invisible" })}
         disabled={disabled}
         onClick={onPrevious}
       >
@@ -89,7 +89,7 @@ export function Pagination(props: PaginationProps) {
         size={2}
         iconEnd={<CaretRightIcon />}
         aria-label={nextLabel}
-        className={hasNext ? undefined : "invisible"}
+        className={buttonSlot({ className: hasNext ? undefined : "invisible" })}
         disabled={disabled}
         onClick={onNext}
       >

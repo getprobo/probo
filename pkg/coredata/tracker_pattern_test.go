@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 // trackerPatternFixture bootstraps the parent rows that a tracker
@@ -317,6 +318,26 @@ func TestResetStaleMappings(t *testing.T) {
 	fresh := newPattern("fresh_unfinished", now, nil)
 	completed := newPattern("completed_mapping", old, &commonPattern.ID)
 
+	extSource := coredata.CookieSourceExtension
+	staleExtension := &coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.cookieBannerID,
+		CookieCategoryID: fx.cookieCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "stale_extension",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "stale_extension",
+		MaxAgeSeconds:    &maxAge,
+		Source:           &extSource,
+		CreatedAt:        old,
+		UpdatedAt:        old,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return staleExtension.Insert(ctx, tx, fx.scope)
+	}))
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return coredata.ResetStaleMappings(ctx, conn, 10*time.Minute)
 	}))
@@ -334,6 +355,7 @@ func TestResetStaleMappings(t *testing.T) {
 	assert.NotNil(t, load(stale.ID).MappingRequestedAt, "claimed-but-unfinished idle row must be re-armed")
 	assert.Nil(t, load(fresh.ID).MappingRequestedAt, "recently claimed row must not be re-armed before the window elapses")
 	assert.Nil(t, load(completed.ID).MappingRequestedAt, "completed mapping (catalog row assigned) must never be re-armed")
+	assert.Nil(t, load(staleExtension.ID).MappingRequestedAt, "unlinked EXTENSION must not be re-armed")
 }
 
 // TestRequestMappingForUnmappedByInitiatorDomains pins the new-domain
@@ -493,4 +515,74 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 	}))
 
 	assert.Equal(t, int64(0), emptyCount, "empty domain set must be a no-op")
+}
+
+// TestTrackerPatterns_LoadByCookieBannerID_SourceOrder pins SOURCE
+// sort: cookie_source is an enum, so ORDER BY COALESCE(source, ”)
+// fails with SQLSTATE 22P02. The column expression must cast to text
+// first so NULL sources sort as empty and come first in ASC.
+func TestTrackerPatterns_LoadByCookieBannerID_SourceOrder(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedTrackerPatternFixture(t, ctx, client)
+
+	seedTrackerPattern(
+		t,
+		ctx,
+		client,
+		fx,
+		"*_session",
+		coredata.TrackerPatternMatchTypeGlob,
+		coredata.CookieSourceScript,
+	)
+
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	maxAge := 3600
+	unsourced := &coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.cookieBannerID,
+		CookieCategoryID: fx.cookieCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "unsourced",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "unsourced",
+		MaxAgeSeconds:    &maxAge,
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return unsourced.Insert(ctx, tx, fx.scope)
+	}))
+
+	cursor := page.NewCursor(
+		10,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.TrackerPatternOrderField]{
+			Field:     coredata.TrackerPatternOrderFieldSource,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	var patterns coredata.TrackerPatterns
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return patterns.LoadByCookieBannerID(
+			ctx,
+			conn,
+			fx.scope,
+			fx.cookieBannerID,
+			cursor,
+			coredata.NewTrackerPatternFilter(nil, nil, nil),
+		)
+	}))
+
+	require.Len(t, patterns, 2)
+	assert.Nil(t, patterns[0].Source)
+	require.NotNil(t, patterns[1].Source)
+	assert.Equal(t, coredata.CookieSourceScript, *patterns[1].Source)
 }

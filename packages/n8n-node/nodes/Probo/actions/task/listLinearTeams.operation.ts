@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { IDataObject, IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
-import { proboApiRequest } from '../../GenericFunctions';
+import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -36,6 +36,49 @@ export const description: INodeProperties[] = [
 		description: 'The ID of the organization',
 		required: true,
 	},
+	{
+		displayName: 'Query',
+		name: 'query',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['listLinearTeams'],
+			},
+		},
+		default: '',
+		description: 'Search teams by name or key',
+	},
+	{
+		displayName: 'Return All',
+		name: 'returnAll',
+		type: 'boolean',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['listLinearTeams'],
+			},
+		},
+		default: false,
+		description: 'Whether to return all results or only up to a given limit',
+	},
+	{
+		displayName: 'Limit',
+		name: 'limit',
+		type: 'number',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['listLinearTeams'],
+				returnAll: [false],
+			},
+		},
+		typeOptions: {
+			minValue: 1,
+		},
+		default: 50,
+		description: 'Max number of results to return',
+	},
 ];
 
 export async function execute(
@@ -43,25 +86,44 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const search = this.getNodeParameter('query', itemIndex) as string;
+	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
+	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query ListLinearTeams($id: ID!) {
+		query ListLinearTeams($id: ID!, $first: Int!, $after: String, $query: String) {
 			node(id: $id) {
 				... on Organization {
-					linearTeams {
-						id
-						name
-						key
+					linearTeams(first: $first, after: $after, query: $query) {
+						edges {
+							node {
+								id
+								name
+								key
+							}
+						}
+						pageInfo {
+							hasNextPage
+							endCursor
+						}
 					}
 				}
 			}
 		}
 	`;
 
-	const responseData = await proboApiRequest.call(this, query, { id: organizationId });
-	const data = responseData.data as IDataObject | undefined;
-	const node = data?.node as IDataObject | undefined;
-	const linearTeams = (node?.linearTeams as IDataObject[] | undefined) ?? [];
+	const linearTeams = await proboApiRequestAllItems.call(
+		this,
+		query,
+		{ id: organizationId, query: search || null },
+		(response) => {
+			const data = response?.data as IDataObject | undefined;
+			const node = data?.node as IDataObject | undefined;
+			return node?.linearTeams as IDataObject | undefined;
+		},
+		returnAll,
+		limit,
+	);
 
 	return {
 		json: { linearTeams },

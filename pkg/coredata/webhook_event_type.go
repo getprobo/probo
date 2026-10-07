@@ -64,6 +64,13 @@ const (
 	WebhookEventTypeDocumentVersionApprovalQuorumApproved  WebhookEventType = "document-version-approval-quorum:approved"
 	WebhookEventTypeDocumentVersionApprovalQuorumRejected  WebhookEventType = "document-version-approval-quorum:rejected"
 	WebhookEventTypeDocumentVersionApprovalQuorumVoided    WebhookEventType = "document-version-approval-quorum:voided"
+
+	WebhookEventTypeTaskCreated        WebhookEventType = "task:created"
+	WebhookEventTypeTaskUpdated        WebhookEventType = "task:updated"
+	WebhookEventTypeTaskDeleted        WebhookEventType = "task:deleted"
+	WebhookEventTypeTaskCommentCreated WebhookEventType = "task-comment:created"
+	WebhookEventTypeTaskCommentUpdated WebhookEventType = "task-comment:updated"
+	WebhookEventTypeTaskCommentDeleted WebhookEventType = "task-comment:deleted"
 )
 
 var (
@@ -104,7 +111,13 @@ func (v WebhookEventType) IsValid() bool {
 		WebhookEventTypeDocumentVersionApprovalQuorumUpdated,
 		WebhookEventTypeDocumentVersionApprovalQuorumApproved,
 		WebhookEventTypeDocumentVersionApprovalQuorumRejected,
-		WebhookEventTypeDocumentVersionApprovalQuorumVoided:
+		WebhookEventTypeDocumentVersionApprovalQuorumVoided,
+		WebhookEventTypeTaskCreated,
+		WebhookEventTypeTaskUpdated,
+		WebhookEventTypeTaskDeleted,
+		WebhookEventTypeTaskCommentCreated,
+		WebhookEventTypeTaskCommentUpdated,
+		WebhookEventTypeTaskCommentDeleted:
 		return true
 	}
 

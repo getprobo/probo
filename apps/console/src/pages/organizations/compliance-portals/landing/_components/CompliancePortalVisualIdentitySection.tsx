@@ -240,9 +240,10 @@ export function CompliancePortalVisualIdentitySection(props: CompliancePortalVis
         </p>
 
         <div className="flex items-center gap-4">
+          {/* Inverse island: a dark logo is drawn for a dark surface. */}
           {currentDarkLogoUrl
             ? (
-                <div className="border border-border-solid rounded-md p-4 bg-gray-900">
+                <div className="dark scheme-dark border border-sand-6 rounded-md p-4 bg-sand-1">
                   <img
                     src={currentDarkLogoUrl}
                     alt={t("brandPage.darkLogo.alt")}
@@ -251,7 +252,7 @@ export function CompliancePortalVisualIdentitySection(props: CompliancePortalVis
                 </div>
               )
             : (
-                <div className="flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border-solid bg-gray-900 text-xs text-txt-tertiary">
+                <div className="dark scheme-dark flex size-16 shrink-0 items-center justify-center rounded-md border border-dashed border-sand-7 bg-sand-1 text-xs text-sand-11">
                   {t("brandPage.actions.noLogo")}
                 </div>
               )}

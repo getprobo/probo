@@ -138,13 +138,13 @@ func (s *Service) linearAccountForTeam(
 	var listErr error
 
 	for i := range accounts {
-		teams, err := accounts[i].client.ListTeams(ctx)
+		found, err := accounts[i].client.HasTeam(ctx, teamID)
 		if err != nil {
 			listErr = err
 			if s.logger != nil {
 				s.logger.WarnCtx(
 					ctx,
-					"cannot list Linear teams for connector",
+					"cannot resolve Linear team for connector",
 					log.String("connector_id", accounts[i].connector.ID.String()),
 					log.Error(err),
 				)
@@ -153,7 +153,7 @@ func (s *Service) linearAccountForTeam(
 			continue
 		}
 
-		if linearTeamExists(teams, teamID) {
+		if found {
 			return &accounts[i], nil
 		}
 	}
@@ -163,28 +163,6 @@ func (s *Service) linearAccountForTeam(
 	}
 
 	return nil, ErrLinearTeamNotFound
-}
-
-func mergeLinearTeams(batches [][]linear.Team) []LinearTeam {
-	seen := make(map[string]struct{})
-	teams := make([]LinearTeam, 0)
-
-	for _, batch := range batches {
-		for _, team := range batch {
-			if _, ok := seen[team.ID]; ok {
-				continue
-			}
-
-			seen[team.ID] = struct{}{}
-			teams = append(teams, LinearTeam{
-				ID:   team.ID,
-				Name: team.Name,
-				Key:  team.Key,
-			})
-		}
-	}
-
-	return teams
 }
 
 func linearTeamExists(teams []linear.Team, teamID string) bool {

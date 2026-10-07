@@ -32,6 +32,11 @@ export const table = tv({
     cell: "box-border border-b border-sand-a3 align-inherit",
     columnHeader: "font-medium text-sand-11",
     rowHeader: "font-normal",
+    sortButton: [
+      "inline-flex max-w-full items-center gap-1 appearance-none border-0 bg-transparent p-0 font-inherit text-sand-11 cursor-pointer",
+      "outline-none focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    ],
+    sortIcon: "shrink-0",
   },
   variants: {
     size: {
@@ -39,23 +44,26 @@ export const table = tv({
         root: "rounded-3",
         table: "text-2",
         cell: "h-9 px-2 py-2",
+        sortIcon: "size-3",
       },
       2: {
         root: "rounded-4",
         table: "text-2",
         cell: "h-11 px-3 py-3",
+        sortIcon: "size-3",
       },
       3: {
         root: "rounded-4",
         table: "text-3",
         cell: "h-12 px-4 py-3",
+        sortIcon: "size-4",
       },
     },
     variant: {
       // Same chrome as List / Card `soft`. No thead wash: sand-a2 on sand-1
       // reconstitutes the page canvas (sand-2) and the header disappears.
       surface: {
-        root: "overflow-hidden border border-sand-a3 bg-sand-1",
+        root: "border border-sand-a3 bg-sand-1",
       },
       ghost: {
         root: "",
@@ -65,8 +73,21 @@ export const table = tv({
       auto: {
         table: "table-auto",
       },
+      // Clip and wrap at lg+. Below that, min-w-max lets the table exceed
+      // the container so the root scroller can reach later columns.
       fixed: {
-        table: "table-fixed",
+        root: "overflow-x-auto lg:overflow-x-hidden",
+        table: "table-fixed min-w-max lg:min-w-0",
+      },
+    },
+    // Fluid column under `layout="fixed"`: max-w-0 lets the cell shrink
+    // below its content so the table stays at container width.
+    overflow: {
+      truncate: {
+        cell: "min-w-0 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+      },
+      break: {
+        cell: "min-w-0 max-w-0 break-all",
       },
     },
     align: {
@@ -100,13 +121,24 @@ export const table = tv({
     interactive: {
       true: {
         row: [
-          "relative isolate cursor-pointer",
+          "relative isolate cursor-pointer hover:bg-sand-a2",
           "[&_td]:pointer-events-none [&_th]:pointer-events-none",
         ],
         // Important: the row's `[&_td]:pointer-events-none` is a descendant
         // selector and otherwise beats a plain `pointer-events-auto` on the
         // cell, so the overlay steals :hover from trailing controls.
         cell: "relative z-1 pointer-events-auto!",
+      },
+    },
+    sort: {
+      none: {
+        sortButton: "hover:text-sand-12",
+      },
+      ascending: {
+        sortButton: "text-sand-12",
+      },
+      descending: {
+        sortButton: "text-sand-12",
       },
     },
   },

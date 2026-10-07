@@ -74,11 +74,11 @@ func TestSecurity_WriteGap_PublishRiskListApproverIDs(t *testing.T) {
 // TestSecurity_WriteGap_CompliancePortalAccessDocuments covers a write-gap found
 // while auditing GHSA-c74x-79w6-63jh's blast radius: CompliancePortalAccessService.Update
 // persisted caller-supplied document/report-file/trust-center-file ids into
-// cp_document_accesses (via coredata's UpsertDocumentAccesses/
-// UpsertReportFileAccesses/UpsertCompliancePortalFileAccesses) without validating
-// they belong to the compliance portal's own organization -- the DB-level FK check
-// alone doesn't catch this because those primary keys are globally unique,
-// not per-tenant.
+// cp_document_accesses (via resolveOrCreate* catalog upserts, then
+// UpsertDocumentAccesses/UpsertCompliancePortalAuditAccesses/
+// UpsertCompliancePortalFileAccesses) without validating they belong to the
+// compliance portal's own organization -- the DB-level FK check alone doesn't
+// catch this because those primary keys are globally unique, not per-tenant.
 //
 // CompliancePortalAccess rows are normally created through the trust/v1 public
 // portal's visitor request flow (requestAccesses / requestDocumentAccess), which

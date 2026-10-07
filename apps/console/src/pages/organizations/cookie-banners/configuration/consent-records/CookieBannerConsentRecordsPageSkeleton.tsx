@@ -18,19 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
+import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
+
+import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
+import { cookieBannerListSkeleton, cookieBannerPage } from "../../variants";
+
 export function CookieBannerConsentRecordsPageSkeleton() {
+  const { root, filters, filter } = cookieBannerListSkeleton();
+
   return (
-    <div className="space-y-4 animate-pulse">
-      <div className="flex items-center gap-4">
-        <div className="h-9 w-36 rounded bg-bg-subtle" />
-        <div className="h-9 w-48 rounded bg-bg-subtle" />
-        <div className="h-9 w-40 rounded bg-bg-subtle" />
-      </div>
-      <div className="rounded-lg border border-border-low">
-        <div className="h-10 border-b border-border-low bg-bg-subtle" />
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-12 border-b border-border-low last:border-b-0" />
-        ))}
+    <div className={cookieBannerPage()}>
+      <CookieBannerPageHeaderSkeleton titleClassName="w-16" />
+      <div className={root()}>
+        <div className={filters()}>
+          <div className={filter()}>
+            <SelectSkeleton />
+          </div>
+          <div className={filter()}>
+            <SelectSkeleton />
+          </div>
+        </div>
+        <TableSkeleton variant="surface" layout="fixed" columns={6} count={8} />
       </div>
     </div>
   );

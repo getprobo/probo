@@ -23,6 +23,7 @@ package provider
 import (
 	"fmt"
 
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -52,6 +53,12 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		opt(&options)
 	}
 
+	if options.awsAPIEndpoint != "" {
+		if _, err := baseurl.Parse(options.awsAPIEndpoint); err != nil {
+			return nil, fmt.Errorf("cannot configure aws API endpoint: %w", err)
+		}
+	}
+
 	r := NewRegistry()
 
 	seen := make(map[coredata.ConnectorProvider]bool, len(options.endpoints))
@@ -62,7 +69,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		authentikRegistration(),
 		asanaRegistration(),
 		attioRegistration(),
-		awsRegistration(),
+		awsRegistration(options.awsAPIEndpoint),
 		azureRegistration(),
 		betterStackRegistration(),
 		bitbucketRegistration(),
@@ -107,6 +114,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		onePasswordRegistration(),
 		openaiRegistration(),
 		openrouterRegistration(),
+		ovhcloudRegistration(),
 		posthogRegistration(),
 		pagerdutyRegistration(),
 		pylonRegistration(),

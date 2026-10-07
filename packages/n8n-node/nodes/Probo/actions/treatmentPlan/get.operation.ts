@@ -72,16 +72,16 @@ export async function execute(
 						id
 						fullName
 					}
-					measures(first: 0) {
+					internalControls(first: 0) {
 						totalCount
 					}
-					implementedMeasures: measures(first: 0, filter: { state: IMPLEMENTED }) {
+					implementedInternalControls: internalControls(first: 0, filter: { state: IMPLEMENTED }) {
 						totalCount
 					}
-					inProgressMeasures: measures(first: 0, filter: { state: IN_PROGRESS }) {
+					inProgressInternalControls: internalControls(first: 0, filter: { state: IN_PROGRESS }) {
 						totalCount
 					}
-					notImplementedMeasures: measures(first: 0, filter: { state: NOT_IMPLEMENTED }) {
+					notImplementedInternalControls: internalControls(first: 0, filter: { state: NOT_IMPLEMENTED }) {
 						totalCount
 					}
 					createdAt

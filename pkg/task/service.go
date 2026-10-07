@@ -80,7 +80,7 @@ func NewService(
 type (
 	CreateTaskRequest struct {
 		OrganizationID     gid.GID
-		MeasureID          *gid.GID
+		InternalControlID  *gid.GID
 		Name               string
 		Content            *string
 		State              *coredata.TaskState
@@ -101,15 +101,10 @@ type (
 		TimeEstimate       **timespan.TimeSpan
 		Deadline           **time.Time
 		AssignedToID       **gid.GID
-		MeasureID          **gid.GID
+		InternalControlID  **gid.GID
 		Rank               *int
 		IdentityID         *gid.GID
 		RecurrenceInterval **timespan.TimeSpan
-	}
-
-	UpdateTaskResult struct {
-		Task     *coredata.Task
-		NextTask *coredata.Task
 	}
 )
 
@@ -117,7 +112,7 @@ func (ctr *CreateTaskRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ctr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(ctr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
+	v.Check(ctr.InternalControlID, "internal_control_id", validator.GID(coredata.InternalControlEntityType))
 	v.Check(ctr.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(
 		ctr.Content,
@@ -183,7 +178,7 @@ func (utr *UpdateTaskRequest) Validate() error {
 	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
 	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
 	v.Check(utr.AssignedToID, "assigned_to_id", validator.GID(coredata.MembershipProfileEntityType))
-	v.Check(utr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
+	v.Check(utr.InternalControlID, "internal_control_id", validator.GID(coredata.InternalControlEntityType))
 	v.Check(utr.Rank, "rank", validator.Min(1))
 	v.Check(utr.IdentityID, "identity_id", validator.GID(coredata.IdentityEntityType))
 	v.Check(utr.RecurrenceInterval, "recurrence_interval", validator.RangeDuration(time.Nanosecond, maxRecurrenceInterval))
@@ -218,29 +213,29 @@ func (s *Service) Create(
 	}
 
 	task := &coredata.Task{
-		ID:             taskID,
-		OrganizationID: req.OrganizationID,
-		MeasureID:      req.MeasureID,
-		Name:           req.Name,
-		Content:        content,
-		Priority:       req.Priority,
-		TimeEstimate:   req.TimeEstimate,
-		AssignedToID:   req.AssignedToID,
-		Deadline:       req.Deadline,
-		Recurrence:     req.RecurrenceInterval,
-		State:          state,
-		ReferenceID:    "custom-task-" + referenceID.String(),
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                taskID,
+		OrganizationID:    req.OrganizationID,
+		InternalControlID: req.InternalControlID,
+		Name:              req.Name,
+		Content:           content,
+		Priority:          req.Priority,
+		TimeEstimate:      req.TimeEstimate,
+		AssignedToID:      req.AssignedToID,
+		Deadline:          req.Deadline,
+		Recurrence:        req.RecurrenceInterval,
+		State:             state,
+		ReferenceID:       "custom-task-" + referenceID.String(),
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if req.MeasureID != nil {
-				measure := &coredata.Measure{}
-				if err := measure.LoadByID(ctx, conn, scope, *req.MeasureID); err != nil {
-					return fmt.Errorf("cannot load measure: %w", err)
+			if req.InternalControlID != nil {
+				internalControl := &coredata.InternalControl{}
+				if err := internalControl.LoadByID(ctx, conn, scope, *req.InternalControlID); err != nil {
+					return fmt.Errorf("cannot load internalControl: %w", err)
 				}
 			}
 
@@ -268,6 +263,10 @@ func (s *Service) Create(
 
 			if err := InsertCreatedActivity(ctx, conn, scope, task, actorID, now); err != nil {
 				return fmt.Errorf("cannot record task created event: %w", err)
+			}
+
+			if err := emitTaskCreated(ctx, conn, scope, task); err != nil {
+				return fmt.Errorf("cannot emit task created webhook: %w", err)
 			}
 
 			return nil
@@ -338,7 +337,7 @@ func (s *Service) Assign(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
 
@@ -351,6 +350,8 @@ func (s *Service) Assign(
 			if gidPtrEqual(oldAssignedToID, &assignedToID) {
 				return nil
 			}
+
+			oldTask := *task
 
 			oldName, err := taskActivityProfileName(ctx, conn, scope, oldAssignedToID)
 			if err != nil {
@@ -390,6 +391,10 @@ func (s *Service) Assign(
 				return fmt.Errorf("cannot record task assignee event: %w", err)
 			}
 
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
 			if s.Sync != nil {
 				if err := s.Sync.EnqueueOutbound(
 					ctx,
@@ -422,13 +427,15 @@ func (s *Service) Unassign(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := task.LoadByID(ctx, conn, scope, taskID); err != nil {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, taskID); err != nil {
 				return fmt.Errorf("cannot load task %q: %w", taskID, err)
 			}
 
 			if task.AssignedToID == nil {
 				return nil
 			}
+
+			oldTask := *task
 
 			oldName, err := taskActivityProfileName(ctx, conn, scope, task.AssignedToID)
 			if err != nil {
@@ -468,6 +475,10 @@ func (s *Service) Unassign(
 				return fmt.Errorf("cannot record task unassign event: %w", err)
 			}
 
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -479,16 +490,15 @@ func (s *Service) Unassign(
 }
 
 func (s *Service) Update(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	req UpdateTaskRequest,
-) (*UpdateTaskResult, error) {
+) (*coredata.Task, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
 
 	task := &coredata.Task{}
-
-	var nextTask *coredata.Task
 
 	err := s.pg.WithTx(
 		ctx,
@@ -537,16 +547,16 @@ func (s *Service) Update(
 				}
 			}
 
-			if req.MeasureID != nil {
-				if *req.MeasureID == nil {
-					task.MeasureID = nil
+			if req.InternalControlID != nil {
+				if *req.InternalControlID == nil {
+					task.InternalControlID = nil
 				} else {
-					measure := &coredata.Measure{}
-					if err := measure.LoadByID(ctx, conn, scope, **req.MeasureID); err != nil {
-						return fmt.Errorf("cannot load measure: %w", err)
+					internalControl := &coredata.InternalControl{}
+					if err := internalControl.LoadByID(ctx, conn, scope, **req.InternalControlID); err != nil {
+						return fmt.Errorf("cannot load internalControl: %w", err)
 					}
 
-					task.MeasureID = *req.MeasureID
+					task.InternalControlID = *req.InternalControlID
 				}
 			}
 
@@ -583,16 +593,6 @@ func (s *Service) Update(
 			}
 
 			now := time.Now()
-			if shouldCloneRecurringTask(oldTask.State, task.State, task) {
-				next, err := insertNextRecurringTask(ctx, conn, scope, task, now)
-				if err != nil {
-					return err
-				}
-
-				task.Recurrence = nil
-				nextTask = next
-			}
-
 			task.UpdatedAt = now
 
 			targetRank := req.Rank
@@ -639,6 +639,10 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot record task update events: %w", err)
 			}
 
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task); err != nil {
+				return fmt.Errorf("cannot emit task updated webhook: %w", err)
+			}
+
 			if s.Sync != nil && syncedTaskFieldsChanged(
 				oldTask.Name,
 				oldTask.Content,
@@ -666,10 +670,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	return &UpdateTaskResult{
-		Task:     task,
-		NextTask: nextTask,
-	}, nil
+	return task, nil
 }
 
 func (s *Service) Delete(
@@ -681,6 +682,10 @@ func (s *Service) Delete(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
+			if err := task.LoadByIDForUpdate(ctx, conn, scope, taskID); err != nil {
+				return fmt.Errorf("cannot load task %q: %w", taskID, err)
+			}
+
 			if s.Sync != nil {
 				if err := s.Sync.EnqueueOutbound(
 					ctx,
@@ -693,7 +698,15 @@ func (s *Service) Delete(
 				}
 			}
 
-			return task.Delete(ctx, conn, scope)
+			if err := emitTaskDeleted(ctx, conn, scope, task); err != nil {
+				return fmt.Errorf("cannot emit task deleted webhook: %w", err)
+			}
+
+			if err := task.Delete(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot delete task: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -706,6 +719,7 @@ func (s *Service) Delete(
 func (s *Service) CountForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.TaskFilter,
 ) (int, error) {
 	var count int
 
@@ -714,7 +728,7 @@ func (s *Service) CountForOrganizationID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
 
-			count, err = tasks.CountByOrganizationID(ctx, conn, scope, organizationID)
+			count, err = tasks.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count tasks: %w", err)
 			}
@@ -733,13 +747,14 @@ func (s *Service) ListForOrganizationID(
 	ctx context.Context, scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.TaskOrderField],
+	filter *coredata.TaskFilter,
 ) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
 	var tasks coredata.Tasks
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return tasks.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor)
+			return tasks.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -749,9 +764,10 @@ func (s *Service) ListForOrganizationID(
 	return page.NewPage(tasks, cursor), nil
 }
 
-func (s *Service) CountForMeasureID(
+func (s *Service) CountForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
+	filter *coredata.TaskFilter,
 ) (int, error) {
 	var count int
 
@@ -760,7 +776,7 @@ func (s *Service) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			tasks := coredata.Tasks{}
 
-			count, err = tasks.CountByMeasureID(ctx, conn, scope, measureID)
+			count, err = tasks.CountByInternalControlID(ctx, conn, scope, internalControlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count tasks: %w", err)
 			}
@@ -775,22 +791,24 @@ func (s *Service) CountForMeasureID(
 	return count, nil
 }
 
-func (s *Service) ListForMeasureID(
+func (s *Service) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.TaskOrderField],
+	filter *coredata.TaskFilter,
 ) (*page.Page[*coredata.Task, coredata.TaskOrderField], error) {
 	var tasks coredata.Tasks
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return tasks.LoadByMeasureID(
+			return tasks.LoadByInternalControlID(
 				ctx,
 				conn,
 				scope,
-				measureID,
+				internalControlID,
 				cursor,
+				filter,
 			)
 		},
 	)

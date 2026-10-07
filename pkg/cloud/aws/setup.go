@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -41,6 +42,12 @@ const (
 	cloudFormationConsolePath   = "/cloudformation/home"
 	cloudFormationConsoleRegion = "us-east-1"
 	cloudFormationStackName     = "probo-audit"
+)
+
+var (
+	errInvalidMemberRoleName = errors.New("awsMemberRoleName is not a valid IAM role name")
+
+	memberRoleNamePattern = regexp.MustCompile(`^[\w+=,.@-]{1,64}$`)
 )
 
 type (
@@ -147,6 +154,22 @@ func NewConnectorSettings(roleARN string) (coredata.AWSConnectorSettings, error)
 	return coredata.AWSConnectorSettings{
 		RoleARN: roleARN,
 	}, nil
+}
+
+// ParseMemberRoleName trims an IAM role name assumed in member accounts.
+// Empty is valid on a standalone connector. A non-empty value must be a
+// valid IAM role name. Returned errors never echo the name.
+func ParseMemberRoleName(raw string) (string, error) {
+	name := strings.TrimSpace(raw)
+	if name == "" {
+		return "", nil
+	}
+
+	if !memberRoleNamePattern.MatchString(name) {
+		return "", errInvalidMemberRoleName
+	}
+
+	return name, nil
 }
 
 func terraformSnippet(moduleSource, issuerURL, subject string) string {

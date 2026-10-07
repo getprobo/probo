@@ -18,15 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card, Field, Input, Textarea } from "@probo/ui";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { Textarea } from "@probo/ui/src/v2/form/Textarea";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-import { PanelPreview } from "./PanelPreview";
+import { cookieBannerTranslationsPage } from "../../../variants";
 import type {
   CategoryInfo,
   TranslationFormValues,
-} from "./TranslationEditor";
+} from "../_lib/translationDefaults";
+
+import { PanelPreview } from "./PanelPreview";
 
 interface PanelTranslationSectionProps {
   categories: CategoryInfo[];
@@ -39,6 +46,7 @@ export function PanelTranslationSection({
 }: PanelTranslationSectionProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { control } = useFormContext<TranslationFormValues>();
+  const { section, split, fields, pair, preview, categoryGrid } = cookieBannerTranslationsPage();
 
   const panelTitle = useWatch({ control, name: "panel_title" });
   const panelDescription = useWatch({ control, name: "panel_description" });
@@ -47,33 +55,38 @@ export function PanelTranslationSection({
   const buttonSave = useWatch({ control, name: "button_save" });
   const categoryTranslations = useWatch({ control, name: "categories" });
 
-  const translatedNecessaryName = (() => {
-    const necessaryCat = categories.find(c => c.kind === "NECESSARY");
-    if (!necessaryCat) return necessaryCategoryName;
-    return categoryTranslations?.[necessaryCat.id]?.name || necessaryCategoryName;
-  })();
+  const necessaryCategory = categories.find(category => category.kind === "NECESSARY");
+  const translatedNecessaryName = necessaryCategory == null
+    ? necessaryCategoryName
+    : (categoryTranslations?.[necessaryCategory.id]?.name || necessaryCategoryName);
 
-  const previewCategories = categories.map((c) => {
-    const translated = categoryTranslations?.[c.id];
+  const previewCategories = categories.map((category) => {
+    const translated = categoryTranslations?.[category.id];
     return {
-      name: translated?.name || c.name,
-      description: translated?.description || c.description,
-      isNecessary: c.kind === "NECESSARY",
+      name: translated?.name || category.name,
+      description: translated?.description || category.description,
+      isNecessary: category.kind === "NECESSARY",
     };
   });
 
   return (
-    <div className="space-y-4">
-      <h3 className="font-medium text-lg">{t("panelTranslationSection.title")}</h3>
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="border p-4">
-          <div className="space-y-4">
+    <section className={section()}>
+      <Heading level={2} size={4} weight="medium" highContrast>
+        {t("panelTranslationSection.title")}
+      </Heading>
+      <div className={split()}>
+        <Card size={2} variant="soft">
+          <div className={fields()}>
             <Controller
               control={control}
               name="panel_title"
               render={({ field }) => (
                 <Field label={t("translationEditor.labels.panelTitle")}>
-                  <Input {...field} />
+                  <TextField
+                    name={field.name}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  />
                 </Field>
               )}
             />
@@ -81,75 +94,92 @@ export function PanelTranslationSection({
               control={control}
               name="panel_description"
               render={({ field }) => (
-                <Field
-                  label={t("translationEditor.labels.panelDescription")}
-                >
-                  <p className="text-xs text-txt-secondary mb-2">
-                    {t("panelTranslationSection.necessaryCategoryHelp")}
-                  </p>
-                  <Textarea {...field} rows={3} />
+                <Field label={t("translationEditor.labels.panelDescription")}>
+                  <Textarea
+                    name={field.name}
+                    rows={3}
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
                 </Field>
               )}
             />
+            <Text size={1} color="faint">
+              {t("panelTranslationSection.necessaryCategoryHelp")}
+            </Text>
             <Controller
               control={control}
               name="button_save"
               render={({ field }) => (
                 <Field label={t("translationEditor.labels.saveButton")}>
-                  <Input {...field} />
+                  <TextField
+                    name={field.name}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  />
                 </Field>
               )}
             />
-
-            <div className="space-y-4 border-t border-border-low pt-4">
-              <h4 className="text-sm font-medium text-txt-secondary">
-                {t("panelTranslationSection.accessibilityLabels")}
-              </h4>
-              <div className="grid grid-cols-2 gap-4">
-                <Controller
-                  control={control}
-                  name="aria_close"
-                  render={({ field }) => (
-                    <Field label={t("translationEditor.labels.ariaClose")}>
-                      <Input {...field} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="aria_cookie_settings"
-                  render={({ field }) => (
-                    <Field
-                      label={t("translationEditor.labels.ariaCookieSettings")}
-                    >
-                      <Input {...field} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="aria_show_details"
-                  render={({ field }) => (
-                    <Field label={t("translationEditor.labels.ariaShowDetails")}>
-                      <Input {...field} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="aria_hide_details"
-                  render={({ field }) => (
-                    <Field label={t("translationEditor.labels.ariaHideDetails")}>
-                      <Input {...field} />
-                    </Field>
-                  )}
-                />
-              </div>
+            <Heading level={3} size={2} weight="medium" highContrast>
+              {t("panelTranslationSection.accessibilityLabels")}
+            </Heading>
+            <div className={pair()}>
+              <Controller
+                control={control}
+                name="aria_close"
+                render={({ field }) => (
+                  <Field label={t("translationEditor.labels.ariaClose")}>
+                    <TextField
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
+                  </Field>
+                )}
+              />
+              <Controller
+                control={control}
+                name="aria_cookie_settings"
+                render={({ field }) => (
+                  <Field label={t("translationEditor.labels.ariaCookieSettings")}>
+                    <TextField
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
+                  </Field>
+                )}
+              />
+              <Controller
+                control={control}
+                name="aria_show_details"
+                render={({ field }) => (
+                  <Field label={t("translationEditor.labels.ariaShowDetails")}>
+                    <TextField
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
+                  </Field>
+                )}
+              />
+              <Controller
+                control={control}
+                name="aria_hide_details"
+                render={({ field }) => (
+                  <Field label={t("translationEditor.labels.ariaHideDetails")}>
+                    <TextField
+                      name={field.name}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
+                  </Field>
+                )}
+              />
             </div>
           </div>
         </Card>
-
-        <div className="flex items-start justify-center rounded-lg border border-border-low bg-[repeating-conic-gradient(#e5e7eb_0%_25%,transparent_0%_50%)] bg-size-[20px_20px] p-6">
+        <div className={preview()}>
           <PanelPreview
             panelTitle={panelTitle}
             panelDescription={panelDescription}
@@ -161,47 +191,55 @@ export function PanelTranslationSection({
           />
         </div>
       </div>
-
       {categories.length > 0 && (
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium text-txt-secondary">
+        <div className={fields()}>
+          <Heading level={3} size={2} weight="medium" highContrast>
             {t("panelTranslationSection.categoryNames")}
-          </h4>
-          <div className="grid grid-cols-2 gap-4">
-            {categories.map(cat => (
-              <Card key={cat.id} className="border p-4 space-y-3">
-                <div className="text-sm text-txt-secondary">
-                  {cat.name}
-                  {" "}
-                  <span className="text-txt-secondary/60">
-                    {`(${cat.slug})`}
-                  </span>
+          </Heading>
+          <div className={categoryGrid()}>
+            {categories.map(category => (
+              <Card key={category.id} size={2} variant="soft">
+                <div className={fields()}>
+                  <Text size={1} color="faint">
+                    {category.name}
+                    {" "}
+                    {`(${category.slug})`}
+                  </Text>
+                  <Controller
+                    control={control}
+                    name={`categories.${category.id}.name`}
+                    render={({ field }) => (
+                      <Field label={t("panelTranslationSection.translatedName")}>
+                        <TextField
+                          name={field.name}
+                          value={field.value}
+                          placeholder={category.name}
+                          onValueChange={field.onChange}
+                        />
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name={`categories.${category.id}.description`}
+                    render={({ field }) => (
+                      <Field label={t("panelTranslationSection.translatedDescription")}>
+                        <Textarea
+                          name={field.name}
+                          rows={2}
+                          value={field.value}
+                          placeholder={category.description}
+                          onChange={field.onChange}
+                        />
+                      </Field>
+                    )}
+                  />
                 </div>
-                <Controller
-                  control={control}
-                  name={`categories.${cat.id}.name`}
-                  render={({ field }) => (
-                    <Field label={t("panelTranslationSection.translatedName")}>
-                      <Input {...field} placeholder={cat.name} />
-                    </Field>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name={`categories.${cat.id}.description`}
-                  render={({ field }) => (
-                    <Field
-                      label={t("panelTranslationSection.translatedDescription")}
-                    >
-                      <Textarea {...field} placeholder={cat.description} rows={2} />
-                    </Field>
-                  )}
-                />
               </Card>
             ))}
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

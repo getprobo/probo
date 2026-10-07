@@ -18,13 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerResourcesPageQuery } from "#/__generated__/core/CookieBannerResourcesPageQuery.graphql";
 
-import CookieBannerResourcesPage, { cookieBannerResourcesPageQuery } from "./CookieBannerResourcesPage";
+import { RESOURCES_PAGE_SIZE } from "./_lib/pageSize";
+import { useResourcesListFilters } from "./_lib/useResourcesListFilters";
+import { CookieBannerResourcesPage, cookieBannerResourcesPageQuery } from "./CookieBannerResourcesPage";
 import { CookieBannerResourcesPageSkeleton } from "./CookieBannerResourcesPageSkeleton";
 
 export default function CookieBannerResourcesPageLoader() {
@@ -33,21 +35,42 @@ export default function CookieBannerResourcesPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
+  const { graphqlFilter, graphqlOrder } = useResourcesListFilters();
+  const filterRef = useRef(graphqlFilter);
+  const orderRef = useRef(graphqlOrder);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerResourcesPageQuery>(
     cookieBannerResourcesPageQuery,
   );
 
   useEffect(() => {
-    loadQuery({ cookieBannerId });
+    filterRef.current = graphqlFilter;
+  }, [graphqlFilter]);
+
+  useEffect(() => {
+    orderRef.current = graphqlOrder;
+  }, [graphqlOrder]);
+
+  useEffect(() => {
+    loadQuery({
+      cookieBannerId,
+      first: RESOURCES_PAGE_SIZE,
+      filter: filterRef.current,
+      order: orderRef.current,
+    });
   }, [loadQuery, cookieBannerId]);
 
-  if (!queryRef) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.cookieBannerId === cookieBannerId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <CookieBannerResourcesPageSkeleton />;
   }
 
   return (
     <Suspense fallback={<CookieBannerResourcesPageSkeleton />}>
-      <CookieBannerResourcesPage queryRef={queryRef} />
+      <CookieBannerResourcesPage key={cookieBannerId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

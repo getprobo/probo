@@ -419,6 +419,33 @@ func TestInitiateWithState_Scopes(t *testing.T) {
 		assert.Equal(t, "read:user write:user", parsed.Query().Get("scope"))
 	})
 
+	t.Run("scopes go to a custom param and separator", func(t *testing.T) {
+		t.Parallel()
+
+		c := &OAuth2Connector{
+			ClientID:       "id",
+			ClientSecret:   "secret",
+			RedirectURI:    "https://example.com/cb",
+			AuthURL:        "https://provider.example.com/authorize",
+			ScopeParam:     "user_scope",
+			ScopeSeparator: ",",
+		}
+
+		orgID := gid.New(gid.NewTenantID(), 0)
+
+		u, err := c.InitiateWithState(
+			context.Background(),
+			OAuth2State{OrganizationID: orgID.String(), Provider: "TEST"},
+			InitiateOptions{Scopes: []string{"users:read", "users:read.email"}},
+		)
+		require.NoError(t, err)
+
+		parsed, err := url.Parse(u)
+		require.NoError(t, err)
+		assert.Equal(t, "users:read,users:read.email", parsed.Query().Get("user_scope"))
+		assert.False(t, parsed.Query().Has("scope"))
+	})
+
 	t.Run("empty scopes omits scope parameter", func(t *testing.T) {
 		t.Parallel()
 

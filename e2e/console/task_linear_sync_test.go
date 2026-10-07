@@ -49,7 +49,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear sync source").
 		Create()
 
@@ -86,7 +86,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	require.NoError(t, err)
 	require.NotNil(t, linkResult.Node)
 	require.NotNil(t, linkResult.Node.ExternalLink)
-	assert.Equal(t, "LINEAR", linkResult.Node.ExternalLink.Provider)
+	assert.Equal(t, "LINEAR_SYNC", linkResult.Node.ExternalLink.Provider)
 	assert.Equal(t, "ENG-1", linkResult.Node.ExternalLink.Identifier)
 	assert.Equal(t, "https://linear.app/eng/issue/ENG-1", linkResult.Node.ExternalLink.URL)
 	assert.Equal(t, "PROBO", linkResult.Node.ExternalLink.Origin)
@@ -127,6 +127,13 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	jobsAfterUpdate := countTaskSyncJobs(t, taskID)
 	require.GreaterOrEqual(t, jobsAfterUpdate, 1)
 
+	webhookSubscription := createWebhookSubscription(
+		t,
+		owner,
+		unroutableWebhookEndpoint(t),
+		[]string{"TASK_UPDATED", "TASK_COMMENT_CREATED"},
+	)
+
 	deliveryID := factory.SafeName("delivery")
 	status := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",
@@ -151,6 +158,20 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	require.Eventually(t, func() bool {
 		return taskName(t, owner, taskID) == "Inbound Linear title"
 	}, 30*time.Second, 200*time.Millisecond)
+
+	webhookEvents := requireWebhookEventsEventually(t, owner, webhookSubscription.ID, 1)
+	eventTypes, payloads := webhookEventPayloads(t, webhookEvents)
+	assert.Equal(t, []string{"task:updated"}, eventTypes)
+
+	payload := webhookPayloadByEventType(t, payloads, "task:updated")
+	data, ok := payload["data"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, taskID, data["id"])
+	assert.Equal(t, "Inbound Linear title", data["name"])
+
+	updatedFrom, ok := payload["updatedFrom"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "Linear sync updated", updatedFrom["name"])
 
 	activities := listTaskActivities(t, owner, taskID)
 	require.GreaterOrEqual(t, activities.Node.Activities.TotalCount, 1)
@@ -187,12 +208,51 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	})
 	require.Equal(t, http.StatusOK, commentStatus)
 
-	require.Never(t, func() bool {
-		return linearWebhookExists(t, commentDeliveryID) ||
-			taskName(t, owner, taskID) != "Inbound Linear title"
-	}, 3*time.Second, 200*time.Millisecond)
+	require.Eventually(t, func() bool {
+		return linearWebhookProcessed(t, commentDeliveryID)
+	}, 30*time.Second, 200*time.Millisecond)
 
+	assert.Equal(t, "Inbound Linear title", taskName(t, owner, taskID))
+	assert.Equal(t, 1, countTaskComments(t, taskID))
 	assert.Equal(t, jobsAfterUpdate, countTaskSyncJobs(t, taskID))
+
+	const commentQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Task {
+					comments(first: 1) {
+						edges {
+							node {
+								owner {
+									id
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var commentResult struct {
+		Node *struct {
+			Comments struct {
+				Edges []struct {
+					Node struct {
+						Owner *struct {
+							ID string `json:"id"`
+						} `json:"owner"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"comments"`
+		} `json:"node"`
+	}
+
+	err = owner.Execute(commentQuery, map[string]any{"id": taskID}, &commentResult)
+	require.NoError(t, err)
+	require.NotNil(t, commentResult.Node)
+	require.Len(t, commentResult.Node.Comments.Edges, 1)
+	assert.Nil(t, commentResult.Node.Comments.Edges[0].Node.Owner)
 
 	duplicateStatus := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",
@@ -214,6 +274,11 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	}, 3*time.Second, 200*time.Millisecond)
 
 	assert.Equal(t, jobsAfterUpdate, countTaskSyncJobs(t, taskID))
+
+	unchanged := loadWebhookSubscriptionNode(t, owner, webhookSubscription.ID)
+	assert.Equal(t, 2, unchanged.Node.Events.TotalCount)
+	unchangedTypes, _ := webhookEventPayloads(t, unchanged)
+	assert.Equal(t, []string{"task-comment:created", "task:updated"}, unchangedTypes)
 }
 
 func TestTaskLinearSync_UnlinkedCreateIsIgnored(t *testing.T) {
@@ -244,6 +309,143 @@ func TestTaskLinearSync_UnlinkedCreateIsIgnored(t *testing.T) {
 	}, 3*time.Second, 200*time.Millisecond)
 
 	assert.Equal(t, 0, countTaskExternalLinksByExternalID(t, externalID))
+}
+
+func TestTaskLinearSync_CommentRemoveDeletesProboComment(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	taskID := factory.NewTaskWithoutInternalControl(owner).
+		WithName("Linear comment remove").
+		Create()
+
+	externalID := "linear-issue-" + factory.SafeName("ext")
+	commentExternalID := "linear-comment-" + factory.SafeName("c")
+
+	seedTaskLinearLink(t, owner, taskID, externalID)
+	seedSyncedTaskComment(t, taskID, commentExternalID)
+
+	require.Equal(t, 1, countTaskComments(t, taskID))
+
+	deliveryID := factory.SafeName("comment-remove")
+	status := postLinearWebhook(t, deliveryID, map[string]any{
+		"action":           "remove",
+		"type":             "Comment",
+		"organizationId":   e2eLinearOrganizationID,
+		"webhookTimestamp": time.Now().UnixMilli(),
+		"actor":            map[string]any{"id": "linear-user-1"},
+		"data": map[string]any{
+			"id":      commentExternalID,
+			"issueId": externalID,
+		},
+	})
+	require.Equal(t, http.StatusOK, status)
+
+	require.Eventually(t, func() bool {
+		return linearWebhookProcessed(t, deliveryID) && countTaskComments(t, taskID) == 0
+	}, 30*time.Second, 200*time.Millisecond)
+
+	assert.Equal(t, 1, countTaskExternalLinksByExternalID(t, externalID))
+	assert.Equal(t, "Linear comment remove", taskName(t, owner, taskID))
+}
+
+func TestTaskLinearSync_IssueRemoveUnlinksTask(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	taskID := factory.NewTaskWithoutInternalControl(owner).
+		WithName("Linear issue remove").
+		Create()
+
+	externalID := "linear-issue-" + factory.SafeName("ext")
+	seedTaskLinearLink(t, owner, taskID, externalID)
+
+	deliveryID := factory.SafeName("issue-remove")
+	status := postLinearWebhook(t, deliveryID, map[string]any{
+		"action":           "remove",
+		"type":             "Issue",
+		"organizationId":   e2eLinearOrganizationID,
+		"webhookTimestamp": time.Now().UnixMilli(),
+		"actor":            map[string]any{"id": "linear-user-1"},
+		"data": map[string]any{
+			"id":        externalID,
+			"updatedAt": time.Now().Format(time.RFC3339),
+		},
+	})
+	require.Equal(t, http.StatusOK, status)
+
+	require.Eventually(t, func() bool {
+		return linearWebhookProcessed(t, deliveryID) &&
+			countTaskExternalLinksByExternalID(t, externalID) == 0
+	}, 30*time.Second, 200*time.Millisecond)
+
+	assert.Equal(t, "Linear issue remove", taskName(t, owner, taskID))
+}
+
+func seedSyncedTaskComment(t *testing.T, taskID, externalCommentID string) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	conn := dialTestPg(t, ctx)
+	t.Cleanup(func() { _ = conn.Close(ctx) })
+
+	parsedTaskID, err := gid.ParseGID(taskID)
+	require.NoError(t, err)
+
+	var (
+		tenantID       gid.TenantID
+		organizationID gid.GID
+		connectorID    gid.GID
+		ownerID        gid.GID
+	)
+
+	err = conn.QueryRow(ctx, `
+		SELECT tenant_id, organization_id, connector_id
+		FROM task_external_links
+		WHERE task_id = $1
+	`, parsedTaskID).Scan(&tenantID, &organizationID, &connectorID)
+	require.NoError(t, err)
+
+	err = conn.QueryRow(ctx, `
+		SELECT id
+		FROM iam_membership_profiles
+		WHERE organization_id = $1
+		LIMIT 1
+	`, organizationID).Scan(&ownerID)
+	require.NoError(t, err)
+
+	now := time.Now().UTC()
+	commentID := gid.New(tenantID, coredata.TaskCommentEntityType)
+	content := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Synced comment"}]}]}`
+
+	_, err = conn.Exec(ctx, `
+		INSERT INTO task_comments (
+			id, tenant_id, organization_id, task_id, owner_profile_id, content, created_at, updated_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+	`, commentID, tenantID, organizationID, parsedTaskID, ownerID, content, now)
+	require.NoError(t, err)
+
+	_, err = conn.Exec(ctx, `
+		INSERT INTO task_comment_external_links (
+			task_comment_id, tenant_id, organization_id, task_id, connector_id, provider,
+			external_id, content_hash, created_at, updated_at
+		) VALUES (
+			$1, $2, $3, $4, $5, 'LINEAR_SYNC', $6, 'hash', $7, $7
+		)
+	`, commentID, tenantID, organizationID, parsedTaskID, connectorID, externalCommentID, now)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		cleanupConn := dialTestPg(t, cleanupCtx)
+		defer func() { _ = cleanupConn.Close(cleanupCtx) }()
+
+		_, _ = cleanupConn.Exec(cleanupCtx, `DELETE FROM task_comment_external_links WHERE task_comment_id = $1`, commentID)
+		_, _ = cleanupConn.Exec(cleanupCtx, `DELETE FROM task_comments WHERE id = $1`, commentID)
+	})
 }
 
 func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID string) {
@@ -283,7 +485,7 @@ func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID
 			external_id, external_identifier, external_url, destination, origin,
 			remote_updated_at, metadata, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, 'LINEAR',
+			$1, $2, $3, $4, 'LINEAR_SYNC',
 			$5, 'ENG-1', 'https://linear.app/eng/issue/ENG-1', $6, 'PROBO',
 			$7, '{"app_actor_id":"probo-app"}', $8, $8
 		)
@@ -300,6 +502,52 @@ func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID
 		_, _ = cleanupConn.Exec(cleanupCtx, `DELETE FROM task_external_links WHERE task_id = $1`, parsedTaskID)
 		_, _ = cleanupConn.Exec(cleanupCtx, `DELETE FROM connectors WHERE id = $1`, connectorID)
 	})
+}
+
+func linearWebhookProcessed(t *testing.T, deliveryID string) bool {
+	t.Helper()
+
+	ctx := context.Background()
+
+	conn := dialTestPg(t, ctx)
+	defer func() { _ = conn.Close(ctx) }()
+
+	var processed bool
+
+	err := conn.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM linear_webhook_events
+			WHERE delivery_id = $1
+				AND processed_at IS NOT NULL
+		)
+	`, deliveryID).Scan(&processed)
+	require.NoError(t, err)
+
+	return processed
+}
+
+func countTaskComments(t *testing.T, taskID string) int {
+	t.Helper()
+
+	ctx := context.Background()
+
+	conn := dialTestPg(t, ctx)
+	defer func() { _ = conn.Close(ctx) }()
+
+	parsedTaskID, err := gid.ParseGID(taskID)
+	require.NoError(t, err)
+
+	var count int
+
+	err = conn.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM task_comments
+		WHERE task_id = $1
+	`, parsedTaskID).Scan(&count)
+	require.NoError(t, err)
+
+	return count
 }
 
 func linearWebhookExists(t *testing.T, deliveryID string) bool {
@@ -337,7 +585,7 @@ func countTaskExternalLinksByExternalID(t *testing.T, externalID string) int {
 	err := conn.QueryRow(ctx, `
 		SELECT COUNT(*)
 		FROM task_external_links
-		WHERE provider = 'LINEAR'
+		WHERE provider = 'LINEAR_SYNC'
 			AND external_id = $1
 	`, externalID).Scan(&count)
 	require.NoError(t, err)
@@ -475,10 +723,17 @@ func TestTask_LinearTeamsWhenNotConnected(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					linearTeams {
-						id
-						name
-						key
+					linearTeams(first: 20) {
+						edges {
+							node {
+								id
+								name
+								key
+							}
+						}
+						pageInfo {
+							hasNextPage
+						}
 					}
 				}
 			}
@@ -487,8 +742,12 @@ func TestTask_LinearTeamsWhenNotConnected(t *testing.T) {
 
 	var result struct {
 		Node *struct {
-			LinearTeams []struct {
-				ID string `json:"id"`
+			LinearTeams struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
 			} `json:"linearTeams"`
 		} `json:"node"`
 	}
@@ -496,14 +755,14 @@ func TestTask_LinearTeamsWhenNotConnected(t *testing.T) {
 	err := owner.Execute(query, map[string]any{"id": owner.GetOrganizationID().String()}, &result)
 	require.NoError(t, err)
 	require.NotNil(t, result.Node)
-	assert.Empty(t, result.Node.LinearTeams)
+	assert.Empty(t, result.Node.LinearTeams.Edges)
 }
 
 func TestTask_UnlinkExternalWhenNotLinked(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	const mutation = `
 		mutation($input: UnlinkTaskExternalInput!) {

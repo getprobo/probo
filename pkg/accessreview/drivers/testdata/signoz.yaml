@@ -24,7 +24,7 @@ interactions:
             Content-Type:
                 - application/json
             Date:
-                - Wed, 23 Sep 2026 09:28:49 GMT
+                - Fri, 25 Sep 2026 06:38:22 GMT
             Server:
                 - signoz.edge
             Strict-Transport-Security:
@@ -34,7 +34,7 @@ interactions:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 81.595375ms
+        duration: 81.913291ms
     - id: 1
       request:
         proto: HTTP/1.1
@@ -58,7 +58,7 @@ interactions:
             Content-Type:
                 - application/json
             Date:
-                - Wed, 23 Sep 2026 09:28:49 GMT
+                - Fri, 25 Sep 2026 06:38:22 GMT
             Server:
                 - signoz.edge
             Strict-Transport-Security:
@@ -68,8 +68,314 @@ interactions:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 27.21825ms
+        duration: 29.804959ms
     - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1073
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-23T09:25:32.693687Z","email":"service-account1@example.com","id":"00000000-0000-4000-a000-000000000001","name":"Service Account 1","orgId":"00000000-0000-4000-8000-0000000000aa","status":"active","updatedAt":"2026-09-23T09:25:32.693688Z"},{"createdAt":"2026-09-25T06:37:32.553144Z","email":"service-account2@example.com","id":"00000000-0000-4000-a000-000000000002","name":"Service Account 2","orgId":"00000000-0000-4000-8000-0000000000aa","status":"active","updatedAt":"2026-09-25T06:37:32.553144Z"},{"createdAt":"2026-09-25T06:37:32.637688Z","email":"service-account3@example.com","id":"00000000-0000-4000-a000-000000000003","name":"Service Account 3","orgId":"00000000-0000-4000-8000-0000000000aa","status":"active","updatedAt":"2026-09-25T06:37:32.637688Z"},{"createdAt":"2026-09-25T06:37:32.726488Z","email":"service-account4@example.com","id":"00000000-0000-4000-a000-000000000004","name":"Service Account 4","orgId":"00000000-0000-4000-8000-0000000000aa","status":"deleted","updatedAt":"2026-09-25T06:37:52.04897Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 24.150291ms
+    - id: 3
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000001/roles
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 17209
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-22T08:12:13.93115Z","description":"Role assigned to users who have full administrative access to SigNoz resources.","id":"00000000-0000-4000-9000-000000000001","name":"signoz-admin","orgId":"00000000-0000-4000-8000-0000000000aa","transactionGroups":[{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"factor-password","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"factor-password","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"session","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"audit-logs","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"meter-metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"deployment-host","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"session","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"factor-password","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"session","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"deployment-host","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"detach"}],"type":"managed","updatedAt":"2026-09-22T08:12:13.93115Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 28.424042ms
+    - id: 4
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000001/keys
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 293
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-23T09:25:42.728187Z","expiresAt":0,"id":"00000000-0000-4000-b000-000000000001","lastObservedAt":"2026-09-25T06:38:22.400917Z","name":"key-1","serviceAccountId":"00000000-0000-4000-a000-000000000001","updatedAt":"2026-09-23T09:25:42.728187Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 24.353458ms
+    - id: 5
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000002/roles
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 4692
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-22T08:12:13.931238Z","description":"Role assigned to users who have read-only access to SigNoz resources.","id":"00000000-0000-4000-9000-000000000002","name":"signoz-viewer","orgId":"00000000-0000-4000-8000-0000000000aa","transactionGroups":[{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"meter-metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"deployment-host","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"list"}],"type":"managed","updatedAt":"2026-09-22T08:12:13.931238Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 28.085916ms
+    - id: 6
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000002/keys
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 557
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-25T06:37:33.138566Z","expiresAt":0,"id":"00000000-0000-4000-b000-000000000002","lastObservedAt":"2026-09-25T06:37:42.222431Z","name":"key-2","serviceAccountId":"00000000-0000-4000-a000-000000000002","updatedAt":"2026-09-25T06:37:33.138566Z"},{"createdAt":"2026-09-25T06:37:42.433592Z","expiresAt":0,"id":"00000000-0000-4000-b000-000000000003","lastObservedAt":"2026-09-25T06:37:42.433592Z","name":"key-3","serviceAccountId":"00000000-0000-4000-a000-000000000002","updatedAt":"2026-09-25T06:37:42.433592Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 23.754292ms
+    - id: 7
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000003/roles
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 8341
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-22T08:12:13.931204Z","description":"Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges.","id":"00000000-0000-4000-9000-000000000003","name":"signoz-editor","orgId":"00000000-0000-4000-8000-0000000000aa","transactionGroups":[{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"meter-metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"deployment-host","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"detach"}],"type":"managed","updatedAt":"2026-09-22T08:12:13.931204Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 26.282584ms
+    - id: 8
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000003/keys
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 293
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-25T06:37:33.245484Z","expiresAt":0,"id":"00000000-0000-4000-b000-000000000004","lastObservedAt":"2026-09-25T06:37:33.245484Z","name":"key-4","serviceAccountId":"00000000-0000-4000-a000-000000000003","updatedAt":"2026-09-25T06:37:33.245484Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 23.650334ms
+    - id: 9
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000004/roles
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 17209
+        uncompressed: true
+        body: '{"data":[{"createdAt":"2026-09-22T08:12:13.93115Z","description":"Role assigned to users who have full administrative access to SigNoz resources.","id":"00000000-0000-4000-9000-000000000001","name":"signoz-admin","orgId":"00000000-0000-4000-8000-0000000000aa","transactionGroups":[{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"factor-password","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"create"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"factor-password","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"session","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"audit-logs","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"meter-metrics","type":"telemetryresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"read"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"deployment-host","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"update"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"session","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"delete"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"cloud-integration","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"cloud-integration-service","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"integration","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"factor-api-key","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"factor-password","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"license","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"subscription","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"org-preference","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"public-dashboard","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"session","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"dashboard","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"pipeline","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"planned-maintenance","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"rule","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"saved-view","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"trace-funnel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ingestion-limit","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"notification-channel","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"route-policy","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"apdex-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"quick-filter","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"ttl-setting","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"deployment-host","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"user-preference","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"logs-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"traces-field","type":"metaresource"},"selectors":["*"]},"relation":"list"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"attach"},{"objectGroup":{"resource":{"kind":"role","type":"role"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"user","type":"user"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"serviceaccount","type":"serviceaccount"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"auth-domain","type":"metaresource"},"selectors":["*"]},"relation":"detach"},{"objectGroup":{"resource":{"kind":"ingestion-key","type":"metaresource"},"selectors":["*"]},"relation":"detach"}],"type":"managed","updatedAt":"2026-09-22T08:12:13.93115Z"}],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 27.838084ms
+    - id: 10
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: signoz.example.com
+        headers:
+            Accept:
+                - application/json
+        url: https://signoz.example.com/api/v1/service_accounts/00000000-0000-4000-a000-000000000004/keys
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 30
+        uncompressed: true
+        body: '{"data":[],"status":"success"}'
+        headers:
+            Content-Type:
+                - application/json
+            Date:
+                - Fri, 25 Sep 2026 06:38:22 GMT
+            Server:
+                - signoz.edge
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+                - Origin
+        status: 200 OK
+        code: 200
+        duration: 25.308042ms
+    - id: 11
       request:
         proto: HTTP/1.1
         proto_major: 1
@@ -92,7 +398,7 @@ interactions:
             Content-Type:
                 - application/json
             Date:
-                - Wed, 23 Sep 2026 09:28:49 GMT
+                - Fri, 25 Sep 2026 06:38:22 GMT
             Server:
                 - signoz.edge
             Strict-Transport-Security:
@@ -102,4 +408,4 @@ interactions:
                 - Origin
         status: 200 OK
         code: 200
-        duration: 23.148584ms
+        duration: 25.738458ms

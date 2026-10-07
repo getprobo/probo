@@ -39,13 +39,6 @@ mutation($input: UpdateTaskInput!) {
       state
       priority
     }
-    nextTaskEdge {
-      node {
-        id
-        name
-        state
-      }
-    }
   }
 }
 `
@@ -58,13 +51,6 @@ type updateResponse struct {
 			State    string `json:"state"`
 			Priority string `json:"priority"`
 		} `json:"task"`
-		NextTaskEdge *struct {
-			Node struct {
-				ID    string `json:"id"`
-				Name  string `json:"name"`
-				State string `json:"state"`
-			} `json:"node"`
-		} `json:"nextTaskEdge"`
 	} `json:"updateTask"`
 }
 
@@ -77,7 +63,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagTimeEstimate       string
 		flagDeadline           string
 		flagAssignedTo         string
-		flagMeasure            string
+		flagInternalControl    string
 		flagRecurrenceInterval string
 	)
 
@@ -148,11 +134,11 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if cmd.Flags().Changed("measure") {
-				if flagMeasure == "" {
-					input["measureId"] = nil
+			if cmd.Flags().Changed("internal-control") {
+				if flagInternalControl == "" {
+					input["internalControlId"] = nil
 				} else {
-					input["measureId"] = flagMeasure
+					input["internalControlId"] = flagInternalControl
 				}
 			}
 
@@ -189,14 +175,6 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				t.ID,
 				t.Name,
 			)
-			if next := resp.UpdateTask.NextTaskEdge; next != nil {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.Out,
-					"Created next task %s (%s)\n",
-					next.Node.ID,
-					next.Node.Name,
-				)
-			}
 
 			return nil
 		},
@@ -209,8 +187,8 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
-	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (empty clears recurrence)")
+	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID")
+	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (empty clears recurrence). The next task is created when the deadline passes")
 
 	return cmd
 }

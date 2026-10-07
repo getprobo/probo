@@ -54,6 +54,9 @@
       "trustedBy": "Dipercaya oleh",
       "recentUpdates": "Pembaruan terbaru"
     },
+    "compliance": {
+      "viewDocuments": "Lihat dokumen"
+    },
     "recentUpdates": {
       "viewAll": "Lihat semua"
     }

@@ -49,6 +49,7 @@ const clientCredentialsConnectorDialogFragment = graphql`
     provider
     displayName
     clientCredentialsTokenUrl
+    oauth2Scopes
     clientCredentialsExtraSettings {
       key
       label
@@ -153,7 +154,7 @@ export function ClientCredentialsConnectorDialog({
           clientId: clientId.trim(),
           clientSecret: clientSecret.trim(),
           tokenUrl: provider.clientCredentialsTokenUrl ? null : tokenUrl.trim(),
-          scope: scope.trim() || null,
+          scope: provider.oauth2Scopes.length > 0 ? null : scope.trim() || null,
           ...extraFields,
         },
       },
@@ -253,11 +254,13 @@ export function ClientCredentialsConnectorDialog({
               required
             />
           )}
-          <Field
-            label={t("clientCredentialsConnectorDialog.fields.scope")}
-            value={scope}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScope(e.target.value)}
-          />
+          {provider?.oauth2Scopes.length === 0 && (
+            <Field
+              label={t("clientCredentialsConnectorDialog.fields.scope")}
+              value={scope}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setScope(e.target.value)}
+            />
+          )}
           {provider?.clientCredentialsExtraSettings.map(setting =>
             setting.key === "region"
               ? (

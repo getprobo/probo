@@ -19,11 +19,11 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { PageHeader } from "@probo/ui";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/TrackerPatternDetailPageQuery.graphql";
 
+import { TrackerPatternDetailHeader } from "./_components/TrackerPatternDetailHeader";
 import { TrackerPatternDetectedTrackersSection } from "./_components/TrackerPatternDetectedTrackersSection";
 import { TrackerPatternPropertiesSection } from "./_components/TrackerPatternPropertiesSection";
 
@@ -34,12 +34,15 @@ export const trackerPatternDetailPageQuery = graphql`
   ) {
     cookieBanner: node(id: $cookieBannerId) @required(action: THROW) {
       __typename
+      ... on CookieBanner {
+        ...TrackerPatternPropertiesSection_cookieBanner
+      }
     }
     node(id: $trackerPatternId) @required(action: THROW) {
       __typename
       ... on TrackerPattern {
-        id
         displayName
+        ...TrackerPatternDetailHeader_trackerPattern
         ...TrackerPatternPropertiesSection_trackerPattern
         ...TrackerPatternDetectedTrackersSection_trackerPattern
       }
@@ -68,9 +71,12 @@ export default function TrackerPatternDetailPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title={pattern.displayName} />
+      <TrackerPatternDetailHeader trackerPatternKey={pattern} />
 
-      <TrackerPatternPropertiesSection trackerPatternKey={pattern} />
+      <TrackerPatternPropertiesSection
+        trackerPatternKey={pattern}
+        cookieBannerKey={data.cookieBanner}
+      />
 
       <TrackerPatternDetectedTrackersSection trackerPatternKey={pattern} />
     </div>

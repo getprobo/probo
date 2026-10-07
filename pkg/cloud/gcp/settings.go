@@ -30,6 +30,7 @@ import (
 var (
 	errInvalidProviderResource    = errors.New("workloadIdentityProvider is not a workload identity provider resource")
 	errInvalidServiceAccountEmail = errors.New("serviceAccountEmail is not a service account email")
+	errInvalidAssetParent         = errors.New("gcpParent is not an organization or folder")
 
 	providerResourcePattern = regexp.MustCompile(
 		`^(?:(?:https:)?//([^/]+)/)?` +
@@ -41,6 +42,7 @@ var (
 	serviceAccountEmailPattern = regexp.MustCompile(
 		`^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9](?:\.s3ns)?\.iam\.gserviceaccount\.com$`,
 	)
+	assetParentPattern = regexp.MustCompile(`^(organizations|folders)/[1-9][0-9]*$`)
 )
 
 type (
@@ -81,6 +83,22 @@ func NewConnectorSettings(providerResource, serviceAccountEmail string) (Connect
 		WorkloadIdentityProvider: canonicalProviderResource(parsed),
 		ServiceAccountEmail:      email,
 	}, nil
+}
+
+// ParseAssetParent trims a Cloud Asset parent. Empty is valid on a standalone
+// connector. A non-empty value must be organizations/{number} or
+// folders/{number}. Returned errors never echo the parent.
+func ParseAssetParent(raw string) (string, error) {
+	parent := strings.TrimSpace(raw)
+	if parent == "" {
+		return "", nil
+	}
+
+	if !assetParentPattern.MatchString(parent) {
+		return "", errInvalidAssetParent
+	}
+
+	return parent, nil
 }
 
 func parseProviderResource(raw string) (providerResource, error) {

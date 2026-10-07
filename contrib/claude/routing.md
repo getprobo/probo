@@ -10,6 +10,7 @@ Probo frontends route with [React Router](https://reactrouter.com/) (`react-rout
 | Loaders, `queryRef`, preloading | [`contrib/claude/relay.md`](relay.md) |
 | Route error boundaries | [`contrib/claude/error-handling.md`](error-handling.md) |
 | Permission-gated UI within a route | [`contrib/claude/permissions.md`](permissions.md) |
+| `Link` vs `ButtonLink` | [`contrib/claude/ui.md`](ui.md#no-structure-changing-variants) |
 
 ## `AppRoute` and the route tree
 
@@ -72,6 +73,90 @@ navigate(`measures/${newId}`);
 ```
 
 Build paths from segments; never hand-concatenate query strings (see [`ts-style.md`](ts-style.md) — use `URL` / `URLSearchParams`).
+
+### Back to the list
+
+A detail page’s “back to the list” control is a **text `Link`**, not a `Button` or `ButtonLink`. `ButtonLink` is for button-looking navigation (Create, New, primary CTAs). See [`ui.md`](ui.md#no-structure-changing-variants).
+
+React Router does not copy the current search string onto a `Link` or `navigate` target unless `search` is set. When the list stores filters, sort, or a search term in the URL, the list-to-detail link and the back link must both pass `search: location.search` (or the list-owned subset of those params). `location.search` already includes the leading `?`.
+
+```tsx
+import { CaretLeftIcon } from "@phosphor-icons/react";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { useLocation } from "react-router";
+
+const location = useLocation();
+
+// GOOD — child of the list route; detail owns no extra params
+<Link
+  to={{ pathname: "..", search: location.search }}
+  size={2}
+  color="neutral"
+  underline={false}
+  iconStart={<CaretLeftIcon />}
+  className={back()}
+>
+  {t("userPage.back")}
+</Link>
+```
+
+`to=".."` is correct only when the detail route is a **child** of the list route. When the detail is a **sibling** of the list (for example `trackers` and `trackers/:id` under the same parent), `..` climbs to that parent — not the list. Point `pathname` at the list path explicitly and still pass `search`.
+
+```tsx
+// BAD — sibling detail; ".." leaves the feature and drops filters
+<Link to=".." …>{t("trackerProperties.actions.back")}</Link>
+
+// GOOD — explicit list path, same search the list owns
+<Link
+  to={{
+    pathname: `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`,
+    search: location.search,
+  }}
+  …
+>
+  {t("trackerProperties.actions.back")}
+</Link>
+```
+
+When the detail page owns extra search params the list does not (for example a visitor’s document-access `status`), copy only the list keys back onto the list URL with `URLSearchParams`. Do not concatenate a query string by hand (see [`ts-style.md`](ts-style.md)).
+
+```tsx
+const [searchParams] = useSearchParams();
+const listSearch = visitorsListSearch(searchParams);
+
+<Link
+  to={{ pathname: "..", search: listSearch }}
+  size={2}
+  color="neutral"
+  underline={false}
+  iconStart={<CaretLeftIcon />}
+  className={back()}
+>
+  {t("visitorPage.back")}
+</Link>
+```
+
+## Register every new console page in the nav
+
+A new page in `apps/console` is not finished when `routes.ts` exists. It must also be reachable from the organization shell. The side panel and the Cmd+K list are **separate catalogs**. Updating only one of them hides the page from the other.
+
+Tasks, Webhooks, and Devices are this kind of page. Add the entry in **both** places, with the same group, path, label key, and permission:
+
+| Surface | Where |
+|---------|--------|
+| Side panel | A `NavPanelItem` in the product group's `*NavPanel` under [`apps/console/src/pages/iam/organizations/_components/shell/`](../../apps/console/src/pages/iam/organizations/_components/shell/) |
+| Cmd+K | One object in `NAV_DESTINATIONS` in [`apps/console/src/pages/iam/organizations/_lib/navDestinations.ts`](../../apps/console/src/pages/iam/organizations/_lib/navDestinations.ts) |
+
+Build the href with `navHref`. Gate both copies with the same `isVisible` / `permission(action:)` check.
+
+Also update:
+
+- The `nav.<key>` label in [`apps/console/src/_locales/`](../../apps/console/src/_locales/) for `en-US`, `fr-FR`, and `nl-NL`. Group names live at `nav.groups.<key>`.
+- When the page introduces a permission: `NavPermission` in [`navigation.ts`](../../apps/console/src/pages/iam/organizations/_lib/navigation.ts), the `navPermissions_organization` fragment, **and** the panel query. Panels do not read the shared fragment, so a permission added to only one of them disagrees.
+- When that permission should reveal the product icon: the group's visibility helper in [`NavRail.tsx`](../../apps/console/src/pages/iam/organizations/_components/shell/NavRail.tsx). When the page can be the first page of the group, the group's landing href in the same file.
+- When the page starts a **new product group**: `NAV_GROUPS` in `navigation.ts`, `navPanels` in [`navPanels.ts`](../../apps/console/src/pages/iam/organizations/_components/shell/navPanels.ts), and a rail item.
+
+Do not put a record-scoped path (a chosen banner, third party, or portal) in `NAV_DESTINATIONS`. Those URLs need an id the Cmd+K list does not have. A detail page of a single record (one risk, one document, one audit) does not get a nav entry either. The list page already links to it.
 
 ## Route params
 

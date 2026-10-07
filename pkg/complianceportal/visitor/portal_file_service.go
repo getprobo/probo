@@ -73,10 +73,6 @@ func (s *Service) GetPortalFile(
 		return nil, err
 	}
 
-	if compliancePortalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityNone {
-		return nil, ErrPortalFileNotVisible
-	}
-
 	return compliancePortalFile, nil
 }
 
@@ -122,6 +118,7 @@ func (s *Service) ExportPortalFile(
 		watermarkText := pdfutils.TruncateWatermarkText(email.String())
 
 		watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			fileData,
 			coredata.DocumentClassificationConfidential.String(),
 			watermarkText,

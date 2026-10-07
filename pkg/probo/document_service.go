@@ -1624,9 +1624,9 @@ func (s *DocumentService) deleteDocumentEntityMappings(
 		return fmt.Errorf("cannot delete risk mappings: %w", err)
 	}
 
-	measureDocument := coredata.MeasureDocument{}
-	if err := measureDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
-		return fmt.Errorf("cannot delete measure mappings: %w", err)
+	internalControlDocument := coredata.InternalControlDocument{}
+	if err := internalControlDocument.DeleteByDocumentIDs(ctx, tx, scope, documentIDs); err != nil {
+		return fmt.Errorf("cannot delete internal control mappings: %w", err)
 	}
 
 	return nil
@@ -2055,9 +2055,9 @@ func (s *DocumentService) ListForRiskID(
 	return page.NewPage(documents, cursor), nil
 }
 
-func (s *DocumentService) CountForMeasureID(
+func (s *DocumentService) CountForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *coredata.DocumentFilter,
 ) (int, error) {
 	var count int
@@ -2067,7 +2067,7 @@ func (s *DocumentService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			documents := &coredata.Documents{}
 
-			count, err = documents.CountByMeasureID(ctx, conn, scope, measureID, filter)
+			count, err = documents.CountByInternalControlID(ctx, conn, scope, internalControlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count documents: %w", err)
 			}
@@ -2082,9 +2082,9 @@ func (s *DocumentService) CountForMeasureID(
 	return count, nil
 }
 
-func (s *DocumentService) ListForMeasureID(
+func (s *DocumentService) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.DocumentOrderField],
 	filter *coredata.DocumentFilter,
 ) (*page.Page[*coredata.Document, coredata.DocumentOrderField], error) {
@@ -2093,8 +2093,8 @@ func (s *DocumentService) ListForMeasureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := documents.LoadByMeasureID(ctx, conn, scope, measureID, cursor, filter); err != nil {
-				return fmt.Errorf("cannot list documents for measure: %w", err)
+			if err := documents.LoadByInternalControlID(ctx, conn, scope, internalControlID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot list documents for internalControl: %w", err)
 			}
 
 			return nil
@@ -2742,7 +2742,7 @@ func exportDocumentPDF(
 		}
 
 		if signaturePagePDF != nil {
-			pdfData, err = pdfutils.MergePDFs(pdfData, signaturePagePDF)
+			pdfData, err = pdfutils.MergePDFs(ctx, pdfData, signaturePagePDF)
 			if err != nil {
 				return nil, fmt.Errorf("cannot merge signature page: %w", err)
 			}
@@ -2755,6 +2755,7 @@ func exportDocumentPDF(
 		}
 
 		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			pdfData,
 			version.Classification.String(),
 			*options.WatermarkText,
@@ -2793,7 +2794,7 @@ func exportStoredPDF(
 		}
 
 		if signaturePagePDF != nil {
-			pdfData, err = pdfutils.MergePDFs(pdfData, signaturePagePDF)
+			pdfData, err = pdfutils.MergePDFs(ctx, pdfData, signaturePagePDF)
 			if err != nil {
 				return nil, fmt.Errorf("cannot merge signature page: %w", err)
 			}
@@ -2806,6 +2807,7 @@ func exportStoredPDF(
 		}
 
 		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			pdfData,
 			version.Classification.String(),
 			*options.WatermarkText,
@@ -3072,6 +3074,7 @@ func renderDocumentPDF(
 		}
 
 		watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+			ctx,
 			pdfData,
 			version.Classification.String(),
 			*options.WatermarkText,

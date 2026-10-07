@@ -28,13 +28,33 @@ import (
 
 func NewAccessReviewSource(s *coredata.AccessReviewSource) *AccessReviewSource {
 	return &AccessReviewSource{
-		ID:             s.ID,
-		OrganizationID: s.OrganizationID,
-		ConnectorID:    s.ConnectorID,
-		Name:           s.Name,
-		CsvData:        s.CsvData,
-		CreatedAt:      s.CreatedAt,
-		UpdatedAt:      s.UpdatedAt,
+		ID:                 s.ID,
+		OrganizationID:     s.OrganizationID,
+		ConnectorAccountID: s.ConnectorAccountID,
+		Name:               s.Name,
+		CsvData:            s.CsvData,
+		CreatedAt:          s.CreatedAt,
+		UpdatedAt:          s.UpdatedAt,
+	}
+}
+
+func ApplySourceConnectorIDs(
+	mapped []*AccessReviewSource,
+	rows []*coredata.AccessReviewSource,
+	connectorIDs map[gid.GID]gid.GID,
+) {
+	for i, row := range rows {
+		if row.ConnectorAccountID == nil {
+			continue
+		}
+
+		id, ok := connectorIDs[*row.ConnectorAccountID]
+		if !ok {
+			continue
+		}
+
+		copied := id
+		mapped[i].ConnectorID = &copied
 	}
 }
 

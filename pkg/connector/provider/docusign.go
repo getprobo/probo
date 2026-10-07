@@ -32,7 +32,12 @@ import (
 
 func docusignRegistration() *Registration {
 	return &Registration{
-		Provider:    coredata.ConnectorProviderDocuSign,
+		Provider: coredata.ConnectorProviderDocuSign,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.DocuSignConnectorSettings) string {
+				return s.AccountID
+			},
+		),
 		DisplayName: "DocuSign",
 		// APIBase is deliberately empty. account.docusign.com above is the
 		// identity host only; the eSignature data host is per account,

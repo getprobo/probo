@@ -35,7 +35,7 @@ const governanceNavPanelQuery = graphql`
       __typename
       ... on Organization {
         canListTasks: permission(action: "core:task:list")
-        canListMeasures: permission(action: "core:measure:list")
+        canListInternalControls: permission(action: "core:internal-control:list")
         canListFrameworks: permission(action: "core:framework:list")
         canListAudits: permission(action: "core:audit:list")
         canListFindings: permission(action: "core:finding:list")
@@ -75,10 +75,10 @@ function GovernanceNavPanelInner({ queryRef, group }: GovernanceNavPanelInnerPro
           to={navHref(organizationId, group, "tasks")}
         />
       )}
-      {organization.canListMeasures && (
+      {organization.canListInternalControls && (
         <NavPanelItem
-          label={t("nav.measures")}
-          to={navHref(organizationId, group, "measures")}
+          label={t("nav.internalControls")}
+          to={navHref(organizationId, group, "internal-controls")}
         />
       )}
       {organization.canListFrameworks && (

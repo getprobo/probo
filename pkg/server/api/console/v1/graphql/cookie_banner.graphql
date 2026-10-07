@@ -76,6 +76,16 @@ enum CookieBannerOrderField
         )
 }
 
+enum CookieBannerVersionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerVersionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerVersionOrderFieldCreatedAt"
+        )
+}
+
 enum CookieCategoryOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField"
@@ -112,6 +122,14 @@ input CookieBannerOrder
     field: CookieBannerOrderField!
 }
 
+input CookieBannerVersionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerVersionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerVersionOrderField!
+}
+
 input CookieCategoryOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryOrderBy"
@@ -133,6 +151,7 @@ type CookieBannerCapabilities
     ) {
     resourceReporting: Boolean!
     tcf: Boolean! @goField(name: "TCF")
+    corsless: Boolean!
 }
 
 type CookieBanner implements Node {
@@ -168,6 +187,14 @@ type CookieBanner implements Node {
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
     publishedVersion: CookieBannerVersion @goField(forceResolver: true)
+
+    versions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerVersionOrder
+    ): CookieBannerVersionConnection @goField(forceResolver: true)
 
     policyDocument: Document @goField(forceResolver: true)
 
@@ -364,7 +391,9 @@ type TrackerPattern implements Node
 
     """
     Catalog verdict inherited from the linked common tracker pattern.
-    Null when the org pattern has no catalog link.
+    Null when the org pattern has no catalog link, except when source
+    is EXTENSION: that is always NOT_ATTRIBUTABLE (visitor software),
+    even if a catalog row is already linked.
     """
     attribution: CommonTrackerPatternAttribution
         @goField(forceResolver: true)
@@ -416,12 +445,24 @@ input TrackerPatternFilter
     common_tracker_patterns.
     """
     thirdPartyId: ID
+    """
+    When true, only excluded patterns. When false, only patterns
+    that are not excluded.
+    """
+    excluded: Boolean
+    """
+    When true, only patterns in a non-uncategorised category.
+    When false, only uncategorised patterns.
+    """
+    categorized: Boolean
 }
 
 type DetectedTracker implements Node {
     id: ID!
     identifier: String!
     initiatorUrl: String
+    cookieDomain: String
+    hostOnly: Boolean
     maxAgeSeconds: Int
     source: CookieSource
     lastDetectedAt: Datetime!
@@ -596,6 +637,20 @@ type CookieBannerVersionCookie {
     trackerType: TrackerType!
     maxAgeSeconds: Int
     description: String!
+}
+
+type CookieBannerVersionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerVersionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerVersionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerVersionEdge {
+    cursor: CursorKey!
+    node: CookieBannerVersion!
 }
 
 type CookieBannerConnection

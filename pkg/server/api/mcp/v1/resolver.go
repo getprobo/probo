@@ -227,3 +227,30 @@ func (r *Resolver) compliancePortalAccessWithIdentity(
 
 	return types.NewCompliancePortalAccess(access, identity), nil
 }
+
+func (r *Resolver) fillSourceConnectorIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	rows []*coredata.AccessReviewSource,
+	mapped []*types.AccessReviewSource,
+) error {
+	accountIDs := make([]gid.GID, 0, len(rows))
+	for _, row := range rows {
+		if row.ConnectorAccountID != nil {
+			accountIDs = append(accountIDs, *row.ConnectorAccountID)
+		}
+	}
+
+	if len(accountIDs) == 0 {
+		return nil
+	}
+
+	connectorIDs, err := r.accessReview.ConnectorIDsByAccountIDs(ctx, scope, accountIDs)
+	if err != nil {
+		return err
+	}
+
+	types.ApplySourceConnectorIDs(mapped, rows, connectorIDs)
+
+	return nil
+}

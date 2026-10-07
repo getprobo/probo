@@ -29,6 +29,7 @@ import { CurrentUser } from "#/providers/CurrentUser";
 
 import { NavPanel } from "./_components/shell/NavPanel";
 import { NavRail } from "./_components/shell/NavRail";
+import { NavSpotlight } from "./_components/shell/NavSpotlight";
 import { organizationLayout } from "./_components/shell/variants";
 
 export const organizationLayoutQuery = graphql`
@@ -39,6 +40,7 @@ export const organizationLayoutQuery = graphql`
       ... on Organization {
         ...NavRail_organization
         ...NavPanel_organization
+        ...NavSpotlight_organization
         viewer @required(action: THROW) {
           fullName
           membership @required(action: THROW) {
@@ -76,6 +78,10 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
     <LayoutContext value={drawerContext}>
       <div className={slots.root()}>
         <div className={slots.body()}>
+          <NavSpotlight
+            organizationKey={organization}
+            slackbotAvailable={slackbotAvailable}
+          />
           <NavRail
             organizationKey={organization}
             slackbotAvailable={slackbotAvailable}

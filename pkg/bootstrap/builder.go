@@ -217,6 +217,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					"PROBOD_IDENTITY_FEDERATION_AZURE_TERRAFORM_MODULE_SOURCE",
 					cloudazure.DefaultTerraformModuleSource,
 				),
+				AWSEndpoint: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_AWS_ENDPOINT"),
 			},
 			ITAM: probodconfig.ITAMConfig{
 				DeviceEnrollmentTokenValidity: b.resolver.getEnvIntOrDefault(
@@ -272,6 +273,9 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 					DebounceDelay:    b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_DEBOUNCE_DELAY", 900),
 					ReminderInterval: b.resolver.getEnvIntOrDefault("PROBOD_DOCUMENT_NOTIFICATION_REMINDER_INTERVAL", 86400),
 				},
+			},
+			TaskRecurrence: probodconfig.TaskRecurrenceConfig{
+				Interval: b.resolver.getEnvIntOrDefault("PROBOD_TASK_RECURRENCE_INTERVAL", 300),
 			},
 			Agents: func() probodconfig.AgentsConfig {
 				defaultProvider := b.resolver.getEnvOrDefault("PROBOD_AGENT_DEFAULT_PROVIDER", "openai")
@@ -590,6 +594,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"CAL_COM",
 		"CALENDLY",
 		"ATTIO",
+		"OVHCLOUD",
 	} {
 		clientID := b.resolver.getEnv("PROBOD_CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -816,6 +821,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_CALENDLY", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_ATTIO", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
+		{"CONNECTOR_OVHCLOUD", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {

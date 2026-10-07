@@ -25,7 +25,7 @@ import {
   acceptPresentation,
   acceptSpreadsheet,
   acceptText,
-  getCompliancePortalVisibilityOptions,
+  getCompliancePortalLinkedVisibilityOptions,
 } from "@probo/helpers";
 import { Badge, Button, Dialog, DialogContent, DialogFooter, type DialogRef, Dropzone, Field, Option, Spinner } from "@probo/ui";
 import { useCallback, useState } from "react";
@@ -75,10 +75,10 @@ export function NewCompliancePortalFileDialog(props: {
   const createSchema = z.object({
     name: z.string().min(1, t("newFileDialog.validation.nameRequired")),
     category: z.string().min(1, t("newFileDialog.validation.categoryRequired")),
-    compliancePortalVisibility: z.enum(["NONE", "RESTRICTED", "PUBLIC"]),
+    compliancePortalVisibility: z.enum(["RESTRICTED", "PUBLIC"]),
   });
   const createForm = useFormWithSchema(createSchema, {
-    defaultValues: { name: "", category: "", compliancePortalVisibility: "NONE" },
+    defaultValues: { name: "", category: "", compliancePortalVisibility: "RESTRICTED" },
   });
 
   const handleFileUpload = useCallback(
@@ -176,11 +176,11 @@ export function NewCompliancePortalFileDialog(props: {
             onValueChange={value =>
               createForm.setValue(
                 "compliancePortalVisibility",
-                value as "NONE" | "RESTRICTED" | "PUBLIC",
+                value as "RESTRICTED" | "PUBLIC",
               )}
             error={createForm.formState.errors.compliancePortalVisibility?.message}
           >
-            {getCompliancePortalVisibilityOptions(t).map(option => (
+            {getCompliancePortalLinkedVisibilityOptions(t).map(option => (
               <Option key={option.value} value={option.value}>
                 <div className="flex items-center justify-between w-full">
                   <Badge variant={option.variant}>{option.label}</Badge>

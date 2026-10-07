@@ -457,6 +457,7 @@ func CompletePendingOutboundJobsForTask(
 	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
+	excludeActions []string,
 	now time.Time,
 ) error {
 	q := `
@@ -472,6 +473,7 @@ WHERE
     AND status = @pending_status
     AND processing_owner_token IS NULL
     AND payload->>'task_id' = @task_id
+    AND NOT (payload->>'action' = ANY(@exclude_actions))
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -482,6 +484,7 @@ WHERE
 		"direction":        TaskSyncJobDirectionOutbound,
 		"now":              now,
 		"task_id":          taskID.String(),
+		"exclude_actions":  excludeActions,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -493,11 +496,59 @@ WHERE
 	return nil
 }
 
+func CompletePendingOutboundCommentJobs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskID gid.GID,
+	commentID gid.GID,
+	actions []string,
+	now time.Time,
+) error {
+	q := `
+UPDATE task_sync_jobs
+SET
+    status = @succeeded_status,
+    completed_at = @now,
+    updated_at = @now,
+    error = NULL
+WHERE
+    %s
+    AND direction = @direction
+    AND status = @pending_status
+    AND processing_owner_token IS NULL
+    AND payload->>'task_id' = @task_id
+    AND payload->>'comment_id' = @comment_id
+    AND payload->>'action' = ANY(@actions)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"succeeded_status": TaskSyncJobStatusSucceeded,
+		"pending_status":   TaskSyncJobStatusPending,
+		"direction":        TaskSyncJobDirectionOutbound,
+		"now":              now,
+		"task_id":          taskID.String(),
+		"comment_id":       commentID.String(),
+		"actions":          actions,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot complete pending outbound comment sync jobs: %w", err)
+	}
+
+	return nil
+}
+
 func (j *TaskSyncJob) HasNewerOutboundJob(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	taskID gid.GID,
+	excludeActions []string,
 ) (bool, error) {
 	q := `
 SELECT EXISTS (
@@ -508,6 +559,7 @@ SELECT EXISTS (
         AND direction = @direction
         AND status IN (@pending_status, @processing_status, @succeeded_status)
         AND payload->>'task_id' = @task_id
+        AND NOT (payload->>'action' = ANY(@exclude_actions))
         AND (created_at, id) > (@created_at, @id)
 )
 `
@@ -520,6 +572,7 @@ SELECT EXISTS (
 		"processing_status": TaskSyncJobStatusProcessing,
 		"succeeded_status":  TaskSyncJobStatusSucceeded,
 		"task_id":           taskID.String(),
+		"exclude_actions":   excludeActions,
 		"created_at":        j.CreatedAt,
 		"id":                j.ID,
 	}
@@ -529,6 +582,53 @@ SELECT EXISTS (
 
 	if err := conn.QueryRow(ctx, q, args).Scan(&exists); err != nil {
 		return false, fmt.Errorf("cannot check newer outbound task sync jobs: %w", err)
+	}
+
+	return exists, nil
+}
+
+func (j *TaskSyncJob) HasNewerOutboundCommentJob(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskID gid.GID,
+	commentID gid.GID,
+	actions []string,
+) (bool, error) {
+	q := `
+SELECT EXISTS (
+    SELECT 1
+    FROM task_sync_jobs
+    WHERE
+        %s
+        AND direction = @direction
+        AND status IN (@pending_status, @processing_status, @succeeded_status)
+        AND payload->>'task_id' = @task_id
+        AND payload->>'comment_id' = @comment_id
+        AND payload->>'action' = ANY(@actions)
+        AND (created_at, id) > (@created_at, @id)
+)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"direction":         TaskSyncJobDirectionOutbound,
+		"pending_status":    TaskSyncJobStatusPending,
+		"processing_status": TaskSyncJobStatusProcessing,
+		"succeeded_status":  TaskSyncJobStatusSucceeded,
+		"task_id":           taskID.String(),
+		"comment_id":        commentID.String(),
+		"actions":           actions,
+		"created_at":        j.CreatedAt,
+		"id":                j.ID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	var exists bool
+
+	if err := conn.QueryRow(ctx, q, args).Scan(&exists); err != nil {
+		return false, fmt.Errorf("cannot check newer outbound comment sync jobs: %w", err)
 	}
 
 	return exists, nil

@@ -217,10 +217,21 @@ func (s *Service) CreateComment(
 				return fmt.Errorf("cannot load owner profile: %w", coredata.ErrResourceNotFound)
 			}
 
-			taskComment.OwnerID = owner.ID
+			ownerID := owner.ID
+			taskComment.OwnerID = &ownerID
 
 			if err := taskComment.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert task comment: %w", err)
+			}
+
+			if err := emitTaskCommentCreated(ctx, conn, scope, taskComment); err != nil {
+				return fmt.Errorf("cannot emit task comment created webhook: %w", err)
+			}
+
+			if s.Sync != nil {
+				if err := s.Sync.EnqueueCommentOutbound(ctx, conn, scope, taskComment.TaskID, taskComment.ID); err != nil {
+					return fmt.Errorf("cannot enqueue task comment sync: %w", err)
+				}
 			}
 
 			return nil
@@ -250,6 +261,8 @@ func (s *Service) UpdateComment(
 				return fmt.Errorf("cannot load task comment: %w", err)
 			}
 
+			previousComment := *taskComment
+
 			if req.OwnerID != nil {
 				owner := &coredata.MembershipProfile{}
 				if err := owner.LoadByID(ctx, conn, scope, **req.OwnerID); err != nil {
@@ -260,7 +273,7 @@ func (s *Service) UpdateComment(
 					return fmt.Errorf("cannot load owner profile: %w", coredata.ErrResourceNotFound)
 				}
 
-				taskComment.OwnerID = **req.OwnerID
+				taskComment.OwnerID = *req.OwnerID
 			}
 
 			if req.Content != nil {
@@ -276,6 +289,16 @@ func (s *Service) UpdateComment(
 
 			if err := taskComment.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update task comment: %w", err)
+			}
+
+			if err := emitTaskCommentUpdated(ctx, conn, scope, &previousComment, taskComment); err != nil {
+				return fmt.Errorf("cannot emit task comment updated webhook: %w", err)
+			}
+
+			if s.Sync != nil && req.Content != nil {
+				if err := s.Sync.EnqueueCommentOutbound(ctx, conn, scope, taskComment.TaskID, taskComment.ID); err != nil {
+					return fmt.Errorf("cannot enqueue task comment sync: %w", err)
+				}
 			}
 
 			return nil
@@ -297,8 +320,18 @@ func (s *Service) DeleteComment(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := taskComment.LoadByID(ctx, conn, scope, taskCommentID); err != nil {
+			if err := taskComment.LoadByIDForUpdate(ctx, conn, scope, taskCommentID); err != nil {
 				return fmt.Errorf("cannot load task comment: %w", err)
+			}
+
+			if err := emitTaskCommentDeleted(ctx, conn, scope, &taskComment); err != nil {
+				return fmt.Errorf("cannot emit task comment deleted webhook: %w", err)
+			}
+
+			if s.Sync != nil {
+				if err := s.Sync.EnqueueCommentDelete(ctx, conn, scope, taskComment.TaskID, taskComment.ID); err != nil {
+					return fmt.Errorf("cannot enqueue task comment delete: %w", err)
+				}
 			}
 
 			if err := taskComment.Delete(ctx, conn, scope); err != nil {

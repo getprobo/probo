@@ -27,7 +27,7 @@ import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CompliancePortalAccessListItemFragment$key } from "#/__generated__/core/CompliancePortalAccessListItemFragment.graphql";
@@ -60,7 +60,9 @@ export function CompliancePortalAccessListItem({
   accessKey,
 }: CompliancePortalAccessListItemProps) {
   const { i18n, t } = useTranslation("organizations/compliance-portals");
+  const location = useLocation();
   const access = useFragment(fragment, accessKey);
+  const visitorTo = { pathname: access.id, search: location.search };
   const {
     item,
     hit,
@@ -85,7 +87,7 @@ export function CompliancePortalAccessListItem({
   return (
     <ListItem className={item()}>
       <Link
-        to={access.id}
+        to={visitorTo}
         className={hit()}
         aria-label={t("accessListItem.actions.open")}
       />
@@ -119,7 +121,7 @@ export function CompliancePortalAccessListItem({
       <div className={trailing()}>
         {access.pendingRequestCount > 0 && (
           <ButtonLink
-            to={access.id}
+            to={visitorTo}
             size={2}
             variant="soft"
             color="indigo"

@@ -21,13 +21,49 @@
 import { navGroupByKey, navHref } from "#/pages/iam/organizations/_lib/navigation";
 
 // Cookie banners live under whichever product segment NAV_GROUPS assigns to the
-// privacy group, so the segment is read from there rather than spelled out.
+// cmp group, so the segment is read from there rather than spelled out.
 export function cookieBannersBasePath(organizationId: string): string {
-  return navHref(organizationId, navGroupByKey("privacy"), "cookie-banners");
+  return navHref(organizationId, navGroupByKey("cmp"), "cookie-banners");
 }
 
 export function cookieBannerPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannersBasePath(organizationId)}/${cookieBannerId}`;
+}
+
+export function cookieBannersNewPath(organizationId: string): string {
+  return `${cookieBannersBasePath(organizationId)}/new`;
+}
+
+export function cookieBannerInstallPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/install`;
+}
+
+export function cookieBannerConfigurePath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/configure`;
+}
+
+export function cookieBannerTranslationsPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/translations`;
+}
+
+export function cookieBannerTrackersPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`;
+}
+
+export function cookieBannerResourcesPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/resources`;
+}
+
+export function cookieBannerTrailPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/trail`;
+}
+
+export function cookieBannerConsentRecordPath(
+  organizationId: string,
+  cookieBannerId: string,
+  consentRecordId: string,
+): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/consent-records/${consentRecordId}`;
 }
 
 export function cookieBannerTCFPath(organizationId: string, cookieBannerId: string): string {

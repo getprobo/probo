@@ -23,6 +23,7 @@ import type { ComponentType } from "react";
 import type { NavGroup, NavGroupKey } from "#/pages/iam/organizations/_lib/navigation";
 
 import { AccessReviewNavPanel } from "./AccessReviewNavPanel";
+import { CmpNavPanel } from "./CmpNavPanel";
 import { CompliancePortalNavPanel } from "./CompliancePortalNavPanel";
 import { GovernanceNavPanel } from "./GovernanceNavPanel";
 import { ItamNavPanel } from "./ItamNavPanel";
@@ -41,6 +42,7 @@ export const navPanels: Record<NavGroupKey, ComponentType<NavPanelBodyProps>> = 
   riskManagement: RiskManagementNavPanel,
   tprm: TprmNavPanel,
   privacy: PrivacyNavPanel,
+  cmp: CmpNavPanel,
   itam: ItamNavPanel,
   registries: RegistriesNavPanel,
   compliancePortal: CompliancePortalNavPanel,

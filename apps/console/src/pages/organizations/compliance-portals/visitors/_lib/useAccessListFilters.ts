@@ -45,6 +45,20 @@ export function accessListGraphqlVariables(order: AccessListFilters["order"], qu
   };
 }
 
+export function visitorsListSearch(searchParams: URLSearchParams): string {
+  const next = new URLSearchParams();
+  const query = searchParams.get("q");
+  const sort = searchParams.get("sort");
+  if (query) {
+    next.set("q", query);
+  }
+  if (sort) {
+    next.set("sort", sort);
+  }
+  const encoded = next.toString();
+  return encoded === "" ? "" : "?" + encoded;
+}
+
 export function useAccessListFilters(): AccessListFilters {
   const [searchParams, setSearchParams] = useSearchParams();
   const sort: AccessListSort = searchParams.get("sort") === "joined" ? "joined" : "requests";

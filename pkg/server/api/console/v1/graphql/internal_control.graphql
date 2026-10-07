@@ -1,0 +1,347 @@
+enum InternalControlType
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlType") {
+    PREVENTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypePreventive"
+        )
+    DETECTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypeDetective"
+        )
+    CORRECTIVE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlTypeCorrective"
+        )
+}
+
+enum InternalControlNature
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlNature") {
+    MANUAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlNatureManual"
+        )
+}
+
+enum InternalControlOperatingMode
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingMode"
+    ) {
+    CONTINUOUS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingModeContinuous"
+        )
+    EVENT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingModeEvent"
+        )
+    PERIODIC
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingModePeriodic"
+        )
+}
+
+type InternalControlOperatingFrequency
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingFrequency"
+    ) {
+    mode: InternalControlOperatingMode!
+    interval: TimeSpan
+    event: String
+}
+
+input InternalControlOperatingFrequencyInput
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlOperatingFrequency"
+    ) {
+    mode: InternalControlOperatingMode!
+    interval: TimeSpan
+    event: String
+}
+
+enum InternalControlImplementationStatus
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus"
+    ) {
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusNotImplemented"
+        )
+    IN_PROGRESS
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusInProgress"
+        )
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusImplemented"
+        )
+    OPERATING
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatusOperating"
+        )
+}
+
+enum InternalControlState
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlState") {
+    NOT_STARTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.InternalControlStateNotStarted")
+    IN_PROGRESS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.InternalControlStateInProgress")
+    NOT_APPLICABLE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlStateNotApplicable"
+        )
+    IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlStateImplemented"
+        )
+    UNKNOWN
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlStateUnknown"
+        )
+    NOT_IMPLEMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlStateNotImplemented"
+        )
+}
+
+enum InternalControlOrderField
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.InternalControlOrderField") {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.InternalControlOrderFieldCreatedAt"
+        )
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.InternalControlOrderFieldName")
+}
+
+input InternalControlOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InternalControlOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: InternalControlOrderField!
+}
+
+input InternalControlFilter {
+    query: String
+    state: InternalControlState
+    category: String
+}
+
+type InternalControl implements Node {
+    id: ID!
+    category: String!
+    name: String!
+    description: String
+    state: InternalControlState!
+    code: String
+    controlType: InternalControlType
+    nature: InternalControlNature
+    operatingFrequency: InternalControlOperatingFrequency
+    evidenceCadence: TimeSpan
+    testingCadence: TimeSpan
+    nextEvidenceDue: Datetime
+    nextTestDue: Datetime
+    implementationStatus: InternalControlImplementationStatus!
+    owner: Profile @goField(forceResolver: true)
+    reviewer: Profile @goField(forceResolver: true)
+    asOf: Datetime
+
+    evidences(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EvidenceOrder
+    ): EvidenceConnection! @goField(forceResolver: true)
+
+    tasks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskOrder
+        filter: TaskFilter
+    ): TaskConnection! @goField(forceResolver: true)
+
+    risks(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: RiskOrder
+        filter: RiskFilter
+    ): RiskConnection! @goField(forceResolver: true)
+
+    controls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ControlOrder
+        filter: ControlFilter
+    ): ControlConnection! @goField(forceResolver: true)
+
+    documents(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentOrder
+        filter: DocumentFilter
+    ): DocumentConnection! @goField(forceResolver: true)
+
+    thirdParties(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: ThirdPartyOrder
+    ): ThirdPartyConnection! @goField(forceResolver: true)
+
+    treatmentPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TreatmentPlanOrder
+        filter: TreatmentPlanFilter
+        asOf: Datetime
+    ): TreatmentPlanConnection! @goField(forceResolver: true)
+
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type InternalControlConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InternalControlConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [InternalControlEdge!]!
+    pageInfo: PageInfo!
+    asOf: Datetime
+}
+
+type InternalControlEdge {
+    cursor: CursorKey!
+    node: InternalControl!
+}
+
+extend type Mutation {
+    createInternalControl(input: CreateInternalControlInput!): CreateInternalControlPayload!
+    updateInternalControl(input: UpdateInternalControlInput!): UpdateInternalControlPayload!
+    importInternalControl(input: ImportInternalControlInput!): ImportInternalControlPayload!
+    deleteInternalControl(input: DeleteInternalControlInput!): DeleteInternalControlPayload!
+    createInternalControlDocumentMapping(
+        input: CreateInternalControlDocumentMappingInput!
+    ): CreateInternalControlDocumentMappingPayload!
+    deleteInternalControlDocumentMapping(
+        input: DeleteInternalControlDocumentMappingInput!
+    ): DeleteInternalControlDocumentMappingPayload!
+    createInternalControlThirdPartyMapping(
+        input: CreateInternalControlThirdPartyMappingInput!
+    ): CreateInternalControlThirdPartyMappingPayload!
+    deleteInternalControlThirdPartyMapping(
+        input: DeleteInternalControlThirdPartyMappingInput!
+    ): DeleteInternalControlThirdPartyMappingPayload!
+}
+
+input CreateInternalControlInput {
+    organizationId: ID!
+    name: String!
+    description: String
+    category: String!
+    code: String
+    controlType: InternalControlType
+    nature: InternalControlNature
+    operatingFrequency: InternalControlOperatingFrequencyInput
+    evidenceCadence: TimeSpan
+    testingCadence: TimeSpan
+    implementationStatus: InternalControlImplementationStatus
+    ownerId: ID
+    reviewerId: ID
+}
+
+input UpdateInternalControlInput {
+    id: ID!
+    name: String
+    description: String @goField(omittable: true)
+    category: String
+    state: InternalControlState
+    code: String @goField(omittable: true)
+    controlType: InternalControlType @goField(omittable: true)
+    nature: InternalControlNature @goField(omittable: true)
+    operatingFrequency: InternalControlOperatingFrequencyInput @goField(omittable: true)
+    evidenceCadence: TimeSpan @goField(omittable: true)
+    testingCadence: TimeSpan @goField(omittable: true)
+    implementationStatus: InternalControlImplementationStatus
+    ownerId: ID @goField(omittable: true)
+    reviewerId: ID @goField(omittable: true)
+}
+
+input ImportInternalControlInput {
+    organizationId: ID!
+    file: Upload!
+}
+
+input DeleteInternalControlInput {
+    internalControlId: ID!
+}
+
+input CreateInternalControlDocumentMappingInput {
+    internalControlId: ID!
+    documentId: ID!
+}
+
+input DeleteInternalControlDocumentMappingInput {
+    internalControlId: ID!
+    documentId: ID!
+}
+
+type CreateInternalControlPayload {
+    internalControlEdge: InternalControlEdge!
+}
+
+type UpdateInternalControlPayload {
+    internalControl: InternalControl!
+}
+
+type ImportInternalControlPayload {
+    internalControlEdges: [InternalControlEdge!]!
+}
+
+type DeleteInternalControlPayload {
+    deletedInternalControlId: ID!
+}
+
+type CreateInternalControlDocumentMappingPayload {
+    internalControlEdge: InternalControlEdge!
+    documentEdge: DocumentEdge!
+}
+
+type DeleteInternalControlDocumentMappingPayload {
+    deletedInternalControlId: ID!
+    deletedDocumentId: ID!
+}
+
+input CreateInternalControlThirdPartyMappingInput {
+    internalControlId: ID!
+    thirdPartyId: ID!
+}
+
+input DeleteInternalControlThirdPartyMappingInput {
+    internalControlId: ID!
+    thirdPartyId: ID!
+}
+
+type CreateInternalControlThirdPartyMappingPayload {
+    internalControlEdge: InternalControlEdge!
+    thirdPartyEdge: ThirdPartyEdge!
+}
+
+type DeleteInternalControlThirdPartyMappingPayload {
+    deletedInternalControlId: ID!
+    deletedThirdPartyId: ID!
+}

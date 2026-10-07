@@ -23,28 +23,33 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerTranslationsPageQuery } from "#/__generated__/core/CookieBannerTranslationsPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import CookieBannerTranslationsPage, { cookieBannerTranslationsPageQuery } from "./CookieBannerTranslationsPage";
+import {
+  CookieBannerTranslationsPage,
+  cookieBannerTranslationsPageQuery,
+} from "./CookieBannerTranslationsPage";
+import { CookieBannerTranslationsPageSkeleton } from "./CookieBannerTranslationsPageSkeleton";
 
 export default function CookieBannerTranslationsPageLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (!cookieBannerId) {
-    throw new Error("missing cookieBannerId param");
+  if (typeof cookieBannerId !== "string") {
+    throw new Error("Missing cookieBannerId parameter");
   }
 
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerTranslationsPageQuery>(cookieBannerTranslationsPageQuery);
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerTranslationsPageQuery>(
+    cookieBannerTranslationsPageQuery,
+  );
 
   useEffect(() => {
     loadQuery({ cookieBannerId });
   }, [loadQuery, cookieBannerId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <CookieBannerTranslationsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<CookieBannerTranslationsPageSkeleton />}>
       <CookieBannerTranslationsPage queryRef={queryRef} />
     </Suspense>
   );

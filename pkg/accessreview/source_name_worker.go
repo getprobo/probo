@@ -30,7 +30,6 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connector/provider"
 	"go.probo.inc/probo/pkg/coredata"
@@ -147,12 +146,17 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(source.ID)
-			if source.ConnectorID == nil {
+			if source.ConnectorAccountID == nil {
 				return fmt.Errorf("source %s has no connector", source.ID)
 			}
 
-			if err := dbConnector.LoadByID(ctx, tx, scope, *source.ConnectorID, h.encryptionKey); err != nil {
-				return fmt.Errorf("cannot load connector %s: %w", *source.ConnectorID, err)
+			account := &coredata.ConnectorAccount{}
+			if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+				return fmt.Errorf("cannot load connector account: %w", err)
+			}
+
+			if err := dbConnector.LoadByID(ctx, tx, scope, account.ConnectorID, h.encryptionKey); err != nil {
+				return fmt.Errorf("cannot load connector %s: %w", account.ConnectorID, err)
 			}
 
 			// The connection decides which credential the resolver can be
@@ -161,7 +165,7 @@ func (h *sourceNameHandler) Process(ctx context.Context, source coredata.AccessR
 			// default arm rather than falling through to the other kind.
 			switch conn := dbConnector.Connection.(type) {
 			case *connector.WorkloadIdentityConnection:
-				r, err := h.newCloudNameResolver(ctx, &dbConnector)
+				r, err := h.newCloudNameResolver(ctx, tx, scope, &source, &dbConnector)
 				if err != nil {
 					return err
 				}
@@ -304,6 +308,9 @@ func (h *sourceNameHandler) markNameSynced(
 
 func (h *sourceNameHandler) newCloudNameResolver(
 	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	source *coredata.AccessReviewSource,
 	dbConnector *coredata.Connector,
 ) (drivers.NameResolver, error) {
 	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
@@ -311,7 +318,16 @@ func (h *sourceNameHandler) newCloudNameResolver(
 		return nil, nil
 	}
 
-	session, err := h.buildCloudSession(ctx, dbConnector)
+	if source.ConnectorAccountID == nil {
+		return nil, fmt.Errorf("cannot resolve source name: source %s has no connector account", source.ID)
+	}
+
+	account := &coredata.ConnectorAccount{}
+	if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+		return nil, fmt.Errorf("cannot load connector account %s: %w", *source.ConnectorAccountID, err)
+	}
+
+	session, err := h.openSession(ctx, dbConnector, account.ExternalAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -357,31 +373,4 @@ func (h *sourceNameHandler) newHTTPNameResolver(
 	}
 
 	return reg.NewNameResolver(ctx, httpClient, dbConnector, h.logger, reg.Endpoints), nil
-}
-
-func (h *sourceNameHandler) buildCloudSession(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-) (cloud.Session, error) {
-	if h.federation == nil {
-		return nil, fmt.Errorf(
-			"cannot reach %s connector: identity federation is not configured in this deployment",
-			dbConnector.Provider,
-		)
-	}
-
-	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.WorkloadIdentity == nil {
-		return nil, fmt.Errorf(
-			"cannot reach %s connector: provider offers no workload identity path",
-			dbConnector.Provider,
-		)
-	}
-
-	session, err := reg.WorkloadIdentity.NewSession(ctx, h.federation, dbConnector)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open cloud session for %s connector: %w", dbConnector.Provider, err)
-	}
-
-	return session, nil
 }

@@ -204,9 +204,9 @@ func (s FrameworkService) Export(
 					return fmt.Errorf("cannot create control directory in archive: %w", err)
 				}
 
-				measures := coredata.Measures{}
+				internalControls := coredata.InternalControls{}
 
-				err = measures.LoadByControlID(
+				err = internalControls.LoadByControlID(
 					ctx,
 					conn,
 					scope,
@@ -215,30 +215,30 @@ func (s FrameworkService) Export(
 						10_000,
 						nil,
 						page.Head,
-						page.OrderBy[coredata.MeasureOrderField]{
-							Field:     coredata.MeasureOrderFieldCreatedAt,
+						page.OrderBy[coredata.InternalControlOrderField]{
+							Field:     coredata.InternalControlOrderFieldCreatedAt,
 							Direction: page.OrderDirectionAsc,
 						},
 					),
-					coredata.NewMeasureFilter(nil, nil, nil),
+					coredata.NewInternalControlFilter(nil, nil, nil),
 				)
 				if err != nil {
-					return fmt.Errorf("cannot load measures: %w", err)
+					return fmt.Errorf("cannot load internalControls: %w", err)
 				}
 
-				for _, measure := range measures {
-					_, err := archive.Create(fmt.Sprintf("%s/%s/%s/", framework.Name, control.SectionTitle, measure.Name))
+				for _, internalControl := range internalControls {
+					_, err := archive.Create(fmt.Sprintf("%s/%s/%s/", framework.Name, control.SectionTitle, internalControl.Name))
 					if err != nil {
-						return fmt.Errorf("cannot create measure directory in archive: %w", err)
+						return fmt.Errorf("cannot create internal control directory in archive: %w", err)
 					}
 
 					evidences := coredata.Evidences{}
 
-					err = evidences.LoadByMeasureID(
+					err = evidences.LoadByInternalControlID(
 						ctx,
 						conn,
 						scope,
-						measure.ID,
+						internalControl.ID,
 						page.NewCursor(
 							10_000,
 							nil,
@@ -278,7 +278,7 @@ func (s FrameworkService) Export(
 
 						defer func() { _ = object.Body.Close() }()
 
-						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence_file.FileName))
+						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, internalControl.Name, evidence_file.FileName))
 						if err != nil {
 							return fmt.Errorf("cannot create evidence in archive: %w", err)
 						}

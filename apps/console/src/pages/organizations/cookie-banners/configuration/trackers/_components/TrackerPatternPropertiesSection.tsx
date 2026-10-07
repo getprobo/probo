@@ -18,40 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
-import { Badge, Card, IconSquareBehindSquare2, PropertyRow, useToast } from "@probo/ui";
+import { CopyIcon } from "@phosphor-icons/react";
+import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
+import { humanizeSeconds } from "@probo/i18n";
+import { useToast } from "@probo/ui";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { Textarea } from "@probo/ui/src/v2/form/Textarea";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useMutation } from "react-relay";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
 
+import type { TrackerPatternPropertiesSection_cookieBanner$key } from "#/__generated__/core/TrackerPatternPropertiesSection_cookieBanner.graphql";
 import type { TrackerPatternPropertiesSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternPropertiesSection_trackerPattern.graphql";
 import type { TrackerPatternPropertiesSectionMoveMutation } from "#/__generated__/core/TrackerPatternPropertiesSectionMoveMutation.graphql";
+import type { TrackerPatternPropertiesSectionUpdateMutation } from "#/__generated__/core/TrackerPatternPropertiesSectionUpdateMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
-import { MoveToCategorySelect } from "./MoveToCategorySelect";
-import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
+import { trackerPatternPropertiesSection } from "../../../variants";
+import { MoveToCategorySelect } from "../../_components/MoveToCategorySelect";
+import { persistentTrackerTypes } from "../../_lib/persistentTrackerTypes";
+import { attributionCopy } from "../_lib/attributionCopy";
+
+import { TrackerMaxAgeField } from "./TrackerMaxAgeField";
+
+const cookieBannerFragment = graphql`
+  fragment TrackerPatternPropertiesSection_cookieBanner on CookieBanner {
+    ...MoveToCategorySelect_cookieBanner
+  }
+`;
 
 const trackerPatternPropertiesSectionFragment = graphql`
   fragment TrackerPatternPropertiesSection_trackerPattern on TrackerPattern {
     id
-    pattern
-    matchType
     trackerType
-    source
     maxAgeSeconds
     description
-    excluded
-    detectedCount
-    lastMatchedAt
+    attribution
+    source
     commonTrackerPatternId
+    canUpdate: permission(action: "core:tracker-pattern:update")
     cookieCategory {
       id
       name
-      kind
     }
     commonThirdParty {
       name
     }
-    attribution
   }
 `;
 
@@ -80,154 +96,255 @@ const movePatternMutation = graphql`
   }
 `;
 
+const updatePatternMutation = graphql`
+  mutation TrackerPatternPropertiesSectionUpdateMutation(
+    $input: UpdateTrackerPatternInput!
+  ) {
+    updateTrackerPattern(input: $input) {
+      trackerPattern {
+        id
+        displayName
+        maxAgeSeconds
+        description
+        updatedAt
+      }
+      cookieBanner {
+        id
+        latestVersion {
+          id
+          version
+          state
+        }
+      }
+    }
+  }
+`;
+
+function maxAgeLabel(
+  trackerType: string,
+  maxAgeSeconds: number | null,
+  translate: (key: string) => string,
+): string {
+  if (maxAgeSeconds == null) {
+    if (persistentTrackerTypes.has(trackerType)) {
+      return translate("trackerPatternRow.duration.persistent");
+    }
+    return translate("trackerPatternRow.duration.session");
+  }
+  return humanizeSeconds(maxAgeSeconds, translate);
+}
+
 interface TrackerPatternPropertiesSectionProps {
   trackerPatternKey: TrackerPatternPropertiesSection_trackerPattern$key;
+  cookieBannerKey: TrackerPatternPropertiesSection_cookieBanner$key;
 }
 
 export function TrackerPatternPropertiesSection({
   trackerPatternKey,
+  cookieBannerKey,
 }: TrackerPatternPropertiesSectionProps) {
   const { toast } = useToast();
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
+  const cookieBanner = useFragment(cookieBannerFragment, cookieBannerKey);
   const pattern = useFragment<TrackerPatternPropertiesSection_trackerPattern$key>(
     trackerPatternPropertiesSectionFragment,
     trackerPatternKey,
   );
+  const { root, fields, pair, sourceId, sourceIdText } = trackerPatternPropertiesSection();
+  const [description, setDescription] = useState(pattern.description);
+  const [duration, setDuration] = useState(() => fromMaxAgeSeconds(pattern.maxAgeSeconds ?? null));
 
-  const [movePattern]
-    = useMutation<TrackerPatternPropertiesSectionMoveMutation>(movePatternMutation);
+  const [movePattern] = useMutation<TrackerPatternPropertiesSectionMoveMutation>(
+    movePatternMutation,
+    {
+      successMessage: t("trackerProperties.messages.moved"),
+      errorToast: t("trackerProperties.errors.move"),
+    },
+  );
+  const [updatePattern, isUpdating] = useMutation<TrackerPatternPropertiesSectionUpdateMutation>(
+    updatePatternMutation,
+    {
+      successMessage: t("trackerProperties.messages.updated"),
+      errorToast: t("trackerProperties.errors.update"),
+    },
+  );
 
-  const handleMove = (targetCategoryId: string) => {
+  const canUpdate = pattern.canUpdate;
+  const attribution = attributionCopy(
+    t,
+    pattern.attribution,
+    pattern.commonThirdParty?.name ?? null,
+    pattern.source,
+  );
+  const currentMaxAge = pattern.maxAgeSeconds == null || pattern.maxAgeSeconds <= 0
+    ? null
+    : pattern.maxAgeSeconds;
+  const readOnlyDuration = maxAgeLabel(pattern.trackerType, currentMaxAge, t);
+
+  function handleMove(targetCategoryId: string) {
     if (targetCategoryId === pattern.cookieCategory?.id) {
       return;
     }
-    movePattern({
+    void movePattern({
       variables: {
         input: {
           trackerPatternId: pattern.id,
           targetCookieCategoryId: targetCategoryId,
         },
       },
-      onCompleted(_, errors) {
-        if (errors?.length) {
-          toast({ title: t("trackerProperties.errors.title"), description: errors[0].message, variant: "error" });
-          return;
-        }
-        toast({ title: t("trackerProperties.messages.successTitle"), description: t("trackerProperties.messages.moved"), variant: "success" });
-      },
-      onError(error) {
-        toast({ title: t("trackerProperties.errors.title"), description: formatError(t("trackerProperties.errors.move"), error), variant: "error" });
-      },
-    });
-  };
+    }).catch(() => undefined);
+  }
 
-  const typeBadges = {
-    COOKIE: { variant: "warning" as const, label: t("trackerProperties.trackerTypes.cookie") },
-    LOCAL_STORAGE: { variant: "info" as const, label: t("trackerProperties.trackerTypes.localStorage") },
-    SESSION_STORAGE: { variant: "highlight" as const, label: t("trackerProperties.trackerTypes.sessionStorage") },
-    INDEXED_DB: { variant: "success" as const, label: t("trackerProperties.trackerTypes.indexedDb") },
-    CACHE_STORAGE: { variant: "outline" as const, label: t("trackerProperties.trackerTypes.cacheStorage") },
-  };
-  const sourceBadges = {
-    SCRIPT: { variant: "info" as const, label: t("trackerProperties.sources.script") },
-    PRE_EXISTING: { variant: "outline" as const, label: t("trackerProperties.sources.preExisting") },
-    HTTP: { variant: "neutral" as const, label: t("trackerProperties.sources.http") },
-    EXTENSION: { variant: "warning" as const, label: t("trackerProperties.sources.extension") },
-  };
-  const typeBadge = typeBadges[pattern.trackerType]
-    ?? { variant: "neutral" as const, label: pattern.trackerType };
-  const sourceBadge = pattern.source
-    ? sourceBadges[pattern.source]
-    ?? { variant: "neutral" as const, label: pattern.source }
-    : null;
+  function saveDescription() {
+    if (description === pattern.description) {
+      return;
+    }
+    void updatePattern({
+      variables: {
+        input: {
+          trackerPatternId: pattern.id,
+          description,
+        },
+      },
+    }).catch(() => undefined);
+  }
+
+  function saveMaxAge(next = duration) {
+    const nextSeconds = toMaxAgeSeconds(next.value, next.unit);
+    if (next.value.trim() !== "" && nextSeconds == null) {
+      setDuration(fromMaxAgeSeconds(currentMaxAge));
+      return;
+    }
+    if (nextSeconds === currentMaxAge) {
+      return;
+    }
+    void updatePattern({
+      variables: {
+        input: {
+          trackerPatternId: pattern.id,
+          maxAgeSeconds: nextSeconds,
+        },
+      },
+    }).catch(() => undefined);
+  }
+
+  function copySourceId() {
+    const commonTrackerPatternId = pattern.commonTrackerPatternId;
+    if (commonTrackerPatternId == null) {
+      return;
+    }
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(commonTrackerPatternId);
+        toast({
+          title: t("trackerProperties.messages.copiedTitle"),
+          description: t("trackerProperties.messages.idCopied"),
+          variant: "success",
+        });
+      } catch {
+        toast({
+          title: t("trackerProperties.errors.title"),
+          description: t("trackerProperties.errors.copy"),
+          variant: "error",
+        });
+      }
+    })();
+  }
 
   return (
-    <Card padded>
-      <PropertyRow label={t("trackerProperties.properties.pattern")}>
-        <span className="font-mono text-sm">{pattern.pattern}</span>
-      </PropertyRow>
-      <PropertyRow label={t("trackerProperties.properties.matchType")}>
-        <span className="text-sm">{pattern.matchType === "EXACT" ? t("trackerProperties.matchTypes.exact") : t("trackerProperties.matchTypes.glob")}</span>
-      </PropertyRow>
-      <PropertyRow label={t("trackerProperties.properties.type")}>
-        <Badge variant={typeBadge.variant}>{typeBadge.label}</Badge>
-      </PropertyRow>
-      {pattern.source && (
-        <PropertyRow label={t("trackerProperties.properties.source")}>
-          <Badge variant={sourceBadge?.variant}>
-            {sourceBadge?.label}
-          </Badge>
-        </PropertyRow>
-      )}
-      <PropertyRow label={t("trackerProperties.properties.category")}>
-        <MoveToCategorySelect
-          currentCategoryId={pattern.cookieCategory?.id}
-          currentCategoryName={pattern.cookieCategory?.name}
-          highlight={!!pattern.cookieCategory && pattern.cookieCategory.kind !== "UNCATEGORISED"}
-          onSelect={handleMove}
-        />
-      </PropertyRow>
-      <PropertyRow label={t("trackerProperties.properties.thirdParty")}>
-        {pattern.commonThirdParty
-          ? <span className="text-sm">{pattern.commonThirdParty.name}</span>
-          : <TrackerAttributionLabel attribution={pattern.attribution} />}
-      </PropertyRow>
-      <PropertyRow label={t("trackerProperties.properties.maxAge")}>
-        <span className="text-sm">
-          {humanizeSeconds(pattern.maxAgeSeconds ?? null, t)}
-        </span>
-      </PropertyRow>
-      {pattern.description && (
-        <>
-          <PropertyRow label={t("trackerProperties.properties.description")}>
-            <span className="text-sm">{pattern.description}</span>
-          </PropertyRow>
-          <PropertyRow label={t("trackerProperties.properties.descriptionSource")}>
-            {pattern.commonTrackerPatternId
+    <div className={root()}>
+      <Card variant="soft" size={2}>
+        <div className={fields()}>
+          <div className={pair()}>
+            <Field label={t("trackerProperties.properties.attribution")}>
+              <Text size={2} color={attribution == null ? "faint" : undefined}>
+                {attribution ?? "-"}
+              </Text>
+            </Field>
+            <Field label={t("trackerProperties.properties.sourceId")}>
+              {pattern.commonTrackerPatternId == null
+                ? (
+                    <Text size={2} color="faint">
+                      {t("trackerProperties.manual")}
+                    </Text>
+                  )
+                : (
+                    <div className={sourceId()}>
+                      <Text size={2} className={sourceIdText()}>
+                        {pattern.commonTrackerPatternId}
+                      </Text>
+                      <IconButton
+                        size={1}
+                        variant="soft"
+                        color="neutral"
+                        aria-label={t("trackerProperties.actions.copyId")}
+                        onClick={copySourceId}
+                      >
+                        <CopyIcon />
+                      </IconButton>
+                    </div>
+                  )}
+            </Field>
+          </div>
+          <Field label={t("trackerProperties.properties.description")}>
+            {canUpdate
               ? (
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-txt-tertiary">{pattern.commonTrackerPatternId}</span>
-                    <button
-                      type="button"
-                      className="p-1 rounded hover:bg-bg-hover transition-colors cursor-pointer"
-                      onClick={() => {
-                        const commonTrackerPatternId = pattern.commonTrackerPatternId;
-                        if (!commonTrackerPatternId) {
-                          return;
-                        }
-                        void (async () => {
-                          try {
-                            await navigator.clipboard.writeText(commonTrackerPatternId);
-                            toast({ title: t("trackerProperties.messages.copiedTitle"), description: t("trackerProperties.messages.idCopied"), variant: "success" });
-                          } catch {
-                            toast({ title: t("trackerProperties.errors.title"), description: t("trackerProperties.errors.copy"), variant: "error" });
-                          }
-                        })();
-                      }}
-                    >
-                      <IconSquareBehindSquare2 size={16} />
-                    </button>
-                  </div>
+                  <Textarea
+                    rows={3}
+                    value={description}
+                    disabled={isUpdating}
+                    placeholder={t("trackerProperties.properties.descriptionPlaceholder")}
+                    onChange={event => setDescription(event.target.value)}
+                    onBlur={saveDescription}
+                  />
                 )
-              : <Badge variant="neutral">{t("trackerProperties.manual")}</Badge>}
-          </PropertyRow>
-        </>
-      )}
-      <PropertyRow label={t("trackerProperties.properties.excluded")}>
-        <span className="text-sm">{pattern.excluded ? t("trackerProperties.boolean.yes") : t("trackerProperties.boolean.no")}</span>
-      </PropertyRow>
-      <PropertyRow label={t("trackerProperties.properties.detectedCount")}>
-        <span className="text-sm">{pattern.detectedCount}</span>
-      </PropertyRow>
-      <PropertyRow label={t("trackerProperties.properties.lastMatched")}>
-        {pattern.lastMatchedAt
-          ? (
-              <time dateTime={pattern.lastMatchedAt}>
-                {dateTimeFormat(i18n.language, pattern.lastMatchedAt)}
-              </time>
-            )
-          : <span className="text-txt-tertiary">-</span>}
-      </PropertyRow>
-    </Card>
+              : (
+                  <Text size={2} color={pattern.description === "" ? "faint" : undefined}>
+                    {pattern.description === "" ? "-" : pattern.description}
+                  </Text>
+                )}
+          </Field>
+          <div className={pair()}>
+            <Field label={t("trackerProperties.properties.category")}>
+              {canUpdate
+                ? (
+                    <MoveToCategorySelect
+                      cookieBannerKey={cookieBanner}
+                      currentCategoryId={pattern.cookieCategory?.id}
+                      currentCategoryName={pattern.cookieCategory?.name}
+                      size={2}
+                      onSelect={handleMove}
+                    />
+                  )
+                : (
+                    <Text size={2} color={pattern.cookieCategory == null ? "faint" : undefined}>
+                      {pattern.cookieCategory?.name ?? "-"}
+                    </Text>
+                  )}
+            </Field>
+            <Field label={t("trackerProperties.properties.maxAge")}>
+              {canUpdate
+                ? (
+                    <TrackerMaxAgeField
+                      value={duration.value}
+                      unit={duration.unit}
+                      disabled={isUpdating}
+                      onValueChange={(value) => {
+                        setDuration(current => ({ ...current, value }));
+                      }}
+                      onUnitChange={(unit) => {
+                        const next = { ...duration, unit };
+                        setDuration(next);
+                        saveMaxAge(next);
+                      }}
+                      onBlur={() => saveMaxAge()}
+                    />
+                  )
+                : <Text size={2}>{readOnlyDuration}</Text>}
+            </Field>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 }

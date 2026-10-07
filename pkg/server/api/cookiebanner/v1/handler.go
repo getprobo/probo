@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -217,6 +218,7 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 		RegulationSource: regulationSource,
 		ConsentMode:      &cm,
 		TC:               body.TC,
+		Origin:           r.Header.Get("Origin"),
 	}
 	if location != nil {
 		req.CountryCode = &location.CountryCode
@@ -263,6 +265,8 @@ type detectedCookieEntry struct {
 	MaxAgeSeconds *int    `json:"max_age_seconds"`
 	Source        string  `json:"source"`
 	InitiatorURL  *string `json:"initiator_url,omitempty"`
+	CookieDomain  *string `json:"cookie_domain,omitempty"`
+	HostOnly      *bool   `json:"host_only,omitempty"`
 }
 
 type reportDetectedCookiesBody struct {
@@ -302,6 +306,72 @@ func sanitizeInitiatorURL(raw *string) *string {
 	}
 
 	return &s
+}
+
+// sanitizeCookieDomain lowercases and strips a leading dot, then
+// accepts the value only when it is a hostname. A trailing-dot Domain
+// is ignored by cookie parsers, so it is dropped. A missing or invalid
+// domain is dropped so one bad report cannot fail the batch.
+func sanitizeCookieDomain(raw *string) *string {
+	if raw == nil {
+		return nil
+	}
+
+	s := strings.ToLower(strings.TrimSpace(*raw))
+	if s == "" || strings.HasSuffix(s, ".") {
+		return nil
+	}
+
+	s = strings.TrimPrefix(s, ".")
+	if s == "" {
+		return nil
+	}
+
+	if err := validator.Domain()(s); err != nil {
+		return nil
+	}
+
+	return &s
+}
+
+// sanitizeCookieDomainFields keeps a hostname Domain attribute or a
+// confirmed host-only flag. A Domain value that is not a hostname is
+// dropped, and host_only is cleared with it so a false (Domain-seen)
+// flag cannot land without a domain.
+func sanitizeCookieDomainFields(rawDomain *string, hostOnly *bool) (*string, *bool) {
+	domain := sanitizeCookieDomain(rawDomain)
+	if rawDomain != nil && strings.TrimSpace(*rawDomain) != "" && domain == nil {
+		return nil, nil
+	}
+
+	if domain != nil && hostOnly == nil {
+		notHostOnly := false
+		hostOnly = &notHostOnly
+	}
+
+	// host_only=false means a Domain attribute was seen. Without a
+	// hostname that claim is incomplete and must not wipe a stored
+	// domain on upsert.
+	if domain == nil && hostOnly != nil && !*hostOnly {
+		hostOnly = nil
+	}
+
+	if hostOnly != nil && *hostOnly {
+		domain = nil
+	}
+
+	return domain, hostOnly
+}
+
+// sanitizeInt4 drops a value that cannot be stored as PostgreSQL
+// INTEGER. A cookie Max-Age of 251610986978 otherwise decodes into
+// Go's 64-bit int and fails the upsert for every item in the batch.
+func sanitizeInt4(raw *int) *int {
+	if raw == nil || *raw <= 0 || *raw > math.MaxInt32 {
+		return nil
+	}
+
+	return raw
 }
 
 func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Request) {
@@ -358,13 +428,17 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 			source = coredata.CookieSourceScript
 		}
 
+		cookieDomain, hostOnly := sanitizeCookieDomainFields(c.CookieDomain, c.HostOnly)
+
 		detected = append(
 			detected,
 			cookiebanner.DetectedCookie{
 				Name:          name,
-				MaxAgeSeconds: c.MaxAgeSeconds,
+				MaxAgeSeconds: sanitizeInt4(c.MaxAgeSeconds),
 				Source:        source,
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
+				CookieDomain:  cookieDomain,
+				HostOnly:      hostOnly,
 			},
 		)
 	}
@@ -480,13 +554,17 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			source = coredata.CookieSourceScript
 		}
 
+		cookieDomain, hostOnly := sanitizeCookieDomainFields(c.CookieDomain, c.HostOnly)
+
 		req.Cookies = append(
 			req.Cookies,
 			cookiebanner.DetectedCookie{
 				Name:          name,
-				MaxAgeSeconds: c.MaxAgeSeconds,
+				MaxAgeSeconds: sanitizeInt4(c.MaxAgeSeconds),
 				Source:        source,
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
+				CookieDomain:  cookieDomain,
+				HostOnly:      hostOnly,
 			},
 		)
 	}
@@ -541,7 +619,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 			cookiebanner.DetectedStorageItem{
 				Key:          key,
 				StorageType:  storageType,
-				ValueSize:    s.ValueSize,
+				ValueSize:    sanitizeInt4(s.ValueSize),
 				Source:       &source,
 				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
 			},

@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"net/url"
 	"slices"
 	"strings"
@@ -139,6 +140,7 @@ type (
 		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
 		TC               *string
+		Origin           string
 	}
 
 	DetectedCookie struct {
@@ -146,6 +148,8 @@ type (
 		MaxAgeSeconds *int
 		Source        coredata.CookieSource
 		InitiatorURL  *string
+		CookieDomain  *string
+		HostOnly      *bool
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -584,6 +588,22 @@ func CanonicalizeOrigin(raw string) string {
 	}
 
 	return u.Scheme + "://" + host
+}
+
+func IsReflectableOrigin(raw string) bool {
+	if raw == "" || raw == "null" {
+		return false
+	}
+
+	return validator.Origin()(raw) == nil
+}
+
+func storedConsentOrigin(raw string) *string {
+	if !IsReflectableOrigin(raw) {
+		return nil
+	}
+
+	return &raw
 }
 
 func (s *Service) ensureDraftVersion(
@@ -1359,6 +1379,21 @@ func (s *Service) UpdateCookieBanner(
 			if snapshotChanged {
 				if _, err := s.ensureDraftVersionForBanner(ctx, tx, scope, banner.ID); err != nil {
 					return fmt.Errorf("cannot ensure draft version: %w", err)
+				}
+			}
+
+			if nameChanged && banner.Capabilities.Corsless {
+				var published coredata.CookieBannerVersion
+
+				err := published.LoadLatestPublishedByCookieBannerID(ctx, tx, scope, banner.ID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load latest published version: %w", err)
+				}
+
+				if err == nil {
+					if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+						return fmt.Errorf("cannot request tracker policy generation: %w", err)
+					}
 				}
 			}
 
@@ -2632,6 +2667,7 @@ func (s *Service) RecordConsent(
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
 				TC:                    optionalNonEmptyString(req.TC),
+				Origin:                storedConsentOrigin(req.Origin),
 				CreatedAt:             time.Now(),
 			}
 
@@ -2713,6 +2749,8 @@ func (s *Service) ReportDetectedTrackers(
 						MaxAgeSeconds: dc.MaxAgeSeconds,
 						Source:        &dc.Source,
 						InitiatorURL:  dc.InitiatorURL,
+						CookieDomain:  dc.CookieDomain,
+						HostOnly:      dc.HostOnly,
 					},
 					&inserted,
 					&matchedPatternIDs,
@@ -2787,6 +2825,8 @@ type detectedTrackerInfo struct {
 	Source        *coredata.CookieSource
 	ValueSize     *int
 	InitiatorURL  *string
+	CookieDomain  *string
+	HostOnly      *bool
 }
 
 func (s *Service) reportDetectedTracker(
@@ -2803,6 +2843,12 @@ func (s *Service) reportDetectedTracker(
 	if len(info.Identifier) > MaxTrackerIdentifierLength {
 		return nil
 	}
+
+	// PostgreSQL INTEGER (int4) is the column type. A cookie Max-Age
+	// like 251610986978 decodes into Go's 64-bit int and then fails
+	// the upsert for the whole batch. Drop the field and keep the row.
+	info.MaxAgeSeconds = int4OrNil(info.MaxAgeSeconds)
+	info.ValueSize = int4OrNil(info.ValueSize)
 
 	var matchedPattern coredata.TrackerPattern
 
@@ -2834,8 +2880,18 @@ func (s *Service) reportDetectedTracker(
 		// no-op when info.Source is nil or weaker, so storage
 		// items without a source and weaker re-detections cost
 		// nothing.
-		if shouldPromoteSource(matchedPattern.Source, info.Source) {
+		promoted := shouldPromoteSource(matchedPattern.Source, info.Source)
+		if promoted {
 			matchedPattern.Source = info.Source
+		}
+
+		filledMaxAge := matchedPattern.MatchType == coredata.TrackerPatternMatchTypeExact &&
+			matchedPattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
+		if filledMaxAge {
+			matchedPattern.MaxAgeSeconds = info.MaxAgeSeconds
+		}
+
+		if promoted || filledMaxAge {
 			matchedPattern.UpdatedAt = now
 
 			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
@@ -2846,11 +2902,18 @@ func (s *Service) reportDetectedTracker(
 			// upserted below carries a fresh initiator domain that
 			// matchByDomain/matchBySiblingOrigin can now use. Re-arm
 			// mapping so the worker revisits the pattern.
-			if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
-				return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
+			if promoted {
+				if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
+				}
 			}
 		}
 	} else {
+		var mappingRequestedAt *time.Time
+		if info.Source == nil || *info.Source != coredata.CookieSourceExtension {
+			mappingRequestedAt = &now
+		}
+
 		newPattern := &coredata.TrackerPattern{
 			ID:                 gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
 			OrganizationID:     banner.OrganizationID,
@@ -2864,7 +2927,7 @@ func (s *Service) reportDetectedTracker(
 			MaxAgeSeconds:      info.MaxAgeSeconds,
 			Source:             info.Source,
 			LastMatchedAt:      &now,
-			MappingRequestedAt: &now,
+			MappingRequestedAt: mappingRequestedAt,
 			CreatedAt:          now,
 			UpdatedAt:          now,
 		}
@@ -2906,6 +2969,8 @@ func (s *Service) reportDetectedTracker(
 		ValueSize:        info.ValueSize,
 		InitiatorURL:     info.InitiatorURL,
 		InitiatorDomain:  initiatorDomain,
+		CookieDomain:     info.CookieDomain,
+		HostOnly:         info.HostOnly,
 		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
@@ -2916,6 +2981,17 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	return nil
+}
+
+// int4OrNil keeps a value only when it fits in PostgreSQL INTEGER.
+// Zero and negative durations are treated as unknown, same as the
+// SDK omitting Max-Age.
+func int4OrNil(v *int) *int {
+	if v == nil || *v <= 0 || *v > math.MaxInt32 {
+		return nil
+	}
+
+	return v
 }
 
 func (s *Service) reportDetectedResource(

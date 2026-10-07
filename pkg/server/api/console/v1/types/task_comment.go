@@ -70,16 +70,19 @@ func NewTaskCommentEdge(
 }
 
 func NewTaskComment(c *coredata.TaskComment) *TaskComment {
-	return &TaskComment{
+	comment := &TaskComment{
 		ID: c.ID,
 		Task: &Task{
 			ID: c.TaskID,
-		},
-		Owner: &Profile{
-			ID: c.OwnerID,
 		},
 		Content:   c.Content,
 		CreatedAt: c.CreatedAt,
 		UpdatedAt: c.UpdatedAt,
 	}
+
+	if c.OwnerID != nil {
+		comment.Owner = &Profile{ID: *c.OwnerID}
+	}
+
+	return comment
 }

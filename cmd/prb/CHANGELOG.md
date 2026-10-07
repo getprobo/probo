@@ -4,6 +4,87 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.241.0] - 2026-10-06
+
+### Changed
+
+- The `measure` command is renamed to `internal-control`. `--measure`
+  and `--measure-id` are now `--internal-control` and
+  `--internal-control-id` on evidence, task, and the link commands
+- The next occurrence of a recurring task is created when its deadline
+  passes, not when the task is marked done. `task update` no longer
+  prints "Created next task <id> (<name>)". The interval stays on the
+  task until the deadline passes
+
+## [0.240.0] - 2026-10-05
+
+### Added
+
+- `org list` shows the organization legal name
+- `cookie-banner view` shows whether the banner is CORSless
+- `consent-record list` and `consent-record view` show the origin the
+  consent was recorded from
+
+## [0.239.0] - 2026-10-05
+
+### Added
+
+- `measure create` and `measure update` accept the internal control
+  fields: `--code`, `--control-type`, `--nature`, `--operating-mode`,
+  `--operating-frequency`, `--operating-event`, `--evidence-cadence`,
+  `--testing-cadence`, `--implementation-status`, `--owner-id` and
+  `--reviewer-id`. Cadences are ISO-8601 durations, and flags that do not
+  belong to the selected operating mode are rejected. `measure view` and
+  `measure list` show the owner and reviewer
+
+## [0.238.0] - 2026-09-30
+
+### Added
+
+- `task list` accepts `--assigned-to` to filter by the profile a task is
+  assigned to
+
+## [0.237.0] - 2026-09-25
+
+### Added
+
+- `task list` accepts `--query` (`-q`) and `--state` to filter by name
+  and state
+
+### Changed
+
+- `task comment list` and `task comment view` leave the owner blank when
+  a comment has none, which is how a Linear comment from a non-member
+  is stored
+
+## [0.236.0] - 2026-09-25
+
+### Added
+
+- `task link-linear` links a task to an existing Linear issue (`--team-id`
+  and `--issue-id` required). Linking updates the Probo task with the
+  Linear issue
+- `task list-linear-issues` searches Linear issues in a team (`--team-id`
+  required, optional `--query` and `--limit`)
+
+### Changed
+
+- `task list-linear-teams` searches and pages teams (`--query`, `--limit`)
+  instead of returning every team
+
+## [0.235.0] - 2026-09-24
+
+### Added
+
+- `connector list`, `connector view`, `connector discover`,
+  `connector enable-accounts`, and `connector connect` manage connector
+  accounts, so one connector credential can cover several accounts
+- `webhook event list` accepts `TASK_CREATED`, `TASK_UPDATED`,
+  `TASK_DELETED`, `TASK_COMMENT_CREATED`, `TASK_COMMENT_UPDATED`, and
+  `TASK_COMMENT_DELETED`
+- `finding list` accepts `--audit` to list only the findings linked to
+  an audit
+
 ## [0.234.0] - 2026-09-23
 
 ### Added

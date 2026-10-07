@@ -164,6 +164,18 @@ func stripCassetteSecrets(i *cassette.Interaction) error {
 	return nil
 }
 
+// dropResponseHeaders strips response headers that carry the recording
+// account's identity or session; replay never needs them.
+func dropResponseHeaders(names ...string) func(*cassette.Interaction) error {
+	return func(i *cassette.Interaction) error {
+		for _, name := range names {
+			i.Response.Headers.Del(name)
+		}
+
+		return nil
+	}
+}
+
 // replaceCassetteBody swaps a recorded response body and keeps every statement
 // of its length in step: the interaction's own field and the Content-Length
 // header the provider sent. A sanitizer that sets only the field leaves a

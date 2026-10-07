@@ -79,6 +79,48 @@ func TestNewAccessReviewEntry_SourceIdentity(t *testing.T) {
 	}
 }
 
+func TestNewAccessReviewSource_ConnectorAccountID(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	accountID := gid.New(tenantID, coredata.ConnectorAccountEntityType)
+
+	tests := map[string]struct {
+		source  *coredata.AccessReviewSource
+		account *gid.GID
+	}{
+		"connector source": {
+			source: &coredata.AccessReviewSource{
+				ID:                 gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+				OrganizationID:     gid.New(tenantID, coredata.OrganizationEntityType),
+				ConnectorAccountID: &accountID,
+				Name:               "Google Workspace",
+			},
+			account: &accountID,
+		},
+		"csv source": {
+			source: &coredata.AccessReviewSource{
+				ID:             gid.New(tenantID, coredata.AccessReviewSourceEntityType),
+				OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
+				Name:           "Uploaded CSV",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				actual := types.NewAccessReviewSource(test.source)
+
+				assert.Equal(t, test.account, actual.ConnectorAccountID)
+			},
+		)
+	}
+}
+
 func TestNewAccessReviewEntry_ManualSourceIncludesNullConnectorID(t *testing.T) {
 	t.Parallel()
 

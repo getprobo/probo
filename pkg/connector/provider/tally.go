@@ -32,7 +32,12 @@ import (
 
 func tallyRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderTally,
+		Provider: coredata.ConnectorProviderTally,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.TallyConnectorSettings) string {
+				return s.OrganizationID
+			},
+		),
 		DisplayName:      "Tally",
 		DocumentationURL: accessReviewDocsURL("tally"),
 		Endpoints: Endpoints{

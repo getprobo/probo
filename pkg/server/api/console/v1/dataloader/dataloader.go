@@ -108,7 +108,7 @@ type (
 		Identity                                   *dataloadgen.Loader[gid.GID, *coredata.Identity]
 		Risk                                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
-		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
+		InternalControl                            *dataloadgen.Loader[gid.GID, *coredata.InternalControl]
 		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
 		TaskExternalLink                           *dataloadgen.Loader[gid.GID, *coredata.TaskExternalLink]
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
@@ -119,10 +119,14 @@ type (
 		ThirdPartyAdministratorIDs                 *dataloadgen.Loader[gid.GID, []gid.GID]
 		CompliancePortalDocument                   *dataloadgen.Loader[CompliancePortalDocumentKey, *coredata.CompliancePortalDocument]
 		CompliancePortalAudit                      *dataloadgen.Loader[CompliancePortalAuditKey, *coredata.CompliancePortalAudit]
+		CompliancePortalDocumentByID               *dataloadgen.Loader[gid.GID, *coredata.CompliancePortalDocument]
+		CompliancePortalAuditByID                  *dataloadgen.Loader[gid.GID, *coredata.CompliancePortalAudit]
+		CompliancePortalDocumentAccess             *dataloadgen.Loader[gid.GID, *coredata.CompliancePortalDocumentAccess]
 		CompliancePortalThirdParty                 *dataloadgen.Loader[CompliancePortalThirdPartyKey, *coredata.CompliancePortalThirdParty]
 		CompliancePortalDocumentAccessByDocument   *dataloadgen.Loader[CompliancePortalDocumentAccessByDocumentKey, *coredata.CompliancePortalDocumentAccess]
 		CompliancePortalDocumentAccessByReportFile *dataloadgen.Loader[CompliancePortalDocumentAccessByReportFileKey, *coredata.CompliancePortalDocumentAccess]
 		CompliancePortalDocumentAccessByFile       *dataloadgen.Loader[CompliancePortalDocumentAccessByFileKey, *coredata.CompliancePortalDocumentAccess]
+		Audit                                      *dataloadgen.Loader[gid.GID, *coredata.Audit]
 		Authorize                                  *dataloadgen.Loader[AuthorizeKey, AuthorizeResult]
 	}
 
@@ -183,7 +187,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Identity:                                 dataloadgen.NewMappedLoader(f.fetchIdentities),
 		Risk:                                     dataloadgen.NewMappedLoader(f.fetchRisks),
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
-		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
+		InternalControl:                          dataloadgen.NewMappedLoader(f.fetchInternalControls),
 		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
 		TaskExternalLink:                         dataloadgen.NewMappedLoader(f.fetchTaskExternalLinks),
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
@@ -194,10 +198,14 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		ThirdPartyAdministratorIDs:               dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
 		CompliancePortalDocument:                 dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocuments),
 		CompliancePortalAudit:                    dataloadgen.NewMappedLoader(f.fetchCompliancePortalAudits),
+		CompliancePortalDocumentByID:             dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentsByID),
+		CompliancePortalAuditByID:                dataloadgen.NewMappedLoader(f.fetchCompliancePortalAuditsByID),
+		CompliancePortalDocumentAccess:           dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccesses),
 		CompliancePortalThirdParty:               dataloadgen.NewMappedLoader(f.fetchCompliancePortalThirdParties),
 		CompliancePortalDocumentAccessByDocument: dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccessesByDocument),
 		CompliancePortalDocumentAccessByReportFile: dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccessesByReportFile),
 		CompliancePortalDocumentAccessByFile:       dataloadgen.NewMappedLoader(f.fetchCompliancePortalDocumentAccessesByFile),
+		Audit:                                      dataloadgen.NewMappedLoader(f.fetchAudits),
 		Authorize: dataloadgen.NewMappedLoader(
 			f.fetchAuthorizes,
 			dataloadgen.WithoutCache(),
@@ -237,8 +245,8 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 			return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
 		}
 
-		// Return every link, including visibility NONE. That field is the
-		// console's linked-vs-unlinked signal; callers filter displayed rows.
+		// Return every link. Presence of a row is the console's
+		// linked-vs-unlinked signal; callers filter displayed rows.
 		for _, link := range links {
 			result[CompliancePortalDocumentKey{
 				TenantID:           group.tenantID,
@@ -283,14 +291,103 @@ func (f *batchFetcher) fetchCompliancePortalAudits(
 			return nil, fmt.Errorf("cannot batch load compliance portal audits: %w", err)
 		}
 
-		// Return every link, including visibility NONE. That field is the
-		// console's linked-vs-unlinked signal; callers filter displayed rows.
+		// Return every link. Presence of a row is the console's
+		// linked-vs-unlinked signal; callers filter displayed rows.
 		for _, link := range links {
 			result[CompliancePortalAuditKey{
 				TenantID:           group.tenantID,
 				CompliancePortalID: group.compliancePortalID,
 				AuditID:            link.AuditID,
 			}] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalDocumentsByID(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.CompliancePortalDocument, error) {
+	result := make(map[gid.GID]*coredata.CompliancePortalDocument, len(keys))
+
+	for tenantID, documentLinkIDs := range gidKeysByTenant(keys) {
+		links, err := f.compliancePortal.GetDocumentLinksByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			documentLinkIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal documents: %w", err)
+		}
+
+		for _, link := range links {
+			result[link.ID] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalAuditsByID(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.CompliancePortalAudit, error) {
+	result := make(map[gid.GID]*coredata.CompliancePortalAudit, len(keys))
+
+	for tenantID, auditLinkIDs := range gidKeysByTenant(keys) {
+		links, err := f.compliancePortal.GetAuditLinksByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			auditLinkIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal audits: %w", err)
+		}
+
+		for _, link := range links {
+			result[link.ID] = link
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchCompliancePortalDocumentAccesses(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.CompliancePortalDocumentAccess, error) {
+	result := make(map[gid.GID]*coredata.CompliancePortalDocumentAccess, len(keys))
+
+	for tenantID, accessIDs := range gidKeysByTenant(keys) {
+		accesses, err := f.compliancePortal.GetDocumentAccessesByIDs(
+			ctx,
+			coredata.NewScope(tenantID),
+			accessIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load compliance portal document accesses: %w", err)
+		}
+
+		for _, access := range accesses {
+			result[access.ID] = access
+		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchAudits(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Audit, error) {
+	result := make(map[gid.GID]*coredata.Audit, len(keys))
+
+	for tenantID, auditIDs := range gidKeysByTenant(keys) {
+		audits, err := f.probo.Audits.GetByIDs(ctx, coredata.NewScope(tenantID), auditIDs...)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load audits: %w", err)
+		}
+
+		for _, audit := range audits {
+			result[audit.ID] = audit
 		}
 	}
 
@@ -363,26 +460,56 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByDocument(
 	result := make(map[CompliancePortalDocumentAccessByDocumentKey]*coredata.CompliancePortalDocumentAccess, len(keys))
 
 	for group, documentIDs := range documentIDsByGroup {
-		accesses, err := f.compliancePortal.GetDocumentAccessesByDocumentIDs(
+		scope := coredata.NewScope(group.tenantID)
+
+		access, err := f.compliancePortal.GetAccess(ctx, scope, group.compliancePortalAccessID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal access: %w", err)
+		}
+
+		links, err := f.compliancePortal.GetDocumentLinks(
 			ctx,
-			coredata.NewScope(group.tenantID),
-			group.compliancePortalAccessID,
+			scope,
+			access.CompliancePortalID,
 			documentIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal documents: %w", err)
+		}
+
+		catalogIDs := make([]gid.GID, 0, len(links))
+
+		documentIDByCatalogID := make(map[gid.GID]gid.GID, len(links))
+		for _, link := range links {
+			catalogIDs = append(catalogIDs, link.ID)
+			documentIDByCatalogID[link.ID] = link.DocumentID
+		}
+
+		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalDocumentIDs(
+			ctx,
+			scope,
+			group.compliancePortalAccessID,
+			catalogIDs,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load document accesses: %w", err)
 		}
 
-		for _, access := range accesses {
-			if access.DocumentID == nil {
+		for _, documentAccess := range accesses {
+			if documentAccess.CompliancePortalDocumentID == nil {
+				continue
+			}
+
+			documentID, ok := documentIDByCatalogID[*documentAccess.CompliancePortalDocumentID]
+			if !ok {
 				continue
 			}
 
 			result[CompliancePortalDocumentAccessByDocumentKey{
 				TenantID:                 group.tenantID,
 				CompliancePortalAccessID: group.compliancePortalAccessID,
-				DocumentID:               *access.DocumentID,
-			}] = access
+				DocumentID:               documentID,
+			}] = documentAccess
 		}
 	}
 
@@ -411,26 +538,58 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByReportFile(
 	result := make(map[CompliancePortalDocumentAccessByReportFileKey]*coredata.CompliancePortalDocumentAccess, len(keys))
 
 	for group, reportFileIDs := range reportFileIDsByGroup {
-		accesses, err := f.compliancePortal.GetDocumentAccessesByReportFileIDs(
+		scope := coredata.NewScope(group.tenantID)
+
+		access, err := f.compliancePortal.GetAccess(ctx, scope, group.compliancePortalAccessID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal access: %w", err)
+		}
+
+		linksByReportFileID, err := f.compliancePortal.GetAuditLinksByReportFileIDs(
 			ctx,
-			coredata.NewScope(group.tenantID),
-			group.compliancePortalAccessID,
+			scope,
+			access.CompliancePortalID,
 			reportFileIDs,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load compliance portal audits: %w", err)
+		}
+
+		catalogIDs := make([]gid.GID, 0, len(linksByReportFileID))
+
+		reportFileIDByCatalogID := make(map[gid.GID]gid.GID, len(linksByReportFileID))
+		for reportFileID, links := range linksByReportFileID {
+			for _, link := range links {
+				catalogIDs = append(catalogIDs, link.ID)
+				reportFileIDByCatalogID[link.ID] = reportFileID
+			}
+		}
+
+		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalAuditIDs(
+			ctx,
+			scope,
+			group.compliancePortalAccessID,
+			catalogIDs,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load report file accesses: %w", err)
 		}
 
-		for _, access := range accesses {
-			if access.ReportFileID == nil {
+		for _, documentAccess := range accesses {
+			if documentAccess.CompliancePortalAuditID == nil {
+				continue
+			}
+
+			reportFileID, ok := reportFileIDByCatalogID[*documentAccess.CompliancePortalAuditID]
+			if !ok {
 				continue
 			}
 
 			result[CompliancePortalDocumentAccessByReportFileKey{
 				TenantID:                 group.tenantID,
 				CompliancePortalAccessID: group.compliancePortalAccessID,
-				ReportFileID:             *access.ReportFileID,
-			}] = access
+				ReportFileID:             reportFileID,
+			}] = documentAccess
 		}
 	}
 
@@ -628,16 +787,16 @@ func (f *batchFetcher) fetchTreatmentProgress(
 	return progress, nil
 }
 
-func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Measure, error) {
+func (f *batchFetcher) fetchInternalControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.InternalControl, error) {
 	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	measures, err := f.probo.Measures.GetByIDs(ctx, scope, keys...)
+	internalControls, err := f.probo.InternalControls.GetByIDs(ctx, scope, keys...)
 	if err != nil {
-		return nil, fmt.Errorf("cannot batch load measures: %w", err)
+		return nil, fmt.Errorf("cannot batch load internalControls: %w", err)
 	}
 
-	result := make(map[gid.GID]*coredata.Measure, len(measures))
-	for _, v := range measures {
+	result := make(map[gid.GID]*coredata.InternalControl, len(internalControls))
+	for _, v := range internalControls {
 		result[v.ID] = v
 	}
 
@@ -927,4 +1086,15 @@ func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {
 	}
 
 	return attrs, nil
+}
+
+func gidKeysByTenant(keys []gid.GID) map[gid.TenantID][]gid.GID {
+	keysByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, key := range keys {
+		tenantID := key.TenantID()
+		keysByTenant[tenantID] = append(keysByTenant[tenantID], key)
+	}
+
+	return keysByTenant
 }

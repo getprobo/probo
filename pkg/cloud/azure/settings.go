@@ -60,7 +60,7 @@ func NewConnectorSettings(
 		return ConnectorSettings{}, fmt.Errorf("cannot create azure connector: %w", err)
 	}
 
-	subscriptionID, err = parseGUID(subscriptionID, errInvalidSubscriptionID)
+	subscriptionID, err = parseOptionalGUID(subscriptionID, errInvalidSubscriptionID)
 	if err != nil {
 		return ConnectorSettings{}, fmt.Errorf("cannot create azure connector: %w", err)
 	}
@@ -85,6 +85,14 @@ func parseGUID(raw string, invalid error) (string, error) {
 	}
 
 	return parsed.String(), nil
+}
+
+func parseOptionalGUID(raw string, invalid error) (string, error) {
+	if strings.TrimSpace(raw) == "" {
+		return "", nil
+	}
+
+	return parseGUID(raw, invalid)
 }
 
 func parseEnvironment(raw string) (Environment, error) {

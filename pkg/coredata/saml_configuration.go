@@ -61,6 +61,10 @@ type (
 	SAMLConfigurations []*SAMLConfiguration
 )
 
+func (s *SAMLConfiguration) SSOEnabled() bool {
+	return s.DomainVerifiedAt != nil && s.EnforcementPolicy != SAMLEnforcementPolicyOff
+}
+
 func (s *SAMLConfiguration) CursorKey(orderBy SAMLConfigurationOrderField) page.CursorKey {
 	switch orderBy {
 	case SAMLConfigurationOrderFieldCreatedAt:

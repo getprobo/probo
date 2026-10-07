@@ -93,6 +93,7 @@ func (s *Service) ExportDocumentPDF(
 	watermarkText := pdfutils.TruncateWatermarkText(email.String())
 
 	watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+		ctx,
 		pdfData,
 		classification.String(),
 		watermarkText,

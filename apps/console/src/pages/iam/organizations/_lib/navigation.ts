@@ -20,6 +20,7 @@
 
 import {
   BooksIcon,
+  CookieIcon,
   GearIcon,
   type Icon,
   KeyIcon,
@@ -38,7 +39,7 @@ import {
 export type NavPermission
   = | "canGetContext"
     | "canListTasks"
-    | "canListMeasures"
+    | "canListInternalControls"
     | "canListRisks"
     | "canListRiskAnalyses"
     | "canListFrameworks"
@@ -66,6 +67,7 @@ export type NavPermission
     | "canListWebhookSubscriptions"
     | "canConnectSlack"
     | "canUninstallSlack"
+    | "canListConnectors"
     | "canUpdateOrganization";
 
 interface NavGroupConfig {
@@ -94,6 +96,11 @@ export const NAV_GROUPS = [
     key: "privacy",
     segment: "privacy",
     icon: LockIcon,
+  },
+  {
+    key: "cmp",
+    segment: "cmp",
+    icon: CookieIcon,
   },
   {
     key: "itam",

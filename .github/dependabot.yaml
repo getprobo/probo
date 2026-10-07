@@ -35,6 +35,12 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 5
+    ignore:
+      # v3 is 3.0.0-beta.1 and fails Swiftly GPG verification.
+      # https://github.com/swift-actions/setup-swift/issues/798
+      - dependency-name: "swift-actions/setup-swift"
+        update-types:
+          - "version-update:semver-major"
     groups:
       github-actions:
         patterns:

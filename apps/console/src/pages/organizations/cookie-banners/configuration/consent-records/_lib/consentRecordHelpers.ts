@@ -1,0 +1,61 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+export function getActionBadgeColor(
+  action: string,
+): "green" | "red" | "amber" | "neutral" {
+  switch (action) {
+    case "ACCEPT_ALL":
+      return "green";
+    case "REJECT_ALL":
+      return "red";
+    case "CUSTOMIZE":
+      return "amber";
+    default:
+      return "neutral";
+  }
+}
+
+export function formatLocation(
+  countryCode: string | null | undefined,
+  subdivisionCode: string | null | undefined,
+): string {
+  if (countryCode == null || countryCode === "") {
+    return "";
+  }
+  if (subdivisionCode == null || subdivisionCode === "") {
+    return countryCode;
+  }
+  const prefix = `${countryCode.toUpperCase()}-`;
+  const region = subdivisionCode.toUpperCase().startsWith(prefix)
+    ? subdivisionCode.slice(prefix.length)
+    : subdivisionCode;
+  return `${countryCode} · ${region}`;
+}
+
+export function formatAnonymizedIp(ip: string): string {
+  if (ip.includes(".")) {
+    return ip.replace(/\.0$/, ".*");
+  }
+  if (ip.endsWith("::")) {
+    return ip + "*";
+  }
+  return ip;
+}

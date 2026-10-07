@@ -37,9 +37,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"go.gearno.de/kit/httpclient"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/cloud"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/netx"
 )
 
 const (
@@ -84,6 +87,13 @@ type (
 		issuer         *identityfederation.Issuer
 		organizationID gid.GID
 	}
+
+	// Option configures a Session.
+	Option func(*sessionConfig)
+
+	sessionConfig struct {
+		apiEndpoint string
+	}
 )
 
 var (
@@ -105,7 +115,13 @@ func NewSession(
 	issuer *identityfederation.Issuer,
 	organizationID gid.GID,
 	roleARN string,
+	opts ...Option,
 ) (*Session, error) {
+	var options sessionConfig
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	parsedARN, err := arn.Parse(roleARN)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open aws session: cannot parse role ARN: %w", err)
@@ -115,20 +131,33 @@ func NewSession(
 		return nil, fmt.Errorf("cannot open aws session: role ARN carries no account ID")
 	}
 
+	loopback, err := isLoopback(options.apiEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open aws session: %w", err)
+	}
+
 	region := regionForPartition(parsedARN.Partition)
 
-	httpClient := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	httpOpts := []httpclient.Option{httpclient.WithSSRFProtection()}
+	if loopback {
+		httpOpts = append(httpOpts, httpclient.WithSSRFAllowLoopback())
+	}
+
+	httpClient := httpclient.DefaultPooledClient(httpOpts...)
+
+	stsConfig := awssdk.Config{
+		Region:      region,
+		Credentials: awssdk.AnonymousCredentials{},
+		HTTPClient:  httpClient,
+	}
+	if options.apiEndpoint != "" {
+		stsConfig.BaseEndpoint = &options.apiEndpoint
+	}
 
 	// AssumeRoleWithWebIdentity is the one STS call that takes no credential —
 	// the assertion is the credential. Signing it anonymously also keeps any
 	// ambient credentials in Probo's own environment out of the exchange.
-	stsClient := sts.NewFromConfig(
-		awssdk.Config{
-			Region:      region,
-			Credentials: awssdk.AnonymousCredentials{},
-			HTTPClient:  httpClient,
-		},
-	)
+	stsClient := sts.NewFromConfig(stsConfig)
 
 	provider := stscreds.NewWebIdentityRoleProvider(
 		stsClient,
@@ -145,13 +174,66 @@ func NewSession(
 
 	return &Session{
 		cfg: awssdk.Config{
-			Region:      region,
-			Credentials: awssdk.NewCredentialsCache(provider),
-			HTTPClient:  httpClient,
+			Region:       region,
+			Credentials:  awssdk.NewCredentialsCache(provider),
+			HTTPClient:   httpClient,
+			BaseEndpoint: stsConfig.BaseEndpoint,
 		},
 		accountID: parsedARN.AccountID,
 		partition: parsedARN.Partition,
 	}, nil
+}
+
+// WithAPIEndpoint points every AWS client built from the session at endpoint.
+// An empty endpoint keeps the SDK's regional hosts. A loopback endpoint is
+// the only case allowed to dial 127.0.0.0/8 or ::1.
+func WithAPIEndpoint(endpoint string) Option {
+	return func(cfg *sessionConfig) {
+		cfg.apiEndpoint = endpoint
+	}
+}
+
+func isLoopback(endpoint string) (bool, error) {
+	if endpoint == "" {
+		return false, nil
+	}
+
+	parsed, err := baseurl.Parse(endpoint)
+	if err != nil {
+		return false, fmt.Errorf("cannot parse API endpoint: %w", err)
+	}
+
+	return netx.IsLoopback(parsed.Hostname()), nil
+}
+
+// MemberRoleARN builds the IAM role ARN assumed in a member account of an
+// organization install. The partition comes from managementRoleARN, never
+// the literal "aws". memberRoleName defaults to ProboAudit when empty.
+func MemberRoleARN(managementRoleARN, accountID, memberRoleName string) (string, error) {
+	parsedARN, err := arn.Parse(managementRoleARN)
+	if err != nil {
+		return "", fmt.Errorf("cannot build member role ARN: cannot parse management role ARN: %w", err)
+	}
+
+	if accountID == "" {
+		return "", fmt.Errorf("cannot build member role ARN: account ID is empty")
+	}
+
+	memberRoleName, err = ParseMemberRoleName(memberRoleName)
+	if err != nil {
+		return "", fmt.Errorf("cannot build member role ARN: %w", err)
+	}
+
+	if memberRoleName == "" {
+		memberRoleName = coredata.DefaultAWSRoleName
+	}
+
+	return arn.ARN{
+		Partition: parsedARN.Partition,
+		Service:   "iam",
+		AccountID: accountID,
+		Resource:  "role/" + memberRoleName,
+	}.String(), nil
 }
 
 // regionForPartition is any STS region in the partition the role ARN names.

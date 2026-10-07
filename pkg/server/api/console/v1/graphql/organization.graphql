@@ -113,6 +113,7 @@ type UpdateOrganizationContextPayload {
 type Organization implements Node {
     id: ID!
     name: String!
+    legalName: String
     logo: File @goField(forceResolver: true)
     horizontalLogo: File @goField(forceResolver: true)
 
@@ -127,7 +128,7 @@ type Organization implements Node {
         filter: ProfileFilter
     ): ProfileConnection! @goField(forceResolver: true)
 
-    measureCategories: [String!]! @goField(forceResolver: true)
+    internalControlCategories: [String!]! @goField(forceResolver: true)
 
     accessReviewSources(
         first: Int
@@ -200,7 +201,14 @@ type Organization implements Node {
         before: CursorKey
     ): SlackConnectionConnection! @goField(forceResolver: true)
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
-    linearTeams: [LinearTeam!]! @goField(forceResolver: true)
+    linearTeams(first: Int, after: String, query: String): LinearTeamConnection!
+        @goField(forceResolver: true)
+    linearIssues(
+        teamId: String!
+        first: Int
+        after: String
+        query: String
+    ): LinearIssueConnection! @goField(forceResolver: true)
     slackbotAvailable: Boolean! @goField(forceResolver: true)
     slackbotInstallation: SlackbotInstallation @goField(forceResolver: true)
     slackbotChannels(cursor: String): SlackbotChannelPage!
@@ -261,14 +269,14 @@ type Organization implements Node {
         orderBy: FrameworkOrder
     ): FrameworkConnection! @goField(forceResolver: true)
 
-    measures(
+    internalControls(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
-    ): MeasureConnection! @goField(forceResolver: true)
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     obligationsDocument: Document @goField(forceResolver: true)
 
@@ -362,6 +370,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: TaskOrder
+        filter: TaskFilter
     ): TaskConnection! @goField(forceResolver: true)
 
     agentExecutions(

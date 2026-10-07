@@ -686,13 +686,13 @@ func TestRisk_SubResolvers(t *testing.T) {
 		assert.NotEmpty(t, result.Node.Organization.Name)
 	})
 
-	t.Run("measures sub-resolver (empty)", func(t *testing.T) {
+	t.Run("internal controls sub-resolver (empty)", func(t *testing.T) {
 		query := `
 			query($id: ID!) {
 				node(id: $id) {
 					... on Risk {
 						id
-						measures(first: 10) {
+						internalControls(first: 10) {
 							edges {
 								node {
 									id
@@ -710,8 +710,8 @@ func TestRisk_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID       string `json:"id"`
-				Measures struct {
+				ID               string `json:"id"`
+				InternalControls struct {
 					Edges []struct {
 						Node struct {
 							ID   string `json:"id"`
@@ -721,13 +721,13 @@ func TestRisk_SubResolvers(t *testing.T) {
 					PageInfo struct {
 						HasNextPage bool `json:"hasNextPage"`
 					} `json:"pageInfo"`
-				} `json:"measures"`
+				} `json:"internalControls"`
 			} `json:"node"`
 		}
 
 		err := owner.Execute(query, map[string]any{"id": riskID}, &result)
 		require.NoError(t, err)
-		assert.NotNil(t, result.Node.Measures.Edges)
+		assert.NotNil(t, result.Node.InternalControls.Edges)
 	})
 
 	t.Run("documents sub-resolver (empty)", func(t *testing.T) {

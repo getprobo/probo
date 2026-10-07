@@ -49,6 +49,12 @@ export const WEBHOOK_EVENT_TYPES = [
   { value: "DOCUMENT_VERSION_APPROVAL_QUORUM_APPROVED", label: "document-version-approval-quorum:approved" },
   { value: "DOCUMENT_VERSION_APPROVAL_QUORUM_REJECTED", label: "document-version-approval-quorum:rejected" },
   { value: "DOCUMENT_VERSION_APPROVAL_QUORUM_VOIDED", label: "document-version-approval-quorum:voided" },
+  { value: "TASK_CREATED", label: "task:created" },
+  { value: "TASK_UPDATED", label: "task:updated" },
+  { value: "TASK_DELETED", label: "task:deleted" },
+  { value: "TASK_COMMENT_CREATED", label: "task-comment:created" },
+  { value: "TASK_COMMENT_UPDATED", label: "task-comment:updated" },
+  { value: "TASK_COMMENT_DELETED", label: "task-comment:deleted" },
 ] as const;
 
 export type WebhookEventType = (typeof WEBHOOK_EVENT_TYPES)[number];

@@ -25,8 +25,10 @@ import "go.probo.inc/probo/pkg/gid"
 type SyncAction string
 
 const (
-	SyncActionUpdate SyncAction = "update"
-	SyncActionCancel SyncAction = "cancel"
+	SyncActionUpdate        SyncAction = "update"
+	SyncActionCancel        SyncAction = "cancel"
+	SyncActionCommentUpsert SyncAction = "comment_upsert"
+	SyncActionCommentDelete SyncAction = "comment_delete"
 )
 
 type JobPayload struct {
@@ -36,4 +38,13 @@ type JobPayload struct {
 	ExternalIdentifier string     `json:"external_identifier"`
 	TeamID             string     `json:"team_id"`
 	ConnectorID        gid.GID    `json:"connector_id"`
+	CommentID          gid.GID    `json:"comment_id,omitempty"`
+	ExternalCommentID  string     `json:"external_comment_id,omitempty"`
+}
+
+func commentSyncActions() []string {
+	return []string{
+		string(SyncActionCommentUpsert),
+		string(SyncActionCommentDelete),
+	}
 }

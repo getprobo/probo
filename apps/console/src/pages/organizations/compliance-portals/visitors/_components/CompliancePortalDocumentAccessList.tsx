@@ -92,7 +92,7 @@ export function CompliancePortalDocumentAccessList({
   const { t } = useTranslation("organizations/compliance-portals");
   const { status, hasActiveFilters } = useDocumentAccessListFilters();
   const [isPending, startTransition] = useTransition();
-  const { root, heading, results, more } = documentAccessList({ pending: isPending });
+  const { root, heading, results, more, moreButton } = documentAccessList({ pending: isPending });
   const {
     data: access,
     hasNext,
@@ -210,8 +210,9 @@ export function CompliancePortalDocumentAccessList({
         {hasNext && (
           <div className={more()}>
             <Button
-              variant="ghost"
+              variant="outline"
               color="neutral"
+              className={moreButton()}
               loading={isLoadingNext}
               onClick={() => loadNext(50)}
             >

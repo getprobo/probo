@@ -217,15 +217,15 @@ func InsertUpdateActivities(
 		}
 	}
 
-	if !gidPtrEqual(oldTask.MeasureID, task.MeasureID) {
-		oldMeasureName, err := taskActivityMeasureName(ctx, tx, scope, oldTask.MeasureID)
+	if !gidPtrEqual(oldTask.InternalControlID, task.InternalControlID) {
+		oldInternalControlName, err := taskActivityInternalControlName(ctx, tx, scope, oldTask.InternalControlID)
 		if err != nil {
-			return fmt.Errorf("cannot load previous measure name: %w", err)
+			return fmt.Errorf("cannot load previous internal control name: %w", err)
 		}
 
-		newMeasureName, err := taskActivityMeasureName(ctx, tx, scope, task.MeasureID)
+		newInternalControlName, err := taskActivityInternalControlName(ctx, tx, scope, task.InternalControlID)
 		if err != nil {
-			return fmt.Errorf("cannot load measure name: %w", err)
+			return fmt.Errorf("cannot load internal control name: %w", err)
 		}
 
 		if err := insertFieldActivity(
@@ -234,12 +234,12 @@ func InsertUpdateActivities(
 			scope,
 			task,
 			actorID,
-			coredata.TaskActivityFieldMeasure,
-			oldMeasureName,
-			newMeasureName,
+			coredata.TaskActivityFieldInternalControl,
+			oldInternalControlName,
+			newInternalControlName,
 			now,
 		); err != nil {
-			return fmt.Errorf("cannot record measure activity: %w", err)
+			return fmt.Errorf("cannot record internal control activity: %w", err)
 		}
 	}
 
@@ -293,22 +293,22 @@ func taskActivityProfileName(
 	return &profile.FullName, nil
 }
 
-func taskActivityMeasureName(
+func taskActivityInternalControlName(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
-	measureID *gid.GID,
+	internalControlID *gid.GID,
 ) (*string, error) {
-	if measureID == nil {
+	if internalControlID == nil {
 		return nil, nil
 	}
 
-	measure := &coredata.Measure{}
-	if err := measure.LoadByID(ctx, conn, scope, *measureID); err != nil {
-		return nil, fmt.Errorf("cannot load measure: %w", err)
+	internalControl := &coredata.InternalControl{}
+	if err := internalControl.LoadByID(ctx, conn, scope, *internalControlID); err != nil {
+		return nil, fmt.Errorf("cannot load internalControl: %w", err)
 	}
 
-	return &measure.Name, nil
+	return &internalControl.Name, nil
 }
 
 func timespanValue(value *timespan.TimeSpan) *string {

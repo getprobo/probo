@@ -38,7 +38,12 @@ var qoveryKeyPattern = regexp.MustCompile(`^(?:qov_|sk-qov-)[\s\S]`)
 
 func qoveryRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderQovery,
+		Provider: coredata.ConnectorProviderQovery,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.QoveryConnectorSettings) string {
+				return s.OrganizationID
+			},
+		),
 		DisplayName:      "Qovery",
 		DocumentationURL: accessReviewDocsURL("qovery"),
 		APIKey: &APIKeyConfig{

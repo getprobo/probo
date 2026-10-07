@@ -1,0 +1,103 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package linktreatmentplan
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+)
+
+const linkTreatmentPlanMutation = `
+mutation($input: CreateTreatmentPlanInternalControlMappingInput!) {
+  createTreatmentPlanInternalControlMapping(input: $input) {
+    internalControlEdge {
+      node { id }
+    }
+    treatmentPlanEdge {
+      node { id }
+    }
+  }
+}
+`
+
+func NewCmdLinkTreatmentPlan(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagInternalControlID string
+		flagTreatmentPlanID   string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "link-treatment-plan",
+		Short: "Link a treatment plan to an internal control",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				"/api/console/v1/graphql",
+				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
+			)
+
+			_, err = client.Do(
+				linkTreatmentPlanMutation,
+				map[string]any{
+					"input": map[string]any{
+						"internalControlId": flagInternalControlID,
+						"treatmentPlanId":   flagTreatmentPlanID,
+					},
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			_, _ = fmt.Fprintf(
+				f.IOStreams.Out,
+				"Linked treatment plan %s to internal control %s\n",
+				flagTreatmentPlanID,
+				flagInternalControlID,
+			)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&flagInternalControlID, "internal-control-id", "", "Internal control ID (required)")
+	cmd.Flags().StringVar(&flagTreatmentPlanID, "treatment-plan-id", "", "Treatment plan ID (required)")
+
+	_ = cmd.MarkFlagRequired("internal-control-id")
+	_ = cmd.MarkFlagRequired("treatment-plan-id")
+
+	return cmd
+}

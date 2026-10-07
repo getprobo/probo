@@ -90,32 +90,32 @@ const (
 			}
 		}`
 
-	createMeasureMutation = `
-		mutation CreateMeasure($input: CreateMeasureInput!) {
-			createMeasure(input: $input) {
-				measureEdge { node { id } }
+	createInternalControlMutation = `
+		mutation CreateInternalControl($input: CreateInternalControlInput!) {
+			createInternalControl(input: $input) {
+				internalControlEdge { node { id } }
 			}
 		}`
 
-	updateMeasureMutation = `
-		mutation UpdateMeasure($input: UpdateMeasureInput!) {
-			updateMeasure(input: $input) {
-				measure { id }
+	updateInternalControlMutation = `
+		mutation UpdateInternalControl($input: UpdateInternalControlInput!) {
+			updateInternalControl(input: $input) {
+				internalControl { id }
 			}
 		}`
 
-	deleteMeasureMutation = `
-		mutation DeleteMeasure($input: DeleteMeasureInput!) {
-			deleteMeasure(input: $input) {
-				deletedMeasureId
+	deleteInternalControlMutation = `
+		mutation DeleteInternalControl($input: DeleteInternalControlInput!) {
+			deleteInternalControl(input: $input) {
+				deletedInternalControlId
 			}
 		}`
 
-	listMeasuresQuery = `
-		query GetMeasures($id: ID!) {
+	listInternalControlsQuery = `
+		query GetInternalControls($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					measures(first: 10) { totalCount }
+					internalControls(first: 10) { totalCount }
 				}
 			}
 		}`
@@ -144,7 +144,7 @@ const (
 	listTasksQuery = `
 		query GetTasks($id: ID!) {
 			node(id: $id) {
-				... on Measure {
+				... on InternalControl {
 					tasks(first: 10) { totalCount }
 				}
 			}
@@ -299,9 +299,9 @@ const (
 
 type (
 	rbacShared struct {
-		orgID       string
-		frameworkID string
-		measureID   string
+		orgID             string
+		frameworkID       string
+		internalControlID string
 	}
 
 	rbacTestCase struct {
@@ -320,12 +320,12 @@ func TestRBAC(t *testing.T) {
 	org := testutil.NewOrganizationRoles(t)
 	ownerClient := org.Client(t, testutil.RoleOwner)
 	shared := rbacShared{
-		orgID:       ownerClient.GetOrganizationID().String(),
-		frameworkID: factory.NewFramework(ownerClient).WithName("RBAC Test Framework").Create(),
-		measureID:   factory.NewMeasure(ownerClient).WithName("RBAC Test Measure").Create(),
+		orgID:             ownerClient.GetOrganizationID().String(),
+		frameworkID:       factory.NewFramework(ownerClient).WithName("RBAC Test Framework").Create(),
+		internalControlID: factory.NewInternalControl(ownerClient).WithName("RBAC Test Internal control").Create(),
 	}
 	_ = factory.NewControl(ownerClient, shared.frameworkID).WithName("RBAC Test Control").Create()
-	_ = factory.NewTask(ownerClient, shared.measureID).WithName("RBAC Test Task").Create()
+	_ = factory.NewTask(ownerClient, shared.internalControlID).WithName("RBAC Test Task").Create()
 
 	tests := []rbacTestCase{
 		{resource: "framework", operation: "create", name: "owner can create framework", role: testutil.RoleOwner, shouldAllow: true},
@@ -351,18 +351,18 @@ func TestRBAC(t *testing.T) {
 		{resource: "control", operation: "list", name: "owner can list controls", role: testutil.RoleOwner, shouldAllow: true},
 		{resource: "control", operation: "list", name: "admin can list controls", role: testutil.RoleAdmin, shouldAllow: true},
 		{resource: "control", operation: "list", name: "viewer can list controls", role: testutil.RoleViewer, shouldAllow: true},
-		{resource: "measure", operation: "create", name: "owner can create measure", role: testutil.RoleOwner, shouldAllow: true},
-		{resource: "measure", operation: "create", name: "admin can create measure", role: testutil.RoleAdmin, shouldAllow: true},
-		{resource: "measure", operation: "create", name: "viewer cannot create measure", role: testutil.RoleViewer, shouldAllow: false},
-		{resource: "measure", operation: "update", name: "owner can update measure", role: testutil.RoleOwner, shouldAllow: true},
-		{resource: "measure", operation: "update", name: "admin can update measure", role: testutil.RoleAdmin, shouldAllow: true},
-		{resource: "measure", operation: "update", name: "viewer cannot update measure", role: testutil.RoleViewer, shouldAllow: false},
-		{resource: "measure", operation: "delete", name: "owner can delete measure", role: testutil.RoleOwner, shouldAllow: true},
-		{resource: "measure", operation: "delete", name: "admin can delete measure", role: testutil.RoleAdmin, shouldAllow: true},
-		{resource: "measure", operation: "delete", name: "viewer cannot delete measure", role: testutil.RoleViewer, shouldAllow: false},
-		{resource: "measure", operation: "list", name: "owner can list measures", role: testutil.RoleOwner, shouldAllow: true},
-		{resource: "measure", operation: "list", name: "admin can list measures", role: testutil.RoleAdmin, shouldAllow: true},
-		{resource: "measure", operation: "list", name: "viewer can list measures", role: testutil.RoleViewer, shouldAllow: true},
+		{resource: "internalControl", operation: "create", name: "owner can create internal control", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "internalControl", operation: "create", name: "admin can create internal control", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "internalControl", operation: "create", name: "viewer cannot create internal control", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "internalControl", operation: "update", name: "owner can update internal control", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "internalControl", operation: "update", name: "admin can update internal control", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "internalControl", operation: "update", name: "viewer cannot update internal control", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "internalControl", operation: "delete", name: "owner can delete internal control", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "internalControl", operation: "delete", name: "admin can delete internal control", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "internalControl", operation: "delete", name: "viewer cannot delete internal control", role: testutil.RoleViewer, shouldAllow: false},
+		{resource: "internalControl", operation: "list", name: "owner can list internal controls", role: testutil.RoleOwner, shouldAllow: true},
+		{resource: "internalControl", operation: "list", name: "admin can list internal controls", role: testutil.RoleAdmin, shouldAllow: true},
+		{resource: "internalControl", operation: "list", name: "viewer can list internal controls", role: testutil.RoleViewer, shouldAllow: true},
 		{resource: "task", operation: "create", name: "owner can create task", role: testutil.RoleOwner, shouldAllow: true},
 		{resource: "task", operation: "create", name: "admin can create task", role: testutil.RoleAdmin, shouldAllow: true},
 		{resource: "task", operation: "create", name: "viewer cannot create task", role: testutil.RoleViewer, shouldAllow: false},
@@ -485,16 +485,16 @@ func rbacQuery(resource, operation string) string {
 		case "list":
 			return listControlsQuery
 		}
-	case "measure":
+	case "internalControl":
 		switch operation {
 		case "create":
-			return createMeasureMutation
+			return createInternalControlMutation
 		case "update":
-			return updateMeasureMutation
+			return updateInternalControlMutation
 		case "delete":
-			return deleteMeasureMutation
+			return deleteInternalControlMutation
 		case "list":
-			return listMeasuresQuery
+			return listInternalControlsQuery
 		}
 	case "task":
 		switch operation {
@@ -655,7 +655,7 @@ func rbacVariables(
 		case "list":
 			return map[string]any{"id": shared.frameworkID}
 		}
-	case "measure":
+	case "internalControl":
 		switch operation {
 		case "create":
 			return map[string]any{
@@ -666,43 +666,43 @@ func rbacVariables(
 				},
 			}
 		case "update":
-			measureID := factory.NewMeasure(owner).
-				WithName(factory.SafeName("RBAC Test Measure")).
+			internalControlID := factory.NewInternalControl(owner).
+				WithName(factory.SafeName("RBAC Test Internal control")).
 				Create()
 
 			return map[string]any{
 				"input": map[string]any{
-					"id":   measureID,
-					"name": factory.SafeName("Updated Measure"),
+					"id":   internalControlID,
+					"name": factory.SafeName("Updated Internal control"),
 				},
 			}
 		case "delete":
-			id := factory.NewMeasure(owner).WithName(factory.SafeName("ToDelete")).Create()
+			id := factory.NewInternalControl(owner).WithName(factory.SafeName("ToDelete")).Create()
 
-			return map[string]any{"input": map[string]any{"measureId": id}}
+			return map[string]any{"input": map[string]any{"internalControlId": id}}
 		case "list":
 			return map[string]any{"id": shared.orgID}
 		}
 	case "task":
 		switch operation {
 		case "create":
-			measureID := factory.NewMeasure(owner).
-				WithName(factory.SafeName("RBAC task measure")).
+			internalControlID := factory.NewInternalControl(owner).
+				WithName(factory.SafeName("RBAC task internal control")).
 				Create()
 
 			return map[string]any{
 				"input": map[string]any{
-					"organizationId": shared.orgID,
-					"measureId":      measureID,
-					"name":           factory.SafeName("Task"),
-					"priority":       "MEDIUM",
+					"organizationId":    shared.orgID,
+					"internalControlId": internalControlID,
+					"name":              factory.SafeName("Task"),
+					"priority":          "MEDIUM",
 				},
 			}
 		case "update":
-			measureID := factory.NewMeasure(owner).
-				WithName(factory.SafeName("RBAC task measure")).
+			internalControlID := factory.NewInternalControl(owner).
+				WithName(factory.SafeName("RBAC task internal control")).
 				Create()
-			taskID := factory.NewTask(owner, measureID).
+			taskID := factory.NewTask(owner, internalControlID).
 				WithName(factory.SafeName("RBAC Test Task")).
 				Create()
 
@@ -713,14 +713,14 @@ func rbacVariables(
 				},
 			}
 		case "delete":
-			measureID := factory.NewMeasure(owner).
-				WithName(factory.SafeName("RBAC task measure")).
+			internalControlID := factory.NewInternalControl(owner).
+				WithName(factory.SafeName("RBAC task internal control")).
 				Create()
-			id := factory.NewTask(owner, measureID).WithName(factory.SafeName("ToDelete")).Create()
+			id := factory.NewTask(owner, internalControlID).WithName(factory.SafeName("ToDelete")).Create()
 
 			return map[string]any{"input": map[string]any{"taskId": id}}
 		case "list":
-			return map[string]any{"id": shared.measureID}
+			return map[string]any{"id": shared.internalControlID}
 		}
 	case "risk":
 		switch operation {

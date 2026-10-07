@@ -79,10 +79,21 @@ type (
 	MembershipProfiles []*MembershipProfile
 )
 
+func (p MembershipProfile) createdAtSortKey() string {
+	rank := "1"
+	if p.State == ProfileStateDeactivated {
+		rank = "0"
+	}
+
+	createdAt := p.CreatedAt.UTC()
+
+	return rank + createdAt.Format("20060102150405") + fmt.Sprintf("%06d", createdAt.Nanosecond()/1000)
+}
+
 func (p MembershipProfile) CursorKey(orderBy MembershipProfileOrderField) page.CursorKey {
 	switch orderBy {
 	case MembershipProfileOrderFieldCreatedAt:
-		return page.NewCursorKey(p.ID, p.CreatedAt)
+		return page.NewCursorKey(p.ID, p.createdAtSortKey())
 	case MembershipProfileOrderFieldFullName:
 		return page.NewCursorKey(p.ID, p.FullName)
 	case MembershipProfileOrderFieldEmailAddress:
@@ -818,10 +829,12 @@ WITH profiles AS (
         p.activated_at,
         p.deactivated_at,
         p.created_at,
-        p.updated_at
+        p.updated_at,
+        o.name AS organization_name
     FROM
         iam_membership_profiles p
     INNER JOIN identities i ON i.id = p.identity_id
+    INNER JOIN organizations o ON o.id = p.organization_id
     WHERE
         p.identity_id = @identity_id
         AND %s
@@ -839,7 +852,7 @@ SELECT
     p.position,
     p.contract_start_date,
     p.contract_end_date,
-    o.name AS organization_name,
+    p.organization_name,
     p.user_name,
     p.external_id,
     p.nickname,
@@ -864,7 +877,6 @@ SELECT
     p.created_at,
     p.updated_at
 FROM profiles p
-INNER JOIN organizations o ON o.id = p.organization_id
 WHERE
     %s
 `

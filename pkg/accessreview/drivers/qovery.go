@@ -57,6 +57,7 @@ type qoveryMember struct {
 	LastActivityAt string `json:"last_activity_at"`
 	CreatedAt      string `json:"created_at"`
 	Role           string `json:"role"`
+	RoleName       string `json:"role_name"`
 }
 
 // NewQoveryDriver builds a driver against baseURL, the Qovery API origin
@@ -111,11 +112,12 @@ func (d *QoveryDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			continue
 		}
 
+		role := qoveryRole(member)
 		record := AccountRecord{
 			Email:       member.Email,
 			FullName:    qoveryFullName(member),
-			Roles:       qoveryRoles(member.Role),
-			IsAdmin:     new(qoveryIsAdmin(member.Role)),
+			Roles:       qoveryRoles(role),
+			IsAdmin:     new(qoveryIsAdmin(role)),
 			MFAStatus:   coredata.MFAStatusUnknown,
 			AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
 			AccountType: coredata.AccessReviewEntryAccountTypeUser,
@@ -150,6 +152,14 @@ func qoveryFullName(member qoveryMember) string {
 	}
 
 	return member.Email
+}
+
+func qoveryRole(member qoveryMember) string {
+	if role := strings.TrimSpace(member.RoleName); role != "" {
+		return role
+	}
+
+	return member.Role
 }
 
 func qoveryRoles(role string) []string {

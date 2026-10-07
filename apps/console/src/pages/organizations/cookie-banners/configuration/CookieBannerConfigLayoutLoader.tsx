@@ -23,26 +23,30 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import CookieBannerConfigLayout, { cookieBannerConfigLayoutQuery } from "./CookieBannerConfigLayout";
+import { CookieBannerConfigLayout, cookieBannerConfigLayoutQuery } from "./CookieBannerConfigLayout";
+import { CookieBannerConfigLayoutSkeleton } from "./CookieBannerConfigLayoutSkeleton";
 
 export default function CookieBannerConfigLayoutLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerConfigLayoutQuery>(cookieBannerConfigLayoutQuery);
+  if (typeof cookieBannerId !== "string") {
+    throw new Error("Missing cookieBannerId parameter");
+  }
+
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerConfigLayoutQuery>(
+    cookieBannerConfigLayoutQuery,
+  );
 
   useEffect(() => {
-    if (cookieBannerId) {
-      loadQuery({ cookieBannerId });
-    }
+    loadQuery({ cookieBannerId });
   }, [loadQuery, cookieBannerId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <CookieBannerConfigLayoutSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<CookieBannerConfigLayoutSkeleton />}>
       <CookieBannerConfigLayout queryRef={queryRef} />
     </Suspense>
   );

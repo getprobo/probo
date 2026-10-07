@@ -758,11 +758,11 @@ func TestControl_SubResolvers(t *testing.T) {
 
 	controlID := controlResult.CreateControl.ControlEdge.Node.ID
 
-	// Create a measure and link it
-	createMeasureQuery := `
-		mutation CreateMeasure($input: CreateMeasureInput!) {
-			createMeasure(input: $input) {
-				measureEdge {
+	// Create an internal control and link it
+	createInternalControlQuery := `
+		mutation CreateInternalControl($input: CreateInternalControlInput!) {
+			createInternalControl(input: $input) {
+				internalControlEdge {
 					node {
 						id
 					}
@@ -771,31 +771,31 @@ func TestControl_SubResolvers(t *testing.T) {
 		}
 	`
 
-	var measureResult struct {
-		CreateMeasure struct {
-			MeasureEdge struct {
+	var internalControlResult struct {
+		CreateInternalControl struct {
+			InternalControlEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"measureEdge"`
-		} `json:"createMeasure"`
+			} `json:"internalControlEdge"`
+		} `json:"createInternalControl"`
 	}
 
-	err = owner.Execute(createMeasureQuery, map[string]any{
+	err = owner.Execute(createInternalControlQuery, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
-			"name":           "Test Measure for Control",
+			"name":           "Test Internal control for Control",
 			"category":       "POLICY",
 		},
-	}, &measureResult)
+	}, &internalControlResult)
 	require.NoError(t, err)
 
-	measureID := measureResult.CreateMeasure.MeasureEdge.Node.ID
+	internalControlID := internalControlResult.CreateInternalControl.InternalControlEdge.Node.ID
 
 	// Create mapping
 	createMappingQuery := `
-		mutation CreateControlMeasureMapping($input: CreateControlMeasureMappingInput!) {
-			createControlMeasureMapping(input: $input) {
+		mutation CreateControlInternalControlMapping($input: CreateControlInternalControlMappingInput!) {
+			createControlInternalControlMapping(input: $input) {
 				controlEdge {
 					node {
 						id
@@ -806,19 +806,19 @@ func TestControl_SubResolvers(t *testing.T) {
 	`
 
 	var mappingResult struct {
-		CreateControlMeasureMapping struct {
+		CreateControlInternalControlMapping struct {
 			ControlEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"controlEdge"`
-		} `json:"createControlMeasureMapping"`
+		} `json:"createControlInternalControlMapping"`
 	}
 
 	err = owner.Execute(createMappingQuery, map[string]any{
 		"input": map[string]any{
-			"controlId": controlID,
-			"measureId": measureID,
+			"controlId":         controlID,
+			"internalControlId": internalControlID,
 		},
 	}, &mappingResult)
 	require.NoError(t, err)
@@ -855,13 +855,13 @@ func TestControl_SubResolvers(t *testing.T) {
 		assert.Equal(t, frameworkID, result.Node.Framework.ID)
 	})
 
-	t.Run("Control measures sub-resolver", func(t *testing.T) {
+	t.Run("Control internal controls sub-resolver", func(t *testing.T) {
 		query := `
-			query GetControlMeasures($id: ID!) {
+			query GetControlInternalControls($id: ID!) {
 				node(id: $id) {
 					... on Control {
 						id
-						measures(first: 10) {
+						internalControls(first: 10) {
 							edges {
 								node {
 									id
@@ -876,15 +876,15 @@ func TestControl_SubResolvers(t *testing.T) {
 
 		var result struct {
 			Node struct {
-				ID       string `json:"id"`
-				Measures struct {
+				ID               string `json:"id"`
+				InternalControls struct {
 					Edges []struct {
 						Node struct {
 							ID   string `json:"id"`
 							Name string `json:"name"`
 						} `json:"node"`
 					} `json:"edges"`
-				} `json:"measures"`
+				} `json:"internalControls"`
 			} `json:"node"`
 		}
 
@@ -892,6 +892,6 @@ func TestControl_SubResolvers(t *testing.T) {
 			"id": controlID,
 		}, &result)
 		require.NoError(t, err)
-		assert.GreaterOrEqual(t, len(result.Node.Measures.Edges), 1)
+		assert.GreaterOrEqual(t, len(result.Node.InternalControls.Edges), 1)
 	})
 }

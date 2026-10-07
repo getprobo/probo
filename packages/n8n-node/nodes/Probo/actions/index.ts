@@ -39,7 +39,7 @@ import * as evidence from './evidence';
 import * as execute from './execute';
 import * as finding from './finding';
 import * as framework from './framework';
-import * as measure from './measure';
+import * as measure from './internalControl';
 import * as obligation from './obligation';
 import * as organization from './organization';
 import * as organizationContext from './organizationContext';
@@ -56,6 +56,7 @@ import * as taskComment from './taskComment';
 import * as taskActivity from './taskActivity';
 import * as tia from './tia';
 import * as compliancePortal from './compliancePortal';
+import * as connector from './connector';
 import * as thirdParty from './thirdParty';
 import * as webhook from './webhook';
 
@@ -90,7 +91,7 @@ export const resources: Record<string, ResourceModule> = {
 	execute: execute as ResourceModule,
 	finding: finding as ResourceModule,
 	framework: framework as ResourceModule,
-	measure: measure as ResourceModule,
+	internalControl: measure as ResourceModule,
 	obligation: obligation as ResourceModule,
 	organization: organization as ResourceModule,
 	organizationContext: organizationContext as ResourceModule,
@@ -107,6 +108,7 @@ export const resources: Record<string, ResourceModule> = {
 	treatmentPlan: treatmentPlan as ResourceModule,
 	tia: tia as ResourceModule,
 	compliancePortal: compliancePortal as ResourceModule,
+	connector: connector as ResourceModule,
 	thirdParty: thirdParty as ResourceModule,
 	webhook: webhook as ResourceModule,
 };

@@ -24,8 +24,8 @@ import * as updateOp from './update.operation';
 import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
-import * as linkMeasureOp from './linkMeasure.operation';
-import * as unlinkMeasureOp from './unlinkMeasure.operation';
+import * as linkInternalControlOp from './linkInternalControl.operation';
+import * as unlinkInternalControlOp from './unlinkInternalControl.operation';
 import * as linkDocumentOp from './linkDocument.operation';
 import * as unlinkDocumentOp from './unlinkDocument.operation';
 import * as linkAuditOp from './linkAudit.operation';
@@ -82,10 +82,10 @@ export const description: INodeProperties[] = [
 				action: 'Link a document to a control',
 			},
 			{
-				name: 'Link Measure',
-				value: 'linkMeasure',
-				description: 'Link a measure to a control',
-				action: 'Link a measure to a control',
+				name: 'Link Internal Control',
+				value: 'linkInternalControl',
+				description: 'Link an internal control to a control',
+				action: 'Link an internal control to a control',
 			},
 			{
 				name: 'Link Obligation',
@@ -106,10 +106,10 @@ export const description: INodeProperties[] = [
 				action: 'Unlink a document from a control',
 			},
 			{
-				name: 'Unlink Measure',
-				value: 'unlinkMeasure',
-				description: 'Unlink a measure from a control',
-				action: 'Unlink a measure from a control',
+				name: 'Unlink Internal Control',
+				value: 'unlinkInternalControl',
+				description: 'Unlink an internal control from a control',
+				action: 'Unlink an internal control from a control',
 			},
 			{
 				name: 'Unlink Obligation',
@@ -131,8 +131,8 @@ export const description: INodeProperties[] = [
 	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
-	...linkMeasureOp.description,
-	...unlinkMeasureOp.description,
+	...linkInternalControlOp.description,
+	...unlinkInternalControlOp.description,
 	...linkDocumentOp.description,
 	...unlinkDocumentOp.description,
 	...linkAuditOp.description,
@@ -147,8 +147,8 @@ export {
 	deleteOp as delete,
 	getOp as get,
 	getAllOp as getAll,
-	linkMeasureOp as linkMeasure,
-	unlinkMeasureOp as unlinkMeasure,
+	linkInternalControlOp as linkInternalControl,
+	unlinkInternalControlOp as unlinkInternalControl,
 	linkDocumentOp as linkDocument,
 	unlinkDocumentOp as unlinkDocument,
 	linkAuditOp as linkAudit,

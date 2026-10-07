@@ -621,7 +621,8 @@
       "allKinds": "Tous les types",
       "allStatuses": "Tous les statuts",
       "allPriorities": "Toutes les priorités",
-      "allOwners": "Tous les propriétaires"
+      "allOwners": "Tous les propriétaires",
+      "allAudits": "Tous les audits"
     },
     "kinds": {
       "minor_nonconformity": "Non-conformité mineure",
@@ -751,7 +752,7 @@
     "title": "Tâches",
     "description": "Suivez les tâches de conformité qui vous sont assignées et gardez votre progression sur la bonne voie.",
     "actions": {
-      "create": "Nouvelle tâche"
+      "create": "Ajouter une tâche"
     }
   },
   "pageError": {
@@ -961,14 +962,17 @@
       "add": "Ajouter un e-mail"
     }
   },
-  "measureSelectField": {
-    "placeholder": "Sélectionner une mesure",
+  "internalControlSelectField": {
+    "placeholder": "Sélectionner un contrôle interne",
     "none": "Aucune"
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Ajouter des personnes...",
     "empty": "Aucune personne disponible",
     "remove": "Retirer {{name}}"
+  },
+  "userSelect": {
+    "loadMore": "Charger plus"
   },
   "peopleSelectField": {
     "placeholder": "Sélectionner un propriétaire",
@@ -1024,22 +1028,22 @@
     "empty": "Aucun tiers disponible",
     "remove": "Retirer {{name}}"
   },
-  "linkedMeasuresCard": {
-    "title": "Mesures",
+  "linkedInternalControlsCard": {
+    "title": "Contrôles internes",
     "columns": {
       "name": "Nom",
       "state": "État"
     },
-    "empty": "Aucune mesure associée",
+    "empty": "Aucun contrôle interne associé",
     "actions": {
-      "link": "Associer une mesure",
+      "link": "Associer un contrôle interne",
       "unlink": "Dissocier",
       "showMore": "Afficher {{count}} de plus"
     }
   },
-  "linkedMeasuresDialog": {
-    "title": "Associer des mesures",
-    "searchPlaceholder": "Rechercher des mesures...",
+  "linkedInternalControlsDialog": {
+    "title": "Associer des contrôles internes",
+    "searchPlaceholder": "Rechercher des contrôles internes...",
     "allCategories": "Toutes les catégories",
     "actions": {
       "close": "Fermer",
@@ -1130,6 +1134,14 @@
       "duplicate": "Doublon"
     },
     "empty": "Aucune tâche",
+    "noResults": "Aucune tâche ne correspond à vos filtres",
+    "searchPlaceholder": "Rechercher des tâches",
+    "filters": {
+      "status": "Statut",
+      "allStatuses": "Tous les statuts",
+      "user": "Utilisateur",
+      "allUsers": "Tous les utilisateurs"
+    },
     "error": {
       "title": "Erreur",
       "reorder": "Échec de la réorganisation de la tâche."
@@ -1145,6 +1157,11 @@
       "moveToDone": "Déplacer vers Terminé",
       "edit": "Modifier",
       "delete": "Supprimer"
+    },
+    "metadata": {
+      "timeEstimate": "Estimation de temps",
+      "deadline": "Échéance",
+      "overdue": "En retard"
     },
     "recurringBadge": {
       "tooltip": "Se répète avec un intervalle de {{interval}}"
@@ -1251,14 +1268,14 @@
       "delete": "Échec de la suppression du référentiel"
     }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
-      "deleted": "Mesure supprimée avec succès.",
-      "updated": "Mesure mise à jour avec succès."
+      "deleted": "Contrôle interne supprimé avec succès.",
+      "updated": "Contrôle interne mis à jour avec succès."
     },
     "errors": {
-      "delete": "Échec de la suppression de la mesure",
-      "update": "Échec de la mise à jour de la mesure"
+      "delete": "Échec de la suppression du contrôle interne",
+      "update": "Échec de la mise à jour du contrôle interne"
     }
   },
   "obligationGraph": {
@@ -1335,7 +1352,6 @@
       "revoked": "Révoqué"
     },
     "compliancePortalVisibility": {
-      "none": "Aucune",
       "restricted": "Restreint",
       "public": "Public"
     },
@@ -1387,6 +1403,13 @@
       "secret": "Secret"
     },
     "measureState": {
+      "implemented": "Mise en œuvre",
+      "inProgress": "En cours",
+      "notApplicable": "Non applicable",
+      "notStarted": "Non commencée",
+      "notImplemented": "Non mise en œuvre"
+    },
+    "internalControlState": {
       "implemented": "Mise en œuvre",
       "inProgress": "En cours",
       "notApplicable": "Non applicable",
@@ -1560,6 +1583,14 @@
       "unknown": "Inconnu",
       "not_implemented": "Non mise en œuvre"
     },
+    "internalControlState": {
+      "implemented": "Mise en œuvre",
+      "in_progress": "En cours",
+      "not_applicable": "Non applicable",
+      "not_started": "Non commencée",
+      "unknown": "Inconnu",
+      "not_implemented": "Non mise en œuvre"
+    },
     "confirmDialog": {
       "defaultTitle": "Êtes-vous sûr ?"
     },
@@ -1578,6 +1609,10 @@
     },
     "measureImplementation": {
       "title": "Mise en œuvre de la mesure",
+      "complete": "Terminée"
+    },
+    "internalControlImplementation": {
+      "title": "Mise en œuvre du contrôle interne",
       "complete": "Terminée"
     },
     "impactOptions": {
@@ -2169,9 +2204,15 @@
     "help": "Aide",
     "switchToDarkMode": "Passer en mode sombre",
     "switchToLightMode": "Passer en mode clair",
+    "spotlight": {
+      "title": "Aller à",
+      "placeholder": "Aller à…",
+      "empty": "Aucune page correspondante"
+    },
     "groups": {
       "governance": "Gouvernance",
       "privacy": "Confidentialité",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "Gestion des actifs informatiques",
       "riskManagement": "Gestion des risques",
@@ -2184,8 +2225,9 @@
     "context": "Contexte",
     "webhooks": "Webhooks",
     "slackBot": "SlackBot",
+    "integrations": "INTÉGRATIONS",
     "tasks": "Tâches",
-    "measures": "Mesures",
+    "internalControls": "Contrôles internes",
     "risks": "Risques",
     "allRisks": "Tous les risques",
     "riskAnalyses": "Analyses des risques",
@@ -2193,6 +2235,8 @@
     "iam": "IAM",
     "users": "Utilisateurs",
     "authProvisioning": "Auth. et provisionnement",
+    "samlSso": "SSO SAML",
+    "scim": "SCIM",
     "auditLog": "Journal d’audit",
     "allThirdParties": "Tous les tiers",
     "thirdParties": "Tiers",
@@ -2205,7 +2249,7 @@
     "thirdPartyServices": "Services",
     "thirdPartySupplyChain": "Chaîne d’approvisionnement",
     "thirdPartyRisks": "Évaluations des risques",
-    "thirdPartyMeasures": "Mesures",
+    "thirdPartyInternalControls": "Contrôles internes",
     "documents": "Documents",
     "assets": "Actifs",
     "devices": "Appareils",
@@ -2234,8 +2278,11 @@
     "compliancePortalsUpdates": "Mises à jour",
     "compliancePortalsRightRequests": "Demandes de droits",
     "cookieBanners": "Bannières de cookies",
+    "cookieBannersInstall": "Installer",
     "cookieBannersConfigure": "Configurer",
-    "cookieBannersDiscovery": "Découverte",
+    "cookieBannersTranslations": "Traductions",
+    "cookieBannersTrackers": "Traceurs",
+    "cookieBannersResources": "Ressources",
     "cookieBannersTrail": "Journal",
     "cookieBannersTCF": "TCF",
     "cookieBannerSwitcher": {
@@ -2277,43 +2324,38 @@
       "logout": "Déconnexion"
     }
   },
-  "peoplePage": {
+  "usersPage": {
+    "empty": "Aucun utilisateur",
+    "emptyFiltered": "Aucun utilisateur ne correspond aux filtres actuels.",
     "actions": {
-      "add": "Ajouter une personne"
+      "add": "Ajouter un utilisateur",
+      "cancel": "Annuler",
+      "previous": "Préc.",
+      "next": "Suiv."
     }
   },
-  "personPage": {
-    "messages": {
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
-    },
-    "errors": {
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
-    },
-    "confirmations": {
-      "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
-      "remove": "Voulez-vous vraiment supprimer {{name}} ?"
-    },
-    "actions": {
-      "deactivate": "Désactiver",
-      "remove": "Supprimer"
+  "userPage": {
+    "back": "Utilisateurs",
+    "empty": "—",
+    "deactivatedCallout": "Cet utilisateur est désactivé.",
+    "notFound": "Utilisateur introuvable",
+    "details": {
+      "title": "Détails",
+      "description": "Poste, e-mails supplémentaires et dates de contrat."
     }
   },
-  "addPersonDialog": {
-    "title": "Ajouter une personne"
+  "newUserPage": {
+    "title": "Ajouter un utilisateur",
+    "description": "Invitez quelqu’un dans cette organisation.",
+    "notFound": "Vous ne pouvez pas ajouter d’utilisateurs à cette organisation"
   },
-  "peopleList": {
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "email": "E-mail",
-      "role": "Rôle",
-      "createdOn": "Créé le",
-      "contractEndDate": "Date de fin de contrat"
+  "usersList": {
+    "searchPlaceholder": "Rechercher des utilisateurs...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
     },
-    "empty": "Aucune personne",
-    "searchPlaceholder": "Rechercher des personnes...",
+    "created": "Créé le {{date}}",
     "filters": {
       "allStatuses": "Tous les statuts",
       "status": "Statut",
@@ -2321,51 +2363,62 @@
       "active": "Actif",
       "deactivated": "Désactivé",
       "allRoles": "Tous les rôles",
-      "allTypes": "Tous les types"
+      "allTypes": "Tous les types d’utilisateur",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur"
     }
   },
-  "peopleListItem": {
+  "userListItem": {
     "messages": {
       "invitationSent": "Invitation envoyée avec succès",
-      "roleUpdated": "Rôle mis à jour avec succès",
-      "deactivated": "Personne désactivée avec succès",
-      "removed": "Personne supprimée avec succès"
+      "deactivated": "Utilisateur désactivé avec succès",
+      "removed": "Utilisateur supprimé avec succès",
+      "roleUpdated": "Rôle mis à jour"
     },
     "errors": {
       "sendInvitation": "Échec de l’envoi de l’invitation",
-      "updateRole": "Échec de la mise à jour du rôle",
-      "deactivate": "Échec de la désactivation de la personne",
-      "remove": "Échec de la suppression de la personne"
+      "deactivate": "Échec de la désactivation de l’utilisateur",
+      "remove": "Échec de la suppression de l’utilisateur",
+      "updateRole": "Échec de la mise à jour du rôle"
     },
     "confirmations": {
       "sendActivationEmail": "Envoyer l’e-mail d’activation à {{name}} ?",
       "deactivate": "Voulez-vous vraiment désactiver {{name}} ?",
       "remove": "Voulez-vous vraiment supprimer {{name}} ?"
     },
+    "dialogs": {
+      "sendTitle": "Envoyer l’e-mail d’activation",
+      "deactivateTitle": "Désactiver l’utilisateur",
+      "removeTitle": "Supprimer l’utilisateur"
+    },
     "actions": {
+      "more": "Plus d’actions",
       "send": "Envoyer",
       "sendActivationMail": "Envoyer l’e-mail d’activation",
       "resendActivationMail": "Renvoyer l’e-mail d’activation",
-      "deactivatePerson": "Désactiver la personne",
-      "removePerson": "Supprimer la personne"
+      "deactivatePerson": "Désactiver l’utilisateur",
+      "removePerson": "Supprimer l’utilisateur"
     }
   },
-  "personForm": {
+  "userForm": {
     "messages": {
-      "created": "Personne créée avec succès.",
-      "updated": "Personne mise à jour avec succès."
+      "created": "Utilisateur créé avec succès.",
+      "updated": "Utilisateur mis à jour avec succès."
     },
     "errors": {
-      "create": "Échec de la création de la personne",
-      "update": "Échec de la mise à jour de la personne"
+      "create": "Échec de la création de l’utilisateur",
+      "update": "Échec de la mise à jour de l’utilisateur"
     },
     "fields": {
-      "fullName": "Nom complet *",
-      "emailAddress": "Adresse e-mail *",
-      "role": "Rôle *",
-      "type": "Type",
+      "fullName": "Nom complet",
+      "emailAddress": "Adresse e-mail",
+      "role": "Rôle Probo",
+      "type": "Type d’utilisateur",
       "position": "Poste",
       "positionPlaceholder": "ex. PDG, DAF, etc.",
+      "additionalEmails": "E-mails supplémentaires",
+      "additionalEmail": "E-mail supplémentaire {{index}}",
+      "additionalEmailPlaceholder": "nom@exemple.com",
       "contractStartDate": "Date de début de contrat",
       "contractEndDate": "Date de fin de contrat"
     },
@@ -2384,8 +2437,9 @@
       "SERVICE_ACCOUNT": "Compte de service"
     },
     "actions": {
-      "update": "Mettre à jour",
-      "create": "Créer"
+      "create": "Créer",
+      "addEmail": "Ajouter un e-mail",
+      "removeEmail": "Supprimer l’e-mail"
     }
   },
   "auditLogPage": {
@@ -2409,25 +2463,43 @@
   },
   "samlSsoPage": {
     "title": "Authentification unique SAML",
-    "actions": { "addConfiguration": "Ajouter une configuration" },
-    "breadcrumb": { "settings": "Paramètres SAML", "configure": "Configurer", "verifyDomain": "Vérifier le domaine" }
+    "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie.",
+    "actions": { "add": "Ajouter le SSO SAML", "previous": "Préc.", "next": "Suiv." }
   },
   "scimPage": {
-    "manualScim": {
-      "title": "SCIM manuel",
-      "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé ci-dessus. Cela nécessite de configurer l’URL du point de terminaison SCIM et le jeton porteur dans votre fournisseur d’identité."
+    "title": "SCIM",
+    "description": "Connectez votre fournisseur d’identité pour synchroniser automatiquement les utilisateurs de votre organisation.",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Connectez Google Workspace ou Google Cloud Identity pour synchroniser automatiquement les utilisateurs via SCIM.",
+        "action": "Connecter"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Connectez Microsoft 365 pour synchroniser automatiquement les utilisateurs via SCIM.",
+        "action": "Connecter"
+      },
+      "manual": {
+        "title": "SCIM manuel",
+        "description": "Configurez SCIM manuellement si votre fournisseur d’identité n’est pas listé.",
+        "action": "Configurer"
+      }
     },
-    "provisioningEventHistory": "Historique des événements de provisionnement",
+    "eventHistory": "Historique des événements",
+    "connecting": "Connexion du fournisseur d’identité",
     "export": {
       "title": "Exporter les événements SCIM",
       "description": "Sélectionnez une plage de dates pour exporter les événements SCIM au format CSV. Vous recevrez un e-mail avec un lien de téléchargement.",
       "fields": { "from": "Du", "to": "Au" },
-      "actions": { "export": "Exporter", "exporting": "Exportation..." },
+      "actions": { "export": "Exporter", "cancel": "Annuler" },
       "messages": {
-        "successTitle": "Succès",
         "success": "Export démarré. Vous recevrez un e-mail avec un lien de téléchargement lorsqu’il sera prêt."
       },
-      "errors": { "title": "Erreur", "request": "Échec de la demande d’export des événements SCIM" }
+      "errors": {
+        "request": "Échec de la demande d’export des événements SCIM",
+        "range": "La plage de dates ne peut pas dépasser un an"
+      }
     }
   },
   "authLayout": {
@@ -2453,10 +2525,6 @@
       "uninstalling": "Désinstallation..."
     }
   },
-  "connectorList": {
-    "title": "Fournisseur d’identité",
-    "description": "Connectez votre fournisseur d’identité pour synchroniser automatiquement les utilisateurs de votre organisation. Une fois connecté, vous n’avez plus besoin de configurer SCIM manuellement."
-  },
   "editSamlConfigurationForm": {
     "messages": {
       "updated": "Configuration SAML mise à jour avec succès."
@@ -2467,7 +2535,6 @@
   },
   "googleWorkspaceConnector": {
     "name": "Google Workspace / Cloud Identity",
-    "connectDescription": "Connectez Google Workspace ou Google Cloud Identity pour synchroniser automatiquement les utilisateurs via SCIM.",
     "connectedOn": "Connecté le {{date}}",
     "status": {
       "disabled": "Désactivé",
@@ -2480,23 +2547,26 @@
       "excludedUsersUpdated": "Noms d’utilisateur exclus mis à jour avec succès"
     },
     "errors": {
-      "bridgeSync": "Le pont ne parvient pas à se synchroniser actuellement. Consultez l’historique des événements de provisionnement pour plus de détails.",
+      "bridgeSync": "Le pont ne parvient pas à se synchroniser actuellement. Consultez l’historique des événements pour plus de détails.",
       "bridgeDisabled": "Le pont est désactivé",
-      "bridgeFailed": "Le pont est en état d’erreur"
+      "bridgeFailed": "Le pont est en état d’erreur",
+      "update": "Échec de la mise à jour des utilisateurs exclus",
+      "disconnect": "Échec de la déconnexion de Google Workspace / Cloud Identity"
     },
     "actions": {
-      "connect": "Connecter",
       "settings": "Paramètres",
       "add": "Ajouter",
       "remove": "Retirer",
-      "disconnect": "Déconnecter",
-      "disconnecting": "Déconnexion en cours..."
+      "disconnect": "Déconnecter"
     },
+    "excludedCount_one": "{{count}} utilisateur exclu",
+    "excludedCount_other": "{{count}} utilisateurs exclus",
     "settings": {
       "title": "Paramètres Google Workspace / Cloud Identity",
       "excludedUserNames": "Noms d’utilisateur exclus",
       "excludedUserNamesDescription": "Les utilisateurs portant ces noms ne seront pas synchronisés depuis Google Workspace / Cloud Identity.",
-      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Google Workspace / Cloud Identity seront synchronisés."
+      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Google Workspace / Cloud Identity seront synchronisés.",
+      "invalidEmail": "Saisissez une adresse e-mail valide"
     },
     "disconnect": {
       "title": "Déconnecter Google Workspace / Cloud Identity",
@@ -2506,7 +2576,6 @@
   },
   "microsoft365Connector": {
     "name": "Microsoft 365",
-    "connectDescription": "Connectez Microsoft 365 pour synchroniser automatiquement les utilisateurs via SCIM.",
     "connectedOn": "Connecté le {{date}}",
     "status": {
       "disabled": "Désactivé",
@@ -2519,29 +2588,43 @@
       "excludedUsersUpdated": "Noms d’utilisateur exclus mis à jour avec succès"
     },
     "errors": {
-      "bridgeSync": "Le pont ne parvient actuellement pas à se synchroniser. Consultez l’historique des événements de provisionnement pour plus de détails.",
+      "bridgeSync": "Le pont ne parvient actuellement pas à se synchroniser. Consultez l’historique des événements pour plus de détails.",
       "bridgeDisabled": "Le pont est désactivé",
-      "bridgeFailed": "Le pont est en état d’erreur"
+      "bridgeFailed": "Le pont est en état d’erreur",
+      "update": "Échec de la mise à jour des utilisateurs exclus",
+      "disconnect": "Échec de la déconnexion de Microsoft 365"
     },
     "actions": {
-      "connect": "Connecter",
       "settings": "Paramètres",
       "add": "Ajouter",
       "remove": "Retirer",
-      "disconnect": "Déconnecter",
-      "disconnecting": "Déconnexion en cours..."
+      "disconnect": "Déconnecter"
     },
+    "excludedCount_one": "{{count}} utilisateur exclu",
+    "excludedCount_other": "{{count}} utilisateurs exclus",
     "settings": {
       "title": "Paramètres Microsoft 365",
       "excludedUserNames": "Noms d’utilisateur exclus",
       "excludedUserNamesDescription": "Les utilisateurs portant ces noms d’utilisateur ne seront pas synchronisés depuis Microsoft 365.",
-      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Microsoft 365 seront synchronisés."
+      "noExcludedUserNames": "Aucun nom d’utilisateur exclu. Tous les utilisateurs Microsoft 365 seront synchronisés.",
+      "invalidEmail": "Saisissez une adresse e-mail valide"
     },
     "disconnect": {
       "title": "Déconnecter Microsoft 365",
       "description": "Cette action déconnectera votre intégration Microsoft 365. Les utilisateurs ne seront plus synchronisés automatiquement via SCIM.",
       "warning": "Cette action est irréversible."
     }
+  },
+  "newSamlSsoPage": {
+    "title": "Ajouter le SSO SAML",
+    "description": "Configurez l’authentification unique SAML 2.0 pour un domaine de messagerie.",
+    "back": "SSO SAML",
+    "notFound": "Vous ne pouvez pas ajouter le SSO SAML à cette organisation"
+  },
+  "samlConfigurationPage": {
+    "title": "SSO SAML",
+    "back": "SSO SAML",
+    "notFound": "Configuration SAML introuvable"
   },
   "newSamlConfigurationForm": {
     "messages": {
@@ -2553,18 +2636,17 @@
   },
   "samlConfigurationForm": {
     "sections": {
-      "basic": "Configuration de base",
-      "identityProvider": "Configuration du fournisseur d’identité",
+      "identityProvider": "Fournisseur d’identité",
       "attributeMapping": "Mappage des attributs"
     },
     "fields": {
-      "emailDomain": "Domaine e-mail *",
+      "emailDomain": "Domaine e-mail",
       "emailDomainLocked": "Le domaine e-mail ne peut pas être modifié après la création",
       "emailDomainHelp": "Le domaine e-mail auquel cette configuration SAML s’applique (par ex. example.com)",
-      "enforcementPolicy": "Politique d’application *",
-      "idpEntityId": "ID d’entité IdP *",
-      "idpSsoUrl": "URL SSO de l’IdP *",
-      "idpCertificate": "Certificat X.509 de l’IdP *",
+      "enforcementPolicy": "Politique d’application",
+      "idpEntityId": "ID d’entité IdP",
+      "idpSsoUrl": "URL SSO de l’IdP",
+      "idpCertificate": "Certificat X.509 de l’IdP",
       "emailAttribute": "Attribut e-mail",
       "firstNameAttribute": "Attribut prénom",
       "lastNameAttribute": "Attribut nom",
@@ -2582,108 +2664,85 @@
       "optional": "Les membres de votre équipe peuvent utiliser soit l’authentification unique, soit leur mot de passe pour se connecter"
     },
     "actions": {
-      "update": "Mettre à jour la configuration",
-      "create": "Créer la configuration"
+      "update": "Mettre à jour la configuration"
     }
   },
   "samlConfigurationList": {
     "messages": {
-      "deleted": "Configuration SAML supprimée avec succès."
+      "deleted": "Configuration SAML supprimée avec succès.",
+      "copied": "Copié dans le presse-papiers"
     },
     "errors": {
-      "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer."
+      "delete": "Échec de la suppression de la configuration SAML. Veuillez réessayer.",
+      "copy": "Échec de la copie dans le presse-papiers"
     },
     "delete": {
       "title": "Supprimer la configuration SAML",
       "description": "Voulez-vous vraiment supprimer la configuration SAML pour {{domain}} ? Cette action est irréversible."
     },
     "empty": {
-      "title": "Aucune configuration SAML",
-      "description": "Configurez l’authentification unique SAML 2.0 pour votre organisation en ajoutant une configuration pour chaque domaine de messagerie."
+      "description": "Configurez l’authentification unique SAML 2.0 pour chaque domaine de messagerie."
     },
-    "columns": {
-      "configurationId": "ID de configuration",
-      "emailDomain": "Domaine de messagerie",
-      "domainStatus": "Statut du domaine",
-      "samlStatus": "Statut SAML",
-      "enforcement": "Application",
+    "pending": {
+      "description": "Ajoutez un enregistrement <type>TXT</type> DNS pour vérifier que vous contrôlez ce domaine."
+    },
+    "dns": {
+      "name": "Nom",
+      "value": "Valeur",
+      "copyName": "Copier le nom",
+      "copyValue": "Copier la valeur",
+      "note": "Les modifications DNS peuvent prendre jusqu’à 48 heures pour se propager, mais se terminent généralement en quelques minutes."
+    },
+    "enforcement": {
+      "optional": "Le SSO est <policy>facultatif</policy>. Les membres peuvent utiliser l’authentification unique ou un mot de passe.",
+      "required": "Le SSO est <policy>obligatoire</policy>. Les membres doivent utiliser l’authentification unique pour se connecter.",
+      "off": "Le SSO est <policy>désactivé</policy>. Les membres doivent utiliser leur mot de passe."
+    },
+    "signup": {
+      "enabled": "L’inscription via SAML est <policy>activée</policy>. Les nouveaux utilisateurs de ce domaine peuvent rejoindre automatiquement.",
+      "disabled": "L’inscription via SAML est <policy>désactivée</policy>. Seuls les utilisateurs existants peuvent se connecter."
+    },
+    "fields": {
       "ssoUrl": "URL SSO"
     },
-    "status": {
-      "verified": "Vérifié",
-      "pendingVerification": "Vérification en attente",
-      "enabled": "Activé",
-      "disabled": "Désactivé"
+    "title": {
+      "pending": "Vérifiez ce domaine",
+      "active": "Le SSO est actif",
+      "off": "Le SSO est désactivé"
     },
     "actions": {
       "delete": "Supprimer",
-      "clickToCopy": "Cliquer pour copier",
-      "copied": "Copié !",
+      "cancel": "Annuler",
       "copyUrl": "Copier l’URL",
-      "edit": "Modifier",
-      "verifyDomain": "Vérifier le domaine"
-    }
-  },
-  "samlDomainVerifyDialog": {
-    "title": "Vérifier la propriété du domaine",
-    "description": "Ajoutez l’enregistrement TXT suivant à la configuration DNS de votre domaine pour vérifier la propriété :",
-    "fields": {
-      "hostName": "Hôte/Nom :",
-      "type": "Type :",
-      "value": "Valeur :"
-    },
-    "hostHint": "ou utilisez le nom de votre domaine",
-    "actions": {
-      "copy": "Copier",
-      "copied": "Copié !"
-    },
-    "note": {
-      "label": "Remarque :",
-      "description": "Les modifications DNS peuvent prendre jusqu’à 48 heures pour se propager, mais se terminent généralement en quelques minutes."
+      "open": "Ouvrir"
     }
   },
   "scimConfiguration": {
     "errors": {
-      "title": "Erreur",
-      "create": "La configuration SCIM manuelle a échoué"
+      "create": "La configuration SCIM manuelle a échoué",
+      "copy": "Impossible de copier dans le presse-papiers",
+      "regenerate": "Échec de la régénération du jeton porteur",
+      "delete": "Échec de la suppression de la configuration SCIM"
     },
     "messages": {
-      "configured": {
-        "title": "Configuration SCIM manuelle effectuée"
-      },
       "copyToken": "Copiez le jeton porteur maintenant. Il ne sera plus affiché ensuite.",
-      "deleted": {
-        "title": "Configuration SCIM manuelle supprimée",
-        "description": "Toutes les adhésions provisionnées par SCIM ont été changées vers une source manuelle."
-      },
-      "regenerated": {
-        "title": "Jeton porteur régénéré",
-        "description": "Copiez le nouveau jeton porteur maintenant. Il ne sera plus affiché ensuite."
-      },
+      "deleted": "Toutes les adhésions provisionnées par SCIM ont été changées vers une source manuelle.",
+      "regenerated": "Copiez le nouveau jeton porteur maintenant. Il ne sera plus affiché ensuite.",
       "copied": "Copié dans le presse-papiers"
     },
-    "empty": {
-      "title": "Le SCIM manuel n’est pas configuré",
-      "description": "Générez un point de terminaison SCIM et un jeton porteur pour configurer manuellement votre fournisseur d’identité."
-    },
-    "active": {
-      "title": "SCIM manuel actif",
-      "description": "Utilisez ces identifiants pour configurer SCIM dans votre fournisseur d’identité."
-    },
+    "configuredOn": "Configuré le {{date}}",
     "fields": {
       "endpointUrl": "URL du point de terminaison SCIM",
       "bearerToken": "Jeton porteur"
     },
     "tokenWarning": "Ce jeton ne sera affiché qu’une seule fois. Copiez-le maintenant.",
     "actions": {
-      "enable": "Activer SCIM",
-      "enabling": "Activation...",
       "regenerateToken": "Régénérer le jeton",
-      "regenerating": "Régénération...",
       "deleteConfiguration": "Supprimer la configuration",
       "cancel": "Annuler",
       "delete": "Supprimer",
-      "deleting": "Suppression..."
+      "copyEndpointUrl": "Copier l’URL du point de terminaison SCIM",
+      "copyBearerToken": "Copier le jeton porteur"
     },
     "delete": {
       "title": "Supprimer la configuration SCIM manuelle",
@@ -2697,13 +2756,19 @@
     }
   },
   "scimEventList": {
-    "columns": {
-      "time": "Heure",
-      "method": "Méthode",
-      "path": "Chemin",
-      "result": "Résultat"
+    "details": {
+      "user": "Utilisateur",
+      "ipAddress": "Adresse IP",
+      "statusCode": "Code de statut",
+      "error": "Erreur"
     },
-    "empty": "Aucun événement SCIM enregistré pour le moment."
+    "request": "Requête",
+    "response": "Réponse",
+    "empty": "Aucun événement SCIM enregistré pour le moment.",
+    "copiedToClipboard": "Copié dans le presse-papiers",
+    "copy": "Copier",
+    "copyFailed": "Impossible de copier dans le presse-papiers",
+    "actions": { "previous": "Précédent", "next": "Suivant" }
   },
   "accessReviewCampaignsPage": {
     "title": "Campagnes",
@@ -2783,7 +2848,7 @@
         "reconnectDescription": "Reconnectez cette source pour rétablir l’accès aux organisations.",
         "credentialsDescription": "Probo ne peut pas lire cette source avec les identifiants actuels. Vérifiez les identifiants et les permissions dont ils disposent sur {{provider}}.",
         "notAuthorizedTitle": "{{provider}} a refusé cette requête",
-        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les permissions dont ils disposent sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
+        "notAuthorizedDescription": "{{provider}} a accepté les identifiants mais a refusé la requête envoyée par Probo. Vérifiez les paramètres saisis pour cette source, les permissions dont disposent ces identifiants sur {{provider}}, et si votre offre inclut l’API utilisée par Probo."
       }
     }
   },
@@ -3058,7 +3123,12 @@
     "errors": {
       "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
       "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}"
+      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
+      "rejected": {
+        "better_stack_team_not_found": "Better Stack n’a aucune équipe portant ce nom pour ce jeton API. Les noms d’équipe sont sensibles à la casse : copiez le nom exact depuis Settings > Teams dans Better Stack, ou utilisez un jeton API d’équipe.",
+        "supabase_organization_not_found": "Supabase n’a aucune organisation avec ce slug. Copiez-le depuis l’URL de l’organisation dans le tableau de bord Supabase (supabase.com/dashboard/org/<slug>).",
+        "supabase_organization_not_accessible": "Ce jeton d’accès ne peut pas lire les membres de cette organisation. Créez un jeton avec un accès aux ressources de type Organization incluant cette organisation, et Organization Members réglé sur Read."
+      }
     },
     "actions": {
       "connect": "Connecter",
@@ -3628,8 +3698,8 @@
       "optimizing": "5 - Optimisé"
     },
     "errors": {
-      "linkMeasure": "Échec de l’association de la mesure",
-      "unlinkMeasure": "Échec de la dissociation de la mesure",
+      "linkInternalControl": "Échec de l’association du contrôle interne",
+      "unlinkInternalControl": "Échec de la dissociation du contrôle interne",
       "linkDocument": "Échec de l’association du document",
       "unlinkDocument": "Échec de la dissociation du document",
       "linkAudit": "Échec de l’association de l’audit",
@@ -3717,10 +3787,28 @@
       "update": "Mettre à jour le référentiel"
     }
   },
-  "measureDetailPage": {
-    "deleteConfirmation": "Cette action supprimera définitivement la mesure « {{name}} ». Elle est irréversible.",
+  "internalControlDetailPage": {
+    "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Elle est irréversible.",
     "fields": {
-      "selectState": "Sélectionner un état"
+      "selectState": "Sélectionner un statut",
+      "code": "Code",
+      "owner": "Responsable",
+      "reviewer": "Relecteur",
+      "operatingFrequency": "Fréquence d’exploitation",
+      "evidenceCadence": "Cadence des preuves",
+      "testingCadence": "Cadence des tests",
+      "nextEvidenceDue": "Preuve due",
+      "nextTestDue": "Test dû"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Lors d’un événement"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Non mis en œuvre",
+      "in_progress": "En cours",
+      "implemented": "Mis en œuvre",
+      "operating": "En exploitation"
     },
     "actions": {
       "edit": "Modifier",
@@ -3743,30 +3831,30 @@
       "thirdParties": "Tiers"
     }
   },
-  "measuresPage": {
-    "title": "Mesures",
-    "description": "Les mesures sont des actions mises en œuvre pour réduire le risque. Ajoutez-en pour suivre leur état de mise en œuvre.",
+  "internalControlsPage": {
+    "title": "Contrôles internes",
+    "description": "Les contrôles internes sont des dispositifs nommés, avec un responsable, qui tournent selon une cadence, produisent des preuves et couvrent plusieurs exigences de référentiel.",
     "messages": {
-      "imported": "Mesures importées avec succès.",
+      "imported": "Contrôles internes importés avec succès.",
       "error": "Erreur",
       "success": "Succès",
-      "deleted": "Mesure supprimée avec succès"
+      "deleted": "Contrôle interne supprimé avec succès"
     },
     "errors": {
-      "import": "Échec de l’importation des mesures",
-      "delete": "Échec de la suppression de la mesure"
+      "import": "Échec de l’importation des contrôles internes",
+      "delete": "Échec de la suppression du contrôle interne"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement la mesure « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Cette action est irréversible.",
     "actions": {
       "import": "Importer",
-      "newMeasure": "Nouvelle mesure",
+      "newInternalControl": "Nouveau contrôle interne",
       "loading": "Chargement...",
       "loadMore": "Charger plus",
       "edit": "Modifier",
       "delete": "Supprimer"
     },
     "filters": {
-      "searchPlaceholder": "Rechercher des mesures...",
+      "searchPlaceholder": "Rechercher des contrôles internes...",
       "allStates": "Tous les états",
       "allCategories": "Toutes les catégories"
     },
@@ -3777,13 +3865,15 @@
       "not_started": "Non commencé"
     },
     "columns": {
-      "measure": "Mesure",
+      "internalControl": "Contrôle interne",
+      "code": "Code",
       "category": "Catégorie",
-      "state": "État"
+      "state": "État",
+      "status": "Statut"
     },
     "empty": {
-      "title": "Aucune mesure pour l’instant",
-      "description": "Créez votre première mesure pour commencer."
+      "title": "Aucun contrôle interne pour l’instant",
+      "description": "Créez votre premier contrôle interne pour commencer."
     }
   },
   "linkedThirdPartiesCard": {
@@ -3807,7 +3897,7 @@
   },
   "createEvidenceDialog": {
     "breadcrumb": {
-      "measureDetail": "Détail de la mesure",
+      "internalControlDetail": "Détails du contrôle interne",
       "createEvidence": "Créer une preuve"
     },
     "tabs": {
@@ -3868,31 +3958,46 @@
       "download": "Télécharger le fichier"
     }
   },
-  "measureFormDialog": {
+  "internalControlFormDialog": {
     "breadcrumb": {
-      "measures": "Mesures",
-      "editMeasure": "Modifier la mesure",
-      "newMeasure": "Nouvelle mesure"
+      "internalControls": "Contrôles internes",
+      "editInternalControl": "Modifier le contrôle interne",
+      "newInternalControl": "Nouveau contrôle interne"
     },
     "messages": {
-      "created": "Mesure créée avec succès."
+      "created": "Contrôle interne créé avec succès."
     },
     "errors": {
-      "create": "Échec de la création de la mesure"
+      "create": "Échec de la création du contrôle interne"
     },
     "validation": {
       "nameRequired": "Le nom est requis",
-      "categoryRequired": "La catégorie est requise"
+      "categoryRequired": "La catégorie est requise",
+      "reviewerDistinct": "Le relecteur doit être une personne différente du responsable",
+      "operatingIntervalRequired": "Indiquez tous les combien le contrôle s’exécute"
     },
     "fields": {
-      "name": "Nom de la mesure",
-      "namePlaceholder": "Titre de la mesure",
+      "name": "Nom",
+      "namePlaceholder": "Titre du contrôle",
       "description": "Description",
       "descriptionPlaceholder": "Ajouter une description",
       "category": "Catégorie",
       "categoryPlaceholder": "Sélectionner une catégorie",
       "state": "État",
-      "statePlaceholder": "Sélectionner un état"
+      "statePlaceholder": "Sélectionner un état",
+      "code": "Code",
+      "codePlaceholder": "IC-ACCESS-01",
+      "notSet": "Non défini",
+      "controlType": "Type",
+      "nature": "Nature",
+      "operatingFrequency": "Fréquence d’exploitation",
+      "operatingEvent": "Événement",
+      "operatingEventPlaceholder": "lorsqu’une personne part",
+      "evidenceCadence": "Cadence des preuves",
+      "testingCadence": "Cadence des tests",
+      "implementationStatus": "Statut de mise en œuvre",
+      "owner": "Responsable",
+      "reviewer": "Relecteur"
     },
     "properties": "Propriétés",
     "states": {
@@ -3903,12 +4008,33 @@
       "unknown": "Inconnu",
       "not_implemented": "Non mis en œuvre"
     },
+    "controlTypes": {
+      "preventive": "Préventif",
+      "detective": "Détectif",
+      "corrective": "Correctif"
+    },
+    "natures": {
+      "manual": "Manuel"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Lorsqu’un événement se produit",
+      "periodic": "Tous les"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Non mis en œuvre",
+      "in_progress": "En cours",
+      "implemented": "Mis en œuvre",
+      "operating": "En exploitation"
+    },
     "actions": {
-      "create": "Créer une mesure",
-      "update": "Mettre à jour la mesure"
+      "create": "Créer le contrôle interne",
+      "update": "Mettre à jour le contrôle interne",
+      "addDuration": "Ajouter une durée",
+      "clearDuration": "Effacer la durée"
     }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Preuves",
     "columns": {
       "name": "Nom",
@@ -3931,7 +4057,7 @@
       "delete": "Supprimer"
     }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
     "actions": {
       "newTask": "Nouvelle tâche"
     }
@@ -4406,7 +4532,7 @@
     },
     "tabs": {
       "overview": "Vue d’ensemble",
-      "measures": "Mesures",
+      "internalControls": "Contrôles internes",
       "documents": "Documents",
       "controls": "Contrôles",
       "obligations": "Obligations",
@@ -4952,13 +5078,13 @@
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "Aucune mesure",
+    "progressEmpty": "Aucun contrôle interne",
     "actions": {
       "tasks": "Tâches",
       "edit": "Modifier",
       "delete": "Supprimer",
-      "expand": "Afficher les mesures",
-      "collapse": "Masquer les mesures"
+      "expand": "Afficher les contrôles internes",
+      "collapse": "Masquer les contrôles internes"
     }
   },
   "riskTreatmentPlansPage": {
@@ -4974,26 +5100,26 @@
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "actions": {
-      "measures": "Mesures",
+      "internalControls": "Contrôles internes",
       "edit": "Modifier",
       "delete": "Supprimer"
     }
   },
-  "treatmentPlanMeasureList": {
-    "title": "Mesures",
-    "empty": "Aucune mesure liée pour le moment.",
-    "deleted": "Mesure supprimée",
-    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de mesures liées.",
+  "treatmentPlanInternalControlList": {
+    "title": "Contrôles internes",
+    "empty": "Aucun contrôle interne lié pour le moment.",
+    "deleted": "Contrôle interne supprimé",
+    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de contrôles internes liés.",
     "actions": {
-      "create": "Nouvelle mesure",
-      "link": "Lier une mesure",
+      "create": "Nouveau contrôle interne",
+      "link": "Lier un contrôle interne",
       "unlink": "Délier",
       "showMore": "Afficher plus"
     }
   },
-  "treatmentPlanMeasuresDialog": {
-    "title": "Mesures du plan de traitement",
-    "loading": "Chargement des mesures…",
+  "treatmentPlanInternalControlsDialog": {
+    "title": "Contrôles internes du plan de traitement",
+    "loading": "Chargement des contrôles internes…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
@@ -5453,6 +5579,7 @@
   },
   "thirdPartiesPage": {
     "description": "Les tiers sont des services et fournisseurs externes utilisés par votre entreprise. Ajoutez-les pour suivre leur risque et leur statut de conformité.",
+    "searchPlaceholder": "Rechercher des tiers...",
     "actions": {
       "document": "Document",
       "publish": "Publier",
@@ -6169,9 +6296,10 @@
     "notes": "Notes"
   },
   "reactivateSCIMBridge": {
-    "actions": { "reactivate": "Réactiver", "reactivating": "Réactivation..." },
+    "actions": { "reactivate": "Réactiver" },
     "dialog": { "title": "Réactiver le pont SCIM", "description": "La prochaine synchronisation est planifiée pour maintenant. Les erreurs consécutives sont remises à zéro, et un pont en échec, désactivé ou bloqué redevient actif." },
-    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." }
+    "messages": { "success": "Le pont SCIM a été réactivé. La prochaine exécution est planifiée pour maintenant." },
+    "errors": { "reactivate": "Échec de la réactivation du pont SCIM" }
   },
   "country": {
     "GLOBAL": "Mondial",

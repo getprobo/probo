@@ -58,7 +58,7 @@ export interface NavRailProps {
 
 function isGovernanceVisible(permissions: NavPermissions): boolean {
   return permissions.canListTasks
-    || permissions.canListMeasures
+    || permissions.canListInternalControls
     || permissions.canListFrameworks
     || permissions.canListAudits
     || permissions.canListFindings
@@ -78,8 +78,11 @@ function isPrivacyVisible(permissions: NavPermissions): boolean {
   return permissions.canListRightsRequests
     || permissions.canListProcessingActivities
     || permissions.canListDataProtectionImpactAssessments
-    || permissions.canListTransferImpactAssessments
-    || permissions.canListCookieBanners;
+    || permissions.canListTransferImpactAssessments;
+}
+
+function isCmpVisible(permissions: NavPermissions): boolean {
+  return permissions.canListCookieBanners;
 }
 
 function isItamVisible(permissions: NavPermissions): boolean {
@@ -110,6 +113,7 @@ function isSettingsVisible(
     || permissions.canGetContext
     || permissions.canListWebhookSubscriptions
     || (slackbotAvailable && (permissions.canConnectSlack || permissions.canUninstallSlack))
+    || permissions.canListConnectors
     || permissions.canListMembers
     || permissions.canListAuditLogEntries;
 }
@@ -128,6 +132,8 @@ function navGroupIsVisible(
       return isTprmVisible(permissions);
     case "privacy":
       return isPrivacyVisible(permissions);
+    case "cmp":
+      return isCmpVisible(permissions);
     case "itam":
       return isItamVisible(permissions);
     case "registries":
@@ -162,8 +168,8 @@ function governanceHref(organizationId: string, permissions: NavPermissions): st
   if (permissions.canListTasks) {
     return groupHref(organizationId, "governance", "tasks");
   }
-  if (permissions.canListMeasures) {
-    return groupHref(organizationId, "governance", "measures");
+  if (permissions.canListInternalControls) {
+    return groupHref(organizationId, "governance", "internal-controls");
   }
   if (permissions.canListFrameworks) {
     return groupHref(organizationId, "governance", "frameworks");
@@ -197,10 +203,7 @@ function privacyHref(organizationId: string, permissions: NavPermissions): strin
   if (permissions.canListDataProtectionImpactAssessments) {
     return groupHref(organizationId, "privacy", "dpias");
   }
-  if (permissions.canListTransferImpactAssessments) {
-    return groupHref(organizationId, "privacy", "tias");
-  }
-  return groupHref(organizationId, "privacy", "cookie-banners/new");
+  return groupHref(organizationId, "privacy", "tias");
 }
 
 function registriesHref(organizationId: string, permissions: NavPermissions): string {
@@ -244,7 +247,13 @@ function settingsHref(
     return groupHref(organizationId, "settings", "slackbot");
   }
   if (permissions.canListMembers) {
-    return groupHref(organizationId, "settings", "people");
+    return groupHref(organizationId, "settings", "users");
+  }
+  if (permissions.canListAuditLogEntries) {
+    return groupHref(organizationId, "settings", "audit-log");
+  }
+  if (permissions.canListConnectors) {
+    return groupHref(organizationId, "settings", "integrations");
   }
   return groupHref(organizationId, "settings", "audit-log");
 }
@@ -304,6 +313,14 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
               label={t("nav.groups.privacy")}
               to={privacyHref(organizationId, permissions)}
               active={activeKey === "privacy"}
+            />
+          )}
+          {isCmpVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("cmp").icon}
+              label={t("nav.groups.cmp")}
+              to={groupHref(organizationId, "cmp", "cookie-banners")}
+              active={activeKey === "cmp"}
             />
           )}
           {isItamVisible(permissions) && (

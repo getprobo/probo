@@ -23,7 +23,9 @@ import { tv } from "tailwind-variants/lite";
 export const tasksPage = tv({
   slots: {
     root: "flex flex-col gap-6",
-    actions: "flex items-center gap-2",
+    header: "flex items-start justify-between gap-4",
+    intro: "flex min-w-0 flex-col gap-2",
+    actions: "flex shrink-0 items-center gap-2",
   },
 });
 
@@ -126,8 +128,12 @@ export const createTaskDialog = tv({
   slots: {
     form: "flex h-full min-h-0 flex-1 flex-col gap-4",
     fields: "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto",
-    descriptionField: "flex min-h-0 flex-1 flex-col",
-    editor: "min-h-80 py-3! [&_.tiptap]:min-h-full [&_.tiptap>p:first-child]:mt-0",
+    descriptionField: "flex flex-col",
+    editor: [
+      "h-64 flex-none! overflow-auto rounded-2 border border-sand-a5",
+      "py-0! [&_.tiptap]:min-h-full [&_.tiptap]:py-3",
+      "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
+    ],
     value: "flex items-center gap-2",
   },
 });

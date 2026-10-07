@@ -31,7 +31,7 @@ var (
 const (
 	OrganizationEntityType                           uint16 = 0
 	FrameworkEntityType                              uint16 = 1
-	MeasureEntityType                                uint16 = 2
+	InternalControlEntityType                        uint16 = 2
 	TaskEntityType                                   uint16 = 3
 	EvidenceEntityType                               uint16 = 4
 	ConnectorEntityType                              uint16 = 5
@@ -165,6 +165,7 @@ const (
 	TaskActivityEntityType                           uint16 = 133
 	TaskSyncJobEntityType                            uint16 = 134
 	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
+	ConnectorAccountEntityType                       uint16 = 136
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -173,8 +174,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &Organization{ID: id}, true
 	case FrameworkEntityType:
 		return &Framework{ID: id}, true
-	case MeasureEntityType:
-		return &Measure{ID: id}, true
+	case InternalControlEntityType:
+		return &InternalControl{ID: id}, true
 	case TaskEntityType:
 		return &Task{ID: id}, true
 	case EvidenceEntityType:
@@ -419,6 +420,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &TaskActivity{ID: id}, true
 	case TaskSyncJobEntityType:
 		return &TaskSyncJob{ID: id}, true
+	case ConnectorAccountEntityType:
+		return &ConnectorAccount{ID: id}, true
 	default:
 		return nil, false
 	}

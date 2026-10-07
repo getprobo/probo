@@ -32,7 +32,12 @@ import (
 
 func neonRegistration() *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderNeon,
+		Provider: coredata.ConnectorProviderNeon,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.NeonConnectorSettings) string {
+				return s.OrganizationID
+			},
+		),
 		DisplayName:      "Neon",
 		DocumentationURL: accessReviewDocsURL("neon"),
 		// Neon's API authenticates with an API key (napi_...) presented

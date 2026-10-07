@@ -51,7 +51,7 @@ export const riskDetailLayoutQuery = graphql`
         referenceId
         name
         description
-        measuresInfo: measures(first: 0) {
+        internalControlsInfo: internalControls(first: 0) {
           totalCount
         }
         documentsInfo: documents(first: 0) {
@@ -154,7 +154,7 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
   };
 
   const documentsCount = risk.documentsInfo?.totalCount ?? 0;
-  const measuresCount = risk.measuresInfo?.totalCount ?? 0;
+  const internalControlsCount = risk.internalControlsInfo?.totalCount ?? 0;
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
   const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
   const scenariosCount = risk.scenariosInfo?.totalCount ?? 0;
@@ -201,9 +201,9 @@ export default function RiskDetailLayout(props: RiskDetailLayoutProps) {
       />
       <Tabs>
         <TabLink to={`${baseTabUrl}/overview`}>{t("riskDetailLayout.tabs.overview")}</TabLink>
-        <TabLink to={`${baseTabUrl}/measures`}>
-          {t("riskDetailLayout.tabs.measures")}
-          <TabBadge>{measuresCount}</TabBadge>
+        <TabLink to={`${baseTabUrl}/internal-controls`}>
+          {t("riskDetailLayout.tabs.internalControls")}
+          <TabBadge>{internalControlsCount}</TabBadge>
         </TabLink>
         <TabLink to={`${baseTabUrl}/documents`}>
           {t("riskDetailLayout.tabs.documents")}

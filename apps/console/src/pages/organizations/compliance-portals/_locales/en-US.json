@@ -232,6 +232,11 @@
     "actions": {
       "toggle": "Toggle {{title}} on the compliance portal"
     },
+    "unlink": {
+      "title": "Remove audit from portal?",
+      "description": "Visitor access requests for this audit report will be removed. This cannot be undone.",
+      "confirm": "Remove"
+    },
     "noExpiry": "No expiry",
     "untitled": "Untitled",
     "states": {
@@ -453,6 +458,11 @@
     },
     "actions": {
       "toggle": "Toggle {{title}} on the compliance portal"
+    },
+    "unlink": {
+      "title": "Remove document from portal?",
+      "description": "Visitor access requests for this document will be removed. This cannot be undone.",
+      "confirm": "Remove"
     }
   },
   "thirdPartyListItem": {
@@ -738,7 +748,7 @@
   },
   "deleteFileDialog": {
     "title": "Delete file",
-    "description": "Are you sure you want to delete this file? This action cannot be undone.",
+    "description": "Visitor access requests for this file will be removed. This cannot be undone.",
     "messages": {
       "deleted": "File deleted successfully"
     },

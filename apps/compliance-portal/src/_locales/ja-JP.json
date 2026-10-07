@@ -54,6 +54,9 @@
       "trustedBy": "導入企業",
       "recentUpdates": "最新のアップデート"
     },
+    "compliance": {
+      "viewDocuments": "ドキュメントを表示"
+    },
     "recentUpdates": {
       "viewAll": "すべて表示"
     }

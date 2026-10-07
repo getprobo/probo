@@ -41,6 +41,12 @@ input TaskOrder
     field: TaskOrderField!
 }
 
+input TaskFilter {
+    query: String
+    state: TaskState
+    assignedToId: ID
+}
+
 type Task implements Node {
     id: ID!
     name: String!
@@ -54,7 +60,7 @@ type Task implements Node {
     assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
-    measure: Measure @goField(forceResolver: true)
+    internalControl: InternalControl @goField(forceResolver: true)
 
     evidences(
         first: Int
@@ -111,6 +117,42 @@ type LinearTeam {
     key: String!
 }
 
+type LinearPageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+}
+
+type LinearTeamEdge {
+    cursor: String!
+    node: LinearTeam!
+}
+
+type LinearTeamConnection {
+    edges: [LinearTeamEdge!]!
+    pageInfo: LinearPageInfo!
+}
+
+type LinearIssue {
+    id: String!
+    identifier: String!
+    title: String!
+    content: String
+    state: TaskState
+    priority: TaskPriority
+}
+
+type LinearIssueEdge {
+    cursor: String!
+    node: LinearIssue!
+}
+
+type LinearIssueConnection {
+    edges: [LinearIssueEdge!]!
+    pageInfo: LinearPageInfo!
+}
+
 type TaskConnection
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TaskConnection"
@@ -130,12 +172,13 @@ extend type Mutation {
     updateTask(input: UpdateTaskInput!): UpdateTaskPayload!
     deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
     publishTaskToLinear(input: PublishTaskToLinearInput!): PublishTaskToLinearPayload!
+    linkTaskToLinear(input: LinkTaskToLinearInput!): LinkTaskToLinearPayload!
     unlinkTaskExternal(input: UnlinkTaskExternalInput!): UnlinkTaskExternalPayload!
 }
 
 input CreateTaskInput {
     organizationId: ID!
-    measureId: ID
+    internalControlId: ID
     name: String!
     content: String
     state: TaskState
@@ -156,7 +199,7 @@ input UpdateTaskInput {
     timeEstimate: TimeSpan @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
-    measureId: ID @goField(omittable: true)
+    internalControlId: ID @goField(omittable: true)
     recurrenceInterval: TimeSpan @goField(omittable: true)
 }
 
@@ -170,7 +213,6 @@ type CreateTaskPayload {
 
 type UpdateTaskPayload {
     task: Task!
-    nextTaskEdge: TaskEdge
 }
 
 type DeleteTaskPayload {
@@ -183,6 +225,16 @@ input PublishTaskToLinearInput {
 }
 
 type PublishTaskToLinearPayload {
+    task: Task!
+}
+
+input LinkTaskToLinearInput {
+    taskId: ID!
+    teamId: String!
+    issueId: String!
+}
+
+type LinkTaskToLinearPayload {
     task: Task!
 }
 

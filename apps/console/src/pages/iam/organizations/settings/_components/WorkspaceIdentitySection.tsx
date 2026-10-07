@@ -59,6 +59,7 @@ const fragment = graphql`
   fragment WorkspaceIdentitySectionFragment on Organization {
     id
     name @required(action: THROW)
+    legalName
     logo {
       downloadUrl
     }
@@ -127,6 +128,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
   const organization = useFragment(fragment, organizationKey);
 
   const [name, setName] = useState(organization.name);
+  const [legalName, setLegalName] = useState(organization.legalName ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<string | null>(null);
@@ -168,6 +170,8 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
     || isDeletingHorizontalLogo;
   const dropzoneDisabled = !canUpdate || busy;
   const nameDirty = name !== organization.name;
+  const legalNameDirty = legalName.trim() !== (organization.legalName ?? "");
+  const identityDirty = nameDirty || legalNameDirty;
   const logoSrc = logoPreview ?? organization.logo?.downloadUrl;
   const horizontalLogoSrc = horizontalLogoPreview ?? organization.horizontalLogo?.downloadUrl;
 
@@ -248,6 +252,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
 
   function handleSubmit() {
     const nextName = name.trim();
+    const nextLegalName = legalName.trim();
     if (nextName.length === 0) {
       setErrors({ name: t("identity.errors.nameRequired") });
       return;
@@ -258,6 +263,9 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
         input: {
           organizationId: organization.id,
           name: nextName,
+          ...(legalNameDirty
+            ? { legalName: nextLegalName.length > 0 ? nextLegalName : null }
+            : {}),
         },
       },
       onCompleted(_response, payloadErrors) {
@@ -269,6 +277,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
     }).then(
       () => {
         setName(nextName);
+        setLegalName(nextLegalName);
         setErrors({});
       },
       () => {
@@ -325,20 +334,42 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
             <Callout color="sky">
               {t("identity.fields.acceptedFiles")}
             </Callout>
-            <Field label={t("identity.fields.name")} error={errors.name}>
-              <TextField
-                name="name"
-                required
-                maxLength={NAME_MAX_LENGTH}
-                value={name}
-                disabled={!canUpdate || busy}
-                onValueChange={(value) => {
-                  setName(value);
-                  setErrors({});
-                }}
-              />
-            </Field>
-            {nameDirty && canUpdate && (
+            <div className="flex flex-col gap-1">
+              <Field label={t("identity.fields.name")} error={errors.name}>
+                <TextField
+                  name="name"
+                  required
+                  maxLength={NAME_MAX_LENGTH}
+                  value={name}
+                  disabled={!canUpdate || busy}
+                  onValueChange={(value) => {
+                    setName(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
+              <Text size={1} color="neutral">
+                {t("identity.fields.nameDescription")}
+              </Text>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Field label={t("identity.fields.legalName")} error={errors.legalName}>
+                <TextField
+                  name="legalName"
+                  maxLength={NAME_MAX_LENGTH}
+                  value={legalName}
+                  disabled={!canUpdate || busy}
+                  onValueChange={(value) => {
+                    setLegalName(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
+              <Text size={1} color="neutral">
+                {t("identity.fields.legalNameDescription")}
+              </Text>
+            </div>
+            {identityDirty && canUpdate && (
               <div className={actions()}>
                 <Button
                   type="submit"

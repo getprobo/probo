@@ -21,12 +21,23 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import { CookieBannerTCFPageSkeleton } from "./tcf/CookieBannerTCFPageSkeleton";
+import { CookieBannerConfigurePageSkeleton } from "./configuration/configure/CookieBannerConfigurePageSkeleton";
+import { CookieBannerConsentRecordsPageSkeleton } from "./configuration/consent-records/CookieBannerConsentRecordsPageSkeleton";
+import { CookieBannerConfigLayoutSkeleton } from "./configuration/CookieBannerConfigLayoutSkeleton";
+import { CookieBannerInstallPageSkeleton } from "./configuration/install/CookieBannerInstallPageSkeleton";
+import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/CookieBannerResourcesPageSkeleton";
+import { CookieBannerTCFPageSkeleton } from "./configuration/tcf/CookieBannerTCFPageSkeleton";
+import { CookieBannerTrackersPageSkeleton } from "./configuration/trackers/CookieBannerTrackersPageSkeleton";
+import { CookieBannerTranslationsPageSkeleton } from "./configuration/translations/CookieBannerTranslationsPageSkeleton";
 
 export const cookieBannerRoutes = [
+  {
+    path: "cookie-banners",
+    Fallback: PageSkeleton,
+    Component: lazy(() => import("#/pages/organizations/cookie-banners/CookieBannersIndexPageLoader")),
+  },
   {
     path: "cookie-banners/new",
     Fallback: PageSkeleton,
@@ -34,57 +45,45 @@ export const cookieBannerRoutes = [
   },
   {
     path: "cookie-banners/:cookieBannerId",
-    Fallback: PageSkeleton,
+    Fallback: CookieBannerConfigLayoutSkeleton,
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigLayoutLoader")),
     children: [
       {
-        path: "configure",
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigureLayout")),
-        children: [
-          {
-            path: "",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/display/CookieBannerDisplayPageLoader")),
-          },
-          {
-            path: "settings",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerSettingsPageLoader")),
-          },
-          {
-            path: "translations",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/translations/CookieBannerTranslationsPageLoader")),
-          },
-        ],
+        path: "install",
+        Fallback: CookieBannerInstallPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/install/CookieBannerInstallPageLoader")),
       },
       {
-        path: "discovery",
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerDiscoveryLayout")),
-        children: [
-          {
-            path: "",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/CookieBannerTrackersPageLoader")),
-          },
-          {
-            path: "resources",
-            Fallback: LinkCardSkeleton,
-            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/resources/CookieBannerResourcesPageLoader")),
-          },
-        ],
+        path: "configure",
+        Fallback: CookieBannerConfigurePageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/configure/CookieBannerConfigurePageLoader")),
+      },
+      {
+        path: "translations",
+        Fallback: CookieBannerTranslationsPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/translations/CookieBannerTranslationsPageLoader")),
+      },
+      {
+        path: "trackers",
+        Fallback: CookieBannerTrackersPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/CookieBannerTrackersPageLoader")),
+      },
+      {
+        path: "resources",
+        Fallback: CookieBannerResourcesPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/resources/CookieBannerResourcesPageLoader")),
       },
       {
         path: "trail",
-        Fallback: LinkCardSkeleton,
+        Fallback: CookieBannerConsentRecordsPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/consent-records/CookieBannerConsentRecordsPageLoader")),
       },
+      {
+        path: "tcf",
+        Fallback: CookieBannerTCFPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/tcf/CookieBannerTCFPageLoader")),
+      },
     ],
-  },
-  {
-    path: "cookie-banners/:cookieBannerId/tcf",
-    Fallback: CookieBannerTCFPageSkeleton,
-    Component: lazy(() => import("#/pages/organizations/cookie-banners/tcf/CookieBannerTCFPageLoader")),
   },
   {
     path: "cookie-banners/:cookieBannerId/consent-records/:consentRecordId",

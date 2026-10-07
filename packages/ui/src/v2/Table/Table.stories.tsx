@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
 import { MemoryRouter } from "react-router";
 
 import { ButtonLink } from "../Button/ButtonLink";
@@ -114,6 +115,104 @@ export const Skeleton: Story = {
   render: () => (
     <div className="w-xl">
       <TableSkeleton variant="surface" count={3} columns={3} />
+    </div>
+  ),
+};
+
+export const SortableHeaders: Story = {
+  render: function SortableHeadersStory() {
+    const [field, setField] = useState<"name" | "email">("name");
+    const [direction, setDirection] = useState<"ASC" | "DESC">("ASC");
+
+    function headerSort(column: "name" | "email") {
+      if (field !== column) {
+        return "none" as const;
+      }
+      return direction === "ASC" ? "ascending" as const : "descending" as const;
+    }
+
+    function handleSort(column: "name" | "email") {
+      if (field !== column) {
+        setField(column);
+        setDirection("ASC");
+        return;
+      }
+      setDirection(current => current === "ASC" ? "DESC" : "ASC");
+    }
+
+    const sortedRows = [...rows].sort((left, right) => {
+      const comparison = left[field].localeCompare(right[field]);
+      return direction === "ASC" ? comparison : -comparison;
+    });
+
+    return (
+      <div className="w-xl">
+        <Table variant="surface">
+          <TableHeader>
+            <TableRow>
+              <TableColumnHeaderCell
+                sort={headerSort("name")}
+                onSort={() => handleSort("name")}
+              >
+                Full name
+              </TableColumnHeaderCell>
+              <TableColumnHeaderCell
+                sort={headerSort("email")}
+                onSort={() => handleSort("email")}
+              >
+                Email
+              </TableColumnHeaderCell>
+              <TableColumnHeaderCell>Group</TableColumnHeaderCell>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedRows.map(entry => (
+              <TableRow key={entry.email}>
+                <TableRowHeaderCell>{entry.name}</TableRowHeaderCell>
+                <TableCell>{entry.email}</TableCell>
+                <TableCell>{entry.group}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  },
+};
+
+const longToken = "https://cdn.example.com/vendor/analytics/v2/collect?id=_ga_XXXXXXXXXXXXXXXXXXXX";
+
+export const OverflowColumn: Story = {
+  render: () => (
+    <div className="flex w-80 flex-col gap-6">
+      <Table variant="surface" layout="fixed">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell overflow="truncate">Truncate</TableColumnHeaderCell>
+            <TableColumnHeaderCell width="5rem">Meta</TableColumnHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableRowHeaderCell overflow="truncate">{longToken}</TableRowHeaderCell>
+            <TableCell>Cookie</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      <Table variant="surface" layout="fixed">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell overflow="break">Break</TableColumnHeaderCell>
+            <TableColumnHeaderCell width="5rem">Meta</TableColumnHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableRowHeaderCell overflow="break">{longToken}</TableRowHeaderCell>
+            <TableCell>Cookie</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     </div>
   ),
 };

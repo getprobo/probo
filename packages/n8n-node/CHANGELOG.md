@@ -4,6 +4,80 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.243.0] - 2026-10-07
+
+### Changed
+
+- **Breaking**: Task `Create`, `Update`, `Get`, and `Get Many` treat `content` as a ProseMirror document JSON string, matching Document content. Plain text is no longer wrapped into a document, and reads return the stored JSON
+- **Breaking**: Task Comment `Create`, `Update`, `Get`, and `Get Many` treat `content` the same way. Risk Analysis `Create`, `Update`, `Fork`, `Get`, and `Get Many` treat `description` the same way
+
+## [0.242.0] - 2026-10-06
+
+### Changed
+
+- **Breaking**: the `Measure` resource is renamed to `Internal Control`
+  (resource value `measure` -> `internalControl`). Parameters named
+  `measureId` are now `internalControlId`, so saved values are dropped
+  and default to empty. `Get Many` returns `internalControls` instead
+  of `measures`. Existing workflows must reselect the resource and
+  parameters, and update expressions that read `measures`.
+- Task `Update` no longer returns the next occurrence. A recurring
+  task's next occurrence is created when its deadline passes, and the
+  interval stays on the current task until then
+
+## [0.241.0] - 2026-10-05
+
+### Added
+
+- Organization `Create` and `Update` accept a `Legal Name`, and `Update`
+  can remove it with `Clear Legal Name`. `Get` and `Get Many` return it
+- Cookie banner operations return the `corsless` capability
+- Cookie consent record `Get` and `Get Many` return the `origin`
+
+## [0.240.0] - 2026-10-05
+
+### Added
+
+- Measure `Create`, `Update`, `Get` and `Get Many` support the internal
+  control fields: `Code`, `Control Type`, `Nature`, `Operating Mode`,
+  `Operating Interval`, `Operating Event`, `Evidence Cadence`,
+  `Testing Cadence`, `Implementation Status`, `Owner ID` and
+  `Reviewer ID`
+
+## [0.239.0] - 2026-09-30
+
+### Added
+
+- Task `Get Many` can filter by `Assigned To ID`
+
+## [0.238.0] - 2026-09-25
+
+### Added
+
+- Task `Get Many` can filter by name and state
+
+## [0.237.0] - 2026-09-25
+
+### Added
+
+- Task `Link To Linear` links a task to an existing Linear issue
+- Task `List Linear Issues` searches Linear issues in a team
+
+### Changed
+
+- Task `List Linear Teams` searches and pages teams instead of returning
+  the full list
+
+## [0.236.0] - 2026-09-24
+
+### Added
+
+- Connector `Create Organization Connector`, `Discover Accounts`,
+  `Enable Accounts`, `Get`, and `Get Many` operations manage connector
+  accounts
+- Webhook `Get Events` includes Task and Task Comment event types
+- Finding `Get Many` accepts an Audit ID filter
+
 ## [0.235.0] - 2026-09-23
 
 ### Added

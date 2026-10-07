@@ -735,17 +735,17 @@ create_third_party "Snowflake" \
 
 echo "    20 third parties created"
 
-echo "  Creating measures..."
+echo "  Creating internal controls..."
 
-create_measure() {
+create_internal_control() {
   local name="$1"
   local category="$2"
 
   local resp
-  resp=$(prb_api "createMeasure: $name" '
-    mutation($input: CreateMeasureInput!) {
-      createMeasure(input: $input) {
-        measureEdge {
+  resp=$(prb_api "createInternalControl: $name" '
+    mutation($input: CreateInternalControlInput!) {
+      createInternalControl(input: $input) {
+        internalControlEdge {
           node { id }
         }
       }
@@ -757,47 +757,47 @@ create_measure() {
       category="$category"
   )")
   local id
-  id=$(echo "$resp" | jq -r '.data.createMeasure.measureEdge.node.id // empty')
+  id=$(echo "$resp" | jq -r '.data.createInternalControl.internalControlEdge.node.id // empty')
   if [ -z "$id" ]; then
-    echo "ERROR (createMeasure: $name): no measure id in response" >&2
+    echo "ERROR (createInternalControl: $name): no internal control id in response" >&2
     exit 1
   fi
 }
 
-create_measure "Information Security Policy" \
+create_internal_control "Information Security Policy" \
   "POLICY"
-create_measure "Access Control Policy" \
+create_internal_control "Access Control Policy" \
   "POLICY"
-create_measure "Incident Response Plan" \
+create_internal_control "Incident Response Plan" \
   "POLICY"
-create_measure "Data Classification Policy" \
+create_internal_control "Data Classification Policy" \
   "POLICY"
-create_measure "Acceptable Use Policy" \
+create_internal_control "Acceptable Use Policy" \
   "POLICY"
 
-create_measure "Multi-Factor Authentication" \
+create_internal_control "Multi-Factor Authentication" \
   "TECHNICAL"
-create_measure "Endpoint Detection and Response" \
+create_internal_control "Endpoint Detection and Response" \
   "TECHNICAL"
-create_measure "Full Disk Encryption" \
+create_internal_control "Full Disk Encryption" \
   "TECHNICAL"
-create_measure "Automated Vulnerability Scanning" \
+create_internal_control "Automated Vulnerability Scanning" \
   "TECHNICAL"
-create_measure "Network Segmentation and Firewall Rules" \
+create_internal_control "Network Segmentation and Firewall Rules" \
   "TECHNICAL"
-create_measure "TLS Encryption in Transit" \
+create_internal_control "TLS Encryption in Transit" \
   "TECHNICAL"
 
-create_measure "Annual Security Awareness Training" \
+create_internal_control "Annual Security Awareness Training" \
   "ORGANIZATIONAL"
-create_measure "Quarterly Access Reviews" \
+create_internal_control "Quarterly Access Reviews" \
   "ORGANIZATIONAL"
-create_measure "Background Checks for New Hires" \
+create_internal_control "Background Checks for New Hires" \
   "ORGANIZATIONAL"
-create_measure "Tabletop Disaster Recovery Exercises" \
+create_internal_control "Tabletop Disaster Recovery Exercises" \
   "ORGANIZATIONAL"
 
-echo "    15 measures created"
+echo "    15 internal controls created"
 
 echo "  Creating devices..."
 
@@ -1231,7 +1231,7 @@ echo "  Created:"
 echo "    3 frameworks, 43 controls"
 echo "    35 risks"
 echo "    20 third parties"
-echo "    15 measures"
+echo "    15 internal controls"
 echo "    8 people"
 echo "    8 devices (6 active, 1 pending, 1 revoked)"
 echo ""

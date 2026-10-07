@@ -131,6 +131,57 @@ LIMIT 1;
 	return nil
 }
 
+func (cpds *CompliancePortalDocuments) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentLinkIDs []gid.GID,
+) error {
+	if len(documentLinkIDs) == 0 {
+		*cpds = CompliancePortalDocuments{}
+		return nil
+	}
+
+	q := `
+SELECT
+	id,
+	organization_id,
+	compliance_portal_id,
+	document_id,
+	visibility,
+	created_at,
+	updated_at
+FROM
+	cp_documents
+WHERE
+	%s
+	AND id = ANY(@ids);
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"ids": documentLinkIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query compliance portal documents: %w", err)
+	}
+
+	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CompliancePortalDocument])
+	if err != nil {
+		return fmt.Errorf("cannot collect compliance portal documents: %w", err)
+	}
+
+	*cpds = documents
+
+	if len(documents) != len(gid.NewSet(documentLinkIDs...)) {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 func (cpd *CompliancePortalDocument) LoadByCompliancePortalIDAndDocumentID(
 	ctx context.Context,
 	conn pg.Querier,

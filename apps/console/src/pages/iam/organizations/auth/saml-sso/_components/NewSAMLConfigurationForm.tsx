@@ -42,21 +42,18 @@ const createSAMLConfigurationMutation = graphql`
       samlConfigurationEdge @prependEdge(connections: $connections) {
         node {
           id
-          emailDomain
-          enforcementPolicy
-          domainVerificationToken
-          domainVerifiedAt
-          testLoginUrl
-          canUpdate: permission(action: "iam:saml-configuration:update")
-          canDelete: permission(action: "iam:saml-configuration:delete")
+          ...SAMLConfigurationListItem_samlConfiguration
         }
       }
     }
   }
 `;
 
-export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
-  const { onCreate } = props;
+export function NewSAMLConfigurationForm({
+  onCreate,
+}: {
+  onCreate: (samlConfigurationId: string) => void;
+}) {
   const organizationId = useOrganizationId();
 
   const { t } = useTranslation();
@@ -87,11 +84,12 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
             idpSsoUrl: data.idpSsoUrl,
             idpCertificate: data.idpCertificate,
             autoSignupEnabled: data.autoSignupEnabled,
+            enforcementPolicy: data.enforcementPolicy,
             attributeMappings: data.attributeMappings,
           },
           connections: [connectionID],
         },
-        onCompleted: (_, e) => {
+        onCompleted: (response, e) => {
           if (e) {
             toast({
               variant: "error",
@@ -104,7 +102,11 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
             return;
           }
 
-          onCreate();
+          const samlConfigurationId
+            = response.createSAMLConfiguration?.samlConfigurationEdge.node.id;
+          if (samlConfigurationId != null && samlConfigurationId !== "") {
+            onCreate(samlConfigurationId);
+          }
         },
       });
     },
@@ -112,6 +114,9 @@ export function NewSAMLConfigurationForm(props: { onCreate: () => void }) {
   );
 
   return (
-    <SAMLConfigurationForm onSubmit={handleCreate} disabled={isCreating} />
+    <SAMLConfigurationForm
+      onSubmit={handleCreate}
+      disabled={isCreating}
+    />
   );
 }

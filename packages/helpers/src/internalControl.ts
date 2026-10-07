@@ -1,0 +1,72 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+type Translator = (s: string) => string;
+
+export const internalControlStates = [
+    "IMPLEMENTED",
+    "IN_PROGRESS",
+    "NOT_APPLICABLE",
+    "NOT_STARTED",
+    "UNKNOWN",
+    "NOT_IMPLEMENTED",
+] as const;
+
+export const internalControlTypes = [
+    "PREVENTIVE",
+    "DETECTIVE",
+    "CORRECTIVE",
+] as const;
+
+export const internalControlNatures = [
+    "MANUAL",
+] as const;
+
+export const internalControlOperatingModes = [
+    "CONTINUOUS",
+    "EVENT",
+    "PERIODIC",
+] as const;
+
+export const internalControlImplementationStatuses = [
+    "NOT_IMPLEMENTED",
+    "IN_PROGRESS",
+    "IMPLEMENTED",
+    "OPERATING",
+] as const;
+
+export function getInternalControlStateLabel(t: Translator, state: string) {
+    switch (state) {
+        case "IMPLEMENTED":
+            return t("helpers.internalControlState.implemented");
+        case "IN_PROGRESS":
+            return t("helpers.internalControlState.inProgress");
+        case "NOT_APPLICABLE":
+            return t("helpers.internalControlState.notApplicable");
+        case "NOT_STARTED":
+            return t("helpers.internalControlState.notStarted");
+        case "UNKNOWN":
+            return t("helpers.common.unknown");
+        case "NOT_IMPLEMENTED":
+            return t("helpers.internalControlState.notImplemented");
+        default:
+            return t("helpers.common.unknown");
+    }
+}

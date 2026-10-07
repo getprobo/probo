@@ -174,6 +174,8 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
 	case RiskOrderFieldCreatedAt:
 		return page.CursorKey{ID: r.ID, Value: r.CreatedAt}
+	case RiskOrderFieldUpdatedAt:
+		return page.CursorKey{ID: r.ID, Value: r.UpdatedAt}
 	case RiskOrderFieldReferenceID:
 		return page.CursorKey{ID: r.ID, Value: r.ReferenceID}
 	case RiskOrderFieldName:
@@ -232,11 +234,11 @@ func (r *Risk) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
-func (r *Risks) CountByMeasureID(
+func (r *Risks) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *RiskFilter,
 ) (int, error) {
 	q := `
@@ -248,9 +250,9 @@ WITH rsks AS (
 	FROM
 		risks r
 	INNER JOIN
-		risks_measures rm ON r.id = rm.risk_id
+		risks_internal_controls rm ON r.id = rm.risk_id
 	WHERE
-		rm.measure_id = @measure_id
+		rm.internal_control_id = @internal_control_id
 )
 SELECT
 	COUNT(id)
@@ -261,7 +263,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"measure_id": measureID}
+	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -275,11 +277,11 @@ WHERE %s
 	return count, nil
 }
 
-func (r *Risks) LoadByMeasureID(
+func (r *Risks) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[RiskOrderField],
 	filter *RiskFilter,
 ) error {
@@ -309,11 +311,11 @@ WITH rsks AS (
 	FROM
 		risks r
 	INNER JOIN
-		risks_measures rm ON r.id = rm.risk_id
+		risks_internal_controls rm ON r.id = rm.risk_id
 	LEFT JOIN
 		iam_membership_profiles p ON r.owner_profile_id = p.id
 	WHERE
-		rm.measure_id = @measure_id
+		rm.internal_control_id = @internal_control_id
 )
 SELECT
 	id,
@@ -342,7 +344,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"measure_id": measureID}
+	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())

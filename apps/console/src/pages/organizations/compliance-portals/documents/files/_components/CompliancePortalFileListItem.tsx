@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { getCompliancePortalVisibilityOptions } from "@probo/helpers";
+import { getCompliancePortalLinkedVisibilityOptions } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
 import { Badge, Button, Field, IconArrowLink, IconPencil, IconTrashCan, Option, Td, Tr } from "@probo/ui";
 import { useCallback } from "react";
@@ -76,7 +76,7 @@ export function CompliancePortalFileListItem(props: {
   const { compliancePortalFragmentRef, fileFragmentRef, onEdit, onDelete } = props;
 
   const { t, i18n } = useTranslation("organizations/compliance-portals");
-  const visibilityOptions = getCompliancePortalVisibilityOptions(t);
+  const visibilityOptions = getCompliancePortalLinkedVisibilityOptions(t);
 
   const compliancePortal = useFragment<CompliancePortalFileListItem_compliancePortalFragment$key>(
     compliancePortalFragment,
@@ -95,7 +95,7 @@ export function CompliancePortalFileListItem(props: {
   const handleValueChange = useCallback(
     async (value: string) => {
       const stringValue = typeof value === "string" ? value : "";
-      const typedValue = stringValue as "NONE" | "RESTRICTED" | "PUBLIC";
+      const typedValue = stringValue === "PUBLIC" ? "PUBLIC" : "RESTRICTED";
       await updateFile({
         variables: {
           input: {

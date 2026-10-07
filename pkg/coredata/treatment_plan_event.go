@@ -45,7 +45,7 @@ type (
 		InherentImpact         int                    `db:"inherent_impact"`
 		ResidualLikelihood     int                    `db:"residual_likelihood"`
 		ResidualImpact         int                    `db:"residual_impact"`
-		MeasureIDs             []string               `db:"measure_ids"`
+		InternalControlIDs     []string               `db:"internal_control_ids"`
 		Category               string                 `db:"category"`
 		TreatmentPlanCreatedAt time.Time              `db:"treatment_plan_created_at"`
 		TreatmentPlanUpdatedAt time.Time              `db:"treatment_plan_updated_at"`
@@ -55,7 +55,7 @@ type (
 	TreatmentPlanEvents []*TreatmentPlanEvent
 )
 
-func MeasureIDStrings(ids []gid.GID) []string {
+func InternalControlIDStrings(ids []gid.GID) []string {
 	if len(ids) == 0 {
 		return []string{}
 	}
@@ -73,7 +73,7 @@ func MeasureIDStrings(ids []gid.GID) []string {
 func NewTreatmentPlanEvent(
 	tp *TreatmentPlan,
 	eventType TreatmentPlanEventType,
-	measureIDs []gid.GID,
+	internalControlIDs []gid.GID,
 	now time.Time,
 ) *TreatmentPlanEvent {
 	return &TreatmentPlanEvent{
@@ -88,7 +88,7 @@ func NewTreatmentPlanEvent(
 		InherentImpact:         tp.InherentImpact,
 		ResidualLikelihood:     tp.ResidualLikelihood,
 		ResidualImpact:         tp.ResidualImpact,
-		MeasureIDs:             MeasureIDStrings(measureIDs),
+		InternalControlIDs:     InternalControlIDStrings(internalControlIDs),
 		Category:               tp.Category,
 		TreatmentPlanCreatedAt: tp.CreatedAt,
 		TreatmentPlanUpdatedAt: tp.UpdatedAt,
@@ -96,12 +96,12 @@ func NewTreatmentPlanEvent(
 	}
 }
 
-func (e *TreatmentPlanEvent) LinkedMeasureIDs() ([]gid.GID, error) {
-	ids := make([]gid.GID, 0, len(e.MeasureIDs))
-	for _, raw := range e.MeasureIDs {
+func (e *TreatmentPlanEvent) LinkedInternalControlIDs() ([]gid.GID, error) {
+	ids := make([]gid.GID, 0, len(e.InternalControlIDs))
+	for _, raw := range e.InternalControlIDs {
 		id, err := gid.ParseGID(raw)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse measure id %q: %w", raw, err)
+			return nil, fmt.Errorf("cannot parse internal control id %q: %w", raw, err)
 		}
 
 		ids = append(ids, id)
@@ -150,7 +150,7 @@ INSERT INTO
         inherent_impact,
         residual_likelihood,
         residual_impact,
-        measure_ids,
+        internal_control_ids,
         category,
         treatment_plan_created_at,
         treatment_plan_updated_at,
@@ -169,7 +169,7 @@ VALUES (
     @inherent_impact,
     @residual_likelihood,
     @residual_impact,
-    @measure_ids,
+    @internal_control_ids,
     @category,
     @treatment_plan_created_at,
     @treatment_plan_updated_at,
@@ -190,7 +190,7 @@ VALUES (
 		"inherent_impact":           e.InherentImpact,
 		"residual_likelihood":       e.ResidualLikelihood,
 		"residual_impact":           e.ResidualImpact,
-		"measure_ids":               e.MeasureIDs,
+		"internal_control_ids":      e.InternalControlIDs,
 		"category":                  e.Category,
 		"treatment_plan_created_at": e.TreatmentPlanCreatedAt,
 		"treatment_plan_updated_at": e.TreatmentPlanUpdatedAt,
@@ -225,7 +225,7 @@ SELECT
     inherent_impact,
     residual_likelihood,
     residual_impact,
-    measure_ids,
+    internal_control_ids,
     category,
     treatment_plan_created_at,
     treatment_plan_updated_at,
@@ -243,7 +243,7 @@ FROM (
         inherent_impact,
         residual_likelihood,
         residual_impact,
-        measure_ids,
+        internal_control_ids,
         category,
         treatment_plan_created_at,
         treatment_plan_updated_at,
@@ -315,7 +315,7 @@ SELECT
     inherent_impact,
     residual_likelihood,
     residual_impact,
-    measure_ids,
+    internal_control_ids,
     category,
     treatment_plan_created_at,
     treatment_plan_updated_at,
@@ -333,7 +333,7 @@ FROM (
         inherent_impact,
         residual_likelihood,
         residual_impact,
-        measure_ids,
+        internal_control_ids,
         category,
         treatment_plan_created_at,
         treatment_plan_updated_at,

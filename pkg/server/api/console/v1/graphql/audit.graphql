@@ -154,6 +154,7 @@ input FindingFilter {
     status: FindingStatus
     priority: FindingPriority
     ownerId: ID
+    auditId: ID
 }
 
 type Audit implements Node {

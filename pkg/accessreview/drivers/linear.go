@@ -59,6 +59,7 @@ type linearUsersResponse struct {
 				Name      string `json:"name"`
 				Active    bool   `json:"active"`
 				Admin     bool   `json:"admin"`
+				Owner     bool   `json:"owner"`
 				Guest     bool   `json:"guest"`
 				LastSeen  string `json:"lastSeen"`
 				CreatedAt string `json:"createdAt"`
@@ -105,9 +106,9 @@ func (d *LinearDriver) ListAccounts(ctx context.Context) ([]AccountRecord, error
 			record := AccountRecord{
 				Email:       u.Email,
 				FullName:    u.Name,
-				Roles:       linearRoles(u.Admin, u.Guest),
+				Roles:       linearRoles(u.Owner, u.Admin, u.Guest),
 				Active:      new(u.Active),
-				IsAdmin:     new(u.Admin),
+				IsAdmin:     new(u.Owner || u.Admin),
 				ExternalID:  u.ID,
 				MFAStatus:   coredata.MFAStatusUnknown,
 				AuthMethod:  coredata.AccessReviewEntryAuthMethodUnknown,
@@ -155,6 +156,7 @@ query AccessReviewLinearUsers($after: String) {
       name
       active
       admin
+      owner
       guest
       lastSeen
       createdAt
@@ -215,8 +217,10 @@ query AccessReviewLinearUsers($after: String) {
 	return &resp, nil
 }
 
-func linearRoles(admin, guest bool) []string {
+func linearRoles(owner, admin, guest bool) []string {
 	switch {
+	case owner:
+		return []string{"Owner"}
 	case admin:
 		return []string{"Admin"}
 	case guest:

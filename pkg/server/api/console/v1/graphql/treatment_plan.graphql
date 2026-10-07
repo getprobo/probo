@@ -107,15 +107,15 @@ type TreatmentPlan implements Node {
     riskAnalysis: RiskAnalysis! @goField(forceResolver: true)
     organization: Organization! @goField(forceResolver: true)
 
-    measures(
+    internalControls(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
         asOf: Datetime
-    ): MeasureConnection! @goField(forceResolver: true)
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -147,12 +147,12 @@ extend type Mutation {
     deleteTreatmentPlan(
         input: DeleteTreatmentPlanInput!
     ): DeleteTreatmentPlanPayload!
-    createTreatmentPlanMeasureMapping(
-        input: CreateTreatmentPlanMeasureMappingInput!
-    ): CreateTreatmentPlanMeasureMappingPayload!
-    deleteTreatmentPlanMeasureMapping(
-        input: DeleteTreatmentPlanMeasureMappingInput!
-    ): DeleteTreatmentPlanMeasureMappingPayload!
+    createTreatmentPlanInternalControlMapping(
+        input: CreateTreatmentPlanInternalControlMappingInput!
+    ): CreateTreatmentPlanInternalControlMappingPayload!
+    deleteTreatmentPlanInternalControlMapping(
+        input: DeleteTreatmentPlanInternalControlMappingInput!
+    ): DeleteTreatmentPlanInternalControlMappingPayload!
 }
 
 input CreateTreatmentPlanInput {
@@ -180,14 +180,14 @@ input DeleteTreatmentPlanInput {
     treatmentPlanId: ID!
 }
 
-input CreateTreatmentPlanMeasureMappingInput {
+input CreateTreatmentPlanInternalControlMappingInput {
     treatmentPlanId: ID!
-    measureId: ID!
+    internalControlId: ID!
 }
 
-input DeleteTreatmentPlanMeasureMappingInput {
+input DeleteTreatmentPlanInternalControlMappingInput {
     treatmentPlanId: ID!
-    measureId: ID!
+    internalControlId: ID!
 }
 
 type CreateTreatmentPlanPayload {
@@ -202,13 +202,13 @@ type DeleteTreatmentPlanPayload {
     deletedTreatmentPlanId: ID!
 }
 
-type CreateTreatmentPlanMeasureMappingPayload {
+type CreateTreatmentPlanInternalControlMappingPayload {
     treatmentPlanEdge: TreatmentPlanEdge!
-    measureEdge: MeasureEdge!
+    internalControlEdge: InternalControlEdge!
 }
 
-type DeleteTreatmentPlanMeasureMappingPayload {
+type DeleteTreatmentPlanInternalControlMappingPayload {
     deletedTreatmentPlanId: ID!
-    deletedMeasureId: ID!
+    deletedInternalControlId: ID!
     treatmentPlan: TreatmentPlan!
 }

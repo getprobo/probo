@@ -97,6 +97,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagName                        string
 		flagCSVFile                     string
 		flagConnectorID                 string
+		flagConnectorAccountID          string
 		flagRoleARN                     string
 		flagGCPWorkloadIdentityProvider string
 		flagGCPServiceAccountEmail      string
@@ -254,6 +255,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["connectorId"] = flagConnectorID
 			}
 
+			if flagConnectorAccountID != "" {
+				input["connectorAccountId"] = flagConnectorAccountID
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -290,6 +295,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name (required)")
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
+	cmd.Flags().StringVar(&flagConnectorAccountID, "connector-account-id", "", "Connector account ID (defaults to the account named by the connector, or its only account)")
 	cmd.Flags().StringVar(&flagRoleARN, "aws-role-arn", "", "IAM role ARN")
 	cmd.Flags().StringVar(
 		&flagGCPWorkloadIdentityProvider,

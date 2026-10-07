@@ -24,13 +24,16 @@ import type { CookieBannerSwitcherListItem_cookieBanner$key } from "#/__generate
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelSwitcherListItem } from "#/pages/organizations/_components/NavPanelSwitcherListItem";
 
-import { cookieBannerPath } from "../_lib/cookieBannerPaths";
+import { cookieBannerConfigurePath } from "../_lib/cookieBannerPaths";
 
 const cookieBannerSwitcherListItemFragment = graphql`
   fragment CookieBannerSwitcherListItem_cookieBanner on CookieBanner {
     id
     name
     origin
+    capabilities {
+      corsless
+    }
   }
 `;
 
@@ -48,9 +51,9 @@ export function CookieBannerSwitcherListItem({
 
   return (
     <NavPanelSwitcherListItem
-      to={`${cookieBannerPath(organizationId, cookieBanner.id)}/configure`}
+      to={cookieBannerConfigurePath(organizationId, cookieBanner.id)}
       name={cookieBanner.name}
-      detail={cookieBanner.origin}
+      detail={cookieBanner.capabilities.corsless ? undefined : cookieBanner.origin}
       selected={selected}
     />
   );

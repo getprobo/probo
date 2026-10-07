@@ -46,6 +46,7 @@ query($id: ID!) {
       capabilities {
         resourceReporting
         tcf
+        corsless
       }
       defaultLanguage
       publisherCountryCode
@@ -71,6 +72,7 @@ type viewResponse struct {
 		Capabilities      struct {
 			ResourceReporting bool `json:"resourceReporting"`
 			TCF               bool `json:"tcf"`
+			Corsless          bool `json:"corsless"`
 		} `json:"capabilities"`
 		DefaultLanguage      string `json:"defaultLanguage"`
 		PublisherCountryCode string `json:"publisherCountryCode"`
@@ -147,6 +149,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.Capabilities.ResourceReporting)
+			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("CORSless:"), v.Capabilities.Corsless)
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)
 			if v.PrivacyPolicyUrl != nil && *v.PrivacyPolicyUrl != "" {

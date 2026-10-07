@@ -40,7 +40,7 @@ import { useDeleteTask } from "../_lib/useDeleteTask";
 const taskDeleteDialogFragment = graphql`
   fragment TaskDeleteDialog_task on Task {
     id
-    measure {
+    internalControl {
       id
     }
   }
@@ -64,7 +64,7 @@ export function TaskDeleteDialog({
   const [deleteTask, isDeleting] = useDeleteTask();
 
   function handleDelete() {
-    void deleteTask(task.id, task.measure?.id ?? undefined).then(
+    void deleteTask(task.id, task.internalControl?.id ?? undefined).then(
       () => {
         onOpenChange(false);
         void navigate(taskListPath(organizationId));

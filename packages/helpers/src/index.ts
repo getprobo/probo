@@ -43,7 +43,14 @@ export {
 } from "./dom";
 export { times, groupBy, isEmpty } from "./array";
 export { randomInt } from "./number";
-export { getMeasureStateLabel, measureStates } from "./measure";
+export {
+  getInternalControlStateLabel,
+  internalControlImplementationStatuses,
+  internalControlNatures,
+  internalControlOperatingModes,
+  internalControlTypes,
+  internalControlStates,
+} from "./internalControl";
 export { getRole, getRoles, peopleRoles } from "./people";
 export { certificationCategoryLabel, certifications } from "./certifications";
 export {
@@ -113,6 +120,7 @@ export {
   toDateInput,
   todayAsDateInput,
   parseDate,
+  isPastDueDate,
   type Period,
 } from "./date";
 export {
@@ -126,7 +134,14 @@ export {
 } from "./duration";
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
 export { detectSocialName } from "./socialUrl";
-export { formatError, graphqlErrorField, toFieldErrors, type GraphQLError } from "./error";
+export {
+  type FieldRejection,
+  formatError,
+  graphqlErrorField,
+  toFieldErrors,
+  toFieldRejections,
+  type GraphQLError,
+} from "./error";
 export {
   Role,
   roles,

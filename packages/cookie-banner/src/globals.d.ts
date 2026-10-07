@@ -38,6 +38,7 @@ interface CookieChangeEvent extends Event {
 interface CookieStoreEventTarget extends EventTarget {
   addEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
   removeEventListener(type: "change", listener: (event: CookieChangeEvent) => void): void;
+  getAll(options?: { name?: string }): Promise<CookieListItem[]>;
 }
 
 declare const cookieStore: CookieStoreEventTarget | undefined;

@@ -188,3 +188,75 @@ func TestNewConnectorSettings(t *testing.T) {
 		assert.NotContains(t, err.Error(), "example.com")
 	})
 }
+
+func TestParseAssetParent(t *testing.T) {
+	t.Parallel()
+
+	t.Run("trims an organization or folder parent", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name string
+			raw  string
+			want string
+		}{
+			{name: "organization", raw: "  organizations/123456789012  ", want: "organizations/123456789012"},
+			{name: "folder", raw: "folders/456", want: "folders/456"},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				got, err := cloudgcp.ParseAssetParent(tt.raw)
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			})
+		}
+	})
+
+	t.Run("accepts an empty parent", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name string
+			raw  string
+		}{
+			{name: "empty", raw: ""},
+			{name: "whitespace", raw: "   "},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				got, err := cloudgcp.ParseAssetParent(tt.raw)
+				require.NoError(t, err)
+				assert.Equal(t, "", got)
+			})
+		}
+	})
+
+	t.Run("refuses a malformed parent without echoing it", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []string{
+			"projects/123",
+			"organizations/abc",
+			"organizations/0",
+			"organizations/123/",
+			"Organizations/123",
+		}
+
+		for _, raw := range tests {
+			t.Run(raw, func(t *testing.T) {
+				t.Parallel()
+
+				_, err := cloudgcp.ParseAssetParent(raw)
+				require.Error(t, err)
+				assert.Equal(t, "gcpParent is not an organization or folder", err.Error())
+				assert.NotContains(t, err.Error(), raw)
+			})
+		}
+	})
+}
