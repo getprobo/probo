@@ -66,6 +66,7 @@ func TestRecoverDocument_UnwrapsLiteralDiagramRequest(t *testing.T) {
 		t.Parallel()
 
 		var pretty bytes.Buffer
+
 		require.NoError(t, json.Indent(&pretty, []byte(raw), "", "  "))
 
 		doc, err := prosemirror.RecoverDocument(prosemirror.FromPlainText(pretty.String()))

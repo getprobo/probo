@@ -256,6 +256,7 @@ func TestContentToMarkdown_UnwrapsLiteralDiagramRequest(t *testing.T) {
 		t.Parallel()
 
 		var pretty bytes.Buffer
+
 		require.NoError(t, json.Indent(&pretty, []byte(raw), "", "  "))
 
 		markdown, err := ContentToMarkdown(prosemirror.FromPlainText(pretty.String()))
@@ -271,6 +272,7 @@ func TestContentToMarkdown_UnwrapsLiteralDiagramRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		var doc prosemirror.Node
+
 		require.NoError(t, json.Unmarshal([]byte(content), &doc))
 		require.GreaterOrEqual(t, len(doc.Content), 2)
 		assert.Equal(t, prosemirror.NodeBulletList, doc.Content[1].Type)

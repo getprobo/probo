@@ -66,7 +66,9 @@ func TestRichTextToMarkdown(t *testing.T) {
 		t.Parallel()
 
 		raw := string(encoded)
+
 		var pretty bytes.Buffer
+
 		require.NoError(t, json.Indent(&pretty, []byte(raw), "", "  "))
 
 		got, err := richTextToMarkdown(prosemirror.FromPlainText(pretty.String()))
