@@ -55,7 +55,7 @@ export function decodeTcString(encoded: string): DecodedTcString | null {
       gvlVersion: model.vendorListVersion === 0 ? "-" : String(model.vendorListVersion),
       language: model.consentLanguage,
       purposeIds,
-      vendorConsentCount: vectorIds(model.vendorConsents).length,
+      vendorConsentCount: model.vendorConsents.size,
     };
   } catch {
     return null;
