@@ -32,6 +32,10 @@ import {
 	getExecuteFunction,
 } from './actions';
 import { getAccessReviewSources } from './actions/accessReview/loadAccessReviewSourceOptions';
+import {
+	getAPIKeyConnectorProviders,
+	getClientCredentialsConnectorProviders,
+} from './actions/connector/loadConnectorProviderOptions';
 
 export class Probo implements INodeType {
 	description: INodeTypeDescription = {
@@ -321,6 +325,8 @@ export class Probo implements INodeType {
 	methods = {
 		loadOptions: {
 			getAccessReviewSources,
+			getAPIKeyConnectorProviders,
+			getClientCredentialsConnectorProviders,
 		},
 		listSearch: {},
 	};

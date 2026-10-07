@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { proboApiRequest } from '../../GenericFunctions';
+
+const sourceDescription =
+	'Connect the provider first. Create the connector with Create API Key, Create Client Credentials, or Create AWS, GCP, or Azure Workload Identity Federation, then pass that connector id here. This operation does not collect credentials. A CSV source is the path with no provider.';
 
 export const description: INodeProperties[] = [
 	{
@@ -52,8 +54,8 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Provider',
-		name: 'provider',
+		displayName: 'Source Type',
+		name: 'sourceType',
 		type: 'options',
 		displayOptions: {
 			show: {
@@ -63,142 +65,65 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'AWS',
-				value: 'AWS',
+				name: 'Connector',
+				value: 'connector',
+				description: sourceDescription,
 			},
 			{
-				name: 'Azure',
-				value: 'AZURE',
-			},
-			{
-				name: 'GCP',
-				value: 'GCP',
+				name: 'CSV',
+				value: 'csv',
+				description: 'A CSV source has no provider',
 			},
 		],
-		default: 'AWS',
-		description: 'Cloud provider for the workload-identity connector',
-		required: true,
+		default: 'connector',
+		description: sourceDescription,
 	},
 	{
-		displayName: 'AWS Role ARN',
-		name: 'awsRoleArn',
+		displayName: 'Connector ID',
+		name: 'connectorId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['accessReviewSource'],
 				operation: ['create'],
-				provider: ['AWS'],
+				sourceType: ['connector'],
 			},
 		},
 		default: '',
-		description: 'IAM role ARN, including partition, account, and role name',
+		description: 'ID of a connector that already exists',
 		required: true,
 	},
 	{
-		displayName: 'GCP Workload Identity Provider',
-		name: 'gcpWorkloadIdentityProvider',
+		displayName: 'Connector Account ID',
+		name: 'connectorAccountId',
 		type: 'string',
 		displayOptions: {
 			show: {
 				resource: ['accessReviewSource'],
 				operation: ['create'],
-				provider: ['GCP'],
+				sourceType: ['connector'],
 			},
 		},
 		default: '',
-		description: 'Workload identity provider resource, including the S3NS IAM host when applicable',
-		required: true,
+		description:
+			'Account on the connector. Leave empty to use the account this credential is, or its only account.',
 	},
 	{
-		displayName: 'GCP Service Account Email',
-		name: 'gcpServiceAccountEmail',
+		displayName: 'CSV Data',
+		name: 'csvData',
 		type: 'string',
+		typeOptions: {
+			rows: 4,
+		},
 		displayOptions: {
 			show: {
 				resource: ['accessReviewSource'],
 				operation: ['create'],
-				provider: ['GCP'],
+				sourceType: ['csv'],
 			},
 		},
 		default: '',
-		description: 'Service account email to impersonate, including the universe-specific suffix',
-		required: true,
-	},
-	{
-		displayName: 'Azure Tenant ID',
-		name: 'azureTenantId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReviewSource'],
-				operation: ['create'],
-				provider: ['AZURE'],
-			},
-		},
-		default: '',
-		description: 'Entra directory (tenant) ID',
-		required: true,
-	},
-	{
-		displayName: 'Azure Client ID',
-		name: 'azureClientId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReviewSource'],
-				operation: ['create'],
-				provider: ['AZURE'],
-			},
-		},
-		default: '',
-		description: 'Entra application (client) ID',
-		required: true,
-	},
-	{
-		displayName: 'Azure Subscription ID',
-		name: 'azureSubscriptionId',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['accessReviewSource'],
-				operation: ['create'],
-				provider: ['AZURE'],
-			},
-		},
-		default: '',
-		required: true,
-	},
-	{
-		displayName: 'Azure Environment',
-		name: 'azureEnvironment',
-		type: 'options',
-		displayOptions: {
-			show: {
-				resource: ['accessReviewSource'],
-				operation: ['create'],
-				provider: ['AZURE'],
-			},
-		},
-		options: [
-			{
-				name: 'Public (GCC Uses This)',
-				value: 'AZURE_PUBLIC',
-			},
-			{
-				name: 'Government (GCC High)',
-				value: 'AZURE_GOVERNMENT',
-			},
-			{
-				name: 'Government DoD',
-				value: 'AZURE_GOVERNMENT_DOD',
-			},
-			{
-				name: 'China',
-				value: 'AZURE_CHINA',
-			},
-		],
-		default: 'AZURE_PUBLIC',
-		description: 'Azure cloud environment. GCC uses Public. Only GCC High and DoD use Government.',
+		description: 'CSV access data. This path has no provider.',
 		required: true,
 	},
 ];
@@ -209,75 +134,21 @@ export async function execute(
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
-	const provider = this.getNodeParameter('provider', itemIndex) as string;
+	const sourceType = this.getNodeParameter('sourceType', itemIndex) as string;
 
-	const createConnectorQuery = `
-		mutation CreateWorkloadIdentityConnector($input: CreateWorkloadIdentityConnectorInput!) {
-			createWorkloadIdentityConnector(input: $input) {
-				connector {
-					id
-					provider
-					protocol
-					connectionStatus
-					createdAt
-				}
-			}
+	const source: Record<string, string> = { name };
+
+	if (sourceType === 'csv') {
+		source.csvData = this.getNodeParameter('csvData', itemIndex) as string;
+	} else {
+		source.connectorId = this.getNodeParameter('connectorId', itemIndex) as string;
+		const connectorAccountId = this.getNodeParameter('connectorAccountId', itemIndex, '') as string;
+		if (connectorAccountId !== '') {
+			source.connectorAccountId = connectorAccountId;
 		}
-	`;
-
-	const connectorInput: Record<string, string> = {
-		organizationId,
-		name,
-		provider,
-	};
-
-	switch (provider) {
-		case 'GCP':
-			connectorInput.gcpWorkloadIdentityProvider = this.getNodeParameter(
-				'gcpWorkloadIdentityProvider',
-				itemIndex,
-			) as string;
-			connectorInput.gcpServiceAccountEmail = this.getNodeParameter(
-				'gcpServiceAccountEmail',
-				itemIndex,
-			) as string;
-			break;
-		case 'AZURE':
-			connectorInput.azureTenantId = this.getNodeParameter('azureTenantId', itemIndex) as string;
-			connectorInput.azureClientId = this.getNodeParameter('azureClientId', itemIndex) as string;
-			connectorInput.azureSubscriptionId = this.getNodeParameter(
-				'azureSubscriptionId',
-				itemIndex,
-			) as string;
-			connectorInput.azureEnvironment = this.getNodeParameter(
-				'azureEnvironment',
-				itemIndex,
-			) as string;
-			break;
-		case 'AWS':
-			connectorInput.awsRoleArn = this.getNodeParameter('awsRoleArn', itemIndex) as string;
-			break;
-		default:
-			throw new NodeOperationError(this.getNode(), `Unsupported provider ${provider}`, {
-				itemIndex,
-			});
 	}
 
-	const connectorResponse = await proboApiRequest.call(this, createConnectorQuery, {
-		input: connectorInput,
-	});
-
-	const connectorPayload = (connectorResponse.data as IDataObject | undefined)
-		?.createWorkloadIdentityConnector as IDataObject | undefined;
-	const connector = connectorPayload?.connector as IDataObject | undefined;
-	const connectorId = connector?.id as string | undefined;
-	if (!connectorId) {
-		throw new NodeOperationError(this.getNode(), 'Workload identity connector was not created');
-	}
-
-	const connectionStatus = connector?.connectionStatus as string | undefined;
-
-	const createSourceQuery = `
+	const query = `
 		mutation CreateAccessReviewSources($input: CreateAccessReviewSourcesInput!) {
 			createAccessReviewSources(input: $input) {
 				results {
@@ -295,73 +166,15 @@ export async function execute(
 		}
 	`;
 
-	const deleteConnectorQuery = `
-		mutation DeleteConnector($input: DeleteConnectorInput!) {
-			deleteConnector(input: $input) {
-				deletedConnectorId
-			}
-		}
-	`;
+	const responseData = await proboApiRequest.call(this, query, {
+		input: {
+			organizationId,
+			sources: [source],
+		},
+	});
 
-	try {
-		if (connectionStatus !== 'CONNECTED') {
-			throw new NodeOperationError(
-				this.getNode(),
-				`Connector is ${connectionStatus ?? 'in an unknown state'}`,
-				{ itemIndex },
-			);
-		}
-
-		const sourceResponse = await proboApiRequest.call(this, createSourceQuery, {
-			input: {
-				organizationId,
-				sources: [{ name, connectorId }],
-			},
-		});
-
-		if (accessReviewSourceCreated(sourceResponse) === false) {
-			await proboApiRequest.call(this, deleteConnectorQuery, {
-				input: { connectorId },
-			});
-		}
-
-		return {
-			json: sourceResponse,
-			pairedItem: { item: itemIndex },
-		};
-	} catch (error) {
-		try {
-			await proboApiRequest.call(this, deleteConnectorQuery, {
-				input: { connectorId },
-			});
-		} catch (cleanupError) {
-			const cleanupMessage =
-				cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
-
-			throw new NodeOperationError(
-				this.getNode(),
-				error instanceof Error ? error : new Error(String(error)),
-				{
-					itemIndex,
-					description: `Cannot delete leftover connector ${connectorId}: ${cleanupMessage}`,
-				},
-			);
-		}
-
-		throw new NodeOperationError(this.getNode(), error as Error, { itemIndex });
-	}
-}
-
-function accessReviewSourceCreated(response: IDataObject): boolean | undefined {
-	const payload = (response.data as IDataObject | undefined)?.createAccessReviewSources as
-		| IDataObject
-		| undefined;
-	const results = payload?.results;
-	if (!Array.isArray(results) || results.length === 0) {
-		return undefined;
-	}
-
-	const created = (results[0] as IDataObject).created;
-
-	return typeof created === 'boolean' ? created : undefined;
+	return {
+		json: responseData,
+		pairedItem: { item: itemIndex },
+	};
 }

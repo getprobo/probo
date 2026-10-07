@@ -10787,7 +10787,7 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 
 	ensured, err := r.accessReview.EnsureSources(ctx, scope, input.OrganizationID, reqs)
 	if err != nil {
-		return nil, types.CreateAccessReviewSourcesOutput{}, fmt.Errorf("cannot create access source: %w", err)
+		return nil, types.CreateAccessReviewSourcesOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create access source", err)
 	}
 
 	rows := make([]*coredata.AccessReviewSource, len(ensured))
@@ -10808,8 +10808,20 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 	}
 
 	if err := r.fillSourceConnectorIDs(ctx, scope, rows, mapped); err != nil {
-		return nil, types.CreateAccessReviewSourcesOutput{}, err
+		return nil, types.CreateAccessReviewSourcesOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot load source connectors", err)
 	}
 
 	return nil, types.CreateAccessReviewSourcesOutput{Results: results}, nil
+}
+
+func (r *Resolver) ListConnectorProvidersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConnectorProvidersInput) (*mcp.CallToolResult, types.ListConnectorProvidersOutput, error) {
+	return r.listConnectorProviders(ctx)
+}
+
+func (r *Resolver) CreateAPIKeyConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateAPIKeyConnectorInput) (*mcp.CallToolResult, types.CreateAPIKeyConnectorOutput, error) {
+	return r.createAPIKeyConnector(ctx, input)
+}
+
+func (r *Resolver) CreateClientCredentialsConnectorTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateClientCredentialsConnectorInput) (*mcp.CallToolResult, types.CreateClientCredentialsConnectorOutput, error) {
+	return r.createClientCredentialsConnector(ctx, input)
 }

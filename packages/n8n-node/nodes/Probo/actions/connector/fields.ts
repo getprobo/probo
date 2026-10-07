@@ -18,35 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package connector
+import type { INodeProperties } from 'n8n-workflow';
 
-import (
-	"github.com/spf13/cobra"
-	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/cmd/connector/connect"
-	"go.probo.inc/probo/pkg/cmd/connector/create"
-	"go.probo.inc/probo/pkg/cmd/connector/discover"
-	enableaccounts "go.probo.inc/probo/pkg/cmd/connector/enable-accounts"
-	"go.probo.inc/probo/pkg/cmd/connector/list"
-	"go.probo.inc/probo/pkg/cmd/connector/providers"
-	"go.probo.inc/probo/pkg/cmd/connector/update"
-	"go.probo.inc/probo/pkg/cmd/connector/view"
-)
-
-func NewCmdConnector(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "connector <command>",
-		Short: "Manage connectors",
-	}
-
-	cmd.AddCommand(list.NewCmdList(f))
-	cmd.AddCommand(providers.NewCmdProviders(f))
-	cmd.AddCommand(create.NewCmdCreate(f))
-	cmd.AddCommand(view.NewCmdView(f))
-	cmd.AddCommand(discover.NewCmdDiscover(f))
-	cmd.AddCommand(enableaccounts.NewCmdEnableAccounts(f))
-	cmd.AddCommand(connect.NewCmdConnect(f))
-	cmd.AddCommand(update.NewCmdUpdate(f))
-
-	return cmd
+export function organizationIdField(operation: string): INodeProperties {
+	return {
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['connector'],
+				operation: [operation],
+			},
+		},
+		default: '',
+		description: 'The ID of the organization',
+		required: true,
+	};
 }
+
+export function connectorNameField(operation: string): INodeProperties {
+	return {
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['connector'],
+				operation: [operation],
+			},
+		},
+		default: '',
+		description:
+			'A name that distinguishes this credential from other credentials for the same provider. For example, production or main.',
+		required: true,
+	};
+}
+
+export const connectorResultFields = `
+					id
+					name
+					provider
+					protocol
+					connectionStatus
+					createdAt
+`;

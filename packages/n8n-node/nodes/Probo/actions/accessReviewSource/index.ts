@@ -40,8 +40,9 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Create',
 				value: 'create',
-				description: 'Create a workload-identity access source',
-				action: 'Create an access review source',
+				description:
+					'Connect the provider first, then create an access source from that connector. A CSV source is the path with no provider.',
+				action: 'Create an access source from a connector',
 			},
 			{
 				name: 'Get Many',
