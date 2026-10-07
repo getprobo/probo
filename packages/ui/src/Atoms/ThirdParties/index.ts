@@ -23,6 +23,7 @@ export { DocuSign } from "./DocuSign";
 export { Dotfile } from "./Dotfile";
 export { ElevenLabs } from "./ElevenLabs";
 export { Figma } from "./Figma";
+export { Front } from "./Front";
 export { GCP } from "./GCP";
 export { GitHub } from "./GitHub";
 export { GitLab } from "./GitLab";
