@@ -43,6 +43,7 @@ import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_ta
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { richTextLabel } from "#/pages/organizations/_lib/richEditorContent";
 import { TaskPriorityIcon } from "#/pages/organizations/tasks/_components/TaskPriorityIcon";
 import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
@@ -177,7 +178,7 @@ export function TaskListItem(props: TaskListItemProps) {
               }
             }}
           >
-            {task.name}
+            {richTextLabel(task.name)}
           </Link>
         </Text>
         {task.externalLink && (

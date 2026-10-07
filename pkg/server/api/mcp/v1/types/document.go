@@ -34,7 +34,7 @@ func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
 		return "", nil
 	}
 
-	node, err := prosemirror.Parse(pmJSON)
+	node, err := prosemirror.RecoverDocument(pmJSON)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse prosemirror json: %w", err)
 	}

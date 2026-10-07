@@ -21,6 +21,7 @@
 package tasksync
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -30,6 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -244,6 +246,42 @@ func TestMarkdownToContent_DropsUnsupported(t *testing.T) {
 	assert.NotContains(t, onlyImage, "image")
 }
 
+func TestContentToMarkdown_UnwrapsLiteralDiagramRequest(t *testing.T) {
+	t.Parallel()
+
+	raw := mermaidDiagramRequestDoc(t)
+	formatted := "Add three Mermaid diagrams\n\n- Network\n- Data flow\n- SDLC\n"
+
+	t.Run("pretty json stored as paragraphs", func(t *testing.T) {
+		t.Parallel()
+
+		var pretty bytes.Buffer
+		require.NoError(t, json.Indent(&pretty, []byte(raw), "", "  "))
+
+		markdown, err := ContentToMarkdown(prosemirror.FromPlainText(pretty.String()))
+		require.NoError(t, err)
+		assert.Equal(t, formatted, markdown)
+		assert.NotContains(t, markdown, "bulletList")
+	})
+
+	t.Run("document json is stored as a document", func(t *testing.T) {
+		t.Parallel()
+
+		content, err := MarkdownToContent(raw)
+		require.NoError(t, err)
+
+		var doc prosemirror.Node
+		require.NoError(t, json.Unmarshal([]byte(content), &doc))
+		require.GreaterOrEqual(t, len(doc.Content), 2)
+		assert.Equal(t, prosemirror.NodeBulletList, doc.Content[1].Type)
+
+		markdown, err := ContentToMarkdown(content)
+		require.NoError(t, err)
+		assert.Equal(t, formatted, markdown)
+		assert.NotContains(t, markdown, `"type"`)
+	})
+}
+
 func TestMarkdownRoundTrip(t *testing.T) {
 	t.Parallel()
 
@@ -255,6 +293,49 @@ func TestMarkdownRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, markdown, "Hello")
 	assert.Contains(t, markdown, "world")
+}
+
+func mermaidDiagramRequestDoc(t *testing.T) string {
+	t.Helper()
+
+	doc := prosemirror.Node{
+		Type: prosemirror.NodeDoc,
+		Content: []prosemirror.Node{
+			mermaidParagraph("Add three Mermaid diagrams"),
+			{
+				Type: prosemirror.NodeBulletList,
+				Content: []prosemirror.Node{
+					mermaidItem("Network"),
+					mermaidItem("Data flow"),
+					mermaidItem("SDLC"),
+				},
+			},
+		},
+	}
+
+	encoded, err := json.Marshal(doc)
+	require.NoError(t, err)
+
+	return string(encoded)
+}
+
+func mermaidParagraph(text string) prosemirror.Node {
+	value := text
+
+	return prosemirror.Node{
+		Type: prosemirror.NodeParagraph,
+		Content: []prosemirror.Node{{
+			Type: prosemirror.NodeText,
+			Text: &value,
+		}},
+	}
+}
+
+func mermaidItem(text string) prosemirror.Node {
+	return prosemirror.Node{
+		Type:    prosemirror.NodeListItem,
+		Content: []prosemirror.Node{mermaidParagraph(text)},
+	}
 }
 
 func TestContentHashStable(t *testing.T) {

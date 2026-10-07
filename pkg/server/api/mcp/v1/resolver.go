@@ -83,6 +83,17 @@ type Resolver struct {
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
+	if node, err := prosemirror.RecoverDocument(markdown); err == nil {
+		out, marshalErr := json.Marshal(node)
+		if marshalErr != nil {
+			return "", fmt.Errorf("cannot marshal prosemirror node: %w", marshalErr)
+		}
+
+		if validateErr := prosemirror.ValidateDocumentContentJSON(string(out)); validateErr == nil {
+			return string(out), nil
+		}
+	}
+
 	node, err := prosemirror.ParseMarkdown(markdown)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)

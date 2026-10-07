@@ -44,6 +44,7 @@ import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
+import { recoverRichContent } from "./recoverContent";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
@@ -105,6 +106,11 @@ type RichEditorProps = ComponentProps<"div"> & {
 };
 
 function parseContent(content: string): Content {
+  const recovered = recoverRichContent(content);
+  if (recovered != null) {
+    return recovered;
+  }
+
   if (!content) {
     return "";
   }

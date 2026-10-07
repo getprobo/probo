@@ -56,6 +56,17 @@ func TestFormatRichText(t *testing.T) {
 		assert.Equal(t, "", got)
 	})
 
+	t.Run("literal document json", func(t *testing.T) {
+		t.Parallel()
+
+		stored := prosemirror.FromPlainText(prosemirror.FromPlainText("Review access controls"))
+
+		got, err := cmdutil.FormatRichText(stored)
+		require.NoError(t, err)
+		assert.Equal(t, "Review access controls", got)
+		assert.NotContains(t, got, `"type"`)
+	})
+
 	t.Run("invalid json", func(t *testing.T) {
 		t.Parallel()
 

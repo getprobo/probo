@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { recoverRichContent } from "@probo/ui/src/RichEditor/recoverContent";
+
 type JSONContent = {
   type?: string;
   text?: string;
@@ -83,20 +85,12 @@ function isEmptyDoc(node: JSONContent): boolean {
 }
 
 function parseDoc(content: string): JSONContent | null {
-  if (!content.trim()) {
+  const recovered = recoverRichContent(content);
+  if (recovered == null || !isDocContent(recovered)) {
     return null;
   }
 
-  try {
-    const parsed: unknown = JSON.parse(content);
-    if (isDocContent(parsed)) {
-      return parsed;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
+  return recovered;
 }
 
 export function isRichEditorContentEmpty(content: string): boolean {
@@ -155,4 +149,13 @@ export function richEditorContentPlainText(content: string): string {
   }
 
   return collectPlainText(parsed).replace(/\n+$/, "");
+}
+
+export function richTextLabel(value: string): string {
+  const text = richEditorContentPlainText(value).replace(/\n+/g, " · ").trim();
+  if (text === "") {
+    return value;
+  }
+
+  return text;
 }

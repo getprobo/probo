@@ -285,6 +285,110 @@ function isProseMirrorNode(value: unknown): value is ProseMirrorNode {
 	return typeof value === 'object' && value !== null;
 }
 
+const maxDocumentDecodeDepth = 4;
+
+const literalBlockTypes = new Set(['paragraph', 'codeBlock']);
+
+const recoverableBlockTypes = new Set([
+	'paragraph',
+	'heading',
+	'blockquote',
+	'codeBlock',
+	'horizontalRule',
+	'bulletList',
+	'orderedList',
+	'table',
+	'image',
+]);
+
+function parseDocValue(value: unknown, depth = 0): ProseMirrorNode | null {
+	if (depth > maxDocumentDecodeDepth) {
+		return null;
+	}
+
+	if (typeof value === 'string') {
+		const trimmed = value.trim();
+		if (trimmed === '') {
+			return null;
+		}
+
+		try {
+			return parseDocValue(JSON.parse(trimmed) as unknown, depth + 1);
+		} catch {
+			return null;
+		}
+	}
+
+	if (!isProseMirrorNode(value) || value.type !== 'doc') {
+		return null;
+	}
+
+	if (value.content != null && !Array.isArray(value.content)) {
+		return null;
+	}
+
+	return value;
+}
+
+function inlineText(node: ProseMirrorNode): string {
+	if (node.type === 'text') {
+		return node.text ?? '';
+	}
+
+	if (node.type === 'hardBreak') {
+		return '\n';
+	}
+
+	return (node.content ?? []).map(inlineText).join('');
+}
+
+function literalDocumentText(node: ProseMirrorNode): string | null {
+	const blocks = node.content ?? [];
+	if (blocks.length === 0) {
+		return null;
+	}
+
+	const lines: string[] = [];
+	for (const block of blocks) {
+		if (!block.type || !literalBlockTypes.has(block.type)) {
+			return null;
+		}
+
+		lines.push(inlineText(block));
+	}
+
+	return lines.join('\n').trim();
+}
+
+function isRecoverableDoc(node: ProseMirrorNode): boolean {
+	const blocks = node.content ?? [];
+	if (blocks.length === 0) {
+		return false;
+	}
+
+	return blocks.every(
+		(block) => block.type != null && recoverableBlockTypes.has(block.type),
+	);
+}
+
+function unwrapLiteralDocument(node: ProseMirrorNode, depth = 0): ProseMirrorNode {
+	if (depth >= maxDocumentDecodeDepth) {
+		return node;
+	}
+
+	const text = literalDocumentText(node);
+	if (!text || (text[0] !== '{' && text[0] !== '"')) {
+		return node;
+	}
+
+	const inner = parseDocValue(text);
+	if (!inner || !isRecoverableDoc(inner)) {
+		return node;
+	}
+
+	return unwrapLiteralDocument(inner, depth + 1);
+}
+
 function collectPlainText(node: ProseMirrorNode): string {
 	if (node.type === 'text') {
 		return node.text ?? '';
@@ -318,18 +422,12 @@ export function proseMirrorJSONToPlainText(json: unknown): string {
 		return '';
 	}
 
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(json);
-	} catch {
+	const parsed = parseDocValue(json);
+	if (!parsed) {
 		return json;
 	}
 
-	if (!isProseMirrorNode(parsed) || parsed.type !== 'doc') {
-		return json;
-	}
-
-	return collectPlainText(parsed).replace(/\n+$/, '');
+	return collectPlainText(unwrapLiteralDocument(parsed)).replace(/\n+$/, '');
 }
 
 export function withPlainTextContent(value: IDataObject): IDataObject {

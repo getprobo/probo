@@ -21,6 +21,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -59,6 +60,20 @@ func TestRichTextToMarkdown(t *testing.T) {
 
 		_, err := richTextToMarkdown("Oldest MCP comment")
 		require.Error(t, err)
+	})
+
+	t.Run("literal document json", func(t *testing.T) {
+		t.Parallel()
+
+		raw := string(encoded)
+		var pretty bytes.Buffer
+		require.NoError(t, json.Indent(&pretty, []byte(raw), "", "  "))
+
+		got, err := richTextToMarkdown(prosemirror.FromPlainText(pretty.String()))
+		require.NoError(t, err)
+		assert.Equal(t, "MCP **comment**\n", got)
+		assert.NotContains(t, got, "bulletList")
+		assert.NotContains(t, got, `"type"`)
 	})
 
 	t.Run("render error", func(t *testing.T) {

@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskNameField_task$key } from "#/__generated__/core/TaskNameField_task.graphql";
+import { richTextLabel } from "#/pages/organizations/_lib/richEditorContent";
 import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
 
 import { useUpdateTask } from "../_lib/useUpdateTask";
@@ -48,7 +49,8 @@ export function TaskNameField({ taskKey }: TaskNameFieldProps) {
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskNameFieldFragment, taskKey);
   const [updateTask] = useUpdateTask();
-  const [draft, setDraft] = useState(task.name);
+  const nameLabel = richTextLabel(task.name);
+  const [draft, setDraft] = useState(nameLabel);
   const [savedName, setSavedName] = useState(task.name);
   const [failedSave, setFailedSave] = useState<{
     next: string;
@@ -57,16 +59,17 @@ export function TaskNameField({ taskKey }: TaskNameFieldProps) {
   const { root, input } = taskNameField();
 
   if (task.name !== savedName) {
+    const previousLabel = richTextLabel(savedName);
     setSavedName(task.name);
-    if (draft === savedName) {
-      setDraft(task.name);
+    if (draft === previousLabel) {
+      setDraft(nameLabel);
     }
   }
 
   if (failedSave) {
     setFailedSave(null);
     if (draft.trim() === failedSave.next && task.name === failedSave.nameAtStart) {
-      setDraft(task.name);
+      setDraft(nameLabel);
     }
   }
 
@@ -74,8 +77,9 @@ export function TaskNameField({ taskKey }: TaskNameFieldProps) {
     async (value: string) => {
       const next = value.trim();
       const nameAtStart = task.name;
-      if (!next || next === nameAtStart) {
-        setDraft(current => (current === value ? nameAtStart : current));
+      const labelAtStart = richTextLabel(nameAtStart);
+      if (!next || next === nameAtStart || next === labelAtStart) {
+        setDraft(current => (current === value ? labelAtStart : current));
         return;
       }
 
@@ -100,7 +104,7 @@ export function TaskNameField({ taskKey }: TaskNameFieldProps) {
   if (!task.canUpdate) {
     return (
       <Heading level={1} size={6} weight="medium" highContrast className="min-w-0 truncate">
-        {task.name}
+        {nameLabel}
       </Heading>
     );
   }

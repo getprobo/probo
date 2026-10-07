@@ -235,7 +235,7 @@ func ContentToMarkdown(content string) (string, error) {
 		return "", nil
 	}
 
-	node, err := prosemirror.Parse(content)
+	node, err := prosemirror.RecoverDocument(content)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse prosemirror json: %w", err)
 	}
@@ -253,11 +253,24 @@ func MarkdownToContent(markdown string) (string, error) {
 		return prosemirror.DefaultDocumentJSON(nil)
 	}
 
+	// A Linear description or agent payload is sometimes already the task
+	// document JSON. Storing that JSON as markdown turns it into paragraphs
+	// of raw text, which the task list then shows instead of the document.
+	if node, err := prosemirror.RecoverDocument(markdown); err == nil {
+		if content, sanitizeErr := sanitizedDocumentJSON(node); sanitizeErr == nil {
+			return content, nil
+		}
+	}
+
 	node, err := prosemirror.ParseMarkdown(markdown)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)
 	}
 
+	return sanitizedDocumentJSON(node)
+}
+
+func sanitizedDocumentJSON(node prosemirror.Node) (string, error) {
 	// Linear descriptions can contain nodes the task editor cannot store,
 	// such as an image inside a paragraph. Keep the rest of the description.
 	node = dropUnsupportedLinearContent(node)

@@ -34,7 +34,7 @@ func FormatRichText(content string) (string, error) {
 		return "", nil
 	}
 
-	node, err := prosemirror.Parse(content)
+	node, err := prosemirror.RecoverDocument(content)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse content: %w", err)
 	}
