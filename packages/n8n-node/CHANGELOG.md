@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.244.0] - 2026-10-08
+
+### Added
+
+- Employee Portal resource with `Get`, `Get Many`, and `Update`
+  operations
+
 ## [0.243.0] - 2026-10-07
 
 ### Changed
