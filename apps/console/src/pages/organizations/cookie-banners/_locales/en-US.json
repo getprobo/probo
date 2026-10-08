@@ -282,7 +282,20 @@
     "deleteConfirmation": "This will permanently delete the cookie banner \"{{name}}\". This action cannot be undone.",
     "dialogs": { "deleteTitle": "Delete cookie banner" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" }
+    "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" },
+    "discovery": { "pageLoads": "Page loads" }
+  },
+  "trackerDiscovery": {
+    "title": "Discovery",
+    "description": "Counted until first publish.",
+    "hitsOfLoads": "{{hits}} / {{loads}}",
+    "families": {
+      "chrome": "Chrome",
+      "edge": "Edge",
+      "firefox": "Firefox",
+      "safari": "Safari",
+      "other": "Other"
+    }
   },
   "cookieBannersIndex": {
     "empty": {

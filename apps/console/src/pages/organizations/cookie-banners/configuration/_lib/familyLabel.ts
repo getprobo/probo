@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { describe, it, expect } from "vitest";
-import { emptyToNull, sprintf } from "./string";
+import type { TFunction } from "i18next";
 
-describe("strings", () => {
-    it("should format a string", () => {
-        expect(sprintf("Hello %s", "world")).toBe("Hello world");
-        expect(sprintf("Hello %s %s", "John", "Doe")).toBe("Hello John Doe");
-        expect(sprintf("%2s %1s", "world", "Hello")).toBe("Hello world");
-    });
+const familyKeys = {
+  CHROME: "chrome",
+  EDGE: "edge",
+  FIREFOX: "firefox",
+  SAFARI: "safari",
+  OTHER: "other",
+} as const;
 
-    it("should treat empty and blank strings as null", () => {
-        expect(emptyToNull(null)).toBeNull();
-        expect(emptyToNull(undefined)).toBeNull();
-        expect(emptyToNull("")).toBeNull();
-        expect(emptyToNull("   ")).toBeNull();
-        expect(emptyToNull("chrome")).toBe("chrome");
-    });
-});
+export function familyLabel(family: string, t: TFunction): string {
+  const key = family in familyKeys
+    ? familyKeys[family as keyof typeof familyKeys]
+    : familyKeys.OTHER;
+  return t(`trackerDiscovery.families.${key}`);
+}

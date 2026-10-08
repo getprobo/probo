@@ -37,6 +37,15 @@ export function TrackerPatternDetailPageSkeleton() {
           <div className="h-8 w-24 rounded bg-sand-a4" />
         </div>
       </div>
+      <div className="flex flex-col gap-3 rounded-4 bg-sand-a2 p-4">
+        <div className="h-5 w-28 rounded bg-sand-a4" />
+        <div className="h-4 w-56 rounded bg-sand-a4" />
+        <div className="flex gap-4">
+          <div className="h-4 w-24 rounded bg-sand-a4" />
+          <div className="h-4 w-24 rounded bg-sand-a4" />
+          <div className="h-4 w-24 rounded bg-sand-a4" />
+        </div>
+      </div>
       <div className="flex flex-col gap-4">
         <div className="h-5 w-24 rounded bg-sand-a4" />
         <div className="flex flex-col gap-4 rounded-4 bg-sand-a2 p-4">

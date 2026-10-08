@@ -24,7 +24,6 @@ import { useParams } from "react-router";
 
 import type { CookieBannerTrackersPageQuery } from "#/__generated__/core/CookieBannerTrackersPageQuery.graphql";
 
-import { TRACKERS_PAGE_SIZE } from "./_lib/pageSize";
 import { useTrackersListFilters } from "./_lib/useTrackersListFilters";
 import { CookieBannerTrackersPage, cookieBannerTrackersPageQuery } from "./CookieBannerTrackersPage";
 import { CookieBannerTrackersPageSkeleton } from "./CookieBannerTrackersPageSkeleton";
@@ -35,9 +34,10 @@ export default function CookieBannerTrackersPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
-  const { graphqlFilter, graphqlOrder } = useTrackersListFilters();
+  const { graphqlFilter, graphqlOrder, graphqlPagination } = useTrackersListFilters();
   const filterRef = useRef(graphqlFilter);
   const orderRef = useRef(graphqlOrder);
+  const paginationRef = useRef(graphqlPagination);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerTrackersPageQuery>(
     cookieBannerTrackersPageQuery,
   );
@@ -51,9 +51,13 @@ export default function CookieBannerTrackersPageLoader() {
   }, [graphqlOrder]);
 
   useEffect(() => {
+    paginationRef.current = graphqlPagination;
+  }, [graphqlPagination]);
+
+  useEffect(() => {
     loadQuery({
       cookieBannerId,
-      first: TRACKERS_PAGE_SIZE,
+      ...paginationRef.current,
       filter: filterRef.current,
       order: orderRef.current,
     });

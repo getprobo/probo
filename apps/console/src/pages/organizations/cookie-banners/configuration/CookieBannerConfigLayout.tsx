@@ -37,6 +37,8 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
 
+import { DiscoveryFamilyCounts } from "./_components/DiscoveryFamilyCounts";
+
 export const cookieBannerConfigLayoutQuery = graphql`
   query CookieBannerConfigLayoutQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) {
@@ -49,6 +51,13 @@ export const cookieBannerConfigLayoutQuery = graphql`
           id
           version
           state
+        }
+        publishedVersion {
+          id
+        }
+        discoveryPageLoads {
+          family
+          count
         }
       }
     }
@@ -89,7 +98,16 @@ export function CookieBannerConfigLayout({
 }: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const { toast } = useToast();
-  const { root, lead, title, meta, id, version: versionClass } = cookieBannerConfigLayout();
+  const {
+    root,
+    lead,
+    title,
+    meta,
+    id,
+    version: versionClass,
+    discovery,
+    discoveryRow,
+  } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
     cookieBannerConfigLayoutQuery,
@@ -113,6 +131,8 @@ export function CookieBannerConfigLayout({
   const hasDraft = banner.latestVersion?.state === "DRAFT";
   const isDeactivated = banner.state !== "ACTIVE";
   const version = banner.latestVersion?.version;
+  const pageLoads = banner.discoveryPageLoads;
+  const showDiscoveryLoads = banner.publishedVersion == null && pageLoads.length > 0;
 
   let message: string;
   if (isDeactivated && hasDraft && version != null) {
@@ -209,7 +229,19 @@ export function CookieBannerConfigLayout({
             )
           : undefined}
       >
-        <Text size={2} color="neutral">{message}</Text>
+        <div className={discovery()}>
+          <Text size={2} color="neutral">{message}</Text>
+          {showDiscoveryLoads
+            ? (
+                <div className={discoveryRow()}>
+                  <Text size={2} color="faint">
+                    {t("configLayout.discovery.pageLoads")}
+                  </Text>
+                  <DiscoveryFamilyCounts items={pageLoads} compact />
+                </div>
+              )
+            : null}
+        </div>
       </TonedCard>
       <Outlet />
     </div>

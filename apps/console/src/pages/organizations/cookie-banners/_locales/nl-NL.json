@@ -282,7 +282,20 @@
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" }
+    "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
+    "discovery": { "pageLoads": "Paginaladingen" }
+  },
+  "trackerDiscovery": {
+    "title": "Ontdekking",
+    "description": "Geteld tot de eerste publicatie.",
+    "hitsOfLoads": "{{hits}} / {{loads}}",
+    "families": {
+      "chrome": "Chrome",
+      "edge": "Edge",
+      "firefox": "Firefox",
+      "safari": "Safari",
+      "other": "Overig"
+    }
   },
   "cookieBannersIndex": {
     "empty": {
