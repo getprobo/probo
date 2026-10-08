@@ -875,3 +875,35 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 		assert.NotEmpty(t, result.Node.Translations)
 	})
 }
+
+func TestCookieBanner_DiscoveryPageLoads(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	bannerID := factory.CreateCookieBanner(owner)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on CookieBanner {
+					discoveryPageLoads {
+						family
+						count
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			DiscoveryPageLoads []struct {
+				Family string `json:"family"`
+				Count  int    `json:"count"`
+			} `json:"discoveryPageLoads"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+	assert.Empty(t, result.Node.DiscoveryPageLoads)
+}

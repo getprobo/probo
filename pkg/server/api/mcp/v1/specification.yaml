@@ -13704,6 +13704,30 @@ components:
         published_version:
           $ref: "#/components/schemas/CookieBannerVersion"
           description: Latest published cookie banner version, if any
+        discovery_page_loads:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryFamilyCount"
+          description: Discovery page loads by browser family. Families with zero page loads are omitted. Frozen on first publish.
+
+    DiscoveryBrowserFamily:
+      type: string
+      enum: [CHROME, EDGE, FIREFOX, SAFARI, OTHER]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamily
+      description: Coarse browser family used for discovery sampling
+
+    DiscoveryFamilyCount:
+      type: object
+      required:
+        - family
+        - count
+      properties:
+        family:
+          $ref: "#/components/schemas/DiscoveryBrowserFamily"
+          description: Browser family
+        count:
+          type: integer
+          description: Page loads or first-sighting hits for this family
 
     CommonGVLVendorMembership:
       type: string
@@ -14003,6 +14027,11 @@ components:
             - "null"
           format: date-time
           description: Timestamp when a cookie last matched this pattern
+        discovery_hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryFamilyCount"
+          description: Discovery first-sighting hits by browser family. Only families with page loads are included. Frozen on first publish.
         common_tracker_pattern_id:
           anyOf:
             - $ref: "#/components/schemas/GID"

@@ -942,6 +942,85 @@ func (s *Service) GetCookieBannersByIDs(
 	return banners, nil
 }
 
+func (s *Service) GetDiscoveryPageLoads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) ([]DiscoveryFamilyCount, error) {
+	var stats coredata.CookieBannerDiscoveryStats
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := stats.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryPageLoads(stats), nil
+}
+
+func (s *Service) GetDiscoveryHits(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+) ([]DiscoveryFamilyCount, error) {
+	var (
+		pattern coredata.TrackerPattern
+		stats   coredata.CookieBannerDiscoveryStats
+		hits    *coredata.TrackerPatternDiscoveryHits
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := pattern.LoadByID(ctx, conn, scope, trackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTrackerPatternNotFound
+				}
+
+				return fmt.Errorf("cannot load tracker pattern: %w", err)
+			}
+
+			if err := stats.LoadByCookieBannerID(ctx, conn, scope, pattern.CookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+			}
+
+			var loaded coredata.TrackerPatternDiscoveryHits
+			if err := loaded.LoadByTrackerPatternID(ctx, conn, scope, trackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load tracker pattern discovery hits: %w", err)
+			}
+
+			hits = &loaded
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryHits(stats, hits), nil
+}
+
 func (s *Service) ListCommonGVLVendors(
 	ctx context.Context,
 	cursor *page.Cursor[coredata.CommonGVLVendorOrderField],

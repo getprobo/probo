@@ -429,6 +429,27 @@ func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.Cook
 	return ids, nil
 }
 
+// DiscoveryPageLoads is the resolver for the discoveryPageLoads field.
+func (r *cookieBannerResolver) DiscoveryPageLoads(ctx context.Context, obj *types.CookieBanner) ([]*cookiebanner.DiscoveryFamilyCount, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	counts, err := r.cookieBanner.GetDiscoveryPageLoads(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner discovery page loads", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	out := make([]*cookiebanner.DiscoveryFamilyCount, len(counts))
+	for i := range counts {
+		out[i] = &counts[i]
+	}
+
+	return out, nil
+}
+
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
 func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrackerResourceOrderBy, filter *types.TrackerResourceFilter) (*types.TrackerResourceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerResourceList)
@@ -1674,6 +1695,27 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	}
 
 	return count, nil
+}
+
+// DiscoveryHits is the resolver for the discoveryHits field.
+func (r *trackerPatternResolver) DiscoveryHits(ctx context.Context, obj *types.TrackerPattern) ([]*cookiebanner.DiscoveryFamilyCount, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	if err != nil {
+		return nil, err
+	}
+
+	counts, err := r.cookieBanner.GetDiscoveryHits(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get tracker pattern discovery hits", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	out := make([]*cookiebanner.DiscoveryFamilyCount, len(counts))
+	for i := range counts {
+		out[i] = &counts[i]
+	}
+
+	return out, nil
 }
 
 // CommonThirdParty is the resolver for the commonThirdParty field.

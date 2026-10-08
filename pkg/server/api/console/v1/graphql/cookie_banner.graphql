@@ -154,6 +154,40 @@ type CookieBannerCapabilities
     corsless: Boolean!
 }
 
+enum DiscoveryBrowserFamily
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamily"
+    ) {
+    CHROME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyChrome"
+        )
+    EDGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyEdge"
+        )
+    FIREFOX
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyFirefox"
+        )
+    SAFARI
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilySafari"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyOther"
+        )
+}
+
+type DiscoveryFamilyCount
+    @goModel(
+        model: "go.probo.inc/probo/pkg/cookiebanner.DiscoveryFamilyCount"
+    ) {
+    family: DiscoveryBrowserFamily!
+    count: Int!
+}
+
 type CookieBanner implements Node {
     id: ID!
     name: String!
@@ -233,6 +267,13 @@ type CookieBanner implements Node {
     ): CommonGVLVendorConnection @goField(forceResolver: true)
 
     gvlVendorIds: [Int!]! @goField(forceResolver: true)
+
+    """
+    Discovery page loads by browser family. Families with zero page
+    loads are omitted. Frozen on first publish.
+    """
+    discoveryPageLoads: [DiscoveryFamilyCount!]!
+        @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -368,6 +409,13 @@ type TrackerPattern implements Node
     source: CookieSource
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
+    """
+    Discovery first-sighting hits by browser family. Only families
+    with page loads are included, so a zero is a sampled miss.
+    Frozen on first publish.
+    """
+    discoveryHits: [DiscoveryFamilyCount!]!
+        @goField(forceResolver: true)
     lastMatchedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!

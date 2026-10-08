@@ -35,7 +35,7 @@ type (
 	// type via @goModel. The first block contains the fields gqlgen
 	// fulfills directly from the model; resolver-only fields
 	// (cookieCategory, detectedTrackers, commonThirdParty, attribution,
-	// detectedCount, permission) are populated by the resolver.
+	// detectedCount, discoveryHits, permission) are populated by the resolver.
 	//
 	// CommonTrackerPatternID is exposed directly as the
 	// commonTrackerPatternId field: a non-null value indicates the

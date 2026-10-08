@@ -60,6 +60,7 @@ export async function execute(
 					defaultLanguage
 					publisherCountryCode
 					tcfCmpId
+					discoveryPageLoads { family count }
 					createdAt
 					updatedAt
 					publishedVersion {

@@ -5807,6 +5807,13 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	out := types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())
 
+	loads, err := r.cookieBanner.GetDiscoveryPageLoads(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+	}
+
+	out.DiscoveryPageLoads = types.NewDiscoveryFamilyCounts(loads)
+
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
 		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
 		if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {
@@ -6101,6 +6108,13 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 	if err != nil {
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
 	}
+
+	hits, err := r.cookieBanner.GetDiscoveryHits(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("internal error")
+	}
+
+	mapped.DiscoveryHits = types.NewDiscoveryFamilyCounts(hits)
 
 	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
