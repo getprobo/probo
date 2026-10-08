@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -61,6 +62,7 @@ export function AddableConnectorListItem({
   children,
 }: AddableConnectorListItemProps) {
   const { t } = useTranslation();
+  const toast = Toast.useToastManager();
   const organizationId = useOrganizationId();
   const connectors = useFragment(fragment, connectorKeys);
   const [isAdding, setIsAdding] = useState(false);
@@ -93,8 +95,11 @@ export function AddableConnectorListItem({
           prependCreatedSourceEdges(store, connectionId);
         },
       }, {
-        successMessage: t("accessReviewSourcesPage.messages.created"),
         errorToast: t("accessReviewSourcesPage.errors.create"),
+      });
+      toast.add({
+        title: t("accessReviewSourcesPage.messages.created"),
+        type: "success",
       });
     } catch {
       // The mutation hook already reported the error.

@@ -2835,12 +2835,14 @@
     "messages": {
       "error": "Erreur",
       "success": "Succès",
+      "deleted": "Source d’accès supprimée avec succès.",
       "organizationUpdated": "Organisation mise à jour."
     },
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "actions": {
       "reconnect": "Reconnecter",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "cancel": "Annuler"
     },
     "loading": "Chargement...",
     "selectOrganization": "Sélectionner une organisation",

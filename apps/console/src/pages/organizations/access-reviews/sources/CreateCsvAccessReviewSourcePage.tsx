@@ -18,26 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import {
-  Button,
-  Card,
-  Field,
-  PageHeader,
-} from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { Textarea } from "@probo/ui/src/v2/form/Textarea";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { Link, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { ConnectionHandler, graphql } from "relay-runtime";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { CreateCsvAccessReviewSourcePageQuery } from "#/__generated__/core/CreateCsvAccessReviewSourcePageQuery.graphql";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
-import { z } from "#/lib/zod";
 
 import { createAccessReviewSourcesMutation, prependCreatedSourceEdges } from "../dialogs/accessReviewSourceMutations";
+
+import { csvSourcePage } from "./_components/variants";
 
 export const createCsvAccessReviewSourcePageQuery = graphql`
   query CreateCsvAccessReviewSourcePageQuery($organizationId: ID!) {
@@ -51,11 +55,6 @@ export const createCsvAccessReviewSourcePageQuery = graphql`
   }
 `;
 
-const csvSchema = z.object({
-  name: z.string().min(1),
-  csvData: z.string().min(1),
-});
-
 interface CreateCsvAccessReviewSourcePageProps {
   queryRef: PreloadedQuery<CreateCsvAccessReviewSourcePageQuery>;
 }
@@ -65,14 +64,10 @@ export function CreateCsvAccessReviewSourcePage({
 }: CreateCsvAccessReviewSourcePageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const organizationId = useOrganizationId();
-  const { register, handleSubmit }
-    = useFormWithSchema(csvSchema, {
-      defaultValues: {
-        name: "",
-        csvData: "",
-      },
-    });
+  const { root, back, intro, form, actions } = csvSourcePage();
+  const sourcesPath = `/organizations/${organizationId}/access-reviews/sources`;
 
   usePageTitle(t("createCsvAccessReviewSourcePage.pageTitle"));
 
@@ -98,25 +93,23 @@ export function CreateCsvAccessReviewSourcePage({
       },
     );
 
-  if (!organization.canCreateSource) {
-    return (
-      <Card padded>
-        <p className="text-txt-secondary text-sm">
-          {t("createCsvAccessReviewSourcePage.permissionDenied")}
-        </p>
-      </Card>
-    );
-  }
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const name = data.get("name");
+    const csvData = data.get("csvData");
+    if (typeof name !== "string" || typeof csvData !== "string") {
+      return;
+    }
 
-  const onSubmit = (data: z.infer<typeof csvSchema>) => {
     void createAccessReviewSources({
       variables: {
         input: {
           organizationId,
           sources: [{
             connectorId: null,
-            name: data.name,
-            csvData: data.csvData,
+            name,
+            csvData,
           }],
         },
       },
@@ -126,49 +119,72 @@ export function CreateCsvAccessReviewSourcePage({
         }
       },
     }).then(() => {
-      void navigate(`/organizations/${organizationId}/access-reviews/sources`);
+      void navigate({ pathname: sourcesPath, search: location.search });
     }).catch(() => undefined);
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("createCsvAccessReviewSourcePage.title")}
-        description={t("createCsvAccessReviewSourcePage.description")}
-      />
+    <div className={root()}>
+      <Link
+        to={{ pathname: sourcesPath, search: location.search }}
+        size={2}
+        color="neutral"
+        underline={false}
+        iconStart={<CaretLeftIcon />}
+        className={back()}
+      >
+        {t("createCsvAccessReviewSourcePage.actions.back")}
+      </Link>
+      <div className={intro()}>
+        <Heading level={1} size={6} weight="medium" highContrast>
+          {t("createCsvAccessReviewSourcePage.title")}
+        </Heading>
+        <Text size={2} color="faint">
+          {t("createCsvAccessReviewSourcePage.description")}
+        </Text>
+      </div>
 
-      <Card padded>
-        <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
-          <Field
-            label={t("createCsvAccessReviewSourcePage.fields.name")}
-            {...register("name")}
-            type="text"
-            required
-          />
+      {organization.canCreateSource
+        ? (
+            <Card variant="soft" size={2}>
+              <form className={form()} onSubmit={handleSubmit}>
+                <Field
+                  label={t("createCsvAccessReviewSourcePage.fields.name")}
+                  required
+                >
+                  <TextField name="name" required />
+                </Field>
 
-          <Field
-            label={t("createCsvAccessReviewSourcePage.fields.csvData")}
-            {...register("csvData")}
-            type="textarea"
-            placeholder={t("createCsvAccessReviewSourcePage.fields.csvPlaceholder")}
-            required
-          />
-          <p className="text-txt-secondary text-sm">
-            {t("createCsvAccessReviewSourcePage.supportedColumns")}
-          </p>
+                <Field
+                  label={t("createCsvAccessReviewSourcePage.fields.csvData")}
+                  required
+                >
+                  <Textarea
+                    name="csvData"
+                    required
+                    rows={8}
+                    placeholder={t("createCsvAccessReviewSourcePage.fields.csvPlaceholder")}
+                  />
+                </Field>
+                <Text size={2} color="faint">
+                  {t("createCsvAccessReviewSourcePage.supportedColumns")}
+                </Text>
 
-          <div className="flex items-center justify-end gap-2">
-            <Button variant="secondary" asChild>
-              <Link to={`/organizations/${organizationId}/access-reviews/sources`}>
-                {t("createCsvAccessReviewSourcePage.actions.back")}
-              </Link>
-            </Button>
-            <Button disabled={isCreating} type="submit">
-              {t("createCsvAccessReviewSourcePage.actions.create")}
-            </Button>
-          </div>
-        </form>
-      </Card>
+                <div className={actions()}>
+                  <Button type="submit" loading={isCreating}>
+                    {t("createCsvAccessReviewSourcePage.actions.create")}
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          )
+        : (
+            <Card variant="soft" size={2}>
+              <Text size={2} color="faint">
+                {t("createCsvAccessReviewSourcePage.permissionDenied")}
+              </Text>
+            </Card>
+          )}
     </div>
   );
 }

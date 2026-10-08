@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { graphql, useFragment } from "react-relay";
 
 import type { CapturedOrganization_source$key } from "#/__generated__/core/CapturedOrganization_source.graphql";
@@ -43,8 +44,8 @@ interface CapturedOrganizationProps {
 export function CapturedOrganization({ sourceKey }: CapturedOrganizationProps) {
   const source = useFragment(capturedOrganizationFragment, sourceKey);
   return (
-    <span className="text-sm text-txt-primary">
+    <Text size={2} highContrast>
       {source.selectedOrganization}
-    </span>
+    </Text>
   );
 }

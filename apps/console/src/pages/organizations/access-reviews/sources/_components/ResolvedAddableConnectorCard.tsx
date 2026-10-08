@@ -50,6 +50,7 @@ import { connectorDetailsPath } from "#/pages/organizations/settings/integration
 import { listedConnectorAccounts } from "../_lib/listedConnectorAccounts";
 
 import type { LoadedConnectorAccounts } from "./AddableConnectorAccounts";
+import { addableConnectorCard } from "./variants";
 
 const connectorFragment = graphql`
   fragment ResolvedAddableConnectorCard_connector on Connector @relay(plural: true) {
@@ -104,6 +105,7 @@ export function ResolvedAddableConnectorCard({
   onAdd,
   children,
 }: ResolvedAddableConnectorCardProps) {
+  const { title, badges } = addableConnectorCard();
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { t: tConnector } = useTranslation("organizations/settings/integrations");
@@ -166,7 +168,7 @@ export function ResolvedAddableConnectorCard({
           <ThirdPartyLogo thirdParty={face.provider} />
         )}
         lead={(
-          <Heading level={3} size={3} weight="medium" highContrast className="min-w-0 truncate">
+          <Heading level={3} size={3} weight="medium" highContrast className={title()}>
             {face.displayName}
           </Heading>
         )}
@@ -211,7 +213,7 @@ export function ResolvedAddableConnectorCard({
             {t("accessReviewSourcesPage.needsOrganization")}
           </Text>
         )}
-        <div className="mt-auto flex flex-wrap items-center gap-2">
+        <div className={badges()}>
           <Badge variant="soft" color={tone} size={1}>
             {sharedStatus != null
               ? tConnector(`detailsPage.status.${sharedStatus}`)

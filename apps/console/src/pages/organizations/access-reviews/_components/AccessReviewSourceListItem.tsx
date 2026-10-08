@@ -18,33 +18,35 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { DotsThreeVerticalIcon, TrashIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
-import {
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  Select,
-  ThirdPartyLogo,
-  useConfirm,
-} from "@probo/ui";
+import { ThirdPartyLogo } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useQueryLoader } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { AccessReviewSourceListItem_source$key } from "#/__generated__/core/AccessReviewSourceListItem_source.graphql";
 import type { AccessReviewSourceListItemConfigureMutation } from "#/__generated__/core/AccessReviewSourceListItemConfigureMutation.graphql";
-import type { AccessReviewSourceListItemDeleteMutation } from "#/__generated__/core/AccessReviewSourceListItemDeleteMutation.graphql";
 import type { InlineOrgSelectQuery } from "#/__generated__/core/InlineOrgSelectQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { buildConnectorInitiateURL } from "#/pages/organizations/settings/integrations/_lib/connectorInitiate";
 
 import { connectionIssue } from "../_lib/connectionIssue";
+import { sourceListItem } from "../sources/_components/variants";
 
+import { AccessReviewSourceDeleteDialog } from "./AccessReviewSourceDeleteDialog";
 import { InlineOrgSelect, inlineOrgSelectQuery } from "./InlineOrgSelect";
 import { SourceConnectionIssue } from "./SourceConnectionIssue";
 
@@ -66,17 +68,7 @@ const fragment = graphql`
     needsConfiguration
     createdAt
     canDelete: permission(action: "access-review:source:delete")
-  }
-`;
-
-export const deleteAccessReviewSourceMutation = graphql`
-  mutation AccessReviewSourceListItemDeleteMutation(
-    $input: DeleteAccessReviewSourceInput!
-    $connections: [ID!]!
-  ) {
-    deleteAccessReviewSource(input: $input) {
-      deletedAccessReviewSourceId @deleteEdge(connections: $connections)
-    }
+    ...AccessReviewSourceDeleteDialog_source
   }
 `;
 
@@ -94,26 +86,21 @@ const configureMutation = graphql`
   }
 `;
 
-type Props = {
+interface AccessReviewSourceListItemProps {
   sourceKey: AccessReviewSourceListItem_source$key;
   connectionId: string;
-};
+}
 
 export function AccessReviewSourceListItem({
   sourceKey,
   connectionId,
-}: Props) {
+}: AccessReviewSourceListItemProps) {
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
-  const confirm = useConfirm();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const accessSource = useFragment(fragment, sourceKey);
 
-  const [deleteAccessReviewSource]
-    = useMutation<AccessReviewSourceListItemDeleteMutation>(
-      deleteAccessReviewSourceMutation,
-      { errorToast: t("accessReviewSourceRow.errors.delete") },
-    );
   const [configure]
     = useMutation<AccessReviewSourceListItemConfigureMutation>(configureMutation, {
       successMessage: t("accessReviewSourceRow.messages.organizationUpdated"),
@@ -143,24 +130,6 @@ export function AccessReviewSourceListItem({
     ? orgsQueryRef
     : null;
 
-  const handleDelete = () => {
-    confirm(
-      () => {
-        void deleteAccessReviewSource({
-          variables: {
-            input: { accessReviewSourceId: accessSource.id },
-            connections: [connectionId],
-          },
-        }).catch(() => undefined);
-      },
-      {
-        message: t("accessReviewSourceRow.deleteConfirmation", {
-          name: accessSource.name,
-        }),
-      },
-    );
-  };
-
   const handleOrgChange = (slug: string) => {
     void configure({
       variables: {
@@ -172,12 +141,57 @@ export function AccessReviewSourceListItem({
     }).catch(() => undefined);
   };
 
+  const {
+    card,
+    header,
+    identity,
+    title,
+    logo,
+    actions,
+  } = sourceListItem();
+
+  const deleteControl = accessSource.canDelete
+    ? (
+        <>
+          <Dropdown>
+            <DropdownTrigger
+              render={(
+                <IconButton
+                  variant="ghost"
+                  color="neutral"
+                  size={1}
+                  aria-label={t("accessReviewSourcesPage.actions.more")}
+                >
+                  <DotsThreeVerticalIcon />
+                </IconButton>
+              )}
+            />
+            <DropdownPopup align="end">
+              <DropdownItem
+                color="error"
+                iconStart={<TrashIcon />}
+                onClick={() => setDeleteOpen(true)}
+              >
+                {t("accessReviewSourceRow.actions.delete")}
+              </DropdownItem>
+            </DropdownPopup>
+          </Dropdown>
+          <AccessReviewSourceDeleteDialog
+            sourceKey={accessSource}
+            connectionId={connectionId}
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+          />
+        </>
+      )
+    : null;
+
   if (connector == null || accessSource.connectionStatus === "NOT_APPLICABLE") {
     return (
-      <Card variant="soft" size={2} className="flex h-full min-w-0 flex-col gap-3">
-        <div className="flex items-center gap-4">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <Heading level={3} size={3} weight="medium" highContrast className="min-w-0 truncate">
+      <Card variant="soft" size={2} className={card()}>
+        <div className={header()}>
+          <div className={identity()}>
+            <Heading level={3} size={3} weight="medium" highContrast className={title()}>
               {accessSource.name}
             </Heading>
             <Text size={1} color="faint">
@@ -187,21 +201,9 @@ export function AccessReviewSourceListItem({
             </Text>
           </div>
         </div>
-        {accessSource.canDelete && (
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <ActionDropdown>
-              <DropdownItem
-                icon={IconTrashCan}
-                variant="danger"
-                onSelect={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-              >
-                {t("accessReviewSourceRow.actions.delete")}
-              </DropdownItem>
-            </ActionDropdown>
+        {deleteControl != null && (
+          <div className={actions()}>
+            {deleteControl}
           </div>
         )}
       </Card>
@@ -234,15 +236,15 @@ export function AccessReviewSourceListItem({
   );
 
   return (
-    <Card variant="soft" size={2} className="flex h-full min-w-0 flex-col gap-3">
-      <div className="flex items-center gap-4">
+    <Card variant="soft" size={2} className={card()}>
+      <div className={header()}>
         <ThirdPartyLogo
           thirdParty={connector.provider}
-          className="size-8 shrink-0"
+          className={logo()}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Heading level={3} size={3} weight="medium" highContrast className="min-w-0 truncate">
-            {accessSource.name}
+        <div className={identity()}>
+          <Heading level={3} size={3} weight="medium" highContrast className={title()}>
+            {accountLabel(accessSource.name, connector.displayName)}
           </Heading>
           <Text size={1} color="faint">
             <time dateTime={accessSource.createdAt}>
@@ -252,7 +254,7 @@ export function AccessReviewSourceListItem({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className={actions()}>
         {showOrgSelector && (
           readyOrgsQueryRef == null
             ? <OrgSelectPending />
@@ -277,34 +279,37 @@ export function AccessReviewSourceListItem({
             reconnectUrl={canReconnect ? reconnectUrl : null}
           />
         )}
-        {accessSource.canDelete && (
-          <ActionDropdown>
-            <DropdownItem
-              icon={IconTrashCan}
-              variant="danger"
-              onSelect={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDelete();
-              }}
-            >
-              {t("accessReviewSourceRow.actions.delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        )}
+        {deleteControl}
       </div>
     </Card>
   );
 }
 
+function accountLabel(name: string, vendorName: string): string {
+  const prefix = `${vendorName} / `;
+  if (vendorName !== "" && name.startsWith(prefix)) {
+    const account = name.slice(prefix.length);
+    if (account !== "") {
+      return account;
+    }
+  }
+
+  return name;
+}
+
 function OrgSelectPending() {
   const { t } = useTranslation();
+  const { organizationSelect } = sourceListItem();
 
   return (
-    <Select
-      variant="editor"
-      disabled
-      placeholder={t("accessReviewSourceRow.loading")}
-    />
+    <div className={organizationSelect()}>
+      <Select disabled>
+        <SelectTrigger
+          size={1}
+          placeholder={t("accessReviewSourceRow.loading")}
+          aria-label={t("accessReviewSourceRow.loading")}
+        />
+      </Select>
+    </div>
   );
 }

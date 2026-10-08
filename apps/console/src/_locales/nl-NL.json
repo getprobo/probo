@@ -2835,12 +2835,14 @@
     "messages": {
       "error": "Fout",
       "success": "Succes",
+      "deleted": "Toegangsbron succesvol verwijderd.",
       "organizationUpdated": "Organisatie bijgewerkt."
     },
     "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "reconnect": "Opnieuw verbinden",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "cancel": "Annuleren"
     },
     "loading": "Laden...",
     "selectOrganization": "Selecteer organisatie",

@@ -20,21 +20,53 @@
 
 import { tv } from "tailwind-variants/lite";
 
-export const accessReviewSourceSection = tv({
+export const sourceListItem = tv({
   slots: {
-    root: "flex flex-col gap-3",
-    header: "flex items-center gap-2.5",
-    title: "text-sm font-medium uppercase tracking-wide text-txt-primary",
-    count: "text-sm text-txt-tertiary",
-    list: "list-none overflow-hidden rounded-[10px] border border-border-low bg-level-1",
-    item: "flex flex-wrap items-center gap-4 border-b border-border-low px-4 py-3 last:border-b-0",
-    content: "flex min-w-48 flex-1 flex-col gap-0.5 sm:max-w-64",
-    trailing: "ml-auto flex min-w-40 flex-1 items-center justify-end",
-    issue: "flex min-w-0 flex-1 flex-wrap items-center gap-2.5",
-    issueIcon: "shrink-0 text-txt-danger",
-    issueContent: "min-w-48 flex-1 space-y-0.5",
-    issueTitle: "text-sm font-medium text-txt-primary",
-    issueDescription: "text-xs leading-5 text-txt-secondary",
+    card: "flex h-full min-w-0 flex-col gap-3",
+    header: "flex items-center gap-4",
+    identity: "flex min-w-0 flex-1 flex-col gap-0.5",
+    title: "min-w-0 truncate",
+    logo: "size-8 shrink-0",
+    actions: "flex flex-wrap items-center justify-end gap-2",
+    organizationSelect: "w-44 shrink-0",
+  },
+});
+
+export const connectionIssue = tv({
+  slots: {
+    root: "min-w-0 flex-1",
+    body: "flex flex-wrap items-center gap-2",
+    copy: "flex min-w-48 flex-1 flex-col gap-0.5",
+  },
+});
+
+export const organizationsEmpty = tv({
+  slots: {
+    root: "flex max-w-80 flex-col gap-2",
+    copy: "flex flex-col gap-1",
+  },
+});
+
+export const manualOrgInput = tv({
+  slots: {
+    field: "max-w-40",
+  },
+});
+
+export const addableConnectorCard = tv({
+  slots: {
+    title: "min-w-0 truncate",
+    badges: "mt-auto flex flex-wrap items-center gap-2",
+  },
+});
+
+export const csvSourcePage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    back: "self-start",
+    intro: "flex min-w-0 flex-col gap-2",
+    form: "flex flex-col gap-4",
+    actions: "flex items-center justify-end gap-2",
   },
 });
 

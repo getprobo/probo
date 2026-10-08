@@ -18,12 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Input } from "@probo/ui";
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { type KeyboardEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ManualOrgInput_source$key } from "#/__generated__/core/ManualOrgInput_source.graphql";
+
+import { manualOrgInput } from "../sources/_components/variants";
 
 const manualOrgInputFragment = graphql`
   fragment ManualOrgInput_source on AccessReviewSource {
@@ -41,6 +44,7 @@ export function ManualOrgInput({ sourceKey, onSubmit }: ManualOrgInputProps) {
   const source = useFragment(manualOrgInputFragment, sourceKey);
   const selectedOrganization = source.selectedOrganization ?? "";
   const [value, setValue] = useState(selectedOrganization);
+  const { field } = manualOrgInput();
 
   const handleBlur = () => {
     const trimmed = value.trim();
@@ -49,21 +53,24 @@ export function ManualOrgInput({ sourceKey, onSubmit }: ManualOrgInputProps) {
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
       handleBlur();
     }
   };
 
   return (
-    <Input
-      placeholder={t("accessReviewSourceRow.organizationSlugPlaceholder")}
-      value={value}
-      onChange={e => setValue(e.target.value)}
-      onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
-      className="max-w-40"
-    />
+    <Field label={t("accessReviewSourceRow.organizations.empty.manualLabel")}>
+      <TextField
+        className={field()}
+        size={1}
+        placeholder={t("accessReviewSourceRow.organizationSlugPlaceholder")}
+        value={value}
+        onValueChange={setValue}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+      />
+    </Field>
   );
 }

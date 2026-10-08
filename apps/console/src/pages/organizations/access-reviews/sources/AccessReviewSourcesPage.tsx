@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
 import { CaretDownIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
@@ -114,7 +114,7 @@ interface AccessReviewSourcesPageProps {
 
 export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPageProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = Toast.useToastManager();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -192,10 +192,10 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
       return;
     }
 
-    toast({
+    toast.add({
       title: t("accessReviewSourcesPage.messages.error"),
       description: callbackError,
-      variant: "error",
+      type: "error",
     });
     setSearchParams(clearOAuthCallbackParams, { replace: true });
   }, [callbackError, setSearchParams, t, toast]);

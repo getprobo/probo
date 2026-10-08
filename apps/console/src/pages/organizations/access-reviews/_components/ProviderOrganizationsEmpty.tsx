@@ -18,11 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconArrowLink, IconWarning } from "@probo/ui";
+import { ArrowSquareOutIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { Callout } from "@probo/ui/src/v2/Callout/Callout";
+import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ProviderOrganizationsEmpty_source$key } from "#/__generated__/core/ProviderOrganizationsEmpty_source.graphql";
+
+import { organizationsEmpty } from "../sources/_components/variants";
 
 import { ManualOrgInput } from "./ManualOrgInput";
 
@@ -52,37 +58,41 @@ export function ProviderOrganizationsEmpty({
   const { t } = useTranslation();
   const source = useFragment(organizationsEmptyFragment, sourceKey);
   const remediationUrl = source.providerOrganizations.remediationUrl;
+  const { root, copy } = organizationsEmpty();
 
   return (
-    <div className="flex max-w-80 flex-col gap-2">
-      <div className="flex items-start gap-2 text-xs text-txt-tertiary">
-        <IconWarning size={14} className="mt-0.5 shrink-0 text-txt-warning" />
-        <div className="space-y-1">
-          <p className="font-medium text-txt-primary">
+    <div className={root()}>
+      <Callout
+        size={1}
+        variant="soft"
+        color="amber"
+        icon={<WarningCircleIcon weight="fill" />}
+      >
+        <div className={copy()}>
+          <Heading level={3} size={2} weight="medium" color="current">
             {t("accessReviewSourceRow.organizations.empty.title", {
               provider: providerName,
             })}
-          </p>
-          <p>{t("accessReviewSourceRow.organizations.empty.description")}</p>
+          </Heading>
+          <Text size={1} color="current">
+            {t("accessReviewSourceRow.organizations.empty.description")}
+          </Text>
           {remediationUrl && (
-            <a
+            <Anchor
               href={remediationUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline hover:no-underline"
+              size={1}
+              color="amber"
+              highContrast
+              iconEnd={<ArrowSquareOutIcon />}
             >
               {t("accessReviewSourceRow.organizations.empty.remediation")}
-              <IconArrowLink size={12} />
-            </a>
+            </Anchor>
           )}
         </div>
-      </div>
-      <div className="space-y-1">
-        <p className="text-xs text-txt-tertiary">
-          {t("accessReviewSourceRow.organizations.empty.manualLabel")}
-        </p>
-        <ManualOrgInput sourceKey={source} onSubmit={onSubmit} />
-      </div>
+      </Callout>
+      <ManualOrgInput sourceKey={source} onSubmit={onSubmit} />
     </div>
   );
 }

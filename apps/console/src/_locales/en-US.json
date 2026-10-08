@@ -1801,9 +1801,9 @@
   },
   "accessReviewSourceRow": {
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
-    "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
+    "messages": { "error": "Error", "success": "Success", "deleted": "Access source deleted successfully.", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
-    "actions": { "reconnect": "Reconnect", "delete": "Delete" },
+    "actions": { "reconnect": "Reconnect", "delete": "Delete", "cancel": "Cancel" },
     "loading": "Loading...",
     "selectOrganization": "Select organization",
     "organizationSlugPlaceholder": "org-slug",
