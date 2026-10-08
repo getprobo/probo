@@ -34,9 +34,11 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"sync"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/jose"
@@ -56,9 +58,11 @@ type (
 	// Issuer mints identity federation tokens and produces the public documents that
 	// describe how to verify them.
 	Issuer struct {
-		baseURL  *baseurl.BaseURL
-		keyRing  *jose.KeyRing
-		tokenTTL time.Duration
+		baseURL      *baseurl.BaseURL
+		keyRing      *jose.KeyRing
+		tokenTTL     time.Duration
+		logger       *log.Logger
+		azureLogOnce sync.Once
 	}
 )
 
@@ -85,6 +89,16 @@ func NewIssuer(
 		keyRing:  keyRing,
 		tokenTTL: tokenTTL,
 	}, nil
+}
+
+// UseLogger turns on the one-line Azure assertion log. A nil logger leaves
+// it off, which is every deployment that did not set the config flag.
+func (i *Issuer) UseLogger(logger *log.Logger) {
+	if logger == nil {
+		return
+	}
+
+	i.logger = logger
 }
 
 // BaseURL returns the advertised issuer base URL.
@@ -178,6 +192,10 @@ func (i *Issuer) Token(
 	token, err := i.keyRing.Sign(claims)
 	if err != nil {
 		return "", fmt.Errorf("cannot sign identity federation token: %w", err)
+	}
+
+	if audience == AudienceAzure {
+		i.logAzureAssertion(ctx, token)
 	}
 
 	return token, nil

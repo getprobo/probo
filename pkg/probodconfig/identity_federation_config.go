@@ -25,6 +25,11 @@ type (
 	// customer cloud accounts.
 	IdentityFederationConfig struct {
 		Enabled bool `json:"enabled"`
+		// LogAzureAssertions logs the header and claims of one Azure assertion
+		// per process, and whether this process's published key set verifies
+		// it. The signature is never logged. Leave it false except while
+		// diagnosing a failed Entra token exchange.
+		LogAzureAssertions bool `json:"log-azure-assertions"`
 		// IssuerBaseURL is the base of the advertised issuer, for example
 		// https://proboidentity.com. It defaults to {base-url}/federation, so
 		// a self-hosted deployment needs no second domain.

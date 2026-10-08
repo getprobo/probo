@@ -210,6 +210,10 @@ probo:
   # issuer URL.
   identityFederation:
     enabled: false
+    # Log one Azure assertion's header and claims per process, without the
+    # signature. Leave false. Set true only while diagnosing a failed Entra
+    # token exchange.
+    logAzureAssertions: false
     # Base of the advertised issuer. Leave empty to serve the issuer at
     # {baseUrl}/federation, which is what a self-hosted deployment uses.
     # WARNING: this value becomes immutable once a customer registers it with

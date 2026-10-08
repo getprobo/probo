@@ -160,6 +160,8 @@ spec:
             # Identity federation issuer
             - name: PROBOD_IDENTITY_FEDERATION_ENABLED
               value: "true"
+            - name: PROBOD_IDENTITY_FEDERATION_LOG_AZURE_ASSERTIONS
+              value: {{ .Values.probo.identityFederation.logAzureAssertions | quote }}
             {{- if .Values.probo.identityFederation.issuerBaseUrl }}
             - name: PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL
               value: {{ .Values.probo.identityFederation.issuerBaseUrl | quote }}

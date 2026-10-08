@@ -198,7 +198,11 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 				},
 			},
 			IdentityFederation: probodconfig.IdentityFederationConfig{
-				Enabled:       identityFederationEnabled,
+				Enabled: identityFederationEnabled,
+				LogAzureAssertions: b.resolver.getEnvBoolOrDefault(
+					"PROBOD_IDENTITY_FEDERATION_LOG_AZURE_ASSERTIONS",
+					false,
+				),
 				IssuerBaseURL: b.resolver.getEnv("PROBOD_IDENTITY_FEDERATION_ISSUER_BASE_URL"),
 				SigningKeys:   identityFederationSigningKeys,
 				CloudFormationTemplateURL: b.resolver.getEnvOrDefault(

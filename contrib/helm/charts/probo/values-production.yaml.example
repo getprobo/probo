@@ -167,6 +167,9 @@ probo:
   # validate the OIDC provider being registered.
   identityFederation:
     enabled: false
+    # Log one Azure assertion's header and claims per process, without the
+    # signature. Leave false except while diagnosing a failed Entra exchange.
+    logAzureAssertions: false
     # Leave empty to serve the issuer at {baseUrl}/federation, which is what a
     # self-hosted deployment should do. Set it only to an HTTPS apex you
     # control — never to Probo's own issuer, which you cannot serve documents
