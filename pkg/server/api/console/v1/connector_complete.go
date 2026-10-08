@@ -463,7 +463,6 @@ func finishConnectorCompletion(
 	q.Set("provider", string(connectorProvider))
 
 	if strings.Contains(completion.ContinueURL, "/access-reviews/sources") ||
-		strings.Contains(completion.ContinueURL, "/access-reviews/connections") ||
 		strings.Contains(completion.ContinueURL, "/settings/integrations") {
 		missing, err := accessReviewSvc.SourceMissingOAuthScopes(r.Context(), scope, cnnctr.ID)
 		if err != nil {
