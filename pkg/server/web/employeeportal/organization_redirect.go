@@ -96,6 +96,7 @@ func OrganizationGIDRedirectMiddleware(
 			}
 
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
 			return
 		}
 
@@ -112,6 +113,7 @@ func OrganizationGIDRedirectMiddleware(
 			}
 
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
 			return
 		}
 
