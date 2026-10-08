@@ -306,7 +306,8 @@ func darwinDefaultsMissing(out CmdResult) bool {
 
 	return strings.Contains(lower, "does not exist") ||
 		strings.Contains(lower, "could not find") ||
-		strings.Contains(lower, "does not exist in domain")
+		strings.Contains(lower, "does not exist in domain") ||
+		(strings.Contains(lower, "domain") && strings.Contains(lower, "not found"))
 }
 
 func darwinConsoleUser(ctx context.Context) string {
