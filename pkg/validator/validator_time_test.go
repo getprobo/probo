@@ -65,6 +65,66 @@ func TestAfter(t *testing.T) {
 	})
 }
 
+func TestAfterOrEqual(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	past := now.Add(-24 * time.Hour)
+	future := now.Add(24 * time.Hour)
+
+	t.Run("time after reference", func(t *testing.T) {
+		t.Parallel()
+
+		err := AfterOrEqual(past)(&future)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("same time", func(t *testing.T) {
+		t.Parallel()
+
+		same := now
+		err := AfterOrEqual(now)(&same)
+		if err != nil {
+			t.Errorf("expected no error for equal times, got: %v", err)
+		}
+	})
+
+	t.Run("time before reference", func(t *testing.T) {
+		t.Parallel()
+
+		err := AfterOrEqual(future)(&past)
+		if err == nil {
+			t.Fatal("expected validation error")
+		} else if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("nil value", func(t *testing.T) {
+		t.Parallel()
+
+		var timeVal *time.Time
+
+		err := AfterOrEqual(now)(timeVal)
+		if err != nil {
+			t.Errorf("expected no error for nil, got: %v", err)
+		}
+	})
+
+	t.Run("nil reference", func(t *testing.T) {
+		t.Parallel()
+
+		var ref *time.Time
+
+		err := AfterOrEqual(ref)(&now)
+		if err != nil {
+			t.Errorf("expected no error for nil reference, got: %v", err)
+		}
+	})
+}
+
 func TestBefore(t *testing.T) {
 	now := time.Now()
 	past := now.Add(-24 * time.Hour)

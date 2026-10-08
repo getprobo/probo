@@ -76,7 +76,7 @@ func (car *CreateAuditRequest) Validate() error {
 	v.Check(car.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
-	v.Check(car.AuditEndDate, "audit_end_date", validator.After(car.AuditStartDate))
+	v.Check(car.AuditEndDate, "audit_end_date", validator.AfterOrEqual(car.AuditStartDate))
 	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 
 	return v.Error()
@@ -89,7 +89,7 @@ func (uar *UpdateAuditRequest) Validate() error {
 	v.Check(uar.Name, "name", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.Firm, "firm", validator.SafeTextNoNewLine(TitleMaxLength))
 	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
-	v.Check(uar.AuditEndDate, "audit_end_date", validator.After(uar.AuditStartDate))
+	v.Check(uar.AuditEndDate, "audit_end_date", validator.AfterOrEqual(uar.AuditStartDate))
 	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
 
 	return v.Error()
