@@ -65,10 +65,20 @@ type (
 	}
 
 	// ImageAttrs contains attributes for image nodes.
+	// FileID is set for an uploaded image. Src is set for a remote image.
 	ImageAttrs struct {
-		Src   string  `json:"src"`
-		Alt   *string `json:"alt"`
-		Title *string `json:"title"`
+		FileID *string `json:"fileId,omitempty"`
+		Src    string  `json:"src"`
+		Alt    *string `json:"alt"`
+		Title  *string `json:"title"`
+	}
+
+	// FileAttrs contains attributes for file attachment nodes.
+	FileAttrs struct {
+		FileID   string `json:"fileId"`
+		FileName string `json:"fileName"`
+		MimeType string `json:"mimeType"`
+		Size     int64  `json:"size"`
 	}
 
 	// TableCellAttrs contains attributes for table cell and table header nodes.
@@ -101,6 +111,7 @@ const (
 	NodeHardBreak      NodeType = "hardBreak"
 	NodeText           NodeType = "text"
 	NodeImage          NodeType = "image"
+	NodeFile           NodeType = "file"
 	NodeBulletList     NodeType = "bulletList"
 	NodeOrderedList    NodeType = "orderedList"
 	NodeListItem       NodeType = "listItem"
@@ -181,6 +192,20 @@ func (n Node) ImageAttrs() (ImageAttrs, error) {
 
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse image attrs: %w", err)
+	}
+
+	return a, nil
+}
+
+// FileAttrs parses and returns the file attachment attributes.
+func (n Node) FileAttrs() (FileAttrs, error) {
+	var a FileAttrs
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
+	if err := json.Unmarshal(n.Attrs, &a); err != nil {
+		return a, fmt.Errorf("cannot parse file attrs: %w", err)
 	}
 
 	return a, nil

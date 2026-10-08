@@ -21,6 +21,7 @@
 package task
 
 import (
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
@@ -40,6 +41,7 @@ var writeActions = []string{
 	ActionTaskCreate, ActionTaskUpdate, ActionTaskDelete,
 	ActionTaskAssign, ActionTaskUnassign,
 	ActionTaskCommentCreate, ActionTaskCommentUpdate, ActionTaskCommentDelete,
+	attachment.ActionUpload,
 }
 
 // FullAccessPolicy grants complete task access to organization owners and
@@ -76,6 +78,9 @@ var TaskCommentOwnershipPolicy = policy.NewPolicy(
 	policy.Allow(ActionTaskCommentUpdate, ActionTaskCommentDelete).
 		WithSID("manage-own-task-comment").
 		When(organizationCondition, ownerCondition),
+	policy.Allow(attachment.ActionUpload).
+		WithSID("upload-attachment").
+		When(organizationCondition),
 ).WithDescription("Authors can update and delete their own task comments; nobody else can update them")
 
 // PolicySet returns the PolicySet for the task service. It is owned by this

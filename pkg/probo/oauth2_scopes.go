@@ -21,6 +21,7 @@
 package probo
 
 import (
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 )
@@ -274,6 +275,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionDocumentVersionSignatureList,
 		ActionElectronicSignatureGet,
 		ActionFileGet,
+		attachment.ActionUpload,
 		ActionDocumentCreate,
 		ActionDocumentUpdate,
 		ActionDocumentDelete,

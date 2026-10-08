@@ -262,10 +262,7 @@ func TestParseMarkdown_Image(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, doc.Content, 1)
 
-	p := doc.Content[0]
-	require.Len(t, p.Content, 1)
-
-	img := p.Content[0]
+	img := doc.Content[0]
 	assert.Equal(t, NodeImage, img.Type)
 
 	attrs, err := img.ImageAttrs()
@@ -284,10 +281,7 @@ func TestParseMarkdown_ImageFormattedAltText(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, doc.Content, 1)
 
-	p := doc.Content[0]
-	require.Len(t, p.Content, 1)
-
-	img := p.Content[0]
+	img := doc.Content[0]
 	assert.Equal(t, NodeImage, img.Type)
 
 	attrs, err := img.ImageAttrs()

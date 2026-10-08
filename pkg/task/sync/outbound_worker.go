@@ -264,6 +264,31 @@ func (h *outboundHandler) processUpdate(
 			return err
 		}
 
+		known, err := h.svc.linearAttachments(ctx, scope, task.ID)
+		if err != nil {
+			return err
+		}
+
+		description, files, changed, err := h.svc.embedLinearFiles(
+			ctx,
+			client,
+			scope,
+			payload.ConnectorID,
+			task.OrganizationID,
+			markdown,
+			task.Content,
+			known,
+		)
+		if err != nil {
+			return err
+		}
+
+		if changed {
+			if err := h.svc.saveLinearAttachments(ctx, scope, task.ID, files); err != nil {
+				return err
+			}
+		}
+
 		stateID, err := PickWorkflowStateID(states, task.State)
 		if err != nil {
 			return err
@@ -281,7 +306,7 @@ func (h *outboundHandler) processUpdate(
 			payload.ExternalID,
 			linear.IssueUpdateInput{
 				Title:       &task.Name,
-				Description: &markdown,
+				Description: &description,
 				StateID:     &stateID,
 				Priority:    priority,
 				DueDate:     dueDate,

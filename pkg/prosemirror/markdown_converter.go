@@ -231,11 +231,7 @@ func (c *converter) convertHeading(n *ast.Heading) ([]Node, error) {
 		return nil, fmt.Errorf("cannot marshal heading attrs: %w", err)
 	}
 
-	return []Node{{
-		Type:    NodeHeading,
-		Content: children,
-		Attrs:   attrs,
-	}}, nil
+	return blocksFromInlines(NodeHeading, attrs, children), nil
 }
 
 func (c *converter) convertParagraph(n ast.Node) ([]Node, error) {
@@ -244,10 +240,7 @@ func (c *converter) convertParagraph(n ast.Node) ([]Node, error) {
 		return nil, err
 	}
 
-	return []Node{{
-		Type:    NodeParagraph,
-		Content: children,
-	}}, nil
+	return promoteAttachmentBlocks(blocksFromInlines(NodeParagraph, nil, children)), nil
 }
 
 func (c *converter) convertBlockquote(n ast.Node) ([]Node, error) {
@@ -362,13 +355,19 @@ func (c *converter) convertListItem(n ast.Node) ([]Node, error) {
 
 	return []Node{{
 		Type:    NodeListItem,
-		Content: children,
+		Content: ensureLeadingParagraph(children),
 	}}, nil
 }
 
 func (c *converter) convertImage(n *ast.Image) ([]Node, error) {
+	src := string(n.Destination)
 	imgAttrs := ImageAttrs{
-		Src: string(n.Destination),
+		Src: src,
+	}
+
+	if fileID, ok := ParseAttachmentID(src); ok {
+		imgAttrs.FileID = &fileID
+		imgAttrs.Src = ""
 	}
 
 	if n.Title != nil {

@@ -27,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const updateMutation = `
@@ -102,7 +101,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				if flagContent == "" {
 					input["content"] = nil
 				} else {
-					input["content"] = prosemirror.FromPlainText(flagContent)
+					content, err := cmdutil.CLIContent(flagContent)
+					if err != nil {
+						return err
+					}
+
+					input["content"] = content
 				}
 			}
 
@@ -184,7 +188,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name")
-	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Task content as markdown or ProseMirror JSON. Images and links to /api/files/v1/attachments/{id} are kept")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")

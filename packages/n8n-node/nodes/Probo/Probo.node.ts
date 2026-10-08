@@ -99,6 +99,11 @@ export class Probo implements INodeType {
 						description: 'Manage assets',
 					},
 					{
+						name: 'Attachment',
+						value: 'attachment',
+						description: 'Upload a file for rich text',
+					},
+					{
 						name: 'Audit',
 						value: 'audit',
 						description: 'Manage audits',

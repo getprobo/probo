@@ -28,7 +28,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const createMutation = `
@@ -120,9 +119,14 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("content is required; pass --content or run interactively")
 			}
 
+			content, err := cmdutil.CLIContent(flagContent)
+			if err != nil {
+				return err
+			}
+
 			input := map[string]any{
 				"taskId":  flagTask,
-				"content": prosemirror.FromPlainText(flagContent),
+				"content": content,
 			}
 
 			if flagOwner != "" {
@@ -154,7 +158,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagTask, "task", "", "Task ID (required)")
 	cmd.Flags().StringVar(&flagOwner, "owner", "", "Owner profile ID (defaults to the authenticated user)")
-	cmd.Flags().StringVar(&flagContent, "content", "", "Comment content (required)")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Comment content as markdown or ProseMirror JSON. Images and links to /api/files/v1/attachments/{id} are kept (required)")
 
 	return cmd
 }

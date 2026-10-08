@@ -29,7 +29,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const forkMutation = `
@@ -136,7 +135,12 @@ func NewCmdFork(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagDescription != "" {
-				input["description"] = prosemirror.FromPlainText(flagDescription)
+				description, err := cmdutil.CLIContent(flagDescription)
+				if err != nil {
+					return err
+				}
+
+				input["description"] = description
 			}
 
 			if flagPeriodStart != "" || flagPeriodEnd != "" {
@@ -193,7 +197,7 @@ func NewCmdFork(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Risk analysis name (required)")
-	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description")
+	cmd.Flags().StringVar(&flagDescription, "description", "", "Risk analysis description as markdown or ProseMirror JSON. Images and links to /api/files/v1/attachments/{id} are kept")
 	cmd.Flags().StringVar(
 		&flagPeriodStart,
 		"period-start",

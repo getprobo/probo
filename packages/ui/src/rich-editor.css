@@ -157,4 +157,24 @@
     .mermaid-empty {
         @apply p-4 text-sm text-txt-tertiary text-center;
     }
+
+    .rich-image {
+        @apply my-2 max-w-full rounded-md;
+    }
+
+    .rich-file {
+        @apply my-2 flex items-center gap-2 rounded-lg border border-border-solid px-3 py-2 text-sm no-underline;
+    }
+
+    .rich-file-name {
+        @apply min-w-0 flex-1 truncate font-normal text-txt-primary;
+    }
+
+    .rich-file-size {
+        @apply shrink-0 text-txt-tertiary;
+    }
+
+    .rich-upload {
+        @apply my-2 rounded-lg border border-dashed border-border-solid px-3 py-2 text-sm text-txt-tertiary;
+    }
 }

@@ -24,6 +24,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
 import type { OrganizationLayoutQuery } from "#/__generated__/iam/OrganizationLayoutQuery.graphql";
+import { RichTextUploads } from "#/hooks/useUploadRichTextFile";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 import { CurrentUser } from "#/providers/CurrentUser";
 
@@ -100,7 +101,9 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
                     role: organization.viewer.membership.role,
                   }}
                 >
-                  <Outlet context={organization.viewer.membership.role} />
+                  <RichTextUploads>
+                    <Outlet context={organization.viewer.membership.role} />
+                  </RichTextUploads>
                 </CurrentUser>
               </CoreRelayProvider>
             </div>

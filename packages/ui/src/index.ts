@@ -119,3 +119,5 @@ export { EditableRow } from "./Molecules/Table/EditableRow";
 
 // Rich editor
 export { RichEditor } from "./RichEditor/RichEditor";
+export { RichTextUploadContext } from "./RichEditor/RichTextUploadContext";
+export type { UploadAttachment } from "./RichEditor/uploadAttachments";

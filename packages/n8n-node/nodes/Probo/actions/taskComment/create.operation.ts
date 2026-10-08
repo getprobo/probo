@@ -50,7 +50,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The comment content as a ProseMirror document JSON string',
+		description: 'The comment content as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size',
 		required: true,
 	},
 	{

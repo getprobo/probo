@@ -39,7 +39,7 @@ func sanitizeHTMLBlockContent(s string) string {
 }
 
 // convertProseMirrorFromInlineHTML sanitizes inline raw HTML and maps it to
-// ProseMirror paragraph-level children (text, hardBreak, image, marks).
+// ProseMirror inline children (text, hardBreak, marks) and image blocks.
 func convertProseMirrorFromInlineHTML(raw string) ([]Node, error) {
 	sanitized := strings.TrimSpace(sanitizeHTMLBlockContent(raw))
 	if sanitized == "" {
@@ -194,7 +194,7 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 			return nil, err
 		}
 
-		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+		return blocksFromInlines(NodeParagraph, nil, inlines), nil
 	case "h1", "h2", "h3", "h4", "h5", "h6":
 		level := int(n.Data[1] - '0')
 
@@ -208,11 +208,7 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 			return nil, fmt.Errorf("cannot marshal heading attrs: %w", err)
 		}
 
-		return []Node{{
-			Type:    NodeHeading,
-			Attrs:   attrs,
-			Content: inlines,
-		}}, nil
+		return blocksFromInlines(NodeHeading, attrs, inlines), nil
 	case "blockquote":
 		return c.convertBlockquote(n)
 	case "pre":
@@ -240,10 +236,7 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 			return nil, nil
 		}
 
-		return []Node{{
-			Type:    NodeParagraph,
-			Content: []Node{*img},
-		}}, nil
+		return []Node{*img}, nil
 	case "div", "section", "article", "aside", "main", "header", "footer", "nav",
 		"center", "figure", "body", "html", "span":
 		return c.unwrapBlockElement(n)
@@ -263,7 +256,7 @@ func (c *htmlBlockConverter) unwrapBlockElement(n *html.Node) ([]Node, error) {
 			return nil, nil
 		}
 
-		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+		return blocksFromInlines(NodeParagraph, nil, inlines), nil
 	}
 
 	return c.convertBlockChildren(n)
@@ -442,20 +435,33 @@ func parseOlStart(n *html.Node) int {
 }
 
 func (c *htmlBlockConverter) convertListItem(li *html.Node) ([]Node, error) {
+	var nodes []Node
+
 	if hasBlockElementChild(li) {
-		return c.convertBlockChildren(li)
+		children, err := c.convertBlockChildren(li)
+		if err != nil {
+			return nil, err
+		}
+
+		nodes = children
+	} else {
+		inlines, err := c.convertInlineFragments(li)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(inlines) == 0 {
+			return nil, nil
+		}
+
+		nodes = blocksFromInlines(NodeParagraph, nil, inlines)
 	}
 
-	inlines, err := c.convertInlineFragments(li)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(inlines) == 0 {
+	if len(nodes) == 0 {
 		return nil, nil
 	}
 
-	return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+	return ensureLeadingParagraph(nodes), nil
 }
 
 func hasBlockElementChild(n *html.Node) bool {

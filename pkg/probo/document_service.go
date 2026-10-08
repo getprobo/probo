@@ -38,6 +38,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -735,6 +736,15 @@ func (s *DocumentService) Create(
 
 			documentVersion.OrganizationID = organization.ID
 
+			if strings.TrimSpace(documentVersion.Content) != "" {
+				bound, err := attachment.Attach(ctx, conn, scope, organization.ID, documentVersion.ID, documentVersion.Content)
+				if err != nil {
+					return fmt.Errorf("cannot bind document files: %w", err)
+				}
+
+				documentVersion.Content = bound
+			}
+
 			if err := documentVersion.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot create document version: %w", err)
 			}
@@ -970,7 +980,12 @@ func (s *DocumentService) updateVersionInTx(
 			return fmt.Errorf("cannot sanitize document content: %w", err)
 		}
 
-		draftVersion.Content = sanitized
+		bound, err := attachment.Attach(ctx, tx, scope, draftVersion.OrganizationID, draftVersion.ID, sanitized)
+		if err != nil {
+			return fmt.Errorf("cannot bind document files: %w", err)
+		}
+
+		draftVersion.Content = bound
 	}
 
 	if title != nil {
@@ -1303,6 +1318,23 @@ func (s *DocumentService) createDraftInTx(
 		return nil, fmt.Errorf("cannot create draft: %w", err)
 	}
 
+	fileIDs, err := attachment.FileIDs(latestVersion.Content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read document files: %w", err)
+	}
+
+	if err := attachment.Copy(
+		ctx,
+		tx,
+		scope,
+		document.OrganizationID,
+		latestVersion.ID,
+		draftVersion.ID,
+		fileIDs,
+	); err != nil {
+		return nil, fmt.Errorf("cannot copy document files: %w", err)
+	}
+
 	return draftVersion, nil
 }
 
@@ -1311,6 +1343,17 @@ func (s *DocumentService) deleteDraftInTx(
 	tx pg.Tx,
 	draftVersion *coredata.DocumentVersion,
 ) error {
+	if err := (coredata.Attachments{}).DeleteExcept(
+		ctx,
+		tx,
+		scope,
+		draftVersion.OrganizationID,
+		draftVersion.ID,
+		nil,
+	); err != nil {
+		return fmt.Errorf("cannot delete document attachments: %w", err)
+	}
+
 	if err := draftVersion.Delete(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot delete document version: %w", err)
 	}
@@ -2217,8 +2260,43 @@ func (s *DocumentService) Update(
 						return err
 					}
 
+					if req.Content != nil {
+						fileIDs, err := attachment.FileIDs(*req.Content)
+						if err != nil {
+							return fmt.Errorf("cannot read document files: %w", err)
+						}
+
+						if err := attachment.Copy(
+							ctx,
+							tx,
+							scope,
+							document.OrganizationID,
+							latestVersion.ID,
+							draftVersion.ID,
+							fileIDs,
+						); err != nil {
+							return fmt.Errorf("cannot copy document files: %w", err)
+						}
+					}
+
 					if err := s.updateVersionInTx(ctx, scope, tx, draftVersion, req.Content, req.Classification, req.DocumentType, req.Title); err != nil {
 						return err
+					}
+
+					publishedFileIDs, err := attachment.FileIDs(latestVersion.Content)
+					if err != nil {
+						return fmt.Errorf("cannot read document files: %w", err)
+					}
+
+					if err := (coredata.Attachments{}).DeleteExcept(
+						ctx,
+						tx,
+						scope,
+						document.OrganizationID,
+						latestVersion.ID,
+						publishedFileIDs,
+					); err != nil {
+						return fmt.Errorf("cannot delete document attachments: %w", err)
 					}
 
 					resultVersion = draftVersion
@@ -2886,8 +2964,65 @@ func generateSignaturePagePDF(
 	return pdfData, nil
 }
 
+func embedContentImages(
+	ctx context.Context,
+	svc *Service,
+	scope coredata.Scoper,
+	conn pg.Querier,
+	content string,
+) string {
+	if strings.TrimSpace(content) == "" {
+		return content
+	}
+
+	node, err := prosemirror.Parse(content)
+	if err != nil {
+		return content
+	}
+
+	dataURLs := map[string]string{}
+
+	for _, ref := range prosemirror.ReferencedFiles(node) {
+		if !ref.Image {
+			continue
+		}
+
+		fileID, err := gid.ParseGID(ref.ID)
+		if err != nil {
+			continue
+		}
+
+		file := &coredata.File{}
+		if err := file.LoadByID(ctx, conn, scope, fileID); err != nil {
+			continue
+		}
+
+		if !strings.HasPrefix(file.MimeType, "image/") {
+			continue
+		}
+
+		encoded, mimeType, err := svc.fileManager.GetFileBase64(ctx, file)
+		if err != nil {
+			continue
+		}
+
+		dataURLs[file.ID.String()] = "data:" + mimeType + ";base64," + encoded
+	}
+
+	prosemirror.EmbedImageDataURLs(&node, dataURLs)
+	prosemirror.DropRemoteImageSrcs(&node)
+
+	out, err := json.Marshal(node)
+	if err != nil {
+		return content
+	}
+
+	return string(out)
+}
+
 type documentPDFInput struct {
 	version            *coredata.DocumentVersion
+	content            string
 	approverNames      []string
 	horizontalLogoFile *coredata.File
 }
@@ -2905,6 +3040,8 @@ func generateDocumentPDF(
 	if err != nil {
 		return nil, err
 	}
+
+	input.content = embedContentImages(ctx, svc, scope, conn, input.version.Content)
 
 	return renderDocumentPDF(ctx, svc, html2pdfConverter, input, options)
 }
@@ -3002,6 +3139,11 @@ func renderDocumentPDF(
 ) ([]byte, error) {
 	version := input.version
 
+	content := input.content
+	if content == "" {
+		content = version.Content
+	}
+
 	classification := docgen.ClassificationSecret
 
 	switch version.Classification {
@@ -3026,7 +3168,7 @@ func renderDocumentPDF(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     json.RawMessage([]byte(version.Content)),
+		Content:                     json.RawMessage([]byte(content)),
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,

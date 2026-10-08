@@ -21,6 +21,7 @@
 package cmdutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -45,4 +46,30 @@ func FormatRichText(content string) (string, error) {
 	}
 
 	return strings.TrimRight(markdown, "\n"), nil
+}
+
+// CLIContent stores editor text. ProseMirror JSON is kept. Markdown images
+// and links, including /api/files/v1/attachments/{id}, become image and file nodes.
+// Other text stays plain paragraphs.
+func CLIContent(text string) (string, error) {
+	trimmed := strings.TrimSpace(text)
+	if strings.HasPrefix(trimmed, "{") {
+		return text, nil
+	}
+
+	if strings.Contains(text, "![") || strings.Contains(text, "](") {
+		node, err := prosemirror.ParseMarkdown(text)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse markdown: %w", err)
+		}
+
+		encoded, err := json.Marshal(node)
+		if err != nil {
+			return "", fmt.Errorf("cannot marshal content: %w", err)
+		}
+
+		return string(encoded), nil
+	}
+
+	return prosemirror.FromPlainText(text), nil
 }

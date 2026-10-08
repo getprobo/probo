@@ -160,7 +160,7 @@ func (r *mdRenderer) renderNode(n Node) error {
 		}
 
 		r.buf.WriteString("](")
-		r.buf.WriteString(safeImageSrc(attrs.Src))
+		r.buf.WriteString(imageSrc(attrs))
 
 		if attrs.Title != nil {
 			r.buf.WriteString(` "`)
@@ -168,6 +168,18 @@ func (r *mdRenderer) renderNode(n Node) error {
 			r.buf.WriteByte('"')
 		}
 
+		r.buf.WriteByte(')')
+	case NodeFile:
+		attrs, err := n.FileAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render file node: %w", err)
+		}
+
+		r.ensurePrefix()
+		r.buf.WriteByte('[')
+		r.buf.WriteString(escapeMarkdown(attrs.FileName))
+		r.buf.WriteString("](")
+		r.buf.WriteString(AttachmentPath(attrs.FileID))
 		r.buf.WriteByte(')')
 	case NodeBulletList:
 		return r.renderBulletList(n)

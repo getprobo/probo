@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -196,6 +197,13 @@ func (s *Service) CreateComment(
 
 			taskComment.OrganizationID = task.OrganizationID
 
+			bound, err := attachment.Attach(ctx, conn, scope, taskComment.OrganizationID, taskComment.ID, taskComment.Content)
+			if err != nil {
+				return fmt.Errorf("cannot bind task comment files: %w", err)
+			}
+
+			taskComment.Content = bound
+
 			owner := &coredata.MembershipProfile{}
 			if req.OwnerID != nil {
 				if err := owner.LoadByID(ctx, conn, scope, *req.OwnerID); err != nil {
@@ -282,7 +290,12 @@ func (s *Service) UpdateComment(
 					return fmt.Errorf("cannot sanitize task comment content: %w", err)
 				}
 
-				taskComment.Content = content
+				bound, err := attachment.Attach(ctx, conn, scope, taskComment.OrganizationID, taskComment.ID, content)
+				if err != nil {
+					return fmt.Errorf("cannot bind task comment files: %w", err)
+				}
+
+				taskComment.Content = bound
 			}
 
 			taskComment.UpdatedAt = time.Now()

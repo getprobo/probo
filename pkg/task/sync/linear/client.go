@@ -29,12 +29,15 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"go.gearno.de/kit/httpclient"
 )
 
 type (
 	Client struct {
 		httpClient *http.Client
 		endpoint   string
+		uploadHTTP *http.Client
 	}
 
 	Team struct {
@@ -139,9 +142,13 @@ var (
 // than pinning, so an endpoint override moves task sync along with the OAuth
 // handshake that mints the token they carry.
 func NewClient(httpClient *http.Client, endpoint string) *Client {
+	uploadHTTP := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	uploadHTTP.Timeout = linearUploadTimeout
+
 	return &Client{
 		httpClient: httpClient,
 		endpoint:   endpoint,
+		uploadHTTP: uploadHTTP,
 	}
 }
 

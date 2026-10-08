@@ -60,6 +60,27 @@ func TestGenerateFileURL_PublicFile(t *testing.T) {
 	)
 }
 
+func TestGenerateFileURL_AttachmentFile(t *testing.T) {
+	t.Parallel()
+
+	base, err := baseurl.Parse("https://app.example.com")
+	if err != nil {
+		t.Fatalf("cannot parse base URL: %v", err)
+	}
+
+	svc := filemanager.NewService(nil, base, nil, log.NewLogger(log.WithOutput(io.Discard)))
+	file := &coredata.File{
+		ID:         gid.New(gid.NilTenant, coredata.FileEntityType),
+		Visibility: coredata.FileVisibilityAttachment,
+	}
+
+	assert.Equal(
+		t,
+		"https://app.example.com/api/files/v1/attachments/"+file.ID.String(),
+		svc.GenerateFileURL(file),
+	)
+}
+
 func TestGenerateFileURL_PrivateFile(t *testing.T) {
 	t.Parallel()
 
