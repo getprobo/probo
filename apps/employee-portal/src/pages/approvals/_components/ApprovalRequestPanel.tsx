@@ -23,7 +23,6 @@ import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
-import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
 import { documentRequestPanel } from "#/pages/_components/variants";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
@@ -82,16 +81,12 @@ export function ApprovalRequestPanel({
   onFinish,
 }: ApprovalRequestPanelProps) {
   const { t } = useTranslation("approvals");
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const decided = state === "APPROVED" || state === "REJECTED" || state === "VOIDED";
   const status = approvalStatus[state === "REJECTED" || state === "VOIDED" ? state : "APPROVED"];
   const slots = documentRequestPanel({ tone: status.tone });
   const StatusIcon = status.Icon;
   const busy = isApproving || isRejecting;
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const detail = decided
     ? (

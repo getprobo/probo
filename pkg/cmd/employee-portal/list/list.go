@@ -117,6 +117,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("organization is required; pass --org or set a default with 'prb auth login'")
 			}
 
+			if err := cmdutil.ValidateEnum("order-direction", flagOrderDir, []string{"ASC", "DESC"}); err != nil {
+				return err
+			}
+
+			if flagLimit < 1 {
+				return fmt.Errorf("--limit must be greater than 0")
+			}
+
 			variables := map[string]any{
 				"id": flagOrg,
 				"orderBy": map[string]any{

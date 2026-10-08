@@ -476,11 +476,11 @@ func (r *mutationResolver) AssumeEmployeePortalSession(ctx context.Context, inpu
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlutils.NotFoundf(ctx, "resource not found")
 		}
 
 		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlutils.NotFoundf(ctx, "resource not found")
 		}
 
 		if errPasswordAuthenticationRequired, ok := errors.AsType[*iam.ErrPasswordAuthenticationRequired](err); ok {

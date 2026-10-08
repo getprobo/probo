@@ -1604,6 +1604,10 @@ func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.O
 		return nil, err
 	}
 
+	if gqlutils.OnlyTotalCountSelected(ctx) {
+		return &types.EmployeePortalConnection{ParentID: obj.ID}, nil
+	}
+
 	pageOrderBy := page.OrderBy[coredata.EmployeePortalOrderField]{
 		Field:     coredata.EmployeePortalOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,

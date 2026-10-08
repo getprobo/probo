@@ -175,6 +175,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 	node, err := loadNode(ctx, id)
 	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
 		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)
 		}

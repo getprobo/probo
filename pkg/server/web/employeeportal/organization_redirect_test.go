@@ -22,6 +22,7 @@ package employeeportal_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,19 +46,23 @@ func TestOrganizationGIDRedirectMiddleware(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	lookup := func(ctx context.Context, id gid.GID) (gid.GID, error) {
-		require.Equal(t, organizationID, id)
-		return portalID, nil
-	}
+	newHandler := func(t *testing.T) http.Handler {
+		t.Helper()
 
-	handler := employeeportal.OrganizationGIDRedirectMiddleware(lookup, next)
+		lookup := func(ctx context.Context, id gid.GID) (gid.GID, error) {
+			require.Equal(t, organizationID, id)
+			return portalID, nil
+		}
+
+		return employeeportal.OrganizationGIDRedirectMiddleware(nil, lookup, next)
+	}
 
 	t.Run("redirects organization home", func(t *testing.T) {
 		t.Parallel()
 
 		req := httptest.NewRequest(http.MethodGet, "/"+organizationID.String(), nil)
 		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+		newHandler(t).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusFound, rec.Code)
 		assert.Equal(t, "/employee-portal/"+portalID.String(), rec.Header().Get("Location"))
@@ -72,7 +77,7 @@ func TestOrganizationGIDRedirectMiddleware(t *testing.T) {
 			nil,
 		)
 		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+		newHandler(t).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusFound, rec.Code)
 		assert.Equal(
@@ -82,12 +87,31 @@ func TestOrganizationGIDRedirectMiddleware(t *testing.T) {
 		)
 	})
 
+	t.Run("does not double-escape encoded suffix", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/"+organizationID.String()+"/foo%20bar",
+			nil,
+		)
+		rec := httptest.NewRecorder()
+		newHandler(t).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusFound, rec.Code)
+		assert.Equal(
+			t,
+			"/employee-portal/"+portalID.String()+"/foo%20bar",
+			rec.Header().Get("Location"),
+		)
+	})
+
 	t.Run("does not redirect portal gid", func(t *testing.T) {
 		t.Parallel()
 
 		req := httptest.NewRequest(http.MethodGet, "/"+portalID.String()+"/devices", nil)
 		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+		newHandler(t).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 	})
@@ -97,7 +121,7 @@ func TestOrganizationGIDRedirectMiddleware(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, "/enroll", nil)
 		rec := httptest.NewRecorder()
-		handler.ServeHTTP(rec, req)
+		newHandler(t).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 	})
@@ -106,6 +130,7 @@ func TestOrganizationGIDRedirectMiddleware(t *testing.T) {
 		t.Parallel()
 
 		missing := employeeportal.OrganizationGIDRedirectMiddleware(
+			nil,
 			func(ctx context.Context, id gid.GID) (gid.GID, error) {
 				return gid.Nil, coredata.ErrResourceNotFound
 			},
@@ -117,5 +142,23 @@ func TestOrganizationGIDRedirectMiddleware(t *testing.T) {
 		missing.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("internal error when lookup fails", func(t *testing.T) {
+		t.Parallel()
+
+		failing := employeeportal.OrganizationGIDRedirectMiddleware(
+			nil,
+			func(ctx context.Context, id gid.GID) (gid.GID, error) {
+				return gid.Nil, errors.New("boom")
+			},
+			next,
+		)
+
+		req := httptest.NewRequest(http.MethodGet, "/"+organizationID.String(), nil)
+		rec := httptest.NewRecorder()
+		failing.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 }

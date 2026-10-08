@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { createContext, type ReactNode, useContext } from "react";
+import { createContext, type ReactNode, useContext, useMemo } from "react";
 
 type EmployeePortalRouteValue = {
   employeePortalId: string;
@@ -34,10 +34,13 @@ export function EmployeePortalRouteProvider({
   organizationId,
   children,
 }: EmployeePortalRouteValue & { children: ReactNode }) {
+  const value = useMemo(
+    () => ({ employeePortalId, organizationId }),
+    [employeePortalId, organizationId],
+  );
+
   return (
-    <EmployeePortalRouteContext.Provider
-      value={{ employeePortalId, organizationId }}
-    >
+    <EmployeePortalRouteContext.Provider value={value}>
       {children}
     </EmployeePortalRouteContext.Provider>
   );

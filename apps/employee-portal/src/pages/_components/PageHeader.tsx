@@ -25,7 +25,6 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { pageHeader } from "./variants";
@@ -49,12 +48,8 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   const { t } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = pageHeader();
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   return (
     <div className={slots.root()}>

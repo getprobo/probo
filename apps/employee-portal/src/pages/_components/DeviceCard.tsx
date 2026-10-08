@@ -29,7 +29,6 @@ import { graphql, useFragment } from "react-relay";
 
 import type { DeviceCard_organization$key } from "#/__generated__/core/DeviceCard_organization.graphql";
 import type { DeviceCard_viewer$key } from "#/__generated__/core/DeviceCard_viewer.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard, deviceCard } from "./variants";
@@ -68,15 +67,11 @@ export function DeviceCard({
   organizationKey,
 }: DeviceCardProps) {
   const { t } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = dashboardCard();
   const status = deviceCard();
   const viewer = useFragment(deviceCardViewerFragment, viewerKey);
   const organization = useFragment(deviceCardOrganizationFragment, organizationKey);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const connected = viewer.enrolledDevices.edges.some(({ node }) => {
     return node.state === "ACTIVE" || node.state === "PENDING";

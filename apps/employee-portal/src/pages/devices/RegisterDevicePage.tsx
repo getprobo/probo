@@ -70,7 +70,7 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
   );
   const requested = parseRegisterDeviceStep(searchParams.get("step"));
   const [reached, setReached] = useState(requested);
-  const enrollment = useEnrollDevice(organizationId ?? "");
+  const enrollment = useEnrollDevice(organizationId);
   const step = registerDeviceStepIndex(requested) <= registerDeviceStepIndex(reached)
     ? requested
     : reached;
@@ -90,10 +90,6 @@ export function RegisterDevicePage({ queryRef }: RegisterDevicePageProps) {
       return params;
     }, { replace: true });
   }, [requested, setSearchParams, step]);
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (organization?.__typename !== "Organization") {
     throw new NotFoundError("invalid type for organization node");

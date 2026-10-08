@@ -24,7 +24,6 @@ import { graphql, useRefetchableFragment } from "react-relay";
 
 import type { SignaturesHistoryList_viewer$key } from "#/__generated__/core/SignaturesHistoryList_viewer.graphql";
 import type { SignaturesHistoryListRefetchQuery } from "#/__generated__/core/SignaturesHistoryListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
@@ -76,7 +75,7 @@ export interface SignaturesHistoryListProps {
 export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const [data, refetch] = useRefetchableFragment<
     SignaturesHistoryListRefetchQuery,
     SignaturesHistoryList_viewer$key
@@ -92,10 +91,6 @@ export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps)
     historyDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = historyDocuments.totalCount;
 

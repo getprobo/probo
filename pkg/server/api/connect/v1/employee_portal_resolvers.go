@@ -20,18 +20,16 @@ import (
 
 // Organization is the resolver for the organization field.
 func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.EmployeePortal) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, obj.ID, employeeportalmgmt.ActionEmployeePortalGet); err != nil {
 		return nil, err
 	}
 
-	employeePortal, err := r.employeePortal.Get(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get employee portal", log.Error(err))
+	if obj.Organization == nil {
+		r.logger.ErrorCtx(ctx, "employee portal is missing organization id")
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	organization, err := r.iam.OrganizationService.GetOrganization(ctx, employeePortal.OrganizationID)
+	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
 			return nil, gqlutils.NotFound(ctx, err)

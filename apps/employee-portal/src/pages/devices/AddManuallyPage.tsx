@@ -53,7 +53,7 @@ interface AddManuallyPageProps {
 export function AddManuallyPage({ queryRef }: AddManuallyPageProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = addManuallyPage();
   const { organization } = usePreloadedQuery<AddManuallyPageQuery>(
     addManuallyPageQuery,
@@ -69,10 +69,6 @@ export function AddManuallyPage({ queryRef }: AddManuallyPageProps) {
     }
     start();
   }, [canEnroll, start]);
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (organization?.__typename !== "Organization") {
     throw new NotFoundError("invalid type for organization node");

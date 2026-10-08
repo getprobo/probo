@@ -69,10 +69,10 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		Use:   "update",
 		Short: "Update employee portal settings",
 		Example: `  # Rename an employee portal
-  prb employee-portal update --name "Acme Employees"
+  prb employee-portal update --portal <portal-id> --name "Acme Employees"
 
   # Hide the device agent in the employee app
-  prb employee-portal update --device-agent=false`,
+  prb employee-portal update --portal <portal-id> --device-agent=false`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()

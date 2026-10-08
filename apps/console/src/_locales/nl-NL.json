@@ -2038,6 +2038,12 @@
       "signOut": "Uitloggen"
     }
   },
+  "redirectToEmployeePortal": {
+    "missing": {
+      "title": "Medewerkersportaal niet beschikbaar",
+      "description": "Deze organisatie heeft nog geen medewerkersportaal. Vraag een beheerder om er een aan te maken."
+    }
+  },
   "invitingOrganizationCard": {
     "checkEmail": "Controleer uw e-mail"
   },

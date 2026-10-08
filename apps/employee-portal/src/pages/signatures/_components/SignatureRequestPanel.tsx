@@ -23,7 +23,6 @@ import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
-import { NotFoundError } from "#/lib/relay/errors";
 import { DocumentRequestPanel } from "#/pages/_components/DocumentRequestPanel";
 import { documentRequestPanel } from "#/pages/_components/variants";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
@@ -58,12 +57,8 @@ export function SignatureRequestPanel({
   onFinish,
 }: SignatureRequestPanelProps) {
   const { t } = useTranslation("signatures");
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = documentRequestPanel({ tone: "signed" });
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const detail = signed
     ? (

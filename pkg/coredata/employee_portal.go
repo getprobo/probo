@@ -169,6 +169,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND active = TRUE
 ORDER BY
 	created_at ASC,
 	id ASC

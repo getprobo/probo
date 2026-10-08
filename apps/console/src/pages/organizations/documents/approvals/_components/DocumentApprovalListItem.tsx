@@ -32,7 +32,6 @@ import { graphql } from "relay-runtime";
 
 import type { DocumentApprovalListItemFragment$key } from "#/__generated__/core/DocumentApprovalListItemFragment.graphql";
 import { employeePortalHref } from "#/lib/employeePortalHref";
-import { useDefaultEmployeePortalId } from "#/lib/useDefaultEmployeePortalId";
 
 const fragment = graphql`
   fragment DocumentApprovalListItemFragment on DocumentVersionApprovalDecision {
@@ -57,10 +56,10 @@ const fragment = graphql`
 
 export function DocumentApprovalListItem(props: {
   fragmentRef: DocumentApprovalListItemFragment$key;
+  employeePortalId: string | null;
 }) {
-  const { fragmentRef } = props;
+  const { fragmentRef, employeePortalId } = props;
   const { t, i18n } = useTranslation();
-  const employeePortalId = useDefaultEmployeePortalId();
 
   const decision = useFragment(fragment, fragmentRef);
 

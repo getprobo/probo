@@ -626,6 +626,10 @@ func (s SessionService) AssumeEmployeePortalSession(
 				return fmt.Errorf("cannot load employee portal: %w", err)
 			}
 
+			if !portal.Active {
+				return coredata.ErrResourceNotFound
+			}
+
 			organizationID = portal.OrganizationID
 
 			return nil

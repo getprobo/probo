@@ -18,25 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphql, useLazyLoadQuery } from "react-relay";
+import { graphql, useFragment, useLazyLoadQuery } from "react-relay";
 
+import type { useDefaultEmployeePortalId_organization$key } from "#/__generated__/core/useDefaultEmployeePortalId_organization.graphql";
 import type { useDefaultEmployeePortalIdQuery } from "#/__generated__/core/useDefaultEmployeePortalIdQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+
+// Keep in sync with ViewerMembershipMenu_organization (IAM / Connect schema).
+const defaultEmployeePortalFragment = graphql`
+  fragment useDefaultEmployeePortalId_organization on Organization {
+    employeePortals(
+      first: 1
+      orderBy: { field: CREATED_AT, direction: ASC }
+    ) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }
+`;
 
 const defaultEmployeePortalQuery = graphql`
   query useDefaultEmployeePortalIdQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
-        employeePortals(
-          first: 1
-          orderBy: { field: CREATED_AT, direction: ASC }
-        ) {
-          edges {
-            node {
-              id
-            }
-          }
-        }
+        __typename
+        ...useDefaultEmployeePortalId_organization
       }
     }
   }
@@ -49,9 +58,11 @@ export function useDefaultEmployeePortalId(): string | null {
     { organizationId },
   );
 
-  if (data.node == null || !("employeePortals" in data.node)) {
-    return null;
-  }
+  const organizationKey: useDefaultEmployeePortalId_organization$key | null
+    = data.node != null && data.node.__typename === "Organization"
+      ? data.node
+      : null;
+  const organization = useFragment(defaultEmployeePortalFragment, organizationKey);
 
-  return data.node.employeePortals?.edges[0]?.node.id ?? null;
+  return organization?.employeePortals.edges[0]?.node.id ?? null;
 }

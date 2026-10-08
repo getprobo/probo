@@ -22,7 +22,6 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { SignaturesPageQuery } from "#/__generated__/core/SignaturesPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
@@ -36,18 +35,11 @@ export default function SignaturesPageLoader() {
   );
 
   useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
     loadQuery(
       { organizationId, first: DOCUMENT_LIST_PAGE_SIZE },
       { fetchPolicy: "network-only" },
     );
   }, [organizationId, loadQuery]);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId

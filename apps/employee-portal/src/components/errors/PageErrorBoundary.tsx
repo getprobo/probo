@@ -25,6 +25,7 @@ import { useRouteError } from "react-router";
 import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
 import { AssumeOrganizationSession } from "#/pages/iam/_components/errors/AssumeOrganizationSession";
+import { useOptionalEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 
 import { GlobalError } from "./GlobalError";
@@ -33,8 +34,9 @@ import { GlobalError } from "./GlobalError";
 // the error renders inside the app chrome (TopBar survives).
 export function PageErrorBoundary() {
   const error = useRouteError();
+  const organizationId = useOptionalEmployeePortalRoute()?.organizationId;
   if (error instanceof UnAuthenticatedError) {
-    redirectToLogin();
+    redirectToLogin({ organizationId });
     return null;
   }
 

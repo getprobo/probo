@@ -104,9 +104,6 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     page: DocumentQueuePage,
     openedDocumentId: string,
   ) => {
-    if (organizationId == null) {
-      return;
-    }
     fetchGenerationRef.current += 1;
     setAdvancing(false);
     const next = enterQueueSnapshot(
@@ -139,8 +136,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
 
   const goTo = useCallback((targetId: string, direction: DocumentQueueDirection) => {
     if (
-      organizationId == null
-      || snapshot == null
+      snapshot == null
       || snapshot.organizationId !== organizationId
     ) {
       return;
@@ -154,8 +150,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
 
   const goForward = useCallback(() => {
     if (
-      organizationId == null
-      || snapshot == null
+      snapshot == null
       || snapshot.organizationId !== organizationId
       || documentId == null
       || advancing
@@ -211,7 +206,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   }, [advancing, documentId, employeePortalId, goTo, navigate, organizationId, snapshot, t, toast]);
 
   const startQueue = useCallback((kind: DocumentQueueKind) => {
-    if (organizationId == null || advancing) {
+    if (advancing) {
       return;
     }
 
@@ -254,14 +249,13 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const close = useCallback((kind?: DocumentQueueKind) => {
     const dest = snapshot?.kind ?? kind;
     leave();
-    if (organizationId == null || dest == null) {
+    if (dest == null) {
       return;
     }
     void navigate(`/${employeePortalId}/${dest}`);
-  }, [employeePortalId, leave, navigate, organizationId, snapshot?.kind]);
+  }, [employeePortalId, leave, navigate, snapshot?.kind]);
 
   const scopedSnapshot = snapshot != null
-    && organizationId != null
     && snapshot.organizationId === organizationId
     ? snapshot
     : null;

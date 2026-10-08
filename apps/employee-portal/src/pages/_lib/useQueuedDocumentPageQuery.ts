@@ -38,11 +38,10 @@ type QueuedDocumentPageVariables = {
 
 function matchesRoute<TQuery extends OperationType>(
   queryRef: PreloadedQuery<TQuery> | null | undefined,
-  organizationId: string | undefined,
+  organizationId: string,
   documentId: string | undefined,
 ): queryRef is PreloadedQuery<TQuery> {
   return queryRef != null
-    && organizationId != null
     && documentId != null
     && queryRef.variables.organizationId === organizationId
     && queryRef.variables.documentId === documentId;
@@ -60,7 +59,7 @@ export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
   const [queryRef, loadQuery] = useQueryLoader<TQuery>(query);
 
   useEffect(() => {
-    if (organizationId == null || documentId == null) {
+    if (documentId == null) {
       return;
     }
     loadQuery(
@@ -74,8 +73,8 @@ export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
     );
   }, [organizationId, documentId, loadQuery]);
 
-  if (organizationId == null || documentId == null) {
-    throw new NotFoundError("organizationId and documentId are required");
+  if (documentId == null) {
+    throw new NotFoundError("documentId is required");
   }
 
   return matchesRoute(queryRef, organizationId, documentId) ? queryRef : null;

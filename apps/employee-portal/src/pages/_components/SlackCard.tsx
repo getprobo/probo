@@ -30,7 +30,6 @@ import { graphql, useFragment } from "react-relay";
 
 import type { SlackCard_organization$key } from "#/__generated__/core/SlackCard_organization.graphql";
 import type { SlackCard_viewer$key } from "#/__generated__/core/SlackCard_viewer.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard, deviceCard } from "./variants";
@@ -58,15 +57,11 @@ export interface SlackCardProps {
 
 export function SlackCard({ viewerKey, organizationKey }: SlackCardProps) {
   const { t } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = dashboardCard();
   const status = deviceCard();
   const viewer = useFragment(slackCardViewerFragment, viewerKey);
   const organization = useFragment(slackCardOrganizationFragment, organizationKey);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (organization.slackbotInstallation?.active !== true) {
     return null;

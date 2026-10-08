@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"strings"
 
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -34,9 +35,13 @@ import (
 type OldestPortalLookup func(ctx context.Context, organizationID gid.GID) (gid.GID, error)
 
 // OrganizationGIDRedirectMiddleware 302s /{organizationId}/… to the
-// organization's oldest employee portal. The handler is mounted after
+// organization's oldest active employee portal. The handler is mounted after
 // StripPrefix(PathPrefix), so r.URL.Path is the SPA-relative path.
-func OrganizationGIDRedirectMiddleware(lookup OldestPortalLookup, next http.Handler) http.Handler {
+func OrganizationGIDRedirectMiddleware(
+	logger *log.Logger,
+	lookup OldestPortalLookup,
+	next http.Handler,
+) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if lookup == nil {
 			next.ServeHTTP(w, r)
@@ -64,6 +69,15 @@ func OrganizationGIDRedirectMiddleware(lookup OldestPortalLookup, next http.Hand
 				return
 			}
 
+			if logger != nil {
+				logger.ErrorCtx(
+					r.Context(),
+					"cannot load employee portal for organization redirect",
+					log.Error(err),
+					log.String("organization_id", parsed.String()),
+				)
+			}
+
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 			return
@@ -71,11 +85,37 @@ func OrganizationGIDRedirectMiddleware(lookup OldestPortalLookup, next http.Hand
 
 		location, err := OrganizationPath(portalID.String(), splitPath(rest)...)
 		if err != nil {
+			if logger != nil {
+				logger.ErrorCtx(
+					r.Context(),
+					"cannot build employee portal redirect path",
+					log.Error(err),
+					log.String("organization_id", parsed.String()),
+					log.String("employee_portal_id", portalID.String()),
+				)
+			}
+
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
-		redirectURL := url.URL{Path: location, RawQuery: r.URL.RawQuery}
+		redirectURL, err := url.Parse(location)
+		if err != nil {
+			if logger != nil {
+				logger.ErrorCtx(
+					r.Context(),
+					"cannot parse employee portal redirect path",
+					log.Error(err),
+					log.String("organization_id", parsed.String()),
+					log.String("employee_portal_id", portalID.String()),
+				)
+			}
+
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		redirectURL.RawQuery = r.URL.RawQuery
 		http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 	})
 }

@@ -25,7 +25,6 @@ import { graphql, useRefetchableFragment } from "react-relay";
 
 import type { ApprovalsPendingList_viewer$key } from "#/__generated__/core/ApprovalsPendingList_viewer.graphql";
 import type { ApprovalsPendingListRefetchQuery } from "#/__generated__/core/ApprovalsPendingListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { type CursorPaginationVariables, useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentEmpty } from "#/pages/_components/DocumentEmpty";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
@@ -85,7 +84,7 @@ export interface ApprovalsPendingListProps {
 export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const { advancing, startQueue } = useDocumentQueue();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsPendingListRefetchQuery,
@@ -102,10 +101,6 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
     pendingDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = pendingDocuments.totalCount;
   const emptyKey = historyCount.totalCount === 0 ? "none" : "allDone";

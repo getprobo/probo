@@ -285,6 +285,7 @@ func (s *Server) setupRoutes() {
 	employeePortalHandler := http.Handler(s.employeePortalWebServer)
 	if s.employeePortal != nil {
 		employeePortalHandler = employeeportal_web.OrganizationGIDRedirectMiddleware(
+			s.logger.Named("employeeportal.redirect"),
 			s.employeePortal.OldestIDForOrganization,
 			employeePortalHandler,
 		)

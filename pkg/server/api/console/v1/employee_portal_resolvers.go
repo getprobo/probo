@@ -47,18 +47,17 @@ func (r *employeePortalResolver) DarkLogo(ctx context.Context, obj *types.Employ
 
 // Organization is the resolver for the organization field.
 func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.EmployeePortal) (*types.Organization, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionOrganizationGet)
+	if obj.Organization == nil {
+		r.logger.ErrorCtx(ctx, "employee portal is missing organization id")
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	scope, err := r.authorize(ctx, obj.Organization.ID, probo.ActionOrganizationGet)
 	if err != nil {
 		return nil, err
 	}
 
-	employeePortal, err := r.employeePortal.Get(ctx, scope, obj.ID)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get employee portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	organization, err := r.probo.Organizations.Get(ctx, scope, employeePortal.OrganizationID)
+	organization, err := r.probo.Organizations.Get(ctx, scope, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)

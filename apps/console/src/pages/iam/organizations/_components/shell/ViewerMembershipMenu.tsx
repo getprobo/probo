@@ -47,6 +47,8 @@ import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDial
 
 import { navRail } from "./variants";
 
+// Keep the oldest-portal pick in sync with useDefaultEmployeePortalId
+// (console schema). Relay cannot share a fragment across iam/core projects.
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
     employeePortals(
@@ -91,14 +93,14 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
   const { t } = useTranslation();
   const { toast } = useToast();
 
+  const organization = useFragment(viewerMembershipMenuFragment, organizationKey);
   const {
-    employeePortals,
     viewer: {
       fullName,
       identity,
     },
-  } = useFragment(viewerMembershipMenuFragment, organizationKey);
-  const employeePortalId = employeePortals.edges[0]?.node.id;
+  } = organization;
+  const employeePortalId = organization.employeePortals.edges[0]?.node.id ?? null;
   const { canListOAuth2AccessTokens, email, avatar } = identity;
   const [signOut, isSigningOut] = useMutation<ViewerMembershipMenuSignOutMutation>(signOutMutation);
   const [avatarOpen, setAvatarOpen] = useState(false);

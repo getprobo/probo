@@ -33,7 +33,6 @@ import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import type { DevicesList_organization$key } from "#/__generated__/core/DevicesList_organization.graphql";
 import type { DevicesList_viewer$key } from "#/__generated__/core/DevicesList_viewer.graphql";
 import type { DevicesListRefetchQuery } from "#/__generated__/core/DevicesListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { PageHeader } from "#/pages/_components/PageHeader";
@@ -96,7 +95,7 @@ export function DevicesList({
 }: DevicesListProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const organization = useFragment(devicesListOrganizationFragment, organizationKey);
   const [data, refetch] = useRefetchableFragment<
     DevicesListRefetchQuery,
@@ -114,10 +113,6 @@ export function DevicesList({
     DOCUMENT_LIST_PAGE_SIZE,
   );
   const slots = devicesList({ busy: isPending });
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const empty = enrolledDevices.edges.length === 0
     && !enrolledDevices.pageInfo.hasPreviousPage;

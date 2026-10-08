@@ -26,7 +26,6 @@ import { graphql, useRefetchableFragment } from "react-relay";
 
 import type { ApprovalsHistoryList_viewer$key } from "#/__generated__/core/ApprovalsHistoryList_viewer.graphql";
 import type { ApprovalsHistoryListRefetchQuery } from "#/__generated__/core/ApprovalsHistoryListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
@@ -79,7 +78,7 @@ export interface ApprovalsHistoryListProps {
 export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { employeePortalId } = useEmployeePortalRoute();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsHistoryListRefetchQuery,
     ApprovalsHistoryList_viewer$key
@@ -95,10 +94,6 @@ export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
     historyDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = historyDocuments.totalCount;
 

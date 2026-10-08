@@ -2038,6 +2038,12 @@
       "signOut": "Se déconnecter"
     }
   },
+  "redirectToEmployeePortal": {
+    "missing": {
+      "title": "Portail employés indisponible",
+      "description": "Cette organisation n'a pas encore de portail employés. Demandez à un administrateur d'en créer un."
+    }
+  },
   "invitingOrganizationCard": {
     "checkEmail": "Consultez votre e-mail"
   },

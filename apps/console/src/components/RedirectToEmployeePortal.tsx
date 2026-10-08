@@ -18,15 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ErrorLayout } from "@probo/ui";
+import { useTranslation } from "react-i18next";
+
 import { ExternalRedirect } from "#/components/ExternalRedirect";
 import { employeePortalHref } from "#/lib/employeePortalHref";
 import { useDefaultEmployeePortalId } from "#/lib/useDefaultEmployeePortalId";
 
 export function RedirectToEmployeePortal() {
+  const { t } = useTranslation();
   const employeePortalId = useDefaultEmployeePortalId();
 
   if (employeePortalId == null) {
-    return null;
+    return (
+      <ErrorLayout
+        title={t("redirectToEmployeePortal.missing.title")}
+        description={t("redirectToEmployeePortal.missing.description")}
+      />
+    );
   }
 
   return <ExternalRedirect to={employeePortalHref(employeePortalId)} />;
