@@ -42,6 +42,7 @@ type QueuedItem =
   | { kind: "resource"; entry: DetectedResourceEntry };
 
 interface Batch {
+  page_view?: boolean;
   cookies?: DetectedCookieEntry[];
   storage?: DetectedStorageEntry[];
   resources?: DetectedResourceEntry[];
@@ -139,6 +140,9 @@ export class ReportQueue {
   private stopped = false;
   private pageHideHandler: (() => void) | null = null;
   private visibilityHandler: (() => void) | null = null;
+  private readonly uncounted: Set<string> = new Set();
+  private pageViewPending = false;
+  private pageViewSent = false;
 
   constructor(reportUrl: URL) {
     this.reportUrl = reportUrl;
@@ -157,6 +161,13 @@ export class ReportQueue {
     this.enqueue(`r:${entry.resource_type}:${entry.url}`, { kind: "resource", entry });
   }
 
+  reportPageView(): void {
+    if (this.stopped || this.pageViewSent || this.pageViewPending) return;
+
+    this.pageViewPending = true;
+    this.scheduleFlush();
+  }
+
   onNotFound(cb: () => void): void {
     this.notFoundListeners.add(cb);
   }
@@ -172,13 +183,17 @@ export class ReportQueue {
 
     this.detachLifecycleListeners();
 
-    if (this.pending.size > 0) {
+    if (this.pending.size > 0 || this.pageViewPending) {
       this.flushSync();
     }
   }
 
   private enqueue(key: string, item: QueuedItem): void {
     if (this.stopped) return;
+
+    if (!this.accepted.has(key) && item.kind !== "resource") {
+      this.uncounted.add(key);
+    }
 
     if (item.kind === "resource") {
       if (this.accepted.has(key)) return;
@@ -232,9 +247,9 @@ export class ReportQueue {
   // in-flight batch when new entries arrive mid-request.
   private flush(): void {
     if (this.flushing || this.stopped) return;
-    if (this.pending.size === 0) return;
+    if (this.pending.size === 0 && !this.pageViewPending) return;
 
-    const { sent, body } = this.takeBatch();
+    const { sent, body, pageView, counted } = this.takeBatch();
 
     this.flushing = true;
     void fetchJSON(this.reportUrl, {
@@ -243,6 +258,7 @@ export class ReportQueue {
     })
       .then(() => {
         this.releaseSent(sent);
+        this.commitDiscovery(pageView, counted);
       })
       .catch((err) => {
         if (err instanceof NotFoundError) {
@@ -252,7 +268,7 @@ export class ReportQueue {
       })
       .finally(() => {
         this.flushing = false;
-        if (!this.stopped && this.pending.size > 0) {
+        if (!this.stopped && (this.pending.size > 0 || this.pageViewPending)) {
           this.scheduleFlush();
         }
       });
@@ -262,20 +278,29 @@ export class ReportQueue {
   // order (Map preserves it) and partitions them into the three arrays
   // the server expects. Insertion-order is naturally fair: items are
   // sent in the order the detectors observed them.
-  private takeBatch(): { sent: Map<string, QueuedItem>; body: Batch } {
+  private takeBatch(): {
+    sent: Map<string, QueuedItem>;
+    body: Batch;
+    pageView: boolean;
+    counted: string[];
+  } {
     const sent: Map<string, QueuedItem> = new Map();
+    const counted: string[] = [];
     const cookies: DetectedCookieEntry[] = [];
     const storage: DetectedStorageEntry[] = [];
     const resources: DetectedResourceEntry[] = [];
 
     for (const [key, item] of this.pending) {
       sent.set(key, item);
+      const hit = this.uncounted.has(key);
+      if (hit) counted.push(key);
+
       switch (item.kind) {
         case "cookie":
-          cookies.push(item.entry);
+          cookies.push(hit ? { ...item.entry, discovery_hit: true } : item.entry);
           break;
         case "storage":
-          storage.push(item.entry);
+          storage.push(hit ? { ...item.entry, discovery_hit: true } : item.entry);
           break;
         case "resource":
           resources.push(item.entry);
@@ -284,12 +309,25 @@ export class ReportQueue {
       if (sent.size >= MAX_ITEMS_PER_REQUEST) break;
     }
 
+    const pageView = this.pageViewPending;
     const body: Batch = {};
+    if (pageView) body.page_view = true;
     if (cookies.length > 0) body.cookies = cookies;
     if (storage.length > 0) body.storage = storage;
     if (resources.length > 0) body.resources = resources;
 
-    return { sent, body };
+    return { sent, body, pageView, counted };
+  }
+
+  private commitDiscovery(pageView: boolean, counted: string[]): void {
+    if (pageView) {
+      this.pageViewPending = false;
+      this.pageViewSent = true;
+    }
+
+    for (const key of counted) {
+      this.uncounted.delete(key);
+    }
   }
 
   // releaseSent drops a pending key only when the queued value is still
@@ -378,9 +416,9 @@ export class ReportQueue {
   // `visibilitychange:hidden` fires but the page is restored from
   // bfcache rather than truly unloading.
   private flushSync(): void {
-    if (this.pending.size === 0) return;
+    if (this.pending.size === 0 && !this.pageViewPending) return;
 
-    const { sent, body } = this.takeBatch();
+    const { sent, body, pageView, counted } = this.takeBatch();
     const payload = JSON.stringify(body);
 
     if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
@@ -395,6 +433,7 @@ export class ReportQueue {
       }
       if (queued) {
         this.releaseSent(sent);
+        this.commitDiscovery(pageView, counted);
         return;
       }
     }
@@ -421,6 +460,7 @@ export class ReportQueue {
           .then((res) => {
             if (res.ok) {
               this.releaseSent(sent);
+              this.commitDiscovery(pageView, counted);
             }
           })
           .catch(() => {
@@ -431,7 +471,7 @@ export class ReportQueue {
           })
           .finally(() => {
             this.flushing = false;
-            if (!this.stopped && this.pending.size > 0) {
+            if (!this.stopped && (this.pending.size > 0 || this.pageViewPending)) {
               this.scheduleFlush();
             }
           });

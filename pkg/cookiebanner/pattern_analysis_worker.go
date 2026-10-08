@@ -249,6 +249,10 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						return fmt.Errorf("cannot relink detected trackers from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
+					if err := coredata.AddDiscoveryHits(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
+						return fmt.Errorf("cannot add discovery hits from pattern %q: %w", exactPattern.Pattern, err)
+					}
+
 					if err := exactPattern.Delete(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot delete orphaned exact pattern %q: %w", exactPattern.Pattern, err)
 					}
@@ -933,6 +937,10 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			if err := match.SetMappingRequested(ctx, tx); err != nil {
 				return false, fmt.Errorf("cannot request mapping after source promotion on glob pattern %q: %w", match.Pattern, err)
 			}
+		}
+
+		if err := coredata.AddDiscoveryHits(ctx, tx, scope, ep.ID, match.ID); err != nil {
+			return false, fmt.Errorf("cannot add discovery hits from pattern %q: %w", ep.Pattern, err)
 		}
 
 		if err := ep.Delete(ctx, tx, scope); err != nil {

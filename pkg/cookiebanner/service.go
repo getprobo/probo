@@ -150,6 +150,7 @@ type (
 		InitiatorURL  *string
 		CookieDomain  *string
 		HostOnly      *bool
+		DiscoveryHit  bool
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -162,6 +163,7 @@ type (
 		ValueSize    *int
 		Source       *coredata.CookieSource
 		InitiatorURL *string
+		DiscoveryHit bool
 	}
 
 	DetectedResourceItem struct {
@@ -173,6 +175,8 @@ type (
 		Cookies   []DetectedCookie
 		Storage   []DetectedStorageItem
 		Resources []DetectedResourceItem
+		PageView  bool
+		Family    coredata.DiscoveryBrowserFamily
 	}
 
 	CreateTrackerPatternRequest struct {
@@ -1434,6 +1438,10 @@ func (s *Service) PublishCookieBannerVersion(
 
 			if err := version.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
+			}
+
+			if err := coredata.FreezeDiscoveryStats(ctx, tx, scope, bannerID); err != nil {
+				return fmt.Errorf("cannot freeze discovery stats: %w", err)
 			}
 
 			banner := coredata.CookieBanner{ID: bannerID}
@@ -2732,6 +2740,13 @@ func (s *Service) ReportDetectedTrackers(
 
 			inserted := 0
 			now := time.Now()
+			countedHits := make(map[gid.GID]struct{})
+
+			if req.PageView {
+				if err := coredata.RecordDiscoveryPageLoad(ctx, tx, scope, banner.ID, req.Family); err != nil {
+					return fmt.Errorf("cannot record discovery page load: %w", err)
+				}
+			}
 
 			var matchedPatternIDs []gid.GID
 
@@ -2751,9 +2766,12 @@ func (s *Service) ReportDetectedTrackers(
 						InitiatorURL:  dc.InitiatorURL,
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
+						DiscoveryHit:  dc.DiscoveryHit,
+						Family:        req.Family,
 					},
 					&inserted,
 					&matchedPatternIDs,
+					countedHits,
 				); err != nil {
 					return err
 				}
@@ -2773,9 +2791,12 @@ func (s *Service) ReportDetectedTrackers(
 						ValueSize:    ds.ValueSize,
 						Source:       ds.Source,
 						InitiatorURL: ds.InitiatorURL,
+						DiscoveryHit: ds.DiscoveryHit,
+						Family:       req.Family,
 					},
 					&inserted,
 					&matchedPatternIDs,
+					countedHits,
 				); err != nil {
 					return err
 				}
@@ -2827,6 +2848,8 @@ type detectedTrackerInfo struct {
 	InitiatorURL  *string
 	CookieDomain  *string
 	HostOnly      *bool
+	DiscoveryHit  bool
+	Family        coredata.DiscoveryBrowserFamily
 }
 
 func (s *Service) reportDetectedTracker(
@@ -2839,6 +2862,7 @@ func (s *Service) reportDetectedTracker(
 	info detectedTrackerInfo,
 	inserted *int,
 	matchedPatternIDs *[]gid.GID,
+	countedHits map[gid.GID]struct{},
 ) error {
 	if len(info.Identifier) > MaxTrackerIdentifierLength {
 		return nil
@@ -2978,6 +3002,15 @@ func (s *Service) reportDetectedTracker(
 
 	if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot upsert detected tracker: %w", err)
+	}
+
+	if info.DiscoveryHit && patternID != nil {
+		if _, seen := countedHits[*patternID]; !seen {
+			countedHits[*patternID] = struct{}{}
+			if err := coredata.RecordDiscoveryPatternHit(ctx, tx, scope, banner.ID, *patternID, info.Family); err != nil {
+				return fmt.Errorf("cannot record discovery pattern hit: %w", err)
+			}
+		}
 	}
 
 	return nil

@@ -434,6 +434,9 @@ export class CookieBannerClient {
 
     const reportUrl = new URL(`${this.bannerId}/report`, this.baseUrl);
     this.reportQueue = new ReportQueue(reportUrl);
+    if (!config) {
+      this.reportQueue.reportPageView();
+    }
 
     const apiOrigin = this.baseUrl.origin;
     this.detectors = [

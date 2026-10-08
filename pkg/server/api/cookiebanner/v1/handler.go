@@ -267,6 +267,7 @@ type detectedCookieEntry struct {
 	InitiatorURL  *string `json:"initiator_url,omitempty"`
 	CookieDomain  *string `json:"cookie_domain,omitempty"`
 	HostOnly      *bool   `json:"host_only,omitempty"`
+	DiscoveryHit  bool    `json:"discovery_hit,omitempty"`
 }
 
 type reportDetectedCookiesBody struct {
@@ -478,6 +479,7 @@ type detectedStorageEntry struct {
 	ValueSize    *int    `json:"value_size"`
 	Source       string  `json:"source"`
 	InitiatorURL *string `json:"initiator_url,omitempty"`
+	DiscoveryHit bool    `json:"discovery_hit,omitempty"`
 }
 
 type detectedResourceEntry struct {
@@ -489,6 +491,7 @@ type reportDetectedTrackersBody struct {
 	Cookies   []detectedCookieEntry   `json:"cookies"`
 	Storage   []detectedStorageEntry  `json:"storage"`
 	Resources []detectedResourceEntry `json:"resources"`
+	PageView  bool                    `json:"page_view,omitempty"`
 }
 
 const maxDetectedTrackersPerRequest = 100
@@ -510,7 +513,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	total := len(body.Cookies) + len(body.Storage) + len(body.Resources)
-	if total == 0 {
+	if total == 0 && !body.PageView {
 		jsonx.RenderBadRequest(w, fmt.Errorf("no items provided"))
 		return
 	}
@@ -520,7 +523,10 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	var req cookiebanner.ReportDetectedTrackersRequest
+	req := cookiebanner.ReportDetectedTrackersRequest{
+		PageView: body.PageView,
+		Family:   cookiebanner.BrowserFamily(r.UserAgent()),
+	}
 
 	for _, c := range body.Cookies {
 		name := strings.TrimSpace(c.Name)
@@ -565,6 +571,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
 				CookieDomain:  cookieDomain,
 				HostOnly:      hostOnly,
+				DiscoveryHit:  c.DiscoveryHit,
 			},
 		)
 	}
@@ -622,6 +629,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				ValueSize:    sanitizeInt4(s.ValueSize),
 				Source:       &source,
 				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
+				DiscoveryHit: s.DiscoveryHit,
 			},
 		)
 	}
@@ -669,7 +677,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		)
 	}
 
-	if len(req.Cookies)+len(req.Storage)+len(req.Resources) == 0 {
+	if len(req.Cookies)+len(req.Storage)+len(req.Resources) == 0 && !req.PageView {
 		jsonx.RenderBadRequest(w, fmt.Errorf("no valid items provided"))
 		return
 	}

@@ -28,6 +28,89 @@ describe("ReportQueue", () => {
     vi.unstubAllGlobals();
   });
 
+  it("counts a discovery page view and the first sighting only", async () => {
+    vi.useFakeTimers();
+
+    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
+    vi.stubGlobal("navigator", { sendBeacon });
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.reportPageView();
+    queue.reportCookie({ name: "sid", max_age_seconds: null, source: "pre-existing" });
+    queue.reportCookie({
+      name: "sid",
+      max_age_seconds: null,
+      source: "script",
+      cookie_domain: "example.com",
+      host_only: false,
+    });
+    queue.stop();
+
+    expect(sendBeacon).toHaveBeenCalledOnce();
+    const sentData: unknown = sendBeacon.mock.calls[0]?.[1];
+    expect(sentData).toBeInstanceOf(Blob);
+    if (!(sentData instanceof Blob)) {
+      throw new Error("expected sendBeacon to receive a Blob");
+    }
+    const body = JSON.parse(await sentData.text()) as {
+      page_view?: boolean;
+      cookies: Array<{ name: string; discovery_hit?: boolean; source: string }>;
+    };
+    expect(body.page_view).toBe(true);
+    expect(body.cookies).toHaveLength(2);
+    expect(body.cookies.every((cookie) => cookie.discovery_hit === true)).toBe(true);
+  });
+
+  it("sends a page_view with no detections", async () => {
+    vi.useFakeTimers();
+
+    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
+    vi.stubGlobal("navigator", { sendBeacon });
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.reportPageView();
+    queue.stop();
+
+    expect(sendBeacon).toHaveBeenCalledOnce();
+    const sentData: unknown = sendBeacon.mock.calls[0]?.[1];
+    expect(sentData).toBeInstanceOf(Blob);
+    if (!(sentData instanceof Blob)) {
+      throw new Error("expected sendBeacon to receive a Blob");
+    }
+    await expect(sentData.text()).resolves.toBe(JSON.stringify({ page_view: true }));
+  });
+
+  it("omits discovery_hit after the first sighting is sent", async () => {
+    vi.useFakeTimers();
+
+    const fetch = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+    vi.stubGlobal("fetch", fetch);
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.reportCookie({ name: "sid", max_age_seconds: null, source: "pre-existing" });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    queue.reportCookie({ name: "sid", max_age_seconds: 3600, source: "script" });
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const first = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body)) as {
+      cookies: Array<{ discovery_hit?: boolean }>;
+    };
+    const second = JSON.parse(String(fetch.mock.calls[1]?.[1]?.body)) as {
+      cookies: Array<{ discovery_hit?: boolean; source: string }>;
+    };
+    expect(first.cookies[0]?.discovery_hit).toBe(true);
+    expect(second.cookies[0]?.discovery_hit).toBeUndefined();
+    expect(second.cookies[0]?.source).toBe("script");
+  });
+
   it("sends unload reports as CORS-safelisted JSON", async () => {
     vi.useFakeTimers();
 
@@ -60,6 +143,7 @@ describe("ReportQueue", () => {
             name: "analytics",
             max_age_seconds: 3600,
             source: "script",
+            discovery_hit: true,
           },
         ],
       }),
