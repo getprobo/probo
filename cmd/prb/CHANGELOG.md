@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.242.0] - 2026-10-08
+
+### Added
+
+- `employee-portal list`, `employee-portal view`, and
+  `employee-portal update` manage an organization's employee portal
+
 ## [0.241.0] - 2026-10-06
 
 ### Changed
