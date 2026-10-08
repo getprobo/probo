@@ -4,6 +4,38 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.306.0] - 2026-10-08
+
+### Added
+
+- Organizations own an employee portal with a display name, branding,
+  and a setting for whether the device agent is offered. It is managed
+  through GraphQL and MCP. Every organization has exactly one portal,
+  and existing organizations are backfilled with a default one
+- Cookie banner detections record the cookie Domain and keep a source
+  that is not demoted by later, weaker observations. Detections split
+  by Domain scope, so a host-only cookie and a Domain-scoped cookie
+  that share a name are tracked separately
+- Open tasks past their deadline show an Overdue badge
+- `log-azure-assertions` logs the header and claims of a minted Azure
+  federated assertion once per process, to diagnose rejected
+  assertions. It is off by default
+
+### Changed
+
+- The employee app URL uses the employee portal id. Old
+  organization-id URLs redirect to the organization's portal
+- Linked safeguards are called internal controls instead of measures
+- Comments created in Linear are attributed to the Probo author
+  instead of only the Probo application
+
+### Fixed
+
+- A cookie report with an oversized Max-Age no longer aborts the whole
+  report batch. The value is omitted and the rest is saved
+- A Mac without a managed profile on macOS 27 is no longer reported as
+  unknown for the automatic software update check
+
 ## [0.305.0] - 2026-10-07
 
 ### Added
