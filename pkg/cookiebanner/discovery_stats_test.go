@@ -186,11 +186,13 @@ func TestPublishCookieBannerVersion_FreezesEmptyDiscoveryStats(t *testing.T) {
 	assert.Equal(t, 0, stats.ChromePageLoads)
 
 	var pattern coredata.TrackerPattern
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return pattern.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "_ga", nil)
 	}))
 
 	var hits coredata.TrackerPatternDiscoveryHits
+
 	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return hits.LoadByTrackerPatternID(ctx, conn, fx.scope, pattern.ID)
 	})
@@ -215,17 +217,20 @@ func TestReportDetectedTrackers_HitWithoutPageLoadDoesNotCount(t *testing.T) {
 	}))
 
 	var stats coredata.CookieBannerDiscoveryStats
+
 	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return stats.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
 	})
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
 	var pattern coredata.TrackerPattern
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return pattern.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "_ga", nil)
 	}))
 
 	var hits coredata.TrackerPatternDiscoveryHits
+
 	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return hits.LoadByTrackerPatternID(ctx, conn, fx.scope, pattern.ID)
 	})
@@ -272,6 +277,7 @@ func insertDraftVersion(
 	t.Helper()
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		version := &coredata.CookieBannerVersion{
 			ID:             gid.New(fx.scope.GetTenantID(), coredata.CookieBannerVersionEntityType),
@@ -297,6 +303,7 @@ func loadDiscoveryStats(
 	t.Helper()
 
 	var stats coredata.CookieBannerDiscoveryStats
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return stats.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
 	}))
@@ -316,6 +323,7 @@ func loadDiscoveryHits(
 	tp := loadPattern(t, ctx, client, fx, pattern)
 
 	var hits coredata.TrackerPatternDiscoveryHits
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return hits.LoadByTrackerPatternID(ctx, conn, fx.scope, tp.ID)
 	}))
@@ -333,6 +341,7 @@ func loadPattern(
 	t.Helper()
 
 	var tp coredata.TrackerPattern
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return tp.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, pattern, nil)
 	}))
