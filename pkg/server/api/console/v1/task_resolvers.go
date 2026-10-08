@@ -34,7 +34,38 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 	identity := authn.IdentityFromContext(ctx)
 
-	task, err := r.task.Create(
+	explicitSet := input.LinearTeamID.IsSet()
+
+	var explicitTeamID *string
+	if explicitSet {
+		explicitTeamID = input.LinearTeamID.Value()
+	}
+
+	teamID, publish, err := r.task.Sync.TeamForNewTask(
+		ctx,
+		scope,
+		input.OrganizationID,
+		explicitSet,
+		explicitTeamID,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot resolve Linear team for new task", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	publishScope := scope
+
+	if publish {
+		updateScope, err := r.authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+		if err != nil {
+			return nil, err
+		}
+
+		publishScope = updateScope
+	}
+
+	created, err := r.task.Create(
 		ctx, scope,
 		task.CreateTaskRequest{
 			InternalControlID:  input.InternalControlID,
@@ -68,8 +99,14 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	if publish {
+		if _, err := r.task.Sync.PublishToLinear(ctx, publishScope, created.ID, teamID); err != nil {
+			return nil, r.linearPublishError(ctx, err)
+		}
+	}
+
 	return &types.CreateTaskPayload{
-		TaskEdge: types.NewTaskEdge(task, coredata.TaskOrderFieldCreatedAt),
+		TaskEdge: types.NewTaskEdge(created, coredata.TaskOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -149,23 +186,7 @@ func (r *mutationResolver) PublishTaskToLinear(ctx context.Context, input types.
 
 	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
 	if err != nil {
-		switch {
-		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearNotConnected):
-			return nil, gqlutils.Invalid(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
-			return nil, gqlutils.Invalid(ctx, err)
-		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
-			errors.Is(err, coredata.ErrResourceAlreadyExists):
-			return nil, gqlutils.Conflict(ctx, err)
-		case errors.Is(err, tasksync.ErrLinearTeamIDRequired),
-			errors.Is(err, tasksync.ErrLinearTeamNotFound):
-			return nil, gqlutils.Invalid(ctx, err)
-		default:
-			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
+		return nil, r.linearPublishError(ctx, err)
 	}
 
 	task, err := r.task.Get(ctx, scope, link.TaskID)
@@ -257,6 +278,44 @@ func (r *mutationResolver) UnlinkTaskExternal(ctx context.Context, input types.U
 
 	return &types.UnlinkTaskExternalPayload{
 		Task: types.NewTask(task),
+	}, nil
+}
+
+// SetLinearSyncDefaultTeam is the resolver for the setLinearSyncDefaultTeam field.
+func (r *mutationResolver) SetLinearSyncDefaultTeam(ctx context.Context, input types.SetLinearSyncDefaultTeamInput) (*types.SetLinearSyncDefaultTeamPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionConnectorInitiate)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.task.Sync.SetLinearDefaultTeam(ctx, scope, input.OrganizationID, input.TeamID); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, gqlutils.NotFound(ctx, err)
+		case errors.Is(err, tasksync.ErrLinearNotConnected),
+			errors.Is(err, tasksync.ErrLinearReconnectRequired),
+			errors.Is(err, tasksync.ErrLinearTeamNotFound):
+			return nil, gqlutils.Invalid(ctx, err)
+		default:
+			r.logger.ErrorCtx(ctx, "cannot set default Linear team", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+	}
+
+	organization, err := r.probo.Organizations.Get(ctx, scope, input.OrganizationID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SetLinearSyncDefaultTeamPayload{
+		Organization: types.NewOrganization(organization),
 	}, nil
 }
 

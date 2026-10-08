@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- Task settings can disconnect Linear Sync and choose a default Linear
+  team. New tasks in the console start on that team, and the choice can
+  still be changed before the task is created
+
+### Changed
+
+- Creating a task in GraphQL and MCP uses the organization's default
+  Linear team when `linearTeamId` / `linear_team_id` is omitted. Null
+  creates the task with no Linear team
+
 ## [0.305.0] - 2026-10-07
 
 ### Added

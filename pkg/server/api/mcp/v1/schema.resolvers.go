@@ -2177,7 +2177,38 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 
 	identity := authn.IdentityFromContext(ctx)
 
-	task, err := r.task.Create(
+	explicitSet := input.LinearTeamID.IsSet()
+
+	var explicitTeamID *string
+	if value, ok := input.LinearTeamID.Value(); ok {
+		explicitTeamID = value
+	}
+
+	teamID, publish, err := r.task.Sync.TeamForNewTask(
+		ctx,
+		scope,
+		input.OrganizationID,
+		explicitSet,
+		explicitTeamID,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot resolve Linear team for new task", log.Error(err))
+
+		return nil, types.AddTaskOutput{}, fmt.Errorf("internal error")
+	}
+
+	publishScope := scope
+
+	if publish {
+		updateScope, err := r.Authorize(ctx, input.OrganizationID, task.ActionTaskUpdate)
+		if err != nil {
+			return nil, types.AddTaskOutput{}, err
+		}
+
+		publishScope = updateScope
+	}
+
+	created, err := r.task.Create(
 		ctx, scope,
 		task.CreateTaskRequest{
 			OrganizationID:     input.OrganizationID,
@@ -2197,7 +2228,13 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 		return nil, types.AddTaskOutput{}, fmt.Errorf("failed to create task: %w", err)
 	}
 
-	taskWithLink, err := r.taskWithExternalLink(ctx, scope, task)
+	if publish {
+		if _, err := r.task.Sync.PublishToLinear(ctx, publishScope, created.ID, teamID); err != nil {
+			return nil, types.AddTaskOutput{}, linearPublishToolError(r, ctx, err)
+		}
+	}
+
+	taskWithLink, err := r.taskWithExternalLink(ctx, scope, created)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load task external link", log.Error(err))
 		return nil, types.AddTaskOutput{}, fmt.Errorf("internal error")
@@ -10216,25 +10253,7 @@ func (r *Resolver) PublishTaskToLinearTool(ctx context.Context, req *mcp.CallToo
 
 	link, err := r.task.Sync.PublishToLinear(ctx, scope, input.TaskID, input.TeamID)
 	if err != nil {
-		switch {
-		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task not found")
-		case errors.Is(err, tasksync.ErrLinearNotConnected):
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector is not connected")
-		case errors.Is(err, tasksync.ErrLinearReconnectRequired):
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear connector must be reconnected with write scopes")
-		case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
-			errors.Is(err, coredata.ErrResourceAlreadyExists):
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("task is already linked to an external issue")
-		case errors.Is(err, tasksync.ErrLinearTeamIDRequired):
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear team id is required")
-		case errors.Is(err, tasksync.ErrLinearTeamNotFound):
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("linear team was not found")
-		default:
-			r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
-
-			return nil, types.PublishTaskToLinearOutput{}, fmt.Errorf("internal error")
-		}
+		return nil, types.PublishTaskToLinearOutput{}, linearPublishToolError(r, ctx, err)
 	}
 
 	task, err := r.task.Get(ctx, scope, link.TaskID)

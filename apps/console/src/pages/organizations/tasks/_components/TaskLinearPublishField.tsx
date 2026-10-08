@@ -35,7 +35,7 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment, useRelayEnvironment } from "react-relay";
 import type { GraphQLTaggedNode } from "relay-runtime";
@@ -385,6 +385,82 @@ export function TaskLinearPublishField({ taskKey }: TaskLinearPublishFieldProps)
   );
 }
 
+export interface LinearTeamOption {
+  id: string;
+  name: string;
+  key: string;
+}
+
+export function linearTeamLabel(team: { name: string; key: string }) {
+  if (team.name && team.key) {
+    return `${team.name} (${team.key})`;
+  }
+
+  return team.name || team.key;
+}
+
+const NO_TEAM_ID = "__none__";
+
+export function LinearTeamCombobox({
+  selectedId,
+  selectedLabel,
+  placeholder,
+  disabled,
+  noneLabel,
+  onSelect,
+  onClear,
+}: {
+  selectedId: string | null;
+  selectedLabel: string;
+  placeholder: string;
+  disabled?: boolean;
+  noneLabel?: string;
+  onSelect: (team: LinearTeamOption) => void;
+  onClear?: () => void;
+}) {
+  const { t } = useTranslation("organizations/tasks");
+  const organizationId = useOrganizationId();
+  const showNone = noneLabel != null && onClear != null;
+  const displayId = selectedId ?? (showNone ? NO_TEAM_ID : null);
+  const displayLabel = selectedId == null && showNone && noneLabel != null
+    ? noneLabel
+    : selectedLabel;
+
+  return (
+    <RemoteCombobox<TaskLinearPublishFieldTeamQuery, LinearTeamOption>
+      query={teamPageQuery}
+      variables={(after, query) => ({
+        organizationId,
+        first: PAGE_SIZE,
+        after,
+        query: query || null,
+      })}
+      readPage={(data) => {
+        const organization = data.node?.__typename === "Organization" ? data.node : null;
+        const page = organization?.linearTeams;
+        return {
+          items: page?.edges.map(edge => edge.node) ?? [],
+          hasNextPage: page?.pageInfo.hasNextPage ?? false,
+          endCursor: page?.pageInfo.endCursor ?? null,
+        };
+      }}
+      reloadKey={organizationId}
+      selectedId={displayId}
+      selectedLabel={displayLabel}
+      placeholder={placeholder}
+      emptyLabel={t("detailsPage.linear.noResults")}
+      disabled={disabled}
+      pinned={noneLabel != null && onClear != null
+        ? { id: NO_TEAM_ID, label: noneLabel }
+        : undefined}
+      onPinnedSelect={onClear}
+      onSelect={onSelect}
+      itemId={team => team.id}
+      itemLabel={team => linearTeamLabel(team)}
+    />
+  );
+}
+
 export interface LinearDraft {
   teamId: string | null;
   issueId: string | null;
@@ -392,17 +468,31 @@ export interface LinearDraft {
 
 export function TaskLinearDraftField({
   disabled,
+  defaultTeam,
   onChange,
   onIssue,
 }: {
   disabled?: boolean;
+  defaultTeam?: LinearTeamOption | null;
   onChange: (selection: LinearDraft) => void;
   onIssue?: (issue: LinearIssueDraft) => void;
 }) {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
-  const [teamId, setTeamId] = useState<string | null>(null);
-  const [teamLabel, setTeamLabel] = useState<string | null>(null);
+  const [teamId, setTeamId] = useState<string | null>(defaultTeam?.id ?? null);
+  const [teamLabel, setTeamLabel] = useState<string | null>(
+    defaultTeam ? linearTeamLabel(defaultTeam) : null,
+  );
+  const announcedDefault = useRef(false);
+
+  useLayoutEffect(() => {
+    if (announcedDefault.current || defaultTeam == null) {
+      return;
+    }
+
+    announcedDefault.current = true;
+    onChange({ teamId: defaultTeam.id, issueId: null });
+  }, [defaultTeam, onChange]);
   const [issueId, setIssueId] = useState(NEW_ISSUE_ID);
   const [issueLabel, setIssueLabel] = useState<string | null>(null);
   const { root } = taskLinearPublishField();
@@ -417,38 +507,26 @@ export function TaskLinearDraftField({
 
   return (
     <div className={root()}>
-      <RemoteCombobox<TaskLinearPublishFieldTeamQuery, { id: string; name: string; key: string }>
-        query={teamPageQuery}
-        variables={(after, query) => ({
-          organizationId,
-          first: PAGE_SIZE,
-          after,
-          query: query || null,
-        })}
-        readPage={(data) => {
-          const organization = data.node?.__typename === "Organization" ? data.node : null;
-          const page = organization?.linearTeams;
-          return {
-            items: page?.edges.map(edge => edge.node) ?? [],
-            hasNextPage: page?.pageInfo.hasNextPage ?? false,
-            endCursor: page?.pageInfo.endCursor ?? null,
-          };
-        }}
-        reloadKey={organizationId}
+      <LinearTeamCombobox
         selectedId={teamId}
         selectedLabel={teamLabel ?? t("detailsPage.linear.chooseTeam")}
         placeholder={t("detailsPage.linear.searchTeam")}
-        emptyLabel={t("detailsPage.linear.noResults")}
         disabled={disabled}
+        noneLabel={t("detailsPage.linear.noTeam")}
+        onClear={() => {
+          setTeamId(null);
+          setTeamLabel(null);
+          setIssueId(NEW_ISSUE_ID);
+          setIssueLabel(null);
+          emit(null, NEW_ISSUE_ID);
+        }}
         onSelect={(team) => {
           setTeamId(team.id);
-          setTeamLabel(`${team.name} (${team.key})`);
+          setTeamLabel(linearTeamLabel(team));
           setIssueId(NEW_ISSUE_ID);
           setIssueLabel(null);
           emit(team.id, NEW_ISSUE_ID);
         }}
-        itemId={team => team.id}
-        itemLabel={team => `${team.name} (${team.key})`}
       />
       <RemoteCombobox<TaskLinearPublishFieldIssueQuery, LinearIssueOption>
         query={issuePageQuery}

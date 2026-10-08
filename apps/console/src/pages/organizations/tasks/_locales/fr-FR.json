@@ -69,12 +69,12 @@
     },
     "linear": {
       "connect": "Connecter Linear Sync",
-      "reconnect": "Reconnecter Linear Sync",
       "publish": "Publier",
       "link": "Lier",
       "unlink": "Dissocier",
       "team": "Équipe Linear",
       "chooseTeam": "Choisir une équipe",
+      "noTeam": "Aucune équipe",
       "chooseIssue": "Choisir une issue",
       "newIssue": "Nouvelle issue",
       "searchTeam": "Rechercher une équipe",
@@ -170,7 +170,23 @@
     },
     "linear": {
       "name": "Linear Sync",
-      "description": "Publiez une tâche sur Linear et synchronisez le nom, le contenu, l'état, la priorité, l'échéance et l'assigné lorsque les e-mails correspondent."
+      "description": "Publiez une tâche sur Linear et synchronisez le nom, le contenu, l'état, la priorité, l'échéance et l'assigné lorsque les e-mails correspondent.",
+      "defaultTeam": "Équipe par défaut",
+      "defaultTeamDescription": "Les nouvelles tâches utilisent cette équipe Linear, sauf si une autre équipe est choisie.",
+      "noDefaultTeam": "Aucune équipe par défaut",
+      "disconnect": {
+        "title": "Déconnecter Linear Sync ?",
+        "description": "Les tâches ne seront plus synchronisées avec Linear. Vous pourrez reconnecter plus tard.",
+        "confirm": "Déconnecter"
+      },
+      "messages": {
+        "disconnected": "Linear Sync déconnecté.",
+        "defaultTeamSaved": "Équipe par défaut enregistrée."
+      },
+      "errors": {
+        "disconnect": "Échec de la déconnexion de Linear Sync",
+        "defaultTeam": "Échec de l'enregistrement de l'équipe par défaut"
+      }
     },
     "status": {
       "connected": "Connecté",
@@ -178,7 +194,7 @@
     },
     "actions": {
       "connect": "Connecter",
-      "reconnect": "Reconnecter",
+      "disconnect": "Déconnecter",
       "close": "Fermer"
     }
   },

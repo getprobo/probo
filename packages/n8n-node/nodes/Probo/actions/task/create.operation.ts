@@ -201,6 +201,19 @@ export const description: INodeProperties[] = [
 		default: '',
 		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline. The next task is created when that deadline passes.',
 	},
+	{
+		displayName: 'Linear Team ID',
+		name: 'linearTeamId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		default: '',
+		description: 'Linear team to publish the task to. Leave empty to use the organization\'s default Linear team. Enter "none" to create the task with no Linear team.',
+	},
 ];
 
 export async function execute(
@@ -217,6 +230,7 @@ export async function execute(
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
+	const linearTeamId = this.getNodeParameter('linearTeamId', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -251,6 +265,11 @@ export async function execute(
 			...(assignedToId && { assignedToId }),
 			...(deadline && { deadline }),
 			...(recurrenceInterval && { recurrenceInterval }),
+			...(linearTeamId === 'none'
+				? { linearTeamId: null }
+				: linearTeamId
+					? { linearTeamId }
+					: {}),
 		},
 	};
 

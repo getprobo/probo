@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Task `Create` accepts a Linear team ID. Leave it empty to use the
+  organization's default Linear team. Enter `none` to create the task
+  with no Linear team
+
 ## [0.243.0] - 2026-10-07
 
 ### Changed

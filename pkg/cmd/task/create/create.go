@@ -71,6 +71,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagAssignedTo         string
 		flagDeadline           string
 		flagRecurrenceInterval string
+		flagLinearTeam         string
+		flagNoLinearTeam       bool
 	)
 
 	cmd := &cobra.Command{
@@ -185,6 +187,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["recurrenceInterval"] = flagRecurrenceInterval
 			}
 
+			if flagNoLinearTeam && flagLinearTeam != "" {
+				return fmt.Errorf("--no-linear-team and --linear-team cannot be used together")
+			}
+
+			if flagNoLinearTeam {
+				input["linearTeamId"] = nil
+			} else if flagLinearTeam != "" {
+				input["linearTeamId"] = flagLinearTeam
+			}
+
 			data, err := client.Do(
 				createMutation,
 				map[string]any{"input": input},
@@ -220,6 +232,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
 	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline). The next task is created when the deadline passes")
+	cmd.Flags().StringVar(&flagLinearTeam, "linear-team", "", "Linear team ID. Omit to use the organization's default Linear team")
+	cmd.Flags().BoolVar(&flagNoLinearTeam, "no-linear-team", false, "Create the task with no Linear team")
 
 	return cmd
 }

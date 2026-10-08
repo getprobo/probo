@@ -69,12 +69,12 @@
     },
     "linear": {
       "connect": "Connect Linear Sync",
-      "reconnect": "Reconnect Linear Sync",
       "publish": "Publish",
       "link": "Link",
       "unlink": "Unlink",
       "team": "Linear team",
       "chooseTeam": "Choose team",
+      "noTeam": "No team",
       "chooseIssue": "Choose issue",
       "newIssue": "New issue",
       "searchTeam": "Search teams",
@@ -170,7 +170,23 @@
     },
     "linear": {
       "name": "Linear Sync",
-      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, and assignee when emails match."
+      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, and assignee when emails match.",
+      "defaultTeam": "Default team",
+      "defaultTeamDescription": "New tasks use this Linear team unless another team is chosen.",
+      "noDefaultTeam": "No default team",
+      "disconnect": {
+        "title": "Disconnect Linear Sync?",
+        "description": "Tasks will no longer sync with Linear. You can connect again later.",
+        "confirm": "Disconnect"
+      },
+      "messages": {
+        "disconnected": "Linear Sync disconnected.",
+        "defaultTeamSaved": "Default team saved."
+      },
+      "errors": {
+        "disconnect": "Failed to disconnect Linear Sync",
+        "defaultTeam": "Failed to save the default team"
+      }
     },
     "status": {
       "connected": "Connected",
@@ -178,7 +194,7 @@
     },
     "actions": {
       "connect": "Connect",
-      "reconnect": "Reconnect",
+      "disconnect": "Disconnect",
       "close": "Close"
     }
   },

@@ -71,6 +71,11 @@ const linearConnectionQuery = graphql`
         connectors(filter: { providers: [LINEAR_SYNC] }) {
           id
         }
+        linearDefaultTeam {
+          id
+          name
+          key
+        }
       }
     }
   }
@@ -232,6 +237,7 @@ export function CreateTaskDialog({
         state,
         priority,
         internalControlId,
+        linearTeamId: null,
       },
       connectionId,
     ).then(
@@ -443,7 +449,12 @@ function CreateTaskLinearSection({
 
   return (
     <Field label={t("detailsPage.fields.linear")}>
-      <TaskLinearDraftField disabled={disabled} onChange={onChange} onIssue={onIssue} />
+      <TaskLinearDraftField
+        disabled={disabled}
+        defaultTeam={organization?.linearDefaultTeam}
+        onChange={onChange}
+        onIssue={onIssue}
+      />
     </Field>
   );
 }
