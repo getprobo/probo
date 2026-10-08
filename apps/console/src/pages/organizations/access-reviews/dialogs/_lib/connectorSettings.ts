@@ -71,6 +71,9 @@ export function mapAPIKeyExtraSettingToField(
     case "OKTA":
       if (settingKey === "domain") return "oktaDomain";
       break;
+    case "ELASTIC_CLOUD":
+      if (settingKey === "organization_id") return "elasticCloudOrganizationId";
+      break;
     case "BETTER_STACK":
       if (settingKey === "teamName") return "betterStackTeamName";
       break;

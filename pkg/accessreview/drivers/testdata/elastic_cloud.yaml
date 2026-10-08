@@ -1,0 +1,49 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.elastic-cloud.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api.elastic-cloud.com/api/v1/organizations/org-example/members
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 258
+        body: '{"members":[{"email":"member1@example.com","member_since":"2024-01-02T03:04:05Z","name":"Member 1","organization_id":"org-example","role_assignments":{"organization":[{"organization_id":"org-example","role_id":"organization-admin"}]},"user_id":"ec-user-1"}]}'
+        headers:
+            Cache-Control:
+                - max-age=0, no-cache, no-store, must-revalidate
+            Content-Length:
+                - "258"
+            Content-Type:
+                - application/json
+            Date:
+                - Thu, 24 Sep 2026 10:09:46 GMT
+            Server:
+                - elastic-iam-service/7a009e2
+            Strict-Transport-Security:
+                - max-age=31536000; includeSubDomains
+            X-Content-Type-Options:
+                - nosniff
+            X-Download-Options:
+                - noopen
+            X-Elastic-Api-Key-Expiration:
+                - "2026-10-01T10:06:56.959Z"
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Request-Id:
+                - b62964e3557b47168fec69f7c1448559
+            X-Xss-Protection:
+                - 1;mode=block
+        status: 200 OK
+        code: 200
+        duration: 314.491262ms
