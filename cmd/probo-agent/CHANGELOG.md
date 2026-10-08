@@ -5,6 +5,15 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.2] - 2026-10-08
+
+### Fixed
+
+- macOS 27 no longer reports the automatic software update check as
+  unknown on Macs without a managed profile. A missing Software Update
+  preference domain is now treated as unset, so the check falls back to
+  the system setting.
+
 ## [0.7.1] - 2026-09-14
 
 ### Fixed
