@@ -18,24 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
-import { type ReactNode, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { type ReactNode } from "react";
 import { graphql, useFragment } from "react-relay";
 
-import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { useMutation } from "#/lib/relay/useMutation";
 
-import {
-  createAccessReviewSourcesMutation,
-  prependCreatedSourceEdges,
-} from "../../dialogs/accessReviewSourceMutations";
-
-import {
-  ConnectorAccountPages,
-} from "./AddableConnectorAccounts";
+import { ConnectorAccountPages } from "./AddableConnectorAccounts";
 import {
   type AddableConnectorCard,
   ResolvedAddableConnectorCard,
@@ -50,63 +38,20 @@ const fragment = graphql`
 
 interface AddableConnectorListItemProps {
   connectorKeys: AddableConnectorListItem_connector$key;
-  connectionId: string;
   normalizedSearch: string;
+  selectedProviders: ReadonlySet<string>;
+  onSelectedChange: (provider: string, selected: boolean) => void;
   children: (card: AddableConnectorCard | null) => ReactNode;
 }
 
 export function AddableConnectorListItem({
   connectorKeys,
-  connectionId,
   normalizedSearch,
+  selectedProviders,
+  onSelectedChange,
   children,
 }: AddableConnectorListItemProps) {
-  const { t } = useTranslation();
-  const toast = Toast.useToastManager();
-  const organizationId = useOrganizationId();
   const connectors = useFragment(fragment, connectorKeys);
-  const [isAdding, setIsAdding] = useState(false);
-  const [createAccessReviewSources, isCreating]
-    = useMutation<accessReviewSourceMutationsCreateMutation>(
-      createAccessReviewSourcesMutation,
-    );
-  const busy = isAdding || isCreating;
-
-  async function addSources(accounts: { id: string; name: string }[]) {
-    if (busy || accounts.length === 0) {
-      return;
-    }
-
-    setIsAdding(true);
-    try {
-      await createAccessReviewSources({
-        variables: {
-          input: {
-            organizationId,
-            sources: accounts.map(account => ({
-              connectorAccountId: account.id,
-              name: account.name,
-              connectorId: null,
-              csvData: null,
-            })),
-          },
-        },
-        updater: (store) => {
-          prependCreatedSourceEdges(store, connectionId);
-        },
-      }, {
-        errorToast: t("accessReviewSourcesPage.errors.create"),
-      });
-      toast.add({
-        title: t("accessReviewSourcesPage.messages.created"),
-        type: "success",
-      });
-    } catch {
-      // The mutation hook already reported the error.
-    } finally {
-      setIsAdding(false);
-    }
-  }
 
   return (
     <ConnectorAccountPages connectorKeys={connectors}>
@@ -115,10 +60,8 @@ export function AddableConnectorListItem({
           pages={pages}
           connectorKeys={connectors}
           normalizedSearch={normalizedSearch}
-          busy={busy}
-          onAdd={(accounts) => {
-            void addSources(accounts);
-          }}
+          selectedProviders={selectedProviders}
+          onSelectedChange={onSelectedChange}
         >
           {children}
         </ResolvedAddableConnectorCard>

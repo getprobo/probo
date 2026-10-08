@@ -18,9 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeVerticalIcon, PencilSimpleIcon, PlusIcon } from "@phosphor-icons/react";
+import { DotsThreeVerticalIcon, PencilSimpleIcon } from "@phosphor-icons/react";
 import { ThirdPartyLogo } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { CardButton } from "@probo/ui/src/v2/Card/CardButton";
+import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -74,8 +76,15 @@ const accountFragment = graphql`
   }
 `;
 
+export interface AddableConnectorAccount {
+  id: string;
+  name: string;
+}
+
 export interface AddableConnectorCard {
   provider: string;
+  accounts: readonly AddableConnectorAccount[];
+  selectable: boolean;
   card: ReactNode;
 }
 
@@ -83,8 +92,8 @@ interface ResolvedAddableConnectorCardProps {
   pages: readonly LoadedConnectorAccounts[];
   connectorKeys: ResolvedAddableConnectorCard_connector$key;
   normalizedSearch: string;
-  busy: boolean;
-  onAdd: (accounts: { id: string; name: string }[]) => void;
+  selectedProviders: ReadonlySet<string>;
+  onSelectedChange: (provider: string, selected: boolean) => void;
   children: (card: AddableConnectorCard | null) => ReactNode;
 }
 
@@ -101,11 +110,10 @@ export function ResolvedAddableConnectorCard({
   pages,
   connectorKeys,
   normalizedSearch,
-  busy,
-  onAdd,
+  selectedProviders,
+  onSelectedChange,
   children,
 }: ResolvedAddableConnectorCardProps) {
-  const { title, badges } = addableConnectorCard();
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const { t: tConnector } = useTranslation("organizations/settings/integrations");
@@ -115,7 +123,7 @@ export function ResolvedAddableConnectorCard({
   );
   const accounts = useFragment(accountFragment, accountKeys);
   const [face] = connectors;
-  const listed = pages.flatMap((page, index) => {
+  const loaded = pages.flatMap((page, index) => {
     const connector = connectors[index];
     const start = pages
       .slice(0, index)
@@ -124,8 +132,9 @@ export function ResolvedAddableConnectorCard({
     if (connector == null) {
       return [];
     }
-    return (listedConnectorAccounts(pageAccounts, connector, normalizedSearch) ?? [])
-      .map(account => ({
+    return [{
+      connector,
+      accounts: pageAccounts.map(account => ({
         id: account.id,
         name: account.name,
         needsOrganization: accountNeedsOrganization(
@@ -133,8 +142,12 @@ export function ResolvedAddableConnectorCard({
           connector.id,
           connector.providerOrganizations.status,
         ),
-      }));
+      })),
+    }];
   });
+  const listed = loaded.flatMap(({ connector, accounts: pageAccounts }) =>
+    listedConnectorAccounts(pageAccounts, connector, normalizedSearch) ?? [],
+  );
   const presented = connectors.flatMap((connector) => {
     const signal = connectionSignalFrom({
       connectionStatus: connector.connectionStatus,
@@ -152,18 +165,45 @@ export function ResolvedAddableConnectorCard({
     : null;
   const tone = presented.length === 0 ? "green" : aggregateConnectionTone(presented);
   const accountCount = face?.distinctAccountCount ?? 0;
-  const addable = listed.filter(account => !account.needsOrganization);
+  const addable = loaded
+    .flatMap(({ accounts: pageAccounts }) => pageAccounts)
+    .filter(account => !account.needsOrganization);
+  const visibleAddable = listed.filter(account => !account.needsOrganization);
   const hasNext = pages.some(page => page.hasNext);
+  const selectable = visibleAddable.length > 0 && !hasNext;
+  const selected = selectable && face != null && selectedProviders.has(face.provider);
+  const { title, controls, checkbox, menu, badges, frame } = addableConnectorCard({
+    selectable,
+  });
   if (face == null || (listed.length === 0 && !hasNext)) {
     return children(null);
   }
 
+  const selectLabel = t("newAccessReviewSourcePage.actions.select", {
+    name: face.displayName,
+  });
+
   return children({
     provider: face.provider,
+    accounts: addable.map(account => ({ id: account.id, name: account.name })),
+    selectable,
     card: (
       <TonedCard
         tone={tone}
         size={2}
+        className={frame()}
+        stretch={selectable
+          ? (
+              <CardButton
+                type="button"
+                aria-label={selectLabel}
+                aria-pressed={selected}
+                onClick={() => {
+                  onSelectedChange(face.provider, !selected);
+                }}
+              />
+            )
+          : undefined}
         icon={(
           <ThirdPartyLogo thirdParty={face.provider} />
         )}
@@ -173,42 +213,48 @@ export function ResolvedAddableConnectorCard({
           </Heading>
         )}
         control={(
-          <Dropdown>
-            <DropdownTrigger
-              render={(
-                <IconButton
-                  variant="ghost"
-                  color="neutral"
-                  size={1}
-                  aria-label={t("accessReviewSourcesPage.actions.more")}
-                >
-                  <DotsThreeVerticalIcon />
-                </IconButton>
-              )}
+          <div className={controls()}>
+            <Checkbox
+              className={checkbox()}
+              checked={selected}
+              disabled={!selectable}
+              tabIndex={selectable ? -1 : undefined}
+              aria-hidden={selectable || undefined}
+              aria-label={selectLabel}
+              onCheckedChange={(checked) => {
+                onSelectedChange(face.provider, checked);
+              }}
             />
-            <DropdownPopup align="end">
-              <DropdownItem
-                iconStart={<PlusIcon />}
-                disabled={busy || addable.length === 0}
-                onClick={() => {
-                  void onAdd(addable);
-                }}
-              >
-                {t("accessReviewSourcesPage.actions.addAll")}
-              </DropdownItem>
-              <DropdownItem
-                iconStart={<PencilSimpleIcon />}
-                render={(
-                  <Link to={connectorDetailsPath(organizationId, face.provider)} />
-                )}
-              >
-                {t("accessReviewSourcesPage.actions.edit")}
-              </DropdownItem>
-            </DropdownPopup>
-          </Dropdown>
+            <div className={menu()}>
+              <Dropdown>
+                <DropdownTrigger
+                  render={(
+                    <IconButton
+                      variant="ghost"
+                      color="neutral"
+                      size={1}
+                      aria-label={t("accessReviewSourcesPage.actions.more")}
+                    >
+                      <DotsThreeVerticalIcon />
+                    </IconButton>
+                  )}
+                />
+                <DropdownPopup align="end">
+                  <DropdownItem
+                    iconStart={<PencilSimpleIcon />}
+                    render={(
+                      <Link to={connectorDetailsPath(organizationId, face.provider)} />
+                    )}
+                  >
+                    {t("accessReviewSourcesPage.actions.edit")}
+                  </DropdownItem>
+                </DropdownPopup>
+              </Dropdown>
+            </div>
+          </div>
         )}
       >
-        {listed.length > 0 && addable.length === 0 && (
+        {listed.length > 0 && visibleAddable.length === 0 && (
           <Text size={2} color="faint">
             {t("accessReviewSourcesPage.needsOrganization")}
           </Text>

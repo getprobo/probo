@@ -19,9 +19,10 @@
 // SOFTWARE.
 
 import { Toast } from "@base-ui/react/toast";
-import { CaretDownIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -30,22 +31,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
-import { useSearchParams } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 
 import type { AccessReviewSourcesPageFragment$key } from "#/__generated__/core/AccessReviewSourcesPageFragment.graphql";
 import type { AccessReviewSourcesPagePaginationQuery } from "#/__generated__/core/AccessReviewSourcesPagePaginationQuery.graphql";
 import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
-import { groupByProvider } from "#/pages/organizations/_lib/connectorStatus";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
 
-import { AddableConnectorGroups } from "./_components/AddableConnectorGroups";
-import { AddSourceSection } from "./_components/AddSourceSection";
 import { sourcesPage } from "./_components/variants";
-
-// The page query spreads the connector fragment owned by the list item.
-import "./_components/AddableConnectorListItem";
 
 function clearOAuthCallbackParams(params: URLSearchParams) {
   params.delete("connector_id");
@@ -60,12 +55,6 @@ export const accessReviewSourcesPageQuery = graphql`
       __typename
       ... on Organization {
         canCreateSource: permission(action: "access-review:source:create")
-        ...AddSourceSection_organization
-        connectors {
-          id
-          provider
-          ...AddableConnectorListItem_connector
-        }
         ...AccessReviewSourcesPageFragment
       }
     }
@@ -115,6 +104,7 @@ interface AccessReviewSourcesPageProps {
 export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPageProps) {
   const { t } = useTranslation();
   const toast = Toast.useToastManager();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -176,15 +166,6 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
   const connectedCount = isSearching
     ? (hasNext ? null : filteredSources.length)
     : accessReviewSources.totalCount;
-  const vendorGroups = useMemo(
-    () => groupByProvider(organization.connectors),
-    [organization.connectors],
-  );
-  const showCSV = !normalizedSearch
-    || "csv".includes(normalizedSearch)
-    || t("addAccessReviewSourceDialog.csv.title")
-      .toLowerCase()
-      .includes(normalizedSearch);
   const callbackError = searchParams.get("error");
 
   useEffect(() => {
@@ -231,6 +212,15 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
             {t("accessReviewSourcesPage.description")}
           </Text>
         </div>
+        {organization.canCreateSource && (
+          <ButtonLink
+            to={{ pathname: "new", search: location.search }}
+            variant="solid"
+            iconStart={<PlusIcon />}
+          >
+            {t("accessReviewSourcesPage.actions.addSources")}
+          </ButtonLink>
+        )}
       </div>
       <div className={list()}>
         <div className={tools()}>
@@ -290,21 +280,6 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
             </div>
           )}
         </section>
-        {organization.canCreateSource && (
-          <AddableConnectorGroups
-            groups={vendorGroups}
-            normalizedSearch={normalizedSearch}
-            connectionId={accessReviewSources.__id}
-          >
-            {cards => (
-              <AddSourceSection
-                cards={cards}
-                showCSV={showCSV}
-                organizationKey={organization}
-              />
-            )}
-          </AddableConnectorGroups>
-        )}
       </div>
     </div>
   );

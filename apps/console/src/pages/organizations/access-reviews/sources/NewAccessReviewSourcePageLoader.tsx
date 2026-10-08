@@ -18,38 +18,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type ReactNode } from "react";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import type { AddableConnectorListItem_connector$key } from "#/__generated__/core/AddableConnectorListItem_connector.graphql";
+import type { NewAccessReviewSourcePageQuery } from "#/__generated__/core/NewAccessReviewSourcePageQuery.graphql";
+import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { ResolveAddableConnectorGroups } from "./ResolveAddableConnectorGroups";
-import type { AddableConnectorCard } from "./ResolvedAddableConnectorCard";
+import {
+  NewAccessReviewSourcePage,
+  newAccessReviewSourcePageQuery,
+} from "./NewAccessReviewSourcePage";
 
-interface AddableConnectorGroupsProps {
-  groups: readonly AddableConnectorListItem_connector$key[];
-  normalizedSearch: string;
-  selectedProviders: ReadonlySet<string>;
-  onSelectedChange: (provider: string, selected: boolean) => void;
-  children: (cards: readonly AddableConnectorCard[]) => ReactNode;
-}
+export default function NewAccessReviewSourcePageLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery]
+    = useQueryLoader<NewAccessReviewSourcePageQuery>(newAccessReviewSourcePageQuery);
 
-export function AddableConnectorGroups({
-  groups,
-  normalizedSearch,
-  selectedProviders,
-  onSelectedChange,
-  children,
-}: AddableConnectorGroupsProps) {
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  if (!queryRef) {
+    return <PageSkeleton />;
+  }
+
   return (
-    <ResolveAddableConnectorGroups
-      groups={groups}
-      index={0}
-      cards={[]}
-      normalizedSearch={normalizedSearch}
-      selectedProviders={selectedProviders}
-      onSelectedChange={onSelectedChange}
-    >
-      {children}
-    </ResolveAddableConnectorGroups>
+    <Suspense fallback={<PageSkeleton />}>
+      <NewAccessReviewSourcePage queryRef={queryRef} />
+    </Suspense>
   );
 }

@@ -64,6 +64,13 @@ export const accessReviewRoutes = [
     ),
   },
   {
+    path: "sources/new",
+    Fallback: PageSkeleton,
+    Component: lazy(
+      () => import("./sources/NewAccessReviewSourcePageLoader"),
+    ),
+  },
+  {
     path: "sources/new/csv",
     Fallback: PageSkeleton,
     Component: lazy(

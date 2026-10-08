@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Toast } from "@base-ui/react/toast";
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -65,9 +66,11 @@ export function CreateCsvAccessReviewSourcePage({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = Toast.useToastManager();
   const organizationId = useOrganizationId();
   const { root, back, intro, form, actions } = csvSourcePage();
   const sourcesPath = `/organizations/${organizationId}/access-reviews/sources`;
+  const newSourcePath = `${sourcesPath}/new`;
 
   usePageTitle(t("createCsvAccessReviewSourcePage.pageTitle"));
 
@@ -88,7 +91,6 @@ export function CreateCsvAccessReviewSourcePage({
     = useMutation<accessReviewSourceMutationsCreateMutation>(
       createAccessReviewSourcesMutation,
       {
-        successMessage: t("createCsvAccessReviewSourcePage.messages.created"),
         errorToast: t("createCsvAccessReviewSourcePage.errors.create"),
       },
     );
@@ -119,6 +121,10 @@ export function CreateCsvAccessReviewSourcePage({
         }
       },
     }).then(() => {
+      toast.add({
+        title: t("createCsvAccessReviewSourcePage.messages.created"),
+        type: "success",
+      });
       void navigate({ pathname: sourcesPath, search: location.search });
     }).catch(() => undefined);
   }
@@ -126,7 +132,7 @@ export function CreateCsvAccessReviewSourcePage({
   return (
     <div className={root()}>
       <Link
-        to={{ pathname: sourcesPath, search: location.search }}
+        to={{ pathname: newSourcePath, search: location.search }}
         size={2}
         color="neutral"
         underline={false}

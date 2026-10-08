@@ -19,63 +19,45 @@
 // SOFTWARE.
 
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
-
-import type { AddSourceSection_organization$key } from "#/__generated__/core/AddSourceSection_organization.graphql";
-import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
 
 import { CsvSourceCard } from "./CsvSourceCard";
 import type { AddableConnectorCard } from "./ResolvedAddableConnectorCard";
 import { sourcesPage } from "./variants";
 
-const addSourceSectionFragment = graphql`
-  fragment AddSourceSection_organization on Organization {
-    ...MarketplaceEntryCard_organization
-  }
-`;
-
 interface AddSourceSectionProps {
   cards: readonly AddableConnectorCard[];
   showCSV: boolean;
-  organizationKey: AddSourceSection_organization$key;
+  isSearching: boolean;
 }
 
 export function AddSourceSection({
   cards,
   showCSV,
-  organizationKey,
+  isSearching,
 }: AddSourceSectionProps) {
   const { t } = useTranslation();
-  const organization = useFragment(addSourceSectionFragment, organizationKey);
-  const { section, sectionTitle, grid, empty } = sourcesPage();
+  const { section, grid, empty } = sourcesPage();
   const hasAddable = cards.length > 0 || showCSV;
-  const availableCount = cards.length + (showCSV ? 1 : 0);
 
   return (
     <section className={section()}>
-      <div className={sectionTitle()}>
-        <Heading level={2} size={3} weight="medium">
-          {t("accessReviewSourcesPage.sections.addSource")}
-        </Heading>
-        <Text size={2} color="faint">{availableCount}</Text>
-      </div>
       {!hasAddable
         ? (
             <Card variant="soft" size={2}>
               <div className={empty()}>
                 <Text size={2} color="faint">
-                  {t("accessReviewSourcesPage.emptyAccounts")}
+                  {isSearching
+                    ? t("accessReviewSourcesPage.emptyAvailableSearch")
+                    : t("accessReviewSourcesPage.emptyAccounts")}
                 </Text>
               </div>
             </Card>
           )
         : (
             <div className={grid()}>
-              <MarketplaceEntryCard organizationKey={organization} />
               {cards.map(({ provider, card }) => (
                 <Fragment key={provider}>{card}</Fragment>
               ))}

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeVerticalIcon, TrashIcon } from "@phosphor-icons/react";
+import { DotsThreeVerticalIcon, FileCsvIcon, TrashIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
 import { ThirdPartyLogo } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -190,6 +190,9 @@ export function AccessReviewSourceListItem({
     return (
       <Card variant="soft" size={2} className={card()}>
         <div className={header()}>
+          {connector == null && (
+            <FileCsvIcon className={logo()} aria-hidden />
+          )}
           <div className={identity()}>
             <Heading level={3} size={3} weight="medium" highContrast className={title()}>
               {accessSource.name}

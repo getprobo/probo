@@ -56,7 +56,23 @@ export const manualOrgInput = tv({
 export const addableConnectorCard = tv({
   slots: {
     title: "min-w-0 truncate",
+    controls: "flex items-center gap-1",
+    checkbox: "",
+    menu: "pointer-events-auto relative z-1",
     badges: "mt-auto flex flex-wrap items-center gap-2",
+    frame: "",
+  },
+  variants: {
+    selectable: {
+      true: {
+        frame: [
+          "pointer-events-none select-none",
+          "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-sand-8",
+          "[&>button]:focus-visible:ring-0 [&>button]:focus-visible:ring-offset-0",
+        ],
+        checkbox: "pointer-events-none",
+      },
+    },
   },
 });
 
@@ -73,8 +89,10 @@ export const csvSourcePage = tv({
 export const sourcesPage = tv({
   slots: {
     root: "flex flex-col gap-6",
+    back: "self-start",
     header: "flex items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-2",
+    actions: "flex shrink-0 items-center gap-2",
     list: "flex flex-col gap-4",
     tools: "flex flex-wrap items-center justify-between gap-2",
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
