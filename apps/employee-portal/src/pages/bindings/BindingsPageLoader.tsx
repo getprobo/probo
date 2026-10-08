@@ -20,10 +20,10 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { BindingsPageQuery } from "#/__generated__/core/BindingsPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { BindingsPage, bindingsPageQuery } from "./BindingsPage";
 import { BindingsPageSkeleton } from "./BindingsPageSkeleton";

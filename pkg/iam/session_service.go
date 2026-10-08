@@ -616,6 +616,7 @@ func (s SessionService) AssumeEmployeePortalSession(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			scope := coredata.NewScopeFromObjectID(employeePortalID)
+
 			portal := &coredata.EmployeePortal{}
 			if err := portal.LoadByID(ctx, conn, scope, employeePortalID); err != nil {
 				if err == coredata.ErrResourceNotFound {

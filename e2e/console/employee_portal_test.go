@@ -537,13 +537,16 @@ func TestEmployeePortal_ConnectAssumeAndList(t *testing.T) {
 	require.NoError(t, err)
 
 	var listedPortalID string
+
 	for _, edge := range listResult.Viewer.Profiles.Edges {
 		if edge.Node.Organization.ID == owner.GetOrganizationID().String() {
 			require.NotEmpty(t, edge.Node.Organization.EmployeePortals.Edges)
 			listedPortalID = edge.Node.Organization.EmployeePortals.Edges[0].Node.ID
+
 			break
 		}
 	}
+
 	require.NotEmpty(t, listedPortalID)
 	assert.Equal(t, portalID, listedPortalID)
 

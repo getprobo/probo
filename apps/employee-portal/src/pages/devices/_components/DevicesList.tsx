@@ -29,7 +29,6 @@ import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { DevicesList_organization$key } from "#/__generated__/core/DevicesList_organization.graphql";
 import type { DevicesList_viewer$key } from "#/__generated__/core/DevicesList_viewer.graphql";
@@ -39,6 +38,7 @@ import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination"
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { PageHeader } from "#/pages/_components/PageHeader";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DeviceListItem } from "./DeviceListItem";
 import { DevicesEmpty } from "./DevicesEmpty";

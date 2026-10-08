@@ -157,6 +157,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		action = employeeportalmgmt.ActionEmployeePortalGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
 			scope := coredata.NewScopeFromObjectID(id)
+
 			employeePortal, err := r.employeePortal.Get(ctx, scope, id)
 			if err != nil {
 				return nil, err

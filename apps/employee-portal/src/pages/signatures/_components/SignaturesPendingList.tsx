@@ -22,7 +22,6 @@ import { SignatureIcon } from "@phosphor-icons/react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { SignaturesPendingList_viewer$key } from "#/__generated__/core/SignaturesPendingList_viewer.graphql";
 import type { SignaturesPendingListRefetchQuery } from "#/__generated__/core/SignaturesPendingListRefetchQuery.graphql";
@@ -35,6 +34,7 @@ import { DocumentQueueSummary } from "#/pages/_components/DocumentQueueSummary";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const signaturesPendingListFragment = graphql`
   fragment SignaturesPendingList_viewer on Viewer

@@ -26,11 +26,11 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { DeviceCard_organization$key } from "#/__generated__/core/DeviceCard_organization.graphql";
 import type { DeviceCard_viewer$key } from "#/__generated__/core/DeviceCard_viewer.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard, deviceCard } from "./variants";
 

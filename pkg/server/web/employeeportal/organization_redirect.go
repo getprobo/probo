@@ -50,6 +50,7 @@ func OrganizationGIDRedirectMiddleware(lookup OldestPortalLookup, next http.Hand
 		}
 
 		first, rest, _ := strings.Cut(trimmed, "/")
+
 		parsed, err := gid.ParseGID(first)
 		if err != nil || parsed.EntityType() != coredata.OrganizationEntityType {
 			next.ServeHTTP(w, r)
@@ -64,6 +65,7 @@ func OrganizationGIDRedirectMiddleware(lookup OldestPortalLookup, next http.Hand
 			}
 
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
 			return
 		}
 

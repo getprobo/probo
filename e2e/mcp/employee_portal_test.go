@@ -89,13 +89,17 @@ func TestMCP_CreateGetUpdateListDeleteEmployeePortal(t *testing.T) {
 	}, &listResult)
 
 	found := false
+
 	for _, portal := range listResult.EmployeePortals {
 		if portal.ID == createResult.EmployeePortal.ID {
 			found = true
+
 			assert.Equal(t, "Updated MCP Portal", portal.Name)
+
 			break
 		}
 	}
+
 	assert.True(t, found, "created employee portal should appear in list")
 
 	var deleteResult struct {

@@ -32,11 +32,11 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { NotFoundError } from "#/lib/relay/errors";
 import type { DocumentQueueKind } from "#/pages/_lib/documentQueue";
 import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard } from "./variants";
 

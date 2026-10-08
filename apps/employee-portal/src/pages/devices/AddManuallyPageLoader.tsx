@@ -20,10 +20,10 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { AddManuallyPageQuery } from "#/__generated__/core/AddManuallyPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { AddManuallyPage, addManuallyPageQuery } from "./AddManuallyPage";
 import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";

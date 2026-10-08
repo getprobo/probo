@@ -20,11 +20,11 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DevicesPage, devicesPageQuery } from "./DevicesPage";
 import { DevicesPageSkeleton } from "./DevicesPageSkeleton";

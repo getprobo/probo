@@ -27,11 +27,11 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { SlackCard_organization$key } from "#/__generated__/core/SlackCard_organization.graphql";
 import type { SlackCard_viewer$key } from "#/__generated__/core/SlackCard_viewer.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard, deviceCard } from "./variants";
 

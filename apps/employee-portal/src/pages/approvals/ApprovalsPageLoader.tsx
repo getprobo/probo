@@ -20,11 +20,11 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { ApprovalsPageQuery } from "#/__generated__/core/ApprovalsPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { ApprovalsPage, approvalsPageQuery } from "./ApprovalsPage";
 import { ApprovalsPageSkeleton } from "./ApprovalsPageSkeleton";

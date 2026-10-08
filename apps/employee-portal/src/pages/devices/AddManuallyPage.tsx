@@ -26,7 +26,6 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { AddManuallyPageQuery } from "#/__generated__/core/AddManuallyPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -34,6 +33,7 @@ import { PageHeader } from "#/pages/_components/PageHeader";
 import { EnrollmentInstructions } from "#/pages/devices/_components/EnrollmentInstructions";
 import { addManuallyPage } from "#/pages/devices/_components/variants";
 import { useEnrollDeviceManually } from "#/pages/devices/_lib/useEnrollDeviceManually";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 export const addManuallyPageQuery = graphql`
   query AddManuallyPageQuery($organizationId: ID!) @throwOnFieldError {

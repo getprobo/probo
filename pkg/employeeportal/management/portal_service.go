@@ -119,6 +119,7 @@ func (s *Service) OldestIDForOrganization(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			scope := coredata.NewScopeFromObjectID(organizationID)
+
 			portal := &coredata.EmployeePortal{}
 			if err := portal.LoadOldestByOrganizationID(ctx, conn, scope, organizationID); err != nil {
 				return fmt.Errorf("cannot load employee portal: %w", err)

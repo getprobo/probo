@@ -22,7 +22,6 @@ import { StampIcon } from "@phosphor-icons/react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import type { ApprovalsPendingList_viewer$key } from "#/__generated__/core/ApprovalsPendingList_viewer.graphql";
 import type { ApprovalsPendingListRefetchQuery } from "#/__generated__/core/ApprovalsPendingListRefetchQuery.graphql";
@@ -34,6 +33,7 @@ import { DocumentQueueSummary } from "#/pages/_components/DocumentQueueSummary";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const approvalsPendingListFragment = graphql`
   fragment ApprovalsPendingList_viewer on Viewer
