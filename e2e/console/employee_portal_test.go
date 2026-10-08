@@ -30,70 +30,6 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestEmployeePortal_Create(t *testing.T) {
-	t.Parallel()
-
-	t.Run("with required fields", func(t *testing.T) {
-		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-
-		const query = `
-			mutation CreateEmployeePortal($input: CreateEmployeePortalInput!) {
-				createEmployeePortal(input: $input) {
-					employeePortalEdge {
-						node {
-							id
-							name
-							active
-							capabilities {
-								deviceAgent
-							}
-							createdAt
-							updatedAt
-						}
-					}
-				}
-			}
-		`
-
-		name := factory.SafeName("Employee Portal")
-
-		var result struct {
-			CreateEmployeePortal struct {
-				EmployeePortalEdge struct {
-					Node struct {
-						ID           string `json:"id"`
-						Name         string `json:"name"`
-						Active       bool   `json:"active"`
-						Capabilities struct {
-							DeviceAgent bool `json:"deviceAgent"`
-						} `json:"capabilities"`
-						CreatedAt string `json:"createdAt"`
-						UpdatedAt string `json:"updatedAt"`
-					} `json:"node"`
-				} `json:"employeePortalEdge"`
-			} `json:"createEmployeePortal"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"organizationId": owner.GetOrganizationID().String(),
-				"name":           name,
-			},
-		}, &result)
-
-		require.NoError(t, err)
-
-		node := result.CreateEmployeePortal.EmployeePortalEdge.Node
-		assert.NotEmpty(t, node.ID)
-		assert.Equal(t, name, node.Name)
-		assert.True(t, node.Active)
-		assert.True(t, node.Capabilities.DeviceAgent)
-		assert.NotEmpty(t, node.CreatedAt)
-		assert.NotEmpty(t, node.UpdatedAt)
-	})
-}
-
 func TestEmployeePortal_Update(t *testing.T) {
 	t.Parallel()
 
@@ -101,7 +37,7 @@ func TestEmployeePortal_Update(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
-		portalID := factory.CreateEmployeePortal(owner)
+		portalID := factory.DefaultEmployeePortalID(owner)
 		newName := factory.SafeName("Updated Portal")
 
 		const query = `
@@ -151,7 +87,7 @@ func TestEmployeePortal_Update(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
-		portalID := factory.CreateEmployeePortal(owner)
+		portalID := factory.DefaultEmployeePortalID(owner)
 
 		const query = `
 			mutation UpdateEmployeePortal($input: UpdateEmployeePortalInput!) {
@@ -196,7 +132,7 @@ func TestEmployeePortal_UpdateBrand(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	portalID := factory.CreateEmployeePortal(owner)
+	portalID := factory.DefaultEmployeePortalID(owner)
 
 	const uploadMutation = `
 		mutation UpdateEmployeePortalBrand($input: UpdateEmployeePortalBrandInput!) {
@@ -259,49 +195,13 @@ func TestEmployeePortal_UpdateBrand(t *testing.T) {
 	)
 }
 
-func TestEmployeePortal_Delete(t *testing.T) {
-	t.Parallel()
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-		owner := testutil.NewClient(t, testutil.RoleOwner)
-
-		portalID := factory.CreateEmployeePortal(owner)
-
-		const query = `
-			mutation DeleteEmployeePortal($input: DeleteEmployeePortalInput!) {
-				deleteEmployeePortal(input: $input) {
-					deletedEmployeePortalId
-				}
-			}
-		`
-
-		var result struct {
-			DeleteEmployeePortal struct {
-				DeletedEmployeePortalID string `json:"deletedEmployeePortalId"`
-			} `json:"deleteEmployeePortal"`
-		}
-
-		err := owner.Execute(query, map[string]any{
-			"input": map[string]any{
-				"employeePortalId": portalID,
-			},
-		}, &result)
-
-		require.NoError(t, err)
-		assert.Equal(t, portalID, result.DeleteEmployeePortal.DeletedEmployeePortalID)
-	})
-}
-
 func TestEmployeePortal_List(t *testing.T) {
 	t.Parallel()
 
 	t.Run("lists portals via organization", func(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
-
-		factory.CreateEmployeePortal(owner)
-		factory.CreateEmployeePortal(owner)
+		portalID := factory.DefaultEmployeePortalID(owner)
 
 		const query = `
 			query($id: ID!) {
@@ -348,8 +248,9 @@ func TestEmployeePortal_List(t *testing.T) {
 		}, &result)
 
 		require.NoError(t, err)
-		assert.GreaterOrEqual(t, result.Node.EmployeePortals.TotalCount, 2)
-		assert.GreaterOrEqual(t, len(result.Node.EmployeePortals.Edges), 2)
+		require.Equal(t, 1, result.Node.EmployeePortals.TotalCount)
+		require.Len(t, result.Node.EmployeePortals.Edges, 1)
+		assert.Equal(t, portalID, result.Node.EmployeePortals.Edges[0].Node.ID)
 	})
 }
 
@@ -360,8 +261,7 @@ func TestEmployeePortal_Node(t *testing.T) {
 		t.Parallel()
 		owner := testutil.NewClient(t, testutil.RoleOwner)
 
-		name := factory.SafeName("Employee Portal")
-		portalID := factory.CreateEmployeePortal(owner, factory.Attrs{"name": name})
+		portalID := factory.DefaultEmployeePortalID(owner)
 
 		const query = `
 			query($id: ID!) {
@@ -392,7 +292,7 @@ func TestEmployeePortal_Node(t *testing.T) {
 		err := owner.Execute(query, map[string]any{"id": portalID}, &result)
 		require.NoError(t, err)
 		assert.Equal(t, portalID, result.Node.ID)
-		assert.Equal(t, name, result.Node.Name)
+		assert.NotEmpty(t, result.Node.Name)
 		assert.True(t, result.Node.Active)
 		assert.True(t, result.Node.Capabilities.DeviceAgent)
 	})

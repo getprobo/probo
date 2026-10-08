@@ -23,9 +23,7 @@ package management
 const (
 	ActionEmployeePortalGet         = "employee-portal:portal:get"
 	ActionEmployeePortalList        = "employee-portal:portal:list"
-	ActionEmployeePortalCreate      = "employee-portal:portal:create"
 	ActionEmployeePortalUpdate      = "employee-portal:portal:update"
-	ActionEmployeePortalDelete      = "employee-portal:portal:delete"
 	ActionEmployeePortalUploadBrand = "employee-portal:portal:upload-brand"
 	ActionEmployeePortalDeleteBrand = "employee-portal:portal:delete-brand"
 )

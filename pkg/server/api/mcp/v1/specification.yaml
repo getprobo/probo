@@ -12540,27 +12540,6 @@ components:
           items:
             $ref: "#/components/schemas/EmployeePortal"
 
-    CreateEmployeePortalInput:
-      type: object
-      required:
-        - organization_id
-        - name
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        name:
-          type: string
-          description: Display name of the employee portal
-
-    CreateEmployeePortalOutput:
-      type: object
-      required:
-        - employee_portal
-      properties:
-        employee_portal:
-          $ref: "#/components/schemas/EmployeePortal"
-
     GetEmployeePortalInput:
       type: object
       required:
@@ -12612,24 +12591,6 @@ components:
       properties:
         employee_portal:
           $ref: "#/components/schemas/EmployeePortal"
-
-    DeleteEmployeePortalInput:
-      type: object
-      required:
-        - employee_portal_id
-      properties:
-        employee_portal_id:
-          $ref: "#/components/schemas/GID"
-          description: Employee portal ID
-
-    DeleteEmployeePortalOutput:
-      type: object
-      required:
-        - deleted_employee_portal_id
-      properties:
-        deleted_employee_portal_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted employee portal ID
 
     UpdateCompliancePortalDocumentVisibilityInput:
       type: object
@@ -19981,18 +19942,6 @@ tools:
       $ref: "#/components/schemas/ListEmployeePortalsInput"
     outputSchema:
       $ref: "#/components/schemas/ListEmployeePortalsOutput"
-  - name: createEmployeePortal
-    title: Create Employee Portal
-    description: Create an employee portal for an organization
-    hints:
-      readonly: false
-      destructive: false
-      idempotent: false
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/CreateEmployeePortalInput"
-    outputSchema:
-      $ref: "#/components/schemas/CreateEmployeePortalOutput"
   - name: getEmployeePortal
     title: Get Employee Portal
     description: Get an employee portal by ID
@@ -20017,18 +19966,6 @@ tools:
       $ref: "#/components/schemas/UpdateEmployeePortalInput"
     outputSchema:
       $ref: "#/components/schemas/UpdateEmployeePortalOutput"
-  - name: deleteEmployeePortal
-    title: Delete Employee Portal
-    description: Delete an employee portal
-    hints:
-      readonly: false
-      destructive: true
-      idempotent: true
-      openWorld: false
-    inputSchema:
-      $ref: "#/components/schemas/DeleteEmployeePortalInput"
-    outputSchema:
-      $ref: "#/components/schemas/DeleteEmployeePortalOutput"
   - name: updateCompliancePortalDocumentVisibility
     title: Update Compliance Portal Document Visibility
     description: Update a document's visibility on a compliance portal

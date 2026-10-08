@@ -71,23 +71,12 @@ type EmployeePortalEdge {
 }
 
 extend type Mutation {
-    createEmployeePortal(
-        input: CreateEmployeePortalInput!
-    ): CreateEmployeePortalPayload!
     updateEmployeePortal(
         input: UpdateEmployeePortalInput!
     ): UpdateEmployeePortalPayload!
     updateEmployeePortalBrand(
         input: UpdateEmployeePortalBrandInput!
     ): UpdateEmployeePortalBrandPayload!
-    deleteEmployeePortal(
-        input: DeleteEmployeePortalInput!
-    ): DeleteEmployeePortalPayload!
-}
-
-input CreateEmployeePortalInput {
-    organizationId: ID!
-    name: String!
 }
 
 input EmployeePortalCapabilitiesInput {
@@ -107,22 +96,10 @@ input UpdateEmployeePortalBrandInput {
     darkLogoFile: Upload @goField(omittable: true)
 }
 
-input DeleteEmployeePortalInput {
-    employeePortalId: ID!
-}
-
-type CreateEmployeePortalPayload {
-    employeePortalEdge: EmployeePortalEdge!
-}
-
 type UpdateEmployeePortalPayload {
     employeePortal: EmployeePortal!
 }
 
 type UpdateEmployeePortalBrandPayload {
     employeePortal: EmployeePortal!
-}
-
-type DeleteEmployeePortalPayload {
-    deletedEmployeePortalId: ID!
 }

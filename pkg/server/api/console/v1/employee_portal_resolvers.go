@@ -93,36 +93,6 @@ func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *
 	return count, nil
 }
 
-// CreateEmployeePortal is the resolver for the createEmployeePortal field.
-func (r *mutationResolver) CreateEmployeePortal(ctx context.Context, input types.CreateEmployeePortalInput) (*types.CreateEmployeePortalPayload, error) {
-	scope, err := r.authorize(ctx, input.OrganizationID, employeeportalmgmt.ActionEmployeePortalCreate)
-	if err != nil {
-		return nil, err
-	}
-
-	portal, err := r.employeePortal.Create(
-		ctx,
-		scope,
-		&employeeportalmgmt.CreateEmployeePortalRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-		},
-	)
-	if err != nil {
-		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot create employee portal", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.CreateEmployeePortalPayload{
-		EmployeePortalEdge: types.NewEmployeePortalEdge(portal, coredata.EmployeePortalOrderFieldCreatedAt),
-	}, nil
-}
-
 // UpdateEmployeePortal is the resolver for the updateEmployeePortal field.
 func (r *mutationResolver) UpdateEmployeePortal(ctx context.Context, input types.UpdateEmployeePortalInput) (*types.UpdateEmployeePortalPayload, error) {
 	scope, err := r.authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalUpdate)
@@ -220,24 +190,6 @@ func (r *mutationResolver) UpdateEmployeePortalBrand(ctx context.Context, input 
 
 	return &types.UpdateEmployeePortalBrandPayload{
 		EmployeePortal: types.NewEmployeePortal(portal),
-	}, nil
-}
-
-// DeleteEmployeePortal is the resolver for the deleteEmployeePortal field.
-func (r *mutationResolver) DeleteEmployeePortal(ctx context.Context, input types.DeleteEmployeePortalInput) (*types.DeleteEmployeePortalPayload, error) {
-	scope, err := r.authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalDelete)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.employeePortal.Delete(ctx, scope, input.EmployeePortalID); err != nil {
-		r.logger.ErrorCtx(ctx, "cannot delete employee portal", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return &types.DeleteEmployeePortalPayload{
-		DeletedEmployeePortalID: input.EmployeePortalID,
 	}, nil
 }
 

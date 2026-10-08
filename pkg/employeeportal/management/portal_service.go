@@ -38,11 +38,6 @@ import (
 )
 
 type (
-	CreateEmployeePortalRequest struct {
-		OrganizationID gid.GID
-		Name           string
-	}
-
 	UpdateRequest struct {
 		ID           gid.GID
 		Name         *string
@@ -56,15 +51,6 @@ type (
 		DarkLogoFile     **FileUpload
 	}
 )
-
-func (r *CreateEmployeePortalRequest) Validate() error {
-	v := validator.New()
-
-	v.Check(r.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(r.Name, "name", validator.Required(), validator.SafeTextNoNewLine(NameMaxLength))
-
-	return v.Error()
-}
 
 func (r *UpdateRequest) Validate() error {
 	v := validator.New()
@@ -157,51 +143,6 @@ func (s *Service) Get(
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load employee portal: %w", err)
-	}
-
-	return portal, nil
-}
-
-func (s *Service) Create(
-	ctx context.Context,
-	scope coredata.Scoper,
-	req *CreateEmployeePortalRequest,
-) (*coredata.EmployeePortal, error) {
-	if err := req.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid request: %w", err)
-	}
-
-	var portal *coredata.EmployeePortal
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, tx, scope, req.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			now := time.Now()
-
-			portal = &coredata.EmployeePortal{
-				ID:             gid.New(scope.GetTenantID(), coredata.EmployeePortalEntityType),
-				OrganizationID: organization.ID,
-				Name:           req.Name,
-				Active:         true,
-				Capabilities:   coredata.DefaultEmployeePortalCapabilities(),
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if err := portal.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert employee portal: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
 	}
 
 	return portal, nil
@@ -443,26 +384,4 @@ func (s *Service) uploadBrandFile(
 	}
 
 	return file, nil
-}
-
-func (s *Service) Delete(
-	ctx context.Context,
-	scope coredata.Scoper,
-	portalID gid.GID,
-) error {
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			portal := &coredata.EmployeePortal{}
-			if err := portal.LoadByID(ctx, tx, scope, portalID); err != nil {
-				return fmt.Errorf("cannot load employee portal: %w", err)
-			}
-
-			if err := portal.Delete(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot delete employee portal: %w", err)
-			}
-
-			return nil
-		},
-	)
 }

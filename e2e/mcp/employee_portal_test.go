@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -37,47 +38,37 @@ type employeePortal struct {
 	} `json:"capabilities"`
 }
 
-func TestMCP_CreateGetUpdateListDeleteEmployeePortal(t *testing.T) {
+func TestMCP_GetUpdateListEmployeePortal(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-
-	var createResult struct {
-		EmployeePortal employeePortal `json:"employee_portal"`
-	}
-	mc.CallToolInto("createEmployeePortal", map[string]any{
-		"organization_id": owner.GetOrganizationID().String(),
-		"name":            "MCP Employee Portal",
-	}, &createResult)
-
-	require.NotEmpty(t, createResult.EmployeePortal.ID)
-	assert.Equal(t, "MCP Employee Portal", createResult.EmployeePortal.Name)
-	assert.True(t, createResult.EmployeePortal.Active)
-	assert.True(t, createResult.EmployeePortal.Capabilities.DeviceAgent)
+	portalID := factory.DefaultEmployeePortalID(owner)
 
 	var getResult struct {
 		EmployeePortal employeePortal `json:"employee_portal"`
 	}
 	mc.CallToolInto("getEmployeePortal", map[string]any{
-		"employee_portal_id": createResult.EmployeePortal.ID,
+		"employee_portal_id": portalID,
 	}, &getResult)
 
-	assert.Equal(t, createResult.EmployeePortal.ID, getResult.EmployeePortal.ID)
-	assert.Equal(t, "MCP Employee Portal", getResult.EmployeePortal.Name)
+	assert.Equal(t, portalID, getResult.EmployeePortal.ID)
+	assert.NotEmpty(t, getResult.EmployeePortal.Name)
+	assert.True(t, getResult.EmployeePortal.Active)
+	assert.True(t, getResult.EmployeePortal.Capabilities.DeviceAgent)
 
 	var updateResult struct {
 		EmployeePortal employeePortal `json:"employee_portal"`
 	}
 	mc.CallToolInto("updateEmployeePortal", map[string]any{
-		"employee_portal_id": createResult.EmployeePortal.ID,
+		"employee_portal_id": portalID,
 		"name":               "Updated MCP Portal",
 		"capabilities": map[string]any{
 			"device_agent": false,
 		},
 	}, &updateResult)
 
-	assert.Equal(t, createResult.EmployeePortal.ID, updateResult.EmployeePortal.ID)
+	assert.Equal(t, portalID, updateResult.EmployeePortal.ID)
 	assert.Equal(t, "Updated MCP Portal", updateResult.EmployeePortal.Name)
 	assert.False(t, updateResult.EmployeePortal.Capabilities.DeviceAgent)
 
@@ -88,26 +79,7 @@ func TestMCP_CreateGetUpdateListDeleteEmployeePortal(t *testing.T) {
 		"organization_id": owner.GetOrganizationID().String(),
 	}, &listResult)
 
-	found := false
-
-	for _, portal := range listResult.EmployeePortals {
-		if portal.ID == createResult.EmployeePortal.ID {
-			found = true
-
-			assert.Equal(t, "Updated MCP Portal", portal.Name)
-
-			break
-		}
-	}
-
-	assert.True(t, found, "created employee portal should appear in list")
-
-	var deleteResult struct {
-		DeletedEmployeePortalID string `json:"deleted_employee_portal_id"`
-	}
-	mc.CallToolInto("deleteEmployeePortal", map[string]any{
-		"employee_portal_id": createResult.EmployeePortal.ID,
-	}, &deleteResult)
-
-	assert.Equal(t, createResult.EmployeePortal.ID, deleteResult.DeletedEmployeePortalID)
+	require.Len(t, listResult.EmployeePortals, 1)
+	assert.Equal(t, portalID, listResult.EmployeePortals[0].ID)
+	assert.Equal(t, "Updated MCP Portal", listResult.EmployeePortals[0].Name)
 }

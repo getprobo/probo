@@ -37,9 +37,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1EmployeePortal: {
 		ActionEmployeePortalGet,
 		ActionEmployeePortalList,
-		ActionEmployeePortalCreate,
 		ActionEmployeePortalUpdate,
-		ActionEmployeePortalDelete,
 		ActionEmployeePortalUploadBrand,
 		ActionEmployeePortalDeleteBrand,
 	},

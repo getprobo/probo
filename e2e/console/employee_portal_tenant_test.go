@@ -35,7 +35,7 @@ func TestEmployeePortal_TenantIsolation(t *testing.T) {
 		owner1 := testutil.NewClient(t, testutil.RoleOwner)
 		owner2 := testutil.NewClient(t, testutil.RoleOwner)
 
-		portalID := factory.CreateEmployeePortal(owner1)
+		portalID := factory.DefaultEmployeePortalID(owner1)
 
 		const query = `
 			query($id: ID!) {

@@ -19,8 +19,6 @@
 // SOFTWARE.
 
 import type { INodeProperties } from 'n8n-workflow';
-import * as createOp from './create.operation';
-import * as deleteOp from './delete.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as updateOp from './update.operation';
@@ -37,18 +35,6 @@ export const description: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				name: 'Create',
-				value: 'create',
-				description: 'Create a new employee portal',
-				action: 'Create an employee portal',
-			},
-			{
-				name: 'Delete',
-				value: 'delete',
-				description: 'Delete an employee portal',
-				action: 'Delete an employee portal',
-			},
 			{
 				name: 'Get',
 				value: 'get',
@@ -70,16 +56,12 @@ export const description: INodeProperties[] = [
 		],
 		default: 'get',
 	},
-	...createOp.description,
-	...deleteOp.description,
 	...getOp.description,
 	...getAllOp.description,
 	...updateOp.description,
 ];
 
 export {
-	createOp as create,
-	deleteOp as delete,
 	getOp as get,
 	getAllOp as getAll,
 	updateOp as update,

@@ -76,8 +76,8 @@ func TestRegisteredOAuth2ScopeRegistries_EmployeePortal(t *testing.T) {
 
 	reg := allRegisteredOAuth2ScopeRegistries()
 
-	assert.True(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortal}, employeeportalmgmt.ActionEmployeePortalCreate))
-	assert.False(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortalRead}, employeeportalmgmt.ActionEmployeePortalCreate))
+	assert.True(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortal}, employeeportalmgmt.ActionEmployeePortalUpdate))
+	assert.False(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortalRead}, employeeportalmgmt.ActionEmployeePortalUpdate))
 	assert.True(t, reg.Allows(coredata.OAuth2Scopes{employeeportalmgmt.ScopeV1EmployeePortalRead}, employeeportalmgmt.ActionEmployeePortalGet))
 }
 

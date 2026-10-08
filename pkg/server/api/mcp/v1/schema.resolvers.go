@@ -10633,29 +10633,6 @@ func (r *Resolver) ListEmployeePortalsTool(ctx context.Context, req *mcp.CallToo
 	return nil, types.NewListEmployeePortalsOutput(portals, portalPage), nil
 }
 
-func (r *Resolver) CreateEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.CreateEmployeePortalInput) (*mcp.CallToolResult, types.CreateEmployeePortalOutput, error) {
-	scope, err := r.Authorize(ctx, input.OrganizationID, employeeportalmgmt.ActionEmployeePortalCreate)
-	if err != nil {
-		return nil, types.CreateEmployeePortalOutput{}, err
-	}
-
-	portal, err := r.employeePortal.Create(
-		ctx,
-		scope,
-		&employeeportalmgmt.CreateEmployeePortalRequest{
-			OrganizationID: input.OrganizationID,
-			Name:           input.Name,
-		},
-	)
-	if err != nil {
-		return nil, types.CreateEmployeePortalOutput{}, fmt.Errorf("cannot create employee portal: %w", err)
-	}
-
-	return nil, types.CreateEmployeePortalOutput{
-		EmployeePortal: types.NewEmployeePortal(portal),
-	}, nil
-}
-
 func (r *Resolver) GetEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetEmployeePortalInput) (*mcp.CallToolResult, types.GetEmployeePortalOutput, error) {
 	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalGet)
 	if err != nil {
@@ -10703,20 +10680,5 @@ func (r *Resolver) UpdateEmployeePortalTool(ctx context.Context, req *mcp.CallTo
 
 	return nil, types.UpdateEmployeePortalOutput{
 		EmployeePortal: types.NewEmployeePortal(portal),
-	}, nil
-}
-
-func (r *Resolver) DeleteEmployeePortalTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteEmployeePortalInput) (*mcp.CallToolResult, types.DeleteEmployeePortalOutput, error) {
-	scope, err := r.Authorize(ctx, input.EmployeePortalID, employeeportalmgmt.ActionEmployeePortalDelete)
-	if err != nil {
-		return nil, types.DeleteEmployeePortalOutput{}, err
-	}
-
-	if err := r.employeePortal.Delete(ctx, scope, input.EmployeePortalID); err != nil {
-		return nil, types.DeleteEmployeePortalOutput{}, fmt.Errorf("cannot delete employee portal: %w", err)
-	}
-
-	return nil, types.DeleteEmployeePortalOutput{
-		DeletedEmployeePortalID: input.EmployeePortalID,
 	}, nil
 }

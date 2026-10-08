@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -324,6 +325,12 @@ INSERT INTO employee_portals (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "idx_employee_portals_organization_id" {
+				return ErrResourceAlreadyExists
+			}
+		}
+
 		return fmt.Errorf("cannot insert employee portal: %w", err)
 	}
 
@@ -369,31 +376,6 @@ WHERE
 
 	if result.RowsAffected() == 0 {
 		return ErrResourceNotFound
-	}
-
-	return nil
-}
-
-func (p *EmployeePortal) Delete(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-) error {
-	q := `
-DELETE FROM employee_portals
-WHERE
-	%s
-	AND id = @id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"id": p.ID}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := conn.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot delete employee portal: %w", err)
 	}
 
 	return nil
