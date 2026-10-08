@@ -30,6 +30,25 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+func TestCreateSignature_EmptyEmailSubject(t *testing.T) {
+	t.Parallel()
+
+	s := &Service{}
+	_, err := s.CreateSignature(
+		context.Background(),
+		nil,
+		&CreateSignatureRequest{
+			ConsentText:  "I consent.",
+			EmailSubject: &EmailSubject{Text: " \t "},
+		},
+	)
+
+	require.Error(t, err)
+	validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
+	require.True(t, ok)
+	assert.NotEmpty(t, validationErrors.ByField("text"))
+}
+
 func TestAcceptSignature_EmptySignerFullName(t *testing.T) {
 	t.Parallel()
 

@@ -52,6 +52,12 @@ type (
 		logger         *log.Logger
 	}
 
+	// EmailSubject configures the certificate-of-completion email.
+	// A nil subject means the signature is recorded without that email.
+	EmailSubject struct {
+		Text string
+	}
+
 	CreateSignatureRequest struct {
 		OrganizationID gid.GID
 		DocumentType   coredata.ElectronicSignatureDocumentType
@@ -59,7 +65,7 @@ type (
 		FileID         gid.GID
 		SignerEmail    mail.Addr
 		ConsentText    string // optional; required when DocumentType == OTHER
-		EmailSubject   string
+		EmailSubject   *EmailSubject
 	}
 
 	AcceptSignatureRequest struct {
@@ -80,7 +86,7 @@ type (
 		SignerIPAddr   string
 		SignerUA       string
 		ConsentText    string
-		EmailSubject   string
+		EmailSubject   *EmailSubject
 	}
 
 	RecordEventRequest struct {
@@ -93,6 +99,14 @@ type (
 		ActorUA       string
 	}
 )
+
+func (s EmailSubject) Validate() error {
+	v := validator.New()
+
+	v.Check(s.Text, "text", validator.NotEmpty())
+
+	return v.Error()
+}
 
 func (req AcceptSignatureRequest) Validate() error {
 	v := validator.New()
@@ -186,14 +200,14 @@ func (s *Service) CreateSignature(
 		return nil, fmt.Errorf("consent text is required")
 	}
 
-	emailSubject := req.EmailSubject
-	if emailSubject == "" {
-		docName := req.DocumentType.DisplayName()
-		if req.DocumentName != nil && *req.DocumentName != "" {
-			docName = *req.DocumentName
+	var emailSubject *string
+
+	if req.EmailSubject != nil {
+		if err := req.EmailSubject.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid email subject: %w", err)
 		}
 
-		emailSubject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
+		emailSubject = new(req.EmailSubject.Text)
 	}
 
 	now := time.Now()

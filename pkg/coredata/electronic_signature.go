@@ -45,7 +45,7 @@ type ElectronicSignature struct {
 	FileID                         gid.GID                         `db:"file_id"`
 	SignerEmail                    string                          `db:"signer_email"`
 	ConsentText                    string                          `db:"consent_text"`
-	EmailSubject                   string                          `db:"email_subject"`
+	EmailSubject                   *string                         `db:"email_subject"`
 	SignerFullName                 *string                         `db:"signer_full_name"`
 	SignerIPAddress                *string                         `db:"signer_ip_address"`
 	SignerUserAgent                *string                         `db:"signer_user_agent"`
@@ -129,11 +129,13 @@ func (es *ElectronicSignature) Insert(
 	q := `
 INSERT INTO electronic_signatures (
 	id, tenant_id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, email_subject, seal_version, attempt_count, max_attempts,
+	signer_email, consent_text, email_subject, seal_version,
+	attempt_count, max_attempts,
 	created_at, updated_at
 ) VALUES (
 	@id, @tenant_id, @organization_id, @status, @document_type, @document_name, @file_id,
-	@signer_email, @consent_text, @email_subject, @seal_version, @attempt_count, @max_attempts,
+	@signer_email, @consent_text, @email_subject, @seal_version,
+	@attempt_count, @max_attempts,
 	@created_at, @updated_at
 )
 `
@@ -232,7 +234,8 @@ func (es *ElectronicSignature) LoadByID(
 	q := `
 SELECT
 	id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
+	signer_email, consent_text, email_subject, signer_full_name,
+	signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
@@ -272,7 +275,8 @@ func (es *ElectronicSignature) LoadNextAcceptedForUpdateSkipLocked(
 	q := `
 SELECT
 	id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
+	signer_email, consent_text, email_subject, signer_full_name,
+	signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,
@@ -310,7 +314,8 @@ func (es *ElectronicSignature) LoadNextCompletedWithoutCertificateForUpdate(
 	q := `
 SELECT
 	id, organization_id, status, document_type, document_name, file_id,
-	signer_email, consent_text, email_subject, signer_full_name, signer_ip_address,
+	signer_email, consent_text, email_subject, signer_full_name,
+	signer_ip_address,
 	signer_user_agent, file_hash, seal, seal_version, tsa_token, signed_at,
 	certificate_file_id, certificate_processing_started_at,
 	attempt_count, max_attempts, last_attempted_at, last_error,

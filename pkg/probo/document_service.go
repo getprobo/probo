@@ -915,7 +915,6 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 					SignerIPAddr:   req.SignerIPAddr,
 					SignerUA:       req.SignerUA,
 					ConsentText:    DocumentSignatureConsentText,
-					EmailSubject:   fmt.Sprintf("Your signed %s - Certificate of Completion", document.Title),
 				},
 			)
 			if err != nil {
