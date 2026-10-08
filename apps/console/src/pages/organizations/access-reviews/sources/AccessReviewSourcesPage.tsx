@@ -60,7 +60,7 @@ export const accessReviewSourcesPageQuery = graphql`
       __typename
       ... on Organization {
         canCreateSource: permission(action: "access-review:source:create")
-        canCreateConnector: permission(action: "core:connector:create")
+        ...AddSourceSection_organization
         connectors {
           id
           provider
@@ -300,7 +300,7 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
               <AddSourceSection
                 cards={cards}
                 showCSV={showCSV}
-                canCreateConnector={organization.canCreateConnector}
+                organizationKey={organization}
               />
             )}
           </AddableConnectorGroups>

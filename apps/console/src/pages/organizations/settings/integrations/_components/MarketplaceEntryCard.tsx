@@ -23,15 +23,34 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
+import type { MarketplaceEntryCard_organization$key } from "#/__generated__/core/MarketplaceEntryCard_organization.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { marketplacePath } from "../_lib/integrationPath";
 
-export function MarketplaceEntryCard() {
+const marketplaceEntryCardFragment = graphql`
+  fragment MarketplaceEntryCard_organization on Organization {
+    canCreate: permission(action: "core:connector:create")
+  }
+`;
+
+interface MarketplaceEntryCardProps {
+  organizationKey: MarketplaceEntryCard_organization$key;
+}
+
+export function MarketplaceEntryCard({
+  organizationKey,
+}: MarketplaceEntryCardProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
+  const organization = useFragment(marketplaceEntryCardFragment, organizationKey);
   const label = t("listPage.addMore");
+
+  if (!organization.canCreate) {
+    return null;
+  }
 
   return (
     <Card variant="soft" size={2} interactive className="h-full">

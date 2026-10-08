@@ -23,28 +23,36 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useFragment } from "react-relay";
 
+import type { AddSourceSection_organization$key } from "#/__generated__/core/AddSourceSection_organization.graphql";
 import { MarketplaceEntryCard } from "#/pages/organizations/settings/integrations/_components/MarketplaceEntryCard";
 
 import { CsvSourceCard } from "./CsvSourceCard";
 import type { AddableConnectorCard } from "./ResolvedAddableConnectorCard";
 import { sourcesPage } from "./variants";
 
+const addSourceSectionFragment = graphql`
+  fragment AddSourceSection_organization on Organization {
+    ...MarketplaceEntryCard_organization
+  }
+`;
+
 interface AddSourceSectionProps {
   cards: readonly AddableConnectorCard[];
   showCSV: boolean;
-  canCreateConnector: boolean;
+  organizationKey: AddSourceSection_organization$key;
 }
 
 export function AddSourceSection({
   cards,
   showCSV,
-  canCreateConnector,
+  organizationKey,
 }: AddSourceSectionProps) {
   const { t } = useTranslation();
+  const organization = useFragment(addSourceSectionFragment, organizationKey);
   const { section, sectionTitle, grid, empty } = sourcesPage();
   const hasAddable = cards.length > 0 || showCSV;
-  const showAddMore = canCreateConnector && hasAddable;
   const availableCount = cards.length + (showCSV ? 1 : 0);
 
   return (
@@ -67,9 +75,7 @@ export function AddSourceSection({
           )
         : (
             <div className={grid()}>
-              {showAddMore && (
-                <MarketplaceEntryCard />
-              )}
+              <MarketplaceEntryCard organizationKey={organization} />
               {cards.map(({ provider, card }) => (
                 <Fragment key={provider}>{card}</Fragment>
               ))}

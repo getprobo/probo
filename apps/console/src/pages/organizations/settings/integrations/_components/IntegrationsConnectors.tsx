@@ -67,6 +67,8 @@ const integrationsConnectorsOrganizationFragment = graphql`
     filter: { type: "ConnectorFilter", defaultValue: null }
   ) {
     canCreateConnector: permission(action: "core:connector:create")
+    ...ConnectorGroupListItem_organization
+    ...MarketplaceEntryCard_organization
     connectors(filter: $filter) {
       id
       provider
@@ -210,9 +212,7 @@ export function IntegrationsConnectors({
                 )
               : (
                   <div className={grid()}>
-                    {organization.canCreateConnector && (
-                      <MarketplaceEntryCard />
-                    )}
+                    <MarketplaceEntryCard organizationKey={organization} />
                     {groupByProvider(connectors).map((group) => {
                       const face = group[0];
                       const providerKey = connectorProviders.find(
@@ -223,8 +223,8 @@ export function IntegrationsConnectors({
                         <ConnectorGroupListItem
                           key={group.length > 1 ? face.provider : face.id}
                           connectorKeys={group}
+                          organizationKey={organization}
                           providerKey={providerKey}
-                          canConnect={organization.canCreateConnector}
                         />
                       );
                     })}

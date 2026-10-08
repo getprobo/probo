@@ -24,11 +24,18 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
+import type { ConnectorConnectMore_organization$key } from "#/__generated__/core/ConnectorConnectMore_organization.graphql";
 import type { ConnectorConnectMore_provider$key } from "#/__generated__/core/ConnectorConnectMore_provider.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { connectMethods } from "../_lib/connectMethods";
 import { connectVendorPath } from "../_lib/integrationPath";
+
+const connectorConnectMoreOrganizationFragment = graphql`
+  fragment ConnectorConnectMore_organization on Organization {
+    canCreate: permission(action: "core:connector:create")
+  }
+`;
 
 const connectorConnectMoreFragment = graphql`
   fragment ConnectorConnectMore_provider on ConnectorProviderInfo {
@@ -43,14 +50,17 @@ const connectorConnectMoreFragment = graphql`
 `;
 
 interface ConnectorConnectMoreProps {
+  organizationKey: ConnectorConnectMore_organization$key;
   providerKey: ConnectorConnectMore_provider$key;
 }
 
 export function ConnectorConnectMore({
+  organizationKey,
   providerKey,
 }: ConnectorConnectMoreProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
+  const organization = useFragment(connectorConnectMoreOrganizationFragment, organizationKey);
   const provider = useFragment(connectorConnectMoreFragment, providerKey);
   const methods = connectMethods({
     configuredProtocols: provider.configuredProtocols,
@@ -61,7 +71,7 @@ export function ConnectorConnectMore({
     installSupported: provider.installSupported,
   });
 
-  if (methods.length === 0) {
+  if (!organization.canCreate || methods.length === 0) {
     return null;
   }
 

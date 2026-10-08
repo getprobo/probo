@@ -32,6 +32,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorGroupListItem_connector$key } from "#/__generated__/core/ConnectorGroupListItem_connector.graphql";
+import type { ConnectorGroupListItem_organization$key } from "#/__generated__/core/ConnectorGroupListItem_organization.graphql";
 import type { ConnectorGroupListItem_provider$key } from "#/__generated__/core/ConnectorGroupListItem_provider.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -55,6 +56,12 @@ import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
 // connectionStatus probes the vendor on every read, so this list pays one
 // outbound call per connected connector. providerOrganizations does too, for
 // providers that have an account picker.
+const connectorGroupListItemOrganizationFragment = graphql`
+  fragment ConnectorGroupListItem_organization on Organization {
+    ...ConnectorConnectMore_organization
+  }
+`;
+
 const connectorGroupListItemProviderFragment = graphql`
   fragment ConnectorGroupListItem_provider on ConnectorProviderInfo {
     ...ConnectorConnectMore_provider
@@ -86,18 +93,19 @@ const connectorGroupListItemFragment = graphql`
 
 interface ConnectorGroupListItemProps {
   connectorKeys: ConnectorGroupListItem_connector$key;
+  organizationKey: ConnectorGroupListItem_organization$key;
   providerKey?: ConnectorGroupListItem_provider$key | null;
-  canConnect: boolean;
 }
 
 export function ConnectorGroupListItem({
   connectorKeys,
+  organizationKey,
   providerKey,
-  canConnect,
 }: ConnectorGroupListItemProps) {
   const { t, i18n } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const organization = useFragment(connectorGroupListItemOrganizationFragment, organizationKey);
   const connectors = useFragment(connectorGroupListItemFragment, connectorKeys);
   const provider = useFragment(connectorGroupListItemProviderFragment, providerKey ?? null);
   const { card, controls, identity, name, tags, title } = connectorCard();
@@ -128,11 +136,14 @@ export function ConnectorGroupListItem({
     0,
   );
   const showDelete = single != null && single.canDelete;
-  const menu = (showDelete || canConnect)
+  const menu = (showDelete || provider != null)
     ? (
         <div className={controls({ className: "pointer-events-auto" })}>
-          {canConnect && provider != null && (
-            <ConnectorConnectMore providerKey={provider} />
+          {provider != null && (
+            <ConnectorConnectMore
+              organizationKey={organization}
+              providerKey={provider}
+            />
           )}
           {showDelete && (
             <IconButton
