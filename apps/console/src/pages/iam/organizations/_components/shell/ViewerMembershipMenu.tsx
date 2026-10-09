@@ -33,11 +33,12 @@ import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { EditableAvatarButton } from "@probo/ui/src/v2/EditableAvatarButton/EditableAvatarButton";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useLazyLoadQuery, useMutation } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment, useMutation, usePreloadedQuery } from "react-relay";
 import { Link } from "react-router";
 
 import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
@@ -48,15 +49,10 @@ import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDial
 
 import { navRail } from "./variants";
 
-// employeePortals is non-null, so a missing list permission nulls the
-// organization and takes down the shell. Roles without that permission
-// (auditor, compliance portal managers) only need the boolean.
 // Keep the oldest-portal pick in sync with useDefaultEmployeePortalId
 // (console schema). Relay cannot share a fragment across iam/core projects.
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
-    id
-    canListEmployeePortals: permission(action: "employee-portal:portal:list")
     viewer @required(action: THROW) {
       fullName
       identity @required(action: THROW) {
@@ -73,15 +69,10 @@ const viewerMembershipMenuFragment = graphql`
   }
 `;
 
-const signOutMutation = graphql`
-  mutation ViewerMembershipMenuSignOutMutation {
-    signOut {
-      success
-    }
-  }
-`;
-
-const employeePortalQuery = graphql`
+// employeePortals is non-null, so this runs only after the layout query
+// confirms the list permission. The shell waits for it, and the menu
+// renders the link from that result.
+export const viewerMembershipMenuEmployeePortalQuery = graphql`
   query ViewerMembershipMenuEmployeePortalQuery($organizationId: ID!) {
     node(id: $organizationId) {
       ... on Organization {
@@ -100,11 +91,23 @@ const employeePortalQuery = graphql`
   }
 `;
 
-function EmployeePortalMenuItem({ organizationId }: { organizationId: string }) {
+const signOutMutation = graphql`
+  mutation ViewerMembershipMenuSignOutMutation {
+    signOut {
+      success
+    }
+  }
+`;
+
+interface EmployeePortalMenuItemProps {
+  queryRef: PreloadedQuery<ViewerMembershipMenuEmployeePortalQuery>;
+}
+
+function EmployeePortalMenuItem({ queryRef }: EmployeePortalMenuItemProps) {
   const { t } = useTranslation();
-  const data = useLazyLoadQuery<ViewerMembershipMenuEmployeePortalQuery>(
-    employeePortalQuery,
-    { organizationId },
+  const data = usePreloadedQuery<ViewerMembershipMenuEmployeePortalQuery>(
+    viewerMembershipMenuEmployeePortalQuery,
+    queryRef,
   );
   const employeePortalId = data.node?.employeePortals?.edges[0]?.node.id ?? null;
   if (employeePortalId == null) {
@@ -123,9 +126,13 @@ function EmployeePortalMenuItem({ organizationId }: { organizationId: string }) 
 
 export interface ViewerMembershipMenuProps {
   organizationKey: ViewerMembershipMenu_organization$key;
+  employeePortalQueryRef: PreloadedQuery<ViewerMembershipMenuEmployeePortalQuery> | null;
 }
 
-export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuProps) {
+export function ViewerMembershipMenu({
+  organizationKey,
+  employeePortalQueryRef,
+}: ViewerMembershipMenuProps) {
   const { t } = useTranslation();
   const toast = useToast();
 
@@ -221,10 +228,12 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
               {t("viewerMembershipDropdown.actions.oauthTokens")}
             </DropdownItem>
           )}
-          {organization.canListEmployeePortals && (
-            <Suspense fallback={null}>
-              <EmployeePortalMenuItem organizationId={organization.id} />
-            </Suspense>
+          {employeePortalQueryRef != null && (
+            <ErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <EmployeePortalMenuItem queryRef={employeePortalQueryRef} />
+              </Suspense>
+            </ErrorBoundary>
           )}
           <DropdownSeparator />
           <DropdownItem

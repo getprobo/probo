@@ -25,12 +25,11 @@ import type { OrganizationLayoutQuery } from "#/__generated__/iam/OrganizationLa
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { OrganizationLayout, organizationLayoutQuery } from "./OrganizationLayout";
+import { OrganizationLayoutGate, organizationLayoutQuery } from "./OrganizationLayout";
 import { OrganizationLayoutSkeleton } from "./OrganizationLayoutSkeleton";
 
 function OrganizationLayoutQueryLoader() {
   const organizationId = useOrganizationId();
-
   const [queryRef, loadQuery] = useQueryLoader<OrganizationLayoutQuery>(
     organizationLayoutQuery,
   );
@@ -39,13 +38,13 @@ function OrganizationLayoutQueryLoader() {
     loadQuery({ organizationId });
   }, [organizationId, loadQuery]);
 
-  if (!queryRef) {
+  if (queryRef == null || queryRef.variables.organizationId !== organizationId) {
     return <OrganizationLayoutSkeleton />;
   }
 
   return (
     <Suspense fallback={<OrganizationLayoutSkeleton />}>
-      <OrganizationLayout queryRef={queryRef} />
+      <OrganizationLayoutGate queryRef={queryRef} />
     </Suspense>
   );
 }
