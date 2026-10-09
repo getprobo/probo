@@ -4,6 +4,37 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.308.0] - 2026-10-09
+
+### Added
+
+- Cookie banner discovery counts page loads and tracker hits by browser
+  family (Chrome, Edge, Firefox, Safari, Other) over one shared window that
+  is frozen on first publish. The console shows them as stat tiles with
+  browser logos and a callout until the banner is frozen, and they are
+  exposed on the GraphQL, MCP, CLI, and n8n APIs
+- Cookie detections record the cookie `Domain` and promote the tracker
+  source, so extension cookies are no longer reported as site trackers
+
+### Changed
+
+- The cookie banner **Configure** navigation entry is now **Settings** and
+  is the banner landing page. Delete moved to the page header
+- Tracker and pattern lists keep their page in the URL, so opening a pattern
+  and going back returns to the same page
+- Console success and error feedback uses the v2 toaster
+
+### Fixed
+
+- Host-only and Domain-scoped cookies with the same name are kept as
+  separate detections
+- A tracker report with an oversized cookie `Max-Age` no longer aborts the
+  whole batch
+- Android Edge is no longer counted as Chrome, and the SDK stops retrying
+  page views after a 404
+- Tracker pagination no longer reuses another banner's cursor
+
+
 ## [0.307.0] - 2026-10-09
 
 ### Added
