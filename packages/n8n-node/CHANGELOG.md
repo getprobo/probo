@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.246.0] - 2026-10-09
+
+### Added
+
+- Cookie Banner `Get` returns discovery page loads by browser family, and
+  Tracker Pattern `Get` returns discovery hits by browser family
+
+
 ## [0.245.0] - 2026-10-09
 
 ### Added
