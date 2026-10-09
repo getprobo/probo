@@ -4,8 +4,39 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.307.0] - 2026-10-09
+
+### Added
+
+- Connectors have a required name that tells several connections to one
+  provider apart, such as Production or Access review only. Existing
+  connectors are numbered per organization and provider (AWS #1, AWS #2).
+  The name is collected on every connect form and can be changed from the
+  provider page
+- A task can be linked to several internal controls, and the task list
+  filters by internal control. Deleting an internal control unlinks its
+  tasks instead of deleting them
+- Vendors are connected from Marketplace pages, with a second step to pick
+  the credential type when a vendor offers more than one. A new Linear Sync
+  connector is stored as "tasks"
+- Adding access review sources has its own page. Connected accounts are
+  grouped by vendor and every selected account is added in one step. CSV
+  sources show a file icon
+
+### Changed
+
+- Access review sources, source cards, and the integrations screens use the
+  v2 kit. Deleting a source confirms in a dialog and success messages use
+  the v2 toast
+- The connector accounts drawer lists only the accounts already stored on the
+  connector
+- The old access review connection URLs no longer redirect to the sources
+  pages
+
 ### Fixed
 
+- The initial account of a connector can no longer be disabled, since
+  connection checks and cloud sessions always use it
 - Built with Go 1.27.2 (up from 1.27.1) to pick up the standard-library
   security fixes in `net/http`, `crypto/tls`, `html/template`,
   `net/textproto`, and `os` (including CVE-2026-97032, CVE-2026-78659,
