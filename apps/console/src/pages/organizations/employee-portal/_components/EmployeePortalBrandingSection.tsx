@@ -212,7 +212,7 @@ export function EmployeePortalBrandingSection({
                 placeholder={t("branding.fields.placeholder")}
                 clearLabel={t("branding.actions.removeLogo")}
                 onFile={file => uploadLogo("logoFile", file)}
-                onClear={employeePortal.canDeleteBrand
+                onClear={employeePortal.canDeleteBrand && !busy
                   ? () => clearLogo("logoFile")
                   : undefined}
                 onReject={handleReject}
@@ -231,7 +231,7 @@ export function EmployeePortalBrandingSection({
                   placeholder={t("branding.fields.placeholder")}
                   clearLabel={t("branding.actions.removeDarkLogo")}
                   onFile={file => uploadLogo("darkLogoFile", file)}
-                  onClear={employeePortal.canDeleteBrand
+                  onClear={employeePortal.canDeleteBrand && !busy
                     ? () => clearLogo("darkLogoFile")
                     : undefined}
                   onReject={handleReject}

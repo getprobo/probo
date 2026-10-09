@@ -1,15 +1,15 @@
 {
   "employeePortalPage": {
     "title": "Portail employé",
-    "description": "Identité visuelle et capacités du portail employés de cette organisation."
+    "description": "Identité visuelle et capacités du portail employé de cette organisation."
   },
   "missing": {
-    "title": "Portail employés indisponible",
-    "description": "Cette organisation n’a pas encore de portail employés."
+    "title": "Portail employé indisponible",
+    "description": "Cette organisation n’a pas encore de portail employé."
   },
   "branding": {
     "title": "Identité visuelle",
-    "description": "Logos affichés dans le portail employés.",
+    "description": "Logos affichés dans le portail employé.",
     "fields": {
       "logo": "Logo",
       "darkLogo": "Logo sombre",
@@ -43,7 +43,7 @@
     "title": "Paramètres",
     "deviceAgent": {
       "title": "Agent d’appareil",
-      "description": "Autoriser les employés à enregistrer des appareils depuis le portail employés."
+      "description": "Autoriser les employés à enregistrer des appareils depuis le portail employé."
     },
     "messages": {
       "updated": "Paramètres mis à jour"
