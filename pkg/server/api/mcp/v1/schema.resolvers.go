@@ -5809,7 +5809,7 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	loads, err := r.cookieBanner.GetDiscoveryPageLoads(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("internal error")
+		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get discovery page loads: %w", err)
 	}
 
 	out.DiscoveryPageLoads = types.NewDiscoveryFamilyCounts(loads)
@@ -6111,7 +6111,7 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 
 	hits, err := r.cookieBanner.GetDiscoveryHits(ctx, scope, input.ID)
 	if err != nil {
-		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("internal error")
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get discovery hits: %w", err)
 	}
 
 	mapped.DiscoveryHits = types.NewDiscoveryFamilyCounts(hits)

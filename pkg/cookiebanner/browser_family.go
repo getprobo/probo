@@ -31,7 +31,7 @@ import (
 // Brave and other Chromium shells are indistinguishable from Chrome.
 func BrowserFamily(userAgent string) coredata.DiscoveryBrowserFamily {
 	switch {
-	case strings.Contains(userAgent, "Edg/") || strings.Contains(userAgent, "EdgiOS"):
+	case strings.Contains(userAgent, "Edg/") || strings.Contains(userAgent, "EdgiOS") || strings.Contains(userAgent, "EdgA"):
 		return coredata.DiscoveryBrowserFamilyEdge
 	case strings.Contains(userAgent, "Chrome/") || strings.Contains(userAgent, "CriOS"):
 		return coredata.DiscoveryBrowserFamilyChrome

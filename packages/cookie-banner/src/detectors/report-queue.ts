@@ -263,6 +263,7 @@ export class ReportQueue {
       .catch((err) => {
         if (err instanceof NotFoundError) {
           this.pending.clear();
+          this.pageViewPending = false;
           this.notifyNotFound();
         }
       })

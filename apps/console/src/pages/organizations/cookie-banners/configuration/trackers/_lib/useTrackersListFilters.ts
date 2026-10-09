@@ -208,6 +208,7 @@ export interface TrackersListFilters {
   setOrder: (field: TrackerPatternOrderField) => void;
   setAfter: (cursor: string) => void;
   setBefore: (cursor: string) => void;
+  resetPagination: () => void;
 }
 
 export function useTrackersListFilters(): TrackersListFilters {
@@ -330,6 +331,17 @@ export function useTrackersListFilters(): TrackersListFilters {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const resetPagination = useCallback(() => {
+    setSearchParams((previous) => {
+      if (!previous.has("after") && !previous.has("before")) {
+        return previous;
+      }
+      const next = new URLSearchParams(previous);
+      clearPagination(next);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return {
     view,
     query,
@@ -355,5 +367,6 @@ export function useTrackersListFilters(): TrackersListFilters {
     setOrder,
     setAfter,
     setBefore,
+    resetPagination,
   };
 }

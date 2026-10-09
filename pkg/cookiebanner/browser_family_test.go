@@ -56,6 +56,11 @@ func TestBrowserFamily(t *testing.T) {
 			want:      coredata.DiscoveryBrowserFamilyEdge,
 		},
 		{
+			name:      "edge android",
+			userAgent: "Mozilla/5.0 (Linux; Android 10; HD1913) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36 EdgA/120.0.2210.141",
+			want:      coredata.DiscoveryBrowserFamilyEdge,
+		},
+		{
 			name:      "firefox",
 			userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0",
 			want:      coredata.DiscoveryBrowserFamilyFirefox,

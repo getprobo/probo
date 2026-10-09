@@ -205,7 +205,7 @@ export const trackerMaxAgeField = tv({
 
 export const discoveryFamilyCounts = tv({
   slots: {
-    root: "flex flex-wrap items-baseline gap-x-3 gap-y-1",
+    root: "flex flex-wrap items-baseline",
     item: "flex items-baseline gap-1.5",
     separator: "text-sand-8",
   },
@@ -214,7 +214,13 @@ export const discoveryFamilyCounts = tv({
       true: {
         root: "gap-x-2 gap-y-0.5",
       },
+      false: {
+        root: "gap-x-3 gap-y-1",
+      },
     },
+  },
+  defaultVariants: {
+    compact: false,
   },
 });
 

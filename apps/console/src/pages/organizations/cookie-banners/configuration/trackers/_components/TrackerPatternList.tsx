@@ -99,6 +99,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
   } = useTrackersListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
+  const prevFilterOrderRef = useRef({ graphqlFilter, graphqlOrder });
   const [cookieBanner, refetch] = useRefetchableFragment<
     TrackerPatternListRefetchQuery,
     TrackerPatternList_cookieBanner$key
@@ -107,13 +108,18 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
   useEffect(() => {
     if (skipFirstRefetch.current) {
       skipFirstRefetch.current = false;
+      prevFilterOrderRef.current = { graphqlFilter, graphqlOrder };
       return;
     }
+
+    const filterOrderChanged = prevFilterOrderRef.current.graphqlFilter !== graphqlFilter
+      || prevFilterOrderRef.current.graphqlOrder !== graphqlOrder;
+    prevFilterOrderRef.current = { graphqlFilter, graphqlOrder };
 
     startRefetchTransition(() => {
       refetch(
         { ...graphqlPagination, filter: graphqlFilter, order: graphqlOrder },
-        { fetchPolicy: "network-only" },
+        { fetchPolicy: filterOrderChanged ? "network-only" : "store-or-network" },
       );
     });
   }, [graphqlFilter, graphqlOrder, graphqlPagination, refetch]);

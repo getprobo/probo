@@ -24,7 +24,7 @@ import { useParams } from "react-router";
 
 import type { CookieBannerTrackersPageQuery } from "#/__generated__/core/CookieBannerTrackersPageQuery.graphql";
 
-import { useTrackersListFilters } from "./_lib/useTrackersListFilters";
+import { trackersListGraphqlPagination, useTrackersListFilters } from "./_lib/useTrackersListFilters";
 import { CookieBannerTrackersPage, cookieBannerTrackersPageQuery } from "./CookieBannerTrackersPage";
 import { CookieBannerTrackersPageSkeleton } from "./CookieBannerTrackersPageSkeleton";
 
@@ -34,10 +34,11 @@ export default function CookieBannerTrackersPageLoader() {
     throw new Error("Missing cookieBannerId parameter");
   }
 
-  const { graphqlFilter, graphqlOrder, graphqlPagination } = useTrackersListFilters();
+  const { graphqlFilter, graphqlOrder, graphqlPagination, resetPagination } = useTrackersListFilters();
   const filterRef = useRef(graphqlFilter);
   const orderRef = useRef(graphqlOrder);
   const paginationRef = useRef(graphqlPagination);
+  const prevBannerIdRef = useRef<string | undefined>(undefined);
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerTrackersPageQuery>(
     cookieBannerTrackersPageQuery,
   );
@@ -55,13 +56,25 @@ export default function CookieBannerTrackersPageLoader() {
   }, [graphqlPagination]);
 
   useEffect(() => {
+    const switched = prevBannerIdRef.current !== undefined
+      && prevBannerIdRef.current !== cookieBannerId;
+    prevBannerIdRef.current = cookieBannerId;
+
+    const pagination = switched
+      ? trackersListGraphqlPagination(null, null)
+      : paginationRef.current;
+
     loadQuery({
       cookieBannerId,
-      ...paginationRef.current,
+      ...pagination,
       filter: filterRef.current,
       order: orderRef.current,
     });
-  }, [loadQuery, cookieBannerId]);
+
+    if (switched) {
+      resetPagination();
+    }
+  }, [loadQuery, cookieBannerId, resetPagination]);
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.cookieBannerId === cookieBannerId

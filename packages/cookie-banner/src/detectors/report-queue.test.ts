@@ -61,6 +61,34 @@ describe("ReportQueue", () => {
     expect(body.cookies.every((cookie) => cookie.discovery_hit === true)).toBe(true);
   });
 
+  it("stops retrying a page view after NotFoundError", async () => {
+    vi.useFakeTimers();
+
+    const fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+      json: async () => ({ error: "not_found", message: "not found" }),
+    });
+    vi.stubGlobal("fetch", fetch);
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.reportPageView();
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetch).toHaveBeenCalledOnce();
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
   it("sends a page_view with no detections", async () => {
     vi.useFakeTimers();
 
