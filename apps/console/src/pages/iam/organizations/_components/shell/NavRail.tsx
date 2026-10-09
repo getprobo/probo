@@ -22,10 +22,11 @@ import { LifebuoyIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, type PreloadedQuery, useFragment } from "react-relay";
 
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavRail_organization$key } from "#/__generated__/iam/NavRail_organization.graphql";
+import type { ViewerMembershipMenuEmployeePortalQuery } from "#/__generated__/iam/ViewerMembershipMenuEmployeePortalQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   NAV_GROUPS,
@@ -54,6 +55,7 @@ const navRailFragment = graphql`
 export interface NavRailProps {
   organizationKey: NavRail_organization$key;
   slackbotAvailable: boolean;
+  employeePortalQueryRef: PreloadedQuery<ViewerMembershipMenuEmployeePortalQuery> | null;
 }
 
 function isGovernanceVisible(permissions: NavPermissions): boolean {
@@ -264,7 +266,11 @@ function settingsHref(
   return groupHref(organizationId, "settings", "audit-log");
 }
 
-export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
+export function NavRail({
+  organizationKey,
+  slackbotAvailable,
+  employeePortalQueryRef,
+}: NavRailProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const organization = useFragment(navRailFragment, organizationKey);
@@ -395,7 +401,10 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
           href="mailto:support@probo.com"
           weight="regular"
         />
-        <ViewerMembershipMenu organizationKey={organization} />
+        <ViewerMembershipMenu
+          organizationKey={organization}
+          employeePortalQueryRef={employeePortalQueryRef}
+        />
       </nav>
     </div>
   );
