@@ -4,13 +4,6 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
-### Added
-
-- `probo.identityFederation.logAzureAssertions` sets
-  `PROBOD_IDENTITY_FEDERATION_LOG_AZURE_ASSERTIONS`. Defaults to false.
-  Set it true only while diagnosing a failed Entra token exchange: it logs
-  one Azure assertion's header and claims per process, without the signature
-
 ## [0.26.0] - 2026-10-06
 
 ### Added

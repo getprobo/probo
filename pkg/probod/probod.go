@@ -2289,10 +2289,6 @@ func (impl *Implm) buildIdentityFederationIssuer(
 		return nil, err
 	}
 
-	if impl.cfg.IdentityFederation.LogAzureAssertions {
-		issuer.UseLogger(l.Named("identityfederation"))
-	}
-
 	// probod cannot verify that the configured apex actually reaches it, so the
 	// effective value is logged for the startup record and covered by a canary.
 	l.Info(

@@ -17,9 +17,6 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   by Domain scope, so a host-only cookie and a Domain-scoped cookie
   that share a name are tracked separately
 - Open tasks past their deadline show an Overdue badge
-- `log-azure-assertions` logs the header and claims of a minted Azure
-  federated assertion once per process, to diagnose rejected
-  assertions. It is off by default
 
 ### Changed
 
