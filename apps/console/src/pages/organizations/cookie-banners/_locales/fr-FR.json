@@ -289,7 +289,9 @@
     "title": "Découverte",
     "description": "Les statistiques sont comptabilisées jusqu’à la première publication.",
     "empty": "Aucun signalement pour le moment.",
-    "hitsOfLoads": "{{hits}} / {{loads}}",
+    "hits": "signalements",
+    "loads": "chargements",
+    "hitRate": "taux de signalement",
     "families": {
       "chrome": "Chrome",
       "edge": "Edge",

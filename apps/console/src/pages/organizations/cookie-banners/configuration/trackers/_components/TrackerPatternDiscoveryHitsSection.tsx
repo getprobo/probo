@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -28,13 +26,12 @@ import { graphql } from "relay-runtime";
 import type { TrackerPatternDiscoveryHitsSection_cookieBanner$key } from "#/__generated__/core/TrackerPatternDiscoveryHitsSection_cookieBanner.graphql";
 import type { TrackerPatternDiscoveryHitsSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternDiscoveryHitsSection_trackerPattern.graphql";
 
-import { trackerPatternDiscoveryHitsSection } from "../../../variants";
 import { DiscoveryFamilyCounts } from "../../_components/DiscoveryFamilyCounts";
 
 const cookieBannerFragment = graphql`
   fragment TrackerPatternDiscoveryHitsSection_cookieBanner on CookieBanner {
     publishedVersion {
-      id
+      __typename
     }
     discoveryPageLoads {
       family
@@ -64,36 +61,29 @@ export function TrackerPatternDiscoveryHitsSection({
   const { t } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(cookieBannerFragment, cookieBannerKey);
   const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
-  const { root, intro } = trackerPatternDiscoveryHitsSection();
 
   if (pattern.discoveryHits.length === 0 && banner.publishedVersion != null) {
     return null;
   }
 
+  if (pattern.discoveryHits.length === 0) {
+    return (
+      <Text size={2} color="faint">
+        {t("trackerDiscovery.empty")}
+      </Text>
+    );
+  }
+
   return (
-    <Card variant="soft" size={2}>
-      <div className={root()}>
-        <div className={intro()}>
-          <Heading level={2} size={4} weight="medium" highContrast>
-            {t("trackerDiscovery.title")}
-          </Heading>
-          <Text size={2} color="neutral">
-            {t("trackerDiscovery.description")}
-          </Text>
-        </div>
-        {pattern.discoveryHits.length > 0
-          ? (
-              <DiscoveryFamilyCounts
-                items={pattern.discoveryHits}
-                denominators={banner.discoveryPageLoads}
-              />
-            )
-          : (
-              <Text size={2} color="faint">
-                {t("trackerDiscovery.empty")}
-              </Text>
-            )}
-      </div>
-    </Card>
+    <DiscoveryFamilyCounts
+      items={pattern.discoveryHits.map(hit => ({
+        family: hit.family,
+        count: hit.count,
+      }))}
+      denominators={banner.discoveryPageLoads.map(load => ({
+        family: load.family,
+        count: load.count,
+      }))}
+    />
   );
 }

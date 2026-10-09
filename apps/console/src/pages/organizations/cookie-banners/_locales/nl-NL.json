@@ -289,7 +289,9 @@
     "title": "Ontdekking",
     "description": "Geteld tot de eerste publicatie.",
     "empty": "Nog geen hits.",
-    "hitsOfLoads": "{{hits}} / {{loads}}",
+    "hits": "hits",
+    "loads": "ladingen",
+    "hitRate": "hitrate",
     "families": {
       "chrome": "Chrome",
       "edge": "Edge",

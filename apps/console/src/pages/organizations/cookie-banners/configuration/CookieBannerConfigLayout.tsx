@@ -25,6 +25,7 @@ import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
@@ -37,7 +38,8 @@ import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
 
-import { DiscoveryFamilyCounts } from "./_components/DiscoveryFamilyCounts";
+import { FamilyLogo } from "./_components/FamilyLogo";
+import { familyLabel } from "./_lib/familyLabel";
 
 export const cookieBannerConfigLayoutQuery = graphql`
   query CookieBannerConfigLayoutQuery($cookieBannerId: ID!) {
@@ -107,6 +109,9 @@ export function CookieBannerConfigLayout({
     version: versionClass,
     discovery,
     discoveryRow,
+    discoveryItem,
+    discoveryLogo,
+    discoverySeparator,
   } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
@@ -238,7 +243,34 @@ export function CookieBannerConfigLayout({
                     {t("configLayout.discovery.pageLoads")}
                   </Text>
                   {pageLoads.length > 0
-                    ? <DiscoveryFamilyCounts items={pageLoads} compact />
+                    ? pageLoads.map((entry, index) => (
+                        <Fragment key={entry.family}>
+                          {index > 0
+                            ? (
+                                <Text
+                                  size={2}
+                                  color="faint"
+                                  className={discoverySeparator()}
+                                >
+                                  ·
+                                </Text>
+                              )
+                            : null}
+                          <div className={discoveryItem()}>
+                            <FamilyLogo
+                              family={entry.family}
+                              size={16}
+                              className={discoveryLogo()}
+                            />
+                            <Text size={2} color="faint">
+                              {familyLabel(entry.family, t)}
+                            </Text>
+                            <Text size={2} weight="medium" highContrast>
+                              {entry.count}
+                            </Text>
+                          </div>
+                        </Fragment>
+                      ))
                     : (
                         <Text size={2} color="faint">
                           {t("configLayout.discovery.empty")}

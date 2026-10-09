@@ -289,7 +289,9 @@
     "title": "Discovery",
     "description": "Counted until first publish.",
     "empty": "No hits yet.",
-    "hitsOfLoads": "{{hits}} / {{loads}}",
+    "hits": "hits",
+    "loads": "loads",
+    "hitRate": "hit rate",
     "families": {
       "chrome": "Chrome",
       "edge": "Edge",

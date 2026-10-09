@@ -18,24 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { GlobeIcon } from "@phosphor-icons/react";
-import { ChromeLogo } from "@probo/ui/src/v2/ChromeLogo/ChromeLogo";
-import { EdgeLogo } from "@probo/ui/src/v2/EdgeLogo/EdgeLogo";
-import { FirefoxLogo } from "@probo/ui/src/v2/FirefoxLogo/FirefoxLogo";
-import { SafariLogo } from "@probo/ui/src/v2/SafariLogo/SafariLogo";
+import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 
 import { discoveryFamilyCounts } from "../../variants";
 import { familyLabel } from "../_lib/familyLabel";
 
-const familyLogos = {
-  CHROME: ChromeLogo,
-  EDGE: EdgeLogo,
-  FIREFOX: FirefoxLogo,
-  SAFARI: SafariLogo,
-} as const;
+import { FamilyLogo } from "./FamilyLogo";
 
 export interface DiscoveryFamilyCountItem {
   family: string;
@@ -45,66 +35,84 @@ export interface DiscoveryFamilyCountItem {
 export interface DiscoveryFamilyCountsProps {
   items: readonly DiscoveryFamilyCountItem[];
   denominators?: readonly DiscoveryFamilyCountItem[];
-  compact?: boolean;
 }
 
 export function DiscoveryFamilyCounts({
   items,
   denominators,
-  compact = false,
 }: DiscoveryFamilyCountsProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
-  const { root, item, logo, separator } = discoveryFamilyCounts({ compact });
-  const logoSize = compact ? 16 : 24;
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { root, card, family, logo, stats, stat, value }
+    = discoveryFamilyCounts();
   const loadsByFamily = new Map(
     (denominators ?? []).map(entry => [entry.family, entry.count]),
   );
 
   return (
     <div className={root()}>
-      {items.map((entry, index) => {
+      {items.map((entry) => {
         const loads = loadsByFamily.get(entry.family);
-        const count = denominators == null || loads == null
-          ? String(entry.count)
-          : t("trackerDiscovery.hitsOfLoads", { hits: entry.count, loads });
+        const rate = loads != null && loads > 0
+          ? formatHitRate(entry.count, loads, i18n.language)
+          : null;
 
         return (
-          <Fragment key={entry.family}>
-            {compact && index > 0
-              ? <Text size={2} color="faint" className={separator()}>·</Text>
-              : null}
-            <div className={item()}>
+          <Card
+            key={entry.family}
+            variant="soft"
+            size={3}
+            padding={4}
+            className={card()}
+          >
+            <div className={family()}>
               <FamilyLogo
                 family={entry.family}
-                size={logoSize}
+                size={24}
                 className={logo()}
               />
-              <Text size={2} color={compact ? "faint" : "neutral"}>
-                {familyLabel(entry.family, t)}
-              </Text>
-              <Text size={2} weight="medium" highContrast>
-                {count}
-              </Text>
+              <Text size={4} weight="medium">{familyLabel(entry.family, t)}</Text>
             </div>
-          </Fragment>
+            {rate != null
+              ? (
+                  <div className={stat()}>
+                    <Text size={5} weight="bold" highContrast className={value()}>
+                      {rate}
+                    </Text>
+                    <Text size={2}>{t("trackerDiscovery.hitRate")}</Text>
+                  </div>
+                )
+              : null}
+            <div className={stats()}>
+              <div className={stat()}>
+                <Text size={4} weight="bold" highContrast className={value()}>
+                  {entry.count}
+                </Text>
+                <Text size={2}>{t("trackerDiscovery.hits")}</Text>
+              </div>
+              {loads != null
+                ? (
+                    <>
+                      <Text size={4} color="faint">/</Text>
+                      <div className={stat()}>
+                        <Text size={4} weight="bold" highContrast className={value()}>
+                          {loads}
+                        </Text>
+                        <Text size={2}>{t("trackerDiscovery.loads")}</Text>
+                      </div>
+                    </>
+                  )
+                : null}
+            </div>
+          </Card>
         );
       })}
     </div>
   );
 }
 
-function FamilyLogo({
-  family,
-  size,
-  className,
-}: {
-  family: string;
-  size: number;
-  className: string;
-}) {
-  const Logo = familyLogos[family as keyof typeof familyLogos];
-  if (Logo == null) {
-    return <GlobeIcon size={size} className={className} aria-hidden />;
-  }
-  return <Logo size={size} className={className} aria-hidden />;
+function formatHitRate(hits: number, loads: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(hits / loads);
 }
