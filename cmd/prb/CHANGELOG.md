@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.244.0] - 2026-10-09
+
+### Added
+
+- `cookie-banner view` and `tracker-pattern view` show discovery page loads
+  and hits by browser family
+
+
 ## [0.243.0] - 2026-10-09
 
 ### Added
