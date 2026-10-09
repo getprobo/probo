@@ -5,6 +5,12 @@ this file.
 
 ## Unreleased
 
+## [0.4.1] - 2026-10-09
+
+### Changed
+
+- The `open-source-compliance` skill and the MCP specification call linked safeguards internal controls instead of measures
+
 ## [0.4.0] - 2026-10-05
 
 ### Added
