@@ -4,6 +4,16 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.245.0] - 2026-10-09
+
+### Added
+
+- Connector `Update` operation renames a connector
+
+### Changed
+
+- **Breaking**: Connector `Create Org` and Access Review Source `Create` require a `Name` that identifies the connector, so several connections to one provider stay distinct. Connector `Get` and `Get Many` return it
+
 ## [0.244.0] - 2026-10-08
 
 ### Added
