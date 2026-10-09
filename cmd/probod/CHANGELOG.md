@@ -4,6 +4,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.309.0] - 2026-10-09
+
+### Added
+
+- Employee portal settings page in the console, with branding (logo) and
+  capabilities sections and a dedicated navigation entry
+
+### Changed
+
+- The employee portal agent is hidden from the console navigation
+
 ### Fixed
 
 - Bump `golang.org/x/net` to v0.60.0 to pick up the HTTP/2 HPACK encoder
