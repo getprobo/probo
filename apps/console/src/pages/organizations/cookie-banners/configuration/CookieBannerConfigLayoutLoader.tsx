@@ -29,16 +29,15 @@ import { CookieBannerConfigLayoutSkeleton } from "./CookieBannerConfigLayoutSkel
 
 export default function CookieBannerConfigLayoutLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  if (typeof cookieBannerId !== "string") {
-    throw new Error("Missing cookieBannerId parameter");
-  }
-
   const [queryRef, loadQuery] = useQueryLoader<CookieBannerConfigLayoutQuery>(
     cookieBannerConfigLayoutQuery,
   );
 
   useEffect(() => {
     function load() {
+      if (cookieBannerId == null) {
+        return;
+      }
       loadQuery({ cookieBannerId }, { fetchPolicy: "store-and-network" });
     }
 
@@ -53,6 +52,10 @@ export default function CookieBannerConfigLayoutLoader() {
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [loadQuery, cookieBannerId]);
+
+  if (cookieBannerId == null) {
+    throw new Error("Missing cookieBannerId parameter");
+  }
 
   if (!queryRef) {
     return <CookieBannerConfigLayoutSkeleton />;
