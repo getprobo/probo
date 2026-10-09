@@ -32,14 +32,17 @@ import {
   cookieBannerThemeSection,
 } from "../../variants";
 
-export function CookieBannerConfigurePageSkeleton() {
+export function CookieBannerSettingsPageSkeleton() {
   const settings = cookieBannerSettingsSection();
   const categories = cookieBannerCategoriesSection();
   const theme = cookieBannerThemeSection();
 
   return (
     <div className={cookieBannerPage()}>
-      <CookieBannerPageHeaderSkeleton titleClassName="w-32" />
+      <CookieBannerPageHeaderSkeleton
+        titleClassName="w-32"
+        actions={<ButtonSkeleton size={2} className="w-20" />}
+      />
       <section className={settings.root()}>
         <CardSkeleton size={2} className="h-96" />
       </section>

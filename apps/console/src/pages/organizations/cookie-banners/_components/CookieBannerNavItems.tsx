@@ -24,10 +24,10 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
 
 import {
-  cookieBannerConfigurePath,
   cookieBannerInstallPath,
   cookieBannerPath,
   cookieBannerResourcesPath,
+  cookieBannerSettingsPath,
   cookieBannerTCFPath,
   cookieBannerTrackersPath,
   cookieBannerTrailPath,
@@ -47,12 +47,12 @@ export function CookieBannerNavItems({ cookieBannerId, tcf }: CookieBannerNavIte
   return (
     <>
       <NavPanelItem
-        label={t("nav.cookieBannersInstall")}
-        to={cookieBannerInstallPath(organizationId, cookieBannerId)}
+        label={t("nav.cookieBannersSettings")}
+        to={cookieBannerSettingsPath(organizationId, cookieBannerId)}
       />
       <NavPanelItem
-        label={t("nav.cookieBannersConfigure")}
-        to={cookieBannerConfigurePath(organizationId, cookieBannerId)}
+        label={t("nav.cookieBannersInstall")}
+        to={cookieBannerInstallPath(organizationId, cookieBannerId)}
       />
       <NavPanelItem
         label={t("nav.cookieBannersTranslations")}

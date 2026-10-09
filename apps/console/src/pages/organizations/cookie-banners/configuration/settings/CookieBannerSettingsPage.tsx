@@ -18,25 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { TrashIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { CookieBannerConfigurePageQuery } from "#/__generated__/core/CookieBannerConfigurePageQuery.graphql";
+import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
 
 import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
 import { cookieBannerPage } from "../../variants";
+import { DeleteCookieBannerDialog } from "../_components/DeleteCookieBannerDialog";
 
 import { BannerSettingsForm } from "./_components/BannerSettingsForm";
 import { CategoryList } from "./_components/CategoryList";
 import { ThemeSection } from "./_components/ThemeSection";
 
-export const cookieBannerConfigurePageQuery = graphql`
-  query CookieBannerConfigurePageQuery($cookieBannerId: ID!) {
+export const cookieBannerSettingsPageQuery = graphql`
+  query CookieBannerSettingsPageQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
+        id
+        name
+        canDelete: permission(action: "core:cookie-banner:delete")
         ...BannerSettingsForm_cookieBanner
         ...CategoryList_cookieBanner
         ...ThemeSection_cookieBanner
@@ -45,18 +52,19 @@ export const cookieBannerConfigurePageQuery = graphql`
   }
 `;
 
-interface CookieBannerConfigurePageProps {
-  queryRef: PreloadedQuery<CookieBannerConfigurePageQuery>;
+interface CookieBannerSettingsPageProps {
+  queryRef: PreloadedQuery<CookieBannerSettingsPageQuery>;
 }
 
-export function CookieBannerConfigurePage({
+export function CookieBannerSettingsPage({
   queryRef,
-}: CookieBannerConfigurePageProps) {
+}: CookieBannerSettingsPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const title = t("configurePage.title");
+  const title = t("settingsPage.title");
   usePageTitle(title);
-  const data = usePreloadedQuery<CookieBannerConfigurePageQuery>(
-    cookieBannerConfigurePageQuery,
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const data = usePreloadedQuery<CookieBannerSettingsPageQuery>(
+    cookieBannerSettingsPageQuery,
     queryRef,
   );
 
@@ -64,15 +72,38 @@ export function CookieBannerConfigurePage({
     throw new Error("invalid type for node");
   }
 
+  const banner = data.node;
+
   return (
     <div className={cookieBannerPage()}>
       <CookieBannerPageHeader
         title={title}
-        description={t("configurePage.description")}
+        description={t("settingsPage.description")}
+        actions={banner.canDelete
+          ? (
+              <Button
+                size={2}
+                variant="solid"
+                color="red"
+                iconStart={<TrashIcon />}
+                onClick={() => setDeleteOpen(true)}
+              >
+                {t("configLayout.actions.delete")}
+              </Button>
+            )
+          : undefined}
       />
-      <BannerSettingsForm cookieBannerKey={data.node} />
-      <CategoryList cookieBannerKey={data.node} />
-      <ThemeSection cookieBannerKey={data.node} />
+      <BannerSettingsForm cookieBannerKey={banner} />
+      <CategoryList cookieBannerKey={banner} />
+      <ThemeSection cookieBannerKey={banner} />
+      {banner.canDelete && (
+        <DeleteCookieBannerDialog
+          cookieBannerId={banner.id}
+          name={banner.name}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
     </div>
   );
 }

@@ -23,11 +23,11 @@ import type { AppRoute } from "@probo/routes";
 
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import { CookieBannerConfigurePageSkeleton } from "./configuration/configure/CookieBannerConfigurePageSkeleton";
 import { CookieBannerConsentRecordsPageSkeleton } from "./configuration/consent-records/CookieBannerConsentRecordsPageSkeleton";
 import { CookieBannerConfigLayoutSkeleton } from "./configuration/CookieBannerConfigLayoutSkeleton";
 import { CookieBannerInstallPageSkeleton } from "./configuration/install/CookieBannerInstallPageSkeleton";
 import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/CookieBannerResourcesPageSkeleton";
+import { CookieBannerSettingsPageSkeleton } from "./configuration/settings/CookieBannerSettingsPageSkeleton";
 import { CookieBannerTCFPageSkeleton } from "./configuration/tcf/CookieBannerTCFPageSkeleton";
 import { CookieBannerTrackersPageSkeleton } from "./configuration/trackers/CookieBannerTrackersPageSkeleton";
 import { CookieBannerTranslationsPageSkeleton } from "./configuration/translations/CookieBannerTranslationsPageSkeleton";
@@ -49,14 +49,14 @@ export const cookieBannerRoutes = [
     Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/CookieBannerConfigLayoutLoader")),
     children: [
       {
+        path: "settings",
+        Fallback: CookieBannerSettingsPageSkeleton,
+        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/settings/CookieBannerSettingsPageLoader")),
+      },
+      {
         path: "install",
         Fallback: CookieBannerInstallPageSkeleton,
         Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/install/CookieBannerInstallPageLoader")),
-      },
-      {
-        path: "configure",
-        Fallback: CookieBannerConfigurePageSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/configure/CookieBannerConfigurePageLoader")),
       },
       {
         path: "translations",

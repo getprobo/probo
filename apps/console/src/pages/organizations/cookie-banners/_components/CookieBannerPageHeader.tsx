@@ -20,22 +20,31 @@
 
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { ReactNode } from "react";
 
 import { cookieBannerPageHeader } from "../variants";
 
 interface CookieBannerPageHeaderProps {
   title: string;
   description: string;
+  actions?: ReactNode;
 }
 
-export function CookieBannerPageHeader({ title, description }: CookieBannerPageHeaderProps) {
-  const { root } = cookieBannerPageHeader();
+export function CookieBannerPageHeader({
+  title,
+  description,
+  actions,
+}: CookieBannerPageHeaderProps) {
+  const { root, titleRow } = cookieBannerPageHeader();
 
   return (
     <div className={root()}>
-      <Heading level={1} size={6} weight="medium" highContrast>
-        {title}
-      </Heading>
+      <div className={titleRow()}>
+        <Heading level={1} size={6} weight="medium" highContrast>
+          {title}
+        </Heading>
+        {actions}
+      </div>
       <Text size={2} color="faint">
         {description}
       </Text>

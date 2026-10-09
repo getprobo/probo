@@ -76,5 +76,5 @@ export function CookieBannersIndexPage({ queryRef }: CookieBannersIndexPageProps
     return <Navigate to="new" replace />;
   }
 
-  return <Navigate to={`${cookieBannerId}/configure`} replace />;
+  return <Navigate to={`${cookieBannerId}/settings`} replace />;
 }

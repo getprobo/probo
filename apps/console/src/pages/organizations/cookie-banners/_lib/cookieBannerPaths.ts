@@ -38,8 +38,8 @@ export function cookieBannerInstallPath(organizationId: string, cookieBannerId: 
   return `${cookieBannerPath(organizationId, cookieBannerId)}/install`;
 }
 
-export function cookieBannerConfigurePath(organizationId: string, cookieBannerId: string): string {
-  return `${cookieBannerPath(organizationId, cookieBannerId)}/configure`;
+export function cookieBannerSettingsPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerPath(organizationId, cookieBannerId)}/settings`;
 }
 
 export function cookieBannerTranslationsPath(organizationId: string, cookieBannerId: string): string {

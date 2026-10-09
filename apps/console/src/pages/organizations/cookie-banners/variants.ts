@@ -27,6 +27,7 @@ export const cookieBannerPage = tv({
 export const cookieBannerPageHeader = tv({
   slots: {
     root: "flex flex-col gap-2",
+    titleRow: "flex flex-wrap items-center justify-between gap-2",
   },
 });
 

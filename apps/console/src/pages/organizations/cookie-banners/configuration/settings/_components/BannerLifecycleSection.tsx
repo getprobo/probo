@@ -18,12 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TrashIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -34,16 +32,13 @@ import type { BannerLifecycleSectionDeactivateMutation } from "#/__generated__/c
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerLifecycleSection } from "../../../variants";
-import { DeleteCookieBannerDialog } from "../../_components/DeleteCookieBannerDialog";
 
 const bannerLifecycleSectionFragment = graphql`
   fragment BannerLifecycleSection_cookieBanner on CookieBanner {
     id
-    name
     state
     canActivate: permission(action: "core:cookie-banner:activate")
     canDeactivate: permission(action: "core:cookie-banner:deactivate")
-    canDelete: permission(action: "core:cookie-banner:delete")
   }
 `;
 
@@ -79,7 +74,6 @@ export function BannerLifecycleSection({
   const { t } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(bannerLifecycleSectionFragment, cookieBannerKey);
   const { root, intro, row, status, actions } = cookieBannerLifecycleSection();
-  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [activate, isActivating] = useMutation<BannerLifecycleSectionActivateMutation>(
     activateMutation,
@@ -117,11 +111,11 @@ export function BannerLifecycleSection({
               : t("configLayout.status.inactive")}
           </Badge>
         </div>
-        <div className={actions()}>
-          {canToggle && (
+        {canToggle && (
+          <div className={actions()}>
             <Button
               size={2}
-              variant="soft"
+              variant={isActive ? "solid" : "soft"}
               color="neutral"
               disabled={isActivating || isDeactivating}
               onClick={() => {
@@ -137,26 +131,9 @@ export function BannerLifecycleSection({
                 ? t("configLayout.actions.deactivate")
                 : t("configLayout.actions.activate")}
             </Button>
-          )}
-          {banner.canDelete && !isActive && (
-            <Button
-              size={2}
-              variant="soft"
-              color="red"
-              iconStart={<TrashIcon />}
-              onClick={() => setDeleteOpen(true)}
-            >
-              {t("configLayout.actions.delete")}
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-      <DeleteCookieBannerDialog
-        cookieBannerId={banner.id}
-        name={banner.name}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
     </div>
   );
 }

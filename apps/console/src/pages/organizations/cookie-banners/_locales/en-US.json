@@ -120,8 +120,8 @@
     "title": "Install",
     "description": "Add this snippet to your site so the banner can load and record consent."
   },
-  "configurePage": {
-    "title": "Configure",
+  "settingsPage": {
+    "title": "Settings",
     "description": "Settings, categories, and theme for this cookie banner."
   },
   "bannerLifecycleSection": {

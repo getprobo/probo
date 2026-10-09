@@ -38,7 +38,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import {
-  cookieBannerConfigurePath,
+  cookieBannerSettingsPath,
   cookieBannersNewPath,
 } from "../../_lib/cookieBannerPaths";
 
@@ -121,7 +121,7 @@ export function DeleteCookieBannerDialog({
             : undefined;
           void navigate(
             remainingId != null
-              ? cookieBannerConfigurePath(organizationId, remainingId)
+              ? cookieBannerSettingsPath(organizationId, remainingId)
               : fallbackPath,
           );
         } catch {

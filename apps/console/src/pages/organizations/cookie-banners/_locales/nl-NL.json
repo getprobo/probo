@@ -120,8 +120,8 @@
     "title": "Installeren",
     "description": "Voeg deze snippet toe aan je site zodat de banner kan laden en toestemming kan vastleggen."
   },
-  "configurePage": {
-    "title": "Configureren",
+  "settingsPage": {
+    "title": "Instellingen",
     "description": "Instellingen, categorieën en thema voor deze cookiebanner."
   },
   "bannerLifecycleSection": {

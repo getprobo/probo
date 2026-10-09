@@ -120,8 +120,8 @@
     "title": "Installer",
     "description": "Ajoutez cet extrait à votre site pour que la bannière puisse se charger et enregistrer le consentement."
   },
-  "configurePage": {
-    "title": "Configurer",
+  "settingsPage": {
+    "title": "Paramètres",
     "description": "Paramètres, catégories et thème de cette bannière de cookies."
   },
   "bannerLifecycleSection": {
