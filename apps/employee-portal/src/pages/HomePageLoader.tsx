@@ -32,13 +32,12 @@ export default function HomePageLoader() {
   const [queryRef, loadQuery] = useQueryLoader<HomePageQuery>(homePageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId, employeePortalId }, { fetchPolicy: "network-only" });
-  }, [employeePortalId, organizationId, loadQuery]);
+    loadQuery({ organizationId }, { fetchPolicy: "network-only" });
+  }, [organizationId, loadQuery]);
 
   if (
     queryRef == null
     || queryRef.variables.organizationId !== organizationId
-    || queryRef.variables.employeePortalId !== employeePortalId
   ) {
     return <HomePageSkeleton />;
   }

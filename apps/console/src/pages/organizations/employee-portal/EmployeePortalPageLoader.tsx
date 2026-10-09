@@ -18,34 +18,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Suspense, useEffect } from "react";
+import { useQueryLoader } from "react-relay";
 
-import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
+import type { EmployeePortalPageQuery } from "#/__generated__/core/EmployeePortalPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-export const devicesRoutes = [
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DeviceAgentLayout")),
-    children: [
-      {
-        index: true,
-        Fallback: DevicesPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-      },
-      {
-        path: "register",
-        Fallback: RegisterDevicePageSkeleton,
-        Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-      },
-      {
-        path: "add-manually",
-        Fallback: AddManuallyPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-      },
-    ],
-  },
-] satisfies AppRoute[];
+import { EmployeePortalPage, employeePortalPageQuery } from "./EmployeePortalPage";
+import { EmployeePortalPageSkeleton } from "./EmployeePortalPageSkeleton";
+
+export default function EmployeePortalPageLoader() {
+  const organizationId = useOrganizationId();
+  const [queryRef, loadQuery] = useQueryLoader<EmployeePortalPageQuery>(
+    employeePortalPageQuery,
+  );
+
+  useEffect(() => {
+    loadQuery({ organizationId });
+  }, [loadQuery, organizationId]);
+
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <EmployeePortalPageSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<EmployeePortalPageSkeleton />}>
+      <EmployeePortalPage key={organizationId} queryRef={currentQueryRef} />
+    </Suspense>
+  );
+}

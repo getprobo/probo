@@ -30,18 +30,11 @@ import { DeviceCard } from "#/pages/_components/DeviceCard";
 import { GetStartedCard } from "#/pages/_components/GetStartedCard";
 import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
 import { SlackCard } from "#/pages/_components/SlackCard";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
 
 export const homePageQuery = graphql`
-  query HomePageQuery($organizationId: ID!, $employeePortalId: ID!) @throwOnFieldError {
-    employeePortal: node(id: $employeePortalId) {
-      __typename
-      ... on EmployeePortal {
-        capabilities {
-          deviceAgent
-        }
-      }
-    }
+  query HomePageQuery($organizationId: ID!) @throwOnFieldError {
     viewer @required(action: THROW) {
       pendingSignatures: signableDocuments(
         organizationId: $organizationId
@@ -93,17 +86,14 @@ interface HomePageProps {
 export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
   const firstName = useViewerFirstName();
-  const { viewer, organization, employeePortal } = usePreloadedQuery<HomePageQuery>(
+  const { deviceAgent } = useEmployeePortalRoute();
+  const { viewer, organization } = usePreloadedQuery<HomePageQuery>(
     homePageQuery,
     queryRef,
   );
 
   if (organization == null || organization.__typename !== "Organization") {
     throw new NotFoundError("invalid type for organization node");
-  }
-
-  if (employeePortal == null || employeePortal.__typename !== "EmployeePortal") {
-    throw new NotFoundError("invalid type for employee portal node");
   }
 
   const showGetStarted
@@ -139,7 +129,7 @@ export function HomePage({ queryRef }: HomePageProps) {
           viewerKey={viewer}
           wash={!showGetStarted && viewer.pendingApprovals.totalCount > 0}
         />
-        {employeePortal.capabilities.deviceAgent && (
+        {deviceAgent && (
           <DeviceCard
             viewerKey={viewer}
             organizationKey={organization}

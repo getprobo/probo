@@ -101,6 +101,10 @@ function isCompliancePortalVisible(permissions: NavPermissions): boolean {
   return permissions.canGetCompliancePortal;
 }
 
+function isEmployeePortalVisible(permissions: NavPermissions): boolean {
+  return permissions.canGetEmployeePortal;
+}
+
 function isAccessReviewVisible(permissions: NavPermissions): boolean {
   return permissions.canListAccessReviewCampaigns || permissions.canListAccessReviewSources;
 }
@@ -140,6 +144,8 @@ function navGroupIsVisible(
       return isRegistriesVisible(permissions);
     case "compliancePortal":
       return isCompliancePortalVisible(permissions);
+    case "employeePortal":
+      return isEmployeePortalVisible(permissions);
     case "accessReview":
       return isAccessReviewVisible(permissions);
     case "settings":
@@ -345,6 +351,14 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
               label={t("nav.groups.compliancePortal")}
               to={groupHref(organizationId, "compliancePortal", "compliance-portals")}
               active={activeKey === "compliancePortal"}
+            />
+          )}
+          {isEmployeePortalVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("employeePortal").icon}
+              label={t("nav.groups.employeePortal")}
+              to={groupHref(organizationId, "employeePortal", "")}
+              active={activeKey === "employeePortal"}
             />
           )}
           {isAccessReviewVisible(permissions) && (

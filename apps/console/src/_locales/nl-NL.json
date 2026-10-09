@@ -2228,6 +2228,7 @@
       "riskManagement": "Risicobeheer",
       "registries": "Registers",
       "compliancePortal": "Compliancepagina",
+      "employeePortal": "Medewerkersportaal",
       "accessReview": "Toegangsbeoordeling",
       "settings": "Instellingen"
     },
@@ -2277,6 +2278,7 @@
     "campaigns": "Campagnes",
     "connections": "Connectoren",
     "sources": "Bronnen",
+    "employeePortalSettings": "Instellingen",
     "compliancePortals": "Compliancepagina's",
     "compliancePortalsSettings": "Instellingen",
     "compliancePortalsHosting": "Hosting",

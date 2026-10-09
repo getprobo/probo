@@ -23,6 +23,7 @@ import { createContext, type ReactNode, useContext, useMemo } from "react";
 type EmployeePortalRouteValue = {
   employeePortalId: string;
   organizationId: string;
+  deviceAgent: boolean;
 };
 
 const EmployeePortalRouteContext = createContext<EmployeePortalRouteValue | null>(
@@ -32,11 +33,12 @@ const EmployeePortalRouteContext = createContext<EmployeePortalRouteValue | null
 export function EmployeePortalRouteProvider({
   employeePortalId,
   organizationId,
+  deviceAgent,
   children,
 }: EmployeePortalRouteValue & { children: ReactNode }) {
   const value = useMemo(
-    () => ({ employeePortalId, organizationId }),
-    [employeePortalId, organizationId],
+    () => ({ employeePortalId, organizationId, deviceAgent }),
+    [deviceAgent, employeePortalId, organizationId],
   );
 
   return (

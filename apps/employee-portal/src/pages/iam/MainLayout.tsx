@@ -39,6 +39,9 @@ export const mainLayoutQuery = graphql`
       __typename
       ... on EmployeePortal {
         id
+        capabilities {
+          deviceAgent
+        }
         organization {
           id
           ...TopBar_organization
@@ -79,6 +82,7 @@ export function MainLayout({ queryRef }: MainLayoutProps) {
     <EmployeePortalRouteProvider
       employeePortalId={data.employeePortal.id}
       organizationId={data.employeePortal.organization.id}
+      deviceAgent={data.employeePortal.capabilities.deviceAgent}
     >
       <ViewerIdentityProvider fullName={organization.viewer.identity.fullName}>
         <DocumentQueueProvider>

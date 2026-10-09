@@ -25,6 +25,7 @@ import type { NavGroup, NavGroupKey } from "#/pages/iam/organizations/_lib/navig
 import { AccessReviewNavPanel } from "./AccessReviewNavPanel";
 import { CmpNavPanel } from "./CmpNavPanel";
 import { CompliancePortalNavPanel } from "./CompliancePortalNavPanel";
+import { EmployeePortalNavPanel } from "./EmployeePortalNavPanel";
 import { GovernanceNavPanel } from "./GovernanceNavPanel";
 import { ItamNavPanel } from "./ItamNavPanel";
 import { PrivacyNavPanel } from "./PrivacyNavPanel";
@@ -46,6 +47,7 @@ export const navPanels: Record<NavGroupKey, ComponentType<NavPanelBodyProps>> = 
   itam: ItamNavPanel,
   registries: RegistriesNavPanel,
   compliancePortal: CompliancePortalNavPanel,
+  employeePortal: EmployeePortalNavPanel,
   accessReview: AccessReviewNavPanel,
   settings: SettingsNavPanel,
 };

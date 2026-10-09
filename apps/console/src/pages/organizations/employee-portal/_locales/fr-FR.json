@@ -1,0 +1,55 @@
+{
+  "employeePortalPage": {
+    "title": "Portail employés",
+    "description": "Identité visuelle et capacités du portail employés de cette organisation."
+  },
+  "missing": {
+    "title": "Portail employés indisponible",
+    "description": "Cette organisation n’a pas encore de portail employés."
+  },
+  "branding": {
+    "title": "Identité visuelle",
+    "description": "Logos affichés dans le portail employés.",
+    "fields": {
+      "logo": "Logo",
+      "darkLogo": "Logo sombre",
+      "placeholder": "Déposer ou cliquer",
+      "acceptedFiles": "JPEG, PNG, SVG ou WebP. 5 Mo maximum."
+    },
+    "actions": {
+      "removeLogo": "Supprimer le logo",
+      "removeDarkLogo": "Supprimer le logo sombre"
+    },
+    "messages": {
+      "updated": "Identité visuelle mise à jour"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour de l’identité visuelle",
+      "invalidFileType": {
+        "title": "Type de fichier non pris en charge",
+        "description": "Téléversez une image JPEG, PNG, SVG ou WebP."
+      },
+      "fileTooLarge": {
+        "title": "Fichier trop volumineux",
+        "description": "Téléversez une image de moins de 5 Mo."
+      },
+      "tooManyFiles": {
+        "title": "Trop de fichiers",
+        "description": "Téléversez une image à la fois."
+      }
+    }
+  },
+  "capabilities": {
+    "title": "Paramètres",
+    "deviceAgent": {
+      "title": "Agent d’appareil",
+      "description": "Autoriser les employés à enregistrer des appareils depuis le portail employés."
+    },
+    "messages": {
+      "updated": "Paramètres mis à jour"
+    },
+    "errors": {
+      "update": "Échec de la mise à jour des paramètres"
+    }
+  }
+}

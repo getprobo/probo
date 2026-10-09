@@ -42,6 +42,7 @@ import { businessFunctionRoutes } from "./pages/organizations/businessFunctions/
 import { compliancePortalRoutes } from "./pages/organizations/compliance-portals/routes";
 import { cookieBannerRoutes } from "./pages/organizations/cookie-banners/routes";
 import { deviceRoutes } from "./pages/organizations/devices/routes";
+import { employeePortalRoutes } from "./pages/organizations/employee-portal/routes";
 import { riskRoutes } from "./pages/organizations/risks/routes";
 import { integrationRoutes } from "./pages/organizations/settings/integrations/routes";
 import { taskRoutes } from "./pages/organizations/tasks/routes";
@@ -307,6 +308,7 @@ const routes = [
             ],
           },
           ...compliancePortalRoutes,
+          ...employeePortalRoutes,
 
           {
             path: "settings",

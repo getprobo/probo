@@ -180,6 +180,13 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canGetCompliancePortal,
   },
   {
+    id: "employee-portal",
+    group: "employeePortal",
+    labelKey: "nav.employeePortalSettings",
+    path: "",
+    isVisible: permissions => permissions.canGetEmployeePortal,
+  },
+  {
     id: "campaigns",
     group: "accessReview",
     labelKey: "nav.campaigns",

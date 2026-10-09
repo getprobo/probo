@@ -18,34 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { Outlet } from "react-router";
 
-import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
+import NotFoundPage from "#/pages/NotFoundPage";
 
-export const devicesRoutes = [
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DeviceAgentLayout")),
-    children: [
-      {
-        index: true,
-        Fallback: DevicesPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-      },
-      {
-        path: "register",
-        Fallback: RegisterDevicePageSkeleton,
-        Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-      },
-      {
-        path: "add-manually",
-        Fallback: AddManuallyPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-      },
-    ],
-  },
-] satisfies AppRoute[];
+export default function DeviceAgentLayout() {
+  const { deviceAgent } = useEmployeePortalRoute();
+
+  if (!deviceAgent) {
+    return <NotFoundPage />;
+  }
+
+  return <Outlet />;
+}

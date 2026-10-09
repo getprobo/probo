@@ -40,8 +40,9 @@ type (
 
 func NewEmployeePortal(p *coredata.EmployeePortal) *EmployeePortal {
 	return &EmployeePortal{
-		ID:   p.ID,
-		Name: p.Name,
+		ID:           p.ID,
+		Name:         p.Name,
+		Capabilities: &p.Capabilities,
 		Organization: &Organization{
 			ID: p.OrganizationID,
 		},

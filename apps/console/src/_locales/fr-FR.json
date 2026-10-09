@@ -2228,6 +2228,7 @@
       "riskManagement": "Gestion des risques",
       "registries": "Registres",
       "compliancePortal": "Portail de conformité",
+      "employeePortal": "Portail employés",
       "accessReview": "Revue d’accès",
       "settings": "Paramètres"
     },
@@ -2277,6 +2278,7 @@
     "campaigns": "Campagnes",
     "connections": "Connecteurs",
     "sources": "Sources",
+    "employeePortalSettings": "Paramètres",
     "compliancePortals": "Portails de conformité",
     "compliancePortalsSettings": "Paramètres",
     "compliancePortalsHosting": "Hébergement",

@@ -21,31 +21,14 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
+import { EmployeePortalPageSkeleton } from "./EmployeePortalPageSkeleton";
 
-export const devicesRoutes = [
+export const employeePortalRoutes = [
   {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DeviceAgentLayout")),
-    children: [
-      {
-        index: true,
-        Fallback: DevicesPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-      },
-      {
-        path: "register",
-        Fallback: RegisterDevicePageSkeleton,
-        Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-      },
-      {
-        path: "add-manually",
-        Fallback: AddManuallyPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-      },
-    ],
+    path: "employee-portal",
+    Fallback: EmployeePortalPageSkeleton,
+    Component: lazy(
+      () => import("#/pages/organizations/employee-portal/EmployeePortalPageLoader"),
+    ),
   },
 ] satisfies AppRoute[];

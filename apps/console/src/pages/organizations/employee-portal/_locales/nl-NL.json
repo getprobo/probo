@@ -1,0 +1,55 @@
+{
+  "employeePortalPage": {
+    "title": "Medewerkersportaal",
+    "description": "Huisstijl en mogelijkheden van het medewerkersportaal van deze organisatie."
+  },
+  "missing": {
+    "title": "Medewerkersportaal niet beschikbaar",
+    "description": "Deze organisatie heeft nog geen medewerkersportaal."
+  },
+  "branding": {
+    "title": "Huisstijl",
+    "description": "Logo’s die in het medewerkersportaal worden getoond.",
+    "fields": {
+      "logo": "Logo",
+      "darkLogo": "Donker logo",
+      "placeholder": "Sleep of klik",
+      "acceptedFiles": "JPEG, PNG, SVG of WebP. Maximaal 5 MB."
+    },
+    "actions": {
+      "removeLogo": "Logo verwijderen",
+      "removeDarkLogo": "Donker logo verwijderen"
+    },
+    "messages": {
+      "updated": "Huusstijl bijgewerkt"
+    },
+    "errors": {
+      "update": "Huusstijl bijwerken mislukt",
+      "invalidFileType": {
+        "title": "Bestandstype niet ondersteund",
+        "description": "Upload een JPEG-, PNG-, SVG- of WebP-afbeelding."
+      },
+      "fileTooLarge": {
+        "title": "Bestand te groot",
+        "description": "Upload een afbeelding kleiner dan 5 MB."
+      },
+      "tooManyFiles": {
+        "title": "Te veel bestanden",
+        "description": "Upload één afbeelding tegelijk."
+      }
+    }
+  },
+  "capabilities": {
+    "title": "Instellingen",
+    "deviceAgent": {
+      "title": "Apparaatagent",
+      "description": "Laat medewerkers apparaten registreren vanuit het medewerkersportaal."
+    },
+    "messages": {
+      "updated": "Instellingen bijgewerkt"
+    },
+    "errors": {
+      "update": "Instellingen bijwerken mislukt"
+    }
+  }
+}

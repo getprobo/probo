@@ -18,34 +18,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { lazy } from "@probo/react-lazy";
-import type { AppRoute } from "@probo/routes";
+import { tv } from "tailwind-variants/lite";
 
-import { AddManuallyPageSkeleton } from "./AddManuallyPageSkeleton";
-import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
-import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
-
-export const devicesRoutes = [
-  {
-    path: "devices",
-    Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DeviceAgentLayout")),
-    children: [
-      {
-        index: true,
-        Fallback: DevicesPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
-      },
-      {
-        path: "register",
-        Fallback: RegisterDevicePageSkeleton,
-        Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-      },
-      {
-        path: "add-manually",
-        Fallback: AddManuallyPageSkeleton,
-        Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-      },
-    ],
+export const employeePortalPage = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex flex-col gap-2",
   },
-] satisfies AppRoute[];
+});
+
+export const employeePortalPageSkeleton = tv({
+  slots: {
+    root: "flex flex-col gap-6",
+    header: "flex flex-col gap-2",
+    section: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+  },
+});
+
+export const employeePortalBrandingSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+    body: "flex flex-col gap-4",
+    logos: "flex items-start gap-4 max-sm:flex-col",
+    logoCell: "flex min-w-0 flex-1 flex-col gap-2",
+    darkIsland: "dark scheme-dark rounded-4 bg-sand-1 p-2",
+  },
+});
+
+export const employeePortalCapabilitiesSection = tv({
+  slots: {
+    root: "flex flex-col gap-4",
+    intro: "flex flex-col gap-1",
+  },
+});

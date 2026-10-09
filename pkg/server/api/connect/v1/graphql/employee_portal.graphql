@@ -36,9 +36,17 @@ input EmployeePortalOrder
     field: EmployeePortalOrderField!
 }
 
+type EmployeePortalCapabilities
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.EmployeePortalCapabilities"
+    ) {
+    deviceAgent: Boolean!
+}
+
 type EmployeePortal implements Node {
     id: ID!
     name: String!
+    capabilities: EmployeePortalCapabilities!
     organization: Organization! @goField(forceResolver: true)
 }
 

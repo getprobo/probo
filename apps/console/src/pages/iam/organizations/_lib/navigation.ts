@@ -29,6 +29,7 @@ import {
   ScalesIcon,
   ShieldIcon,
   StorefrontIcon,
+  UsersIcon,
   WarningIcon,
 } from "@phosphor-icons/react";
 
@@ -62,6 +63,7 @@ export type NavPermission
     | "canListAccessReviewCampaigns"
     | "canListAccessReviewSources"
     | "canGetCompliancePortal"
+    | "canGetEmployeePortal"
     | "canListCookieBanners"
     | "canListAuditLogEntries"
     | "canListWebhookSubscriptions"
@@ -118,6 +120,11 @@ export const NAV_GROUPS = [
     icon: ShieldIcon,
   },
   {
+    key: "employeePortal",
+    segment: "employee-portal",
+    icon: UsersIcon,
+  },
+  {
     key: "accessReview",
     segment: "access-reviews",
     icon: KeyIcon,
@@ -143,7 +150,13 @@ export function navGroupByKey(key: NavGroupKey): NavGroup {
 }
 
 export function navLandingPath(group: NavGroup, path: string): string {
-  return group.segment == null ? path : `${group.segment}/${path}`;
+  if (group.segment == null) {
+    return path;
+  }
+  if (path === "") {
+    return group.segment;
+  }
+  return `${group.segment}/${path}`;
 }
 
 export function navHref(organizationId: string, group: NavGroup, path: string): string {
