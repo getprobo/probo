@@ -21,10 +21,10 @@
       "removeDarkLogo": "Donker logo verwijderen"
     },
     "messages": {
-      "updated": "Huusstijl bijgewerkt"
+      "updated": "Huisstijl bijgewerkt"
     },
     "errors": {
-      "update": "Huusstijl bijwerken mislukt",
+      "update": "Huisstijl bijwerken mislukt",
       "invalidFileType": {
         "title": "Bestandstype niet ondersteund",
         "description": "Upload een JPEG-, PNG-, SVG- of WebP-afbeelding."

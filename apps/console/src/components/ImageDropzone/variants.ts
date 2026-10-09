@@ -34,7 +34,7 @@ export const imageDropzone = tv({
       "pointer-events-none absolute inset-0 z-1 hidden flex-col items-center justify-center gap-1 px-3 text-center",
       "bg-sand-1/70 backdrop-blur-sm group-hover:flex group-focus-visible:flex",
     ],
-    clear: "absolute top-1 right-1 z-2",
+    clear: "pointer-events-auto absolute top-1 right-1 z-2",
   },
   variants: {
     ratio: {

@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
 
-import type { EnrollPageQuery } from "#/__generated__/iam/EnrollPageQuery.graphql";
+import type { EnrollPageQuery$data, EnrollPageQuery } from "#/__generated__/iam/EnrollPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { DownloadStep } from "#/pages/devices/_components/DownloadStep";
@@ -67,7 +67,7 @@ export const enrollPageQuery = graphql`
               employeePortals(
                 first: 1
                 orderBy: { field: CREATED_AT, direction: ASC }
-              ) {
+              ) @catch(to: RESULT) {
                 edges {
                   node {
                     capabilities {
@@ -89,6 +89,16 @@ interface EnrollPageProps {
   queryRef: PreloadedQuery<EnrollPageQuery>;
 }
 
+function portalDeviceAgentEnabled(
+  portals: EnrollPageQuery$data["viewer"]["profiles"]["edges"][number]["node"]["organization"]["employeePortals"],
+): boolean {
+  if (portals == null || portals.ok !== true) {
+    return false;
+  }
+
+  return portals.value.edges[0]?.node.capabilities.deviceAgent === true;
+}
+
 export function EnrollPage({ queryRef }: EnrollPageProps) {
   const { t } = useTranslation("enroll");
   const { t: tDevices } = useTranslation("devices");
@@ -100,8 +110,8 @@ export function EnrollPage({ queryRef }: EnrollPageProps) {
   const { viewer } = usePreloadedQuery<EnrollPageQuery>(enrollPageQuery, queryRef);
   const nodes = viewer.profiles.edges.map(({ node }) => node);
   const enrollable = nodes.filter(profile => profile.organization.canEnrollDevice);
-  const profiles = enrollable.filter(
-    profile => profile.organization.employeePortals.edges[0]?.node.capabilities.deviceAgent === true,
+  const profiles = enrollable.filter(profile =>
+    portalDeviceAgentEnabled(profile.organization.employeePortals),
   );
   const organizationIds = useMemo(
     () => new Set(profiles.map(profile => profile.organization.id)),

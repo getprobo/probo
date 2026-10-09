@@ -23,7 +23,7 @@ import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -70,6 +70,24 @@ const updateBrandMutation = graphql`
   }
 `;
 
+function revokeObjectUrl(url: string | undefined) {
+  if (url != null) {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function replaceObjectUrl(ref: { current: string | undefined }, next: string) {
+  revokeObjectUrl(ref.current);
+  ref.current = next;
+}
+
+function clearObjectUrl(ref: { current: string | undefined }, url: string) {
+  revokeObjectUrl(url);
+  if (ref.current === url) {
+    ref.current = undefined;
+  }
+}
+
 export interface EmployeePortalBrandingSectionProps {
   employeePortalKey: EmployeePortalBrandingSection_employeePortal$key;
 }
@@ -85,6 +103,8 @@ export function EmployeePortalBrandingSection({
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [darkLogoPreview, setDarkLogoPreview] = useState<string | null>(null);
   const [uploadingField, setUploadingField] = useState<"logo" | "darkLogo" | null>(null);
+  const logoObjectUrlRef = useRef<string | undefined>(undefined);
+  const darkLogoObjectUrlRef = useRef<string | undefined>(undefined);
 
   const [updateBrand] = useMutation<EmployeePortalBrandingSection_updateMutation>(
     updateBrandMutation,
@@ -93,6 +113,13 @@ export function EmployeePortalBrandingSection({
       errorToast: t("branding.errors.update"),
     },
   );
+
+  useEffect(() => {
+    return () => {
+      revokeObjectUrl(logoObjectUrlRef.current);
+      revokeObjectUrl(darkLogoObjectUrlRef.current);
+    };
+  }, []);
 
   const logoSrc = logoPreview ?? employeePortal.logo?.downloadUrl;
   const darkLogoSrc = darkLogoPreview ?? employeePortal.darkLogo?.downloadUrl;
@@ -109,7 +136,9 @@ export function EmployeePortalBrandingSection({
   function uploadLogo(field: "logoFile" | "darkLogoFile", file: File) {
     const preview = URL.createObjectURL(file);
     const isDark = field === "darkLogoFile";
+    const objectUrlRef = isDark ? darkLogoObjectUrlRef : logoObjectUrlRef;
     const setPreview = isDark ? setDarkLogoPreview : setLogoPreview;
+    replaceObjectUrl(objectUrlRef, preview);
     setPreview(preview);
     setUploadingField(isDark ? "darkLogo" : "logo");
     void updateBrand({
@@ -124,12 +153,12 @@ export function EmployeePortalBrandingSection({
       },
     }).then(
       () => {
-        URL.revokeObjectURL(preview);
+        clearObjectUrl(objectUrlRef, preview);
         setPreview(null);
         setUploadingField(null);
       },
       () => {
-        URL.revokeObjectURL(preview);
+        clearObjectUrl(objectUrlRef, preview);
         setPreview(null);
         setUploadingField(null);
       },

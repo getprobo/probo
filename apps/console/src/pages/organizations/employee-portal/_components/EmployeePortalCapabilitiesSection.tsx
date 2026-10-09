@@ -94,6 +94,8 @@ export function EmployeePortalCapabilitiesSection({
           },
         },
       },
+    }).catch(() => {
+      // Error toast is already shown by useMutation.
     });
   }
 

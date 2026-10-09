@@ -113,7 +113,7 @@ export function ImageDropzone({
           <Spinner size={2} />
         </div>
       )}
-      {filled && onClear != null && !disabled && !uploading && (
+      {filled && onClear != null && !uploading && (
         <div className={clear()}>
           <IconButton
             type="button"

@@ -38,7 +38,7 @@ export function EmployeePortalPageSkeleton() {
           <HeadingSkeleton size={4} className="w-24" />
           <TextSkeleton size={2} className="w-80" />
         </div>
-        <CardSkeleton size={2} />
+        <CardSkeleton size={2} className="h-64 max-sm:h-[28rem]" />
       </div>
       <div className={section()}>
         <div className={intro()}>
