@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CheckCircleIcon, CopyIcon, WarningIcon } from "@phosphor-icons/react";
+import { CheckCircleIcon, CopyIcon, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
@@ -34,6 +34,7 @@ import { graphql } from "relay-runtime";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
+import type { TonedCardTone } from "#/components/TonedCard/variants";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
@@ -54,9 +55,7 @@ export const cookieBannerConfigLayoutQuery = graphql`
           version
           state
         }
-        publishedVersion {
-          id
-        }
+        discoveryFrozenAt
         discoveryPageLoads {
           family
           count
@@ -81,6 +80,7 @@ const publishMutation = graphql`
           version
           state
         }
+        discoveryFrozenAt
         publishedVersion {
           id
           gvlVendorCount
@@ -135,15 +135,17 @@ export function CookieBannerConfigLayout({
 
   const hasDraft = banner.latestVersion?.state === "DRAFT";
   const isDeactivated = banner.state !== "ACTIVE";
+  const inDiscovery = banner.discoveryFrozenAt == null;
   const version = banner.latestVersion?.version;
   const pageLoads = banner.discoveryPageLoads;
-  const showDiscoveryLoads = banner.publishedVersion == null;
 
   let message: string;
   if (isDeactivated && hasDraft && version != null) {
     message = t("configLayout.callout.deactivatedDraft", { version });
   } else if (isDeactivated) {
     message = t("configLayout.callout.deactivated");
+  } else if (inDiscovery) {
+    message = t("configLayout.callout.discovery");
   } else if (hasDraft && version != null) {
     message = t("configLayout.callout.draft", { version });
   } else if (version != null) {
@@ -152,10 +154,21 @@ export function CookieBannerConfigLayout({
     message = t("configLayout.callout.publishedUnknown");
   }
 
-  const tone = isDeactivated || hasDraft ? "amber" : "green";
-  const icon = isDeactivated || hasDraft
-    ? <WarningIcon size={24} weight="duotone" />
-    : <CheckCircleIcon size={24} weight="duotone" />;
+  let tone: TonedCardTone;
+  let icon: ReactNode;
+  if (isDeactivated) {
+    tone = "amber";
+    icon = <WarningIcon size={24} weight="duotone" />;
+  } else if (inDiscovery) {
+    tone = "sky";
+    icon = <InfoIcon size={24} weight="duotone" />;
+  } else if (hasDraft) {
+    tone = "amber";
+    icon = <WarningIcon size={24} weight="duotone" />;
+  } else {
+    tone = "green";
+    icon = <CheckCircleIcon size={24} weight="duotone" />;
+  }
 
   function handleCopyId() {
     void navigator.clipboard.writeText(banner.id).then(
@@ -236,7 +249,7 @@ export function CookieBannerConfigLayout({
       >
         <div className={discovery()}>
           <Text size={2} color="neutral">{message}</Text>
-          {showDiscoveryLoads
+          {inDiscovery
             ? (
                 <div className={discoveryRow()}>
                   <Text size={2} color="faint">

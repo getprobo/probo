@@ -75,7 +75,7 @@ export function DiscoveryFamilyCounts({
             {rate != null
               ? (
                   <div className={stat()}>
-                    <Text size={5} weight="bold" highContrast className={value()}>
+                    <Text size={4} weight="bold" highContrast className={value()}>
                       {rate}
                     </Text>
                     <Text size={2}>{t("trackerDiscovery.hitRate")}</Text>

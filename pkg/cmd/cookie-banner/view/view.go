@@ -55,6 +55,7 @@ query($id: ID!) {
         family
         count
       }
+      discoveryFrozenAt
       createdAt
       updatedAt
     }
@@ -85,8 +86,9 @@ type viewResponse struct {
 			Family string `json:"family"`
 			Count  int    `json:"count"`
 		} `json:"discoveryPageLoads"`
-		CreatedAt string `json:"createdAt"`
-		UpdatedAt string `json:"updatedAt"`
+		DiscoveryFrozenAt *string `json:"discoveryFrozenAt"`
+		CreatedAt         string  `json:"createdAt"`
+		UpdatedAt         string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -171,6 +173,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				for _, load := range v.DiscoveryPageLoads {
 					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
 				}
+			}
+
+			if v.DiscoveryFrozenAt != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Frozen:"), cmdutil.FormatTime(*v.DiscoveryFrozenAt))
+			} else {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Frozen:"), "no")
 			}
 
 			_, _ = fmt.Fprintln(out)

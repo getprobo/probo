@@ -273,6 +273,7 @@
       "version": "v{{version}}",
       "deactivated": "This banner is deactivated and is not shown to visitors.",
       "deactivatedDraft": "This banner is deactivated and is not shown to visitors. This version has unpublished changes.",
+      "discovery": "This banner is in discovery. Page loads and tracker hits are counted until you publish. This version is not live yet.",
       "draft": "This version has unpublished changes.",
       "published": "This version is published and live.",
       "publishedUnknown": "This banner is published and live."

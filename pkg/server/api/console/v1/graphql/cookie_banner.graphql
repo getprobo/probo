@@ -275,6 +275,12 @@ type CookieBanner implements Node {
     discoveryPageLoads: [DiscoveryFamilyCount!]!
         @goField(forceResolver: true)
 
+    """
+    When discovery counting stopped. Null while page loads and
+    pattern hits are still being recorded.
+    """
+    discoveryFrozenAt: Datetime @goField(forceResolver: true)
+
     uncategorisedTrackerResources(
         first: Int
         after: CursorKey

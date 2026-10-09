@@ -34,7 +34,7 @@ import { graphql } from "relay-runtime";
 import type { TrackerPatternList_cookieBanner$key } from "#/__generated__/core/TrackerPatternList_cookieBanner.graphql";
 import type { TrackerPatternListRefetchQuery } from "#/__generated__/core/TrackerPatternListRefetchQuery.graphql";
 
-import { cookieBannerList } from "../../../variants";
+import { cookieBannerList, trackerPatternListItem } from "../../../variants";
 import {
   trackersListHeaderSort,
   useTrackersListFilters,
@@ -127,6 +127,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
   const edges = cookieBanner.trackerPatterns.edges;
   const pageInfo = cookieBanner.trackerPatterns.pageInfo;
   const { root, results, pager, empty } = cookieBannerList({ pending: isRefetchPending });
+  const { optional } = trackerPatternListItem();
 
   function refetchCurrentPage() {
     startRefetchTransition(() => {
@@ -196,6 +197,7 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
                         width="7rem"
+                        className={optional()}
                         sort={trackersListHeaderSort("SOURCE", graphqlOrder)}
                         onSort={() => setOrder("SOURCE")}
                         aria-label={t("trackersPage.sort.source")}
@@ -205,11 +207,12 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                       <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.category")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell width="7rem">
+                      <TableColumnHeaderCell width="7rem" className={optional()}>
                         {t("trackersPage.columns.maxAge")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
                         width="10rem"
+                        className={optional()}
                         sort={trackersListHeaderSort("LAST_MATCHED_AT", graphqlOrder)}
                         onSort={() => setOrder("LAST_MATCHED_AT")}
                         aria-label={t("trackersPage.sort.lastMatched")}

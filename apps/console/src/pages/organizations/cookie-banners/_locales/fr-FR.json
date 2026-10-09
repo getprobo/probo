@@ -273,6 +273,7 @@
       "version": "v{{version}}",
       "deactivated": "Cette bannière est désactivée et n’est pas affichée aux visiteurs.",
       "deactivatedDraft": "Cette bannière est désactivée et n’est pas affichée aux visiteurs. Cette version contient des modifications non publiées.",
+      "discovery": "Cette bannière est en découverte. Les chargements de page et les signalements de trackers sont comptés jusqu’à la publication. Cette version n’est pas encore en ligne.",
       "draft": "Cette version contient des modifications non publiées.",
       "published": "Cette version est publiée et en ligne.",
       "publishedUnknown": "Cette bannière est publiée et en ligne."

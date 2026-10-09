@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -448,6 +449,22 @@ func (r *cookieBannerResolver) DiscoveryPageLoads(ctx context.Context, obj *type
 	}
 
 	return out, nil
+}
+
+// DiscoveryFrozenAt is the resolver for the discoveryFrozenAt field.
+func (r *cookieBannerResolver) DiscoveryFrozenAt(ctx context.Context, obj *types.CookieBanner) (*time.Time, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, err
+	}
+
+	frozenAt, err := r.cookieBanner.GetDiscoveryFrozenAt(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner discovery frozen at", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return frozenAt, nil
 }
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.

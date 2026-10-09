@@ -970,6 +970,34 @@ func (s *Service) GetDiscoveryPageLoads(
 	return discoveryPageLoads(stats), nil
 }
 
+func (s *Service) GetDiscoveryFrozenAt(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) (*time.Time, error) {
+	var stats coredata.CookieBannerDiscoveryStats
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := stats.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats.FrozenAt, nil
+}
+
 func (s *Service) GetDiscoveryHits(
 	ctx context.Context,
 	scope coredata.Scoper,

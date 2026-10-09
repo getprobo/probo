@@ -61,6 +61,7 @@ export async function execute(
 					publisherCountryCode
 					tcfCmpId
 					discoveryPageLoads { family count }
+					discoveryFrozenAt
 					createdAt
 					updatedAt
 					publishedVersion {

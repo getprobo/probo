@@ -13709,6 +13709,12 @@ components:
           items:
             $ref: "#/components/schemas/DiscoveryFamilyCount"
           description: Discovery page loads by browser family. Families with zero page loads are omitted. Frozen on first publish.
+        discovery_frozen_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When discovery counting stopped. Null while page loads and pattern hits are still being recorded.
 
     DiscoveryBrowserFamily:
       type: string

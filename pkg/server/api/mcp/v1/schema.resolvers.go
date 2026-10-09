@@ -5814,6 +5814,13 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	out.DiscoveryPageLoads = types.NewDiscoveryFamilyCounts(loads)
 
+	frozenAt, err := r.cookieBanner.GetDiscoveryFrozenAt(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get discovery frozen at: %w", err)
+	}
+
+	out.DiscoveryFrozenAt = frozenAt
+
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
 		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
 		if err != nil && !errors.Is(err, cookiebanner.ErrVersionNotFound) {

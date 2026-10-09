@@ -136,13 +136,15 @@ export const cookieBannerListSkeleton = tv({
 export const trackerPatternListItem = tv({
   slots: {
     name: "flex min-w-0 flex-col gap-0.5",
-    heading: "flex min-w-0 items-start gap-2",
-    title: "min-w-0 break-all font-mono",
+    heading: "flex min-w-0 items-center gap-2",
+    link: "min-w-0 overflow-hidden xl:overflow-visible",
+    title: "min-w-0 truncate font-mono xl:whitespace-normal xl:overflow-visible xl:break-all",
     type: "relative z-1 shrink-0 pointer-events-auto",
     info: "relative z-1 shrink-0 pointer-events-auto",
     detail: "flex flex-col gap-1",
     date: "whitespace-nowrap",
     actions: "flex items-center gap-1",
+    optional: "hidden xl:table-cell",
   },
   variants: {
     excluded: {

@@ -273,6 +273,7 @@
       "version": "v{{version}}",
       "deactivated": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers.",
       "deactivatedDraft": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers. Deze versie heeft ongepubliceerde wijzigingen.",
+      "discovery": "Deze banner is in ontdekkingsmodus. Paginaladingen en tracker-hits worden geteld tot de eerste publicatie. Deze versie is nog niet live.",
       "draft": "Deze versie heeft ongepubliceerde wijzigingen.",
       "published": "Deze versie is gepubliceerd en live.",
       "publishedUnknown": "Deze banner is gepubliceerd en live."

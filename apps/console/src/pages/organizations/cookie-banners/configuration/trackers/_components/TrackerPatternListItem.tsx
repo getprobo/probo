@@ -147,9 +147,10 @@ export function TrackerPatternListItem({
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { name, heading, title, type, info, detail, date, actions } = trackerPatternListItem({
-    excluded: pattern.excluded,
-  });
+  const { name, heading, link, title, type, info, detail, date, actions, optional }
+    = trackerPatternListItem({
+      excluded: pattern.excluded,
+    });
   const description = pattern.description.trim();
 
   const [movePattern] = useMutation<TrackerPatternListItemMoveMutation>(
@@ -229,7 +230,10 @@ export function TrackerPatternListItem({
                   <TrackerTypeBadge trackerType={pattern.trackerType} />
                 </span>
               )}
-              <TableLink to={{ pathname: detailPath, search: location.search }}>
+              <TableLink
+                to={{ pathname: detailPath, search: location.search }}
+                className={link()}
+              >
                 <Text size={2} weight="medium" highContrast className={title()}>
                   {pattern.displayName}
                 </Text>
@@ -278,7 +282,7 @@ export function TrackerPatternListItem({
                 )
               : <TrackerAttributionLabel attribution={pattern.attribution} />}
         </TableCell>
-        <TableCell>
+        <TableCell className={optional()}>
           {sourceBadge == null
             ? <Text size={2} color="faint">-</Text>
             : (
@@ -308,10 +312,10 @@ export function TrackerPatternListItem({
                 </Text>
               </TableCell>
             )}
-        <TableCell>
+        <TableCell className={optional()}>
           <Text size={2} className={date()}>{duration}</Text>
         </TableCell>
-        <TableCell>
+        <TableCell className={optional()}>
           {pattern.lastMatchedAt == null
             ? <Text size={2} color="faint">-</Text>
             : (
