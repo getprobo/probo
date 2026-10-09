@@ -4,6 +4,23 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.243.0] - 2026-10-09
+
+### Added
+
+- `connector update <connector-id> --name` renames a connector
+
+### Changed
+
+- `connector connect` and `access-review source create` take a required
+  `--name` that identifies the connector, so several connections to one
+  provider stay distinct. `connector list` and `connector view` show it
+- `task create` and `task update` accept a repeatable `--internal-control`
+  to link a task to several internal controls. Passing an empty value on
+  `task update` clears them all
+- `access-review source create` sends the source in a single list, which
+  matches the new server API
+
 ## [0.242.0] - 2026-10-08
 
 ### Added
