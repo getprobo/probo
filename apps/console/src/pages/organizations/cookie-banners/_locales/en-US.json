@@ -283,11 +283,12 @@
     "dialogs": { "deleteTitle": "Delete cookie banner" },
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publish": "Publish changes", "activate": "Activate", "deactivate": "Deactivate", "delete": "Delete", "cancel": "Cancel", "copyId": "Copy banner ID" },
-    "discovery": { "pageLoads": "Page loads" }
+    "discovery": { "pageLoads": "Page loads", "empty": "None yet" }
   },
   "trackerDiscovery": {
     "title": "Discovery",
     "description": "Counted until first publish.",
+    "empty": "No hits yet.",
     "hitsOfLoads": "{{hits}} / {{loads}}",
     "families": {
       "chrome": "Chrome",

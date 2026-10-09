@@ -283,11 +283,12 @@
     "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
     "status": { "active": "Active", "inactive": "Inactive" },
     "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" },
-    "discovery": { "pageLoads": "Chargements de page" }
+    "discovery": { "pageLoads": "Chargements de page", "empty": "Aucun pour le moment" }
   },
   "trackerDiscovery": {
     "title": "Découverte",
     "description": "Les statistiques sont comptabilisées jusqu’à la première publication.",
+    "empty": "Aucun signalement pour le moment.",
     "hitsOfLoads": "{{hits}} / {{loads}}",
     "families": {
       "chrome": "Chrome",

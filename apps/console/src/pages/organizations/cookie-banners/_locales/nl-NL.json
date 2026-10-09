@@ -283,11 +283,12 @@
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
     "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
-    "discovery": { "pageLoads": "Paginaladingen" }
+    "discovery": { "pageLoads": "Paginaladingen", "empty": "Nog geen" }
   },
   "trackerDiscovery": {
     "title": "Ontdekking",
     "description": "Geteld tot de eerste publicatie.",
+    "empty": "Nog geen hits.",
     "hitsOfLoads": "{{hits}} / {{loads}}",
     "families": {
       "chrome": "Chrome",

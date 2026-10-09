@@ -38,7 +38,20 @@ export default function CookieBannerConfigLayoutLoader() {
   );
 
   useEffect(() => {
-    loadQuery({ cookieBannerId });
+    function load() {
+      loadQuery({ cookieBannerId }, { fetchPolicy: "store-and-network" });
+    }
+
+    load();
+
+    function onVisible() {
+      if (document.visibilityState === "visible") {
+        load();
+      }
+    }
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [loadQuery, cookieBannerId]);
 
   if (!queryRef) {

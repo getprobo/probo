@@ -18,12 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { GlobeIcon } from "@phosphor-icons/react";
+import { ChromeLogo } from "@probo/ui/src/v2/ChromeLogo/ChromeLogo";
+import { EdgeLogo } from "@probo/ui/src/v2/EdgeLogo/EdgeLogo";
+import { FirefoxLogo } from "@probo/ui/src/v2/FirefoxLogo/FirefoxLogo";
+import { SafariLogo } from "@probo/ui/src/v2/SafariLogo/SafariLogo";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 
 import { discoveryFamilyCounts } from "../../variants";
 import { familyLabel } from "../_lib/familyLabel";
+
+const familyLogos = {
+  CHROME: ChromeLogo,
+  EDGE: EdgeLogo,
+  FIREFOX: FirefoxLogo,
+  SAFARI: SafariLogo,
+} as const;
 
 export interface DiscoveryFamilyCountItem {
   family: string;
@@ -42,7 +54,8 @@ export function DiscoveryFamilyCounts({
   compact = false,
 }: DiscoveryFamilyCountsProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { root, item, separator } = discoveryFamilyCounts({ compact });
+  const { root, item, logo, separator } = discoveryFamilyCounts({ compact });
+  const logoSize = compact ? 16 : 24;
   const loadsByFamily = new Map(
     (denominators ?? []).map(entry => [entry.family, entry.count]),
   );
@@ -61,6 +74,11 @@ export function DiscoveryFamilyCounts({
               ? <Text size={2} color="faint" className={separator()}>·</Text>
               : null}
             <div className={item()}>
+              <FamilyLogo
+                family={entry.family}
+                size={logoSize}
+                className={logo()}
+              />
               <Text size={2} color={compact ? "faint" : "neutral"}>
                 {familyLabel(entry.family, t)}
               </Text>
@@ -73,4 +91,20 @@ export function DiscoveryFamilyCounts({
       })}
     </div>
   );
+}
+
+function FamilyLogo({
+  family,
+  size,
+  className,
+}: {
+  family: string;
+  size: number;
+  className: string;
+}) {
+  const Logo = familyLogos[family as keyof typeof familyLogos];
+  if (Logo == null) {
+    return <GlobeIcon size={size} className={className} aria-hidden />;
+  }
+  return <Logo size={size} className={className} aria-hidden />;
 }

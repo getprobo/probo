@@ -33,6 +33,9 @@ import { DiscoveryFamilyCounts } from "../../_components/DiscoveryFamilyCounts";
 
 const cookieBannerFragment = graphql`
   fragment TrackerPatternDiscoveryHitsSection_cookieBanner on CookieBanner {
+    publishedVersion {
+      id
+    }
     discoveryPageLoads {
       family
       count
@@ -63,7 +66,7 @@ export function TrackerPatternDiscoveryHitsSection({
   const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
   const { root, intro } = trackerPatternDiscoveryHitsSection();
 
-  if (pattern.discoveryHits.length === 0) {
+  if (pattern.discoveryHits.length === 0 && banner.publishedVersion != null) {
     return null;
   }
 
@@ -78,10 +81,18 @@ export function TrackerPatternDiscoveryHitsSection({
             {t("trackerDiscovery.description")}
           </Text>
         </div>
-        <DiscoveryFamilyCounts
-          items={pattern.discoveryHits}
-          denominators={banner.discoveryPageLoads}
-        />
+        {pattern.discoveryHits.length > 0
+          ? (
+              <DiscoveryFamilyCounts
+                items={pattern.discoveryHits}
+                denominators={banner.discoveryPageLoads}
+              />
+            )
+          : (
+              <Text size={2} color="faint">
+                {t("trackerDiscovery.empty")}
+              </Text>
+            )}
       </div>
     </Card>
   );

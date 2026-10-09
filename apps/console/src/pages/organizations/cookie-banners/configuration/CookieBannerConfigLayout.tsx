@@ -132,7 +132,7 @@ export function CookieBannerConfigLayout({
   const isDeactivated = banner.state !== "ACTIVE";
   const version = banner.latestVersion?.version;
   const pageLoads = banner.discoveryPageLoads;
-  const showDiscoveryLoads = banner.publishedVersion == null && pageLoads.length > 0;
+  const showDiscoveryLoads = banner.publishedVersion == null;
 
   let message: string;
   if (isDeactivated && hasDraft && version != null) {
@@ -237,7 +237,13 @@ export function CookieBannerConfigLayout({
                   <Text size={2} color="faint">
                     {t("configLayout.discovery.pageLoads")}
                   </Text>
-                  <DiscoveryFamilyCounts items={pageLoads} compact />
+                  {pageLoads.length > 0
+                    ? <DiscoveryFamilyCounts items={pageLoads} compact />
+                    : (
+                        <Text size={2} color="faint">
+                          {t("configLayout.discovery.empty")}
+                        </Text>
+                      )}
                 </div>
               )
             : null}
