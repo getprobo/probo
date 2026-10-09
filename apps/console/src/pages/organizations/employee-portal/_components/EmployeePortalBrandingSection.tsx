@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useState } from "react";
@@ -90,7 +90,7 @@ export function EmployeePortalBrandingSection({
   employeePortalKey,
 }: EmployeePortalBrandingSectionProps) {
   const { t } = useTranslation(NS);
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { root, intro, body, logos, logoCell, darkIsland } = employeePortalBrandingSection();
   const employeePortal = useFragment(employeePortalFragment, employeePortalKey);
 
