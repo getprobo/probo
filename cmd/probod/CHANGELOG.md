@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.309.1] - 2026-10-09
+
+### Fixed
+
+- The console skips the employee portal list unless the viewer can list
+  portals, so auditor and compliance-portal roles keep the organization
+
 ## [0.309.0] - 2026-10-09
 
 ### Added
