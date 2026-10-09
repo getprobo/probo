@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Bump `golang.org/x/net` to v0.60.0 to pick up the HTTP/2 HPACK encoder
+  race fix (CVE-2026-97032)
+
 ## [0.308.0] - 2026-10-09
 
 ### Added
