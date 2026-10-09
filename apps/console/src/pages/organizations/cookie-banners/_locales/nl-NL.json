@@ -290,7 +290,7 @@
     "description": "Geteld tot de eerste publicatie.",
     "empty": "Nog geen hits.",
     "hits": "hits",
-    "loads": "ladingen",
+    "loads": "paginaladingen",
     "hitRate": "hitrate",
     "families": {
       "chrome": "Chrome",
