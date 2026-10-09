@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Built with Go 1.27.2 (up from 1.27.1) to pick up the standard-library
+  security fixes in `net/http`, `crypto/tls`, `html/template`,
+  `net/textproto`, and `os` (including CVE-2026-97032, CVE-2026-78659,
+  and CVE-2026-97031)
+
 ## [0.306.0] - 2026-10-08
 
 ### Added
