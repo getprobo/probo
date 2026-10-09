@@ -31,8 +31,8 @@ import {
   Select,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -97,7 +97,7 @@ export function CreateBusinessFunctionDialog({
   type FormData = z.infer<typeof schema>;
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
-  const { toast } = useToast();
+  const toast = useToast();
   const [createBusinessFunction, isCreating] = useMutation<CreateBusinessFunctionDialogMutation>(
     createBusinessFunctionMutation,
     {
@@ -145,10 +145,10 @@ export function CreateBusinessFunctionDialog({
         connections: connectionIds ?? [],
       },
     });
-    toast({
+    toast.add({
       title: t("createBusinessFunctionDialog.messages.success"),
       description: t("createBusinessFunctionDialog.messages.created"),
-      variant: "success",
+      type: "success",
     });
     reset();
     dialogRef.current?.close();

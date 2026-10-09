@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, Input, useToast } from "@probo/ui";
+import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, Input } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -58,7 +59,7 @@ export function DocumentTitleForm(props: {
   const { fKey, documentId, documentStatus, isEditable, onDocumentUpdated } = props;
 
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const schema = z.object({
     title: z.string().min(1, t("documentTitleForm.validation.titleRequired")).max(255),
   });
@@ -90,10 +91,10 @@ export function DocumentTitleForm(props: {
       },
       onCompleted(data, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("documentTitleForm.errors.title"),
             description: formatError(t("documentTitleForm.errors.update"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -104,10 +105,10 @@ export function DocumentTitleForm(props: {
         }
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("documentTitleForm.errors.title"),
           description: error.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -21,11 +21,11 @@
 import { CopyIcon } from "@phosphor-icons/react";
 import { fromMaxAgeSeconds, toMaxAgeSeconds } from "@probo/helpers";
 import { humanizeSeconds } from "@probo/i18n";
-import { useToast } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { Textarea } from "@probo/ui/src/v2/form/Textarea";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -143,7 +143,7 @@ export function TrackerPatternPropertiesSection({
   trackerPatternKey,
   cookieBannerKey,
 }: TrackerPatternPropertiesSectionProps) {
-  const { toast } = useToast();
+  const toast = useToast();
   const { t } = useTranslation("organizations/cookie-banners");
   const cookieBanner = useFragment(cookieBannerFragment, cookieBannerKey);
   const pattern = useFragment<TrackerPatternPropertiesSection_trackerPattern$key>(
@@ -236,16 +236,16 @@ export function TrackerPatternPropertiesSection({
     void (async () => {
       try {
         await navigator.clipboard.writeText(commonTrackerPatternId);
-        toast({
+        toast.add({
           title: t("trackerProperties.messages.copiedTitle"),
           description: t("trackerProperties.messages.idCopied"),
-          variant: "success",
+          type: "success",
         });
       } catch {
-        toast({
+        toast.add({
           title: t("trackerProperties.errors.title"),
           description: t("trackerProperties.errors.copy"),
-          variant: "error",
+          type: "error",
         });
       }
     })();

@@ -135,7 +135,7 @@ If you find yourself reaching for tier 4 for an ordinary CRUD dialog, step back 
 Validation that only the backend can perform (uniqueness, business rules — see [`validation.md`](validation.md) for the error codes the API returns) comes back from the mutation. Map it onto the `Form` `errors` prop keyed by field `name`; Base UI clears each entry when the field changes. Use `formatError` from `@probo/helpers` to turn a GraphQL error into a message.
 
 ```tsx
-const toast = Toast.useToastManager();
+const toast = useToast();
 const [createMeasure, isCreating] = useMutation<CreateMeasureMutation>(createMeasureMutation);
 const [errors, setErrors] = useState<Record<string, string | string[]>>({});
 

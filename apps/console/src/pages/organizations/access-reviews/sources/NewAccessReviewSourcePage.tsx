@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { CaretLeftIcon, MagnifyingGlassIcon, PlugIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -26,6 +25,7 @@ import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useMemo, useState } from "react";
@@ -81,7 +81,7 @@ export function NewAccessReviewSourcePage({ queryRef }: NewAccessReviewSourcePag
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProviders, setSelectedProviders] = useState<ReadonlySet<string>>(

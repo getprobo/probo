@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { useToast } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -55,7 +55,7 @@ export function ConnectForm({
   onSubmit,
 }: ConnectFormProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const { toast } = useToast();
+  const toast = useToast();
   const navigate = useNavigate();
   const provider = useFragment(connectFormFragment, providerKey);
   const [name, setName] = useState("");
@@ -72,10 +72,10 @@ export function ConnectForm({
       if (result == null) {
         return;
       }
-      toast({
+      toast.add({
         title: t("marketplacePage.connected"),
         description: t("listPage.messages.connectedDescription"),
-        variant: "success",
+        type: "success",
       });
       void navigate(result.to, { state: result.state ?? null });
     } catch {

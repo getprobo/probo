@@ -31,8 +31,8 @@ import {
   IconTrashCan,
   useConfirm,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import {
   useCallback,
   useDeferredValue,
@@ -194,7 +194,7 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const navigate = useNavigate();
   const environment = useRelayEnvironment();
   const data = usePreloadedQuery<CampaignDetailPageQuery>(campaignDetailPageQuery, queryRef);
-  const { toast } = useToast();
+  const toast = useToast();
   const confirm = useConfirm();
 
   if (data.node.__typename !== "AccessReviewCampaign") {
@@ -401,24 +401,24 @@ export default function CampaignDetailPage({ queryRef }: Props) {
       variables: { input: { accessReviewCampaignId: campaign.id } },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("campaignDetailPage.messages.error"),
             description: formatError(t("campaignDetailPage.errors.start"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("campaignDetailPage.messages.success"),
           description: t("campaignDetailPage.messages.started"),
-          variant: "success",
+          type: "success",
         });
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("campaignDetailPage.messages.error"),
           description: formatError(t("campaignDetailPage.errors.start"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -441,27 +441,27 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({
+                toast.add({
                   title: t("campaignDetailPage.messages.error"),
                   description: formatError(t("campaignDetailPage.errors.delete"), errors),
-                  variant: "error",
+                  type: "error",
                 });
                 resolve();
                 return;
               }
-              toast({
+              toast.add({
                 title: t("campaignDetailPage.messages.success"),
                 description: t("campaignDetailPage.messages.deleted"),
-                variant: "success",
+                type: "success",
               });
               resolve();
               void navigate(`/organizations/${organizationId}/access-reviews/campaigns`);
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("campaignDetailPage.messages.error"),
                 description: formatError(t("campaignDetailPage.errors.delete"), error),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },
@@ -483,26 +483,26 @@ export default function CampaignDetailPage({ queryRef }: Props) {
             variables: { input: { accessReviewCampaignId: campaign.id } },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({
+                toast.add({
                   title: t("campaignDetailPage.messages.error"),
                   description: formatError(t("campaignDetailPage.errors.complete"), errors),
-                  variant: "error",
+                  type: "error",
                 });
                 resolve();
                 return;
               }
-              toast({
+              toast.add({
                 title: t("campaignDetailPage.messages.success"),
                 description: t("campaignDetailPage.messages.completed"),
-                variant: "success",
+                type: "success",
               });
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("campaignDetailPage.messages.error"),
                 description: formatError(t("campaignDetailPage.errors.complete"), error),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },
@@ -549,20 +549,20 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
     const finish = () => {
       if (failedIds.length > 0) {
-        toast({
+        toast.add({
           title: t("campaignDetailPage.messages.error"),
           description: t("campaignDetailPage.errors.updateFlags", { count: failedIds.length }),
-          variant: "error",
+          type: "error",
         });
         // Keep flag selection/dirty so the user can retry failed entries.
         onDone?.({ succeededIds, failedIds });
         return;
       }
 
-      toast({
+      toast.add({
         title: t("campaignDetailPage.messages.success"),
         description: t("campaignDetailPage.messages.flagsUpdated"),
-        variant: "success",
+        type: "success",
       });
       setBulkFlagSelection([]);
       setBulkFlagsDirty(false);
@@ -642,20 +642,20 @@ export default function CampaignDetailPage({ queryRef }: Props) {
 
     const finish = () => {
       if (failedIds.length === decisions.length) {
-        toast({
+        toast.add({
           title: t("campaignDetailPage.messages.error"),
           description: t("campaignDetailPage.errors.recordDecisions", { count: failedIds.length }),
-          variant: "error",
+          type: "error",
         });
         // Full failure — keep selection and bulk state for retry; do not chain flags.
         return;
       }
 
       if (failedIds.length > 0) {
-        toast({
+        toast.add({
           title: t("campaignDetailPage.messages.error"),
           description: t("campaignDetailPage.errors.recordDecisions", { count: failedIds.length }),
-          variant: "error",
+          type: "error",
         });
         // Partial failure — keep bulk decision state for retrying failed entries;
         // caller applies flags to successes and narrows selection to failures.
@@ -663,10 +663,10 @@ export default function CampaignDetailPage({ queryRef }: Props) {
         return;
       }
 
-      toast({
+      toast.add({
         title: t("campaignDetailPage.messages.success"),
         description: t("campaignDetailPage.messages.decisionsRecorded"),
-        variant: "success",
+        type: "success",
       });
       setBulkDecision(null);
       setBulkPendingDecision(null);

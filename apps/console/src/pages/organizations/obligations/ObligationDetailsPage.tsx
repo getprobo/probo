@@ -35,8 +35,8 @@ import {
   Option,
   Select,
   Textarea,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -69,7 +69,7 @@ export default function ObligationDetailsPage(props: Props) {
     queryRef,
   );
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
 
   const disabled = !obligation.canUpdate;
@@ -142,19 +142,19 @@ export default function ObligationDetailsPage(props: Props) {
         ownerId: formData.ownerId,
       });
 
-      toast({
+      toast.add({
         title: t("obligationDetailsPage.messages.success"),
         description: t("obligationDetailsPage.messages.updated"),
-        variant: "success",
+        type: "success",
       });
     } catch (error) {
-      toast({
+      toast.add({
         title: t("obligationDetailsPage.messages.error"),
         description: formatError(
           t("obligationDetailsPage.errors.update"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     }
   });

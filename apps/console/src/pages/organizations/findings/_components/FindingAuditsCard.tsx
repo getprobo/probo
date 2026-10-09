@@ -31,8 +31,8 @@ import {
   Th,
   Thead,
   Tr,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense, useEffect, useTransition } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
@@ -202,7 +202,7 @@ function FindingAuditsCardData({
   );
   const [isRefreshing, startTransition] = useTransition();
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const connectionId = finding.audits.__id;
   const auditEdges = finding.audits.edges;
@@ -227,13 +227,13 @@ function FindingAuditsCardData({
         });
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("findingDetails.errors.title"),
           description: formatError(
             t("findingDetails.errors.linkAudit"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -249,13 +249,13 @@ function FindingAuditsCardData({
         connections: [connectionId],
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("findingDetails.errors.title"),
           description: formatError(
             t("findingDetails.errors.unlinkAudit"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

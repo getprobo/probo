@@ -32,8 +32,8 @@ import {
   Select,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -75,7 +75,7 @@ export function CreateProcessingActivityDialog({
   connectionId,
 }: CreateProcessingActivityDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
 
   const createProcessingActivity = useCreateProcessingActivity(connectionId);
@@ -134,19 +134,19 @@ export function CreateProcessingActivityDialog({
         thirdPartyIds: formData.thirdPartyIds,
       });
 
-      toast({
+      toast.add({
         title: t("createProcessingActivityDialog.messages.success"),
         description: t("createProcessingActivityDialog.messages.created"),
-        variant: "success",
+        type: "success",
       });
 
       reset();
       dialogRef.current?.close();
     } catch (error) {
-      toast({
+      toast.add({
         title: t("createProcessingActivityDialog.messages.error"),
         description: formatError(t("createProcessingActivityDialog.errors.create"), error as GraphQLError),
-        variant: "error",
+        type: "error",
       });
     }
   };

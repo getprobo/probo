@@ -19,10 +19,10 @@
 // SOFTWARE.
 
 import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -50,7 +50,7 @@ export function InstallSnippetSection({
   cookieBannerKey,
 }: InstallSnippetSectionProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
+  const toast = useToast();
   const { root, intro, snippetWrap, snippet, snippetCopy } = cookieBannerInstallSection();
   const banner = useFragment(fragment, cookieBannerKey);
   const baseUrl = new URL("/api/cookie-banner/v1", window.location.origin).href;
@@ -63,17 +63,17 @@ export function InstallSnippetSection({
   function handleCopy() {
     void navigator.clipboard.writeText(code).then(
       () => {
-        toast({
+        toast.add({
           title: t("codeSnippets.messages.copiedTitle"),
           description: t("codeSnippets.messages.copied"),
-          variant: "success",
+          type: "success",
         });
       },
       () => {
-        toast({
+        toast.add({
           title: t("codeSnippets.errors.title"),
           description: t("codeSnippets.errors.copy"),
-          variant: "error",
+          type: "error",
         });
       },
     );

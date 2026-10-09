@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { Button, ErrorLayout, useToast } from "@probo/ui";
+import { Button, ErrorLayout } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -37,7 +38,7 @@ const signOutMutation = graphql`
 
 function NoOrganizationAccessContent() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const [signOut, isSigningOut]
     = useMutation<NoOrganizationAccessSignOutMutation>(signOutMutation);
@@ -47,23 +48,23 @@ function NoOrganizationAccessContent() {
       variables: {},
       onCompleted: (_, e) => {
         if (e) {
-          toast({
+          toast.add({
             title: t("noOrganizationAccess.errors.requestFailed"),
             description: formatError(
               t("noOrganizationAccess.errors.cannotSignOut"),
               e,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
         window.location.href = "/auth/login";
       },
       onError: (e) => {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

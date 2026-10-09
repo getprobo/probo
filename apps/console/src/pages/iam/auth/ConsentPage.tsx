@@ -29,10 +29,10 @@ import {
 } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -166,7 +166,7 @@ export default function ConsentPage(props: {
   queryRef: PreloadedQuery<ConsentPageQuery>;
 }) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [deviceResult, setDeviceResult] = useState<"authorized" | "denied" | null>(null);
   const [pendingAction, setPendingAction] = useState<"allow" | "deny" | null>(null);
   const [redirectState, setRedirectState] = useState<{
@@ -213,23 +213,23 @@ export default function ConsentPage(props: {
         onCompleted: (response, errors) => {
           if (errors) {
             setPendingAction(null);
-            toast({
+            toast.add({
               title: t("consentPage.errors.authorizationFailed"),
               description: formatError(
                 t("consentPage.errors.generic"),
                 errors,
               ),
-              variant: "error",
+              type: "error",
             });
             return;
           }
 
           if (!response.approveConsent) {
             setPendingAction(null);
-            toast({
+            toast.add({
               title: t("consentPage.errors.authorizationFailed"),
               description: t("consentPage.errors.generic"),
-              variant: "error",
+              type: "error",
             });
             return;
           }
@@ -248,11 +248,11 @@ export default function ConsentPage(props: {
         },
         onError: (err) => {
           setPendingAction(null);
-          toast({
+          toast.add({
             title: t("common.error"),
             description:
               err.message || t("consentPage.errors.generic"),
-            variant: "error",
+            type: "error",
           });
         },
       });

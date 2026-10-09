@@ -22,10 +22,10 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -44,7 +44,7 @@ const sendInstructionsMutation = graphql`
 `;
 
 export default function ForgotPasswordPage() {
-  const { toast } = useToast();
+  const toast = useToast();
   const { t } = useTranslation();
 
   usePageTitle(t("forgotPasswordPage.pageTitle"));
@@ -62,29 +62,29 @@ export default function ForgotPasswordPage() {
         input: { email },
       },
       onError: (e: Error) => {
-        toast({
+        toast.add({
           title: t("forgotPasswordPage.errors.requestFailed"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
       onCompleted: (_, e) => {
         if (e) {
-          toast({
+          toast.add({
             title: t("forgotPasswordPage.errors.requestFailed"),
             description: formatError(
               t("forgotPasswordPage.errors.sendInstructions"),
               e,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
 
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("forgotPasswordPage.messages.instructionsSent"),
-          variant: "success",
+          type: "success",
         });
         setInstructionsSent(true);
       },

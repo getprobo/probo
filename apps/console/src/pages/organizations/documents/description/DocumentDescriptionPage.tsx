@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { RichEditor, useToast } from "@probo/ui";
+import { RichEditor } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
@@ -87,7 +88,7 @@ export function DocumentDescriptionPage(props: {
   const { queryRef, versionChangedAt } = props;
 
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const { onDocumentUpdated, isEditable } = useOutletContext<{
     onDocumentUpdated: () => void;
     isEditable: boolean;
@@ -123,10 +124,10 @@ export function DocumentDescriptionPage(props: {
         },
         onCompleted: (data, errors) => {
           if (errors?.length) {
-            toast({
+            toast.add({
               title: t("documentDescriptionPage.errors.title"),
               description: formatError(t("documentDescriptionPage.errors.save"), errors),
-              variant: "error",
+              type: "error",
             });
             return;
           }
@@ -136,17 +137,17 @@ export function DocumentDescriptionPage(props: {
             onDocumentUpdated();
           }
 
-          toast({
+          toast.add({
             title: t("documentDescriptionPage.messages.successTitle"),
             description: t("documentDescriptionPage.messages.saved"),
-            variant: "success",
+            type: "success",
           });
         },
         onError: (error) => {
-          toast({
+          toast.add({
             title: t("documentDescriptionPage.errors.title"),
             description: error.message ?? t("documentDescriptionPage.errors.save"),
-            variant: "error",
+            type: "error",
           });
         },
       });

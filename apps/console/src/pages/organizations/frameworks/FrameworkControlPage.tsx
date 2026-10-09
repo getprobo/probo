@@ -31,8 +31,8 @@ import {
   IconPencil,
   IconTrashCan,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import {
   type PreloadedQuery,
@@ -182,7 +182,7 @@ type Props = {
 */
 export default function FrameworkControlPage({ queryRef }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const { framework } = useOutletContext<{
     framework: FrameworkDetailPageFragment$data;
   }>();
@@ -249,25 +249,25 @@ export default function FrameworkControlPage({ queryRef }: Props) {
           ...options,
           onCompleted: (response, error) => {
             if (error) {
-              toast({
+              toast.add({
                 title: t("frameworkControlPage.messages.error"),
                 description: formatError(
                   errorMessage,
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
             }
             options.onCompleted?.(response, error);
           },
           onError: (error) => {
-            toast({
+            toast.add({
               title: t("frameworkControlPage.messages.error"),
               description: formatError(
                 errorMessage,
                 error,
               ),
-              variant: "error",
+              type: "error",
             });
             options.onError?.(error);
           },

@@ -27,8 +27,8 @@ import {
   IconSend,
   IconUpload,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -69,7 +69,7 @@ export function PublishRiskAnalysisDialog({
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
 
@@ -111,12 +111,12 @@ export function PublishRiskAnalysisDialog({
       onCompleted(response) {
         const documentId = response.publishRiskAnalysis?.documentEdge?.node?.id;
         if (documentId) {
-          toast({
+          toast.add({
             title: t("publishRiskAnalysisDialog.messages.success"),
             description: requestedApproval
               ? t("publishRiskAnalysisDialog.messages.approvalRequested")
               : t("publishRiskAnalysisDialog.messages.published"),
-            variant: "success",
+            type: "success",
           });
           dialogRef.current?.close();
           reset();
@@ -124,13 +124,13 @@ export function PublishRiskAnalysisDialog({
         }
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("publishRiskAnalysisDialog.messages.error"),
           description: formatError(
             t("publishRiskAnalysisDialog.errors.publish"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

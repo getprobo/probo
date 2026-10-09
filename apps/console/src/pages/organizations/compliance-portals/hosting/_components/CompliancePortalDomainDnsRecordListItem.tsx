@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -49,7 +49,7 @@ export function CompliancePortalDomainDnsRecordListItem({
   dnsRecordKey,
 }: CompliancePortalDomainDnsRecordListItemProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { toast } = useToast();
+  const toast = useToast();
   const dnsRecord = useFragment(dnsRecordFragment, dnsRecordKey);
   const { record, recordHeader, recordField, recordValue, code } = domainCard();
 
@@ -57,17 +57,17 @@ export function CompliancePortalDomainDnsRecordListItem({
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      toast({
+      toast.add({
         title: t("domainCard.messages.copyFailed"),
         description: t("domainCard.messages.valueCopyFailed"),
-        variant: "error",
+        type: "error",
       });
       return;
     }
-    toast({
+    toast.add({
       title: t("domainCard.messages.copied"),
       description: t("domainCard.messages.valueCopied"),
-      variant: "success",
+      type: "success",
     });
   }
 

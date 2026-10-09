@@ -535,7 +535,7 @@ const imageCard = tv({ slots: { shell: "...", image: "...", text: "..." } });
 
 ## User feedback (toasts)
 
-Transient feedback for an action's outcome uses **Base UI's Toast** (`@base-ui/react/toast`) — never `alert`, a hand-rolled banner, or a `console.log`. As with every other primitive, we **style** Base UI's toast; we do not build our own toast system. The legacy kit `useToast` / `Toaster` is non-compliant and is being removed — do not use it in v2.
+Transient feedback for an action's outcome uses **Base UI's Toast** (`@base-ui/react/toast`) — never `alert`, a hand-rolled banner, or a `console.log`. As with every other primitive, we **style** Base UI's toast; we do not build our own toast system.
 
 The kit exposes a styled **`Toaster`** (a `Toast.Portal` + `Toast.Viewport` rendering styled `Toast.Root`s, keyed off each toast's `type`). Mount Base UI's `Toast.Provider` and the `Toaster` **once** at the app root; everything else queues toasts through Base UI's manager.
 
@@ -550,13 +550,13 @@ import { Toaster } from "@probo/ui";
 </Toast.Provider>
 ```
 
-Queue a toast with `Toast.useToastManager().add(...)` — the same API Base UI exposes. Use `type` to drive the styled variant.
+Queue a toast with `useToast().add(...)`. The module's default export is `Toast.useToastManager`. Base UI's package entry exports that hook as a type only, so import it from the kit. Use `type` to drive the styled variant.
 
 ```tsx
-import { Toast } from "@base-ui/react/toast";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 
 function CreateMeasureButton() {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
   const [createMeasure] = useMutation<CreateMeasureMutation>(createMeasureMutation);
 

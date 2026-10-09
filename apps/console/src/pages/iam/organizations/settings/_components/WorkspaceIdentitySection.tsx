@@ -21,7 +21,6 @@
 import { Form } from "@base-ui/react/form";
 import { TrashIcon } from "@phosphor-icons/react";
 import { toFieldErrors } from "@probo/helpers";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -34,6 +33,7 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -123,7 +123,7 @@ interface WorkspaceIdentitySectionProps {
 
 export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentitySectionProps) {
   const { t } = useTranslation(SETTINGS_NS);
-  const { toast } = useToast();
+  const toast = useToast();
   const { form, logos, logoCell, horizontalCell, actions, root, intro } = identitySection();
   const organization = useFragment(fragment, organizationKey);
 
@@ -176,10 +176,10 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
   const horizontalLogoSrc = horizontalLogoPreview ?? organization.horizontalLogo?.downloadUrl;
 
   function handleReject(error: FileDropzoneError) {
-    toast({
+    toast.add({
       title: t(`identity.errors.${error}.title`),
       description: t(`identity.errors.${error}.description`),
-      variant: "error",
+      type: "error",
     });
   }
 

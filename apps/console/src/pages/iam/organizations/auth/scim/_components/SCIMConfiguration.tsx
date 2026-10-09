@@ -20,10 +20,10 @@
 
 import { ArrowsClockwiseIcon, CopyIcon, PlugsConnectedIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -80,7 +80,7 @@ export function SCIMConfiguration({
   onDeleted,
 }: SCIMConfigurationProps) {
   const { t, i18n } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organization = useFragment(fragment, organizationKey);
   const configuration = organization.scimConfiguration;
   const [token, setToken] = useState<string | null>(null);
@@ -118,16 +118,16 @@ export function SCIMConfiguration({
   async function copyToClipboard(text: string, description: string) {
     try {
       await navigator.clipboard.writeText(text);
-      toast({
+      toast.add({
         title: t("scimConfiguration.messages.copied"),
         description,
-        variant: "success",
+        type: "success",
       });
     } catch {
-      toast({
+      toast.add({
         title: t("scimConfiguration.errors.copy"),
         description,
-        variant: "error",
+        type: "error",
       });
     }
   }

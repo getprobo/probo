@@ -21,10 +21,10 @@
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { formatError, type GraphQLError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense } from "react";
@@ -55,7 +55,7 @@ export default function PasswordSignInPage() {
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const [signIn, isSigningIn]
     = useMutation<PasswordSignInPageMutation>(signInMutation);
@@ -94,13 +94,13 @@ export default function PasswordSignInPage() {
             return;
           }
 
-          toast({
+          toast.add({
             title: t("common.error"),
             description: formatError(
               t("passwordSignInPage.errors.login"),
               error,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -108,10 +108,10 @@ export default function PasswordSignInPage() {
         window.location.href = postAuthRedirectUrl;
       },
       onError: (e) => {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

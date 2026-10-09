@@ -37,8 +37,8 @@ import {
   TabItem,
   Tabs,
   Textarea,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -88,7 +88,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
       props.queryRef,
     );
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const updateProcessingActivitySchema = z.object({
     name: z.string().min(1, t("processingActivityDetailsPage.validation.nameRequired")),
@@ -284,19 +284,19 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         thirdPartyIds: formData.thirdPartyIds,
       });
 
-      toast({
+      toast.add({
         title: t("processingActivityDetailsPage.messages.success"),
         description: t("processingActivityDetailsPage.messages.activityUpdated"),
-        variant: "success",
+        type: "success",
       });
     } catch (error) {
-      toast({
+      toast.add({
         title: t("processingActivityDetailsPage.messages.error"),
         description: formatError(
           t("processingActivityDetailsPage.errors.updateActivity"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     }
   });
@@ -319,10 +319,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
             (formData.residualRisk as ProcessingActivityDPIAResidualRisk)
             || undefined,
         });
-        toast({
+        toast.add({
           title: t("processingActivityDetailsPage.messages.success"),
           description: t("processingActivityDetailsPage.messages.dpiaUpdated"),
-          variant: "success",
+          type: "success",
         });
       } else {
         // Create new DPIA
@@ -339,20 +339,20 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         });
         setDpiaDeleted(false);
         setShowDpiaForm(true);
-        toast({
+        toast.add({
           title: t("processingActivityDetailsPage.messages.success"),
           description: t("processingActivityDetailsPage.messages.dpiaCreated"),
-          variant: "success",
+          type: "success",
         });
       }
     } catch (error) {
-      toast({
+      toast.add({
         title: t("processingActivityDetailsPage.messages.error"),
         description: formatError(
           t("processingActivityDetailsPage.errors.saveDpia"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     } finally {
       setDpiaSubmitting(false);
@@ -373,10 +373,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
           localLawRisk: formData.localLawRisk || undefined,
           supplementaryMeasures: formData.supplementaryMeasures || undefined,
         });
-        toast({
+        toast.add({
           title: t("processingActivityDetailsPage.messages.success"),
           description: t("processingActivityDetailsPage.messages.tiaUpdated"),
-          variant: "success",
+          type: "success",
         });
       } else {
         // Create new TIA
@@ -390,20 +390,20 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         });
         setTiaDeleted(false);
         setShowTiaForm(true);
-        toast({
+        toast.add({
           title: t("processingActivityDetailsPage.messages.success"),
           description: t("processingActivityDetailsPage.messages.tiaCreated"),
-          variant: "success",
+          type: "success",
         });
       }
     } catch (error) {
-      toast({
+      toast.add({
         title: t("processingActivityDetailsPage.messages.error"),
         description: formatError(
           t("processingActivityDetailsPage.errors.saveTia"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     } finally {
       setTiaSubmitting(false);

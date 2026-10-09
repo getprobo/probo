@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { TrashIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
@@ -28,6 +27,7 @@ import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
 import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -68,7 +68,7 @@ export function AccessReviewSourceDeleteDialog({
   onOpenChange,
 }: AccessReviewSourceDeleteDialogProps) {
   const { t } = useTranslation();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const source = useFragment(accessReviewSourceDeleteDialogFragment, sourceKey);
   const [deleteAccessReviewSource, isDeleting]
     = useMutation<AccessReviewSourceDeleteDialogMutation>(

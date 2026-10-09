@@ -20,7 +20,6 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
@@ -28,6 +27,7 @@ import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Fragment, type ReactNode, useEffect, useRef, useState, useTransition } from "react";
@@ -205,7 +205,7 @@ export function TasksCard({ tasks, canReorder, refetch }: TasksCardProps) {
   const [, startTransition] = useTransition();
   const skipFirstFilterRefetch = useRef(true);
 
-  const { toast } = useToast();
+  const toast = useToast();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [previewOrder, setPreviewOrder] = useState<string[] | null>(null);
   const [dropTargetState, setDropTargetState] = useState<string | null>(null);
@@ -370,10 +370,10 @@ export function TasksCard({ tasks, canReorder, refetch }: TasksCardProps) {
       },
       onCompleted: (_, errors) => {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("tasksCard.error.title"),
             description: formatError(t("tasksCard.error.reorder"), errors),
-            variant: "error",
+            type: "error",
           });
         }
         if (refetch) {
@@ -393,10 +393,10 @@ export function TasksCard({ tasks, canReorder, refetch }: TasksCardProps) {
       onError: () => {
         droppedRef.current = false;
         resetDragState();
-        toast({
+        toast.add({
           title: t("tasksCard.error.title"),
           description: t("tasksCard.error.reorder"),
-          variant: "error",
+          type: "error",
         });
       },
     }).catch(() => {

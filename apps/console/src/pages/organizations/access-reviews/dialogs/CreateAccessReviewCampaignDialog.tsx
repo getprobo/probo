@@ -28,8 +28,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
@@ -91,7 +91,7 @@ export function CreateAccessReviewCampaignDialog({
   connectionId,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const ref = useDialogRef();
   const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
   const { register, handleSubmit, reset, formState } = useFormWithSchema(
@@ -131,33 +131,33 @@ export function CreateAccessReviewCampaignDialog({
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("createAccessReviewCampaignDialog.messages.error"),
             description: formatError(
               t("createAccessReviewCampaignDialog.errors.create"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("createAccessReviewCampaignDialog.messages.success"),
           description: t("createAccessReviewCampaignDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         reset();
         setSelectedSourceIds([]);
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createAccessReviewCampaignDialog.messages.error"),
           description: formatError(
             t("createAccessReviewCampaignDialog.errors.create"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -27,8 +27,8 @@ import {
   Td,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
@@ -66,7 +66,7 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
   const { t } = useTranslation();
   const service = useFragment(serviceRowFragment, props.serviceKey);
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
   const [deleteService] = useMutation<ThirdPartyServiceRowDeleteMutation>(
     deleteServiceMutation,
   );
@@ -83,25 +83,25 @@ export function ThirdPartyServiceRow(props: ThirdPartyServiceRowProps) {
             },
             onCompleted(_response, errors) {
               if (errors) {
-                toast({
+                toast.add({
                   title: t("thirdPartyServiceRow.messages.error"),
                   description: formatError(
                     t("thirdPartyServiceRow.errors.delete"),
                     errors,
                   ),
-                  variant: "error",
+                  type: "error",
                 });
               }
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("thirdPartyServiceRow.messages.error"),
                 description: formatError(
                   t("thirdPartyServiceRow.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },

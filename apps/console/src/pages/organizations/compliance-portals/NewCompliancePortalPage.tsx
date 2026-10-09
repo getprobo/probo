@@ -26,8 +26,8 @@ import {
   Field,
   Input,
   PageHeader,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -55,7 +55,7 @@ const createCompliancePortalMutation = graphql`
 
 export default function NewCompliancePortalPage() {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { toast } = useToast();
+  const toast = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
 
@@ -83,19 +83,19 @@ export default function NewCompliancePortalPage() {
         connections: [connectionId],
       },
       onCompleted(data) {
-        toast({
+        toast.add({
           title: t("newPortalPage.messages.successTitle"),
           description: t("newPortalPage.messages.created"),
-          variant: "success",
+          type: "success",
         });
         const portalId = data.createCompliancePortal.compliancePortalEdge.node.id;
         void navigate(`/organizations/${organizationId}/compliance-portals/${portalId}`);
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("newPortalPage.errors.title"),
           description: formatError(t("newPortalPage.errors.create"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

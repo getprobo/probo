@@ -7,8 +7,8 @@ import type { ReactNodeViewProps } from "@tiptap/react";
 import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
 import { useEffect, useId, useState } from "react";
 
-import { useToast } from "../Atoms/Toasts/Toasts";
 import { mermaidRenderErrorToast, renderMermaidDiagram } from "../lib/mermaid";
+import useToast from "../v2/Toaster/useToast";
 
 type MermaidMode = "code" | "preview";
 
@@ -25,7 +25,7 @@ function MermaidPreview({ chart }: { chart: string }) {
     svg: null,
     hasError: false,
   });
-  const { toast } = useToast();
+  const toast = useToast();
 
   const source = chart.trim();
   const svg = renderState.source === source ? renderState.svg : null;
@@ -55,7 +55,7 @@ function MermaidPreview({ chart }: { chart: string }) {
             svg: null,
             hasError: true,
           });
-          toast(mermaidRenderErrorToast);
+          toast.add(mermaidRenderErrorToast);
         }
       });
 

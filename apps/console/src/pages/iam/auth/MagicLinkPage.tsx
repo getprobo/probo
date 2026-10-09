@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type FormEvent, useState } from "react";
@@ -30,7 +30,7 @@ import { useSearchParams } from "react-router";
 
 export default function MagicLinkPage() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const token = searchParams.get("token")?.trim() ?? "";
@@ -42,10 +42,10 @@ export default function MagicLinkPage() {
     setIsSubmitting(true);
 
     const showContinueError = () => {
-      toast({
+      toast.add({
         title: t("common.error"),
         description: t("magicLinkPage.errors.continue"),
-        variant: "error",
+        type: "error",
       });
     };
 

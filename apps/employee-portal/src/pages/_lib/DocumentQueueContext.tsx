@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { formatError, type GraphQLError } from "@probo/helpers";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import {
   createContext,
   type ReactNode,
@@ -83,7 +83,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { organizationId, employeePortalId } = useEmployeePortalRoute();
   const { documentId } = useParams();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
   const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(null);
   const [advancing, setAdvancing] = useState(false);

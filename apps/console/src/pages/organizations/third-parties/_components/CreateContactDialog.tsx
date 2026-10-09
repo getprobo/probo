@@ -27,8 +27,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -101,7 +101,7 @@ export function CreateContactDialog({
       },
     },
   );
-  const { toast } = useToast();
+  const toast = useToast();
   const [createContact, isCreating] = useMutation<CreateContactDialogMutation>(
     createContactMutation,
   );
@@ -119,27 +119,27 @@ export function CreateContactDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("createThirdPartyContactDialog.messages.error"),
             description: formatError(t("createThirdPartyContactDialog.errors.create"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("createThirdPartyContactDialog.messages.success"),
           description: t("createThirdPartyContactDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         reset();
         onCreated?.();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createThirdPartyContactDialog.messages.error"),
           description: formatError(t("createThirdPartyContactDialog.errors.create"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

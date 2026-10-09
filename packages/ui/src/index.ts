@@ -117,8 +117,5 @@ export {
 } from "./Molecules/Table/SelectCell";
 export { EditableRow } from "./Molecules/Table/EditableRow";
 
-// Hooks
-export { Toasts, useToast } from "./Atoms/Toasts/Toasts";
-
 // Rich editor
 export { RichEditor } from "./RichEditor/RichEditor";

@@ -27,8 +27,8 @@ import {
   DialogFooter,
   IconPlusLarge,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, Suspense, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQueryLoader } from "react-relay";
@@ -79,7 +79,7 @@ export function CreateThirdPartyDialog({
   onCreated,
 }: CreateThirdPartyDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [createThirdParty] = useMutation<CreateThirdPartyDialogCreateMutation>(createThirdPartyMutation);
   const dialogRef = useDialogRef();
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,26 +105,26 @@ export function CreateThirdPartyDialog({
       },
       onCompleted(response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("createThirdPartyDialog.messages.error"),
             description: formatError(t("createThirdPartyDialog.errors.create"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("createThirdPartyDialog.messages.success"),
           description: t("createThirdPartyDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         onCreated?.(response.createThirdParty.thirdPartyEdge.node.id);
         dialogRef.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createThirdPartyDialog.messages.error"),
           description: formatError(t("createThirdPartyDialog.errors.create"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

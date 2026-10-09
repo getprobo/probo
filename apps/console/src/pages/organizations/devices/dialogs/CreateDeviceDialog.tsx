@@ -26,8 +26,8 @@ import {
   DialogContent,
   DialogFooter,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -68,7 +68,7 @@ export function CreateDeviceDialog({
   onCreated,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
   const [enrollment, setEnrollment] = useState<{
     enrollmentToken: string;
@@ -114,10 +114,10 @@ export function CreateDeviceDialog({
       },
       onCompleted(response, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("common.error"),
             description: errors[0].message,
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -126,20 +126,20 @@ export function CreateDeviceDialog({
           enrollmentToken: response.createDevice.enrollmentToken,
           serverUrl: response.createDevice.serverUrl,
         });
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("deviceEnrollment.messages.created"),
-          variant: "success",
+          type: "success",
         });
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: formatError(
             t("devices.errors.create"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

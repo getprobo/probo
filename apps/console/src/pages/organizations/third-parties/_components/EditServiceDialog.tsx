@@ -27,8 +27,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
@@ -64,7 +64,7 @@ const updateServiceMutation = graphql`
 
 export function EditServiceDialog({ serviceKey, onClose }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const service = useFragment(editServiceDialogFragment, serviceKey);
 
   const schema = z.object({
@@ -97,25 +97,25 @@ export function EditServiceDialog({ serviceKey, onClose }: Props) {
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("editThirdPartyServiceDialog.messages.error"),
             description: formatError(t("editThirdPartyServiceDialog.errors.update"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("editThirdPartyServiceDialog.messages.success"),
           description: t("editThirdPartyServiceDialog.messages.updated"),
-          variant: "success",
+          type: "success",
         });
         onClose();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("editThirdPartyServiceDialog.messages.error"),
           description: formatError(t("editThirdPartyServiceDialog.errors.update"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

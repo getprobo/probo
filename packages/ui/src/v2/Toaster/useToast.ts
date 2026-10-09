@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,18 +19,7 @@
 // SOFTWARE.
 
 import { Toast } from "@base-ui/react/toast";
-import { ConfirmDialog } from "@probo/ui";
-import { Toaster } from "@probo/ui/src/v2/Toaster/Toaster";
-import { RouterProvider } from "react-router";
 
-import { router } from "./routes";
-
-export function App() {
-  return (
-    <Toast.Provider>
-      <RouterProvider router={router} />
-      <Toaster />
-      <ConfirmDialog />
-    </Toast.Provider>
-  );
-}
+// The package entry re-exports this hook as a type only. The value lives on
+// the `Toast` namespace.
+export default Toast.useToastManager;

@@ -33,7 +33,6 @@ import { Link } from "react-router";
 
 import { Logo } from "../Atoms/Logo/Logo";
 import { Sidebar } from "../Atoms/Sidebar/Sidebar";
-import { Toasts } from "../Atoms/Toasts/Toasts";
 import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog";
 
 type Props = PropsWithChildren<{
@@ -98,7 +97,6 @@ export function Layout({
             </div>
           </main>
         </div>
-        <Toasts />
         <ConfirmDialog />
       </div>
     </LayoutContext>

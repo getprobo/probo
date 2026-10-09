@@ -41,8 +41,8 @@ import {
   Input,
   Option,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
@@ -112,7 +112,7 @@ export default function AuditDetailsPage(props: Props) {
   const [uploadAuditReport, isUploading] = useUploadAuditReport();
   const deleteAuditReport = useDeleteAuditReport();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const onSubmit = handleSubmit(async (formData) => {
     if (!auditEntry.id) return;
@@ -133,19 +133,19 @@ export default function AuditDetailsPage(props: Props) {
         state: formData.state,
       });
       reset(formData);
-      toast({
+      toast.add({
         title: t("auditDetailsPage.messages.success"),
         description: t("auditDetailsPage.messages.updated"),
-        variant: "success",
+        type: "success",
       });
     } catch (error) {
-      toast({
+      toast.add({
         title: t("auditDetailsPage.messages.error"),
         description: formatError(
           t("auditDetailsPage.errors.update"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     }
   });

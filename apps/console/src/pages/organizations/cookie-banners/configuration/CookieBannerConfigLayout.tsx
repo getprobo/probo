@@ -20,9 +20,9 @@
 
 import { CheckCircleIcon, CopyIcon, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Fragment, type ReactNode } from "react";
@@ -99,7 +99,7 @@ export function CookieBannerConfigLayout({
   queryRef,
 }: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
+  const toast = useToast();
   const {
     root,
     lead,
@@ -173,17 +173,17 @@ export function CookieBannerConfigLayout({
   function handleCopyId() {
     void navigator.clipboard.writeText(banner.id).then(
       () => {
-        toast({
+        toast.add({
           title: t("configLayout.messages.copiedTitle"),
           description: t("configLayout.messages.idCopied"),
-          variant: "success",
+          type: "success",
         });
       },
       () => {
-        toast({
+        toast.add({
           title: t("configLayout.errors.title"),
           description: t("configLayout.errors.copy"),
-          variant: "error",
+          type: "error",
         });
       },
     );

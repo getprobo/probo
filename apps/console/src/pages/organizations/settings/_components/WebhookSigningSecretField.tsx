@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -55,7 +55,7 @@ export function WebhookSigningSecretField({
   webhookSubscriptionId,
 }: WebhookSigningSecretFieldProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const environment = useRelayEnvironment();
   const { root, header, value, actions } = webhookSigningSecretField();
   const [secret, setSecret] = useState<string | null>(null);
@@ -80,10 +80,10 @@ export function WebhookSigningSecretField({
       setSecret(next);
       return next;
     } catch {
-      toast({
+      toast.add({
         title: t("webhooksSettingsPage.errorTitle"),
         description: t("webhooksSettingsPage.errors.loadSigningSecret"),
-        variant: "error",
+        type: "error",
       });
       return null;
     } finally {
@@ -111,16 +111,16 @@ export function WebhookSigningSecretField({
 
     try {
       await navigator.clipboard.writeText(next);
-      toast({
+      toast.add({
         title: t("webhooksSettingsPage.copiedToClipboard"),
         description: t("webhooksSettingsPage.fields.signingSecret"),
-        variant: "success",
+        type: "success",
       });
     } catch {
-      toast({
+      toast.add({
         title: t("webhooksSettingsPage.errorTitle"),
         description: t("webhooksSettingsPage.errors.copySigningSecret"),
-        variant: "error",
+        type: "error",
       });
     }
   }

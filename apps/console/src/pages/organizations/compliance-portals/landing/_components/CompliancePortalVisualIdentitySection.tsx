@@ -17,8 +17,8 @@ import {
   FileButton,
   IconTrashCan,
   Label,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ChangeEventHandler, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -66,7 +66,7 @@ export interface CompliancePortalVisualIdentitySectionProps {
 
 export function CompliancePortalVisualIdentitySection(props: CompliancePortalVisualIdentitySectionProps) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { toast } = useToast();
+  const toast = useToast();
 
   const compliancePortal = useFragment(compliancePortalFragment, props.compliancePortalRef);
   const compliancePortalId = compliancePortal.id;
@@ -94,10 +94,10 @@ export function CompliancePortalVisualIdentitySection(props: CompliancePortalVis
 
   const isTooLarge = (file: File) => {
     if (file.size > maxLogoBytes) {
-      toast({
+      toast.add({
         title: t("brandPage.errors.fileTooLarge.title"),
         description: t("brandPage.errors.fileTooLarge.description"),
-        variant: "error",
+        type: "error",
       });
       return true;
     }

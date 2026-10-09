@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { useTranslation } from "react-i18next";
 
@@ -33,7 +33,7 @@ interface ConsentRecordCopyValueProps {
 
 export function ConsentRecordCopyValue({ label, value }: ConsentRecordCopyValueProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
+  const toast = useToast();
   const { copyRow, value: valueClass } = consentRecordPage();
   const text = value == null || value === "" ? null : value;
 
@@ -43,16 +43,16 @@ export function ConsentRecordCopyValue({ label, value }: ConsentRecordCopyValueP
     }
     try {
       await navigator.clipboard.writeText(text);
-      toast({
+      toast.add({
         title: t("consentRecordPage.messages.copiedTitle"),
         description: label,
-        variant: "success",
+        type: "success",
       });
     } catch {
-      toast({
+      toast.add({
         title: t("consentRecordPage.errors.copyTitle"),
         description: t("consentRecordPage.errors.copy"),
-        variant: "error",
+        type: "error",
       });
     }
   }

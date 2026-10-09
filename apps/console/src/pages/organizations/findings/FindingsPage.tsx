@@ -44,9 +44,9 @@ import {
   Thead,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -441,7 +441,7 @@ function FindingRow(props: FindingRowProps) {
   const organizationId = useOrganizationId();
   const { t, i18n } = useTranslation();
   const [deleteFinding] = useMutation<FindingsPageDeleteMutation>(deleteFindingMutation);
-  const { toast } = useToast();
+  const toast = useToast();
   const confirm = useConfirm();
 
   const handleDelete = () => {
@@ -457,31 +457,31 @@ function FindingRow(props: FindingRowProps) {
             },
             onCompleted(_, error) {
               if (error) {
-                toast({
+                toast.add({
                   title: t("findingsPage.errors.title"),
                   description: formatError(
                     t("findingsPage.errors.delete"),
                     error,
                   ),
-                  variant: "error",
+                  type: "error",
                 });
               } else {
-                toast({
+                toast.add({
                   title: t("findingsPage.messages.successTitle"),
                   description: t("findingsPage.messages.deleted"),
-                  variant: "success",
+                  type: "success",
                 });
               }
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("findingsPage.errors.title"),
                 description: formatError(
                   t("findingsPage.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },

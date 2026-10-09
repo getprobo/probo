@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { graphql } from "react-relay";
 
 import type { useFinishWorkloadIdentityCreateMutation } from "#/__generated__/core/useFinishWorkloadIdentityCreateMutation.graphql";
@@ -51,7 +51,7 @@ const deleteConnectorMutation = graphql`
 
 export function useFinishWorkloadIdentity() {
   const organizationId = useOrganizationId();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const [createConnector] = useMutation<useFinishWorkloadIdentityCreateMutation>(
     createWorkloadIdentityConnectorMutation,
   );

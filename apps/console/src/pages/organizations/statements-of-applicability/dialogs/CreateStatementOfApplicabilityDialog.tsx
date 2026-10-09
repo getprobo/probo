@@ -27,8 +27,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -74,7 +74,7 @@ export function CreateStatementOfApplicabilityDialog({
   connectionId,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const { register, handleSubmit, reset } = useFormWithSchema(
@@ -100,10 +100,10 @@ export function CreateStatementOfApplicabilityDialog({
         connections: [connectionId],
       },
       onCompleted(response) {
-        toast({
+        toast.add({
           title: t("createStatementOfApplicabilityDialog.messages.success"),
           description: t("createStatementOfApplicabilityDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         reset();
         ref.current?.close();
@@ -115,13 +115,13 @@ export function CreateStatementOfApplicabilityDialog({
         );
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createStatementOfApplicabilityDialog.messages.error"),
           description: formatError(
             t("createStatementOfApplicabilityDialog.errors.create"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

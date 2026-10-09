@@ -29,8 +29,8 @@ import {
   Tr,
   useConfirm,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
@@ -83,7 +83,7 @@ export function RiskRow(props: RiskRowProps) {
   const risk = useFragment(riskRowFragment, props.riskKey);
   const [deleteRisk] = useMutation<RiskRowDeleteMutation>(deleteRiskMutation);
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
   const formDialogRef = useDialogRef();
 
   const onDelete = () => {
@@ -99,13 +99,13 @@ export function RiskRow(props: RiskRowProps) {
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("riskRow.messages.error"),
                 description: formatError(
                   t("riskRow.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },

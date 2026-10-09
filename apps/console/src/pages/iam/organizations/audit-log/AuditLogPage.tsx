@@ -40,8 +40,8 @@ import {
   Thead,
   Tr,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -210,7 +210,7 @@ function ExportAuditLogDialog({
   organizationId: string;
 }) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -229,27 +229,27 @@ function ExportAuditLogDialog({
       },
       onCompleted: (_response, errors) => {
         if (errors) {
-          toast({
+          toast.add({
             title: t("auditLogPage.export.errors.title"),
             description: formatError(t("auditLogPage.export.errors.request"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("auditLogPage.export.messages.successTitle"),
           description: t("auditLogPage.export.messages.success"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         setFromDate("");
         setToDate("");
       },
       onError: (error) => {
-        toast({
+        toast.add({
           title: t("auditLogPage.export.errors.title"),
           description: formatError(t("auditLogPage.export.errors.request"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

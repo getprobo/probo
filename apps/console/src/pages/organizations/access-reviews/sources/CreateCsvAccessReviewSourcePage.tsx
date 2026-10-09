@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -27,6 +26,7 @@ import { Field } from "@probo/ui/src/v2/form/Field";
 import { Textarea } from "@probo/ui/src/v2/form/Textarea";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type FormEvent } from "react";
@@ -66,7 +66,7 @@ export function CreateCsvAccessReviewSourcePage({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const { root, back, intro, form, actions } = csvSourcePage();
   const sourcesPath = `/organizations/${organizationId}/access-reviews/sources`;

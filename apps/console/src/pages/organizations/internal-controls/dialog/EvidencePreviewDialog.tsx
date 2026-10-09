@@ -27,8 +27,8 @@ import {
   IconWarning,
   Spinner,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLazyLoadQuery } from "react-relay";
@@ -97,7 +97,7 @@ function EvidencePreviewContent({
     { fetchPolicy: "network-only" },
   ).node;
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const mimeType
     = evidence.file?.mimeType?.split(";")[0]?.trim().toLowerCase() ?? "";
   const fileName = evidence.file?.fileName.toLowerCase() ?? "";
@@ -132,16 +132,16 @@ function EvidencePreviewContent({
           if (e.name === "AbortError") {
             return;
           }
-          toast({
+          toast.add({
             title: t("evidencePreviewDialog.messages.error"),
             description: t("evidencePreviewDialog.errors.extractUrl"),
-            variant: "error",
+            type: "error",
           });
         } else {
-          toast({
+          toast.add({
             title: t("evidencePreviewDialog.messages.error"),
             description: t("evidencePreviewDialog.errors.extractUrl"),
-            variant: "error",
+            type: "error",
           });
         }
       })

@@ -28,8 +28,8 @@ import {
   Option,
   Select,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
@@ -111,7 +111,7 @@ export function AddCampaignSourceDialog({
   existingCampaignSourceIds,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const ref = useDialogRef();
   const [selectedSourceId, setSelectedSourceId] = useState<string>("");
 
@@ -130,32 +130,32 @@ export function AddCampaignSourceDialog({
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("addCampaignSourceDialog.messages.error"),
             description: formatError(
               t("addCampaignSourceDialog.errors.add"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("addCampaignSourceDialog.messages.success"),
           description: t("addCampaignSourceDialog.messages.added"),
-          variant: "success",
+          type: "success",
         });
         setSelectedSourceId("");
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("addCampaignSourceDialog.messages.error"),
           description: formatError(
             t("addCampaignSourceDialog.errors.add"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react";
-import { Button, MermaidDiagram, useToast } from "@probo/ui";
+import { Button, MermaidDiagram } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchQuery, graphql, useFragment, useRelayEnvironment } from "react-relay";
@@ -153,15 +154,15 @@ interface CopyChartButtonProps {
 
 function CopyChartButton({ chart }: CopyChartButtonProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
 
   const onClick = () => {
     const onFailure = () => {
-      toast({
+      toast.add({
         title: t("diagramChart.errorTitle"),
         description: t("diagramChart.copyError"),
-        variant: "error",
+        type: "error",
       });
     };
 

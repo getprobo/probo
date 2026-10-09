@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 
 export type CopyValue = (
@@ -28,7 +28,7 @@ export type CopyValue = (
 ) => void;
 
 export function useCopyValue(): CopyValue {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
 
   return (value, message, failure) => {

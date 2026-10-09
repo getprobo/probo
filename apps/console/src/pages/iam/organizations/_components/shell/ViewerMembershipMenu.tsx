@@ -25,7 +25,6 @@ import {
   SignOutIcon,
 } from "@phosphor-icons/react";
 import { formatError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
@@ -34,6 +33,7 @@ import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { EditableAvatarButton } from "@probo/ui/src/v2/EditableAvatarButton/EditableAvatarButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -91,7 +91,7 @@ export interface ViewerMembershipMenuProps {
 
 export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const organization = useFragment(viewerMembershipMenuFragment, organizationKey);
   const {
@@ -113,10 +113,10 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
       variables: {},
       onCompleted: (_, errors) => {
         if (errors) {
-          toast({
+          toast.add({
             title: t("viewerMembershipDropdown.errors.requestFailed"),
             description: formatError(t("viewerMembershipDropdown.errors.cannotSignOut"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -125,10 +125,10 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
         window.location.href = "/auth/login";
       },
       onError: (error) => {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: error.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -19,7 +19,7 @@ import { mermaidRenderConfig } from "./mermaidConfig";
 export const mermaidRenderErrorToast = {
   title: "Unable to render Mermaid diagram",
   description: "Check the diagram syntax and try again.",
-  variant: "error",
+  type: "error",
 } as const;
 
 export async function renderMermaidDiagram(id: string, source: string) {

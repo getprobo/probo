@@ -20,7 +20,6 @@
 
 import { CaretDownIcon, CopyIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
-import { useToast } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Collapsible } from "@probo/ui/src/v2/Collapsible/Collapsible";
@@ -30,6 +29,7 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { List } from "@probo/ui/src/v2/List/List";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { Pagination } from "@probo/ui/src/v2/Pagination/Pagination";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -180,7 +180,7 @@ function DeliveryJsonBlock({
   value: string;
 }) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const {
     block,
     blockHeading,
@@ -192,16 +192,16 @@ function DeliveryJsonBlock({
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(value);
-      toast({
+      toast.add({
         title: t("webhooksSettingsPage.copiedToClipboard"),
         description: label,
-        variant: "success",
+        type: "success",
       });
     } catch {
-      toast({
+      toast.add({
         title: t("webhooksSettingsPage.errorTitle"),
         description: copyError,
-        variant: "error",
+        type: "error",
       });
     }
   }

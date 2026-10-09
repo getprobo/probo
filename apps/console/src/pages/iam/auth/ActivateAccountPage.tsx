@@ -20,9 +20,9 @@
 
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useRef } from "react";
@@ -47,7 +47,7 @@ const activateAccountMutation = graphql`
 
 export default function ActivateAccountPage() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const submittedRef = useRef(false);
@@ -64,10 +64,10 @@ export default function ActivateAccountPage() {
     }
 
     if (token === "") {
-      toast({
+      toast.add({
         title: t("activateAccountPage.errors.activationFailed"),
         description: t("activateAccountPage.errors.missingToken"),
-        variant: "error",
+        type: "error",
       });
       return;
     }
@@ -91,19 +91,19 @@ export default function ActivateAccountPage() {
           }
 
           submittedRef.current = false;
-          toast({
+          toast.add({
             title: t("activateAccountPage.errors.activationFailed"),
             description: formatError(t("activateAccountPage.errors.activationFailed"), errors),
-            variant: "error",
+            type: "error",
           });
 
           return;
         }
 
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("activateAccountPage.messages.activated"),
-          variant: "success",
+          type: "success",
         });
 
         const { activateAccount } = response;
@@ -143,10 +143,10 @@ export default function ActivateAccountPage() {
       },
       onError: (e) => {
         submittedRef.current = false;
-        toast({
+        toast.add({
           title: t("activateAccountPage.errors.activationFailed"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

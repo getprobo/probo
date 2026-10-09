@@ -29,8 +29,8 @@ import {
   ImpactOptions,
   SentitivityOptions,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -85,7 +85,7 @@ export function CreateRiskAssessmentDialog({
         businessImpact: "LOW",
       },
     });
-  const { toast } = useToast();
+  const toast = useToast();
   const [createRiskAssessment, isCreating]
     = useMutation<CreateRiskAssessmentDialogMutation>(
       createRiskAssessmentMutation,
@@ -106,32 +106,32 @@ export function CreateRiskAssessmentDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("createThirdPartyRiskAssessmentDialog.messages.error"),
             description: formatError(
               t("createThirdPartyRiskAssessmentDialog.errors.create"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("createThirdPartyRiskAssessmentDialog.messages.success"),
           description: t("createThirdPartyRiskAssessmentDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         reset();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createThirdPartyRiskAssessmentDialog.messages.error"),
           description: formatError(
             t("createThirdPartyRiskAssessmentDialog.errors.create"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

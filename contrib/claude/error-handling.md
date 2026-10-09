@@ -124,7 +124,7 @@ Boundaries will not catch a rejected promise in a submit handler. Wrap the risky
 // Good — async event handler guards itself; the boundary above can't help here
 function PublishButton() {
   const { t } = useTranslation();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const [isPublishing, setIsPublishing] = useState(false);
 
   async function onPublish() {

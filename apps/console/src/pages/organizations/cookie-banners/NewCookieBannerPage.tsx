@@ -21,11 +21,11 @@
 import { Form } from "@base-ui/react/form";
 import { formatError, toFieldErrors } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -57,7 +57,7 @@ const createCookieBannerMutation = graphql`
 
 export default function NewCookieBannerPage() {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
+  const toast = useToast();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const { card, fields, pair, actions } = cookieBannerSettingsSection();
@@ -114,18 +114,18 @@ export default function NewCookieBannerPage() {
           return;
         }
         if (payloadErrors != null && payloadErrors.length > 0) {
-          toast({
+          toast.add({
             title: t("newCookieBannerPage.errors.title"),
             description: formatError(createError, payloadErrors),
-            variant: "error",
+            type: "error",
           });
         }
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("newCookieBannerPage.errors.title"),
           description: formatError(createError, error),
-          variant: "error",
+          type: "error",
         });
       },
     }).then((response) => {

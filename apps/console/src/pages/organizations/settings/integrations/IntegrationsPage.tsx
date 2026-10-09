@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
@@ -48,7 +48,7 @@ interface IntegrationsPageProps {
 
 export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const { toast } = useToast();
+  const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const data = usePreloadedQuery<IntegrationsPageQuery>(integrationsPageQuery, queryRef);
   const { organization } = data;
@@ -61,10 +61,10 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
   useEffect(() => {
     if (callbackConnectorId) {
       if (callbackError) {
-        toast({
+        toast.add({
           title: t("listPage.messages.error"),
           description: callbackError,
-          variant: "error",
+          type: "error",
         });
       }
 
@@ -78,10 +78,10 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
     }
 
     if (callbackError) {
-      toast({
+      toast.add({
         title: t("listPage.messages.error"),
         description: callbackError,
-        variant: "error",
+        type: "error",
       });
       setSearchParams((params) => {
         params.delete("error");

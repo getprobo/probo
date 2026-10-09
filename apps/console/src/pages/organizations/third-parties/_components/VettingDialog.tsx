@@ -26,8 +26,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -76,7 +76,7 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
   const schema = z.object({
     url: z.string().url(t("vettingDialog.validation.url")),
   });
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
   const { register, handleSubmit, reset, formState } = useFormWithSchema(
     schema,
@@ -98,32 +98,32 @@ export function VettingDialog({ thirdPartyId, websiteUrl, children }: VettingDia
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("vettingDialog.messages.error"),
             description: formatError(
               t("vettingDialog.errors.start"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("vettingDialog.messages.success"),
           description: t("vettingDialog.messages.started"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         reset();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("vettingDialog.messages.error"),
           description: formatError(
             t("vettingDialog.errors.start"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

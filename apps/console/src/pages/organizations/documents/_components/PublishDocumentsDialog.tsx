@@ -28,8 +28,8 @@ import {
   IconWarning,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -67,7 +67,7 @@ export function PublishDocumentsDialog({
   onSave,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
   const minorRef = useRef(false);
 
@@ -101,28 +101,28 @@ export function PublishDocumentsDialog({
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("publishDocumentsDialog.errors.title"),
             description: formatError(t("publishDocumentsDialog.errors.publish"), [...errors]),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("publishDocumentsDialog.messages.successTitle"),
           description: t("publishDocumentsDialog.messages.published", {
             count: documentIds.length,
           }),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         onSave();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("publishDocumentsDialog.errors.title"),
           description: error.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

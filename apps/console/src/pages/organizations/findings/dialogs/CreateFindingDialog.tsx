@@ -35,8 +35,8 @@ import {
   Select,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, useEffect } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -129,7 +129,7 @@ export function CreateFindingDialog({
   connectionIds,
 }: CreateFindingDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
   const [createFinding] = useMutation<CreateFindingDialogMutation>(createFindingMutation);
   const statusOptions = ["OPEN", "IN_PROGRESS", "CLOSED", "RISK_ACCEPTED", "MITIGATED", "FALSE_POSITIVE"] as const;
@@ -194,19 +194,19 @@ export function CreateFindingDialog({
         connections: connectionIds ?? [],
       },
       onCompleted() {
-        toast({
+        toast.add({
           title: t("createFindingDialog.messages.successTitle"),
           description: t("createFindingDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         reset();
         dialogRef.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createFindingDialog.errors.title"),
           description: formatError(t("createFindingDialog.errors.create"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -26,8 +26,8 @@ import {
   DialogContent,
   DialogFooter,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -78,7 +78,7 @@ export function ReassignDeviceDialog({
   ref: refProps,
 }: ReassignDeviceDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
   const ref = refProps ?? dialogRef;
 
@@ -120,30 +120,30 @@ export function ReassignDeviceDialog({
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("common.error"),
             description: errors[0].message,
-            variant: "error",
+            type: "error",
           });
           return;
         }
 
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("devices.messages.ownerUpdated"),
-          variant: "success",
+          type: "success",
         });
         handleClose();
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: formatError(
             t("devices.errors.reassign"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

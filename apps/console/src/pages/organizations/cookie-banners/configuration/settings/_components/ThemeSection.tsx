@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useMemo, useState } from "react";
@@ -91,7 +91,7 @@ interface ThemeSectionProps {
 export function ThemeSection({ cookieBannerKey }: ThemeSectionProps) {
   const cookieBanner = useFragment(themeSectionFragment, cookieBannerKey);
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
+  const toast = useToast();
   const {
     root,
     intro,
@@ -128,17 +128,17 @@ export function ThemeSection({ cookieBannerKey }: ThemeSectionProps) {
   function handleCopyCSS() {
     void navigator.clipboard.writeText(cssSnippet).then(
       () => {
-        toast({
+        toast.add({
           title: t("themeSection.messages.copiedTitle"),
           description: t("themeSection.messages.copied"),
-          variant: "success",
+          type: "success",
         });
       },
       () => {
-        toast({
+        toast.add({
           title: t("themeSection.errors.title"),
           description: t("themeSection.errors.copy"),
-          variant: "error",
+          type: "error",
         });
       },
     );

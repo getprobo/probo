@@ -20,8 +20,8 @@
 
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import {
@@ -60,7 +60,7 @@ export default function DeviceActivationPage(props: {
   queryRef: PreloadedQuery<DeviceActivationPageQuery>;
 }) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -134,13 +134,13 @@ export default function DeviceActivationPage(props: {
         variables: { input: { userCode } },
         onCompleted: (response, errors) => {
           if (errors) {
-            toast({
+            toast.add({
               title: t("deviceActivationPage.errors.authorizationFailed"),
               description: formatError(
                 t("deviceActivationPage.errors.invalidCode"),
                 errors,
               ),
-              variant: "error",
+              type: "error",
             });
             return;
           }
@@ -155,10 +155,10 @@ export default function DeviceActivationPage(props: {
           }
         },
         onError: (err) => {
-          toast({
+          toast.add({
             title: t("common.error"),
             description: err.message || t("deviceActivationPage.errors.generic"),
-            variant: "error",
+            type: "error",
           });
         },
       });

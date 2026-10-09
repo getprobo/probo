@@ -38,8 +38,8 @@ import {
   Option,
   Select,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense } from "react";
 import { type Control, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -87,7 +87,7 @@ export function CreateAuditDialog({
   onClose,
 }: Props) {
   const { i18n, t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const schema = z.object({
     frameworkId: z.string().min(1, t("createAuditDialog.validation.frameworkRequired")),
     name: z.string().optional(),
@@ -137,21 +137,21 @@ export function CreateAuditDialog({
       ref.current?.close();
       reset();
       onClose?.();
-      toast({
+      toast.add({
         title: t("createAuditDialog.messages.success"),
         description: file
           ? t("createAuditDialog.messages.createdWithReport")
           : t("createAuditDialog.messages.created"),
-        variant: "success",
+        type: "success",
       });
     } catch (error) {
-      toast({
+      toast.add({
         title: t("createAuditDialog.messages.error"),
         description: formatError(
           t("createAuditDialog.errors.create"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     }
   };

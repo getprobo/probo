@@ -31,8 +31,8 @@ import {
   Select,
   Textarea,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -202,7 +202,7 @@ export function BusinessFunctionDetailsPage({
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const [updateBusinessFunction]
     = useMutation<BusinessFunctionDetailsPageUpdateMutation>(
@@ -252,10 +252,10 @@ export function BusinessFunctionDetailsPage({
             connections,
           },
         });
-        toast({
+        toast.add({
           title: t("businessFunctionDetailsPage.messages.success"),
           description: t("businessFunctionDetailsPage.messages.deleted"),
-          variant: "success",
+          type: "success",
         });
         void navigate(`/organizations/${organizationId}/registries/business-functions`);
       },
@@ -310,10 +310,10 @@ export function BusinessFunctionDetailsPage({
       },
     });
     reset(formData);
-    toast({
+    toast.add({
       title: t("businessFunctionDetailsPage.messages.success"),
       description: t("businessFunctionDetailsPage.messages.updated"),
-      variant: "success",
+      type: "success",
     });
   });
 

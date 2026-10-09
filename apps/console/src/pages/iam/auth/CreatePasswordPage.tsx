@@ -22,10 +22,10 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -45,7 +45,7 @@ const createPasswordMutation = graphql`
 
 export default function CreatePasswordPage() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -56,10 +56,10 @@ export default function CreatePasswordPage() {
 
   const onSubmit = (password: string) => {
     if (token === "") {
-      toast({
+      toast.add({
         title: t("createPasswordPage.errors.creationFailed"),
         description: t("createPasswordPage.errors.missingToken"),
-        variant: "error",
+        type: "error",
       });
       return;
     }
@@ -73,18 +73,18 @@ export default function CreatePasswordPage() {
       },
       onCompleted: (_, e) => {
         if (e) {
-          toast({
+          toast.add({
             title: t("createPasswordPage.errors.creationFailed"),
             description: formatError(t("createPasswordPage.errors.creationFailed"), e),
-            variant: "error",
+            type: "error",
           });
           return;
         }
 
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("createPasswordPage.messages.created"),
-          variant: "success",
+          type: "success",
         });
 
         searchParams.delete("token");
@@ -96,10 +96,10 @@ export default function CreatePasswordPage() {
         });
       },
       onError: (e) => {
-        toast({
+        toast.add({
           title: t("createPasswordPage.errors.creationFailed"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -28,8 +28,8 @@ import {
   IconUpload,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type Ref, useImperativeHandle, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -111,7 +111,7 @@ export function PublishDialog({
 }: PublishDialogProps) {
   const document = useFragment(documentFragment, documentFragmentRef);
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
 
@@ -165,26 +165,26 @@ export function PublishDialog({
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("publishDialog.errors.title"),
             description: formatError(t("publishDialog.errors.publish"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("publishDialog.messages.successTitle"),
           description: !minor && data.approverIds.length > 0
             ? t("publishDialog.messages.approvalRequested")
             : t("publishDialog.messages.published"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         reset();
         onSuccess();
       },
       onError(error) {
-        toast({ title: t("publishDialog.errors.title"), description: error.message, variant: "error" });
+        toast.add({ title: t("publishDialog.errors.title"), description: error.message, type: "error" });
       },
     });
   };

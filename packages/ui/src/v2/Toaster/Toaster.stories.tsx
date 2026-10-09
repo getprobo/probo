@@ -23,6 +23,7 @@ import { Toast } from "@base-ui/react/toast";
 import { Button } from "../Button/Button";
 
 import { Toaster } from "./Toaster";
+import useToast from "./useToast";
 
 export default {
   title: "v2/Toaster",
@@ -48,7 +49,7 @@ const descriptions: Record<(typeof types)[number], string> = {
 };
 
 function ToasterDemo({ withDescription = false }: { withDescription?: boolean }) {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
 
   return (
     <div className="flex flex-wrap gap-2">

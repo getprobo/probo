@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql } from "react-relay";
@@ -57,7 +55,6 @@ export function NewSAMLConfigurationForm({
   const organizationId = useOrganizationId();
 
   const { t } = useTranslation();
-  const { toast } = useToast();
 
   const [create, isCreating]
     = useMutationWithToasts<NewSAMLConfigurationForm_createMutation>(
@@ -91,14 +88,6 @@ export function NewSAMLConfigurationForm({
         },
         onCompleted: (response, e) => {
           if (e) {
-            toast({
-              variant: "error",
-              title: t("common.error"),
-              description: formatError(
-                t("newSamlConfigurationForm.errors.create"),
-                e,
-              ),
-            });
             return;
           }
 
@@ -110,7 +99,7 @@ export function NewSAMLConfigurationForm({
         },
       });
     },
-    [organizationId, create, onCreate, t, toast],
+    [organizationId, create, onCreate],
   );
 
   return (

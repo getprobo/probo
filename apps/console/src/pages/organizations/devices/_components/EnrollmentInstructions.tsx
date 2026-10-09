@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, useToast } from "@probo/ui";
+import { Button, Card } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Trans, useTranslation } from "react-i18next";
 
 const AGENT_RELEASES_URL
@@ -123,22 +124,22 @@ ${WINDOWS_DOWNLOAD_COMMAND}`;
 
 function CopyableCodeBlock({ code }: { code: string }) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(
       () => {
-        toast({
+        toast.add({
           title: t("common.messages.copied"),
           description: t("common.messages.copiedToClipboard"),
-          variant: "success",
+          type: "success",
         });
       },
       () => {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: t("deviceEnrollment.errors.copyToClipboard"),
-          variant: "error",
+          type: "error",
         });
       },
     );

@@ -20,10 +20,10 @@
 
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Suspense, useEffect, useState } from "react";
@@ -132,7 +132,7 @@ function NavigateToSSOLoginURL(props: {
   const { queryRef, loginSearch } = props;
 
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
@@ -144,13 +144,13 @@ function NavigateToSSOLoginURL(props: {
 
   useEffect(() => {
     if (!ssoLoginURL.ok) {
-      toast({
+      toast.add({
         title: t("common.error"),
         description:
           ssoLoginURL.errors[0] instanceof Error
             ? ssoLoginURL.errors[0].message
             : t("ssoSignInPage.errors.unavailable"),
-        variant: "error",
+        type: "error",
       });
 
       void navigate({ pathname: "/auth/login", search: loginSearch });
@@ -158,9 +158,9 @@ function NavigateToSSOLoginURL(props: {
     }
 
     if (!ssoLoginURL.value) {
-      toast({
+      toast.add({
         title: t("common.error"), description: t("ssoSignInPage.errors.unavailable"),
-        variant: "error",
+        type: "error",
       });
       return;
     }

@@ -30,8 +30,8 @@ import {
   Label,
   PropertyRow,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -78,7 +78,7 @@ const createDocumentMutation = graphql`
 export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDialogProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const { toast } = useToast();
+  const toast = useToast();
   const documentSchema = z.object({
     title: z.string().min(1, t("createDocumentDialog.validation.titleRequired")),
     documentType: z.enum(["OTHER", "GOVERNANCE", "POLICY", "PROCEDURE", "PLAN", "REGISTER", "RECORD", "REPORT", "TEMPLATE"]),
@@ -111,26 +111,26 @@ export function CreateDocumentDialog({ trigger, connection }: CreateDocumentDial
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("createDocumentDialog.errors.title"),
             description: formatError(t("createDocumentDialog.errors.create"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("createDocumentDialog.messages.successTitle"),
           description: t("createDocumentDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         reset();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createDocumentDialog.errors.title"),
           description: error.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { Badge, Checkbox, useToast } from "@probo/ui";
+import { Badge, Checkbox } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import * as Popover from "@radix-ui/react-popover";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -56,7 +57,7 @@ type Props = {
 
 export function EntryFlagSelect({ entryKey }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const entry = useFragment(entryFlagSelectFragment, entryKey);
   const currentFlags = entry.flags;
   const [open, setOpen] = useState(false);
@@ -94,24 +95,24 @@ export function EntryFlagSelect({ entryKey }: Props) {
           },
           onCompleted(_, errors) {
             if (errors?.length) {
-              toast({
+              toast.add({
                 title: t("entryFlagSelect.messages.error"),
                 description: formatError(
                   t("entryFlagSelect.errors.update"),
                   errors,
                 ),
-                variant: "error",
+                type: "error",
               });
             }
           },
           onError(error) {
-            toast({
+            toast.add({
               title: t("entryFlagSelect.messages.error"),
               description: formatError(
                 t("entryFlagSelect.errors.update"),
                 error,
               ),
-              variant: "error",
+              type: "error",
             });
           },
         });

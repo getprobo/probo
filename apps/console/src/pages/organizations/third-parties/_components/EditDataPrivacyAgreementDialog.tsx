@@ -28,8 +28,8 @@ import {
   Input,
   Spinner,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
@@ -97,7 +97,7 @@ export function EditDataPrivacyAgreementDialog({
     },
   });
 
-  const { toast } = useToast();
+  const toast = useToast();
   const [updateAgreement, isUpdating]
     = useMutation<EditDataPrivacyAgreementDialogMutation>(
       updateDataPrivacyAgreementMutation,
@@ -121,32 +121,32 @@ export function EditDataPrivacyAgreementDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("editDataPrivacyAgreementDialog.messages.error"),
             description: formatError(
               t("editDataPrivacyAgreementDialog.errors.update"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("editDataPrivacyAgreementDialog.messages.success"),
           description: t("editDataPrivacyAgreementDialog.messages.updated"),
-          variant: "success",
+          type: "success",
         });
         onSuccess?.();
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("editDataPrivacyAgreementDialog.messages.error"),
           description: formatError(
             t("editDataPrivacyAgreementDialog.errors.update"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

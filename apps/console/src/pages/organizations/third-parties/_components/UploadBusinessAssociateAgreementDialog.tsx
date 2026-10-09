@@ -29,8 +29,8 @@ import {
   Input,
   Spinner,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
@@ -94,7 +94,7 @@ export function UploadBusinessAssociateAgreementDialog({
     },
   });
 
-  const { toast } = useToast();
+  const toast = useToast();
   const [uploadAgreement, isUploading]
     = useMutation<UploadBusinessAssociateAgreementDialogMutation>(
       uploadBusinessAssociateAgreementMutation,
@@ -135,20 +135,20 @@ export function UploadBusinessAssociateAgreementDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("uploadBusinessAssociateAgreementDialog.messages.error"),
             description: formatError(
               t("uploadBusinessAssociateAgreementDialog.errors.upload"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("uploadBusinessAssociateAgreementDialog.messages.success"),
           description: t("uploadBusinessAssociateAgreementDialog.messages.uploaded"),
-          variant: "success",
+          type: "success",
         });
         reset();
         setUploadedFile(null);
@@ -156,13 +156,13 @@ export function UploadBusinessAssociateAgreementDialog({
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("uploadBusinessAssociateAgreementDialog.messages.error"),
           description: formatError(
             t("uploadBusinessAssociateAgreementDialog.errors.upload"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

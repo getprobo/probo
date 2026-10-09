@@ -22,10 +22,10 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { formatError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -45,7 +45,7 @@ const resetPasswordMutation = graphql`
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token")?.trim() ?? "";
@@ -58,10 +58,10 @@ export default function ResetPasswordPage() {
 
   const onSubmit = (password: string) => {
     if (token === "") {
-      toast({
+      toast.add({
         title: t("resetPasswordPage.errors.resetFailed"),
         description: t("resetPasswordPage.errors.invalidToken"),
-        variant: "error",
+        type: "error",
       });
       return;
     }
@@ -74,28 +74,28 @@ export default function ResetPasswordPage() {
         },
       },
       onError: (e: Error) => {
-        toast({
+        toast.add({
           title: t("resetPasswordPage.errors.resetFailed"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
       onCompleted: (_, e) => {
         if (e) {
-          toast({
+          toast.add({
             title: t("resetPasswordPage.errors.resetFailed"),
             description: formatError(
               t("resetPasswordPage.errors.reset"),
               e,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("resetPasswordPage.messages.reset"),
-          variant: "success",
+          type: "success",
         });
         void navigate("/auth/login", { replace: true });
       },

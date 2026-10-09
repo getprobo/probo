@@ -45,9 +45,9 @@ import {
   Tr,
   useConfirm,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
 import { InternalControlBadge } from "@probo/ui/src/Molecules/Badge/InternalControlBadge";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ChangeEventHandler, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -438,7 +438,7 @@ function InternalControlRow(props: InternalControlRowProps) {
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
   const [deleteInternalControl] = useMutation<InternalControlsPageDeleteMutation>(deleteInternalControlMutation);
-  const { toast } = useToast();
+  const toast = useToast();
   const confirm = useConfirm();
   const dialogRef = useDialogRef();
 
@@ -453,31 +453,31 @@ function InternalControlRow(props: InternalControlRowProps) {
             },
             onCompleted(_, error) {
               if (error) {
-                toast({
+                toast.add({
                   title: t("internalControlsPage.messages.error"),
                   description: formatError(
                     t("internalControlsPage.errors.delete"),
                     error,
                   ),
-                  variant: "error",
+                  type: "error",
                 });
               } else {
-                toast({
+                toast.add({
                   title: t("internalControlsPage.messages.success"),
                   description: t("internalControlsPage.messages.deleted"),
-                  variant: "success",
+                  type: "success",
                 });
               }
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("internalControlsPage.messages.error"),
                 description: formatError(
                   t("internalControlsPage.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },
