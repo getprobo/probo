@@ -35,32 +35,28 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { EditableAvatarButton } from "@probo/ui/src/v2/EditableAvatarButton/EditableAvatarButton";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment, useMutation } from "react-relay";
+import { graphql, useFragment, useLazyLoadQuery, useMutation } from "react-relay";
 import { Link } from "react-router";
 
 import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
+import type { ViewerMembershipMenuEmployeePortalQuery } from "#/__generated__/iam/ViewerMembershipMenuEmployeePortalQuery.graphql";
 import type { ViewerMembershipMenuSignOutMutation } from "#/__generated__/iam/ViewerMembershipMenuSignOutMutation.graphql";
 import { employeePortalHref } from "#/lib/employeePortalHref";
 import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDialog";
 
 import { navRail } from "./variants";
 
+// employeePortals is non-null, so a missing list permission nulls the
+// organization and takes down the shell. Roles without that permission
+// (auditor, compliance portal managers) only need the boolean.
 // Keep the oldest-portal pick in sync with useDefaultEmployeePortalId
 // (console schema). Relay cannot share a fragment across iam/core projects.
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
-    employeePortals(
-      first: 1
-      orderBy: { field: CREATED_AT, direction: ASC }
-    ) {
-      edges {
-        node {
-          id
-        }
-      }
-    }
+    id
+    canListEmployeePortals: permission(action: "employee-portal:portal:list")
     viewer @required(action: THROW) {
       fullName
       identity @required(action: THROW) {
@@ -85,6 +81,46 @@ const signOutMutation = graphql`
   }
 `;
 
+const employeePortalQuery = graphql`
+  query ViewerMembershipMenuEmployeePortalQuery($organizationId: ID!) {
+    node(id: $organizationId) {
+      ... on Organization {
+        employeePortals(
+          first: 1
+          orderBy: { field: CREATED_AT, direction: ASC }
+        ) {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+function EmployeePortalMenuItem({ organizationId }: { organizationId: string }) {
+  const { t } = useTranslation();
+  const data = useLazyLoadQuery<ViewerMembershipMenuEmployeePortalQuery>(
+    employeePortalQuery,
+    { organizationId },
+  );
+  const employeePortalId = data.node?.employeePortals?.edges[0]?.node.id ?? null;
+  if (employeePortalId == null) {
+    return null;
+  }
+
+  return (
+    <DropdownItem
+      iconStart={<FileTextIcon />}
+      render={<a href={employeePortalHref(employeePortalId)} />}
+    >
+      {t("viewerMembershipDropdown.actions.employeePortal")}
+    </DropdownItem>
+  );
+}
+
 export interface ViewerMembershipMenuProps {
   organizationKey: ViewerMembershipMenu_organization$key;
 }
@@ -100,7 +136,6 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
       identity,
     },
   } = organization;
-  const employeePortalId = organization.employeePortals.edges[0]?.node.id ?? null;
   const { canListOAuth2AccessTokens, email, avatar } = identity;
   const [signOut, isSigningOut] = useMutation<ViewerMembershipMenuSignOutMutation>(signOutMutation);
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -186,13 +221,10 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
               {t("viewerMembershipDropdown.actions.oauthTokens")}
             </DropdownItem>
           )}
-          {employeePortalId != null && (
-            <DropdownItem
-              iconStart={<FileTextIcon />}
-              render={<a href={employeePortalHref(employeePortalId)} />}
-            >
-              {t("viewerMembershipDropdown.actions.employeePortal")}
-            </DropdownItem>
+          {organization.canListEmployeePortals && (
+            <Suspense fallback={null}>
+              <EmployeePortalMenuItem organizationId={organization.id} />
+            </Suspense>
           )}
           <DropdownSeparator />
           <DropdownItem
