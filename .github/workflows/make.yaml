@@ -191,7 +191,7 @@ jobs:
           key: "trivy-db-${{ matrix.arch }}-${{ github.run_id }}"
           restore-keys: "trivy-db-${{ matrix.arch }}-"
       - name: "Scan Docker image with Trivy"
-        uses: "aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25" # 0.36.0
+        uses: "aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e" # trivy v0.75.0
         with:
           image-ref: "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}"
           format: "table"
