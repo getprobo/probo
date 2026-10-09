@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useToast } from "@probo/ui";
+import { Toast } from "@base-ui/react/toast";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -90,7 +90,7 @@ export function EmployeePortalBrandingSection({
   employeePortalKey,
 }: EmployeePortalBrandingSectionProps) {
   const { t } = useTranslation(NS);
-  const { toast } = useToast();
+  const toast = Toast.useToastManager();
   const { root, intro, body, logos, logoCell, darkIsland } = employeePortalBrandingSection();
   const employeePortal = useFragment(employeePortalFragment, employeePortalKey);
 
@@ -113,10 +113,10 @@ export function EmployeePortalBrandingSection({
   const busy = uploadingField != null;
 
   function handleReject(error: FileDropzoneError) {
-    toast({
+    toast.add({
       title: t(`branding.errors.${error}.title`),
       description: t(`branding.errors.${error}.description`),
-      variant: "error",
+      type: "error",
     });
   }
 
