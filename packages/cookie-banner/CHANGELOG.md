@@ -4,6 +4,22 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.20.0] - 2026-10-09
+
+### Added
+
+- Cookie detections report the cookie `Domain`, and a richer observation
+  replaces an earlier one without demoting its source
+
+### Fixed
+
+- Extension cookies are no longer reported as site trackers
+- Tracker reports drop a cookie `Max-Age` that does not fit a 32-bit
+  integer instead of failing the whole batch
+- Android Edge is counted as Edge, not Chrome, and a 404 on page-view
+  recording no longer causes endless retries
+
+
 ## [0.19.0] - 2026-09-24
 
 ### Fixed
