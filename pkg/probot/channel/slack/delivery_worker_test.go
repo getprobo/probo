@@ -23,13 +23,17 @@ package slack
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -96,8 +100,8 @@ func TestDeliveryOperationHandler_RetryAndDeadLetter(t *testing.T) {
 		},
 	}
 
-	claimed, err := handler.Claim(t.Context())
-	require.NoError(t, err)
+	claimed := claimDeliveryOperation(t, fixture.pg, fixture.scope, operation.ID, now)
+	require.Equal(t, operation.ID, claimed.ID)
 	require.Error(t, handler.Process(t.Context(), claimed))
 	retried := loadDeliveryOperation(t, fixture.pg, fixture.scope, operation.ID)
 	require.NotNil(t, retried.NextAttemptAt)
@@ -107,9 +111,8 @@ func TestDeliveryOperationHandler_RetryAndDeadLetter(t *testing.T) {
 	retryAt := *retried.NextAttemptAt
 	handler.now = func() time.Time { return retryAt }
 
-	claimedAgain, err := handler.Claim(t.Context())
-	require.NoError(t, err)
-
+	claimedAgain := claimDeliveryOperation(t, fixture.pg, fixture.scope, operation.ID, retryAt)
+	require.Equal(t, operation.ID, claimedAgain.ID)
 	claimedAgain.MaxAttempts = claimedAgain.AttemptCount
 	require.Error(t, handler.Process(t.Context(), claimedAgain))
 	dead := loadDeliveryOperation(t, fixture.pg, fixture.scope, operation.ID)
@@ -209,6 +212,85 @@ func TestDeliveryOperationHandler_AlreadyReactedIsSuccess(t *testing.T) {
 
 	require.NoError(t, handler.deliverOperation(t.Context(), operation))
 	assert.Equal(t, 1, reactions)
+}
+
+func claimDeliveryOperation(
+	t *testing.T,
+	pgClient *pg.Client,
+	scope coredata.Scoper,
+	id gid.GID,
+	now time.Time,
+) coredata.SlackDeliveryOperation {
+	t.Helper()
+
+	var operation coredata.SlackDeliveryOperation
+
+	args := pgx.StrictNamedArgs{
+		"id":          id,
+		"now":         now,
+		"owner_token": uuid.MustNewV4().String(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	require.NoError(
+		t,
+		pgClient.WithTx(
+			t.Context(),
+			func(ctx context.Context, tx pg.Tx) error {
+				rows, err := tx.Query(
+					ctx,
+					fmt.Sprintf(
+						`
+WITH candidate AS (
+	SELECT id
+	FROM slack_delivery_operations
+	WHERE %s
+		AND id = @id
+		AND completed_at IS NULL
+		AND dead_lettered_at IS NULL
+		AND processing_started_at IS NULL
+		AND processing_owner_token IS NULL
+		AND attempt_count < max_attempts
+		AND (next_attempt_at IS NULL OR next_attempt_at <= @now)
+	LIMIT 1
+	FOR UPDATE SKIP LOCKED
+)
+UPDATE slack_delivery_operations operation
+SET attempt_count = operation.attempt_count + 1,
+	processing_owner_token = @owner_token,
+	processing_started_at = @now,
+	updated_at = @now
+FROM candidate
+WHERE operation.id = candidate.id
+RETURNING operation.id, operation.organization_id, operation.operation_key,
+	operation.operation_kind, operation.payload, operation.client_msg_id,
+	operation.processing_owner_token, operation.processing_started_at,
+	operation.completed_at, operation.attempt_count, operation.max_attempts,
+	operation.next_attempt_at, operation.last_error, operation.dead_lettered_at,
+	operation.created_at, operation.updated_at
+`,
+						scope.SQLFragment(),
+					),
+					args,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot claim Slack delivery operation: %w", err)
+				}
+
+				operation, err = pgx.CollectExactlyOneRow(
+					rows,
+					pgx.RowToStructByName[coredata.SlackDeliveryOperation],
+				)
+				if err != nil {
+					return fmt.Errorf("cannot collect claimed Slack delivery operation: %w", err)
+				}
+
+				return nil
+			},
+		),
+	)
+
+	return operation
 }
 
 func loadDeliveryOperation(
