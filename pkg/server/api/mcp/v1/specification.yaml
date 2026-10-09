@@ -10805,6 +10805,163 @@ components:
           format: date-time
           description: Creation timestamp
 
+    ConnectorProviderSetting:
+      type: object
+      required:
+        - key
+        - label
+        - required
+      properties:
+        key:
+          type: string
+          description: Catalog key for an extra setting
+        label:
+          type: string
+          description: Label shown on the connect form
+        required:
+          type: boolean
+          description: Whether the connect form requires this setting
+
+    ConnectorProviderCatalogEntry:
+      type: object
+      required:
+        - provider
+        - display_name
+        - api_key_supported
+        - api_key_managed
+        - install_supported
+        - api_key_extra_settings
+        - client_credentials_supported
+        - client_credentials_extra_settings
+      properties:
+        provider:
+          type: string
+          description: Connector provider
+        display_name:
+          type: string
+          description: Provider name shown to a user
+        api_key_supported:
+          type: boolean
+          description: Whether the customer can connect this provider with an API key
+        api_key_managed:
+          type: boolean
+          description: Whether Probo supplies the API key
+        install_supported:
+          type: boolean
+          description: Whether this provider connects through an install ceremony
+        api_key_extra_settings:
+          type: array
+          description: Extra settings the API-key form requires. Empty for the generic create.
+          items:
+            $ref: "#/components/schemas/ConnectorProviderSetting"
+        client_credentials_supported:
+          type: boolean
+          description: Whether the customer can connect this provider with client credentials
+        client_credentials_token_url:
+          type:
+            - string
+            - "null"
+          description: Token URL the provider pins. Null when the customer supplies it.
+        client_credentials_extra_settings:
+          type: array
+          description: Extra settings the client-credentials form requires. Empty for the generic create.
+          items:
+            $ref: "#/components/schemas/ConnectorProviderSetting"
+
+    ListConnectorProvidersMCPInput:
+      type: object
+      properties: {}
+
+    ListConnectorProvidersMCPOutput:
+      type: object
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorProviderCatalogEntry"
+
+    CreateAPIKeyConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - provider
+        - api_key
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: >-
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
+        provider:
+          type: string
+          description: >-
+            Provider from listConnectorProviders whose API-key extra settings
+            are empty. A provider that needs an extra setting is connected in
+            the console.
+        api_key:
+          type: string
+          description: Customer API key
+
+    CreateAPIKeyConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+
+    CreateClientCredentialsConnectorMCPInput:
+      type: object
+      required:
+        - organization_id
+        - name
+        - provider
+        - client_id
+        - client_secret
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        name:
+          type: string
+          description: >-
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
+        provider:
+          type: string
+          description: >-
+            Provider from listConnectorProviders whose client-credentials extra
+            settings are empty. A provider that needs an extra setting is
+            connected in the console.
+        client_id:
+          type: string
+          description: OAuth client ID
+        client_secret:
+          type: string
+          description: OAuth client secret
+        token_url:
+          type: string
+          description: >-
+            Token endpoint. Leave empty when listConnectorProviders shows a
+            pinned client_credentials_token_url.
+        scope:
+          type: string
+          description: OAuth scope. The provider's own scopes win when it declares them.
+
+    CreateClientCredentialsConnectorMCPOutput:
+      type: object
+      required:
+        - connector
+      properties:
+        connector:
+          $ref: "#/components/schemas/Connector"
+
     AWSConnectorSetup:
       type: object
       required:
@@ -19455,7 +19612,13 @@ tools:
       $ref: "#/components/schemas/ListAccessReviewSourcesOutput"
   - name: createAccessReviewSources
     title: Create Access Review Sources
-    description: Create access sources for an organization. One call accepts the whole list and skips an account that already has a source.
+    description: >-
+      Create access sources for an organization. Connect the provider first.
+      Create the connector with the generic form, or with Create AWS, GCP, or
+      Azure Workload Identity Federation, then pass that connector id here.
+      This operation does not collect credentials. A CSV source is the path
+      with no provider. One call accepts the whole list and skips an account
+      that already has a source.
     hints:
       readonly: false
       destructive: false
@@ -19537,6 +19700,53 @@ tools:
       $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPInput"
     outputSchema:
       $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPOutput"
+  - name: listConnectorProviders
+    title: List Connector Providers
+    description: >-
+      List connector providers. Create API Key Connector and Create Client
+      Credentials Connector accept a provider only when its extra-settings
+      list is empty and it is not an install or a Probo-managed key. A
+      provider that needs an extra setting is connected in the console.
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListConnectorProvidersMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListConnectorProvidersMCPOutput"
+  - name: createAPIKeyConnector
+    title: Create API Key Connector
+    description: >-
+      Create an API-key connector for a provider that needs no extra setting.
+      A provider that needs a base URL, an organization slug, or another
+      setting is connected in the console, not with this tool.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateAPIKeyConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateAPIKeyConnectorMCPOutput"
+  - name: createClientCredentialsConnector
+    title: Create Client Credentials Connector
+    description: >-
+      Create a client-credentials connector for a provider that needs no extra
+      setting. A provider that needs another setting is connected in the
+      console, not with this tool. Leave token_url empty when the provider
+      pins one.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/CreateClientCredentialsConnectorMCPInput"
+    outputSchema:
+      $ref: "#/components/schemas/CreateClientCredentialsConnectorMCPOutput"
   - name: listConnectors
     title: List Connectors
     description: List connectors for an organization

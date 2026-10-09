@@ -22,7 +22,6 @@ package create
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 
@@ -31,10 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
 )
 
-const connectionStatusConnected = "CONNECTED"
-
-const (
-	createMutation = `
+const createMutation = `
 mutation($input: CreateAccessReviewSourcesInput!) {
   createAccessReviewSources(input: $input) {
     results {
@@ -50,101 +46,52 @@ mutation($input: CreateAccessReviewSourcesInput!) {
 }
 `
 
-	createWorkloadIdentityConnectorMutation = `
-mutation($input: CreateWorkloadIdentityConnectorInput!) {
-  createWorkloadIdentityConnector(input: $input) {
-    connector {
-      id
-      connectionStatus
-    }
-  }
+type createResponse struct {
+	CreateAccessReviewSources struct {
+		Results []struct {
+			Created                bool `json:"created"`
+			AccessReviewSourceEdge struct {
+				Node struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"node"`
+			} `json:"accessReviewSourceEdge"`
+		} `json:"results"`
+	} `json:"createAccessReviewSources"`
 }
-`
-
-	deleteConnectorMutation = `
-mutation($input: DeleteConnectorInput!) {
-  deleteConnector(input: $input) {
-    deletedConnectorId
-  }
-}
-`
-)
-
-type (
-	createResponse struct {
-		CreateAccessReviewSources struct {
-			Results []struct {
-				Created                bool `json:"created"`
-				AccessReviewSourceEdge struct {
-					Node struct {
-						ID   string `json:"id"`
-						Name string `json:"name"`
-					} `json:"node"`
-				} `json:"accessReviewSourceEdge"`
-			} `json:"results"`
-		} `json:"createAccessReviewSources"`
-	}
-
-	createWorkloadIdentityConnectorResponse struct {
-		CreateWorkloadIdentityConnector struct {
-			Connector struct {
-				ID               string `json:"id"`
-				ConnectionStatus string `json:"connectionStatus"`
-			} `json:"connector"`
-		} `json:"createWorkloadIdentityConnector"`
-	}
-)
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg                         string
-		flagName                        string
-		flagCSVFile                     string
-		flagConnectorID                 string
-		flagConnectorAccountID          string
-		flagRoleARN                     string
-		flagGCPWorkloadIdentityProvider string
-		flagGCPServiceAccountEmail      string
-		flagAzureTenantID               string
-		flagAzureClientID               string
-		flagAzureSubscriptionID         string
-		flagAzureEnvironment            string
+		flagOrg                string
+		flagName               string
+		flagCSVFile            string
+		flagConnectorID        string
+		flagConnectorAccountID string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create an access source",
-		Example: `  # Create an access source from a CSV file
-  prb access-review source create --name "Okta Users" --csv-file users.csv
+		Long: `Connect the provider first. Create the connector with the generic form, or with Create AWS, GCP, or Azure Workload Identity Federation, then pass that connector id here. This operation does not collect credentials.
 
-  # Create an access source with a connector
+A CSV source is the path with no provider.`,
+		Example: `  # Create an access source from a connector that already exists
   prb access-review source create --name "GitHub" --connector-id <connector-id>
 
-  # Create an AWS workload-identity access source
-  prb access-review source create --name "AWS prod" --aws-role-arn arn:aws:iam::123456789012:role/ProboAudit
+  # Create an access source for one account on that connector
+  prb access-review source create --name "GitHub" --connector-id <connector-id> \
+    --connector-account-id <connector-account-id>
 
-  # Create a GCP workload-identity access source
-  prb access-review source create --name "GCP prod" \
-    --gcp-workload-identity-provider projects/123456789012/locations/global/workloadIdentityPools/probo/providers/probo \
-    --gcp-service-account-email probo-audit@my-project.iam.gserviceaccount.com
-
-  # Create an Azure workload-identity access source
-  prb access-review source create --name "Azure prod" \
-    --azure-tenant-id 11111111-1111-1111-1111-111111111111 \
-    --azure-client-id 22222222-2222-2222-2222-222222222222 \
-    --azure-subscription-id 33333333-3333-3333-3333-333333333333
-
-  # Create an Azure Government workload-identity access source
-  prb access-review source create --name "Azure gov" \
-    --azure-tenant-id 11111111-1111-1111-1111-111111111111 \
-    --azure-client-id 22222222-2222-2222-2222-222222222222 \
-    --azure-subscription-id 33333333-3333-3333-3333-333333333333 \
-    --azure-environment AZURE_GOVERNMENT`,
+  # Create an access source from a CSV file
+  prb access-review source create --name "Okta Users" --csv-file users.csv`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if cmd.Flags().Changed("azure-environment") &&
-				!cmd.Flags().Changed("azure-tenant-id") {
-				return fmt.Errorf("--azure-environment requires --azure-tenant-id")
+			if flagConnectorID == "" && flagCSVFile == "" {
+				return fmt.Errorf("connect the provider first, then pass --connector-id, or pass --csv-file for a source with no provider")
+			}
+
+			if flagConnectorAccountID != "" && flagConnectorID == "" {
+				return fmt.Errorf("--connector-account-id requires --connector-id")
 			}
 
 			cfg, err := f.Config()
@@ -173,76 +120,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot determine organization, use --org or 'prb auth login'")
 			}
 
-			var createdConnectorID string
-
-			if flagRoleARN != "" {
-				connectorID, status, err := createAWSConnector(client, flagOrg, flagName, flagRoleARN)
-				if err != nil {
-					return err
-				}
-
-				createdConnectorID = connectorID
-				flagConnectorID = connectorID
-
-				if status != connectionStatusConnected {
-					return abandonCreatedConnector(
-						client,
-						createdConnectorID,
-						fmt.Errorf("connector is %s", status),
-					)
-				}
-			}
-
-			if flagGCPWorkloadIdentityProvider != "" {
-				connectorID, status, err := createGCPConnector(
-					client,
-					flagOrg,
-					flagName,
-					flagGCPWorkloadIdentityProvider,
-					flagGCPServiceAccountEmail,
-				)
-				if err != nil {
-					return err
-				}
-
-				createdConnectorID = connectorID
-				flagConnectorID = connectorID
-
-				if status != connectionStatusConnected {
-					return abandonCreatedConnector(
-						client,
-						createdConnectorID,
-						fmt.Errorf("connector is %s", status),
-					)
-				}
-			}
-
-			if flagAzureTenantID != "" {
-				connectorID, status, err := createAzureConnector(
-					client,
-					flagOrg,
-					flagName,
-					flagAzureTenantID,
-					flagAzureClientID,
-					flagAzureSubscriptionID,
-					flagAzureEnvironment,
-				)
-				if err != nil {
-					return err
-				}
-
-				createdConnectorID = connectorID
-				flagConnectorID = connectorID
-
-				if status != connectionStatusConnected {
-					return abandonCreatedConnector(
-						client,
-						createdConnectorID,
-						fmt.Errorf("connector is %s", status),
-					)
-				}
-			}
-
 			source := map[string]any{
 				"name": flagName,
 			}
@@ -264,43 +141,29 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				source["connectorAccountId"] = flagConnectorAccountID
 			}
 
-			input := map[string]any{
-				"organizationId": flagOrg,
-				"sources":        []any{source},
-			}
-
 			data, err := client.Do(
 				createMutation,
-				map[string]any{"input": input},
+				map[string]any{
+					"input": map[string]any{
+						"organizationId": flagOrg,
+						"sources":        []any{source},
+					},
+				},
 			)
 			if err != nil {
-				return abandonCreatedConnector(client, createdConnectorID, err)
+				return err
 			}
 
 			var resp createResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
-				return abandonCreatedConnector(
-					client,
-					createdConnectorID,
-					fmt.Errorf("cannot parse response: %w", err),
-				)
+				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
 			if len(resp.CreateAccessReviewSources.Results) != 1 {
-				return abandonCreatedConnector(
-					client,
-					createdConnectorID,
-					fmt.Errorf("cannot parse response: expected one access source"),
-				)
+				return fmt.Errorf("cannot parse response: expected one access source")
 			}
 
 			result := resp.CreateAccessReviewSources.Results[0]
-			if !result.Created {
-				if err := abandonCreatedConnector(client, createdConnectorID, nil); err != nil {
-					return err
-				}
-			}
-
 			s := result.AccessReviewSourceEdge.Node
 			out := f.IOStreams.Out
 
@@ -318,168 +181,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name (required)")
-	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data")
-	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID to use as data source")
+	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data. A CSV source has no provider.")
+	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID. Connect the provider first; this command does not collect credentials.")
 	cmd.Flags().StringVar(&flagConnectorAccountID, "connector-account-id", "", "Connector account ID (defaults to the account named by the connector, or its only account)")
-	cmd.Flags().StringVar(&flagRoleARN, "aws-role-arn", "", "IAM role ARN")
-	cmd.Flags().StringVar(
-		&flagGCPWorkloadIdentityProvider,
-		"gcp-workload-identity-provider",
-		"",
-		"GCP workload identity provider resource, including the S3NS IAM host when applicable",
-	)
-	cmd.Flags().StringVar(
-		&flagGCPServiceAccountEmail,
-		"gcp-service-account-email",
-		"",
-		"GCP service account email to impersonate, including the universe-specific suffix",
-	)
-	cmd.Flags().StringVar(
-		&flagAzureTenantID,
-		"azure-tenant-id",
-		"",
-		"Entra directory (tenant) ID",
-	)
-	cmd.Flags().StringVar(
-		&flagAzureClientID,
-		"azure-client-id",
-		"",
-		"Entra application (client) ID",
-	)
-	cmd.Flags().StringVar(
-		&flagAzureSubscriptionID,
-		"azure-subscription-id",
-		"",
-		"Azure subscription ID",
-	)
-	cmd.Flags().StringVar(
-		&flagAzureEnvironment,
-		"azure-environment",
-		"AZURE_PUBLIC",
-		"Azure cloud environment (AZURE_PUBLIC, AZURE_GOVERNMENT, AZURE_GOVERNMENT_DOD, AZURE_CHINA)",
-	)
 
 	_ = cmd.MarkFlagRequired("name")
-	cmd.MarkFlagsMutuallyExclusive(
-		"csv-file",
-		"connector-id",
-		"aws-role-arn",
-		"gcp-workload-identity-provider",
-		"azure-tenant-id",
-	)
-	cmd.MarkFlagsRequiredTogether(
-		"gcp-workload-identity-provider",
-		"gcp-service-account-email",
-	)
-	cmd.MarkFlagsRequiredTogether(
-		"azure-tenant-id",
-		"azure-client-id",
-		"azure-subscription-id",
-	)
+	cmd.MarkFlagsMutuallyExclusive("csv-file", "connector-id")
 
 	return cmd
-}
-
-func createAWSConnector(
-	client *api.Client,
-	orgID string,
-	name string,
-	roleARN string,
-) (string, string, error) {
-	return createWorkloadIdentityConnector(
-		client,
-		map[string]any{
-			"organizationId": orgID,
-			"name":           name,
-			"provider":       "AWS",
-			"awsRoleArn":     roleARN,
-		},
-	)
-}
-
-func createGCPConnector(
-	client *api.Client,
-	orgID string,
-	name string,
-	providerResource string,
-	serviceAccountEmail string,
-) (string, string, error) {
-	return createWorkloadIdentityConnector(
-		client,
-		map[string]any{
-			"organizationId":              orgID,
-			"name":                        name,
-			"provider":                    "GCP",
-			"gcpWorkloadIdentityProvider": providerResource,
-			"gcpServiceAccountEmail":      serviceAccountEmail,
-		},
-	)
-}
-
-func createAzureConnector(
-	client *api.Client,
-	orgID string,
-	name string,
-	tenantID string,
-	clientID string,
-	subscriptionID string,
-	environment string,
-) (string, string, error) {
-	return createWorkloadIdentityConnector(
-		client,
-		map[string]any{
-			"organizationId":      orgID,
-			"name":                name,
-			"provider":            "AZURE",
-			"azureTenantId":       tenantID,
-			"azureClientId":       clientID,
-			"azureSubscriptionId": subscriptionID,
-			"azureEnvironment":    environment,
-		},
-	)
-}
-
-func createWorkloadIdentityConnector(
-	client *api.Client,
-	input map[string]any,
-) (string, string, error) {
-	data, err := client.Do(
-		createWorkloadIdentityConnectorMutation,
-		map[string]any{"input": input},
-	)
-	if err != nil {
-		return "", "", err
-	}
-
-	var resp createWorkloadIdentityConnectorResponse
-	if err := json.Unmarshal(data, &resp); err != nil {
-		return "", "", fmt.Errorf("cannot parse response: %w", err)
-	}
-
-	cnnctr := resp.CreateWorkloadIdentityConnector.Connector
-
-	return cnnctr.ID, cnnctr.ConnectionStatus, nil
-}
-
-func abandonCreatedConnector(client *api.Client, connectorID string, cause error) error {
-	if connectorID == "" {
-		return cause
-	}
-
-	_, err := client.Do(
-		deleteConnectorMutation,
-		map[string]any{
-			"input": map[string]any{
-				"connectorId": connectorID,
-			},
-		},
-	)
-	if err != nil {
-		return errors.Join(
-			cause,
-			fmt.Errorf("cannot delete leftover connector %s: %w", connectorID, err),
-		)
-	}
-
-	return cause
 }
