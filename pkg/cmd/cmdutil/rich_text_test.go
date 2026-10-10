@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/prosemirror"
 )
 
@@ -61,5 +62,41 @@ func TestFormatRichText(t *testing.T) {
 
 		_, err := cmdutil.FormatRichText("not json")
 		require.Error(t, err)
+	})
+}
+
+func TestCLIContent(t *testing.T) {
+	t.Parallel()
+
+	t.Run("plain text", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := cmdutil.CLIContent("Review access controls")
+		require.NoError(t, err)
+		assert.Equal(t, prosemirror.FromPlainText("Review access controls"), got)
+	})
+
+	t.Run("json passthrough", func(t *testing.T) {
+		t.Parallel()
+
+		raw := "  " + prosemirror.FromPlainText("kept")
+		got, err := cmdutil.CLIContent(raw)
+		require.NoError(t, err)
+		assert.Equal(t, raw, got)
+	})
+
+	t.Run("markdown image and file", func(t *testing.T) {
+		t.Parallel()
+
+		fileID := gid.New(gid.TenantID{}, 25).String()
+		path := prosemirror.AttachmentPath(fileID)
+		got, err := cmdutil.CLIContent("![diagram](" + path + ")\n\n[policy.pdf](" + path + ")")
+		require.NoError(t, err)
+
+		doc, err := prosemirror.Parse(got)
+		require.NoError(t, err)
+		require.Len(t, doc.Content, 2)
+		assert.Equal(t, prosemirror.NodeImage, doc.Content[0].Type)
+		assert.Equal(t, prosemirror.NodeFile, doc.Content[1].Type)
 	})
 }

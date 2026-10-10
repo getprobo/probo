@@ -21,6 +21,7 @@
 package probo
 
 import (
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
@@ -231,6 +232,7 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 
 	policy.Allow(
 		ActionDocumentGet, ActionDocumentList, ActionDocumentUpdate,
+		attachment.ActionUpload,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionAuditGet, ActionAuditList, ActionAuditUpdate,
 		ActionReportGet, ActionReportGetReportUrl, ActionReportDownloadUrlGet,

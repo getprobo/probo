@@ -101,6 +101,21 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			in:      `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`,
 			wantErr: false,
 		},
+		{
+			name:    "image inside paragraph",
+			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "valid file block",
+			in:      `{"type":"doc","content":[{"type":"file","attrs":{"fileId":"file_1","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`,
+			wantErr: false,
+		},
+		{
+			name:    "file block without id",
+			in:      `{"type":"doc","content":[{"type":"file","attrs":{"fileId":"","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`,
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -256,4 +271,36 @@ func TestSanitizeDocumentJSON_PreservesSafeImageSrc(t *testing.T) {
 	attrs, err := img.ImageAttrs()
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com/img.png", attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_DropsDataImageSrc(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"data:image/png;base64,iVBOR","alt":"preview"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	assert.Empty(t, attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_ImageFileIDClearsSrc(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"file_1","src":"data:image/png;base64,iVBOR"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.FileID)
+	assert.Equal(t, "file_1", *attrs.FileID)
+	assert.Empty(t, attrs.Src)
 }

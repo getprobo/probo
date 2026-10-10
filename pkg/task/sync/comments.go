@@ -80,12 +80,37 @@ func (s *Service) copyTaskCommentsToLinear(
 			continue
 		}
 
+		description, files, changed, err := s.embedLinearFiles(
+			ctx,
+			client,
+			scope,
+			link.ConnectorID,
+			comment.OrganizationID,
+			markdown,
+			comment.Content,
+			attachmentsFromMetadata(link.Metadata),
+		)
+		if err != nil {
+			return createdIDs, err
+		}
+
+		if changed {
+			if err := s.saveLinearAttachments(ctx, scope, link.TaskID, files); err != nil {
+				return createdIDs, err
+			}
+
+			link.Metadata, err = mergeAttachments(link.Metadata, files)
+			if err != nil {
+				return createdIDs, err
+			}
+		}
+
 		author, err := s.commentAuthor(ctx, scope, comment.OwnerID)
 		if err != nil {
 			return createdIDs, fmt.Errorf("cannot load Linear comment author for %q: %w", comment.ID, err)
 		}
 
-		created, err := client.CreateComment(ctx, link.ExternalID, markdown, author)
+		created, err := client.CreateComment(ctx, link.ExternalID, description, author)
 		if err != nil {
 			return createdIDs, fmt.Errorf("cannot create Linear comment for %q: %w", comment.ID, err)
 		}
@@ -433,7 +458,12 @@ func (s *Service) applyInboundCommentTx(
 		return nil
 	}
 
-	content, canonical, err := inboundCommentContent(data.Body)
+	body := data.Body
+	if existing != nil {
+		body = restoreLinearFiles(body, attachmentsFromMetadata(link.Metadata))
+	}
+
+	content, canonical, err := inboundCommentContent(body)
 	if err != nil {
 		return err
 	}
@@ -771,9 +801,40 @@ func (h *outboundHandler) processCommentUpsert(
 			return h.succeed(ctx, item)
 		}
 
+		known, err := h.svc.linearAttachments(ctx, scope, payload.TaskID)
+		if err != nil {
+			return err
+		}
+
 		hash := CommentContentHash(markdown)
-		if mapping != nil && mapping.ContentHash != nil && *mapping.ContentHash == hash {
+
+		missing, err := linearFilesMissing(known, comment.Content)
+		if err != nil {
+			return err
+		}
+
+		if mapping != nil && mapping.ContentHash != nil && *mapping.ContentHash == hash && !missing {
 			return h.succeed(ctx, item)
+		}
+
+		description, files, changed, err := h.svc.embedLinearFiles(
+			ctx,
+			client,
+			scope,
+			payload.ConnectorID,
+			comment.OrganizationID,
+			markdown,
+			comment.Content,
+			known,
+		)
+		if err != nil {
+			return err
+		}
+
+		if changed {
+			if err := h.svc.saveLinearAttachments(ctx, scope, payload.TaskID, files); err != nil {
+				return err
+			}
 		}
 
 		created := mapping == nil
@@ -786,12 +847,12 @@ func (h *outboundHandler) processCommentUpsert(
 				return fmt.Errorf("cannot load Linear comment author: %w", err)
 			}
 
-			remote, err = client.CreateComment(ctx, payload.ExternalID, markdown, author)
+			remote, err = client.CreateComment(ctx, payload.ExternalID, description, author)
 			if err != nil {
 				return fmt.Errorf("cannot create Linear comment: %w", err)
 			}
 		} else {
-			remote, err = client.UpdateComment(ctx, mapping.ExternalID, markdown)
+			remote, err = client.UpdateComment(ctx, mapping.ExternalID, description)
 			if err != nil {
 				return fmt.Errorf("cannot update Linear comment: %w", err)
 			}

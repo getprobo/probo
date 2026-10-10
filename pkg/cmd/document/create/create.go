@@ -195,7 +195,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagContent != "" {
-				input["content"] = flagContent
+				content, err := cmdutil.CLIContent(flagContent)
+				if err != nil {
+					return err
+				}
+
+				input["content"] = content
 			}
 
 			data, err := client.Do(
@@ -226,7 +231,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagTitle, "title", "", "Document title")
-	cmd.Flags().StringVar(&flagContent, "content", "", "Document content")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Document content as markdown or ProseMirror JSON. Images and links to /api/files/v1/attachments/{id} are kept")
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
 

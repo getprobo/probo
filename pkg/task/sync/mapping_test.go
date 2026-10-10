@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -235,13 +236,37 @@ func TestMarkdownToContent_DropsUnsupported(t *testing.T) {
 
 	content, err := MarkdownToContent("Hello ![alt](https://example.com/a.png) world")
 	require.NoError(t, err)
-	assert.NotContains(t, content, "image")
+	assert.Contains(t, content, `"type":"image"`)
 	assert.Contains(t, content, "Hello")
 	assert.Contains(t, content, "world")
 
 	onlyImage, err := MarkdownToContent("![alt](https://example.com/a.png)")
 	require.NoError(t, err)
-	assert.NotContains(t, onlyImage, "image")
+	assert.Contains(t, onlyImage, `"type":"image"`)
+}
+
+func TestMarkdownToContent_RestoresUploadedFilesBothWays(t *testing.T) {
+	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
+	path := prosemirror.AttachmentPath(fileID)
+	markdown := "![diagram](" + path + ")\n\n[policy.pdf](" + path + ")"
+
+	content, err := MarkdownToContent(markdown)
+	require.NoError(t, err)
+	assert.Contains(t, content, `"type":"image"`)
+	assert.Contains(t, content, `"type":"file"`)
+	assert.Contains(t, content, fileID)
+
+	rendered, err := ContentToMarkdown(content)
+	require.NoError(t, err)
+	assert.Contains(t, rendered, "![diagram]("+path+")")
+	assert.Contains(t, rendered, "[policy.pdf]("+path+")")
+
+	again, err := MarkdownToContent(rendered)
+	require.NoError(t, err)
+	assert.Contains(t, again, `"type":"file"`)
+	assert.Contains(t, again, `"fileId":"`+fileID+`"`)
 }
 
 func TestMarkdownRoundTrip(t *testing.T) {

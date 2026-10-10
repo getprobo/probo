@@ -7562,7 +7562,7 @@ components:
           description: Task name
         content:
           type: string
-          description: Task content in markdown format
+          description: Task content in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
         time_estimate:
           $ref: "#/components/schemas/TimeSpan"
           description: Time estimate
@@ -7610,7 +7610,7 @@ components:
           description: Task name
         content:
           type: ["string", "null"]
-          description: Task content in markdown format
+          description: Task content in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
           go.probo.inc/mcpgen/omittable: true
         state:
           anyOf:
@@ -7852,7 +7852,7 @@ components:
           description: Owner membership profile ID. Defaults to the caller's profile in the task organization when omitted.
         content:
           type: string
-          description: Task comment content in markdown format
+          description: Task comment content in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
 
     AddTaskCommentOutput:
       type: object
@@ -7875,7 +7875,7 @@ components:
           description: Owner membership profile ID
         content:
           type: ["string", "null"]
-          description: Task comment content in markdown format
+          description: Task comment content in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskCommentOutput:
@@ -8521,7 +8521,7 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content in markdown format
+          description: Document content in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -8559,7 +8559,7 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content in markdown format
+          description: Document content in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -15791,7 +15791,7 @@ components:
           description: Risk analysis name
         description:
           type: string
-          description: Risk analysis description in markdown format
+          description: Risk analysis description in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -15820,7 +15820,7 @@ components:
           description: Risk analysis name
         description:
           type: ["string", "null"]
-          description: Risk analysis description in markdown format
+          description: Risk analysis description in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
           go.probo.inc/mcpgen/omittable: true
         period:
           $ref: "#/components/schemas/Period"
@@ -15866,7 +15866,7 @@ components:
           description: Forked risk analysis name
         description:
           type: string
-          description: Forked risk analysis description in markdown format
+          description: Forked risk analysis description in markdown format. Images and links to /api/files/v1/attachments/{id} are kept
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period (not copied from the source)
@@ -17123,6 +17123,44 @@ components:
       properties:
         deleted_compliance_portal_framework_id:
           $ref: "#/components/schemas/GID"
+
+    UploadAttachmentFileInput:
+      type: object
+      required:
+        - organization_id
+        - file_name
+        - content_base64
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        file_name:
+          type: string
+          description: File name
+        mime_type:
+          type: string
+          description: MIME type. Defaults to application/octet-stream
+        content_base64:
+          type: string
+          description: File bytes encoded as base64
+
+    UploadAttachmentFileOutput:
+      type: object
+      required: [id, file_name, mime_type, size]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: File ID to store on the image or file node
+        file_name:
+          type: string
+          description: File name
+        mime_type:
+          type: string
+          description: MIME type
+        size:
+          type: integer
+          format: int64
+          description: File size in bytes
 
 tools:
   - name: listOrganizations
@@ -21709,3 +21747,15 @@ tools:
       $ref: "#/components/schemas/DeleteCompliancePortalFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalFrameworkOutput"
+  - name: uploadAttachmentFile
+    title: Upload Attachment File
+    description: Upload an attachment file for an image or file node. The file is linked when saved content references it.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UploadAttachmentFileInput"
+    outputSchema:
+      $ref: "#/components/schemas/UploadAttachmentFileOutput"

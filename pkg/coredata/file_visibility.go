@@ -28,8 +28,9 @@ import (
 type FileVisibility string
 
 const (
-	FileVisibilityPrivate FileVisibility = "PRIVATE"
-	FileVisibilityPublic  FileVisibility = "PUBLIC"
+	FileVisibilityPrivate    FileVisibility = "PRIVATE"
+	FileVisibilityPublic     FileVisibility = "PUBLIC"
+	FileVisibilityAttachment FileVisibility = "ATTACHMENT"
 )
 
 var (
@@ -42,6 +43,7 @@ func FileVisibilities() []FileVisibility {
 	return []FileVisibility{
 		FileVisibilityPrivate,
 		FileVisibilityPublic,
+		FileVisibilityAttachment,
 	}
 }
 
@@ -49,7 +51,8 @@ func (v FileVisibility) IsValid() bool {
 	switch v {
 	case
 		FileVisibilityPrivate,
-		FileVisibilityPublic:
+		FileVisibilityPublic,
+		FileVisibilityAttachment:
 		return true
 	}
 

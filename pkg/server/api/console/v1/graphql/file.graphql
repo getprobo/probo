@@ -7,3 +7,18 @@ type File {
     createdAt: Datetime!
     updatedAt: Datetime!
 }
+
+extend type Mutation {
+    uploadAttachmentFile(
+        input: UploadAttachmentFileInput!
+    ): UploadAttachmentFilePayload!
+}
+
+input UploadAttachmentFileInput {
+    organizationId: ID!
+    file: Upload!
+}
+
+type UploadAttachmentFilePayload {
+    file: File!
+}

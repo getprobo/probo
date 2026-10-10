@@ -33,6 +33,18 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
+)
+
+var attachmentValidator = filevalidation.NewValidator(
+	filevalidation.WithCategories(
+		filevalidation.CategoryDocument,
+		filevalidation.CategorySpreadsheet,
+		filevalidation.CategoryPresentation,
+		filevalidation.CategoryText,
+		filevalidation.CategoryImage,
+		filevalidation.CategoryData,
+	),
 )
 
 type (
@@ -106,11 +118,66 @@ func (s FileService) GetByIDs(
 	return files, nil
 }
 
+type AttachmentUpload struct {
+	OrganizationID gid.GID
+	File           *FileUpload
+}
+
+func (s FileService) UploadFile(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AttachmentUpload,
+) (*coredata.File, error) {
+	if err := attachmentValidator.Validate(req.File.Filename, req.File.ContentType, req.File.Size); err != nil {
+		return nil, validator.ValidationErrors{
+			{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	organization := &coredata.Organization{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := s.UploadAndSaveFile(
+		ctx,
+		scope,
+		attachmentValidator,
+		map[string]string{
+			"type":            "attachment",
+			"organization-id": organization.ID.String(),
+		},
+		req.File,
+		coredata.FileVisibilityAttachment,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload file: %w", err)
+	}
+
+	return file, nil
+}
+
 func (s FileService) UploadAndSaveFile(
 	ctx context.Context, scope coredata.Scoper,
 	fileValidator *filevalidation.FileValidator,
 	s3Metadata map[string]string,
 	req *FileUpload,
+	visibility coredata.FileVisibility,
 ) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -180,7 +247,7 @@ func (s FileService) UploadAndSaveFile(
 				FileName:       req.Filename,
 				FileKey:        objectKey.String(),
 				FileSize:       *headOutput.ContentLength,
-				Visibility:     coredata.FileVisibilityPrivate,
+				Visibility:     visibility,
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
@@ -215,4 +282,28 @@ func (s FileService) GenerateFileURL(
 	}
 
 	return presignedURL, nil
+}
+
+func (s FileService) ListAttachments(
+	ctx context.Context,
+	scope coredata.Scoper,
+	fileID gid.GID,
+) (coredata.Attachments, error) {
+	var attachments coredata.Attachments
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := attachments.LoadByFileIDs(ctx, conn, scope, []gid.GID{fileID}); err != nil {
+				return fmt.Errorf("cannot load attachments: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return attachments, nil
 }

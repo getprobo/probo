@@ -25,11 +25,14 @@ import (
 )
 
 func apiPath(file *coredata.File) string {
-	if file.Visibility == coredata.FileVisibilityPublic {
+	switch file.Visibility {
+	case coredata.FileVisibilityPublic:
 		return "/api/files/v1/public/" + file.ID.String()
+	case coredata.FileVisibilityAttachment:
+		return "/api/files/v1/attachments/" + file.ID.String()
+	default:
+		return "/api/files/v1/" + file.ID.String()
 	}
-
-	return "/api/files/v1/" + file.ID.String()
 }
 
 // GenerateFileURL returns the stable app URL routing through the files API.

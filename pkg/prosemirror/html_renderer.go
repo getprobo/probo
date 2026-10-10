@@ -125,7 +125,7 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		}
 
 		buf.WriteString("<img")
-		writeAttr(buf, "src", safeImageSrc(attrs.Src))
+		writeAttr(buf, "src", imageSrc(attrs))
 
 		if attrs.Alt != nil {
 			writeAttr(buf, "alt", *attrs.Alt)
@@ -136,6 +136,17 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		}
 
 		buf.WriteByte('>')
+	case NodeFile:
+		attrs, err := n.FileAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render file node: %w", err)
+		}
+
+		buf.WriteString("<a")
+		writeAttr(buf, "href", AttachmentPath(attrs.FileID))
+		buf.WriteByte('>')
+		buf.WriteString(html.EscapeString(attrs.FileName))
+		buf.WriteString("</a>")
 	case NodeBulletList:
 		buf.WriteString("<ul>")
 
@@ -425,9 +436,8 @@ func safeLinkHref(href string) string {
 }
 
 // safeImageSrc returns a value safe to use in an HTML img src attribute.
-// Only http, https, and data schemes are permitted; everything else
-// (javascript:, vbscript:, etc.) is replaced with an empty string so the
-// image simply does not render.
+// http, https, same-origin paths, and base64 image data URLs are kept.
+// javascript: and other schemes become an empty string.
 func safeImageSrc(src string) string {
 	src = strings.TrimSpace(src)
 	if src == "" {
@@ -449,8 +459,14 @@ func safeImageSrc(src string) string {
 
 	if u.Scheme != "" {
 		switch strings.ToLower(u.Scheme) {
-		case "http", "https", "data":
+		case "http", "https":
 			return src
+		case "data":
+			if isSafeImageDataURL(src) {
+				return src
+			}
+
+			return ""
 		default:
 			return ""
 		}
@@ -461,4 +477,28 @@ func safeImageSrc(src string) string {
 	}
 
 	return src
+}
+
+// persistedImageSrc is the src stored in a document. Data URLs are dropped so
+// an upload preview is never saved; PDF export injects data URLs only in memory.
+func persistedImageSrc(src string) string {
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(src)), "data:") {
+		return ""
+	}
+
+	return safeImageSrc(src)
+}
+
+func isSafeImageDataURL(src string) bool {
+	lower := strings.ToLower(strings.TrimSpace(src))
+	switch {
+	case strings.HasPrefix(lower, "data:image/png;"),
+		strings.HasPrefix(lower, "data:image/jpeg;"),
+		strings.HasPrefix(lower, "data:image/webp;"),
+		strings.HasPrefix(lower, "data:image/gif;"),
+		strings.HasPrefix(lower, "data:image/svg+xml;"):
+		return strings.Contains(lower, ";base64,")
+	default:
+		return false
+	}
 }

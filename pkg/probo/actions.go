@@ -243,7 +243,7 @@ const (
 	ActionProcessingActivityDelete  = "core:processing-activity:delete"
 	ActionProcessingActivityPublish = "core:processing-activity:publish"
 
-	// File actions
+	// File actions.
 	ActionFileGet = "core:file:get"
 
 	// Connector actions

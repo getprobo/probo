@@ -29,9 +29,11 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -61,6 +63,7 @@ func NewService(
 	baseURL string,
 	linearAPIBaseURL string,
 	logger *log.Logger,
+	files *filemanager.Service,
 ) *Service {
 	return &Service{
 		pg:     pgClient,
@@ -73,6 +76,7 @@ func NewService(
 			linearAPIBaseURL,
 			logger,
 			InsertUpdateActivities,
+			&attachmentReader{pg: pgClient, files: files},
 		),
 	}
 }
@@ -251,6 +255,13 @@ func (s *Service) Create(
 					return fmt.Errorf("cannot load assignee profile: %w", err)
 				}
 			}
+
+			bound, err := attachment.Attach(ctx, conn, scope, task.OrganizationID, task.ID, task.Content)
+			if err != nil {
+				return fmt.Errorf("cannot bind task files: %w", err)
+			}
+
+			task.Content = bound
 
 			if err := task.Insert(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot insert task: %w", err)
@@ -529,7 +540,12 @@ func (s *Service) Update(
 					return fmt.Errorf("cannot sanitize task content: %w", err)
 				}
 
-				task.Content = content
+				bound, err := attachment.Attach(ctx, conn, scope, task.OrganizationID, task.ID, content)
+				if err != nil {
+					return fmt.Errorf("cannot bind task files: %w", err)
+				}
+
+				task.Content = bound
 			}
 
 			if req.State != nil {

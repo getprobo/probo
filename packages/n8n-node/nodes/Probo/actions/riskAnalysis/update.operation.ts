@@ -57,7 +57,7 @@ export const description: INodeProperties[] = [
 					rows: 6,
 				},
 				default: '',
-				description: 'The description of the risk analysis as a ProseMirror document JSON string',
+				description: 'The description of the risk analysis as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size',
 			},
 			{
 				displayName: 'Name',

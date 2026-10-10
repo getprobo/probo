@@ -414,6 +414,7 @@ func (s AuditService) UploadReport(
 			Size:        req.File.Size,
 			ContentType: req.File.ContentType,
 		},
+		coredata.FileVisibilityPrivate,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot upload file: %w", err)

@@ -47,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/dpia"
 	employeeportal "go.probo.inc/probo/pkg/cmd/employee-portal"
 	"go.probo.inc/probo/pkg/cmd/evidence"
+	"go.probo.inc/probo/pkg/cmd/file"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
 	internalcontrol "go.probo.inc/probo/pkg/cmd/internal-control"
@@ -127,6 +128,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(dpia.NewCmdDPIA(f))
 	cmd.AddCommand(employeeportal.NewCmdEmployeePortal(f))
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
+	cmd.AddCommand(file.NewCmdFile(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
 	cmd.AddCommand(internalcontrol.NewCmdInternalControl(f))

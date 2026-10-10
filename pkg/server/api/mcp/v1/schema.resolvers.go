@@ -10813,3 +10813,7 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 
 	return nil, types.CreateAccessReviewSourcesOutput{Results: results}, nil
 }
+
+func (r *Resolver) UploadAttachmentFileTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.UploadAttachmentFileInput) (*mcp.CallToolResult, types.UploadAttachmentFileOutput, error) {
+	return r.uploadAttachmentFile(ctx, input)
+}

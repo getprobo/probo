@@ -98,7 +98,9 @@ func (s ThirdPartyComplianceReportService) Upload(
 			"thirdParty-id":   thirdPartyID.String(),
 			"organization-id": thirdParty.OrganizationID.String(),
 		},
-		&req.File)
+		&req.File,
+		coredata.FileVisibilityPrivate,
+	)
 	if err != nil {
 		return nil, err
 	}

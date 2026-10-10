@@ -21,6 +21,7 @@
 package riskmanagement
 
 import (
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
@@ -58,6 +59,9 @@ var FullAccessPolicy = policy.NewPolicy(
 	"Risk Management Full Access",
 	policy.Allow("risk-management:*").
 		WithSID("risk-management-full-access").
+		When(organizationCondition),
+	policy.Allow(attachment.ActionUpload).
+		WithSID("upload-attachment").
 		When(organizationCondition),
 ).WithDescription("Full risk-management access")
 

@@ -104,7 +104,16 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if cmd.Flags().Changed("content") {
-				input["content"] = flagContent
+				if flagContent == "" {
+					input["content"] = ""
+				} else {
+					content, err := cmdutil.CLIContent(flagContent)
+					if err != nil {
+						return err
+					}
+
+					input["content"] = content
+				}
 			}
 
 			if cmd.Flags().Changed("document-type") {
@@ -171,7 +180,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&flagTitle, "title", "", "Document title")
-	cmd.Flags().StringVar(&flagContent, "content", "", "Document content")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Document content as markdown or ProseMirror JSON. Images and links to /api/files/v1/attachments/{id} are kept")
 	cmd.Flags().StringVar(&flagDocumentType, "document-type", "", "Document type: OTHER, GOVERNANCE, POLICY, PROCEDURE, PLAN, REGISTER, RECORD, REPORT, TEMPLATE, STATEMENT_OF_APPLICABILITY")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: PUBLIC, INTERNAL, CONFIDENTIAL, SECRET")
 

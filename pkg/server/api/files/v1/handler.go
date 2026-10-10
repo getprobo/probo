@@ -36,9 +36,11 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/jsonx"
+	"go.probo.inc/probo/pkg/task"
 )
 
 const presignedURLExpiry = 1 * time.Hour
@@ -80,6 +82,7 @@ func NewMux(
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
+		r.Get("/attachments/{fileID}", h.handleGetAttachmentFile)
 		r.Get("/{fileID}", h.handleGetFile)
 	})
 
@@ -160,6 +163,7 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 
 		if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
 			jsonx.RenderForbidden(w)
+
 			return
 		}
 
@@ -181,6 +185,11 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if f.Visibility == coredata.FileVisibilityAttachment {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
 	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
 	if err != nil {
 		h.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err), log.String("file_id", fileIDStr))
@@ -190,4 +199,148 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, presignedURL, http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) handleGetAttachmentFile(w http.ResponseWriter, r *http.Request) {
+	fileIDStr := chi.URLParam(r, "fileID")
+
+	fileID, err := gid.ParseGID(fileIDStr)
+	if err != nil {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
+	ctx := r.Context()
+	lookup := coredata.NewScopeFromObjectID(fileID)
+
+	f, err := h.probo.Files.Get(ctx, lookup, fileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+			return
+		}
+
+		h.logger.ErrorCtx(ctx, "cannot get attachment file", log.Error(err), log.String("file_id", fileIDStr))
+		jsonx.RenderInternalServerError(w)
+
+		return
+	}
+
+	if f.Visibility != coredata.FileVisibilityAttachment {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
+	attachments, err := h.probo.Files.ListAttachments(ctx, lookup, fileID)
+	if err != nil {
+		h.logger.ErrorCtx(ctx, "cannot list attachments", log.Error(err), log.String("file_id", fileIDStr))
+		jsonx.RenderInternalServerError(w)
+
+		return
+	}
+
+	parents := attachmentParents(attachments)
+	if len(parents) == 0 {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	session := authn.SessionFromContext(ctx)
+
+	var authErr error
+
+	for _, parent := range parents {
+		params := iam.AuthorizeParams{
+			Principal:          identity.ID,
+			Resource:           parent.id,
+			Action:             parent.action,
+			ResourceAttributes: make(map[string]string),
+		}
+		if session != nil {
+			params.Session = &session.ID
+		}
+
+		if _, err := h.iamSvc.Authorizer.Authorize(ctx, params); err != nil {
+			authErr = err
+			continue
+		}
+
+		authErr = nil
+
+		break
+	}
+
+	if authErr != nil {
+		h.renderAuthError(w, authErr)
+		return
+	}
+
+	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
+	if err != nil {
+		h.logger.ErrorCtx(ctx, "cannot generate attachment URL", log.Error(err), log.String("file_id", fileIDStr))
+		jsonx.RenderInternalServerError(w)
+
+		return
+	}
+
+	http.Redirect(w, r, presignedURL, http.StatusTemporaryRedirect)
+}
+
+func (h *Handler) renderAuthError(w http.ResponseWriter, err error) {
+	if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
+		bearertoken.SetBearerInsufficientScope(w, h.baseURL, scopeErr.Scopes...)
+		jsonx.RenderForbidden(w)
+
+		return
+	}
+
+	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
+		jsonx.RenderForbidden(w)
+
+		return
+	}
+
+	jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+}
+
+type attachmentParent struct {
+	id     gid.GID
+	action string
+}
+
+func attachmentParents(rows coredata.Attachments) []attachmentParent {
+	parents := make([]attachmentParent, 0, len(rows))
+	seen := make(map[gid.GID]struct{}, len(rows))
+
+	for _, row := range rows {
+		action, ok := parentAction(row.ParentID)
+		if !ok {
+			continue
+		}
+
+		if _, ok := seen[row.ParentID]; ok {
+			continue
+		}
+
+		seen[row.ParentID] = struct{}{}
+		parents = append(parents, attachmentParent{id: row.ParentID, action: action})
+	}
+
+	return parents
+}
+
+func parentAction(parentID gid.GID) (string, bool) {
+	switch parentID.EntityType() {
+	case coredata.DocumentVersionEntityType:
+		return probo.ActionDocumentVersionGet, true
+	case coredata.TaskEntityType:
+		return task.ActionTaskGet, true
+	case coredata.TaskCommentEntityType:
+		return task.ActionTaskCommentGet, true
+	case coredata.RiskAnalysisEntityType:
+		return riskmanagement.ActionRiskAnalysisGet, true
+	default:
+		return "", false
+	}
 }
