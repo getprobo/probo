@@ -122,6 +122,7 @@ func (s *Service) FlushDiscoveryCounts(ctx context.Context) error {
 	s.pageLoadCounts.Range(
 		func(key, value any) bool {
 			bannerID := key.(gid.GID)
+
 			deltas := value.(*discoveryFamilyAtomics).swap(0)
 			if deltas.Empty() {
 				s.pageLoadCounts.Delete(key)
@@ -138,6 +139,7 @@ func (s *Service) FlushDiscoveryCounts(ctx context.Context) error {
 	s.patternHitCounts.Range(
 		func(key, value any) bool {
 			hitKey := key.(discoveryHitKey)
+
 			deltas := value.(*discoveryFamilyAtomics).swap(0)
 			if deltas.Empty() {
 				s.patternHitCounts.Delete(key)
@@ -195,6 +197,7 @@ func (s *Service) flushBannerDiscoveryCounts(
 
 func (s *Service) RunDiscoveryCountFlusher(ctx context.Context, logger *log.Logger) error {
 	logger = logger.Named("discovery-count-flusher")
+
 	ticker := time.NewTicker(discoveryCountFlushInterval)
 	defer ticker.Stop()
 

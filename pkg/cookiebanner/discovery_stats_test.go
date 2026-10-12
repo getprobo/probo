@@ -114,12 +114,15 @@ func TestReportDetectedTrackers_CountsConcurrentPageLoads(t *testing.T) {
 	const n = 32
 
 	var wg sync.WaitGroup
+
 	errs := make(chan error, n)
 
 	wg.Add(n)
+
 	for range n {
 		go func() {
 			defer wg.Done()
+
 			errs <- svc.ReportDetectedTrackers(
 				ctx,
 				fx.banner.ID,
