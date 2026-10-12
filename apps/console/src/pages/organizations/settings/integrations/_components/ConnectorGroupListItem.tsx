@@ -207,7 +207,7 @@ export function ConnectorGroupListItem({
             {t("listPage.accountCount", { count: accountTotal })}
           </Badge>
         </div>
-        {single != null && single.canReconnect && (
+        {single != null && solo?.issue === "reconnect" && (
           <div className="pointer-events-auto relative z-1">
             <ButtonAnchor
               href={buildConnectorInitiateURL(

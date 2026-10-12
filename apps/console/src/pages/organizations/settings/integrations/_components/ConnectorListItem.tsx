@@ -161,7 +161,7 @@ export function ConnectorListItem({
             <ConnectorOrganizationSelect connectorKey={connector} />
           </div>
         </div>
-        {connector.canReconnect && (
+        {solo?.issue === "reconnect" && (
           <div className="pointer-events-auto relative z-1">
             <ButtonAnchor
               href={buildConnectorInitiateURL(
