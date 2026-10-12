@@ -34,15 +34,14 @@ func NewDetectedTracker(dt *coredata.DetectedTracker) *DetectedTracker {
 	}
 
 	return &DetectedTracker{
-		ID:             dt.ID,
-		Identifier:     dt.Identifier,
-		InitiatorURL:   dt.InitiatorURL,
-		CookieDomain:   dt.CookieDomain,
-		HostOnly:       dt.HostOnly,
-		MaxAgeSeconds:  dt.MaxAgeSeconds,
-		Source:         source,
-		LastDetectedAt: dt.LastDetectedAt,
-		CreatedAt:      dt.CreatedAt,
+		ID:            dt.ID,
+		Identifier:    dt.Identifier,
+		InitiatorURL:  dt.InitiatorURL,
+		CookieDomain:  dt.CookieDomain,
+		HostOnly:      dt.HostOnly,
+		MaxAgeSeconds: dt.MaxAgeSeconds,
+		Source:        source,
+		CreatedAt:     dt.CreatedAt,
 	}
 }
 

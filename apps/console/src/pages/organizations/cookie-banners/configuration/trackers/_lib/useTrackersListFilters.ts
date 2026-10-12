@@ -41,7 +41,7 @@ export const trackerTypes = [
 ] as const;
 export type TrackerType = (typeof trackerTypes)[number];
 
-export const trackerPatternOrderFields = ["NAME", "SOURCE", "LAST_MATCHED_AT"] as const;
+export const trackerPatternOrderFields = ["NAME", "SOURCE", "CREATED_AT"] as const;
 export type TrackerPatternOrderField = (typeof trackerPatternOrderFields)[number];
 export type OrderDirection = "ASC" | "DESC";
 
@@ -58,7 +58,7 @@ export const defaultTrackersListOrder: TrackersListOrder = {
 const firstTrackersListDirection: Record<TrackerPatternOrderField, OrderDirection> = {
   NAME: "ASC",
   SOURCE: "ASC",
-  LAST_MATCHED_AT: "DESC",
+  CREATED_AT: "DESC",
 };
 
 export type TrackersListGraphqlFilter = {

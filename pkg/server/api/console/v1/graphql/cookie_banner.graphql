@@ -386,10 +386,6 @@ enum TrackerPatternOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldName"
         )
-    LAST_MATCHED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldLastMatchedAt"
-        )
     UPDATED_AT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldUpdatedAt"
@@ -422,7 +418,6 @@ type TrackerPattern implements Node
     """
     discoveryHits: [DiscoveryFamilyCount!]!
         @goField(forceResolver: true)
-    lastMatchedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -519,7 +514,6 @@ type DetectedTracker implements Node {
     hostOnly: Boolean
     maxAgeSeconds: Int
     source: CookieSource
-    lastDetectedAt: Datetime!
     createdAt: Datetime!
 }
 
@@ -527,13 +521,13 @@ enum DetectedTrackerOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField"
     ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldCreatedAt"
+        )
     INITIATOR_URL
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldInitiatorURL"
-        )
-    LAST_DETECTED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldLastDetectedAt"
         )
 }
 
@@ -607,10 +601,6 @@ enum TrackerResourceOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldCreatedAt"
         )
-    LAST_DETECTED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldLastDetectedAt"
-        )
     ORIGIN
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldOrigin"
@@ -630,7 +620,6 @@ type TrackerResource implements Node {
     displayName: String!
     description: String!
     excluded: Boolean!
-    lastDetectedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
 

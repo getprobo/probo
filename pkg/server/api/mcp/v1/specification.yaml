@@ -13930,12 +13930,6 @@ components:
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
-        last_matched_at:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when a cookie last matched this pattern
         discovery_hits:
           type: array
           items:
@@ -14008,12 +14002,6 @@ components:
         excluded:
           type: boolean
           description: Whether this resource is excluded from the consent banner
-        last_detected_at:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when this resource was last detected
         created_at:
           type: string
           format: date-time
@@ -16846,7 +16834,7 @@ components:
     # --- Detected trackers ---
     DetectedTrackerOrderField:
       type: string
-      enum: [INITIATOR_URL, LAST_DETECTED_AT]
+      enum: [CREATED_AT, INITIATOR_URL]
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField
 
     DetectedTrackerOrderBy:
@@ -16860,7 +16848,7 @@ components:
 
     DetectedTracker:
       type: object
-      required: [id, identifier, last_detected_at, created_at]
+      required: [id, identifier, created_at]
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -16883,9 +16871,6 @@ components:
           enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           nullable: true
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieSource
-        last_detected_at:
-          type: string
-          format: date-time
         created_at:
           type: string
           format: date-time

@@ -42,7 +42,6 @@ query($id: ID!) {
       displayName
       description
       excluded
-      lastDetectedAt
       createdAt
       updatedAt
     }
@@ -52,17 +51,16 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename       string  `json:"__typename"`
-		ID             string  `json:"id"`
-		Type           string  `json:"type"`
-		Origin         string  `json:"origin"`
-		Path           string  `json:"path"`
-		DisplayName    string  `json:"displayName"`
-		Description    string  `json:"description"`
-		Excluded       bool    `json:"excluded"`
-		LastDetectedAt *string `json:"lastDetectedAt"`
-		CreatedAt      string  `json:"createdAt"`
-		UpdatedAt      string  `json:"updatedAt"`
+		Typename    string `json:"__typename"`
+		ID          string `json:"id"`
+		Type        string `json:"type"`
+		Origin      string `json:"origin"`
+		Path        string `json:"path"`
+		DisplayName string `json:"displayName"`
+		Description string `json:"description"`
+		Excluded    bool   `json:"excluded"`
+		CreatedAt   string `json:"createdAt"`
+		UpdatedAt   string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -129,10 +127,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Excluded:"), v.Excluded)
 			if v.Description != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), v.Description)
-			}
-
-			if v.LastDetectedAt != nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last Detected:"), cmdutil.FormatTime(*v.LastDetectedAt))
 			}
 
 			_, _ = fmt.Fprintln(out)

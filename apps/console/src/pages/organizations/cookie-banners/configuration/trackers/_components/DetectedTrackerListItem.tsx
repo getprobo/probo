@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
@@ -40,7 +39,6 @@ const detectedTrackerFragment = graphql`
     initiatorUrl
     maxAgeSeconds
     source
-    lastDetectedAt
   }
 `;
 
@@ -49,9 +47,9 @@ interface DetectedTrackerListItemProps {
 }
 
 export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerListItemProps) {
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
   const tracker = useFragment(detectedTrackerFragment, detectedTrackerKey);
-  const { identifier, url, date } = detectedTrackerListItem();
+  const { identifier, url } = detectedTrackerListItem();
   const sourceBadge = tracker.source == null ? null : cookieSourceBadges[tracker.source];
 
   return (
@@ -98,13 +96,6 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
                 {t(`trackerPatternRow.sources.${sourceBadge.labelKey}`)}
               </Badge>
             )}
-      </TableCell>
-      <TableCell>
-        <time dateTime={tracker.lastDetectedAt} className={date()}>
-          <Text size={2}>
-            {dateTimeFormat(i18n.language, tracker.lastDetectedAt)}
-          </Text>
-        </time>
       </TableCell>
     </TableRow>
   );

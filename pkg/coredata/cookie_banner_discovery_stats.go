@@ -44,9 +44,21 @@ type (
 		CreatedAt        time.Time  `db:"created_at"`
 		UpdatedAt        time.Time  `db:"updated_at"`
 	}
+
+	DiscoveryFamilyDeltas struct {
+		Chrome  int64
+		Edge    int64
+		Firefox int64
+		Safari  int64
+		Other   int64
+	}
 )
 
-// RecordDiscoveryPageLoad counts one discovery page view for family.
+func (d DiscoveryFamilyDeltas) Empty() bool {
+	return d.Chrome == 0 && d.Edge == 0 && d.Firefox == 0 && d.Safari == 0 && d.Other == 0
+}
+
+// RecordDiscoveryPageLoad adds the family deltas to the banner window.
 // A published version or a frozen row makes this a no-op. The first
 // successful call creates the shared window every pattern hit uses.
 func RecordDiscoveryPageLoad(
@@ -54,10 +66,10 @@ func RecordDiscoveryPageLoad(
 	tx pg.Tx,
 	scope Scoper,
 	cookieBannerID gid.GID,
-	family DiscoveryBrowserFamily,
+	deltas DiscoveryFamilyDeltas,
 ) error {
-	if !family.IsValid() {
-		family = DiscoveryBrowserFamilyOther
+	if deltas.Empty() {
+		return nil
 	}
 
 	now := time.Now()
@@ -77,11 +89,11 @@ INSERT INTO cookie_banner_discovery_stats (
 SELECT
     @cookie_banner_id,
     @tenant_id,
-    CASE WHEN @family = @chrome THEN 1 ELSE 0 END,
-    CASE WHEN @family = @edge THEN 1 ELSE 0 END,
-    CASE WHEN @family = @firefox THEN 1 ELSE 0 END,
-    CASE WHEN @family = @safari THEN 1 ELSE 0 END,
-    CASE WHEN @family = @other THEN 1 ELSE 0 END,
+    @chrome,
+    @edge,
+    @firefox,
+    @safari,
+    @other,
     @now,
     @now
 WHERE NOT EXISTS (
@@ -105,12 +117,11 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 		"tenant_id":        scope.GetTenantID(),
-		"family":           family,
-		"chrome":           DiscoveryBrowserFamilyChrome,
-		"edge":             DiscoveryBrowserFamilyEdge,
-		"firefox":          DiscoveryBrowserFamilyFirefox,
-		"safari":           DiscoveryBrowserFamilySafari,
-		"other":            DiscoveryBrowserFamilyOther,
+		"chrome":           deltas.Chrome,
+		"edge":             deltas.Edge,
+		"firefox":          deltas.Firefox,
+		"safari":           deltas.Safari,
+		"other":            deltas.Other,
 		"published":        CookieBannerVersionStatePublished,
 		"now":              now,
 	}

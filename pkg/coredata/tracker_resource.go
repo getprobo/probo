@@ -47,7 +47,6 @@ type (
 		DisplayName      string              `db:"display_name"`
 		Description      string              `db:"description"`
 		Excluded         bool                `db:"excluded"`
-		LastDetectedAt   *time.Time          `db:"last_detected_at"`
 		CreatedAt        time.Time           `db:"created_at"`
 		UpdatedAt        time.Time           `db:"updated_at"`
 	}
@@ -59,12 +58,6 @@ func (tr *TrackerResource) CursorKey(field TrackerResourceOrderField) page.Curso
 	switch field {
 	case TrackerResourceOrderFieldCreatedAt:
 		return page.NewCursorKey(tr.ID, tr.CreatedAt)
-	case TrackerResourceOrderFieldLastDetectedAt:
-		if tr.LastDetectedAt == nil {
-			return page.NewCursorKey(tr.ID, time.Time{})
-		}
-
-		return page.NewCursorKey(tr.ID, *tr.LastDetectedAt)
 	case TrackerResourceOrderFieldOrigin:
 		return page.NewCursorKey(tr.ID, tr.Origin)
 	case TrackerResourceOrderFieldUpdatedAt:
@@ -131,7 +124,6 @@ SELECT
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 FROM
@@ -187,7 +179,6 @@ SELECT
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 FROM
@@ -248,7 +239,6 @@ INSERT INTO tracker_resources (
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -263,7 +253,6 @@ INSERT INTO tracker_resources (
 	@display_name,
 	@description,
 	@excluded,
-	@last_detected_at,
 	@created_at,
 	@updated_at
 )
@@ -281,7 +270,6 @@ INSERT INTO tracker_resources (
 		"display_name":       tr.DisplayName,
 		"description":        tr.Description,
 		"excluded":           tr.Excluded,
-		"last_detected_at":   tr.LastDetectedAt,
 		"created_at":         tr.CreatedAt,
 		"updated_at":         tr.UpdatedAt,
 	}
@@ -300,8 +288,8 @@ INSERT INTO tracker_resources (
 	return nil
 }
 
-// Upsert inserts a new tracker resource or bumps last_detected_at on the
-// existing row matching (cookie_banner_id, resource_type, origin, path).
+// Upsert inserts a new tracker resource. Repeat reports of the same
+// (cookie_banner_id, resource_type, origin, path) are a no-op.
 // Returns true when a new row was inserted.
 func (tr *TrackerResource) Upsert(
 	ctx context.Context,
@@ -321,7 +309,6 @@ INSERT INTO tracker_resources (
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -336,13 +323,10 @@ INSERT INTO tracker_resources (
 	@display_name,
 	@description,
 	@excluded,
-	@last_detected_at,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, resource_type, origin, path) DO UPDATE SET
-	last_detected_at = GREATEST(tracker_resources.last_detected_at, EXCLUDED.last_detected_at),
-	updated_at = EXCLUDED.updated_at
+ON CONFLICT (cookie_banner_id, resource_type, origin, path) DO NOTHING
 RETURNING
 	id,
 	organization_id,
@@ -354,7 +338,6 @@ RETURNING
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 `
@@ -373,7 +356,6 @@ RETURNING
 		"display_name":       tr.DisplayName,
 		"description":        tr.Description,
 		"excluded":           tr.Excluded,
-		"last_detected_at":   tr.LastDetectedAt,
 		"created_at":         tr.CreatedAt,
 		"updated_at":         tr.UpdatedAt,
 	}
@@ -386,6 +368,10 @@ RETURNING
 
 	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrackerResource])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+
 		return false, fmt.Errorf("cannot collect upsert result: %w", err)
 	}
 
@@ -406,7 +392,6 @@ SET
 	display_name = @display_name,
 	description = @description,
 	excluded = @excluded,
-	last_detected_at = @last_detected_at,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -421,7 +406,6 @@ WHERE
 		"display_name":       tr.DisplayName,
 		"description":        tr.Description,
 		"excluded":           tr.Excluded,
-		"last_detected_at":   tr.LastDetectedAt,
 		"updated_at":         tr.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -483,7 +467,6 @@ SELECT
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 FROM
@@ -590,7 +573,6 @@ SELECT
 	display_name,
 	description,
 	excluded,
-	last_detected_at,
 	created_at,
 	updated_at
 FROM

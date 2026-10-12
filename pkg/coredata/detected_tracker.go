@@ -46,7 +46,6 @@ type (
 		InitiatorDomain  *string       `db:"initiator_domain"`
 		CookieDomain     *string       `db:"cookie_domain"`
 		HostOnly         *bool         `db:"host_only"`
-		LastDetectedAt   time.Time     `db:"last_detected_at"`
 		CreatedAt        time.Time     `db:"created_at"`
 		UpdatedAt        time.Time     `db:"updated_at"`
 	}
@@ -56,14 +55,14 @@ type (
 
 func (dt *DetectedTracker) CursorKey(field DetectedTrackerOrderField) page.CursorKey {
 	switch field {
+	case DetectedTrackerOrderFieldCreatedAt:
+		return page.NewCursorKey(dt.ID, dt.CreatedAt)
 	case DetectedTrackerOrderFieldInitiatorURL:
 		if dt.InitiatorURL == nil {
 			return page.NewCursorKey(dt.ID, "")
 		}
 
 		return page.NewCursorKey(dt.ID, *dt.InitiatorURL)
-	case DetectedTrackerOrderFieldLastDetectedAt:
-		return page.NewCursorKey(dt.ID, dt.LastDetectedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
@@ -89,7 +88,6 @@ INSERT INTO detected_trackers (
 	initiator_domain,
 	cookie_domain,
 	host_only,
-	last_detected_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -106,13 +104,11 @@ INSERT INTO detected_trackers (
 	@initiator_domain,
 	@cookie_domain,
 	@host_only,
-	@last_detected_at,
 	@created_at,
 	@updated_at
 )
 ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, '')) DO UPDATE
-	SET last_detected_at = EXCLUDED.last_detected_at,
-		source = CASE
+	SET source = CASE
 			WHEN detected_trackers.source IS NULL THEN EXCLUDED.source
 			WHEN (
 				CASE EXCLUDED.source
@@ -153,7 +149,6 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain,
 		"initiator_domain":   dt.InitiatorDomain,
 		"cookie_domain":      dt.CookieDomain,
 		"host_only":          dt.HostOnly,
-		"last_detected_at":   dt.LastDetectedAt,
 		"created_at":         dt.CreatedAt,
 		"updated_at":         dt.UpdatedAt,
 	}
@@ -161,6 +156,74 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain,
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
 		return false, fmt.Errorf("cannot upsert detected tracker: %w", err)
+	}
+
+	return result.RowsAffected() > 0, nil
+}
+
+func (dt *DetectedTracker) InsertIfNotExists(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) (bool, error) {
+	q := `
+INSERT INTO detected_trackers (
+	id,
+	tenant_id,
+	cookie_banner_id,
+	tracker_pattern_id,
+	tracker_type,
+	identifier,
+	max_age_seconds,
+	source,
+	value_size,
+	initiator_url,
+	initiator_domain,
+	cookie_domain,
+	host_only,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	@tenant_id,
+	@cookie_banner_id,
+	@tracker_pattern_id,
+	@tracker_type,
+	@identifier,
+	@max_age_seconds,
+	@source,
+	@value_size,
+	@initiator_url,
+	@initiator_domain,
+	@cookie_domain,
+	@host_only,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, '')) DO NOTHING
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":                 dt.ID,
+		"tenant_id":          scope.GetTenantID(),
+		"cookie_banner_id":   dt.CookieBannerID,
+		"tracker_pattern_id": dt.TrackerPatternID,
+		"tracker_type":       dt.TrackerType,
+		"identifier":         dt.Identifier,
+		"max_age_seconds":    dt.MaxAgeSeconds,
+		"source":             dt.Source,
+		"value_size":         dt.ValueSize,
+		"initiator_url":      dt.InitiatorURL,
+		"initiator_domain":   dt.InitiatorDomain,
+		"cookie_domain":      dt.CookieDomain,
+		"host_only":          dt.HostOnly,
+		"created_at":         dt.CreatedAt,
+		"updated_at":         dt.UpdatedAt,
+	}
+
+	result, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot insert detected tracker: %w", err)
 	}
 
 	return result.RowsAffected() > 0, nil
@@ -250,7 +313,6 @@ SELECT
 	initiator_domain,
 	cookie_domain,
 	host_only,
-	last_detected_at,
 	created_at,
 	updated_at
 FROM

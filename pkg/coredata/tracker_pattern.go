@@ -51,7 +51,6 @@ type (
 		Excluded               bool                    `db:"excluded"`
 		MaxAgeSeconds          *int                    `db:"max_age_seconds"`
 		Source                 *CookieSource           `db:"source"`
-		LastMatchedAt          *time.Time              `db:"last_matched_at"`
 		MappingRequestedAt     *time.Time              `db:"mapping_requested_at"`
 		CreatedAt              time.Time               `db:"created_at"`
 		UpdatedAt              time.Time               `db:"updated_at"`
@@ -66,12 +65,6 @@ func (tp *TrackerPattern) CursorKey(field TrackerPatternOrderField) page.CursorK
 		return page.NewCursorKey(tp.ID, tp.CreatedAt)
 	case TrackerPatternOrderFieldName:
 		return page.NewCursorKey(tp.ID, tp.DisplayName)
-	case TrackerPatternOrderFieldLastMatchedAt:
-		if tp.LastMatchedAt == nil {
-			return page.NewCursorKey(tp.ID, time.Time{})
-		}
-
-		return page.NewCursorKey(tp.ID, *tp.LastMatchedAt)
 	case TrackerPatternOrderFieldUpdatedAt:
 		return page.NewCursorKey(tp.ID, tp.UpdatedAt)
 	case TrackerPatternOrderFieldSource:
@@ -145,7 +138,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -213,7 +205,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -276,7 +267,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -343,7 +333,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -420,7 +409,6 @@ INSERT INTO tracker_patterns (
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -439,7 +427,6 @@ INSERT INTO tracker_patterns (
 	@excluded,
 	@max_age_seconds,
 	@source,
-	@last_matched_at,
 	@mapping_requested_at,
 	@created_at,
 	@updated_at
@@ -461,7 +448,6 @@ INSERT INTO tracker_patterns (
 		"excluded":                  tp.Excluded,
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"source":                    tp.Source,
-		"last_matched_at":           tp.LastMatchedAt,
 		"mapping_requested_at":      tp.MappingRequestedAt,
 		"created_at":                tp.CreatedAt,
 		"updated_at":                tp.UpdatedAt,
@@ -502,7 +488,6 @@ INSERT INTO tracker_patterns (
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -521,7 +506,6 @@ INSERT INTO tracker_patterns (
 	@excluded,
 	@max_age_seconds,
 	@source,
-	@last_matched_at,
 	@mapping_requested_at,
 	@created_at,
 	@updated_at
@@ -544,7 +528,6 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 		"excluded":                  tp.Excluded,
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"source":                    tp.Source,
-		"last_matched_at":           tp.LastMatchedAt,
 		"mapping_requested_at":      tp.MappingRequestedAt,
 		"created_at":                tp.CreatedAt,
 		"updated_at":                tp.UpdatedAt,
@@ -579,7 +562,6 @@ SET
 	description = @description,
 	excluded = @excluded,
 	source = @source,
-	last_matched_at = @last_matched_at,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -597,7 +579,6 @@ WHERE
 		"description":               tp.Description,
 		"excluded":                  tp.Excluded,
 		"source":                    tp.Source,
-		"last_matched_at":           tp.LastMatchedAt,
 		"updated_at":                tp.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -623,7 +604,7 @@ WHERE
 // UpdateMapping writes only the columns the tracker-mapping worker
 // resolves — common_tracker_pattern_id and an enriched description —
 // leaving the user-editable fields (display_name, excluded,
-// cookie_category_id, max_age_seconds, source, last_matched_at)
+// cookie_category_id, max_age_seconds, source)
 // untouched.
 //
 // The worker loads the pattern in its claim transaction and commits the
@@ -697,41 +678,6 @@ WHERE
 	return nil
 }
 
-func (tps *TrackerPatterns) RefreshLastMatchedAtByCookieBannerID(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	cookieBannerID gid.GID,
-) error {
-	q := `
-UPDATE tracker_patterns
-SET
-	last_matched_at = sub.max_detected
-FROM (
-	SELECT tracker_pattern_id, MAX(last_detected_at) AS max_detected
-	FROM detected_trackers
-	WHERE %[1]s AND cookie_banner_id = @cookie_banner_id
-	GROUP BY tracker_pattern_id
-) sub
-WHERE
-	tracker_patterns.id = sub.tracker_pattern_id
-	AND %[1]s
-	AND tracker_patterns.cookie_banner_id = @cookie_banner_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"cookie_banner_id": cookieBannerID}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot refresh last_matched_at for banner tracker patterns: %w", err)
-	}
-
-	return nil
-}
-
 func (tps *TrackerPatterns) LoadByCookieBannerID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -755,7 +701,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -850,7 +795,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at
@@ -989,44 +933,6 @@ WHERE
 	return commonPatternIDs, nil
 }
 
-func (tps *TrackerPatterns) UpdateLastMatchedAt(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	patternIDs []gid.GID,
-	matchedAt time.Time,
-) error {
-	if len(patternIDs) == 0 {
-		return nil
-	}
-
-	q := `
-UPDATE tracker_patterns
-SET
-	last_matched_at = @matched_at,
-	updated_at = @updated_at
-WHERE
-	%s
-	AND id = ANY(@pattern_ids)
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"pattern_ids": patternIDs,
-		"matched_at":  matchedAt,
-		"updated_at":  matchedAt,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	_, err := tx.Exec(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot update last_matched_at for tracker patterns: %w", err)
-	}
-
-	return nil
-}
-
 func (tps *TrackerPatterns) MoveToCategoryByCookieCategoryID(
 	ctx context.Context,
 	tx pg.Tx,
@@ -1079,7 +985,6 @@ SELECT
 	excluded,
 	max_age_seconds,
 	source,
-	last_matched_at,
 	mapping_requested_at,
 	created_at,
 	updated_at

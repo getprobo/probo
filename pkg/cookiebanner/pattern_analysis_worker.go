@@ -273,11 +273,6 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 				return fmt.Errorf("cannot adopt uncategorised patterns: %w", err)
 			}
 
-			var patterns coredata.TrackerPatterns
-			if err := patterns.RefreshLastMatchedAtByCookieBannerID(ctx, tx, scope, banner.ID); err != nil {
-				return fmt.Errorf("cannot refresh last_matched_at: %w", err)
-			}
-
 			// Merging exact patterns into a glob in the same category
 			// does not change visitor consent for those identifiers
 			// (findMergeGroups keys on category, so every member of a

@@ -58,7 +58,6 @@ func NewTrackerPatternWithAttribution(
 		Description:            p.Description,
 		Source:                 source,
 		Excluded:               p.Excluded,
-		LastMatchedAt:          p.LastMatchedAt,
 		CommonTrackerPatternID: p.CommonTrackerPatternID,
 		Attribution:            mapped,
 		CreatedAt:              p.CreatedAt,

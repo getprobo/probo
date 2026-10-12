@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, TrashIcon } from "@phosphor-icons/react";
-import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
+import { humanizeSeconds } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -66,7 +66,6 @@ const trackerPatternFragment = graphql`
     description
     maxAgeSeconds
     excluded
-    lastMatchedAt
     cookieCategory {
       id
       name
@@ -141,7 +140,7 @@ export function TrackerPatternListItem({
   onMoved,
   onRemoved,
 }: TrackerPatternListItemProps) {
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const location = useLocation();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
@@ -314,17 +313,6 @@ export function TrackerPatternListItem({
             )}
         <TableCell className={optional()}>
           <Text size={2} className={date()}>{duration}</Text>
-        </TableCell>
-        <TableCell className={optional()}>
-          {pattern.lastMatchedAt == null
-            ? <Text size={2} color="faint">-</Text>
-            : (
-                <time dateTime={pattern.lastMatchedAt} className={date()}>
-                  <Text size={2}>
-                    {dateTimeFormat(i18n.language, pattern.lastMatchedAt)}
-                  </Text>
-                </time>
-              )}
         </TableCell>
         <TableCell interactive={pattern.canUpdate || pattern.canDelete ? true : undefined} justify="end">
           {(pattern.canUpdate || pattern.canDelete) && (

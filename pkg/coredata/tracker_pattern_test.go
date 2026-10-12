@@ -450,7 +450,6 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       identifier,
 			InitiatorDomain:  &d,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}

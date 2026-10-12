@@ -29,6 +29,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
@@ -52,6 +53,7 @@ func TestReportDetectedTrackers_CountsSharedDiscoveryWindow(t *testing.T) {
 			DiscoveryHit: true,
 		}},
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	stats := loadDiscoveryStats(t, ctx, client, fx)
 	assert.Equal(t, 1, stats.ChromePageLoads)
@@ -68,6 +70,7 @@ func TestReportDetectedTrackers_CountsSharedDiscoveryWindow(t *testing.T) {
 			Source: coredata.CookieSourceScript,
 		}},
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	stats = loadDiscoveryStats(t, ctx, client, fx)
 	assert.Equal(t, 1, stats.ChromePageLoads)
@@ -89,6 +92,7 @@ func TestReportDetectedTrackers_CountsSharedDiscoveryWindow(t *testing.T) {
 			DiscoveryHit: true,
 		}},
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	stats = loadDiscoveryStats(t, ctx, client, fx)
 	require.NotNil(t, stats.FrozenAt)
@@ -134,7 +138,16 @@ func TestReportDetectedTrackers_CountsConcurrentPageLoads(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	stats := loadDiscoveryStats(t, ctx, client, fx)
+	var stats coredata.CookieBannerDiscoveryStats
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return stats.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
+	})
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	requireFlushDiscoveryCounts(t, ctx, svc)
+
+	stats = loadDiscoveryStats(t, ctx, client, fx)
 	assert.Equal(t, n, stats.ChromePageLoads)
 }
 
@@ -150,6 +163,7 @@ func TestReportDetectedTrackers_PageViewStartsSharedWindow(t *testing.T) {
 		PageView: true,
 		Family:   coredata.DiscoveryBrowserFamilyChrome,
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	stats := loadDiscoveryStats(t, ctx, client, fx)
 	assert.Equal(t, 1, stats.ChromePageLoads)
@@ -187,6 +201,7 @@ func TestReportDetectedTrackers_CountsPatternOncePerReport(t *testing.T) {
 			},
 		},
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	assert.Equal(t, 1, loadDiscoveryHits(t, ctx, client, fx, "_ga").ChromeHits)
 }
@@ -221,6 +236,7 @@ func TestPublishCookieBannerVersion_FreezesEmptyDiscoveryStats(t *testing.T) {
 			DiscoveryHit: true,
 		}},
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	stats = loadDiscoveryStats(t, ctx, client, fx)
 	assert.Equal(t, 0, stats.ChromePageLoads)
@@ -255,6 +271,7 @@ func TestReportDetectedTrackers_HitWithoutPageLoadDoesNotCount(t *testing.T) {
 			DiscoveryHit: true,
 		}},
 	}))
+	requireFlushDiscoveryCounts(t, ctx, svc)
 
 	var stats coredata.CookieBannerDiscoveryStats
 
@@ -297,6 +314,8 @@ func TestAddDiscoveryHits_SumsOntoTarget(t *testing.T) {
 		}))
 	}
 
+	requireFlushDiscoveryCounts(t, ctx, svc)
+
 	ga := loadPattern(t, ctx, client, fx, "_ga")
 	gidPattern := loadPattern(t, ctx, client, fx, "_gid")
 
@@ -306,6 +325,72 @@ func TestAddDiscoveryHits_SumsOntoTarget(t *testing.T) {
 
 	hits := loadDiscoveryHits(t, ctx, client, fx, "_gid")
 	assert.Equal(t, 2, hits.ChromeHits)
+}
+
+func TestReportDetectedTrackers_SkipsNoopRepeatUpsert(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	req := ReportDetectedTrackersRequest{
+		PageView: true,
+		Family:   coredata.DiscoveryBrowserFamilyChrome,
+		Cookies: []DetectedCookie{{
+			Name:         "_ga",
+			Source:       coredata.CookieSourceScript,
+			DiscoveryHit: true,
+		}},
+	}
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, req))
+	requireFlushDiscoveryCounts(t, ctx, svc)
+
+	patternBefore := loadPattern(t, ctx, client, fx, "_ga")
+	detectionsBefore := loadDetectedTrackersByPattern(t, ctx, client, fx, "_ga")
+	require.Len(t, detectionsBefore, 1)
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, req))
+	requireFlushDiscoveryCounts(t, ctx, svc)
+
+	patternAfter := loadPattern(t, ctx, client, fx, "_ga")
+	detectionsAfter := loadDetectedTrackersByPattern(t, ctx, client, fx, "_ga")
+	require.Len(t, detectionsAfter, 1)
+
+	assert.Equal(t, patternBefore.UpdatedAt, patternAfter.UpdatedAt)
+	assert.Equal(t, detectionsBefore[0].UpdatedAt, detectionsAfter[0].UpdatedAt)
+	assert.Equal(t, detectionsBefore[0].ID, detectionsAfter[0].ID)
+	assert.Equal(t, 2, loadDiscoveryStats(t, ctx, client, fx).ChromePageLoads)
+	assert.Equal(t, 2, loadDiscoveryHits(t, ctx, client, fx, "_ga").ChromeHits)
+}
+
+func TestRunDiscoveryCountFlusher_FlushesOnShutdown(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	flusherCtx, cancel := context.WithCancel(ctx)
+	done := make(chan error, 1)
+
+	go func() {
+		done <- svc.RunDiscoveryCountFlusher(flusherCtx, log.NewLogger())
+	}()
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+		PageView: true,
+		Family:   coredata.DiscoveryBrowserFamilyChrome,
+	}))
+
+	cancel()
+	require.NoError(t, <-done)
+
+	stats := loadDiscoveryStats(t, ctx, client, fx)
+	assert.Equal(t, 1, stats.ChromePageLoads)
 }
 
 func insertDraftVersion(
@@ -369,6 +454,12 @@ func loadDiscoveryHits(
 	}))
 
 	return hits
+}
+
+func requireFlushDiscoveryCounts(t *testing.T, ctx context.Context, svc *Service) {
+	t.Helper()
+
+	require.NoError(t, svc.FlushDiscoveryCounts(ctx))
 }
 
 func loadPattern(

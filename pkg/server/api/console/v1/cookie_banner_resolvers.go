@@ -475,7 +475,7 @@ func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context
 	}
 
 	pageOrderBy := page.OrderBy[coredata.TrackerResourceOrderField]{
-		Field:     coredata.TrackerResourceOrderFieldLastDetectedAt,
+		Field:     coredata.TrackerResourceOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
@@ -1828,7 +1828,7 @@ func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *type
 	}
 
 	pageOrderBy := page.OrderBy[coredata.DetectedTrackerOrderField]{
-		Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+		Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {

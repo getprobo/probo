@@ -46,19 +46,20 @@ type (
 	}
 )
 
-// RecordDiscoveryPatternHit counts one first sighting of a pattern.
-// It no-ops until a page-load row exists, and after that row is frozen
-// or a version is published, so every pattern shares one window.
+// RecordDiscoveryPatternHit adds the family deltas for a first
+// sighting. It no-ops until a page-load row exists, and after that
+// row is frozen or a version is published, so every pattern shares
+// one window.
 func RecordDiscoveryPatternHit(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,
 	cookieBannerID gid.GID,
 	trackerPatternID gid.GID,
-	family DiscoveryBrowserFamily,
+	deltas DiscoveryFamilyDeltas,
 ) error {
-	if !family.IsValid() {
-		family = DiscoveryBrowserFamilyOther
+	if deltas.Empty() {
+		return nil
 	}
 
 	now := time.Now()
@@ -66,12 +67,11 @@ func RecordDiscoveryPatternHit(
 		"tracker_pattern_id": trackerPatternID,
 		"cookie_banner_id":   cookieBannerID,
 		"tenant_id":          scope.GetTenantID(),
-		"family":             family,
-		"chrome":             DiscoveryBrowserFamilyChrome,
-		"edge":               DiscoveryBrowserFamilyEdge,
-		"firefox":            DiscoveryBrowserFamilyFirefox,
-		"safari":             DiscoveryBrowserFamilySafari,
-		"other":              DiscoveryBrowserFamilyOther,
+		"chrome":             deltas.Chrome,
+		"edge":               deltas.Edge,
+		"firefox":            deltas.Firefox,
+		"safari":             deltas.Safari,
+		"other":              deltas.Other,
 		"published":          CookieBannerVersionStatePublished,
 		"now":                now,
 	}
@@ -93,11 +93,11 @@ SELECT
     @tracker_pattern_id,
     @tenant_id,
     @cookie_banner_id,
-    CASE WHEN @family = @chrome THEN 1 ELSE 0 END,
-    CASE WHEN @family = @edge THEN 1 ELSE 0 END,
-    CASE WHEN @family = @firefox THEN 1 ELSE 0 END,
-    CASE WHEN @family = @safari THEN 1 ELSE 0 END,
-    CASE WHEN @family = @other THEN 1 ELSE 0 END,
+    @chrome,
+    @edge,
+    @firefox,
+    @safari,
+    @other,
     @now,
     @now
 FROM cookie_banner_discovery_stats

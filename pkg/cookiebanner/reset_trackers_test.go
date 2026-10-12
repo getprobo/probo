@@ -77,7 +77,6 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 				TrackerType:      coredata.TrackerTypeCookie,
 				Identifier:       identifier,
 				Source:           new(coredata.CookieSourceScript),
-				LastDetectedAt:   now,
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}
@@ -120,7 +119,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 			detections, err := page.LoadAll(
 				ctx,
 				page.OrderBy[coredata.DetectedTrackerOrderField]{
-					Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+					Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
 					Direction: page.OrderDirectionAsc,
 				},
 				func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {

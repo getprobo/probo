@@ -273,7 +273,7 @@ func decomposeLockedGlob(
 	err := page.WalkAll(
 		ctx,
 		page.OrderBy[coredata.DetectedTrackerOrderField]{
-			Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+			Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
 		func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {

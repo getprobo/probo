@@ -8517,7 +8517,7 @@ func (r *Resolver) ListDetectedTrackersTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	pageOrderBy := page.OrderBy[coredata.DetectedTrackerOrderField]{
-		Field:     coredata.DetectedTrackerOrderFieldLastDetectedAt,
+		Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {

@@ -89,14 +89,12 @@
   },
   "detectedTrackersSection": {
     "title": "Detecties",
-    "columns": { "identifier": "Identificatie", "domain": "Domein", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron", "detectionTime": "Detectietijd" },
+    "columns": { "identifier": "Identificatie", "domain": "Domein", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron" },
     "empty": "Nog geen detecties voor deze tracker.",
-    "sort": { "initiatorUrl": "Sorteren op initiator-URL", "detectionTime": "Sorteren op detectietijd" },
+    "sort": { "initiatorUrl": "Sorteren op initiator-URL" },
     "actions": { "showMore": "Meer weergeven" },
-    "summary_one": "{{count}} detectie · Laatst overeengekomen op {{date}}",
-    "summary_other": "{{count}} detecties · Laatst overeengekomen op {{date}}",
-    "summaryNever_one": "{{count}} detectie · Nog niet overeengekomen",
-    "summaryNever_other": "{{count}} detecties · Nog niet overeengekomen"
+    "summary_one": "{{count}} detectie",
+    "summary_other": "{{count}} detecties"
   },
   "moveToCategorySelect": { "empty": "Geen categorieën" },
   "detectedTrackerRow": {
@@ -109,8 +107,8 @@
     "filters": { "search": "Zoeken op naam of beschrijving...", "allThirdParties": "Alle derde partijen", "allCategories": "Alle categorieën", "source": "Bron", "type": "Type", "category": "Categorie", "thirdParty": "Derde partij" },
     "types": { "all": "Alle typen", "cookie": "Cookie", "localStorage": "localStorage", "sessionStorage": "sessionStorage", "indexedDb": "IndexedDB", "cacheStorage": "Cache-opslag" },
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
-    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd", "lastMatched": "Laatst overeengekomen" },
-    "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron", "lastMatched": "Sorteren op laatst overeengekomen" },
+    "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd" },
+    "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
     "views": { "onBanner": "Op banner", "allDetected": "Alle gedetecteerde", "ariaLabel": "Trackerlijstweergave" },
     "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "onBanner": "Er worden geen gecategoriseerde trackers op de banner getoond." },
@@ -167,8 +165,8 @@
     "description": "Scripts, iframes en andere resources die door deze banner zijn gedetecteerd.",
     "filters": { "search": "Zoeken op origin of pad...", "type": "Type" },
     "types": { "all": "Alle typen", "script": "Script", "iframe": "Iframe", "image": "Afbeelding", "stylesheet": "Stylesheet", "font": "Lettertype", "beacon": "Beacon", "fetch": "Fetch", "media": "Media", "serviceWorker": "Service worker" },
-    "columns": { "type": "Type", "origin": "Origin", "path": "Pad", "category": "Categorie", "lastDetected": "Laatst gedetecteerd" },
-    "sort": { "origin": "Sorteren op origin", "lastDetected": "Sorteren op laatst gedetecteerd" },
+    "columns": { "type": "Type", "origin": "Origin", "path": "Pad", "category": "Categorie" },
+    "sort": { "origin": "Sorteren op origin" },
     "actions": { "previous": "Vorige", "next": "Volgende" },
     "empty": { "title": "Geen ongecategoriseerde resources", "description": "Alle gedetecteerde resources zijn gecategoriseerd. Nieuwe resources verschijnen hier zodra ze worden gedetecteerd." },
     "emptyFiltered": "Geen overeenkomende resources"

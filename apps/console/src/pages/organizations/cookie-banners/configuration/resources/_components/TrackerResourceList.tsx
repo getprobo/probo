@@ -55,7 +55,7 @@ export const trackerResourceListFragment = graphql`
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     filter: { type: "TrackerResourceFilter", defaultValue: null }
-    order: { type: "TrackerResourceOrder", defaultValue: { field: LAST_DETECTED_AT, direction: DESC } }
+    order: { type: "TrackerResourceOrder", defaultValue: { field: CREATED_AT, direction: DESC } }
   ) {
     ...MoveToCategorySelect_cookieBanner
     uncategorisedTrackerResources(
@@ -205,14 +205,6 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell width="10rem">
                         {t("resourcesPage.columns.category")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell
-                        width="10rem"
-                        sort={resourcesListHeaderSort("LAST_DETECTED_AT", graphqlOrder)}
-                        onSort={() => setOrder("LAST_DETECTED_AT")}
-                        aria-label={t("resourcesPage.sort.lastDetected")}
-                      >
-                        {t("resourcesPage.columns.lastDetected")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell width="3rem" />
                     </TableRow>

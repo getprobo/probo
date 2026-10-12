@@ -432,8 +432,8 @@ func TestPatternAnalysisWorker_AdoptionTriggersDraftVersion(t *testing.T) {
 // exact `ph_phc_<id>_posthog` in uncategorised. The merge loop hits
 // the cross-category skip branch (the existing slot belongs to a
 // recategorised glob), so promotion can only happen via the
-// adoption path. This guards against the gap where last_matched_at
-// was refreshed on the glob but its source stayed at PRE_EXISTING
+// adoption path. This guards against the gap where the glob was
+// considered already seen but its source stayed at PRE_EXISTING
 // despite the new SDK-observed signal.
 func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T) {
 	t.Parallel()
@@ -527,9 +527,9 @@ func TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory(t *testing.T)
 // created and the merge/adoption loops in
 // patternAnalysisHandler.Process never see the new signal. Without
 // the in-line source promotion in reportDetectedTracker (which
-// mutates matchedPattern.Source and writes via Update), only
-// last_matched_at would advance — source would stay stuck at
-// PRE_EXISTING despite the new SDK-observed evidence. This test
+// mutates matchedPattern.Source and writes via Update), source
+// would stay stuck at PRE_EXISTING despite the new SDK-observed
+// evidence. This test
 // pins the same-category promotion path; the cross-category gap
 // is covered by TestPatternAnalysisWorker_AdoptionPromotesSourceCrossCategory.
 func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
@@ -573,7 +573,6 @@ func TestReportDetectedTrackers_PromotesSourceOnExistingGlob(t *testing.T) {
 
 	require.NotNil(t, loaded.Source)
 	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source, "reportDetectedTracker must promote a PRE_EXISTING glob to SCRIPT when a stronger detection matches it")
-	assert.NotNil(t, loaded.LastMatchedAt, "matched detections must bump last_matched_at")
 	assert.Equal(t, fx.uncategorisedID, loaded.CookieCategoryID, "category must not move")
 
 	var exacts coredata.TrackerPatterns

@@ -210,15 +210,6 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                       <TableColumnHeaderCell width="7rem" className={optional()}>
                         {t("trackersPage.columns.maxAge")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell
-                        width="10rem"
-                        className={optional()}
-                        sort={trackersListHeaderSort("LAST_MATCHED_AT", graphqlOrder)}
-                        onSort={() => setOrder("LAST_MATCHED_AT")}
-                        aria-label={t("trackersPage.sort.lastMatched")}
-                      >
-                        {t("trackersPage.columns.lastMatched")}
-                      </TableColumnHeaderCell>
                       <TableColumnHeaderCell width="3rem" />
                     </TableRow>
                   </TableHeader>

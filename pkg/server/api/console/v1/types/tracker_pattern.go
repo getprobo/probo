@@ -51,7 +51,6 @@ type (
 		Description   string                           `json:"description"`
 		Source        *coredata.CookieSource           `json:"source,omitempty"`
 		Excluded      bool                             `json:"excluded"`
-		LastMatchedAt *time.Time                       `json:"lastMatchedAt,omitempty"`
 		CreatedAt     time.Time                        `json:"createdAt"`
 		UpdatedAt     time.Time                        `json:"updatedAt"`
 
@@ -156,7 +155,6 @@ func NewTrackerPatternNode(tp *coredata.TrackerPattern) *TrackerPattern {
 		Description:            tp.Description,
 		Source:                 tp.Source,
 		Excluded:               tp.Excluded,
-		LastMatchedAt:          tp.LastMatchedAt,
 		CreatedAt:              tp.CreatedAt,
 		UpdatedAt:              tp.UpdatedAt,
 		CommonTrackerPatternID: tp.CommonTrackerPatternID,

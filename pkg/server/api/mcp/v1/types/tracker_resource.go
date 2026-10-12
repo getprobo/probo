@@ -37,7 +37,6 @@ func NewTrackerResource(tr *coredata.TrackerResource) *TrackerResource {
 		DisplayName:      tr.DisplayName,
 		Description:      tr.Description,
 		Excluded:         tr.Excluded,
-		LastDetectedAt:   tr.LastDetectedAt,
 		CreatedAt:        tr.CreatedAt,
 		UpdatedAt:        tr.UpdatedAt,
 	}

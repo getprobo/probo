@@ -34,7 +34,7 @@ export const trackerResourceTypes = [
 ] as const;
 export type TrackerResourceType = (typeof trackerResourceTypes)[number];
 
-export const trackerResourceOrderFields = ["ORIGIN", "LAST_DETECTED_AT"] as const;
+export const trackerResourceOrderFields = ["ORIGIN", "CREATED_AT"] as const;
 export type TrackerResourceOrderField = (typeof trackerResourceOrderFields)[number];
 export type OrderDirection = "ASC" | "DESC";
 
@@ -44,13 +44,13 @@ export type ResourcesListOrder = {
 };
 
 export const defaultResourcesListOrder: ResourcesListOrder = {
-  field: "LAST_DETECTED_AT",
+  field: "CREATED_AT",
   direction: "DESC",
 };
 
 const firstResourcesListDirection: Record<TrackerResourceOrderField, OrderDirection> = {
   ORIGIN: "ASC",
-  LAST_DETECTED_AT: "DESC",
+  CREATED_AT: "DESC",
 };
 
 export type ResourcesListGraphqlFilter = {

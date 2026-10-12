@@ -368,7 +368,6 @@ func TestMatchBySiblingOrigin_SiblingWithCatalogVendor(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Identifier:       "_gid",
 		InitiatorDomain:  &initiatorDomain,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -380,7 +379,6 @@ func TestMatchBySiblingOrigin_SiblingWithCatalogVendor(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Identifier:       unmappedName,
 		InitiatorDomain:  &initiatorDomain,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -545,7 +543,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       "sibling_a",
 			InitiatorDomain:  &sharedDomain,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -560,7 +557,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       "sibling_b",
 			InitiatorDomain:  &sharedDomain,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -575,7 +571,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       unmappedName,
 			InitiatorDomain:  &sharedDomain,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -766,7 +761,6 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       "converge_a",
 			InitiatorDomain:  &sharedDomain,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -781,7 +775,6 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       "converge_b",
 			InitiatorDomain:  &sharedDomain,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -796,7 +789,6 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       unmappedName,
 			InitiatorDomain:  &sharedDomain,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}
@@ -906,7 +898,6 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Identifier:       "_gid_backfill",
 		InitiatorDomain:  &initiatorDomain,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -918,7 +909,6 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Identifier:       backfillName,
 		InitiatorDomain:  &initiatorDomain,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1044,7 +1034,6 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Identifier:       "_sibling_fp",
 		InitiatorDomain:  &firstPartyDomain,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1056,7 +1045,6 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Identifier:       supportName,
 		InitiatorDomain:  &firstPartyDomain,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1193,7 +1181,6 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 				TrackerType:      coredata.TrackerTypeCookie,
 				Identifier:       identifier,
 				InitiatorDomain:  &sharedDomain,
-				LastDetectedAt:   now,
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}
@@ -1345,7 +1332,6 @@ func TestProcess_DoesNotReenqueueCatalogLinkedOrExtensionSiblings(t *testing.T) 
 				TrackerType:      coredata.TrackerTypeCookie,
 				Identifier:       identifier,
 				InitiatorDomain:  &sharedDomain,
-				LastDetectedAt:   now,
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}
@@ -1430,7 +1416,6 @@ func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
 				TrackerType:      coredata.TrackerTypeCookie,
 				Identifier:       identifier,
 				InitiatorDomain:  &sharedDomain,
-				LastDetectedAt:   now,
 				CreatedAt:        now,
 				UpdatedAt:        now,
 			}

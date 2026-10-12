@@ -30,6 +30,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -46,9 +47,11 @@ const (
 )
 
 type Service struct {
-	pg           *pg.Client
-	showBranding bool
-	tcfCmpID     int
+	pg               *pg.Client
+	showBranding     bool
+	tcfCmpID         int
+	pageLoadCounts   sync.Map
+	patternHitCounts sync.Map
 }
 
 func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
@@ -2850,8 +2853,6 @@ func (s *Service) ReportDetectedTrackers(
 			inserted := 0
 			now := time.Now()
 
-			var matchedPatternIDs []gid.GID
-
 			for _, dc := range req.Cookies {
 				if err := s.reportDetectedTracker(
 					ctx,
@@ -2871,7 +2872,6 @@ func (s *Service) ReportDetectedTrackers(
 						DiscoveryHit:  dc.DiscoveryHit,
 					},
 					&inserted,
-					&matchedPatternIDs,
 					countedHits,
 				); err != nil {
 					return err
@@ -2895,7 +2895,6 @@ func (s *Service) ReportDetectedTrackers(
 						DiscoveryHit: ds.DiscoveryHit,
 					},
 					&inserted,
-					&matchedPatternIDs,
 					countedHits,
 				); err != nil {
 					return err
@@ -2921,13 +2920,6 @@ func (s *Service) ReportDetectedTrackers(
 				}
 			}
 
-			if len(matchedPatternIDs) > 0 {
-				var patterns coredata.TrackerPatterns
-				if err := patterns.UpdateLastMatchedAt(ctx, tx, scope, matchedPatternIDs, now); err != nil {
-					return fmt.Errorf("cannot update tracker pattern last_matched_at: %w", err)
-				}
-			}
-
 			if inserted > 0 {
 				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
 					return fmt.Errorf("cannot request pattern analysis: %w", err)
@@ -2941,40 +2933,9 @@ func (s *Service) ReportDetectedTrackers(
 		return err
 	}
 
-	return s.recordDiscoveryIncrements(ctx, bannerID, req.Family, req.PageView, countedHits)
-}
+	s.recordDiscoveryIncrements(bannerID, req.Family, req.PageView, countedHits)
 
-func (s *Service) recordDiscoveryIncrements(
-	ctx context.Context,
-	bannerID gid.GID,
-	family coredata.DiscoveryBrowserFamily,
-	pageView bool,
-	patternIDs map[gid.GID]struct{},
-) error {
-	if !pageView && len(patternIDs) == 0 {
-		return nil
-	}
-
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(bannerID)
-
-			if pageView {
-				if err := coredata.RecordDiscoveryPageLoad(ctx, tx, scope, bannerID, family); err != nil {
-					return fmt.Errorf("cannot record discovery page load: %w", err)
-				}
-			}
-
-			for patternID := range patternIDs {
-				if err := coredata.RecordDiscoveryPatternHit(ctx, tx, scope, bannerID, patternID, family); err != nil {
-					return fmt.Errorf("cannot record discovery pattern hit: %w", err)
-				}
-			}
-
-			return nil
-		},
-	)
+	return nil
 }
 
 type detectedTrackerInfo struct {
@@ -2998,7 +2959,6 @@ func (s *Service) reportDetectedTracker(
 	now time.Time,
 	info detectedTrackerInfo,
 	inserted *int,
-	matchedPatternIDs *[]gid.GID,
 	countedHits map[gid.GID]struct{},
 ) error {
 	if len(info.Identifier) > MaxTrackerIdentifierLength {
@@ -3022,10 +2982,13 @@ func (s *Service) reportDetectedTracker(
 		return nil
 	}
 
-	var patternID *gid.GID
+	var (
+		patternID     *gid.GID
+		needsMetadata bool
+	)
+
 	if err == nil {
 		patternID = &matchedPattern.ID
-		*matchedPatternIDs = append(*matchedPatternIDs, matchedPattern.ID)
 
 		// A glob (or exact) pattern already covers this
 		// identifier, so no new exact pattern will be created
@@ -3036,10 +2999,9 @@ func (s *Service) reportDetectedTracker(
 		// otherwise a pattern that started life as PRE_EXISTING
 		// (or EXTENSION) never advances even when subsequent
 		// SCRIPT-source detections confirm it as a real page
-		// tracker — last_matched_at would move forward but
-		// source would stay stale. shouldPromoteSource is a
-		// no-op when info.Source is nil or weaker, so storage
-		// items without a source and weaker re-detections cost
+		// tracker. shouldPromoteSource is a no-op when
+		// info.Source is nil or weaker, so storage items
+		// without a source and weaker re-detections cost
 		// nothing.
 		promoted := shouldPromoteSource(matchedPattern.Source, info.Source)
 		if promoted {
@@ -3052,7 +3014,8 @@ func (s *Service) reportDetectedTracker(
 			matchedPattern.MaxAgeSeconds = info.MaxAgeSeconds
 		}
 
-		if promoted || filledMaxAge {
+		needsMetadata = promoted || filledMaxAge
+		if needsMetadata {
 			matchedPattern.UpdatedAt = now
 
 			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
@@ -3060,7 +3023,7 @@ func (s *Service) reportDetectedTracker(
 			}
 
 			// A stronger source can unblock mapping: the detection
-			// upserted below carries a fresh initiator domain that
+			// written below carries a fresh initiator domain that
 			// matchByDomain/matchBySiblingOrigin can now use. Re-arm
 			// mapping so the worker revisits the pattern.
 			if promoted {
@@ -3087,7 +3050,6 @@ func (s *Service) reportDetectedTracker(
 			Description:        "",
 			MaxAgeSeconds:      info.MaxAgeSeconds,
 			Source:             info.Source,
-			LastMatchedAt:      &now,
 			MappingRequestedAt: mappingRequestedAt,
 			CreatedAt:          now,
 			UpdatedAt:          now,
@@ -3132,13 +3094,16 @@ func (s *Service) reportDetectedTracker(
 		InitiatorDomain:  initiatorDomain,
 		CookieDomain:     info.CookieDomain,
 		HostOnly:         info.HostOnly,
-		LastDetectedAt:   now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
 
-	if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot upsert detected tracker: %w", err)
+	if needsMetadata {
+		if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot upsert detected tracker: %w", err)
+		}
+	} else if _, err := tracker.InsertIfNotExists(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert detected tracker: %w", err)
 	}
 
 	if info.DiscoveryHit && patternID != nil {
@@ -3190,7 +3155,6 @@ func (s *Service) reportDetectedResource(
 		Path:             path,
 		DisplayName:      u.Host + path,
 		Description:      "",
-		LastDetectedAt:   &now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
