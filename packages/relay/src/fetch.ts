@@ -45,8 +45,15 @@ const hasNDASignatureRequiredError = hasCode("NDA_SIGNATURE_REQUIRED");
 const hasMembershipRequiredError = hasCode("MEMBERSHIP_REQUIRED");
 const hasForbiddenError = hasCode("FORBIDDEN");
 
-const isRequestLevel = (error: GraphQLError) =>
-  error.path === undefined || error.path === null || error.path.length <= 1;
+const isPathless = (error: GraphQLError) =>
+  error.path === undefined || error.path === null || error.path.length === 0;
+
+// Pathless errors apply to the whole operation. A mutation is a single root
+// field, so a path of length 1 is the whole mutation. Query/subscription
+// field errors (including root @catch fields) stay in the response.
+const isRequestLevel = (error: GraphQLError, operationKind: string) =>
+  isPathless(error)
+  || (operationKind === "mutation" && error.path?.length === 1);
 
 export const makeFetchQuery = (endpoint: string): FetchFunction => {
   return async (request, variables, _, uploadables) => {
@@ -133,10 +140,11 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
       }
 
       // Nested field errors stay in the response so Relay can attach them
-      // to the reading field. A request-level failure (no path, or only the
-      // operation root) throws so mutations and page queries still map to
-      // ForbiddenError.
-      const requestErrors = errors.filter(isRequestLevel);
+      // to the reading field. Pathless errors always throw. Mutation-root
+      // errors (path length 1) also throw so ForbiddenError still maps.
+      const requestErrors = errors.filter(error =>
+        isRequestLevel(error, request.operationKind),
+      );
 
       const forbiddenError = requestErrors.find(hasForbiddenError);
       if (forbiddenError) {
