@@ -39,7 +39,11 @@ class MemoryStorage {
     return this.data.get(key) ?? null;
   }
 
-  setItem(key: string, value: string): void {
+  setItem(key: string, value: unknown): void {
+    if (typeof value === "symbol") {
+      throw new TypeError("Cannot convert a Symbol value to a string");
+    }
+
     this.data.set(key, String(value));
   }
 
@@ -129,6 +133,20 @@ describe("StorageDetector", () => {
       entry.source === "script" &&
       entry.storage_type === "local_storage"
     ))).toBe(true);
+
+    detector.stop();
+  });
+
+  it("rejects Symbol assignment like native Storage", () => {
+    installFakeStorage();
+    const { queue, reported } = fakeQueue();
+    const detector = new StorageDetector(queue, "https://api.example.com");
+
+    detector.start();
+    expect(() => {
+      (window.localStorage as unknown as Record<string, unknown>).foo = Symbol("x");
+    }).toThrow(TypeError);
+    expect(reported).toEqual([]);
 
     detector.stop();
   });

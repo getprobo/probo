@@ -137,7 +137,7 @@ export class StorageDetector implements Detector {
           return Reflect.set(target, prop, value);
         }
 
-        target.setItem(prop, String(value));
+        target.setItem(prop, value);
         return true;
       },
       get(target, prop) {

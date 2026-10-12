@@ -52,12 +52,13 @@ export function enableNamedLoggers(): void {
   // Replay through setItem after the StorageDetector wrap is live.
   // Do not wait for probo-ready: discovery never fires that event
   // (`CookieBannerClient.loaded` is false without a published config).
-  try {
-    for (const key of keys) {
+  // Catch per key so one quota failure does not skip the rest.
+  for (const key of keys) {
+    try {
       localStorage.setItem(key, "DEBUG");
+    } catch {
+      // sandboxed frames and quota errors must not abort banner startup
     }
-  } catch {
-    // sandboxed frames and quota errors must not abort banner startup
   }
 }
 

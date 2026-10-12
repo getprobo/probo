@@ -43,6 +43,7 @@ export class CookieDetector implements Detector {
   private readonly queue: ReportQueue;
   private readonly apiOrigin: string;
   private readonly knownNames: Set<string>;
+  private started = false;
   private prototypeHooks: PrototypeHook[] = [];
   private cookieStoreHandler: ((event: CookieChangeEvent) => void) | null = null;
 
@@ -56,12 +57,13 @@ export class CookieDetector implements Detector {
     this.queue.onNotFound(() => this.stop());
 
     if (isExtensionContext()) return;
-    if (this.prototypeHooks.length > 0) return;
+    if (this.started) return;
+    this.started = true;
 
+    // Another SDK instance may already own the prototype hook. Still
+    // observe cookieStore so this instance reports HTTP-source
+    // changes; the client scans leftovers after published names land.
     this.installPrototypeHooks();
-    if (this.prototypeHooks.length === 0) return;
-
-    this.scanExisting();
     this.observeCookieStore();
   }
 
@@ -75,6 +77,7 @@ export class CookieDetector implements Detector {
       Object.defineProperty(hook.proto, "cookie", hook.original);
     }
     this.prototypeHooks = [];
+    this.started = false;
   }
 
   // Chrome ignores an instance override of the cookie IDL attribute
@@ -146,7 +149,12 @@ export class CookieDetector implements Detector {
     this.queue.reportCookie(entry);
   }
 
-  private scanExisting(): void {
+  // scanExisting reports leftovers as PRE_EXISTING. Call after
+  // published snapshot names are in knownNames so inventoried
+  // cookies are not re-queued on every page load.
+  scanExisting(): void {
+    if (!this.started) return;
+
     // Queue names from document.cookie immediately so a tab close
     // during getAll() still reports pre-existing cookies. getAll is
     // an enrichment pass that re-sends the same names with a domain.

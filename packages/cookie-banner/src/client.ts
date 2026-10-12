@@ -134,6 +134,7 @@ export class CookieBannerClient {
         integration.grantAll();
       }
       this.startResourceDetector();
+      this.scanExistingCookies();
       if (err instanceof NotFoundError) {
         this.reportQueue?.reportPageView();
       }
@@ -150,6 +151,7 @@ export class CookieBannerClient {
       integration.setDefaults(config.categories);
     }
     this.ignorePublishedCookieNames(config);
+    this.scanExistingCookies();
     this.startResourceDetector(config);
 
     if (this.visitorId) {
@@ -447,13 +449,22 @@ export class CookieBannerClient {
   // Published snapshot cookies are already inventoried. After the
   // first publish, discovery is frozen, so keep reporting them would
   // only add traffic. The same Set is shared with CookieDetector;
-  // mutating it here takes effect on the next write without a rescan.
+  // mutating it here takes effect on later writes and on the deferred
+  // pre-existing scan.
   private ignorePublishedCookieNames(config: BannerConfig): void {
     if (!this.knownCookieNames) return;
 
     for (const cat of config.categories) {
       for (const cookie of cat.cookies) {
         this.knownCookieNames.add(cookie.name);
+      }
+    }
+  }
+
+  private scanExistingCookies(): void {
+    for (const d of this.detectors) {
+      if (d instanceof CookieDetector) {
+        d.scanExisting();
       }
     }
   }

@@ -571,12 +571,10 @@ func loadDetectedTrackersByPattern(
 	return trackers
 }
 
-// TestReportDetectedTrackers_PromotesSourceOnInsertConflict races
-// PRE_EXISTING and SCRIPT first-inserts for the same new cookie. The
-// InsertIfNotExists loser used to attach the pattern ID and skip
-// promotion, so a PRE_EXISTING winner stayed stuck even though SCRIPT
-// arrived on the same identifier. After both waves finish the stored
-// source must be SCRIPT regardless of who inserted.
+// TestReportDetectedTrackers_PromotesSourceOnInsertConflict holds the
+// SCRIPT first-insert until PRE_EXISTING has committed, after both
+// lookups have seen no pattern. The SCRIPT report then loses
+// InsertIfNotExists and must still promote the PRE_EXISTING row.
 func TestReportDetectedTrackers_PromotesSourceOnInsertConflict(t *testing.T) {
 	t.Parallel()
 
@@ -585,48 +583,67 @@ func TestReportDetectedTrackers_PromotesSourceOnInsertConflict(t *testing.T) {
 	fx := seedWorkerFixture(t, ctx, client)
 	svc := NewService(client, false, 0)
 
-	const (
-		name = "_ph_insert_conflict"
-		n    = 16
-	)
+	const name = "_ph_insert_conflict"
+
+	scriptLookedUp := make(chan struct{})
+	preExistingCommitted := make(chan struct{})
+
+	svc.afterPatternLookup = func(source *coredata.CookieSource) {
+		if source == nil {
+			return
+		}
+
+		switch *source {
+		case coredata.CookieSourcePreExisting:
+			<-scriptLookedUp
+		case coredata.CookieSourceScript:
+			select {
+			case <-scriptLookedUp:
+			default:
+				close(scriptLookedUp)
+			}
+
+			<-preExistingCommitted
+		}
+	}
 
 	var wg sync.WaitGroup
 
-	errs := make(chan error, n*2)
+	errs := make(chan error, 2)
 
-	wg.Add(n * 2)
+	wg.Add(2)
 
-	for range n {
-		go func() {
-			defer wg.Done()
+	go func() {
+		defer wg.Done()
 
-			errs <- svc.ReportDetectedTrackers(
-				ctx,
-				fx.banner.ID,
-				ReportDetectedTrackersRequest{
-					Cookies: []DetectedCookie{{
-						Name:   name,
-						Source: coredata.CookieSourcePreExisting,
-					}},
-				},
-			)
-		}()
+		err := svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{{
+					Name:   name,
+					Source: coredata.CookieSourcePreExisting,
+				}},
+			},
+		)
+		close(preExistingCommitted)
+		errs <- err
+	}()
 
-		go func() {
-			defer wg.Done()
+	go func() {
+		defer wg.Done()
 
-			errs <- svc.ReportDetectedTrackers(
-				ctx,
-				fx.banner.ID,
-				ReportDetectedTrackersRequest{
-					Cookies: []DetectedCookie{{
-						Name:   name,
-						Source: coredata.CookieSourceScript,
-					}},
-				},
-			)
-		}()
-	}
+		errs <- svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{{
+					Name:   name,
+					Source: coredata.CookieSourceScript,
+				}},
+			},
+		)
+	}()
 
 	wg.Wait()
 	close(errs)

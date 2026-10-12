@@ -139,6 +139,63 @@ describe("CookieDetector", () => {
     detector.stop();
   });
 
+  it("does not scan leftovers until scanExisting runs", () => {
+    const { document } = installFakeCookieDocument();
+    document.cookie = "leftover=1; path=/";
+
+    const { queue, reported } = fakeQueue();
+    const detector = new CookieDetector(queue, "https://api.example.com", new Set([COOKIE_NAME]));
+
+    detector.start();
+    expect(reported).toEqual([]);
+
+    detector.scanExisting();
+    expect(reported).toEqual([
+      expect.objectContaining({ name: "leftover", source: "pre-existing" }),
+    ]);
+
+    detector.stop();
+  });
+
+  it("skips published names added to the shared set before the scan", () => {
+    const { document } = installFakeCookieDocument();
+    document.cookie = "_ga=GA1; path=/";
+
+    const { queue, reported } = fakeQueue();
+    const known = new Set([COOKIE_NAME]);
+    const detector = new CookieDetector(queue, "https://api.example.com", known);
+
+    detector.start();
+    known.add("_ga");
+    detector.scanExisting();
+
+    expect(reported).toEqual([]);
+
+    detector.stop();
+  });
+
+  it("still observes cookieStore when another instance already hooked the prototype", () => {
+    const { emitCookieStoreChange } = installFakeCookieDocument();
+    const first = fakeQueue();
+    const second = fakeQueue();
+
+    const owner = new CookieDetector(first.queue, "https://api.example.com", new Set([COOKIE_NAME]));
+    const follower = new CookieDetector(second.queue, "https://api.example.com", new Set([COOKIE_NAME]));
+
+    owner.start();
+    follower.start();
+    emitCookieStoreChange({
+      changed: [{ name: "from-http", expires: null, domain: null }],
+    });
+
+    expect(second.reported).toEqual([
+      expect.objectContaining({ name: "from-http", source: "http" }),
+    ]);
+
+    owner.stop();
+    follower.stop();
+  });
+
   it("keeps script when cookieStore echoes the same write as http", async () => {
     vi.useFakeTimers();
 

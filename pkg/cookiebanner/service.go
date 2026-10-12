@@ -52,6 +52,11 @@ type Service struct {
 	tcfCmpID         int
 	pageLoadCounts   sync.Map
 	patternHitCounts sync.Map
+	// afterPatternLookup runs after FindMatchingPattern in
+	// reportDetectedTracker. Tests use it to hold a SCRIPT first-insert
+	// until a PRE_EXISTING sibling has committed, so the loser hits
+	// InsertIfNotExists instead of a later FindMatchingPattern promote.
+	afterPatternLookup func(source *coredata.CookieSource)
 }
 
 func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
@@ -2980,6 +2985,10 @@ func (s *Service) reportDetectedTracker(
 	err := matchedPattern.FindMatchingPattern(ctx, tx, scope, banner.ID, info.TrackerType, info.Identifier)
 	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot find matching tracker pattern: %w", err)
+	}
+
+	if s.afterPatternLookup != nil {
+		s.afterPatternLookup(info.Source)
 	}
 
 	if err == nil && matchedPattern.Excluded {
