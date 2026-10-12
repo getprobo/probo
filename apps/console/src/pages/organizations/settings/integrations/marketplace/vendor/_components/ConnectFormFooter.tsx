@@ -47,7 +47,7 @@ export function ConnectFormFooter({
   return (
     <div className="flex items-center justify-between gap-2">
       <ConnectorDocumentationLink providerKey={provider} variant="button" />
-      <Button type="submit" variant="solid" disabled={disabled} loading={loading}>
+      <Button type="submit" variant="solid" disabled={disabled} loading={loading} className="ml-auto">
         {t("marketplacePage.connect")}
       </Button>
     </div>
