@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -200,6 +201,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					return fmt.Errorf("%s needs an extra setting; connect it in the console", provider.DisplayName)
 				}
 
+				flagClientID = strings.TrimSpace(flagClientID)
 				if flagClientID == "" && f.IOStreams.IsInteractive() {
 					err := huh.NewInput().
 						Title("Client ID").
@@ -208,6 +210,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					if err != nil {
 						return err
 					}
+
+					flagClientID = strings.TrimSpace(flagClientID)
 				}
 
 				if flagClientID == "" {
@@ -295,8 +299,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 }
 
 func fillSecret(interactive bool, value *string, envName, title string) error {
+	// createClientCredentialsConnector stores the secret verbatim, so a
+	// trailing newline authenticates as a different secret.
+	*value = strings.TrimSpace(*value)
 	if *value == "" {
-		*value = os.Getenv(envName)
+		*value = strings.TrimSpace(os.Getenv(envName))
 	}
 
 	if *value == "" && interactive {
@@ -308,6 +315,8 @@ func fillSecret(interactive bool, value *string, envName, title string) error {
 		if err != nil {
 			return err
 		}
+
+		*value = strings.TrimSpace(*value)
 	}
 
 	return nil

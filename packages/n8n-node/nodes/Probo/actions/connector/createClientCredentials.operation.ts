@@ -77,6 +77,7 @@ export const description: INodeProperties[] = [
 	{
 		displayName: 'Token Endpoint',
 		name: 'tokenUrl',
+		// eslint-disable-next-line n8n-nodes-base/node-param-type-options-password-missing -- endpoint URL, not a secret
 		type: 'string',
 		displayOptions: {
 			show: {
