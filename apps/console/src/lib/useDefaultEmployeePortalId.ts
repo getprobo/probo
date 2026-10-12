@@ -24,9 +24,7 @@ import type { useDefaultEmployeePortalId_organization$key } from "#/__generated_
 import type { useDefaultEmployeePortalIdQuery } from "#/__generated__/core/useDefaultEmployeePortalIdQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-// Keep the oldest-portal pick in sync with ViewerMembershipMenu (IAM schema).
-// Listing portals is a second request: the field is non-null, so selecting it
-// before the permission check fails the query for roles that cannot list.
+// Keep in sync with ViewerMembershipMenu_organization (IAM / Connect schema).
 const defaultEmployeePortalFragment = graphql`
   fragment useDefaultEmployeePortalId_organization on Organization {
     employeePortals(
@@ -43,17 +41,11 @@ const defaultEmployeePortalFragment = graphql`
 `;
 
 const defaultEmployeePortalQuery = graphql`
-  query useDefaultEmployeePortalIdQuery(
-    $organizationId: ID!
-    $includePortals: Boolean!
-  ) {
+  query useDefaultEmployeePortalIdQuery($organizationId: ID!) {
     node(id: $organizationId) {
-      __typename
       ... on Organization {
-        canListEmployeePortals: permission(
-          action: "employee-portal:portal:list"
-        )
-        ...useDefaultEmployeePortalId_organization @include(if: $includePortals)
+        __typename
+        ...useDefaultEmployeePortalId_organization
       }
     }
   }
@@ -61,22 +53,13 @@ const defaultEmployeePortalQuery = graphql`
 
 export function useDefaultEmployeePortalId(): string | null {
   const organizationId = useOrganizationId();
-  const access = useLazyLoadQuery<useDefaultEmployeePortalIdQuery>(
-    defaultEmployeePortalQuery,
-    { organizationId, includePortals: false },
-  );
-  const canListEmployeePortals = access.node?.__typename === "Organization"
-    && access.node.canListEmployeePortals;
-
   const data = useLazyLoadQuery<useDefaultEmployeePortalIdQuery>(
     defaultEmployeePortalQuery,
-    { organizationId, includePortals: canListEmployeePortals },
+    { organizationId },
   );
 
   const organizationKey: useDefaultEmployeePortalId_organization$key | null
-    = canListEmployeePortals
-      && data.node != null
-      && data.node.__typename === "Organization"
+    = data.node != null && data.node.__typename === "Organization"
       ? data.node
       : null;
   const organization = useFragment(defaultEmployeePortalFragment, organizationKey);
