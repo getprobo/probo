@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -57,7 +57,7 @@ type Service struct {
 func NewService(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	baseURL string,
 	linearAPIBaseURL string,
 	logger *log.Logger,

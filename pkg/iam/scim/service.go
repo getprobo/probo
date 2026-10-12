@@ -37,7 +37,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/hash"
@@ -62,7 +62,7 @@ type (
 		TracerProvider    trace.TracerProvider
 		Registerer        prometheus.Registerer
 		EncryptionKey     cipher.EncryptionKey
-		ConnectorRegistry *connector.Registry
+		ConnectorRegistry *connectorprotocol.Registry
 		BridgeRunner      BridgeRunnerConfig
 	}
 )

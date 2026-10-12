@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam/scim/bridge"
 	scimclient "go.probo.inc/probo/pkg/iam/scim/bridge/client"
@@ -187,7 +187,7 @@ func (r *BridgeRunner) createOAuth2BridgeProvider(
 		return nil, fmt.Errorf("connector has no connection configured")
 	}
 
-	oauth2Conn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
+	oauth2Conn, ok := dbConnector.Connection.(*connectorprotocol.OAuth2Connection)
 	if !ok {
 		return nil, fmt.Errorf("connector is not an OAuth2 connection")
 	}

@@ -43,13 +43,16 @@ var (
 
 type (
 	ConnectorAccount struct {
-		ID                gid.GID   `db:"id"`
-		OrganizationID    gid.GID   `db:"organization_id"`
-		ConnectorID       gid.GID   `db:"connector_id"`
-		ExternalAccountID string    `db:"external_account_id"`
-		Name              string    `db:"name"`
-		CreatedAt         time.Time `db:"created_at"`
-		UpdatedAt         time.Time `db:"updated_at"`
+		ID                    gid.GID    `db:"id"`
+		OrganizationID        gid.GID    `db:"organization_id"`
+		ConnectorID           gid.GID    `db:"connector_id"`
+		ExternalAccountID     string     `db:"external_account_id"`
+		Name                  string     `db:"name"`
+		NameSyncedAt          *time.Time `db:"name_synced_at"`
+		NameSyncAttempts      int        `db:"name_sync_attempts"`
+		NameSyncNextAttemptAt *time.Time `db:"name_sync_next_attempt_at"`
+		CreatedAt             time.Time  `db:"created_at"`
+		UpdatedAt             time.Time  `db:"updated_at"`
 	}
 
 	ConnectorAccounts []*ConnectorAccount
@@ -118,6 +121,9 @@ SELECT
     connector_id,
     external_account_id,
     name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -218,6 +224,9 @@ SELECT
     connector_id,
     external_account_id,
     name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -260,6 +269,9 @@ SELECT
     connector_id,
     external_account_id,
     name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -311,6 +323,9 @@ SELECT
     connector_id,
     external_account_id,
     name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -421,6 +436,9 @@ INSERT INTO connector_accounts (
     connector_id,
     external_account_id,
     name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
     created_at,
     updated_at
 )
@@ -431,6 +449,9 @@ VALUES (
     @connector_id,
     @external_account_id,
     @name,
+    @name_synced_at,
+    @name_sync_attempts,
+    @name_sync_next_attempt_at,
     @created_at,
     @updated_at
 )
@@ -443,20 +464,26 @@ RETURNING
     connector_id,
     external_account_id,
     name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
     created_at,
     updated_at
 `
 	originalID := a.ID
 
 	args := pgx.StrictNamedArgs{
-		"id":                  a.ID,
-		"tenant_id":           scope.GetTenantID(),
-		"organization_id":     a.OrganizationID,
-		"connector_id":        a.ConnectorID,
-		"external_account_id": a.ExternalAccountID,
-		"name":                a.Name,
-		"created_at":          a.CreatedAt,
-		"updated_at":          a.UpdatedAt,
+		"id":                        a.ID,
+		"tenant_id":                 scope.GetTenantID(),
+		"organization_id":           a.OrganizationID,
+		"connector_id":              a.ConnectorID,
+		"external_account_id":       a.ExternalAccountID,
+		"name":                      a.Name,
+		"name_synced_at":            a.NameSyncedAt,
+		"name_sync_attempts":        a.NameSyncAttempts,
+		"name_sync_next_attempt_at": a.NameSyncNextAttemptAt,
+		"created_at":                a.CreatedAt,
+		"updated_at":                a.UpdatedAt,
 	}
 
 	rows, err := conn.Query(ctx, q, args)
@@ -662,6 +689,250 @@ WHERE
 
 		return fmt.Errorf("cannot delete connector_account: %w", err)
 	}
+
+	return nil
+}
+
+// RecordNameSyncAttempt charges the claimed account for one name-resolution
+// attempt and holds it out of the queue for backoff. It must run in the
+// transaction that claimed the row: the claim predicate does not otherwise
+// change on failure, so an uncharged attempt is re-claimed immediately.
+//
+// The deadline is computed from the database clock, which is the clock the
+// claim predicate compares against.
+func (a *ConnectorAccount) RecordNameSyncAttempt(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	backoff time.Duration,
+) error {
+	q := `
+UPDATE connector_accounts
+SET
+    name_sync_attempts = name_sync_attempts + 1,
+    name_sync_next_attempt_at = NOW() + @backoff::interval
+WHERE
+    %s
+    AND id = @id
+RETURNING name_sync_attempts, name_sync_next_attempt_at
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":      a.ID,
+		"backoff": backoff,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	err := conn.QueryRow(ctx, q, args).Scan(&a.NameSyncAttempts, &a.NameSyncNextAttemptAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot record connector account name sync attempt: %w", err)
+	}
+
+	return nil
+}
+
+// MarkNameSynced retires the account from the name-sync queue and writes the
+// resolved instance name. It applies only while the row still carries the
+// deadline and attempt count the caller claimed: a reconnect that lands during
+// the resolve wins. applied is false in that case, and the error is nil, so
+// the worker does not write a stale name.
+//
+// The deadline is what makes the guard a claim generation. The attempt count
+// alone is not unique — a reconnect resets it to zero and the next claim
+// charges it straight back to the same number.
+func (a *ConnectorAccount) MarkNameSynced(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	syncedAt time.Time,
+) (bool, error) {
+	q := `
+UPDATE connector_accounts
+SET
+    name = @name,
+    name_synced_at = @name_synced_at,
+    name_sync_next_attempt_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+    AND name_synced_at IS NULL
+    AND name_sync_attempts = @name_sync_attempts
+    AND name_sync_next_attempt_at IS NOT DISTINCT FROM @name_sync_next_attempt_at
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":                        a.ID,
+		"name":                      a.Name,
+		"name_synced_at":            syncedAt,
+		"name_sync_attempts":        a.NameSyncAttempts,
+		"name_sync_next_attempt_at": a.NameSyncNextAttemptAt,
+		"updated_at":                syncedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot mark connector account name synced: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return false, nil
+	}
+
+	a.NameSyncedAt = &syncedAt
+	a.NameSyncNextAttemptAt = nil
+	a.UpdatedAt = syncedAt
+
+	return true, nil
+}
+
+// ResetNameSyncByConnectorID clears the synced name and the retry budget for
+// every account of connectorID, so the name worker re-resolves their display
+// name. No-op when the connector has no account.
+//
+// Rows already at NULL are included: an account still inside its backoff, or
+// one that exhausted its attempts against a misconfigured connector, is exactly
+// what the reconnect that fixed it needs to release.
+func (accounts *ConnectorAccounts) ResetNameSyncByConnectorID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	connectorID gid.GID,
+) error {
+	q := `
+UPDATE connector_accounts
+SET
+    name_synced_at = NULL,
+    name_sync_attempts = 0,
+    name_sync_next_attempt_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND connector_id = @connector_id
+    AND (name_synced_at IS NOT NULL OR name_sync_attempts > 0)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"connector_id": connectorID,
+		"updated_at":   time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot clear connector account name sync: %w", err)
+	}
+
+	return nil
+}
+
+// ResetNameSyncByID clears the synced name and the retry budget for one
+// account. A relink or an organization change may resolve to a different
+// instance, so the name worker has to run again.
+func (a *ConnectorAccount) ResetNameSyncByID(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE connector_accounts
+SET
+    name_synced_at = NULL,
+    name_sync_attempts = 0,
+    name_sync_next_attempt_at = NULL,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+    AND (name_synced_at IS NOT NULL OR name_sync_attempts > 0)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	now := time.Now()
+
+	args := pgx.StrictNamedArgs{
+		"id":         a.ID,
+		"updated_at": now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot clear connector account name sync: %w", err)
+	}
+
+	a.NameSyncedAt = nil
+	a.NameSyncAttempts = 0
+	a.NameSyncNextAttemptAt = nil
+	a.UpdatedAt = now
+
+	return nil
+}
+
+// ErrNoConnectorAccountNameSyncAvailable is returned when no connector account
+// needs its name resolved.
+var ErrNoConnectorAccountNameSyncAvailable = fmt.Errorf("no connector account name sync available")
+
+// LoadNextUnsyncedNameForUpdateSkipLocked claims the next connector account
+// that has not yet had its name resolved and is not backing off from a
+// previous failure. The row is locked with FOR UPDATE SKIP LOCKED so
+// concurrent workers do not pick the same row.
+//
+// The query is intentionally cross-tenant: the worker serves every tenant and
+// re-scopes from the claimed row's own GID.
+//
+// The backoff gate is what bounds the claim. Nothing else transitions the
+// predicate on failure, so without it the same row is re-claimed as fast as
+// it can be processed. Callers must charge the attempt with
+// RecordNameSyncAttempt in this same transaction.
+func (a *ConnectorAccount) LoadNextUnsyncedNameForUpdateSkipLocked(
+	ctx context.Context,
+	conn pg.Tx,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    connector_id,
+    external_account_id,
+    name,
+    name_synced_at,
+    name_sync_attempts,
+    name_sync_next_attempt_at,
+    created_at,
+    updated_at
+FROM
+    connector_accounts
+WHERE
+    name_synced_at IS NULL
+    AND (name_sync_next_attempt_at IS NULL OR name_sync_next_attempt_at <= NOW())
+ORDER BY
+    created_at ASC
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+`
+
+	rows, err := conn.Query(ctx, q)
+	if err != nil {
+		return fmt.Errorf("cannot query unsynced connector_accounts: %w", err)
+	}
+
+	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[ConnectorAccount])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoConnectorAccountNameSyncAvailable
+		}
+
+		return fmt.Errorf("cannot collect unsynced connector account: %w", err)
+	}
+
+	*a = row
 
 	return nil
 }

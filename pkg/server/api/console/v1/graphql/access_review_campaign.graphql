@@ -339,6 +339,7 @@ type AccessReviewSource implements Node {
     connectorId: ID @goField(forceResolver: true)
     connector: Connector @goField(forceResolver: true)
     connectorAccountId: ID
+    connectorAccount: ConnectorAccount @goField(forceResolver: true)
     name: String!
     csvData: String
     providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)

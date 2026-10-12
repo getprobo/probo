@@ -1,0 +1,89 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package provider
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+// oktaRegistration wires the Okta access-review connector. Okta is a
+// per-tenant IdP with no central API gateway, so a one-click OAuth flow is not
+// possible — it authenticates with a read-only API token presented under the
+// `SSWS` Authorization scheme (APIKeyAuthScheme), plus the customer's org
+// domain. The token + domain identify exactly one org, so there is no picker
+// and no OAuth metadata. BuildProbeURL targets the org's own API host.
+func oktaRegistration() *Registration {
+	return &Registration{
+		Provider: coredata.ConnectorProviderOkta,
+		InitialAccountFunc: initialAccount(
+			func(s coredata.OktaConnectorSettings) string {
+				return s.Domain
+			},
+		),
+		DisplayName:      "Okta",
+		DocumentationURL: accessReviewDocsURL("okta"),
+		APIKey: &APIKeyConfig{
+			Auth: APIKeyAuth{Mode: APIKeyAuthScheme, Name: "SSWS"},
+			ExtraSettings: []ExtraSetting{
+				{Key: "domain", Label: "Okta Domain", Required: true},
+			},
+		},
+		BuildProbeURL: buildOktaProbeURL,
+		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
+			s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
+			if err != nil {
+				return nil, fmt.Errorf("cannot read okta connector settings: %w", err)
+			}
+
+			// Re-validate the stored domain at the construction site
+			// (defense-in-depth): the create-connector resolver validates on
+			// write, but pinning the host invariant here keeps the driver safe
+			// regardless of how the connector row was populated. An empty
+			// domain also fails this check.
+			if !connectorprotocol.IsValidOktaDomain(s.Domain) {
+				return nil, fmt.Errorf("cannot create okta driver: invalid or missing domain")
+			}
+
+			return drivers.NewOktaDriver(c, s.Domain), nil
+		},
+		NewNameResolver: func(ctx context.Context, c *http.Client, conn *coredata.Connector, logger *log.Logger, _ Endpoints) drivers.NameResolver {
+			s, err := coredata.ConnectorSettings[coredata.OktaConnectorSettings](conn)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot read okta connector settings", log.Error(err))
+				return nil
+			}
+
+			if !connectorprotocol.IsValidOktaDomain(s.Domain) {
+				logger.ErrorCtx(ctx, "invalid okta domain in connector settings")
+				return nil
+			}
+
+			return drivers.NewOktaNameResolver(c, s.Domain)
+		},
+	}
+}

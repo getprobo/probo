@@ -32,7 +32,7 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/pem"
 	"go.probo.inc/probo/pkg/probodconfig"
@@ -774,7 +774,7 @@ func TestBuilder_Build_GitHubAppConnector(t *testing.T) {
 	require.Len(t, cfg.Probod.Connectors, 1)
 	c := cfg.Probod.Connectors[0]
 	assert.Equal(t, "GITHUB", c.Provider)
-	assert.Equal(t, connector.ProtocolGitHubApp, c.Protocol)
+	assert.Equal(t, connectorprotocol.ProtocolGitHubApp, c.Protocol)
 
 	raw := c.RawConfig.(probodconfig.ConnectorConfigGitHubApp)
 	assert.Equal(t, "123456", raw.AppID)

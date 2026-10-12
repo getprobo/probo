@@ -89,6 +89,9 @@ const sourcesQuery = graphql`
             node {
               id
               name
+              connectorAccount {
+                name
+              }
             }
           }
         }
@@ -245,7 +248,7 @@ function SourceSelect({
     >
       {sources.map(source => (
         <Option key={source.id} value={source.id}>
-          {source.name}
+          {source.connectorAccount?.name ?? source.name}
         </Option>
       ))}
     </Select>

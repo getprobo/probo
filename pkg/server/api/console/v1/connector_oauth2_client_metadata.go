@@ -25,11 +25,11 @@ import (
 	"net/http"
 
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 )
 
 // oauth2ClientMetadata is the OAuth2 Client ID Metadata Document (CIMD)
-// published for public-client connectors. The deployment's
+// published for public-client connector. The deployment's
 // (baseURL + CIMDMetadataPath) URL is the OAuth client_id; providers such as
 // PostHog fetch this document server-to-server during authorization to learn
 // the client's identity and allowed redirect URIs, so no app pre-registration
@@ -59,11 +59,11 @@ type oauth2ClientMetadata struct {
 // provider fetches it without any Probo credentials.
 func handleConnectorOAuth2ClientMetadata(baseURL *baseurl.BaseURL) http.HandlerFunc {
 	doc := oauth2ClientMetadata{
-		ClientID:                baseURL.WithPath(connector.CIMDMetadataPath).MustString(),
+		ClientID:                baseURL.WithPath(connectorprotocol.CIMDMetadataPath).MustString(),
 		ClientName:              "Probo",
 		ClientURI:               proboBrandURI,
 		LogoURI:                 proboLogoURI,
-		RedirectURIs:            []string{baseURL.WithPath(connector.CallbackPath).MustString()},
+		RedirectURIs:            []string{baseURL.WithPath(connectorprotocol.CallbackPath).MustString()},
 		TokenEndpointAuthMethod: "none",
 		GrantTypes:              []string{"authorization_code", "refresh_token"},
 		ResponseTypes:           []string{"code"},

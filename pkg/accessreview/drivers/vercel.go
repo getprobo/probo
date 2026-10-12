@@ -29,7 +29,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -260,7 +260,7 @@ func (r *vercelNameResolver) ResolveInstanceName(ctx context.Context) (string, e
 
 	// Personal-account fallback: /v2/teams/<uid> returns 404, but
 	// /v2/user works with the same Bearer token.
-	user, err := connector.FetchVercelUser(ctx, r.httpClient, r.baseURL)
+	user, err := connectorprotocol.FetchVercelUser(ctx, r.httpClient, r.baseURL)
 	if err != nil {
 		return "", err
 	}

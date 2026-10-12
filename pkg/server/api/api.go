@@ -39,8 +39,8 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
@@ -110,7 +110,7 @@ type (
 		// InstallStateKey signs the app-install state tokens the connector
 		// install ceremony carries across the vendor.
 		InstallStateKey   string
-		ConnectorRegistry *connector.Registry
+		ConnectorRegistry *connectorprotocol.Registry
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
 		GraphQLLimits     gqlutils.Limits

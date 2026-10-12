@@ -31,7 +31,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
@@ -65,7 +65,7 @@ type (
 		tracer            trace.Tracer
 		registerer        prometheus.Registerer
 		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.Registry
+		connectorRegistry *connectorprotocol.Registry
 		cfg               BridgeRunnerConfig
 	}
 )
@@ -77,7 +77,7 @@ func NewBridgeRunner(
 	tp trace.TracerProvider,
 	registerer prometheus.Registerer,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	cfg BridgeRunnerConfig,
 ) *BridgeRunner {
 	if cfg.Interval == 0 {

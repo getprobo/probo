@@ -37,7 +37,7 @@ import (
 // its bare domain host (e.g. "acme.okta.com") supplied with the API token —
 // Okta has no central API gateway, so every request targets that org's own
 // host. The connection's transport attaches the `Authorization: SSWS <token>`
-// header (see connector.APIKeyConnection); the driver only sets Accept.
+// header (see connectorprotocol.APIKeyConnection); the driver only sets Accept.
 type OktaDriver struct {
 	httpClient *http.Client
 	domain     string

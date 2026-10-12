@@ -460,9 +460,18 @@ func (s *Service) upsertCampaignSource(
 	now := time.Now()
 	sourceID := source.ID
 
-	connectorID, err := accountConnectorID(ctx, tx, scope, source.ConnectorAccountID)
-	if err != nil {
-		return err
+	name := source.Name
+
+	var connectorID *gid.GID
+
+	if source.ConnectorAccountID != nil {
+		account := &coredata.ConnectorAccount{}
+		if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+			return fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		name = account.Name
+		connectorID = &account.ConnectorID
 	}
 
 	campaignSource := &coredata.AccessReviewCampaignSource{
@@ -470,7 +479,7 @@ func (s *Service) upsertCampaignSource(
 		OrganizationID:         source.OrganizationID,
 		AccessReviewCampaignID: campaignID,
 		AccessReviewSourceID:   &sourceID,
-		Name:                   source.Name,
+		Name:                   name,
 		ConnectorID:            connectorID,
 		ConnectorAccountID:     source.ConnectorAccountID,
 		CreatedAt:              now,

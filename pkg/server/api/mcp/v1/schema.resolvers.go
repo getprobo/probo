@@ -18,7 +18,8 @@ import (
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
@@ -10349,7 +10350,7 @@ func (r *Resolver) DiscoverConnectorAccountsTool(ctx context.Context, req *mcp.C
 
 func labelDiscoveredAccounts(
 	ctx context.Context,
-	connectors *probo.ConnectorService,
+	connectors *connector.Service,
 	scope coredata.Scoper,
 	connectorID gid.GID,
 	accounts []provider.DiscoveredAccount,
@@ -10372,13 +10373,13 @@ func (r *Resolver) EnableConnectorAccountsTool(ctx context.Context, req *mcp.Cal
 		return nil, types.EnableConnectorAccountsOutput{}, err
 	}
 
-	reqAccounts := make([]probo.EnableConnectorAccount, 0, len(input.Accounts))
+	reqAccounts := make([]connector.EnableConnectorAccount, 0, len(input.Accounts))
 	for _, account := range input.Accounts {
 		if account == nil {
 			continue
 		}
 
-		reqAccounts = append(reqAccounts, probo.EnableConnectorAccount{
+		reqAccounts = append(reqAccounts, connector.EnableConnectorAccount{
 			ExternalAccountID: account.ExternalAccountID,
 			Name:              account.Name,
 		})
@@ -10654,7 +10655,7 @@ func (r *Resolver) UpdateConnectorTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.UpdateConnectorOutput{}, err
 	}
 
-	cnnctr, err := r.proboSvc.Connectors.Update(ctx, scope, probo.UpdateConnectorRequest{
+	cnnctr, err := r.proboSvc.Connectors.Update(ctx, scope, connector.UpdateConnectorRequest{
 		ConnectorID: input.ConnectorID,
 		Name:        input.Name,
 	})

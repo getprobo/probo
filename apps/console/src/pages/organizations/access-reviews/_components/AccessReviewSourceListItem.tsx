@@ -54,6 +54,9 @@ const fragment = graphql`
   fragment AccessReviewSourceListItem_source on AccessReviewSource {
     id
     name
+    connectorAccount {
+      name
+    }
     connectorId
     connector {
       provider
@@ -247,7 +250,7 @@ export function AccessReviewSourceListItem({
         />
         <div className={identity()}>
           <Heading level={3} size={3} weight="medium" highContrast className={title()}>
-            {accountLabel(accessSource.name, connector.displayName)}
+            {accessSource.connectorAccount?.name ?? accessSource.name}
           </Heading>
           <Text size={1} color="faint">
             <time dateTime={accessSource.createdAt}>
@@ -286,18 +289,6 @@ export function AccessReviewSourceListItem({
       </div>
     </Card>
   );
-}
-
-function accountLabel(name: string, vendorName: string): string {
-  const prefix = `${vendorName} / `;
-  if (vendorName !== "" && name.startsWith(prefix)) {
-    const account = name.slice(prefix.length);
-    if (account !== "") {
-      return account;
-    }
-  }
-
-  return name;
 }
 
 function OrgSelectPending() {

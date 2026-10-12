@@ -32,7 +32,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -174,7 +175,7 @@ func handleConnectorInstallComplete(
 			return
 		}
 
-		payload, err := connector.ValidateInstallState(installStateKey, state)
+		payload, err := connectorprotocol.ValidateInstallState(installStateKey, state)
 		if err != nil {
 			// Warn, not Error: an expired state is an ordinary customer outcome.
 			// The query carries the state and the vendor's proof, so only the
@@ -268,7 +269,7 @@ func handleConnectorInstallComplete(
 		// prefetch cannot run a second verification in parallel with this one.
 		processingToken, err := proboSvc.Connectors.ClaimInstallState(ctx, scope, organizationID, state)
 		if err != nil {
-			if errors.Is(err, probo.ErrInstallStateAlreadyUsed) {
+			if errors.Is(err, connector.ErrInstallStateAlreadyUsed) {
 				redirectInstallOutcome(w, r, logger, baseURL, safeRedirect, organizationID, installMessageAlreadyUsed)
 				return
 			}
@@ -385,7 +386,7 @@ func handleConnectorInstallComplete(
 		cnnctr, err := proboSvc.Connectors.CompleteInstall(
 			claimedCtx,
 			scope,
-			probo.CompleteConnectorInstallRequest{
+			connector.CompleteConnectorInstallRequest{
 				OrganizationID:  organizationID,
 				Provider:        p,
 				SettingsKey:     reg.Install.SettingsResourceKey,

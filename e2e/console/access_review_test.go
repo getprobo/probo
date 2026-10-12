@@ -1816,7 +1816,7 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	require.ElementsMatch(t, []string{firstConnector, secondConnector}, listBrexConnectorIDs())
 
 	// Relinking a source to a connector already referenced by another
-	// source is refused: sources stay one-to-one with connectors.
+	// source is refused: sources stay one-to-one with connector.
 	const updateQuery = `
 		mutation($input: UpdateAccessReviewSourceInput!) {
 			updateAccessReviewSource(input: $input) {

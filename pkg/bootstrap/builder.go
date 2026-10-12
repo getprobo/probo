@@ -29,8 +29,8 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
 
@@ -494,7 +494,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 			cfg.Probod.Connectors,
 			probodconfig.ConnectorConfig{
 				Provider: "GITHUB",
-				Protocol: connector.ProtocolGitHubApp,
+				Protocol: connectorprotocol.ProtocolGitHubApp,
 				RawConfig: probodconfig.ConnectorConfigGitHubApp{
 					AppID:        githubAppID,
 					ClientID:     b.resolver.getEnv("PROBOD_CONNECTOR_GITHUB_APP_CLIENT_ID"),

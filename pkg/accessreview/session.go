@@ -25,10 +25,9 @@ import (
 	"fmt"
 
 	"go.probo.inc/probo/pkg/cloud"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/identityfederation"
 )
 
 // OpenSession opens authenticated access to a workload identity connector.
@@ -41,51 +40,7 @@ func (s *Service) OpenSession(
 	dbConnector *coredata.Connector,
 	accountID string,
 ) (cloud.Session, error) {
-	return openSession(ctx, s.federation, s.providerRegistry, dbConnector, accountID)
-}
-
-func (h *sourceNameHandler) openSession(
-	ctx context.Context,
-	dbConnector *coredata.Connector,
-	accountID string,
-) (cloud.Session, error) {
-	return openSession(ctx, h.federation, h.providerRegistry, dbConnector, accountID)
-}
-
-func openSession(
-	ctx context.Context,
-	federation *identityfederation.Issuer,
-	providerRegistry *provider.Registry,
-	dbConnector *coredata.Connector,
-	accountID string,
-) (cloud.Session, error) {
-	reg, ok := providerRegistry.Get(dbConnector.Provider)
-	if !ok || reg.WorkloadIdentity == nil {
-		return nil, fmt.Errorf(
-			"cannot open cloud session: provider %s offers no workload identity path",
-			dbConnector.Provider,
-		)
-	}
-
-	// The initial account's own id is empty too: AWS would assume the member
-	// role instead of the configured RoleARN.
-	if accountID != "" {
-		initialID, _, err := reg.ResolveInitialAccount(dbConnector)
-		if err != nil {
-			return nil, fmt.Errorf("cannot resolve initial account: %w", err)
-		}
-
-		if accountID == initialID {
-			accountID = ""
-		}
-	}
-
-	session, err := reg.WorkloadIdentity.NewSession(ctx, federation, dbConnector, accountID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open cloud session for %s connector: %w", dbConnector.Provider, err)
-	}
-
-	return session, nil
+	return provider.OpenSession(ctx, s.federation, s.providerRegistry, dbConnector, accountID)
 }
 
 func (s *Service) initialAccount(c *coredata.Connector) (string, string, error) {

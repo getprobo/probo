@@ -27,7 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/log"
 
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
 

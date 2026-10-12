@@ -32,7 +32,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -57,7 +57,7 @@ type (
 	Service struct {
 		pg                *pg.Client
 		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.Registry
+		connectorRegistry *connectorprotocol.Registry
 		baseURL           string
 		// linearAPIBaseURL is the LINEAR_SYNC provider registration's
 		// Endpoints.APIBase, threaded in by probod so a deployment that
@@ -80,7 +80,7 @@ const linearPublishPendingExternalIDPrefix = "pending:"
 func NewService(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	baseURL string,
 	linearAPIBaseURL string,
 	logger *log.Logger,
@@ -1387,7 +1387,7 @@ func (s *Service) linearClientForConnector(
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
 ) (*linear.Client, *coredata.Connector, error) {
-	oauthConn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
+	oauthConn, ok := dbConnector.Connection.(*connectorprotocol.OAuth2Connection)
 	if !ok {
 		return nil, nil, fmt.Errorf("cannot use Linear connector: unsupported credential")
 	}
@@ -1430,7 +1430,7 @@ func (s *Service) linearClientForConnector(
 
 func (s *Service) oauthHTTPClient(
 	ctx context.Context,
-	conn *connector.OAuth2Connection,
+	conn *connectorprotocol.OAuth2Connection,
 	provider coredata.ConnectorProvider,
 ) (*http.Client, error) {
 	refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(provider))

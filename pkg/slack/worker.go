@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
@@ -193,7 +193,7 @@ func (h *sendingHandler) RecoverStale(ctx context.Context) error {
 	)
 }
 
-func (h *sendingHandler) loadSlackConnection(ctx context.Context, message *coredata.SlackMessage) (*connector.SlackConnection, error) {
+func (h *sendingHandler) loadSlackConnection(ctx context.Context, message *coredata.SlackMessage) (*connectorprotocol.SlackConnection, error) {
 	scope := coredata.NewScope(message.ID.TenantID())
 
 	var c coredata.Connector
@@ -221,7 +221,7 @@ func (h *sendingHandler) loadSlackConnection(ctx context.Context, message *cored
 		return nil, fmt.Errorf("connector has nil connection")
 	}
 
-	slackConn, ok := c.Connection.(*connector.SlackConnection)
+	slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection)
 	if !ok {
 		return nil, fmt.Errorf("unexpected connection type %T", c.Connection)
 	}

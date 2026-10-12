@@ -33,7 +33,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	connectorprovider "go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -442,10 +443,15 @@ func (s *Service) UpdateSource(
 					source.ConnectorAccountID = nil
 				}
 
-				// A (re)linked connector may resolve to a different instance
-				// name; clear the synced flag so the source-name worker picks
-				// the row up and re-resolves it, with a fresh retry budget.
-				source.ResetNameSync()
+				// A (re)linked account may resolve to a different instance
+				// name; clear its synced flag so the name worker re-resolves
+				// it, with a fresh retry budget.
+				if source.ConnectorAccountID != nil {
+					account := &coredata.ConnectorAccount{ID: *source.ConnectorAccountID}
+					if err := account.ResetNameSyncByID(ctx, conn, scope); err != nil {
+						return fmt.Errorf("cannot reset connector account name sync: %w", err)
+					}
+				}
 			}
 
 			if req.CsvData != nil {
@@ -572,7 +578,7 @@ func (s *Service) BuildHTTPClient(
 		return nil, nil, err
 	}
 
-	conn, ok := dbConnector.Connection.(connector.HTTPConnection)
+	conn, ok := dbConnector.Connection.(connectorprotocol.HTTPConnection)
 	if !ok {
 		return nil, nil, fmt.Errorf(
 			"cannot create HTTP client for %s connector: credential does not ride on HTTP",
@@ -595,16 +601,16 @@ func (s *Service) httpClientFor(
 	ctx context.Context,
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
-	conn connector.HTTPConnection,
+	conn connectorprotocol.HTTPConnection,
 ) (*http.Client, error) {
-	var tokenBefore string
+	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn)
 
-	oauth2Conn, isOAuth2 := conn.(*connector.OAuth2Connection)
-	if isOAuth2 {
+	var tokenBefore string
+	if oauth2Conn != nil {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
-	httpClient, err := buildHTTPClient(
+	httpClient, err := connectorprovider.HTTPClient(
 		ctx,
 		s.connectorRegistry,
 		s.providerRegistry,
@@ -615,7 +621,7 @@ func (s *Service) httpClientFor(
 		return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 	}
 
-	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
+	if oauth2Conn != nil && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
 
 		if err := s.pg.WithTx(
@@ -705,13 +711,11 @@ func (s *Service) ConfigureAccessReviewSource(
 			}
 
 			// The selected org changed, so the resolvable instance name may
-			// have too; clear the synced flag so the source-name worker
+			// have too; clear the synced flag so the name worker
 			// re-resolves the display name, with a fresh retry budget.
-			source.ResetNameSync()
-			source.UpdatedAt = time.Now()
-
-			if err := source.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot reset access source name sync: %w", err)
+			accounts := &coredata.ConnectorAccounts{}
+			if err := accounts.ResetNameSyncByConnectorID(ctx, conn, scope, dbConnector.ID); err != nil {
+				return fmt.Errorf("cannot reset connector account name sync: %w", err)
 			}
 
 			return nil
@@ -766,7 +770,7 @@ func (s *Service) ProbeConnector(
 	// Only a ProbeError means the credential or the provider is at fault;
 	// everything else returned here is Probo's own.
 	switch conn := dbConnector.Connection.(type) {
-	case *connector.WorkloadIdentityConnection:
+	case *connectorprotocol.WorkloadIdentityConnection:
 		session, err := s.OpenSession(ctx, dbConnector, "")
 		if err != nil {
 			return err
@@ -782,7 +786,7 @@ func (s *Service) ProbeConnector(
 
 		return nil
 
-	case connector.HTTPConnection:
+	case connectorprotocol.HTTPConnection:
 		// The eager token refresh runs here, so a revoked grant fails the
 		// probe before any request is made.
 		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
@@ -814,7 +818,7 @@ const newConnectorCheckTimeout = 15 * time.Second
 func (s *Service) CheckNewAPIKeyConnector(
 	ctx context.Context,
 	prvdr coredata.ConnectorProvider,
-	conn *connector.APIKeyConnection,
+	conn *connectorprotocol.APIKeyConnection,
 	rawSettings json.RawMessage,
 ) *drivers.SettingRejectedError {
 	reg, ok := s.providerRegistry.Get(prvdr)
@@ -861,10 +865,10 @@ func (s *Service) CheckNewAPIKeyConnector(
 func (s *Service) probeNewAPIKeyConnector(
 	ctx context.Context,
 	prvdr coredata.ConnectorProvider,
-	conn *connector.APIKeyConnection,
+	conn *connectorprotocol.APIKeyConnection,
 	rawSettings json.RawMessage,
 ) error {
-	httpClient, err := buildHTTPClient(ctx, s.connectorRegistry, s.providerRegistry, prvdr, conn)
+	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, prvdr, conn)
 	if err != nil {
 		return fmt.Errorf("cannot create HTTP client: %w", err)
 	}
@@ -1094,19 +1098,19 @@ func (s *Service) SourceNeedsReconnect(
 func (s *Service) ValidateConnectorInstall(
 	ctx context.Context,
 	provider coredata.ConnectorProvider,
-	conn connector.Connection,
+	conn connectorprotocol.Connection,
 ) error {
 	reg, ok := s.providerRegistry.Get(provider)
 	if !ok || reg.ValidateInstall == nil {
 		return nil
 	}
 
-	httpConn, ok := conn.(connector.HTTPConnection)
+	httpConn, ok := conn.(connectorprotocol.HTTPConnection)
 	if !ok {
 		return nil
 	}
 
-	httpClient, err := buildHTTPClient(ctx, s.connectorRegistry, s.providerRegistry, provider, httpConn)
+	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, provider, httpConn)
 	if err != nil {
 		return fmt.Errorf("cannot create HTTP client for %s connector: %w", provider, err)
 	}
@@ -1147,9 +1151,9 @@ func missingOAuthScopesForConnector(
 	dbConnector coredata.Connector,
 	required []string,
 ) []string {
-	if !connector.SupportsScopeGrantCheckFor(
+	if !connectorprotocol.SupportsScopeGrantCheckFor(
 		dbConnector.Connection,
-		connector.ProtocolType(dbConnector.Protocol),
+		connectorprotocol.ProtocolType(dbConnector.Protocol),
 	) {
 		return []string{}
 	}
@@ -1169,17 +1173,17 @@ func missingOAuthScopesForConnector(
 	// never synthesize it into Connection.Scopes(), which reconnect uses
 	// to build the next authorize request (Google rejects offline_access).
 	if connectionHasRefreshToken(dbConnector.Connection) {
-		granted = connector.UnionScopes(granted, []string{"offline_access"})
+		granted = connectorprotocol.UnionScopes(granted, []string{"offline_access"})
 	}
 
-	return connector.MissingScopes(required, granted)
+	return connectorprotocol.MissingScopes(required, granted)
 }
 
-func connectionHasRefreshToken(c connector.Connection) bool {
+func connectionHasRefreshToken(c connectorprotocol.Connection) bool {
 	switch conn := c.(type) {
-	case *connector.OAuth2Connection:
+	case *connectorprotocol.OAuth2Connection:
 		return conn.RefreshToken != ""
-	case *connector.SlackConnection:
+	case *connectorprotocol.SlackConnection:
 		return conn.RefreshToken != ""
 	default:
 		return false
@@ -1277,8 +1281,12 @@ func (s *Service) SetConnectorOrganization(
 		return err
 	}
 
-	if err := s.ResetSourceNameSyncForConnector(ctx, scope, connectorID); err != nil {
-		return fmt.Errorf("cannot reset access source name sync: %w", err)
+	if err := s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
+		accounts := &coredata.ConnectorAccounts{}
+
+		return accounts.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
+	}); err != nil {
+		return fmt.Errorf("cannot reset connector account name sync: %w", err)
 	}
 
 	return nil
@@ -1439,23 +1447,4 @@ func (s *Service) AutoSelectDefaultOrganization(
 			log.Error(err),
 		)
 	}
-}
-
-// ResetSourceNameSyncForConnector clears the synced-name flag on every access
-// source backed by connectorID so the source-name worker re-resolves the
-// display name. Called after a connector is reconnected — the new grant may
-// scope a different org/workspace, changing the resolvable name.
-func (s *Service) ResetSourceNameSyncForConnector(
-	ctx context.Context,
-	scope coredata.Scoper,
-	connectorID gid.GID,
-) error {
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			sources := &coredata.AccessReviewSources{}
-
-			return sources.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
-		},
-	)
 }

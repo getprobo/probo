@@ -28,6 +28,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -41,7 +42,7 @@ func handleConnectorInitiate(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
@@ -50,7 +51,7 @@ func handleConnectorInitiate(
 			return
 		}
 
-		if _, err := connectorRegistry.Lookup(provider, connector.ProtocolOAuth2); err != nil {
+		if _, err := connectorRegistry.Lookup(provider, connectorprotocol.ProtocolOAuth2); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider: %q", provider))
 			return
 		}
@@ -126,7 +127,7 @@ func handleConnectorInitiate(
 			return
 		}
 
-		opts := connector.InitiateOptions{
+		opts := connectorprotocol.InitiateOptions{
 			Scopes: requestedScopes,
 			Site:   r.URL.Query().Get("site"),
 			Name:   name,
@@ -187,7 +188,7 @@ func initiateConnectorName(r *http.Request, reconnecting bool) (string, error) {
 		return "", nil
 	}
 
-	name, err := probo.NormalizeConnectorName(r.URL.Query().Get("name"))
+	name, err := connector.NormalizeConnectorName(r.URL.Query().Get("name"))
 	if err != nil {
 		return "", fmt.Errorf("invalid name parameter")
 	}

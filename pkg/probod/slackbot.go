@@ -28,7 +28,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/agent"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"

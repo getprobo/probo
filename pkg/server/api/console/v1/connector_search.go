@@ -23,7 +23,7 @@ package console_v1
 import (
 	"strings"
 
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 )
 

@@ -32,8 +32,8 @@ import (
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
@@ -67,7 +67,7 @@ func NewGraphQLHandler(
 	mailmanSvc *mailman.Service,
 	cookieBannerSvc *cookiebanner.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	providerRegistry *provider.Registry,
 	customDomainCname string,
 	logger *log.Logger,

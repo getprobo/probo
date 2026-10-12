@@ -23,16 +23,16 @@ package console_v1
 import (
 	"context"
 
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
 func labelDiscoveredAccounts(
 	ctx context.Context,
-	connectors *probo.ConnectorService,
+	connectors *connector.Service,
 	scope coredata.Scoper,
 	connectorID gid.GID,
 	accounts []provider.DiscoveredAccount,

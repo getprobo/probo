@@ -25,7 +25,7 @@ import (
 	"net/http"
 
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -201,7 +201,7 @@ func ProviderSupportsOrganizationPicker(
 		return false
 	}
 
-	return connector.SupportsOrganizationPickerForProtocol(
-		connector.ProtocolType(protocol),
+	return connectorprotocol.SupportsOrganizationPickerForProtocol(
+		connectorprotocol.ProtocolType(protocol),
 	)
 }

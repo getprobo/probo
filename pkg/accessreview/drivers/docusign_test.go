@@ -39,7 +39,7 @@ func TestDocuSignDriver(t *testing.T) {
 	rec := newRecorder(t, "testdata/docusign", "DOCUSIGN_TOKEN")
 	client := newVCRClient(rec, bearerAuth(os.Getenv("DOCUSIGN_TOKEN")))
 	// The literal matches the cassette's recorded host and the registration's
-	// compiled Endpoints.Identity default (pkg/connector/provider/docusign.go)
+	// compiled Endpoints.Identity default (pkg/connectorprotocol/provider/docusign.go)
 	// byte-for-byte; drivers cannot import the provider package to reference
 	// it (provider imports drivers, not the reverse).
 	driver := NewDocuSignDriver(client, accountID, "https://account.docusign.com/oauth/userinfo")

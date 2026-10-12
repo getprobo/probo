@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -180,7 +180,7 @@ func seedConnector(
 			Provider:       provider,
 			Protocol:       coredata.ConnectorProtocolOAuth2,
 			Name:           "Test connector",
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				AccessToken: "test-token",
 				TokenType:   "Bearer",
 			},

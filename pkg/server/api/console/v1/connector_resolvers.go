@@ -13,6 +13,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -33,9 +34,9 @@ func (r *connectorResolver) CanReconnect(ctx context.Context, obj *types.Connect
 		return false, fmt.Errorf("cannot load connector connection: %w", err)
 	}
 
-	return connector.SupportsReconnectFor(
+	return connectorprotocol.SupportsReconnectFor(
 		cnnctr.Connection,
-		connector.ProtocolType(obj.Protocol),
+		connectorprotocol.ProtocolType(obj.Protocol),
 	), nil
 }
 
@@ -418,7 +419,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	conn := r.newAPIKeyConnection(input.Provider, apiKey)
 
-	req := probo.CreateConnectorRequest{
+	req := connector.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Provider:       input.Provider,
@@ -472,8 +473,8 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
-	oauth2Conn := &connector.OAuth2Connection{
-		GrantType:    connector.OAuth2GrantTypeClientCredentials,
+	oauth2Conn := &connectorprotocol.OAuth2Connection{
+		GrantType:    connectorprotocol.OAuth2GrantTypeClientCredentials,
 		ClientID:     input.ClientID,
 		ClientSecret: input.ClientSecret,
 		TokenURL:     tokenURL,
@@ -481,7 +482,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	oauth2Conn.Scope = clientCredentialsScope(r.providerRegistry, input.Provider, input.Scope)
 
-	req := probo.CreateConnectorRequest{
+	req := connector.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Provider:       input.Provider,
@@ -524,12 +525,12 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 		return nil, err
 	}
 
-	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, connector.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
-		Connection:     &connector.WorkloadIdentityConnection{},
+		Connection:     &connectorprotocol.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
@@ -557,12 +558,12 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 		return nil, err
 	}
 
-	cnnctr, err := r.probo.Connectors.Create(ctx, scope, probo.CreateConnectorRequest{
+	cnnctr, err := r.probo.Connectors.Create(ctx, scope, connector.CreateConnectorRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolWorkloadIdentity,
-		Connection:     &connector.WorkloadIdentityConnection{},
+		Connection:     &connectorprotocol.WorkloadIdentityConnection{},
 		RawSettings:    raw,
 	})
 	if err != nil {
@@ -613,13 +614,13 @@ func (r *mutationResolver) EnableConnectorAccounts(ctx context.Context, input ty
 		return nil, err
 	}
 
-	req := make([]probo.EnableConnectorAccount, 0, len(input.Accounts))
+	req := make([]connector.EnableConnectorAccount, 0, len(input.Accounts))
 	for _, account := range input.Accounts {
 		if account == nil {
 			continue
 		}
 
-		req = append(req, probo.EnableConnectorAccount{
+		req = append(req, connector.EnableConnectorAccount{
 			ExternalAccountID: account.ExternalAccountID,
 			Name:              account.Name,
 		})
@@ -666,7 +667,7 @@ func (r *mutationResolver) DisableConnectorAccount(ctx context.Context, input ty
 			return nil, gqlutils.Conflictf(ctx, "connector account is in use")
 		}
 
-		if errors.Is(err, probo.ErrInitialConnectorAccount) {
+		if errors.Is(err, connector.ErrInitialConnectorAccount) {
 			return nil, gqlutils.Conflictf(ctx, "connector account is the initial account")
 		}
 
@@ -709,7 +710,7 @@ func (r *mutationResolver) UpdateConnector(ctx context.Context, input types.Upda
 		return nil, err
 	}
 
-	cnnctr, err := r.probo.Connectors.Update(ctx, scope, probo.UpdateConnectorRequest{
+	cnnctr, err := r.probo.Connectors.Update(ctx, scope, connector.UpdateConnectorRequest{
 		ConnectorID: input.ConnectorID,
 		Name:        input.Name,
 	})

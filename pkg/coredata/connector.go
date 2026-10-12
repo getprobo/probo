@@ -31,7 +31,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -66,16 +66,16 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 
 type (
 	Connector struct {
-		ID                  gid.GID              `db:"id"`
-		OrganizationID      gid.GID              `db:"organization_id"`
-		Provider            ConnectorProvider    `db:"provider"`
-		Protocol            ConnectorProtocol    `db:"protocol"`
-		Name                string               `db:"name"`
-		RawSettings         jsonRawMessageOrNull `db:"settings"`
-		Connection          connector.Connection `db:"-"`
-		EncryptedConnection []byte               `db:"encrypted_connection"`
-		CreatedAt           time.Time            `db:"created_at"`
-		UpdatedAt           time.Time            `db:"updated_at"`
+		ID                  gid.GID                      `db:"id"`
+		OrganizationID      gid.GID                      `db:"organization_id"`
+		Provider            ConnectorProvider            `db:"provider"`
+		Protocol            ConnectorProtocol            `db:"protocol"`
+		Name                string                       `db:"name"`
+		RawSettings         jsonRawMessageOrNull         `db:"settings"`
+		Connection          connectorprotocol.Connection `db:"-"`
+		EncryptedConnection []byte                       `db:"encrypted_connection"`
+		CreatedAt           time.Time                    `db:"created_at"`
+		UpdatedAt           time.Time                    `db:"updated_at"`
 	}
 
 	Connectors []*Connector
@@ -527,7 +527,7 @@ INSERT INTO connectors (
 	}
 
 	if c.Provider == ConnectorProviderSlack {
-		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+		if slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection); ok {
 			_ = c.SetSettings(
 				&SlackConnectorSettings{
 					Channel:   slackConn.Settings.Channel,
@@ -703,7 +703,7 @@ WHERE
 	}
 
 	if c.Provider == ConnectorProviderSlack {
-		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+		if slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection); ok {
 			_ = c.SetSettings(
 				&SlackConnectorSettings{
 					Channel:   slackConn.Settings.Channel,
@@ -802,13 +802,13 @@ func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error 
 		return fmt.Errorf("cannot decrypt connection for %s: %w", c.Provider, err)
 	}
 
-	c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
+	c.Connection, err = connectorprotocol.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal connection for %s: %w", c.Provider, err)
 	}
 
 	if c.Provider == ConnectorProviderSlack {
-		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+		if slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection); ok {
 			settings, _ := ConnectorSettings[SlackConnectorSettings](c)
 			slackConn.Settings.Channel = settings.Channel
 			slackConn.Settings.ChannelID = settings.ChannelID

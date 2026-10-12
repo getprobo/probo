@@ -66,6 +66,9 @@ const sourcesQuery = graphql`
             node {
               id
               name
+              connectorAccount {
+                name
+              }
             }
           }
         }
@@ -263,7 +266,7 @@ function SourceSelector({
               checked={selectedSourceIds.includes(source.id)}
               onChange={() => onToggle(source.id)}
             />
-            <span className="text-sm">{source.name}</span>
+            <span className="text-sm">{source.connectorAccount?.name ?? source.name}</span>
           </label>
         ))}
       </div>

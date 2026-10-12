@@ -36,16 +36,13 @@ import (
 
 type (
 	AccessReviewSource struct {
-		ID                    gid.GID    `db:"id"`
-		OrganizationID        gid.GID    `db:"organization_id"`
-		ConnectorAccountID    *gid.GID   `db:"connector_account_id"`
-		Name                  string     `db:"name"`
-		CsvData               *string    `db:"csv_data"`
-		NameSyncedAt          *time.Time `db:"name_synced_at"`
-		NameSyncAttempts      int        `db:"name_sync_attempts"`
-		NameSyncNextAttemptAt *time.Time `db:"name_sync_next_attempt_at"`
-		CreatedAt             time.Time  `db:"created_at"`
-		UpdatedAt             time.Time  `db:"updated_at"`
+		ID                 gid.GID   `db:"id"`
+		OrganizationID     gid.GID   `db:"organization_id"`
+		ConnectorAccountID *gid.GID  `db:"connector_account_id"`
+		Name               string    `db:"name"`
+		CsvData            *string   `db:"csv_data"`
+		CreatedAt          time.Time `db:"created_at"`
+		UpdatedAt          time.Time `db:"updated_at"`
 	}
 
 	AccessReviewSources []*AccessReviewSource
@@ -112,9 +109,6 @@ SELECT
     connector_account_id,
     name,
     csv_data,
-    name_synced_at,
-    name_sync_attempts,
-    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -163,9 +157,6 @@ SELECT
     connector_account_id,
     name,
     csv_data,
-    name_synced_at,
-    name_sync_attempts,
-    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -213,9 +204,6 @@ SELECT
     connector_account_id,
     name,
     csv_data,
-    name_synced_at,
-    name_sync_attempts,
-    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -298,9 +286,6 @@ INSERT INTO
         connector_account_id,
         name,
         csv_data,
-        name_synced_at,
-        name_sync_attempts,
-        name_sync_next_attempt_at,
         created_at,
         updated_at
     )
@@ -311,9 +296,6 @@ VALUES (
     @connector_account_id,
     @name,
     @csv_data,
-    @name_synced_at,
-    @name_sync_attempts,
-    @name_sync_next_attempt_at,
     @created_at,
     @updated_at
 )
@@ -322,17 +304,14 @@ RETURNING id;
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                        as.ID,
-		"tenant_id":                 scope.GetTenantID(),
-		"organization_id":           as.OrganizationID,
-		"connector_account_id":      as.ConnectorAccountID,
-		"name":                      as.Name,
-		"csv_data":                  as.CsvData,
-		"name_synced_at":            as.NameSyncedAt,
-		"name_sync_attempts":        as.NameSyncAttempts,
-		"name_sync_next_attempt_at": as.NameSyncNextAttemptAt,
-		"created_at":                as.CreatedAt,
-		"updated_at":                as.UpdatedAt,
+		"id":                   as.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      as.OrganizationID,
+		"connector_account_id": as.ConnectorAccountID,
+		"name":                 as.Name,
+		"csv_data":             as.CsvData,
+		"created_at":           as.CreatedAt,
+		"updated_at":           as.UpdatedAt,
 	}
 
 	var insertedID gid.GID
@@ -363,9 +342,6 @@ SET
     connector_account_id = @connector_account_id,
     connector_id = NULL,
     csv_data = @csv_data,
-    name_synced_at = @name_synced_at,
-    name_sync_attempts = @name_sync_attempts,
-    name_sync_next_attempt_at = @name_sync_next_attempt_at,
     updated_at = @updated_at
 WHERE
     %s
@@ -374,14 +350,11 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                        as.ID,
-		"name":                      as.Name,
-		"connector_account_id":      as.ConnectorAccountID,
-		"csv_data":                  as.CsvData,
-		"name_synced_at":            as.NameSyncedAt,
-		"name_sync_attempts":        as.NameSyncAttempts,
-		"name_sync_next_attempt_at": as.NameSyncNextAttemptAt,
-		"updated_at":                as.UpdatedAt,
+		"id":                   as.ID,
+		"name":                 as.Name,
+		"connector_account_id": as.ConnectorAccountID,
+		"csv_data":             as.CsvData,
+		"updated_at":           as.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -439,9 +412,6 @@ SELECT
     connector_account_id,
     name,
     csv_data,
-    name_synced_at,
-    name_sync_attempts,
-    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -515,9 +485,6 @@ SELECT
     connector_account_id,
     name,
     csv_data,
-    name_synced_at,
-    name_sync_attempts,
-    name_sync_next_attempt_at,
     created_at,
     updated_at
 FROM
@@ -572,222 +539,4 @@ WHERE
 	}
 
 	return count, nil
-}
-
-// RecordNameSyncAttempt charges the claimed source for one name-resolution
-// attempt and holds it out of the queue for backoff. It must run in the
-// transaction that claimed the row: the claim predicate does not otherwise
-// change on failure, so an uncharged attempt is re-claimed immediately.
-//
-// The deadline is computed from the database clock, which is the clock the
-// claim predicate compares against.
-func (as *AccessReviewSource) RecordNameSyncAttempt(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	backoff time.Duration,
-) error {
-	q := `
-UPDATE access_review_sources
-SET
-    name_sync_attempts = name_sync_attempts + 1,
-    name_sync_next_attempt_at = NOW() + @backoff::interval
-WHERE
-    %s
-    AND id = @id
-RETURNING name_sync_attempts, name_sync_next_attempt_at
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"id":      as.ID,
-		"backoff": backoff,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	err := conn.QueryRow(ctx, q, args).Scan(&as.NameSyncAttempts, &as.NameSyncNextAttemptAt)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot record access source name sync attempt: %w", err)
-	}
-
-	return nil
-}
-
-// MarkNameSynced retires the source from the name-sync queue, writing the
-// resolved name alongside. It touches only the name-sync columns and applies
-// only while the row still carries the deadline and attempt count the caller
-// claimed: a reconnect or a relink that lands during the resolve wins, and
-// this reports no error so the worker treats the task as done.
-//
-// The deadline is what makes the guard a claim generation. The attempt count
-// alone is not unique — a reconnect resets it to zero and the next claim
-// charges it straight back to the same number, so a resolve still in flight
-// from before the reconnect would match again and overwrite the fresh claim
-// with a stale name. RecordNameSyncAttempt stamps a new deadline from the
-// database clock on every claim, so no two claims of a row carry the same one.
-func (as *AccessReviewSource) MarkNameSynced(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	syncedAt time.Time,
-) error {
-	q := `
-UPDATE access_review_sources
-SET
-    name = @name,
-    name_synced_at = @name_synced_at,
-    name_sync_next_attempt_at = NULL,
-    updated_at = @updated_at
-WHERE
-    %s
-    AND id = @id
-    AND name_synced_at IS NULL
-    AND name_sync_attempts = @name_sync_attempts
-    AND name_sync_next_attempt_at IS NOT DISTINCT FROM @name_sync_next_attempt_at
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"id":                        as.ID,
-		"name":                      as.Name,
-		"name_synced_at":            syncedAt,
-		"name_sync_attempts":        as.NameSyncAttempts,
-		"name_sync_next_attempt_at": as.NameSyncNextAttemptAt,
-		"updated_at":                syncedAt,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot mark access source name synced: %w", err)
-	}
-
-	as.NameSyncedAt = &syncedAt
-	as.NameSyncNextAttemptAt = nil
-	as.UpdatedAt = syncedAt
-
-	return nil
-}
-
-// ResetNameSync puts the source back at the head of the name-sync queue with a
-// clean retry budget. updated_at is left to the caller, which owns the rest of
-// the mutation.
-func (as *AccessReviewSource) ResetNameSync() {
-	as.NameSyncedAt = nil
-	as.NameSyncAttempts = 0
-	as.NameSyncNextAttemptAt = nil
-}
-
-// ResetNameSyncByConnectorID clears the synced name and the retry budget for
-// every access source backed by connectorID, so the source-name worker
-// re-resolves their display name. No-op when no source references it.
-//
-// Rows already at NULL are included: a source still inside its backoff, or one
-// that exhausted its attempts against a misconfigured connector, is exactly
-// what the reconnect that fixed it needs to release.
-func (sources *AccessReviewSources) ResetNameSyncByConnectorID(
-	ctx context.Context,
-	conn pg.Tx,
-	scope Scoper,
-	connectorID gid.GID,
-) error {
-	q := `
-UPDATE access_review_sources
-SET
-    name_synced_at = NULL,
-    name_sync_attempts = 0,
-    name_sync_next_attempt_at = NULL,
-    updated_at = @updated_at
-WHERE
-    %s
-    AND connector_account_id IN (
-        SELECT id
-        FROM connector_accounts
-        WHERE
-            %s
-            AND connector_id = @connector_id
-    )
-    AND (name_synced_at IS NOT NULL OR name_sync_attempts > 0)
-`
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"connector_id": connectorID,
-		"updated_at":   time.Now(),
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot clear access source name sync: %w", err)
-	}
-
-	return nil
-}
-
-// ErrNoAccessReviewSourceNameSyncAvailable is returned when no access source
-// needs its name synced from its connector.
-var ErrNoAccessReviewSourceNameSyncAvailable = fmt.Errorf("no access source name sync available")
-
-// LoadNextUnsyncedNameForUpdateSkipLocked claims the next access source that
-// has a connector, has not yet had its name synced, and is not backing off
-// from a previous failure. The row is locked with FOR UPDATE SKIP LOCKED so
-// concurrent workers do not pick the same row.
-//
-// The query is intentionally cross-tenant: the worker serves every tenant and
-// re-scopes from the claimed row's own GID.
-//
-// The backoff gate is what bounds the claim. Nothing else transitions the
-// predicate on failure -- name_synced_at is untouched and the row lock ends
-// with this transaction -- so without it the same row is re-claimed as fast as
-// it can be processed, and being ordered by created_at it also blocks every
-// source behind it. Callers must charge the attempt with RecordNameSyncAttempt
-// in this same transaction.
-func (as *AccessReviewSource) LoadNextUnsyncedNameForUpdateSkipLocked(
-	ctx context.Context,
-	conn pg.Tx,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    connector_account_id,
-    name,
-    csv_data,
-    name_synced_at,
-    name_sync_attempts,
-    name_sync_next_attempt_at,
-    created_at,
-    updated_at
-FROM
-    access_review_sources
-WHERE
-    connector_account_id IS NOT NULL
-    AND name_synced_at IS NULL
-    AND (name_sync_next_attempt_at IS NULL OR name_sync_next_attempt_at <= NOW())
-ORDER BY
-    created_at ASC
-LIMIT 1
-FOR UPDATE SKIP LOCKED;
-`
-
-	rows, err := conn.Query(ctx, q)
-	if err != nil {
-		return fmt.Errorf("cannot query unsynced access_review_sources: %w", err)
-	}
-
-	row, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[AccessReviewSource])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrNoAccessReviewSourceNameSyncAvailable
-		}
-
-		return fmt.Errorf("cannot collect unsynced access source: %w", err)
-	}
-
-	*as = row
-
-	return nil
 }

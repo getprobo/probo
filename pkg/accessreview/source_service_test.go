@@ -32,8 +32,8 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -279,7 +279,7 @@ func TestEnsureSource_RejectsForeignOrganization(t *testing.T) {
 				OrganizationID: foreignOrganizationID,
 				Provider:       coredata.ConnectorProviderGitHub,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},
@@ -440,7 +440,7 @@ func TestSource_RefusesConnectorWithNoAccount(t *testing.T) {
 				OrganizationID: env.organizationID,
 				Provider:       coredata.ConnectorProviderGitHub,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},
@@ -742,7 +742,7 @@ func TestSourceNeedsReconnect_Slack(t *testing.T) {
 		require.NoError(t, env.client.WithTx(
 			env.ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				conn := &connector.SlackConnection{
+				conn := &connectorprotocol.SlackConnection{
 					AccessToken: "xox-test",
 					TokenType:   tokenType,
 					Scope:       scope,
@@ -805,7 +805,7 @@ func TestSetConnectorOrganization_GitHubApp(t *testing.T) {
 				OrganizationID: env.organizationID,
 				Provider:       coredata.ConnectorProviderGitHub,
 				Protocol:       coredata.ConnectorProtocolGitHubApp,
-				Connection:     &connector.GitHubAppConnection{InstallationID: 42},
+				Connection:     &connectorprotocol.GitHubAppConnection{InstallationID: 42},
 				CreatedAt:      env.now,
 				UpdatedAt:      env.now,
 			}
@@ -899,7 +899,7 @@ func (e *accessSourceEnv) insertConnector(
 				OrganizationID: e.organizationID,
 				Provider:       connectorProvider,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},

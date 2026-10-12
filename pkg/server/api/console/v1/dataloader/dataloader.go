@@ -102,6 +102,7 @@ type (
 		Organization                               *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework                                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
 		Control                                    *dataloadgen.Loader[gid.GID, *coredata.Control]
+		ConnectorAccount                           *dataloadgen.Loader[gid.GID, *coredata.ConnectorAccount]
 		ThirdParty                                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document                                   *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile                                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
@@ -181,6 +182,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Organization:                             dataloadgen.NewMappedLoader(f.fetchOrganizations),
 		Framework:                                dataloadgen.NewMappedLoader(f.fetchFrameworks),
 		Control:                                  dataloadgen.NewMappedLoader(f.fetchControls),
+		ConnectorAccount:                         dataloadgen.NewMappedLoader(f.fetchConnectorAccounts),
 		ThirdParty:                               dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:                                 dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:                                  dataloadgen.NewMappedLoader(f.fetchProfiles),
@@ -639,6 +641,22 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByFile(
 				CompliancePortalFileID:   *access.CompliancePortalFileID,
 			}] = access
 		}
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchConnectorAccounts(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ConnectorAccount, error) {
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	accounts, err := f.probo.Connectors.GetAccountsByIDs(ctx, scope, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load connector accounts: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.ConnectorAccount, len(accounts))
+	for _, account := range accounts {
+		result[account.ID] = account
 	}
 
 	return result, nil

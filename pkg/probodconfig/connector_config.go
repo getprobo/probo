@@ -26,20 +26,20 @@ import (
 	"fmt"
 	"strings"
 
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 )
 
 type ConnectorConfig struct {
-	Provider    string                 `json:"provider"`
-	Protocol    connector.ProtocolType `json:"protocol"`
-	Config      connector.Connector    `json:"-"`
-	RawConfig   any                    `json:"config,omitempty"`
-	Settings    any                    `json:"-"`
-	RawSettings any                    `json:"settings,omitempty"`
+	Provider    string                         `json:"provider"`
+	Protocol    connectorprotocol.ProtocolType `json:"protocol"`
+	Config      connectorprotocol.Connector    `json:"-"`
+	RawConfig   any                            `json:"config,omitempty"`
+	Settings    any                            `json:"-"`
+	RawSettings any                            `json:"settings,omitempty"`
 	// APIKey holds the Probo-supplied credential for an api_key-protocol
 	// connector (ManagedAPIKey providers such as Crisp). It is resolved
 	// from RawConfig by UnmarshalJSON and registered on the provider
-	// Registry by probod. Empty for OAuth2 connectors.
+	// Registry by probod. Empty for OAuth2 connector.
 	APIKey string `json:"-"`
 	// ResourceID holds an optional Probo-supplied resource identifier for an
 	// api_key-protocol connector, distinct from the credential (e.g. the
@@ -156,7 +156,7 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	c.Provider = strings.ToUpper(tmp.Provider)
-	c.Protocol = connector.ProtocolType(strings.ToUpper(tmp.Protocol))
+	c.Protocol = connectorprotocol.ProtocolType(strings.ToUpper(tmp.Protocol))
 
 	if len(tmp.Settings) > 0 {
 		var settings map[string]any
@@ -168,13 +168,13 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	switch c.Protocol {
-	case connector.ProtocolOAuth2:
+	case connectorprotocol.ProtocolOAuth2:
 		var config ConnectorConfigOAuth2
 		if err := json.NewDecoder(bytes.NewReader(tmp.RawConfig)).Decode(&config); err != nil {
 			return fmt.Errorf("cannot unmarshal oauth2 connector config: %w", err)
 		}
 
-		oauth2Connector := connector.OAuth2Connector{
+		oauth2Connector := connectorprotocol.OAuth2Connector{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
 		}
@@ -182,7 +182,7 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 		oauth2Connector.IntegrationSlug = config.IntegrationSlug
 
 		c.Config = &oauth2Connector
-	case connector.ProtocolAPIKey:
+	case connectorprotocol.ProtocolAPIKey:
 		var config ConnectorConfigAPIKey
 		if err := json.NewDecoder(bytes.NewReader(tmp.RawConfig)).Decode(&config); err != nil {
 			return fmt.Errorf("cannot unmarshal api key connector config: %w", err)
@@ -190,8 +190,8 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 
 		c.APIKey = config.APIKey
 		c.ResourceID = config.ResourceID
-	case connector.ProtocolGitHubApp:
-		if c.Provider != connector.GitHubProvider {
+	case connectorprotocol.ProtocolGitHubApp:
+		if c.Provider != connectorprotocol.GitHubProvider {
 			return fmt.Errorf("github_app connector protocol requires GITHUB provider")
 		}
 
@@ -200,7 +200,7 @@ func (c *ConnectorConfig) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("cannot unmarshal github app connector config: %w", err)
 		}
 
-		c.Config = &connector.GitHubAppConnector{
+		c.Config = &connectorprotocol.GitHubAppConnector{
 			AppID:        config.AppID,
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,

@@ -42,7 +42,7 @@ func NewConnectorProviderFilter(provider *ConnectorProvider) *ConnectorFilter {
 }
 
 // NewConnectorListFilter restricts a connector list. An empty providers
-// slice does not constrain the provider. query matches connectors.name;
+// slice does not constrain the provider. query matches connector.name;
 // queryProviders are the providers whose display name or slug matched query,
 // resolved by the caller because display names are not stored.
 func NewConnectorListFilter(

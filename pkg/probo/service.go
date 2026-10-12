@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/esign"
@@ -85,7 +85,7 @@ type (
 		fileManager                           *filemanager.Service
 		logger                                *log.Logger
 		esign                                 *esign.Service
-		connectorRegistry                     *connector.Registry
+		connectorRegistry                     *connectorprotocol.Registry
 		invitationTokenValidity               time.Duration
 		Frameworks                            *FrameworkService
 		InternalControls                      *InternalControlService
@@ -101,7 +101,7 @@ type (
 		ThirdPartyContacts                    *ThirdPartyContactService
 		ThirdPartyDataPrivacyAgreements       *ThirdPartyDataPrivacyAgreementService
 		ThirdPartyServices                    *ThirdPartyServiceService
-		Connectors                            *ConnectorService
+		Connectors                            *connector.Service
 		Assets                                *AssetService
 		Data                                  *DatumService
 		Audits                                *AuditService
@@ -136,8 +136,8 @@ func NewService(
 	logger *log.Logger,
 	iamService *iam.Service,
 	esignService *esign.Service,
-	connectorRegistry *connector.Registry,
-	providerRegistry *provider.Registry,
+	connectorsService *connector.Service,
+	connectorRegistry *connectorprotocol.Registry,
 	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	if bucket == "" {
@@ -214,7 +214,7 @@ func NewService(
 	svc.ThirdPartyContacts = &ThirdPartyContactService{svc: svc}
 	svc.ThirdPartyDataPrivacyAgreements = &ThirdPartyDataPrivacyAgreementService{svc: svc}
 	svc.ThirdPartyServices = &ThirdPartyServiceService{svc: svc}
-	svc.Connectors = &ConnectorService{svc: svc, providerRegistry: providerRegistry}
+	svc.Connectors = connectorsService
 	svc.Assets = &AssetService{svc: svc}
 	svc.Data = &DatumService{svc: svc}
 	svc.Audits = &AuditService{svc: svc}

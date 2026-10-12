@@ -39,6 +39,9 @@ const accessReviewSourceDeleteDialogFragment = graphql`
   fragment AccessReviewSourceDeleteDialog_source on AccessReviewSource {
     id
     name
+    connectorAccount {
+      name
+    }
     canDelete: permission(action: "access-review:source:delete")
   }
 `;
@@ -106,7 +109,7 @@ export function AccessReviewSourceDeleteDialog({
         <DialogHeader>
           <DialogTitle>{t("accessReviewSourceRow.actions.delete")}</DialogTitle>
           <DialogDescription>
-            {t("accessReviewSourceRow.deleteConfirmation", { name: source.name })}
+            {t("accessReviewSourceRow.deleteConfirmation", { name: source.connectorAccount?.name ?? source.name })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

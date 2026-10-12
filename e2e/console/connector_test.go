@@ -170,7 +170,7 @@ func TestConnectorProviders(t *testing.T) {
 	assert.Empty(t, clientCredentialsSettingKeys["LANGFUSE"])
 
 	// A documented provider exposes its probo.com docs URL; an undocumented one
-	// exposes null. See pkg/connector/provider/docs.go.
+	// exposes null. See pkg/connectorprotocol/provider/docs.go.
 	require.Contains(t, docURLByProvider, "ANTHROPIC")
 
 	if url := docURLByProvider["ANTHROPIC"]; assert.NotNil(t, url) {

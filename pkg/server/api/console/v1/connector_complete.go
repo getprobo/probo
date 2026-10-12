@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
@@ -46,7 +47,7 @@ func handleConnectorComplete(
 	baseURL *baseurl.BaseURL,
 	proboSvc *probo.Service,
 	accessReviewSvc *accessreview.Service,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +110,7 @@ func handleConnectorGitHubAppComplete(
 	baseURL *baseurl.BaseURL,
 	proboSvc *probo.Service,
 	accessReviewSvc *accessreview.Service,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -164,10 +165,10 @@ func connectorRawSettings(
 	logger *log.Logger,
 	w http.ResponseWriter,
 	r *http.Request,
-	completion *connector.CompletionState,
+	completion *connectorprotocol.CompletionState,
 	query url.Values,
 ) (json.RawMessage, bool) {
-	if completion.Protocol == connector.ProtocolGitHubApp {
+	if completion.Protocol == connectorprotocol.ProtocolGitHubApp {
 		return githubAppConnectorRawSettings(logger, w, r, completion)
 	}
 
@@ -178,9 +179,9 @@ func githubAppConnectorRawSettings(
 	logger *log.Logger,
 	w http.ResponseWriter,
 	r *http.Request,
-	completion *connector.CompletionState,
+	completion *connectorprotocol.CompletionState,
 ) (json.RawMessage, bool) {
-	org := completion.ProviderMetadata[connector.CompletionMetadataGitHubOrganization]
+	org := completion.ProviderMetadata[connectorprotocol.CompletionMetadataGitHubOrganization]
 
 	raw, err := json.Marshal(&coredata.GitHubConnectorSettings{
 		Organization: org,
@@ -199,7 +200,7 @@ func oauthConnectorRawSettings(
 	logger *log.Logger,
 	w http.ResponseWriter,
 	r *http.Request,
-	completion *connector.CompletionState,
+	completion *connectorprotocol.CompletionState,
 	query url.Values,
 ) (json.RawMessage, bool) {
 	var connectorProvider coredata.ConnectorProvider
@@ -212,7 +213,7 @@ func oauthConnectorRawSettings(
 
 	if connectorProvider == coredata.ConnectorProviderDatadog {
 		domain := query.Get("domain")
-		if !connector.IsValidDatadogDomain(domain) {
+		if !connectorprotocol.IsValidDatadogDomain(domain) {
 			logger.WarnCtx(r.Context(), "rejecting invalid datadog domain",
 				log.String("provider", string(connectorProvider)),
 			)
@@ -221,7 +222,7 @@ func oauthConnectorRawSettings(
 			return nil, false
 		}
 
-		region, _ := connector.DatadogSiteForDomain(domain)
+		region, _ := connectorprotocol.DatadogSiteForDomain(domain)
 
 		raw, err := json.Marshal(&coredata.DatadogConnectorSettings{
 			Region: region,
@@ -238,7 +239,7 @@ func oauthConnectorRawSettings(
 	}
 
 	if connectorProvider == coredata.ConnectorProviderZendesk {
-		if !connector.IsValidZendeskSubdomain(completion.Site) {
+		if !connectorprotocol.IsValidZendeskSubdomain(completion.Site) {
 			logger.WarnCtx(r.Context(), "rejecting invalid zendesk subdomain",
 				log.String("provider", string(connectorProvider)),
 			)
@@ -329,7 +330,7 @@ func finishConnectorCompletion(
 	proboSvc *probo.Service,
 	accessReviewSvc *accessreview.Service,
 	safeRedirect *saferedirect.SafeRedirect,
-	completion *connector.CompletionState,
+	completion *connectorprotocol.CompletionState,
 	query url.Values,
 	rawSettings json.RawMessage,
 ) {
@@ -387,7 +388,7 @@ func finishConnectorCompletion(
 		cnnctr, err = proboSvc.Connectors.Reconnect(
 			r.Context(),
 			scope,
-			probo.ReconnectConnectorRequest{
+			connector.ReconnectConnectorRequest{
 				ConnectorID:    connectorID,
 				OrganizationID: organizationID,
 				Provider:       connectorProvider,
@@ -402,11 +403,11 @@ func finishConnectorCompletion(
 			return
 		}
 
-		if err := accessReviewSvc.ResetSourceNameSyncForConnector(r.Context(), scope, cnnctr.ID); err != nil {
-			logger.WarnCtx(r.Context(), "cannot reset access source name sync after reconnect", log.Error(err))
+		if err := proboSvc.Connectors.ResetAccountNameSync(r.Context(), scope, cnnctr.ID); err != nil {
+			logger.WarnCtx(r.Context(), "cannot reset connector account name sync after reconnect", log.Error(err))
 		}
 	} else {
-		createReq := probo.CreateConnectorRequest{
+		createReq := connector.CreateConnectorRequest{
 			OrganizationID: organizationID,
 			Name:           completion.Name,
 			Provider:       connectorProvider,
@@ -417,8 +418,8 @@ func finishConnectorCompletion(
 		if connectorProvider == coredata.ConnectorProviderVercel {
 			teamID := vercelCallbackTeamID(query)
 			if teamID == "" {
-				if oauth2Conn, ok := connection.(*connector.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
-					if uid, err := connector.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
+				if oauth2Conn, ok := connection.(*connectorprotocol.OAuth2Connection); ok && oauth2Conn.AccessToken != "" {
+					if uid, err := connectorprotocol.FetchVercelUserID(r.Context(), oauth2Conn.AccessToken); err == nil {
 						teamID = uid
 					} else {
 						logger.WarnCtx(r.Context(), "cannot fetch vercel user id for personal-account fallback", log.Error(err))
@@ -481,10 +482,10 @@ func redirectToGitHubAppInstall(
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *log.Logger,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	err error,
 ) bool {
-	if !errors.Is(err, connector.ErrGitHubAppInstallationRequired) {
+	if !errors.Is(err, connectorprotocol.ErrGitHubAppInstallationRequired) {
 		return false
 	}
 
@@ -506,7 +507,7 @@ func handleConnectorCallbackError(
 	r *http.Request,
 	logger *log.Logger,
 	baseURL *baseurl.BaseURL,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	safeRedirect *saferedirect.SafeRedirect,
 	query url.Values,
 ) {
@@ -516,15 +517,15 @@ func handleConnectorCallbackError(
 	redirectURL := baseURL.String()
 
 	if stateToken := query.Get("state"); stateToken != "" {
-		if connector.IsGitHubAppState(stateToken) {
+		if connectorprotocol.IsGitHubAppState(stateToken) {
 			if state, err := connectorRegistry.ValidateGitHubAppState(stateToken); err == nil {
-				provider = connector.GitHubProvider
+				provider = connectorprotocol.GitHubProvider
 
 				if state.ContinueURL != "" {
 					redirectURL = state.ContinueURL
 				}
 			}
-		} else if payload, err := connector.DecodeOAuth2StatePayload(stateToken); err == nil {
+		} else if payload, err := connectorprotocol.DecodeOAuth2StatePayload(stateToken); err == nil {
 			if payload.Data.Provider != "" {
 				provider = payload.Data.Provider
 			}

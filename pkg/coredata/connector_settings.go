@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 )
 
 const (
@@ -143,7 +143,7 @@ type (
 	// the per-org API host (https://<domain>/api/v1/...). Okta has no
 	// central API gateway — every org authenticates against its own
 	// domain — so the host is operator-supplied and validated (see
-	// connector.NormalizeOktaDomain) before it reaches URL construction.
+	// connectorprotocol.NormalizeOktaDomain) before it reaches URL construction.
 	OktaConnectorSettings struct {
 		Domain string `json:"domain"`
 	}
@@ -307,7 +307,7 @@ type (
 // connector. Driver factories that dispatch on grant type (1Password)
 // read this instead of inspecting the typed Connection directly.
 func (c *Connector) GrantType() string {
-	if oauth2Conn, ok := c.Connection.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := c.Connection.(*connectorprotocol.OAuth2Connection); ok {
 		return string(oauth2Conn.GrantType)
 	}
 
