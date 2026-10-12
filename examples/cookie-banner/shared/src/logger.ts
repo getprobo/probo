@@ -20,7 +20,11 @@
 
 import log from "loglevel";
 
-log.setLevel("debug");
+// persist=false: loglevel writes `localStorage[key] = level` (not
+// setItem). Those assignments happen at module load, before
+// <probo-cookie-banner> connects and StorageDetector wraps Storage, so
+// a persisted setLevel would only ever be seen as PRE_EXISTING.
+log.setLevel("debug", false);
 
 const namedLoggers = new Map<string, log.Logger>();
 
@@ -32,21 +36,33 @@ export function getExampleLogger(suffix: string): log.Logger {
   }
 
   const logger = log.getLogger(name);
-  logger.setLevel("debug");
+  logger.setLevel("debug", false);
   namedLoggers.set(name, logger);
   return logger;
 }
 
 export function enableNamedLoggers(): void {
+  const keys = ["loglevel"];
+
   for (const [name, logger] of namedLoggers) {
-    logger.setLevel("debug");
-    // loglevel persists via property assignment, which the SDK does not
-    // hook. Replay the same key through setItem so a live write is
-    // observed as SCRIPT after the detector has wrapped Storage.
-    try {
-      localStorage.setItem(`loglevel:${name}`, "DEBUG");
-    } catch {
-      // sandboxed frames and quota errors must not abort probo-ready
-    }
+    logger.setLevel("debug", false);
+    keys.push(`loglevel:${name}`);
   }
+
+  // Replay through setItem after the StorageDetector wrap is live.
+  // Do not wait for probo-ready: discovery never fires that event
+  // (`CookieBannerClient.loaded` is false without a published config).
+  try {
+    for (const key of keys) {
+      localStorage.setItem(key, "DEBUG");
+    }
+  } catch {
+    // sandboxed frames and quota errors must not abort banner startup
+  }
+}
+
+export function scheduleEnableNamedLoggers(): void {
+  queueMicrotask(() => {
+    enableNamedLoggers();
+  });
 }

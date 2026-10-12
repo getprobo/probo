@@ -32,6 +32,7 @@ import {
   ExampleShell,
   enableNamedLoggers,
   getExampleLogger,
+  scheduleEnableNamedLoggers,
   useEventLog,
 } from "@probo/example-cookie-banner-shared";
 import { headlessRootHTML } from "./markup";
@@ -94,6 +95,7 @@ export function App() {
 
     const root = container.querySelector("probo-cookie-banner-root");
     if (root) {
+      scheduleEnableNamedLoggers();
       root.addEventListener("probo-ready", (e: Event) => {
         const detail = (e as CustomEvent).detail as {
           config?: BannerConfig;

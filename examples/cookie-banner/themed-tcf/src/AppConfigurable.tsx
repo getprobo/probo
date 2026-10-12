@@ -29,6 +29,7 @@ import {
   ExampleShell,
   enableNamedLoggers,
   getExampleLogger,
+  scheduleEnableNamedLoggers,
   isValidBannerApiBaseUrl,
   useConfig,
   useEventLog,
@@ -59,6 +60,7 @@ export function App() {
       registerCookieBanner();
       started = true;
     }
+    scheduleEnableNamedLoggers();
     initPosthog();
   }, []);
 
@@ -83,6 +85,9 @@ export function App() {
       };
       el.addEventListener("probo-ready", onReady);
       el.addEventListener("probo-consent", onConsent);
+      if (customElements.get("probo-cookie-banner")) {
+        scheduleEnableNamedLoggers();
+      }
       return () => {
         el.removeEventListener("probo-ready", onReady);
         el.removeEventListener("probo-consent", onConsent);

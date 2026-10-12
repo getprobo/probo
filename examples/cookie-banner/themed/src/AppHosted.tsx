@@ -28,6 +28,7 @@ import {
   ExampleShell,
   enableNamedLoggers,
   getExampleLogger,
+  scheduleEnableNamedLoggers,
   useEventLog,
 } from "@probo/example-cookie-banner-shared";
 import {
@@ -49,6 +50,7 @@ export function App() {
   useEffect(() => {
     themedLogger.debug("[themed] registerCookieBanner");
     registerCookieBanner();
+    scheduleEnableNamedLoggers();
     initPosthog();
   }, []);
 
@@ -73,6 +75,9 @@ export function App() {
       };
       el.addEventListener("probo-ready", onReady);
       el.addEventListener("probo-consent", onConsent);
+      if (customElements.get("probo-cookie-banner")) {
+        scheduleEnableNamedLoggers();
+      }
       return () => {
         el.removeEventListener("probo-ready", onReady);
         el.removeEventListener("probo-consent", onConsent);
