@@ -26,9 +26,10 @@ import type {
 	JsonObject,
 	IHttpRequestOptions,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 import { version } from '../../package.json';
+import { readGraphQLBody } from './graphqlResponse';
 
 type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,
@@ -38,7 +39,27 @@ type ApiRequestFn = (
 
 type ApiRequestContext = IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions;
 
-async function proboGraphqlRequest(
+function graphqlBodyOrThrow(this: ApiRequestContext, response: unknown): IDataObject {
+	const parsed = readGraphQLBody(response);
+	if (!parsed.ok) {
+		throw new NodeApiError(this.getNode(), (parsed.body ?? { message: parsed.message }) as JsonObject, {
+			message: parsed.message,
+			level: 'error',
+		});
+	}
+
+	return parsed.body as IDataObject;
+}
+
+function rethrowRequestError(this: ApiRequestContext, error: unknown): never {
+	if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+		throw error;
+	}
+
+	throw new NodeApiError(this.getNode(), error as JsonObject);
+}
+
+async function proboGraphQLRequest(
 	this: ApiRequestContext,
 	apiPath: string,
 	query: string,
@@ -61,27 +82,18 @@ async function proboGraphqlRequest(
 		json: true,
 	};
 
+	let response: unknown;
 	try {
-		const response = await this.helpers.httpRequestWithAuthentication.call(
+		response = await this.helpers.httpRequestWithAuthentication.call(
 			this,
 			'proboApi',
 			options,
 		);
-
-		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) =>
-				err.message || JSON.stringify(err)
-			).join('; ');
-			throw new NodeApiError(this.getNode(), {
-				message: `GraphQL errors: ${errorMessages}`,
-				httpCode: '200',
-			} as JsonObject);
-		}
-
-		return response;
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as JsonObject);
+		rethrowRequestError.call(this, error);
 	}
+
+	return graphqlBodyOrThrow.call(this, response);
 }
 
 export async function proboApiRequest(
@@ -89,7 +101,7 @@ export async function proboApiRequest(
 	query: string,
 	variables: IDataObject = {},
 ): Promise<IDataObject> {
-	return proboGraphqlRequest.call(this, '/api/console/v1/graphql', query, variables);
+	return proboGraphQLRequest.call(this, '/api/console/v1/graphql', query, variables);
 }
 
 export async function proboConnectApiRequest(
@@ -97,7 +109,7 @@ export async function proboConnectApiRequest(
 	query: string,
 	variables: IDataObject = {},
 ): Promise<IDataObject> {
-	return proboGraphqlRequest.call(this, '/api/connect/v1/graphql', query, variables);
+	return proboGraphQLRequest.call(this, '/api/connect/v1/graphql', query, variables);
 }
 
 async function proboGraphqlRequestAllItems(
@@ -242,27 +254,18 @@ export async function proboApiMultipartRequest(
 		body,
 	};
 
+	let response: unknown;
 	try {
-		const response = await this.helpers.httpRequestWithAuthentication.call(
+		response = await this.helpers.httpRequestWithAuthentication.call(
 			this,
 			'proboApi',
 			options,
 		);
-
-		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) =>
-				err.message || JSON.stringify(err)
-			).join('; ');
-			throw new NodeApiError(this.getNode(), {
-				message: `GraphQL errors: ${errorMessages}`,
-				httpCode: '200',
-			} as JsonObject);
-		}
-
-		return response;
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as JsonObject);
+		rethrowRequestError.call(this, error);
 	}
+
+	return graphqlBodyOrThrow.call(this, response);
 }
 
 export function toPeriod(

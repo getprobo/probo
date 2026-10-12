@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import {
+	NodeApiError,
 	NodeConnectionTypes,
 	NodeOperationError,
 	type IExecuteFunctions,
@@ -36,6 +37,23 @@ import {
 	getAPIKeyConnectorProviders,
 	getClientCredentialsConnectorProviders,
 } from './actions/connector/loadConnectorProviderOptions';
+
+function nodeErrorForItem(
+	this: IExecuteFunctions,
+	error: unknown,
+	itemIndex: number,
+): NodeApiError | NodeOperationError {
+	if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+		error.context.itemIndex = itemIndex;
+		return error;
+	}
+
+	const cause = error instanceof Error ? error : new Error(String(error));
+	return new NodeOperationError(this.getNode(), cause, {
+		itemIndex,
+		level: 'error',
+	});
+}
 
 export class Probo implements INodeType {
 	description: INodeTypeDescription = {
@@ -308,14 +326,16 @@ export class Probo implements INodeType {
 				const result = await executeFunction.call(this, i);
 				returnData.push(result);
 			} catch (error) {
+				const nodeError = nodeErrorForItem.call(this, error, i);
 				if (this.continueOnFail()) {
 					returnData.push({
-						json: { error: error instanceof Error ? error.message : String(error) },
+						json: { error: nodeError.message },
+						error: nodeError,
 						pairedItem: { item: i },
 					});
 					continue;
 				}
-				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
+				throw nodeError;
 			}
 		}
 
