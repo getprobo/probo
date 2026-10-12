@@ -24,6 +24,7 @@ import (
 	"context"
 	"math"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -568,4 +569,92 @@ func loadDetectedTrackersByPattern(
 	}))
 
 	return trackers
+}
+
+// TestReportDetectedTrackers_PromotesSourceOnInsertConflict races
+// PRE_EXISTING and SCRIPT first-inserts for the same new cookie. The
+// InsertIfNotExists loser used to attach the pattern ID and skip
+// promotion, so a PRE_EXISTING winner stayed stuck even though SCRIPT
+// arrived on the same identifier. After both waves finish the stored
+// source must be SCRIPT regardless of who inserted.
+func TestReportDetectedTrackers_PromotesSourceOnInsertConflict(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	const (
+		name = "_ph_insert_conflict"
+		n    = 16
+	)
+
+	var wg sync.WaitGroup
+
+	errs := make(chan error, n*2)
+
+	wg.Add(n * 2)
+
+	for range n {
+		go func() {
+			defer wg.Done()
+
+			errs <- svc.ReportDetectedTrackers(
+				ctx,
+				fx.banner.ID,
+				ReportDetectedTrackersRequest{
+					Cookies: []DetectedCookie{{
+						Name:   name,
+						Source: coredata.CookieSourcePreExisting,
+					}},
+				},
+			)
+		}()
+
+		go func() {
+			defer wg.Done()
+
+			errs <- svc.ReportDetectedTrackers(
+				ctx,
+				fx.banner.ID,
+				ReportDetectedTrackersRequest{
+					Cookies: []DetectedCookie{{
+						Name:   name,
+						Source: coredata.CookieSourceScript,
+					}},
+				},
+			)
+		}()
+	}
+
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	var loaded coredata.TrackerPattern
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByBannerIDTypeAndPattern(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					name,
+					nil,
+				)
+			},
+		),
+	)
+
+	require.NotNil(t, loaded.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source)
 }

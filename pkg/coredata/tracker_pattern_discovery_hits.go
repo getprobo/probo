@@ -103,6 +103,11 @@ SELECT
 FROM cookie_banner_discovery_stats
 WHERE cookie_banner_id = @cookie_banner_id
   AND frozen_at IS NULL
+  AND EXISTS (
+      SELECT 1
+      FROM tracker_patterns
+      WHERE id = @tracker_pattern_id
+  )
   AND NOT EXISTS (
       SELECT 1
       FROM cookie_banner_versions

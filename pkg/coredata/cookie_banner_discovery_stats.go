@@ -58,6 +58,25 @@ func (d DiscoveryFamilyDeltas) Empty() bool {
 	return d.Chrome == 0 && d.Edge == 0 && d.Firefox == 0 && d.Safari == 0 && d.Other == 0
 }
 
+func DiscoveryFamilyDeltasFor(family DiscoveryBrowserFamily, n int64) DiscoveryFamilyDeltas {
+	if n == 0 {
+		return DiscoveryFamilyDeltas{}
+	}
+
+	switch family {
+	case DiscoveryBrowserFamilyChrome:
+		return DiscoveryFamilyDeltas{Chrome: n}
+	case DiscoveryBrowserFamilyEdge:
+		return DiscoveryFamilyDeltas{Edge: n}
+	case DiscoveryBrowserFamilyFirefox:
+		return DiscoveryFamilyDeltas{Firefox: n}
+	case DiscoveryBrowserFamilySafari:
+		return DiscoveryFamilyDeltas{Safari: n}
+	default:
+		return DiscoveryFamilyDeltas{Other: n}
+	}
+}
+
 // RecordDiscoveryPageLoad adds the family deltas to the banner window.
 // A published version or a frozen row makes this a no-op. The first
 // successful call creates the shared window every pattern hit uses.

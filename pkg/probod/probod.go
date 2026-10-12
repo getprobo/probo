@@ -1564,14 +1564,15 @@ func (impl *Implm) Run(
 	)
 
 	discoveryCountFlusherCtx, stopDiscoveryCountFlusher := context.WithCancel(context.Background())
+	discoveryCountFlusherDone := make(chan struct{})
 
-	wg.Go(
-		func() {
-			if err := cookieBannerService.RunDiscoveryCountFlusher(discoveryCountFlusherCtx, l); err != nil {
-				cancel(fmt.Errorf("discovery count flusher crashed: %w", err))
-			}
-		},
-	)
+	go func() {
+		defer close(discoveryCountFlusherDone)
+
+		if err := cookieBannerService.RunDiscoveryCountFlusher(discoveryCountFlusherCtx, l); err != nil {
+			cancel(fmt.Errorf("discovery count flusher crashed: %w", err))
+		}
+	}()
 
 	trackerPolicyWorker := probo.NewTrackerPolicyWorker(proboService.GeneratedDocuments, pgClient, l)
 	trackerPolicyWorkerCtx, stopTrackerPolicyWorker := context.WithCancel(context.Background())
@@ -1748,7 +1749,6 @@ func (impl *Implm) Run(
 	stopESignService()
 	stopCertManagerService()
 	stopTrackerPatternAnalysisWorker()
-	stopDiscoveryCountFlusher()
 	stopTrackerPolicyWorker()
 	stopTrackerMappingWorker()
 	stopCommonPatternEnrichmentWorker()
@@ -1779,6 +1779,9 @@ func (impl *Implm) Run(
 	stopProbotRetentionWorker()
 
 	wg.Wait()
+
+	stopDiscoveryCountFlusher()
+	<-discoveryCountFlusherDone
 
 	pgClient.Close()
 

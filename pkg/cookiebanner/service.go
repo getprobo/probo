@@ -1526,6 +1526,10 @@ func (s *Service) PublishCookieBannerVersion(
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBannerVersion, error) {
+	if err := s.FlushDiscoveryCountsForBanner(ctx, bannerID); err != nil {
+		return nil, fmt.Errorf("cannot flush discovery counts before publish: %w", err)
+	}
+
 	var version coredata.CookieBannerVersion
 
 	err := s.pg.WithTx(
@@ -3003,34 +3007,9 @@ func (s *Service) reportDetectedTracker(
 		// info.Source is nil or weaker, so storage items
 		// without a source and weaker re-detections cost
 		// nothing.
-		promoted := shouldPromoteSource(matchedPattern.Source, info.Source)
-		if promoted {
-			matchedPattern.Source = info.Source
-		}
-
-		filledMaxAge := matchedPattern.MatchType == coredata.TrackerPatternMatchTypeExact &&
-			matchedPattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
-		if filledMaxAge {
-			matchedPattern.MaxAgeSeconds = info.MaxAgeSeconds
-		}
-
-		needsMetadata = promoted || filledMaxAge
-		if needsMetadata {
-			matchedPattern.UpdatedAt = now
-
-			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", matchedPattern.Pattern, err)
-			}
-
-			// A stronger source can unblock mapping: the detection
-			// written below carries a fresh initiator domain that
-			// matchByDomain/matchBySiblingOrigin can now use. Re-arm
-			// mapping so the worker revisits the pattern.
-			if promoted {
-				if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
-					return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
-				}
-			}
+		needsMetadata, err = applyIncomingPatternMetadata(ctx, tx, scope, &matchedPattern, info, now)
+		if err != nil {
+			return err
 		}
 	} else {
 		var mappingRequestedAt *time.Time
@@ -3069,7 +3048,16 @@ func (s *Service) reportDetectedTracker(
 				return fmt.Errorf("cannot load existing tracker pattern: %w", err)
 			}
 
+			if existingPattern.Excluded {
+				return nil
+			}
+
 			patternID = &existingPattern.ID
+
+			needsMetadata, err = applyIncomingPatternMetadata(ctx, tx, scope, &existingPattern, info, now)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -3111,6 +3099,50 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	return nil
+}
+
+// applyIncomingPatternMetadata promotes source and fills max-age on
+// an already-persisted pattern when the incoming detection is
+// richer. Used both when FindMatchingPattern hits and when
+// InsertIfNotExists loses a first-insert race, so a PRE_EXISTING
+// winner still advances to SCRIPT on the same request.
+func applyIncomingPatternMetadata(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	pattern *coredata.TrackerPattern,
+	info detectedTrackerInfo,
+	now time.Time,
+) (bool, error) {
+	promoted := shouldPromoteSource(pattern.Source, info.Source)
+	if promoted {
+		pattern.Source = info.Source
+	}
+
+	filledMaxAge := pattern.MatchType == coredata.TrackerPatternMatchTypeExact &&
+		pattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
+	if filledMaxAge {
+		pattern.MaxAgeSeconds = info.MaxAgeSeconds
+	}
+
+	needsMetadata := promoted || filledMaxAge
+	if !needsMetadata {
+		return false, nil
+	}
+
+	pattern.UpdatedAt = now
+
+	if err := pattern.Update(ctx, tx, scope); err != nil {
+		return false, fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", pattern.Pattern, err)
+	}
+
+	if promoted {
+		if err := pattern.SetMappingRequested(ctx, tx); err != nil {
+			return false, fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", pattern.Pattern, err)
+		}
+	}
+
+	return true, nil
 }
 
 // int4OrNil keeps a value only when it fits in PostgreSQL INTEGER.

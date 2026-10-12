@@ -152,6 +152,14 @@ export function TrackerPatternDetectedTrackersSection({
                       <TableColumnHeaderCell width="7rem">
                         {t("detectedTrackersSection.columns.source")}
                       </TableColumnHeaderCell>
+                      <TableColumnHeaderCell
+                        width="10rem"
+                        sort={detectedTrackersHeaderSort("CREATED_AT", order)}
+                        onSort={() => handleSort("CREATED_AT")}
+                        aria-label={t("detectedTrackersSection.sort.firstSeen")}
+                      >
+                        {t("detectedTrackersSection.columns.firstSeen")}
+                      </TableColumnHeaderCell>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

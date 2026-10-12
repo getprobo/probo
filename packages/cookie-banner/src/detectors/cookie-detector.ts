@@ -32,11 +32,18 @@ import { getInitiatorURL } from "./initiator";
 import type { ReportQueue } from "./report-queue";
 import type { DetectedCookieEntry } from "./types";
 
+const COOKIE_HOOK_MARKER = Symbol("proboCookieHook");
+
+interface PrototypeHook {
+  proto: object;
+  original: PropertyDescriptor;
+}
+
 export class CookieDetector implements Detector {
   private readonly queue: ReportQueue;
   private readonly apiOrigin: string;
   private readonly knownNames: Set<string>;
-  private originalDescriptor: PropertyDescriptor | null = null;
+  private prototypeHooks: PrototypeHook[] = [];
   private cookieStoreHandler: ((event: CookieChangeEvent) => void) | null = null;
 
   constructor(queue: ReportQueue, apiOrigin: string, knownNames: Set<string>) {
@@ -49,29 +56,10 @@ export class CookieDetector implements Detector {
     this.queue.onNotFound(() => this.stop());
 
     if (isExtensionContext()) return;
+    if (this.prototypeHooks.length > 0) return;
 
-    const desc =
-      Object.getOwnPropertyDescriptor(Document.prototype, "cookie") ??
-      Object.getOwnPropertyDescriptor(HTMLDocument.prototype, "cookie");
-
-    if (!desc?.set || !desc?.get) return;
-
-    this.originalDescriptor = desc;
-
-    const self = this;
-    const originalGet = desc.get;
-    const originalSet = desc.set;
-
-    Object.defineProperty(document, "cookie", {
-      configurable: true,
-      get() {
-        return originalGet.call(this);
-      },
-      set(value: string) {
-        originalSet.call(this, value);
-        self.onCookieSet(value);
-      },
-    });
+    this.installPrototypeHooks();
+    if (this.prototypeHooks.length === 0) return;
 
     this.scanExisting();
     this.observeCookieStore();
@@ -83,10 +71,58 @@ export class CookieDetector implements Detector {
       this.cookieStoreHandler = null;
     }
 
-    if (this.originalDescriptor) {
-      Object.defineProperty(document, "cookie", this.originalDescriptor);
-      this.originalDescriptor = null;
+    for (const hook of this.prototypeHooks) {
+      Object.defineProperty(hook.proto, "cookie", hook.original);
     }
+    this.prototypeHooks = [];
+  }
+
+  // Chrome ignores an instance override of the cookie IDL attribute
+  // and keeps calling Document.prototype. A document.cookie write
+  // then only shows up on cookieStore "change" and is classified as
+  // HTTP. Hook the prototypes the browser actually uses.
+  private installPrototypeHooks(): void {
+    if (typeof Document === "undefined") return;
+
+    const seen = new Set<object>();
+
+    this.tryHookPrototype(Document.prototype, seen);
+    if (typeof HTMLDocument !== "undefined") {
+      this.tryHookPrototype(HTMLDocument.prototype, seen);
+    }
+  }
+
+  private tryHookPrototype(proto: object, seen: Set<object>): void {
+    if (seen.has(proto)) return;
+
+    const desc = Object.getOwnPropertyDescriptor(proto, "cookie");
+    if (!desc?.set || !desc?.get) return;
+    if (COOKIE_HOOK_MARKER in desc.set) return;
+
+    seen.add(proto);
+
+    const self = this;
+    const originalGet = desc.get;
+    const originalSet = desc.set;
+
+    const get = function (this: Document): string {
+      return originalGet.call(this);
+    };
+
+    const set = function (this: Document, value: string): void {
+      originalSet.call(this, value);
+      self.onCookieSet(value);
+    };
+    Object.defineProperty(set, COOKIE_HOOK_MARKER, { value: true });
+
+    Object.defineProperty(proto, "cookie", {
+      configurable: true,
+      enumerable: desc.enumerable,
+      get,
+      set,
+    });
+
+    this.prototypeHooks.push({ proto, original: desc });
   }
 
   private onCookieSet(raw: string): void {

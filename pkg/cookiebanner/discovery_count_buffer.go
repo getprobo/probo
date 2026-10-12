@@ -54,18 +54,25 @@ type (
 	}
 )
 
-func (c *discoveryFamilyAtomics) add(family coredata.DiscoveryBrowserFamily, n int64) {
-	switch family {
-	case coredata.DiscoveryBrowserFamilyChrome:
-		c.chrome.Add(n)
-	case coredata.DiscoveryBrowserFamilyEdge:
-		c.edge.Add(n)
-	case coredata.DiscoveryBrowserFamilyFirefox:
-		c.firefox.Add(n)
-	case coredata.DiscoveryBrowserFamilySafari:
-		c.safari.Add(n)
-	default:
-		c.other.Add(n)
+func (c *discoveryFamilyAtomics) addDeltas(deltas coredata.DiscoveryFamilyDeltas) {
+	if deltas.Chrome != 0 {
+		c.chrome.Add(deltas.Chrome)
+	}
+
+	if deltas.Edge != 0 {
+		c.edge.Add(deltas.Edge)
+	}
+
+	if deltas.Firefox != 0 {
+		c.firefox.Add(deltas.Firefox)
+	}
+
+	if deltas.Safari != 0 {
+		c.safari.Add(deltas.Safari)
+	}
+
+	if deltas.Other != 0 {
+		c.other.Add(deltas.Other)
 	}
 }
 
@@ -84,13 +91,35 @@ func (s *Service) addDiscoveryFamily(
 	family coredata.DiscoveryBrowserFamily,
 	pageLoad bool,
 ) {
+	s.addDiscoveryDeltas(key, coredata.DiscoveryFamilyDeltasFor(family, 1), pageLoad)
+}
+
+func (s *Service) addDiscoveryDeltas(
+	key any,
+	deltas coredata.DiscoveryFamilyDeltas,
+	pageLoad bool,
+) {
+	if deltas.Empty() {
+		return
+	}
+
 	m := &s.patternHitCounts
 	if pageLoad {
 		m = &s.pageLoadCounts
 	}
 
 	actual, _ := m.LoadOrStore(key, &discoveryFamilyAtomics{})
-	actual.(*discoveryFamilyAtomics).add(family, 1)
+	c := actual.(*discoveryFamilyAtomics)
+	c.addDeltas(deltas)
+
+	if current, ok := m.Load(key); ok && current == c {
+		return
+	}
+
+	// Flush deleted the entry after we loaded it. Put the increment
+	// on whatever key is live now so it is not stranded on an orphan.
+	actual, _ = m.LoadOrStore(key, &discoveryFamilyAtomics{})
+	actual.(*discoveryFamilyAtomics).addDeltas(deltas)
 }
 
 func (s *Service) recordDiscoveryIncrements(
@@ -161,6 +190,8 @@ func (s *Service) FlushDiscoveryCounts(ctx context.Context) error {
 
 	for bannerID, flush := range byBanner {
 		if err := s.flushBannerDiscoveryCounts(ctx, bannerID, flush); err != nil {
+			s.restoreBannerDiscoveryCounts(bannerID, flush)
+
 			if firstErr == nil {
 				firstErr = err
 			}
@@ -168,6 +199,65 @@ func (s *Service) FlushDiscoveryCounts(ctx context.Context) error {
 	}
 
 	return firstErr
+}
+
+func (s *Service) FlushDiscoveryCountsForBanner(ctx context.Context, bannerID gid.GID) error {
+	flush := &bannerDiscoveryFlush{}
+
+	if actual, ok := s.pageLoadCounts.Load(bannerID); ok {
+		deltas := actual.(*discoveryFamilyAtomics).swap(0)
+		if deltas.Empty() {
+			s.pageLoadCounts.Delete(bannerID)
+		} else {
+			flush.pageLoads = deltas
+		}
+	}
+
+	s.patternHitCounts.Range(
+		func(key, value any) bool {
+			hitKey := key.(discoveryHitKey)
+			if hitKey.bannerID != bannerID {
+				return true
+			}
+
+			deltas := value.(*discoveryFamilyAtomics).swap(0)
+			if deltas.Empty() {
+				s.patternHitCounts.Delete(key)
+				return true
+			}
+
+			if flush.hits == nil {
+				flush.hits = make(map[gid.GID]coredata.DiscoveryFamilyDeltas)
+			}
+
+			flush.hits[hitKey.patternID] = deltas
+
+			return true
+		},
+	)
+
+	if flush.pageLoads.Empty() && len(flush.hits) == 0 {
+		return nil
+	}
+
+	if err := s.flushBannerDiscoveryCounts(ctx, bannerID, flush); err != nil {
+		s.restoreBannerDiscoveryCounts(bannerID, flush)
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) restoreBannerDiscoveryCounts(bannerID gid.GID, flush *bannerDiscoveryFlush) {
+	s.addDiscoveryDeltas(bannerID, flush.pageLoads, true)
+
+	for patternID, deltas := range flush.hits {
+		s.addDiscoveryDeltas(
+			discoveryHitKey{bannerID: bannerID, patternID: patternID},
+			deltas,
+			false,
+		)
+	}
 }
 
 func (s *Service) flushBannerDiscoveryCounts(

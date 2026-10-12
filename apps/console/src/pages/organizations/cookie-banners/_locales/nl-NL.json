@@ -89,9 +89,9 @@
   },
   "detectedTrackersSection": {
     "title": "Detecties",
-    "columns": { "identifier": "Identificatie", "domain": "Domein", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron" },
+    "columns": { "identifier": "Identificatie", "domain": "Domein", "initiatorUrl": "Initiator-URL", "maxAge": "Maximale leeftijd (seconden)", "source": "Bron", "firstSeen": "Eerst gezien" },
     "empty": "Nog geen detecties voor deze tracker.",
-    "sort": { "initiatorUrl": "Sorteren op initiator-URL" },
+    "sort": { "initiatorUrl": "Sorteren op initiator-URL", "firstSeen": "Sorteren op eerst gezien" },
     "actions": { "showMore": "Meer weergeven" },
     "summary_one": "{{count}} detectie",
     "summary_other": "{{count}} detecties"

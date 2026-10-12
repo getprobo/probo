@@ -330,6 +330,66 @@ func TestAddDiscoveryHits_SumsOntoTarget(t *testing.T) {
 	assert.Equal(t, 2, hits.ChromeHits)
 }
 
+func TestPublishCookieBannerVersion_FlushesPendingCounts(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+		PageView: true,
+		Family:   coredata.DiscoveryBrowserFamilyChrome,
+		Cookies: []DetectedCookie{{
+			Name:         "_ga",
+			Source:       coredata.CookieSourceScript,
+			DiscoveryHit: true,
+		}},
+	}))
+
+	insertDraftVersion(t, ctx, client, fx)
+
+	_, err := svc.PublishCookieBannerVersion(ctx, fx.scope, fx.banner.ID)
+	require.NoError(t, err)
+
+	stats := loadDiscoveryStats(t, ctx, client, fx)
+	require.NotNil(t, stats.FrozenAt)
+	assert.Equal(t, 1, stats.ChromePageLoads)
+	assert.Equal(t, 1, loadDiscoveryHits(t, ctx, client, fx, "_ga").ChromeHits)
+}
+
+func TestFlushDiscoveryCounts_RestoresDeltasOnFailure(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+		PageView: true,
+		Family:   coredata.DiscoveryBrowserFamilyChrome,
+	}))
+
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+
+	require.Error(t, svc.FlushDiscoveryCounts(canceled))
+
+	var stats coredata.CookieBannerDiscoveryStats
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return stats.LoadByCookieBannerID(ctx, conn, fx.scope, fx.banner.ID)
+	})
+	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+
+	requireFlushDiscoveryCounts(t, ctx, svc)
+
+	stats = loadDiscoveryStats(t, ctx, client, fx)
+	assert.Equal(t, 1, stats.ChromePageLoads)
+}
+
 func TestReportDetectedTrackers_SkipsNoopRepeatUpsert(t *testing.T) {
 	t.Parallel()
 
