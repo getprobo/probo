@@ -26,6 +26,15 @@ import type { DetectedStorageEntry, StorageSource } from "./types";
 
 const OWN_KEY_PREFIX = "probo_consent:";
 
+// Web IDL DOMString: Symbol throws; everything else is ToString.
+function toStorageDOMString(value: unknown): string {
+  if (typeof value === "symbol") {
+    throw new TypeError("Cannot convert a Symbol value to a string");
+  }
+
+  return String(value);
+}
+
 interface StorageWindowHook {
   name: "localStorage" | "sessionStorage";
   hadOwn: boolean;
@@ -103,18 +112,21 @@ export class StorageDetector implements Detector {
     const self = this;
 
     Storage.prototype.setItem = function (key: string, value: string) {
-      originalSetItem.call(this, key, value);
+      // Convert the key once. A second ToString in getItem would
+      // miss (or throw) when toString / toPrimitive is stateful.
+      const storedKey = toStorageDOMString(key);
+      originalSetItem.call(this, storedKey, value);
 
-      // Native setItem converts the argument to DOMString (and throws
+      // Native setItem converts the value to DOMString (and throws
       // on Symbol). Report the stored string so value_size is not
       // NaN / a throw for null, numbers, and other non-strings.
-      const stored = originalGetItem.call(this, key);
+      const stored = originalGetItem.call(this, storedKey);
       if (stored == null) return;
 
       const storageType: "local_storage" | "session_storage" =
         self.isLocalStorage(this) ? "local_storage" : "session_storage";
 
-      self.onStorageWrite(key, stored, storageType);
+      self.onStorageWrite(storedKey, stored, storageType);
     };
 
     // Named writes (`localStorage.foo = "bar"`) go through the Storage

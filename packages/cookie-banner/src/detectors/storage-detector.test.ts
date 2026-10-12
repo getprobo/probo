@@ -154,6 +154,30 @@ describe("StorageDetector", () => {
     detector.stop();
   });
 
+  it("uses one key conversion for write and lookup", () => {
+    installFakeStorage();
+    const { queue, reported } = fakeQueue();
+    const detector = new StorageDetector(queue, "https://api.example.com");
+
+    let n = 0;
+    const key = {
+      toString() {
+        return `k${++n}`;
+      },
+    };
+
+    detector.start();
+    localStorage.setItem(key as unknown as string, "DEBUG");
+
+    expect(n).toBe(1);
+    expect(localStorage.getItem("k1")).toBe("DEBUG");
+    expect(reported).toEqual([
+      expect.objectContaining({ key: "k1", source: "script" }),
+    ]);
+
+    detector.stop();
+  });
+
   it("rejects Symbol assignment like native Storage", () => {
     installFakeStorage();
     const { queue, reported } = fakeQueue();

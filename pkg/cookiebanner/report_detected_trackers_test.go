@@ -626,7 +626,9 @@ func TestReportDetectedTrackers_PromotesSourceOnInsertConflict(t *testing.T) {
 				}},
 			},
 		)
+
 		close(preExistingCommitted)
+
 		errs <- err
 	}()
 
