@@ -32,6 +32,7 @@
     "browserslist": "^4.28.7",
     "engine.io": "^6.6.10",
     "fast-uri": "^3.1.8",
+    "handlebars": "4.7.10",
     "katex": "0.18.2",
     "postcss-selector-parser": "^7.1.6",
     "qs": "^6.16.0",
