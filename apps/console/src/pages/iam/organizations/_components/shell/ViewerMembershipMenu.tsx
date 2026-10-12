@@ -24,7 +24,7 @@ import {
   KeyIcon,
   SignOutIcon,
 } from "@phosphor-icons/react";
-import { formatError } from "@probo/helpers";
+import { formatError, graphqlErrorsMessage, isForbiddenGraphqlError } from "@probo/helpers";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
@@ -40,7 +40,10 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 import { Link } from "react-router";
 
-import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
+import type {
+  ViewerMembershipMenu_organization$data,
+  ViewerMembershipMenu_organization$key,
+} from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
 import type { ViewerMembershipMenuSignOutMutation } from "#/__generated__/iam/ViewerMembershipMenuSignOutMutation.graphql";
 import { employeePortalHref } from "#/lib/employeePortalHref";
 import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDialog";
@@ -52,7 +55,7 @@ const viewerMembershipMenuFragment = graphql`
     employeePortals(
       first: 1
       orderBy: { field: CREATED_AT, direction: ASC }
-    ) {
+    ) @catch(to: RESULT) {
       edges {
         node {
           id
@@ -98,7 +101,7 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
       identity,
     },
   } = organization;
-  const employeePortalId = organization.employeePortals?.edges[0]?.node.id ?? null;
+  const employeePortalId = employeePortalIdFromCatch(organization.employeePortals);
   const { canListOAuth2AccessTokens, email, avatar } = identity;
   const [signOut, isSigningOut] = useMutation<ViewerMembershipMenuSignOutMutation>(signOutMutation);
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -211,4 +214,19 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
       />
     </>
   );
+}
+
+function employeePortalIdFromCatch(
+  portals: ViewerMembershipMenu_organization$data["employeePortals"],
+): string | null {
+  if (portals == null) {
+    return null;
+  }
+  if (portals.ok) {
+    return portals.value?.edges[0]?.node.id ?? null;
+  }
+  if (isForbiddenGraphqlError(portals.errors)) {
+    return null;
+  }
+  throw new Error(graphqlErrorsMessage(portals.errors) ?? "cannot list employee portals");
 }
