@@ -47,9 +47,9 @@ type (
 )
 
 // RecordDiscoveryPatternHit adds family hit increments for a first
-// sighting. It no-ops until a page-load row exists, and after that
-// row is frozen or a version is published, so every pattern shares
-// one window.
+// sighting. It no-ops when the banner is frozen or a version is
+// published. A missing stats row is not a gate: the page load can
+// arrive later.
 func RecordDiscoveryPatternHit(
 	ctx context.Context,
 	tx pg.Tx,
@@ -104,19 +104,22 @@ SELECT
     @other,
     @now,
     @now
-FROM cookie_banner_discovery_stats
-WHERE cookie_banner_id = @cookie_banner_id
-  AND frozen_at IS NULL
-  AND EXISTS (
-      SELECT 1
-      FROM tracker_patterns
-      WHERE id = @tracker_pattern_id
+WHERE EXISTS (
+    SELECT 1
+    FROM tracker_patterns
+    WHERE id = @tracker_pattern_id
+)
+  AND NOT EXISTS (
+    SELECT 1
+    FROM cookie_banner_versions
+    WHERE cookie_banner_id = @cookie_banner_id
+      AND state = @published
   )
   AND NOT EXISTS (
-      SELECT 1
-      FROM cookie_banner_versions
-      WHERE cookie_banner_id = @cookie_banner_id
-        AND state = @published
+    SELECT 1
+    FROM cookie_banner_discovery_stats
+    WHERE cookie_banner_id = @cookie_banner_id
+      AND frozen_at IS NOT NULL
   )
 ON CONFLICT (tracker_pattern_id) DO UPDATE
 SET

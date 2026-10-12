@@ -187,7 +187,7 @@ func TestPublishCookieBannerVersion_FreezesEmptyDiscoveryStats(t *testing.T) {
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
 
-func TestReportDetectedTrackers_HitWithoutPageLoadDoesNotCount(t *testing.T) {
+func TestReportDetectedTrackers_HitWithoutPageLoadStillCounts(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -212,18 +212,7 @@ func TestReportDetectedTrackers_HitWithoutPageLoadDoesNotCount(t *testing.T) {
 	})
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
-	var pattern coredata.TrackerPattern
-
-	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return pattern.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "_ga", nil)
-	}))
-
-	var hits coredata.TrackerPatternDiscoveryHits
-
-	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return hits.LoadByTrackerPatternID(ctx, conn, fx.scope, pattern.ID)
-	})
-	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+	assert.Equal(t, 1, loadDiscoveryHits(t, ctx, client, fx, "_ga").ChromeHits)
 }
 
 func TestAddDiscoveryHits_SumsOntoTarget(t *testing.T) {

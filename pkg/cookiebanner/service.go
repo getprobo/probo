@@ -1531,9 +1531,9 @@ func (s *Service) PublishCookieBannerVersion(
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBannerVersion, error) {
-	if err := s.FlushDiscoveryCounts(ctx); err != nil {
-		return nil, fmt.Errorf("cannot flush discovery counts before publish: %w", err)
-	}
+	// Best-effort: a leftover write for another banner must not
+	// block this publish. Freeze still closes this banner's window.
+	_ = s.FlushDiscoveryCounts(ctx)
 
 	var version coredata.CookieBannerVersion
 
