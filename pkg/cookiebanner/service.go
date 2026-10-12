@@ -2822,7 +2822,9 @@ func (s *Service) ReportDetectedTrackers(
 	bannerID gid.GID,
 	req ReportDetectedTrackersRequest,
 ) error {
-	return s.pg.WithTx(
+	countedHits := make(map[gid.GID]struct{})
+
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(bannerID)
@@ -2847,13 +2849,6 @@ func (s *Service) ReportDetectedTrackers(
 
 			inserted := 0
 			now := time.Now()
-			countedHits := make(map[gid.GID]struct{})
-
-			if req.PageView {
-				if err := coredata.RecordDiscoveryPageLoad(ctx, tx, scope, banner.ID, req.Family); err != nil {
-					return fmt.Errorf("cannot record discovery page load: %w", err)
-				}
-			}
 
 			var matchedPatternIDs []gid.GID
 
@@ -2874,7 +2869,6 @@ func (s *Service) ReportDetectedTrackers(
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
 						DiscoveryHit:  dc.DiscoveryHit,
-						Family:        req.Family,
 					},
 					&inserted,
 					&matchedPatternIDs,
@@ -2899,7 +2893,6 @@ func (s *Service) ReportDetectedTrackers(
 						Source:       ds.Source,
 						InitiatorURL: ds.InitiatorURL,
 						DiscoveryHit: ds.DiscoveryHit,
-						Family:       req.Family,
 					},
 					&inserted,
 					&matchedPatternIDs,
@@ -2944,6 +2937,44 @@ func (s *Service) ReportDetectedTrackers(
 			return nil
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	return s.recordDiscoveryIncrements(ctx, bannerID, req.Family, req.PageView, countedHits)
+}
+
+func (s *Service) recordDiscoveryIncrements(
+	ctx context.Context,
+	bannerID gid.GID,
+	family coredata.DiscoveryBrowserFamily,
+	pageView bool,
+	patternIDs map[gid.GID]struct{},
+) error {
+	if !pageView && len(patternIDs) == 0 {
+		return nil
+	}
+
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			scope := coredata.NewScopeFromObjectID(bannerID)
+
+			if pageView {
+				if err := coredata.RecordDiscoveryPageLoad(ctx, tx, scope, bannerID, family); err != nil {
+					return fmt.Errorf("cannot record discovery page load: %w", err)
+				}
+			}
+
+			for patternID := range patternIDs {
+				if err := coredata.RecordDiscoveryPatternHit(ctx, tx, scope, bannerID, patternID, family); err != nil {
+					return fmt.Errorf("cannot record discovery pattern hit: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
 }
 
 type detectedTrackerInfo struct {
@@ -2956,7 +2987,6 @@ type detectedTrackerInfo struct {
 	CookieDomain  *string
 	HostOnly      *bool
 	DiscoveryHit  bool
-	Family        coredata.DiscoveryBrowserFamily
 }
 
 func (s *Service) reportDetectedTracker(
@@ -3112,12 +3142,7 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	if info.DiscoveryHit && patternID != nil {
-		if _, seen := countedHits[*patternID]; !seen {
-			countedHits[*patternID] = struct{}{}
-			if err := coredata.RecordDiscoveryPatternHit(ctx, tx, scope, banner.ID, *patternID, info.Family); err != nil {
-				return fmt.Errorf("cannot record discovery pattern hit: %w", err)
-			}
-		}
+		countedHits[*patternID] = struct{}{}
 	}
 
 	return nil

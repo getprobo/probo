@@ -23,6 +23,7 @@ package cookiebanner
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"testing"
 	"time"
 
@@ -96,6 +97,45 @@ func TestReportDetectedTrackers_CountsSharedDiscoveryWindow(t *testing.T) {
 	assert.Equal(t, 0, stats.SafariPageLoads)
 	assert.Equal(t, 1, loadDiscoveryHits(t, ctx, client, fx, "_ga").ChromeHits)
 	assert.Equal(t, 0, loadDiscoveryHits(t, ctx, client, fx, "_ga").SafariHits)
+}
+
+func TestReportDetectedTrackers_CountsConcurrentPageLoads(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	const n = 32
+
+	var wg sync.WaitGroup
+	errs := make(chan error, n)
+
+	wg.Add(n)
+	for range n {
+		go func() {
+			defer wg.Done()
+			errs <- svc.ReportDetectedTrackers(
+				ctx,
+				fx.banner.ID,
+				ReportDetectedTrackersRequest{
+					PageView: true,
+					Family:   coredata.DiscoveryBrowserFamilyChrome,
+				},
+			)
+		}()
+	}
+
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	stats := loadDiscoveryStats(t, ctx, client, fx)
+	assert.Equal(t, n, stats.ChromePageLoads)
 }
 
 func TestReportDetectedTrackers_PageViewStartsSharedWindow(t *testing.T) {
