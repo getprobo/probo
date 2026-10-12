@@ -21,6 +21,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    catchResultValue,
     formatError,
     graphqlErrorField,
     graphqlErrorsMessage,
@@ -122,6 +123,7 @@ describe("isForbiddenGraphqlError", () => {
 
     it("reads FORBIDDEN from the message when extensions are absent", () => {
         expect(isForbiddenGraphqlError({ message: "FORBIDDEN: not allowed" })).toBe(true);
+        expect(isForbiddenGraphqlError({ message: "forbidden" })).toBe(true);
     });
 
     it("scans an error list", () => {
@@ -137,6 +139,31 @@ describe("isForbiddenGraphqlError", () => {
             extensions: { code: "INTERNAL" },
         })).toBe(false);
         expect(isForbiddenGraphqlError(null)).toBe(false);
+    });
+});
+
+describe("catchResultValue", () => {
+    it("returns the value when the catch result is ok", () => {
+        expect(catchResultValue({ ok: true, value: { id: "1" } }, "cannot list")).toEqual({
+            id: "1",
+        });
+    });
+
+    it("returns null when the result is missing or forbidden", () => {
+        expect(catchResultValue(null, "cannot list")).toBeNull();
+        expect(catchResultValue({
+            ok: false,
+            errors: { message: "not allowed", extensions: { code: "FORBIDDEN" } },
+        }, "cannot list")).toBeNull();
+    });
+
+    it("throws other field errors", () => {
+        expect(() =>
+            catchResultValue({
+                ok: false,
+                errors: { message: "timed out" },
+            }, "cannot list")
+        ).toThrow("timed out");
     });
 });
 

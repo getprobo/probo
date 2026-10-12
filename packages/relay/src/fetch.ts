@@ -46,7 +46,7 @@ const hasMembershipRequiredError = hasCode("MEMBERSHIP_REQUIRED");
 const hasForbiddenError = hasCode("FORBIDDEN");
 
 const isRequestLevel = (error: GraphQLError) =>
-  error.path === undefined || error.path === null || error.path.length === 0;
+  error.path === undefined || error.path === null || error.path.length <= 1;
 
 export const makeFetchQuery = (endpoint: string): FetchFunction => {
   return async (request, variables, _, uploadables) => {
@@ -132,8 +132,10 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
         throw new MembershipRequiredError(membershipRequiredError.message);
       }
 
-      // Field-level errors stay in the response so Relay can attach them to
-      // the reading field. Only a request-level failure (no path) throws.
+      // Nested field errors stay in the response so Relay can attach them
+      // to the reading field. A request-level failure (no path, or only the
+      // operation root) throws so mutations and page queries still map to
+      // ForbiddenError.
       const requestErrors = errors.filter(isRequestLevel);
 
       const forbiddenError = requestErrors.find(hasForbiddenError);

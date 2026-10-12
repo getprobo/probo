@@ -71,8 +71,28 @@ export function isForbiddenGraphqlError(error: unknown): boolean {
       return true;
     }
     const message = graphqlErrorMessage(item);
-    return message != null && message.includes("FORBIDDEN");
+    return message != null && message.toUpperCase().includes("FORBIDDEN");
   });
+}
+
+export type CatchResult<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly errors: unknown };
+
+export function catchResultValue<T>(
+  result: CatchResult<T> | null | undefined,
+  fallbackMessage: string,
+): T | null {
+  if (result == null) {
+    return null;
+  }
+  if (result.ok) {
+    return result.value ?? null;
+  }
+  if (isForbiddenGraphqlError(result.errors)) {
+    return null;
+  }
+  throw new Error(graphqlErrorsMessage(result.errors) ?? fallbackMessage);
 }
 
 function nestedGraphqlErrors(error: unknown): unknown[] {

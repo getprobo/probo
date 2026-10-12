@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { graphqlErrorsMessage, isForbiddenGraphqlError } from "@probo/helpers";
+import { catchResultValue } from "@probo/helpers";
 import { Badge, Button, IconCrossLargeX, useConfirm } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type {
-  DocumentApprovalList_versionFragment$data,
-  DocumentApprovalList_versionFragment$key,
-} from "#/__generated__/core/DocumentApprovalList_versionFragment.graphql";
+import type { DocumentApprovalList_versionFragment$key } from "#/__generated__/core/DocumentApprovalList_versionFragment.graphql";
 import type { DocumentApprovalList_voidMutation } from "#/__generated__/core/DocumentApprovalList_voidMutation.graphql";
 
 import { DocumentApprovalListItem } from "./DocumentApprovalListItem";
@@ -95,9 +92,10 @@ export function DocumentApprovalList(props: {
   const { t } = useTranslation();
 
   const version = useFragment(versionFragment, versionFragmentRef);
-  const employeePortalId = employeePortalIdFromCatch(
+  const employeePortalId = catchResultValue(
     version.document.organization.employeePortals,
-  );
+    "cannot list employee portals",
+  )?.edges[0]?.node.id ?? null;
 
   const lastQuorum = version.approvalQuorums?.edges?.[0]?.node ?? null;
   const isPending = lastQuorum?.status === "PENDING";
@@ -186,19 +184,4 @@ export function DocumentApprovalList(props: {
           )}
     </div>
   );
-}
-
-function employeePortalIdFromCatch(
-  portals: DocumentApprovalList_versionFragment$data["document"]["organization"]["employeePortals"],
-): string | null {
-  if (portals == null) {
-    return null;
-  }
-  if (portals.ok) {
-    return portals.value?.edges[0]?.node.id ?? null;
-  }
-  if (isForbiddenGraphqlError(portals.errors)) {
-    return null;
-  }
-  throw new Error(graphqlErrorsMessage(portals.errors) ?? "cannot list employee portals");
 }

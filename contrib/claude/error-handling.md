@@ -166,10 +166,11 @@ error (with a `path`). To contain such a failure to the component that reads the
 bad field — instead of collapsing the whole page — two pieces cooperate:
 
 1. **The fetch layer only throws request-level errors.** A request-level error
-   has **no `path`** (auth, malformed request, transport) and applies to the
-   whole operation, so it throws and propagates to the nearest boundary.
-   Field-level errors (those with a `path`) are **left in the response** so Relay
-   can attribute them to the reading field.
+   has **no `path`**, or a path of **length 1** (the operation root — a mutation
+   name or the single top-level field of a page query). Those apply to the
+   whole operation, so they throw and propagate to the nearest boundary.
+   Nested field errors (path length greater than 1) are **left in the response**
+   so Relay can attribute them to the reading field.
 
    [`packages/relay/src/fetch.ts`](../../packages/relay/src/fetch.ts)
    (`makeFetchQuery`) throws only request-level errors. Session gates

@@ -40,13 +40,18 @@ export default function RedirectToEmployeePortalLoader() {
     loadQuery({ organizationId });
   }, [loadQuery, organizationId]);
 
-  if (queryRef == null) {
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
     return <PageSkeleton />;
   }
 
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <RedirectToEmployeePortal queryRef={queryRef} />
+      <RedirectToEmployeePortal key={organizationId} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

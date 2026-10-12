@@ -135,6 +135,8 @@ export {
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
 export { detectSocialName } from "./socialUrl";
 export {
+  catchResultValue,
+  type CatchResult,
   type FieldRejection,
   formatError,
   graphqlErrorField,
