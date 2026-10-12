@@ -64,5 +64,5 @@ export function useDefaultEmployeePortalId(): string | null {
       : null;
   const organization = useFragment(defaultEmployeePortalFragment, organizationKey);
 
-  return organization?.employeePortals.edges[0]?.node.id ?? null;
+  return organization?.employeePortals?.edges[0]?.node.id ?? null;
 }

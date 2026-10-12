@@ -31,23 +31,22 @@ import {
   UnAuthenticatedError,
 } from "./errors";
 
-const hasUnauthenticatedError = (error: GraphQLError) =>
-  error.extensions?.code === "UNAUTHENTICATED";
+type ErrorResponse = GraphQLResponse & { errors?: GraphQLError[] };
 
-const hasFullNameRequiredError = (error: GraphQLError) =>
-  error.extensions?.code === "FULL_NAME_REQUIRED";
+const hasCode = (code: string) => (error: GraphQLError) =>
+  error.extensions?.code === code;
 
-const hasAssumptionRequiredError = (error: GraphQLError) =>
-  error.extensions?.code === "ASSUMPTION_REQUIRED";
+// Session gates attach a resolver path even when they apply to the whole
+// request. Scan every error so the route boundary can still redirect.
+const hasUnauthenticatedError = hasCode("UNAUTHENTICATED");
+const hasFullNameRequiredError = hasCode("FULL_NAME_REQUIRED");
+const hasAssumptionRequiredError = hasCode("ASSUMPTION_REQUIRED");
+const hasNDASignatureRequiredError = hasCode("NDA_SIGNATURE_REQUIRED");
+const hasMembershipRequiredError = hasCode("MEMBERSHIP_REQUIRED");
+const hasForbiddenError = hasCode("FORBIDDEN");
 
-const hasNDASignatureRequiredError = (error: GraphQLError) =>
-  error.extensions?.code === "NDA_SIGNATURE_REQUIRED";
-
-const hasMembershipRequiredError = (error: GraphQLError) =>
-  error.extensions?.code === "MEMBERSHIP_REQUIRED";
-
-const hasForbiddenError = (error: GraphQLError) =>
-  error.extensions?.code === "FORBIDDEN";
+const isRequestLevel = (error: GraphQLError) =>
+  error.path === undefined || error.path === null || error.path.length === 0;
 
 export const makeFetchQuery = (endpoint: string): FetchFunction => {
   return async (request, variables, _, uploadables) => {
@@ -103,9 +102,7 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
       throw new InternalServerError();
     }
 
-    const json = (await response.json()) as GraphQLResponse & {
-      errors?: GraphQLError[];
-    };
+    const json = (await response.json()) as ErrorResponse;
 
     if (json.errors) {
       const errors = json.errors;
@@ -135,9 +132,18 @@ export const makeFetchQuery = (endpoint: string): FetchFunction => {
         throw new MembershipRequiredError(membershipRequiredError.message);
       }
 
-      const forbiddenError = errors.find(hasForbiddenError);
+      // Field-level errors stay in the response so Relay can attach them to
+      // the reading field. Only a request-level failure (no path) throws.
+      const requestErrors = errors.filter(isRequestLevel);
+
+      const forbiddenError = requestErrors.find(hasForbiddenError);
       if (forbiddenError) {
         throw new ForbiddenError(forbiddenError.message);
+      }
+
+      const requestError = requestErrors[0];
+      if (requestError) {
+        throw new Error(requestError.message);
       }
     }
 

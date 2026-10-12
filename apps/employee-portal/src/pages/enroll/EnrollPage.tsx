@@ -92,7 +92,7 @@ interface EnrollPageProps {
 function portalDeviceAgentEnabled(
   portals: EnrollPageQuery$data["viewer"]["profiles"]["edges"][number]["node"]["organization"]["employeePortals"],
 ): boolean {
-  if (portals == null || portals.ok !== true) {
+  if (portals == null || portals.ok !== true || portals.value == null) {
     return false;
   }
 

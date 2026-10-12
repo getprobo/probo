@@ -74,7 +74,7 @@ export function OrganizationListItem({ profileKey }: OrganizationListItemProps) 
       ? null
       : { expiresAt: membership.lastSession.expiresAt },
   );
-  const employeePortalId = organization.employeePortals.edges[0]?.node.id;
+  const employeePortalId = organization.employeePortals?.edges[0]?.node.id;
   const isAssuming = sessionStatus === "authenticated";
 
   let statusBadge = (

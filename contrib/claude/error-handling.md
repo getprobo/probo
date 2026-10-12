@@ -171,10 +171,11 @@ bad field — instead of collapsing the whole page — two pieces cooperate:
    Field-level errors (those with a `path`) are **left in the response** so Relay
    can attribute them to the reading field.
 
-   The compliance-portal wires this in its own
-   [`apps/compliance-portal/src/lib/relay/fetch.ts`](../../apps/compliance-portal/src/lib/relay/fetch.ts)
-   (it does **not** use `@probo/relay`'s `makeFetchQuery`, which throws for the
-   whole operation on any known code).
+   [`packages/relay/src/fetch.ts`](../../packages/relay/src/fetch.ts)
+   (`makeFetchQuery`) throws only request-level errors. Session gates
+   (`UNAUTHENTICATED`, `FULL_NAME_REQUIRED`, `ASSUMPTION_REQUIRED`,
+   `NDA_SIGNATURE_REQUIRED`, `MEMBERSHIP_REQUIRED`) still throw even when they
+   have a path, because the backend attaches a resolver path to those.
 
 2. **`@throwOnFieldError` on the query/fragment that reads the field.** With the
    directive set, a field error throws **at the read site** (`usePreloadedQuery`

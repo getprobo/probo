@@ -141,8 +141,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				func(data json.RawMessage) (*api.Connection[employeePortal], error) {
 					var resp struct {
 						Node *struct {
-							Typename        string                         `json:"__typename"`
-							EmployeePortals api.Connection[employeePortal] `json:"employeePortals"`
+							Typename        string                          `json:"__typename"`
+							EmployeePortals *api.Connection[employeePortal] `json:"employeePortals"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -157,7 +157,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
 					}
 
-					return &resp.Node.EmployeePortals, nil
+					if resp.Node.EmployeePortals == nil {
+						return nil, fmt.Errorf("employee portal list is unavailable")
+					}
+
+					return resp.Node.EmployeePortals, nil
 				},
 			)
 			if err != nil {

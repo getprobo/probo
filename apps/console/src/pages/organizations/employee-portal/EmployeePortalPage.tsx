@@ -73,7 +73,7 @@ export function EmployeePortalPage({ queryRef }: EmployeePortalPageProps) {
     throw new Error("invalid type for organization node");
   }
 
-  const employeePortal = organization.employeePortals.edges[0]?.node;
+  const employeePortal = organization.employeePortals?.edges[0]?.node;
   if (employeePortal == null) {
     return (
       <ErrorLayout

@@ -36,7 +36,7 @@ interface ErrorContent {
 
 // Map a caught error to the page-level copy. Recognizes the portal error
 // classes first, then falls back to the code embedded in generic Error messages
-// (thrown request-level by lib/relay/fetch.ts).
+// (thrown request-level by @probo/relay makeFetchQuery).
 function resolveContent(error: unknown): ErrorContent {
   const message = error instanceof Error ? error.message : "";
 

@@ -43,7 +43,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: EmployeePortalOrder
-  ): EmployeePortalConnection! @goField(forceResolver: true)
+  ): EmployeePortalConnection @goField(forceResolver: true)
 
   permission(action: String!, attributes: Map): Boolean!
     @goField(forceResolver: true)

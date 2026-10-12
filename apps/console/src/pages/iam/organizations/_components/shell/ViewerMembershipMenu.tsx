@@ -100,7 +100,7 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
       identity,
     },
   } = organization;
-  const employeePortalId = organization.employeePortals.edges[0]?.node.id ?? null;
+  const employeePortalId = organization.employeePortals?.edges[0]?.node.id ?? null;
   const { canListOAuth2AccessTokens, email, avatar } = identity;
   const [signOut, isSigningOut] = useMutation<ViewerMembershipMenuSignOutMutation>(signOutMutation);
   const [avatarOpen, setAvatarOpen] = useState(false);

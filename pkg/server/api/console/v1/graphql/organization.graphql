@@ -395,7 +395,7 @@ type Organization implements Node {
         last: Int
         before: CursorKey
         orderBy: EmployeePortalOrder
-    ): EmployeePortalConnection! @goField(forceResolver: true)
+    ): EmployeePortalConnection @goField(forceResolver: true)
 
     cookieBanners(
         first: Int
