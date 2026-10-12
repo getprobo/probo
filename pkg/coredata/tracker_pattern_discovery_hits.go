@@ -46,7 +46,7 @@ type (
 	}
 )
 
-// RecordDiscoveryPatternHit adds the family deltas for a first
+// RecordDiscoveryPatternHit adds family hit increments for a first
 // sighting. It no-ops until a page-load row exists, and after that
 // row is frozen or a version is published, so every pattern shares
 // one window.
@@ -56,9 +56,13 @@ func RecordDiscoveryPatternHit(
 	scope Scoper,
 	cookieBannerID gid.GID,
 	trackerPatternID gid.GID,
-	deltas DiscoveryFamilyDeltas,
+	chrome int64,
+	edge int64,
+	firefox int64,
+	safari int64,
+	other int64,
 ) error {
-	if deltas.Empty() {
+	if chrome == 0 && edge == 0 && firefox == 0 && safari == 0 && other == 0 {
 		return nil
 	}
 
@@ -67,11 +71,11 @@ func RecordDiscoveryPatternHit(
 		"tracker_pattern_id": trackerPatternID,
 		"cookie_banner_id":   cookieBannerID,
 		"tenant_id":          scope.GetTenantID(),
-		"chrome":             deltas.Chrome,
-		"edge":               deltas.Edge,
-		"firefox":            deltas.Firefox,
-		"safari":             deltas.Safari,
-		"other":              deltas.Other,
+		"chrome":             chrome,
+		"edge":               edge,
+		"firefox":            firefox,
+		"safari":             safari,
+		"other":              other,
 		"published":          CookieBannerVersionStatePublished,
 		"now":                now,
 	}

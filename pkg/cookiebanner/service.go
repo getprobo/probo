@@ -1531,7 +1531,7 @@ func (s *Service) PublishCookieBannerVersion(
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBannerVersion, error) {
-	if err := s.FlushDiscoveryCountsForBanner(ctx, bannerID); err != nil {
+	if err := s.FlushDiscoveryCounts(ctx); err != nil {
 		return nil, fmt.Errorf("cannot flush discovery counts before publish: %w", err)
 	}
 

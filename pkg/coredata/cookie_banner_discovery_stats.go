@@ -44,50 +44,24 @@ type (
 		CreatedAt        time.Time  `db:"created_at"`
 		UpdatedAt        time.Time  `db:"updated_at"`
 	}
-
-	DiscoveryFamilyDeltas struct {
-		Chrome  int64
-		Edge    int64
-		Firefox int64
-		Safari  int64
-		Other   int64
-	}
 )
 
-func (d DiscoveryFamilyDeltas) Empty() bool {
-	return d.Chrome == 0 && d.Edge == 0 && d.Firefox == 0 && d.Safari == 0 && d.Other == 0
-}
-
-func DiscoveryFamilyDeltasFor(family DiscoveryBrowserFamily, n int64) DiscoveryFamilyDeltas {
-	if n == 0 {
-		return DiscoveryFamilyDeltas{}
-	}
-
-	switch family {
-	case DiscoveryBrowserFamilyChrome:
-		return DiscoveryFamilyDeltas{Chrome: n}
-	case DiscoveryBrowserFamilyEdge:
-		return DiscoveryFamilyDeltas{Edge: n}
-	case DiscoveryBrowserFamilyFirefox:
-		return DiscoveryFamilyDeltas{Firefox: n}
-	case DiscoveryBrowserFamilySafari:
-		return DiscoveryFamilyDeltas{Safari: n}
-	default:
-		return DiscoveryFamilyDeltas{Other: n}
-	}
-}
-
-// RecordDiscoveryPageLoad adds the family deltas to the banner window.
-// A published version or a frozen row makes this a no-op. The first
-// successful call creates the shared window every pattern hit uses.
+// RecordDiscoveryPageLoad adds family page-load increments to the
+// banner window. A published version or a frozen row makes this a
+// no-op. The first successful call creates the shared window every
+// pattern hit uses.
 func RecordDiscoveryPageLoad(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,
 	cookieBannerID gid.GID,
-	deltas DiscoveryFamilyDeltas,
+	chrome int64,
+	edge int64,
+	firefox int64,
+	safari int64,
+	other int64,
 ) error {
-	if deltas.Empty() {
+	if chrome == 0 && edge == 0 && firefox == 0 && safari == 0 && other == 0 {
 		return nil
 	}
 
@@ -136,11 +110,11 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"cookie_banner_id": cookieBannerID,
 		"tenant_id":        scope.GetTenantID(),
-		"chrome":           deltas.Chrome,
-		"edge":             deltas.Edge,
-		"firefox":          deltas.Firefox,
-		"safari":           deltas.Safari,
-		"other":            deltas.Other,
+		"chrome":           chrome,
+		"edge":             edge,
+		"firefox":          firefox,
+		"safari":           safari,
+		"other":            other,
 		"published":        CookieBannerVersionStatePublished,
 		"now":              now,
 	}
