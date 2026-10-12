@@ -126,6 +126,7 @@ func (s *Service) FlushDiscoveryCounts(ctx context.Context) error {
 	s.pageLoadCounts.Range(
 		func(key, value any) bool {
 			bannerID := key.(gid.GID)
+
 			counts := value.(*discoveryFamilyAtomics).swap(0)
 			if counts.empty() {
 				return true
@@ -142,6 +143,7 @@ func (s *Service) FlushDiscoveryCounts(ctx context.Context) error {
 	s.patternHitCounts.Range(
 		func(key, value any) bool {
 			hitKey := key.(discoveryHitKey)
+
 			counts := value.(*discoveryFamilyAtomics).swap(0)
 			if counts.empty() {
 				return true
