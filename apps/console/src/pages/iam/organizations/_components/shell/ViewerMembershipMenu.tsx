@@ -47,8 +47,6 @@ import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDial
 
 import { navRail } from "./variants";
 
-// Keep the oldest-portal pick in sync with useDefaultEmployeePortalId
-// (console schema). Relay cannot share a fragment across iam/core projects.
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
     employeePortals(

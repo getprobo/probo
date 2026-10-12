@@ -20,7 +20,14 @@
 
 import { describe, expect, it } from "vitest";
 
-import { formatError, graphqlErrorField, toFieldErrors, toFieldRejections } from "./error";
+import {
+    formatError,
+    graphqlErrorField,
+    graphqlErrorsMessage,
+    isForbiddenGraphqlError,
+    toFieldErrors,
+    toFieldRejections,
+} from "./error";
 
 describe("graphqlErrorField", () => {
     it("reads the validation field from extensions", () => {
@@ -102,6 +109,48 @@ describe("toFieldRejections", () => {
 
     it("ignores errors without a field", () => {
         expect(toFieldRejections({ message: "boom", extensions: { code: "INTERNAL_SERVER_ERROR" } })).toBeUndefined();
+    });
+});
+
+describe("isForbiddenGraphqlError", () => {
+    it("reads FORBIDDEN from extensions", () => {
+        expect(isForbiddenGraphqlError({
+            message: "not allowed",
+            extensions: { code: "FORBIDDEN" },
+        })).toBe(true);
+    });
+
+    it("reads FORBIDDEN from the message when extensions are absent", () => {
+        expect(isForbiddenGraphqlError({ message: "FORBIDDEN: not allowed" })).toBe(true);
+    });
+
+    it("scans an error list", () => {
+        expect(isForbiddenGraphqlError([
+            { message: "other" },
+            { message: "not allowed", extensions: { code: "FORBIDDEN" } },
+        ])).toBe(true);
+    });
+
+    it("returns false for other codes", () => {
+        expect(isForbiddenGraphqlError({
+            message: "boom",
+            extensions: { code: "INTERNAL" },
+        })).toBe(false);
+        expect(isForbiddenGraphqlError(null)).toBe(false);
+    });
+});
+
+describe("graphqlErrorsMessage", () => {
+    it("returns the first message", () => {
+        expect(graphqlErrorsMessage([
+            { message: "first" },
+            { message: "second" },
+        ])).toBe("first");
+    });
+
+    it("returns undefined without a message", () => {
+        expect(graphqlErrorsMessage([{ extensions: { code: "INTERNAL" } }])).toBeUndefined();
+        expect(graphqlErrorsMessage(null)).toBeUndefined();
     });
 });
 

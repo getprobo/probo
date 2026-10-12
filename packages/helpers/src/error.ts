@@ -30,7 +30,7 @@ export interface GraphQLError {
   };
 }
 
-function graphqlErrorExtension(error: unknown, key: "field" | "cause"): string | undefined {
+function graphqlErrorExtension(error: unknown, key: "field" | "cause" | "code"): string | undefined {
   if (error == null || typeof error !== "object" || !("extensions" in error)) {
     return undefined;
   }
@@ -46,11 +46,33 @@ export function graphqlErrorField(error: unknown): string | undefined {
   return graphqlErrorExtension(error, "field");
 }
 
-function graphqlErrorMessage(error: unknown): string | undefined {
+export function graphqlErrorMessage(error: unknown): string | undefined {
   if (error == null || typeof error !== "object" || !("message" in error)) {
     return undefined;
   }
   return typeof error.message === "string" ? error.message : undefined;
+}
+
+export function graphqlErrorsMessage(error: unknown): string | undefined {
+  const items = Array.isArray(error) ? error : [error];
+  for (const item of items.flatMap(nestedGraphqlErrors)) {
+    const message = graphqlErrorMessage(item);
+    if (message != null) {
+      return message;
+    }
+  }
+  return undefined;
+}
+
+export function isForbiddenGraphqlError(error: unknown): boolean {
+  const items = Array.isArray(error) ? error : [error];
+  return items.flatMap(nestedGraphqlErrors).some((item) => {
+    if (graphqlErrorExtension(item, "code") === "FORBIDDEN") {
+      return true;
+    }
+    const message = graphqlErrorMessage(item);
+    return message != null && message.includes("FORBIDDEN");
+  });
 }
 
 function nestedGraphqlErrors(error: unknown): unknown[] {

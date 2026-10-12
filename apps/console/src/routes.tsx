@@ -27,7 +27,7 @@ import { createBrowserRouter, Navigate, redirect } from "react-router";
 
 import { OrganizationErrorBoundary } from "./components/OrganizationErrorBoundary";
 import { PageError } from "./components/PageError";
-import { RedirectToEmployeePortal } from "./components/RedirectToEmployeePortal";
+import RedirectToEmployeePortalLoader from "./components/RedirectToEmployeePortalLoader";
 import { RootErrorBoundary } from "./components/RootErrorBoundary";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton";
 import { AuthLayoutSkeleton } from "./pages/iam/auth/AuthLayoutSkeleton";
@@ -207,7 +207,7 @@ const routes = [
               const { role } = use(CurrentUser);
               switch (role) {
                 case Role.EMPLOYEE:
-                  return <RedirectToEmployeePortal />;
+                  return <RedirectToEmployeePortalLoader />;
                 case Role.AUDITOR:
                   return <Navigate to="governance/internal-controls" />;
                 case Role.COMPLIANCE_PORTAL_MANAGER:
