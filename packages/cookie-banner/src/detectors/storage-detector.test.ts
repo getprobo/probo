@@ -137,6 +137,23 @@ describe("StorageDetector", () => {
     detector.stop();
   });
 
+  it("reports the stored DOMString size for non-string assignment", () => {
+    installFakeStorage();
+    const { queue, reported } = fakeQueue();
+    const detector = new StorageDetector(queue, "https://api.example.com");
+
+    detector.start();
+    (window.localStorage as unknown as Record<string, unknown>).count = 42;
+    (window.localStorage as unknown as Record<string, unknown>).empty = null;
+
+    expect(reported).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: "count", value_size: 4, source: "script" }),
+      expect.objectContaining({ key: "empty", value_size: 8, source: "script" }),
+    ]));
+
+    detector.stop();
+  });
+
   it("rejects Symbol assignment like native Storage", () => {
     installFakeStorage();
     const { queue, reported } = fakeQueue();

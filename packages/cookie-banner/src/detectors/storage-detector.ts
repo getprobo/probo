@@ -97,6 +97,7 @@ export class StorageDetector implements Detector {
     this.rawSessionStorage = typeof sessionStorage === "undefined" ? null : sessionStorage;
 
     const originalSetItem = Storage.prototype.setItem;
+    const originalGetItem = Storage.prototype.getItem;
     this.originalSetItem = originalSetItem;
 
     const self = this;
@@ -104,10 +105,16 @@ export class StorageDetector implements Detector {
     Storage.prototype.setItem = function (key: string, value: string) {
       originalSetItem.call(this, key, value);
 
+      // Native setItem converts the argument to DOMString (and throws
+      // on Symbol). Report the stored string so value_size is not
+      // NaN / a throw for null, numbers, and other non-strings.
+      const stored = originalGetItem.call(this, key);
+      if (stored == null) return;
+
       const storageType: "local_storage" | "session_storage" =
         self.isLocalStorage(this) ? "local_storage" : "session_storage";
 
-      self.onStorageWrite(key, value, storageType);
+      self.onStorageWrite(key, stored, storageType);
     };
 
     // Named writes (`localStorage.foo = "bar"`) go through the Storage
