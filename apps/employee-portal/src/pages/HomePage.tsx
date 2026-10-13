@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { pendingTaskStates } from "@probo/tasks";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -61,12 +60,23 @@ export const homePageQuery = graphql`
       ) {
         totalCount
       }
-      assignedTasks(organizationId: $organizationId, first: 500) {
-        edges {
-          node {
-            state
-          }
-        }
+      inProgressTasks: assignedTasks(
+        organizationId: $organizationId
+        filter: { state: IN_PROGRESS }
+      ) {
+        totalCount
+      }
+      todoTasks: assignedTasks(
+        organizationId: $organizationId
+        filter: { state: TODO }
+      ) {
+        totalCount
+      }
+      backlogTasks: assignedTasks(
+        organizationId: $organizationId
+        filter: { state: BACKLOG }
+      ) {
+        totalCount
       }
       ...GetStartedCard_viewer @arguments(organizationId: $organizationId)
       ...DocumentsDashboardCard_viewer @arguments(organizationId: $organizationId)
@@ -108,9 +118,10 @@ export function HomePage({ queryRef }: HomePageProps) {
     = (viewer.pendingSignatures.totalCount > 0 || viewer.pendingApprovals.totalCount > 0)
       && viewer.completedSignatures.totalCount === 0
       && viewer.approvedDocuments.totalCount === 0;
-  const pendingTaskCount = viewer.assignedTasks.edges.filter(
-    ({ node }) => pendingTaskStates.has(node.state),
-  ).length;
+  const pendingTaskCount
+    = viewer.inProgressTasks.totalCount
+      + viewer.todoTasks.totalCount
+      + viewer.backlogTasks.totalCount;
 
   const welcome = firstName === ""
     ? t("homePage.welcomeFallback")

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { ArrowRightIcon, CheckIcon, CheckSquareIcon, TrayIcon } from "@phosphor-icons/react";
-import { pendingTaskStates } from "@probo/tasks";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Link } from "@probo/ui/src/v2/Link/Link";
@@ -38,12 +37,29 @@ const tasksDashboardCardFragment = graphql`
   fragment TasksDashboardCard_viewer on Viewer
   @argumentDefinitions(organizationId: { type: "ID!" })
   @throwOnFieldError {
-    assignedTasks(organizationId: $organizationId, first: 500) {
-      edges {
-        node {
-          state
-        }
-      }
+    inProgressTasks: assignedTasks(
+      organizationId: $organizationId
+      filter: { state: IN_PROGRESS }
+    ) {
+      totalCount
+    }
+    todoTasks: assignedTasks(
+      organizationId: $organizationId
+      filter: { state: TODO }
+    ) {
+      totalCount
+    }
+    backlogTasks: assignedTasks(
+      organizationId: $organizationId
+      filter: { state: BACKLOG }
+    ) {
+      totalCount
+    }
+    doneTasks: assignedTasks(
+      organizationId: $organizationId
+      filter: { state: DONE }
+    ) {
+      totalCount
     }
   }
 `;
@@ -62,12 +78,11 @@ export function TasksDashboardCard({
   const slots = dashboardCard({ wash });
   const viewer = useFragment(tasksDashboardCardFragment, viewerKey);
 
-  const pendingCount = viewer.assignedTasks.edges.filter(
-    ({ node }) => pendingTaskStates.has(node.state),
-  ).length;
-  const completedCount = viewer.assignedTasks.edges.filter(
-    ({ node }) => node.state === "DONE",
-  ).length;
+  const pendingCount
+    = viewer.inProgressTasks.totalCount
+      + viewer.todoTasks.totalCount
+      + viewer.backlogTasks.totalCount;
+  const completedCount = viewer.doneTasks.totalCount;
 
   let bodyState: "empty" | "pending" | "allDone" = "empty";
   if (pendingCount > 0) {
