@@ -37,23 +37,18 @@ export const taskList = tv({
     empty: "py-6",
   },
   variants: {
-    open: {
-      true: {
-        sectionHeader: [
-          "[&_[data-slot=caret-closed]]:hidden",
-          "[&_[data-slot=caret-open]]:block",
-        ],
-      },
+    offset: {
+      true: { sectionHeader: "pt-4" },
       false: {},
     },
-    offset: {
-      true: { sectionHeader: "mt-4" },
+    spaced: {
+      true: { sectionHeader: "pb-2" },
       false: {},
     },
   },
   defaultVariants: {
-    open: false,
     offset: false,
+    spaced: false,
   },
 });
 

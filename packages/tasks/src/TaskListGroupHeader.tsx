@@ -44,7 +44,8 @@ export function TaskListGroupHeader({
   onOpenChange,
 }: TaskListGroupHeaderProps) {
   const { t } = useTranslation(TASKS_NAMESPACE);
-  const slots = taskList({ open, offset });
+  const slots = taskList({ offset, spaced: true });
+  const CaretIcon = open ? CaretDownIcon : CaretRightIcon;
 
   return (
     <button
@@ -55,16 +56,7 @@ export function TaskListGroupHeader({
         onOpenChange(!open);
       }}
     >
-      <CaretRightIcon
-        className={slots.caret()}
-        data-slot="caret-closed"
-        aria-hidden
-      />
-      <CaretDownIcon
-        className={slots.caret()}
-        data-slot="caret-open"
-        aria-hidden
-      />
+      <CaretIcon className={slots.caret()} aria-hidden />
       <TaskStateIcon state={state} />
       <Text size={2} weight="medium">
         {t(`states.${taskStateKeys[state]}`)}

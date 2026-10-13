@@ -22,15 +22,16 @@ import type { TaskListFlatItem } from "./flattenTaskListItems";
 
 export const taskListGroupHeaderSize = 32;
 export const taskListGroupHeaderOffset = 16;
+export const taskListGroupHeaderGap = 8;
 export const taskListRowSize = 48;
 
 export function taskListItemSize(item: Pick<TaskListFlatItem<unknown>, "type"> & {
   offset?: boolean;
 }): number {
   if (item.type === "header") {
-    return item.offset === true
-      ? taskListGroupHeaderSize + taskListGroupHeaderOffset
-      : taskListGroupHeaderSize;
+    return (item.offset === true ? taskListGroupHeaderOffset : 0)
+      + taskListGroupHeaderSize
+      + taskListGroupHeaderGap;
   }
 
   return taskListRowSize;

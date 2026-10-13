@@ -44,6 +44,7 @@ export {
   type TaskListRowFrameProps,
 } from "./TaskListRowFrame";
 export {
+  taskListGroupHeaderGap,
   taskListGroupHeaderOffset,
   taskListGroupHeaderSize,
   taskListItemSize,
