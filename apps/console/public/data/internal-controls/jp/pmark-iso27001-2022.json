@@ -41,19 +41,7 @@
       {
         "reference-id": "pmark-context-task-1",
         "name": "組織の状況と適用範囲の整理",
-        "description": "事業内容、外部・内部の課題、利害関係者の期待を洗い出し、PMS・ISMS の適用範囲を文書にまとめる。年1回、または事業の変化があったときに見直す。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-context-task-1-evidence-1",
-            "type": "FILE",
-            "name": "適用範囲を定めた文書"
-          },
-          {
-            "reference-id": "pmark-context-task-1-evidence-2",
-            "type": "FILE",
-            "name": "課題・利害関係者の一覧"
-          }
-        ]
+        "description": "事業内容、外部・内部の課題、利害関係者の期待を洗い出し、PMS・ISMS の適用範囲を文書にまとめる。年1回、または事業の変化があったときに見直す。\n\n記録：適用範囲を定めた文書、課題・利害関係者の一覧"
       }
     ]
   },
@@ -79,19 +67,7 @@
       {
         "reference-id": "pmark-legal-task-1",
         "name": "法令等の一覧の作成と見直し",
-        "description": "個人情報保護法、ガイドライン、業界の規範、契約上の義務を一覧にし、改正の有無を年1回以上確認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-legal-task-1-evidence-1",
-            "type": "FILE",
-            "name": "法令・規範の一覧"
-          },
-          {
-            "reference-id": "pmark-legal-task-1-evidence-2",
-            "type": "FILE",
-            "name": "見直しの記録"
-          }
-        ]
+        "description": "個人情報保護法、ガイドライン、業界の規範、契約上の義務を一覧にし、改正の有無を年1回以上確認する。\n\n記録：法令・規範の一覧、見直しの記録"
       }
     ]
   },
@@ -113,14 +89,7 @@
       {
         "reference-id": "pmark-leadership-task-1",
         "name": "経営層の関与の記録",
-        "description": "経営層が方針・目標の承認、資源の提供、マネジメントレビューへの参加を行ったことを記録する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-leadership-task-1-evidence-1",
-            "type": "FILE",
-            "name": "経営層の承認記録"
-          }
-        ]
+        "description": "経営層が方針・目標の承認、資源の提供、マネジメントレビューへの参加を行ったことを記録する。\n\n記録：経営層の承認記録"
       }
     ]
   },
@@ -146,19 +115,7 @@
       {
         "reference-id": "pmark-policy-task-1",
         "name": "方針の策定と公表",
-        "description": "内部向けと外部向けの個人情報保護方針を作成し、代表者が承認する。外部向け方針はWebサイトで公表し、従業者に周知する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-policy-task-1-evidence-1",
-            "type": "FILE",
-            "name": "承認済みの個人情報保護方針"
-          },
-          {
-            "reference-id": "pmark-policy-task-1-evidence-2",
-            "type": "LINK",
-            "name": "公表ページのURL"
-          }
-        ]
+        "description": "内部向けと外部向けの個人情報保護方針を作成し、代表者が承認する。外部向け方針はWebサイトで公表し、従業者に周知する。\n\n記録：承認済みの個人情報保護方針、公表ページのURL"
       }
     ]
   },
@@ -192,19 +149,7 @@
       {
         "reference-id": "pmark-roles-task-1",
         "name": "管理者と監査責任者の任命",
-        "description": "個人情報保護管理者と個人情報保護監査責任者を任命し、兼任させない。各部門の責任者と権限を体制図にまとめる。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-roles-task-1-evidence-1",
-            "type": "FILE",
-            "name": "任命書"
-          },
-          {
-            "reference-id": "pmark-roles-task-1-evidence-2",
-            "type": "FILE",
-            "name": "体制図"
-          }
-        ]
+        "description": "個人情報保護管理者と個人情報保護監査責任者を任命し、兼任させない。各部門の責任者と権限を体制図にまとめる。\n\n記録：任命書、体制図"
       }
     ]
   },
@@ -230,14 +175,7 @@
       {
         "reference-id": "pmark-inventory-task-1",
         "name": "個人情報管理台帳の作成と更新",
-        "description": "業務ごとに取り扱う個人情報を洗い出し、利用目的、保管場所、保存期間、アクセスできる人、委託の有無を台帳にまとめる。年1回以上、および業務の追加・変更時に更新する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-inventory-task-1-evidence-1",
-            "type": "FILE",
-            "name": "個人情報管理台帳"
-          }
-        ]
+        "description": "業務ごとに取り扱う個人情報を洗い出し、利用目的、保管場所、保存期間、アクセスできる人、委託の有無を台帳にまとめる。年1回以上、および業務の追加・変更時に更新する。\n\n記録：個人情報管理台帳"
       }
     ]
   },
@@ -271,14 +209,7 @@
       {
         "reference-id": "pmark-risk-assessment-task-1",
         "name": "リスクの洗い出しと評価",
-        "description": "台帳の個人情報ごとに、取得から廃棄までの各段階で起こりうるリスク（漏えい、滅失、き損、目的外利用など）を洗い出して評価する。年1回以上実施する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-risk-assessment-task-1-evidence-1",
-            "type": "FILE",
-            "name": "リスク分析表"
-          }
-        ]
+        "description": "台帳の個人情報ごとに、取得から廃棄までの各段階で起こりうるリスク（漏えい、滅失、き損、目的外利用など）を洗い出して評価する。年1回以上実施する。\n\n記録：リスク分析表"
       }
     ]
   },
@@ -308,19 +239,7 @@
       {
         "reference-id": "pmark-risk-treatment-task-1",
         "name": "対策の決定と残留リスクの承認",
-        "description": "評価したリスクごとに対策を決め、対策後に残るリスクを個人情報保護管理者が確認して承認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-risk-treatment-task-1-evidence-1",
-            "type": "FILE",
-            "name": "リスク対応計画"
-          },
-          {
-            "reference-id": "pmark-risk-treatment-task-1-evidence-2",
-            "type": "FILE",
-            "name": "残留リスクの承認記録"
-          }
-        ]
+        "description": "評価したリスクごとに対策を決め、対策後に残るリスクを個人情報保護管理者が確認して承認する。\n\n記録：リスク対応計画、残留リスクの承認記録"
       }
     ]
   },
@@ -354,19 +273,7 @@
       {
         "reference-id": "pmark-objectives-task-1",
         "name": "年間計画の策定",
-        "description": "個人情報保護の目標と、教育・内部監査・マネジメントレビューなどの年間計画を立てる。体制や業務を変えるときは、変更の計画を作る。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-objectives-task-1-evidence-1",
-            "type": "FILE",
-            "name": "年間計画"
-          },
-          {
-            "reference-id": "pmark-objectives-task-1-evidence-2",
-            "type": "FILE",
-            "name": "目標と達成状況の記録"
-          }
-        ]
+        "description": "個人情報保護の目標と、教育・内部監査・マネジメントレビューなどの年間計画を立てる。体制や業務を変えるときは、変更の計画を作る。\n\n記録：年間計画、目標と達成状況の記録"
       }
     ]
   },
@@ -396,14 +303,7 @@
       {
         "reference-id": "pmark-resources-task-1",
         "name": "力量の確認",
-        "description": "個人情報保護管理者、監査責任者、担当者に必要な知識・経験を定め、満たしていることを確認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-resources-task-1-evidence-1",
-            "type": "FILE",
-            "name": "力量の確認記録"
-          }
-        ]
+        "description": "個人情報保護管理者、監査責任者、担当者に必要な知識・経験を定め、満たしていることを確認する。\n\n記録：力量の確認記録"
       }
     ]
   },
@@ -429,24 +329,7 @@
       {
         "reference-id": "pmark-training-task-1",
         "name": "年次の教育",
-        "description": "全従業者（派遣社員・アルバイトを含む）に、方針、規程、違反時の影響について年1回以上教育を行い、理解度を確認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-training-task-1-evidence-1",
-            "type": "FILE",
-            "name": "教育計画"
-          },
-          {
-            "reference-id": "pmark-training-task-1-evidence-2",
-            "type": "FILE",
-            "name": "受講記録"
-          },
-          {
-            "reference-id": "pmark-training-task-1-evidence-3",
-            "type": "FILE",
-            "name": "理解度テストの結果"
-          }
-        ]
+        "description": "全従業者（派遣社員・アルバイトを含む）に、方針、規程、違反時の影響について年1回以上教育を行い、理解度を確認する。\n\n記録：教育計画、受講記録、理解度テストの結果"
       }
     ]
   },
@@ -468,14 +351,7 @@
       {
         "reference-id": "pmark-communication-task-1",
         "name": "連絡体制の整備",
-        "description": "社内外への連絡の内容、時期、相手、方法を決めておく。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-communication-task-1-evidence-1",
-            "type": "FILE",
-            "name": "連絡体制の一覧"
-          }
-        ]
+        "description": "社内外への連絡の内容、時期、相手、方法を決めておく。\n\n記録：連絡体制の一覧"
       }
     ]
   },
@@ -517,19 +393,7 @@
       {
         "reference-id": "pmark-incident-task-1",
         "name": "漏えい時の手順の整備と訓練",
-        "description": "漏えい等が起きたときの報告経路、本人への通知、個人情報保護委員会などへの報告、再発防止の手順を定め、従業者に周知する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-incident-task-1-evidence-1",
-            "type": "FILE",
-            "name": "緊急時対応手順"
-          },
-          {
-            "reference-id": "pmark-incident-task-1-evidence-2",
-            "type": "FILE",
-            "name": "報告・対応の記録"
-          }
-        ]
+        "description": "漏えい等が起きたときの報告経路、本人への通知、個人情報保護委員会などへの報告、再発防止の手順を定め、従業者に周知する。\n\n記録：緊急時対応手順、報告・対応の記録"
       }
     ]
   },
@@ -571,19 +435,7 @@
       {
         "reference-id": "pmark-documents-task-1",
         "name": "文書の版管理",
-        "description": "規程や手順書を承認してから発行し、版と改訂履歴を管理する。古い版が使われないようにする。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-documents-task-1-evidence-1",
-            "type": "FILE",
-            "name": "文書一覧"
-          },
-          {
-            "reference-id": "pmark-documents-task-1-evidence-2",
-            "type": "FILE",
-            "name": "改訂履歴"
-          }
-        ]
+        "description": "規程や手順書を承認してから発行し、版と改訂履歴を管理する。古い版が使われないようにする。\n\n記録：文書一覧、改訂履歴"
       }
     ]
   },
@@ -609,14 +461,7 @@
       {
         "reference-id": "pmark-internal-rules-task-1",
         "name": "個人情報保護規程の整備",
-        "description": "取得・利用・提供、安全管理、委託、本人対応、教育、監査、是正処置などを定めた社内規程を整備し、定期的に見直す。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-internal-rules-task-1-evidence-1",
-            "type": "FILE",
-            "name": "個人情報保護規程"
-          }
-        ]
+        "description": "取得・利用・提供、安全管理、委託、本人対応、教育、監査、是正処置などを定めた社内規程を整備し、定期的に見直す。\n\n記録：個人情報保護規程"
       }
     ]
   },
@@ -642,14 +487,7 @@
       {
         "reference-id": "pmark-records-task-1",
         "name": "記録の保管と廃棄",
-        "description": "必要な記録の種類と保存期間を決め、改ざんや紛失から保護し、期間を過ぎたら廃棄する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-records-task-1-evidence-1",
-            "type": "FILE",
-            "name": "記録の一覧と保存期間"
-          }
-        ]
+        "description": "必要な記録の種類と保存期間を決め、改ざんや紛失から保護し、期間を過ぎたら廃棄する。\n\n記録：記録の一覧と保存期間"
       }
     ]
   },
@@ -671,14 +509,7 @@
       {
         "reference-id": "pmark-operation-task-1",
         "name": "運用状況の確認",
-        "description": "年間計画に沿って運用されていることを確認し、遅れがあれば対応する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-operation-task-1-evidence-1",
-            "type": "FILE",
-            "name": "運用状況の記録"
-          }
-        ]
+        "description": "年間計画に沿って運用されていることを確認し、遅れがあれば対応する。\n\n記録：運用状況の記録"
       }
     ]
   },
@@ -704,14 +535,7 @@
       {
         "reference-id": "pmark-monitoring-task-1",
         "name": "定期点検",
-        "description": "各部門で規程どおりに運用されているかを定期的に点検し、結果を個人情報保護管理者に報告する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-monitoring-task-1-evidence-1",
-            "type": "FILE",
-            "name": "点検の記録"
-          }
-        ]
+        "description": "各部門で規程どおりに運用されているかを定期的に点検し、結果を個人情報保護管理者に報告する。\n\n記録：点検の記録"
       }
     ]
   },
@@ -741,19 +565,7 @@
       {
         "reference-id": "pmark-internal-audit-task-1",
         "name": "年次の内部監査",
-        "description": "監査計画を立て、監査員が自部門を監査しないようにして年1回以上監査を行う。結果を代表者に報告する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-internal-audit-task-1-evidence-1",
-            "type": "FILE",
-            "name": "監査計画"
-          },
-          {
-            "reference-id": "pmark-internal-audit-task-1-evidence-2",
-            "type": "FILE",
-            "name": "監査報告書"
-          }
-        ]
+        "description": "監査計画を立て、監査員が自部門を監査しないようにして年1回以上監査を行う。結果を代表者に報告する。\n\n記録：監査計画、監査報告書"
       }
     ]
   },
@@ -783,14 +595,7 @@
       {
         "reference-id": "pmark-management-review-task-1",
         "name": "年次のマネジメントレビュー",
-        "description": "監査結果、苦情、法令の変化、リスクの状況などをもとに、代表者がマネジメントシステムを見直し、指示を記録する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-management-review-task-1-evidence-1",
-            "type": "FILE",
-            "name": "マネジメントレビューの議事録"
-          }
-        ]
+        "description": "監査結果、苦情、法令の変化、リスクの状況などをもとに、代表者がマネジメントシステムを見直し、指示を記録する。\n\n記録：マネジメントレビューの議事録"
       }
     ]
   },
@@ -812,14 +617,7 @@
       {
         "reference-id": "pmark-corrective-task-1",
         "name": "是正処置の実施",
-        "description": "監査や運用で見つかった不適合の原因を調べ、再発防止策を実施し、その効果を確認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-corrective-task-1-evidence-1",
-            "type": "FILE",
-            "name": "是正処置の記録"
-          }
-        ]
+        "description": "監査や運用で見つかった不適合の原因を調べ、再発防止策を実施し、その効果を確認する。\n\n記録：是正処置の記録"
       }
     ]
   },
@@ -841,14 +639,7 @@
       {
         "reference-id": "pmark-improvement-task-1",
         "name": "改善の取り組み",
-        "description": "点検・監査・レビューの結果をもとに、マネジメントシステムを継続的に改善する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-improvement-task-1-evidence-1",
-            "type": "FILE",
-            "name": "改善の記録"
-          }
-        ]
+        "description": "点検・監査・レビューの結果をもとに、マネジメントシステムを継続的に改善する。\n\n記録：改善の記録"
       }
     ]
   },
@@ -874,14 +665,7 @@
       {
         "reference-id": "pmark-purpose-task-1",
         "name": "利用目的の特定",
-        "description": "個人情報ごとに利用目的をできる限り具体的に定め、その範囲を超えて利用するときは本人の同意を得る。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-purpose-task-1-evidence-1",
-            "type": "FILE",
-            "name": "利用目的の一覧（台帳）"
-          }
-        ]
+        "description": "個人情報ごとに利用目的をできる限り具体的に定め、その範囲を超えて利用するときは本人の同意を得る。\n\n記録：利用目的の一覧（台帳）"
       }
     ]
   },
@@ -907,19 +691,7 @@
       {
         "reference-id": "pmark-acquisition-task-1",
         "name": "取得方法の確認",
-        "description": "偽りや不正な手段で取得していないことを確認する。要配慮個人情報は、原則として本人の同意を得てから取得する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-acquisition-task-1-evidence-1",
-            "type": "FILE",
-            "name": "取得方法の確認記録"
-          },
-          {
-            "reference-id": "pmark-acquisition-task-1-evidence-2",
-            "type": "FILE",
-            "name": "同意の記録"
-          }
-        ]
+        "description": "偽りや不正な手段で取得していないことを確認する。要配慮個人情報は、原則として本人の同意を得てから取得する。\n\n記録：取得方法の確認記録、同意の記録"
       }
     ]
   },
@@ -945,19 +717,7 @@
       {
         "reference-id": "pmark-notice-task-1",
         "name": "通知・明示の文面の整備",
-        "description": "取得時に利用目的を通知または公表する。申込書やWebフォームなど本人から書面で直接取得するときは、必要な事項を事前に明示し、同意を得る。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-notice-task-1-evidence-1",
-            "type": "FILE",
-            "name": "同意書・フォームの文面"
-          },
-          {
-            "reference-id": "pmark-notice-task-1-evidence-2",
-            "type": "LINK",
-            "name": "公表ページのURL"
-          }
-        ]
+        "description": "取得時に利用目的を通知または公表する。申込書やWebフォームなど本人から書面で直接取得するときは、必要な事項を事前に明示し、同意を得る。\n\n記録：同意書・フォームの文面、公表ページのURL"
       }
     ]
   },
@@ -979,14 +739,7 @@
       {
         "reference-id": "pmark-contact-task-1",
         "name": "連絡時の確認",
-        "description": "取得した個人情報を使って本人に連絡・接触するときは、利用目的の範囲内であることを確認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-contact-task-1-evidence-1",
-            "type": "FILE",
-            "name": "確認の記録"
-          }
-        ]
+        "description": "取得した個人情報を使って本人に連絡・接触するときは、利用目的の範囲内であることを確認する。\n\n記録：確認の記録"
       }
     ]
   },
@@ -1024,19 +777,7 @@
       {
         "reference-id": "pmark-third-party-task-1",
         "name": "第三者提供の同意と記録",
-        "description": "第三者に提供するときは原則として本人の同意を得て、提供の記録を作成・保存する。第三者から受け取るときは、取得の経緯を確認して記録する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-third-party-task-1-evidence-1",
-            "type": "FILE",
-            "name": "提供・受領の記録"
-          },
-          {
-            "reference-id": "pmark-third-party-task-1-evidence-2",
-            "type": "FILE",
-            "name": "同意の記録"
-          }
-        ]
+        "description": "第三者に提供するときは原則として本人の同意を得て、提供の記録を作成・保存する。第三者から受け取るときは、取得の経緯を確認して記録する。\n\n記録：提供・受領の記録、同意の記録"
       }
     ]
   },
@@ -1066,14 +807,7 @@
       {
         "reference-id": "pmark-foreign-task-1",
         "name": "外国への提供の確認",
-        "description": "外国の第三者に提供するときは、提供先の国の制度や相手の保護措置を確認し、必要な情報を本人に提供したうえで同意を得る。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-foreign-task-1-evidence-1",
-            "type": "FILE",
-            "name": "提供先の国と保護措置の確認記録"
-          }
-        ]
+        "description": "外国の第三者に提供するときは、提供先の国の制度や相手の保護措置を確認し、必要な情報を本人に提供したうえで同意を得る。\n\n記録：提供先の国と保護措置の確認記録"
       }
     ]
   },
@@ -1103,14 +837,7 @@
       {
         "reference-id": "pmark-anonymized-task-1",
         "name": "加工方法と取扱いの管理",
-        "description": "匿名加工情報・仮名加工情報を作成・利用する場合は、加工方法、公表事項、削除情報の管理を定めて実施する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-anonymized-task-1-evidence-1",
-            "type": "FILE",
-            "name": "加工方法の記録"
-          }
-        ]
+        "description": "匿名加工情報・仮名加工情報を作成・利用する場合は、加工方法、公表事項、削除情報の管理を定めて実施する。\n\n記録：加工方法の記録"
       }
     ]
   },
@@ -1136,14 +863,7 @@
       {
         "reference-id": "pmark-accuracy-task-1",
         "name": "最新化と消去",
-        "description": "個人情報を正確・最新の状態に保ち、利用する必要がなくなったら遅滞なく消去する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-accuracy-task-1-evidence-1",
-            "type": "FILE",
-            "name": "消去・廃棄の記録"
-          }
-        ]
+        "description": "個人情報を正確・最新の状態に保ち、利用する必要がなくなったら遅滞なく消去する。\n\n記録：消去・廃棄の記録"
       }
     ]
   },
@@ -1173,14 +893,7 @@
       {
         "reference-id": "pmark-sec-organizational-task-1",
         "name": "取扱いルールと管理状況の確認",
-        "description": "個人情報の取扱いルールを定め、取扱状況を確認できるようにする。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-sec-organizational-task-1-evidence-1",
-            "type": "FILE",
-            "name": "取扱状況の確認記録"
-          }
-        ]
+        "description": "個人情報の取扱いルールを定め、取扱状況を確認できるようにする。\n\n記録：取扱状況の確認記録"
       }
     ]
   },
@@ -1222,14 +935,7 @@
       {
         "reference-id": "pmark-staff-task-1",
         "name": "誓約書と監督",
-        "description": "入社時・退職時に秘密保持の誓約書を取り交わし、違反時の懲戒手続きを定める。従業者の取扱状況を監督する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-staff-task-1-evidence-1",
-            "type": "FILE",
-            "name": "秘密保持誓約書"
-          }
-        ]
+        "description": "入社時・退職時に秘密保持の誓約書を取り交わし、違反時の懲戒手続きを定める。従業者の取扱状況を監督する。\n\n記録：秘密保持誓約書"
       }
     ]
   },
@@ -1271,19 +977,7 @@
       {
         "reference-id": "pmark-sec-physical-task-1",
         "name": "入退室管理と持ち出し管理",
-        "description": "個人情報を扱う区域の入退室を管理し、書類・媒体・機器の盗難防止、持ち出しの管理、確実な廃棄を行う。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-sec-physical-task-1-evidence-1",
-            "type": "FILE",
-            "name": "入退室記録"
-          },
-          {
-            "reference-id": "pmark-sec-physical-task-1-evidence-2",
-            "type": "FILE",
-            "name": "廃棄証明"
-          }
-        ]
+        "description": "個人情報を扱う区域の入退室を管理し、書類・媒体・機器の盗難防止、持ち出しの管理、確実な廃棄を行う。\n\n記録：入退室記録、廃棄証明"
       }
     ]
   },
@@ -1325,14 +1019,7 @@
       {
         "reference-id": "pmark-sec-access-task-1",
         "name": "アクセス権の管理と定期見直し",
-        "description": "業務に必要な人だけに個人情報へのアクセス権を与え、異動・退職時に速やかに削除する。アクセス権を定期的に見直す。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-sec-access-task-1-evidence-1",
-            "type": "FILE",
-            "name": "アクセス権の見直し記録"
-          }
-        ]
+        "description": "業務に必要な人だけに個人情報へのアクセス権を与え、異動・退職時に速やかに削除する。アクセス権を定期的に見直す。\n\n記録：アクセス権の見直し記録"
       }
     ]
   },
@@ -1378,19 +1065,7 @@
       {
         "reference-id": "pmark-sec-technical-task-1",
         "name": "端末とシステムの保護",
-        "description": "端末のマルウェア対策と更新、脆弱性への対応、ログの取得と確認、暗号化、バックアップを行う。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-sec-technical-task-1-evidence-1",
-            "type": "FILE",
-            "name": "端末のセキュリティ状態"
-          },
-          {
-            "reference-id": "pmark-sec-technical-task-1-evidence-2",
-            "type": "FILE",
-            "name": "ログの確認記録"
-          }
-        ]
+        "description": "端末のマルウェア対策と更新、脆弱性への対応、ログの取得と確認、暗号化、バックアップを行う。\n\n記録：端末のセキュリティ状態、ログの確認記録"
       }
     ]
   },
@@ -1428,19 +1103,7 @@
       {
         "reference-id": "pmark-vendor-task-1",
         "name": "委託先の評価と契約",
-        "description": "委託先を選定基準に沿って評価し、安全管理や再委託の条件を定めた契約を結ぶ。年1回以上、委託先の取扱状況を確認する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-vendor-task-1-evidence-1",
-            "type": "FILE",
-            "name": "委託先評価表"
-          },
-          {
-            "reference-id": "pmark-vendor-task-1-evidence-2",
-            "type": "FILE",
-            "name": "委託契約書"
-          }
-        ]
+        "description": "委託先を選定基準に沿って評価し、安全管理や再委託の条件を定めた契約を結ぶ。年1回以上、委託先の取扱状況を確認する。\n\n記録：委託先評価表、委託契約書"
       }
     ]
   },
@@ -1470,14 +1133,7 @@
       {
         "reference-id": "pmark-rights-procedure-task-1",
         "name": "受付手続きの整備と公表",
-        "description": "開示・訂正・利用停止などの請求の受付窓口、手続き、本人確認の方法を定め、保有個人データに関する事項とあわせて公表する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-rights-procedure-task-1-evidence-1",
-            "type": "LINK",
-            "name": "請求手続きの公表ページのURL"
-          }
-        ]
+        "description": "開示・訂正・利用停止などの請求の受付窓口、手続き、本人確認の方法を定め、保有個人データに関する事項とあわせて公表する。\n\n記録：請求手続きの公表ページのURL"
       }
     ]
   },
@@ -1511,14 +1167,7 @@
       {
         "reference-id": "pmark-rights-response-task-1",
         "name": "請求への対応と記録",
-        "description": "本人から利用目的の通知、開示、訂正・追加・削除、利用停止・提供停止を求められたときに、期限内に対応して記録する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-rights-response-task-1-evidence-1",
-            "type": "FILE",
-            "name": "請求の受付・対応記録"
-          }
-        ]
+        "description": "本人から利用目的の通知、開示、訂正・追加・削除、利用停止・提供停止を求められたときに、期限内に対応して記録する。\n\n記録：請求の受付・対応記録"
       }
     ]
   },
@@ -1540,14 +1189,7 @@
       {
         "reference-id": "pmark-complaints-task-1",
         "name": "苦情・相談窓口の運用",
-        "description": "苦情・相談の窓口を設け、受け付けた内容と対応を記録する。",
-        "requested-evidences": [
-          {
-            "reference-id": "pmark-complaints-task-1-evidence-1",
-            "type": "FILE",
-            "name": "苦情・相談の記録"
-          }
-        ]
+        "description": "苦情・相談の窓口を設け、受け付けた内容と対応を記録する。\n\n記録：苦情・相談の記録"
       }
     ]
   }

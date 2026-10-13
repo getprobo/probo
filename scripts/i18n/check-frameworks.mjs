@@ -229,6 +229,11 @@ export function validateInternalControls(data, catalog) {
       if (isBlank(task.name)) {
         issues.push({ key: task["reference-id"] || key, kind: "empty", message: "task name is empty" });
       }
+      // The importer currently fails on requested evidences: it inserts
+      // them without an organization_id (pkg/probo/internal_control_service.go).
+      if ((task["requested-evidences"] ?? []).length > 0) {
+        issues.push({ key: task["reference-id"] || key, kind: "evidence", message: "requested-evidences break the import; list the records in the task description instead" });
+      }
       for (const evidence of task["requested-evidences"] ?? []) {
         claim(evidence["reference-id"], key);
         if (isBlank(evidence.name) || !EVIDENCE_TYPES.has(evidence.type)) {

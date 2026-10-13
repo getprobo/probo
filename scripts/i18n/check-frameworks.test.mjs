@@ -126,7 +126,7 @@ const internalControl = (overrides = {}) => ({
   "name": "統制",
   "category": "体制",
   "standards": [{ framework: "PM", control: "J.1" }, { framework: "PM", control: "J.2" }, { framework: "ISO", control: "A.1" }],
-  "tasks": [{ "reference-id": "pm-1-t", "name": "作業", "requested-evidences": [{ "reference-id": "pm-1-e", "type": "FILE", "name": "記録" }] }],
+  "tasks": [{ "reference-id": "pm-1-t", "name": "作業", "description": "記録：台帳" }],
   ...overrides,
 });
 
@@ -145,10 +145,10 @@ test("validateInternalControls reports unknown references and missing coverage",
   assert.deepEqual(kinds(validateInternalControls(data, catalog)), ["control:pm-1", "framework:pm-1", "coverage:J.2"]);
 });
 
-test("validateInternalControls reports duplicate reference ids and bad evidence", () => {
+test("validateInternalControls reports duplicate reference ids and requested evidences", () => {
   const data = [
     internalControl(),
     internalControl({ tasks: [{ "reference-id": "pm-2-t", "name": "作業", "requested-evidences": [{ "reference-id": "pm-2-e", "type": "PDF", "name": "記録" }] }] }),
   ];
-  assert.deepEqual(kinds(validateInternalControls(data, catalog)), ["duplicate:pm-1", "evidence:pm-2-e"]);
+  assert.deepEqual(kinds(validateInternalControls(data, catalog)), ["duplicate:pm-1", "evidence:pm-2-t", "evidence:pm-2-e"]);
 });
