@@ -51,6 +51,14 @@
     "dashboard": {
       "view": "Voir",
       "allDone": "Vous avez tout terminé",
+      "documents": {
+        "title": "Documents",
+        "description": "Signez et approuvez les documents attribués.",
+        "empty": "Rien à examiner pour le moment",
+        "pendingCount_one": "{{count}} document à examiner",
+        "pendingCount_other": "{{count}} documents à examiner",
+        "action": "Examiner les documents"
+      },
       "signatures": {
         "title": "Signatures",
         "description": "Signez les documents attribués.",

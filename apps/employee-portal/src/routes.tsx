@@ -27,6 +27,7 @@ import { RootErrorBoundary } from "#/components/errors/RootErrorBoundary";
 import { approvalsRoutes } from "#/pages/approvals/routes";
 import { bindingsRoutes } from "#/pages/bindings/routes";
 import { devicesRoutes } from "#/pages/devices/routes";
+import { documentsRoutes } from "#/pages/documents/routes";
 import { enrollRoutes } from "#/pages/enroll/routes";
 import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
@@ -55,6 +56,7 @@ const routes = [
             Fallback: HomePageSkeleton,
             Component: lazy(() => import("#/pages/HomePageLoader")),
           },
+          ...documentsRoutes,
           ...signaturesRoutes,
           ...approvalsRoutes,
           ...devicesRoutes,

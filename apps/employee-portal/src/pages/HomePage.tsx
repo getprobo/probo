@@ -25,10 +25,9 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
-import { ApprovalDashboardCard } from "#/pages/_components/ApprovalDashboardCard";
 import { DeviceCard } from "#/pages/_components/DeviceCard";
+import { DocumentsDashboardCard } from "#/pages/_components/DocumentsDashboardCard";
 import { GetStartedCard } from "#/pages/_components/GetStartedCard";
-import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
 import { SlackCard } from "#/pages/_components/SlackCard";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
@@ -61,8 +60,7 @@ export const homePageQuery = graphql`
         totalCount
       }
       ...GetStartedCard_viewer @arguments(organizationId: $organizationId)
-      ...SignatureDashboardCard_viewer @arguments(organizationId: $organizationId)
-      ...ApprovalDashboardCard_viewer @arguments(organizationId: $organizationId)
+      ...DocumentsDashboardCard_viewer @arguments(organizationId: $organizationId)
       ...DeviceCard_viewer @arguments(organizationId: $organizationId)
       ...SlackCard_viewer
     }
@@ -121,13 +119,13 @@ export function HomePage({ queryRef }: HomePageProps) {
             <GetStartedCard viewerKey={viewer} />
           </div>
         )}
-        <SignatureDashboardCard
+        <DocumentsDashboardCard
           viewerKey={viewer}
-          wash={!showGetStarted && viewer.pendingSignatures.totalCount > 0}
-        />
-        <ApprovalDashboardCard
-          viewerKey={viewer}
-          wash={!showGetStarted && viewer.pendingApprovals.totalCount > 0}
+          wash={
+            !showGetStarted
+            && (viewer.pendingSignatures.totalCount > 0
+              || viewer.pendingApprovals.totalCount > 0)
+          }
         />
         {deviceAgent && (
           <DeviceCard

@@ -51,6 +51,14 @@
     "dashboard": {
       "view": "Ver",
       "allDone": "Ya está todo listo",
+      "documents": {
+        "title": "Documentos",
+        "description": "Firme y apruebe los documentos asignados.",
+        "empty": "No hay nada que revisar por ahora",
+        "pendingCount_one": "{{count}} documento por revisar",
+        "pendingCount_other": "{{count}} documentos por revisar",
+        "action": "Revisar documentos"
+      },
       "signatures": {
         "title": "Firmas",
         "description": "Firme los documentos asignados.",

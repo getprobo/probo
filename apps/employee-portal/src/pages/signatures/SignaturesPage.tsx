@@ -24,6 +24,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import type { SignaturesPageQuery } from "#/__generated__/core/SignaturesPageQuery.graphql";
 import { PageHeader } from "#/pages/_components/PageHeader";
 import { useClearDocumentQueueOnMount } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { SignaturesHistoryList } from "./_components/SignaturesHistoryList";
 import { SignaturesPendingList } from "./_components/SignaturesPendingList";
@@ -44,6 +45,8 @@ interface SignaturesPageProps {
 export function SignaturesPage({ queryRef }: SignaturesPageProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
+  const { t: tDocuments } = useTranslation("documents");
+  const { employeePortalId } = useEmployeePortalRoute();
   useClearDocumentQueueOnMount();
   const { viewer } = usePreloadedQuery<SignaturesPageQuery>(
     signaturesPageQuery,
@@ -54,6 +57,10 @@ export function SignaturesPage({ queryRef }: SignaturesPageProps) {
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
       <PageHeader
         homeLabel={tApp("homePage.breadcrumb")}
+        parent={{
+          label: tDocuments("breadcrumb"),
+          to: `/${employeePortalId}/documents`,
+        }}
         currentLabel={t("breadcrumb")}
         title={t("title")}
       />

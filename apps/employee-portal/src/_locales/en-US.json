@@ -51,6 +51,14 @@
     "dashboard": {
       "view": "View",
       "allDone": "You're all done",
+      "documents": {
+        "title": "Documents",
+        "description": "Sign and approve assigned documents.",
+        "empty": "Nothing to review yet",
+        "pendingCount_one": "{{count}} document to review",
+        "pendingCount_other": "{{count}} documents to review",
+        "action": "Review documents"
+      },
       "signatures": {
         "title": "Signatures",
         "description": "Sign assigned documents.",
