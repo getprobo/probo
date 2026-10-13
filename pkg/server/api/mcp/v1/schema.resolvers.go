@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 	"go.probo.inc/probo/pkg/task"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
@@ -10695,7 +10696,7 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 
 	ensured, err := r.accessReview.EnsureSources(ctx, scope, input.OrganizationID, reqs)
 	if err != nil {
-		return nil, types.CreateAccessReviewSourcesOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot create access source", err)
+		return nil, types.CreateAccessReviewSourcesOutput{}, mcpx.MapError(ctx, r.logger, "cannot create access source", err)
 	}
 
 	rows := make([]*coredata.AccessReviewSource, len(ensured))
@@ -10716,7 +10717,7 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 	}
 
 	if err := r.fillSourceConnectorIDs(ctx, scope, rows, mapped); err != nil {
-		return nil, types.CreateAccessReviewSourcesOutput{}, connectorMCPWriteError(ctx, r.logger, "cannot load source connectors", err)
+		return nil, types.CreateAccessReviewSourcesOutput{}, mcpx.MapError(ctx, r.logger, "cannot load source connectors", err)
 	}
 
 	return nil, types.CreateAccessReviewSourcesOutput{Results: results}, nil

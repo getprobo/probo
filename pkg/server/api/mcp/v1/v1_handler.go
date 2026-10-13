@@ -49,7 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
+	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -105,10 +105,10 @@ func NewMux(
 		azureConnectorInstall: azureConnectorInstall,
 	}
 
-	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
+	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcpx.NewRecoverFunc(logger)))
 
-	mcpServer.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
-	mcpServer.AddReceivingMiddleware(mcputils.ListToolsCacheMiddleware(5 * time.Minute))
+	mcpServer.AddReceivingMiddleware(mcpx.LoggingMiddleware(logger))
+	mcpServer.AddReceivingMiddleware(mcpx.ListToolsCacheMiddleware(5 * time.Minute))
 
 	getServer := func(r *http.Request) *mcp.Server { return mcpServer }
 	eventStore := mcp.NewMemoryEventStore(nil)

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,67 +18,53 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package mcputils
+package mcpx
 
 import (
 	"context"
 	"errors"
-	"fmt"
-	"runtime/debug"
 
 	"go.gearno.de/kit/log"
-	mcpgenmcp "go.probo.inc/mcpgen/mcp"
+	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/validator"
 )
 
-// NewRecoverFunc returns a RecoverFunc for the generated MCP server that
-// classifies panics into safe client-facing errors and logs unknown errors.
-func NewRecoverFunc(logger *log.Logger) mcpgenmcp.RecoverFunc {
-	return func(ctx context.Context, r any) error {
-		if r == nil {
-			logger.ErrorCtx(ctx, "nil panic in MCP tool handler")
-			return fmt.Errorf("internal server error")
-		}
+// Client-facing errors returned by MapError. Their text is safe to show.
+var (
+	ErrResourceNotFound      = errors.New("resource not found")
+	ErrResourceAlreadyExists = errors.New("resource already exists")
+	ErrResourceInUse         = errors.New("resource is in use")
+	ErrForbidden             = errors.New("permission denied")
+	ErrAssumptionRequired    = errors.New("assumption required")
+	ErrInternal              = errors.New("internal server error")
+)
 
-		if err, ok := r.(error); ok {
-			return sanitizeError(ctx, logger, err)
-		}
-
-		logger.ErrorCtx(
-			ctx,
-			"unexpected panic in MCP tool handler",
-			log.Any("panic", r),
-			log.String("stack", string(debug.Stack())),
-		)
-
-		return fmt.Errorf("internal server error")
-	}
-}
-
-// sanitizeError classifies known error types and returns a clear message for
-// those. Unknown errors are logged and replaced with a generic internal error
-// to avoid leaking implementation details to the client.
-func sanitizeError(ctx context.Context, logger *log.Logger, err error) error {
+// MapError turns a service error into the error an MCP client should see.
+// Generic failures become an mcpx sentinel. A domain sentinel whose text is
+// already safe to show is returned without its wrap. Validation errors are
+// returned as-is. Anything else is logged and returned as ErrInternal.
+func MapError(ctx context.Context, logger *log.Logger, message string, err error) error {
 	if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
-		return fmt.Errorf("permission denied")
+		return ErrForbidden
 	}
 
 	if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
-		return fmt.Errorf("assumption required")
+		return ErrAssumptionRequired
 	}
 
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return fmt.Errorf("resource not found")
-	}
-
-	if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-		return fmt.Errorf("resource already exists")
-	}
-
-	if errors.Is(err, coredata.ErrResourceInUse) {
-		return fmt.Errorf("resource is in use")
+	switch {
+	case errors.Is(err, accessreview.ErrNoConnectorAccount):
+		return accessreview.ErrNoConnectorAccount
+	case errors.Is(err, coredata.ErrMultipleConnectorAccounts):
+		return coredata.ErrMultipleConnectorAccounts
+	case errors.Is(err, coredata.ErrResourceNotFound):
+		return ErrResourceNotFound
+	case errors.Is(err, coredata.ErrResourceAlreadyExists):
+		return ErrResourceAlreadyExists
+	case errors.Is(err, coredata.ErrResourceInUse):
+		return ErrResourceInUse
 	}
 
 	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -89,7 +75,7 @@ func sanitizeError(ctx context.Context, logger *log.Logger, err error) error {
 		return validationError
 	}
 
-	logger.ErrorCtx(ctx, "internal error in MCP tool handler", log.Error(err))
+	logger.ErrorCtx(ctx, message, log.Error(err))
 
-	return fmt.Errorf("internal server error")
+	return ErrInternal
 }
