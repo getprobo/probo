@@ -1,0 +1,79 @@
+{
+  "workspaceSettingsPage": {
+    "title": "ワークスペース"
+  },
+  "identity": {
+    "title": "ID情報",
+    "description": "これらの情報は、コンソール、ドキュメント、エクスポートで使用されます。",
+    "fields": {
+      "logo": "ロゴ",
+      "logoPlaceholder": "ドロップまたはクリック",
+      "horizontalLogo": "横長ロゴ",
+      "horizontalLogoPlaceholder": "ドロップまたはクリック",
+      "acceptedFiles": "JPEG、PNG、SVG、WebP。最大5 MB。",
+      "name": "名前",
+      "nameDescription": "コンソールに表示される運用上の名称です。",
+      "legalName": "法人名",
+      "legalNameDescription": "登記上の正式名称です。設定すると、スキルが法的文書で使用します。"
+    },
+    "actions": {
+      "save": "保存",
+      "clearHorizontalLogo": "横長ロゴを削除"
+    },
+    "messages": {
+      "updated": "ワークスペースを更新しました",
+      "horizontalLogoDeleted": "横長ロゴを削除しました"
+    },
+    "errors": {
+      "update": "ワークスペースを更新できませんでした",
+      "deleteHorizontalLogo": "横長ロゴを削除できませんでした",
+      "nameRequired": "名前を入力してください",
+      "invalidFileType": {
+        "title": "サポートされていないファイル形式です",
+        "description": "JPEG、PNG、SVG、WebPのいずれかの画像をアップロードしてください。"
+      },
+      "fileTooLarge": {
+        "title": "ファイルが大きすぎます",
+        "description": "5 MB未満の画像をアップロードしてください。"
+      },
+      "tooManyFiles": {
+        "title": "ファイルが多すぎます",
+        "description": "画像は1枚ずつアップロードしてください。"
+      }
+    },
+    "deleteHorizontalLogo": {
+      "title": "横長ロゴを削除",
+      "description": "このワークスペースから横長ロゴを削除してもよろしいですか？",
+      "actions": {
+        "cancel": "キャンセル",
+        "confirm": "削除"
+      }
+    }
+  },
+  "dangerZone": {
+    "title": "危険な操作",
+    "delete": {
+      "title": "ワークスペースを削除",
+      "description": "このワークスペースとすべてのデータを完全に削除します。",
+      "warning": "この操作は取り消せません。",
+      "action": "ワークスペースを削除"
+    }
+  },
+  "deleteWorkspaceDialog": {
+    "title": "ワークスペースを削除",
+    "description": "{{organizationName}}とすべてのデータを完全に削除します。",
+    "warning": "この操作は取り消せません。",
+    "confirmationLabel": "確認のため「{{organizationName}}」と入力してください：",
+    "confirmationMismatch": "名前が一致しません。",
+    "actions": {
+      "cancel": "キャンセル",
+      "delete": "ワークスペースを削除"
+    },
+    "messages": {
+      "deleted": "ワークスペースを削除しました"
+    },
+    "errors": {
+      "delete": "ワークスペースを削除できませんでした"
+    }
+  }
+}

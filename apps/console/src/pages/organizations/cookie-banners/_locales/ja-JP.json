@@ -1,0 +1,732 @@
+{
+  "bannerTranslationSection": {
+    "title": "バナー",
+    "policyLinkHelp": "{{cookie_policy_link}}と{{privacy_policy_link}}を使うと、方針へのリンクを挿入できます。"
+  },
+  "panelTranslationSection": {
+    "title": "設定パネル",
+    "necessaryCategoryHelp": "{{necessary_category}}を使うと、必須Cookieのカテゴリー名を参照できます。",
+    "accessibilityLabels": "アクセシビリティラベル",
+    "categoryNames": "カテゴリー名",
+    "translatedName": "翻訳後の名前",
+    "translatedDescription": "翻訳後の説明"
+  },
+  "placeholderTranslationSection": {
+    "title": "プレースホルダー",
+    "description": "訪問者が同意するまで、ブロックされたコンテンツの代わりに表示されます。",
+    "categoryHelp": "{{category}}を使うと、コンテンツのカテゴリーを参照できます。"
+  },
+  "translationEditor": {
+    "messages": {
+      "successTitle": "成功",
+      "saved": "翻訳を保存しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "save": "翻訳を保存できませんでした"
+    },
+    "exampleCategory": "分析",
+    "actions": {
+      "saving": "保存中…",
+      "save": "翻訳を保存"
+    },
+    "labels": {
+      "bannerTitle": "バナーのタイトル",
+      "bannerDescription": "バナーの説明",
+      "acceptAllButton": "すべて許可ボタン",
+      "rejectAllButton": "すべて拒否ボタン",
+      "customizeButton": "カスタマイズボタン",
+      "cookiePolicyLinkText": "Cookieポリシーのリンクテキスト",
+      "privacyPolicyLinkText": "プライバシーポリシーのリンクテキスト",
+      "panelTitle": "パネルのタイトル",
+      "panelDescription": "パネルの説明",
+      "saveButton": "保存ボタン",
+      "ariaClose": "閉じる（ARIA）",
+      "ariaShowDetails": "詳細を表示（ARIA）",
+      "ariaHideDetails": "詳細を非表示（ARIA）",
+      "ariaCookieSettings": "Cookie設定（ARIA）",
+      "placeholderText": "プレースホルダーのテキスト",
+      "placeholderButton": "プレースホルダーのボタン"
+    }
+  },
+  "translationsPage": {
+    "title": "翻訳",
+    "description": "言語ごとに、バナー、設定パネル、プレースホルダーの文言を編集します。",
+    "language": "言語",
+    "necessaryFallback": "必須",
+    "languageDefault": "{{language}}（デフォルト）",
+    "defaultLanguageDescription": "これはデフォルト言語です。訪問者の言語が利用できない場合、この翻訳が表示されます。"
+  },
+  "trackerAttribution": {
+    "firstParty": "ファーストパーティ",
+    "thirdParty": "サードパーティ",
+    "visitorSoftware": "訪問者のソフトウェア",
+    "undetermined": "未確定"
+  },
+  "trackerPatternRow": {
+    "messages": {
+      "trackerDeleted": "トラッカーを削除しました",
+      "cookieMoved": "Cookieを移動しました"
+    },
+    "errors": {
+      "deleteTracker": "トラッカーを削除できませんでした",
+      "moveCookie": "Cookieを移動できませんでした",
+      "updateCookie": "Cookieを更新できませんでした"
+    },
+    "deleteConfirmation": "「{{name}}」を削除してもよろしいですか？",
+    "dialogs": {
+      "deleteTitle": "トラッカーを削除"
+    },
+    "actions": {
+      "include": "含める",
+      "exclude": "除外",
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "more": "その他の操作",
+      "description": "説明を表示"
+    },
+    "types": {
+      "cookie": "Cookie",
+      "cookieShort": "C",
+      "localStorage": "localStorage",
+      "localStorageShort": "LS",
+      "sessionStorage": "sessionStorage",
+      "sessionStorageShort": "SS",
+      "indexedDb": "IndexedDB",
+      "indexedDbShort": "IDB",
+      "cacheStorage": "キャッシュストレージ",
+      "cacheStorageShort": "CS"
+    },
+    "sources": {
+      "script": "スクリプト",
+      "preExisting": "既存",
+      "http": "HTTP",
+      "extension": "拡張機能"
+    },
+    "duration": {
+      "session": "セッション",
+      "persistent": "永続"
+    }
+  },
+  "trackerProperties": {
+    "messages": {
+      "moved": "Cookieを移動しました",
+      "updated": "トラッカーを更新しました",
+      "copiedTitle": "コピーしました",
+      "idCopied": "共通トラッカーIDをクリップボードにコピーしました"
+    },
+    "errors": {
+      "title": "エラー",
+      "move": "Cookieを移動できませんでした",
+      "update": "トラッカーを更新できませんでした",
+      "copy": "共通トラッカーIDをコピーできませんでした"
+    },
+    "properties": {
+      "attribution": "帰属",
+      "sourceId": "ソース",
+      "category": "カテゴリー",
+      "maxAge": "最大有効期間",
+      "maxAgeUnit": "単位",
+      "description": "説明",
+      "descriptionPlaceholder": "説明"
+    },
+    "actions": {
+      "back": "トラッカー",
+      "copyId": "共通トラッカーIDをコピー"
+    },
+    "attribution": {
+      "firstParty": "これはファーストパーティのトラッカーです。",
+      "visitorSoftware": "このトラッカーは訪問者のソフトウェアによって設定されています。",
+      "thirdParty": "これは{{name}}のサードパーティトラッカーです。",
+      "thirdPartyUnnamed": "これはサードパーティのトラッカーです。",
+      "undetermined": "このトラッカーの帰属は未確定です。"
+    },
+    "manual": "手動"
+  },
+  "detectedTrackersSection": {
+    "title": "検出",
+    "columns": {
+      "identifier": "識別子",
+      "domain": "ドメイン",
+      "initiatorUrl": "発信元URL",
+      "maxAge": "最大有効期間（秒）",
+      "source": "ソース",
+      "detectionTime": "検出日時"
+    },
+    "empty": "このトラッカーはまだ検出されていません。",
+    "sort": {
+      "initiatorUrl": "発信元URLで並べ替え",
+      "detectionTime": "検出日時で並べ替え"
+    },
+    "actions": {
+      "showMore": "さらに表示"
+    },
+    "summary_one": "{{count}}件の検出 · 最終一致{{date}}",
+    "summary_other": "{{count}}件の検出 · 最終一致{{date}}",
+    "summaryNever_one": "{{count}}件の検出 · 未一致",
+    "summaryNever_other": "{{count}}件の検出 · 未一致"
+  },
+  "moveToCategorySelect": {
+    "empty": "カテゴリーはありません"
+  },
+  "detectedTrackerRow": {
+    "hostOnly": "ホスト限定",
+    "duration": {
+      "second_one": "{{count}}秒",
+      "second_other": "{{count}}秒"
+    }
+  },
+  "trackersPage": {
+    "title": "トラッカー",
+    "description": "このバナーで検出されたトラッカーと、それぞれが属するカテゴリーです。",
+    "filters": {
+      "search": "名前または説明で検索…",
+      "allThirdParties": "すべてのサードパーティ",
+      "allCategories": "すべてのカテゴリー",
+      "source": "ソース",
+      "type": "種類",
+      "category": "カテゴリー",
+      "thirdParty": "サードパーティ"
+    },
+    "types": {
+      "all": "すべての種類",
+      "cookie": "Cookie",
+      "localStorage": "localStorage",
+      "sessionStorage": "sessionStorage",
+      "indexedDb": "IndexedDB",
+      "cacheStorage": "キャッシュストレージ"
+    },
+    "sources": {
+      "all": "すべてのソース",
+      "script": "スクリプト",
+      "preExisting": "既存",
+      "http": "HTTP",
+      "extension": "拡張機能"
+    },
+    "columns": {
+      "name": "名前",
+      "attribution": "帰属",
+      "source": "ソース",
+      "category": "カテゴリー",
+      "maxAge": "最大有効期間",
+      "lastMatched": "最終一致"
+    },
+    "sort": {
+      "name": "名前で並べ替え",
+      "source": "ソースで並べ替え",
+      "lastMatched": "最終一致で並べ替え"
+    },
+    "actions": {
+      "previous": "前へ",
+      "next": "次へ"
+    },
+    "views": {
+      "onBanner": "バナー上",
+      "allDetected": "検出済みすべて",
+      "ariaLabel": "トラッカー一覧の表示"
+    },
+    "empty": {
+      "title": "トラッカーはありません",
+      "description": "トラッカーはまだ検出されていません。検出されるとここに表示されます。",
+      "onBanner": "バナーに表示されている分類済みのトラッカーはありません。"
+    },
+    "emptyFiltered": "一致するトラッカーはありません"
+  },
+  "installPage": {
+    "title": "インストール",
+    "description": "このスニペットをサイトに追加すると、バナーを読み込み、同意を記録できます。"
+  },
+  "settingsPage": {
+    "title": "設定",
+    "description": "このCookieバナーの設定、カテゴリー、テーマです。"
+  },
+  "bannerLifecycleSection": {
+    "title": "バナーの状態",
+    "description": "バナーを有効にすると訪問者に表示され、無効にすると表示されなくなります。"
+  },
+  "codeSnippets": {
+    "messages": {
+      "copiedTitle": "コピーしました",
+      "copied": "コードをクリップボードにコピーしました"
+    },
+    "errors": {
+      "title": "エラー",
+      "copy": "クリップボードにコピーできませんでした"
+    },
+    "actions": {
+      "copy": "コピー"
+    },
+    "documentation": "ESモジュールやヘッドレスでの連携をお探しですか？<link>詳しい連携ガイドはドキュメントをご覧ください。</link>",
+    "tcfNote": "このバナーはIAB TCFスクリプトを使用します。ベンダーがSDKの読み込み前にキューへ登録できるよう、スニペットはページのできるだけ上部に配置してください。"
+  },
+  "bannerSettingsForm": {
+    "title": "設定",
+    "messages": {
+      "successTitle": "成功",
+      "updated": "バナー設定を更新しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "update": "更新できませんでした",
+      "publisherCountryCode": "AAまたはISO 3166-1 alpha-2の国コードを指定してください"
+    },
+    "fields": {
+      "name": "名前",
+      "origin": "オリジンURL",
+      "cookiePolicyUrl": "CookieポリシーURL",
+      "privacyPolicyUrl": "プライバシーポリシーURL",
+      "consentExpiryDays": "同意の有効期限（日）",
+      "defaultLanguage": "デフォルト言語",
+      "publisherCountryCode": "パブリッシャーの国",
+      "publisherCountryCodeHelp": "IAB TCFの設立国（ISO 3166-1 alpha-2）。未指定の場合はAAを使用します。",
+      "resourceReportingEnabled": "リソースレポート",
+      "resourceReportingEnabledHelp": "有効にすると、バナーSDKがサードパーティのスクリプト、iframe、その他のリソースを検出して報告します。"
+    },
+    "languages": {
+      "english": "英語",
+      "french": "フランス語",
+      "german": "ドイツ語",
+      "spanish": "スペイン語",
+      "dutch": "オランダ語"
+    },
+    "actions": {
+      "saving": "保存中…",
+      "save": "保存"
+    }
+  },
+  "trackerResourceRow": {
+    "messages": {
+      "deleted": "リソースを削除しました",
+      "moved": "リソースを移動しました"
+    },
+    "errors": {
+      "delete": "リソースを削除できませんでした",
+      "move": "リソースを移動できませんでした",
+      "update": "リソースを更新できませんでした"
+    },
+    "deleteConfirmation": "「{{name}}」を削除してもよろしいですか？",
+    "dialogs": {
+      "deleteTitle": "リソースを削除"
+    },
+    "actions": {
+      "include": "含める",
+      "exclude": "除外",
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "more": "その他の操作"
+    },
+    "types": {
+      "script": "スクリプト",
+      "iframe": "Iframe",
+      "image": "画像",
+      "stylesheet": "スタイルシート",
+      "font": "フォント",
+      "beacon": "ビーコン",
+      "fetch": "Fetch",
+      "media": "メディア",
+      "serviceWorker": "Service Worker"
+    }
+  },
+  "resourcesPage": {
+    "title": "リソース",
+    "description": "このバナーで検出されたスクリプト、iframe、その他のリソースです。",
+    "filters": {
+      "search": "オリジンまたはパスで検索…",
+      "type": "種類"
+    },
+    "types": {
+      "all": "すべての種類",
+      "script": "スクリプト",
+      "iframe": "Iframe",
+      "image": "画像",
+      "stylesheet": "スタイルシート",
+      "font": "フォント",
+      "beacon": "ビーコン",
+      "fetch": "Fetch",
+      "media": "メディア",
+      "serviceWorker": "Service Worker"
+    },
+    "columns": {
+      "type": "種類",
+      "origin": "オリジン",
+      "path": "パス",
+      "category": "カテゴリー",
+      "lastDetected": "最終検出"
+    },
+    "sort": {
+      "origin": "オリジンで並べ替え",
+      "lastDetected": "最終検出で並べ替え"
+    },
+    "actions": {
+      "previous": "前へ",
+      "next": "次へ"
+    },
+    "empty": {
+      "title": "未分類のリソースはありません",
+      "description": "検出されたリソースはすべて分類済みです。新しいリソースが検出されるとここに表示されます。"
+    },
+    "emptyFiltered": "一致するリソースはありません"
+  },
+  "categoryList": {
+    "title": "カテゴリー",
+    "description": "バナーに表示するカテゴリーの順序を設定します。カテゴリーを編集すると、名前、スラッグ、同意のマッピングを変更できます。",
+    "actions": {
+      "add": "カテゴリーを追加"
+    },
+    "empty": {
+      "title": "カテゴリーはありません",
+      "description": "バナー上の同意の選択肢をまとめるカテゴリーを追加してください。"
+    }
+  },
+  "categoryListItem": {
+    "required": "必須",
+    "actions": {
+      "moveUp": "上へ移動",
+      "moveDown": "下へ移動",
+      "edit": "カテゴリーを編集",
+      "delete": "カテゴリーを削除"
+    },
+    "errors": {
+      "reorder": "カテゴリーを並べ替えできませんでした"
+    }
+  },
+  "categoryDrawer": {
+    "title": "カテゴリーを編集",
+    "description": "このカテゴリーの名前、スラッグ、同意のマッピングです。",
+    "fields": {
+      "name": "名前",
+      "slug": "スラッグ",
+      "slugHelp": "data-cookie-consent属性の値として使用されます",
+      "description": "説明"
+    },
+    "googleConsentMode": {
+      "title": "Google Consent Mode",
+      "description": "このカテゴリーが制御するGoogle Consent Modeのシグナルを選択します。"
+    },
+    "tcfPurposes": {
+      "title": "TCFの目的",
+      "description": "TCFが有効な場合、選択したすべての目的に対して同意または正当な利益がある場合にのみ、このカテゴリーが許可されます。"
+    },
+    "posthog": {
+      "title": "PostHog",
+      "description": "このカテゴリーに基づいてPostHogのトラッキング同意を制御します。",
+      "checkbox": "PostHogのトラッキングをオプトイン/オプトアウト"
+    },
+    "messages": {
+      "updated": "カテゴリーを更新しました"
+    },
+    "errors": {
+      "update": "カテゴリーを更新できませんでした"
+    },
+    "actions": {
+      "save": "保存",
+      "cancel": "キャンセル",
+      "close": "閉じる"
+    }
+  },
+  "categoryCreateDialog": {
+    "title": "カテゴリーを追加",
+    "fields": {
+      "name": "名前",
+      "slug": "スラッグ",
+      "slugHelp": "data-cookie-consent属性の値として使用されます",
+      "description": "説明"
+    },
+    "messages": {
+      "created": "カテゴリーを作成しました"
+    },
+    "errors": {
+      "create": "カテゴリーを作成できませんでした"
+    },
+    "actions": {
+      "create": "作成",
+      "cancel": "キャンセル"
+    }
+  },
+  "deleteCategoryDialog": {
+    "title": "カテゴリーを削除",
+    "description": "カテゴリー「{{name}}」を削除しますか？このカテゴリーのトラッカーは「未分類」に移動します。",
+    "messages": {
+      "deleted": "カテゴリーを削除しました"
+    },
+    "errors": {
+      "delete": "カテゴリーを削除できませんでした"
+    },
+    "actions": {
+      "delete": "削除",
+      "cancel": "キャンセル"
+    }
+  },
+  "themeSection": {
+    "title": "テーマ",
+    "description": "これらのコントロールは、テーマのプレビューとCSSスニペットの生成のみを行います。バナーにスタイルは保存されません。スニペットはご自身でサイトに追加してください。",
+    "defaultSnippet": "/* Using default theme — no overrides needed */",
+    "messages": {
+      "copiedTitle": "コピーしました",
+      "copied": "CSSスニペットをクリップボードにコピーしました"
+    },
+    "errors": {
+      "title": "エラー",
+      "copy": "CSSスニペットをコピーできませんでした"
+    },
+    "actions": {
+      "reset": "デフォルトに戻す",
+      "copy": "スニペットをコピー"
+    },
+    "variables": {
+      "bg": "背景",
+      "text": "テキスト",
+      "textsecondary": "サブテキスト",
+      "border": "枠線",
+      "accent": "アクセント",
+      "accenttext": "アクセントのテキスト",
+      "radius": "角丸",
+      "btnradius": "ボタンの角丸",
+      "fontsize": "フォントサイズ",
+      "fontfamily": "フォントファミリー",
+      "shadow": "影"
+    },
+    "banner": {
+      "title": "Cookie設定",
+      "description": "当サイトでは、利便性の向上とサイトのアクセス解析のためにCookieを使用しています。<policy>プライバシーポリシー</policy>",
+      "acceptAll": "すべて許可",
+      "rejectAll": "すべて拒否",
+      "customize": "カスタマイズ",
+      "privacyBy": "提供："
+    }
+  },
+  "consentRecordsPage": {
+    "title": "同意履歴",
+    "description": "訪問者がこのバナーで行った同意の選択です。",
+    "filters": {
+      "all": "すべての版",
+      "allActions": "すべての操作",
+      "bannerVersion": "バナーの版",
+      "seeMore": "さらに表示"
+    },
+    "actions": {
+      "acceptAll": "すべて許可",
+      "rejectAll": "すべて拒否",
+      "customize": "カスタマイズ",
+      "gpc": "GPC",
+      "acknowledge": "確認",
+      "previous": "前へ",
+      "next": "次へ"
+    },
+    "columns": {
+      "action": "操作",
+      "bannerVersion": "版",
+      "origin": "オリジン",
+      "regulation": "法規制",
+      "location": "場所",
+      "date": "日付"
+    },
+    "sort": {
+      "date": "日付で並べ替え"
+    },
+    "empty": {
+      "title": "同意記録はありません",
+      "description": "訪問者がCookieバナーを操作すると、同意記録がここに表示されます。"
+    },
+    "emptyFiltered": "一致する同意記録はありません"
+  },
+  "consentRecordPage": {
+    "title": "同意記録",
+    "description": "この訪問者の同意の選択の詳細です。",
+    "cards": {
+      "action": "操作",
+      "request": "リクエスト",
+      "tcf": "TCF",
+      "categories": "カテゴリー",
+      "location": "場所"
+    },
+    "properties": {
+      "visitorId": "訪問者ID",
+      "action": "操作",
+      "bannerVersion": "版",
+      "origin": "オリジン",
+      "ipAddress": "IPアドレス",
+      "userAgent": "ユーザーエージェント",
+      "sdkVersion": "SDKバージョン",
+      "regulation": "法規制",
+      "date": "日付"
+    },
+    "tcf": {
+      "created": "作成日時",
+      "lastUpdated": "最終更新",
+      "cmp": "CMP ID / バージョン",
+      "cmpValue": "{{id}} / {{version}}",
+      "tcfPolicyVersion": "TCFポリシーバージョン",
+      "gvlVersion": "GVLバージョン",
+      "language": "言語",
+      "purposes": "目的ID",
+      "vendorConsentCount": "ベンダーの同意",
+      "decodeError": "このTC文字列をデコードできませんでした。"
+    },
+    "unknownLocation": "場所不明",
+    "messages": {
+      "copiedTitle": "コピーしました"
+    },
+    "errors": {
+      "copyTitle": "エラー",
+      "copy": "クリップボードにコピーできませんでした"
+    },
+    "actions": {
+      "copy": "{{label}}をコピー",
+      "accept_all": "すべて許可",
+      "reject_all": "すべて拒否",
+      "customize": "カスタマイズ",
+      "gpc": "GPC",
+      "acknowledge": "確認"
+    },
+    "consent": {
+      "accepted": "許可",
+      "rejected": "拒否"
+    }
+  },
+  "configLayout": {
+    "callout": {
+      "version": "v{{version}}",
+      "deactivated": "このバナーは無効のため、訪問者には表示されません。",
+      "deactivatedDraft": "このバナーは無効のため、訪問者には表示されません。この版には未公開の変更があります。",
+      "discovery": "このバナーは検出中です。公開するまで、ページの読み込みとトラッカーのヒットが集計されます。この版はまだ公開されていません。",
+      "draft": "この版には未公開の変更があります。",
+      "published": "この版は公開済みで、稼働中です。",
+      "publishedUnknown": "このバナーは公開済みで、稼働中です。"
+    },
+    "messages": {
+      "copiedTitle": "コピーしました",
+      "activated": "バナーを有効にしました",
+      "deactivated": "バナーを無効にしました",
+      "published": "版を公開しました",
+      "idCopied": "バナーIDをクリップボードにコピーしました",
+      "deleted": "Cookieバナーを削除しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "activate": "有効にできませんでした",
+      "deactivate": "無効にできませんでした",
+      "publish": "公開できませんでした",
+      "delete": "Cookieバナーを削除できませんでした",
+      "copy": "バナーIDをコピーできませんでした"
+    },
+    "deleteConfirmation": "Cookieバナー「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "dialogs": {
+      "deleteTitle": "Cookieバナーを削除"
+    },
+    "status": {
+      "active": "有効",
+      "inactive": "無効"
+    },
+    "actions": {
+      "publish": "変更を公開",
+      "activate": "有効にする",
+      "deactivate": "無効にする",
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "copyId": "バナーIDをコピー"
+    },
+    "discovery": {
+      "pageLoads": "ページ読み込み",
+      "empty": "まだありません"
+    }
+  },
+  "trackerDiscovery": {
+    "title": "検出状況",
+    "description": "初回公開まで集計されます。",
+    "empty": "まだヒットはありません。",
+    "hits": "ヒット",
+    "loads": "読み込み",
+    "hitRate": "ヒット率",
+    "families": {
+      "chrome": "Chrome",
+      "edge": "Edge",
+      "firefox": "Firefox",
+      "safari": "Safari",
+      "other": "その他"
+    }
+  },
+  "cookieBannersIndex": {
+    "empty": {
+      "title": "Cookieバナーはありません",
+      "description": "このワークスペースにはまだCookieバナーがありません。"
+    }
+  },
+  "newCookieBannerPage": {
+    "pageTitle": "新規Cookieバナー",
+    "title": "Cookieバナーを作成",
+    "description": "オリジンURLと同意の設定を指定して、新しいCookie同意バナーを設定します。",
+    "messages": {
+      "successTitle": "成功",
+      "created": "Cookieバナーを作成しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "create": "Cookieバナーを作成できませんでした"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "マイウェブサイト",
+      "origin": "オリジンURL",
+      "originPlaceholder": "https://example.com",
+      "cookiePolicyUrl": "CookieポリシーURL",
+      "cookiePolicyUrlPlaceholder": "https://example.com/cookies",
+      "privacyPolicyUrl": "プライバシーポリシーURL",
+      "privacyPolicyUrlPlaceholder": "https://example.com/privacy",
+      "consentExpiryDays": "同意の有効期限（日）"
+    },
+    "actions": {
+      "creating": "作成中…",
+      "create": "バナーを作成"
+    }
+  },
+  "tcfPage": {
+    "title": "TCFベンダー",
+    "description": "このバナーで開示するIAB Global Vendor Listのベンダーを選択します。",
+    "searchPlaceholder": "ベンダーを検索",
+    "stats": {
+      "vendors": "ベンダー",
+      "catalog": "カタログ",
+      "draft": "下書き",
+      "live": "公開中",
+      "gvl": "GVL",
+      "tcfPolicy": "TCFポリシー",
+      "empty": "—",
+      "version": "v{{version}}",
+      "catalogTotal_one": "{{count}}件のベンダー",
+      "catalogTotal_other": "{{count}}件のベンダー",
+      "unpublishedAdded_one": "追加予定のベンダー：{{count}}件",
+      "unpublishedAdded_other": "追加予定のベンダー：{{count}}件",
+      "unpublishedRemoved_one": "削除予定のベンダー：{{count}}件",
+      "unpublishedRemoved_other": "削除予定のベンダー：{{count}}件",
+      "unpublishedChanged": "追加{{added}}件、削除{{removed}}件",
+      "unpublishedNever": "未公開"
+    },
+    "emptyCatalog": "GVLのベンダーはまだインポートされていません。gvl-importを実行してカタログを作成してください。",
+    "emptyFiltered": "一致するベンダーはありません",
+    "emptyFilteredDescription": "別の名前、IABベンダーID、または所属フィルターをお試しください。",
+    "filter": {
+      "label": "ベンダーの所属",
+      "all": "すべてのベンダー",
+      "on": "このバナーに含む",
+      "off": "このバナーに含まない"
+    },
+    "previous": "前へ",
+    "next": "次へ",
+    "noUpdatePermission": "TCFベンダーを変更する権限がありません。",
+    "iabVendorId": "IAB {{id}}",
+    "policy": "プライバシーポリシー",
+    "notFound": "ページが見つかりません",
+    "actions": {
+      "clearSearch": "フィルターをクリア",
+      "add": "追加",
+      "remove": "削除",
+      "addVendor": "{{name}}をこのバナーに追加",
+      "removeVendor": "{{name}}をこのバナーから削除"
+    },
+    "errors": {
+      "add": "ベンダーを追加できませんでした",
+      "remove": "ベンダーを削除できませんでした"
+    }
+  }
+}

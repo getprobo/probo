@@ -1,0 +1,206 @@
+{
+  "detailsPage": {
+    "notFound": "タスクが見つかりません",
+    "empty": "—",
+    "none": "なし",
+    "searchInternalControls": "内部統制を検索",
+    "noInternalControls": "内部統制はありません",
+    "noDescription": "説明はありません",
+    "unassigned": "未割り当て",
+    "overdue": "期限超過",
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "state": "状態",
+      "priority": "優先度",
+      "assignedTo": "担当者",
+      "linear": "Linear",
+      "internalControls": "内部統制",
+      "timeEstimate": "見積時間",
+      "timeEstimateUnit": "見積時間の単位",
+      "deadline": "期限",
+      "recurrence": "繰り返し",
+      "recurrenceUnit": "繰り返しの単位",
+      "createdAt": "作成日時",
+      "updatedAt": "更新日時"
+    },
+    "duration": {
+      "S": "秒",
+      "M": "分",
+      "H": "時間",
+      "D": "日",
+      "W": "週間",
+      "MO": "か月",
+      "Y": "年"
+    },
+    "states": {
+      "backlog": "バックログ",
+      "todo": "未着手",
+      "inProgress": "対応中",
+      "done": "完了",
+      "canceled": "キャンセル",
+      "duplicate": "重複"
+    },
+    "priorities": {
+      "urgent": "緊急",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "doesNotRepeat": "繰り返しなし",
+    "hints": {
+      "recurrenceNeedsDeadline": "繰り返し間隔を追加する前に期限を設定してください"
+    },
+    "actions": {
+      "addEstimate": "見積を追加",
+      "clearEstimate": "見積をクリア",
+      "addRecurrence": "間隔を追加",
+      "clearRecurrence": "間隔をクリア",
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "more": "その他の操作",
+      "loadMoreInternalControls": "さらに読み込む",
+      "retry": "再試行"
+    },
+    "delete": {
+      "title": "タスクを削除",
+      "description": "このタスクを削除してもよろしいですか？",
+      "loadError": "残りの内部統制を読み込めませんでした。",
+      "confirm": "削除"
+    },
+    "messages": {
+      "updated": "タスクを更新しました。",
+      "deleted": "タスクを削除しました。"
+    },
+    "linear": {
+      "connect": "Linear同期を接続",
+      "reconnect": "Linear同期を再接続",
+      "publish": "公開",
+      "link": "紐付け",
+      "unlink": "紐付けを解除",
+      "team": "Linearチーム",
+      "chooseTeam": "チームを選択",
+      "chooseIssue": "課題を選択",
+      "newIssue": "新規課題",
+      "searchTeam": "チームを検索",
+      "searchIssue": "課題を検索",
+      "noResults": "結果はありません",
+      "loadMore": "さらに読み込む",
+      "published": "タスクをLinearに公開しました。",
+      "linked": "タスクをLinearにリンクしました。",
+      "confirmLink": {
+        "title": "Linear課題をリンク",
+        "description": "ProboのタスクがLinearの課題の内容で更新されます。"
+      },
+      "unlinked": "Linear課題のリンクを解除しました。",
+      "errors": {
+        "publish": "タスクをLinearに公開できませんでした",
+        "link": "タスクをLinearにリンクできませんでした",
+        "unlink": "Linear課題のリンクを解除できませんでした",
+        "load": "Linearを表示できませんでした"
+      }
+    },
+    "errors": {
+      "delete": "タスクを削除できませんでした",
+      "update": "タスクを更新できませんでした",
+      "content": "この説明を表示できませんでした"
+    },
+    "comments": {
+      "title": "コメント",
+      "empty": "コメントはまだありません",
+      "authorFallback": "不明なユーザー",
+      "fields": {
+        "comment": "コメント",
+        "leaveAComment": "コメントを入力"
+      },
+      "actions": {
+        "submit": "コメントを追加",
+        "delete": "コメントを削除",
+        "showMore": "さらに表示"
+      },
+      "delete": {
+        "title": "コメントを削除",
+        "description": "このコメントを削除してもよろしいですか？",
+        "confirm": "削除"
+      },
+      "messages": {
+        "created": "コメントを追加しました。",
+        "updated": "コメントを更新しました。",
+        "deleted": "コメントを削除しました。"
+      },
+      "errors": {
+        "create": "コメントを追加できませんでした",
+        "update": "コメントを更新できませんでした",
+        "delete": "コメントを削除できませんでした",
+        "content": "このコメントを表示できませんでした",
+        "contentRequired": "コメントを入力してください",
+        "contentTooLong": "コメントは{{max}}文字以内で入力してください"
+      }
+    },
+    "activity": {
+      "title": "アクティビティ",
+      "empty": "アクティビティはまだありません",
+      "actorFallback": "不明なユーザー",
+      "actions": {
+        "showMore": "さらに表示"
+      },
+      "sentences": {
+        "created": "{{actor}}がこのタスクを作成しました",
+        "updated": "{{actor}}がこのタスクを更新しました",
+        "renamed": "{{actor}}が名前を{{oldValue}}から{{newValue}}に変更しました",
+        "descriptionUpdated": "{{actor}}が説明を更新しました",
+        "stateChanged": "{{actor}}がステータスを{{oldValue}}から{{newValue}}に変更しました",
+        "priorityChanged": "{{actor}}が優先度を{{oldValue}}から{{newValue}}に変更しました",
+        "assigned": "{{actor}}が{{newValue}}を担当者に設定しました",
+        "reassigned": "{{actor}}が担当者を{{oldValue}}から{{newValue}}に変更しました",
+        "unassigned": "{{actor}}が{{oldValue}}の担当を解除しました",
+        "internalControlLinked": "{{actor}}が{{newValue}}をリンクしました",
+        "internalControlChanged": "{{actor}}が{{oldValue}}から{{newValue}}に変更しました",
+        "internalControlUnlinked": "{{actor}}が{{oldValue}}のリンクを解除しました",
+        "deadlineSet": "{{actor}}が期限を{{newValue}}に設定しました",
+        "deadlineChanged": "{{actor}}が期限を{{oldValue}}から{{newValue}}に変更しました",
+        "deadlineRemoved": "{{actor}}が期限を削除しました",
+        "timeEstimateSet": "{{actor}}が見積時間を{{newValue}}に設定しました",
+        "timeEstimateChanged": "{{actor}}が見積時間を{{oldValue}}から{{newValue}}に変更しました",
+        "timeEstimateRemoved": "{{actor}}が見積時間を削除しました"
+      }
+    }
+  },
+  "settingsDialog": {
+    "trigger": "設定",
+    "title": "設定",
+    "integrations": {
+      "title": "タスク連携",
+      "description": "ツールを接続して、タスクの公開と同期を行います。"
+    },
+    "linear": {
+      "name": "Linear同期",
+      "description": "タスクをLinearに公開し、メールアドレスが一致する場合は名前、内容、状態、優先度、期限、担当者を同期します。"
+    },
+    "status": {
+      "connected": "接続済み",
+      "notConnected": "未接続"
+    },
+    "actions": {
+      "connect": "接続",
+      "reconnect": "再接続",
+      "close": "閉じる"
+    }
+  },
+  "createDialog": {
+    "title": "タスクを追加",
+    "fields": {
+      "namePlaceholder": "タスク名"
+    },
+    "actions": {
+      "create": "タスクを作成"
+    },
+    "messages": {
+      "created": "タスクを作成しました。"
+    },
+    "errors": {
+      "create": "タスクを作成できませんでした",
+      "nameRequired": "タスク名を入力してください"
+    }
+  }
+}

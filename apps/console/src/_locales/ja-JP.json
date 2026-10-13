@@ -1,0 +1,6785 @@
+{
+  "size": {
+    "B": "B",
+    "KB": "KB",
+    "MB": "MB",
+    "GB": "GB",
+    "TB": "TB"
+  },
+  "duration": {
+    "seconds_one": "秒",
+    "seconds_other": "秒",
+    "minutes_one": "分",
+    "minutes_other": "分",
+    "hours_one": "時間",
+    "hours_other": "時間",
+    "days_one": "日",
+    "days_other": "日",
+    "weeks_one": "週間",
+    "weeks_other": "週間",
+    "months_one": "か月",
+    "months_other": "か月",
+    "years_one": "年",
+    "years_other": "年",
+    "session": "セッション",
+    "persistent": "永続",
+    "sec_one": "{{count}}秒",
+    "sec_other": "{{count}}秒",
+    "min_one": "{{count}}分",
+    "min_other": "{{count}}分",
+    "hour_one": "{{count}}時間",
+    "hour_other": "{{count}}時間"
+  },
+  "dataPage": {
+    "pageTitle": "データ",
+    "title": "データ",
+    "description": "組織のデータ資産と機密区分を管理します。",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "add": "データを追加",
+      "delete": "削除"
+    },
+    "columns": {
+      "name": "名前",
+      "classification": "機密区分",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "unassigned": "未割り当て",
+    "none": "なし"
+  },
+  "datumDetails": {
+    "fields": {
+      "name": "名前",
+      "classification": "機密区分",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "classifications": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "ownerRequired": "オーナーは必須です"
+    },
+    "errors": {
+      "missingId": "データIDがありません。"
+    },
+    "actions": {
+      "delete": "削除",
+      "updating": "更新中…",
+      "update": "更新"
+    }
+  },
+  "createDatumDialog": {
+    "breadcrumbs": {
+      "data": "データ",
+      "new": "新規データ"
+    },
+    "fields": {
+      "name": "名前",
+      "classification": "機密区分",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "classifications": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "ownerRequired": "オーナーは必須です"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "publishDataListDialog": {
+    "title": "データ一覧を公開",
+    "errors": {
+      "publish": "データ一覧を公開できませんでした"
+    },
+    "messages": {
+      "published": "データ一覧を公開しました。"
+    }
+  },
+  "documentLayout": {
+    "actions": {
+      "publish": "公開"
+    },
+    "status": {
+      "generated": "自動生成",
+      "published": "公開済み",
+      "pendingApproval": "承認待ち",
+      "draft": "下書き",
+      "rejected": "却下"
+    },
+    "tabs": {
+      "description": "説明",
+      "controls": "管理策",
+      "approvals": "承認",
+      "signatures": "署名"
+    }
+  },
+  "documentsPage": {
+    "pageTitle": "ドキュメント",
+    "title": "ドキュメント",
+    "description": "組織のドキュメントを管理します",
+    "actions": {
+      "new": "新規ドキュメント"
+    },
+    "tabs": {
+      "active": "有効",
+      "archived": "アーカイブ済み"
+    }
+  },
+  "createDocumentDialog": {
+    "breadcrumbs": {
+      "documents": "ドキュメント",
+      "new": "新規ドキュメント"
+    },
+    "fields": {
+      "title": "タイトル",
+      "titlePlaceholder": "ドキュメントのタイトル",
+      "approversPlaceholder": "承認者を追加…"
+    },
+    "properties": {
+      "title": "プロパティ",
+      "status": "ステータス",
+      "type": "種別",
+      "classification": "機密区分",
+      "approvers": "承認者"
+    },
+    "status": {
+      "draft": "下書き"
+    },
+    "validation": {
+      "titleRequired": "タイトルは必須です"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "created": "ドキュメントを作成しました。"
+    },
+    "errors": {
+      "title": "エラー",
+      "create": "ドキュメントを作成できませんでした"
+    },
+    "actions": {
+      "create": "ドキュメントを作成"
+    }
+  },
+  "deleteDocumentDialog": {
+    "title": {
+      "single": "ドキュメントを削除",
+      "multiple": "ドキュメントを削除"
+    },
+    "confirmation": {
+      "single": "ドキュメント「{{title}}」を削除してもよろしいですか？",
+      "selected_one": "選択した{{count}}件のドキュメントを削除してもよろしいですか？",
+      "selected_other": "選択した{{count}}件のドキュメントを削除してもよろしいですか？"
+    },
+    "irreversible": "この操作は元に戻せません。",
+    "actions": {
+      "delete": "削除"
+    }
+  },
+  "documentActions": {
+    "messages": {
+      "successTitle": "成功",
+      "archived": "ドキュメントをアーカイブしました。",
+      "unarchived": "ドキュメントのアーカイブを解除しました。",
+      "draftDeleted": "下書きを削除しました。"
+    },
+    "errors": {
+      "title": "エラー",
+      "archive": "ドキュメントをアーカイブできませんでした",
+      "unarchive": "ドキュメントのアーカイブを解除できませんでした",
+      "deleteDraft": "下書きを削除できませんでした",
+      "generatePdf": "PDFを生成できませんでした"
+    },
+    "confirmations": {
+      "archive": "ドキュメント「{{title}}」をアーカイブします。以後は編集できなくなります。",
+      "deleteDraft": "現在の下書きを削除し、最後に公開した版に戻します。"
+    },
+    "actions": {
+      "downloadPdf": "PDFをダウンロード",
+      "deleteDraft": "下書きを削除",
+      "archive": "アーカイブ",
+      "archiveDocument": "ドキュメントをアーカイブ",
+      "unarchiveDocument": "ドキュメントのアーカイブを解除",
+      "deleteDocument": "ドキュメントを削除"
+    }
+  },
+  "documentDetails": {
+    "fields": {
+      "type": "種別",
+      "classification": "機密区分",
+      "approvers": "承認者",
+      "approversPlaceholder": "承認者を追加…",
+      "version": "版",
+      "lastModified": "最終更新",
+      "publishedDate": "公開日",
+      "archivedOn": "アーカイブ日"
+    },
+    "documentTypes": {
+      "other": "その他",
+      "governance": "ガバナンス",
+      "policy": "方針",
+      "procedure": "手順",
+      "plan": "計画",
+      "register": "台帳",
+      "record": "記録",
+      "report": "報告書",
+      "template": "テンプレート",
+      "statement_of_applicability": "適用宣言書"
+    },
+    "classifications": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "typeUpdated": "ドキュメント種別を更新しました",
+      "classificationUpdated": "ドキュメントの機密区分を更新しました",
+      "approversUpdated": "承認者を更新しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "updateType": "ドキュメント種別を更新できませんでした",
+      "updateClassification": "ドキュメントの機密区分を更新できませんでした",
+      "updateApprovers": "承認者を更新できませんでした"
+    },
+    "none": "なし"
+  },
+  "documentList": {
+    "filters": {
+      "searchPlaceholder": "タイトルでドキュメントを検索…",
+      "allSources": "すべてのソース",
+      "allTypes": "すべての種別",
+      "allClassifications": "すべての機密区分"
+    },
+    "writeModes": {
+      "authored": "手動作成",
+      "generated": "自動生成"
+    },
+    "documentTypes": {
+      "other": "その他",
+      "governance": "ガバナンス",
+      "policy": "方針",
+      "procedure": "手順",
+      "plan": "計画",
+      "register": "台帳",
+      "record": "記録",
+      "report": "報告書",
+      "template": "テンプレート",
+      "statement_of_applicability": "適用宣言書"
+    },
+    "classifications": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "columns": {
+      "name": "名前",
+      "status": "ステータス",
+      "version": "版",
+      "type": "種別",
+      "classification": "機密区分",
+      "approvers": "承認者",
+      "lastUpdate": "最終更新",
+      "signatures": "署名"
+    },
+    "selected_one": "{{count}}件のドキュメントを選択中",
+    "selected_other": "{{count}}件のドキュメントを選択中",
+    "messages": {
+      "archived": "ドキュメントをアーカイブしました。",
+      "unarchived": "ドキュメントのアーカイブを解除しました。"
+    },
+    "errors": {
+      "archive": "ドキュメントをアーカイブできませんでした",
+      "unarchive": "ドキュメントのアーカイブを解除できませんでした"
+    },
+    "actions": {
+      "clearSelection": "選択を解除",
+      "unarchive": "アーカイブを解除",
+      "delete": "削除",
+      "publish": "公開",
+      "requestSignature": "署名を依頼",
+      "export": "エクスポート",
+      "archive": "アーカイブ"
+    },
+    "empty": {
+      "title": "ドキュメントはまだありません",
+      "archivedTitle": "アーカイブ済みのドキュメントはありません",
+      "description": "最初のドキュメントを作成して始めましょう。"
+    }
+  },
+  "documentListItem": {
+    "status": {
+      "draft": "下書き",
+      "pendingApproval": "承認待ち",
+      "published": "公開済み",
+      "rejected": "却下"
+    },
+    "documentTypes": {
+      "other": "その他",
+      "governance": "ガバナンス",
+      "policy": "方針",
+      "procedure": "手順",
+      "plan": "計画",
+      "register": "台帳",
+      "record": "記録",
+      "report": "報告書",
+      "template": "テンプレート",
+      "statement_of_applicability": "適用宣言書"
+    },
+    "classifications": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "archived": "ドキュメントをアーカイブしました。",
+      "unarchived": "ドキュメントのアーカイブを解除しました。"
+    },
+    "errors": {
+      "title": "エラー",
+      "archive": "ドキュメントをアーカイブできませんでした",
+      "unarchive": "ドキュメントのアーカイブを解除できませんでした"
+    },
+    "confirmations": {
+      "archive": "ドキュメント「{{title}}」をアーカイブします。以後は編集できなくなります。"
+    },
+    "actions": {
+      "archive": "アーカイブ",
+      "unarchive": "アーカイブを解除",
+      "delete": "削除"
+    }
+  },
+  "documentTitleForm": {
+    "validation": {
+      "titleRequired": "タイトルは必須です"
+    },
+    "errors": {
+      "title": "エラー",
+      "update": "ドキュメントを更新できませんでした"
+    }
+  },
+  "documentVersionsDropdown": {
+    "title": "版履歴"
+  },
+  "documentVersionsDropdownItem": {
+    "status": {
+      "draft": "下書き",
+      "pendingApproval": "承認待ち"
+    }
+  },
+  "publishDialog": {
+    "title": "ドキュメントを公開",
+    "validation": {
+      "changelogRequired": "変更履歴は必須です"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "approvalRequested": "承認を依頼しました。",
+      "published": "ドキュメントを公開しました。"
+    },
+    "errors": {
+      "title": "エラー",
+      "publish": "ドキュメントを公開できませんでした"
+    },
+    "fields": {
+      "changelog": "変更履歴",
+      "changelogPlaceholder": "この版の変更内容を入力…",
+      "approvers": "承認者",
+      "approversPlaceholder": "承認者を追加…"
+    },
+    "approversDescription": "承認者にメールが送信され、全員が承認するとメジャー版として公開されます。承認者をすべて外すと、メジャー版として直接公開されます。",
+    "actions": {
+      "publishMinor": "マイナー版として公開",
+      "requestApproval": "承認を依頼",
+      "publishMajor": "メジャー版として公開"
+    }
+  },
+  "publishDocumentsDialog": {
+    "title": "ドキュメントを公開",
+    "validation": {
+      "changelogRequired": "変更履歴は必須です"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "published_one": "{{count}}件のドキュメントを公開しました",
+      "published_other": "{{count}}件のドキュメントを公開しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "publish": "ドキュメントを公開できませんでした"
+    },
+    "warning": {
+      "approval": "メジャー版として公開すると、既定の承認者が設定されているドキュメントには承認が依頼されます。承認者にはメールで通知されます。",
+      "skipped": "すでに公開済みのドキュメントと承認待ちのドキュメントはスキップされます。"
+    },
+    "fields": {
+      "changelog": "変更履歴",
+      "changelogPlaceholder": "この版の変更内容を入力…"
+    },
+    "actions": {
+      "publishMinor": "マイナー版として公開",
+      "publish_one": "{{count}}件のドキュメントを公開",
+      "publish_other": "{{count}}件のドキュメントを公開"
+    }
+  },
+  "signatureDocumentsDialog": {
+    "breadcrumbs": {
+      "documents": "ドキュメント",
+      "requests": "署名依頼"
+    },
+    "messages": {
+      "created_one": "{{count}}件の署名依頼を作成しました",
+      "created_other": "{{count}}件の署名依頼を作成しました"
+    },
+    "errors": {
+      "create": "署名依頼を作成できませんでした"
+    },
+    "actions": {
+      "request": "署名を依頼",
+      "showMore": "さらに{{count}}件を表示"
+    }
+  },
+  "documentApprovalsPage": {
+    "previousRequests": "過去の承認依頼",
+    "status": {
+      "approved": "承認済み",
+      "rejected": "却下",
+      "voided": "取消済み",
+      "pending": "保留中"
+    }
+  },
+  "documentApprovalList": {
+    "confirmation": {
+      "void": "現在の承認依頼を取り消し、この版を下書きに戻します。この操作は元に戻せません。"
+    },
+    "status": {
+      "pending": "保留中",
+      "approved": "承認済み",
+      "rejected": "却下",
+      "voided": "取消済み"
+    },
+    "actions": {
+      "void": "承認を取り消す",
+      "cancel": "キャンセル"
+    },
+    "empty": "承認の判断はまだありません。"
+  },
+  "documentApprovalListItem": {
+    "dates": {
+      "requested": "{{date}}に依頼",
+      "approved": "{{date}}に承認",
+      "rejected": "{{date}}に却下"
+    },
+    "status": {
+      "approved": "承認済み",
+      "rejected": "却下",
+      "pending": "保留中",
+      "voided": "取消済み"
+    },
+    "actions": {
+      "review": "レビュー"
+    }
+  },
+  "documentDescriptionPage": {
+    "messages": {
+      "successTitle": "成功",
+      "saved": "内容を保存しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "save": "内容を保存できませんでした"
+    }
+  },
+  "documentSignaturesPage": {
+    "filter": {
+      "label": "状態で絞り込み："
+    },
+    "states": {
+      "requested": "依頼済み",
+      "signed": "署名済み"
+    }
+  },
+  "documentSignatureListItem": {
+    "dates": {
+      "signed": "{{date}}に署名",
+      "requested": "{{date}}に依頼"
+    },
+    "messages": {
+      "cancelled": "依頼をキャンセルしました"
+    },
+    "errors": {
+      "cancel": "署名依頼をキャンセルできませんでした"
+    },
+    "status": {
+      "signed": "署名済み"
+    },
+    "actions": {
+      "cancel": "依頼をキャンセル"
+    }
+  },
+  "documentSignaturePlaceholder": {
+    "messages": {
+      "sent": "署名依頼を送信しました"
+    },
+    "errors": {
+      "send": "署名依頼を送信できませんでした"
+    },
+    "actions": {
+      "request": "署名を依頼"
+    }
+  },
+  "findingDetails": {
+    "kinds": {
+      "minor_nonconformity": "軽微な不適合",
+      "major_nonconformity": "重大な不適合",
+      "observation": "観察事項",
+      "exception": "例外"
+    },
+    "status": {
+      "open": "未完了",
+      "in_progress": "対応中",
+      "closed": "完了",
+      "risk_accepted": "リスク受容",
+      "mitigated": "低減済み",
+      "false_positive": "誤検知"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "deleted": "指摘事項を削除しました",
+      "updated": "指摘事項を更新しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "delete": "指摘事項を削除できませんでした",
+      "update": "指摘事項を更新できませんでした",
+      "linkAudit": "監査を紐付けできませんでした",
+      "unlinkAudit": "監査の紐付けを解除できませんでした"
+    },
+    "deleteConfirmation": "指摘事項{{referenceId}}を完全に削除します。この操作は元に戻せません。",
+    "fields": {
+      "description": "説明",
+      "source": "ソース",
+      "owner": "オーナー",
+      "status": "ステータス",
+      "priority": "優先度",
+      "acceptedRisk": "受容したリスク",
+      "dateIdentified": "特定日",
+      "dueDate": "期限",
+      "rootCause": "根本原因",
+      "correctiveAction": "是正処置",
+      "effectivenessCheck": "有効性確認"
+    },
+    "placeholders": {
+      "description": "説明を入力",
+      "source": "ソースを入力",
+      "rootCause": "根本原因を入力",
+      "correctiveAction": "是正処置を入力",
+      "effectivenessCheck": "有効性確認の内容を入力"
+    },
+    "actions": {
+      "delete": "削除",
+      "updating": "更新中…",
+      "update": "更新"
+    },
+    "audits": {
+      "title": "紐付けた監査",
+      "referenceId": "監査の参照番号",
+      "link": "監査を紐付け",
+      "empty": "紐付けた監査はありません",
+      "loadMore": "さらに監査を読み込む",
+      "loading": "読み込み中…"
+    }
+  },
+  "findingsPage": {
+    "pageTitle": "指摘事項",
+    "title": "指摘事項",
+    "description": "組織の指摘事項を管理します。",
+    "filters": {
+      "allKinds": "すべての種類",
+      "allStatuses": "すべてのステータス",
+      "allPriorities": "すべての優先度",
+      "allOwners": "すべてのオーナー",
+      "allAudits": "すべての監査"
+    },
+    "kinds": {
+      "minor_nonconformity": "軽微な不適合",
+      "major_nonconformity": "重大な不適合",
+      "minorNonconformity": "軽微な不適合",
+      "majorNonconformity": "重大な不適合",
+      "observation": "観察事項",
+      "exception": "例外"
+    },
+    "status": {
+      "open": "未完了",
+      "in_progress": "対応中",
+      "closed": "完了",
+      "risk_accepted": "リスク受容",
+      "mitigated": "低減済み",
+      "false_positive": "誤検知"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "columns": {
+      "kind": "種類",
+      "referenceId": "参照ID",
+      "description": "説明",
+      "status": "ステータス",
+      "priority": "優先度",
+      "owner": "オーナー",
+      "dueDate": "期限",
+      "actions": "操作"
+    },
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "add": "指摘事項を追加",
+      "loadMore": "さらに読み込む",
+      "delete": "削除"
+    },
+    "loading": "読み込み中…",
+    "noDescription": "説明なし",
+    "noDueDate": "期限なし",
+    "empty": {
+      "title": "指摘事項はまだありません",
+      "description": "最初の指摘事項を作成して始めましょう。"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "deleted": "指摘事項を削除しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "delete": "指摘事項を削除できませんでした"
+    },
+    "deleteConfirmation": "指摘事項{{referenceId}}を完全に削除します。この操作は元に戻せません。"
+  },
+  "createFindingDialog": {
+    "breadcrumbs": {
+      "findings": "指摘事項",
+      "create": "作成"
+    },
+    "kinds": {
+      "minorNonconformity": "軽微な不適合",
+      "majorNonconformity": "重大な不適合",
+      "observation": "観察事項",
+      "exception": "例外"
+    },
+    "status": {
+      "open": "未完了",
+      "in_progress": "対応中",
+      "closed": "完了",
+      "risk_accepted": "リスク受容",
+      "mitigated": "低減済み",
+      "false_positive": "誤検知"
+    },
+    "priority": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "messages": {
+      "successTitle": "成功",
+      "created": "指摘事項を作成しました"
+    },
+    "errors": {
+      "title": "エラー",
+      "create": "指摘事項を作成できませんでした"
+    },
+    "fields": {
+      "kind": "種類",
+      "description": "説明",
+      "source": "ソース",
+      "owner": "オーナー",
+      "status": "ステータス",
+      "priority": "優先度",
+      "acceptedRisk": "受容したリスク",
+      "dateIdentified": "特定日",
+      "dueDate": "期限",
+      "rootCause": "根本原因",
+      "correctiveAction": "是正処置",
+      "effectivenessCheck": "有効性確認"
+    },
+    "placeholders": {
+      "selectKind": "種類を選択",
+      "description": "指摘事項の概要…",
+      "source": "ソースを入力",
+      "selectStatus": "ステータスを選択",
+      "rootCause": "根本原因の詳細な分析…",
+      "correctiveAction": "提案する是正処置…",
+      "effectivenessCheck": "是正処置の有効性の評価…"
+    },
+    "actions": {
+      "creating": "作成中…",
+      "create": "指摘事項を作成"
+    }
+  },
+  "publishFindingListDialog": {
+    "title": "指摘事項一覧を公開",
+    "errors": {
+      "publish": "指摘事項一覧を公開できませんでした"
+    },
+    "messages": {
+      "published": "指摘事項一覧を公開しました。"
+    }
+  },
+  "tasks": {
+    "title": "タスク",
+    "description": "割り当てられたコンプライアンスタスクを追跡し、進捗を管理します。",
+    "actions": {
+      "create": "タスクを追加"
+    }
+  },
+  "pageError": {
+    "actions": {
+      "goHome": "ホームへ戻る"
+    },
+    "notFound": {
+      "title": "ページが見つかりません",
+      "description": "お探しのページは存在しません。"
+    },
+    "forbidden": {
+      "title": "このページにアクセスする権限がありません",
+      "description": "現在のロールではこのページを表示できません。アクセスが必要な場合は、組織の管理者に依頼してください。"
+    },
+    "unexpected": {
+      "title": "問題が発生しました",
+      "description": "予期しないエラーが発生しました。ホームに戻って操作を続けてください。"
+    },
+    "technicalDetails": "技術的な詳細"
+  },
+  "sortableTable": {
+    "actions": {
+      "showMore": "さらに表示"
+    }
+  },
+  "assetsTable": {
+    "columns": {
+      "name": "名前",
+      "type": "種別",
+      "dataTypesStored": "保存するデータの種類",
+      "amount": "数量",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "actions": {
+      "add": "資産を追加",
+      "edit": "編集",
+      "delete": "削除"
+    },
+    "assetTypes": {
+      "physical": "物理",
+      "virtual": "仮想"
+    },
+    "delete": {
+      "missingIdOrName": "資産を削除できませんでした：IDまたは名前がありません",
+      "confirmation": "「{{name}}」を完全に削除します。この操作は元に戻せません。"
+    }
+  },
+  "readOnlyAssetsTable": {
+    "columns": {
+      "name": "名前",
+      "type": "種別",
+      "amount": "数量",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "assetTypes": {
+      "physical": "物理",
+      "virtual": "仮想"
+    },
+    "unassigned": "未割り当て",
+    "none": "なし"
+  },
+  "linkedAuditsCard": {
+    "title": "監査",
+    "columns": {
+      "name": "名前",
+      "state": "状態"
+    },
+    "empty": "紐付けた監査はありません",
+    "actions": {
+      "link": "監査を紐付け",
+      "unlink": "紐付けを解除",
+      "showMore": "さらに{{count}}件を表示"
+    }
+  },
+  "linkedAuditsDialog": {
+    "title": "監査を紐付け",
+    "searchPlaceholder": "監査を検索…",
+    "referenceIdLabel": "監査の参照番号",
+    "referenceIdDescription": "この指摘事項に監査報告書で使われている参照番号を入力してください。",
+    "referenceIdPlaceholder": "報告書の参照番号を入力",
+    "empty": "検索に一致する監査はありません。",
+    "actions": {
+      "back": "戻る",
+      "close": "閉じる",
+      "confirmLink": "監査を紐付け",
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "linkedControlsCard": {
+    "columns": {
+      "reference": "参照番号",
+      "name": "名前"
+    },
+    "empty": "紐付けた管理策はありません",
+    "actions": {
+      "link": "管理策を紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "linkedControlsDialog": {
+    "title": "管理策を紐付け",
+    "searchPlaceholder": "管理策を検索…",
+    "actions": {
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "bulkExportDialog": {
+    "title": "{{count}}件のドキュメントをエクスポート",
+    "includeSignatures": {
+      "label": "署名を含める",
+      "description": "PDFに署名情報と承認の詳細を表示します"
+    },
+    "watermark": {
+      "label": "透かしを追加",
+      "description": "すべてのPDFに、各ドキュメントの機密区分、任意のテキスト、タイムスタンプを入れた透かしを追加します",
+      "textLabel": "透かしのテキスト",
+      "textPlaceholder": "透かしのテキストを入力"
+    },
+    "notice": "ドキュメントは個別のPDFとしてZIPファイルにまとめてエクスポートされます。ダウンロードの準備ができたらメールでお知らせします。",
+    "actions": {
+      "export": "ドキュメントをエクスポート",
+      "exporting": "エクスポート中…"
+    }
+  },
+  "linkedDocumentsCard": {
+    "title": "ドキュメント",
+    "columns": {
+      "name": "名前",
+      "type": "種別",
+      "state": "状態"
+    },
+    "empty": "紐付けたドキュメントはありません",
+    "actions": {
+      "link": "ドキュメントを紐付け",
+      "unlink": "紐付けを解除",
+      "showMore": "さらに{{count}}件を表示"
+    }
+  },
+  "linkedDocumentsDialog": {
+    "title": "ドキュメントを紐付け",
+    "searchPlaceholder": "ドキュメントを検索…",
+    "actions": {
+      "close": "閉じる",
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "pdfDownloadDialog": {
+    "title": "PDFダウンロードのオプション",
+    "includeSignatures": {
+      "label": "署名を含める",
+      "description": "PDFに署名情報と承認の詳細を表示します"
+    },
+    "watermark": {
+      "label": "透かしを追加",
+      "description": "ドキュメントの機密区分、任意のテキスト、タイムスタンプを入れた透かしを追加します",
+      "textLabel": "透かしのテキスト",
+      "textPlaceholder": "透かしのテキストを入力"
+    },
+    "actions": {
+      "download": "PDFをダウンロード",
+      "downloading": "ダウンロード中…"
+    }
+  },
+  "controlMaturityLevelOptions": {
+    "levels": {
+      "NONE": "0 - なし",
+      "INITIAL": "1 - 初期",
+      "MANAGED": "2 - 管理されている",
+      "DEFINED": "3 - 定義されている",
+      "QUANTITATIVELY_MANAGED": "4 - 定量的に管理されている",
+      "OPTIMIZING": "5 - 最適化されている"
+    }
+  },
+  "countriesField": {
+    "searchPlaceholder": "国を検索して追加…"
+  },
+  "documentClassificationOptions": {
+    "classifications": {
+      "PUBLIC": "公開",
+      "INTERNAL": "社内限",
+      "CONFIDENTIAL": "機密",
+      "SECRET": "極秘"
+    }
+  },
+  "documentTypeOptions": {
+    "types": {
+      "OTHER": "その他",
+      "GOVERNANCE": "ガバナンス",
+      "POLICY": "方針",
+      "PROCEDURE": "手順",
+      "PLAN": "計画",
+      "REGISTER": "台帳",
+      "RECORD": "記録",
+      "REPORT": "報告書",
+      "TEMPLATE": "テンプレート",
+      "STATEMENT_OF_APPLICABILITY": "適用宣言書"
+    }
+  },
+  "emailsField": {
+    "additionalEmails": "追加のメールアドレス",
+    "actions": {
+      "add": "メールアドレスを追加"
+    }
+  },
+  "internalControlSelectField": {
+    "placeholder": "内部統制を選択",
+    "none": "なし"
+  },
+  "peopleMultiSelectField": {
+    "addPlaceholder": "メンバーを追加…",
+    "empty": "選択できるメンバーはいません",
+    "remove": "{{name}}を削除"
+  },
+  "userSelect": {
+    "loadMore": "さらに読み込む"
+  },
+  "peopleSelectField": {
+    "placeholder": "オーナーを選択",
+    "none": "なし"
+  },
+  "riskSelectField": {
+    "placeholder": "リスクを選択",
+    "none": "なし"
+  },
+  "processingActivityEnumOptions": {
+    "specialOrCriminalData": {
+      "yes": "はい",
+      "no": "いいえ",
+      "possible": "可能性あり"
+    },
+    "lawfulBasis": {
+      "consent": "同意",
+      "contractualNecessity": "契約の履行",
+      "legalObligation": "法的義務",
+      "legitimateInterest": "正当な利益",
+      "publicTask": "公的任務",
+      "vitalInterests": "生命に関する利益"
+    },
+    "residualRisk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "transferSafeguards": {
+      "none": "なし",
+      "standardContractualClauses": "標準契約条項",
+      "bindingCorporateRules": "拘束的企業準則",
+      "adequacyDecision": "十分性認定",
+      "derogations": "例外規定",
+      "codesOfConduct": "行動規範",
+      "certificationMechanisms": "認証メカニズム"
+    },
+    "dataProtectionImpactAssessment": {
+      "needed": "必要",
+      "notNeeded": "不要"
+    },
+    "transferImpactAssessment": {
+      "needed": "必要",
+      "notNeeded": "不要"
+    },
+    "roles": {
+      "controller": "管理者",
+      "processor": "処理者"
+    }
+  },
+  "thirdPartiesMultiSelectField": {
+    "addPlaceholder": "取引先を追加…",
+    "empty": "選択できる取引先はありません",
+    "remove": "{{name}}を削除"
+  },
+  "linkedInternalControlsCard": {
+    "title": "内部統制",
+    "columns": {
+      "name": "名前",
+      "state": "状態"
+    },
+    "empty": "紐付けた内部統制はありません",
+    "actions": {
+      "link": "内部統制を紐付け",
+      "unlink": "紐付けを解除",
+      "showMore": "さらに{{count}}件を表示"
+    }
+  },
+  "linkedInternalControlsDialog": {
+    "title": "内部統制を紐付け",
+    "searchPlaceholder": "内部統制を検索…",
+    "allCategories": "すべてのカテゴリ",
+    "actions": {
+      "close": "閉じる",
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "linkedObligationsCard": {
+    "title": "義務",
+    "columns": {
+      "area": "領域",
+      "source": "ソース",
+      "status": "ステータス",
+      "owner": "オーナー"
+    },
+    "empty": "紐付けた義務はありません",
+    "noArea": "領域未指定",
+    "noSource": "ソース未指定",
+    "unassigned": "未割り当て",
+    "actions": {
+      "link": "義務を紐付け",
+      "unlink": "紐付けを解除",
+      "showMore": "さらに{{count}}件を表示"
+    }
+  },
+  "linkedObligationsDialog": {
+    "title": "義務を紐付け",
+    "searchPlaceholder": "義務を検索…",
+    "noArea": "領域未指定",
+    "noSource": "ソース未指定",
+    "unassigned": "未割り当て",
+    "actions": {
+      "close": "閉じる",
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "linkedRisksCard": {
+    "columns": {
+      "referenceId": "参照ID",
+      "name": "名前",
+      "initialRisk": "初期リスク",
+      "residualRisk": "残留リスク"
+    },
+    "empty": "紐付けたリスクはありません",
+    "actions": {
+      "link": "リスクを紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "linkedRisksDialog": {
+    "title": "リスクを紐付け",
+    "searchPlaceholder": "リスクを検索…",
+    "allCategories": "すべてのカテゴリ",
+    "actions": {
+      "close": "閉じる",
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "controlSkeleton": {
+    "actions": {
+      "edit": "管理策を編集"
+    }
+  },
+  "risksPageSkeleton": {
+    "title": "リスク",
+    "actions": {
+      "create": "新規リスク"
+    }
+  },
+  "graphQLCell": {
+    "searchPlaceholder": "検索"
+  },
+  "sortableDataTable": {
+    "actions": {
+      "showMore": "さらに表示"
+    }
+  },
+  "tasksCard": {
+    "states": {
+      "all": "すべて",
+      "backlog": "バックログ",
+      "todo": "未着手",
+      "inProgress": "対応中",
+      "done": "完了",
+      "canceled": "キャンセル",
+      "duplicate": "重複"
+    },
+    "empty": "タスクはありません",
+    "noResults": "条件に一致するタスクはありません",
+    "searchPlaceholder": "タスクを検索",
+    "filters": {
+      "status": "ステータス",
+      "allStatuses": "すべてのステータス",
+      "user": "ユーザー",
+      "allUsers": "すべてのユーザー",
+      "internalControl": "内部統制",
+      "allInternalControls": "すべての内部統制",
+      "searchInternalControls": "内部統制を検索",
+      "noInternalControls": "内部統制はありません"
+    },
+    "error": {
+      "title": "エラー",
+      "reorder": "タスクを並べ替えできませんでした。"
+    },
+    "dragInstructions": {
+      "all": "ドラッグ＆ドロップでタスクの並べ替えや状態間の移動ができます",
+      "state": "ドラッグ＆ドロップでタスクを並べ替えできます"
+    },
+    "deleteConfirmation": "このタスクを削除してもよろしいですか？",
+    "actions": {
+      "moveToTodo": "未着手に移動",
+      "moveToInProgress": "対応中に移動",
+      "moveToDone": "完了に移動",
+      "edit": "編集",
+      "delete": "削除"
+    },
+    "metadata": {
+      "timeEstimate": "見積時間",
+      "deadline": "締切",
+      "overdue": "期限超過"
+    },
+    "recurringBadge": {
+      "tooltip": "{{interval}}ごとに繰り返し"
+    }
+  },
+  "deleteTrustCenterReferenceDialog": {
+    "title": "参照先を削除",
+    "description": "参照先「{{referenceName}}」を削除してもよろしいですか？",
+    "warning": "この操作は元に戻せません。",
+    "actions": {
+      "delete": "削除",
+      "deleting": "削除中…"
+    }
+  },
+  "trustCenterReferenceDialog": {
+    "fields": {
+      "name": {
+        "label": "参照先名",
+        "placeholder": "会社名または組織名"
+      },
+      "description": {
+        "label": "説明",
+        "placeholder": "参照先の概要"
+      },
+      "websiteUrl": {
+        "label": "WebサイトのURL",
+        "placeholder": "https://example.com"
+      },
+      "rank": {
+        "label": "表示順",
+        "placeholder": "表示順（1、2、3…）",
+        "help": "数字が小さいほど先に表示されます"
+      },
+      "logo": {
+        "label": "ロゴ",
+        "description": "ロゴ画像をアップロード（PNG、JPG、WEBP、SVG、最大5MB）",
+        "selectedFile": "選択したファイル",
+        "keepCurrent": "新しいファイルをアップロードしない場合は、現在のロゴが維持されます",
+        "required": "新規の参照先にはロゴが必須です"
+      }
+    },
+    "actions": {
+      "add": "参照先を追加",
+      "edit": "参照先を編集",
+      "update": "参照先を更新"
+    }
+  },
+  "assetGraph": {
+    "deleteConfirmation": "「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "errors": {
+      "deleteMissingIdOrName": "資産を削除できませんでした：IDまたは名前がありません",
+      "createNameRequired": "資産を作成できませんでした：名前は必須です",
+      "createOwnerRequired": "資産を作成できませんでした：オーナーは必須です",
+      "createOrganizationRequired": "資産を作成できませんでした：組織は必須です",
+      "createDataTypesStoredRequired": "資産を作成できませんでした：保存するデータの種類は必須です",
+      "updateIdRequired": "資産を更新できませんでした：資産IDは必須です"
+    }
+  },
+  "auditGraph": {
+    "deleteConfirmation": "{{frameworkName}}の監査を完全に削除します。この操作は元に戻せません。",
+    "messages": {
+      "deleted": "監査を削除しました",
+      "reportUploaded": "監査報告書をアップロードしました",
+      "reportDeleted": "監査報告書を削除しました"
+    },
+    "errors": {
+      "delete": "監査を削除できませんでした",
+      "createOrganizationRequired": "監査を作成できませんでした：組織は必須です",
+      "createFrameworkRequired": "監査を作成できませんでした：フレームワークは必須です",
+      "updateIdRequired": "監査を更新できませんでした：監査IDは必須です",
+      "uploadReport": "監査報告書をアップロードできませんでした",
+      "uploadReportIdRequired": "報告書をアップロードできませんでした：監査IDは必須です",
+      "deleteReport": "監査報告書を削除できませんでした"
+    }
+  },
+  "datumGraph": {
+    "deleteConfirmation": "「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "errors": {
+      "deleteMissingIdOrName": "データを削除できませんでした：IDまたは名前がありません",
+      "createNameRequired": "データを作成できませんでした：名前は必須です",
+      "createOwnerRequired": "データを作成できませんでした：オーナーは必須です",
+      "createOrganizationRequired": "データを作成できませんでした：組織は必須です",
+      "updateMissingId": "データを更新できませんでした：IDがありません"
+    }
+  },
+  "documentGraph": {
+    "messages": {
+      "deleted": "ドキュメントを削除しました。",
+      "bulkDeleted": "ドキュメントを削除しました。",
+      "exportStarted": "ドキュメントのエクスポートを開始しました。準備ができたらメールでお知らせします。"
+    },
+    "errors": {
+      "delete": "ドキュメントを削除できませんでした",
+      "bulkDelete": "ドキュメントを削除できませんでした",
+      "export": "ドキュメントのエクスポートを開始できませんでした"
+    }
+  },
+  "frameworkGraph": {
+    "deleteConfirmation": "フレームワーク「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "messages": {
+      "deleted": "フレームワークを削除しました"
+    },
+    "errors": {
+      "delete": "フレームワークを削除できませんでした"
+    }
+  },
+  "internalControlGraph": {
+    "messages": {
+      "deleted": "内部統制を削除しました。",
+      "updated": "内部統制を更新しました。"
+    },
+    "errors": {
+      "delete": "内部統制を削除できませんでした",
+      "update": "内部統制を更新できませんでした"
+    }
+  },
+  "obligationGraph": {
+    "deleteConfirmation": "この義務を完全に削除します。この操作は元に戻せません。",
+    "messages": {
+      "deleted": "義務を削除しました"
+    },
+    "errors": {
+      "delete": "義務を削除できませんでした",
+      "createOrganizationRequired": "義務を作成できませんでした：組織は必須です",
+      "createOwnerRequired": "義務を作成できませんでした：オーナーは必須です",
+      "updateIdRequired": "義務を更新できませんでした：IDは必須です"
+    }
+  },
+  "processingActivityGraph": {
+    "deleteConfirmation": "処理活動{{name}}を完全に削除します。この操作は元に戻せません。",
+    "dpiaDeleteConfirmation": "このデータ保護影響評価を完全に削除します。この操作は元に戻せません。",
+    "tiaDeleteConfirmation": "この移転影響評価を完全に削除します。この操作は元に戻せません。",
+    "messages": {
+      "deleted": "処理活動を削除しました",
+      "dpiaDeleted": "DPIAを削除しました",
+      "tiaDeleted": "TIAを削除しました"
+    },
+    "errors": {
+      "delete": "処理活動を削除できませんでした",
+      "createOrganizationRequired": "処理活動を作成できませんでした：組織は必須です",
+      "createNameRequired": "処理活動を作成できませんでした：名前は必須です",
+      "updateIdRequired": "処理活動を更新できませんでした：IDは必須です",
+      "createDpiaProcessingActivityIdRequired": "DPIAを作成できませんでした：処理活動IDは必須です",
+      "updateDpiaIdRequired": "DPIAを更新できませんでした：IDは必須です",
+      "deleteDpia": "DPIAを削除できませんでした",
+      "createTiaProcessingActivityIdRequired": "TIAを作成できませんでした：処理活動IDは必須です",
+      "updateTiaIdRequired": "TIAを更新できませんでした：IDは必須です",
+      "deleteTia": "TIAを削除できませんでした"
+    }
+  },
+  "rightsRequestGraph": {
+    "deleteConfirmation": "この本人からの請求を完全に削除します。この操作は元に戻せません。",
+    "messages": {
+      "deleted": "本人からの請求を削除しました"
+    },
+    "errors": {
+      "delete": "本人からの請求を削除できませんでした",
+      "createOrganizationRequired": "本人からの請求を作成できませんでした：組織は必須です",
+      "createRequestTypeRequired": "本人からの請求を作成できませんでした：請求種別は必須です",
+      "createRequestStateRequired": "本人からの請求を作成できませんでした：請求の状態は必須です",
+      "updateIdRequired": "本人からの請求を更新できませんでした：IDは必須です"
+    }
+  },
+  "helpers": {
+    "common": {
+      "unknown": "不明"
+    },
+    "auditState": {
+      "toBook": "日程調整待ち",
+      "auditBooked": "監査予約済み",
+      "notStarted": "未着手",
+      "inProgress": "対応中",
+      "completed": "完了",
+      "rejected": "却下",
+      "outdated": "期限切れ"
+    },
+    "certificationCategory": {
+      "securityStandards": "セキュリティ基準",
+      "regulatoryLegal": "規制・法令",
+      "industrySpecific": "業界固有",
+      "internationalGovernment": "国際・政府機関",
+      "custom": "カスタム認証"
+    },
+    "compliancePortalDocumentAccessStatus": {
+      "requested": "申請中",
+      "granted": "許可済み",
+      "rejected": "却下",
+      "revoked": "取り消し済み"
+    },
+    "compliancePortalVisibility": {
+      "restricted": "限定公開",
+      "public": "公開"
+    },
+    "controlMaturityLevel": {
+      "none": "0 - なし",
+      "initial": "1 - 初期",
+      "managed": "2 - 管理されている",
+      "defined": "3 - 定義されている",
+      "quantitativelyManaged": "4 - 定量的に管理されている",
+      "optimizing": "5 - 最適化"
+    },
+    "customDomain": {
+      "status": {
+        "active": "有効",
+        "provisioning": "プロビジョニング中",
+        "pending": "保留中",
+        "failed": "失敗",
+        "expired": "期限切れ"
+      },
+      "provisioningError": {
+        "dnsCname": "DNSがまだ正しく設定されていません。CNAMEレコードを確認してください。",
+        "dnsCaa": "DNSのCAAレコードで、当社の認証局が許可されていません。",
+        "rateLimited": "認証局により一時的にレート制限されています。自動的に再試行します。",
+        "invalidOrder": "ドメインの所有権を確認できませんでした。自動的に再試行します。",
+        "temporary": "証明書のプロビジョニングで一時的なエラーが発生しました。自動的に再試行します。",
+        "failed": "証明書のプロビジョニングに失敗しました。解決しない場合はサポートにお問い合わせください。"
+      }
+    },
+    "documentType": {
+      "other": "その他",
+      "governance": "ガバナンス",
+      "policy": "方針",
+      "procedure": "手順",
+      "plan": "計画",
+      "register": "台帳",
+      "record": "記録",
+      "report": "報告書",
+      "template": "テンプレート",
+      "statementOfApplicability": "適用宣言書"
+    },
+    "documentWriteMode": {
+      "authored": "手動作成",
+      "generated": "自動生成"
+    },
+    "documentClassification": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "measureState": {
+      "implemented": "実施済み",
+      "inProgress": "対応中",
+      "notApplicable": "対象外",
+      "notStarted": "未着手",
+      "notImplemented": "未実施"
+    },
+    "internalControlState": {
+      "implemented": "実施済み",
+      "inProgress": "対応中",
+      "notApplicable": "対象外",
+      "notStarted": "未着手",
+      "notImplemented": "未実施"
+    },
+    "obligationStatus": {
+      "nonCompliant": "未準拠",
+      "partiallyCompliant": "一部準拠",
+      "compliant": "準拠"
+    },
+    "obligationType": {
+      "legal": "法的",
+      "contractual": "契約上"
+    },
+    "peopleRole": {
+      "employee": "従業員",
+      "contractor": "業務委託",
+      "serviceAccount": "サービスアカウント"
+    },
+    "membershipRole": {
+      "owner": "オーナー",
+      "admin": "管理者",
+      "viewer": "閲覧者",
+      "auditor": "監査人",
+      "employee": "従業員",
+      "compliancePortalManager": "コンプライアンスポータル管理者",
+      "compliancePortalAccessManager": "コンプライアンスポータルアクセス管理者"
+    },
+    "registryStatus": {
+      "open": "未完了",
+      "inProgress": "対応中",
+      "closed": "完了",
+      "riskAccepted": "リスク受容",
+      "mitigated": "低減済み",
+      "falsePositive": "誤検知"
+    },
+    "rightsRequestType": {
+      "access": "開示",
+      "deletion": "削除",
+      "rectification": "訂正",
+      "portability": "ポータビリティ",
+      "objection": "異議",
+      "complaint": "苦情"
+    },
+    "rightsRequestState": {
+      "todo": "未対応",
+      "inProgress": "対応中",
+      "done": "完了",
+      "rejected": "却下"
+    },
+    "riskImpact": {
+      "negligible": "無視できる",
+      "low": "低",
+      "moderate": "中程度",
+      "significant": "大",
+      "catastrophic": "壊滅的"
+    },
+    "riskTreatment": {
+      "mitigate": "低減",
+      "accept": "受容",
+      "transfer": "移転",
+      "avoid": "回避"
+    },
+    "riskLikelihood": {
+      "improbable": "ほぼ起こらない",
+      "remote": "起こりにくい",
+      "occasional": "ときどき起こる",
+      "probable": "起こりやすい",
+      "frequent": "頻繁に起こる"
+    },
+    "riskScales": {
+      "impact": {
+        "2": {
+          "1": "低",
+          "2": "高"
+        },
+        "3": {
+          "1": "低",
+          "2": "中",
+          "3": "高"
+        },
+        "4": {
+          "1": "低",
+          "2": "中",
+          "3": "高",
+          "4": "重大"
+        }
+      },
+      "likelihood": {
+        "2": {
+          "1": "起こりにくい",
+          "2": "起こりやすい"
+        },
+        "3": {
+          "1": "起こりにくい",
+          "2": "起こり得る",
+          "3": "起こりやすい"
+        },
+        "4": {
+          "1": "起こりにくい",
+          "2": "起こり得る",
+          "3": "起こりやすい",
+          "4": "ほぼ確実"
+        }
+      }
+    },
+    "riskSeverity": {
+      "critical": "重大",
+      "high": "高",
+      "low": "低"
+    },
+    "trackerType": {
+      "cookie": "Cookie",
+      "localStorage": "localStorage",
+      "sessionStorage": "sessionStorage",
+      "indexedDb": "IndexedDB",
+      "cacheStorage": "Cache Storage"
+    },
+    "trackerSource": {
+      "script": "スクリプト",
+      "preExisting": "既存",
+      "http": "HTTP",
+      "extension": "拡張機能"
+    }
+  },
+  "ui": {
+    "actions": {
+      "cancel": "キャンセル",
+      "delete": "削除",
+      "search": "検索"
+    },
+    "loading": "読み込み中",
+    "dropzone": {
+      "uploading": "ファイルをアップロード中",
+      "browse": "ドラッグ＆ドロップまたはファイルを参照",
+      "errors": {
+        "unsupported": "このファイルはサポートされていません",
+        "tooLarge": "このファイルは大きすぎます",
+        "generic": "問題が発生しました"
+      }
+    },
+    "documentClassification": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "documentType": {
+      "other": "その他",
+      "governance": "ガバナンス",
+      "policy": "方針",
+      "procedure": "手順",
+      "plan": "計画",
+      "register": "台帳",
+      "record": "記録",
+      "report": "報告書",
+      "template": "テンプレート",
+      "statement_of_applicability": "適用宣言書"
+    },
+    "documentVersionBadge": {
+      "draft": "下書き",
+      "pendingApproval": "承認待ち",
+      "published": "公開済み"
+    },
+    "measureState": {
+      "implemented": "実施済み",
+      "in_progress": "対応中",
+      "not_applicable": "対象外",
+      "not_started": "未着手",
+      "unknown": "不明",
+      "not_implemented": "未実施"
+    },
+    "internalControlState": {
+      "implemented": "実施済み",
+      "in_progress": "対応中",
+      "not_applicable": "対象外",
+      "not_started": "未着手",
+      "unknown": "不明",
+      "not_implemented": "未実施"
+    },
+    "confirmDialog": {
+      "defaultTitle": "よろしいですか？"
+    },
+    "durationPicker": {
+      "minutes": "分",
+      "hours": "時間",
+      "days": "日",
+      "weeks": "週"
+    },
+    "frameworkSelector": {
+      "new": "新しいフレームワーク",
+      "custom": {
+        "title": "カスタムフレームワーク",
+        "description": "ゼロから作成"
+      }
+    },
+    "measureImplementation": {
+      "title": "対策の実施状況",
+      "complete": "完了"
+    },
+    "internalControlImplementation": {
+      "title": "内部統制の実施状況",
+      "complete": "完了"
+    },
+    "impactOptions": {
+      "low": "業務への影響は最小限",
+      "medium": "業務への影響は中程度",
+      "high": "業務への影響が大きい",
+      "critical": "業務運営に不可欠"
+    },
+    "sensitivityOptions": {
+      "none": "機微なデータなし",
+      "low": "公開データまたは機微でないデータ",
+      "medium": "社内限・制限付きデータ",
+      "high": "機密データ",
+      "critical": "規制対象・個人情報・財務データ"
+    },
+    "risk": {
+      "initial": "初期リスク",
+      "net": "正味リスク",
+      "residual": "残留リスク",
+      "score": "スコア",
+      "numberOfRisks": "リスク数",
+      "linkedRisks": "関連リスク",
+      "severity": {
+        "none": "なし",
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "重大"
+      },
+      "impact": {
+        "label": "影響度"
+      },
+      "likelihood": {
+        "label": "発生可能性"
+      },
+      "cell": "発生可能性{{likelihood}}、影響度{{impact}}：{{count}}件"
+    }
+  },
+  "common": {
+    "error": "エラー",
+    "success": "成功",
+    "create": "作成",
+    "actions": {
+      "back": "戻る",
+      "close": "閉じる",
+      "continue": "続行",
+      "copy": "コピー",
+      "tryAgain": "再試行"
+    },
+    "messages": {
+      "copied": "コピーしました",
+      "copiedToClipboard": "クリップボードにコピーしました"
+    }
+  },
+  "mutation": {
+    "messages": {
+      "completed": "操作が完了しました"
+    },
+    "errors": {
+      "commit": "この操作を確定できませんでした"
+    }
+  },
+  "activateAccountPage": {
+    "pageTitle": "アカウントの有効化",
+    "title": "アカウントの有効化",
+    "description": "「続行」をクリックしてアカウントを有効化してください。",
+    "activating": "アカウントを有効化中…",
+    "messages": {
+      "activated": "アカウントを有効化しました。"
+    },
+    "errors": {
+      "activationFailed": "有効化できませんでした",
+      "missingToken": "メールに記載された有効化リンクを使用してください"
+    },
+    "actions": {
+      "continue": "続行",
+      "goBack": "戻る"
+    }
+  },
+  "consentPage": {
+    "pageTitle": "アプリケーションの承認",
+    "apiAccess": "APIアクセス（{{count}}）",
+    "authorize": "承認",
+    "description": "このアプリケーションは、次の権限であなたのアカウントへのアクセスを求めています。",
+    "authorizationComplete": "承認が完了しました",
+    "redirectingTo": "次の宛先にリダイレクトされます",
+    "revokeNotice": "アクセス権は、アカウント設定からいつでも取り消せます。",
+    "scopes": {
+      "openid": "本人確認を行う",
+      "email": "メールアドレスを表示する",
+      "profile": "プロフィール情報を表示する",
+      "offlineAccess": "ログイン状態を維持し、不在中もデータにアクセスする"
+    },
+    "errors": {
+      "authorizationFailed": "承認できませんでした",
+      "generic": "問題が発生しました。もう一度お試しください。"
+    },
+    "invalidRequest": {
+      "title": "無効なリクエスト",
+      "description": "この同意リクエストは無効か、有効期限が切れています。"
+    },
+    "deviceAuthorized": {
+      "title": "端末を承認しました",
+      "description": "端末を承認しました。このウィンドウを閉じて、端末に戻ってください。"
+    },
+    "accessDenied": {
+      "title": "アクセスを拒否しました",
+      "description": "承認リクエストを拒否しました。このウィンドウを閉じてください。"
+    },
+    "actions": {
+      "deny": "拒否",
+      "allow": "許可"
+    }
+  },
+  "oauthScopes": {
+    "api": {
+      "v1:access-review:read": "アクセスレビューの読み取り",
+      "v1:access-review": "アクセスレビューの管理",
+      "v1:agent:read": "エージェントの読み取り",
+      "v1:agent": "エージェントの管理",
+      "v1:ai-system:read": "AIシステムの読み取り",
+      "v1:ai-system": "AIシステムの管理",
+      "v1:asset:read": "資産の読み取り",
+      "v1:asset": "資産の管理",
+      "v1:audit:read": "監査の読み取り",
+      "v1:audit": "監査の管理",
+      "v1:business-function:read": "業務機能の読み取り",
+      "v1:business-function": "業務機能の管理",
+      "v1:common-third-party:read": "共通取引先の読み取り",
+      "v1:common-third-party": "共通取引先の管理",
+      "v1:compliance-page:read": "コンプライアンスポータルの読み取り",
+      "v1:compliance-page": "コンプライアンスポータルの管理",
+      "v1:connector:read": "コネクターの読み取り",
+      "v1:connector": "コネクターの管理",
+      "v1:control:read": "管理策の読み取り",
+      "v1:control": "管理策の管理",
+      "v1:datum:read": "データの読み取り",
+      "v1:datum": "データの管理",
+      "v1:document:read": "ドキュメントの読み取り",
+      "v1:document": "ドキュメントの管理",
+      "v1:iam:read": "IAM設定の読み取り",
+      "v1:iam": "IAM設定の管理",
+      "v1:itam:read": "端末の読み取り",
+      "v1:itam": "端末の管理",
+      "v1:org:read": "組織の読み取り",
+      "v1:org": "組織の管理",
+      "v1:privacy:read": "プライバシー設定の読み取り",
+      "v1:privacy": "プライバシー設定の管理",
+      "v1:resource-alias:read": "リソースエイリアスの読み取り",
+      "v1:resource-alias": "リソースエイリアスの管理",
+      "v1:risk:read": "リスクの読み取り",
+      "v1:risk": "リスクの管理",
+      "v1:slack-connection:read": "Slack連携の読み取り",
+      "v1:slack-connection": "Slack連携の管理",
+      "v1:task:read": "タスクの読み取り",
+      "v1:task": "タスクの管理",
+      "v1:third-party:read": "取引先の読み取り",
+      "v1:third-party": "取引先の管理",
+      "v1:webhook:read": "Webhookの読み取り",
+      "v1:webhook": "Webhookの管理"
+    }
+  },
+  "createPasswordPage": {
+    "pageTitle": "パスワードの作成",
+    "title": "パスワードを作成",
+    "description": "アカウントのパスワードを8文字以上で設定してください",
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+    "messages": {
+      "created": "アカウントを作成しました"
+    },
+    "errors": {
+      "creationFailed": "パスワードを作成できませんでした",
+      "missingToken": "メールに記載されたパスワード設定リンクを使用してください"
+    },
+    "fields": {
+      "password": "パスワード"
+    },
+    "actions": {
+      "save": "保存",
+      "logIn": "こちらからログイン"
+    }
+  },
+  "deviceActivationPage": {
+    "pageTitle": "端末の有効化",
+    "title": "端末の有効化",
+    "description": "端末に表示されているコードを入力してください",
+    "codeCharacter": "コードの{{count}}文字目",
+    "notice": "このコードが端末に表示されているものと一致していることを確認してください。",
+    "authorized": {
+      "title": "端末を承認しました",
+      "description": "端末を承認しました。このウィンドウを閉じて、端末に戻ってください。"
+    },
+    "errors": {
+      "authorizationFailed": "承認できませんでした",
+      "invalidCode": "コードが無効か、有効期限が切れています。",
+      "generic": "問題が発生しました。もう一度お試しください。"
+    },
+    "actions": {
+      "authorizing": "承認中...",
+      "continue": "続行"
+    }
+  },
+  "forgotPasswordPage": {
+    "pageTitle": "パスワードをお忘れの場合",
+    "title": "パスワードをお忘れの場合",
+    "description": "メールアドレスを入力してください。パスワードをリセットする手順をお送りします",
+    "rememberPassword": "パスワードを思い出しましたか？",
+    "messages": {
+      "instructionsSent": "パスワードのリセット手順をメールで送信しました"
+    },
+    "errors": {
+      "requestFailed": "リクエストに失敗しました",
+      "sendInstructions": "リセット手順を送信できませんでした"
+    },
+    "fields": {
+      "email": "メールアドレス",
+      "emailPlaceholder": "name@example.com"
+    },
+    "sent": {
+      "title": "メールをご確認ください",
+      "description": "パスワードのリセット手順をメールアドレスに送信しました",
+      "didNotReceive": "メールが届きませんか？"
+    },
+    "actions": {
+      "tryAgain": "再試行",
+      "backToLogin": "ログインに戻る",
+      "sendingInstructions": "送信中...",
+      "sendInstructions": "リセット手順を送信"
+    }
+  },
+  "resendVerificationEmailPage": {
+    "pageTitle": "メールアドレスの確認",
+    "title": "メールアドレスの確認",
+    "description": "メールアドレスがまだ確認されていません。メールアドレスを入力すると、新しい確認リンクをお送りします",
+    "alreadyVerified": "すでに確認済みですか？",
+    "messages": {
+      "verificationSent": "確認メールを送信しました"
+    },
+    "errors": {
+      "requestFailed": "リクエストに失敗しました",
+      "sendVerification": "確認メールを送信できませんでした"
+    },
+    "fields": {
+      "email": "メールアドレス",
+      "emailPlaceholder": "name@example.com"
+    },
+    "sent": {
+      "title": "メールをご確認ください",
+      "description": "確認リンクをメールアドレスに送信しました",
+      "didNotReceive": "メールが届きませんか？"
+    },
+    "actions": {
+      "tryAgain": "再試行",
+      "backToLogin": "ログインに戻る",
+      "sendingVerification": "確認メールを送信中...",
+      "sendVerification": "確認メールを送信"
+    }
+  },
+  "resetPasswordPage": {
+    "pageTitle": "パスワードのリセット",
+    "title": "パスワードのリセット",
+    "description": "アカウントをリセットするため、新しいパスワードを入力してください",
+    "rememberPassword": "パスワードを思い出しましたか？",
+    "messages": {
+      "reset": "パスワードをリセットしました"
+    },
+    "errors": {
+      "resetFailed": "リセットできませんでした",
+      "invalidToken": "メールに記載されたリセットリンクを使用してください",
+      "reset": "パスワードをリセットできませんでした"
+    },
+    "fields": {
+      "newPassword": "新しいパスワード",
+      "confirmPassword": "パスワード（確認）"
+    },
+    "actions": {
+      "resetting": "パスワードをリセット中...",
+      "reset": "パスワードをリセット",
+      "logIn": "こちらからログイン"
+    }
+  },
+  "signUpPage": {
+    "pageTitle": "新規登録",
+    "title": "新規登録",
+    "description": "アカウントを作成するため、情報を入力してください",
+    "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+    "checkEmail": {
+      "title": "メールをご確認ください",
+      "description": "{{email}}に確認リンクを送信しました。",
+      "resend": "メールが届きませんか？"
+    },
+    "messages": {
+      "created": "アカウントを作成しました"
+    },
+    "errors": {
+      "failed": "新規登録できませんでした"
+    },
+    "unavailable": {
+      "title": "新規登録はご利用いただけません",
+      "description": "現在、新規アカウントの登録は無効になっています。管理者にお問い合わせいただくか、Proboまでご連絡ください。"
+    },
+    "fields": {
+      "fullName": "氏名",
+      "fullNamePlaceholder": "山田 太郎",
+      "email": "メールアドレス",
+      "emailPlaceholder": "name@example.com",
+      "password": "パスワード"
+    },
+    "actions": {
+      "backToLogin": "ログインに戻る",
+      "creating": "アカウントを作成中...",
+      "signUpWithEmail": "メールアドレスで新規登録",
+      "logIn": "こちらからログイン",
+      "resend": "確認メールを再送信"
+    }
+  },
+  "verifyEmailPage": {
+    "pageTitle": "メールアドレスの確認",
+    "title": "メールアドレスの確認",
+    "description": "登録を完了するため、メールアドレスを確認してください",
+    "continueDescription": "「続行」をクリックするとメールアドレスを確認し、ログインします。",
+    "messages": {
+      "confirmed": "メールアドレスを確認しました",
+      "confirmedWithExclamation": "メールアドレスを確認しました！"
+    },
+    "errors": {
+      "confirm": "メールアドレスを確認できませんでした",
+      "tokenRequired": "確認トークンを入力してください"
+    },
+    "fields": {
+      "token": "確認トークン",
+      "tokenPlaceholder": "確認トークンを入力",
+      "tokenHelp": "URLにトークンが含まれている場合は自動的に入力されます"
+    },
+    "actions": {
+      "proceedToLogin": "ログインへ進む",
+      "confirming": "確認中...",
+      "confirm": "メールアドレスを確認",
+      "continue": "続行",
+      "backToLogin": "ログインに戻る"
+    }
+  },
+  "passwordSignInPage": {
+    "title": "メールアドレスでログイン",
+    "description": "メールアドレスとパスワードを入力してください",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "errors": {
+      "login": "ログインできませんでした"
+    },
+    "fields": {
+      "email": "メールアドレス",
+      "password": "パスワード"
+    },
+    "actions": {
+      "back": "戻る",
+      "backToLogin": "ログインに戻る",
+      "loggingIn": "ログイン中...",
+      "login": "ログイン",
+      "register": "新規登録",
+      "resetPassword": "パスワードをリセット"
+    }
+  },
+  "ssoSignInPage": {
+    "title": "SSOでログイン",
+    "description": "SSOで続行するには、勤務先のメールアドレスを入力してください",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "errors": {
+      "unavailable": "このメールドメインではSSOを利用できません"
+    },
+    "fields": {
+      "workEmail": "勤務先メールアドレス"
+    },
+    "actions": {
+      "back": "戻る",
+      "backToLogin": "ログインに戻る",
+      "checking": "確認中...",
+      "continue": "SSOで続行",
+      "register": "新規登録"
+    }
+  },
+  "signInPage": {
+    "title": "アカウントにログイン",
+    "authorize": {
+      "title": "続行するにはログインしてください",
+      "titleWithClient": "{{name}}にログイン",
+      "description": "メールアドレスまたは連携アカウントで続行してください"
+    },
+    "or": "または",
+    "newToProbo": "Proboは初めてですか？",
+    "actions": {
+      "usePassword": "パスワードを使用",
+      "createAccount": "アカウントを作成"
+    }
+  },
+  "oidcButton": {
+    "signInWith": "{{provider}}でログイン"
+  },
+  "topBar": {
+    "tagline": "コンソール"
+  },
+  "membershipsPage": {
+    "pageTitle": "所属組織",
+    "title": "所属組織",
+    "pendingInvitations": "保留中の招待",
+    "searchPlaceholder": "組織を検索",
+    "empty": "組織が見つかりません",
+    "emptySearch": "検索条件に一致する組織はありません。",
+    "createOrganization": {
+      "title": "組織を作成",
+      "description": "アカウントに新しい組織を追加します",
+      "action": "組織を作成"
+    }
+  },
+  "noOrganizationAccess": {
+    "title": "組織へのアクセス権がありません",
+    "description": "お使いのアカウントは、このインスタンスのどの組織にも所属していません。管理者に招待を依頼してください。",
+    "errors": {
+      "requestFailed": "リクエストに失敗しました",
+      "cannotSignOut": "ログアウトできません"
+    },
+    "actions": {
+      "signOut": "ログアウト"
+    }
+  },
+  "redirectToEmployeePortal": {
+    "missing": {
+      "title": "従業員ポータルはご利用いただけません",
+      "description": "この組織にはまだ従業員ポータルがありません。管理者に作成を依頼してください。"
+    }
+  },
+  "invitingOrganizationCard": {
+    "checkEmail": "メールをご確認ください"
+  },
+  "membershipCard": {
+    "status": {
+      "authenticated": "認証済み",
+      "sessionExpired": "セッション期限切れ",
+      "authenticationRequired": "認証が必要です"
+    },
+    "actions": {
+      "open": "開く",
+      "continue": "続行"
+    }
+  },
+  "viewerDropdown": {
+    "errors": {
+      "requestFailed": "リクエストに失敗しました",
+      "cannotSignOut": "ログアウトできません"
+    },
+    "actions": {
+      "oauthTokens": "OAuthトークン",
+      "help": "ヘルプ",
+      "logout": "ログアウト"
+    }
+  },
+  "editAvatar": {
+    "title": "プロフィール写真",
+    "description": "公開される写真をアップロードします。",
+    "messages": {
+      "updated": "プロフィール写真を更新しました。",
+      "removed": "プロフィール写真を削除しました。"
+    },
+    "errors": {
+      "update": "プロフィール写真を更新できませんでした",
+      "remove": "プロフィール写真を削除できませんでした",
+      "invalidFile": "5 MB未満のJPEGまたはPNGを使用してください。"
+    },
+    "actions": {
+      "upload": "写真をアップロード",
+      "replace": "写真を変更",
+      "remove": "写真を削除",
+      "close": "閉じる",
+      "change": "プロフィール写真を変更"
+    }
+  },
+  "newOAuthTokenPage": {
+    "pageTitle": "OAuthトークンの新規作成",
+    "breadcrumb": "新規トークン",
+    "title": "OAuthトークンの新規作成",
+    "description": "Probo APIへのアクセス範囲を限定したBearerトークンを作成します。",
+    "messages": {
+      "created": "OAuthトークンを作成しました。"
+    },
+    "errors": {
+      "create": "OAuthトークンを作成できませんでした"
+    },
+    "fields": {
+      "name": "名前",
+      "expiration": "有効期限",
+      "scopes": "スコープ"
+    },
+    "expirations": {
+      "month_one": "{{count}}か月",
+      "month_other": "{{count}}か月",
+      "year_one": "{{count}}年",
+      "year_other": "{{count}}年"
+    },
+    "actions": {
+      "create": "トークンを作成",
+      "selectAll": "すべて選択",
+      "deselectAll": "すべて選択解除",
+      "cancel": "キャンセル"
+    }
+  },
+  "oauthTokensPage": {
+    "pageTitle": "OAuthトークン",
+    "title": "OAuthトークン",
+    "description": "アカウント用に、APIアクセス範囲を限定したBearerトークンを作成します。",
+    "showing": "{{total}}件中{{shown}}件を表示",
+    "empty": {
+      "title": "OAuthトークンはありません",
+      "description": "トークンを作成すると、あなたに代わってAPIリクエストを認証できます。"
+    },
+    "columns": {
+      "name": "名前",
+      "scopes": "スコープ",
+      "created": "作成日",
+      "expires": "有効期限"
+    },
+    "actions": {
+      "create": "トークンを作成",
+      "showMore": "さらに表示"
+    }
+  },
+  "oauthTokenCredentialsDialog": {
+    "title": "トークン",
+    "description": "このBearerトークンを今すぐコピーしてください。再度表示することはできません。",
+    "actions": {
+      "copy": "コピー",
+      "copied": "コピーしました",
+      "done": "完了"
+    }
+  },
+  "oauthTokenRow": {
+    "messages": {
+      "revoked": "OAuthトークンを失効させました。"
+    },
+    "errors": {
+      "revoke": "OAuthトークンを失効できませんでした。"
+    },
+    "revoke": {
+      "title": "OAuthトークンを失効",
+      "description": "このトークンはただちに使用できなくなります。この操作は取り消せません。"
+    },
+    "actions": {
+      "revoke": "失効",
+      "revokeToken": "トークンを失効"
+    }
+  },
+  "assumePage": {
+    "title": "ログインのリダイレクト",
+    "description": "認証URLにリダイレクトしています…"
+  },
+  "newOrganizationPage": {
+    "title": "組織を作成",
+    "description": "コンプライアンスとセキュリティの管理に使う新しい組織を作成します。",
+    "details": "組織の詳細",
+    "detailsDescription": "組織の基本情報を入力してください。",
+    "messages": {
+      "created": "組織を作成しました"
+    },
+    "errors": {
+      "nameRequired": "名前は必須です",
+      "create": "組織を作成できませんでした"
+    },
+    "fields": {
+      "name": "組織名",
+      "nameHelp": "プラットフォーム全体に表示される組織の名前です。"
+    },
+    "actions": {
+      "back": "戻る",
+      "create": "組織を作成"
+    }
+  },
+  "membershipsDropdown": {
+    "searchPlaceholder": "組織を検索...",
+    "loading": "組織を読み込み中...",
+    "addOrganization": "組織を追加"
+  },
+  "membershipsDropdownInvitingItem": {
+    "title": "メールを確認して招待を承諾してください"
+  },
+  "membershipsDropdownMenu": {
+    "pendingInvitations": "保留中の招待"
+  },
+  "organizationSwitcher": {
+    "empty": "組織が見つかりません",
+    "sessionActive": "ログイン中",
+    "sessionExpired": "セッション期限切れ",
+    "sessionLocked": "未ログイン"
+  },
+  "nav": {
+    "products": "プロダクト",
+    "help": "ヘルプ",
+    "switchToDarkMode": "ダークモードに切り替え",
+    "switchToLightMode": "ライトモードに切り替え",
+    "spotlight": {
+      "title": "移動",
+      "placeholder": "移動…",
+      "empty": "一致するページはありません"
+    },
+    "groups": {
+      "governance": "ガバナンス",
+      "privacy": "プライバシー",
+      "cmp": "CMP",
+      "tprm": "TPRM",
+      "itam": "IT資産管理",
+      "riskManagement": "リスク管理",
+      "registries": "台帳",
+      "compliancePortal": "コンプライアンスポータル",
+      "employeePortal": "従業員ポータル",
+      "accessReview": "アクセスレビュー",
+      "settings": "設定"
+    },
+    "context": "組織の状況",
+    "webhooks": "Webhook",
+    "slackBot": "SlackBot",
+    "integrations": "連携",
+    "tasks": "タスク",
+    "internalControls": "内部統制",
+    "risks": "リスク",
+    "allRisks": "すべてのリスク",
+    "riskAnalyses": "リスク分析",
+    "frameworks": "フレームワーク",
+    "iam": "IAM",
+    "users": "ユーザー",
+    "authProvisioning": "認証とプロビジョニング",
+    "samlSso": "SAML SSO",
+    "scim": "SCIM",
+    "auditLog": "監査ログ",
+    "allThirdParties": "すべての取引先",
+    "thirdParties": "取引先",
+    "thirdPartyCompliance": "コンプライアンス",
+    "thirdPartyRisk": "リスク",
+    "thirdPartyProfile": "プロフィール",
+    "thirdPartyStakeholders": "利害関係者",
+    "thirdPartyAssurance": "保証",
+    "thirdPartyAgreements": "契約",
+    "thirdPartyServices": "サービス",
+    "thirdPartySupplyChain": "サプライチェーン",
+    "thirdPartyRisks": "リスクアセスメント",
+    "thirdPartyInternalControls": "内部統制",
+    "documents": "ドキュメント",
+    "assets": "資産",
+    "devices": "端末",
+    "data": "データ",
+    "audits": "監査",
+    "findings": "指摘事項",
+    "businessFunctions": "業務機能",
+    "aiSystems": "AIシステム",
+    "obligations": "義務",
+    "processingActivities": "処理活動",
+    "dataProtectionImpactAssessments": "DPIA",
+    "transferImpactAssessments": "TIA",
+    "statementsOfApplicability": "SoA",
+    "rightsRequests": "本人からの請求",
+    "campaigns": "キャンペーン",
+    "connections": "コネクター",
+    "sources": "ソース",
+    "employeePortalSettings": "設定",
+    "compliancePortals": "コンプライアンスポータル",
+    "compliancePortalsSettings": "設定",
+    "compliancePortalsHosting": "ホスティング",
+    "compliancePortalsVisitors": "訪問者",
+    "compliancePortalsIntegrations": "連携",
+    "compliancePortalsPages": "ページ",
+    "compliancePortalsLanding": "ランディング",
+    "compliancePortalsDocuments": "ドキュメント",
+    "compliancePortalsSubprocessors": "サブプロセッサ",
+    "compliancePortalsUpdates": "更新情報",
+    "compliancePortalsRightRequests": "本人からの請求",
+    "cookieBanners": "Cookieバナー",
+    "cookieBannersSettings": "設定",
+    "cookieBannersInstall": "インストール",
+    "cookieBannersTranslations": "翻訳",
+    "cookieBannersTrackers": "トラッカー",
+    "cookieBannersResources": "リソース",
+    "cookieBannersTrail": "同意履歴",
+    "cookieBannersTCF": "TCF",
+    "workspaceSettings": "ワークスペース",
+    "cookieBannerSwitcher": {
+      "label": "Cookieバナー",
+      "select": "バナーを選択",
+      "new": "新規バナー",
+      "create": "新規Cookieバナー",
+      "empty": "Cookieバナーはありません",
+      "loading": "読み込み中…",
+      "showMore": "さらに表示"
+    },
+    "thirdPartySwitcher": {
+      "label": "取引先",
+      "select": "取引先を選択",
+      "create": "新規取引先",
+      "empty": "取引先はありません",
+      "loading": "読み込み中…"
+    },
+    "compliancePortalSwitcher": {
+      "label": "コンプライアンスポータル",
+      "new": "新規ポータル",
+      "create": "新規ポータル",
+      "empty": "コンプライアンスポータルはありません",
+      "loading": "読み込み中…",
+      "open": "ポータルを開く"
+    }
+  },
+  "viewerMembershipDropdown": {
+    "errors": {
+      "requestFailed": "リクエストに失敗しました",
+      "cannotSignOut": "ログアウトできません"
+    },
+    "actions": {
+      "oauthTokens": "OAuthトークン",
+      "employeePortal": "従業員ポータル",
+      "switchToDarkMode": "ダークモードに切り替え",
+      "switchToLightMode": "ライトモードに切り替え",
+      "help": "ヘルプ",
+      "logout": "ログアウト"
+    }
+  },
+  "usersPage": {
+    "empty": "ユーザーはいません",
+    "emptyFiltered": "現在のフィルターに一致するユーザーはいません。",
+    "actions": {
+      "add": "ユーザーを追加",
+      "cancel": "キャンセル",
+      "previous": "前へ",
+      "next": "次へ"
+    }
+  },
+  "userPage": {
+    "back": "ユーザー",
+    "empty": "—",
+    "deactivatedCallout": "このユーザーは無効化されています。",
+    "notFound": "ユーザーが見つかりません",
+    "details": {
+      "title": "詳細",
+      "description": "役職、追加のメールアドレス、契約日。"
+    }
+  },
+  "newUserPage": {
+    "title": "ユーザーを追加",
+    "description": "この組織に招待するユーザーを追加します。",
+    "notFound": "この組織にユーザーを追加することはできません"
+  },
+  "usersList": {
+    "searchPlaceholder": "ユーザーを検索...",
+    "contract": {
+      "range": "{{start}} – {{end}}",
+      "empty": "—"
+    },
+    "created": "作成日：{{date}}",
+    "filters": {
+      "allStatuses": "すべてのステータス",
+      "status": "ステータス",
+      "pending": "保留中",
+      "active": "有効",
+      "deactivated": "無効",
+      "allRoles": "すべてのロール",
+      "allTypes": "すべてのユーザー種別",
+      "role": "Proboロール",
+      "type": "ユーザー種別"
+    }
+  },
+  "userListItem": {
+    "messages": {
+      "invitationSent": "招待を送信しました",
+      "deactivated": "ユーザーを無効化しました",
+      "removed": "ユーザーを削除しました",
+      "roleUpdated": "ロールを更新しました"
+    },
+    "errors": {
+      "sendInvitation": "招待を送信できませんでした",
+      "deactivate": "ユーザーを無効化できませんでした",
+      "remove": "ユーザーを削除できませんでした",
+      "updateRole": "ロールを更新できませんでした"
+    },
+    "confirmations": {
+      "sendActivationEmail": "{{name}}にアクティベーションメールを送信しますか？",
+      "deactivate": "{{name}}を無効化してもよろしいですか？",
+      "remove": "{{name}}を削除してもよろしいですか？"
+    },
+    "dialogs": {
+      "sendTitle": "アクティベーションメールを送信",
+      "deactivateTitle": "ユーザーを無効化",
+      "removeTitle": "ユーザーを削除"
+    },
+    "actions": {
+      "more": "その他の操作",
+      "send": "送信",
+      "sendActivationMail": "アクティベーションメールを送信",
+      "resendActivationMail": "アクティベーションメールを再送信",
+      "deactivatePerson": "ユーザーを無効化",
+      "removePerson": "ユーザーを削除"
+    }
+  },
+  "userForm": {
+    "messages": {
+      "created": "ユーザーを作成しました。",
+      "updated": "ユーザーを更新しました。"
+    },
+    "errors": {
+      "create": "ユーザーを作成できませんでした",
+      "update": "ユーザーを更新できませんでした"
+    },
+    "fields": {
+      "fullName": "氏名",
+      "emailAddress": "メールアドレス",
+      "role": "Proboロール",
+      "type": "ユーザー種別",
+      "position": "役職",
+      "positionPlaceholder": "例：CEO、CFOなど",
+      "additionalEmails": "追加のメールアドレス",
+      "additionalEmail": "追加のメールアドレス{{index}}",
+      "additionalEmailPlaceholder": "name@example.com",
+      "contractStartDate": "契約開始日",
+      "contractEndDate": "契約終了日"
+    },
+    "roleDescriptions": {
+      "owner": "すべての機能にフルアクセスできます",
+      "admin": "組織の設定とAPIキーを除くすべての機能にフルアクセスできます",
+      "viewer": "閲覧のみ可能です",
+      "auditor": "設定とタスクを除き、閲覧のみ可能です",
+      "employee": "従業員ページにアクセスできます",
+      "compliancePortalManager": "コンプライアンスポータルを管理できます",
+      "compliancePortalAccessManager": "コンプライアンスポータルの訪問者のアクセスを管理できます"
+    },
+    "kinds": {
+      "EMPLOYEE": "従業員",
+      "CONTRACTOR": "業務委託",
+      "SERVICE_ACCOUNT": "サービスアカウント"
+    },
+    "actions": {
+      "create": "作成",
+      "addEmail": "メールアドレスを追加",
+      "removeEmail": "メールアドレスを削除"
+    }
+  },
+  "auditLogPage": {
+    "title": "監査ログ",
+    "description": "組織内で実行されたすべての操作の記録です。エントリーは変更・削除できません。",
+    "empty": "監査ログのエントリーはまだありません。",
+    "showing": "{{total}}件中{{shown}}件のエントリーを表示",
+    "columns": {
+      "date": "日時",
+      "actor": "実行者",
+      "action": "操作",
+      "resource": "リソース"
+    },
+    "actions": {
+      "showMore": "さらに表示"
+    },
+    "export": {
+      "title": "監査ログをエクスポート",
+      "description": "期間を選択して、監査ログのエントリーをCSVでエクスポートします。ダウンロードリンクをメールでお送りします。",
+      "fields": {
+        "from": "開始日",
+        "to": "終了日"
+      },
+      "actions": {
+        "export": "エクスポート",
+        "exporting": "エクスポート中..."
+      },
+      "messages": {
+        "successTitle": "成功",
+        "success": "エクスポートを開始しました。準備ができたら、ダウンロードリンクをメールでお送りします。"
+      },
+      "errors": {
+        "title": "エラー",
+        "request": "監査ログのエクスポートをリクエストできませんでした"
+      }
+    }
+  },
+  "samlSsoPage": {
+    "title": "SAMLシングルサインオン",
+    "description": "メールドメインごとにSAML 2.0のシングルサインオンを設定します。",
+    "actions": {
+      "add": "SAML SSOを追加",
+      "previous": "前へ",
+      "next": "次へ"
+    }
+  },
+  "scimPage": {
+    "title": "SCIM",
+    "description": "IDプロバイダーを接続して、組織にユーザーを自動同期します。",
+    "setup": {
+      "google": {
+        "title": "Google Workspace / Cloud Identity",
+        "description": "Google WorkspaceまたはGoogle Cloud Identityを接続して、SCIMでユーザーを自動同期します。",
+        "action": "接続"
+      },
+      "microsoft": {
+        "title": "Microsoft 365",
+        "description": "Microsoft 365を接続して、SCIMでユーザーを自動同期します。",
+        "action": "接続"
+      },
+      "manual": {
+        "title": "手動SCIM",
+        "description": "IDプロバイダーが一覧にない場合は、SCIMを手動で設定します。",
+        "action": "設定"
+      }
+    },
+    "eventHistory": "イベント履歴",
+    "connecting": "IDプロバイダーを接続中",
+    "export": {
+      "title": "SCIMイベントをエクスポート",
+      "description": "期間を選択して、SCIMイベントをCSVでエクスポートします。ダウンロードリンクをメールでお送りします。",
+      "fields": {
+        "from": "開始日",
+        "to": "終了日"
+      },
+      "actions": {
+        "export": "エクスポート",
+        "cancel": "キャンセル"
+      },
+      "messages": {
+        "success": "エクスポートを開始しました。準備ができたら、ダウンロードリンクをメールでお送りします。"
+      },
+      "errors": {
+        "request": "SCIMイベントのエクスポートをリクエストできませんでした",
+        "range": "期間は1年以内で指定してください"
+      }
+    }
+  },
+  "authLayout": {
+    "title": "認証とプロビジョニング",
+    "tabs": {
+      "samlSso": "SAML SSO",
+      "scim": "SCIM"
+    }
+  },
+  "slackBotSettingsPage": {
+    "title": "SlackBot",
+    "connectionTitle": "Slack",
+    "emptyDescription": "通知を受け取るには、Probo Slackアプリをインストールしてください",
+    "installed": "Probo Slackアプリはインストール済みです",
+    "uninstallConfirmation": "Probo Slackアプリをアンインストールしますか？ProboはこのワークスペースでのSlackイベントの受信と通知の送信を停止します。",
+    "messages": {
+      "uninstalled": "Probo Slackアプリをアンインストールしました"
+    },
+    "errors": {
+      "uninstall": "Probo Slackアプリをアンインストールできませんでした"
+    },
+    "actions": {
+      "install": "インストール",
+      "configure": "設定",
+      "uninstall": "アンインストール",
+      "uninstalling": "アンインストール中..."
+    }
+  },
+  "editSamlConfigurationForm": {
+    "messages": {
+      "updated": "SAML設定を更新しました。"
+    },
+    "errors": {
+      "update": "SAML設定を更新できませんでした。もう一度お試しください。"
+    }
+  },
+  "googleWorkspaceConnector": {
+    "name": "Google Workspace / Cloud Identity",
+    "connectedOn": "接続日：{{date}}",
+    "status": {
+      "disabled": "無効",
+      "error": "エラー",
+      "syncing": "同期中",
+      "connected": "接続済み"
+    },
+    "messages": {
+      "disconnected": "Google Workspace / Cloud Identityの接続を解除しました",
+      "excludedUsersUpdated": "除外するユーザー名を更新しました"
+    },
+    "errors": {
+      "bridgeSync": "ブリッジの同期に失敗しています。詳細はイベント履歴を確認してください。",
+      "bridgeDisabled": "ブリッジは無効です",
+      "bridgeFailed": "ブリッジがエラー状態です",
+      "update": "除外ユーザーを更新できませんでした",
+      "disconnect": "Google Workspace / Cloud Identityの接続を解除できませんでした"
+    },
+    "actions": {
+      "settings": "設定",
+      "add": "追加",
+      "remove": "削除",
+      "disconnect": "接続解除"
+    },
+    "excludedCount_one": "除外ユーザー{{count}}件",
+    "excludedCount_other": "除外ユーザー{{count}}件",
+    "settings": {
+      "title": "Google Workspace / Cloud Identityの設定",
+      "excludedUserNames": "除外するユーザー名",
+      "excludedUserNamesDescription": "これらのユーザー名のユーザーは、Google Workspace / Cloud Identityから同期されません。",
+      "noExcludedUserNames": "除外するユーザー名はありません。Google Workspace / Cloud Identityのすべてのユーザーが同期されます。",
+      "invalidEmail": "有効なメールアドレスを入力してください"
+    },
+    "disconnect": {
+      "title": "Google Workspace / Cloud Identityの接続を解除",
+      "description": "Google Workspace / Cloud Identityとの連携を解除します。以降、SCIMによるユーザーの自動同期は行われません。",
+      "warning": "この操作は取り消せません。"
+    }
+  },
+  "microsoft365Connector": {
+    "name": "Microsoft 365",
+    "connectedOn": "接続日：{{date}}",
+    "status": {
+      "disabled": "無効",
+      "error": "エラー",
+      "syncing": "同期中",
+      "connected": "接続済み"
+    },
+    "messages": {
+      "disconnected": "Microsoft 365の接続を解除しました",
+      "excludedUsersUpdated": "除外するユーザー名を更新しました"
+    },
+    "errors": {
+      "bridgeSync": "ブリッジの同期に失敗しています。詳細はイベント履歴を確認してください。",
+      "bridgeDisabled": "ブリッジは無効です",
+      "bridgeFailed": "ブリッジがエラー状態です",
+      "update": "除外ユーザーを更新できませんでした",
+      "disconnect": "Microsoft 365の接続を解除できませんでした"
+    },
+    "actions": {
+      "settings": "設定",
+      "add": "追加",
+      "remove": "削除",
+      "disconnect": "接続解除"
+    },
+    "excludedCount_one": "除外ユーザー{{count}}件",
+    "excludedCount_other": "除外ユーザー{{count}}件",
+    "settings": {
+      "title": "Microsoft 365の設定",
+      "excludedUserNames": "除外するユーザー名",
+      "excludedUserNamesDescription": "これらのユーザー名のユーザーは、Microsoft 365から同期されません。",
+      "noExcludedUserNames": "除外するユーザー名はありません。Microsoft 365のすべてのユーザーが同期されます。",
+      "invalidEmail": "有効なメールアドレスを入力してください"
+    },
+    "disconnect": {
+      "title": "Microsoft 365の接続を解除",
+      "description": "Microsoft 365との連携を解除します。以降、SCIMによるユーザーの自動同期は行われません。",
+      "warning": "この操作は取り消せません。"
+    }
+  },
+  "newSamlSsoPage": {
+    "title": "SAML SSOを追加",
+    "description": "メールドメインにSAML 2.0のシングルサインオンを設定します。",
+    "back": "SAML SSO",
+    "notFound": "この組織にSAML SSOを追加することはできません"
+  },
+  "samlConfigurationPage": {
+    "title": "SAML SSO",
+    "back": "SAML SSO",
+    "notFound": "SAML設定が見つかりません"
+  },
+  "newSamlConfigurationForm": {
+    "messages": {
+      "created": "SAML設定を作成しました。"
+    },
+    "errors": {
+      "create": "SAML設定を作成できませんでした"
+    }
+  },
+  "samlConfigurationForm": {
+    "sections": {
+      "identityProvider": "アイデンティティプロバイダー",
+      "attributeMapping": "属性マッピング"
+    },
+    "fields": {
+      "emailDomain": "メールドメイン",
+      "emailDomainLocked": "メールドメインは作成後に変更できません",
+      "emailDomainHelp": "このSAML設定を適用するメールドメイン（例：example.com）",
+      "enforcementPolicy": "適用ポリシー",
+      "idpEntityId": "IdPエンティティID",
+      "idpSsoUrl": "IdP SSO URL",
+      "idpCertificate": "IdP X.509証明書",
+      "emailAttribute": "メール属性",
+      "firstNameAttribute": "名の属性",
+      "lastNameAttribute": "姓の属性",
+      "roleAttribute": "ロール属性",
+      "autoSignupEnabled": "SAMLによるユーザーの自動登録を有効にする"
+    },
+    "enforcement": {
+      "optional": "任意",
+      "required": "必須",
+      "off": "オフ"
+    },
+    "enforcementDescriptions": {
+      "off": "チームメンバーはシングルサインオンを使用できず、パスワードでログインする必要があります",
+      "required": "チームメンバーはシングルサインオンでログインする必要があります",
+      "optional": "チームメンバーはシングルサインオンまたはパスワードのどちらでもログインできます"
+    },
+    "actions": {
+      "update": "設定を更新"
+    }
+  },
+  "samlConfigurationList": {
+    "messages": {
+      "deleted": "SAML設定を削除しました。",
+      "copied": "クリップボードにコピーしました"
+    },
+    "errors": {
+      "delete": "SAML設定を削除できませんでした。もう一度お試しください。",
+      "copy": "クリップボードにコピーできませんでした"
+    },
+    "delete": {
+      "title": "SAML設定を削除",
+      "description": "{{domain}}のSAML設定を削除してもよろしいですか？この操作は取り消せません。"
+    },
+    "empty": {
+      "description": "メールドメインごとにSAML 2.0のシングルサインオンを設定します。"
+    },
+    "pending": {
+      "description": "このドメインの管理権限を確認するため、DNSに<type>TXT</type>レコードを追加してください。"
+    },
+    "dns": {
+      "name": "名前",
+      "value": "値",
+      "copyName": "名前をコピー",
+      "copyValue": "値をコピー",
+      "note": "DNSの変更が反映されるまで最大48時間かかる場合がありますが、通常は数分で完了します。"
+    },
+    "enforcement": {
+      "optional": "SSOは<policy>任意</policy>です。メンバーはシングルサインオンまたはパスワードを使用できます。",
+      "required": "SSOは<policy>必須</policy>です。メンバーはシングルサインオンでログインする必要があります。",
+      "off": "SSOは<policy>オフ</policy>です。メンバーはパスワードを使用する必要があります。"
+    },
+    "signup": {
+      "enabled": "SAMLによる新規登録は<policy>オン</policy>です。このドメインの新規ユーザーは自動的に参加できます。",
+      "disabled": "SAMLによる新規登録は<policy>オフ</policy>です。既存のユーザーのみログインできます。"
+    },
+    "fields": {
+      "ssoUrl": "SSO URL"
+    },
+    "title": {
+      "pending": "このドメインを確認",
+      "active": "SSOは有効です",
+      "off": "SSOはオフです"
+    },
+    "actions": {
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "copyUrl": "URLをコピー",
+      "open": "開く"
+    }
+  },
+  "scimConfiguration": {
+    "errors": {
+      "create": "SCIMの手動設定に失敗しました",
+      "copy": "クリップボードにコピーできませんでした",
+      "regenerate": "ベアラートークンを再生成できませんでした",
+      "delete": "SCIM設定を削除できませんでした"
+    },
+    "messages": {
+      "copyToken": "ベアラートークンを今すぐコピーしてください。再表示はされません。",
+      "deleted": "SCIMでプロビジョニングされたすべてのメンバーシップを手動ソースに変更しました。",
+      "regenerated": "新しいベアラートークンを今すぐコピーしてください。再表示はされません。",
+      "copied": "クリップボードにコピーしました"
+    },
+    "configuredOn": "{{date}}に設定",
+    "fields": {
+      "endpointUrl": "SCIMエンドポイントURL",
+      "bearerToken": "ベアラートークン"
+    },
+    "tokenWarning": "このトークンは一度だけ表示されます。今すぐコピーしてください。",
+    "actions": {
+      "regenerateToken": "トークンを再生成",
+      "deleteConfiguration": "設定を削除",
+      "cancel": "キャンセル",
+      "delete": "削除",
+      "copyEndpointUrl": "SCIMエンドポイントURLをコピー",
+      "copyBearerToken": "ベアラートークンをコピー"
+    },
+    "delete": {
+      "title": "SCIM手動設定を削除",
+      "description": "SCIMの手動設定を削除してもよろしいですか？次の処理が行われます。",
+      "effects": {
+        "disable": "SCIMの手動プロビジョニングを無効にします",
+        "changeMembershipSource": "SCIMでプロビジョニングされたすべてのメンバーシップを手動ソースに変更します",
+        "invalidateToken": "現在のベアラートークンを無効にします"
+      },
+      "note": "既存のユーザーは削除されず、メンバーシップのソースのみが変更されます。"
+    }
+  },
+  "scimEventList": {
+    "details": {
+      "user": "ユーザー",
+      "ipAddress": "IPアドレス",
+      "statusCode": "ステータスコード",
+      "error": "エラー"
+    },
+    "request": "リクエスト",
+    "response": "レスポンス",
+    "empty": "SCIMイベントはまだ記録されていません。",
+    "copiedToClipboard": "クリップボードにコピーしました",
+    "copy": "コピー",
+    "copyFailed": "クリップボードにコピーできませんでした",
+    "actions": {
+      "previous": "前へ",
+      "next": "次へ"
+    }
+  },
+  "accessReviewCampaignsPage": {
+    "title": "キャンペーン",
+    "description": "組織のシステムやアプリケーションに対するユーザーのアクセス権をレビュー・管理します。",
+    "errors": {
+      "delete": "キャンペーンを削除できませんでした"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "deleted": "キャンペーンを削除しました。"
+    },
+    "deleteConfirmation": "「{{name}}」を完全に削除します。この操作は取り消せません。",
+    "actions": {
+      "new": "新規キャンペーン",
+      "delete": "削除",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む"
+    },
+    "columns": {
+      "name": "名前",
+      "status": "ステータス",
+      "createdAt": "作成日時"
+    },
+    "status": {
+      "draft": "下書き",
+      "in_progress": "対応中",
+      "pending_actions": "対応待ち",
+      "completed": "完了",
+      "cancelled": "キャンセル済み"
+    },
+    "empty": "アクセスレビューのキャンペーンはまだありません。最初のキャンペーンを作成して、アクセスのレビューを始めましょう。"
+  },
+  "createCsvAccessReviewSourcePage": {
+    "pageTitle": "CSVアクセスソースを追加",
+    "title": "CSVアクセスソースを追加",
+    "description": "ヘッダー行を含むCSVの内容を貼り付けてください。このソースは保存され、アクセスレビューで利用できます。",
+    "permissionDenied": "アクセスソースを作成する権限がありません。",
+    "errors": {
+      "create": "アクセスソースを作成できませんでした"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "created": "アクセスソースを作成しました。"
+    },
+    "fields": {
+      "name": "名前",
+      "csvData": "CSVデータ",
+      "csvPlaceholder": "email,full_name,role,job_title,is_admin,active,external_id"
+    },
+    "supportedColumns": "対応する列：email、full_name、role、job_title、is_admin、active、external_id。",
+    "actions": {
+      "back": "戻る",
+      "create": "作成"
+    }
+  },
+  "accessReviewSourceRow": {
+    "errors": {
+      "delete": "アクセスソースを削除できませんでした",
+      "configure": "ソースを設定できませんでした"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "deleted": "アクセスソースを削除しました。",
+      "organizationUpdated": "組織を更新しました。"
+    },
+    "deleteConfirmation": "「{{name}}」を完全に削除します。この操作は取り消せません。",
+    "actions": {
+      "reconnect": "再接続",
+      "delete": "削除",
+      "cancel": "キャンセル"
+    },
+    "loading": "読み込み中…",
+    "selectOrganization": "組織を選択",
+    "organizationSlugPlaceholder": "org-slug",
+    "organizations": {
+      "empty": {
+        "title": "{{provider}}から組織が返されませんでした",
+        "description": "組織がProboのアクセスをまだ承認していないか、接続したアカウントが組織ではなく個人アカウントの可能性があります。下にスラッグを入力しても、Proboにアクセス権が付与されるまでは機能しません。",
+        "remediation": "Proboのアクセスを確認",
+        "manualLabel": "組織のスラッグを手動で入力"
+      },
+      "unavailable": {
+        "reconnectTitle": "{{provider}}は未接続です",
+        "credentialsTitle": "{{provider}}の認証情報が無効です",
+        "reconnectDescription": "このソースを再接続して、組織へのアクセスを回復してください。",
+        "credentialsDescription": "現在の認証情報ではProboがこのソースを読み取れません。認証情報と、その認証情報が{{provider}}で持つ権限を確認してください。",
+        "notAuthorizedTitle": "{{provider}}がこのリクエストを拒否しました",
+        "notAuthorizedDescription": "{{provider}}は認証情報を受け付けましたが、Proboが行ったリクエストを拒否しました。このソースに入力した設定、この認証情報が{{provider}}で持つ権限、およびご利用のプランにProboが使用するAPIが含まれているかを確認してください。"
+      }
+    }
+  },
+  "entryDecisionActions": {
+    "errors": {
+      "record": "判断を記録できませんでした"
+    },
+    "messages": {
+      "error": "エラー"
+    },
+    "actions": {
+      "approve": "承認",
+      "revoke": "取り消し",
+      "modify": "変更",
+      "escalate": "エスカレーション",
+      "confirm": "確定"
+    },
+    "placeholder": "判断を選択…",
+    "note": {
+      "title": "判断メモ",
+      "description": "この判断の理由を入力してください。",
+      "label": "メモ"
+    }
+  },
+  "entryFlagSelect": {
+    "errors": {
+      "update": "エントリーにフラグを設定できませんでした"
+    },
+    "messages": {
+      "error": "エラー"
+    },
+    "groups": {
+      "account": "アカウント",
+      "privileges": "権限",
+      "anomaly": "異常"
+    },
+    "flags": {
+      "orphaned": "孤立アカウント",
+      "dormant": "休眠",
+      "terminated_user": "退職済みユーザー",
+      "contractor_expired": "契約期間満了の外部委託者",
+      "excessive": "過剰な権限",
+      "sod_conflict": "職務分掌の競合",
+      "privileged_access": "特権アクセス",
+      "role_creep": "ロールの肥大化",
+      "no_business_justification": "業務上の根拠なし",
+      "out_of_department": "部門外",
+      "shared_account": "共有アカウント",
+      "inactive": "無効",
+      "role_mismatch": "ロールの不一致",
+      "new": "新規",
+      "none": "なし"
+    }
+  },
+  "campaignDetailPage": {
+    "errors": {
+      "start": "キャンペーンを開始できませんでした",
+      "delete": "キャンペーンを削除できませんでした",
+      "complete": "キャンペーンを完了できませんでした",
+      "recordDecisions_one": "{{count}}件のエントリーの判断を記録できませんでした。",
+      "recordDecisions_other": "{{count}}件のエントリーの判断を記録できませんでした。",
+      "updateFlags_one": "{{count}}件のエントリーのフラグを更新できませんでした。",
+      "updateFlags_other": "{{count}}件のエントリーのフラグを更新できませんでした。"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "started": "キャンペーンを開始しました。ソースを取得しています。",
+      "deleted": "キャンペーンを削除しました。",
+      "completed": "キャンペーンを完了しました。",
+      "decisionsRecorded": "判断を記録しました。",
+      "flagsUpdated": "選択したエントリーのフラグを更新しました。"
+    },
+    "deleteConfirmation": "「{{name}}」を完全に削除します。この操作は取り消せません。",
+    "completeConfirmation": "このキャンペーンを完了してもよろしいですか？この操作は取り消せません。すべての判断が確定されます。",
+    "status": {
+      "draft": "下書き",
+      "in_progress": "対応中",
+      "pending_actions": "対応待ち",
+      "completed": "完了",
+      "cancelled": "キャンセル済み",
+      "active": "有効",
+      "disabled": "無効"
+    },
+    "fetchStatus": {
+      "success": "成功",
+      "failed": "失敗",
+      "fetching": "取得中",
+      "queued": "待機中"
+    },
+    "mfaStatus": {
+      "enabled": "有効",
+      "disabled": "無効",
+      "unknown": "不明"
+    },
+    "accountStatus": {
+      "active": "有効",
+      "disabled": "無効",
+      "unknown": "不明"
+    },
+    "authMethod": {
+      "sso": "SSO",
+      "password": "パスワード",
+      "api_key": "APIキー",
+      "oauth2": "OAuth2",
+      "ssh": "SSH",
+      "service_account": "サービスアカウント",
+      "unknown": "不明"
+    },
+    "decisions": {
+      "pending": "保留中",
+      "approved": "承認済み",
+      "revoke": "取り消し済み",
+      "defer": "変更済み",
+      "escalate": "エスカレーション済み"
+    },
+    "flags": {
+      "orphaned": "孤立アカウント",
+      "dormant": "休眠",
+      "terminated_user": "退職済みユーザー",
+      "contractor_expired": "契約期間満了の外部委託者",
+      "excessive": "過剰な権限",
+      "sod_conflict": "職務分掌の競合",
+      "privileged_access": "特権アクセス",
+      "role_creep": "ロールの肥大化",
+      "no_business_justification": "業務上の根拠なし",
+      "out_of_department": "部門外",
+      "shared_account": "共有アカウント",
+      "inactive": "無効",
+      "role_mismatch": "ロールの不一致",
+      "new": "新規",
+      "none": "なし"
+    },
+    "actions": {
+      "delete": "削除",
+      "complete": "完了",
+      "completing": "完了中…",
+      "completeCampaign": "キャンペーンを完了",
+      "deleting": "削除中…",
+      "addSource": "ソースを追加",
+      "starting": "開始中…",
+      "startCampaign": "キャンペーンを開始",
+      "clearSelection": "クリア",
+      "selectAll": "すべて選択",
+      "selectAllLoaded": "読み込み済みをすべて選択（{{loaded}}）",
+      "approve": "承認",
+      "revoke": "取り消し",
+      "modify": "変更",
+      "escalate": "エスカレーション",
+      "noDecision": "判断なし",
+      "confirm": "確定",
+      "submit": "送信"
+    },
+    "emptySources": "このキャンペーンにはソースが設定されていません。",
+    "emptyFiltered": "現在のフィルターに一致するエントリーはありません。",
+    "fetchFailed": "取得に失敗しました",
+    "emptyEntries": "このソースのエントリーはありません。",
+    "filters": {
+      "searchEmail": "メールを検索…",
+      "allConnectors": "すべてのコネクター",
+      "allMfa": "すべてのMFA",
+      "allAuthMethods": "すべての認証方式",
+      "allAdmin": "すべての管理者",
+      "allAccountStatuses": "すべてのステータス"
+    },
+    "columns": {
+      "admin": "管理者",
+      "mfa": "MFA",
+      "authMethod": "認証",
+      "lastLogin": "最終ログイン"
+    },
+    "values": {
+      "yes": "はい",
+      "no": "いいえ",
+      "unknown": "不明"
+    },
+    "selected_one": "{{count}}件を選択中",
+    "selected_other": "{{count}}件を選択中",
+    "selectionLoadedOnly": "これまでに読み込まれたエントリーのみ選択できます。スクロールしてさらに読み込んでください。",
+    "decisionPlaceholder": "判断を設定…",
+    "selectEntry": "{{name}}を選択",
+    "showAdditionalRoles_one": "追加の{{count}}件のロールを表示",
+    "showAdditionalRoles_other": "追加の{{count}}件のロールを表示",
+    "additionalRoles_one": "追加の{{count}}件のロール",
+    "additionalRoles_other": "追加の{{count}}件のロール",
+    "flagsPlaceholder": "フラグを設定…",
+    "note": {
+      "title": "判断メモ",
+      "description": "この判断の理由を入力してください。",
+      "label": "メモ"
+    }
+  },
+  "addAccessReviewSourceDialog": {
+    "actions": {
+      "open": "開く"
+    },
+    "csv": {
+      "title": "CSV",
+      "description": "CSVデータを直接アップロードして、アクセスソースとして使用します。"
+    }
+  },
+  "addCampaignSourceDialog": {
+    "errors": {
+      "add": "ソースを追加できませんでした"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "added": "キャンペーンにソースを追加しました。"
+    },
+    "breadcrumb": {
+      "campaign": "キャンペーン",
+      "addSource": "ソースを追加"
+    },
+    "loading": "読み込み中…",
+    "actions": {
+      "add": "追加"
+    },
+    "allSourcesAdded": "利用可能なソースはすべてこのキャンペーンに追加済みです。",
+    "selectSource": "ソースを選択"
+  },
+  "createAccessReviewCampaignDialog": {
+    "errors": {
+      "create": "キャンペーンを作成できませんでした"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "created": "キャンペーンを作成しました。"
+    },
+    "breadcrumb": {
+      "accessReviews": "キャンペーン",
+      "newCampaign": "新規キャンペーン"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "sources": "ソース"
+    },
+    "loadingSources": "ソースを読み込み中…",
+    "actions": {
+      "create": "作成"
+    },
+    "emptySources": "利用可能なソースがありません。先にソースのページでソースを追加してください。"
+  },
+  "postHogDeploymentField": {
+    "deployment": {
+      "label": "デプロイメント",
+      "placeholder": "デプロイメントを選択",
+      "usCloud": "PostHog Cloud（US）",
+      "euCloud": "PostHog Cloud（EU）",
+      "selfHosted": "セルフホスト"
+    },
+    "instanceUrl": "インスタンスURL"
+  },
+  "newAccessReviewSourcePage": {
+    "title": "ソースを追加",
+    "description": "設定で接続済みのアカウントからソースを追加します。",
+    "permissionDenied": "アクセスソースを作成する権限がありません。",
+    "searchPlaceholder": "コネクターを検索",
+    "actions": {
+      "new": "新規",
+      "add": "追加",
+      "addCount": "追加（{{count}}）",
+      "select": "{{name}}を選択"
+    }
+  },
+  "accessReviewSourcesPage": {
+    "title": "ソース",
+    "description": "アクセスレビューで使用するソースです。",
+    "errors": {
+      "create": "アクセスソースを作成できませんでした"
+    },
+    "messages": {
+      "error": "エラー",
+      "success": "成功",
+      "created": "アクセスソースを作成しました。"
+    },
+    "actions": {
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む",
+      "retry": "再試行",
+      "more": "その他の操作",
+      "addAll": "すべて追加",
+      "edit": "編集",
+      "addSources": "ソースを追加"
+    },
+    "accountCount_one": "{{count}}件のアカウント",
+    "accountCount_other": "{{count}}件のアカウント",
+    "sections": {
+      "connected": "ソース"
+    },
+    "needsOrganization": "先に設定で組織を選択してください。",
+    "emptyAccounts": "利用可能なアカウントがありません。先に設定でベンダーを接続してください。",
+    "searchPlaceholder": "ソースを検索",
+    "emptyConnected": "接続済みのアクセスソースはまだありません。",
+    "emptyConnectedSearch": "検索条件に一致する接続済みソースはありません。",
+    "searchLoadFailed": "一部のソースを読み込めなかったため、検索結果が不完全です。再試行してすべてのソースを検索してください。",
+    "emptyAvailableSearch": "検索条件に一致する利用可能なプロバイダーはありません。",
+    "comingSoon": "近日対応予定"
+  },
+  "assetDetailsPage": {
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "amountRequired": "数量は必須です",
+      "dataTypesStoredRequired": "保存するデータの種類は必須です",
+      "ownerRequired": "オーナーは必須です"
+    },
+    "assetTypes": {
+      "physical": "物理",
+      "virtual": "仮想"
+    },
+    "fields": {
+      "name": "名前",
+      "amount": "数量",
+      "assetType": "資産の種類",
+      "dataTypesStored": "保存するデータの種類",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "actions": {
+      "delete": "削除",
+      "update": "更新",
+      "updating": "更新中…"
+    }
+  },
+  "assetsPage": {
+    "title": "資産",
+    "description": "組織の資産とその機密区分を管理します。",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "addAsset": "資産を追加"
+    }
+  },
+  "assetsMultiSelectField": {
+    "addPlaceholder": "資産を追加…",
+    "empty": "利用可能な資産はありません",
+    "remove": "{{name}}を削除"
+  },
+  "businessFunctionsPage": {
+    "title": "業務機能",
+    "description": "組織の業務機能の台帳を管理します。",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "add": "業務機能を追加",
+      "loadMore": "さらに読み込む",
+      "loading": "読み込み中…"
+    },
+    "filters": {
+      "allClassifications": "すべての分類"
+    },
+    "classifications": {
+      "critical": "重大",
+      "important": "重要",
+      "secondary": "二次的",
+      "standard": "標準"
+    },
+    "columns": {
+      "referenceId": "参照ID",
+      "name": "名前",
+      "classification": "分類",
+      "mtd": "MTD",
+      "rto": "RTO",
+      "rpo": "RPO",
+      "owner": "オーナー",
+      "assets": "資産",
+      "thirdParties": "取引先",
+      "actions": "操作"
+    },
+    "none": "なし",
+    "empty": {
+      "title": "業務機能はまだありません",
+      "description": "最初の業務機能を作成して始めましょう。",
+      "filteredTitle": "一致する業務機能はありません",
+      "filteredDescription": "選択した分類に一致する業務機能はありません。"
+    }
+  },
+  "businessFunctionListItem": {
+    "actions": {
+      "delete": "削除"
+    },
+    "messages": {
+      "success": "成功",
+      "deleted": "業務機能を削除しました"
+    },
+    "errors": {
+      "delete": "業務機能を削除できませんでした"
+    },
+    "deleteConfirmation": "業務機能{{referenceId}}を完全に削除します。この操作は取り消せません。"
+  },
+  "businessFunctionDetailsPage": {
+    "validation": {
+      "nameRequired": "名前は必須です"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "名前を入力",
+      "classification": "分類",
+      "classificationPlaceholder": "分類を選択",
+      "mtd": "MTD（分）",
+      "rto": "RTO（分）",
+      "rpo": "RPO（分）",
+      "durationHelper": "よく使う値：1時間 = 60、12時間 = 720、24時間 = 1440、3日 = 4320分",
+      "impactTolerance": "影響許容度",
+      "impactTolerancePlaceholder": "事業中断時に許容できる影響を入力",
+      "notes": "備考",
+      "notesPlaceholder": "依存関係やその他の備考",
+      "owner": "オーナー",
+      "assets": "資産",
+      "thirdParties": "取引先"
+    },
+    "classifications": {
+      "critical": "重大",
+      "important": "重要",
+      "secondary": "二次的",
+      "standard": "標準"
+    },
+    "actions": {
+      "delete": "削除",
+      "update": "更新",
+      "updating": "更新中…"
+    },
+    "messages": {
+      "success": "成功",
+      "updated": "業務機能を更新しました",
+      "deleted": "業務機能を削除しました"
+    },
+    "errors": {
+      "update": "業務機能を更新できませんでした",
+      "delete": "業務機能を削除できませんでした"
+    },
+    "dependenciesTruncated": "この業務機能には100件を超える資産または取引先が紐づいています。読み込まれていない関連が保存時に意図せず削除されないよう、依存関係の編集は無効になっています。",
+    "deleteConfirmation": "業務機能{{referenceId}}を完全に削除します。この操作は取り消せません。"
+  },
+  "createBusinessFunctionDialog": {
+    "breadcrumb": {
+      "businessFunctions": "業務機能",
+      "create": "作成"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "名前を入力",
+      "classification": "分類",
+      "classificationPlaceholder": "分類を選択",
+      "mtd": "MTD（分）",
+      "rto": "RTO（分）",
+      "rpo": "RPO（分）",
+      "durationHelper": "よく使う値：1時間 = 60、12時間 = 720、24時間 = 1440、3日 = 4320分",
+      "impactTolerance": "影響許容度",
+      "impactTolerancePlaceholder": "影響許容度を入力",
+      "notes": "備考",
+      "notesPlaceholder": "依存関係やその他の備考",
+      "owner": "オーナー",
+      "assets": "資産",
+      "thirdParties": "取引先"
+    },
+    "classifications": {
+      "critical": "重大",
+      "important": "重要",
+      "secondary": "二次的",
+      "standard": "標準"
+    },
+    "actions": {
+      "create": "業務機能を作成",
+      "creating": "作成中…"
+    },
+    "messages": {
+      "success": "成功",
+      "created": "業務機能を作成しました"
+    },
+    "errors": {
+      "create": "業務機能を作成できませんでした"
+    }
+  },
+  "publishBusinessFunctionListDialog": {
+    "title": "業務機能一覧を公開",
+    "errors": {
+      "publish": "業務機能一覧を公開できませんでした"
+    },
+    "messages": {
+      "published": "業務機能一覧を公開しました。"
+    }
+  },
+  "aiSystemsPage": {
+    "pageTitle": "AIシステム",
+    "title": "AIシステム",
+    "description": "組織全体で使用しているAIシステムについて、役割、リスク分類、レビュー予定を管理します。",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "add": "AIシステムを追加",
+      "loadMore": "さらに読み込む",
+      "loading": "読み込み中…"
+    },
+    "filters": {
+      "allStatuses": "すべてのステータス",
+      "allRiskClassifications": "すべてのリスク分類"
+    },
+    "status": {
+      "active": "稼働中",
+      "inDevelopment": "開発中",
+      "decommissioned": "廃止済み"
+    },
+    "riskClassification": {
+      "highRisk": "高リスク",
+      "limited": "限定リスク",
+      "minimal": "最小リスク",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "プロバイダー",
+      "deployer": "導入者",
+      "user": "ユーザー",
+      "developer": "開発者"
+    },
+    "columns": {
+      "name": "名前",
+      "version": "版",
+      "status": "ステータス",
+      "riskClassification": "リスク分類",
+      "owner": "システムオーナー",
+      "nextReviewDate": "次回レビュー日",
+      "actions": "操作"
+    },
+    "empty": {
+      "title": "AIシステムはまだありません",
+      "description": "最初のAIシステムを作成して始めましょう。",
+      "filteredTitle": "一致するAIシステムはありません",
+      "filteredDescription": "選択したフィルターに一致するAIシステムはありません。"
+    }
+  },
+  "aiSystemListItem": {
+    "actions": {
+      "delete": "削除"
+    },
+    "messages": {
+      "success": "成功",
+      "deleted": "AIシステムを削除しました"
+    },
+    "errors": {
+      "delete": "AIシステムを削除できませんでした"
+    },
+    "deleteConfirmation": "AIシステム「{{name}}」を完全に削除します。この操作は取り消せません。"
+  },
+  "aiSystemDetailsPage": {
+    "validation": {
+      "nameRequired": "名前は必須です"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "システム名を入力",
+      "version": "版",
+      "versionPlaceholder": "例：1.0",
+      "companyRoles": "自社の役割",
+      "status": "ステータス",
+      "owner": "システムオーナー",
+      "source": "提供元",
+      "sourcePlaceholder": "システムの開発元または提供元",
+      "purpose": "目的・事業上の目標",
+      "purposePlaceholder": "このシステムが存在する理由と、達成を目指すこと",
+      "intendedUseCases": "想定する利用例",
+      "intendedUseCasesPlaceholder": "システムの具体的な利用方法",
+      "autonomyLevel": "自律性レベル",
+      "autonomyLevelPlaceholder": "自律性のレベルを入力",
+      "humanOversightMechanism": "人間による監督の仕組み",
+      "humanOversightMechanismPlaceholder": "人間がこのシステムをどのように監督するか",
+      "riskClassification": "リスク分類",
+      "keyStakeholders": "影響を受ける主な利害関係者",
+      "keyStakeholdersPlaceholder": "このシステムの影響を受ける可能性がある人",
+      "dataSourcesAndType": "データソースと種類",
+      "dataSourcesAndTypePlaceholder": "システムが処理するデータとその種類",
+      "deploymentDate": "導入日",
+      "lastReviewDate": "前回レビュー日",
+      "nextReviewDate": "次回レビュー日",
+      "notes": "備考・所見",
+      "notesPlaceholder": "追加の備考や所見",
+      "notSet": "未設定"
+    },
+    "status": {
+      "active": "稼働中",
+      "inDevelopment": "開発中",
+      "decommissioned": "廃止済み"
+    },
+    "riskClassification": {
+      "highRisk": "高リスク",
+      "limited": "限定リスク",
+      "minimal": "最小リスク",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "プロバイダー",
+      "deployer": "導入者",
+      "user": "ユーザー",
+      "developer": "開発者"
+    },
+    "actions": {
+      "delete": "削除",
+      "update": "更新",
+      "updating": "更新中…"
+    },
+    "messages": {
+      "success": "成功",
+      "updated": "AIシステムを更新しました",
+      "deleted": "AIシステムを削除しました"
+    },
+    "errors": {
+      "update": "AIシステムを更新できませんでした",
+      "delete": "AIシステムを削除できませんでした"
+    },
+    "deleteConfirmation": "AIシステム「{{name}}」を完全に削除します。この操作は取り消せません。"
+  },
+  "createAiSystemDialog": {
+    "breadcrumb": {
+      "aiSystems": "AIシステム",
+      "create": "作成"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "システム名を入力",
+      "version": "版",
+      "versionPlaceholder": "例：1.0",
+      "companyRoles": "自社の役割",
+      "status": "ステータス",
+      "owner": "システムオーナー",
+      "source": "提供元",
+      "sourcePlaceholder": "システムの開発元または提供元",
+      "purpose": "目的・事業上の目標",
+      "purposePlaceholder": "このシステムが存在する理由と、達成を目指すこと",
+      "intendedUseCases": "想定する利用例",
+      "intendedUseCasesPlaceholder": "システムの具体的な利用方法",
+      "autonomyLevel": "自律性レベル",
+      "autonomyLevelPlaceholder": "自律性のレベルを入力",
+      "humanOversightMechanism": "人間による監督の仕組み",
+      "humanOversightMechanismPlaceholder": "人間がこのシステムをどのように監督するか",
+      "riskClassification": "リスク分類",
+      "keyStakeholders": "影響を受ける主な利害関係者",
+      "keyStakeholdersPlaceholder": "このシステムの影響を受ける可能性がある人",
+      "dataSourcesAndType": "データソースと種類",
+      "dataSourcesAndTypePlaceholder": "システムが処理するデータとその種類",
+      "deploymentDate": "導入日",
+      "lastReviewDate": "前回レビュー日",
+      "nextReviewDate": "次回レビュー日",
+      "notes": "備考・所見",
+      "notesPlaceholder": "追加の備考や所見",
+      "notSet": "未設定"
+    },
+    "status": {
+      "active": "稼働中",
+      "inDevelopment": "開発中",
+      "decommissioned": "廃止済み"
+    },
+    "riskClassification": {
+      "highRisk": "高リスク",
+      "limited": "限定リスク",
+      "minimal": "最小リスク",
+      "gpai": "GPAI"
+    },
+    "companyRoles": {
+      "provider": "プロバイダー",
+      "deployer": "導入者",
+      "user": "ユーザー",
+      "developer": "開発者"
+    },
+    "actions": {
+      "create": "AIシステムを作成",
+      "creating": "作成中…"
+    },
+    "messages": {
+      "success": "成功",
+      "created": "AIシステムを作成しました"
+    },
+    "errors": {
+      "create": "AIシステムを作成できませんでした"
+    }
+  },
+  "publishListDialog": {
+    "description": "承認者を選択して公開前の承認を依頼するか、承認者なしでそのまま公開できます。",
+    "fields": {
+      "approvers": "承認者",
+      "approversPlaceholder": "承認者を追加…"
+    },
+    "actions": {
+      "publishMinor": "軽微な変更として公開",
+      "requestApproval": "承認を依頼",
+      "publish": "公開"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "approvalRequested": "承認を依頼しました。"
+    }
+  },
+  "publishAiSystemListDialog": {
+    "title": "AIシステムを公開",
+    "errors": {
+      "publish": "AIシステム一覧を公開できませんでした"
+    },
+    "messages": {
+      "published": "AIシステム一覧を公開しました。"
+    }
+  },
+  "createAssetDialog": {
+    "breadcrumb": {
+      "assets": "資産",
+      "newAsset": "新規資産"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "amountRequired": "数量は必須です",
+      "ownerRequired": "オーナーは必須です",
+      "dataTypesStoredRequired": "保存するデータの種類は必須です"
+    },
+    "fields": {
+      "name": "名前",
+      "amount": "数量",
+      "assetType": "資産の種類",
+      "dataTypesStored": "保存するデータの種類",
+      "owner": "オーナー",
+      "thirdParties": "取引先"
+    },
+    "assetTypes": {
+      "physical": "物理",
+      "virtual": "仮想"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "publishAssetListDialog": {
+    "title": "資産一覧を公開",
+    "errors": {
+      "publish": "資産一覧を公開できませんでした"
+    },
+    "messages": {
+      "published": "資産一覧を公開しました。"
+    }
+  },
+  "auditDetailsPage": {
+    "errors": {
+      "update": "監査を更新できませんでした"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "監査を更新しました"
+    },
+    "deleteReportConfirmation": "監査報告書「{{name}}」を完全に削除します。この操作は取り消せません。",
+    "states": {
+      "to_book": "日程調整待ち",
+      "audit_booked": "監査予約済み",
+      "not_started": "未着手",
+      "in_progress": "対応中",
+      "completed": "完了",
+      "rejected": "却下",
+      "outdated": "期限切れ"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "監査名",
+      "firm": "監査法人",
+      "firmPlaceholder": "監査法人",
+      "state": "状態",
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限",
+      "auditStartDate": "監査開始日",
+      "auditEndDate": "監査終了日"
+    },
+    "actions": {
+      "delete": "削除",
+      "update": "更新",
+      "updating": "更新中…",
+      "download": "ダウンロード"
+    },
+    "report": {
+      "title": "監査報告書",
+      "uploaded": "{{date}}にアップロード",
+      "uploadDescription": "最終版の監査報告書をアップロードしてください（PDF推奨）",
+      "dropzoneDescription": "25MBまでのPDFのみアップロードできます"
+    }
+  },
+  "auditsPage": {
+    "title": "監査",
+    "description": "組織のコンプライアンス監査とその進捗を管理します。",
+    "errors": {
+      "unsupportedFileType": {
+        "title": "未対応のファイル形式です",
+        "description": "PDFファイルのみ対応しています。"
+      }
+    },
+    "dropzoneOverlay": "PDFをドロップして、報告書付きの監査を作成",
+    "actions": {
+      "addAudit": "監査を追加",
+      "delete": "削除"
+    },
+    "columns": {
+      "name": "名前",
+      "framework": "フレームワーク",
+      "state": "状態",
+      "auditPeriod": "監査期間",
+      "validityPeriod": "有効期間",
+      "report": "報告書"
+    },
+    "states": {
+      "to_book": "日程調整待ち",
+      "audit_booked": "監査予約済み",
+      "not_started": "未着手",
+      "in_progress": "対応中",
+      "completed": "完了",
+      "rejected": "却下",
+      "outdated": "期限切れ"
+    },
+    "row": {
+      "untitled": "無題",
+      "unknownFramework": "不明なフレームワーク",
+      "notSet": "未設定",
+      "uploaded": "アップロード済み",
+      "notUploaded": "未アップロード",
+      "period": {
+        "from": "{{date}}から",
+        "until": "{{date}}まで"
+      }
+    }
+  },
+  "createAuditDialog": {
+    "breadcrumb": {
+      "audits": "監査",
+      "newAudit": "新規監査"
+    },
+    "validation": {
+      "frameworkRequired": "フレームワークは必須です"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "監査を作成しました",
+      "createdWithReport": "監査を作成し、報告書をアップロードしました"
+    },
+    "errors": {
+      "create": "監査を作成できませんでした"
+    },
+    "fileSize": "{{value}} MB",
+    "loading": "読み込み中…",
+    "fields": {
+      "framework": "フレームワーク",
+      "frameworkPlaceholder": "フレームワークを選択",
+      "name": "名前",
+      "namePlaceholder": "監査名",
+      "firm": "監査法人",
+      "firmPlaceholder": "監査法人",
+      "state": "状態",
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限",
+      "auditStartDate": "監査開始日",
+      "auditEndDate": "監査終了日"
+    },
+    "states": {
+      "to_book": "日程調整待ち",
+      "audit_booked": "監査予約済み",
+      "not_started": "未着手",
+      "in_progress": "対応中",
+      "completed": "完了",
+      "rejected": "却下",
+      "outdated": "期限切れ"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "context": {
+    "title": "組織の状況",
+    "description": "AIアシスタントやコンプライアンスのワークフローで使用する、会社の構造化された情報です。",
+    "sections": {
+      "product": {
+        "title": "プロダクト",
+        "description": "プロダクトの機能、主な特徴、提供価値を記述してください。",
+        "placeholder": "プロダクトについてMarkdown形式で記述…"
+      },
+      "architecture": {
+        "title": "アーキテクチャ",
+        "description": "技術アーキテクチャ、インフラ、主な設計上の決定事項を記述してください。",
+        "placeholder": "アーキテクチャについてMarkdown形式で記述…"
+      },
+      "team": {
+        "title": "チーム",
+        "description": "チームの体制、ロール、責任を記述してください。",
+        "placeholder": "チームについてMarkdown形式で記述…"
+      },
+      "processes": {
+        "title": "プロセス",
+        "description": "主要なプロセス、ワークフロー、運用手順を記述してください。",
+        "placeholder": "プロセスについてMarkdown形式で記述…"
+      },
+      "customers": {
+        "title": "顧客",
+        "description": "ターゲット市場、顧客セグメント、ユースケースを記述してください。",
+        "placeholder": "顧客についてMarkdown形式で記述…"
+      }
+    },
+    "messages": {
+      "updated": "組織の状況を更新しました"
+    },
+    "errors": {
+      "update": "組織の状況を更新できませんでした"
+    },
+    "actions": {
+      "cancel": "キャンセル",
+      "save": "保存",
+      "edit": "編集"
+    },
+    "empty": "まだ内容がありません。「編集」をクリックして追加してください。"
+  },
+  "frameworkControlPage": {
+    "messages": {
+      "error": "エラー"
+    },
+    "deleteConfirmation": "この管理策を削除してもよろしいですか？",
+    "actions": {
+      "editControl": "管理策を編集",
+      "delete": "削除"
+    },
+    "fields": {
+      "bestPractice": "ベストプラクティス",
+      "maturityLevel": "成熟度",
+      "notImplementedJustification": "未実施の根拠"
+    },
+    "answers": {
+      "yes": "はい",
+      "no": "いいえ"
+    },
+    "maturityLevels": {
+      "none": "0 - なし",
+      "initial": "1 - 初期",
+      "managed": "2 - 管理されている",
+      "defined": "3 - 定義されている",
+      "quantitatively_managed": "4 - 定量的に管理されている",
+      "optimizing": "5 - 最適化されている"
+    },
+    "errors": {
+      "linkInternalControl": "内部統制を紐づけられませんでした",
+      "unlinkInternalControl": "内部統制の紐づけを解除できませんでした",
+      "linkDocument": "ドキュメントを紐づけられませんでした",
+      "unlinkDocument": "ドキュメントの紐づけを解除できませんでした",
+      "linkAudit": "監査を紐づけられませんでした",
+      "unlinkAudit": "監査の紐づけを解除できませんでした",
+      "linkObligation": "義務を紐づけられませんでした",
+      "unlinkObligation": "義務の紐づけを解除できませんでした"
+    }
+  },
+  "frameworkDetailPage": {
+    "errors": {
+      "export": "フレームワークをエクスポートできませんでした"
+    },
+    "messages": {
+      "exportStarted": "フレームワークのエクスポートを開始しました。エクスポートが完了するとメールでお知らせします。"
+    },
+    "actions": {
+      "edit": "編集",
+      "export": "フレームワークをエクスポート",
+      "delete": "削除",
+      "addControl": "管理策を追加"
+    },
+    "requirementCategories": "要求事項カテゴリー"
+  },
+  "frameworksPage": {
+    "title": "フレームワーク",
+    "description": "コンプライアンスのフレームワークを管理します",
+    "messages": {
+      "imported": "フレームワークをインポートしました"
+    },
+    "errors": {
+      "import": "フレームワークをインポートできませんでした"
+    },
+    "actions": {
+      "import": "インポート",
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "frameworkControlDialog": {
+    "breadcrumb": {
+      "controls": "管理策",
+      "editControl": "管理策を編集",
+      "newControl": "新規管理策"
+    },
+    "messages": {
+      "created": "管理策を作成しました。",
+      "updated": "管理策を更新しました。"
+    },
+    "errors": {
+      "create": "管理策を作成できませんでした",
+      "update": "管理策を更新できませんでした"
+    },
+    "fields": {
+      "sectionTitle": "セクションタイトル",
+      "name": "管理策名",
+      "description": "説明を追加",
+      "bestPractice": "ベストプラクティス",
+      "maturityLevel": "成熟度",
+      "notImplementedJustification": "未実施の根拠"
+    },
+    "actions": {
+      "create": "管理策を作成",
+      "update": "管理策を更新"
+    }
+  },
+  "frameworkFormDialog": {
+    "breadcrumb": {
+      "framework": "フレームワーク",
+      "newFramework": "新規フレームワーク"
+    },
+    "messages": {
+      "created": "フレームワークを作成しました",
+      "updated": "フレームワークを更新しました"
+    },
+    "errors": {
+      "create": "フレームワークを作成できませんでした",
+      "update": "フレームワークを更新できませんでした"
+    },
+    "fields": {
+      "title": "フレームワーク名",
+      "description": "説明を追加"
+    },
+    "actions": {
+      "create": "フレームワークを作成",
+      "update": "フレームワークを更新"
+    }
+  },
+  "internalControlDetailPage": {
+    "deleteConfirmation": "内部統制「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "fields": {
+      "selectState": "ステータスを選択",
+      "code": "コード",
+      "owner": "オーナー",
+      "reviewer": "レビュー担当者",
+      "operatingFrequency": "運用頻度",
+      "evidenceCadence": "証跡の取得周期",
+      "testingCadence": "テストの実施周期",
+      "nextEvidenceDue": "証跡の期限",
+      "nextTestDue": "テストの期限"
+    },
+    "operatingModes": {
+      "continuous": "常時",
+      "event": "イベント発生時"
+    },
+    "actions": {
+      "edit": "編集",
+      "delete": "削除"
+    },
+    "states": {
+      "implemented": "実施済み",
+      "in_progress": "対応中",
+      "not_applicable": "対象外",
+      "not_started": "未着手",
+      "unknown": "不明",
+      "not_implemented": "未実施"
+    },
+    "implementationStatuses": {
+      "not_implemented": "未実施",
+      "in_progress": "対応中",
+      "implemented": "実施済み",
+      "operating": "運用中"
+    },
+    "tabs": {
+      "evidences": "証跡",
+      "tasks": "タスク",
+      "controls": "管理策",
+      "risks": "リスク",
+      "documents": "ドキュメント",
+      "thirdParties": "取引先"
+    }
+  },
+  "internalControlsPage": {
+    "title": "内部統制",
+    "description": "内部統制は、オーナーが責任を持って一定の周期で運用し、証跡を残し、複数のフレームワーク要求事項を同時にカバーする保護手段です。",
+    "messages": {
+      "imported": "内部統制をインポートしました。",
+      "error": "エラー",
+      "success": "成功",
+      "deleted": "内部統制を削除しました"
+    },
+    "errors": {
+      "import": "内部統制をインポートできませんでした",
+      "delete": "内部統制を削除できませんでした"
+    },
+    "deleteConfirmation": "内部統制「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "actions": {
+      "import": "インポート",
+      "newInternalControl": "内部統制を追加",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む",
+      "edit": "編集",
+      "delete": "削除"
+    },
+    "filters": {
+      "searchPlaceholder": "内部統制を検索…",
+      "allStates": "すべてのステータス",
+      "allCategories": "すべてのカテゴリー"
+    },
+    "states": {
+      "implemented": "実施済み",
+      "in_progress": "対応中",
+      "not_applicable": "対象外",
+      "not_started": "未着手"
+    },
+    "columns": {
+      "internalControl": "内部統制",
+      "code": "コード",
+      "category": "カテゴリー",
+      "state": "状態",
+      "status": "ステータス"
+    },
+    "empty": {
+      "title": "内部統制はまだありません",
+      "description": "最初の内部統制を作成して始めましょう。"
+    }
+  },
+  "linkedThirdPartiesCard": {
+    "columns": {
+      "name": "名前",
+      "category": "カテゴリー"
+    },
+    "empty": "リンクされた取引先はありません",
+    "actions": {
+      "link": "取引先をリンク",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "linkedThirdPartiesDialog": {
+    "title": "取引先をリンク",
+    "searchPlaceholder": "取引先を検索…",
+    "actions": {
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "createEvidenceDialog": {
+    "breadcrumb": {
+      "internalControlDetail": "内部統制の詳細",
+      "createEvidence": "証跡を作成"
+    },
+    "tabs": {
+      "upload": "アップロード",
+      "link": "リンク"
+    },
+    "messages": {
+      "uploaded": "証跡をアップロードしました",
+      "created": "証跡を作成しました"
+    },
+    "errors": {
+      "create": "証跡を作成できませんでした"
+    },
+    "uploadDescription": "ドキュメント、スプレッドシート、プレゼンテーション、画像、テキストファイル（20MBまで）",
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "証跡名を入力",
+      "url": "URL",
+      "urlPlaceholder": "証跡のURLを入力",
+      "urlHelp": "URLを含む .uriファイルが作成されます"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "evidenceDownloadDialog": {
+    "breadcrumb": {
+      "evidences": "証跡",
+      "download": "ダウンロード"
+    },
+    "generating": "ダウンロードリンクを生成中…"
+  },
+  "evidencePreviewDialog": {
+    "breadcrumb": {
+      "evidences": "証跡"
+    },
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "extractUrl": "URIファイルからURLを取得できませんでした"
+    },
+    "csv": {
+      "column": "列",
+      "empty": "このCSVファイルは空です。",
+      "error": "CSVのプレビューを読み込めません。",
+      "retry": "再試行",
+      "truncated": "先頭100行のデータを表示しています。"
+    },
+    "text": {
+      "empty": "このテキストファイルは空です。",
+      "error": "テキストのプレビューを読み込めません。",
+      "retry": "再試行",
+      "truncated": "先頭512KBを表示しています。"
+    },
+    "previewUnavailable": "このファイル形式はプレビューできません：{{mimeType}}",
+    "actions": {
+      "download": "ファイルをダウンロード"
+    }
+  },
+  "internalControlFormDialog": {
+    "breadcrumb": {
+      "internalControls": "内部統制",
+      "editInternalControl": "内部統制を編集",
+      "newInternalControl": "内部統制を追加"
+    },
+    "messages": {
+      "created": "内部統制を作成しました。"
+    },
+    "errors": {
+      "create": "内部統制を作成できませんでした"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "categoryRequired": "カテゴリーは必須です",
+      "reviewerDistinct": "レビュー担当者はオーナーと別の人にしてください",
+      "operatingIntervalRequired": "統制の実施頻度を入力してください"
+    },
+    "fields": {
+      "name": "名前",
+      "namePlaceholder": "統制のタイトルを入力",
+      "description": "説明",
+      "descriptionPlaceholder": "説明を入力",
+      "category": "カテゴリー",
+      "categoryPlaceholder": "カテゴリーを選択",
+      "state": "状態",
+      "statePlaceholder": "状態を選択",
+      "code": "コード",
+      "codePlaceholder": "IC-ACCESS-01",
+      "notSet": "未設定",
+      "controlType": "種別",
+      "nature": "性質",
+      "operatingFrequency": "運用頻度",
+      "operatingEvent": "イベント",
+      "operatingEventPlaceholder": "例：退職者が出たとき",
+      "evidenceCadence": "証跡の取得周期",
+      "testingCadence": "テストの実施周期",
+      "implementationStatus": "実施状況",
+      "owner": "オーナー",
+      "reviewer": "レビュー担当者"
+    },
+    "properties": "プロパティ",
+    "states": {
+      "implemented": "実施済み",
+      "in_progress": "対応中",
+      "not_applicable": "対象外",
+      "not_started": "未着手",
+      "unknown": "不明",
+      "not_implemented": "未実施"
+    },
+    "controlTypes": {
+      "preventive": "予防的",
+      "detective": "発見的",
+      "corrective": "是正的"
+    },
+    "natures": {
+      "manual": "手動"
+    },
+    "operatingModes": {
+      "continuous": "常時",
+      "event": "イベント発生時",
+      "periodic": "定期"
+    },
+    "implementationStatuses": {
+      "not_implemented": "未実施",
+      "in_progress": "対応中",
+      "implemented": "実施済み",
+      "operating": "運用中"
+    },
+    "actions": {
+      "create": "内部統制を作成",
+      "update": "内部統制を更新",
+      "addDuration": "期間を追加",
+      "clearDuration": "期間をクリア"
+    }
+  },
+  "internalControlEvidencesTab": {
+    "pageTitle": "{{name}} - 証跡",
+    "columns": {
+      "name": "名前",
+      "description": "説明",
+      "fileType": "ファイル形式",
+      "fileSize": "ファイルサイズ",
+      "createdAt": "作成日時"
+    },
+    "messages": {
+      "deleted": "証跡「{{name}}」を削除しました"
+    },
+    "errors": {
+      "delete": "証跡を削除できませんでした"
+    },
+    "deleteConfirmation": "証跡「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "linkEvidence": "証跡をリンク",
+    "actions": {
+      "add": "証跡を追加",
+      "download": "ダウンロード",
+      "delete": "削除"
+    }
+  },
+  "internalControlTasksTab": {
+    "empty": "タスクはありません",
+    "columns": {
+      "name": "名前",
+      "state": "状態"
+    },
+    "actions": {
+      "newTask": "タスクを追加",
+      "link": "タスクをリンク",
+      "unlink": "紐付けを解除",
+      "retry": "再試行",
+      "showMore": "さらに{{count}}件を表示"
+    },
+    "dialog": {
+      "title": "タスクをリンク",
+      "searchPlaceholder": "タスクを検索",
+      "empty": "タスクはありません",
+      "actions": {
+        "close": "閉じる",
+        "link": "紐付け",
+        "unlink": "紐付けを解除"
+      }
+    }
+  },
+  "obligationDetailsPage": {
+    "title": "義務",
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "義務を更新しました"
+    },
+    "errors": {
+      "update": "義務を更新できませんでした"
+    },
+    "validation": {
+      "ownerRequired": "オーナーは必須です"
+    },
+    "fields": {
+      "area": "領域",
+      "source": "根拠法令・契約等",
+      "status": "ステータス",
+      "owner": "オーナー",
+      "regulator": "規制当局",
+      "type": "種別",
+      "lastReviewDate": "最終レビュー日",
+      "dueDate": "期限",
+      "requirement": "要求事項",
+      "actionsToBeImplemented": "実施すべき対応"
+    },
+    "placeholders": {
+      "area": "領域を入力",
+      "source": "根拠法令・契約等を入力",
+      "status": "ステータスを選択",
+      "regulator": "規制当局を入力",
+      "type": "種別を選択",
+      "requirement": "要求事項を入力",
+      "actionsToBeImplemented": "実施すべき対応を入力"
+    },
+    "statuses": {
+      "non_compliant": "未遵守",
+      "partially_compliant": "一部遵守",
+      "compliant": "遵守"
+    },
+    "types": {
+      "legal": "法令",
+      "contractual": "契約"
+    },
+    "actions": {
+      "delete": "削除",
+      "saving": "保存中…",
+      "save": "変更を保存"
+    }
+  },
+  "obligationsPage": {
+    "title": "義務",
+    "description": "組織の義務を管理します。",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "add": "義務を追加",
+      "loadMore": "さらに読み込む",
+      "delete": "削除"
+    },
+    "empty": {
+      "title": "義務はまだありません",
+      "description": "最初の義務を作成して始めましょう。"
+    },
+    "columns": {
+      "area": "領域",
+      "source": "根拠法令・契約等",
+      "status": "ステータス",
+      "owner": "オーナー",
+      "dueDate": "期限",
+      "actions": "操作"
+    },
+    "statuses": {
+      "non_compliant": "未遵守",
+      "partially_compliant": "一部遵守",
+      "compliant": "遵守"
+    },
+    "deleteConfirmation": "この義務を完全に削除します。この操作は元に戻せません。",
+    "noDueDate": "期限なし"
+  },
+  "createObligationDialog": {
+    "breadcrumb": {
+      "obligations": "義務",
+      "create": "義務を作成"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "義務を作成しました"
+    },
+    "errors": {
+      "create": "義務を作成できませんでした"
+    },
+    "validation": {
+      "ownerRequired": "オーナーは必須です"
+    },
+    "fields": {
+      "area": "領域",
+      "source": "根拠法令・契約等",
+      "status": "ステータス",
+      "owner": "オーナー",
+      "regulator": "規制当局",
+      "type": "種別",
+      "lastReviewDate": "最終レビュー日",
+      "dueDate": "期限",
+      "requirement": "要求事項",
+      "actionsToBeImplemented": "実施すべき対応"
+    },
+    "placeholders": {
+      "area": "領域を入力",
+      "source": "根拠法令・契約等を入力",
+      "status": "ステータスを選択",
+      "regulator": "規制当局を入力",
+      "type": "種別を選択",
+      "requirement": "要求事項の詳細を入力…",
+      "actionsToBeImplemented": "実施すべき対応を入力…"
+    },
+    "statuses": {
+      "non_compliant": "未遵守",
+      "partially_compliant": "一部遵守",
+      "compliant": "遵守"
+    },
+    "types": {
+      "legal": "法令",
+      "contractual": "契約"
+    },
+    "actions": {
+      "creating": "作成中…",
+      "create": "義務を作成"
+    }
+  },
+  "publishObligationListDialog": {
+    "title": "義務一覧を公開",
+    "errors": {
+      "publish": "義務一覧を公開できませんでした"
+    },
+    "messages": {
+      "published": "義務一覧を公開しました。"
+    }
+  },
+  "processingActivitiesPage": {
+    "title": "処理活動",
+    "description": "GDPRに基づく処理活動を管理します",
+    "actions": {
+      "add": "処理活動を追加",
+      "document": "ドキュメント",
+      "publish": "公開",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む",
+      "delete": "削除"
+    },
+    "columns": {
+      "name": "名前",
+      "purpose": "目的",
+      "dataSubject": "本人",
+      "lawfulBasis": "法的根拠",
+      "location": "所在地",
+      "internationalTransfers": "国際移転",
+      "actions": "操作"
+    },
+    "empty": {
+      "title": "処理活動はまだありません",
+      "description": "最初の処理活動を作成して、GDPR対応を始めましょう。"
+    },
+    "deleteConfirmation": "処理活動{{name}}を完全に削除します。この操作は元に戻せません。",
+    "answers": {
+      "yes": "はい",
+      "no": "いいえ"
+    }
+  },
+  "dataProtectionImpactAssessmentsPage": {
+    "description": "処理活動全体のデータ保護影響評価を確認します",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む"
+    },
+    "columns": {
+      "processingActivity": "処理活動",
+      "description": "説明",
+      "potentialRisk": "潜在リスク",
+      "residualRisk": "残留リスク"
+    },
+    "empty": {
+      "title": "データ保護影響評価はまだありません",
+      "description": "DPIAは、各処理活動の中から作成します。"
+    }
+  },
+  "transferImpactAssessmentsPage": {
+    "description": "処理活動全体の移転影響評価を確認します",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む"
+    },
+    "columns": {
+      "processingActivity": "処理活動",
+      "dataSubjects": "本人",
+      "transfer": "移転",
+      "localLawRisk": "現地法リスク"
+    },
+    "empty": {
+      "title": "移転影響評価はまだありません",
+      "description": "TIAは、各処理活動の中から作成します。"
+    }
+  },
+  "processingActivityDetailsPage": {
+    "tabs": {
+      "overview": "概要",
+      "dpia": "データ保護影響評価",
+      "tia": "移転影響評価"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "activityUpdated": "処理活動を更新しました",
+      "dpiaUpdated": "DPIAを更新しました",
+      "dpiaCreated": "DPIAを作成しました",
+      "tiaUpdated": "TIAを更新しました",
+      "tiaCreated": "TIAを作成しました"
+    },
+    "errors": {
+      "updateActivity": "処理活動を更新できませんでした",
+      "saveDpia": "DPIAを保存できませんでした",
+      "saveTia": "TIAを保存できませんでした"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です"
+    },
+    "fields": {
+      "name": "名前",
+      "role": "ロール",
+      "purpose": "目的",
+      "dataSubjectCategory": "本人の区分",
+      "personalDataCategory": "個人情報の区分",
+      "specialOrCriminalData": "特別カテゴリーまたは犯罪関連データ",
+      "consentEvidenceLink": "同意の証跡リンク",
+      "lawfulBasis": "法的根拠",
+      "lastReviewDate": "最終レビュー日",
+      "nextReviewDate": "次回レビュー日",
+      "dataProtectionOfficer": "データ保護責任者",
+      "recipients": "提供先",
+      "location": "所在地",
+      "internationalTransfers": "国際移転",
+      "internationalTransfersDescription": "データを国外へ移転している",
+      "transferSafeguards": "移転時の保護措置",
+      "retentionPeriod": "保存期間",
+      "securityMeasures": "安全管理措置",
+      "dpiaNeeded": "データ保護影響評価",
+      "tiaNeeded": "移転影響評価",
+      "thirdParties": "取引先",
+      "dpiaDescription": "説明",
+      "necessityAndProportionality": "必要性と比例性",
+      "potentialRisk": "潜在リスク",
+      "mitigations": "低減策",
+      "residualRisk": "残留リスク",
+      "dataSubjects": "本人",
+      "legalMechanism": "法的手段",
+      "transfer": "移転",
+      "localLawRisk": "現地法リスク",
+      "supplementaryMeasures": "補完措置"
+    },
+    "placeholders": {
+      "role": "ロールを選択",
+      "purpose": "処理の目的を入力",
+      "dataSubjectCategory": "例：従業員、顧客、見込み客",
+      "personalDataCategory": "例：連絡先、財務データ",
+      "specialOrCriminalData": "特別カテゴリーまたは犯罪関連データの該当を選択",
+      "consentEvidenceLink": "該当する場合は同意の証跡へのリンクを入力",
+      "lawfulBasis": "処理の法的根拠を選択",
+      "recipients": "データの提供先を入力",
+      "location": "データを処理している場所を入力",
+      "transferSafeguards": "移転時の保護措置を選択",
+      "retentionPeriod": "データの保存期間を入力",
+      "securityMeasures": "技術的措置と組織的措置を入力",
+      "dpiaNeeded": "DPIAは必要ですか？",
+      "tiaNeeded": "TIAは必要ですか？",
+      "dpiaDescription": "処理活動とその目的を入力",
+      "necessityAndProportionality": "処理が必要かつ適切である理由を入力",
+      "potentialRisk": "本人に対する潜在的なリスクを入力",
+      "mitigations": "特定したリスクを低減する措置を入力",
+      "residualRisk": "残留リスクのレベルを選択",
+      "dataSubjects": "移転に関わる本人について入力",
+      "legalMechanism": "移転の法的手段を入力（例：SCC、BCR、十分性認定）",
+      "transfer": "データ移転の性質と詳細を入力",
+      "localLawRisk": "移転先の国の法令に関するリスクを評価して入力",
+      "supplementaryMeasures": "十分な保護を確保するために講じた補完措置を入力"
+    },
+    "residualRisk": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "actions": {
+      "delete": "削除",
+      "saving": "保存中…",
+      "save": "変更を保存",
+      "cancel": "キャンセル",
+      "createDpia": "DPIAを作成",
+      "updateDpia": "DPIAを更新",
+      "deleteDpia": "DPIAを削除",
+      "createTia": "TIAを作成",
+      "updateTia": "TIAを更新",
+      "deleteTia": "TIAを削除"
+    }
+  },
+  "createProcessingActivityDialog": {
+    "breadcrumb": {
+      "activities": "処理活動",
+      "create": "処理活動を作成"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "処理活動を作成しました"
+    },
+    "errors": {
+      "create": "処理活動を作成できませんでした"
+    },
+    "validation": {
+      "nameRequired": "名前は必須です"
+    },
+    "placeholders": {
+      "name": "処理活動名を入力"
+    },
+    "actions": {
+      "creating": "作成中…",
+      "create": "処理活動を作成"
+    }
+  },
+  "publishDpiaListDialog": {
+    "title": "データ保護影響評価を公開",
+    "errors": {
+      "publish": "データ保護影響評価を公開できませんでした"
+    },
+    "messages": {
+      "published": "データ保護影響評価を公開しました。"
+    }
+  },
+  "publishProcessingActivityListDialog": {
+    "title": "処理活動を公開",
+    "errors": {
+      "publish": "処理活動を公開できませんでした"
+    },
+    "messages": {
+      "published": "処理活動を公開しました。"
+    }
+  },
+  "publishTiaListDialog": {
+    "title": "移転影響評価を公開",
+    "errors": {
+      "publish": "移転影響評価を公開できませんでした"
+    },
+    "messages": {
+      "published": "移転影響評価を公開しました。"
+    }
+  },
+  "rightsRequestDetailsPage": {
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "本人からの請求を更新しました"
+    },
+    "errors": {
+      "update": "本人からの請求を更新できませんでした"
+    },
+    "types": {
+      "access": "開示",
+      "deletion": "削除",
+      "rectification": "訂正",
+      "portability": "ポータビリティ",
+      "objection": "異議",
+      "complaint": "苦情"
+    },
+    "states": {
+      "todo": "未着手",
+      "in_progress": "対応中",
+      "done": "完了",
+      "rejected": "却下"
+    },
+    "fields": {
+      "requestType": "請求の種類",
+      "state": "状態",
+      "dataSubject": "本人",
+      "contact": "連絡先",
+      "details": "詳細",
+      "deadline": "期限",
+      "actionTaken": "対応内容"
+    },
+    "placeholders": {
+      "details": "請求の詳細を入力",
+      "actionTaken": "対応内容を入力"
+    },
+    "actions": {
+      "delete": "削除",
+      "saving": "保存中…",
+      "save": "変更を保存"
+    }
+  },
+  "rightsRequestsPage": {
+    "title": "本人からの請求",
+    "description": "本人からの権利行使の請求を管理します。",
+    "actions": {
+      "add": "請求を追加",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む",
+      "delete": "削除"
+    },
+    "columns": {
+      "type": "種類",
+      "state": "状態",
+      "dataSubject": "本人",
+      "contact": "連絡先",
+      "deadline": "期限",
+      "actions": "操作"
+    },
+    "types": {
+      "access": "開示",
+      "deletion": "削除",
+      "rectification": "訂正",
+      "portability": "ポータビリティ",
+      "objection": "異議",
+      "complaint": "苦情"
+    },
+    "states": {
+      "todo": "未着手",
+      "in_progress": "対応中",
+      "done": "完了",
+      "rejected": "却下"
+    },
+    "empty": {
+      "title": "本人からの請求はまだありません",
+      "description": "最初の請求を作成して始めましょう。"
+    },
+    "deleteConfirmation": "この本人からの請求を完全に削除します。この操作は元に戻せません。",
+    "noDeadline": "期限なし"
+  },
+  "createRightsRequestDialog": {
+    "breadcrumb": {
+      "requests": "本人からの請求",
+      "create": "請求を作成"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "本人からの請求を作成しました"
+    },
+    "errors": {
+      "create": "本人からの請求を作成できませんでした"
+    },
+    "placeholders": {
+      "dataSubject": "本人の氏名を入力",
+      "contact": "連絡先を入力"
+    },
+    "actions": {
+      "creating": "作成中…",
+      "create": "請求を作成"
+    }
+  },
+  "riskDetailLayout": {
+    "deleteConfirmation": "リスク{{referenceId}}「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "deleteConfirmationWithHistory_one": "リスク{{referenceId}}「{{name}}」を完全に削除します。このリスクは{{count}}件の分析の履歴に残っています。削除すると、その履歴も削除されます。",
+    "deleteConfirmationWithHistory_other": "リスク{{referenceId}}「{{name}}」を完全に削除します。このリスクは{{count}}件の分析の履歴に残っています。削除すると、その履歴も削除されます。",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除"
+    },
+    "tabs": {
+      "overview": "概要",
+      "internalControls": "内部統制",
+      "documents": "ドキュメント",
+      "controls": "管理策",
+      "obligations": "義務",
+      "scenarios": "シナリオ",
+      "treatmentPlans": "リスク対応計画"
+    }
+  },
+  "risksPage": {
+    "description": "リスクは組織にとって潜在的な脅威です。特定・評価し、低減策を実施して管理します。",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "newRisk": "リスクを追加"
+    },
+    "columns": {
+      "referenceId": "参照ID",
+      "name": "リスク名",
+      "category": "カテゴリー",
+      "treatment": "リスク対応",
+      "initialRisk": "初期リスク",
+      "residualRisk": "残留リスク",
+      "owner": "オーナー"
+    }
+  },
+  "riskOverviewPage": {
+    "emptyScores": "スコアは、リスク分析のリスク対応計画で設定します。",
+    "fields": {
+      "owner": "オーナー",
+      "treatment": "リスク対応",
+      "initialRiskScore": "初期スコア",
+      "residualRiskScore": "残留スコア",
+      "note": "メモ"
+    },
+    "treatments": {
+      "mitigated": "低減",
+      "accepted": "受容",
+      "transferred": "移転",
+      "avoided": "回避",
+      "unknown": "不明"
+    }
+  },
+  "formRiskDialog": {
+    "breadcrumb": {
+      "risks": "リスク",
+      "edit": "リスクを編集",
+      "new": "リスクを追加"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "リスクを更新しました。",
+      "created": "リスクを作成しました。"
+    },
+    "errors": {
+      "update": "リスクを更新できませんでした",
+      "create": "リスクを作成できませんでした"
+    },
+    "fields": {
+      "name": "リスク名",
+      "description": "説明",
+      "initialRisk": "初期リスク",
+      "residualRisk": "残留リスク",
+      "owner": "オーナー",
+      "treatment": "対応方針",
+      "note": "メモ",
+      "impact": "影響度",
+      "likelihood": "発生可能性",
+      "category": "リスクカテゴリー"
+    },
+    "properties": "プロパティ",
+    "placeholders": {
+      "name": "サービス停止",
+      "description": "説明を入力",
+      "treatment": "対応方針を選択",
+      "note": "このリスクに関する補足事項を入力",
+      "impact": "影響度のレベルを選択",
+      "likelihood": "発生可能性のレベルを選択",
+      "category": "カテゴリーを選択",
+      "template": "テンプレートを選択"
+    },
+    "treatments": {
+      "avoided": "回避",
+      "mitigated": "低減",
+      "transferred": "移転",
+      "accepted": "受容"
+    },
+    "scoreOption": "{{value}} - {{label}}",
+    "impacts": {
+      "1": "無視できる",
+      "2": "小",
+      "3": "中程度",
+      "4": "大",
+      "5": "壊滅的"
+    },
+    "likelihoods": {
+      "1": "ほぼない",
+      "2": "極めて低い",
+      "3": "時々ある",
+      "4": "高い",
+      "5": "頻繁にある"
+    },
+    "actions": {
+      "create": "リスクを作成",
+      "update": "リスクを更新"
+    }
+  },
+  "linkScenarioDialog": {
+    "title": "シナリオをリンク",
+    "searchPlaceholder": "シナリオを検索…",
+    "noDescription": "説明なし",
+    "actions": {
+      "close": "閉じる",
+      "link": "紐付け",
+      "unlink": "紐付けを解除"
+    }
+  },
+  "publishRiskListDialog": {
+    "title": "リスクを公開",
+    "errors": {
+      "publish": "リスクを公開できませんでした"
+    },
+    "messages": {
+      "published": "リスクを公開しました。"
+    }
+  },
+  "publishRiskAnalysisDialog": {
+    "title": "リスク分析を公開",
+    "description": "承認者を選択すると、公開前に承認を依頼します。承認者を選択せずに、そのまま公開することもできます。",
+    "fields": {
+      "approvers": "承認者"
+    },
+    "placeholders": {
+      "approvers": "承認者を追加…"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "approvalRequested": "承認を依頼しました。",
+      "published": "リスク分析を公開しました。"
+    },
+    "errors": {
+      "publish": "リスク分析を公開できませんでした"
+    },
+    "actions": {
+      "publishMinor": "軽微な更新として公開",
+      "requestApproval": "承認を依頼",
+      "publish": "公開"
+    }
+  },
+  "riskRow": {
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "リスクを削除できませんでした"
+    },
+    "deleteConfirmation": "リスク{{referenceId}}「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "deleteConfirmationWithHistory_one": "リスク{{referenceId}}「{{name}}」を完全に削除します。このリスクは{{count}}件の分析の履歴に残っています。削除すると、その履歴も削除されます。",
+    "deleteConfirmationWithHistory_other": "リスク{{referenceId}}「{{name}}」を完全に削除します。このリスクは{{count}}件の分析の履歴に残っています。削除すると、その履歴も削除されます。",
+    "treatments": {
+      "mitigated": "低減",
+      "accepted": "受容",
+      "transferred": "移転",
+      "avoided": "回避",
+      "unknown": "不明"
+    },
+    "unassigned": "未割り当て",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "riskControlsPage": {
+    "columns": {
+      "reference": "参照番号",
+      "name": "名前"
+    },
+    "empty": "リンクされた管理策はありません"
+  },
+  "riskAnalysisDetailPage": {
+    "title": "リスク分析",
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "リスク分析を削除できませんでした",
+      "update": "リスク分析を更新できませんでした",
+      "content": "この説明を表示できませんでした"
+    },
+    "deleteConfirmation": "このリスク分析と、その図、ノード、プロセス、脅威をすべて完全に削除します。この操作は元に戻せません。",
+    "actions": {
+      "fork": "フォーク",
+      "edit": "編集",
+      "delete": "削除",
+      "showMore": "もっと見る",
+      "publish": "公開",
+      "document": "ドキュメント"
+    },
+    "details": "詳細",
+    "noDescription": "説明なし",
+    "fields": {
+      "period": "期間",
+      "matrixSize": "マトリクスのサイズ",
+      "createdAt": "作成日時",
+      "description": "説明"
+    },
+    "diagrams": "図",
+    "treatmentPlans": "リスクとリスク対応計画",
+    "emptyDiagrams": "図はまだありません。図を作成して、ノード、プロセス、脅威の定義を始めましょう。",
+    "tabs": {
+      "diagrams": "図",
+      "treatmentPlans": "リスクとリスク対応計画"
+    }
+  },
+  "riskAnalysesPage": {
+    "title": "リスク分析",
+    "description": "図、ノード、プロセス、脅威、シナリオを使ってリスク分析を管理します。",
+    "columns": {
+      "name": "名前",
+      "description": "説明",
+      "period": "期間",
+      "matrixSize": "マトリクス",
+      "created": "作成日"
+    },
+    "empty": "リスク分析はまだありません。",
+    "actions": {
+      "fork": "フォーク"
+    }
+  },
+  "riskAnalysisBoundaryActions": {
+    "breadcrumb": {
+      "boundaries": "境界"
+    },
+    "deleteConfirmation": "この境界を削除しますか？境界内のノードと入れ子の境界は、最上位に移動されます。",
+    "fields": {
+      "name": "名前",
+      "parentBoundary": "親の境界"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "noneTopLevel": "なし（最上位）",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存"
+    }
+  },
+  "createRiskAnalysisBoundaryDialog": {
+    "breadcrumb": {
+      "boundaries": "境界",
+      "addBoundary": "境界を追加"
+    },
+    "fields": {
+      "name": "名前",
+      "parentBoundary": "親の境界"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "noneTopLevel": "なし（最上位）",
+    "actions": {
+      "add": "追加"
+    }
+  },
+  "createRiskAnalysisNodeDialog": {
+    "breadcrumb": {
+      "nodes": "ノード",
+      "addNode": "ノードを追加"
+    },
+    "fields": {
+      "type": "種別",
+      "name": "名前",
+      "boundary": "境界"
+    },
+    "types": {
+      "entity": "エンティティ",
+      "asset": "資産",
+      "data": "データ"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "none": "なし",
+    "actions": {
+      "add": "追加"
+    }
+  },
+  "createRiskAnalysisProcessDialog": {
+    "breadcrumb": {
+      "processes": "プロセス",
+      "addProcess": "プロセスを追加"
+    },
+    "fields": {
+      "source": "送信元",
+      "target": "送信先",
+      "name": "名前"
+    },
+    "validation": {
+      "required": "この項目は必須です"
+    },
+    "placeholders": {
+      "sourceNode": "送信元ノードを選択",
+      "targetNode": "送信先ノードを選択",
+      "name": "例：ユーザー → API"
+    },
+    "actions": {
+      "add": "追加"
+    }
+  },
+  "createRiskAnalysisDialog": {
+    "title": "リスク分析を追加",
+    "breadcrumb": {
+      "riskAnalyses": "リスク分析"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "matrixSize": "マトリクスのサイズ",
+      "periodStart": "期間の開始日",
+      "periodEnd": "期間の終了日"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です",
+      "periodEndBeforeStart": "期間の終了日は開始日以降にしてください",
+      "matrixSizeRequired": "マトリクスのサイズは必須です"
+    },
+    "placeholders": {
+      "name": "例：プラットフォーム脅威モデル2026",
+      "description": "このアセスメントの範囲と目的を入力…"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "forkRiskAnalysisDialog": {
+    "title": "リスク分析をフォーク",
+    "breadcrumb": {
+      "riskAnalyses": "リスク分析"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "matrixSize": "マトリクスのサイズ",
+      "periodStart": "期間の開始日",
+      "periodEnd": "期間の終了日"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です",
+      "periodEndBeforeStart": "期間の終了日は開始日以降にしてください"
+    },
+    "placeholders": {
+      "name": "例：プラットフォーム脅威モデル2026",
+      "description": "このアセスメントの範囲と目的を入力…"
+    },
+    "actions": {
+      "fork": "フォーク"
+    }
+  },
+  "updateRiskAnalysisDialog": {
+    "title": "リスク分析を編集",
+    "breadcrumb": {
+      "riskAnalyses": "リスク分析"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "matrixSize": "マトリクスのサイズ",
+      "periodStart": "期間の開始日",
+      "periodEnd": "期間の終了日"
+    },
+    "matrixSizes": {
+      "3x3": "3×3",
+      "4x4": "4×4",
+      "5x5": "5×5"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です",
+      "periodEndBeforeStart": "期間の終了日は開始日以降にしてください"
+    },
+    "placeholders": {
+      "name": "例：プラットフォーム脅威モデル2026",
+      "description": "このアセスメントの範囲と目的を入力…"
+    },
+    "actions": {
+      "save": "保存"
+    }
+  },
+  "createScenarioInDiagramDialog": {
+    "breadcrumb": {
+      "scenarios": "シナリオ",
+      "addScenario": "シナリオを追加"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "threats": "脅威",
+      "risks": "リスク"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "placeholders": {
+      "name": "例：APIの侵害によるデータ漏えい",
+      "threatToLink": "リンクする脅威を選択…",
+      "riskToLink": "リンクするリスクを選択…"
+    },
+    "noMoreRisks": "選択できるリスクはこれ以上ありません。",
+    "loadingRisks": "リスクを読み込み中…",
+    "actions": {
+      "add": "追加"
+    }
+  },
+  "createRiskAnalysisDiagramDialog": {
+    "breadcrumb": {
+      "diagrams": "図",
+      "newDiagram": "図を追加"
+    },
+    "fields": {
+      "name": "名前"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "placeholders": {
+      "name": "例：APIレイヤー"
+    },
+    "actions": {
+      "addDiagram": "図を追加",
+      "create": "作成"
+    }
+  },
+  "createRiskAnalysisThreatDialog": {
+    "breadcrumb": {
+      "threats": "脅威",
+      "addThreat": "脅威を追加"
+    },
+    "fields": {
+      "process": "プロセス",
+      "name": "名前",
+      "category": "カテゴリー"
+    },
+    "validation": {
+      "required": "この項目は必須です"
+    },
+    "placeholders": {
+      "process": "プロセスを選択",
+      "name": "例：SQLインジェクション",
+      "category": "例：機密性"
+    },
+    "actions": {
+      "add": "追加"
+    }
+  },
+  "createTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "リスクとリスク対応計画",
+      "new": "リスク対応計画を追加"
+    },
+    "fields": {
+      "risk": "リスク",
+      "treatment": "リスク対応",
+      "owner": "オーナー",
+      "inherentRisk": "固有リスク",
+      "residualRisk": "残留リスク",
+      "inherentLikelihood": "固有の発生可能性",
+      "inherentImpact": "固有の影響度",
+      "residualLikelihood": "残留の発生可能性",
+      "residualImpact": "残留の影響度"
+    },
+    "placeholders": {
+      "treatment": "リスク対応を選択",
+      "risk": "リスクを選択"
+    },
+    "validation": {
+      "riskRequired": "リスクを選択してください",
+      "ownerRequired": "オーナーを選択してください"
+    },
+    "properties": "プロパティ",
+    "hint": "この分析のシナリオにリンクされたリスクのみ選択できます。",
+    "emptyEligible": "先に、図のシナリオにリスクをリンクしてください。",
+    "actions": {
+      "add": "リスク対応計画を追加",
+      "create": "リスク対応計画を作成"
+    }
+  },
+  "updateTreatmentPlanDialog": {
+    "breadcrumb": {
+      "treatmentPlans": "リスクとリスク対応計画",
+      "edit": "リスク対応計画を編集"
+    },
+    "fields": {
+      "risk": "リスク",
+      "treatment": "リスク対応",
+      "owner": "オーナー",
+      "inherentRisk": "固有リスク",
+      "residualRisk": "残留リスク",
+      "inherentLikelihood": "固有の発生可能性",
+      "inherentImpact": "固有の影響度",
+      "residualLikelihood": "残留の発生可能性",
+      "residualImpact": "残留の影響度"
+    },
+    "placeholders": {
+      "treatment": "リスク対応を選択"
+    },
+    "validation": {
+      "ownerRequired": "オーナーを選択してください"
+    },
+    "properties": "プロパティ",
+    "actions": {
+      "update": "リスク対応計画を更新"
+    }
+  },
+  "riskAnalysisTreatmentPlansPage": {
+    "columns": {
+      "risk": "リスク",
+      "category": "カテゴリー",
+      "treatment": "リスク対応",
+      "owner": "オーナー",
+      "scores": "固有 / 残留",
+      "progress": "進捗"
+    },
+    "empty": "この分析のシナリオにリンクされたリスクはまだありません。",
+    "emptyFilter": "このマトリクスのセルに該当するリンク済みリスクはありません。",
+    "unplannedWarning_one": "リスク対応計画が未作成のリンク済みリスクが{{count}}件あります。",
+    "unplannedWarning_other": "リスク対応計画が未作成のリンク済みリスクが{{count}}件あります。",
+    "filter": "{{state}} · 発生可能性{{likelihood}} × 影響度{{impact}}",
+    "asOf": "基準日",
+    "search": "リスクを検索",
+    "states": {
+      "inherent": "固有",
+      "net": "正味",
+      "residual": "残留"
+    },
+    "axes": {
+      "likelihood": "発生可能性",
+      "impact": "影響度"
+    },
+    "legend": {
+      "impact": "影響度：{{levels}}",
+      "likelihood": "発生可能性：{{levels}}",
+      "level": "{{value}} {{label}}"
+    },
+    "cell": "発生可能性{{likelihood}}、影響度{{impact}}：{{count}}件"
+  },
+  "linkedRiskListItem": {
+    "empty": "リスク対応計画はまだありません",
+    "actions": {
+      "create": "計画を追加"
+    }
+  },
+  "treatmentPlanListItem": {
+    "deleteConfirmation": "「{{name}}」のリスク対応計画を完全に削除します。この操作は元に戻せません。",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "progress": "{{done}}/{{total}}",
+    "progressEmpty": "内部統制はありません",
+    "actions": {
+      "tasks": "タスク",
+      "edit": "編集",
+      "delete": "削除",
+      "expand": "内部統制を表示",
+      "collapse": "内部統制を非表示"
+    }
+  },
+  "riskTreatmentPlansPage": {
+    "columns": {
+      "analysis": "リスク分析",
+      "treatment": "リスク対応",
+      "owner": "オーナー",
+      "scores": "固有 / 残留"
+    },
+    "empty": "このリスクのリスク対応計画はまだありません。"
+  },
+  "riskTreatmentPlanListItem": {
+    "deleteConfirmation": "「{{name}}」のリスク対応計画を完全に削除します。この操作は元に戻せません。",
+    "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
+    "actions": {
+      "internalControls": "内部統制",
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "treatmentPlanInternalControlList": {
+    "title": "内部統制",
+    "empty": "リンクされた内部統制はまだありません。",
+    "deleted": "削除された内部統制",
+    "acceptedEmpty": "受容したリスクには内部統制をリンクできません。",
+    "actions": {
+      "create": "内部統制を追加",
+      "link": "内部統制をリンク",
+      "unlink": "紐付けを解除",
+      "showMore": "もっと見る"
+    }
+  },
+  "treatmentPlanInternalControlsDialog": {
+    "title": "リスク対応計画の内部統制",
+    "loading": "内部統制を読み込み中…",
+    "netScore": "正味{{score}}（{{likelihood}} × {{impact}}）"
+  },
+  "riskAnalysisNodeActions": {
+    "breadcrumb": {
+      "nodes": "ノード"
+    },
+    "deleteConfirmation": "このノードを削除しますか？",
+    "fields": {
+      "type": "種別",
+      "name": "名前",
+      "boundary": "境界"
+    },
+    "types": {
+      "entity": "エンティティ",
+      "asset": "資産",
+      "data": "データ"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "none": "なし",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存"
+    }
+  },
+  "riskAnalysisProcessActions": {
+    "breadcrumb": {
+      "processes": "プロセス"
+    },
+    "deleteConfirmation": "このプロセスを削除しますか？",
+    "fields": {
+      "source": "送信元",
+      "target": "送信先",
+      "name": "名前"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "placeholders": {
+      "sourceNode": "送信元ノードを選択",
+      "targetNode": "送信先ノードを選択"
+    },
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存"
+    }
+  },
+  "riskAnalysisScenarioActions": {
+    "breadcrumb": {
+      "scenarios": "シナリオ"
+    },
+    "deleteConfirmation": "このシナリオを削除しますか？",
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "threats": "脅威",
+      "risks": "リスク"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "placeholders": {
+      "threatToLink": "リンクする脅威を選択…",
+      "riskToLink": "リンクするリスクを選択…"
+    },
+    "noMoreRisks": "選択できるリスクはこれ以上ありません。",
+    "loadingRisks": "リスクを読み込み中…",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存"
+    }
+  },
+  "riskAnalysisDiagramActions": {
+    "breadcrumb": {
+      "diagrams": "図",
+      "editDiagram": "図を編集"
+    },
+    "deleteConfirmation": "この図と、その中のノード、プロセス、脅威をすべて削除しますか？",
+    "fields": {
+      "name": "名前"
+    },
+    "validation": {
+      "nameRequired": "この項目は必須です"
+    },
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存"
+    }
+  },
+  "diagramCard": {
+    "summary": "ノード{{nodes}}件 · プロセス{{processes}}件 · 脅威{{threats}}件 · シナリオ{{scenarios}}件",
+    "sectionTitle": {
+      "nodes_one": "ノード（{{count}}）",
+      "nodes_other": "ノード（{{count}}）",
+      "processes_one": "プロセス（{{count}}）",
+      "processes_other": "プロセス（{{count}}）",
+      "boundaries_one": "境界（{{count}}）",
+      "boundaries_other": "境界（{{count}}）",
+      "threats_one": "脅威（{{count}}）",
+      "threats_other": "脅威（{{count}}）",
+      "scenarios_one": "シナリオ（{{count}}）",
+      "scenarios_other": "シナリオ（{{count}}）"
+    },
+    "hints": {
+      "nodes": "この図に含まれるエンティティ、境界、資産、データです。",
+      "processes": "ノード間のデータフローとやり取りです。",
+      "boundaries": "ノードをまとめるグループです。他の境界の中に入れ子にできます。",
+      "threats": "プロセスを狙う潜在的な脅威です。脅威はシナリオを介してリスクに紐付けます。",
+      "scenarios": "脅威とリスクを結び付けるリスクシナリオです。"
+    },
+    "columns": {
+      "name": "名前",
+      "type": "種類",
+      "boundary": "境界",
+      "from": "開始元",
+      "to": "送信先",
+      "parent": "親",
+      "threat": "脅威",
+      "category": "カテゴリー",
+      "process": "プロセス",
+      "scenario": "シナリオ",
+      "risks": "リスク",
+      "threats": "脅威"
+    },
+    "empty": {
+      "nodes": "ノードはありません",
+      "processes": "プロセスはありません",
+      "boundaries": "境界はありません",
+      "threats": "脅威はありません",
+      "scenarios": "シナリオはありません"
+    },
+    "schema": {
+      "title": "図の構造",
+      "hint": "図の更新に使うノード、プロセス、境界、脅威です。"
+    }
+  },
+  "diagramChart": {
+    "empty": "ノードとプロセスを追加すると図が表示されます。",
+    "errorTitle": "エラー",
+    "copyError": "クリップボードにコピーできませんでした",
+    "copyMermaidSource": "Mermaidソースをコピー",
+    "legend": {
+      "entity": "エンティティ",
+      "boundary": "境界",
+      "asset": "資産",
+      "data": "データ",
+      "threat": "脅威"
+    }
+  },
+  "riskAnalysisThreatActions": {
+    "breadcrumb": {
+      "threats": "脅威"
+    },
+    "deleteConfirmation": "この脅威を削除してもよろしいですか？",
+    "fields": {
+      "name": "名前",
+      "category": "カテゴリー"
+    },
+    "validation": {
+      "required": "この項目は必須です"
+    },
+    "placeholders": {
+      "category": "例：機密性"
+    },
+    "actions": {
+      "edit": "編集",
+      "delete": "削除",
+      "save": "保存"
+    }
+  },
+  "riskScenariosPage": {
+    "columns": {
+      "scenario": "シナリオ",
+      "description": "説明"
+    },
+    "empty": "このリスクに紐付くシナリオはまだありません。",
+    "actions": {
+      "unlink": "紐付けを解除",
+      "linkScenario": "シナリオを紐付け"
+    }
+  },
+  "webhooksSettingsPage": {
+    "description": "組織でイベントが発生したときに通知を受け取るWebhookを設定します。",
+    "newDescription": "エンドポイントURLを入力し、このWebhookを実行するイベントを選択してください。",
+    "fields": {
+      "endpointUrl": "エンドポイントURL",
+      "signingSecret": "署名シークレット",
+      "events": "イベント"
+    },
+    "validation": {
+      "endpointUrlRequired": "エンドポイントURLを入力してください",
+      "invalidUrl": "有効なURLを入力してください",
+      "httpsRequired": "URLはhttps://で始まる必要があります",
+      "eventRequired": "イベントを1つ以上選択してください"
+    },
+    "placeholders": {
+      "endpointUrl": "https://example.com/webhook"
+    },
+    "dialogs": {
+      "addTitle": "Webhookサブスクリプションを追加",
+      "deleteTitle": "Webhookを削除"
+    },
+    "status": {
+      "succeeded": "成功",
+      "pending": "保留中",
+      "failed": "失敗"
+    },
+    "errorTitle": "エラー",
+    "errors": {
+      "loadSigningSecret": "署名シークレットを読み込めませんでした。",
+      "copySigningSecret": "署名シークレットをコピーできませんでした。",
+      "copyPayload": "ペイロードをコピーできませんでした。",
+      "copyResponse": "レスポンスをコピーできませんでした。",
+      "create": "Webhookを作成できませんでした",
+      "update": "Webhookを更新できませんでした",
+      "delete": "Webhookを削除できませんでした"
+    },
+    "messages": {
+      "created": "Webhookを作成しました",
+      "updated": "Webhookを更新しました",
+      "deleted": "Webhookを削除しました"
+    },
+    "copiedToClipboard": "クリップボードにコピーしました",
+    "deliveriesCount_one": "配信（{{count}}）",
+    "deliveriesCount_other": "配信（{{count}}）",
+    "emptyDeliveries": "配信の記録はまだありません。",
+    "emptyDeliveriesFiltered": "このステータスに一致する配信はありません。",
+    "filterStatus": "配信ステータス",
+    "filterAll": "すべて",
+    "lastDeliveryEmpty": "配信はまだありません。",
+    "empty": "Webhookサブスクリプションはまだありません。追加して始めましょう。",
+    "notFound": "このWebhookサブスクリプションが見つかりませんでした。",
+    "payload": "ペイロード",
+    "response": "レスポンス",
+    "copySigningSecret": "署名シークレットをコピー",
+    "copyPayload": "ペイロードをコピー",
+    "copyResponse": "レスポンスをコピー",
+    "deleteWebhook": "Webhookを削除",
+    "seeAll": "すべて表示",
+    "subscribedCount_one": "{{count}}件のイベントを購読中",
+    "subscribedCount_other": "{{count}}件のイベントを購読中",
+    "searchEvents": "イベントを検索",
+    "removeEvent": "{{event}}を削除",
+    "editEvents": "購読イベントを編集",
+    "emptySearch": "検索に一致するイベントはありません。",
+    "deleteConfirmation": "このWebhookサブスクリプションを削除してもよろしいですか？",
+    "cannotUndo": "この操作は元に戻せません。",
+    "actions": {
+      "create": "作成",
+      "save": "保存",
+      "add": "Webhookサブスクリプションを追加",
+      "back": "戻る",
+      "hide": "非表示",
+      "show": "表示",
+      "delete": "削除",
+      "cancel": "キャンセル",
+      "previous": "前へ",
+      "next": "次へ"
+    }
+  },
+  "statementOfApplicabilityDetailPage": {
+    "title": "適用宣言書",
+    "sections": {
+      "details": "詳細",
+      "statements": "記載事項"
+    },
+    "fields": {
+      "createdAt": "作成日時",
+      "updatedAt": "更新日時",
+      "approvers": "承認者"
+    },
+    "placeholders": {
+      "approvers": "承認者を追加…"
+    },
+    "validation": {
+      "nameRequired": "名前を入力してください"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "適用宣言書を更新しました。",
+      "approversUpdated": "承認者を更新しました。"
+    },
+    "errors": {
+      "missingDeleteData": "適用宣言書を削除できませんでした：IDまたは名前がありません",
+      "delete": "適用宣言書を削除できませんでした",
+      "update": "適用宣言書を更新できませんでした",
+      "updateApprovers": "承認者を更新できませんでした"
+    },
+    "deleteConfirmation": "「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "none": "なし",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "delete": "削除"
+    }
+  },
+  "statementsOfApplicabilityPage": {
+    "description": "組織のフレームワークに対する適用宣言書を管理します。",
+    "columns": {
+      "name": "名前",
+      "createdAt": "作成日時",
+      "controls": "管理策"
+    },
+    "actions": {
+      "add": "適用宣言書を追加",
+      "loading": "読み込み中…",
+      "loadMore": "さらに読み込む"
+    },
+    "empty": {
+      "title": "適用宣言書はまだありません",
+      "description": "最初の適用宣言書を作成して始めましょう。"
+    }
+  },
+  "addApplicabilityStatementDialog": {
+    "breadcrumb": {
+      "statementsOfApplicability": "適用宣言書",
+      "addStatement": "記載事項を追加"
+    },
+    "applicability": {
+      "notLinked": "未紐付け",
+      "applicable": "適用",
+      "notApplicable": "適用除外"
+    },
+    "placeholders": {
+      "justification": "適用除外の理由",
+      "search": "管理策を検索…"
+    },
+    "messages": {
+      "created": "記載事項を作成しました。",
+      "removed": "記載事項を削除しました。",
+      "updated": "記載事項を更新しました。"
+    },
+    "errors": {
+      "create": "記載事項を作成できませんでした",
+      "remove": "記載事項を削除できませんでした",
+      "update": "記載事項を更新できませんでした"
+    },
+    "empty": "管理策が見つかりません",
+    "actions": {
+      "save": "保存",
+      "expand": "展開",
+      "collapse": "折りたたむ",
+      "close": "閉じる"
+    }
+  },
+  "createStatementOfApplicabilityDialog": {
+    "breadcrumb": {
+      "statementsOfApplicability": "適用宣言書",
+      "newStatement": "適用宣言書を新規作成"
+    },
+    "fields": {
+      "name": "名前"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "適用宣言書を作成しました。"
+    },
+    "errors": {
+      "create": "適用宣言書を作成できませんでした"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "editApplicabilityStatementDialog": {
+    "breadcrumb": {
+      "statementsOfApplicability": "適用宣言書",
+      "editStatement": "記載事項を編集"
+    },
+    "fields": {
+      "applicability": "適用可否",
+      "justification": "根拠"
+    },
+    "options": {
+      "yes": "はい",
+      "no": "いいえ"
+    },
+    "placeholders": {
+      "justification": "適用除外の理由"
+    },
+    "messages": {
+      "updated": "記載事項を更新しました。"
+    },
+    "errors": {
+      "update": "記載事項を更新できませんでした"
+    },
+    "actions": {
+      "save": "保存"
+    }
+  },
+  "publishStatementOfApplicabilityDialog": {
+    "title": "適用宣言書を公開",
+    "description": "公開前に承認を依頼する場合は承認者を選択してください。承認者なしで直接公開することもできます。",
+    "fields": {
+      "approvers": "承認者"
+    },
+    "placeholders": {
+      "approvers": "承認者を追加…"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "approvalRequested": "承認を依頼しました。",
+      "published": "適用宣言書を公開しました。"
+    },
+    "errors": {
+      "publish": "適用宣言書を公開できませんでした"
+    },
+    "actions": {
+      "publishMinor": "軽微な変更として公開",
+      "requestApproval": "承認を依頼",
+      "publish": "公開"
+    }
+  },
+  "statementOfApplicabilityControlsTab": {
+    "columns": {
+      "framework": "フレームワーク",
+      "control": "管理策",
+      "applicability": "適用可否",
+      "maturity": "成熟度",
+      "regulatory": "法規制",
+      "contractual": "契約",
+      "bestPractice": "ベストプラクティス",
+      "riskAssessment": "リスクアセスメント"
+    },
+    "messages": {
+      "removed": "記載事項を削除しました。"
+    },
+    "errors": {
+      "remove": "記載事項を削除できませんでした"
+    },
+    "empty": "紐付いた管理策はありません",
+    "options": {
+      "yes": "はい",
+      "no": "いいえ"
+    },
+    "maturity": {
+      "none": "0 - なし",
+      "initial": "1 - 初期",
+      "managed": "2 - 管理された",
+      "defined": "3 - 定義された",
+      "quantitatively_managed": "4 - 定量的に管理された",
+      "optimizing": "5 - 最適化"
+    },
+    "actions": {
+      "createStatement": "記載事項を作成",
+      "edit": "編集",
+      "remove": "削除"
+    }
+  },
+  "thirdPartiesPage": {
+    "description": "取引先は、自社が利用している外部のサービスやプロバイダーです。リスクとコンプライアンスの状況を把握するために追加してください。",
+    "searchPlaceholder": "取引先を検索…",
+    "actions": {
+      "document": "ドキュメント",
+      "publish": "公開",
+      "add": "取引先を追加"
+    },
+    "columns": {
+      "thirdParty": "取引先",
+      "assessedAt": "評価日",
+      "dataRisk": "データリスク",
+      "businessRisk": "事業リスク"
+    }
+  },
+  "thirdPartyDetailLayout": {
+    "title": "取引先",
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "取引先を削除できませんでした"
+    },
+    "deleteConfirmation": "取引先「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "vettingInProgress": "審査中です。分析が完了すると結果が表示されます。",
+    "vettingFailed": "審査に失敗しました。もう一度審査を開始できます。",
+    "level": "レベル{{level}}",
+    "from": "取得元：",
+    "actions": {
+      "startVetting": "審査を開始",
+      "delete": "削除"
+    }
+  },
+  "addChildThirdPartyDialog": {
+    "title": "取引先を追加",
+    "searchPlaceholder": "取引先の名前を入力",
+    "createNew": "取引先を新規作成：{{name}}"
+  },
+  "createThirdPartyContactDialog": {
+    "breadcrumb": {
+      "contacts": "担当者連絡先",
+      "newContact": "担当者連絡先を新規作成"
+    },
+    "fields": {
+      "name": "名前",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "role": "役職"
+    },
+    "placeholders": {
+      "name": "担当者の氏名",
+      "email": "contact@example.com",
+      "phone": "例：+1234567890",
+      "role": "例：アカウントマネージャー、テクニカルサポート"
+    },
+    "help": {
+      "phone": "+で始まる国際形式で入力してください"
+    },
+    "validation": {
+      "email": "有効なメールアドレスを入力してください",
+      "phone": "電話番号は国際形式で入力してください（例：+1234567890）"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "担当者連絡先を作成しました。"
+    },
+    "errors": {
+      "create": "担当者連絡先を作成できませんでした"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "editThirdPartyContactDialog": {
+    "breadcrumb": {
+      "contacts": "担当者連絡先",
+      "editContact": "担当者連絡先を編集"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "担当者連絡先を更新しました。"
+    },
+    "errors": {
+      "update": "担当者連絡先を更新できませんでした"
+    },
+    "actions": {
+      "save": "保存"
+    }
+  },
+  "createThirdPartyRiskAssessmentDialog": {
+    "breadcrumb": {
+      "riskAssessments": "リスクアセスメント",
+      "newRiskAssessment": "リスクアセスメントを新規作成"
+    },
+    "fields": {
+      "dataSensitivity": "データの機微度",
+      "businessImpact": "事業への影響度",
+      "notes": "メモ"
+    },
+    "notesHelp": "今後の参照に役立つ背景や詳細があれば、このリスクアセスメントに追記してください。",
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "リスクアセスメントを作成しました。"
+    },
+    "errors": {
+      "create": "リスクアセスメントを作成できませんでした"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "createThirdPartyServiceDialog": {
+    "breadcrumb": {
+      "services": "サービス",
+      "newService": "サービスを新規作成"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明"
+    },
+    "placeholders": {
+      "name": "サービス名",
+      "description": "サービスの簡単な説明"
+    },
+    "validation": {
+      "nameRequired": "サービス名を入力してください"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "サービスを作成しました。"
+    },
+    "errors": {
+      "create": "サービスを作成できませんでした"
+    },
+    "actions": {
+      "create": "作成"
+    }
+  },
+  "editThirdPartyServiceDialog": {
+    "breadcrumb": {
+      "services": "サービス",
+      "editService": "サービスを編集"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "サービスを更新しました。"
+    },
+    "errors": {
+      "update": "サービスを更新できませんでした"
+    },
+    "actions": {
+      "save": "保存"
+    }
+  },
+  "publishThirdPartyListDialog": {
+    "title": "取引先を公開",
+    "errors": {
+      "publish": "取引先を公開できませんでした"
+    },
+    "messages": {
+      "published": "取引先を公開しました。"
+    }
+  },
+  "thirdPartyRow": {
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "取引先を削除できませんでした"
+    },
+    "deleteConfirmation": "取引先「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "unnamed": "名前のない取引先",
+    "notAssessed": "未評価",
+    "actions": {
+      "delete": "削除"
+    }
+  },
+  "createThirdPartyDialog": {
+    "title": "取引先を追加",
+    "searchPlaceholder": "取引先の名前を入力",
+    "createNew": "取引先を新規作成：{{name}}",
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "created": "取引先を作成しました"
+    },
+    "errors": {
+      "create": "取引先を作成できませんでした"
+    }
+  },
+  "deleteBusinessAssociateAgreementDialog": {
+    "title": "事業提携契約（BAA）を削除",
+    "confirmation": "事業提携契約「{{fileName}}」を削除してもよろしいですか？",
+    "cannotUndo": "この操作は元に戻せません。",
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "deleted": "事業提携契約を削除しました"
+    },
+    "errors": {
+      "delete": "事業提携契約を削除できませんでした"
+    },
+    "actions": {
+      "delete": "削除"
+    }
+  },
+  "deleteDataPrivacyAgreementDialog": {
+    "title": "データ処理契約（DPA）を削除",
+    "confirmation": "データ処理契約「{{fileName}}」を削除してもよろしいですか？",
+    "cannotUndo": "この操作は元に戻せません。",
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "deleted": "データ処理契約を削除しました"
+    },
+    "errors": {
+      "delete": "データ処理契約を削除できませんでした"
+    },
+    "actions": {
+      "delete": "削除"
+    }
+  },
+  "editBusinessAssociateAgreementDialog": {
+    "title": "事業提携契約（BAA）を編集",
+    "fields": {
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "事業提携契約を更新しました"
+    },
+    "errors": {
+      "update": "事業提携契約を更新できませんでした"
+    },
+    "actions": {
+      "update": "更新"
+    }
+  },
+  "editDataPrivacyAgreementDialog": {
+    "title": "データ処理契約（DPA）を編集",
+    "fields": {
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "updated": "データ処理契約を更新しました"
+    },
+    "errors": {
+      "update": "データ処理契約を更新できませんでした"
+    },
+    "actions": {
+      "update": "更新"
+    }
+  },
+  "uploadBusinessAssociateAgreementDialog": {
+    "title": "事業提携契約（BAA）をアップロード",
+    "fileHelp": "アップロードできるのは10MBまでのPDFファイルのみです",
+    "selectedFile": "選択したファイル：",
+    "fields": {
+      "fileName": "ファイル名",
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限"
+    },
+    "placeholders": {
+      "fileName": "事業提携契約"
+    },
+    "validation": {
+      "fileNameRequired": "ファイル名を入力してください"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "uploaded": "事業提携契約をアップロードしました"
+    },
+    "errors": {
+      "upload": "事業提携契約をアップロードできませんでした"
+    },
+    "actions": {
+      "upload": "アップロード"
+    }
+  },
+  "uploadComplianceReportDialog": {
+    "title": "準拠報告書をアップロード",
+    "fileHelp": "アップロードできるのは30MBまでのPDFファイルのみです",
+    "selectedFile": "選択したファイル：",
+    "fields": {
+      "reportDate": "報告書の日付",
+      "validUntil": "有効期限"
+    },
+    "validation": {
+      "reportDateRequired": "報告書の日付を入力してください"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "uploaded": "準拠報告書をアップロードしました"
+    },
+    "errors": {
+      "upload": "準拠報告書をアップロードできませんでした"
+    },
+    "actions": {
+      "upload": "アップロード"
+    }
+  },
+  "uploadDataPrivacyAgreementDialog": {
+    "title": "データ処理契約（DPA）をアップロード",
+    "fileHelp": "アップロードできるのは10MBまでのPDFファイルのみです",
+    "selectedFile": "選択したファイル：",
+    "fields": {
+      "fileName": "ファイル名",
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限"
+    },
+    "placeholders": {
+      "fileName": "データ処理契約"
+    },
+    "validation": {
+      "fileNameRequired": "ファイル名を入力してください"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "uploaded": "データ処理契約をアップロードしました"
+    },
+    "errors": {
+      "upload": "データ処理契約をアップロードできませんでした"
+    },
+    "actions": {
+      "upload": "アップロード"
+    }
+  },
+  "vettingDialog": {
+    "title": "審査を開始",
+    "fields": {
+      "websiteUrl": "WebサイトURL"
+    },
+    "validation": {
+      "url": "有効なURLを入力してください"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "started": "取引先をバックグラウンドで審査しています。"
+    },
+    "errors": {
+      "start": "審査を開始できませんでした。"
+    },
+    "actions": {
+      "start": "審査を開始"
+    }
+  },
+  "thirdPartyProfilePage": {
+    "pageTitle": "{{name}} - プロフィール",
+    "title": "プロフィール",
+    "description": "この取引先の身元情報と事業所在地です。",
+    "sections": {
+      "details": "取引先の詳細",
+      "countries": "国"
+    },
+    "fields": {
+      "name": "名前",
+      "description": "説明",
+      "category": "カテゴリー",
+      "legalName": "法人名",
+      "headquarterAddress": "本社所在地",
+      "websiteUrl": "WebサイトURL"
+    },
+    "placeholders": {
+      "category": "カテゴリーを選択"
+    },
+    "categories": {
+      "analytics": "アナリティクス",
+      "cloudMonitoring": "クラウド監視",
+      "cloudProvider": "クラウドプロバイダー",
+      "collaboration": "コラボレーション",
+      "customerSupport": "カスタマーサポート",
+      "dataStorageAndProcessing": "データの保管・処理",
+      "documentManagement": "文書管理",
+      "employeeManagement": "従業員管理",
+      "engineering": "エンジニアリング",
+      "finance": "財務",
+      "identityProvider": "IDプロバイダー",
+      "it": "IT",
+      "marketing": "マーケティング",
+      "officeOperations": "オフィス運営",
+      "other": "その他",
+      "passwordManagement": "パスワード管理",
+      "productAndDesign": "プロダクト・デザイン",
+      "professionalServices": "専門サービス",
+      "recruiting": "採用",
+      "sales": "営業",
+      "security": "セキュリティ",
+      "versionControl": "バージョン管理"
+    },
+    "actions": {
+      "update": "取引先を更新"
+    },
+    "messages": {
+      "updated": "取引先を更新しました。",
+      "updateError": "取引先を更新できませんでした"
+    }
+  },
+  "thirdPartyStakeholdersPage": {
+    "pageTitle": "{{name}} - 利害関係者",
+    "title": "利害関係者",
+    "description": "この取引関係に責任を持つ人（管理者と担当者連絡先）です。",
+    "sections": {
+      "administrators": "管理者",
+      "contacts": "担当者連絡先"
+    },
+    "fields": {
+      "administrators": "管理者"
+    },
+    "placeholders": {
+      "administrators": "管理者を追加…"
+    },
+    "actions": {
+      "addContact": "担当者連絡先を追加"
+    },
+    "columns": {
+      "name": "名前",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "role": "役職",
+      "actions": "操作"
+    }
+  },
+  "thirdPartyAssurancePage": {
+    "pageTitle": "{{name}} - 保証",
+    "title": "保証",
+    "description": "この取引先のセキュリティおよびプライバシー対応状況を示す証跡です。",
+    "sections": {
+      "certifications": "認証",
+      "links": "リンク",
+      "reports": "準拠報告書"
+    },
+    "categories": {
+      "securityStandards": "セキュリティ規格",
+      "regulatoryLegal": "法規制・法務",
+      "industrySpecific": "業界固有",
+      "internationalGov": "国際・政府",
+      "custom": "カスタム認証"
+    },
+    "placeholders": {
+      "add": "認証を追加"
+    },
+    "addCustom": "カスタム認証を追加：{{name}}",
+    "urlLabels": {
+      "statusPage": "ステータスページのURL",
+      "termsOfService": "利用規約のURL",
+      "privacyPolicy": "プライバシー関連文書のURL",
+      "serviceLevelAgreement": "サービスレベル契約のURL",
+      "dataProcessingAgreement": "データ処理契約のURL",
+      "securityPage": "セキュリティページのURL",
+      "trustPage": "トラストページのURL"
+    },
+    "actions": {
+      "addReport": "報告書を追加"
+    },
+    "columns": {
+      "reportName": "報告書名",
+      "reportDate": "報告書の日付",
+      "validUntil": "有効期限",
+      "fileSize": "ファイルサイズ",
+      "actions": "操作"
+    }
+  },
+  "thirdPartyAgreementsPage": {
+    "pageTitle": "{{name}} - 契約",
+    "title": "契約",
+    "description": "この取引先と締結したデータ処理に関する契約です。",
+    "agreements": {
+      "businessAssociate": "事業提携契約（BAA）",
+      "dataPrivacy": "データ処理契約（DPA）",
+      "noBusinessAssociate": "利用可能な事業提携契約はありません",
+      "noDataPrivacy": "利用可能なデータ処理契約はありません",
+      "validity": {
+        "range": "有効期間：{{from}}から{{until}}まで",
+        "from": "{{date}}から有効",
+        "until": "{{date}}まで有効"
+      }
+    },
+    "actions": {
+      "downloadPdf": "PDFをダウンロード",
+      "upload": "アップロード"
+    }
+  },
+  "thirdPartyComplianceReportRow": {
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "報告書を削除できませんでした"
+    },
+    "deleteConfirmation": "報告書「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "actions": {
+      "download": "ダウンロード",
+      "delete": "削除"
+    }
+  },
+  "thirdPartyRiskAssessmentPage": {
+    "pageTitle": "{{name}} - リスクアセスメント",
+    "empty": "リスクアセスメントが見つかりません",
+    "columns": {
+      "createdAt": "作成日時",
+      "expires": "有効期限",
+      "dataSensitivity": "データの機微度",
+      "businessImpact": "事業への影響度"
+    },
+    "actions": {
+      "add": "リスクアセスメントを追加"
+    }
+  },
+  "thirdPartyServicesPage": {
+    "pageTitle": "{{name}} - サービス",
+    "title": "サービス",
+    "description": "この取引先が提供するサービスを管理します。",
+    "actions": {
+      "add": "サービスを追加"
+    },
+    "columns": {
+      "name": "名前",
+      "description": "説明",
+      "actions": "操作"
+    }
+  },
+  "thirdPartyServiceRow": {
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "サービスを削除できませんでした"
+    },
+    "deleteConfirmation": "サービス「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "emptyValue": "—",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "thirdPartySupplyChainPage": {
+    "pageTitle": "{{name}} - サプライチェーン",
+    "title": "サプライチェーン",
+    "description": "このベンダーが依存している取引先です。",
+    "deleteConfirmation": "「{{name}}」を削除しますか？",
+    "notAssessed": "未評価",
+    "actions": {
+      "add": "取引先を追加"
+    },
+    "columns": {
+      "thirdParty": "取引先",
+      "assessedAt": "評価日",
+      "dataRisk": "データリスク",
+      "businessRisk": "事業リスク"
+    }
+  },
+  "thirdPartyContactRow": {
+    "messages": {
+      "error": "エラー"
+    },
+    "errors": {
+      "delete": "担当者連絡先を削除できませんでした"
+    },
+    "deleteConfirmation": "担当者連絡先「{{name}}」を完全に削除します。この操作は元に戻せません。",
+    "unnamed": "名前のない担当者連絡先",
+    "emptyValue": "—",
+    "actions": {
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "magicLinkPage": {
+    "pageTitle": "ログインを続行",
+    "title": "ログインを続行",
+    "description": "「続行」をクリックしてログインを完了してください。",
+    "errors": {
+      "continue": "ログインを完了できません"
+    },
+    "actions": {
+      "continue": "続行"
+    }
+  },
+  "magicLinkForm": {
+    "errors": {
+      "send": "マジックリンクを送信できません"
+    },
+    "messages": {
+      "sent": "マジックリンクを送信しました！"
+    },
+    "fields": {
+      "email": "メールアドレス"
+    },
+    "sentDescription": "マジックリンクを送信しました。メールを確認し、リンクから続行してください。",
+    "actions": {
+      "resend": "リンクを再送信",
+      "resendIn": "{{count}}秒後にリンクを再送信",
+      "send": "続行"
+    }
+  },
+  "auth": {
+    "actions": {
+      "signIn": "ログイン"
+    }
+  },
+  "authError": {
+    "enterpriseAccountRequired": {
+      "title": "法人アカウントが必要です",
+      "description": "個人のGoogleアカウントおよびMicrosoftアカウントではログインできません。勤務先または学校のアカウントをご利用ください。"
+    },
+    "emailNotVerified": {
+      "title": "メールアドレスが未確認です",
+      "description": "お使いのメールアドレスがIDプロバイダーで確認されていません。確認してから、もう一度ログインしてください。"
+    },
+    "signInSessionExpired": {
+      "title": "ログインセッションの有効期限が切れました",
+      "description": "このログイン試行は無効になりました。ログインページからやり直してください。"
+    },
+    "magicLinkExpired": {
+      "title": "リンクの有効期限切れ",
+      "description": "このマジックリンクの有効期限が切れています。マジックリンクの有効期間は15分です。新しいリンクをリクエストしてください。"
+    },
+    "magicLinkAlreadyUsed": {
+      "title": "使用済みのリンク",
+      "description": "このマジックリンクはすでに使用されています。新しいリンクをリクエストしてください。"
+    },
+    "invalidLink": {
+      "title": "無効なリンク",
+      "description": "このマジックリンクは無効です。新しいリンクをリクエストしてください。"
+    },
+    "default": {
+      "title": "認証に失敗しました",
+      "description": "ログインを完了できませんでした。もう一度お試しください。"
+    }
+  },
+  "devices": {
+    "title": "端末",
+    "description": "Probo posture agentに登録されたコンピューターを管理します。",
+    "empty": "登録済みの端末はありません",
+    "actions": {
+      "add": "端末を追加",
+      "new": "端末を新規作成",
+      "reassign": "再割り当て",
+      "revoke": "失効",
+      "delete": "削除"
+    },
+    "fields": {
+      "organization": "組織",
+      "hostname": "ホスト名",
+      "owner": "オーナー",
+      "state": "状態",
+      "platform": "プラットフォーム",
+      "osVersion": "OSバージョン",
+      "hardwareUuid": "ハードウェアUUID",
+      "serialNumber": "シリアル番号",
+      "agentVersion": "エージェントのバージョン",
+      "enrolledAt": "登録日時",
+      "lastSeen": "最終確認"
+    },
+    "values": {
+      "pending": "（保留中）",
+      "never": "なし",
+      "unassigned": "未割り当て"
+    },
+    "messages": {
+      "ownerUpdated": "端末のオーナーを更新しました",
+      "revoked": "端末を失効しました",
+      "deleted": "端末を削除しました"
+    },
+    "errors": {
+      "create": "端末を作成できませんでした",
+      "reassign": "端末を再割り当てできませんでした",
+      "revoke": "端末を失効できませんでした",
+      "delete": "端末を削除できませんでした"
+    },
+    "confirmations": {
+      "revoke": "端末「{{hostname}}」を失効しますか？この端末のエージェントは報告を停止し、再登録が必要になります。",
+      "delete": "端末「{{hostname}}」を削除しますか？インベントリから削除されます。"
+    },
+    "postures": {
+      "currentTitle": "現在のセキュリティ状態",
+      "empty": "セキュリティ状態の確認記録はありません",
+      "values": {
+        "on": "オン",
+        "off": "オフ",
+        "immediate": "即時",
+        "seconds": "{{seconds}}秒",
+        "minPasswordLength": "最小{{length}}文字",
+        "configured": "設定済み",
+        "none": "なし",
+        "unknown": "不明"
+      },
+      "checks": {
+        "diskEncryption": "ディスク暗号化",
+        "screenLock": "画面ロック",
+        "firewallEnabled": "ファイアウォールの有効化",
+        "timeSync": "時刻同期",
+        "osVersion": "OSバージョン",
+        "autoUpdate": "自動更新",
+        "passwordPolicy": "パスワードポリシー",
+        "remoteLogin": "リモートログイン",
+        "malwareProtection": "マルウェア対策"
+      }
+    },
+    "history": {
+      "title": "報告履歴",
+      "empty": "セキュリティ状態の報告はまだありません",
+      "checkCount_one": "{{count}}件のチェックを報告",
+      "checkCount_other": "{{count}}件のチェックを報告",
+      "columns": {
+        "time": "日時",
+        "checks": "チェック",
+        "correlationId": "相関ID"
+      },
+      "actions": {
+        "copyCorrelationId": "相関IDをコピー",
+        "correlationIdCopied": "相関IDをコピーしました"
+      }
+    }
+  },
+  "deviceEnrollment": {
+    "token": {
+      "title": "登録トークンを生成しました",
+      "description": "この登録トークンは、安全な方法で端末のオーナーにのみ共有してください。1回のみ使用でき、7日後に失効します。",
+      "manualInstall": "手動インストール（CLI / MDM）",
+      "releaseListHint": "<link>GitHubのprobo-agentリリース</link>（タグprobo-agent/v*）を開き、お使いのOSとアーキテクチャに合うアーカイブ（例：probo-agent_Darwin_arm64.tar.gz、probo-agent_Linux_x86_64.tar.gz、probo-agent_Windows_x86_64.zip）を選択してください。ダウンロードコマンドのvX.Y.Z、OS、ARCHは、選択したアセットの値に置き換えてください。",
+      "installUnix": "macOSまたはLinuxにインストール（sudo権限のあるシェルで実行）",
+      "installWindows": "Windowsにインストール（管理者権限のPowerShellセッションで実行）",
+      "downloadStep": "バイナリーをダウンロードして配置",
+      "enrollStep": "端末を設定してエージェントを起動",
+      "securityNotice": "トークンはCLIフラグとして渡されます（curlのシェルへのパイプやsudoの環境変数は使用しません）。インストール後、エージェントはcosign署名を検証しながらGitHub Releasesから自動更新されます。"
+    },
+    "messages": {
+      "created": "端末を作成しました。登録トークンを今すぐコピーしてください。再表示はされません。"
+    },
+    "errors": {
+      "copyToClipboard": "クリップボードにコピーできませんでした"
+    }
+  },
+  "thirdPartyRiskAssessmentRow": {
+    "expired": "期限切れ",
+    "notes": "メモ"
+  },
+  "reactivateSCIMBridge": {
+    "actions": {
+      "reactivate": "再有効化"
+    },
+    "dialog": {
+      "title": "SCIMブリッジを再有効化",
+      "description": "次回の同期は直ちに実行されるようスケジュールされます。連続エラーはクリアされ、失敗・無効・停止状態のブリッジは有効に戻ります。"
+    },
+    "messages": {
+      "success": "SCIMブリッジを再有効化しました。次回の実行は直ちにスケジュールされます。"
+    },
+    "errors": {
+      "reactivate": "SCIMブリッジを再有効化できませんでした"
+    }
+  },
+  "country": {
+    "GLOBAL": "グローバル",
+    "AD": "アンドラ",
+    "AE": "アラブ首長国連邦",
+    "AF": "アフガニスタン",
+    "AG": "アンティグア・バーブーダ",
+    "AI": "アンギラ",
+    "AL": "アルバニア",
+    "AM": "アルメニア",
+    "AO": "アンゴラ",
+    "AQ": "南極",
+    "AR": "アルゼンチン",
+    "AS": "米領サモア",
+    "AT": "オーストリア",
+    "AU": "オーストラリア",
+    "AW": "アルーバ",
+    "AX": "オーランド諸島",
+    "AZ": "アゼルバイジャン",
+    "BA": "ボスニア・ヘルツェゴビナ",
+    "BB": "バルバドス",
+    "BD": "バングラデシュ",
+    "BE": "ベルギー",
+    "BF": "ブルキナファソ",
+    "BG": "ブルガリア",
+    "BH": "バーレーン",
+    "BI": "ブルンジ",
+    "BJ": "ベナン",
+    "BL": "サン・バルテルミー",
+    "BM": "バミューダ",
+    "BN": "ブルネイ",
+    "BO": "ボリビア",
+    "BQ": "ボネール、シント・ユースタティウス及びサバ",
+    "BR": "ブラジル",
+    "BS": "バハマ",
+    "BT": "ブータン",
+    "BV": "ブーベ島",
+    "BW": "ボツワナ",
+    "BY": "ベラルーシ",
+    "BZ": "ベリーズ",
+    "CA": "カナダ",
+    "CC": "ココス（キーリング）諸島",
+    "CD": "コンゴ民主共和国",
+    "CF": "中央アフリカ",
+    "CG": "コンゴ共和国",
+    "CH": "スイス",
+    "CI": "コートジボワール",
+    "CK": "クック諸島",
+    "CL": "チリ",
+    "CM": "カメルーン",
+    "CN": "中国",
+    "CO": "コロンビア",
+    "CR": "コスタリカ",
+    "CU": "キューバ",
+    "CV": "カーボベルデ",
+    "CW": "キュラソー",
+    "CX": "クリスマス島",
+    "CY": "キプロス",
+    "CZ": "チェコ",
+    "DE": "ドイツ",
+    "DJ": "ジブチ",
+    "DK": "デンマーク",
+    "DM": "ドミニカ国",
+    "DO": "ドミニカ共和国",
+    "DZ": "アルジェリア",
+    "EC": "エクアドル",
+    "EE": "エストニア",
+    "EG": "エジプト",
+    "EH": "西サハラ",
+    "ER": "エリトリア",
+    "ES": "スペイン",
+    "ET": "エチオピア",
+    "EU": "EU",
+    "FI": "フィンランド",
+    "FJ": "フィジー",
+    "FK": "フォークランド諸島",
+    "FM": "ミクロネシア連邦",
+    "FO": "フェロー諸島",
+    "FR": "フランス",
+    "GA": "ガボン",
+    "GB": "英国",
+    "GD": "グレナダ",
+    "GE": "ジョージア",
+    "GF": "仏領ギアナ",
+    "GG": "ガーンジー",
+    "GH": "ガーナ",
+    "GI": "ジブラルタル",
+    "GL": "グリーンランド",
+    "GM": "ガンビア",
+    "GN": "ギニア",
+    "GP": "グアドループ",
+    "GQ": "赤道ギニア",
+    "GR": "ギリシャ",
+    "GT": "グアテマラ",
+    "GU": "グアム",
+    "GW": "ギニアビサウ",
+    "GY": "ガイアナ",
+    "HK": "香港",
+    "HM": "ハード島・マクドナルド諸島",
+    "HN": "ホンジュラス",
+    "HR": "クロアチア",
+    "HT": "ハイチ",
+    "HU": "ハンガリー",
+    "ID": "インドネシア",
+    "IE": "アイルランド",
+    "IL": "イスラエル",
+    "IM": "マン島",
+    "IN": "インド",
+    "IO": "英領インド洋地域",
+    "IQ": "イラク",
+    "IR": "イラン",
+    "IS": "アイスランド",
+    "IT": "イタリア",
+    "JE": "ジャージー",
+    "JM": "ジャマイカ",
+    "JO": "ヨルダン",
+    "JP": "日本",
+    "KE": "ケニア",
+    "KG": "キルギス",
+    "KH": "カンボジア",
+    "KI": "キリバス",
+    "KM": "コモロ",
+    "KN": "セントクリストファー・ネーヴィス",
+    "KP": "北朝鮮",
+    "KR": "韓国",
+    "KW": "クウェート",
+    "KY": "ケイマン諸島",
+    "KZ": "カザフスタン",
+    "LA": "ラオス",
+    "LB": "レバノン",
+    "LC": "セントルシア",
+    "LI": "リヒテンシュタイン",
+    "LK": "スリランカ",
+    "LR": "リベリア",
+    "LS": "レソト",
+    "LT": "リトアニア",
+    "LU": "ルクセンブルク",
+    "LV": "ラトビア",
+    "LY": "リビア",
+    "MA": "モロッコ",
+    "MC": "モナコ",
+    "MD": "モルドバ",
+    "ME": "モンテネグロ",
+    "MF": "サン・マルタン",
+    "MG": "マダガスカル",
+    "MH": "マーシャル諸島",
+    "MK": "北マケドニア",
+    "ML": "マリ",
+    "MM": "ミャンマー",
+    "MN": "モンゴル",
+    "MO": "マカオ",
+    "MP": "北マリアナ諸島",
+    "MQ": "マルティニーク",
+    "MR": "モーリタニア",
+    "MS": "モントセラト",
+    "MT": "マルタ",
+    "MU": "モーリシャス",
+    "MV": "モルディブ",
+    "MW": "マラウイ",
+    "MX": "メキシコ",
+    "MY": "マレーシア",
+    "MZ": "モザンビーク",
+    "NA": "ナミビア",
+    "NC": "ニューカレドニア",
+    "NE": "ニジェール",
+    "NF": "ノーフォーク島",
+    "NG": "ナイジェリア",
+    "NI": "ニカラグア",
+    "NL": "オランダ",
+    "NO": "ノルウェー",
+    "NP": "ネパール",
+    "NR": "ナウル",
+    "NU": "ニウエ",
+    "NZ": "ニュージーランド",
+    "OM": "オマーン",
+    "PA": "パナマ",
+    "PE": "ペルー",
+    "PF": "仏領ポリネシア",
+    "PG": "パプアニューギニア",
+    "PH": "フィリピン",
+    "PK": "パキスタン",
+    "PL": "ポーランド",
+    "PM": "サンピエール島・ミクロン島",
+    "PN": "ピトケアン諸島",
+    "PR": "プエルトリコ",
+    "PS": "パレスチナ",
+    "PT": "ポルトガル",
+    "PW": "パラオ",
+    "PY": "パラグアイ",
+    "QA": "カタール",
+    "RE": "レユニオン",
+    "RO": "ルーマニア",
+    "RS": "セルビア",
+    "RU": "ロシア",
+    "RW": "ルワンダ",
+    "SA": "サウジアラビア",
+    "SB": "ソロモン諸島",
+    "SC": "セーシェル",
+    "SD": "スーダン",
+    "SE": "スウェーデン",
+    "SG": "シンガポール",
+    "SH": "セントヘレナ",
+    "SI": "スロベニア",
+    "SJ": "スバールバル諸島・ヤンマイエン島",
+    "SK": "スロバキア",
+    "SL": "シエラレオネ",
+    "SM": "サンマリノ",
+    "SN": "セネガル",
+    "SO": "ソマリア",
+    "SR": "スリナム",
+    "SS": "南スーダン",
+    "ST": "サントメ・プリンシペ",
+    "SV": "エルサルバドル",
+    "SX": "シント・マールテン",
+    "SY": "シリア",
+    "SZ": "エスワティニ",
+    "TC": "タークス・カイコス諸島",
+    "TD": "チャド",
+    "TF": "仏領南方・南極地域",
+    "TG": "トーゴ",
+    "TH": "タイ",
+    "TJ": "タジキスタン",
+    "TK": "トケラウ",
+    "TL": "東ティモール",
+    "TM": "トルクメニスタン",
+    "TN": "チュニジア",
+    "TO": "トンガ",
+    "TR": "トルコ",
+    "TT": "トリニダード・トバゴ",
+    "TV": "ツバル",
+    "TW": "台湾",
+    "TZ": "タンザニア",
+    "UA": "ウクライナ",
+    "UG": "ウガンダ",
+    "UM": "合衆国領有小離島",
+    "US": "米国",
+    "UY": "ウルグアイ",
+    "UZ": "ウズベキスタン",
+    "VA": "バチカン",
+    "VC": "セントビンセント及びグレナディーン諸島",
+    "VE": "ベネズエラ",
+    "VG": "英領ヴァージン諸島",
+    "VI": "米領ヴァージン諸島",
+    "VN": "ベトナム",
+    "VU": "バヌアツ",
+    "WF": "ウォリス・フツナ",
+    "WS": "サモア",
+    "YE": "イエメン",
+    "YT": "マヨット",
+    "ZA": "南アフリカ",
+    "ZM": "ザンビア",
+    "ZW": "ジンバブエ"
+  }
+}

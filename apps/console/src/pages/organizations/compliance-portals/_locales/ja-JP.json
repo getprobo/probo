@@ -1,0 +1,966 @@
+{
+  "newPortalPage": {
+    "pageTitle": "コンプライアンスポータルを新規作成",
+    "title": "コンプライアンスポータルを作成",
+    "description": "公開用のコンプライアンスポータルを新しく設定します。URLのスラッグはページの作成時に自動で割り当てられます。",
+    "fields": {
+      "entityName": {
+        "label": "法人名",
+        "placeholder": "株式会社サンプル"
+      }
+    },
+    "actions": {
+      "create": "コンプライアンスポータルを作成",
+      "creating": "作成中…"
+    },
+    "messages": {
+      "created": "コンプライアンスポータルを作成しました",
+      "successTitle": "成功"
+    },
+    "errors": {
+      "create": "コンプライアンスポータルを作成できませんでした",
+      "title": "エラー"
+    }
+  },
+  "aliasField": {
+    "messages": {
+      "updated": "エイリアスを更新しました。",
+      "removed": "エイリアスを削除しました。"
+    },
+    "errors": {
+      "update": "エイリアスを更新できませんでした",
+      "remove": "エイリアスを削除できませんでした"
+    },
+    "placeholder": "例：privacy-policy"
+  },
+  "hostingPage": {
+    "title": "ホスティング",
+    "description": "ポータルを公開し、独自ドメインで提供します。"
+  },
+  "visitorsPage": {
+    "title": "訪問者",
+    "description": "非公開ドキュメントを閲覧できる人を管理し、NDAの締結を必須にします。"
+  },
+  "integrationsPage": {
+    "title": "連携",
+    "description": "Slackを接続して、アクセス請求をチームに通知します。"
+  },
+  "brandingPage": {
+    "title": "ブランディング",
+    "description": "訪問者が最初に目にする外観、プロフィール、カスタムリンクを設定します。"
+  },
+  "contentPage": {
+    "title": "コンテンツ",
+    "description": "ランディングページに表示するフレームワーク、コミットメント、導入実績を選択します。"
+  },
+  "rightRequestsPage": {
+    "title": "本人からの請求",
+    "description": "訪問者がポータルから本人からの請求（開示等の請求）を送信できるようにします。"
+  },
+  "accessPage": {
+    "description": "ポータルに人を追加するか、ドキュメントの請求やNDAの承諾のために本人がログインするのを待ちます。"
+  },
+  "visitorPage": {
+    "back": "訪問者",
+    "notVisited": "未訪問",
+    "visitedOn": "訪問日：{{date}}",
+    "deactivated": "無効化済み",
+    "deactivatedCallout": "この訪問者は、再び有効にするまで保護されたドキュメントを請求・利用できません。付与済みの権限は残りますが、それまでは効力を持ちません。",
+    "actions": {
+      "deactivate": "無効化",
+      "activate": "有効化"
+    },
+    "deactivate": {
+      "title": "訪問者を無効化しますか？",
+      "description": "再び有効にするまで、保護されたドキュメント、報告書、ファイルにアクセスできなくなります。付与済みの権限は残りますが、それまでは効力を持ちません。",
+      "actions": {
+        "cancel": "キャンセル",
+        "confirm": "無効化"
+      }
+    },
+    "messages": {
+      "updated": "アクセスを更新しました",
+      "deactivated": "訪問者を無効化しました",
+      "activated": "訪問者を有効化しました"
+    },
+    "errors": {
+      "update": "アクセスを更新できませんでした",
+      "deactivate": "訪問者を無効化できませんでした",
+      "activate": "訪問者を有効化できませんでした"
+    }
+  },
+  "accessList": {
+    "empty": "訪問者はまだいません",
+    "emptyDescription": "人を追加するか、ポータルにログインするのを待ってください。",
+    "emptyFiltered": "一致する訪問者はいません",
+    "emptyFilteredDescription": "別の名前やメールアドレスを試すか、検索をクリアしてください。",
+    "search": {
+      "placeholder": "名前またはメールアドレスで検索"
+    },
+    "sort": {
+      "label": "並べ替え",
+      "ariaLabel": "並べ替え：{{value}}",
+      "requests": "請求数順",
+      "joined": "参加日順"
+    },
+    "actions": {
+      "showMore": "さらに表示",
+      "clearSearch": "検索をクリア"
+    }
+  },
+  "accessListItem": {
+    "notVisited": "未訪問",
+    "visitedOn": "訪問日：{{date}}",
+    "deactivated": "無効化済み",
+    "requested_one": "{{count}}件の請求を確認",
+    "requested_other": "{{count}}件の請求を確認",
+    "nda": {
+      "signed": "NDA署名済み",
+      "processing": "NDA処理中",
+      "pending": "NDA署名待ち",
+      "failed": "NDA署名失敗"
+    },
+    "actions": {
+      "open": "訪問者を開く"
+    }
+  },
+  "addVisitorDialog": {
+    "title": "訪問者を追加",
+    "searchPlaceholder": "人を検索、またはメールアドレスを入力",
+    "addEmail": "{{email}}を追加",
+    "empty": "一致する人はいません",
+    "actions": {
+      "open": "訪問者を追加"
+    },
+    "messages": {
+      "created": "訪問者を追加しました"
+    },
+    "errors": {
+      "create": "訪問者を追加できませんでした"
+    }
+  },
+  "documentAccessList": {
+    "title": "アクセス制限付きドキュメント",
+    "actions": {
+      "grant": "許可",
+      "reject": "却下",
+      "revoke": "取り消し",
+      "rejectOrRevoke": "却下または取り消し",
+      "cancel": "キャンセル",
+      "showMore": "さらに表示"
+    },
+    "selection": {
+      "count": "{{count}}件を選択中",
+      "clear": "選択を解除",
+      "selectAll": "すべて選択",
+      "selectRow": "{{title}}を選択"
+    },
+    "grantConfirm": {
+      "title": "{{count}}件のドキュメントを許可しますか？",
+      "description": "この訪問者は、選択したドキュメントを閲覧できるようになります。",
+      "confirm": "許可"
+    },
+    "rejectOrRevokeConfirm": {
+      "title": "{{count}}件のドキュメントを却下または取り消しますか？",
+      "description": "許可済みのドキュメントは取り消され、保留中の請求は却下されます。",
+      "confirm": "却下または取り消し"
+    },
+    "empty": "利用可能なドキュメントはありません",
+    "emptyFilter": "このステータスのドキュメントはありません",
+    "filter": {
+      "label": "ステータス",
+      "all": "すべてのステータス",
+      "none": "なし"
+    }
+  },
+  "electronicSignature": {
+    "title": "NDA",
+    "certificateTitle": "完了証明書",
+    "status": {
+      "signed": "電子署名済み",
+      "processing": "署名処理中",
+      "pending": "署名待ち",
+      "failed": "署名未完了"
+    },
+    "descriptions": {
+      "signedAt": "この訪問者は{{date}}に電子署名しました。",
+      "pending": "この訪問者はまだ署名していません。",
+      "processing": "この署名は処理中です。",
+      "failed": "この署名を完了できませんでした。",
+      "completed": "この訪問者は電子署名しました。"
+    },
+    "actions": {
+      "download": "ダウンロード"
+    },
+    "activity": "アクティビティ"
+  },
+  "eventTypeLabel": {
+    "documentViewed": "ドキュメントを閲覧",
+    "consentGiven": "電子署名に同意",
+    "fullNameTyped": "氏名を入力",
+    "signatureAccepted": "署名を承諾",
+    "signatureCompleted": "署名を記録",
+    "sealComputed": "ドキュメントを封印",
+    "timestampRequested": "タイムスタンプを付与",
+    "certificateGenerated": "証明書を作成",
+    "processingError": "処理に失敗"
+  },
+  "auditsPage": {
+    "title": "監査",
+    "description": "監査報告書と認証を管理します"
+  },
+  "auditList": {
+    "columns": {
+      "displayed": "表示",
+      "framework": "フレームワーク",
+      "name": "名前",
+      "validUntil": "有効期限",
+      "state": "状態",
+      "visibility": "公開範囲"
+    },
+    "empty": "利用可能な監査はありません"
+  },
+  "auditListItem": {
+    "messages": {
+      "visibilityUpdated": "監査のポータル設定を更新しました。",
+      "removed": "監査をポータルから削除しました。"
+    },
+    "errors": {
+      "updateVisibility": "監査の公開範囲を更新できませんでした",
+      "remove": "監査をポータルから削除できませんでした"
+    },
+    "actions": {
+      "toggle": "コンプライアンスポータルでの{{title}}の表示を切り替え"
+    },
+    "unlink": {
+      "title": "監査をポータルから削除しますか？",
+      "description": "この監査報告書に対する訪問者のアクセス請求は削除されます。この操作は元に戻せません。",
+      "confirm": "削除"
+    },
+    "noExpiry": "期限なし",
+    "untitled": "無題",
+    "states": {
+      "not_started": "未着手",
+      "in_progress": "対応中",
+      "completed": "完了",
+      "rejected": "却下",
+      "outdated": "期限切れ"
+    }
+  },
+  "brandPage": {
+    "messages": {
+      "updated": "コンプライアンスポータルのブランディングを更新しました"
+    },
+    "errors": {
+      "update": "コンプライアンスポータルのブランディングを更新できませんでした",
+      "fileTooLarge": {
+        "title": "ファイルサイズが大きすぎます",
+        "description": "ファイルサイズが大きすぎます。5MB未満のファイルをアップロードしてください。"
+      }
+    },
+    "actions": {
+      "uploading": "アップロード中…",
+      "noLogo": "ロゴなし",
+      "uploadLogo": "ロゴをアップロード",
+      "uploadDarkLogo": "ダークロゴをアップロード",
+      "changeLogo": "ロゴを変更",
+      "removeLogo": "ロゴを削除",
+      "changeDarkLogo": "ダークロゴを変更",
+      "removeDarkLogo": "ダークロゴを削除"
+    },
+    "logo": {
+      "label": "ロゴ",
+      "description": "このロゴは公開コンプライアンスポータルに表示されます。",
+      "alt": "コンプライアンスポータルのロゴ",
+      "uploadDescription": "ロゴ画像をアップロード（PNG、JPG、SVG、WEBP、5MBまで）"
+    },
+    "darkLogo": {
+      "label": "ダークモード用ロゴ",
+      "description": "このロゴはダークモードが有効なときに使用されます。",
+      "alt": "コンプライアンスポータルのダークロゴ",
+      "uploadDescription": "ダークロゴ画像をアップロード（PNG、JPG、SVG、WEBP、5MBまで）"
+    },
+    "profile": {
+      "title": "基本情報",
+      "description": "訪問者に表示する説明と連絡先です。",
+      "errors": {
+        "update": "コンプライアンスポータルの情報を更新できませんでした"
+      },
+      "validation": {
+        "emailInvalid": "有効なメールアドレスを入力してください"
+      },
+      "fields": {
+        "entityName": "法人名",
+        "entityNamePlaceholder": "サンプル",
+        "description": "説明",
+        "descriptionPlaceholder": "訪問者向けの簡単な説明",
+        "websiteUrl": "WebサイトのURL",
+        "email": "メールアドレス",
+        "emailPlaceholder": "contact@example.com",
+        "address": "本社所在地",
+        "addressPlaceholder": "東京都千代田区丸の内1-1-1"
+      }
+    }
+  },
+  "commitmentDialog": {
+    "title": {
+      "create": "コミットメントを追加",
+      "edit": "コミットメントを編集"
+    },
+    "validation": {
+      "iconRequired": "アイコンは必須です",
+      "titleRequired": "タイトルは必須です",
+      "descriptionRequired": "説明は必須です"
+    },
+    "messages": {
+      "created": "コミットメントを作成しました",
+      "updated": "コミットメントを更新しました"
+    },
+    "errors": {
+      "create": "コミットメントを作成できませんでした",
+      "update": "コミットメントを更新できませんでした"
+    },
+    "fields": {
+      "icon": "アイコン",
+      "iconPlaceholder": "アイコンを選択",
+      "eyebrow": "見出し上ラベル",
+      "eyebrowPlaceholder": "タイトルの上に表示する小さなラベル",
+      "title": "タイトル",
+      "titlePlaceholder": "コミットメントの見出し",
+      "description": "説明",
+      "descriptionPlaceholder": "補足の本文"
+    },
+    "actions": {
+      "add": "コミットメントを追加",
+      "update": "コミットメントを更新"
+    },
+    "icons": {
+      "lock_key": "錠と鍵",
+      "eye_slash": "目に斜線",
+      "fingerprint": "指紋",
+      "shield_warning": "警告付きシールド",
+      "shield_check": "チェック付きシールド",
+      "siren": "サイレン",
+      "key": "鍵",
+      "lock": "錠",
+      "cloud": "クラウド",
+      "database": "データベース",
+      "globe": "地球",
+      "eye": "目",
+      "users": "ユーザー",
+      "certificate": "証明書",
+      "gavel": "小槌",
+      "heartbeat": "心拍",
+      "bell": "ベル",
+      "bug": "バグ",
+      "code": "コード",
+      "server": "サーバー"
+    }
+  },
+  "commitmentGroupDialog": {
+    "title": {
+      "create": "グループを追加",
+      "edit": "グループを編集"
+    },
+    "validation": {
+      "titleRequired": "タイトルは必須です",
+      "descriptionRequired": "説明は必須です"
+    },
+    "messages": {
+      "created": "グループを作成しました",
+      "updated": "グループを更新しました"
+    },
+    "errors": {
+      "create": "グループを作成できませんでした",
+      "update": "グループを更新できませんでした"
+    },
+    "fields": {
+      "title": "タイトル",
+      "titlePlaceholder": "例：データ保護",
+      "description": "説明",
+      "descriptionPlaceholder": "このコミットメントグループが対象とする内容を入力"
+    },
+    "actions": {
+      "add": "グループを追加",
+      "update": "グループを更新"
+    }
+  },
+  "commitmentGroupList": {
+    "title": "セキュリティコミットメント",
+    "description": "コミットメントカードをセクションにまとめて、コンプライアンスポータルに表示します",
+    "messages": {
+      "orderUpdated": "並び順を更新しました"
+    },
+    "errors": {
+      "updateOrder": "並び順を更新できませんでした"
+    },
+    "actions": {
+      "addGroup": "グループを追加"
+    },
+    "empty": "コミットメントグループはまだありません"
+  },
+  "commitmentGroupListItem": {
+    "messages": {
+      "deleted": "グループを削除しました",
+      "orderUpdated": "並び順を更新しました"
+    },
+    "errors": {
+      "delete": "グループを削除できませんでした",
+      "updateOrder": "並び順を更新できませんでした"
+    },
+    "delete": {
+      "title": "グループを削除",
+      "description": "グループ「{{title}}」を削除してもよろしいですか？",
+      "warning": "このグループ内のコミットメントカードもすべて削除されます。この操作は元に戻せません。"
+    },
+    "columns": {
+      "icon": "アイコン",
+      "title": "タイトル",
+      "description": "説明"
+    },
+    "actions": {
+      "deleting": "削除中…",
+      "delete": "削除",
+      "addCommitment": "コミットメントを追加"
+    },
+    "empty": "コミットメントカードはまだありません"
+  },
+  "commitmentListItem": {
+    "messages": {
+      "deleted": "コミットメントを削除しました"
+    },
+    "errors": {
+      "delete": "コミットメントを削除できませんでした"
+    }
+  },
+  "documentsPage": {
+    "title": "ドキュメント",
+    "description": "方針、手順、コンプライアンス関連ドキュメントを管理します"
+  },
+  "documentList": {
+    "columns": {
+      "displayed": "表示",
+      "name": "名前",
+      "type": "種別",
+      "alias": "エイリアス",
+      "visibility": "公開範囲"
+    },
+    "empty": "有効な公開済みドキュメントはありません"
+  },
+  "documentListItem": {
+    "messages": {
+      "visibilityUpdated": "ドキュメントのポータル設定を更新しました。",
+      "removed": "ドキュメントをポータルから削除しました。"
+    },
+    "errors": {
+      "updateVisibility": "ドキュメントの公開範囲を更新できませんでした",
+      "remove": "ドキュメントをポータルから削除できませんでした"
+    },
+    "actions": {
+      "toggle": "コンプライアンスポータルでの{{title}}の表示を切り替え"
+    },
+    "unlink": {
+      "title": "ドキュメントをポータルから削除しますか？",
+      "description": "このドキュメントに対する訪問者のアクセス請求は削除されます。この操作は元に戻せません。",
+      "confirm": "削除"
+    }
+  },
+  "thirdPartyListItem": {
+    "messages": {
+      "linked": "サブプロセッサをポータルに追加しました。",
+      "removed": "サブプロセッサをポータルから削除しました。"
+    },
+    "errors": {
+      "link": "サブプロセッサをポータルに追加できませんでした",
+      "remove": "サブプロセッサをポータルから削除できませんでした"
+    },
+    "actions": {
+      "toggle": "コンプライアンスポータルでの{{title}}の表示を切り替え"
+    }
+  },
+  "thirdPartyList": {
+    "columns": {
+      "displayed": "表示",
+      "name": "名前",
+      "category": "カテゴリ"
+    },
+    "empty": "利用可能なサブプロセッサはありません"
+  },
+  "referenceList": {
+    "columns": {
+      "name": "名前",
+      "description": "説明"
+    },
+    "empty": "利用可能な導入実績はありません",
+    "dragHint": "ドラッグ＆ドロップで導入実績の表示順を変更できます"
+  },
+  "referencesPage": {
+    "title": "導入実績",
+    "description": "お客様やパートナーをコンプライアンスポータルで紹介します",
+    "actions": {
+      "add": "導入実績を追加"
+    }
+  },
+  "statusSection": {
+    "title": "公開範囲",
+    "description": "コンプライアンスポータルを公開し、検索エンジンに表示するかどうかを選択します。",
+    "activation": {
+      "titleActive": "コンプライアンスポータルは有効です",
+      "titleInactive": "コンプライアンスポータルは無効です",
+      "description": "コンプライアンスポータルを一般に公開して、お客様からの信頼を高めます"
+    },
+    "indexing": {
+      "title": "検索エンジンへのインデックス登録",
+      "description": "検索エンジンによるコンプライアンスポータルのインデックス登録を許可し、見つけやすくします",
+      "disabledHint": "検索エンジンへのインデックス登録を有効にするには、先にコンプライアンスポータルを有効にしてください"
+    },
+    "rightsRequests": {
+      "title": "本人からの請求",
+      "description": "訪問者がコンプライアンスポータルから本人からの請求を送信できるようにします"
+    }
+  },
+  "domainsSection": {
+    "title": "ドメイン",
+    "description": "コンプライアンスポータルは、デフォルトのprobopage.comサブドメインで常に利用できます。独自ドメインを1つ設定して提供することもできます。"
+  },
+  "slackSection": {
+    "title": "Slack通知",
+    "connectionTitle": "通知チャンネル",
+    "notInstalledTitle": "Slackボットが未インストールです",
+    "description": "このコンプライアンスポータルへのアクセス請求の送信先を選択します。",
+    "notInstalled": "チャンネルを選択する前に、組織設定からProbo Slackアプリをインストールしてください。",
+    "loginRequired": {
+      "title": "Slackでのアクセスには/probot loginが必要です",
+      "description": "レビュアーは、アクセス請求を処理する前に、Slackで<cmd>/probot login</cmd>を実行してProboアカウントをリンクする必要があります。"
+    },
+    "channel": {
+      "label": "チャンネル",
+      "placeholder": "チャンネルを選択",
+      "help": "選択する前に、@Proboをチャンネルに招待してください。",
+      "emptyTitle": "Slackチャンネルがまだありません",
+      "emptyDescription": "Slackで@Proboをチャンネルに招待してから、この一覧を開き直してください。"
+    },
+    "actions": {
+      "clear": "クリア",
+      "install": "インストール",
+      "refresh": "更新",
+      "loadingMore": "読み込み中…"
+    }
+  },
+  "externalUrls": {
+    "title": "カスタムリンク",
+    "description": "コンプライアンスポータルに表示する外部URLを追加します",
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "urlInvalid": "有効なURLを入力してください"
+    },
+    "messages": {
+      "created": "リンクを追加しました。",
+      "updated": "リンクを更新しました。",
+      "deleted": "リンクを削除しました。",
+      "orderUpdated": "並び順を更新しました。"
+    },
+    "errors": {
+      "create": "リンクを追加できませんでした。",
+      "update": "リンクを更新できませんでした。",
+      "delete": "リンクを削除できませんでした。",
+      "orderUpdate": "並び順を更新できませんでした。"
+    },
+    "dialog": {
+      "titleCreate": "リンクを追加",
+      "titleEdit": "リンクを編集"
+    },
+    "fields": {
+      "url": "URL",
+      "urlPlaceholder": "https://example.com",
+      "name": "名前",
+      "namePlaceholder": "例：XまたはLinkedIn"
+    },
+    "actions": {
+      "add": "リンクを追加",
+      "save": "変更を保存",
+      "open": "リンクを開く",
+      "remove": "リンクを削除"
+    },
+    "dragHint": "ドラッグ＆ドロップで表示順を変更できます"
+  },
+  "sendUpdateDialog": {
+    "title": "購読者にアップデートを送信",
+    "description": "このアップデートは、このメーリングリストの現在のすべての購読者に送信されます。この操作は元に戻せません。",
+    "messages": {
+      "enqueued": "アップデートを配信待ちに追加しました"
+    },
+    "errors": {
+      "enqueue": "アップデートを配信待ちに追加できませんでした"
+    },
+    "actions": {
+      "send": "送信"
+    }
+  },
+  "newSubscriberDialog": {
+    "title": "購読者を追加",
+    "description": "セキュリティとコンプライアンスのアップデートを受け取る人を追加します",
+    "validation": {
+      "fullNameRequired": "氏名は必須です",
+      "emailRequired": "メールアドレスは必須です",
+      "emailInvalid": "有効なメールアドレスを入力してください"
+    },
+    "messages": {
+      "created": "購読者を追加しました"
+    },
+    "errors": {
+      "create": "購読者を追加できませんでした"
+    },
+    "fields": {
+      "fullName": "氏名",
+      "fullNamePlaceholder": "山田 太郎",
+      "email": "メールアドレス",
+      "emailPlaceholder": "taro@example.com",
+      "skipConfirmation": "確認メールを送信しない"
+    },
+    "consentNotice": "このチェックボックスをオンにすると、適用されるデータ保護関連法令（例：GDPR、CAN-SPAM）に従い、これらの連絡を受け取ることについて、本人から検証可能な事前の同意を得ていることを表明したものとみなされます。必要に応じて同意の証拠を示す責任は、すべてお客様が負うものとします。",
+    "actions": {
+      "create": "購読者を追加"
+    }
+  },
+  "updateFormDialog": {
+    "title": {
+      "view": "アップデートを表示",
+      "edit": "アップデートを編集",
+      "create": "アップデートを追加"
+    },
+    "validation": {
+      "titleRequired": "タイトルは必須です",
+      "bodyRequired": "本文は必須です"
+    },
+    "messages": {
+      "created": "アップデートを作成しました",
+      "updated": "アップデートを保存しました"
+    },
+    "errors": {
+      "create": "アップデートを作成できませんでした",
+      "update": "アップデートを保存できませんでした"
+    },
+    "confidentialityNotice": "このアップデートには、機密情報や取り扱いに注意が必要な情報を含めないでください。保護が必要な内容は、NDAで保護されたドキュメントに記載してください。",
+    "fields": {
+      "title": "タイトル",
+      "body": "本文"
+    },
+    "sentNotice": "このアップデートは送信済みのため、編集できません。",
+    "actions": {
+      "save": "保存",
+      "create": "作成"
+    }
+  },
+  "updatesList": {
+    "messages": {
+      "deleted": "アップデートを削除しました"
+    },
+    "errors": {
+      "delete": "アップデートを削除できませんでした"
+    },
+    "empty": "アップデートはまだありません",
+    "columns": {
+      "title": "タイトル",
+      "status": "ステータス",
+      "created": "作成日"
+    },
+    "status": {
+      "sent": "送信済み",
+      "enqueued": "配信待ち",
+      "processing": "処理中…",
+      "draft": "下書き"
+    },
+    "actions": {
+      "send": "送信",
+      "edit": "アップデートを編集",
+      "view": "アップデートを表示",
+      "delete": "アップデートを削除",
+      "showMore": "さらに表示"
+    }
+  },
+  "mailingList": {
+    "messages": {
+      "deleted": "購読者を削除しました"
+    },
+    "errors": {
+      "delete": "購読者を削除できませんでした"
+    },
+    "empty": "メーリングリストの購読者はまだいません",
+    "columns": {
+      "name": "名前",
+      "email": "メールアドレス",
+      "status": "ステータス",
+      "subscribedOn": "購読日"
+    },
+    "status": {
+      "confirmed": "確認済み",
+      "pending": "保留中"
+    },
+    "actions": {
+      "delete": "購読者を削除",
+      "showMore": "さらに表示"
+    }
+  },
+  "newFileDialog": {
+    "title": "ファイルを追加",
+    "uploadDescription": "ファイルをアップロード（最大10MB）",
+    "selectedFile": "選択中のファイル：{{name}}",
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "categoryRequired": "カテゴリは必須です",
+      "fileTypeNotAllowed": "このファイル形式は使用できません"
+    },
+    "messages": {
+      "created": "ファイルをアップロードしました"
+    },
+    "errors": {
+      "create": "ファイルをアップロードできませんでした"
+    },
+    "fields": {
+      "name": "名前",
+      "category": "カテゴリ",
+      "visibility": "公開範囲"
+    },
+    "actions": {
+      "add": "ファイルを追加"
+    }
+  },
+  "editFileDialog": {
+    "title": "ファイルを編集",
+    "validation": {
+      "nameRequired": "名前は必須です",
+      "categoryRequired": "カテゴリは必須です"
+    },
+    "messages": {
+      "updated": "ファイルを更新しました"
+    },
+    "errors": {
+      "update": "ファイルを更新できませんでした"
+    },
+    "fields": {
+      "name": "名前",
+      "category": "カテゴリ"
+    },
+    "actions": {
+      "save": "保存"
+    }
+  },
+  "deleteFileDialog": {
+    "title": "ファイルを削除",
+    "description": "このファイルに対する訪問者のアクセス請求は削除されます。この操作は元に戻せません。",
+    "messages": {
+      "deleted": "ファイルを削除しました"
+    },
+    "errors": {
+      "delete": "ファイルを削除できませんでした"
+    },
+    "actions": {
+      "delete": "削除"
+    }
+  },
+  "fileListItem": {
+    "messages": {
+      "updated": "ファイルを更新しました"
+    },
+    "errors": {
+      "update": "ファイルを更新できませんでした"
+    },
+    "actions": {
+      "download": "ダウンロード",
+      "edit": "編集",
+      "delete": "削除"
+    }
+  },
+  "fileList": {
+    "columns": {
+      "name": "名前",
+      "category": "カテゴリ",
+      "uploadDate": "アップロード日",
+      "alias": "エイリアス",
+      "visibility": "公開範囲"
+    },
+    "empty": "利用可能なファイルはありません"
+  },
+  "filesPage": {
+    "title": "ファイル",
+    "description": "コンプライアンスポータル用のファイルをアップロードして管理します",
+    "actions": {
+      "add": "ファイルを追加"
+    }
+  },
+  "customDomainForm": {
+    "title": "独自ドメインを追加",
+    "messages": {
+      "created": "ドメインを追加しました。DNSレコードを設定して、ドメインの確認と有効化を行ってください。"
+    },
+    "errors": {
+      "create": "ドメインを追加できませんでした"
+    },
+    "fields": {
+      "domain": "ドメイン",
+      "domainPlaceholder": "compliance.example.com",
+      "domainInvalid": "有効なドメインを入力してください（例：compliance.example.com）"
+    },
+    "examples": "例：compliance.example.com、trust.example.com",
+    "actions": {
+      "add": "ドメインを追加"
+    }
+  },
+  "deleteDomainDialog": {
+    "title": "独自ドメインを削除",
+    "description": "独自ドメイン{{domain}}と、そのすべての設定が完全に削除されます。",
+    "warning": "この操作は元に戻せません。",
+    "confirmationLabel": "削除を確定するには、下の欄に「{{domain}}」と入力してください。",
+    "confirmationMismatch": "入力した値がドメインと一致しません。",
+    "messages": {
+      "deleted": "ドメインを削除しました"
+    },
+    "errors": {
+      "delete": "ドメインを削除できませんでした"
+    },
+    "actions": {
+      "delete": "ドメインを削除",
+      "cancel": "キャンセル"
+    }
+  },
+  "domainCard": {
+    "managed": "マネージド",
+    "active": {
+      "title": "ドメインは有効です",
+      "description": "独自ドメインは確認済みで、SSL証明書も有効です",
+      "dns": "これらのレコードはそのまま残してください。このドメインをここに向け続けるために必要です。"
+    },
+    "pending": {
+      "title": "DNS設定待ち",
+      "description": "DNSレコードを追加すると、確認が自動的に行われます。反映には数分かかる場合があります。",
+      "dns": "確認を完了するには、DNSプロバイダーでこれらのレコードを追加してください。"
+    },
+    "provisioning": {
+      "title": "証明書を発行中です",
+      "description": "このドメインのSSL証明書をプロビジョニングしています。",
+      "dns": "このドメインを使用している間は、これらのレコードを残しておく必要があります。"
+    },
+    "renewing": {
+      "title": "証明書を更新中です",
+      "description": "新しいSSL証明書を発行しています。完了するまでは現在の証明書が有効です。",
+      "dns": "これらのレコードは、更新中も更新完了後も残しておく必要があります。"
+    },
+    "expired": {
+      "title": "証明書の有効期限が切れています",
+      "description": "このドメインのSSL証明書の有効期限が切れており、再発行が必要です。",
+      "dns": "証明書を再発行できるよう、これらのレコードは引き続きここを指している必要があります。"
+    },
+    "failed": {
+      "title": "証明書のプロビジョニングに失敗しました",
+      "description": "このドメインのSSL証明書を発行できませんでした。",
+      "dns": "これらのレコードがDNSプロバイダーの設定と一致しているか確認してください。不一致は失敗の一般的な原因です。"
+    },
+    "error": {
+      "title": "プロビジョニングエラー"
+    },
+    "sslExpires": "SSLの有効期限：{{date}}",
+    "dns": {
+      "name": "名前",
+      "value": "値",
+      "ttl": "TTL：{{ttl}}",
+      "copy": "コピー",
+      "purposePointToServers": "ドメインをProboのサーバーに向ける"
+    },
+    "messages": {
+      "copied": "コピーしました",
+      "valueCopied": "値をクリップボードにコピーしました",
+      "copyFailed": "コピーできませんでした",
+      "valueCopyFailed": "値をクリップボードにコピーできませんでした"
+    },
+    "actions": {
+      "delete": "削除"
+    }
+  },
+  "frameworkList": {
+    "title": "コンプライアンスフレームワーク",
+    "description": "公開コンプライアンスポータルに表示するフレームワークを選択します。",
+    "empty": "利用可能なフレームワークはありません",
+    "messages": {
+      "visibilityUpdated": "フレームワークの公開範囲を更新しました。"
+    },
+    "errors": {
+      "visibilityUpdate": "フレームワークの公開範囲を更新できませんでした"
+    }
+  },
+  "ndaSection": {
+    "title": "秘密保持契約（NDA）",
+    "empty": "NDAファイルはアップロードされていません",
+    "description": "訪問者は、非公開ドキュメントを閲覧する前に、この契約書に署名する必要があります。",
+    "dropHint": "PDFをここにドロップ",
+    "dropReplace": "PDFをドロップして置き換え",
+    "dropActive": "PDFをドロップ",
+    "actions": {
+      "download": "ダウンロード",
+      "upload": "NDAをアップロード",
+      "replace": "置き換え",
+      "delete": "削除",
+      "uploading": "アップロード中…"
+    },
+    "delete": {
+      "title": "NDAを削除",
+      "description": "NDAファイルを削除してもよろしいですか？この操作は元に戻せません。",
+      "actions": {
+        "delete": "削除",
+        "cancel": "キャンセル"
+      }
+    },
+    "errors": {
+      "invalidFileType": {
+        "title": "サポートされていないファイル形式です",
+        "description": "PDFファイルをアップロードしてください。"
+      },
+      "fileTooLarge": {
+        "title": "ファイルサイズが大きすぎます",
+        "description": "10MB未満のファイルをアップロードしてください。"
+      },
+      "tooManyFiles": {
+        "title": "ファイルが多すぎます",
+        "description": "PDFは一度に1つずつアップロードしてください。"
+      }
+    }
+  },
+  "subprocessorsPage": {
+    "title": "サブプロセッサ",
+    "description": "サブプロセッサの評価と取引先のリスク情報を管理します"
+  },
+  "updatesPage": {
+    "title": "アップデート",
+    "description": "セキュリティとコンプライアンスのアップデートを購読者に送信します。",
+    "errors": {
+      "update": "メーリングリストを更新できませんでした"
+    },
+    "settings": {
+      "title": "設定",
+      "description": "メーリングリストの動作を設定します",
+      "replyTo": "返信先メールアドレス",
+      "replyToPlaceholder": "security@example.com"
+    },
+    "tabs": {
+      "updates": "アップデート",
+      "subscribers": "購読者"
+    },
+    "actions": {
+      "addUpdate": "アップデートを追加",
+      "addSubscriber": "購読者を追加"
+    }
+  },
+  "documentsLayout": {
+    "tabs": {
+      "audits": "監査",
+      "documents": "ドキュメント",
+      "files": "ファイル"
+    }
+  },
+  "landingLayout": {
+    "tabs": {
+      "branding": "ブランディング",
+      "content": "コンテンツ"
+    }
+  }
+}

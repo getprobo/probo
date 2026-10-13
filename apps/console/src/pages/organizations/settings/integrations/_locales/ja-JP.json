@@ -1,0 +1,208 @@
+{
+  "connectForm": {
+    "name": {
+      "label": "名前",
+      "description": "同じプロバイダーの他の認証情報と区別するための名前です。例：productionやmain。",
+      "required": "名前を入力してください。",
+      "saveFailed": "名前を保存できませんでした。"
+    }
+  },
+  "marketplacePage": {
+    "title": "マーケットプレイス",
+    "description": "Proboが接続できるベンダーです。",
+    "permissionDenied": "ベンダーを接続する権限がありません。",
+    "connect": "接続",
+    "credentialCount_one": "{{count}}件の認証情報を接続済み",
+    "credentialCount_other": "{{count}}件の認証情報を接続済み",
+    "connectTitle": "{{provider}}を接続",
+    "choose": "{{provider}}の接続方法を選択してください。",
+    "methods": {
+      "WORKLOAD_IDENTITY": "ワークロードID",
+      "GITHUB_APP": "GitHub App",
+      "INSTALL": "アプリのインストール",
+      "OAUTH2": "OAuth",
+      "CLIENT_CREDENTIALS": "クライアント認証情報",
+      "API_KEY": "APIキー"
+    },
+    "methodDescriptions": {
+      "WORKLOAD_IDENTITY": "クラウドのロールにProboを信頼させます。長期間有効なシークレットは不要です。",
+      "GITHUB_APP": "Probo GitHub Appをインストールします。",
+      "INSTALL": "ベンダーにProboアプリをインストールします。",
+      "OAUTH2": "ベンダーにログインしてアクセスを許可します。",
+      "CLIENT_CREDENTIALS": "クライアントIDとクライアントシークレットを使用します。",
+      "API_KEY": "ベンダーのAPIキーを貼り付けます。"
+    },
+    "documentation": "ドキュメント",
+    "fields": {
+      "apiKey": "APIキー",
+      "clientId": "クライアントID",
+      "clientSecret": "クライアントシークレット",
+      "tokenUrl": "トークンURL",
+      "scope": "スコープ",
+      "datadogSite": "Datadogサイト",
+      "zendeskSubdomain": "Zendeskサブドメイン",
+      "region": "リージョン",
+      "regionPlaceholder": "リージョンを選択",
+      "regionUnitedStates": "アメリカ合衆国",
+      "regionEurope": "ヨーロッパ"
+    },
+    "workloadIdentity": {
+      "propagationHint": "フェデレーションの反映には数分かかることがあります。コネクターが未接続と表示される場合は、しばらく待ってからもう一度お試しください。",
+      "fields": {
+        "roleArn": "ロールARN",
+        "roleArnHelp": "例：arn:aws:iam::123456789012:role/ProboAudit",
+        "workloadIdentityProvider": "ワークロードIDプロバイダー",
+        "workloadIdentityProviderHelp": "例：projects/123456789012/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+        "serviceAccountEmail": "サービスアカウントのメールアドレス",
+        "serviceAccountEmailHelp": "例：probo-audit@PROJECT_ID.iam.gserviceaccount.com",
+        "tenantId": "ディレクトリ（テナント）ID",
+        "tenantIdHelp": "例：11111111-1111-1111-1111-111111111111",
+        "clientId": "アプリケーション（クライアント）ID",
+        "clientIdHelp": "例：22222222-2222-2222-2222-222222222222",
+        "subscriptionId": "サブスクリプションID",
+        "subscriptionIdHelp": "例：33333333-3333-3333-3333-333333333333",
+        "environment": "Azure環境",
+        "environmentGccNote": "GCCはAzure Publicを使用します。GovernmentはGCC HighとDoDのみが対象です。",
+        "issuer": "発行者",
+        "audience": "オーディエンス",
+        "subject": "サブジェクト"
+      },
+      "environments": {
+        "AZURE_PUBLIC": "Public — GCCはAzure Publicを使用",
+        "AZURE_GOVERNMENT": "Government（GCC High）",
+        "AZURE_GOVERNMENT_DOD": "Government DoD",
+        "AZURE_CHINA": "中国"
+      },
+      "messages": {
+        "copyFailed": "コピーできませんでした",
+        "copiedIssuer": "発行者をコピーしました。",
+        "copiedAudience": "オーディエンスをコピーしました。",
+        "copiedSubject": "サブジェクトをコピーしました。",
+        "copiedTerraform": "Terraformスニペットをコピーしました。",
+        "error": "エラー"
+      },
+      "errors": {
+        "roleArn": "有効なIAMロールARNを入力してください。",
+        "workloadIdentityProvider": "有効なワークロードIDプロバイダーのリソースを入力してください。",
+        "serviceAccountEmail": "有効なサービスアカウントのメールアドレスを入力してください。",
+        "tenantId": "有効なディレクトリ（テナント）IDを入力してください。",
+        "clientId": "有効なアプリケーション（クライアント）IDを入力してください。",
+        "subscriptionId": "有効なサブスクリプションIDを入力してください。",
+        "aws": {
+          "create": "コネクターを作成できませんでした。ロールARNを確認して、もう一度お試しください。",
+          "disconnected": "Proboが監査ロールを引き受けることができませんでした。このアカウントにスタックがデプロイされていること、および発行者とサブジェクトがセットアップ時に表示された値と一致していることを確認してください。"
+        },
+        "gcp": {
+          "create": "コネクターを作成できませんでした。プロバイダーのリソースとサービスアカウントのメールアドレスを確認して、もう一度お試しください。",
+          "disconnected": "Proboが監査用サービスアカウントになりすますことができませんでした。このプロジェクトにモジュールが適用されていること、および発行者とサブジェクトがセットアップ時に表示された値と一致していることを確認してください。"
+        },
+        "azure": {
+          "create": "コネクターを作成できませんでした。テナントID、クライアントID、サブスクリプションIDを確認して、もう一度お試しください。",
+          "disconnected": "Proboが監査用IDを引き受けることができませんでした。モジュールが適用されていること、および発行者とサブジェクトがセットアップ時に表示された値と一致していることを確認してください。フェデレーションの反映には数分かかることがあります。"
+        },
+        "delete": "コネクターを削除できませんでした。もう一度お試しください。"
+      },
+      "actions": {
+        "copy": "コピー",
+        "installViaCloudFormation": "CloudFormationでインストール",
+        "installViaTerraform": "Terraformでインストール"
+      }
+    },
+    "connected": "ベンダーを接続しました。",
+    "connectFailed": "接続できませんでした"
+  },
+  "listPage": {
+    "title": "コネクター",
+    "description": "Proboが認証情報を保持しているベンダーです。",
+    "notFound": "組織が見つかりません",
+    "sections": {
+      "connected": "接続済み",
+      "available": "利用可能"
+    },
+    "addMore": "さらに追加",
+    "emptyConnected": "接続済みのベンダーはまだありません。",
+    "emptyConnectedSearch": "検索に一致する接続済みのベンダーはありません。",
+    "emptyAvailable": "利用可能なベンダーはすべて接続済みです。",
+    "emptyAvailableSearch": "検索に一致する利用可能なベンダーはありません。",
+    "searchPlaceholder": "ベンダーを検索…",
+    "searchConnectorsPlaceholder": "コネクターを検索…",
+    "filters": {
+      "status": "ステータス",
+      "allStatuses": "すべてのステータス"
+    },
+    "created": "{{date}}に作成",
+    "accountCount_one": "{{count}}件のアカウント",
+    "accountCount_other": "{{count}}件のアカウント",
+    "connectedCount": "{{connected}}/{{total}}件を接続済み",
+    "connectionIssues": {
+      "reconnect": "アクセスを復旧するには{{provider}}を再接続してください。",
+      "credentials": "{{provider}}の認証情報が無効です。現在の認証情報ではProboはこのベンダーを読み取れません。",
+      "notAuthorized": "{{provider}}は認証情報を受け付けましたが、リクエストを拒否しました。この認証情報の権限と、ProboがAPIを利用できるプランかどうかを確認してください。"
+    },
+    "organization": "組織",
+    "organizationPlaceholder": "組織を選択",
+    "comingSoon": "近日公開",
+    "actions": {
+      "add": "コネクターを追加",
+      "manage": "管理",
+      "connectMore": "さらに接続"
+    },
+    "messages": {
+      "connected": "ベンダーを接続しました。",
+      "connectedDescription": "このベンダーを利用できます。",
+      "error": "接続できませんでした",
+      "organizationUpdated": "組織を更新しました。"
+    },
+    "errors": {
+      "organization": "組織を更新できませんでした"
+    }
+  },
+  "detailsPage": {
+    "notFound": "連携が見つかりません",
+    "status": {
+      "CONNECTED": "接続済み",
+      "DISCONNECTED": "未接続",
+      "NOT_AUTHORIZED": "未承認",
+      "RECONNECT_REQUIRED": "再接続が必要"
+    },
+    "connectors": {
+      "title": "コネクター"
+    },
+    "accounts": {
+      "title": "アカウント",
+      "empty": "この認証情報で有効なアカウントはまだありません。",
+      "discoveryFailed": "Proboはこの認証情報ではアカウントを一覧表示できません。",
+      "unknown": "不明",
+      "disconnect": "接続解除",
+      "disconnectTitle": "アカウントの接続解除",
+      "disconnectDescription": "接続を解除すると{{name}}が削除されます。これを使用しているものがある場合は、先に削除する必要があります。",
+      "disconnectConfirm": "接続解除",
+      "loadMore": "アカウントをさらに表示"
+    },
+    "actions": {
+      "back": "コネクター",
+      "close": "閉じる",
+      "reconnect": "再接続",
+      "delete": "接続解除",
+      "cancel": "キャンセル",
+      "more": "その他の操作"
+    },
+    "probeError": {
+      "copy": "エラーをコピー",
+      "copied": "エラーをコピーしました。"
+    },
+    "delete": {
+      "title": "連携の接続解除",
+      "description": "接続を解除すると、Proboが保持している{{name}}の認証情報が削除されます。これを使用しているものがある場合は、先に削除する必要があります。",
+      "confirm": "接続解除"
+    },
+    "messages": {
+      "deleted": "連携の接続を解除しました。",
+      "accountDisconnected": "アカウントの接続を解除しました。"
+    },
+    "errors": {
+      "delete": "連携の接続を解除できませんでした",
+      "disable": "アカウントの接続を解除できませんでした"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "employeePortalPage": {
+    "title": "従業員ポータル",
+    "description": "この組織の従業員ポータルのブランディングと機能を設定します。"
+  },
+  "missing": {
+    "title": "従業員ポータルを利用できません",
+    "description": "この組織にはまだ従業員ポータルがありません。"
+  },
+  "branding": {
+    "title": "ブランディング",
+    "description": "従業員ポータルに表示するロゴです。",
+    "fields": {
+      "logo": "ロゴ",
+      "darkLogo": "ダークモード用ロゴ",
+      "placeholder": "ドロップまたはクリック",
+      "acceptedFiles": "JPEG、PNG、SVG、WebP。最大5 MB。"
+    },
+    "actions": {
+      "removeLogo": "ロゴを削除",
+      "removeDarkLogo": "ダークモード用ロゴを削除"
+    },
+    "messages": {
+      "updated": "ブランディングを更新しました"
+    },
+    "errors": {
+      "update": "ブランディングを更新できませんでした",
+      "invalidFileType": {
+        "title": "サポートされていないファイル形式です",
+        "description": "JPEG、PNG、SVG、WebPのいずれかの画像をアップロードしてください。"
+      },
+      "fileTooLarge": {
+        "title": "ファイルが大きすぎます",
+        "description": "5 MB未満の画像をアップロードしてください。"
+      },
+      "tooManyFiles": {
+        "title": "ファイルが多すぎます",
+        "description": "画像は1枚ずつアップロードしてください。"
+      }
+    }
+  },
+  "capabilities": {
+    "title": "設定",
+    "deviceAgent": {
+      "title": "端末エージェント",
+      "description": "従業員が従業員ポータルから端末を登録できるようにします。"
+    },
+    "messages": {
+      "updated": "設定を更新しました"
+    },
+    "errors": {
+      "update": "設定を更新できませんでした"
+    }
+  }
+}
