@@ -32,15 +32,20 @@ package identityfederation
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 const (
@@ -59,32 +64,85 @@ type (
 		baseURL  *baseurl.BaseURL
 		keyRing  *jose.KeyRing
 		tokenTTL time.Duration
+		debug    bool
+		logger   *log.Logger
 	}
 )
 
-// NewIssuer returns an issuer advertising baseURL and signing with keyRing.
+// NewIssuer builds the outbound issuer from cfg. A disabled configuration
+// returns a nil issuer. logger receives the startup record and, when
+// cfg.Debug is set, each minted assertion. A nil logger skips those lines.
+// appBaseURL is required so an empty cfg.IssuerBaseURL can derive
+// {appBaseURL}/federation.
 func NewIssuer(
-	baseURL *baseurl.BaseURL,
-	keyRing *jose.KeyRing,
-	tokenTTL time.Duration,
+	logger *log.Logger,
+	cfg probodconfig.IdentityFederationConfig,
+	appBaseURL *baseurl.BaseURL,
 ) (*Issuer, error) {
-	if baseURL == nil {
-		return nil, fmt.Errorf("cannot create identity federation issuer: base URL is required")
+	if !cfg.Enabled {
+		return nil, nil
 	}
 
-	if keyRing == nil {
-		return nil, fmt.Errorf("cannot create identity federation issuer: key ring is required")
+	if len(cfg.SigningKeys) == 0 {
+		return nil, fmt.Errorf("cannot create identity federation issuer: at least one signing key is required")
 	}
 
-	if tokenTTL <= 0 {
-		return nil, fmt.Errorf("cannot create identity federation issuer: token TTL must be positive")
+	signingKeys := make([]jose.SigningKey, 0, len(cfg.SigningKeys))
+
+	for _, keyCfg := range cfg.SigningKeys {
+		kid := keyCfg.KID
+		if kid == "" {
+			kid = "default"
+		}
+
+		signingKeys = append(signingKeys, jose.SigningKey{
+			PrivateKey: keyCfg.PrivateKey.PrivateKey(),
+			KID:        kid,
+			Active:     keyCfg.Active,
+		})
 	}
 
-	return &Issuer{
-		baseURL:  baseURL,
+	keyRing, err := jose.NewKeyRing(signingKeys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create identity federation issuer: %w", err)
+	}
+
+	issuerBaseURL, err := ResolveIssuerBaseURL(cfg.IssuerBaseURL, appBaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create identity federation issuer: %w", err)
+	}
+
+	issuer := &Issuer{
+		baseURL:  issuerBaseURL,
 		keyRing:  keyRing,
-		tokenTTL: tokenTTL,
-	}, nil
+		tokenTTL: DefaultTokenTTL,
+		debug:    cfg.Debug,
+		logger:   logger,
+	}
+
+	if logger == nil {
+		return issuer, nil
+	}
+
+	// probod cannot verify that the configured apex actually reaches it, so the
+	// effective value is logged for the startup record and covered by a canary.
+	logger.Info(
+		"identity federation issuer configured",
+		log.String("issuer_base_url", issuer.BaseURL()),
+		log.Bool("debug", cfg.Debug),
+	)
+
+	// A derived issuer is not held to the provider rules, so localhost and CI
+	// still start. Warn instead of failing, rather than staying silent.
+	if err := ValidateConfig(issuerBaseURL); err != nil {
+		logger.Warn(
+			"identity federation issuer cannot be registered with one or more cloud providers; customers cannot install the connector until it is publicly reachable over https without a port",
+			log.String("issuer_base_url", issuer.BaseURL()),
+			log.Error(err),
+		)
+	}
+
+	return issuer, nil
 }
 
 // BaseURL returns the advertised issuer base URL.
@@ -180,6 +238,14 @@ func (i *Issuer) Token(
 		return "", fmt.Errorf("cannot sign identity federation token: %w", err)
 	}
 
+	if i.debug {
+		i.logger.InfoCtx(
+			ctx,
+			"minted identity federation assertion",
+			tokenFields(token, i.keyRing.JWKS(), claims)...,
+		)
+	}
+
 	return token, nil
 }
 
@@ -212,4 +278,56 @@ func (i *Issuer) Metadata(organizationID gid.GID) (*Metadata, error) {
 // token signed before a rotation still verifies.
 func (i *Issuer) JWKS() *jose.JWKS {
 	return i.keyRing.JWKS()
+}
+
+// tokenFields describes a minted assertion for the debug log. Claims are the
+// values that were signed. alg, typ, and kid are read from the token header.
+// The compact token also supplies the segment lengths, and the published key
+// set checks the signature. The signature and the raw token are never returned.
+func tokenFields(token string, jwks *jose.JWKS, claims Claims) []log.Attr {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return []log.Attr{
+			log.String("decode_error", "cannot decode identity federation assertion"),
+		}
+	}
+
+	headerJSON, err := base64.RawURLEncoding.DecodeString(parts[0])
+	if err != nil {
+		return []log.Attr{
+			log.String("decode_error", "cannot decode identity federation assertion"),
+		}
+	}
+
+	var header jose.JWTHeader
+	if err := json.Unmarshal(headerJSON, &header); err != nil {
+		return []log.Attr{
+			log.String("decode_error", "cannot decode identity federation assertion"),
+		}
+	}
+
+	_, verifyErr := jose.VerifyJWTWithJWKS(token, jwks)
+
+	fields := []log.Attr{
+		log.String("alg", header.Algorithm),
+		log.String("typ", header.Type),
+		log.String("kid", header.KeyID),
+		log.String("iss", claims.Issuer),
+		log.String("sub", claims.Subject),
+		log.String("aud", claims.Audience),
+		log.Int64("iat", claims.IssuedAt),
+		log.Int64("nbf", claims.NotBefore),
+		log.Int64("exp", claims.ExpiresAt),
+		log.String("jti", claims.JTI),
+		log.Int("header_length", len(parts[0])),
+		log.Int("payload_length", len(parts[1])),
+		log.Int("signature_length", len(parts[2])),
+		log.Bool("signature_verified", verifyErr == nil),
+	}
+
+	if verifyErr != nil {
+		fields = append(fields, log.String("verify_error", verifyErr.Error()))
+	}
+
+	return fields
 }

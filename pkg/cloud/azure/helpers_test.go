@@ -28,9 +28,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 const (
@@ -51,15 +51,19 @@ func testIssuer(t *testing.T) *identityfederation.Issuer {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
-	keyRing, err := jose.NewKeyRing(
-		[]jose.SigningKey{{PrivateKey: key, KID: "test", Active: true}},
+	issuer, err := identityfederation.NewIssuer(
+		nil,
+		probodconfig.IdentityFederationConfig{
+			Enabled:       true,
+			IssuerBaseURL: testIssuerBase,
+			SigningKeys: []probodconfig.IdentityFederationSigningKeyConfig{{
+				PrivateKey: probodconfig.RSAPrivateKeyFromKey(key),
+				KID:        "test",
+				Active:     true,
+			}},
+		},
+		baseurl.MustParse("https://app.probo.com"),
 	)
-	require.NoError(t, err)
-
-	base, err := baseurl.Parse(testIssuerBase)
-	require.NoError(t, err)
-
-	issuer, err := identityfederation.NewIssuer(base, keyRing, identityfederation.DefaultTokenTTL)
 	require.NoError(t, err)
 
 	return issuer

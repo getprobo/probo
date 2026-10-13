@@ -2254,9 +2254,7 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 // defaultSigningKeyID names a configured key that carries no explicit kid.
 const defaultSigningKeyID = "default"
 
-// newSigningKey turns one configured key into a key ring entry. The OAuth2
-// server and the identity federation issuer keep separate config sections but
-// accept the same material, so both read their keys through here.
+// newSigningKey turns one configured OAuth2 key into a key ring entry.
 //
 // The key material is already decoded by the configuration; a key left empty
 // there arrives nil and is rejected by jose.NewKeyRing.
@@ -2279,53 +2277,13 @@ func (impl *Implm) buildIdentityFederationIssuer(
 	baseURL *baseurl.BaseURL,
 	l *log.Logger,
 ) (*identityfederation.Issuer, error) {
-	if !impl.cfg.IdentityFederation.Enabled {
-		return nil, nil
-	}
-
-	if len(impl.cfg.IdentityFederation.SigningKeys) == 0 {
-		return nil, fmt.Errorf("cannot configure identity federation issuer: at least one signing key is required")
-	}
-
-	issuerBaseURL, err := identityfederation.ResolveIssuerBaseURL(impl.cfg.IdentityFederation.IssuerBaseURL, baseURL)
-	if err != nil {
-		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
-	}
-
-	signingKeys := make([]jose.SigningKey, 0, len(impl.cfg.IdentityFederation.SigningKeys))
-
-	for _, keyCfg := range impl.cfg.IdentityFederation.SigningKeys {
-		signingKeys = append(
-			signingKeys,
-			newSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active),
-		)
-	}
-
-	keyRing, err := jose.NewKeyRing(signingKeys)
-	if err != nil {
-		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
-	}
-
-	issuer, err := identityfederation.NewIssuer(issuerBaseURL, keyRing, identityfederation.DefaultTokenTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	// probod cannot verify that the configured apex actually reaches it, so the
-	// effective value is logged for the startup record and covered by a canary.
-	l.Info(
-		"identity federation issuer configured",
-		log.String("issuer_base_url", issuer.BaseURL()),
+	issuer, err := identityfederation.NewIssuer(
+		l.Named("identityfederation"),
+		impl.cfg.IdentityFederation,
+		baseURL,
 	)
-
-	// A derived issuer is not held to the provider rules, so localhost and CI
-	// still start. Warn instead of failing, rather than staying silent.
-	if err := identityfederation.ValidateConfig(issuerBaseURL); err != nil {
-		l.Warn(
-			"identity federation issuer cannot be registered with one or more cloud providers; customers cannot install the connector until it is publicly reachable over https without a port",
-			log.String("issuer_base_url", issuer.BaseURL()),
-			log.Error(err),
-		)
+	if err != nil {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
 	}
 
 	return issuer, nil

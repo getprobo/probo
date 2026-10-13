@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 	idfed "go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 const (
@@ -62,15 +63,18 @@ var rsaTestKey = sync.OnceValue(
 func testIssuer(t testing.TB) *idfed.Issuer {
 	t.Helper()
 
-	keyRing, err := jose.NewKeyRing(
-		[]jose.SigningKey{{PrivateKey: rsaTestKey(), KID: "test", Active: true}},
-	)
-	require.NoError(t, err)
-
 	issuer, err := idfed.NewIssuer(
-		baseurl.MustParse(issuerBase),
-		keyRing,
-		idfed.DefaultTokenTTL,
+		nil,
+		probodconfig.IdentityFederationConfig{
+			Enabled:       true,
+			IssuerBaseURL: issuerBase,
+			SigningKeys: []probodconfig.IdentityFederationSigningKeyConfig{{
+				PrivateKey: probodconfig.RSAPrivateKeyFromKey(rsaTestKey()),
+				KID:        "test",
+				Active:     true,
+			}},
+		},
+		baseurl.MustParse("https://app.probo.com"),
 	)
 	require.NoError(t, err)
 

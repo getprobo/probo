@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- `identity-federation.debug` logs each minted federation assertion's
+  header and claims, and whether this process's key set verifies the
+  signature. The signature is never logged. It is off by default
+
 ## [0.310.0] - 2026-10-13
 
 ### Added
