@@ -2222,8 +2222,8 @@
     "groups": {
       "governance": "ガバナンス",
       "privacy": "プライバシー",
-      "cmp": "Cookie同意管理（CMP）",
-      "tprm": "取引先リスク管理（TPRM）",
+      "cmp": "CMP",
+      "tprm": "TPRM",
       "itam": "IT資産管理",
       "riskManagement": "リスク管理",
       "registries": "台帳",
