@@ -1,0 +1,134 @@
+{
+  "title": "この端末を登録",
+  "breadcrumb": "端末",
+  "registerBreadcrumb": "登録",
+  "addManuallyBreadcrumb": "手動で追加",
+  "list": {
+    "title": "端末",
+    "register": "新しい端末を登録",
+    "addManually": "手動で追加",
+    "lastActive": "最終アクティブ",
+    "never": "なし",
+    "justNow": "たった今",
+    "pendingHostname": "保留中",
+    "connected": "接続済み",
+    "disconnected": "未接続",
+    "columns": {
+      "hostname": "端末",
+      "details": "詳細"
+    },
+    "platforms": {
+      "DARWIN": "macOS",
+      "WINDOWS": "Windows",
+      "LINUX": "Linux",
+      "FREEBSD": "FreeBSD"
+    }
+  },
+  "empty": {
+    "title": "端末はまだありません",
+    "description": "端末を登録すると、組織に接続してセキュリティ状態を監視できます。",
+    "register": "端末を登録",
+    "addManually": "手動で追加"
+  },
+  "unavailable": {
+    "title": "登録できません",
+    "description": "この組織で端末を登録する権限がありません。",
+    "home": "ホームに戻る"
+  },
+  "steps": {
+    "review": {
+      "title": "端末情報を確認",
+      "description": "Probo Agentが保存する情報を確認します。"
+    },
+    "download": {
+      "title": "エージェントをダウンロード",
+      "description": "デスクトップエージェントをインストールします"
+    },
+    "enroll": {
+      "title": "Probo Agentを開く",
+      "description": "この端末の登録を完了します。"
+    }
+  },
+  "review": {
+    "title": "収集されるデータを確認",
+    "description": "Proboは、資産管理とセキュリティ状態の報告のために、次の端末メタデータを収集します。",
+    "understand": "理解しました",
+    "thisDevice": {
+      "title": "この端末",
+      "hostname": "ホスト名",
+      "platform": "プラットフォーム",
+      "osVersion": "OSのバージョン"
+    },
+    "identity": {
+      "title": "端末の識別情報",
+      "hardwareUuid": "ハードウェアUUID",
+      "hostname": "ホスト名",
+      "serialNumber": "シリアル番号（取得できる場合）"
+    },
+    "system": {
+      "title": "システム情報",
+      "platform": "プラットフォーム",
+      "osVersion": "OSのバージョン",
+      "agentVersion": "Probo Agentのバージョン"
+    },
+    "activity": {
+      "title": "稼働状況",
+      "enrollmentTime": "登録日時",
+      "heartbeats": "エージェントのハートビート",
+      "posture": "セキュリティ状態のチェック結果"
+    }
+  },
+  "download": {
+    "title": "Probo Agentをダウンロード",
+    "description": "アプリをインストールして、この端末を保護し、組織に接続します。",
+    "featured": "macOS版Probo Agent",
+    "continue": "続ける",
+    "download": "ダウンロード",
+    "downloadNamed": "{{title}}をダウンロード",
+    "macosIntel": {
+      "title": "macOS Intel",
+      "meta": "macOS 13.0以降"
+    },
+    "windows": {
+      "title": "Windows",
+      "meta": "Windows 11以降"
+    }
+  },
+  "enroll": {
+    "title": "アプリで続ける",
+    "description": "Probo Agentを開いて、この端末の登録を完了してください。",
+    "open": "Probo Agentを開く",
+    "preparing": "準備中…",
+    "waiting": "エージェントからの最初の接続を待っています…",
+    "timedOut": "エージェントからの応答がまだありません。デスクトップエージェントがインストールされて実行中であることを確認してから、もう一度お試しください。",
+    "failed": "登録を開始できませんでした。もう一度お試しください。",
+    "tryAgain": "もう一度試す",
+    "enrolled": "この端末を登録しました。",
+    "enrolledWithHostname": "{{hostname}}を登録しました。",
+    "home": "ホームに戻る"
+  },
+  "addManually": {
+    "title": "手動で登録",
+    "creating": "端末を作成中…",
+    "failed": "登録トークンを作成できませんでした。もう一度お試しください。",
+    "created": "端末を作成しました。登録トークンは今回のみ表示されるため、今すぐコピーしてください。",
+    "done": "完了",
+    "retry": "もう一度試す",
+    "back": "端末一覧に戻る",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "copyFailed": "クリップボードにコピーできませんでした",
+    "token": {
+      "title": "登録トークンを生成しました",
+      "description": "この登録トークンは、端末の所有者にだけ安全な方法で共有してください。1回だけ使用でき、7日後に期限切れになります。",
+      "releaseListHint": "<link>GitHubのprobo-agentリリース</link>（タグprobo-agent/v*）を開き、お使いのOSとアーキテクチャに合ったアーカイブを選んでください（例：probo-agent_Darwin_arm64.tar.gz、probo-agent_Linux_x86_64.tar.gz、probo-agent_Windows_x86_64.zip）。ダウンロード用コマンドのvX.Y.Z、OS、ARCHは、選んだアセットの値に置き換えてください。",
+      "tabUnix": "macOS / Linux",
+      "tabWindows": "Windows",
+      "installUnix": "macOSまたはLinuxにインストール（sudo権限のあるシェルで実行）",
+      "installWindows": "Windowsにインストール（管理者権限のPowerShellで実行）",
+      "downloadStep": "バイナリーをダウンロードして配置",
+      "enrollStep": "端末を設定してエージェントを起動",
+      "securityNotice": "トークンはCLIフラグとして渡されます（curlの出力をシェルにパイプする方法やsudoの環境変数は使いません）。インストール後、エージェントはcosign署名を検証しながらGitHub Releasesから自動更新します。"
+    }
+  }
+}

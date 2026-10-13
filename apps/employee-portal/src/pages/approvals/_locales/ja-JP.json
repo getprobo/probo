@@ -1,0 +1,38 @@
+{
+  "title": "承認",
+  "breadcrumb": "承認",
+  "pending": {
+    "heading": "承認待ち（{{count}}）",
+    "summaryTitle_one": "承認する文書が{{count}}件あります",
+    "summaryTitle_other": "承認する文書が{{count}}件あります",
+    "summaryDescription": "従業員としての設定を完了するために必要な文書を確認し、承認してください。",
+    "action": "承認を開始",
+    "itemAction": "承認"
+  },
+  "history": {
+    "heading": "確認済み（{{count}}）",
+    "statusApproved": "承認済み",
+    "statusRejected": "却下"
+  },
+  "empty": {
+    "none": {
+      "title": "承認依頼はまだありません",
+      "description": "承認が必要な文書はここに表示されます。"
+    },
+    "allDone": {
+      "title": "すべて完了しました",
+      "description": "対応は済んでいます。確認済みの文書は下に表示されています。"
+    }
+  },
+  "document": {
+    "instruction": "この文書を確認して、承認または却下してください。",
+    "reviewAndApprove": "確認して承認",
+    "reject": "却下",
+    "approved": "この文書を承認しました。",
+    "rejected": "この文書を却下しました。",
+    "voided": "この承認は不要になりました。",
+    "goToNext": "次の文書へ",
+    "finish": "承認を完了",
+    "backToList": "承認一覧に戻る"
+  }
+}

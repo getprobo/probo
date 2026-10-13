@@ -1,0 +1,173 @@
+{
+  "topBar": {
+    "tagline": "従業員ポータル"
+  },
+  "userMenu": {
+    "oauthTokens": "OAuthトークン",
+    "switchToDarkMode": "ダークモードに切り替え",
+    "switchToLightMode": "ライトモードに切り替え",
+    "help": "ヘルプ",
+    "signOut": "ログアウト",
+    "signOutFailed": "ログアウトできません"
+  },
+  "organizationsPage": {
+    "title": "所属する組織",
+    "searchPlaceholder": "組織を検索",
+    "empty": "利用できる従業員ポータルはまだありません。",
+    "emptySearch": "検索に一致する組織はありません。",
+    "status": {
+      "authenticated": "認証済み",
+      "sessionExpired": "セッションの有効期限切れ",
+      "authenticationRequired": "認証が必要です"
+    },
+    "actions": {
+      "open": "開く",
+      "continue": "続ける"
+    }
+  },
+  "breadcrumb": {
+    "nav": "パンくずリスト"
+  },
+  "homePage": {
+    "breadcrumb": "ホーム",
+    "welcome": "{{name}}さん、ようこそ。",
+    "welcomeFallback": "ようこそ。",
+    "getStarted": {
+      "title": "はじめに",
+      "description": "必要な手順を完了して、従業員ポータルの設定を済ませましょう。",
+      "signatures": {
+        "count_one": "署名する文書が{{count}}件あります",
+        "count_other": "署名する文書が{{count}}件あります",
+        "description": "割り当てられた文書を確認して署名してください。",
+        "action": "署名する"
+      },
+      "approvals": {
+        "count_one": "承認する文書が{{count}}件あります",
+        "count_other": "承認する文書が{{count}}件あります",
+        "description": "割り当てられた文書を確認して承認してください。",
+        "action": "承認する"
+      }
+    },
+    "dashboard": {
+      "view": "表示",
+      "allDone": "すべて完了しました",
+      "signatures": {
+        "title": "署名",
+        "description": "割り当てられた文書に署名します。",
+        "empty": "署名する文書はまだありません",
+        "pendingCount_one": "署名する文書が{{count}}件あります",
+        "pendingCount_other": "署名する文書が{{count}}件あります",
+        "action": "署名を開始"
+      },
+      "approvals": {
+        "title": "承認",
+        "description": "承認待ちの文書を確認します。",
+        "empty": "承認する文書はまだありません",
+        "pendingCount_one": "承認する文書が{{count}}件あります",
+        "pendingCount_other": "承認する文書が{{count}}件あります",
+        "action": "承認を開始"
+      },
+      "devices": {
+        "title": "端末",
+        "description": "業務で使う端末を管理します。",
+        "connected": "端末は接続済みです",
+        "action": "端末を登録"
+      },
+      "slack": {
+        "title": "Slack",
+        "description": "Slackアカウントを連携すると、Probotがサポートします。",
+        "connected": "Slackは接続済みです",
+        "hint": "Slackで<cmd>/probot login</cmd>を実行してください"
+      }
+    }
+  },
+  "common": {
+    "error": "問題が発生しました"
+  },
+  "pagination": {
+    "previous": "前へ",
+    "next": "次へ"
+  },
+  "queue": {
+    "previous": "前の文書",
+    "next": "次の文書",
+    "close": "閉じる",
+    "progressSignatures": "署名する文書{{current}}/{{total}}",
+    "progressApprovals": "承認する文書{{current}}/{{total}}",
+    "empty": "このキューに残っている文書はありません"
+  },
+  "viewer": {
+    "pageOf": "{{current}}/{{total}}ページ",
+    "previousPage": "前のページ",
+    "nextPage": "次のページ",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "download": "PDFをダウンロード"
+  },
+  "documents": {
+    "lastUpdated": "最終更新",
+    "columns": {
+      "title": "タイトル",
+      "classification": "機密区分",
+      "type": "種別",
+      "status": "ステータス",
+      "action": "操作"
+    },
+    "types": {
+      "other": "その他",
+      "governance": "ガバナンス",
+      "policy": "方針",
+      "procedure": "手順",
+      "plan": "計画",
+      "register": "台帳",
+      "record": "記録",
+      "report": "報告書",
+      "template": "テンプレート",
+      "statement_of_applicability": "適用宣言書"
+    },
+    "classifications": {
+      "public": "公開",
+      "internal": "社内限",
+      "confidential": "機密",
+      "secret": "極秘"
+    },
+    "versions": {
+      "heading": "版の履歴",
+      "count_one": "{{count}}版",
+      "count_other": "{{count}}版",
+      "label": "v{{major}}.{{minor}}",
+      "current": "最新",
+      "select": "版{{major}}.{{minor}}を表示",
+      "status": {
+        "inReview": "レビュー中",
+        "approved": "承認済み",
+        "rejected": "却下",
+        "voided": "無効",
+        "signed": "署名済み"
+      }
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "ページが見つかりません",
+      "description": "お探しのページは存在しないか、移動した可能性があります。"
+    },
+    "forbidden": {
+      "title": "アクセスできません",
+      "description": "このページを表示する権限がありません。組織の一覧に戻るか、心当たりがない場合はサポートにお問い合わせください。"
+    },
+    "serverError": {
+      "title": "問題が発生しました",
+      "description": "サーバー側で問題が発生しました。もう一度お試しください。解決しない場合はサポートにお問い合わせください。"
+    },
+    "generic": {
+      "title": "ページを読み込めません",
+      "description": "このページを読み込めませんでした。もう一度お試しください。解決しない場合はサポートにお問い合わせください。"
+    },
+    "actions": {
+      "tryAgain": "もう一度試す",
+      "backToOrganizations": "組織一覧に戻る",
+      "contactSupport": "サポートに問い合わせる"
+    }
+  }
+}

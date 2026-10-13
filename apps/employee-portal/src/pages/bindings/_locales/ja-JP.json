@@ -1,0 +1,57 @@
+{
+  "bind": {
+    "title": "SlackをProboに連携",
+    "description": "このSlackアカウントをProboのIDに紐付けると、Probotがサポートします。",
+    "breadcrumb": "連携",
+    "fields": {
+      "tenant": "ワークスペース",
+      "account": "アカウント"
+    },
+    "actions": {
+      "confirm": "Slackアカウントを連携"
+    },
+    "messages": {
+      "linked": "SlackアカウントをProboに連携しました。"
+    },
+    "missingToken": {
+      "title": "確認用リンクがありません",
+      "description": "Slackで/probot loginを実行すると、あなた専用の確認用リンクが届きます。"
+    },
+    "errors": {
+      "linkFailed": "連携できませんでした",
+      "invalidOrExpiredTokenTitle": "このリンクは有効期限が切れています",
+      "invalidOrExpiredToken": "ボットに新しい専用の確認用リンクを依頼してください。"
+    }
+  },
+  "list": {
+    "title": "Slack",
+    "breadcrumb": "Slack",
+    "description": "Slackアカウントを連携すると、この組織でProbotがサポートします。",
+    "connectedDescription": "{{account}} · {{workspace}}",
+    "providers": {
+      "slack": "Slack"
+    },
+    "columns": {
+      "account": "アカウント",
+      "action": "操作"
+    },
+    "actions": {
+      "unlink": "連携を解除",
+      "cancel": "キャンセル"
+    },
+    "empty": {
+      "title": "連携済みのSlackアカウントはありません",
+      "description": "Slackで<cmd>/probot login</cmd>を実行すると、あなた専用の確認用リンクが届きます。"
+    },
+    "messages": {
+      "unlinked": "Slackアカウントの連携を解除しました。"
+    },
+    "errors": {
+      "unlinkFailed": "このアカウントの連携を解除できませんでした。"
+    },
+    "confirmations": {
+      "unlinkTitle": "Slackアカウントの連携を解除",
+      "unlink": "このSlackアカウントの連携を解除してもよろしいですか？再び連携するまで、Probotはサポートできなくなります。"
+    }
+  }
+}

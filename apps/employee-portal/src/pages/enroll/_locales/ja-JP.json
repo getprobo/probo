@@ -1,0 +1,20 @@
+{
+  "title": "端末を登録",
+  "unavailable": {
+    "title": "登録できません",
+    "description": "どの組織でも端末を登録する権限がありません。",
+    "home": "組織一覧に戻る"
+  },
+  "steps": {
+    "organization": {
+      "title": "組織を選択",
+      "description": "この端末を所有する組織を選んでください。"
+    }
+  },
+  "organization": {
+    "title": "組織を選択",
+    "description": "この端末を所有・管理する組織を選んでください。",
+    "placeholder": "組織を選択",
+    "continue": "続ける"
+  }
+}

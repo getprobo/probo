@@ -1,0 +1,33 @@
+{
+  "title": "署名",
+  "breadcrumb": "署名",
+  "pending": {
+    "heading": "署名待ち（{{count}}）",
+    "summaryTitle_one": "署名する文書が{{count}}件あります",
+    "summaryTitle_other": "署名する文書が{{count}}件あります",
+    "summaryDescription": "従業員としての設定を完了するために必要な文書を確認し、署名してください。",
+    "action": "署名を開始",
+    "itemAction": "署名"
+  },
+  "history": {
+    "heading": "署名済み（{{count}}）"
+  },
+  "empty": {
+    "none": {
+      "title": "署名依頼はまだありません",
+      "description": "署名が必要な文書はここに表示されます。"
+    },
+    "allDone": {
+      "title": "すべて完了しました",
+      "description": "対応は済んでいます。署名済みの文書は下に表示されています。"
+    }
+  },
+  "document": {
+    "instruction": "署名する前に、この文書を確認してください。",
+    "reviewAndSign": "確認して署名",
+    "signed": "この文書に署名しました。",
+    "goToNext": "次の文書へ",
+    "finish": "署名を完了",
+    "backToList": "署名一覧に戻る"
+  }
+}
