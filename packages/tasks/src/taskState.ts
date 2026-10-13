@@ -44,6 +44,15 @@ export const pendingTaskStates = new Set<TaskState>([
   "IN_PROGRESS",
 ]);
 
+export const taskListGroupStates = [
+  "IN_PROGRESS",
+  "TODO",
+  "BACKLOG",
+  "DONE",
+  "CANCELED",
+  "DUPLICATE",
+] as const satisfies readonly TaskState[];
+
 export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
 
 export type TaskPriority = (typeof taskPriorities)[number];

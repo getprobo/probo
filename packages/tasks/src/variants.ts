@@ -25,7 +25,9 @@ export const taskList = tv({
     root: "flex flex-col gap-4",
     group: "flex flex-col gap-2",
     sectionHeader: [
-      "flex w-full items-center gap-2 text-start",
+      "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit",
+      "flex w-full items-center gap-2 text-start outline-none",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
       "[&_[data-slot=caret-open]]:hidden",
       "data-panel-open:[&_[data-slot=caret-closed]]:hidden",
       "data-panel-open:[&_[data-slot=caret-open]]:block",
@@ -33,6 +35,45 @@ export const taskList = tv({
     caret: "size-4 shrink-0 text-sand-11",
     list: "divide-y divide-sand-a3",
     empty: "py-6",
+  },
+  variants: {
+    open: {
+      true: {
+        sectionHeader: [
+          "[&_[data-slot=caret-closed]]:hidden",
+          "[&_[data-slot=caret-open]]:block",
+        ],
+      },
+      false: {},
+    },
+    offset: {
+      true: { sectionHeader: "mt-4" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    open: false,
+    offset: false,
+  },
+});
+
+export const taskListRow = tv({
+  base: "bg-sand-1",
+  variants: {
+    position: {
+      only: "rounded-4 border border-sand-a3",
+      first: "rounded-t-4 border-x border-t border-sand-a3",
+      middle: "border-x border-t border-sand-a3",
+      last: "rounded-b-4 border border-sand-a3",
+    },
+    placeholder: {
+      true: "h-12 animate-pulse",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    position: "only",
+    placeholder: false,
   },
 });
 

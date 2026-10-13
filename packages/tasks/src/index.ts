@@ -27,7 +27,28 @@ export {
   TaskEngagement,
   type TaskEngagementProps,
 } from "./TaskEngagement";
+export {
+  flattenTaskListItems,
+  type TaskListFlatItem,
+  type TaskListGroupInput,
+  type TaskListRowPosition,
+  taskListRowPosition,
+} from "./flattenTaskListItems";
 export { TaskList, type TaskListItemSource, type TaskListProps } from "./TaskList";
+export {
+  TaskListGroupHeader,
+  type TaskListGroupHeaderProps,
+} from "./TaskListGroupHeader";
+export {
+  TaskListRowFrame,
+  type TaskListRowFrameProps,
+} from "./TaskListRowFrame";
+export {
+  taskListGroupHeaderOffset,
+  taskListGroupHeaderSize,
+  taskListItemSize,
+  taskListRowSize,
+} from "./taskListSize";
 export { TaskNameField, type TaskNameFieldProps } from "./TaskNameField";
 export {
   PropertyRow,
@@ -41,20 +62,20 @@ export {
   type TaskDurationFieldProps,
 } from "./TaskDurationField";
 export {
+  type ParsedTaskDuration,
   parseTaskDuration,
   parseTaskDurationAmount,
   stringifyTaskDuration,
   taskDurationsEqual,
+  type TaskDurationUnit,
   taskDurationUnits,
   taskEstimateDurationUnits,
   taskRecurrenceDurationUnits,
-  type ParsedTaskDuration,
-  type TaskDurationUnit,
 } from "./taskDuration";
 export {
   formatTaskActivityValue,
-  taskActivitySentenceKey,
   type TaskActivityField,
+  taskActivitySentenceKey,
   type TaskActivityType,
 } from "./taskActivity";
 export {
@@ -68,6 +89,7 @@ export {
   taskEngagement,
   taskList,
   taskListItem,
+  taskListRow,
   taskNameField,
   taskProperties,
 } from "./variants";
@@ -81,8 +103,9 @@ export { TaskPriorityIcon } from "./TaskPriorityIcon";
 export { TaskStateIcon } from "./TaskStateIcon";
 export {
   pendingTaskStates,
-  type TaskPriority,
+  taskListGroupStates,
   taskPriorities,
+  type TaskPriority,
   taskPriorityKeys,
   type TaskState,
   taskStateKeys,
