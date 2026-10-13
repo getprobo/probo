@@ -2222,8 +2222,8 @@
     "groups": {
       "governance": "ガバナンス",
       "privacy": "プライバシー",
-      "cmp": "Cookie同意管理",
-      "tprm": "取引先リスク管理",
+      "cmp": "Cookie同意管理（CMP）",
+      "tprm": "取引先リスク管理（TPRM）",
       "itam": "IT資産管理",
       "riskManagement": "リスク管理",
       "registries": "台帳",
@@ -2242,7 +2242,7 @@
     "allRisks": "すべてのリスク",
     "riskAnalyses": "リスク分析",
     "frameworks": "フレームワーク",
-    "iam": "ID・アクセス管理",
+    "iam": "ID・アクセス管理（IAM）",
     "users": "ユーザー",
     "authProvisioning": "認証とプロビジョニング",
     "samlSso": "SAML SSO",
@@ -2270,9 +2270,9 @@
     "aiSystems": "AIシステム",
     "obligations": "義務",
     "processingActivities": "処理活動",
-    "dataProtectionImpactAssessments": "データ保護影響評価",
-    "transferImpactAssessments": "移転影響評価",
-    "statementsOfApplicability": "適用宣言書",
+    "dataProtectionImpactAssessments": "データ保護影響評価（DPIA）",
+    "transferImpactAssessments": "移転影響評価（TIA）",
+    "statementsOfApplicability": "適用宣言書（SoA）",
     "rightsRequests": "本人からの請求",
     "campaigns": "キャンペーン",
     "connections": "コネクター",
@@ -5573,7 +5573,7 @@
     }
   },
   "statementOfApplicabilityDetailPage": {
-    "title": "適用宣言書",
+    "title": "適用宣言書（SoA）",
     "sections": {
       "details": "詳細",
       "statements": "記載事項"

@@ -174,7 +174,7 @@
     }
   },
   "electronicSignature": {
-    "title": "秘密保持契約",
+    "title": "秘密保持契約（NDA）",
     "certificateTitle": "完了証明書",
     "status": {
       "signed": "電子署名済み",
