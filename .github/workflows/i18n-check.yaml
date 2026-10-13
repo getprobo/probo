@@ -30,6 +30,7 @@ on:
   pull_request:
     paths:
       - "apps/*/src/**/_locales/*.json"
+      - "apps/console/public/data/frameworks/**"
       - "scripts/i18n/**"
       - ".github/workflows/i18n-check.yaml"
 
@@ -48,7 +49,9 @@ jobs:
       - uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v6
         with:
           node-version-file: ".nvmrc"
-      - name: "Test checker"
-        run: "node --test scripts/i18n/check-locales.test.mjs"
+      - name: "Test checkers"
+        run: "node --test scripts/i18n/check-locales.test.mjs scripts/i18n/check-frameworks.test.mjs"
       - name: "Check ja-JP catalogs"
         run: "node scripts/i18n/check-locales.mjs --locale ja-JP"
+      - name: "Check ja-JP frameworks"
+        run: "node scripts/i18n/check-frameworks.mjs --locale ja-JP"
