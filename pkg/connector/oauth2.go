@@ -834,11 +834,9 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 		TokenType:    c.TokenType,
 	}
 
-	// Create an HTTP client with telemetry for the oauth2 library to use
-	// This ensures token refresh requests are also logged
-	baseClient := &http.Client{
-		Transport: httpclient.DefaultPooledTransport(opts...),
-	}
+	// Token refresh is logged by the telemetry transport, and retried when
+	// the endpoint answers 429 or 5xx. See newTokenHTTPClient.
+	baseClient := newTokenHTTPClient(opts...)
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, baseClient)
 
 	// Create a token source that will automatically refresh when expired
@@ -903,12 +901,10 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 	req.Header.Set("User-Agent", "Probo Connector")
 	req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
 
-	httpClient := &http.Client{
-		Transport: httpclient.DefaultPooledTransport(opts...),
-		// The callers run on a worker context with no deadline, so an
-		// unbounded exchange holds a worker slot and its database connection.
-		Timeout: clientCredentialsTokenTimeout,
-	}
+	httpClient := newTokenHTTPClient(opts...)
+	// The callers run on a worker context with no deadline, so an
+	// unbounded exchange holds a worker slot and its database connection.
+	httpClient.Timeout = clientCredentialsTokenTimeout
 
 	resp, err := httpClient.Do(req)
 	if err != nil {

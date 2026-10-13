@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1660,4 +1661,122 @@ func TestCompleteWithState_PKCEMismatch(t *testing.T) {
 	)
 	_, _, err = c.CompleteWithState(context.Background(), req)
 	require.Error(t, err, "PKCE rejection from token endpoint must propagate")
+}
+
+// TestRefreshableClient_RetriesServiceUnavailable is the Google token-endpoint
+// 503 that used to fail a SCIM sync on the first attempt. The same refresh
+// grant must be posted again, and a following 200 must stick.
+func TestRefreshableClient_RetriesServiceUnavailable(t *testing.T) {
+	t.Parallel()
+
+	const unavailable = `{"error":{"code":503,"message":"The service is currently unavailable.","status":"UNAVAILABLE"}}`
+
+	var calls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.Contains(t, string(body), "grant_type=refresh_token")
+
+		n := calls.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+
+		if n == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(unavailable))
+
+			return
+		}
+
+		_, _ = w.Write([]byte(`{"access_token":"retried","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		AccessToken:  "stale",
+		RefreshToken: "refresh-tok",
+		ExpiresAt:    time.Now().Add(-time.Hour),
+		TokenType:    "Bearer",
+	}
+
+	_, err := conn.RefreshableClient(
+		context.Background(),
+		OAuth2RefreshConfig{ClientID: "cid", ClientSecret: "secret", TokenURL: server.URL},
+		httpclient.WithSSRFAllowLoopback(),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "retried", conn.AccessToken)
+	assert.Equal(t, int32(2), calls.Load())
+}
+
+// TestRefreshableClient_DoesNotRetryInvalidGrant pins the customer-side
+// refusal: a 400 invalid_grant is the provider's answer, and a second post
+// would only repeat it.
+func TestRefreshableClient_DoesNotRetryInvalidGrant(t *testing.T) {
+	t.Parallel()
+
+	var calls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid_grant","error_description":"Token has been expired or revoked."}`))
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		AccessToken:  "stale",
+		RefreshToken: "revoked",
+		ExpiresAt:    time.Now().Add(-time.Hour),
+		TokenType:    "Bearer",
+	}
+
+	_, err := conn.RefreshableClient(
+		context.Background(),
+		OAuth2RefreshConfig{ClientID: "cid", ClientSecret: "secret", TokenURL: server.URL},
+		httpclient.WithSSRFAllowLoopback(),
+	)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid_grant")
+	assert.Equal(t, int32(1), calls.Load())
+}
+
+func TestClientCredentialsClient_RetriesServiceUnavailable(t *testing.T) {
+	t.Parallel()
+
+	var calls atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		assert.NoError(t, err)
+		assert.Contains(t, string(body), "grant_type=client_credentials")
+
+		n := calls.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+
+		if n == 1 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte(`{"error":{"code":503,"message":"The service is currently unavailable.","status":"UNAVAILABLE"}}`))
+
+			return
+		}
+
+		_, _ = w.Write([]byte(`{"access_token":"minted","token_type":"Bearer","expires_in":3600}`))
+	}))
+	defer server.Close()
+
+	conn := &OAuth2Connection{
+		GrantType:    OAuth2GrantTypeClientCredentials,
+		ClientID:     "cc-client-id",
+		ClientSecret: "cc-client-secret",
+		TokenURL:     server.URL,
+	}
+
+	client, err := conn.clientCredentialsClient(context.Background(), httpclient.WithSSRFAllowLoopback())
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	assert.Equal(t, "minted", conn.AccessToken)
+	assert.Equal(t, int32(2), calls.Load())
 }
