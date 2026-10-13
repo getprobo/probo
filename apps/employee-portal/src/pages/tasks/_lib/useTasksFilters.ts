@@ -22,10 +22,7 @@ import { type TaskState, taskStates } from "@probo/tasks";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-export interface TasksFilterInput {
-  query: string | null;
-  state: TaskState | null;
-}
+import { taskListIncludeFlags } from "./taskListIncludes";
 
 function taskStateFromParam(value: string | null): TaskState | null {
   return taskStates.find(
@@ -37,10 +34,8 @@ export function useTasksFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const state = taskStateFromParam(searchParams.get("status"));
-  const graphqlFilter = useMemo<TasksFilterInput>(() => ({
-    query: query === "" ? null : query,
-    state,
-  }), [query, state]);
+  const graphqlQuery = query === "" ? null : query;
+  const includeFlags = useMemo(() => taskListIncludeFlags(state), [state]);
 
   const setQuery = useCallback((value: string) => {
     setSearchParams((previous) => {
@@ -68,8 +63,9 @@ export function useTasksFilters() {
 
   return {
     query,
+    graphqlQuery,
     state,
-    graphqlFilter,
+    includeFlags,
     setQuery,
     setState,
   };

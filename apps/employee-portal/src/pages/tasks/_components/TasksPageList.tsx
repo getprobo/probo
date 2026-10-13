@@ -19,14 +19,21 @@
 // SOFTWARE.
 
 import { TaskList } from "@probo/tasks";
-import { useEffect, useRef, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { graphql, readInlineData, useRefetchableFragment } from "react-relay";
 
 import type { TasksPageList_task$key } from "#/__generated__/core/TasksPageList_task.graphql";
 import type { TasksPageList_viewer$key } from "#/__generated__/core/TasksPageList_viewer.graphql";
 import type { TasksPageListRefetchQuery } from "#/__generated__/core/TasksPageListRefetchQuery.graphql";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
+import {
+  mergeTaskListIncludeFlags,
+  taskListNeedsFetch,
+  taskListReadableIncludeFlags,
+} from "../_lib/taskListIncludes";
 import { useTasksFilters } from "../_lib/useTasksFilters";
+import { useTasksPageListGroups } from "../_lib/useTasksPageListGroups";
 import { tasksPage } from "../variants";
 
 import { TasksPageTaskListItem } from "./TasksPageTaskListItem";
@@ -43,22 +50,33 @@ const tasksPageListFragment = graphql`
   @refetchable(queryName: "TasksPageListRefetchQuery")
   @argumentDefinitions(
     organizationId: { type: "ID!" }
-    filter: { type: "TaskFilter" }
+    query: { type: "String" }
+    includeInProgress: { type: "Boolean!" }
+    includeTodo: { type: "Boolean!" }
+    includeBacklog: { type: "Boolean!" }
+    includeDone: { type: "Boolean!" }
+    includeCanceled: { type: "Boolean!" }
+    includeDuplicate: { type: "Boolean!" }
   )
   @throwOnFieldError {
-    assignedTasks(
-      organizationId: $organizationId
-      first: 500
-      orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: $filter
-    ) {
-      edges {
-        node {
-          ...TasksPageList_task
-          ...TasksPageTaskListItem_task
-        }
-      }
-    }
+    ...useTasksPageListGroups_inProgress
+      @arguments(organizationId: $organizationId, query: $query)
+      @include(if: $includeInProgress)
+    ...useTasksPageListGroups_todo
+      @arguments(organizationId: $organizationId, query: $query)
+      @include(if: $includeTodo)
+    ...useTasksPageListGroups_backlog
+      @arguments(organizationId: $organizationId, query: $query)
+      @include(if: $includeBacklog)
+    ...useTasksPageListGroups_done
+      @arguments(organizationId: $organizationId, query: $query)
+      @include(if: $includeDone)
+    ...useTasksPageListGroups_canceled
+      @arguments(organizationId: $organizationId, query: $query)
+      @include(if: $includeCanceled)
+    ...useTasksPageListGroups_duplicate
+      @arguments(organizationId: $organizationId, query: $query)
+      @include(if: $includeDuplicate)
   }
 `;
 
@@ -71,30 +89,70 @@ export interface TasksPageListProps {
 }
 
 export function TasksPageList({ viewerKey }: TasksPageListProps) {
-  const { query, state: selectedState, graphqlFilter } = useTasksFilters();
+  const { organizationId } = useEmployeePortalRoute();
+  const { query, graphqlQuery, state: selectedState, includeFlags } = useTasksFilters();
   const [isPending, startTransition] = useTransition();
-  const skipFirstFilterRefetch = useRef(true);
+  const skipFirstRefetch = useRef(true);
+  const [fetched, setFetched] = useState(() => ({
+    query: graphqlQuery,
+    includes: includeFlags,
+  }));
   const [viewer, refetch] = useRefetchableFragment<
     TasksPageListRefetchQuery,
     TasksPageList_viewer$key
   >(tasksPageListFragment, viewerKey);
+  const groups = useTasksPageListGroups(
+    viewer,
+    taskListReadableIncludeFlags(includeFlags, fetched.includes),
+  );
   const { list } = tasksPage({ busy: isPending });
+  const visibleGroups = groups.filter(
+    group => selectedState == null || group.state === selectedState,
+  );
+  const items = visibleGroups.flatMap(group =>
+    group.edges.map(({ node }) => ({
+      ...readTask(node),
+      node,
+    })),
+  );
 
   useEffect(() => {
-    if (skipFirstFilterRefetch.current) {
-      skipFirstFilterRefetch.current = false;
+    if (skipFirstRefetch.current) {
+      skipFirstRefetch.current = false;
       return;
     }
 
-    startTransition(() => {
-      refetch({ filter: graphqlFilter }, { fetchPolicy: "store-or-network" });
-    });
-  }, [graphqlFilter, refetch]);
+    if (!taskListNeedsFetch(graphqlQuery, includeFlags, fetched)) {
+      return;
+    }
 
-  const items = viewer.assignedTasks.edges.map(({ node }) => ({
-    ...readTask(node),
-    node,
-  }));
+    const requestedQuery = graphqlQuery;
+    const requestedIncludes = includeFlags;
+    startTransition(() => {
+      refetch(
+        {
+          organizationId,
+          query: requestedQuery,
+          ...requestedIncludes,
+        },
+        {
+          fetchPolicy: "store-or-network",
+          onComplete(error) {
+            if (error) {
+              return;
+            }
+
+            setFetched(current => ({
+              query: requestedQuery,
+              includes: current.query === requestedQuery
+                ? mergeTaskListIncludeFlags(current.includes, requestedIncludes)
+                : requestedIncludes,
+            }));
+          },
+        },
+      );
+    });
+  }, [fetched, graphqlQuery, includeFlags, organizationId, refetch]);
 
   return (
     <div className={list()} aria-busy={isPending || undefined}>

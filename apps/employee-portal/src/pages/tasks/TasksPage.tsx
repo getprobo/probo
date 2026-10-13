@@ -20,11 +20,11 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import {
+  taskListGroupStates,
   TASKS_NAMESPACE,
-  TaskStateIcon,
   type TaskState,
+  TaskStateIcon,
   taskStateKeys,
-  taskStates,
 } from "@probo/tasks";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
@@ -49,10 +49,29 @@ import { useTasksSearch } from "./_lib/useTasksSearch";
 import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`
-  query TasksPageQuery($organizationId: ID!, $filter: TaskFilter)
+  query TasksPageQuery(
+    $organizationId: ID!
+    $query: String
+    $includeInProgress: Boolean!
+    $includeTodo: Boolean!
+    $includeBacklog: Boolean!
+    $includeDone: Boolean!
+    $includeCanceled: Boolean!
+    $includeDuplicate: Boolean!
+  )
   @throwOnFieldError {
     viewer @required(action: THROW) {
-      ...TasksPageList_viewer @arguments(organizationId: $organizationId, filter: $filter)
+      ...TasksPageList_viewer
+        @arguments(
+          organizationId: $organizationId
+          query: $query
+          includeInProgress: $includeInProgress
+          includeTodo: $includeTodo
+          includeBacklog: $includeBacklog
+          includeDone: $includeDone
+          includeCanceled: $includeCanceled
+          includeDuplicate: $includeDuplicate
+        )
     }
   }
 `;
@@ -120,7 +139,7 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
                   <SelectItem value={null}>
                     {t("filters.allStatuses")}
                   </SelectItem>
-                  {taskStates.map(state => (
+                  {taskListGroupStates.map(state => (
                     <SelectItem key={state} value={state}>
                       <span className={slots.stateOption()}>
                         <TaskStateIcon state={state} />

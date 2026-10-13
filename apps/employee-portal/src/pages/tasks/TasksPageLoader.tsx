@@ -24,6 +24,10 @@ import { useQueryLoader } from "react-relay";
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
+import {
+  pickTaskListIncludeFlags,
+  taskListIncludeFlagsEqual,
+} from "./_lib/taskListIncludes";
 import { useTasksFilters } from "./_lib/useTasksFilters";
 import { TasksPage, tasksPageQuery } from "./TasksPage";
 import { TasksPageSkeleton } from "./TasksPageSkeleton";
@@ -44,7 +48,7 @@ interface TasksPageQueryLoaderProps {
 }
 
 function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
-  const { graphqlFilter } = useTasksFilters();
+  const { graphqlQuery, includeFlags } = useTasksFilters();
   const [queryRef, loadQuery] = useQueryLoader<TasksPageQuery>(tasksPageQuery);
   const [pageReady, setPageReady] = useState(false);
   const onReady = useCallback(() => {
@@ -56,14 +60,17 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
       return;
     }
     loadQuery(
-      { organizationId, filter: graphqlFilter },
+      { organizationId, query: graphqlQuery, ...includeFlags },
       { fetchPolicy: "store-and-network" },
     );
-  }, [graphqlFilter, loadQuery, organizationId, pageReady]);
+  }, [graphqlQuery, includeFlags, loadQuery, organizationId, pageReady]);
 
   const queryMatchesPendingFilter = queryRef != null
-    && queryRef.variables.filter?.query === graphqlFilter.query
-    && queryRef.variables.filter?.state === graphqlFilter.state;
+    && queryRef.variables.query === graphqlQuery
+    && taskListIncludeFlagsEqual(
+      pickTaskListIncludeFlags(queryRef.variables),
+      includeFlags,
+    );
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
     && (pageReady || queryMatchesPendingFilter)
