@@ -19,6 +19,7 @@
     "@probo/routes": "1.0.0",
     "@probo/tasks": "1.0.0",
     "@probo/ui": "1.0.0",
+    "@tanstack/react-virtual": "^3.14.18",
     "i18next": "^26.4.0",
     "pdfjs-dist": "5.4.296",
     "react": "^19.2.7",

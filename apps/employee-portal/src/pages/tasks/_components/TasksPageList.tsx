@@ -18,8 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TaskList } from "@probo/tasks";
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  flattenTaskListItems,
+  taskList,
+  TaskListGroupHeader,
+  taskListItemSize,
+  TaskListRowFrame,
+  TASKS_NAMESPACE,
+  type TaskState,
+} from "@probo/tasks";
+import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useTranslation } from "react-i18next";
 import { graphql, readInlineData, useRefetchableFragment } from "react-relay";
 
 import type { TasksPageList_task$key } from "#/__generated__/core/TasksPageList_task.graphql";
@@ -33,7 +45,10 @@ import {
   taskListReadableIncludeFlags,
 } from "../_lib/taskListIncludes";
 import { useTasksFilters } from "../_lib/useTasksFilters";
-import { useTasksPageListGroups } from "../_lib/useTasksPageListGroups";
+import {
+  type TasksPageListGroupNode,
+  useTasksPageListGroups,
+} from "../_lib/useTasksPageListGroups";
 import { tasksPage } from "../variants";
 
 import { TasksPageTaskListItem } from "./TasksPageTaskListItem";
@@ -80,8 +95,39 @@ const tasksPageListFragment = graphql`
   }
 `;
 
+type TasksPageListRowItem = {
+  id: string;
+  state: TaskState;
+  node: TasksPageListGroupNode;
+};
+
 function readTask(key: TasksPageList_task$key) {
   return readInlineData(taskInlineFragment, key);
+}
+
+function nearestOverflowParent(element: HTMLElement | null): HTMLElement | null {
+  let current = element?.parentElement ?? null;
+  while (current != null) {
+    const overflowY = getComputedStyle(current).overflowY;
+    if (overflowY === "auto" || overflowY === "scroll") {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return null;
+}
+
+function flatItemKey(
+  item: ReturnType<typeof flattenTaskListItems<TasksPageListRowItem>>[number],
+  index: number,
+): string {
+  if (item.type === "header") {
+    return `header:${item.state}`;
+  }
+  if (item.type === "row") {
+    return item.item.id;
+  }
+  return `placeholder:${item.state}:${index}`;
 }
 
 export interface TasksPageListProps {
@@ -89,6 +135,7 @@ export interface TasksPageListProps {
 }
 
 export function TasksPageList({ viewerKey }: TasksPageListProps) {
+  const { t } = useTranslation(TASKS_NAMESPACE);
   const { organizationId } = useEmployeePortalRoute();
   const { query, graphqlQuery, state: selectedState, includeFlags } = useTasksFilters();
   const [isPending, startTransition] = useTransition();
@@ -97,6 +144,9 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     query: graphqlQuery,
     includes: includeFlags,
   }));
+  const [closedStates, setClosedStates] = useState(() => new Set<TaskState>());
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
   const [viewer, refetch] = useRefetchableFragment<
     TasksPageListRefetchQuery,
     TasksPageList_viewer$key
@@ -106,15 +156,35 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     taskListReadableIncludeFlags(includeFlags, fetched.includes),
   );
   const { list } = tasksPage({ busy: isPending });
+  const slots = taskList();
   const visibleGroups = groups.filter(
     group => selectedState == null || group.state === selectedState,
   );
-  const items = visibleGroups.flatMap(group =>
-    group.edges.map(({ node }) => ({
-      ...readTask(node),
-      node,
-    })),
+  const flatItems = useMemo(
+    () => flattenTaskListItems(
+      visibleGroups.map(group => ({
+        state: group.state,
+        totalCount: group.totalCount,
+        loadedItems: group.edges.map(({ node }) => ({
+          ...readTask(node),
+          node,
+        })),
+        open: !closedStates.has(group.state),
+      })),
+    ),
+    [closedStates, visibleGroups],
   );
+  const virtualizer = useVirtualizer({
+    count: flatItems.length,
+    getScrollElement: () => scrollElement,
+    estimateSize: index => taskListItemSize(flatItems[index]),
+    overscan: 8,
+    getItemKey: index => flatItemKey(flatItems[index], index),
+  });
+
+  useEffect(() => {
+    setScrollElement(nearestOverflowParent(listRef.current));
+  }, []);
 
   useEffect(() => {
     if (skipFirstRefetch.current) {
@@ -154,19 +224,73 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     });
   }, [fetched, graphqlQuery, includeFlags, organizationId, refetch]);
 
+  function onGroupOpenChange(state: TaskState, open: boolean) {
+    setClosedStates((current) => {
+      const next = new Set(current);
+      if (open) {
+        next.delete(state);
+      } else {
+        next.add(state);
+      }
+      return next;
+    });
+  }
+
+  if (flatItems.length === 0) {
+    return (
+      <div className={list()} aria-busy={isPending || undefined}>
+        <Text size={2} color="faint" align="center" className={slots.empty()}>
+          {query !== "" || selectedState != null ? t("noResults") : t("empty")}
+        </Text>
+      </div>
+    );
+  }
+
   return (
-    <div className={list()} aria-busy={isPending || undefined}>
-      <TaskList
-        items={items}
-        filtered={query !== "" || selectedState != null}
-        renderItem={(item, sectionState) => (
-          <TasksPageTaskListItem
-            key={item.id}
-            taskKey={item.node}
-            sectionState={sectionState}
-          />
-        )}
-      />
+    <div ref={listRef} className={list()} aria-busy={isPending || undefined}>
+      <TooltipProvider>
+        <div
+          className="relative w-full"
+          style={{ height: virtualizer.getTotalSize() }}
+        >
+          {virtualizer.getVirtualItems().map((virtualItem) => {
+            const item = flatItems[virtualItem.index];
+            return (
+              <div
+                key={virtualItem.key}
+                data-index={virtualItem.index}
+                ref={virtualizer.measureElement}
+                className="absolute top-0 left-0 w-full"
+                style={{ transform: `translateY(${virtualItem.start}px)` }}
+              >
+                {item.type === "header"
+                  ? (
+                      <TaskListGroupHeader
+                        state={item.state}
+                        count={item.count}
+                        open={!closedStates.has(item.state)}
+                        offset={item.offset}
+                        onOpenChange={open => onGroupOpenChange(item.state, open)}
+                      />
+                    )
+                  : (
+                      <TaskListRowFrame
+                        position={item.position}
+                        placeholder={item.type === "placeholder"}
+                      >
+                        {item.type === "row" && (
+                          <TasksPageTaskListItem
+                            taskKey={item.item.node}
+                            sectionState={item.state}
+                          />
+                        )}
+                      </TaskListRowFrame>
+                    )}
+              </div>
+            );
+          })}
+        </div>
+      </TooltipProvider>
     </div>
   );
 }
