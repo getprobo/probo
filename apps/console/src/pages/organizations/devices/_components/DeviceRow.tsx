@@ -22,6 +22,7 @@ import { dateTimeFormat } from "@probo/i18n";
 import {
   ActionDropdown,
   Badge,
+  Checkbox,
   DropdownItem,
   IconEject,
   IconTrashCan,
@@ -65,6 +66,8 @@ interface DeviceRowProps {
   canRevoke: boolean;
   connectionId: string;
   fKey: DeviceRowFragment$key;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 }
 
 export function DeviceRow({
@@ -73,6 +76,8 @@ export function DeviceRow({
   canRevoke,
   connectionId,
   fKey,
+  selected,
+  onSelectedChange,
 }: DeviceRowProps) {
   const { i18n, t } = useTranslation();
   const organizationId = useOrganizationId();
@@ -88,6 +93,7 @@ export function DeviceRow({
   });
 
   const deletable = isDeviceDeletable(device.state);
+  const canSelect = device.state === "ACTIVE";
   const showAssign = canAssignDevice && !deletable;
   const showRevoke = canRevoke && !deletable;
   const showDelete = canDelete && deletable;
@@ -101,6 +107,18 @@ export function DeviceRow({
         organizationId={organizationId}
       />
       <Tr to={`/organizations/${organizationId}/itam/devices/${device.id}`}>
+        {onSelectedChange && (
+          <Td noLink width={48}>
+            <Checkbox
+              checked={canSelect && (selected ?? false)}
+              disabled={!canSelect}
+              onChange={onSelectedChange}
+              aria-label={t("devices.actions.selectDevice", {
+                hostname: displayValue(device.hostname, pendingLabel),
+              })}
+            />
+          </Td>
+        )}
         <Td>{displayValue(device.hostname, pendingLabel)}</Td>
         <Td>{device.owner?.fullName ?? t("devices.values.unassigned")}</Td>
         <Td>

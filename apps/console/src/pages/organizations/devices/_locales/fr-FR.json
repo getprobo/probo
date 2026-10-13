@@ -1,0 +1,146 @@
+{
+  "devices": {
+    "title": "Appareils",
+    "detailsTitle": "Appareil",
+    "description": "Gérez les ordinateurs enrôlés avec l’agent de posture Probo.",
+    "empty": "Aucun appareil enrôlé pour le moment",
+    "actions": {
+      "add": "Ajouter un appareil",
+      "new": "Nouvel appareil",
+      "reassign": "Réattribuer",
+      "revoke": "Révoquer",
+      "delete": "Supprimer",
+      "downloadAsEvidence": "Télécharger comme preuve",
+      "downloadAsEvidenceCount": "Télécharger comme preuve ({{count}})",
+      "clearSelection": "Effacer la sélection",
+      "selectAll": "Tout sélectionner",
+      "menu": "Actions de l’appareil",
+      "selectDevice": "Sélectionner {{owner}}"
+    },
+    "fields": {
+      "organization": "Organisation",
+      "owner": "Propriétaire",
+      "postures": "Postures",
+      "state": "État",
+      "platform": "Plateforme",
+      "osVersion": "Version du système",
+      "hardwareUuid": "UUID matériel",
+      "serialNumber": "Numéro de série",
+      "agentVersion": "Version de l’agent",
+      "enrolledAt": "Enrôlé le",
+      "lastSeen": "Dernière connexion"
+    },
+    "filters": {
+      "allStates": "Tous les états",
+      "pending": "En attente",
+      "active": "Actif",
+      "revoked": "Révoqué",
+      "allAgentVersions": "Toutes les versions de l’agent",
+      "allPlatforms": "Toutes les plateformes",
+      "search": "Rechercher par propriétaire",
+      "empty": "Aucun appareil ne correspond à ces filtres"
+    },
+    "platforms": {
+      "darwin": "macOS",
+      "linux": "Linux",
+      "freebsd": "FreeBSD",
+      "windows": "Windows"
+    },
+    "values": {
+      "pending": "(en attente)",
+      "never": "Jamais",
+      "unassigned": "Non attribué"
+    },
+    "messages": {
+      "ownerUpdated": "Propriétaire de l’appareil mis à jour",
+      "revoked": "Appareil révoqué",
+      "revokedMany": "{{count}} appareils révoqués",
+      "revokedPartial_one": "{{count}} appareil sur {{total}} révoqué",
+      "revokedPartial_other": "{{count}} appareils sur {{total}} révoqués",
+      "deleted": "Appareil supprimé",
+      "deletedMany": "{{count}} appareils supprimés",
+      "deletedPartial_one": "{{count}} appareil sur {{total}} supprimé",
+      "deletedPartial_other": "{{count}} appareils sur {{total}} supprimés"
+    },
+    "errors": {
+      "create": "Échec de la création de l’appareil",
+      "reassign": "Échec de la réattribution de l’appareil",
+      "revoke": "Échec de la révocation de l’appareil",
+      "delete": "Échec de la suppression de l’appareil",
+      "downloadEvidence": "Échec du téléchargement de la preuve"
+    },
+    "confirmations": {
+      "revoke": "Révoquer l’appareil « {{owner}} » ?",
+      "revokeMany": "Révoquer {{count}} appareils ?",
+      "revokeWarning": "L’agent sur l’appareil arrêtera de transmettre des données et devra être réenrôlé.",
+      "revokeWarningMany": "Les agents arrêteront de transmettre des données et devront être réenrôlés.",
+      "delete": "Supprimer l’appareil « {{owner}} » ?",
+      "deleteMany": "Supprimer {{count}} appareils ?",
+      "deleteWarning": "Il sera définitivement retiré de l’inventaire.",
+      "deleteWarningMany": "Ils seront définitivement retirés de l’inventaire."
+    },
+    "postures": {
+      "currentTitle": "Postures actuelles",
+      "empty": "Aucun contrôle de posture enregistré",
+      "checks_one": "{{count}} contrôle",
+      "checks_other": "{{count}} contrôles",
+      "warnings_one": "{{count}} avertissement",
+      "warnings_other": "{{count}} avertissements",
+      "unknownHint": "L'agent n'a pas pu capturer ou interpréter ce contrôle, il a donc indiqué Inconnu.",
+      "values": {
+        "on": "Activé",
+        "off": "Désactivé",
+        "immediate": "Immédiat",
+        "seconds": "{{seconds}} s",
+        "minPasswordLength": "Longueur min. {{length}}",
+        "configured": "Configurée",
+        "none": "Aucune",
+        "unknown": "Inconnu"
+      },
+      "checks": {
+        "diskEncryption": "Chiffrement du disque",
+        "screenLock": "Verrouillage de l’écran",
+        "firewallEnabled": "Pare-feu activé",
+        "timeSync": "Synchronisation de l’heure",
+        "osVersion": "Version du système",
+        "autoUpdate": "Mise à jour automatique",
+        "passwordPolicy": "Politique de mot de passe",
+        "remoteLogin": "Connexion à distance",
+        "malwareProtection": "Protection contre les logiciels malveillants"
+      }
+    },
+    "history": {
+      "title": "Historique des rapports",
+      "empty": "Aucun rapport de posture pour le moment",
+      "checkCount_one": "{{count}} contrôle rapporté",
+      "checkCount_other": "{{count}} contrôles rapportés",
+      "columns": {
+        "time": "Heure",
+        "checks": "Contrôles",
+        "correlationId": "ID de corrélation"
+      },
+      "actions": {
+        "copyCorrelationId": "Copier l’ID de corrélation",
+        "correlationIdCopied": "ID de corrélation copié"
+      },
+      "errors": {
+        "copyCorrelationId": "Échec de la copie de l’ID de corrélation"
+      }
+    },
+    "selected_one": "{{count}} appareil sélectionné",
+    "selected_other": "{{count}} appareils sélectionnés"
+  },
+  "deviceEnrollment": {
+    "token": {
+      "title": "Jeton d’enrôlement généré",
+      "label": "Jeton d’enrôlement",
+      "description": "Ne partagez ce jeton d’enrôlement qu’avec le propriétaire de l’appareil, via un canal sécurisé. Il ne peut être utilisé qu’une seule fois et expire après sept jours."
+    },
+    "messages": {
+      "created": "Appareil créé. Copiez le jeton d’enrôlement maintenant — il ne sera plus affiché par la suite."
+    },
+    "errors": {
+      "copyToClipboard": "Échec de la copie dans le presse-papiers"
+    }
+  }
+}

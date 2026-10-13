@@ -293,6 +293,27 @@ func (r *mutationResolver) SetDeviceOwner(ctx context.Context, input types.SetDe
 	return &types.SetDeviceOwnerPayload{Device: types.NewDevice(d)}, nil
 }
 
+// DownloadDeviceEvidence is the resolver for the downloadDeviceEvidence field.
+func (r *mutationResolver) DownloadDeviceEvidence(ctx context.Context, input types.DownloadDeviceEvidenceInput) (*types.DownloadDeviceEvidencePayload, error) {
+	scope, err := r.batchAuthorize(ctx, itam.ActionDeviceDownload, input.DeviceIds)
+	if err != nil {
+		return nil, err
+	}
+
+	downloadURL, err := r.itam.ExportDeviceEvidence(ctx, scope, input.DeviceIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot export device evidence", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.DownloadDeviceEvidencePayload{DownloadURL: downloadURL}, nil
+}
+
 // Device returns schema.DeviceResolver implementation.
 func (r *Resolver) Device() schema.DeviceResolver { return &deviceResolver{r} }
 

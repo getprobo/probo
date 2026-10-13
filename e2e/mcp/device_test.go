@@ -21,6 +21,9 @@
 package mcp_test
 
 import (
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -333,4 +336,39 @@ func TestMCP_Device_IncludePosturesOnDeviceWithNoChecks(t *testing.T) {
 	}
 
 	assert.True(t, found, "created device should appear in listDevices")
+}
+
+func TestMCP_Device_DownloadEvidence(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	deviceID := createDeviceViaMCP(t, mc, orgID)
+
+	var result struct {
+		DownloadURL string `json:"download_url"`
+	}
+	mc.CallToolInto("downloadDeviceEvidence", map[string]any{
+		"device_ids": []string{deviceID},
+	}, &result)
+	require.NotEmpty(t, result.DownloadURL)
+
+	resp, err := http.Get(result.DownloadURL)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 8))
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(string(body), "%PDF"))
+
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	employeeMC := testutil.NewMCPClient(t, employee)
+	msg := employeeMC.CallToolExpectToolError("downloadDeviceEvidence", map[string]any{
+		"device_ids": []string{deviceID},
+	})
+	assert.Contains(t, msg, "permission denied")
 }

@@ -38,7 +38,7 @@ var FullAccessPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionDeviceList, ActionEmployeeDeviceList, ActionDeviceGet, ActionDeviceCreate,
 		ActionDeviceEnroll, ActionDeviceRevoke, ActionDeviceDelete, ActionDeviceAssignOwner,
-		ActionDevicePostureList,
+		ActionDeviceDownload, ActionDevicePostureList,
 	).WithSID("itam-full-access").When(organizationCondition),
 	policy.Allow(ActionEmployeeDeviceGet).
 		WithSID("itam-full-access-get-own-device").
@@ -52,7 +52,7 @@ var ViewerPolicy = policy.NewPolicy(
 	"ITAM Viewer",
 	policy.Allow(
 		ActionDeviceGet, ActionDeviceList, ActionEmployeeDeviceList,
-		ActionDevicePostureList,
+		ActionDeviceDownload, ActionDevicePostureList,
 	).WithSID("itam-read-access").When(organizationCondition),
 ).WithDescription("Read-only ITAM access for organization viewers")
 

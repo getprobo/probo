@@ -10739,3 +10739,23 @@ func (r *Resolver) ListConnectorProvidersTool(ctx context.Context, req *mcp.Call
 func (r *Resolver) UploadFileTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.UploadFileInput) (*mcp.CallToolResult, types.UploadFileOutput, error) {
 	return r.uploadFile(ctx, input)
 }
+
+func (r *Resolver) DownloadDeviceEvidenceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DownloadDeviceEvidenceInput) (*mcp.CallToolResult, types.DownloadDeviceEvidenceOutput, error) {
+	scope, err := r.AuthorizeBatch(ctx, input.DeviceIds, itam.ActionDeviceDownload)
+	if err != nil {
+		return nil, types.DownloadDeviceEvidenceOutput{}, err
+	}
+
+	downloadURL, err := r.itamSvc.ExportDeviceEvidence(ctx, scope, input.DeviceIds)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.DownloadDeviceEvidenceOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot export device evidence", log.Error(err))
+
+		return nil, types.DownloadDeviceEvidenceOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.DownloadDeviceEvidenceOutput{DownloadURL: downloadURL}, nil
+}

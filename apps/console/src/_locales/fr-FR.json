@@ -6115,7 +6115,11 @@
       "new": "Nouvel appareil",
       "reassign": "Réattribuer",
       "revoke": "Révoquer",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "downloadAsEvidence": "Télécharger comme preuve",
+      "clearSelection": "Effacer la sélection",
+      "selectAll": "Tout sélectionner",
+      "selectDevice": "Sélectionner {{hostname}}"
     },
     "fields": {
       "organization": "Organisation",
@@ -6144,7 +6148,8 @@
       "create": "Échec de la création de l’appareil",
       "reassign": "Échec de la réattribution de l’appareil",
       "revoke": "Échec de la révocation de l’appareil",
-      "delete": "Échec de la suppression de l’appareil"
+      "delete": "Échec de la suppression de l’appareil",
+      "downloadEvidence": "Échec du téléchargement de la preuve"
     },
     "confirmations": {
       "revoke": "Révoquer l’appareil « {{hostname}} » ? L’agent sur l’appareil arrêtera de transmettre des données et devra être réenrôlé.",
@@ -6189,7 +6194,9 @@
         "copyCorrelationId": "Copier l’ID de corrélation",
         "correlationIdCopied": "ID de corrélation copié"
       }
-    }
+    },
+    "selected_one": "{{count}} appareil sélectionné",
+    "selected_other": "{{count}} appareils sélectionnés"
   },
   "deviceEnrollment": {
     "token": {

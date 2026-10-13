@@ -1,0 +1,146 @@
+{
+  "devices": {
+    "title": "Devices",
+    "detailsTitle": "Device",
+    "description": "Manage computers enrolled with the Probo posture agent.",
+    "empty": "No devices enrolled yet",
+    "actions": {
+      "add": "Add device",
+      "new": "New device",
+      "reassign": "Re-assign",
+      "revoke": "Revoke",
+      "delete": "Delete",
+      "downloadAsEvidence": "Download as evidence",
+      "downloadAsEvidenceCount": "Download as evidence ({{count}})",
+      "clearSelection": "Clear selection",
+      "selectAll": "Select all",
+      "menu": "Device actions",
+      "selectDevice": "Select {{owner}}"
+    },
+    "fields": {
+      "organization": "Organization",
+      "owner": "Owner",
+      "postures": "Postures",
+      "state": "State",
+      "platform": "Platform",
+      "osVersion": "OS version",
+      "hardwareUuid": "Hardware UUID",
+      "serialNumber": "Serial number",
+      "agentVersion": "Agent version",
+      "enrolledAt": "Enrolled at",
+      "lastSeen": "Last seen"
+    },
+    "filters": {
+      "allStates": "All states",
+      "pending": "Pending",
+      "active": "Active",
+      "revoked": "Revoked",
+      "allAgentVersions": "All agent versions",
+      "allPlatforms": "All platforms",
+      "search": "Search by owner",
+      "empty": "No devices match these filters"
+    },
+    "platforms": {
+      "darwin": "macOS",
+      "linux": "Linux",
+      "freebsd": "FreeBSD",
+      "windows": "Windows"
+    },
+    "values": {
+      "pending": "(pending)",
+      "never": "Never",
+      "unassigned": "Unassigned"
+    },
+    "messages": {
+      "ownerUpdated": "Device owner updated",
+      "revoked": "Device revoked",
+      "revokedMany": "{{count}} devices revoked",
+      "revokedPartial_one": "{{count}} of {{total}} devices revoked",
+      "revokedPartial_other": "{{count}} of {{total}} devices revoked",
+      "deleted": "Device deleted",
+      "deletedMany": "{{count}} devices deleted",
+      "deletedPartial_one": "{{count}} of {{total}} devices deleted",
+      "deletedPartial_other": "{{count}} of {{total}} devices deleted"
+    },
+    "errors": {
+      "create": "Failed to create device",
+      "reassign": "Failed to re-assign device",
+      "revoke": "Failed to revoke device",
+      "delete": "Failed to delete device",
+      "downloadEvidence": "Failed to download the evidence"
+    },
+    "confirmations": {
+      "revoke": "Revoke device \"{{owner}}\"?",
+      "revokeMany": "Revoke {{count}} devices?",
+      "revokeWarning": "The agent on the device will stop reporting and must be re-enrolled.",
+      "revokeWarningMany": "The agents will stop reporting and must be re-enrolled.",
+      "delete": "Delete device \"{{owner}}\"?",
+      "deleteMany": "Delete {{count}} devices?",
+      "deleteWarning": "This permanently removes it from the inventory.",
+      "deleteWarningMany": "This permanently removes them from the inventory."
+    },
+    "postures": {
+      "currentTitle": "Current postures",
+      "empty": "No posture checks recorded",
+      "checks_one": "{{count}} check",
+      "checks_other": "{{count}} checks",
+      "warnings_one": "{{count}} warning",
+      "warnings_other": "{{count}} warnings",
+      "unknownHint": "The agent could not capture or interpret this check, so it reported unknown.",
+      "values": {
+        "on": "On",
+        "off": "Off",
+        "immediate": "Immediate",
+        "seconds": "{{seconds}}s",
+        "minPasswordLength": "Min length {{length}}",
+        "configured": "Configured",
+        "none": "None",
+        "unknown": "Unknown"
+      },
+      "checks": {
+        "diskEncryption": "Disk encryption",
+        "screenLock": "Screen lock",
+        "firewallEnabled": "Firewall enabled",
+        "timeSync": "Time sync",
+        "osVersion": "OS version",
+        "autoUpdate": "Auto update",
+        "passwordPolicy": "Password policy",
+        "remoteLogin": "Remote login",
+        "malwareProtection": "Malware protection"
+      }
+    },
+    "history": {
+      "title": "Report history",
+      "empty": "No posture reports yet",
+      "checkCount_one": "{{count}} check reported",
+      "checkCount_other": "{{count}} checks reported",
+      "columns": {
+        "time": "Time",
+        "checks": "Checks",
+        "correlationId": "Correlation ID"
+      },
+      "actions": {
+        "copyCorrelationId": "Copy correlation ID",
+        "correlationIdCopied": "Correlation ID copied"
+      },
+      "errors": {
+        "copyCorrelationId": "Failed to copy the correlation ID"
+      }
+    },
+    "selected_one": "{{count}} device selected",
+    "selected_other": "{{count}} devices selected"
+  },
+  "deviceEnrollment": {
+    "token": {
+      "title": "Enrollment token generated",
+      "label": "Enrollment token",
+      "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days."
+    },
+    "messages": {
+      "created": "Device created. Copy the enrollment token now — it will not be shown again."
+    },
+    "errors": {
+      "copyToClipboard": "Failed to copy to clipboard"
+    }
+  }
+}

@@ -6104,7 +6104,11 @@
       "new": "Nieuw apparaat",
       "reassign": "Opnieuw toewijzen",
       "revoke": "Intrekken",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "downloadAsEvidence": "Downloaden als bewijs",
+      "clearSelection": "Selectie wissen",
+      "selectAll": "Alles selecteren",
+      "selectDevice": "{{hostname}} selecteren"
     },
     "fields": {
       "organization": "Organisatie",
@@ -6133,7 +6137,8 @@
       "create": "Aanmaken van apparaat mislukt",
       "reassign": "Opnieuw toewijzen van apparaat mislukt",
       "revoke": "Intrekken van apparaat mislukt",
-      "delete": "Verwijderen van apparaat mislukt"
+      "delete": "Verwijderen van apparaat mislukt",
+      "downloadEvidence": "Downloaden van het bewijs is mislukt"
     },
     "confirmations": {
       "revoke": "Apparaat \"{{hostname}}\" intrekken? De agent op het apparaat stopt met rapporteren en moet opnieuw worden geregistreerd.",
@@ -6178,7 +6183,9 @@
         "copyCorrelationId": "Correlatie-ID kopiëren",
         "correlationIdCopied": "Correlatie-ID gekopieerd"
       }
-    }
+    },
+    "selected_one": "{{count}} apparaat geselecteerd",
+    "selected_other": "{{count}} apparaten geselecteerd"
   },
   "deviceEnrollment": {
     "token": {

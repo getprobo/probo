@@ -3925,6 +3925,28 @@ components:
         device:
           $ref: "#/components/schemas/Device"
 
+    DownloadDeviceEvidenceInput:
+      type: object
+      required:
+        - device_ids
+      properties:
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to include, in page order. At most 100, with no duplicates.
+          items:
+            $ref: "#/components/schemas/GID"
+
+    DownloadDeviceEvidenceOutput:
+      type: object
+      required:
+        - download_url
+      properties:
+        download_url:
+          type: string
+          description: Presigned download URL for the PDF. Valid for 15 minutes.
+
     DataClassification:
       type: string
       enum:
@@ -17775,6 +17797,18 @@ tools:
       $ref: "#/components/schemas/SetDeviceOwnerInput"
     outputSchema:
       $ref: "#/components/schemas/SetDeviceOwnerOutput"
+  - name: downloadDeviceEvidence
+    title: Download Device Evidence
+    description: "Render one A4 PDF page per device, with identity fields and current posture checks, and return a presigned download URL valid for 15 minutes. device_ids keeps page order. At most 100 ids, with no duplicates."
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DownloadDeviceEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DownloadDeviceEvidenceOutput"
   - name: listData
     title: List Data
     description: List all data for the organization

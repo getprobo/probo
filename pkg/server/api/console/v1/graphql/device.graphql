@@ -276,6 +276,14 @@ input SetDeviceOwnerInput {
     ownerId: ID
 }
 
+input DownloadDeviceEvidenceInput {
+    deviceIds: [ID!]!
+}
+
+type DownloadDeviceEvidencePayload {
+    downloadUrl: String!
+}
+
 extend type Mutation {
     enrollDevice(input: EnrollDeviceInput!): CreateDevicePayload!
     createDevice(input: CreateDeviceInput!): CreateDevicePayload!
@@ -284,4 +292,7 @@ extend type Mutation {
     setDeviceOwner(
         input: SetDeviceOwnerInput!
     ): SetDeviceOwnerPayload!
+    downloadDeviceEvidence(
+        input: DownloadDeviceEvidenceInput!
+    ): DownloadDeviceEvidencePayload!
 }

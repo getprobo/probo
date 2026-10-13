@@ -32,7 +32,9 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/crypto/rand"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -98,6 +100,9 @@ type (
 		pg                      *pg.Client
 		logger                  *log.Logger
 		enrollmentTokenValidity time.Duration
+		html2pdfConverter       *html2pdf.Converter
+		fileManager             *filemanager.Service
+		bucket                  string
 	}
 
 	CreateDeviceRequest struct {
@@ -138,6 +143,9 @@ type (
 
 	ServiceConfig struct {
 		EnrollmentTokenValidity time.Duration
+		PDF                     *html2pdf.Converter
+		FileManager             *filemanager.Service
+		Bucket                  string
 	}
 )
 
@@ -158,6 +166,9 @@ func NewService(
 		pg:                      pgClient,
 		logger:                  logger,
 		enrollmentTokenValidity: validity,
+		html2pdfConverter:       cfg.PDF,
+		fileManager:             cfg.FileManager,
+		bucket:                  cfg.Bucket,
 	}
 }
 

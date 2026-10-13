@@ -50,3 +50,5 @@ func TestRun_Handoff(t *testing.T) {
 ## Helpers and mocks
 
 Define mock types and helper functions (e.g. `stopResponse`, `userMessage`) at the top of the test file, not inline in each test.
+
+Do not add a production interface so a test can mock it. If the behavior under test is formatting or a decision, call that function with plain values. Do not stand up fakes for PDF rendering or object storage from the caller.
