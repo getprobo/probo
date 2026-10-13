@@ -18,19 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useConfirm } from "@probo/ui";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  ConnectionHandler,
-  type DataID,
-  graphql,
-} from "relay-runtime";
+import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
 import type { useDeleteDeviceMutation } from "#/__generated__/core/useDeleteDeviceMutation.graphql";
-import { useMutation } from "#/lib/relay/useMutation";
-
-import { displayValue } from "./deviceDisplay";
+import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
 export const DevicesConnectionKey = "DevicesPage_devices";
 
@@ -47,24 +40,15 @@ const deleteDeviceMutation = graphql`
   }
 `;
 
-interface DeleteDeviceInput {
-  id: string;
-  hostname: string | null | undefined;
-}
-
 interface DeleteDeviceOptions {
   organizationId: string;
   connectionId?: DataID;
-  onDeleted?: () => void;
 }
 
 export function useDeleteDevice(options: DeleteDeviceOptions) {
-  const { t } = useTranslation();
-  const confirm = useConfirm();
-  const pendingLabel = t("devices.values.pending");
+  const { t } = useTranslation("organizations/devices");
   const organizationId = options.organizationId;
   const connectionId = options.connectionId;
-  const onDeleted = options.onDeleted;
 
   const [deleteDevice, isDeleting] = useMutation<useDeleteDeviceMutation>(
     deleteDeviceMutation,
@@ -74,42 +58,21 @@ export function useDeleteDevice(options: DeleteDeviceOptions) {
     },
   );
 
-  const confirmDelete = useCallback(
-    (device: DeleteDeviceInput) => {
+  const remove = useCallback(
+    (deviceId: string, feedback?: MutationFeedback) => {
       const connections = [
         connectionId
         ?? ConnectionHandler.getConnectionID(organizationId, DevicesConnectionKey),
       ];
-
-      confirm(
-        async () => {
-          await deleteDevice({
-            variables: {
-              input: { deviceId: device.id },
-              connections,
-            },
-          });
-          onDeleted?.();
+      return deleteDevice({
+        variables: {
+          input: { deviceId },
+          connections,
         },
-        {
-          message: t("devices.confirmations.delete", {
-            hostname: displayValue(device.hostname, pendingLabel),
-          }),
-          variant: "danger",
-          label: t("devices.actions.delete"),
-        },
-      );
+      }, feedback);
     },
-    [
-      t,
-      confirm,
-      pendingLabel,
-      deleteDevice,
-      organizationId,
-      connectionId,
-      onDeleted,
-    ],
+    [deleteDevice, organizationId, connectionId],
   );
 
-  return [confirmDelete, isDeleting] as const;
+  return [remove, isDeleting] as const;
 }

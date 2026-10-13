@@ -3283,38 +3283,6 @@
     "invalidLink": { "title": "Invalid link", "description": "This magic link is invalid. Please request a new one." },
     "default": { "title": "Authentication failed", "description": "We could not complete your sign-in. Please try again." }
   },
-  "devices": {
-    "title": "Devices",
-    "description": "Manage computers enrolled with the Probo posture agent.",
-    "empty": "No devices enrolled yet",
-    "actions": { "add": "Add device", "new": "New device", "reassign": "Re-assign", "revoke": "Revoke", "delete": "Delete", "downloadAsEvidence": "Download as evidence", "clearSelection": "Clear selection", "selectAll": "Select all", "selectDevice": "Select {{hostname}}" },
-    "fields": { "organization": "Organization", "hostname": "Hostname", "owner": "Owner", "state": "State", "platform": "Platform", "osVersion": "OS version", "hardwareUuid": "Hardware UUID", "serialNumber": "Serial number", "agentVersion": "Agent version", "enrolledAt": "Enrolled at", "lastSeen": "Last seen" },
-    "values": { "pending": "(pending)", "never": "Never", "unassigned": "Unassigned" },
-    "messages": { "ownerUpdated": "Device owner updated", "revoked": "Device revoked", "deleted": "Device deleted" },
-    "errors": { "create": "Failed to create device", "reassign": "Failed to re-assign device", "revoke": "Failed to revoke device", "delete": "Failed to delete device", "downloadEvidence": "Failed to download the evidence" },
-    "confirmations": { "revoke": "Revoke device \"{{hostname}}\"? The agent on the device will stop reporting and must be re-enrolled.", "delete": "Delete device \"{{hostname}}\"? This removes it from the inventory." },
-    "postures": {
-      "currentTitle": "Current postures",
-      "empty": "No posture checks recorded",
-      "values": { "on": "On", "off": "Off", "immediate": "Immediate", "seconds": "{{seconds}}s", "minPasswordLength": "Min length {{length}}", "configured": "Configured", "none": "None", "unknown": "Unknown" },
-      "checks": { "diskEncryption": "Disk encryption", "screenLock": "Screen lock", "firewallEnabled": "Firewall enabled", "timeSync": "Time sync", "osVersion": "OS version", "autoUpdate": "Auto update", "passwordPolicy": "Password policy", "remoteLogin": "Remote login", "malwareProtection": "Malware protection" }
-    },
-    "history": {
-      "title": "Report history",
-      "empty": "No posture reports yet",
-      "checkCount_one": "{{count}} check reported",
-      "checkCount_other": "{{count}} checks reported",
-      "columns": { "time": "Time", "checks": "Checks", "correlationId": "Correlation ID" },
-      "actions": { "copyCorrelationId": "Copy correlation ID", "correlationIdCopied": "Correlation ID copied" }
-    },
-    "selected_one": "{{count}} device selected",
-    "selected_other": "{{count}} devices selected"
-  },
-  "deviceEnrollment": {
-    "token": { "title": "Enrollment token generated", "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.", "manualInstall": "Manual install (CLI / MDM)", "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.", "installUnix": "Install on macOS or Linux (run from a shell with sudo access)", "installWindows": "Install on Windows (run from an elevated PowerShell session)", "downloadStep": "Download and place the binary", "enrollStep": "Configure the device and start the agent", "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification." },
-    "messages": { "created": "Device created. Copy the enrollment token now — it will not be shown again." },
-    "errors": { "copyToClipboard": "Failed to copy to clipboard" }
-  },
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expired",
     "notes": "Notes"

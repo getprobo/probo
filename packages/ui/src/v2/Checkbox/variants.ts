@@ -24,7 +24,7 @@ import { tv } from "tailwind-variants/lite";
 // the disabled treatment resolve off Base UI's data-* state attributes.
 export const checkbox = tv({
   base: [
-    "inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-2 border border-sand-a7 bg-sand-1 text-gold-1 outline-none transition-colors",
+    "relative inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-2 border border-sand-a7 bg-sand-1 text-gold-1 outline-none transition-colors",
     "focus-visible:ring-2 focus-visible:ring-gold-8",
     "data-[checked]:border-gold-12 data-[checked]:bg-gold-12",
     "data-[indeterminate]:border-gold-12 data-[indeterminate]:bg-gold-12",
@@ -33,7 +33,7 @@ export const checkbox = tv({
 });
 
 export const checkboxIndicator = tv({
-  base: "flex items-center justify-center text-current [&_svg]:size-3.5",
+  base: "absolute inset-0 flex items-center justify-center text-current [&_svg]:size-3.5",
 });
 
 export const checkboxSkeleton = tv({

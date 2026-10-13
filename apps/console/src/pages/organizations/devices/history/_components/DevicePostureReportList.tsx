@@ -18,13 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Tbody, Td, Th, Thead, Tr } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Table } from "@probo/ui/src/v2/Table/Table";
+import { TableBody } from "@probo/ui/src/v2/Table/TableBody";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderCell";
+import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
 
 import type { DevicePostureReportListFragment$key } from "#/__generated__/core/DevicePostureReportListFragment.graphql";
 import type { DevicePostureReportListPaginationQuery } from "#/__generated__/core/DevicePostureReportListPaginationQuery.graphql";
-import { SortableTable } from "#/components/SortableTable";
+
+import { devicesPage } from "../../_components/variants";
 
 import { DevicePostureReportListItem } from "./DevicePostureReportListItem";
 
@@ -60,50 +68,50 @@ interface DevicePostureReportListProps {
 export function DevicePostureReportList({
   fKey,
 }: DevicePostureReportListProps) {
-  const { t } = useTranslation();
-
+  const { t } = useTranslation("organizations/devices");
+  const { more } = devicesPage();
   const reportsPagination = usePaginationFragment<
     DevicePostureReportListPaginationQuery,
     DevicePostureReportListFragment$key
   >(deviceFragment, fKey);
-
   const edges = reportsPagination.data.postureReports.edges;
 
   return (
-    <SortableTable
-      {...reportsPagination}
-      refetch={() => {
-        reportsPagination.refetch({}, { fetchPolicy: "network-only" });
-      }}
-      pageSize={20}
-    >
-      <Thead>
-        <Tr>
-          <Th>{t("devices.history.columns.time")}</Th>
-          <Th className="text-txt-tertiary font-normal">
-            {t("devices.history.columns.correlationId")}
-          </Th>
-          <Th>{t("devices.history.columns.checks")}</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {edges.length === 0
-          ? (
-              <Tr>
-                <Td colSpan={3} className="text-center text-txt-secondary">
-                  {t("devices.history.empty")}
-                </Td>
-              </Tr>
-            )
-          : (
-              edges.map(({ node: report }) => (
-                <DevicePostureReportListItem
-                  key={report.id}
-                  fKey={report}
-                />
-              ))
-            )}
-      </Tbody>
-    </SortableTable>
+    <div className={devicesPage().root()}>
+      <Table size={2} variant="surface">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell>{t("devices.history.columns.time")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell>{t("devices.history.columns.correlationId")}</TableColumnHeaderCell>
+            <TableColumnHeaderCell>{t("devices.history.columns.checks")}</TableColumnHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {edges.length === 0
+            ? (
+                <TableRow>
+                  <TableCell colSpan={3} justify="center">
+                    <Text size={2} color="faint">{t("devices.history.empty")}</Text>
+                  </TableCell>
+                </TableRow>
+              )
+            : edges.map(({ node: report }) => (
+                <DevicePostureReportListItem key={report.id} fKey={report} />
+              ))}
+        </TableBody>
+      </Table>
+      {reportsPagination.hasNext && (
+        <div className={more()}>
+          <Button
+            variant="soft"
+            color="neutral"
+            loading={reportsPagination.isLoadingNext}
+            onClick={() => reportsPagination.loadNext(20)}
+          >
+            {t("sortableTable.actions.showMore")}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

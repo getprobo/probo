@@ -25,16 +25,14 @@ export function displayValue(
   return value && value.length > 0 ? value : pendingLabel;
 }
 
-export function stateVariant(
-  state: string,
-): "success" | "danger" | "warning" | "info" {
+export function stateColor(state: string): "green" | "red" | "amber" {
   switch (state) {
     case "ACTIVE":
-      return "success";
+      return "green";
     case "REVOKED":
-      return "danger";
+      return "red";
     default:
-      return "warning";
+      return "amber";
   }
 }
 

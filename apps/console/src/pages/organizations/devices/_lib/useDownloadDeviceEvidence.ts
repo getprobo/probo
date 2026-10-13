@@ -37,7 +37,7 @@ const downloadDeviceEvidenceMutation = graphql`
 const evidenceFileName = "device-evidence.pdf";
 
 export function useDownloadDeviceEvidence() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/devices");
   const [commit, isDownloading] = useMutation<useDownloadDeviceEvidenceMutation>(
     downloadDeviceEvidenceMutation,
   );

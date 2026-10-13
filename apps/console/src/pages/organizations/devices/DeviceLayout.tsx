@@ -18,24 +18,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretLeftIcon, DownloadSimpleIcon, PlugsIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { Button, IconEject, IconTrashCan, PageHeader } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  type PreloadedQuery,
-  usePreloadedQuery,
-} from "react-relay";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet, useNavigate } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { DeviceLayoutQuery } from "#/__generated__/core/DeviceLayoutQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { DeviceCurrentPostures } from "./_components/DeviceCurrentPostures";
+import { DeviceDeleteDialog } from "./_components/DeviceDeleteDialog";
 import { DeviceDetailsCard } from "./_components/DeviceDetailsCard";
+import { DeviceRevokeDialog } from "./_components/DeviceRevokeDialog";
+import { devicesPage } from "./_components/variants";
 import { displayValue, isDeviceDeletable } from "./_lib/deviceDisplay";
-import { useDeleteDevice } from "./_lib/useDeleteDevice";
-import { useRevokeDevice } from "./_lib/useRevokeDevice";
+import { useDownloadDeviceEvidence } from "./_lib/useDownloadDeviceEvidence";
 
 export const deviceLayoutQuery = graphql`
   query DeviceLayoutQuery($deviceId: ID!, $organizationId: ID!) {
@@ -54,6 +58,7 @@ export const deviceLayoutQuery = graphql`
       ... on Organization {
         canRevokeDevice: permission(action: "itam:device:revoke")
         canDeleteDevice: permission(action: "itam:device:delete")
+        canDownloadEvidence: permission(action: "itam:device:download")
       }
     }
   }
@@ -64,74 +69,110 @@ interface DeviceLayoutProps {
 }
 
 export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/devices");
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
-  const pendingLabel = t("devices.values.pending");
+  const [revokeOpen, setRevokeOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const { download: downloadEvidence, isDownloading } = useDownloadDeviceEvidence();
+  const { root, header, intro, actions, section, sections } = devicesPage();
 
   const { device, organization } = usePreloadedQuery<DeviceLayoutQuery>(
     deviceLayoutQuery,
     queryRef,
   );
+  usePageTitle(
+    device.__typename === "Device"
+      ? displayValue(device.hostname, t("devices.values.pending"))
+      : t("devices.title"),
+  );
   if (device.__typename !== "Device") {
-    throw new Error("invalid type for device node");
+    throw new NotFoundError("invalid type for device node");
   }
   if (organization.__typename !== "Organization") {
-    throw new Error("invalid type for organization node");
+    throw new NotFoundError("invalid type for organization node");
   }
 
-  usePageTitle(displayValue(device.hostname, pendingLabel));
-
-  const hostnameLabel = displayValue(device.hostname, pendingLabel);
-
-  const [confirmRevoke, isRevoking] = useRevokeDevice();
-  const [confirmDelete, isDeleting] = useDeleteDevice({
-    organizationId,
-    onDeleted: () => {
-      void navigate(`/organizations/${organizationId}/itam/devices`, { replace: true });
-    },
-  });
+  const hostnameLabel = displayValue(device.hostname, t("devices.values.pending"));
 
   const deletable = isDeviceDeletable(device.state);
   const canRevokeDevice = organization.canRevokeDevice ?? false;
   const canDeleteDevice = organization.canDeleteDevice ?? false;
+  const canDownloadEvidence = organization.canDownloadEvidence ?? false;
 
   return (
-    <div className="flex flex-col gap-6 h-full">
-      <PageHeader title={hostnameLabel}>
-        {!deletable && canRevokeDevice && (
-          <Button
-            variant="danger"
-            icon={IconEject}
-            onClick={() =>
-              confirmRevoke({ id: device.id, hostname: device.hostname })}
-            disabled={isRevoking}
-          >
-            {t("devices.actions.revoke")}
-          </Button>
-        )}
-        {deletable && canDeleteDevice && (
-          <Button
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={() =>
-              confirmDelete({ id: device.id, hostname: device.hostname })}
-            disabled={isDeleting}
-          >
-            {t("devices.actions.delete")}
-          </Button>
-        )}
-      </PageHeader>
+    <div className={root()}>
+      <Link
+        to={`/organizations/${organizationId}/itam/devices`}
+        size={2}
+        color="neutral"
+        underline={false}
+        iconStart={<CaretLeftIcon />}
+      >
+        {t("devices.title")}
+      </Link>
+      <div className={header()}>
+        <div className={intro()}>
+          <Heading level={1} size={6} weight="medium" highContrast>
+            {hostnameLabel}
+          </Heading>
+        </div>
+        <div className={actions()}>
+          {canDownloadEvidence && (
+            <Button
+              variant="soft"
+              color="neutral"
+              iconStart={<DownloadSimpleIcon />}
+              loading={isDownloading}
+              onClick={() => {
+                void downloadEvidence([device.id]);
+              }}
+            >
+              {t("devices.actions.downloadAsEvidence")}
+            </Button>
+          )}
+          {!deletable && canRevokeDevice && (
+            <Button
+              variant="solid"
+              color="red"
+              iconStart={<PlugsIcon />}
+              onClick={() => setRevokeOpen(true)}
+            >
+              {t("devices.actions.revoke")}
+            </Button>
+          )}
+          {deletable && canDeleteDevice && (
+            <Button variant="solid" color="red" onClick={() => setDeleteOpen(true)}>
+              {t("devices.actions.delete")}
+            </Button>
+          )}
+        </div>
+      </div>
 
-      <DeviceDetailsCard deviceFragmentRef={device} />
+      <DeviceRevokeDialog
+        open={revokeOpen}
+        onOpenChange={setRevokeOpen}
+        devices={[{ id: device.id, hostname: device.hostname }]}
+      />
+      <DeviceDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        organizationId={organizationId}
+        devices={[{ id: device.id, hostname: device.hostname }]}
+        onDeleted={() => {
+          void navigate(`/organizations/${organizationId}/itam/devices`, { replace: true });
+        }}
+      />
 
-      <DeviceCurrentPostures deviceFragmentRef={device} />
-
-      <div className="space-y-4">
-        <h2 className="text-base font-medium">
-          {t("devices.history.title")}
-        </h2>
-        <Outlet />
+      <div className={sections()}>
+        <DeviceDetailsCard deviceFragmentRef={device} />
+        <DeviceCurrentPostures deviceFragmentRef={device} />
+        <div className={section()}>
+          <Heading level={2} size={3} weight="medium">
+            {t("devices.history.title")}
+          </Heading>
+          <Outlet />
+        </div>
       </div>
     </div>
   );

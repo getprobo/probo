@@ -23,8 +23,9 @@ import type { AppRoute } from "@probo/routes";
 import { Fragment } from "react";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
+import { DeviceLayoutSkeleton } from "#/pages/organizations/devices/DeviceLayoutSkeleton";
+import { DevicesPageSkeleton } from "#/pages/organizations/devices/DevicesPageSkeleton";
+import { DeviceHistoryPageSkeleton } from "#/pages/organizations/devices/history/DeviceHistoryPageSkeleton";
 
 const deviceTabs = () => [
   {
@@ -41,7 +42,7 @@ const deviceTabs = () => [
   },
   {
     path: "history",
-    Fallback: LinkCardSkeleton,
+    Fallback: DeviceHistoryPageSkeleton,
     Component: lazy(
       () =>
         import("#/pages/organizations/devices/history/DeviceHistoryPageLoader"),
@@ -52,14 +53,14 @@ const deviceTabs = () => [
 export const deviceRoutes = [
   {
     path: "devices",
-    Fallback: PageSkeleton,
+    Fallback: DevicesPageSkeleton,
     Component: lazy(
       () => import("#/pages/organizations/devices/DevicesPageLoader"),
     ),
   },
   {
     path: "devices/:deviceId",
-    Fallback: PageSkeleton,
+    Fallback: DeviceLayoutSkeleton,
     Component: lazy(
       () => import("#/pages/organizations/devices/DeviceLayoutLoader"),
     ),

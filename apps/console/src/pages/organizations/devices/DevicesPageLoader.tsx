@@ -22,10 +22,10 @@ import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { DevicesPage, devicesPageQuery } from "./DevicesPage";
+import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
 
 export default function DevicesPageLoader() {
   const organizationId = useOrganizationId();
@@ -37,11 +37,11 @@ export default function DevicesPageLoader() {
   }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <DevicesPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<DevicesPageSkeleton />}>
       <DevicesPage queryRef={queryRef} />
     </Suspense>
   );

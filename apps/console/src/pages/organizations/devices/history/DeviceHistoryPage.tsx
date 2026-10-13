@@ -22,6 +22,7 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { DeviceHistoryPageQuery } from "#/__generated__/core/DeviceHistoryPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 
 import { DevicePostureReportList } from "./_components/DevicePostureReportList";
 
@@ -46,7 +47,7 @@ export function DeviceHistoryPage({ queryRef }: DeviceHistoryPageProps) {
     queryRef,
   );
   if (device.__typename !== "Device") {
-    throw new Error("invalid type for device node");
+    throw new NotFoundError("invalid type for device node");
   }
 
   return <DevicePostureReportList fKey={device} />;
