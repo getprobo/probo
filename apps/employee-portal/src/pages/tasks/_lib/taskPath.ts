@@ -18,9 +18,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
 export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
+
+export const taskListConnectionKeys = {
+  IN_PROGRESS: "useTasksPageListGroups_inProgress__inProgressTasks",
+  TODO: "useTasksPageListGroups_todo__todoTasks",
+  BACKLOG: "useTasksPageListGroups_backlog__backlogTasks",
+  DONE: "useTasksPageListGroups_done__doneTasks",
+  CANCELED: "useTasksPageListGroups_canceled__canceledTasks",
+  DUPLICATE: "useTasksPageListGroups_duplicate__duplicateTasks",
+} as const satisfies Record<TaskState, string>;
+
+export function taskListConnectionFilters(
+  organizationId: string,
+  query: string | null,
+  state: TaskState,
+) {
+  return {
+    organizationId,
+    filter: {
+      query,
+      state,
+    },
+  };
+}
+
+export function taskListConnectionId(
+  viewerId: string,
+  organizationId: string,
+  query: string | null,
+  state: TaskState,
+) {
+  return ConnectionHandler.getConnectionID(
+    viewerId,
+    taskListConnectionKeys[state],
+    taskListConnectionFilters(organizationId, query, state),
+  );
+}
 
 const taskCommentsConnectionFilters = {
   orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },

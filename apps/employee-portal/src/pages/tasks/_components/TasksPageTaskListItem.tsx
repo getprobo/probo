@@ -19,12 +19,15 @@
 // SOFTWARE.
 
 import { TaskListItem, type TaskState } from "@probo/tasks";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { TasksPageTaskListItem_task$key } from "#/__generated__/core/TasksPageTaskListItem_task.graphql";
 import type { TasksPageTaskListItemUpdateStateMutation } from "#/__generated__/core/TasksPageTaskListItemUpdateStateMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
+
+import { taskListStateMoveUpdaters } from "../_lib/moveTaskListEdge";
+import { useTasksFilters } from "../_lib/useTasksFilters";
 
 const tasksPageTaskListItemFragment = graphql`
   fragment TasksPageTaskListItem_task on Task {
@@ -67,19 +70,33 @@ export function TasksPageTaskListItem({
   taskKey,
   sectionState,
 }: TasksPageTaskListItemProps) {
-  const { employeePortalId } = useEmployeePortalRoute();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { graphqlQuery } = useTasksFilters();
+  const environment = useRelayEnvironment();
   const { canUpdate, ...task } = useFragment(tasksPageTaskListItemFragment, taskKey);
   const [updateState, isUpdating] = useMutation<TasksPageTaskListItemUpdateStateMutation>(
     updateStateMutation,
   );
 
   function onStateChange(state: TaskState) {
+    const move = taskListStateMoveUpdaters(environment, {
+      taskId: task.id,
+      nextState: state,
+      organizationId,
+      query: graphqlQuery,
+    });
     void updateState({
       variables: {
         input: {
           taskId: task.id,
           state,
         },
+      },
+      optimisticUpdater(store) {
+        move.optimisticUpdater(store);
+      },
+      updater(store) {
+        move.updater(store);
       },
     }).catch(() => {
       // Error feedback is handled by useMutation.

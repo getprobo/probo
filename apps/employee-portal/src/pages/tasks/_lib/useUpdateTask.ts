@@ -19,10 +19,14 @@
 // SOFTWARE.
 
 import { useTranslation } from "react-i18next";
-import { graphql } from "react-relay";
+import { graphql, type UseMutationConfig, useRelayEnvironment } from "react-relay";
 
 import type { useUpdateTaskMutation } from "#/__generated__/core/useUpdateTaskMutation.graphql";
-import { useMutation } from "#/lib/relay/useMutation";
+import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
+
+import { taskListStateMoveUpdaters } from "./moveTaskListEdge";
+import { useTasksFilters } from "./useTasksFilters";
 
 const updateTaskMutation = graphql`
   mutation useUpdateTaskMutation($input: UpdateTaskInput!) {
@@ -38,12 +42,40 @@ const updateTaskMutation = graphql`
 
 export function useUpdateTask() {
   const { t } = useTranslation("tasks");
-
-  return useMutation<useUpdateTaskMutation>(
+  const { organizationId } = useEmployeePortalRoute();
+  const { graphqlQuery } = useTasksFilters();
+  const environment = useRelayEnvironment();
+  const [commit, isUpdating] = useMutation<useUpdateTaskMutation>(
     updateTaskMutation,
     {
       successMessage: t("detail.messages.updated"),
       errorToast: t("detail.errors.update"),
     },
   );
+
+  function updateTask(
+    config: UseMutationConfig<useUpdateTaskMutation>,
+    feedback?: MutationFeedback,
+  ) {
+    const move = taskListStateMoveUpdaters(environment, {
+      taskId: config.variables.input.taskId,
+      nextState: config.variables.input.state,
+      organizationId,
+      query: graphqlQuery,
+    });
+
+    return commit({
+      ...config,
+      optimisticUpdater(store, data) {
+        move.optimisticUpdater(store);
+        config.optimisticUpdater?.(store, data);
+      },
+      updater(store, data) {
+        move.updater(store);
+        config.updater?.(store, data);
+      },
+    }, feedback);
+  }
+
+  return [updateTask, isUpdating] as const;
 }
