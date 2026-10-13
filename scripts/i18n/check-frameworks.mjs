@@ -24,6 +24,11 @@
 // Japan-specific frameworks under apps/console/public/data/frameworks/jp/
 // have no English source; they are checked for a framework id, unique
 // control ids and non-empty names.
+// Internal control import files under
+// apps/console/public/data/internal-controls/jp/ must only reference
+// frameworks and controls that exist in those files (the importer skips
+// unknown references silently), and must cover every control of the
+// Japan-specific frameworks they reference.
 //
 // Usage:
 //   node scripts/i18n/check-frameworks.mjs [--locale ja-JP] [--root dir]
@@ -35,6 +40,8 @@ import { fileURLToPath } from "node:url";
 export const FRAMEWORKS_DIR = "apps/console/public/data/frameworks";
 export const DEFAULT_LOCALE = "ja-JP";
 export const STANDALONE_DIR = "jp";
+export const INTERNAL_CONTROLS_DIR = "apps/console/public/data/internal-controls/jp";
+const EVIDENCE_TYPES = new Set(["FILE", "LINK"]);
 
 const isBlank = value => typeof value !== "string" || value.trim() === "";
 
@@ -155,6 +162,105 @@ export function checkStandalone({ root }) {
     });
 }
 
+function listJson(directory) {
+  return existsSync(directory)
+    ? readdirSync(directory).filter(name => name.endsWith(".json")).map(name => join(directory, name))
+    : [];
+}
+
+export function loadFrameworkCatalog(root) {
+  const directory = join(root, FRAMEWORKS_DIR);
+  const catalog = new Map();
+  for (const [path, standalone] of [
+    ...listJson(directory).map(path => [path, false]),
+    ...listJson(join(directory, STANDALONE_DIR)).map(path => [path, true]),
+  ]) {
+    try {
+      const framework = readJson(path);
+      catalog.set(framework.id, { controls: framework.controls.map(control => control.id), standalone });
+    } catch {
+      // Broken framework files are reported by checkLocale/checkStandalone.
+    }
+  }
+  return catalog;
+}
+
+export function validateInternalControls(data, catalog) {
+  const issues = [];
+  const referenceIds = new Set();
+  const covered = new Map();
+
+  const claim = (referenceId, key) => {
+    if (isBlank(referenceId)) {
+      issues.push({ key, kind: "empty", message: "reference-id is empty" });
+    } else if (referenceIds.has(referenceId)) {
+      issues.push({ key: referenceId, kind: "duplicate", message: "reference-id is duplicated" });
+    }
+    referenceIds.add(referenceId);
+  };
+
+  if (!Array.isArray(data.internalControls) || data.internalControls.length === 0) {
+    return [{ key: "internalControls", kind: "type", message: "internalControls must be a non-empty array" }];
+  }
+
+  data.internalControls.forEach((control, index) => {
+    const key = control["reference-id"] || `#${index}`;
+    claim(control["reference-id"], key);
+    if (isBlank(control.name) || isBlank(control.category)) {
+      issues.push({ key, kind: "empty", message: "name and category are required" });
+    }
+
+    for (const standard of control.standards ?? []) {
+      const framework = catalog.get(standard.framework);
+      if (!framework) {
+        issues.push({ key, kind: "framework", message: `unknown framework "${standard.framework}"` });
+      } else if (!framework.controls.includes(standard.control)) {
+        issues.push({ key, kind: "control", message: `unknown control "${standard.control}" in "${standard.framework}"` });
+      } else {
+        covered.set(standard.framework, (covered.get(standard.framework) ?? new Set()).add(standard.control));
+      }
+    }
+
+    for (const task of control.tasks ?? []) {
+      claim(task["reference-id"], key);
+      if (isBlank(task.name)) {
+        issues.push({ key: task["reference-id"] || key, kind: "empty", message: "task name is empty" });
+      }
+      for (const evidence of task["requested-evidences"] ?? []) {
+        claim(evidence["reference-id"], key);
+        if (isBlank(evidence.name) || !EVIDENCE_TYPES.has(evidence.type)) {
+          issues.push({ key: evidence["reference-id"] || key, kind: "evidence", message: "evidence needs a name and a FILE or LINK type" });
+        }
+      }
+    }
+  });
+
+  for (const [frameworkId, controls] of covered) {
+    const framework = catalog.get(frameworkId);
+    if (!framework.standalone) {
+      continue;
+    }
+    for (const id of framework.controls.filter(id => !controls.has(id))) {
+      issues.push({ key: id, kind: "coverage", message: `control of "${frameworkId}" is not covered` });
+    }
+  }
+
+  return issues;
+}
+
+export function checkInternalControls({ root }) {
+  const catalog = loadFrameworkCatalog(root);
+  return listJson(join(root, INTERNAL_CONTROLS_DIR)).map((path) => {
+    let issues;
+    try {
+      issues = validateInternalControls(readJson(path), catalog);
+    } catch (error) {
+      issues = [{ key: "", kind: "syntax", message: error.message }];
+    }
+    return { file: relative(root, path), issues };
+  });
+}
+
 function parseArguments(argv) {
   const options = { locale: DEFAULT_LOCALE, root: process.cwd() };
 
@@ -186,7 +292,11 @@ function main(argv) {
     return 2;
   }
 
-  const results = [...checkLocale(options), ...checkStandalone(options)];
+  const results = [
+    ...checkLocale(options),
+    ...checkStandalone(options),
+    ...checkInternalControls(options),
+  ];
   let total = 0;
   for (const { file, issues } of results) {
     if (issues.length === 0) {
@@ -204,7 +314,7 @@ function main(argv) {
     return 1;
   }
 
-  console.log(`${results.length} framework(s) OK`);
+  console.log(`${results.length} file(s) OK`);
   return 0;
 }
 

@@ -1,0 +1,1556 @@
+{
+  "internalControls": [
+    {
+      "reference-id": "pmark-context",
+      "name": "組織の状況と適用範囲の明確化",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.1.1"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.1.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.1.4"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.1.5"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "4.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "4.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "4.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "4.4"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-context-task-1",
+          "name": "組織の状況と適用範囲の整理",
+          "description": "事業内容、外部・内部の課題、利害関係者の期待を洗い出し、PMS・ISMS の適用範囲を文書にまとめる。年1回、または事業の変化があったときに見直す。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-context-task-1-evidence-1",
+              "type": "FILE",
+              "name": "適用範囲を定めた文書"
+            },
+            {
+              "reference-id": "pmark-context-task-1-evidence-2",
+              "type": "FILE",
+              "name": "課題・利害関係者の一覧"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-legal",
+      "name": "法令・ガイドラインの特定と更新",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.1.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.31"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-legal-task-1",
+          "name": "法令等の一覧の作成と見直し",
+          "description": "個人情報保護法、ガイドライン、業界の規範、契約上の義務を一覧にし、改正の有無を年1回以上確認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-legal-task-1-evidence-1",
+              "type": "FILE",
+              "name": "法令・規範の一覧"
+            },
+            {
+              "reference-id": "pmark-legal-task-1-evidence-2",
+              "type": "FILE",
+              "name": "見直しの記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-leadership",
+      "name": "経営層によるマネジメントシステムへの関与",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.2.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "5.1"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-leadership-task-1",
+          "name": "経営層の関与の記録",
+          "description": "経営層が方針・目標の承認、資源の提供、マネジメントレビューへの参加を行ったことを記録する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-leadership-task-1-evidence-1",
+              "type": "FILE",
+              "name": "経営層の承認記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-policy",
+      "name": "個人情報保護方針の策定・周知・公表",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.2.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "5.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.1"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-policy-task-1",
+          "name": "方針の策定と公表",
+          "description": "内部向けと外部向けの個人情報保護方針を作成し、代表者が承認する。外部向け方針はWebサイトで公表し、従業者に周知する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-policy-task-1-evidence-1",
+              "type": "FILE",
+              "name": "承認済みの個人情報保護方針"
+            },
+            {
+              "reference-id": "pmark-policy-task-1-evidence-2",
+              "type": "LINK",
+              "name": "公表ページのURL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-roles",
+      "name": "役割・責任・権限の割り当て",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.2.3.1"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.2.3.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "5.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.3"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-roles-task-1",
+          "name": "管理者と監査責任者の任命",
+          "description": "個人情報保護管理者と個人情報保護監査責任者を任命し、兼任させない。各部門の責任者と権限を体制図にまとめる。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-roles-task-1-evidence-1",
+              "type": "FILE",
+              "name": "任命書"
+            },
+            {
+              "reference-id": "pmark-roles-task-1-evidence-2",
+              "type": "FILE",
+              "name": "体制図"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-inventory",
+      "name": "個人情報の特定と台帳管理",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.1.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.9"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.12"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-inventory-task-1",
+          "name": "個人情報管理台帳の作成と更新",
+          "description": "業務ごとに取り扱う個人情報を洗い出し、利用目的、保管場所、保存期間、アクセスできる人、委託の有無を台帳にまとめる。年1回以上、および業務の追加・変更時に更新する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-inventory-task-1-evidence-1",
+              "type": "FILE",
+              "name": "個人情報管理台帳"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-risk-assessment",
+      "name": "個人情報のリスクアセスメント",
+      "category": "リスク管理",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.1.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.1.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "6.1.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "6.1.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "8.2"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-risk-assessment-task-1",
+          "name": "リスクの洗い出しと評価",
+          "description": "台帳の個人情報ごとに、取得から廃棄までの各段階で起こりうるリスク（漏えい、滅失、き損、目的外利用など）を洗い出して評価する。年1回以上実施する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-risk-assessment-task-1-evidence-1",
+              "type": "FILE",
+              "name": "リスク分析表"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-risk-treatment",
+      "name": "リスク対応と管理策の決定",
+      "category": "リスク管理",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.1.4"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.2.4"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "6.1.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "8.3"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-risk-treatment-task-1",
+          "name": "対策の決定と残留リスクの承認",
+          "description": "評価したリスクごとに対策を決め、対策後に残るリスクを個人情報保護管理者が確認して承認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-risk-treatment-task-1-evidence-1",
+              "type": "FILE",
+              "name": "リスク対応計画"
+            },
+            {
+              "reference-id": "pmark-risk-treatment-task-1-evidence-2",
+              "type": "FILE",
+              "name": "残留リスクの承認記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-objectives",
+      "name": "目標と運用計画の策定",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.3"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.3.4"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "6.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "6.3"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-objectives-task-1",
+          "name": "年間計画の策定",
+          "description": "個人情報保護の目標と、教育・内部監査・マネジメントレビューなどの年間計画を立てる。体制や業務を変えるときは、変更の計画を作る。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-objectives-task-1-evidence-1",
+              "type": "FILE",
+              "name": "年間計画"
+            },
+            {
+              "reference-id": "pmark-objectives-task-1-evidence-2",
+              "type": "FILE",
+              "name": "目標と達成状況の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-resources",
+      "name": "必要な資源と力量の確保",
+      "category": "教育・意識向上",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.1"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.2"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-resources-task-1",
+          "name": "力量の確認",
+          "description": "個人情報保護管理者、監査責任者、担当者に必要な知識・経験を定め、満たしていることを確認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-resources-task-1-evidence-1",
+              "type": "FILE",
+              "name": "力量の確認記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-training",
+      "name": "従業者教育の実施と記録",
+      "category": "教育・意識向上",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.3"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-training-task-1",
+          "name": "年次の教育",
+          "description": "全従業者（派遣社員・アルバイトを含む）に、方針、規程、違反時の影響について年1回以上教育を行い、理解度を確認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-training-task-1-evidence-1",
+              "type": "FILE",
+              "name": "教育計画"
+            },
+            {
+              "reference-id": "pmark-training-task-1-evidence-2",
+              "type": "FILE",
+              "name": "受講記録"
+            },
+            {
+              "reference-id": "pmark-training-task-1-evidence-3",
+              "type": "FILE",
+              "name": "理解度テストの結果"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-communication",
+      "name": "内外とのコミュニケーション",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.4.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.4"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-communication-task-1",
+          "name": "連絡体制の整備",
+          "description": "社内外への連絡の内容、時期、相手、方法を決めておく。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-communication-task-1-evidence-1",
+              "type": "FILE",
+              "name": "連絡体制の一覧"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-incident",
+      "name": "緊急事態への準備と漏えい等への対応",
+      "category": "インシデント対応",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.4.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.24"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.25"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.26"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.27"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.29"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.8"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-incident-task-1",
+          "name": "漏えい時の手順の整備と訓練",
+          "description": "漏えい等が起きたときの報告経路、本人への通知、個人情報保護委員会などへの報告、再発防止の手順を定め、従業者に周知する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-incident-task-1-evidence-1",
+              "type": "FILE",
+              "name": "緊急時対応手順"
+            },
+            {
+              "reference-id": "pmark-incident-task-1-evidence-2",
+              "type": "FILE",
+              "name": "報告・対応の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-documents",
+      "name": "文書の作成・承認・管理",
+      "category": "文書・記録管理",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.5.1"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.5.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.5.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.5.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.5.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.5.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.37"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-documents-task-1",
+          "name": "文書の版管理",
+          "description": "規程や手順書を承認してから発行し、版と改訂履歴を管理する。古い版が使われないようにする。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-documents-task-1-evidence-1",
+              "type": "FILE",
+              "name": "文書一覧"
+            },
+            {
+              "reference-id": "pmark-documents-task-1-evidence-2",
+              "type": "FILE",
+              "name": "改訂履歴"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-internal-rules",
+      "name": "社内規程の整備",
+      "category": "文書・記録管理",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.5.4"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.37"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-internal-rules-task-1",
+          "name": "個人情報保護規程の整備",
+          "description": "取得・利用・提供、安全管理、委託、本人対応、教育、監査、是正処置などを定めた社内規程を整備し、定期的に見直す。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-internal-rules-task-1-evidence-1",
+              "type": "FILE",
+              "name": "個人情報保護規程"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-records",
+      "name": "記録の管理",
+      "category": "文書・記録管理",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.4.5.5"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.5.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.33"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-records-task-1",
+          "name": "記録の保管と廃棄",
+          "description": "必要な記録の種類と保存期間を決め、改ざんや紛失から保護し、期間を過ぎたら廃棄する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-records-task-1-evidence-1",
+              "type": "FILE",
+              "name": "記録の一覧と保存期間"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-operation",
+      "name": "計画に沿った運用",
+      "category": "ガバナンス・体制",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.5.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "8.1"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-operation-task-1",
+          "name": "運用状況の確認",
+          "description": "年間計画に沿って運用されていることを確認し、遅れがあれば対応する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-operation-task-1-evidence-1",
+              "type": "FILE",
+              "name": "運用状況の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-monitoring",
+      "name": "運用状況の点検",
+      "category": "監査・改善",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.6.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "9.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.36"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-monitoring-task-1",
+          "name": "定期点検",
+          "description": "各部門で規程どおりに運用されているかを定期的に点検し、結果を個人情報保護管理者に報告する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-monitoring-task-1-evidence-1",
+              "type": "FILE",
+              "name": "点検の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-internal-audit",
+      "name": "内部監査",
+      "category": "監査・改善",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.6.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "9.2.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "9.2.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.35"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-internal-audit-task-1",
+          "name": "年次の内部監査",
+          "description": "監査計画を立て、監査員が自部門を監査しないようにして年1回以上監査を行う。結果を代表者に報告する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-internal-audit-task-1-evidence-1",
+              "type": "FILE",
+              "name": "監査計画"
+            },
+            {
+              "reference-id": "pmark-internal-audit-task-1-evidence-2",
+              "type": "FILE",
+              "name": "監査報告書"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-management-review",
+      "name": "マネジメントレビュー",
+      "category": "監査・改善",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.6.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "9.3.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "9.3.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "9.3.3"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-management-review-task-1",
+          "name": "年次のマネジメントレビュー",
+          "description": "監査結果、苦情、法令の変化、リスクの状況などをもとに、代表者がマネジメントシステムを見直し、指示を記録する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-management-review-task-1-evidence-1",
+              "type": "FILE",
+              "name": "マネジメントレビューの議事録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-corrective",
+      "name": "不適合と是正処置",
+      "category": "監査・改善",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.7.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "10.2"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-corrective-task-1",
+          "name": "是正処置の実施",
+          "description": "監査や運用で見つかった不適合の原因を調べ、再発防止策を実施し、その効果を確認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-corrective-task-1-evidence-1",
+              "type": "FILE",
+              "name": "是正処置の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-improvement",
+      "name": "継続的な改善",
+      "category": "監査・改善",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.7.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "10.1"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-improvement-task-1",
+          "name": "改善の取り組み",
+          "description": "点検・監査・レビューの結果をもとに、マネジメントシステムを継続的に改善する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-improvement-task-1-evidence-1",
+              "type": "FILE",
+              "name": "改善の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-purpose",
+      "name": "利用目的の特定と範囲内での利用",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.1"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.6"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-purpose-task-1",
+          "name": "利用目的の特定",
+          "description": "個人情報ごとに利用目的をできる限り具体的に定め、その範囲を超えて利用するときは本人の同意を得る。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-purpose-task-1-evidence-1",
+              "type": "FILE",
+              "name": "利用目的の一覧（台帳）"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-acquisition",
+      "name": "適正な取得と要配慮個人情報の扱い",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-acquisition-task-1",
+          "name": "取得方法の確認",
+          "description": "偽りや不正な手段で取得していないことを確認する。要配慮個人情報は、原則として本人の同意を得てから取得する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-acquisition-task-1-evidence-1",
+              "type": "FILE",
+              "name": "取得方法の確認記録"
+            },
+            {
+              "reference-id": "pmark-acquisition-task-1-evidence-2",
+              "type": "FILE",
+              "name": "同意の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-notice",
+      "name": "取得時の通知・公表と書面取得時の明示",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.4"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.5"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-notice-task-1",
+          "name": "通知・明示の文面の整備",
+          "description": "取得時に利用目的を通知または公表する。申込書やWebフォームなど本人から書面で直接取得するときは、必要な事項を事前に明示し、同意を得る。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-notice-task-1-evidence-1",
+              "type": "FILE",
+              "name": "同意書・フォームの文面"
+            },
+            {
+              "reference-id": "pmark-notice-task-1-evidence-2",
+              "type": "LINK",
+              "name": "公表ページのURL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-contact",
+      "name": "本人への連絡・接触時の対応",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.7"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-contact-task-1",
+          "name": "連絡時の確認",
+          "description": "取得した個人情報を使って本人に連絡・接触するときは、利用目的の範囲内であることを確認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-contact-task-1-evidence-1",
+              "type": "FILE",
+              "name": "確認の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-third-party",
+      "name": "第三者提供の管理と記録",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.8"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.8.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.8.3"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.8.4"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.14"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-third-party-task-1",
+          "name": "第三者提供の同意と記録",
+          "description": "第三者に提供するときは原則として本人の同意を得て、提供の記録を作成・保存する。第三者から受け取るときは、取得の経緯を確認して記録する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-third-party-task-1-evidence-1",
+              "type": "FILE",
+              "name": "提供・受領の記録"
+            },
+            {
+              "reference-id": "pmark-third-party-task-1-evidence-2",
+              "type": "FILE",
+              "name": "同意の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-foreign",
+      "name": "外国にある第三者への提供",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.8.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.14"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.31"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-foreign-task-1",
+          "name": "外国への提供の確認",
+          "description": "外国の第三者に提供するときは、提供先の国の制度や相手の保護措置を確認し、必要な情報を本人に提供したうえで同意を得る。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-foreign-task-1-evidence-1",
+              "type": "FILE",
+              "name": "提供先の国と保護措置の確認記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-anonymized",
+      "name": "匿名加工情報・仮名加工情報の取扱い",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.9"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.8.10"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.11"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-anonymized-task-1",
+          "name": "加工方法と取扱いの管理",
+          "description": "匿名加工情報・仮名加工情報を作成・利用する場合は、加工方法、公表事項、削除情報の管理を定めて実施する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-anonymized-task-1-evidence-1",
+              "type": "FILE",
+              "name": "加工方法の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-accuracy",
+      "name": "正確性の確保と不要なデータの消去",
+      "category": "個人情報の取扱い",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.10"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-accuracy-task-1",
+          "name": "最新化と消去",
+          "description": "個人情報を正確・最新の状態に保ち、利用する必要がなくなったら遅滞なく消去する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-accuracy-task-1-evidence-1",
+              "type": "FILE",
+              "name": "消去・廃棄の記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-sec-organizational",
+      "name": "組織的安全管理措置",
+      "category": "安全管理措置",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.10"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.15"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.12"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-sec-organizational-task-1",
+          "name": "取扱いルールと管理状況の確認",
+          "description": "個人情報の取扱いルールを定め、取扱状況を確認できるようにする。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-sec-organizational-task-1-evidence-1",
+              "type": "FILE",
+              "name": "取扱状況の確認記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-staff",
+      "name": "従業者の監督",
+      "category": "安全管理措置",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.3"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.4"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.5"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.6.6"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-staff-task-1",
+          "name": "誓約書と監督",
+          "description": "入社時・退職時に秘密保持の誓約書を取り交わし、違反時の懲戒手続きを定める。従業者の取扱状況を監督する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-staff-task-1-evidence-1",
+              "type": "FILE",
+              "name": "秘密保持誓約書"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-sec-physical",
+      "name": "物理的安全管理措置",
+      "category": "安全管理措置",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.7.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.7.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.7.7"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.7.9"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.7.10"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.7.14"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-sec-physical-task-1",
+          "name": "入退室管理と持ち出し管理",
+          "description": "個人情報を扱う区域の入退室を管理し、書類・媒体・機器の盗難防止、持ち出しの管理、確実な廃棄を行う。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-sec-physical-task-1-evidence-1",
+              "type": "FILE",
+              "name": "入退室記録"
+            },
+            {
+              "reference-id": "pmark-sec-physical-task-1-evidence-2",
+              "type": "FILE",
+              "name": "廃棄証明"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-sec-access",
+      "name": "アクセス制御と認証",
+      "category": "安全管理措置",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.15"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.16"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.17"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.18"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.5"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-sec-access-task-1",
+          "name": "アクセス権の管理と定期見直し",
+          "description": "業務に必要な人だけに個人情報へのアクセス権を与え、異動・退職時に速やかに削除する。アクセス権を定期的に見直す。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-sec-access-task-1-evidence-1",
+              "type": "FILE",
+              "name": "アクセス権の見直し記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-sec-technical",
+      "name": "技術的安全管理措置",
+      "category": "安全管理措置",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.2"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.7"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.8"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.13"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.15"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.16"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.8.24"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-sec-technical-task-1",
+          "name": "端末とシステムの保護",
+          "description": "端末のマルウェア対策と更新、脆弱性への対応、ログの取得と確認、暗号化、バックアップを行う。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-sec-technical-task-1-evidence-1",
+              "type": "FILE",
+              "name": "端末のセキュリティ状態"
+            },
+            {
+              "reference-id": "pmark-sec-technical-task-1-evidence-2",
+              "type": "FILE",
+              "name": "ログの確認記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-vendor",
+      "name": "委託先の選定と監督",
+      "category": "委託先管理",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.9.4"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.19"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.20"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.21"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.22"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.23"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-vendor-task-1",
+          "name": "委託先の評価と契約",
+          "description": "委託先を選定基準に沿って評価し、安全管理や再委託の条件を定めた契約を結ぶ。年1回以上、委託先の取扱状況を確認する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-vendor-task-1-evidence-1",
+              "type": "FILE",
+              "name": "委託先評価表"
+            },
+            {
+              "reference-id": "pmark-vendor-task-1-evidence-2",
+              "type": "FILE",
+              "name": "委託契約書"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-rights-procedure",
+      "name": "開示等の請求に応じる手続きと周知",
+      "category": "本人対応",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.1"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.2"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.3"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-rights-procedure-task-1",
+          "name": "受付手続きの整備と公表",
+          "description": "開示・訂正・利用停止などの請求の受付窓口、手続き、本人確認の方法を定め、保有個人データに関する事項とあわせて公表する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-rights-procedure-task-1-evidence-1",
+              "type": "LINK",
+              "name": "請求手続きの公表ページのURL"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-rights-response",
+      "name": "開示・訂正・利用停止等への対応",
+      "category": "本人対応",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.4"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.5"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.6"
+        },
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.10.7"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "A.5.34"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-rights-response-task-1",
+          "name": "請求への対応と記録",
+          "description": "本人から利用目的の通知、開示、訂正・追加・削除、利用停止・提供停止を求められたときに、期限内に対応して記録する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-rights-response-task-1-evidence-1",
+              "type": "FILE",
+              "name": "請求の受付・対応記録"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "reference-id": "pmark-complaints",
+      "name": "苦情・相談への対応",
+      "category": "本人対応",
+      "standards": [
+        {
+          "framework": "PMARK-JISQ15001-2023",
+          "control": "J.11.1"
+        },
+        {
+          "framework": "ISO/IEC 27001:2022",
+          "control": "7.4"
+        }
+      ],
+      "tasks": [
+        {
+          "reference-id": "pmark-complaints-task-1",
+          "name": "苦情・相談窓口の運用",
+          "description": "苦情・相談の窓口を設け、受け付けた内容と対応を記録する。",
+          "requested-evidences": [
+            {
+              "reference-id": "pmark-complaints-task-1-evidence-1",
+              "type": "FILE",
+              "name": "苦情・相談の記録"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

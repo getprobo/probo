@@ -31,6 +31,7 @@ on:
     paths:
       - "apps/*/src/**/_locales/*.json"
       - "apps/console/public/data/frameworks/**"
+      - "apps/console/public/data/internal-controls/**"
       - "scripts/i18n/**"
       - ".github/workflows/i18n-check.yaml"
 
@@ -53,5 +54,5 @@ jobs:
         run: "node --test scripts/i18n/check-locales.test.mjs scripts/i18n/check-frameworks.test.mjs"
       - name: "Check ja-JP catalogs"
         run: "node scripts/i18n/check-locales.mjs --locale ja-JP"
-      - name: "Check ja-JP frameworks"
+      - name: "Check ja-JP frameworks and internal controls"
         run: "node scripts/i18n/check-frameworks.mjs --locale ja-JP"
