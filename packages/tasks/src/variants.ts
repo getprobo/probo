@@ -23,8 +23,15 @@ import { tv } from "tailwind-variants/lite";
 export const taskList = tv({
   slots: {
     root: "flex flex-col gap-4",
-    list: "divide-y divide-sand-6",
-    sectionHeader: "flex items-center gap-2 bg-sand-3 px-6 py-3",
+    group: "flex flex-col gap-2",
+    sectionHeader: [
+      "flex w-full items-center gap-2 text-start",
+      "[&_[data-slot=caret-open]]:hidden",
+      "data-panel-open:[&_[data-slot=caret-closed]]:hidden",
+      "data-panel-open:[&_[data-slot=caret-open]]:block",
+    ],
+    caret: "size-4 shrink-0 text-sand-11",
+    list: "divide-y divide-sand-a3",
     empty: "py-6",
   },
 });

@@ -18,11 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CaretDownIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
+import { Collapsible } from "@probo/ui/src/v2/Collapsible/Collapsible";
+import { CollapsiblePanel } from "@probo/ui/src/v2/Collapsible/CollapsiblePanel";
+import { CollapsibleTrigger } from "@probo/ui/src/v2/Collapsible/CollapsibleTrigger";
 import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { Fragment, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
@@ -62,29 +66,41 @@ export function TaskList<T extends TaskListItemSource>({
 
   return (
     <div className={slots.root()}>
-      <Card padding="none">
-        <TooltipProvider>
-          <div className={slots.list()}>
-            {taskStates
-              .filter(state => (itemsByState.get(state)?.length ?? 0) > 0)
-              .map((state) => {
-                const stateItems = itemsByState.get(state) ?? [];
-                return (
-                  <Fragment key={state}>
-                    <div className={slots.sectionHeader()}>
-                      <TaskStateIcon state={state} />
-                      <Text size={2} weight="medium">
-                        {t(`states.${taskStateKeys[state]}`)}
-                      </Text>
-                      <Badge>{stateItems.length}</Badge>
+      <TooltipProvider>
+        {taskStates
+          .filter(state => (itemsByState.get(state)?.length ?? 0) > 0)
+          .map((state) => {
+            const stateItems = itemsByState.get(state) ?? [];
+            return (
+              <Collapsible key={state} defaultOpen className={slots.group()}>
+                <CollapsibleTrigger className={slots.sectionHeader()}>
+                  <CaretRightIcon
+                    className={slots.caret()}
+                    data-slot="caret-closed"
+                    aria-hidden
+                  />
+                  <CaretDownIcon
+                    className={slots.caret()}
+                    data-slot="caret-open"
+                    aria-hidden
+                  />
+                  <TaskStateIcon state={state} />
+                  <Text size={2} weight="medium">
+                    {t(`states.${taskStateKeys[state]}`)}
+                  </Text>
+                  <Badge>{stateItems.length}</Badge>
+                </CollapsibleTrigger>
+                <CollapsiblePanel>
+                  <Card variant="soft" padding="none">
+                    <div className={slots.list()}>
+                      {stateItems.map(item => renderItem(item, state))}
                     </div>
-                    {stateItems.map(item => renderItem(item, state))}
-                  </Fragment>
-                );
-              })}
-          </div>
-        </TooltipProvider>
-      </Card>
+                  </Card>
+                </CollapsiblePanel>
+              </Collapsible>
+            );
+          })}
+      </TooltipProvider>
     </div>
   );
 }

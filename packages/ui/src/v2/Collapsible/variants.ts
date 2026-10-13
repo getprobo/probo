@@ -21,7 +21,7 @@
 import { tv } from "tailwind-variants/lite";
 
 // Collapsible (Radix "Collapsible" over Base UI). Chrome stays minimal: a
-// trigger reset and a height-animated panel. Callers own the row look.
+// trigger reset and a height + opacity animated panel. Callers own the row look.
 export const collapsible = tv({
   slots: {
     trigger: [
@@ -31,8 +31,9 @@ export const collapsible = tv({
     ],
     panel: [
       "h-(--collapsible-panel-height) overflow-hidden",
-      "transition-[height] duration-150 ease-out",
-      "data-starting-style:h-0 data-ending-style:h-0",
+      "transition-[height,opacity] duration-150 ease-out",
+      "data-starting-style:h-0 data-starting-style:opacity-0",
+      "data-ending-style:h-0 data-ending-style:opacity-0",
     ],
   },
 });

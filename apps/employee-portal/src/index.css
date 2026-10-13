@@ -22,6 +22,7 @@
 @import "tailwindcss";
 @import "@probo/ui/src/v2/theme.css";
 @source "../../../packages/ui/src/v2";
+@source "../../../packages/tasks/src";
 
 .status-pip-ring {
   animation: status-pip-pulse 1.8s ease-in-out infinite;
