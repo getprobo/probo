@@ -4,6 +4,39 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.310.0] - 2026-10-13
+
+### Added
+
+- Connector accounts store the instance name. Source cards and the accounts
+  drawer show it, a campaign snapshots it, and names already resolved on
+  access sources are copied over. A CSV source keeps its own name
+
+### Changed
+
+- MCP can create an API-key or client-credentials connector for a provider
+  that needs no extra setting. An access source takes a connector that
+  already exists, or CSV data, and no longer collects credentials
+- The console loads the employee portal list and leaves a forbidden result
+  on that field. The shell hides the employee-portal item in that case, and
+  any other list error still fails the shell. Switching organization no
+  longer reuses the previous portal query
+
+### Fixed
+
+- Reconnect is shown only when reconnecting fixes the connection
+- Connect stays on the right of a vendor form when the provider has no
+  documentation link
+- MCP evidence lists return the file download URL for file evidences
+- An access-source MCP error for a missing account, more than one account,
+  or a SCIM binding is returned to the client instead of as an internal
+  error
+- A blank OAuth client id or secret is rejected instead of being stored as
+  a disconnected connector
+- Viewers can list their own devices in the employee portal
+- Banners published before discovery stats were frozen get a frozen
+  timestamp, so the console no longer treats them as still discovering
+
 ## [0.309.1] - 2026-10-09
 
 ### Fixed
