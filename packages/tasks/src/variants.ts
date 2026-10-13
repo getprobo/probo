@@ -79,10 +79,12 @@ export const taskListItem = tv({
     title: "min-w-0 truncate",
     titleLink: "hover:underline after:absolute after:inset-0 after:content-['']",
     meta: "flex shrink-0 items-center gap-1 text-sand-11 [&_svg]:size-3.5",
+    deadline: "flex shrink-0 items-center gap-1 [&_svg]:size-3.5",
     externalLink: "relative z-1 shrink-0",
     trailing: "relative z-1 ml-auto flex shrink-0 items-center gap-2",
     assignee: "shrink-0",
-    state: "relative z-1 w-40 shrink-0",
+    state: "relative z-1 shrink-0",
+    stateTrigger: "w-auto min-w-0 gap-0 px-0 [&>:last-child]:hidden",
     stateOption: "flex items-center gap-2",
   },
   variants: {
@@ -93,9 +95,14 @@ export const taskListItem = tv({
       dragging: { root: "cursor-grabbing opacity-40 select-none" },
       ghost: { root: "bg-sand-3 opacity-50 select-none" },
     },
+    overdue: {
+      true: { deadline: "text-red-11" },
+      false: { deadline: "text-sand-11" },
+    },
   },
   defaultVariants: {
     interaction: "idle",
+    overdue: false,
   },
 });
 

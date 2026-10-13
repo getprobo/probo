@@ -20,12 +20,11 @@
 
 import {
   ArrowsClockwiseIcon,
-  CalendarBlankIcon,
+  CalendarDotIcon,
   ClockIcon,
 } from "@phosphor-icons/react";
 import { dateFormat, formatDuration } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -42,8 +41,8 @@ import { Link } from "react-router";
 import { TASKS_NAMESPACE } from "./i18n";
 import { isOverdueTask } from "./isOverdueTask";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
-import { TaskStateIcon } from "./TaskStateIcon";
 import { type TaskPriority, type TaskState, taskStateKeys, taskStates } from "./taskState";
+import { TaskStateIcon } from "./TaskStateIcon";
 import { taskListItem } from "./variants";
 
 export interface TaskListItemAssignee {
@@ -108,7 +107,10 @@ export function TaskListItem(props: TaskListItemProps) {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const displayState = props.sectionState ?? props.task.state;
   const isOverdue = isOverdueTask(props.task.deadline, displayState);
-  const slots = taskListItem({ interaction: rowInteraction(props, isMouseDown) });
+  const slots = taskListItem({
+    interaction: rowInteraction(props, isMouseDown),
+    overdue: isOverdue,
+  });
   const { canDrag } = props;
   const timeEstimate = formatDuration(props.task.timeEstimate, t);
   const recurrence = formatDuration(props.task.recurrenceInterval, t);
@@ -127,6 +129,14 @@ export function TaskListItem(props: TaskListItemProps) {
     >
       <div className={slots.main()}>
         <TaskPriorityIcon priority={props.task.priority} />
+        <TaskListItemState
+          displayState={displayState}
+          taskState={props.task.state}
+          canUpdate={props.canUpdate}
+          isUpdating={props.isUpdating}
+          slots={slots}
+          onStateChange={props.onStateChange}
+        />
         <Text size={2} weight="medium" className={slots.title()}>
           <Link
             to={props.detailsTo}
@@ -166,10 +176,10 @@ export function TaskListItem(props: TaskListItemProps) {
         )}
         {props.task.deadline && (
           <span
-            className={slots.meta()}
+            className={slots.deadline()}
             title={t("metadata.deadline")}
           >
-            <CalendarBlankIcon />
+            <CalendarDotIcon />
             <Text size={1} color="current">
               <time dateTime={props.task.deadline}>
                 {dateFormat(i18n.language, props.task.deadline)}
@@ -188,55 +198,93 @@ export function TaskListItem(props: TaskListItemProps) {
             </Text>
           </span>
         )}
-        {(isOverdue || props.task.assignedTo?.fullName) && (
+        {props.task.assignedTo?.fullName && (
           <div className={slots.trailing()}>
-            {isOverdue && (
-              <Badge variant="soft" color="red" size={1}>
-                {t("metadata.overdue")}
-              </Badge>
-            )}
-            {props.task.assignedTo?.fullName && (
-              <TaskListItemAssignee
-                assignee={props.task.assignedTo}
-                to={props.assigneeTo}
-                className={slots.assignee()}
-              />
-            )}
+            <TaskListItemAssignee
+              assignee={props.task.assignedTo}
+              to={props.assigneeTo}
+              className={slots.assignee()}
+            />
           </div>
         )}
       </div>
-      <div className={slots.state()}>
-        <Select
-          value={displayState}
-          disabled={!props.canUpdate || props.isUpdating}
-          onValueChange={(state: TaskState | null) => {
-            if (state != null && state !== props.task.state) {
-              props.onStateChange(state);
-            }
-          }}
-        >
-          <SelectTrigger size={1} variant="ghost">
-            {(state: TaskState | null) => state
-              ? (
-                  <span className={slots.stateOption()}>
-                    <TaskStateIcon state={state} />
-                    {t(`states.${taskStateKeys[state]}`)}
-                  </span>
-                )
-              : null}
-          </SelectTrigger>
-          <SelectPopup align="end">
-            {taskStates.map(state => (
-              <SelectItem key={state} value={state}>
-                <span className={slots.stateOption()}>
-                  <TaskStateIcon state={state} />
-                  {t(`states.${taskStateKeys[state]}`)}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectPopup>
-        </Select>
-      </div>
+    </div>
+  );
+}
+
+function TaskListItemState({
+  displayState,
+  taskState,
+  canUpdate,
+  isUpdating,
+  slots,
+  onStateChange,
+}: {
+  displayState: TaskState;
+  taskState: TaskState;
+  canUpdate: boolean;
+  isUpdating?: boolean;
+  slots: ReturnType<typeof taskListItem>;
+  onStateChange: (state: TaskState) => void;
+}): ReactNode {
+  const { t } = useTranslation(TASKS_NAMESPACE);
+  const label = t(`states.${taskStateKeys[displayState]}`);
+  const icon = <TaskStateIcon state={displayState} />;
+
+  if (!canUpdate) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={(
+            <span className={slots.state()} aria-label={label}>
+              {icon}
+            </span>
+          )}
+        />
+        <TooltipPopup>{label}</TooltipPopup>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <div className={slots.state()}>
+      <Select
+        value={displayState}
+        disabled={isUpdating}
+        onValueChange={(state: TaskState | null) => {
+          if (state != null && state !== taskState) {
+            onStateChange(state);
+          }
+        }}
+      >
+        <Tooltip>
+          <TooltipTrigger
+            render={(
+              <SelectTrigger
+                size={1}
+                variant="ghost"
+                className={slots.stateTrigger()}
+                aria-label={label}
+              >
+                {(state: TaskState | null) => state == null
+                  ? null
+                  : <TaskStateIcon state={state} />}
+              </SelectTrigger>
+            )}
+          />
+          <TooltipPopup>{label}</TooltipPopup>
+        </Tooltip>
+        <SelectPopup align="start">
+          {taskStates.map(state => (
+            <SelectItem key={state} value={state}>
+              <span className={slots.stateOption()}>
+                <TaskStateIcon state={state} />
+                {t(`states.${taskStateKeys[state]}`)}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
     </div>
   );
 }

@@ -104,6 +104,12 @@
     "months_one": "mes",
     "months_other": "meses",
     "years_one": "año",
-    "years_other": "años"
+    "years_other": "años",
+    "sec_one": "{{count}} segundo",
+    "sec_other": "{{count}} segundos",
+    "min_one": "{{count}} minuto",
+    "min_other": "{{count}} minutos",
+    "hour_one": "{{count}} hora",
+    "hour_other": "{{count}} horas"
   }
 }

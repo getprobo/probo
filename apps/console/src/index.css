@@ -11,6 +11,7 @@
 @import "tw-animate-css";
 @source "../../../packages/ui/src";
 @source "../../../packages/helpers/src";
+@source "../../../packages/tasks/src";
 
 /* The v1 Layout used to wrap every page in this; the new shell only paints a
  * background, so uncoloured headings fell back to CanvasText in dark mode. */
