@@ -2938,9 +2938,12 @@ components:
             - FILE
             - LINK
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EvidenceType
+        file:
+          $ref: "#/components/schemas/File"
+          description: Attached file when the evidence type is FILE
         url:
           type: string
-          description: URL
+          description: Link URL, or the attached file download URL when the evidence type is FILE
         description:
           type: string
           description: Description

@@ -2843,7 +2843,13 @@ func (r *Resolver) ListInternalControlEvidencesTool(ctx context.Context, req *mc
 		return nil, types.ListInternalControlEvidencesOutput{}, fmt.Errorf("failed to list internal control evidences: %w", err)
 	}
 
-	return nil, types.NewListInternalControlEvidencesOutput(evidencePage), nil
+	filesByID, err := r.evidenceFilesByID(ctx, scope, evidencePage.Data)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot load evidence files", log.Error(err))
+		return nil, types.ListInternalControlEvidencesOutput{}, fmt.Errorf("internal error")
+	}
+
+	return nil, types.NewListInternalControlEvidencesOutput(evidencePage, filesByID), nil
 }
 
 func (r *Resolver) LinkInternalControlTool(ctx context.Context, req *mcp.CallToolRequest, input *types.LinkInternalControlInput) (*mcp.CallToolResult, types.LinkInternalControlOutput, error) {

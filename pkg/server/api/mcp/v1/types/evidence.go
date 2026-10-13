@@ -22,10 +22,16 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewEvidence(e *coredata.Evidence) *Evidence {
+func NewEvidence(e *coredata.Evidence, file *File) *Evidence {
+	url := e.URL
+	if url == "" && file != nil {
+		url = file.DownloadURL
+	}
+
 	return &Evidence{
 		ID:                e.ID,
 		OrganizationID:    e.OrganizationID,
@@ -34,17 +40,26 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 		State:             EvidenceState(e.State.String()),
 		ReferenceID:       e.ReferenceID,
 		Type:              EvidenceType(e.Type.String()),
-		URL:               e.URL,
+		File:              file,
+		URL:               url,
 		Description:       e.Description,
 		CreatedAt:         e.CreatedAt,
 		UpdatedAt:         e.UpdatedAt,
 	}
 }
 
-func NewListInternalControlEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField]) ListInternalControlEvidencesOutput {
+func NewListInternalControlEvidencesOutput(
+	evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField],
+	filesByID map[gid.GID]*File,
+) ListInternalControlEvidencesOutput {
 	evidences := make([]*Evidence, 0, len(evidencePage.Data))
 	for _, v := range evidencePage.Data {
-		evidences = append(evidences, NewEvidence(v))
+		var file *File
+		if v.EvidenceFileId != nil {
+			file = filesByID[*v.EvidenceFileId]
+		}
+
+		evidences = append(evidences, NewEvidence(v, file))
 	}
 
 	var nextCursor *page.CursorKey
