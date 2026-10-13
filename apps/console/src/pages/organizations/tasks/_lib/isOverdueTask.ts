@@ -18,15 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { isPastDueDate } from "@probo/helpers";
-
-import type { TaskState } from "./taskState";
-
-const closedTaskStates = new Set<TaskState>(["DONE", "CANCELED", "DUPLICATE"]);
-
-export function isOverdueTask(
-  deadline: string | null | undefined,
-  state: TaskState,
-): boolean {
-  return Boolean(deadline) && !closedTaskStates.has(state) && isPastDueDate(deadline);
-}
+export { isOverdueTask } from "@probo/tasks";

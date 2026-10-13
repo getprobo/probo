@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/task"
 )
 
 // SignableDocuments is the resolver for the signableDocuments field.
@@ -167,6 +168,61 @@ func (r *viewerResolver) EnrolledDevices(ctx context.Context, obj *types.Viewer,
 	}
 
 	return types.NewEmployeeDeviceConnection(devicesPage), nil
+}
+
+// AssignedTasks is the resolver for the assignedTasks field.
+func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy, filter *types.TaskFilter) (*types.TaskConnection, error) {
+	scope, err := r.authorize(ctx, organizationID, task.ActionEmployeeTaskList)
+	if err != nil {
+		return nil, err
+	}
+
+	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
+		Field:     coredata.TaskOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TaskOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	identity := authn.IdentityFromContext(ctx)
+
+	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identity.ID,
+		organizationID,
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get assigned tasks owner profile", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	var query *string
+	var state *coredata.TaskState
+	if filter != nil {
+		query = filter.Query
+		state = filter.State
+	}
+
+	taskFilter := coredata.NewTaskFilter(query, state, &profile.ID, nil)
+
+	page, err := r.task.ListForOrganizationID(ctx, scope, organizationID, cursor, taskFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list assigned tasks", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskConnection(page, r, organizationID, taskFilter), nil
 }
 
 // EnrolledDevice is the resolver for the enrolledDevice field.

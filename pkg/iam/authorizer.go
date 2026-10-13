@@ -449,6 +449,21 @@ func (a *Authorizer) evaluateMultiInTx(
 			"organization_id": membership.OrganizationID.String(),
 			"role":            membership.Role.String(),
 		}
+
+		profile := &coredata.MembershipProfile{}
+		if err := profile.LoadByIdentityIDAndOrganizationID(
+			ctx,
+			tx,
+			coredata.NewScopeFromObjectID(membership.OrganizationID),
+			params.Principal,
+			membership.OrganizationID,
+		); err != nil {
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, nil, nil, fmt.Errorf("cannot load membership profile: %w", err)
+			}
+		} else {
+			scopedPrincipalAttrs["profile_id"] = profile.ID.String()
+		}
 	}
 
 	principalAttrs, err := a.buildPrincipalAttributes(ctx, tx, params.Principal, scopedPrincipalAttrs)

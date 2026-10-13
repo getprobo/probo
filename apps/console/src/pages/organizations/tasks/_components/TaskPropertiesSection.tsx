@@ -18,19 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime, toDateInput } from "@probo/helpers";
-import { dateFormat, dateTimeFormat, formatDuration } from "@probo/i18n";
+import {
+  PropertyRow,
+  TASKS_NAMESPACE,
+  TaskDurationField,
+  TaskProperties,
+  type TaskPriority,
+  type TaskState,
+  taskRecurrenceDurationUnits,
+} from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Card } from "@probo/ui/src/v2/Card/Card";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
@@ -39,22 +39,12 @@ import type { TaskPropertiesSection_task$key } from "#/__generated__/core/TaskPr
 import type { TaskPropertiesSectionInternalControlsQuery } from "#/__generated__/core/TaskPropertiesSectionInternalControlsQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { taskRecurrenceDurationUnits } from "../_lib/taskDuration";
-import type { TaskPriority, TaskState } from "../_lib/taskState";
-import {
-  taskPriorities,
-  taskStateKeys,
-  taskStates,
-} from "../_lib/taskState";
 import { useUpdateTask } from "../_lib/useUpdateTask";
 import { taskPropertiesSection } from "../variants";
 
 import { TaskAssigneeField } from "./TaskAssigneeField";
-import { TaskDurationField } from "./TaskDurationField";
 import { TaskInternalControlField } from "./TaskInternalControlField";
 import { TaskLinearField } from "./TaskLinearField";
-import { TaskPriorityIcon } from "./TaskPriorityIcon";
-import { TaskStateIcon } from "./TaskStateIcon";
 
 const taskInternalControlsPageSize = 50;
 
@@ -97,8 +87,8 @@ interface TaskPropertiesSectionProps {
 }
 
 export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
-  const { t, i18n } = useTranslation("organizations/tasks");
-  const { t: tApp } = useTranslation();
+  const { t } = useTranslation("organizations/tasks");
+  const { t: tTasks } = useTranslation(TASKS_NAMESPACE);
   const organizationId = useOrganizationId();
   const {
     data: task,
@@ -110,8 +100,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
     TaskPropertiesSection_task$key
   >(taskPropertiesSectionFragment, taskKey);
   const [updateTask, isUpdating] = useUpdateTask();
-  const { root, value, names } = taskPropertiesSection();
-  const empty = t("detailsPage.empty");
+  const { names } = taskPropertiesSection();
   const internalControls = task.internalControls.edges.map(edge => edge.node);
 
   function save(
@@ -141,281 +130,118 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
   }
 
   return (
-    <Card size={2}>
-      <div className={root()}>
-        <PropertyRow label={t("detailsPage.fields.state")}>
-          {task.canUpdate
-            ? (
-                <Select
-                  value={task.state}
-                  disabled={isUpdating}
-                  onValueChange={(state: TaskState | null) => {
-                    if (state == null || state === task.state) {
-                      return;
-                    }
-                    void save({ state });
-                  }}
-                >
-                  <SelectTrigger size={1} aria-label={t("detailsPage.fields.state")}>
-                    {(state: TaskState | null) =>
-                      state
-                        ? (
-                            <span className={value()}>
-                              <TaskStateIcon state={state} />
-                              {t(`detailsPage.states.${taskStateKeys[state]}`)}
-                            </span>
-                          )
-                        : null}
-                  </SelectTrigger>
-                  <SelectPopup>
-                    {taskStates.map(state => (
-                      <SelectItem key={state} value={state}>
-                        <span className={value()}>
-                          <TaskStateIcon state={state} />
-                          {t(`detailsPage.states.${taskStateKeys[state]}`)}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectPopup>
-                </Select>
-              )
-            : (
-                <span className={value()}>
-                  <TaskStateIcon state={task.state} />
-                  <Text size={2}>{t(`detailsPage.states.${taskStateKeys[task.state]}`)}</Text>
-                </span>
-              )}
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.priority")}>
-          {task.canUpdate
-            ? (
-                <Select
-                  value={task.priority}
-                  disabled={isUpdating}
-                  onValueChange={(priority: TaskPriority | null) => {
-                    if (priority == null || priority === task.priority) {
-                      return;
-                    }
-                    void save({ priority });
-                  }}
-                >
-                  <SelectTrigger size={1} aria-label={t("detailsPage.fields.priority")}>
-                    {(priority: TaskPriority | null) =>
-                      priority
-                        ? (
-                            <span className={value()}>
-                              <TaskPriorityIcon priority={priority} />
-                              {t(`detailsPage.priorities.${priority.toLowerCase()}`)}
-                            </span>
-                          )
-                        : null}
-                  </SelectTrigger>
-                  <SelectPopup>
-                    {taskPriorities.map(priority => (
-                      <SelectItem key={priority} value={priority}>
-                        <span className={value()}>
-                          <TaskPriorityIcon priority={priority} />
-                          {t(`detailsPage.priorities.${priority.toLowerCase()}`)}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectPopup>
-                </Select>
-              )
-            : (
-                <span className={value()}>
-                  <TaskPriorityIcon priority={task.priority} />
-                  <Text size={2}>
-                    {t(`detailsPage.priorities.${task.priority.toLowerCase()}`)}
-                  </Text>
-                </span>
-              )}
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.assignedTo")}>
-          {task.canUpdate
-            ? (
-                <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
-                  <TaskAssigneeField
-                    taskKey={task}
-                    disabled={isUpdating}
-                    onValueChange={(assignedToId) => {
-                      void save({ assignedToId });
-                    }}
-                  />
-                </Suspense>
-              )
-            : task.assignedTo
-              ? (
-                  <Link
-                    size={2}
-                    to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
-                  >
-                    {task.assignedTo.fullName}
-                  </Link>
-                )
-              : (
-                  <Text size={2} color="faint">{t("detailsPage.unassigned")}</Text>
-                )}
-        </PropertyRow>
-        <Suspense fallback={null}>
-          <TaskLinearField taskKey={task} />
-        </Suspense>
-        <PropertyRow
-          label={t("detailsPage.fields.internalControls")}
-          align={internalControls.length > 0 || hasNext ? "start" : "center"}
-        >
-          <span className={names()}>
+    <TaskProperties
+      task={task}
+      canUpdate={task.canUpdate}
+      isUpdating={isUpdating}
+      extraProperties={(
+        <>
+          <PropertyRow label={t("detailsPage.fields.assignedTo")}>
             {task.canUpdate
               ? (
                   <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
-                    <TaskInternalControlField
-                      internalControls={internalControls}
-                      disabled={isUpdating || hasNext || isLoadingNext}
-                      onValueChange={(internalControlIds) => {
-                        void save({ internalControlIds });
+                    <TaskAssigneeField
+                      taskKey={task}
+                      disabled={isUpdating}
+                      onValueChange={(assignedToId) => {
+                        void save({ assignedToId });
                       }}
                     />
                   </Suspense>
                 )
-              : internalControls.length > 0
+              : task.assignedTo
                 ? (
-                    internalControls.map(internalControl => (
-                      <Link
-                        key={internalControl.id}
-                        size={2}
-                        to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}
-                      >
-                        {internalControl.name}
-                      </Link>
-                    ))
+                    <Link
+                      size={2}
+                      to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
+                    >
+                      {task.assignedTo.fullName}
+                    </Link>
                   )
                 : (
-                    <Text size={2} color="faint">{t("detailsPage.none")}</Text>
+                    <Text size={2} color="faint">{t("detailsPage.unassigned")}</Text>
                   )}
-            {hasNext && (
-              <Button
-                variant="ghost"
-                color="neutral"
-                size={1}
-                className="self-start"
-                loading={isLoadingNext}
-                onClick={() => loadNext(taskInternalControlsPageSize)}
-              >
-                {t("detailsPage.actions.loadMoreInternalControls")}
-              </Button>
-            )}
-          </span>
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.timeEstimate")}>
-          {task.canUpdate
-            ? (
-                <TaskDurationField
-                  value={task.timeEstimate ?? null}
-                  onValueChange={timeEstimate => save({ timeEstimate })}
-                />
-              )
-            : (
-                <Text size={2}>{formatDuration(task.timeEstimate, tApp) ?? empty}</Text>
+          </PropertyRow>
+          <Suspense fallback={null}>
+            <TaskLinearField taskKey={task} />
+          </Suspense>
+          <PropertyRow
+            label={t("detailsPage.fields.internalControls")}
+            align={internalControls.length > 0 || hasNext ? "start" : "center"}
+          >
+            <span className={names()}>
+              {task.canUpdate
+                ? (
+                    <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
+                      <TaskInternalControlField
+                        internalControls={internalControls}
+                        disabled={isUpdating || hasNext || isLoadingNext}
+                        onValueChange={(internalControlIds) => {
+                          void save({ internalControlIds });
+                        }}
+                      />
+                    </Suspense>
+                  )
+                : internalControls.length > 0
+                  ? (
+                      internalControls.map(internalControl => (
+                        <Link
+                          key={internalControl.id}
+                          size={2}
+                          to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}
+                        >
+                          {internalControl.name}
+                        </Link>
+                      ))
+                    )
+                  : (
+                      <Text size={2} color="faint">{t("detailsPage.none")}</Text>
+                    )}
+              {hasNext && (
+                <Button
+                  variant="ghost"
+                  color="neutral"
+                  size={1}
+                  className="self-start"
+                  loading={isLoadingNext}
+                  onClick={() => loadNext(taskInternalControlsPageSize)}
+                >
+                  {t("detailsPage.actions.loadMoreInternalControls")}
+                </Button>
               )}
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.deadline")}>
-          {task.canUpdate
-            ? (
-                <>
-                  <TextField
-                    size={1}
-                    type="date"
-                    value={toDateInput(task.deadline)}
-                    disabled={isUpdating}
-                    aria-label={t("detailsPage.fields.deadline")}
-                    onChange={(event) => {
-                      const next = event.currentTarget.value;
-                      const deadline = next ? formatDatetime(next) ?? null : null;
-                      const current = task.deadline ? toDateInput(task.deadline) : "";
-                      if (next === current) {
-                        return;
-                      }
-                      if (!deadline && task.recurrenceInterval) {
-                        void save({ deadline, recurrenceInterval: null });
-                        return;
-                      }
-                      void save({ deadline });
-                    }}
-                  />
-                </>
-              )
-            : task.deadline
-              ? (
-                  <Text size={2}>
-                    <time dateTime={toDateInput(task.deadline)}>
-                      {dateFormat(i18n.language, toDateInput(task.deadline))}
-                    </time>
-                  </Text>
-                )
-              : (
-                  <Text size={2} color="faint">{empty}</Text>
-                )}
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.recurrence")}>
-          {task.canUpdate
-            ? (
-                <TaskDurationField
-                  value={task.recurrenceInterval ?? null}
-                  disabled={!task.deadline && !task.recurrenceInterval}
-                  defaultValue="P7D"
-                  units={taskRecurrenceDurationUnits}
-                  addLabel={t("detailsPage.actions.addRecurrence")}
-                  addTitle={!task.deadline
-                    ? t("detailsPage.hints.recurrenceNeedsDeadline")
-                    : undefined}
-                  clearLabel={t("detailsPage.actions.clearRecurrence")}
-                  amountAriaLabel={t("detailsPage.fields.recurrence")}
-                  unitAriaLabel={t("detailsPage.fields.recurrenceUnit")}
-                  onValueChange={recurrenceInterval => save({ recurrenceInterval })}
-                />
-              )
-            : task.recurrenceInterval
-              ? (
-                  <Text size={2}>{formatDuration(task.recurrenceInterval, tApp)}</Text>
-                )
-              : (
-                  <Text size={2} color="faint">{t("detailsPage.doesNotRepeat")}</Text>
-                )}
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.createdAt")}>
-          <Text size={2}>
-            <time dateTime={task.createdAt}>
-              {dateTimeFormat(i18n.language, task.createdAt)}
-            </time>
-          </Text>
-        </PropertyRow>
-        <PropertyRow label={t("detailsPage.fields.updatedAt")}>
-          <Text size={2}>
-            <time dateTime={task.updatedAt}>
-              {dateTimeFormat(i18n.language, task.updatedAt)}
-            </time>
-          </Text>
-        </PropertyRow>
-      </div>
-    </Card>
-  );
-}
-
-function PropertyRow({
-  label,
-  children,
-  align = "center",
-}: {
-  label: string;
-  children: ReactNode;
-  align?: "center" | "start";
-}) {
-  const { row, label: labelClassName } = taskPropertiesSection({ align });
-
-  return (
-    <div className={row()}>
-      <Text size={2} color="faint" className={labelClassName()}>{label}</Text>
-      {children}
-    </div>
+            </span>
+          </PropertyRow>
+        </>
+      )}
+      timeEstimateField={task.canUpdate
+        ? (
+            <TaskDurationField
+              value={task.timeEstimate ?? null}
+              onValueChange={timeEstimate => save({ timeEstimate })}
+            />
+          )
+        : undefined}
+      recurrenceField={task.canUpdate
+        ? (
+            <TaskDurationField
+              value={task.recurrenceInterval ?? null}
+              disabled={!task.deadline && !task.recurrenceInterval}
+              defaultValue="P7D"
+              units={taskRecurrenceDurationUnits}
+              addLabel={tTasks("actions.addRecurrence")}
+              addTitle={!task.deadline
+                ? tTasks("hints.recurrenceNeedsDeadline")
+                : undefined}
+              clearLabel={tTasks("actions.clearRecurrence")}
+              amountAriaLabel={tTasks("fields.recurrence")}
+              unitAriaLabel={tTasks("fields.recurrenceUnit")}
+              onValueChange={recurrenceInterval => save({ recurrenceInterval })}
+            />
+          )
+        : undefined}
+      onChange={(change) => {
+        void save(change);
+      }}
+    />
   );
 }

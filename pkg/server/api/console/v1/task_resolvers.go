@@ -544,7 +544,14 @@ func (r *taskResolver) Permission(ctx context.Context, obj *types.Task, action s
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, task.ActionTaskList)
 	if err != nil {
-		return 0, err
+		if !gqlutils.IsForbidden(err) {
+			return 0, err
+		}
+
+		scope, err = r.authorize(ctx, obj.ParentID, task.ActionEmployeeTaskList)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	switch obj.Resolver.(type) {
@@ -556,7 +563,7 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 		}
 
 		return count, nil
-	case *organizationResolver:
+	case *organizationResolver, *viewerResolver:
 		count, err := r.task.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count tasks", log.Error(err))

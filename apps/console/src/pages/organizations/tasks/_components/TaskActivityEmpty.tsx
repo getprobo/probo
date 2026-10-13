@@ -18,24 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ClockCounterClockwiseIcon } from "@phosphor-icons/react";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useTranslation } from "react-i18next";
-
-import { taskCommentsEmpty } from "../variants";
-
-export function TaskActivityEmpty() {
-  const { t } = useTranslation("organizations/tasks");
-  const { root, icon } = taskCommentsEmpty();
-
-  return (
-    <div className={root()}>
-      <span className={icon()}>
-        <ClockCounterClockwiseIcon weight="light" />
-      </span>
-      <Text size={1} color="faint">
-        {t("detailsPage.activity.empty")}
-      </Text>
-    </div>
-  );
-}
+export { TaskActivityEmpty } from "@probo/tasks";

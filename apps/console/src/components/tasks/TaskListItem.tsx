@@ -18,43 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  ArrowsClockwiseIcon,
-  CalendarBlankIcon,
-  ClockIcon,
-} from "@phosphor-icons/react";
-import { dateFormat, formatDuration } from "@probo/i18n";
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
-import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
-import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
-import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { TaskListItem as SharedTaskListItem, type TaskState } from "@probo/tasks";
 import { graphql, useFragment } from "react-relay";
-import { Link } from "react-router";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
-import { TaskPriorityIcon } from "#/pages/organizations/tasks/_components/TaskPriorityIcon";
-import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
-import { isOverdueTask } from "#/pages/organizations/tasks/_lib/isOverdueTask";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
-import {
-  type TaskState,
-  taskStateKeys,
-  taskStates,
-} from "#/pages/organizations/tasks/_lib/taskState";
-
-import { taskListItem } from "./variants";
 
 const taskListItemFragment = graphql`
   fragment TaskListItem_task on Task {
@@ -93,23 +64,6 @@ const updateStateMutation = graphql`
   }
 `;
 
-function rowInteraction(
-  props: TaskListItemProps,
-  isMouseDown: boolean,
-): "idle" | "grab" | "grabbing" | "dragging" | "ghost" {
-  if (props.isGhost) {
-    return "ghost";
-  }
-  if (!props.canDrag) {
-    return "idle";
-  }
-  if (props.isDragging) {
-    return "dragging";
-  }
-
-  return isMouseDown ? "grabbing" : "grab";
-}
-
 interface TaskListItemProps {
   taskKey: TaskListItem_task$key;
   sectionState?: TaskState;
@@ -126,13 +80,10 @@ interface TaskListItemProps {
 
 export function TaskListItem(props: TaskListItemProps) {
   const organizationId = useOrganizationId();
-  const { t, i18n } = useTranslation();
   const { canUpdate, ...task } = useFragment(taskListItemFragment, props.taskKey);
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
     updateStateMutation,
   );
-  const [isMouseDown, setIsMouseDown] = useState(false);
-  const displayState = props.sectionState ?? task.state;
 
   function onStateChange(state: TaskState) {
     void updateState({
@@ -150,152 +101,42 @@ export function TaskListItem(props: TaskListItemProps) {
     });
   }
 
-  const { canDrag } = props;
-  const isOverdue = isOverdueTask(task.deadline, displayState);
-  const slots = taskListItem({ interaction: rowInteraction(props, isMouseDown) });
-  const detailsUrl = taskDetailsPath(organizationId, task.id);
-
   return (
-    <div
-      className={slots.root()}
-      draggable={canDrag}
-      onDragStart={canDrag ? props.onDragStart : undefined}
-      onDragOver={canDrag ? props.onDragOver : undefined}
-      onDrop={canDrag ? props.onDrop : undefined}
-      onDragEnd={canDrag ? props.onDragEnd : undefined}
-      onMouseDown={canDrag ? () => setIsMouseDown(true) : undefined}
-      onMouseUp={canDrag ? () => setIsMouseDown(false) : undefined}
-      onMouseLeave={canDrag ? () => setIsMouseDown(false) : undefined}
-    >
-      <div className={slots.main()}>
-        <TaskPriorityIcon priority={task.priority} />
-        <Text size={2} weight="medium" className={slots.title()}>
-          <Link
-            to={detailsUrl}
-            className={slots.titleLink()}
-            draggable={false}
-            onClick={(event) => {
-              if (props.ignoreClick) {
-                event.preventDefault();
-              }
-            }}
-          >
-            {task.name}
-          </Link>
-        </Text>
-        {task.externalLink && (
-          <Anchor
-            className={slots.externalLink()}
-            size={1}
-            color="neutral"
-            href={task.externalLink.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {task.externalLink.identifier}
-          </Anchor>
-        )}
-        {task.timeEstimate && (
-          <span
-            className={slots.meta()}
-            title={t("tasksCard.metadata.timeEstimate")}
-          >
-            <ClockIcon />
-            <Text size={1} color="current">
-              {formatDuration(task.timeEstimate, t)}
-            </Text>
-          </span>
-        )}
-        {task.deadline && (
-          <span
-            className={slots.meta()}
-            title={t("tasksCard.metadata.deadline")}
-          >
-            <CalendarBlankIcon />
-            <Text size={1} color="current">
-              <time dateTime={task.deadline}>
-                {dateFormat(i18n.language, task.deadline)}
-              </time>
-            </Text>
-          </span>
-        )}
-        {task.recurrenceInterval && (
-          <span
-            className={slots.meta()}
-            title={t("tasksCard.recurringBadge.tooltip", {
-              interval: formatDuration(task.recurrenceInterval, t),
-            })}
-          >
-            <ArrowsClockwiseIcon />
-            <Text size={1} color="current">
-              {formatDuration(task.recurrenceInterval, t)}
-            </Text>
-          </span>
-        )}
-        {(isOverdue || task.assignedTo?.fullName) && (
-          <div className={slots.trailing()}>
-            {isOverdue && (
-              <Badge variant="soft" color="red" size={1}>
-                {t("tasksCard.metadata.overdue")}
-              </Badge>
-            )}
-            {task.assignedTo?.fullName && (
-              <Tooltip>
-                <TooltipTrigger
-                  render={(
-                    <Link
-                      className={slots.assignee()}
-                      to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
-                      aria-label={task.assignedTo.fullName}
-                    >
-                      <Avatar
-                        size={1}
-                        radius="full"
-                        name={task.assignedTo.fullName}
-                        email={task.assignedTo.emailAddress}
-                        src={task.assignedTo.avatar?.downloadUrl}
-                      />
-                    </Link>
-                  )}
-                />
-                <TooltipPopup>{task.assignedTo.fullName}</TooltipPopup>
-              </Tooltip>
-            )}
-          </div>
-        )}
-      </div>
-      <div className={slots.state()}>
-        <Select
-          value={displayState}
-          disabled={!canUpdate || isUpdating}
-          onValueChange={(state: TaskState | null) => {
-            if (state != null && state !== task.state) {
-              onStateChange(state);
-            }
-          }}
-        >
-          <SelectTrigger size={1} variant="ghost">
-            {(state: TaskState | null) => state
-              ? (
-                  <span className={slots.stateOption()}>
-                    <TaskStateIcon state={state} />
-                    {t(`tasksCard.states.${taskStateKeys[state]}`)}
-                  </span>
-                )
-              : null}
-          </SelectTrigger>
-          <SelectPopup align="end">
-            {taskStates.map(state => (
-              <SelectItem key={state} value={state}>
-                <span className={slots.stateOption()}>
-                  <TaskStateIcon state={state} />
-                  {t(`tasksCard.states.${taskStateKeys[state]}`)}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectPopup>
-        </Select>
-      </div>
-    </div>
+    <SharedTaskListItem
+      task={{
+        id: task.id,
+        name: task.name,
+        state: task.state,
+        priority: task.priority,
+        timeEstimate: task.timeEstimate,
+        deadline: task.deadline,
+        recurrenceInterval: task.recurrenceInterval,
+        externalLink: task.externalLink,
+        assignedTo: task.assignedTo == null
+          ? null
+          : {
+              id: task.assignedTo.id,
+              fullName: task.assignedTo.fullName,
+              emailAddress: task.assignedTo.emailAddress,
+              avatarUrl: task.assignedTo.avatar?.downloadUrl,
+            },
+      }}
+      canUpdate={canUpdate}
+      isUpdating={isUpdating}
+      detailsTo={taskDetailsPath(organizationId, task.id)}
+      assigneeTo={task.assignedTo
+        ? `/organizations/${organizationId}/settings/users/${task.assignedTo.id}`
+        : undefined}
+      sectionState={props.sectionState}
+      canDrag={props.canDrag}
+      isDragging={props.isDragging}
+      isGhost={props.isGhost}
+      ignoreClick={props.ignoreClick}
+      onStateChange={onStateChange}
+      onDragStart={props.onDragStart}
+      onDragOver={props.onDragOver}
+      onDrop={props.onDrop}
+      onDragEnd={props.onDragEnd}
+    />
   );
 }

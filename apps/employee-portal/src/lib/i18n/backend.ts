@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { registerTasksCatalogs } from "@probo/tasks";
 import type { BackendModule, ReadCallback, ResourceKey } from "i18next";
 
 // The default namespace for app-wide chrome strings, sourced from src/_locales/.
@@ -51,6 +52,8 @@ function buildLookup(): Map<string, () => Promise<CatalogModule>> {
 
     lookup.set(catalogKey(namespace, language), importer);
   }
+
+  registerTasksCatalogs(lookup, catalogKey);
 
   return lookup;
 }

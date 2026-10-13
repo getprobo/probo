@@ -18,43 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  CellSignalFullIcon,
-  CellSignalLowIcon,
-  CellSignalMediumIcon,
-  WarningCircleIcon,
-} from "@phosphor-icons/react";
-import { tv } from "tailwind-variants/lite";
-
-import type { TaskPriority } from "../_lib/taskState";
-
-const taskPriorityIcon = tv({
-  base: "size-4 shrink-0",
-  variants: {
-    priority: {
-      LOW: "text-sand-10",
-      MEDIUM: "text-sand-11",
-      HIGH: "text-sand-12",
-      URGENT: "text-red-11",
-    },
-  },
-});
-
-interface TaskPriorityIconProps {
-  priority: TaskPriority;
-}
-
-export function TaskPriorityIcon({ priority }: TaskPriorityIconProps) {
-  const className = taskPriorityIcon({ priority });
-
-  switch (priority) {
-    case "LOW":
-      return <CellSignalLowIcon className={className} aria-hidden />;
-    case "MEDIUM":
-      return <CellSignalMediumIcon className={className} aria-hidden />;
-    case "HIGH":
-      return <CellSignalFullIcon className={className} aria-hidden />;
-    case "URGENT":
-      return <WarningCircleIcon className={className} weight="fill" aria-hidden />;
-  }
-}
+export { TaskPriorityIcon } from "@probo/tasks";

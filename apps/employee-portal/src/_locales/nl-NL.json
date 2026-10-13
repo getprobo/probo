@@ -59,6 +59,14 @@
         "pendingCount_other": "{{count}} documenten om te beoordelen",
         "action": "Documenten beoordelen"
       },
+      "tasks": {
+        "title": "Taken",
+        "description": "Bekijk en voltooi toegewezen taken.",
+        "empty": "Nog niets te doen",
+        "pendingCount_one": "{{count}} taak te doen",
+        "pendingCount_other": "{{count}} taken te doen",
+        "action": "Naar taken"
+      },
       "signatures": {
         "title": "Handtekeningen",
         "description": "Onderteken toegewezen documenten.",

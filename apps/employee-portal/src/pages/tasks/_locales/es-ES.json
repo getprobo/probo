@@ -1,0 +1,49 @@
+{
+  "title": "Tareas",
+  "breadcrumb": "Tareas",
+  "searchPlaceholder": "Buscar tareas",
+  "filters": {
+    "status": "Estado",
+    "allStatuses": "Todos los estados"
+  },
+  "detail": {
+    "title": "Tarea",
+    "breadcrumb": "Tarea",
+    "back": "Volver a las tareas",
+    "notFound": "Tarea no encontrada",
+    "noDescription": "Sin descripción",
+    "actions": {
+      "cancel": "Cancelar"
+    },
+    "messages": {
+      "updated": "Tarea actualizada."
+    },
+    "errors": {
+      "update": "No se pudo actualizar la tarea",
+      "content": "No se pudo mostrar esta descripción"
+    },
+    "comments": {
+      "actions": {
+        "delete": "Eliminar comentario"
+      },
+      "delete": {
+        "title": "Eliminar comentario",
+        "description": "¿Seguro que quieres eliminar este comentario?",
+        "confirm": "Eliminar"
+      },
+      "messages": {
+        "created": "Comentario añadido.",
+        "updated": "Comentario actualizado.",
+        "deleted": "Comentario eliminado."
+      },
+      "errors": {
+        "create": "No se pudo añadir el comentario",
+        "update": "No se pudo actualizar el comentario",
+        "delete": "No se pudo eliminar el comentario",
+        "content": "No se pudo mostrar este comentario",
+        "contentRequired": "Escribe un comentario",
+        "contentTooLong": "El comentario debe tener como máximo {{max}} caracteres"
+      }
+    }
+  }
+}

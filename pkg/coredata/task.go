@@ -75,7 +75,7 @@ func (t *Task) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM tasks WHERE id = ANY(@resource_ids::text[])`
+	q := `SELECT id, organization_id, assigned_to_profile_id FROM tasks WHERE id = ANY(@resource_ids::text[])`
 
 	args := pgx.StrictNamedArgs{
 		"resource_ids": resourceIDs,
@@ -91,15 +91,24 @@ func (t *Task) AuthorizationAttributes(
 	attrsByID := make(policy.AttributesByID)
 
 	for rows.Next() {
-		var id, organizationID gid.GID
+		var (
+			id             gid.GID
+			organizationID gid.GID
+			assignedToID   *gid.GID
+		)
 
-		if err := rows.Scan(&id, &organizationID); err != nil {
+		if err := rows.Scan(&id, &organizationID, &assignedToID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
-		attrsByID[id] = policy.Attributes{
+		attrs := policy.Attributes{
 			"organization_id": organizationID.String(),
 		}
+		if assignedToID != nil {
+			attrs["assigned_to_profile_id"] = assignedToID.String()
+		}
+
+		attrsByID[id] = attrs
 	}
 
 	if err := rows.Err(); err != nil {

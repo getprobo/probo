@@ -59,6 +59,14 @@
         "pendingCount_other": "{{count}} documents to review",
         "action": "Review documents"
       },
+      "tasks": {
+        "title": "Tasks",
+        "description": "Review and complete assigned tasks.",
+        "empty": "Nothing to do yet",
+        "pendingCount_one": "{{count}} task to do",
+        "pendingCount_other": "{{count}} tasks to do",
+        "action": "Go to tasks"
+      },
       "signatures": {
         "title": "Signatures",
         "description": "Sign assigned documents.",

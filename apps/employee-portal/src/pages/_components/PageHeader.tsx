@@ -36,7 +36,8 @@ export interface PageHeaderProps {
     to: string;
   };
   currentLabel: string;
-  title: string;
+  title?: string;
+  hideTitle?: boolean;
   actions?: ReactNode;
 }
 
@@ -45,6 +46,7 @@ export function PageHeader({
   parent,
   currentLabel,
   title,
+  hideTitle = false,
   actions,
 }: PageHeaderProps) {
   const { t } = useTranslation();
@@ -84,16 +86,24 @@ export function PageHeader({
           {currentLabel}
         </Text>
       </nav>
-      <div className={slots.titleRow()}>
-        <Heading level={1} size={7} weight="medium" highContrast className="min-w-0">
-          {title}
-        </Heading>
-        {actions != null && (
-          <div className={slots.actions()}>
-            {actions}
-          </div>
-        )}
-      </div>
+      {hideTitle && actions == null
+        ? null
+        : (
+            <div className={slots.titleRow()}>
+              {hideTitle || title == null
+                ? null
+                : (
+                    <Heading level={1} size={7} weight="medium" highContrast className="min-w-0">
+                      {title}
+                    </Heading>
+                  )}
+              {actions != null && (
+                <div className={slots.actions()}>
+                  {actions}
+                </div>
+              )}
+            </div>
+          )}
     </div>
   );
 }

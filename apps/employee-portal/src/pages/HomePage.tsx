@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { pendingTaskStates } from "@probo/tasks";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -29,6 +30,7 @@ import { DeviceCard } from "#/pages/_components/DeviceCard";
 import { DocumentsDashboardCard } from "#/pages/_components/DocumentsDashboardCard";
 import { GetStartedCard } from "#/pages/_components/GetStartedCard";
 import { SlackCard } from "#/pages/_components/SlackCard";
+import { TasksDashboardCard } from "#/pages/_components/TasksDashboardCard";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
 
@@ -59,8 +61,16 @@ export const homePageQuery = graphql`
       ) {
         totalCount
       }
+      assignedTasks(organizationId: $organizationId, first: 500) {
+        edges {
+          node {
+            state
+          }
+        }
+      }
       ...GetStartedCard_viewer @arguments(organizationId: $organizationId)
       ...DocumentsDashboardCard_viewer @arguments(organizationId: $organizationId)
+      ...TasksDashboardCard_viewer @arguments(organizationId: $organizationId)
       ...DeviceCard_viewer @arguments(organizationId: $organizationId)
       ...SlackCard_viewer
     }
@@ -98,6 +108,9 @@ export function HomePage({ queryRef }: HomePageProps) {
     = (viewer.pendingSignatures.totalCount > 0 || viewer.pendingApprovals.totalCount > 0)
       && viewer.completedSignatures.totalCount === 0
       && viewer.approvedDocuments.totalCount === 0;
+  const pendingTaskCount = viewer.assignedTasks.edges.filter(
+    ({ node }) => pendingTaskStates.has(node.state),
+  ).length;
 
   const welcome = firstName === ""
     ? t("homePage.welcomeFallback")
@@ -126,6 +139,10 @@ export function HomePage({ queryRef }: HomePageProps) {
             && (viewer.pendingSignatures.totalCount > 0
               || viewer.pendingApprovals.totalCount > 0)
           }
+        />
+        <TasksDashboardCard
+          viewerKey={viewer}
+          wash={!showGetStarted && pendingTaskCount > 0}
         />
         {deviceAgent && (
           <DeviceCard

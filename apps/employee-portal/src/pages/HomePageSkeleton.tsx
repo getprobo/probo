@@ -33,6 +33,7 @@ export function HomePageSkeleton() {
         <CardSkeleton size={5} className="h-75" />
         <CardSkeleton size={5} className="h-75" />
         <CardSkeleton size={5} className="h-75" />
+        <CardSkeleton size={5} className="h-75" />
       </div>
     </main>
   );

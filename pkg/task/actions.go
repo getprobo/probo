@@ -21,13 +21,14 @@
 package task
 
 const (
-	ActionTaskGet      = "core:task:get"
-	ActionTaskList     = "core:task:list"
-	ActionTaskCreate   = "core:task:create"
-	ActionTaskUpdate   = "core:task:update"
-	ActionTaskDelete   = "core:task:delete"
-	ActionTaskAssign   = "core:task:assign"
-	ActionTaskUnassign = "core:task:unassign"
+	ActionTaskGet          = "core:task:get"
+	ActionTaskList         = "core:task:list"
+	ActionEmployeeTaskList = "core:employee-task:list"
+	ActionTaskCreate       = "core:task:create"
+	ActionTaskUpdate       = "core:task:update"
+	ActionTaskDelete       = "core:task:delete"
+	ActionTaskAssign       = "core:task:assign"
+	ActionTaskUnassign     = "core:task:unassign"
 
 	ActionTaskCommentGet    = "core:task-comment:get"
 	ActionTaskCommentList   = "core:task-comment:list"

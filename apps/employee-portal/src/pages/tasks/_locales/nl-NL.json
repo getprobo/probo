@@ -1,0 +1,49 @@
+{
+  "title": "Taken",
+  "breadcrumb": "Taken",
+  "searchPlaceholder": "Taken zoeken",
+  "filters": {
+    "status": "Status",
+    "allStatuses": "Alle statussen"
+  },
+  "detail": {
+    "title": "Taak",
+    "breadcrumb": "Taak",
+    "back": "Terug naar taken",
+    "notFound": "Taak niet gevonden",
+    "noDescription": "Geen beschrijving",
+    "actions": {
+      "cancel": "Annuleren"
+    },
+    "messages": {
+      "updated": "Taak bijgewerkt."
+    },
+    "errors": {
+      "update": "Taak bijwerken mislukt",
+      "content": "Deze beschrijving kon niet worden weergegeven"
+    },
+    "comments": {
+      "actions": {
+        "delete": "Opmerking verwijderen"
+      },
+      "delete": {
+        "title": "Opmerking verwijderen",
+        "description": "Weet u zeker dat u deze opmerking wilt verwijderen?",
+        "confirm": "Verwijderen"
+      },
+      "messages": {
+        "created": "Opmerking toegevoegd.",
+        "updated": "Opmerking bijgewerkt.",
+        "deleted": "Opmerking verwijderd."
+      },
+      "errors": {
+        "create": "Opmerking toevoegen mislukt",
+        "update": "Opmerking bijwerken mislukt",
+        "delete": "Opmerking verwijderen mislukt",
+        "content": "Deze opmerking kon niet worden weergegeven",
+        "contentRequired": "Voer een opmerking in",
+        "contentTooLong": "De opmerking mag maximaal {{max}} tekens bevatten"
+      }
+    }
+  }
+}

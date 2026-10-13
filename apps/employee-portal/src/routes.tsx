@@ -33,6 +33,7 @@ import { HomePageSkeleton } from "#/pages/HomePageSkeleton";
 import { MainLayoutSkeleton } from "#/pages/iam/MainLayoutSkeleton";
 import { OrganizationsPageSkeleton } from "#/pages/iam/OrganizationsPageSkeleton";
 import { signaturesRoutes } from "#/pages/signatures/routes";
+import { tasksRoutes } from "#/pages/tasks/routes";
 
 const routes = [
   {
@@ -57,6 +58,7 @@ const routes = [
             Component: lazy(() => import("#/pages/HomePageLoader")),
           },
           ...documentsRoutes,
+          ...tasksRoutes,
           ...signaturesRoutes,
           ...approvalsRoutes,
           ...devicesRoutes,
