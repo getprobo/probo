@@ -185,6 +185,9 @@ export function loadFrameworkCatalog(root) {
   return catalog;
 }
 
+// The importer decodes the file straight into a list of internal controls
+// (pkg/server/api/console/v1/internal_control_resolvers.go), so the top
+// level must be an array, not an object.
 export function validateInternalControls(data, catalog) {
   const issues = [];
   const referenceIds = new Set();
@@ -199,11 +202,11 @@ export function validateInternalControls(data, catalog) {
     referenceIds.add(referenceId);
   };
 
-  if (!Array.isArray(data.internalControls) || data.internalControls.length === 0) {
-    return [{ key: "internalControls", kind: "type", message: "internalControls must be a non-empty array" }];
+  if (!Array.isArray(data) || data.length === 0) {
+    return [{ key: "", kind: "type", message: "top level must be a non-empty array of internal controls" }];
   }
 
-  data.internalControls.forEach((control, index) => {
+  data.forEach((control, index) => {
     const key = control["reference-id"] || `#${index}`;
     claim(control["reference-id"], key);
     if (isBlank(control.name) || isBlank(control.category)) {
