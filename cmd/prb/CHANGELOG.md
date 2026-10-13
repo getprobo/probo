@@ -4,6 +4,26 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.245.0] - 2026-10-13
+
+### Added
+
+- `connector create` creates an API-key or client-credentials connector
+  for a provider that needs no extra setting. A blank client id or secret
+  is rejected. AWS, GCP, and Azure workload identity stay on
+  `connector connect`
+
+### Changed
+
+- **Breaking**: `access-review source create` no longer collects cloud
+  credentials. Connect the provider first, then pass `--connector-id`.
+  A CSV source is `--csv-file` and has no provider
+
+### Fixed
+
+- `employee-portal list` reports that the list is unavailable when the
+  server omits it
+
 ## [0.244.0] - 2026-10-09
 
 ### Added
