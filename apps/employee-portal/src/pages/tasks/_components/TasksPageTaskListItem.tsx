@@ -51,7 +51,7 @@ const updateStateMutation = graphql`
   mutation TasksPageTaskListItemUpdateStateMutation($input: UpdateTaskInput!) {
     updateTask(input: $input) {
       task {
-        ...TasksPage_task
+        ...TasksPageList_task
         ...TasksPageTaskListItem_task
       }
     }

@@ -20,7 +20,6 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import {
-  TaskList,
   TASKS_NAMESPACE,
   TaskStateIcon,
   type TaskState,
@@ -32,74 +31,52 @@ import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
   type PreloadedQuery,
-  readInlineData,
   usePreloadedQuery,
 } from "react-relay";
 
-import type { TasksPage_task$key } from "#/__generated__/core/TasksPage_task.graphql";
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import { PageHeader } from "#/pages/_components/PageHeader";
 
-import { TasksPageTaskListItem } from "./_components/TasksPageTaskListItem";
+import { TasksPageList } from "./_components/TasksPageList";
+import { TasksPageListSkeleton } from "./_components/TasksPageListSkeleton";
 import { useTasksFilters } from "./_lib/useTasksFilters";
 import { useTasksSearch } from "./_lib/useTasksSearch";
 import { tasksPage } from "./variants";
-
-const taskInlineFragment = graphql`
-  fragment TasksPage_task on Task @inline {
-    id
-    state
-  }
-`;
-
-function readTask(key: TasksPage_task$key) {
-  return readInlineData(taskInlineFragment, key);
-}
 
 export const tasksPageQuery = graphql`
   query TasksPageQuery($organizationId: ID!, $filter: TaskFilter)
   @throwOnFieldError {
     viewer @required(action: THROW) {
-      assignedTasks(
-        organizationId: $organizationId
-        first: 500
-        orderBy: { field: PRIORITY_RANK, direction: ASC }
-        filter: $filter
-      ) {
-        edges {
-          node {
-            ...TasksPage_task
-            ...TasksPageTaskListItem_task
-          }
-        }
-      }
+      ...TasksPageList_viewer @arguments(organizationId: $organizationId, filter: $filter)
     }
   }
 `;
 
 interface TasksPageProps {
   queryRef: PreloadedQuery<TasksPageQuery>;
+  onReady?: () => void;
 }
 
-export function TasksPage({ queryRef }: TasksPageProps) {
+export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation("tasks");
   const { t: tApp } = useTranslation();
   const { t: tTasks } = useTranslation(TASKS_NAMESPACE);
-  const { query, state: selectedState, setState } = useTasksFilters();
+  const { state: selectedState, setState } = useTasksFilters();
   const [queryInput, setQueryInput] = useTasksSearch();
   const { viewer } = usePreloadedQuery<TasksPageQuery>(
     tasksPageQuery,
     queryRef,
   );
   const slots = tasksPage();
-  const items = viewer.assignedTasks.edges.map(({ node }) => ({
-    ...readTask(node),
-    node,
-  }));
+
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
@@ -156,17 +133,9 @@ export function TasksPage({ queryRef }: TasksPageProps) {
             </div>
           </div>
         </div>
-        <TaskList
-          items={items}
-          filtered={query !== "" || selectedState != null}
-          renderItem={(item, sectionState) => (
-            <TasksPageTaskListItem
-              key={item.id}
-              taskKey={item.node}
-              sectionState={sectionState}
-            />
-          )}
-        />
+        <Suspense fallback={<TasksPageListSkeleton />}>
+          <TasksPageList viewerKey={viewer} />
+        </Suspense>
       </div>
     </main>
   );

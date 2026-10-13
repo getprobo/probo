@@ -27,5 +27,17 @@ export const tasksPage = tv({
     filters: "flex flex-wrap items-center justify-end gap-2",
     filter: "w-40 shrink-0",
     stateOption: "flex items-center gap-2",
+    list: "transition-opacity duration-150",
+  },
+  variants: {
+    busy: {
+      true: {
+        list: "opacity-60",
+      },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    busy: false,
   },
 });

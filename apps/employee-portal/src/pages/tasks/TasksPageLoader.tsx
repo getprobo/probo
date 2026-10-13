@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
@@ -30,20 +30,43 @@ import { TasksPageSkeleton } from "./TasksPageSkeleton";
 
 export default function TasksPageLoader() {
   const { organizationId } = useEmployeePortalRoute();
+
+  return (
+    <TasksPageQueryLoader
+      key={organizationId}
+      organizationId={organizationId}
+    />
+  );
+}
+
+interface TasksPageQueryLoaderProps {
+  organizationId: string;
+}
+
+function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
   const { graphqlFilter } = useTasksFilters();
   const [queryRef, loadQuery] = useQueryLoader<TasksPageQuery>(tasksPageQuery);
+  const [pageReady, setPageReady] = useState(false);
+  const onReady = useCallback(() => {
+    setPageReady(true);
+  }, []);
 
   useEffect(() => {
+    if (pageReady) {
+      return;
+    }
     loadQuery(
       { organizationId, filter: graphqlFilter },
       { fetchPolicy: "store-and-network" },
     );
-  }, [graphqlFilter, loadQuery, organizationId]);
+  }, [graphqlFilter, loadQuery, organizationId, pageReady]);
 
+  const queryMatchesPendingFilter = queryRef != null
+    && queryRef.variables.filter?.query === graphqlFilter.query
+    && queryRef.variables.filter?.state === graphqlFilter.state;
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
-    && queryRef.variables.filter?.query === graphqlFilter.query
-    && queryRef.variables.filter?.state === graphqlFilter.state
+    && (pageReady || queryMatchesPendingFilter)
     ? queryRef
     : null;
 
@@ -52,8 +75,8 @@ export default function TasksPageLoader() {
   }
 
   return (
-    <Suspense key={organizationId} fallback={<TasksPageSkeleton />}>
-      <TasksPage queryRef={currentQueryRef} />
+    <Suspense fallback={<TasksPageSkeleton />}>
+      <TasksPage queryRef={currentQueryRef} onReady={onReady} />
     </Suspense>
   );
 }

@@ -29,7 +29,7 @@ const updateTaskMutation = graphql`
     updateTask(input: $input) {
       task {
         ...TaskDetailsPage_task
-        ...TasksPage_task
+        ...TasksPageList_task
         ...TasksPageTaskListItem_task
       }
     }
