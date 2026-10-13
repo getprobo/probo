@@ -4,6 +4,28 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.247.0] - 2026-10-13
+
+### Added
+
+- Connector `Create API Key` and `Create Client Credentials` for providers
+  that need no extra setting, plus `Create AWS Workload Identity
+  Federation`, `Create GCP Workload Identity Federation`, and `Create
+  Azure Workload Identity Federation`
+
+### Changed
+
+- **Breaking**: Access Review Source `Create` no longer takes a cloud
+  provider and its credentials. Pass a connector that already exists, or
+  CSV data
+- Connector `Create Organization Connector` is marked deprecated. Saved
+  workflows that already use it keep working
+
+### Fixed
+
+- A node fails when the GraphQL response contains errors, instead of
+  continuing with an error payload
+
 ## [0.246.0] - 2026-10-09
 
 ### Added
