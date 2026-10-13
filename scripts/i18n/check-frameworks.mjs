@@ -21,6 +21,9 @@
 // Checks that every translated framework file under
 // apps/console/public/data/frameworks/<locale>/ matches its English source:
 // same framework id, same control ids in the same order, and non-empty names.
+// Japan-specific frameworks under apps/console/public/data/frameworks/jp/
+// have no English source; they are checked for a framework id, unique
+// control ids and non-empty names.
 //
 // Usage:
 //   node scripts/i18n/check-frameworks.mjs [--locale ja-JP] [--root dir]
@@ -31,6 +34,7 @@ import { fileURLToPath } from "node:url";
 
 export const FRAMEWORKS_DIR = "apps/console/public/data/frameworks";
 export const DEFAULT_LOCALE = "ja-JP";
+export const STANDALONE_DIR = "jp";
 
 const isBlank = value => typeof value !== "string" || value.trim() === "";
 
@@ -70,6 +74,36 @@ export function compareFrameworks(source, target) {
   return issues;
 }
 
+export function validateFramework(framework) {
+  const issues = [];
+
+  if (isBlank(framework.id)) {
+    issues.push({ key: "id", kind: "empty", message: "framework id is empty" });
+  }
+  if (isBlank(framework.name)) {
+    issues.push({ key: "name", kind: "empty", message: "framework name is empty" });
+  }
+  if (!Array.isArray(framework.controls) || framework.controls.length === 0) {
+    return [...issues, { key: "controls", kind: "type", message: "controls must be a non-empty array" }];
+  }
+
+  const seen = new Set();
+  framework.controls.forEach((control, index) => {
+    const key = isBlank(control?.id) ? `#${index}` : control.id;
+    if (isBlank(control?.id)) {
+      issues.push({ key, kind: "empty", message: "control id is empty" });
+    } else if (seen.has(control.id)) {
+      issues.push({ key, kind: "duplicate", message: "control id is duplicated" });
+    }
+    seen.add(control?.id);
+    if (isBlank(control?.name)) {
+      issues.push({ key, kind: "empty", message: "control name is empty" });
+    }
+  });
+
+  return issues;
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -99,6 +133,26 @@ export function checkLocale({ root, locale }) {
       file: relative(root, join(localeDirectory, name)),
       issues: checkFile(join(directory, name), join(localeDirectory, name)),
     }));
+}
+
+export function checkStandalone({ root }) {
+  const directory = join(root, FRAMEWORKS_DIR, STANDALONE_DIR);
+  if (!existsSync(directory)) {
+    return [];
+  }
+
+  return readdirSync(directory)
+    .filter(name => name.endsWith(".json"))
+    .map((name) => {
+      const path = join(directory, name);
+      let issues;
+      try {
+        issues = validateFramework(readJson(path));
+      } catch (error) {
+        issues = [{ key: "", kind: "syntax", message: error.message }];
+      }
+      return { file: relative(root, path), issues };
+    });
 }
 
 function parseArguments(argv) {
@@ -132,7 +186,7 @@ function main(argv) {
     return 2;
   }
 
-  const results = checkLocale(options);
+  const results = [...checkLocale(options), ...checkStandalone(options)];
   let total = 0;
   for (const { file, issues } of results) {
     if (issues.length === 0) {

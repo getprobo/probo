@@ -24,7 +24,14 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { checkLocale, compareFrameworks, FRAMEWORKS_DIR } from "./check-frameworks.mjs";
+import {
+  checkLocale,
+  checkStandalone,
+  compareFrameworks,
+  FRAMEWORKS_DIR,
+  STANDALONE_DIR,
+  validateFramework,
+} from "./check-frameworks.mjs";
 
 const source = {
   id: "ISO/IEC 27001:2022",
@@ -76,5 +83,34 @@ test("checkLocale reports syntax errors and files without a source", () => {
   assert.deepEqual(byFile, {
     [join(FRAMEWORKS_DIR, "ja-JP", "ISO.json")]: ["syntax"],
     [join(FRAMEWORKS_DIR, "ja-JP", "Unknown.json")]: ["file"],
+  });
+});
+
+test("validateFramework accepts a standalone framework", () => {
+  const framework = { id: "PMARK", name: "Pマーク", controls: [{ id: "J.1.1", name: "状況" }] };
+  assert.deepEqual(validateFramework(framework), []);
+});
+
+test("validateFramework reports empty and duplicated controls", () => {
+  const framework = {
+    id: "",
+    name: "Pマーク",
+    controls: [{ id: "J.1.1", name: "状況" }, { id: "J.1.1", name: "重複" }, { id: "J.1.2", name: " " }],
+  };
+  assert.deepEqual(kinds(validateFramework(framework)), ["empty:id", "duplicate:J.1.1", "empty:J.1.2"]);
+});
+
+test("checkStandalone validates files in the jp directory", () => {
+  const root = mkdtempSync(join(tmpdir(), "check-frameworks-jp-"));
+  const directory = join(root, FRAMEWORKS_DIR, STANDALONE_DIR);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "OK.json"), JSON.stringify({ id: "X", name: "X", controls: [{ id: "1", name: "a" }] }));
+  writeFileSync(join(directory, "Broken.json"), "{");
+
+  const byFile = Object.fromEntries(checkStandalone({ root }).map(r => [r.file, r.issues.map(i => i.kind)]));
+
+  assert.deepEqual(byFile, {
+    [join(FRAMEWORKS_DIR, STANDALONE_DIR, "Broken.json")]: ["syntax"],
+    [join(FRAMEWORKS_DIR, STANDALONE_DIR, "OK.json")]: [],
   });
 });
