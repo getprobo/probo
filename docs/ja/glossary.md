@@ -7,6 +7,8 @@ SPDX-License-Identifier: MIT
 
 `ja-JP.json` の翻訳とレビューで使う訳語と表記のルールです。ISMS・Pマークの実務で通じる言葉を優先します。JIS Q 27001 / JIS Q 15001 などの規格本文は引用しません。
 
+利用者向けの用語解説は [terms.md](terms.md) にあります。
+
 ## 表記ルール
 
 | 項目 | ルール | 例 |
