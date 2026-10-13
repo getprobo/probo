@@ -39,7 +39,7 @@
   },
   "visitorsPage": {
     "title": "訪問者",
-    "description": "非公開ドキュメントを閲覧できる人を管理し、NDAの締結を必須にします。"
+    "description": "非公開ドキュメントを閲覧できる人を管理し、秘密保持契約の締結を必須にします。"
   },
   "integrationsPage": {
     "title": "連携",
@@ -58,7 +58,7 @@
     "description": "訪問者がポータルから本人からの請求（開示等の請求）を送信できるようにします。"
   },
   "accessPage": {
-    "description": "ポータルに人を追加するか、ドキュメントの請求やNDAの承諾のために本人がログインするのを待ちます。"
+    "description": "ポータルに人を追加するか、ドキュメントの請求や秘密保持契約の承諾のために本人がログインするのを待ちます。"
   },
   "visitorPage": {
     "back": "訪問者",
@@ -115,10 +115,10 @@
     "requested_one": "{{count}}件の請求を確認",
     "requested_other": "{{count}}件の請求を確認",
     "nda": {
-      "signed": "NDA署名済み",
-      "processing": "NDA処理中",
-      "pending": "NDA署名待ち",
-      "failed": "NDA署名失敗"
+      "signed": "秘密保持契約署名済み",
+      "processing": "秘密保持契約処理中",
+      "pending": "秘密保持契約署名待ち",
+      "failed": "秘密保持契約署名失敗"
     },
     "actions": {
       "open": "訪問者を開く"
@@ -174,7 +174,7 @@
     }
   },
   "electronicSignature": {
-    "title": "NDA",
+    "title": "秘密保持契約",
     "certificateTitle": "完了証明書",
     "status": {
       "signed": "電子署名済み",
@@ -641,7 +641,7 @@
       "create": "アップデートを作成できませんでした",
       "update": "アップデートを保存できませんでした"
     },
-    "confidentialityNotice": "このアップデートには、機密情報や取り扱いに注意が必要な情報を含めないでください。保護が必要な内容は、NDAで保護されたドキュメントに記載してください。",
+    "confidentialityNotice": "このアップデートには、機密情報や取り扱いに注意が必要な情報を含めないでください。保護が必要な内容は、秘密保持契約で保護されたドキュメントに記載してください。",
     "fields": {
       "title": "タイトル",
       "body": "本文"
@@ -890,21 +890,21 @@
   },
   "ndaSection": {
     "title": "秘密保持契約（NDA）",
-    "empty": "NDAファイルはアップロードされていません",
+    "empty": "秘密保持契約のファイルはアップロードされていません",
     "description": "訪問者は、非公開ドキュメントを閲覧する前に、この契約書に署名する必要があります。",
     "dropHint": "PDFをここにドロップ",
     "dropReplace": "PDFをドロップして置き換え",
     "dropActive": "PDFをドロップ",
     "actions": {
       "download": "ダウンロード",
-      "upload": "NDAをアップロード",
+      "upload": "秘密保持契約をアップロード",
       "replace": "置き換え",
       "delete": "削除",
       "uploading": "アップロード中…"
     },
     "delete": {
-      "title": "NDAを削除",
-      "description": "NDAファイルを削除してもよろしいですか？この操作は元に戻せません。",
+      "title": "秘密保持契約を削除",
+      "description": "秘密保持契約のファイルを削除してもよろしいですか？この操作は元に戻せません。",
       "actions": {
         "delete": "削除",
         "cancel": "キャンセル"

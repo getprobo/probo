@@ -508,7 +508,7 @@
       "acceptAll": "すべて許可",
       "rejectAll": "すべて拒否",
       "customize": "カスタマイズ",
-      "gpc": "GPC",
+      "gpc": "GPC（拒否シグナル）",
       "acknowledge": "確認",
       "previous": "前へ",
       "next": "次へ"
@@ -576,7 +576,7 @@
       "accept_all": "すべて許可",
       "reject_all": "すべて拒否",
       "customize": "カスタマイズ",
-      "gpc": "GPC",
+      "gpc": "GPC（拒否シグナル）",
       "acknowledge": "確認"
     },
     "consent": {
@@ -689,7 +689,7 @@
       "catalog": "カタログ",
       "draft": "下書き",
       "live": "公開中",
-      "gvl": "GVL",
+      "gvl": "ベンダーリスト（GVL）",
       "tcfPolicy": "TCFポリシー",
       "empty": "—",
       "version": "v{{version}}",

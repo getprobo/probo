@@ -1300,20 +1300,20 @@
     "tiaDeleteConfirmation": "この移転影響評価を完全に削除します。この操作は元に戻せません。",
     "messages": {
       "deleted": "処理活動を削除しました",
-      "dpiaDeleted": "DPIAを削除しました",
-      "tiaDeleted": "TIAを削除しました"
+      "dpiaDeleted": "データ保護影響評価を削除しました",
+      "tiaDeleted": "移転影響評価を削除しました"
     },
     "errors": {
       "delete": "処理活動を削除できませんでした",
       "createOrganizationRequired": "処理活動を作成できませんでした：組織は必須です",
       "createNameRequired": "処理活動を作成できませんでした：名前は必須です",
       "updateIdRequired": "処理活動を更新できませんでした：IDは必須です",
-      "createDpiaProcessingActivityIdRequired": "DPIAを作成できませんでした：処理活動IDは必須です",
-      "updateDpiaIdRequired": "DPIAを更新できませんでした：IDは必須です",
-      "deleteDpia": "DPIAを削除できませんでした",
-      "createTiaProcessingActivityIdRequired": "TIAを作成できませんでした：処理活動IDは必須です",
-      "updateTiaIdRequired": "TIAを更新できませんでした：IDは必須です",
-      "deleteTia": "TIAを削除できませんでした"
+      "createDpiaProcessingActivityIdRequired": "データ保護影響評価を作成できませんでした：処理活動IDは必須です",
+      "updateDpiaIdRequired": "データ保護影響評価を更新できませんでした：IDは必須です",
+      "deleteDpia": "データ保護影響評価を削除できませんでした",
+      "createTiaProcessingActivityIdRequired": "移転影響評価を作成できませんでした：処理活動IDは必須です",
+      "updateTiaIdRequired": "移転影響評価を更新できませんでした：IDは必須です",
+      "deleteTia": "移転影響評価を削除できませんでした"
     }
   },
   "rightsRequestGraph": {
@@ -2222,8 +2222,8 @@
     "groups": {
       "governance": "ガバナンス",
       "privacy": "プライバシー",
-      "cmp": "CMP",
-      "tprm": "TPRM",
+      "cmp": "Cookie同意管理",
+      "tprm": "取引先リスク管理",
       "itam": "IT資産管理",
       "riskManagement": "リスク管理",
       "registries": "台帳",
@@ -2242,7 +2242,7 @@
     "allRisks": "すべてのリスク",
     "riskAnalyses": "リスク分析",
     "frameworks": "フレームワーク",
-    "iam": "IAM",
+    "iam": "ID・アクセス管理",
     "users": "ユーザー",
     "authProvisioning": "認証とプロビジョニング",
     "samlSso": "SAML SSO",
@@ -2270,9 +2270,9 @@
     "aiSystems": "AIシステム",
     "obligations": "義務",
     "processingActivities": "処理活動",
-    "dataProtectionImpactAssessments": "DPIA",
-    "transferImpactAssessments": "TIA",
-    "statementsOfApplicability": "SoA",
+    "dataProtectionImpactAssessments": "データ保護影響評価",
+    "transferImpactAssessments": "移転影響評価",
+    "statementsOfApplicability": "適用宣言書",
     "rightsRequests": "本人からの請求",
     "campaigns": "キャンペーン",
     "connections": "コネクター",
@@ -3065,14 +3065,14 @@
     "filters": {
       "searchEmail": "メールを検索…",
       "allConnectors": "すべてのコネクター",
-      "allMfa": "すべてのMFA",
+      "allMfa": "多要素認証：すべて",
       "allAuthMethods": "すべての認証方式",
       "allAdmin": "すべての管理者",
       "allAccountStatuses": "すべてのステータス"
     },
     "columns": {
       "admin": "管理者",
-      "mfa": "MFA",
+      "mfa": "多要素認証",
       "authMethod": "認証",
       "lastLogin": "最終ログイン"
     },
@@ -3268,9 +3268,9 @@
       "referenceId": "参照ID",
       "name": "名前",
       "classification": "分類",
-      "mtd": "MTD",
-      "rto": "RTO",
-      "rpo": "RPO",
+      "mtd": "最大許容停止時間",
+      "rto": "目標復旧時間",
+      "rpo": "目標復旧時点",
       "owner": "オーナー",
       "assets": "資産",
       "thirdParties": "取引先",
@@ -3417,7 +3417,7 @@
       "highRisk": "高リスク",
       "limited": "限定リスク",
       "minimal": "最小リスク",
-      "gpai": "GPAI"
+      "gpai": "汎用AI"
     },
     "companyRoles": {
       "provider": "プロバイダー",
@@ -3497,7 +3497,7 @@
       "highRisk": "高リスク",
       "limited": "限定リスク",
       "minimal": "最小リスク",
-      "gpai": "GPAI"
+      "gpai": "汎用AI"
     },
     "companyRoles": {
       "provider": "プロバイダー",
@@ -3568,7 +3568,7 @@
       "highRisk": "高リスク",
       "limited": "限定リスク",
       "minimal": "最小リスク",
-      "gpai": "GPAI"
+      "gpai": "汎用AI"
     },
     "companyRoles": {
       "provider": "プロバイダー",
@@ -4419,7 +4419,7 @@
     },
     "empty": {
       "title": "データ保護影響評価はまだありません",
-      "description": "DPIAは、各処理活動の中から作成します。"
+      "description": "データ保護影響評価は、各処理活動の中から作成します。"
     }
   },
   "transferImpactAssessmentsPage": {
@@ -4438,7 +4438,7 @@
     },
     "empty": {
       "title": "移転影響評価はまだありません",
-      "description": "TIAは、各処理活動の中から作成します。"
+      "description": "移転影響評価は、各処理活動の中から作成します。"
     }
   },
   "processingActivityDetailsPage": {
@@ -4451,15 +4451,15 @@
       "success": "成功",
       "error": "エラー",
       "activityUpdated": "処理活動を更新しました",
-      "dpiaUpdated": "DPIAを更新しました",
-      "dpiaCreated": "DPIAを作成しました",
-      "tiaUpdated": "TIAを更新しました",
-      "tiaCreated": "TIAを作成しました"
+      "dpiaUpdated": "データ保護影響評価を更新しました",
+      "dpiaCreated": "データ保護影響評価を作成しました",
+      "tiaUpdated": "移転影響評価を更新しました",
+      "tiaCreated": "移転影響評価を作成しました"
     },
     "errors": {
       "updateActivity": "処理活動を更新できませんでした",
-      "saveDpia": "DPIAを保存できませんでした",
-      "saveTia": "TIAを保存できませんでした"
+      "saveDpia": "データ保護影響評価を保存できませんでした",
+      "saveTia": "移転影響評価を保存できませんでした"
     },
     "validation": {
       "nameRequired": "名前は必須です"
@@ -4510,8 +4510,8 @@
       "transferSafeguards": "移転時の保護措置を選択",
       "retentionPeriod": "データの保存期間を入力",
       "securityMeasures": "技術的措置と組織的措置を入力",
-      "dpiaNeeded": "DPIAは必要ですか？",
-      "tiaNeeded": "TIAは必要ですか？",
+      "dpiaNeeded": "データ保護影響評価は必要ですか？",
+      "tiaNeeded": "移転影響評価は必要ですか？",
       "dpiaDescription": "処理活動とその目的を入力",
       "necessityAndProportionality": "処理が必要かつ適切である理由を入力",
       "potentialRisk": "本人に対する潜在的なリスクを入力",
@@ -4533,12 +4533,12 @@
       "saving": "保存中…",
       "save": "変更を保存",
       "cancel": "キャンセル",
-      "createDpia": "DPIAを作成",
-      "updateDpia": "DPIAを更新",
-      "deleteDpia": "DPIAを削除",
-      "createTia": "TIAを作成",
-      "updateTia": "TIAを更新",
-      "deleteTia": "TIAを削除"
+      "createDpia": "データ保護影響評価を作成",
+      "updateDpia": "データ保護影響評価を更新",
+      "deleteDpia": "データ保護影響評価を削除",
+      "createTia": "移転影響評価を作成",
+      "updateTia": "移転影響評価を更新",
+      "deleteTia": "移転影響評価を削除"
     }
   },
   "createProcessingActivityDialog": {

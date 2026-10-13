@@ -34,8 +34,26 @@ SPDX-License-Identifier: MIT
 - ネスト参照 `$t(...)`
 - `<0>…</0>`、`<1/>`、`<strong>…</strong>` などのタグと番号
 - 改行 `\n`、URL、メールアドレス、コード（`curl ...` 等）、HTTP ヘッダー名
-- 製品名・サービス名・規格名：Probo、Slack、Google Workspace、Microsoft 365、Entra ID、Okta、GitHub、Linear、PostHog、AWS、n8n、SAML、SCIM、OIDC、OAuth、SSO、MFA、API、CSV、PDF、JSON、URL、DNS、TLS、GDPR、HIPAA、CCPA、SOC 2、ISO 27001、ISO 42001、TCF、IAB
+- 製品名・サービス名・規格名：Probo、Slack、Google Workspace、Microsoft 365、Entra ID、Okta、GitHub、Linear、PostHog、AWS、n8n、SAML、SCIM、OIDC、OAuth、SSO、API、CSV、PDF、JSON、URL、DNS、TLS、GDPR、HIPAA、CCPA、SOC 2、ISO 27001、ISO 42001、TCF、IAB
 - 国名は日本で一般的な名称（外務省の表記に準じる）
+
+## 略語の扱い
+
+GRC 分野の略語（TPRM、CMP、DPIA、TIA、SoA、MTD、RTO、RPO、GPAI など）は、専門家以外には伝わりにくいため日本語にします。略語を併記したいときは「秘密保持契約（NDA）」のように括弧で添えます。
+
+IT 管理者が設定画面で使う技術規格の名前（SSO、SAML、SCIM、IdP、OAuth、TCF、IAB など）は、そのまま残します。設定項目名やベンダーのドキュメントと照合できるようにするためです。
+
+| 英語 | 日本語 |
+| --- | --- |
+| TPRM | 取引先リスク管理 |
+| CMP | Cookie同意管理（TCF の「CMP ID」はそのまま） |
+| IAM | ID・アクセス管理 |
+| MFA | 多要素認証 |
+| MTD / RTO / RPO | 最大許容停止時間 / 目標復旧時間 / 目標復旧時点 |
+| GPAI | 汎用AI |
+| NDA | 秘密保持契約 |
+| GVL | ベンダーリスト（GVL） |
+| GPC | GPC（拒否シグナル） |
 
 ## 用語集
 
@@ -50,7 +68,7 @@ SPDX-License-Identifier: MIT
 | Internal control | 内部統制 | 組織が実施する統制 |
 | Measure | 対策 | |
 | Measure implementation | 対策の実施状況 | |
-| Statement of Applicability (SoA) | 適用宣言書 | 略称は「SoA」のまま |
+| Statement of Applicability (SoA) | 適用宣言書 | 略称は使わない |
 | Applicability statement | 適用可否 | |
 | Applicable / Not applicable | 適用 / 適用除外 | 状態の「Not Applicable」は「対象外」 |
 | Justification | 根拠 | 適用除外の理由など |
@@ -134,8 +152,8 @@ SPDX-License-Identifier: MIT
 | Record of processing activities | 処理活動の記録 | |
 | Data subject | 本人 | 「データ主体」は不可 |
 | Rights request | 本人からの請求 | 開示等の請求 |
-| Data Protection Impact Assessment (DPIA) | データ保護影響評価（DPIA） | ナビは「DPIA」のまま |
-| Transfer Impact Assessment (TIA) | 移転影響評価（TIA） | ナビは「TIA」のまま |
+| Data Protection Impact Assessment (DPIA) | データ保護影響評価 | 略称は使わない |
+| Transfer Impact Assessment (TIA) | 移転影響評価 | 略称は使わない |
 | Lawful basis | 法的根拠 | |
 | Retention period | 保存期間 | |
 | Consent | 同意 | |
@@ -147,12 +165,12 @@ SPDX-License-Identifier: MIT
 | Tracker | トラッカー | |
 | Visitor | 訪問者 | |
 
-### 取引先管理（TPRM）
+### 取引先管理
 
 | 英語 | 日本語 | 備考 |
 | --- | --- | --- |
 | Third party | 取引先 | 委託先を含む外部の組織 |
-| Third-party risk management (TPRM) | 取引先リスク管理 | ナビは「TPRM」のまま |
+| Third-party risk management (TPRM) | 取引先リスク管理 | 略称は使わない |
 | Vendor | ベンダー | |
 | Service | サービス | |
 | Supply chain | サプライチェーン | |
