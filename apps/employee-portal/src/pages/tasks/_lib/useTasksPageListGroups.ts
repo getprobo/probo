@@ -211,6 +211,15 @@ const duplicateGroupFragment = graphql`
 export type TasksPageListGroupNode
   = TasksPageList_task$key & TasksPageTaskListItem_task$key;
 
+export interface TaskListLoadNextOptions {
+  onComplete?: (error: Error | null) => void;
+}
+
+export type TaskListLoadNext = (
+  count?: number,
+  options?: TaskListLoadNextOptions,
+) => void;
+
 export interface TasksPageListGroup {
   state: TaskState;
   connectionId: string;
@@ -218,7 +227,7 @@ export interface TasksPageListGroup {
   edges: readonly { readonly node: TasksPageListGroupNode }[];
   hasNext: boolean;
   isLoadingNext: boolean;
-  loadNext: (count?: number) => void;
+  loadNext: TaskListLoadNext;
 }
 
 function paginationGroup(
@@ -230,7 +239,7 @@ function paginationGroup(
   } | null | undefined,
   hasNext: boolean,
   isLoadingNext: boolean,
-  loadNext: (count?: number) => void,
+  loadNext: TaskListLoadNext,
 ): TasksPageListGroup {
   const edges = assignedTasks?.edges.map(edge => ({ node: edge.node })) ?? [];
   return {
@@ -308,42 +317,42 @@ export function useTasksPageListGroups(
       inProgress.data?.inProgressTasks,
       inProgress.hasNext,
       inProgress.isLoadingNext,
-      count => inProgress.loadNext(count ?? taskListPageSize),
+      (count, options) => inProgress.loadNext(count ?? taskListPageSize, options),
     ),
     TODO: paginationGroup(
       "TODO",
       todo.data?.todoTasks,
       todo.hasNext,
       todo.isLoadingNext,
-      count => todo.loadNext(count ?? taskListPageSize),
+      (count, options) => todo.loadNext(count ?? taskListPageSize, options),
     ),
     BACKLOG: paginationGroup(
       "BACKLOG",
       backlog.data?.backlogTasks,
       backlog.hasNext,
       backlog.isLoadingNext,
-      count => backlog.loadNext(count ?? taskListPageSize),
+      (count, options) => backlog.loadNext(count ?? taskListPageSize, options),
     ),
     DONE: paginationGroup(
       "DONE",
       done.data?.doneTasks,
       done.hasNext,
       done.isLoadingNext,
-      count => done.loadNext(count ?? taskListPageSize),
+      (count, options) => done.loadNext(count ?? taskListPageSize, options),
     ),
     CANCELED: paginationGroup(
       "CANCELED",
       canceled.data?.canceledTasks,
       canceled.hasNext,
       canceled.isLoadingNext,
-      count => canceled.loadNext(count ?? taskListPageSize),
+      (count, options) => canceled.loadNext(count ?? taskListPageSize, options),
     ),
     DUPLICATE: paginationGroup(
       "DUPLICATE",
       duplicate.data?.duplicateTasks,
       duplicate.hasNext,
       duplicate.isLoadingNext,
-      count => duplicate.loadNext(count ?? taskListPageSize),
+      (count, options) => duplicate.loadNext(count ?? taskListPageSize, options),
     ),
   };
 

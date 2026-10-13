@@ -45,6 +45,7 @@ import {
   taskListReadableIncludeFlags,
 } from "../_lib/taskListIncludes";
 import { useTasksFilters } from "../_lib/useTasksFilters";
+import { useTasksListFill } from "../_lib/useTasksListFill";
 import {
   type TasksPageListGroupNode,
   useTasksPageListGroups,
@@ -155,11 +156,12 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     viewer,
     taskListReadableIncludeFlags(includeFlags, fetched.includes),
   );
-  const { list } = tasksPage({ busy: isPending });
-  const slots = taskList();
   const visibleGroups = groups.filter(
     group => selectedState == null || group.state === selectedState,
   );
+  const isFilling = visibleGroups.some(group => group.isLoadingNext);
+  const { list } = tasksPage({ busy: isPending || isFilling });
+  const slots = taskList();
   const flatItems = useMemo(
     () => flattenTaskListItems(
       visibleGroups.map(group => ({
@@ -180,6 +182,21 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     estimateSize: index => taskListItemSize(flatItems[index]),
     overscan: 8,
     getItemKey: index => flatItemKey(flatItems[index], index),
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+  const fillRange = virtualItems.length === 0
+    ? null
+    : {
+        startIndex: virtualItems[0].index,
+        endIndex: virtualItems[virtualItems.length - 1].index,
+      };
+  useTasksListFill({
+    items: flatItems,
+    groups: visibleGroups,
+    range: fillRange,
+    closedStates,
+    selectedState,
+    startTransition,
   });
 
   useEffect(() => {
@@ -238,7 +255,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
 
   if (flatItems.length === 0) {
     return (
-      <div className={list()} aria-busy={isPending || undefined}>
+      <div className={list()} aria-busy={isPending || isFilling || undefined}>
         <Text size={2} color="faint" align="center" className={slots.empty()}>
           {query !== "" || selectedState != null ? t("noResults") : t("empty")}
         </Text>
@@ -247,7 +264,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
   }
 
   return (
-    <div ref={listRef} className={list()} aria-busy={isPending || undefined}>
+    <div ref={listRef} className={list()} aria-busy={isPending || isFilling || undefined}>
       <TooltipProvider>
         <div
           className="relative w-full"
