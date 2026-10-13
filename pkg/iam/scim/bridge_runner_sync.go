@@ -214,7 +214,7 @@ func (r *BridgeRunner) createOAuth2BridgeProvider(
 			return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 		}
 
-		return factory(httpClient), nil
+		return factory(withServerErrorRetry(httpClient)), nil
 	}
 
 	httpClient, err := oauth2Conn.RefreshableClient(ctx, *refreshCfg, httpClientOpts...)
@@ -222,5 +222,5 @@ func (r *BridgeRunner) createOAuth2BridgeProvider(
 		return nil, fmt.Errorf("cannot create refreshable HTTP client: %w", err)
 	}
 
-	return factory(httpClient), nil
+	return factory(withServerErrorRetry(httpClient)), nil
 }
