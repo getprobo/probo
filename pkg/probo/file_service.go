@@ -117,10 +117,7 @@ func (s FileService) UploadAndSaveFile(
 		return nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	mimeType := req.ContentType
-	if mimeType == "" {
-		mimeType = "application/octet-stream"
-	}
+	mimeType := filevalidation.ResolveContentType(req.ContentType, req.Filename)
 
 	if err := fileValidator.Validate(req.Filename, mimeType, req.Size); err != nil {
 		return nil, fmt.Errorf("cannot validate file: %w", err)

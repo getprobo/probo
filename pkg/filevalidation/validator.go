@@ -97,6 +97,20 @@ var FileTypes = []FileType{
 	{MimeType: "video/webm", Extensions: []string{".webm"}, Category: CategoryVideo},
 }
 
+// Error is a file rejected by Validate. Callers should report it to the
+// client; it is not an internal failure.
+type Error struct {
+	message string
+}
+
+func (e *Error) Error() string {
+	return e.message
+}
+
+func validationError(format string, args ...any) error {
+	return &Error{message: fmt.Sprintf(format, args...)}
+}
+
 // FileValidator is a configurable file validator
 type FileValidator struct {
 	// MaxFileSize specifies the maximum file size in bytes
@@ -210,31 +224,31 @@ func (v *FileValidator) WithMaxFileSize(maxSize int64) *FileValidator {
 // Validate validates that the file meets the configured requirements
 func (v *FileValidator) Validate(filename string, contentType string, size int64) error {
 	if size == 0 {
-		return fmt.Errorf("file can't be empty")
+		return validationError("file can't be empty")
 	}
 
 	if size > v.MaxFileSize {
-		return fmt.Errorf("file size exceeds maximum allowed size of %d bytes", v.MaxFileSize)
+		return validationError("file size exceeds maximum allowed size of %d bytes", v.MaxFileSize)
 	}
 
 	if !v.AllowedMimeTypes[contentType] {
-		return fmt.Errorf("content type %q is not allowed", contentType)
+		return validationError("content type %q is not allowed", contentType)
 	}
 
 	ext := strings.ToLower(filepath.Ext(filename))
 	if ext == "" {
-		return fmt.Errorf("file has no extension")
+		return validationError("file has no extension")
 	}
 
 	allowedTypes, extAllowed := v.AllowedExtensions[ext]
 	if !extAllowed {
-		return fmt.Errorf("file extension %q is not allowed", ext)
+		return validationError("file extension %q is not allowed", ext)
 	}
 
 	validType := slices.Contains(allowedTypes, contentType)
 
 	if !validType {
-		return fmt.Errorf("content type %q does not match extension %q", contentType, ext)
+		return validationError("content type %q does not match extension %q", contentType, ext)
 	}
 
 	return nil

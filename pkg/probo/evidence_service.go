@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -133,6 +134,16 @@ func (s EvidenceService) UploadInternalControlEvidence(
 				},
 				&req.File)
 			if err != nil {
+				if fileErr, ok := errors.AsType[*filevalidation.Error](err); ok {
+					return validator.ValidationErrors{
+						{
+							Field:   "file",
+							Code:    validator.ErrorCodeInvalidFormat,
+							Message: fileErr.Error(),
+						},
+					}
+				}
+
 				return fmt.Errorf("cannot upload or file: %w", err)
 			}
 

@@ -27,10 +27,12 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"strings"
 	"time"
 
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/version"
 )
 
@@ -279,8 +281,8 @@ func (c *Client) doUploadRequest(
 		return nil, fmt.Errorf("cannot write map field: %w", err)
 	}
 
-	// Part 3: file
-	part, err := writer.CreateFormFile("0", filename)
+	// CreateFormFile forces application/octet-stream, which evidence upload rejects.
+	part, err := writer.CreatePart(filePartHeader("0", filename))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create form file: %w", err)
 	}
@@ -392,4 +394,23 @@ func (c *Client) tryRefreshToken() error {
 	}
 
 	return nil
+}
+
+func filePartHeader(fieldname, filename string) textproto.MIMEHeader {
+	h := make(textproto.MIMEHeader)
+	h.Set(
+		"Content-Disposition",
+		fmt.Sprintf(
+			`form-data; name="%s"; filename="%s"`,
+			escapeQuotes(fieldname),
+			escapeQuotes(filename),
+		),
+	)
+	h.Set("Content-Type", filevalidation.ResolveContentType("", filename))
+
+	return h
+}
+
+func escapeQuotes(s string) string {
+	return strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(s)
 }
