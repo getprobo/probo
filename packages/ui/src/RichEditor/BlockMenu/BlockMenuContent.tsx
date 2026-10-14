@@ -13,9 +13,11 @@ import type { Icon } from "@phosphor-icons/react";
 import {
   CodeBlockIcon,
   GridFourIcon,
+  ImageIcon,
   ListBulletsIcon,
   ListNumbersIcon,
   MinusIcon,
+  PaperclipIcon,
   QuotesIcon,
   TextHFourIcon,
   TextHOneIcon,
@@ -38,11 +40,19 @@ const { menu } = blockMenuVariants();
 
 type ChainCommands = ReturnType<Editor["chain"]>;
 
-type BlockItem = {
+type BlockCommand = {
   label: string;
   icon: Icon;
   action: (chain: ChainCommands) => ChainCommands;
 };
+
+type BlockPicker = {
+  label: string;
+  icon: Icon;
+  pick: "image" | "file";
+};
+
+type BlockItem = BlockCommand | BlockPicker;
 
 const BLOCK_ITEMS: BlockItem[] = [
   { label: "Text", icon: TextTIcon, action: chain => chain.setParagraph() },
@@ -57,14 +67,17 @@ const BLOCK_ITEMS: BlockItem[] = [
   { label: "Mermaid Diagram", icon: TreeStructureIcon, action: chain => chain.setCodeBlock({ language: "mermaid" }) },
   { label: "Divider", icon: MinusIcon, action: chain => chain.setHorizontalRule() },
   { label: "Table", icon: GridFourIcon, action: chain => chain.insertTable() },
+  { label: "Image", icon: ImageIcon, pick: "image" },
+  { label: "File", icon: PaperclipIcon, pick: "file" },
 ];
 
 type BlockMenuContentProps = {
   editor: Editor;
   slashState: { active: boolean; query: string; from: number };
+  onPickFiles?: (kind: "image" | "file") => void;
 };
 
-export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) {
+export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuContentProps) {
   const [slashNav, setSlashNav] = useState({ index: 0, query: "" });
   const slashDropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -73,11 +86,12 @@ export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) 
     : 0;
 
   const filteredItems = useMemo(() => {
-    if (!slashState.active) return BLOCK_ITEMS;
+    const source = onPickFiles ? BLOCK_ITEMS : BLOCK_ITEMS.filter(item => !("pick" in item));
+    if (!slashState.active) return source;
     const q = slashState.query.toLowerCase();
-    if (q.length === 0) return BLOCK_ITEMS;
-    return BLOCK_ITEMS.filter(item => item.label.toLowerCase().includes(q));
-  }, [slashState.active, slashState.query]);
+    if (q.length === 0) return source;
+    return source.filter(item => item.label.toLowerCase().includes(q));
+  }, [onPickFiles, slashState.active, slashState.query]);
 
   const {
     refs: slashMenuRefs,
@@ -128,14 +142,18 @@ export function BlockMenuContent({ editor, slashState }: BlockMenuContentProps) 
           .deleteRange({ from, to: cursorPos })
           .run();
 
-        item.action(editor.chain().focus()).run();
+        if ("pick" in item) {
+          onPickFiles?.(item.pick);
+        } else {
+          item.action(editor.chain().focus()).run();
+        }
       } catch {
         // Block may no longer be in the document
       }
 
       deactivateSlash();
     },
-    [editor, slashState, deactivateSlash],
+    [editor, slashState, deactivateSlash, onPickFiles],
   );
 
   useEffect(() => {

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { TrashIcon, UserIcon } from "@phosphor-icons/react";
-import { RichEditor } from "@probo/ui";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
@@ -29,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskCommentListItem_taskComment$key } from "#/__generated__/core/TaskCommentListItem_taskComment.graphql";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
 import { taskCommentEditor, taskCommentListItem } from "../variants";
 

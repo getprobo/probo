@@ -20,17 +20,29 @@
 
 package riskmanagement
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"go.probo.inc/probo/pkg/coredata"
+)
 
 // Risk analyses and treatment plans share the existing v1:risk OAuth2
 // namespace. Do not introduce a new scope pair.
 const (
 	scopeV1RiskRead coredata.OAuth2Scope = "v1:risk:read"
 	scopeV1Risk     coredata.OAuth2Scope = "v1:risk"
+
+	// actionFileGet is probo.ActionFileGet. A risk token that can read an
+	// analysis downloads the private files in its description through the
+	// existing file handler. actionFileUpload is probo.ActionFileUpload.
+	actionFileGet    = "core:file:get"
+	actionFileUpload = "core:file:upload"
 )
 
 // OAuth2ScopeMappings maps OAuth2 scopes to risk-management actions.
 var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
-	scopeV1RiskRead: readActions,
-	scopeV1Risk:     append(append([]string{}, readActions...), writeActions...),
+	scopeV1RiskRead: append(append([]string{}, readActions...), actionFileGet),
+	scopeV1Risk: append(
+		append(append([]string{}, readActions...), writeActions...),
+		actionFileGet,
+		actionFileUpload,
+	),
 }

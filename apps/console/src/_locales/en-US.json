@@ -1034,6 +1034,16 @@
         "generic": "Something went wrong"
       }
     },
+    "richEditor": {
+      "file": "File",
+      "imageUnavailable": "Image unavailable",
+      "resizeImage": "Resize image",
+      "uploading": "Uploading {{fileName}}…",
+      "uploadFailed": "Upload failed",
+      "couldNotUpload": "Could not upload {{fileName}}",
+      "tooLarge": "{{fileName}} is too large",
+      "unsupported": "{{fileName}} is not a supported file"
+    },
     "documentClassification": {
       "public": "Public",
       "internal": "Internal",

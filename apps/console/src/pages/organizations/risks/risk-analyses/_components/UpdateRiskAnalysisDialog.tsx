@@ -27,9 +27,9 @@ import {
   DialogFooter,
   Field,
   Input,
-  RichEditor,
   useDialogRef,
 } from "@probo/ui";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -37,6 +37,7 @@ import { graphql, useFragment } from "react-relay";
 import type { UpdateRiskAnalysisDialog_riskAnalysis$key } from "#/__generated__/core/UpdateRiskAnalysisDialog_riskAnalysis.graphql";
 import type { UpdateRiskAnalysisDialogMutation } from "#/__generated__/core/UpdateRiskAnalysisDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
 import { riskAnalysisDescriptionField } from "../variants";
@@ -95,6 +96,7 @@ export function UpdateRiskAnalysisDialog({
   const { t } = useTranslation();
   const riskAnalysis = useFragment(updateRiskAnalysisDialogFragment, riskAnalysisKey);
   const [updateRiskAnalysis, isUpdating] = useMutation<UpdateRiskAnalysisDialogMutation>(updateMutation);
+  const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, control, formState } = useForm<FormData>({
     values: {
       name: riskAnalysis.name,
@@ -105,6 +107,10 @@ export function UpdateRiskAnalysisDialog({
   });
 
   const onSubmit = async (data: FormData) => {
+    if (uploading) {
+      return;
+    }
+
     try {
       await updateRiskAnalysis({
         variables: {
@@ -159,6 +165,7 @@ export function UpdateRiskAnalysisDialog({
                   placeholder={t("updateRiskAnalysisDialog.placeholders.description")}
                   aria-label={t("updateRiskAnalysisDialog.fields.description")}
                   onChangeContent={field.onChange}
+                  onUploadingChange={setUploading}
                 />
               )}
             />
@@ -186,7 +193,7 @@ export function UpdateRiskAnalysisDialog({
           </Field>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isUpdating}>
+          <Button type="submit" disabled={isUpdating || uploading}>
             {t("updateRiskAnalysisDialog.actions.save")}
           </Button>
         </DialogFooter>

@@ -345,6 +345,19 @@ func TestValidateEdgeCases(t *testing.T) {
 	}
 }
 
+func TestValidate_CSVReportedAsExcel(t *testing.T) {
+	t.Parallel()
+
+	v := NewValidator(WithCategories(CategoryData, CategorySpreadsheet))
+
+	assert.NoError(t, v.Validate("report.csv", "application/vnd.ms-excel", 1024))
+	assert.NoError(t, v.Validate("sheet.xls", "application/vnd.ms-excel", 1024))
+
+	mime, ok := v.ContentTypeForFilename("report.csv")
+	assert.True(t, ok)
+	assert.Equal(t, "text/csv", mime)
+}
+
 // Test each file category individually
 func TestFileCategories(t *testing.T) {
 	categoryTests := []struct {
@@ -568,4 +581,52 @@ func TestValidateCustomAllowedExtensions(t *testing.T) {
 	if !contains(err.Error(), "content type \"image/png\" does not match extension \".jpg\"") {
 		t.Errorf("Unexpected error message: %s", err.Error())
 	}
+}
+
+func TestFileValidator_ContentTypeForFilename(t *testing.T) {
+	t.Parallel()
+
+	validator := NewValidator(WithCategories(
+		CategoryDocument,
+		CategorySpreadsheet,
+		CategoryPresentation,
+		CategoryText,
+		CategoryImage,
+		CategoryData,
+	))
+
+	tests := []struct {
+		name     string
+		filename string
+		want     string
+		ok       bool
+	}{
+		{name: "png", filename: "dot.png", want: "image/png", ok: true},
+		{name: "uppercase extension", filename: "notes.TXT", want: "text/plain", ok: true},
+		{name: "log prefers text/plain", filename: "app.log", want: "text/plain", ok: true},
+		{name: "video is excluded", filename: "clip.mp4", ok: false},
+		{name: "no extension", filename: "readme", ok: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, ok := validator.ContentTypeForFilename(tt.filename)
+			if ok != tt.ok || got != tt.want {
+				t.Errorf("ContentTypeForFilename(%q) = %q, %v; want %q, %v", tt.filename, got, ok, tt.want, tt.ok)
+			}
+		})
+	}
+}
+
+func TestContentTypeForAttachment(t *testing.T) {
+	t.Parallel()
+
+	got, ok := ContentTypeForAttachment("diagram.png")
+	assert.True(t, ok)
+	assert.Equal(t, "image/png", got)
+
+	_, ok = ContentTypeForAttachment("clip.mp4")
+	assert.False(t, ok)
 }

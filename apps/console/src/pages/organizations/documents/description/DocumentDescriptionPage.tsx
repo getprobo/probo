@@ -19,9 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { RichEditor } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useOutletContext } from "react-router";
@@ -30,6 +29,7 @@ import { useDebounceCallback } from "usehooks-ts";
 
 import type { DocumentDescriptionPage_updateContentMutation } from "#/__generated__/core/DocumentDescriptionPage_updateContentMutation.graphql";
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
 const autoSaveIntervalMs = 1000;
 
@@ -154,6 +154,15 @@ export function DocumentDescriptionPage(props: {
     }, [documentId, wasDraft, updateContent, toast, t, onDocumentUpdated]),
     autoSaveIntervalMs,
   );
+  const uploadingRef = useRef(false);
+  const handleContentChange = useCallback((content: string) => {
+    if (uploadingRef.current) {
+      handleUpdate.cancel();
+      return;
+    }
+
+    handleUpdate(content);
+  }, [handleUpdate]);
 
   const canEdit = isEditable
     && document.canUpdate
@@ -201,7 +210,13 @@ export function DocumentDescriptionPage(props: {
       content={currentVersion.content}
       data-theme="document"
       disabled={!canEdit}
-      onChangeContent={handleUpdate}
+      onChangeContent={handleContentChange}
+      onUploadingChange={(uploading) => {
+        uploadingRef.current = uploading;
+        if (uploading) {
+          handleUpdate.cancel();
+        }
+      }}
     />
   );
 }

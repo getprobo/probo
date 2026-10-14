@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
@@ -989,28 +990,31 @@ func (s *DocumentApprovalService) generateApprovalPDF(
 	ctx context.Context, scope coredata.Scoper,
 	documentVersionID gid.GID,
 ) ([]byte, error) {
-	var pdfData []byte
+	var prepared *preparedDocumentExport
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			pdfData, err = exportDocumentPDF(
-				ctx,
-				s.svc,
-				s.html2pdfConverter,
-				conn,
-				scope,
-				documentVersionID,
-				ExportPDFOptions{},
-			)
+			prepared, err = prepareDocumentExport(ctx, conn, scope, documentVersionID, ExportPDFOptions{}, s.svc.logger)
+			if err != nil {
+				return err
+			}
 
-			return err
+			return nil
 		},
 	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot prepare approval PDF: %w", err)
+	}
 
-	return pdfData, err
+	pdf, err := renderPreparedDocumentExport(ctx, s.svc, s.html2pdfConverter, prepared)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render approval PDF: %w", err)
+	}
+
+	return pdf, nil
 }
 
 func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
@@ -1032,7 +1036,7 @@ func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
 		func(ctx context.Context, conn pg.Querier) error {
 			holdsClaim, err := quorum.HasPDFClaim(ctx, conn, scope)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot check PDF claim: %w", err)
 			}
 
 			if !holdsClaim {
@@ -1046,9 +1050,9 @@ func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
 				return fmt.Errorf("cannot load document version: %w", err)
 			}
 
-			pdfInput, err = loadDocumentPDFInput(ctx, conn, scope, version)
+			pdfInput, err = loadDocumentPDFInput(ctx, conn, scope, version, s.svc.logger)
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot load document PDF input: %w", err)
 			}
 
 			return nil
@@ -1061,6 +1065,8 @@ func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
 	if skip {
 		return nil
 	}
+
+	pdfInput.content = docgen.EmbedContentImages(ctx, s.svc.logger, pdfInput.content, pdfInput.imageFiles, s.svc.fileManager)
 
 	pdfData, err := renderDocumentPDF(
 		ctx,
@@ -1149,7 +1155,7 @@ func (s *DocumentApprovalService) generateAndUploadQuorumPDF(
 			return nil
 		}
 
-		return err
+		return fmt.Errorf("cannot save quorum document PDF: %w", err)
 	}
 
 	return nil

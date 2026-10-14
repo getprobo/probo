@@ -418,6 +418,40 @@ func TestRenderMarkdown_ImageWithoutTitle(t *testing.T) {
 	assert.Equal(t, "![A photo](https://example.com/img.png)\n", got)
 }
 
+func TestRenderMarkdown_ImageWidth(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","width":50}}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "<img src=\"https://example.com/img.png\" alt=\"A photo\" width=\"50%\">\n", got)
+
+	full := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","width":100}}]}`
+	require.NoError(t, json.Unmarshal([]byte(full), &n))
+
+	got, err = RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "<img src=\"https://example.com/img.png\" alt=\"A photo\" width=\"100%\">\n", got)
+
+	titled := `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","title":"My image","width":50}}]}`
+	require.NoError(t, json.Unmarshal([]byte(titled), &n))
+
+	got, err = RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "<img src=\"https://example.com/img.png\" alt=\"A photo\" title=\"My image\" width=\"50%\">\n", got)
+
+	dangerous := `{"type":"doc","content":[{"type":"image","attrs":{"src":"javascript:alert(1)","alt":null,"title":null,"width":50}}]}`
+	require.NoError(t, json.Unmarshal([]byte(dangerous), &n))
+
+	got, err = RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "<img src=\"\" width=\"50%\">\n", got)
+}
+
 func TestRenderMarkdown_ImageSanitizesDangerousSrc(t *testing.T) {
 	t.Parallel()
 
@@ -533,6 +567,19 @@ func TestRenderMarkdown_TableWithBlockContent(t *testing.T) {
 	got, err := RenderMarkdown(n)
 	require.NoError(t, err)
 	assert.Equal(t, "| Header |\n| --- |\n| <ul><li><p>item</p></li></ul> |\n", got)
+}
+
+func TestRenderMarkdown_FileEscapesAmpersand(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"file","attrs":{"fileId":"file-1","fileName":"report &amp;.pdf","mimeType":"application/pdf","size":12}}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "[report \\&amp;.pdf](/api/files/v1/file-1)\n", got)
 }
 
 func TestRenderMarkdown_MarkdownEscaping(t *testing.T) {

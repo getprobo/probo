@@ -15,7 +15,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { RichEditor } from "@probo/ui";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ErrorInfo, type ReactNode } from "react";
@@ -23,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { RiskAnalysisDescriptionSection_riskAnalysis$key } from "#/__generated__/core/RiskAnalysisDescriptionSection_riskAnalysis.graphql";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
 import { riskAnalysisDescriptionField } from "../variants";

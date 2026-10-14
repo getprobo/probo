@@ -198,6 +198,36 @@ func TestRenderHTML(t *testing.T) {
 	}
 }
 
+func TestRenderHTML_FileLink(t *testing.T) {
+	t.Parallel()
+
+	result, err := RenderHTML(DocumentData{
+		Title:   "Files",
+		BaseURL: "http://localhost:8080",
+		Content: json.RawMessage([]byte(
+			`{"type":"doc","content":[{"type":"file","attrs":{"fileId":"file-1","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`,
+		)),
+	})
+	require.NoError(t, err)
+
+	html := string(result)
+	assert.Contains(t, html, `<base href="http://localhost:8080">`)
+	assert.Contains(t, html, `<a href="/api/files/v1/file-1" class="document-file">policy.pdf</a>`)
+
+	escaped, err := RenderHTML(DocumentData{
+		Title:   "Files",
+		BaseURL: "http://localhost:8080",
+		Content: json.RawMessage([]byte(
+			`{"type":"doc","content":[{"type":"file","attrs":{"fileId":"file-1","fileName":"<script>alert(1).pdf","mimeType":"application/pdf","size":12}}]}`,
+		)),
+	})
+	require.NoError(t, err)
+
+	escapedHTML := string(escaped)
+	assert.Contains(t, escapedHTML, `<a href="/api/files/v1/file-1" class="document-file">&lt;script&gt;alert(1).pdf</a>`)
+	assert.NotContains(t, escapedHTML, "<script>alert(1).pdf")
+}
+
 func TestRenderHTML_ErrorHandling(t *testing.T) {
 	data := DocumentData{
 		Title: "Valid Document",

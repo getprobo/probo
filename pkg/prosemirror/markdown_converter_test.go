@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestParseMarkdown_EmptyInput(t *testing.T) {
@@ -255,6 +256,97 @@ func TestParseMarkdown_LinkSanitizesDangerousHrefs(t *testing.T) {
 	}
 }
 
+func TestParseMarkdown_ImageOnlyHeading(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		source string
+	}{
+		{name: "markdown", source: "# ![diagram](https://example.com/diagram.png)"},
+		{name: "html", source: `<h1><img src="https://example.com/diagram.png" alt="diagram"></h1>`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			doc, err := ParseMarkdown(tt.source)
+			require.NoError(t, err)
+			require.NoError(t, validateDocument(doc))
+			require.Len(t, doc.Content, 1)
+
+			image := doc.Content[0]
+			assert.Equal(t, NodeImage, image.Type)
+
+			imageAttrs, err := image.ImageAttrs()
+			require.NoError(t, err)
+			assert.Equal(t, "https://example.com/diagram.png", imageAttrs.Src)
+			require.NotNil(t, imageAttrs.Alt)
+			assert.Equal(t, "diagram", *imageAttrs.Alt)
+		})
+	}
+}
+
+func TestParseMarkdown_HeadingStartsWithImage(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("# ![diagram](https://example.com/diagram.png) Title")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 3)
+
+	heading := doc.Content[0]
+	assert.Equal(t, NodeHeading, heading.Type)
+	assert.Empty(t, heading.Content)
+
+	attrs, err := heading.HeadingAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 1, attrs.Level)
+
+	assert.Equal(t, NodeImage, doc.Content[1].Type)
+	assert.Equal(t, NodeParagraph, doc.Content[2].Type)
+	require.Len(t, doc.Content[2].Content, 1)
+	assert.Equal(t, " Title", *doc.Content[2].Content[0].Text)
+}
+
+func TestParseMarkdown_HeadingImageThenText(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("# Hello ![diagram](https://example.com/diagram.png) world")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 3)
+
+	heading := doc.Content[0]
+	assert.Equal(t, NodeHeading, heading.Type)
+	require.Len(t, heading.Content, 1)
+	assert.Equal(t, "Hello ", *heading.Content[0].Text)
+
+	attrs, err := heading.HeadingAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, 1, attrs.Level)
+
+	assert.Equal(t, NodeImage, doc.Content[1].Type)
+	assert.Equal(t, NodeParagraph, doc.Content[2].Type)
+	require.Len(t, doc.Content[2].Content, 1)
+	assert.Equal(t, " world", *doc.Content[2].Content[0].Text)
+}
+
+func TestParseMarkdown_ImagesSeparatedBySpace(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("before ![one](https://example.com/one.png) ![two](https://example.com/two.png) after")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 4)
+	assert.Equal(t, NodeParagraph, doc.Content[0].Type)
+	assert.Equal(t, "before ", *doc.Content[0].Content[0].Text)
+	assert.Equal(t, NodeImage, doc.Content[1].Type)
+	assert.Equal(t, NodeImage, doc.Content[2].Type)
+	assert.Equal(t, NodeParagraph, doc.Content[3].Type)
+	assert.Equal(t, " after", *doc.Content[3].Content[0].Text)
+}
+
 func TestParseMarkdown_Image(t *testing.T) {
 	t.Parallel()
 
@@ -262,10 +354,7 @@ func TestParseMarkdown_Image(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, doc.Content, 1)
 
-	p := doc.Content[0]
-	require.Len(t, p.Content, 1)
-
-	img := p.Content[0]
+	img := doc.Content[0]
 	assert.Equal(t, NodeImage, img.Type)
 
 	attrs, err := img.ImageAttrs()
@@ -277,6 +366,31 @@ func TestParseMarkdown_Image(t *testing.T) {
 	assert.Equal(t, "title", *attrs.Title)
 }
 
+func TestParseMarkdown_ImageWidthRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
+	markdown := `<img src="/api/files/v1/attachments/` + fileID + `" alt="diagram" width="50%">`
+
+	doc, err := ParseMarkdown(markdown)
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.FileID)
+	assert.Equal(t, fileID, *attrs.FileID)
+	assert.Empty(t, attrs.Src)
+	require.NotNil(t, attrs.Width)
+	assert.Equal(t, 50, *attrs.Width)
+	require.NotNil(t, attrs.Alt)
+	assert.Equal(t, "diagram", *attrs.Alt)
+
+	rendered, err := RenderMarkdown(doc)
+	require.NoError(t, err)
+	assert.Equal(t, `<img src="/api/files/v1/`+fileID+`" alt="diagram" width="50%">`+"\n", rendered)
+}
+
 func TestParseMarkdown_ImageFormattedAltText(t *testing.T) {
 	t.Parallel()
 
@@ -284,16 +398,32 @@ func TestParseMarkdown_ImageFormattedAltText(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, doc.Content, 1)
 
-	p := doc.Content[0]
-	require.Len(t, p.Content, 1)
-
-	img := p.Content[0]
+	img := doc.Content[0]
 	assert.Equal(t, NodeImage, img.Type)
 
 	attrs, err := img.ImageAttrs()
 	require.NoError(t, err)
 	require.NotNil(t, attrs.Alt)
 	assert.Equal(t, "bold and italic", *attrs.Alt)
+}
+
+func TestParseMarkdown_EmptyListItem(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("-\n- item\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 1)
+
+	list := doc.Content[0]
+	assert.Equal(t, NodeBulletList, list.Type)
+	require.Len(t, list.Content, 2)
+
+	empty := list.Content[0]
+	assert.Equal(t, NodeListItem, empty.Type)
+	require.Len(t, empty.Content, 1)
+	assert.Equal(t, NodeParagraph, empty.Content[0].Type)
+	assert.Empty(t, empty.Content[0].Content)
 }
 
 func TestParseMarkdown_BulletList(t *testing.T) {
@@ -504,6 +634,30 @@ func TestParseMarkdown_MarkdownTable(t *testing.T) {
 	assert.Equal(t, "30", *table.Content[1].Content[1].Content[0].Content[0].Text)
 	assert.Equal(t, "Bob", *table.Content[2].Content[0].Content[0].Content[0].Text)
 	assert.Equal(t, "25", *table.Content[2].Content[1].Content[0].Content[0].Text)
+}
+
+func TestParseMarkdown_ImageInTableCell(t *testing.T) {
+	t.Parallel()
+
+	md := "| Label |\n| --- |\n| before ![diagram](https://example.com/diagram.png) after |\n"
+	doc, err := ParseMarkdown(md)
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+
+	cell := doc.Content[0].Content[1].Content[0]
+	assert.Equal(t, NodeTableCell, cell.Type)
+	require.Len(t, cell.Content, 3)
+	assert.Equal(t, NodeParagraph, cell.Content[0].Type)
+	assert.Equal(t, "before ", *cell.Content[0].Content[0].Text)
+	assert.Equal(t, NodeImage, cell.Content[1].Type)
+	assert.Equal(t, NodeParagraph, cell.Content[2].Type)
+	assert.Equal(t, " after", *cell.Content[2].Content[0].Text)
+
+	attrs, err := cell.Content[1].ImageAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, "https://example.com/diagram.png", attrs.Src)
+	require.NotNil(t, attrs.Alt)
+	assert.Equal(t, "diagram", *attrs.Alt)
 }
 
 func TestParseMarkdown_MarkdownTableWithInlineMarks(t *testing.T) {

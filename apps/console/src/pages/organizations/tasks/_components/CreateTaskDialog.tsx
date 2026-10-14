@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { RichEditor } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog, type DialogProps } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
@@ -48,6 +47,7 @@ import type { CreateTaskDialogLinkMutation } from "#/__generated__/core/CreateTa
 import type { CreateTaskDialogPublishMutation } from "#/__generated__/core/CreateTaskDialogPublishMutation.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
 import type { TaskPriority, TaskState } from "../_lib/taskState";
@@ -159,6 +159,7 @@ export function CreateTaskDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<TaskState>("TODO");
@@ -218,6 +219,10 @@ export function CreateTaskDialog({
   }
 
   function handleSubmit() {
+    if (uploading) {
+      return;
+    }
+
     const nextName = name.trim();
     if (!nextName) {
       setErrors({ name: t("createDialog.errors.nameRequired") });
@@ -309,6 +314,7 @@ export function CreateTaskDialog({
                 disabled={isSaving}
                 aria-label={t("detailsPage.fields.description")}
                 onChangeContent={setContent}
+                onUploadingChange={setUploading}
               />
             </Field>
             <Select
@@ -410,6 +416,7 @@ export function CreateTaskDialog({
               variant="solid"
               color="neutral"
               highContrast
+              disabled={uploading}
               loading={isSaving}
             >
               {t("createDialog.actions.create")}

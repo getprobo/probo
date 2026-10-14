@@ -157,4 +157,67 @@
     .mermaid-empty {
         @apply p-4 text-sm text-txt-tertiary text-center;
     }
+
+    .rich-image-slot {
+        @apply my-2 w-full;
+    }
+
+    .rich-image-frame {
+        @apply relative mx-auto w-fit max-w-full;
+    }
+
+    .rich-image {
+        @apply block h-auto max-w-full rounded-md;
+    }
+
+    .rich-image-sized {
+        @apply w-full;
+    }
+
+    .rich-image-handle {
+        @apply absolute top-1/2 z-10 flex h-10 w-5 -translate-y-1/2 cursor-ew-resize items-center justify-center border-0 bg-transparent p-0 opacity-0 touch-none transition-opacity;
+    }
+
+    .rich-image-handle::before {
+        content: "";
+        @apply h-6 w-1.5 rounded-full border border-border-strong bg-txt-invert shadow-mid;
+    }
+
+    .rich-image-slot:hover .rich-image-handle,
+    .ProseMirror-selectednode .rich-image-handle,
+    .rich-image-handle:focus-visible {
+        @apply opacity-100;
+    }
+
+    .rich-image-handle-left {
+        @apply left-0 -translate-x-1/2;
+    }
+
+    .rich-image-handle-right {
+        @apply right-0 translate-x-1/2;
+    }
+
+    .rich-image-missing {
+        @apply my-2 flex items-center gap-2 rounded-lg border border-dashed border-border-solid px-3 py-2 text-sm text-txt-tertiary;
+    }
+
+    .ProseMirror-selectednode .rich-image-missing {
+        @apply bg-subtle;
+    }
+
+    .rich-file {
+        @apply my-2 flex items-center gap-2 rounded-lg border border-border-solid px-3 py-2 text-sm no-underline;
+    }
+
+    .rich-file-name {
+        @apply min-w-0 flex-1 truncate font-normal text-txt-primary;
+    }
+
+    .rich-file-size {
+        @apply shrink-0 text-txt-tertiary;
+    }
+
+    .rich-upload {
+        @apply my-2 rounded-lg border border-dashed border-border-solid px-3 py-2 text-sm text-txt-tertiary;
+    }
 }

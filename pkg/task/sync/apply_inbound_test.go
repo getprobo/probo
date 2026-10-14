@@ -260,7 +260,7 @@ func TestMapInboundIssue_PartialPayloadKeepsOmittedFields(t *testing.T) {
 	data, err := envelope.IssueData()
 	require.NoError(t, err)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", mapped.Name)
 	assert.Equal(t, content, mapped.Content)
@@ -290,7 +290,7 @@ func TestMapInboundIssue_UnsetLinearPriorityKeepsExisting(t *testing.T) {
 	require.True(t, data.Has("priority"))
 	assert.Equal(t, 0, data.Priority)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", mapped.Name)
 	assert.Equal(t, coredata.TaskPriorityHigh, mapped.Priority)
@@ -327,7 +327,7 @@ func TestMapInboundIssue_DescriptionHashMatchesOutboundRender(t *testing.T) {
 	data, err := envelope.IssueData()
 	require.NoError(t, err)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 
 	inboundHash := ContentHash(

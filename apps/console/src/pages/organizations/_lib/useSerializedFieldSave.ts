@@ -67,12 +67,18 @@ export function useDebouncedSerializedFieldSave(
   const persistRef = useRef(persist);
   const [pending, setPending] = useState<string | null>(null);
   const pendingSave = useRef<{ value: string } | null>(null);
+  const retainOnUnmountRef = useRef(false);
 
   useEffect(() => {
     persistRef.current = persist;
   }, [persist]);
 
   useLayoutEffect(() => {
+    if (retainOnUnmountRef.current && pending == null) {
+      return;
+    }
+
+    retainOnUnmountRef.current = false;
     pendingSave.current = pending == null ? null : { value: pending };
   }, [pending]);
 
@@ -93,6 +99,8 @@ export function useDebouncedSerializedFieldSave(
     }
 
     const timer = window.setTimeout(() => {
+      retainOnUnmountRef.current = false;
+      pendingSave.current = null;
       persist(pending);
       setPending(null);
     }, delayMs);
@@ -103,24 +111,38 @@ export function useDebouncedSerializedFieldSave(
   }, [delayMs, pending, persist]);
 
   function schedule(value: string) {
+    retainOnUnmountRef.current = false;
     pendingSave.current = { value };
     setPending(value);
   }
 
   function flush() {
+    retainOnUnmountRef.current = false;
     const queued = pendingSave.current;
     if (queued == null) {
       return;
     }
 
+    pendingSave.current = null;
     persist(queued.value);
     setPending(null);
   }
 
+  function hold(value?: string) {
+    if (value !== undefined) {
+      pendingSave.current = { value };
+    }
+
+    // Stop the timer and keep the queued draft. Unmount still flushes it.
+    retainOnUnmountRef.current = true;
+    setPending(null);
+  }
+
   function cancel() {
+    retainOnUnmountRef.current = false;
     pendingSave.current = null;
     setPending(null);
   }
 
-  return { schedule, flush, cancel };
+  return { schedule, flush, hold, cancel };
 }

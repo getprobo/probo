@@ -245,7 +245,8 @@ func (s *Service) CreateComment(
 }
 
 func (s *Service) UpdateComment(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	req UpdateTaskCommentRequest,
 ) (*coredata.TaskComment, error) {
 	if err := req.Validate(); err != nil {
@@ -257,7 +258,7 @@ func (s *Service) UpdateComment(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := taskComment.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := taskComment.LoadByIDForUpdate(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load task comment: %w", err)
 			}
 

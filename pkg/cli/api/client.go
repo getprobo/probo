@@ -210,7 +210,8 @@ func (c *Client) doRequest(
 
 // DoUpload sends a GraphQL multipart file upload request following the
 // graphql-multipart-request-spec. It maps the given file to the variable
-// at the provided path (e.g. "variables.input.file").
+// at the provided path (e.g. "variables.input.file"). The file part's
+// MIME type is inferred from the filename.
 func (c *Client) DoUpload(
 	query string,
 	variables map[string]any,

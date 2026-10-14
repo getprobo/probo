@@ -47,6 +47,10 @@ import (
 
 const (
 	frameworkExportEmailExpiresIn = 24 * time.Hour
+
+	// frameworkDocumentExportBatchSize bounds how many document bodies are
+	// held between the read and the PDF render.
+	frameworkDocumentExportBatchSize = 10
 )
 
 type (
@@ -168,7 +172,9 @@ func (s FrameworkService) Export(
 
 	defer func() { _ = archive.Close() }()
 
-	return s.svc.pg.WithTx(
+	var documentExports []frameworkDocumentExport
+
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			framework := &coredata.Framework{}
@@ -318,34 +324,114 @@ func (s FrameworkService) Export(
 						return fmt.Errorf("cannot load document version: %w", err)
 					}
 
-					exportedPDF, err := exportDocumentPDF(
-						ctx,
-						s.svc,
-						s.html2pdfConverter,
-						conn,
-						scope,
-						documentVersion.ID,
-						ExportPDFOptions{WithSignatures: true},
+					documentExports = append(
+						documentExports,
+						frameworkDocumentExport{
+							name:      fmt.Sprintf("%s/%s/%s.pdf", framework.Name, control.SectionTitle, document.Title),
+							versionID: documentVersion.ID,
+						},
 					)
-					if err != nil {
-						return fmt.Errorf("cannot export document PDF: %w", err)
-					}
-
-					w, err := archive.Create(fmt.Sprintf("%s/%s/%s.pdf", framework.Name, control.SectionTitle, document.Title))
-					if err != nil {
-						return fmt.Errorf("cannot create document in archive: %w", err)
-					}
-
-					_, err = w.Write(exportedPDF)
-					if err != nil {
-						return fmt.Errorf("cannot write document to archive: %w", err)
-					}
 				}
 			}
 
 			return nil
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("cannot prepare framework export: %w", err)
+	}
+
+	return s.writeFrameworkDocumentPDFs(ctx, scope, archive, documentExports)
+}
+
+type frameworkDocumentExport struct {
+	name      string
+	versionID gid.GID
+}
+
+func (s FrameworkService) writeFrameworkDocumentPDFs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	archive *zip.Writer,
+	documents []frameworkDocumentExport,
+) error {
+	for start := 0; start < len(documents); start += frameworkDocumentExportBatchSize {
+		end := min(start+frameworkDocumentExportBatchSize, len(documents))
+
+		if err := s.writeFrameworkDocumentPDFBatch(ctx, scope, archive, documents[start:end]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s FrameworkService) writeFrameworkDocumentPDFBatch(
+	ctx context.Context,
+	scope coredata.Scoper,
+	archive *zip.Writer,
+	documents []frameworkDocumentExport,
+) error {
+	type preparedFrameworkDocument struct {
+		name     string
+		prepared *preparedDocumentExport
+	}
+
+	var prepared []preparedFrameworkDocument
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			prepared = make([]preparedFrameworkDocument, 0, len(documents))
+
+			for _, document := range documents {
+				item, err := prepareDocumentExport(
+					ctx,
+					conn,
+					scope,
+					document.versionID,
+					ExportPDFOptions{WithSignatures: true},
+					s.svc.logger,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot export document PDF: %w", err)
+				}
+
+				prepared = append(
+					prepared,
+					preparedFrameworkDocument{
+						name:     document.name,
+						prepared: item,
+					},
+				)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot prepare framework export: %w", err)
+	}
+
+	for i := range prepared {
+		exportedPDF, err := renderPreparedDocumentExport(ctx, s.svc, s.html2pdfConverter, prepared[i].prepared)
+		if err != nil {
+			return fmt.Errorf("cannot export document PDF: %w", err)
+		}
+
+		w, err := archive.Create(prepared[i].name)
+		if err != nil {
+			return fmt.Errorf("cannot create document in archive: %w", err)
+		}
+
+		if _, err := w.Write(exportedPDF); err != nil {
+			return fmt.Errorf("cannot write document to archive: %w", err)
+		}
+
+		prepared[i].prepared = nil
+	}
+
+	return nil
 }
 
 func (s FrameworkService) Create(

@@ -240,12 +240,34 @@ func ContentToMarkdown(content string) (string, error) {
 		return "", fmt.Errorf("cannot parse prosemirror json: %w", err)
 	}
 
+	// Linear renders a markdown image and shows an HTML img tag as text.
+	// Width has no markdown syntax Linear accepts, so the description omits it.
+	omitImageWidth(&node)
+
 	md, err := prosemirror.RenderMarkdown(node)
 	if err != nil {
 		return "", fmt.Errorf("cannot render markdown: %w", err)
 	}
 
 	return md, nil
+}
+
+func omitImageWidth(node *prosemirror.Node) {
+	if node.Type == prosemirror.NodeImage {
+		attrs, err := node.ImageAttrs()
+		if err == nil && attrs.Width != nil {
+			attrs.Width = nil
+
+			encoded, marshalErr := json.Marshal(attrs)
+			if marshalErr == nil {
+				node.Attrs = encoded
+			}
+		}
+	}
+
+	for i := range node.Content {
+		omitImageWidth(&node.Content[i])
+	}
 }
 
 func MarkdownToContent(markdown string) (string, error) {
@@ -258,8 +280,9 @@ func MarkdownToContent(markdown string) (string, error) {
 		return "", fmt.Errorf("cannot parse markdown: %w", err)
 	}
 
-	// Linear descriptions can contain nodes the task editor cannot store,
-	// such as an image inside a paragraph. Keep the rest of the description.
+	// Linear descriptions can contain nodes the task editor cannot store.
+	// Keep the rest of the description. Images are hoisted to blocks first,
+	// and uploaded images and files are restored from their file URLs.
 	node = dropUnsupportedLinearContent(node)
 	if len(node.Content) == 0 {
 		return prosemirror.DefaultDocumentJSON(nil)
@@ -435,7 +458,8 @@ func linearNodeKept(n prosemirror.Node) bool {
 	case prosemirror.NodeListItem:
 		return len(n.Content) > 0 && n.Content[0].Type == prosemirror.NodeParagraph
 	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeCodeBlock,
-		prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeText, prosemirror.NodeHardBreak:
+		prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeFile,
+		prosemirror.NodeText, prosemirror.NodeHardBreak:
 		return true
 	default:
 		return false
@@ -446,7 +470,7 @@ func linearBlock(t prosemirror.NodeType) bool {
 	switch t {
 	case prosemirror.NodeParagraph, prosemirror.NodeHeading, prosemirror.NodeBlockquote, prosemirror.NodeCodeBlock,
 		prosemirror.NodeHorizontalRule, prosemirror.NodeBulletList, prosemirror.NodeOrderedList,
-		prosemirror.NodeTable, prosemirror.NodeImage:
+		prosemirror.NodeTable, prosemirror.NodeImage, prosemirror.NodeFile:
 		return true
 	default:
 		return false
@@ -459,7 +483,7 @@ func linearInline(t prosemirror.NodeType) bool {
 
 func linearLeaf(t prosemirror.NodeType) bool {
 	switch t {
-	case prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeHardBreak, prosemirror.NodeText:
+	case prosemirror.NodeHorizontalRule, prosemirror.NodeImage, prosemirror.NodeFile, prosemirror.NodeHardBreak, prosemirror.NodeText:
 		return true
 	default:
 		return false

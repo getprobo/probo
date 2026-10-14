@@ -36,6 +36,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/awsconfig"
@@ -2564,10 +2565,14 @@ func (s *DocumentService) ExportPDF(
 		return nil, fmt.Errorf("cannot validate PDF export options: %w", err)
 	}
 
+	var prepared *preparedDocumentExport
+
 	err := s.svc.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Tx) (err error) {
-			data, err = exportDocumentPDF(ctx, s.svc, s.html2pdfConverter, conn, scope, documentVersionID, options)
+		func(ctx context.Context, conn pg.Tx) error {
+			var err error
+
+			prepared, err = prepareDocumentExport(ctx, conn, scope, documentVersionID, options, s.svc.logger)
 			if err != nil {
 				return fmt.Errorf("cannot export document PDF: %w", err)
 			}
@@ -2576,7 +2581,12 @@ func (s *DocumentService) ExportPDF(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot prepare document PDF: %w", err)
+	}
+
+	data, err = renderPreparedDocumentExport(ctx, s.svc, s.html2pdfConverter, prepared)
+	if err != nil {
+		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
 	return data, nil
@@ -2704,39 +2714,73 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, scope coreda
 	return exportJob, nil
 }
 
-func exportDocumentPDF(
+type preparedDocumentExport struct {
+	version    *coredata.DocumentVersion
+	input      *documentPDFInput
+	storedFile *coredata.File
+	signatures []docgen.SignatureData
+	options    ExportPDFOptions
+}
+
+func prepareDocumentExport(
 	ctx context.Context,
-	svc *Service,
-	html2pdfConverter *html2pdf.Converter,
 	conn pg.Querier,
 	scope coredata.Scoper,
 	documentVersionID gid.GID,
 	options ExportPDFOptions,
-) ([]byte, error) {
+	logger *log.Logger,
+) (*preparedDocumentExport, error) {
 	version := &coredata.DocumentVersion{}
 	if err := version.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
 		return nil, fmt.Errorf("cannot load document version: %w", err)
 	}
 
-	// Published versions with a stored PDF: use the stored file,
-	// append signature page and watermark as needed.
+	prepared := &preparedDocumentExport{
+		version: version,
+		options: options,
+	}
+
 	if version.FileID != nil {
-		return exportStoredPDF(ctx, svc, html2pdfConverter, conn, scope, version, options)
-	}
+		fileRecord := &coredata.File{}
+		if err := fileRecord.LoadByID(ctx, conn, scope, *version.FileID); err != nil {
+			return nil, fmt.Errorf("cannot load document version file: %w", err)
+		}
 
-	// No stored PDF: generate on the fly without watermark — watermark is
-	// applied after merging the signature page so all pages are watermarked.
-	generateOptions := options
-	generateOptions.WithWatermark = false
-	generateOptions.WatermarkText = nil
+		prepared.storedFile = fileRecord
+	} else {
+		input, err := loadDocumentPDFInput(ctx, conn, scope, version, logger)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load document PDF input: %w", err)
+		}
 
-	pdfData, err := generateDocumentPDF(ctx, svc, html2pdfConverter, conn, scope, version, generateOptions)
-	if err != nil {
-		return nil, err
+		prepared.input = input
 	}
 
 	if options.WithSignatures {
-		signaturePagePDF, err := generateSignaturePagePDF(ctx, svc, html2pdfConverter, conn, scope, version)
+		signatures, err := loadSignaturePageData(ctx, conn, scope, version)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load signature page: %w", err)
+		}
+
+		prepared.signatures = signatures
+	}
+
+	return prepared, nil
+}
+
+func renderPreparedDocumentExport(
+	ctx context.Context,
+	svc *Service,
+	html2pdfConverter *html2pdf.Converter,
+	prepared *preparedDocumentExport,
+) ([]byte, error) {
+	pdfData, err := prepared.documentPDF(ctx, svc, html2pdfConverter)
+	if err != nil {
+		return nil, fmt.Errorf("cannot render document PDF: %w", err)
+	}
+
+	if len(prepared.signatures) > 0 {
+		signaturePagePDF, err := renderSignaturePagePDF(ctx, html2pdfConverter, prepared.version, prepared.signatures)
 		if err != nil {
 			return nil, fmt.Errorf("cannot generate signature page: %w", err)
 		}
@@ -2749,16 +2793,16 @@ func exportDocumentPDF(
 		}
 	}
 
-	if options.WithWatermark {
-		if options.WatermarkText == nil {
+	if prepared.options.WithWatermark {
+		if prepared.options.WatermarkText == nil {
 			return nil, fmt.Errorf("watermark text is required with watermark enabled")
 		}
 
 		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
 			ctx,
 			pdfData,
-			version.Classification.String(),
-			*options.WatermarkText,
+			prepared.version.Classification.String(),
+			*prepared.options.WatermarkText,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
@@ -2768,66 +2812,40 @@ func exportDocumentPDF(
 	return pdfData, nil
 }
 
-func exportStoredPDF(
+func (p *preparedDocumentExport) documentPDF(
 	ctx context.Context,
 	svc *Service,
 	html2pdfConverter *html2pdf.Converter,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	version *coredata.DocumentVersion,
-	options ExportPDFOptions,
 ) ([]byte, error) {
-	fileRecord := &coredata.File{}
-	if err := fileRecord.LoadByID(ctx, conn, scope, *version.FileID); err != nil {
-		return nil, fmt.Errorf("cannot load document version file: %w", err)
+	if p.storedFile != nil {
+		pdfData, err := svc.fileManager.GetFileBytes(ctx, p.storedFile)
+		if err != nil {
+			return nil, fmt.Errorf("cannot download document version PDF: %w", err)
+		}
+
+		return pdfData, nil
 	}
 
-	pdfData, err := svc.fileManager.GetFileBytes(ctx, fileRecord)
+	p.input.content = docgen.EmbedContentImages(ctx, svc.logger, p.input.content, p.input.imageFiles, svc.fileManager)
+
+	options := p.options
+	options.WithWatermark = false
+	options.WatermarkText = nil
+
+	pdfData, err := renderDocumentPDF(ctx, svc, html2pdfConverter, p.input, options)
 	if err != nil {
-		return nil, fmt.Errorf("cannot download document version PDF: %w", err)
-	}
-
-	if options.WithSignatures {
-		signaturePagePDF, err := generateSignaturePagePDF(ctx, svc, html2pdfConverter, conn, scope, version)
-		if err != nil {
-			return nil, fmt.Errorf("cannot generate signature page: %w", err)
-		}
-
-		if signaturePagePDF != nil {
-			pdfData, err = pdfutils.MergePDFs(ctx, pdfData, signaturePagePDF)
-			if err != nil {
-				return nil, fmt.Errorf("cannot merge signature page: %w", err)
-			}
-		}
-	}
-
-	if options.WithWatermark {
-		if options.WatermarkText == nil {
-			return nil, fmt.Errorf("watermark text is required with watermark enabled")
-		}
-
-		pdfData, err = pdfutils.AddWatermarkWithTimestamp(
-			ctx,
-			pdfData,
-			version.Classification.String(),
-			*options.WatermarkText,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
-		}
+		return nil, fmt.Errorf("cannot render document content: %w", err)
 	}
 
 	return pdfData, nil
 }
 
-func generateSignaturePagePDF(
+func loadSignaturePageData(
 	ctx context.Context,
-	svc *Service,
-	html2pdfConverter *html2pdf.Converter,
 	conn pg.Querier,
 	scope coredata.Scoper,
 	version *coredata.DocumentVersion,
-) ([]byte, error) {
+) ([]docgen.SignatureData, error) {
 	signaturesWithPeople := &coredata.DocumentVersionSignaturesWithPeople{}
 	if err := signaturesWithPeople.LoadByDocumentVersionIDWithPeople(ctx, conn, scope, version.ID, 1_000); err != nil {
 		return nil, fmt.Errorf("cannot load document version signatures: %w", err)
@@ -2847,10 +2865,23 @@ func generateSignaturePagePDF(
 		}
 	}
 
+	return signatureData, nil
+}
+
+func renderSignaturePagePDF(
+	ctx context.Context,
+	html2pdfConverter *html2pdf.Converter,
+	version *coredata.DocumentVersion,
+	signatures []docgen.SignatureData,
+) ([]byte, error) {
+	if len(signatures) == 0 {
+		return nil, nil
+	}
+
 	isLandscape := version.Orientation == coredata.DocumentVersionOrientationLandscape
 
 	htmlContent, err := docgen.RenderSignaturePageHTML(docgen.SignaturePageData{
-		Signatures: signatureData,
+		Signatures: signatures,
 		Landscape:  isLandscape,
 	})
 	if err != nil {
@@ -2888,25 +2919,10 @@ func generateSignaturePagePDF(
 
 type documentPDFInput struct {
 	version            *coredata.DocumentVersion
+	content            string
 	approverNames      []string
 	horizontalLogoFile *coredata.File
-}
-
-func generateDocumentPDF(
-	ctx context.Context,
-	svc *Service,
-	html2pdfConverter *html2pdf.Converter,
-	conn pg.Querier,
-	scope coredata.Scoper,
-	version *coredata.DocumentVersion,
-	options ExportPDFOptions,
-) ([]byte, error) {
-	input, err := loadDocumentPDFInput(ctx, conn, scope, version)
-	if err != nil {
-		return nil, err
-	}
-
-	return renderDocumentPDF(ctx, svc, html2pdfConverter, input, options)
+	imageFiles         []*coredata.File
 }
 
 func loadDocumentPDFInput(
@@ -2914,6 +2930,7 @@ func loadDocumentPDFInput(
 	conn pg.Querier,
 	scope coredata.Scoper,
 	version *coredata.DocumentVersion,
+	logger *log.Logger,
 ) (*documentPDFInput, error) {
 	document := &coredata.Document{}
 	organization := &coredata.Organization{}
@@ -2988,8 +3005,10 @@ func loadDocumentPDFInput(
 
 	return &documentPDFInput{
 		version:            version,
+		content:            version.Content,
 		approverNames:      approverNames,
 		horizontalLogoFile: horizontalLogoFile,
+		imageFiles:         docgen.ContentImageFiles(ctx, conn, scope, version.Content, logger),
 	}, nil
 }
 
@@ -3001,6 +3020,11 @@ func renderDocumentPDF(
 	options ExportPDFOptions,
 ) ([]byte, error) {
 	version := input.version
+
+	content := input.content
+	if content == "" {
+		content = version.Content
+	}
 
 	classification := docgen.ClassificationSecret
 
@@ -3026,7 +3050,7 @@ func renderDocumentPDF(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     json.RawMessage([]byte(version.Content)),
+		Content:                     json.RawMessage([]byte(content)),
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,
@@ -3034,6 +3058,7 @@ func renderDocumentPDF(
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 		Landscape:                   isLandscape,
+		BaseURL:                     svc.baseURL,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -3107,7 +3132,14 @@ func (s *DocumentService) Export(
 		}
 	}()
 
-	return s.svc.pg.WithTx(
+	type archiveDocument struct {
+		filename string
+		prepared *preparedDocumentExport
+	}
+
+	var documents []archiveDocument
+
+	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			for i, documentID := range documentIDs {
@@ -3121,35 +3153,41 @@ func (s *DocumentService) Export(
 					return fmt.Errorf("cannot load document version for %q: %w", documentID, err)
 				}
 
-				exportedPDF, err := exportDocumentPDF(
-					ctx,
-					s.svc,
-					s.html2pdfConverter,
-					conn,
-					scope,
-					documentVersion.ID,
-					options,
-				)
+				prepared, err := prepareDocumentExport(ctx, conn, scope, documentVersion.ID, options, s.svc.logger)
 				if err != nil {
 					return fmt.Errorf("cannot export document PDF for %q: %w", documentID, err)
 				}
 
-				filename := fmt.Sprintf("%d_%s.pdf", i+1, sanitizeFilename(document.Title))
-
-				w, err := archive.Create(filename)
-				if err != nil {
-					return fmt.Errorf("cannot create document in archive: %w", err)
-				}
-
-				_, err = w.Write(exportedPDF)
-				if err != nil {
-					return fmt.Errorf("cannot write document to archive: %w", err)
-				}
+				documents = append(documents, archiveDocument{
+					filename: fmt.Sprintf("%d_%s.pdf", i+1, sanitizeFilename(document.Title)),
+					prepared: prepared,
+				})
 			}
 
 			return nil
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("cannot prepare document export: %w", err)
+	}
+
+	for _, document := range documents {
+		exportedPDF, err := renderPreparedDocumentExport(ctx, s.svc, s.html2pdfConverter, document.prepared)
+		if err != nil {
+			return fmt.Errorf("cannot export document PDF: %w", err)
+		}
+
+		w, err := archive.Create(document.filename)
+		if err != nil {
+			return fmt.Errorf("cannot create document in archive: %w", err)
+		}
+
+		if _, err := w.Write(exportedPDF); err != nil {
+			return fmt.Errorf("cannot write document to archive: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *DocumentService) SendExportEmail(
@@ -3521,26 +3559,23 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 	ctx context.Context, scope coredata.Scoper,
 	documentVersion *coredata.DocumentVersion,
 ) error {
-	var pdfData []byte
+	var prepared *preparedDocumentExport
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var err error
 
-			pdfData, err = exportDocumentPDF(
-				ctx,
-				s.svc,
-				s.html2pdfConverter,
-				conn,
-				scope,
-				documentVersion.ID,
-				ExportPDFOptions{},
-			)
+			prepared, err = prepareDocumentExport(ctx, conn, scope, documentVersion.ID, ExportPDFOptions{}, s.svc.logger)
 
 			return err
 		},
 	)
+	if err != nil {
+		return fmt.Errorf("cannot generate publication PDF: %w", err)
+	}
+
+	pdfData, err := renderPreparedDocumentExport(ctx, s.svc, s.html2pdfConverter, prepared)
 	if err != nil {
 		return fmt.Errorf("cannot generate publication PDF: %w", err)
 	}

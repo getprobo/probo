@@ -274,6 +274,7 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionDocumentVersionSignatureList,
 		ActionElectronicSignatureGet,
 		ActionFileGet,
+		ActionFileUpload,
 		ActionDocumentCreate,
 		ActionDocumentUpdate,
 		ActionDocumentDelete,

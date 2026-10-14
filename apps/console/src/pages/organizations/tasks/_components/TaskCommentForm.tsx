@@ -19,12 +19,12 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { RichEditor } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import {
   isRichEditorContentEmpty,
   richEditorContentTextLength,
@@ -38,11 +38,16 @@ export function TaskCommentForm() {
   const { t } = useTranslation("organizations/tasks");
   const [createTaskComment, isCreating] = useCreateTaskComment();
   const [content, setContent] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { root, actions } = taskCommentForm();
 
   function handleSubmit() {
+    if (uploading) {
+      return;
+    }
+
     if (isRichEditorContentEmpty(content)) {
       setErrors({ content: t("detailsPage.comments.errors.contentRequired") });
       return;
@@ -94,6 +99,7 @@ export function TaskCommentForm() {
 
             setErrors({});
           }}
+          onUploadingChange={setUploading}
         />
       </Field>
       <div className={actions()}>
@@ -102,6 +108,7 @@ export function TaskCommentForm() {
           variant="solid"
           color="neutral"
           highContrast
+          disabled={uploading}
           loading={isCreating}
         >
           {t("detailsPage.comments.actions.submit")}

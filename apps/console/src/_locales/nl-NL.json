@@ -1556,6 +1556,16 @@
         "generic": "Er is iets misgegaan"
       }
     },
+    "richEditor": {
+      "file": "Bestand",
+      "imageUnavailable": "Afbeelding niet beschikbaar",
+      "resizeImage": "Afbeelding vergroten of verkleinen",
+      "uploading": "{{fileName}} uploaden…",
+      "uploadFailed": "Uploaden mislukt",
+      "couldNotUpload": "Kan {{fileName}} niet uploaden",
+      "tooLarge": "{{fileName}} is te groot",
+      "unsupported": "{{fileName}} is geen ondersteund bestand"
+    },
     "documentClassification": {
       "public": "Openbaar",
       "internal": "Intern",

@@ -1556,6 +1556,16 @@
         "generic": "Une erreur est survenue"
       }
     },
+    "richEditor": {
+      "file": "Fichier",
+      "imageUnavailable": "Image indisponible",
+      "resizeImage": "Redimensionner l'image",
+      "uploading": "Envoi de {{fileName}}…",
+      "uploadFailed": "Échec de l’envoi",
+      "couldNotUpload": "Impossible d’envoyer {{fileName}}",
+      "tooLarge": "{{fileName}} est trop volumineux",
+      "unsupported": "{{fileName}} n’est pas un fichier pris en charge"
+    },
     "documentClassification": {
       "public": "Public",
       "internal": "Interne",

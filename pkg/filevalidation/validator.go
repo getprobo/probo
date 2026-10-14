@@ -90,6 +90,8 @@ var FileTypes = []FileType{
 	{MimeType: "text/json", Extensions: []string{".json"}, Category: CategoryData},
 	{MimeType: "text/csv", Extensions: []string{".csv"}, Category: CategoryData},
 	{MimeType: "application/csv", Extensions: []string{".csv"}, Category: CategoryData},
+	// Windows browsers report .csv as the legacy Excel type.
+	{MimeType: "application/vnd.ms-excel", Extensions: []string{".csv"}, Category: CategoryData},
 
 	// Video types
 	{MimeType: "video/mp4", Extensions: []string{".mp4"}, Category: CategoryVideo},
@@ -226,10 +228,44 @@ func NewValidator(opts ...Option) *FileValidator {
 	return v
 }
 
+// NewAttachmentValidator returns the validator used for attachment uploads.
+func NewAttachmentValidator() *FileValidator {
+	return NewValidator(
+		WithCategories(
+			CategoryDocument,
+			CategorySpreadsheet,
+			CategoryPresentation,
+			CategoryText,
+			CategoryImage,
+			CategoryData,
+		),
+	)
+}
+
+// ContentTypeForAttachment returns the MIME type accepted for filename.
+func ContentTypeForAttachment(filename string) (string, bool) {
+	return NewAttachmentValidator().ContentTypeForFilename(filename)
+}
+
 // WithMaxFileSize sets the maximum file size and returns the validator
 func (v *FileValidator) WithMaxFileSize(maxSize int64) *FileValidator {
 	v.MaxFileSize = maxSize
 	return v
+}
+
+// ContentTypeForFilename returns the first allowed MIME type for filename's extension.
+func (v *FileValidator) ContentTypeForFilename(filename string) (string, bool) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == "" {
+		return "", false
+	}
+
+	contentTypes := v.AllowedExtensions[ext]
+	if len(contentTypes) == 0 {
+		return "", false
+	}
+
+	return contentTypes[0], true
 }
 
 // Validate validates that the file meets the configured requirements

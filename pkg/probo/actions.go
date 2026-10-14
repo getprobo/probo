@@ -244,7 +244,8 @@ const (
 	ActionProcessingActivityPublish = "core:processing-activity:publish"
 
 	// File actions
-	ActionFileGet = "core:file:get"
+	ActionFileGet    = "core:file:get"
+	ActionFileUpload = "core:file:upload"
 
 	// Connector actions
 	ActionConnectorInitiate = "core:connector:initiate"

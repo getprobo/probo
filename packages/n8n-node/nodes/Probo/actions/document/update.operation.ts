@@ -70,7 +70,7 @@ export const description: INodeProperties[] = [
 					rows: 6,
 				},
 				default: '',
-				description: 'The body of the document as a ProseMirror document JSON string. Updating it edits the current draft version, creating one from the latest published version if none exists.',
+				description: 'The body of the document as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size. Updating it edits the current draft version, creating one from the latest published version if none exists.',
 			},
 			{
 				displayName: 'Default Approver IDs',

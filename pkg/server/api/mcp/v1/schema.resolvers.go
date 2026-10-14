@@ -10733,3 +10733,7 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 func (r *Resolver) ListConnectorProvidersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConnectorProvidersInput) (*mcp.CallToolResult, types.ListConnectorProvidersOutput, error) {
 	return r.listConnectorProviders(ctx)
 }
+
+func (r *Resolver) UploadFileTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.UploadFileInput) (*mcp.CallToolResult, types.UploadFileOutput, error) {
+	return r.uploadFile(ctx, input)
+}

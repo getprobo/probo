@@ -26,7 +26,7 @@ export const acceptDocument = {
 } satisfies Record<string, string[]>;
 
 export const acceptSpreadsheet = {
-  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.ms-excel": [".xls", ".csv"],
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
   "application/vnd.oasis.opendocument.spreadsheet": [".ods"],
 } satisfies Record<string, string[]>;

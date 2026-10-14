@@ -29,12 +29,16 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"go.gearno.de/kit/httpclient"
 )
 
 type (
 	Client struct {
-		httpClient *http.Client
-		endpoint   string
+		httpClient           *http.Client
+		endpoint             string
+		uploadHTTP           *http.Client
+		connectionGeneration string
 	}
 
 	Team struct {
@@ -139,10 +143,34 @@ var (
 // than pinning, so an endpoint override moves task sync along with the OAuth
 // handshake that mints the token they carry.
 func NewClient(httpClient *http.Client, endpoint string) *Client {
+	uploadHTTP := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	uploadHTTP.Timeout = linearUploadTimeout
+
 	return &Client{
 		httpClient: httpClient,
 		endpoint:   endpoint,
+		uploadHTTP: uploadHTTP,
 	}
+}
+
+// SetConnectionGeneration records which Linear connection uploaded assets
+// for this client. An in-place reconnect uses a new generation so cached
+// asset URLs from the previous account are not reused.
+func (c *Client) SetConnectionGeneration(generation string) {
+	if c == nil {
+		return
+	}
+
+	c.connectionGeneration = generation
+}
+
+// ConnectionGeneration returns the Linear connection recorded for this client.
+func (c *Client) ConnectionGeneration() string {
+	if c == nil {
+		return ""
+	}
+
+	return c.connectionGeneration
 }
 
 func (c *Client) ViewerID(ctx context.Context) (string, error) {

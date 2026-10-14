@@ -18,13 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { RichEditor } from "@probo/ui";
 import { Field } from "@probo/ui/src/v2/form/Field";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskCommentEditor_taskComment$key } from "#/__generated__/core/TaskCommentEditor_taskComment.graphql";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import { richEditorContentTextLength } from "#/pages/organizations/_lib/richEditorContent";
 import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
 
@@ -112,6 +112,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
     persist,
     taskCommentSaveDelayMs,
   );
+  const uploadingRef = useRef(false);
 
   return (
     <Field error={error}>
@@ -120,6 +121,12 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
         className={taskCommentEditor()}
         content={draft}
         aria-label={t("detailsPage.comments.fields.comment")}
+        onUploadingChange={(uploading) => {
+          uploadingRef.current = uploading;
+          if (uploading) {
+            persistDebounced.hold();
+          }
+        }}
         onChangeContent={(next) => {
           setDirty(true);
           setDraft(next);
@@ -129,13 +136,23 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
                 max: taskCommentMaxLength,
               }),
             );
+            persistDebounced.cancel();
             return;
           }
 
           setError(undefined);
+          if (uploadingRef.current) {
+            persistDebounced.hold(next);
+            return;
+          }
+
           persistDebounced.schedule(next);
         }}
         onBlur={() => {
+          if (uploadingRef.current) {
+            return;
+          }
+
           persistDebounced.flush();
         }}
       />

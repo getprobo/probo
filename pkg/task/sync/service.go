@@ -66,6 +66,8 @@ type (
 		linearAPIBaseURL       string
 		logger                 *log.Logger
 		recordUpdateActivities RecordUpdateActivitiesFunc
+		attachments            AttachmentReader
+		linearAssets           linearAssetCache
 	}
 
 	LinearTeam struct {
@@ -85,6 +87,7 @@ func NewService(
 	linearAPIBaseURL string,
 	logger *log.Logger,
 	recordUpdateActivities RecordUpdateActivitiesFunc,
+	attachments AttachmentReader,
 ) *Service {
 	return &Service{
 		pg:                     pgClient,
@@ -94,6 +97,8 @@ func NewService(
 		linearAPIBaseURL:       linearAPIBaseURL,
 		logger:                 logger,
 		recordUpdateActivities: recordUpdateActivities,
+		attachments:            attachments,
+		linearAssets:           linearAssetCache{urls: map[string]string{}},
 	}
 }
 
@@ -272,17 +277,40 @@ func (s *Service) PublishToLinear(
 
 	s.archiveAbandonedLinearIssue(ctx, accounts, task.ID, archiveConnectorID, archiveIssueID)
 
-	var issue *linear.Issue
+	var (
+		issue *linear.Issue
+		files map[string]string
+	)
 
 	if reused != nil {
 		issue = issueFromExternalLink(reused)
+		files = attachmentsFromMetadata(reused.Metadata)
 	} else {
+		description, uploaded, _, err := s.embedLinearDescription(
+			ctx,
+			client,
+			scope,
+			dbConnector.ID,
+			linearPublishPendingExternalID(task.ID),
+			task.OrganizationID,
+			task.ID,
+			markdown,
+			task.Content,
+		)
+		if err != nil {
+			s.compensateFailedPublish(ctx, client, scope, taskID, "")
+
+			return nil, fmt.Errorf("cannot embed Linear files: %w", err)
+		}
+
+		files = uploaded
+
 		issue, err = client.CreateIssue(
 			ctx,
 			linear.IssueInput{
 				TeamID:      teamID,
 				Title:       task.Name,
-				Description: markdown,
+				Description: description,
 				StateID:     stateID,
 				Priority:    TaskPriorityToLinear(task.Priority),
 				DueDate:     DeadlineToLinearDate(task.Deadline),
@@ -305,6 +333,7 @@ func (s *Service) PublishToLinear(
 		viewerID,
 		issue,
 		markdown,
+		files,
 	)
 	if err != nil {
 		s.compensateFailedPublish(ctx, client, scope, taskID, issue.ID)
@@ -1052,6 +1081,7 @@ func (s *Service) finishLinearPublish(
 	viewerID string,
 	issue *linear.Issue,
 	markdown string,
+	files map[string]string,
 ) (*coredata.TaskExternalLink, error) {
 	if err := s.persistPublishedIssueIdentity(ctx, scope, task.ID, issue, destination); err != nil {
 		return nil, fmt.Errorf("cannot persist Linear issue identity: %w", err)
@@ -1070,6 +1100,13 @@ func (s *Service) finishLinearPublish(
 	metadata, err := linearLinkMetadata(attachmentID, viewerID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(files) > 0 {
+		metadata, err = mergeAttachments(metadata, files)
+		if err != nil {
+			return nil, fmt.Errorf("cannot merge Linear attachments: %w", err)
+		}
 	}
 
 	hash := ContentHash(
@@ -1425,7 +1462,10 @@ func (s *Service) linearClientForConnector(
 		}
 	}
 
-	return linear.NewClient(httpClient, s.linearAPIBaseURL), dbConnector, nil
+	client := linear.NewClient(httpClient, s.linearAPIBaseURL)
+	client.SetConnectionGeneration(linearAssetGeneration(oauthConn.AccessToken))
+
+	return client, dbConnector, nil
 }
 
 func (s *Service) oauthHTTPClient(

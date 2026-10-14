@@ -231,6 +231,7 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 
 	policy.Allow(
 		ActionDocumentGet, ActionDocumentList, ActionDocumentUpdate,
+		ActionFileUpload,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionAuditGet, ActionAuditList, ActionAuditUpdate,
 		ActionReportGet, ActionReportGetReportUrl, ActionReportDownloadUrlGet,

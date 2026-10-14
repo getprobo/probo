@@ -33,7 +33,21 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/validator"
 )
+
+var attachmentValidator = filevalidation.NewAttachmentValidator()
+
+// ContentTypeForAttachment returns the MIME type accepted for filename.
+func ContentTypeForAttachment(filename string) (string, bool) {
+	return filevalidation.ContentTypeForAttachment(filename)
+}
+
+// AttachmentMaxFileSize is the largest file UploadFile accepts.
+func AttachmentMaxFileSize() int64 {
+	return attachmentValidator.MaxFileSize
+}
 
 type (
 	FileService struct {
@@ -104,6 +118,69 @@ func (s FileService) GetByIDs(
 	}
 
 	return files, nil
+}
+
+type AttachmentUpload struct {
+	OrganizationID gid.GID
+	File           *FileUpload
+}
+
+func (s FileService) UploadFile(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AttachmentUpload,
+) (*coredata.File, error) {
+	if err := attachmentValidator.Validate(req.File.Filename, req.File.ContentType, req.File.Size); err != nil {
+		return nil, validator.ValidationErrors{
+			{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	if len(req.File.Filename) > prosemirror.MaxFileNameBytes {
+		return nil, validator.ValidationErrors{
+			{
+				Field:   "file",
+				Code:    validator.ErrorCodeTooLong,
+				Message: fmt.Sprintf("file name must be at most %d bytes", prosemirror.MaxFileNameBytes),
+			},
+		}
+	}
+
+	organization := &coredata.Organization{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	file, err := s.UploadAndSaveFile(
+		ctx,
+		scope,
+		attachmentValidator,
+		map[string]string{
+			"type":            "file",
+			"organization-id": organization.ID.String(),
+		},
+		req.File,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload file: %w", err)
+	}
+
+	return file, nil
 }
 
 func (s FileService) UploadAndSaveFile(

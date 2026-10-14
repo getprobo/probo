@@ -894,6 +894,7 @@ func (impl *Implm) Run(
 		baseURL.String(),
 		linearAPIBaseURL,
 		l.Named("task"),
+		fileManagerService,
 	)
 
 	itamService := itam.NewService(

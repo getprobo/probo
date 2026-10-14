@@ -21,6 +21,7 @@
 package cmdutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -45,4 +46,50 @@ func FormatRichText(content string) (string, error) {
 	}
 
 	return strings.TrimRight(markdown, "\n"), nil
+}
+
+// CLIContent stores editor text. Valid ProseMirror document JSON is kept.
+// Plain text keeps one paragraph per line. Markdown, including headings,
+// lists, and links to /api/files/v1/{id}, is parsed as markdown.
+func CLIContent(text string) (string, error) {
+	trimmed := strings.TrimSpace(text)
+	if strings.HasPrefix(trimmed, "{") && prosemirror.ValidateDocumentContentJSON(text) == nil {
+		return text, nil
+	}
+
+	if trimmed == "" {
+		return prosemirror.FromPlainText(""), nil
+	}
+
+	node, err := prosemirror.ParseMarkdown(text)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse markdown: %w", err)
+	}
+
+	if cliPlainParagraphs(node) && strings.Contains(text, "\n") {
+		return prosemirror.FromPlainText(text), nil
+	}
+
+	encoded, err := json.Marshal(node)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal content: %w", err)
+	}
+
+	return string(encoded), nil
+}
+
+func cliPlainParagraphs(doc prosemirror.Node) bool {
+	for _, block := range doc.Content {
+		if block.Type != prosemirror.NodeParagraph {
+			return false
+		}
+
+		for _, inline := range block.Content {
+			if inline.Type != prosemirror.NodeText || len(inline.Marks) > 0 {
+				return false
+			}
+		}
+	}
+
+	return true
 }

@@ -18,13 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { RichEditor } from "@probo/ui";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants/lite";
 
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 import { useDebouncedSerializedFieldSave } from "#/pages/organizations/_lib/useSerializedFieldSave";
+
+import { RichEditor } from "./RichEditor";
 
 const richDescriptionEditor = tv({
   slots: {
@@ -106,6 +107,7 @@ export function RichDescriptionEditor({
     [],
   );
   const persistDebounced = useDebouncedSerializedFieldSave(persist, saveDelayMs);
+  const uploadingRef = useRef(false);
   const { root, editor } = richDescriptionEditor();
 
   return (
@@ -117,12 +119,27 @@ export function RichDescriptionEditor({
               className={editor()}
               content={draft}
               aria-label={ariaLabel}
+              onUploadingChange={(uploading) => {
+                uploadingRef.current = uploading;
+                if (uploading) {
+                  persistDebounced.hold();
+                }
+              }}
               onChangeContent={(next) => {
                 setDirty(true);
                 setDraft(next);
+                if (uploadingRef.current) {
+                  persistDebounced.hold(next);
+                  return;
+                }
+
                 persistDebounced.schedule(next);
               }}
               onBlur={() => {
+                if (uploadingRef.current) {
+                  return;
+                }
+
                 persistDebounced.flush();
               }}
             />

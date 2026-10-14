@@ -22,14 +22,18 @@ package prosemirror
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
 
 	tests := []struct {
 		name    string
@@ -100,6 +104,51 @@ func TestValidateDocumentContentJSON_Schema(t *testing.T) {
 			name:    "valid image block",
 			in:      `{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}`,
 			wantErr: false,
+		},
+		{
+			name:    "image with empty file id",
+			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"","src":"https://example.com/img.png"}}]}`,
+			wantErr: false,
+		},
+		{
+			name:    "image with whitespace file id",
+			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"   ","src":"https://example.com/img.png"}}]}`,
+			wantErr: false,
+		},
+		{
+			name:    "image with invalid file id",
+			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"not a file"}}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "image with non-gid file id",
+			in:      `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"abc"}}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "image with padded file id",
+			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"image","attrs":{"fileId":" %s "}}]}`, fileID),
+			wantErr: false,
+		},
+		{
+			name:    "image with gid file id",
+			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"image","attrs":{"fileId":"%s"}}]}`, fileID),
+			wantErr: false,
+		},
+		{
+			name:    "image inside paragraph",
+			in:      `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"image","attrs":{"src":"https://example.com/img.png"}}]}]}`,
+			wantErr: true,
+		},
+		{
+			name:    "valid file block",
+			in:      fmt.Sprintf(`{"type":"doc","content":[{"type":"file","attrs":{"fileId":"%s","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`, fileID),
+			wantErr: false,
+		},
+		{
+			name:    "file block without id",
+			in:      `{"type":"doc","content":[{"type":"file","attrs":{"fileId":"","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`,
+			wantErr: true,
 		},
 	}
 
@@ -224,6 +273,38 @@ func TestSanitizeDocumentJSON_PreservesSafeHref(t *testing.T) {
 	assert.Equal(t, "https://example.com", attrs.Href)
 }
 
+func TestSanitizeDocumentJSON_ImageWidth(t *testing.T) {
+	t.Parallel()
+
+	kept, err := SanitizeDocumentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":50}}]}`)
+	require.NoError(t, err)
+
+	doc, err := Parse(kept)
+	require.NoError(t, err)
+
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.Width)
+	assert.Equal(t, 50, *attrs.Width)
+
+	full, err := SanitizeDocumentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":100}}]}`)
+	require.NoError(t, err)
+
+	doc, err = Parse(full)
+	require.NoError(t, err)
+
+	attrs, err = doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.Width)
+	assert.Equal(t, 100, *attrs.Width)
+
+	err = ValidateDocumentContentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":0}}]}`)
+	require.Error(t, err)
+
+	err = ValidateDocumentContentJSON(`{"type":"doc","content":[{"type":"image","attrs":{"src":"https://example.com/img.png","width":101}}]}`)
+	require.Error(t, err)
+}
+
 func TestSanitizeDocumentJSON_ImageSrc(t *testing.T) {
 	t.Parallel()
 
@@ -256,4 +337,77 @@ func TestSanitizeDocumentJSON_PreservesSafeImageSrc(t *testing.T) {
 	attrs, err := img.ImageAttrs()
 	require.NoError(t, err)
 	assert.Equal(t, "https://example.com/img.png", attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_DropsDataImageSrc(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"src":"data:image/png;base64,iVBOR","alt":"preview"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	assert.Empty(t, attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_BlankImageFileIDIsAbsent(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"image","attrs":{"fileId":"  ","src":"https://example.com/img.png"}}]}`
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	assert.Nil(t, attrs.FileID)
+	assert.Equal(t, "https://example.com/img.png", attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_ImageFileIDClearsSrc(t *testing.T) {
+	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
+	raw := fmt.Sprintf(
+		`{"type":"doc","content":[{"type":"image","attrs":{"fileId":"%s","src":"data:image/png;base64,iVBOR"}}]}`,
+		fileID,
+	)
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.FileID)
+	assert.Equal(t, fileID, *attrs.FileID)
+	assert.Empty(t, attrs.Src)
+}
+
+func TestSanitizeDocumentJSON_TrimsImageFileID(t *testing.T) {
+	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
+	raw := fmt.Sprintf(
+		`{"type":"doc","content":[{"type":"image","attrs":{"fileId":" %s ","src":"https://example.com/img.png"}}]}`,
+		fileID,
+	)
+
+	out, err := SanitizeDocumentJSON(raw)
+	require.NoError(t, err)
+
+	var doc Node
+	require.NoError(t, json.Unmarshal([]byte(out), &doc))
+	attrs, err := doc.Content[0].ImageAttrs()
+	require.NoError(t, err)
+	require.NotNil(t, attrs.FileID)
+	assert.Equal(t, fileID, *attrs.FileID)
+	assert.Empty(t, attrs.Src)
 }

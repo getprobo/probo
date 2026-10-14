@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -61,6 +62,7 @@ func NewService(
 	baseURL string,
 	linearAPIBaseURL string,
 	logger *log.Logger,
+	files *filemanager.Service,
 ) *Service {
 	return &Service{
 		pg:     pgClient,
@@ -73,6 +75,7 @@ func NewService(
 			linearAPIBaseURL,
 			logger,
 			InsertUpdateActivities,
+			&attachmentReader{pg: pgClient, files: files},
 		),
 	}
 }

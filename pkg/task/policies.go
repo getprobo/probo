@@ -25,6 +25,15 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
+const (
+	// actionFileGet is probo.ActionFileGet. People who can read a task can
+	// download its private files through the existing file handler.
+	actionFileGet = "core:file:get"
+	// actionFileUpload is probo.ActionFileUpload. People who can create or
+	// edit a task can upload a file.
+	actionFileUpload = "core:file:upload"
+)
+
 var (
 	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 	ownerCondition        = policy.Equals("principal.id", "resource.owner_id")
@@ -34,12 +43,14 @@ var readActions = []string{
 	ActionTaskGet, ActionTaskList,
 	ActionTaskCommentGet, ActionTaskCommentList,
 	ActionTaskActivityGet, ActionTaskActivityList,
+	actionFileGet,
 }
 
 var writeActions = []string{
 	ActionTaskCreate, ActionTaskUpdate, ActionTaskDelete,
 	ActionTaskAssign, ActionTaskUnassign,
 	ActionTaskCommentCreate, ActionTaskCommentUpdate, ActionTaskCommentDelete,
+	actionFileUpload,
 }
 
 // FullAccessPolicy grants complete task access to organization owners and
