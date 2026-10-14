@@ -25,11 +25,6 @@ type (
 	// customer cloud accounts.
 	IdentityFederationConfig struct {
 		Enabled bool `json:"enabled"`
-		// Debug logs each minted assertion's header and claims, and whether
-		// this process's published key set verifies the signature. The
-		// signature and the raw token are never logged. Leave it false except
-		// while diagnosing a failed cloud token exchange.
-		Debug bool `json:"debug"`
 		// IssuerBaseURL is the base of the advertised issuer, for example
 		// https://proboidentity.com. It defaults to {base-url}/federation, so
 		// a self-hosted deployment needs no second domain.

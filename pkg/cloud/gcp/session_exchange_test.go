@@ -27,6 +27,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -37,6 +38,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -275,7 +277,7 @@ func exchangeTestIssuer(t *testing.T) *identityfederation.Issuer {
 	require.NoError(t, err)
 
 	issuer, err := identityfederation.NewIssuer(
-		nil,
+		log.NewLogger(log.WithOutput(io.Discard)),
 		probodconfig.IdentityFederationConfig{
 			Enabled:       true,
 			IssuerBaseURL: "https://proboidentity.com",

@@ -64,15 +64,13 @@ type (
 		baseURL  *baseurl.BaseURL
 		keyRing  *jose.KeyRing
 		tokenTTL time.Duration
-		debug    bool
 		logger   *log.Logger
 	}
 )
 
 // NewIssuer builds the outbound issuer from cfg. A disabled configuration
-// returns a nil issuer. logger receives the startup record and, when
-// cfg.Debug is set, each minted assertion. A nil logger skips those lines.
-// appBaseURL is required so an empty cfg.IssuerBaseURL can derive
+// returns a nil issuer. logger receives the startup record and each minted
+// assertion. appBaseURL is required so an empty cfg.IssuerBaseURL can derive
 // {appBaseURL}/federation.
 func NewIssuer(
 	logger *log.Logger,
@@ -116,12 +114,7 @@ func NewIssuer(
 		baseURL:  issuerBaseURL,
 		keyRing:  keyRing,
 		tokenTTL: DefaultTokenTTL,
-		debug:    cfg.Debug,
 		logger:   logger,
-	}
-
-	if logger == nil {
-		return issuer, nil
 	}
 
 	// probod cannot verify that the configured apex actually reaches it, so the
@@ -129,7 +122,6 @@ func NewIssuer(
 	logger.Info(
 		"identity federation issuer configured",
 		log.String("issuer_base_url", issuer.BaseURL()),
-		log.Bool("debug", cfg.Debug),
 	)
 
 	// A derived issuer is not held to the provider rules, so localhost and CI
@@ -238,13 +230,11 @@ func (i *Issuer) Token(
 		return "", fmt.Errorf("cannot sign identity federation token: %w", err)
 	}
 
-	if i.debug {
-		i.logger.InfoCtx(
-			ctx,
-			"minted identity federation assertion",
-			tokenFields(token, i.keyRing.JWKS(), claims)...,
-		)
-	}
+	i.logger.InfoCtx(
+		ctx,
+		"minted identity federation assertion",
+		tokenFields(token, i.keyRing.JWKS(), claims)...,
+	)
 
 	return token, nil
 }

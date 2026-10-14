@@ -26,6 +26,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -34,6 +35,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/jose"
@@ -112,7 +114,7 @@ func testIssuer(t testing.TB, base string, active ...bool) *identityfederation.I
 	}
 
 	issuer, err := identityfederation.NewIssuer(
-		nil,
+		log.NewLogger(log.WithOutput(io.Discard)),
 		testFederationConfig(base, active...),
 		testAppBase(base),
 	)
@@ -169,7 +171,7 @@ func TestNewIssuer_Errors(t *testing.T) {
 			t.Parallel()
 
 			_, err := identityfederation.NewIssuer(
-				nil,
+				log.NewLogger(log.WithOutput(io.Discard)),
 				testFederationConfig(saasIssuerBase, true),
 				nil,
 			)
@@ -185,7 +187,7 @@ func TestNewIssuer_Errors(t *testing.T) {
 			t.Parallel()
 
 			_, err := identityfederation.NewIssuer(
-				nil,
+				log.NewLogger(log.WithOutput(io.Discard)),
 				probodconfig.IdentityFederationConfig{
 					Enabled:       true,
 					IssuerBaseURL: saasIssuerBase,
@@ -403,7 +405,7 @@ func TestIssuer_JWKS_KeyRotation(t *testing.T) {
 
 	// Once the key is dropped from configuration it stops verifying.
 	withoutRetiredKey, err := identityfederation.NewIssuer(
-		nil,
+		log.NewLogger(log.WithOutput(io.Discard)),
 		probodconfig.IdentityFederationConfig{
 			Enabled:       true,
 			IssuerBaseURL: saasIssuerBase,

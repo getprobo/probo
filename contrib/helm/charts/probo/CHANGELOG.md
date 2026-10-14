@@ -4,13 +4,6 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
-### Added
-
-- `probo.identityFederation.debug` sets
-  `PROBOD_IDENTITY_FEDERATION_DEBUG`. Defaults to false. It logs each
-  minted assertion's header and claims, and whether the published key
-  set verifies the signature. The signature is never logged
-
 ## [0.26.0] - 2026-10-06
 
 ### Added

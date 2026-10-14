@@ -54,7 +54,7 @@ func awsTestIssuer(t *testing.T) *identityfederation.Issuer {
 	require.NoError(t, err)
 
 	issuer, err := identityfederation.NewIssuer(
-		nil,
+		log.NewLogger(log.WithOutput(io.Discard)),
 		probodconfig.IdentityFederationConfig{
 			Enabled:       true,
 			IssuerBaseURL: awsTestIssuerBase,

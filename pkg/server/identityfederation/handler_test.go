@@ -64,7 +64,7 @@ func testIssuer(t testing.TB) *idfed.Issuer {
 	t.Helper()
 
 	issuer, err := idfed.NewIssuer(
-		nil,
+		log.NewLogger(log.WithOutput(io.Discard)),
 		probodconfig.IdentityFederationConfig{
 			Enabled:       true,
 			IssuerBaseURL: issuerBase,

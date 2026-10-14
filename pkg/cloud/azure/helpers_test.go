@@ -23,9 +23,11 @@ package azure_test
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -52,7 +54,7 @@ func testIssuer(t *testing.T) *identityfederation.Issuer {
 	require.NoError(t, err)
 
 	issuer, err := identityfederation.NewIssuer(
-		nil,
+		log.NewLogger(log.WithOutput(io.Discard)),
 		probodconfig.IdentityFederationConfig{
 			Enabled:       true,
 			IssuerBaseURL: testIssuerBase,
