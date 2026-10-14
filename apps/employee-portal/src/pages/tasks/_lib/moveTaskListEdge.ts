@@ -73,7 +73,7 @@ function findEdge(connection: TaskRecord, nodeId: string) {
     .find(existing => existing?.getLinkedRecord("node")?.getDataID() === nodeId);
 }
 
-function adjustTotalCount(connection: TaskRecord, delta: number) {
+export function adjustTotalCount(connection: TaskRecord, delta: number) {
   const current = connection.getValue("totalCount");
   if (typeof current !== "number") {
     return;

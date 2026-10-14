@@ -22,6 +22,7 @@ import { taskStates } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
+import { adjustTotalCount } from "./moveTaskListEdge";
 import {
   taskListConnectionFilters,
   taskListConnectionKeys,
@@ -62,10 +63,7 @@ export function deleteTaskListEdges(
         continue;
       }
       ConnectionHandler.deleteNode(connection, taskId);
-      const current = connection.getValue("totalCount");
-      if (typeof current === "number") {
-        connection.setValue(Math.max(0, current - 1), "totalCount");
-      }
+      adjustTotalCount(connection, -1);
     }
   }
 }
