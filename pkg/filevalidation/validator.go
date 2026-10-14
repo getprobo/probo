@@ -207,6 +207,51 @@ func (v *FileValidator) WithMaxFileSize(maxSize int64) *FileValidator {
 	return v
 }
 
+// ResolveContentType returns contentType, or the type implied by filename
+// when contentType is empty or application/octet-stream.
+func ResolveContentType(filename, contentType string) string {
+	contentType = strings.TrimSpace(contentType)
+
+	if !unspecifiedContentType(contentType) {
+		return contentType
+	}
+
+	if detected := contentTypeForExtension(filepath.Ext(filename)); detected != "" {
+		return detected
+	}
+
+	if contentType == "" {
+		return "application/octet-stream"
+	}
+
+	return contentType
+}
+
+func unspecifiedContentType(contentType string) bool {
+	if contentType == "" {
+		return true
+	}
+
+	mediaType, _, _ := strings.Cut(contentType, ";")
+
+	return strings.EqualFold(strings.TrimSpace(mediaType), "application/octet-stream")
+}
+
+func contentTypeForExtension(ext string) string {
+	ext = strings.ToLower(ext)
+	if ext == "" {
+		return ""
+	}
+
+	for _, fileType := range FileTypes {
+		if slices.Contains(fileType.Extensions, ext) {
+			return fileType.MimeType
+		}
+	}
+
+	return ""
+}
+
 // Validate validates that the file meets the configured requirements
 func (v *FileValidator) Validate(filename string, contentType string, size int64) error {
 	if size == 0 {

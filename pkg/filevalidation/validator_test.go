@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewValidator(t *testing.T) {
@@ -100,6 +101,116 @@ func TestNewValidator(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestResolveContentType(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		filename    string
+		contentType string
+		want        string
+	}{
+		{
+			name:        "octet-stream pdf",
+			filename:    "report.pdf",
+			contentType: "application/octet-stream",
+			want:        "application/pdf",
+		},
+		{
+			name:        "empty type docx",
+			filename:    "policy.docx",
+			contentType: "",
+			want:        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		},
+		{
+			name:        "octet-stream with parameter",
+			filename:    "notes.md",
+			contentType: "application/octet-stream; charset=binary",
+			want:        "text/markdown",
+		},
+		{
+			name:        "uppercase extension",
+			filename:    "REPORT.PDF",
+			contentType: "application/octet-stream",
+			want:        "application/pdf",
+		},
+		{
+			name:        "explicit type kept",
+			filename:    "photo.jpg",
+			contentType: "image/jpeg",
+			want:        "image/jpeg",
+		},
+		{
+			name:        "unknown extension stays octet-stream",
+			filename:    "payload.exe",
+			contentType: "application/octet-stream",
+			want:        "application/octet-stream",
+		},
+		{
+			name:        "empty filename",
+			filename:    "",
+			contentType: "",
+			want:        "application/octet-stream",
+		},
+		{
+			name:        "log prefers text/plain",
+			filename:    "auth.log",
+			contentType: "application/octet-stream",
+			want:        "text/plain",
+		},
+		{
+			name:        "csv prefers text/csv",
+			filename:    "rows.csv",
+			contentType: "",
+			want:        "text/csv",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, ResolveContentType(tt.filename, tt.contentType))
+		})
+	}
+}
+
+func TestResolveContentType_AllowedExtensionsValidate(t *testing.T) {
+	t.Parallel()
+
+	v := NewValidator(
+		WithCategories(
+			CategoryDocument,
+			CategorySpreadsheet,
+			CategoryPresentation,
+			CategoryData,
+			CategoryText,
+			CategoryImage,
+			CategoryVideo,
+		),
+	)
+
+	seen := map[string]struct{}{}
+	for _, fileType := range FileTypes {
+		for _, ext := range fileType.Extensions {
+			if _, ok := seen[ext]; ok {
+				continue
+			}
+
+			seen[ext] = struct{}{}
+			filename := "evidence" + ext
+
+			for _, declared := range []string{"", "application/octet-stream"} {
+				contentType := ResolveContentType(filename, declared)
+				err := v.Validate(filename, contentType, 1)
+				assert.NoError(t, err, "%s declared %q", filename, declared)
+			}
+		}
+	}
+
+	require.NotEmpty(t, seen)
 }
 
 func TestWithMimeTypes(t *testing.T) {

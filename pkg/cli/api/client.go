@@ -27,10 +27,12 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"strings"
 	"time"
 
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/version"
 )
 
@@ -77,6 +79,8 @@ type (
 		RefreshToken string `json:"refresh_token,omitempty"`
 	}
 )
+
+var quoteEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`)
 
 func WithTokenRefresher(r *TokenRefresher) Option {
 	return func(c *Client) { c.refresher = r }
@@ -280,7 +284,7 @@ func (c *Client) doUploadRequest(
 	}
 
 	// Part 3: file
-	part, err := writer.CreateFormFile("0", filename)
+	part, err := createUploadPart(writer, "0", filename)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create form file: %w", err)
 	}
@@ -392,4 +396,19 @@ func (c *Client) tryRefreshToken() error {
 	}
 
 	return nil
+}
+
+func createUploadPart(writer *multipart.Writer, fieldName, filename string) (io.Writer, error) {
+	header := make(textproto.MIMEHeader)
+	header.Set(
+		"Content-Disposition",
+		fmt.Sprintf(
+			`form-data; name="%s"; filename="%s"`,
+			quoteEscaper.Replace(fieldName),
+			quoteEscaper.Replace(filename),
+		),
+	)
+	header.Set("Content-Type", filevalidation.ResolveContentType(filename, ""))
+
+	return writer.CreatePart(header)
 }
