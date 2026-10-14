@@ -4,6 +4,22 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.21.0] - 2026-10-14
+
+### Changed
+
+- `document.cookie` and named storage writes (for example
+  `localStorage[key] = value`) are classified as `SCRIPT` instead of
+  `HTTP` or `PRE_EXISTING`. Hooks start before the config fetch, and the
+  leftover cookie scan waits for the config so inventoried cookies are
+  not re-queued on every page load
+
+### Fixed
+
+- Storage writes report the size of the value actually stored, instead of
+  failing on `null` or reporting `NaN` for numbers, and convert the key
+  only once
+
 ## [0.20.0] - 2026-10-09
 
 ### Added
