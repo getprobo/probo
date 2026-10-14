@@ -64,6 +64,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { DeviceDeleteDialog } from "./_components/DeviceDeleteDialog";
+import { DeviceInstallationCard } from "./_components/DeviceInstallationCard";
 import { DeviceListItem } from "./_components/DeviceListItem";
 import { DeviceRevokeDialog } from "./_components/DeviceRevokeDialog";
 import { DevicesListSearch } from "./_components/DevicesListSearch";
@@ -99,6 +100,8 @@ export const devicesPageQuery = graphql`
         canDeleteDevice: permission(action: "itam:device:delete")
         canCreateDevice: permission(action: "itam:device:create")
         canDownloadEvidence: permission(action: "itam:device:download")
+        ...DeviceInstallationCardEmployees_organization
+        ...DeviceInstallationCardDevices_organization
         ...DevicesPageFragment
           @arguments(
             query: $query
@@ -175,6 +178,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   const [revokeOpen, setRevokeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [order, setOrder] = useState<DeviceOrder>(initialOrder);
+  const [installationRefresh, setInstallationRefresh] = useState(0);
   const [isPending, startTransition] = useTransition();
   const {
     ownerQuery,
@@ -268,6 +272,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   } = devicesPage({ pending: isPending });
 
   function refetchDevices() {
+    setInstallationRefresh(token => token + 1);
     startTransition(() => {
       pagination.refetch(
         {
@@ -306,6 +311,11 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
 
   return (
     <div className={root()}>
+      <DeviceInstallationCard
+        organizationKey={organization}
+        refreshToken={installationRefresh}
+      />
+
       <div className={header()}>
         <div className={intro()}>
           <div className={title()}>

@@ -31,6 +31,7 @@ import DocumentApproval from "../src/DocumentApproval";
 import DocumentSigning from "../src/DocumentSigning";
 import FrameworkExport from "../src/FrameworkExport";
 import Invitation from "../src/Invitation";
+import DeviceInstallation from "../src/DeviceInstallation";
 import PasswordReset from "../src/PasswordReset";
 import CompliancePortalAccess from "../src/CompliancePortalAccess";
 import CompliancePortalDocumentAccessRejected from "../src/CompliancePortalDocumentAccessRejected";
@@ -60,6 +61,10 @@ const templates: TemplateConfig[] = [
   {
     name: "invitation",
     render: () => Invitation(),
+  },
+  {
+    name: "device-installation",
+    render: () => DeviceInstallation(),
   },
   {
     name: "document-approval",

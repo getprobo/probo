@@ -905,6 +905,9 @@ func (impl *Implm) Run(
 			PDF:                     html2pdfConverter,
 			FileManager:             fileManagerService,
 			Bucket:                  impl.cfg.AWS.Bucket,
+			BaseURL:                 baseURL.String(),
+			TokenSecret:             impl.cfg.Auth.Cookie.Secret,
+			InvitationTokenValidity: time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity) * time.Second,
 		},
 		l.Named("itam"),
 	)

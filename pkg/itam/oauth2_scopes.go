@@ -45,5 +45,6 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 		ActionDeviceRevoke,
 		ActionDeviceDelete,
 		ActionDeviceAssignOwner,
+		ActionDeviceSendInstallationEmail,
 	},
 }

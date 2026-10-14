@@ -28,6 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/device/download"
 	"go.probo.inc/probo/pkg/cmd/device/list"
 	"go.probo.inc/probo/pkg/cmd/device/revoke"
+	sendinstallationemails "go.probo.inc/probo/pkg/cmd/device/send-installation-emails"
 	setowner "go.probo.inc/probo/pkg/cmd/device/set-owner"
 	"go.probo.inc/probo/pkg/cmd/device/view"
 )
@@ -43,6 +44,7 @@ func NewCmdDevice(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(list.NewCmdList(f))
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(revoke.NewCmdRevoke(f))
+	cmd.AddCommand(sendinstallationemails.NewCmdSendInstallationEmails(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
 	cmd.AddCommand(setowner.NewCmdSetOwner(f))
 

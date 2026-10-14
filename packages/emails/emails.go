@@ -103,6 +103,7 @@ const (
 	subjectConfirmEmail                           = "Confirm your email address"
 	subjectPasswordReset                          = "Reset your password"
 	subjectInvitation                             = "Invitation to join %s on Probo"
+	subjectDeviceInstallation                     = "Install the Probo device agent for %s"
 	subjectDocumentApproval                       = "Action Required – Please review and approve %s compliance documents"
 	subjectDocumentSigning                        = "Action Required – Please review and sign %s compliance documents"
 	subjectDocumentExport                         = "Your document export is ready"
@@ -124,6 +125,8 @@ var (
 	passwordResetTextTemplate                          = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/password-reset.txt.tmpl"))
 	invitationHTMLTemplate                             = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/invitation.html.tmpl"))
 	invitationTextTemplate                             = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/invitation.txt.tmpl"))
+	deviceInstallationHTMLTemplate                     = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/device-installation.html.tmpl"))
+	deviceInstallationTextTemplate                     = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/device-installation.txt.tmpl"))
 	documentApprovalHTMLTemplate                       = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-approval.html.tmpl"))
 	documentApprovalTextTemplate                       = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/document-approval.txt.tmpl"))
 	documentSigningHTMLTemplate                        = htmltemplate.Must(htmltemplate.ParseFS(Templates, "dist/document-signing.html.tmpl"))
@@ -242,6 +245,35 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
 
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
+}
+
+func (p *Presenter) RenderDeviceInstallation(
+	ctx context.Context,
+	installURL string,
+	organizationName string,
+) (subject string, textBody string, htmlBody *string, err error) {
+	vars, err := p.getCommonVariables()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
+	}
+
+	data := struct {
+		*CommonVariables
+		InstallUrl       string
+		OrganizationName string
+	}{
+		CommonVariables:  vars,
+		InstallUrl:       installURL,
+		OrganizationName: organizationName,
+	}
+
+	textBody, htmlBody, err = renderEmail(
+		deviceInstallationTextTemplate,
+		deviceInstallationHTMLTemplate,
+		data,
+	)
+
+	return fmt.Sprintf(subjectDeviceInstallation, organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentApproval(

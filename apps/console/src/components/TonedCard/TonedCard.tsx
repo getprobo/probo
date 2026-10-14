@@ -67,7 +67,9 @@ export function TonedCard(props: TonedCardProps) {
         {lead != null && <div className={leadSlot()}>{lead}</div>}
         {control != null && <div className={controlSlot()}>{control}</div>}
       </div>
-      <div className={body()}>{children}</div>
+      {children != null && children !== false && (
+        <div className={body()}>{children}</div>
+      )}
     </Card>
   );
 }

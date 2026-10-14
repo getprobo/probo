@@ -291,6 +291,14 @@ type DownloadDeviceEvidencePayload {
     downloadUrl: String!
 }
 
+input SendDeviceInstallationEmailsInput {
+    organizationId: ID!
+}
+
+type SendDeviceInstallationEmailsPayload {
+    recipientCount: Int!
+}
+
 extend type Mutation {
     enrollDevice(input: EnrollDeviceInput!): CreateDevicePayload!
     createDevice(input: CreateDeviceInput!): CreateDevicePayload!
@@ -302,4 +310,7 @@ extend type Mutation {
     downloadDeviceEvidence(
         input: DownloadDeviceEvidenceInput!
     ): DownloadDeviceEvidencePayload!
+    sendDeviceInstallationEmails(
+        input: SendDeviceInstallationEmailsInput!
+    ): SendDeviceInstallationEmailsPayload!
 }

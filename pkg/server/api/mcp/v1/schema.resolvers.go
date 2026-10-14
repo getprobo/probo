@@ -10783,3 +10783,34 @@ func (r *Resolver) DownloadDeviceEvidenceTool(ctx context.Context, req *mcp.Call
 
 	return nil, types.DownloadDeviceEvidenceOutput{DownloadURL: downloadURL}, nil
 }
+
+func (r *Resolver) SendDeviceInstallationEmailsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SendDeviceInstallationEmailsInput) (*mcp.CallToolResult, types.SendDeviceInstallationEmailsOutput, error) {
+	scope, err := r.Authorize(ctx, input.OrganizationID, itam.ActionDeviceSendInstallationEmail)
+	if err != nil {
+		return nil, types.SendDeviceInstallationEmailsOutput{}, err
+	}
+
+	count, err := r.itamSvc.SendDeviceInstallationEmails(
+		ctx,
+		scope,
+		itam.SendDeviceInstallationEmailsRequest{
+			OrganizationID: input.OrganizationID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.SendDeviceInstallationEmailsOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(
+			ctx,
+			"cannot send device installation emails",
+			log.String("organization_id", input.OrganizationID.String()),
+			log.Error(err),
+		)
+
+		return nil, types.SendDeviceInstallationEmailsOutput{}, fmt.Errorf("internal server error")
+	}
+
+	return nil, types.SendDeviceInstallationEmailsOutput{RecipientCount: count}, nil
+}
