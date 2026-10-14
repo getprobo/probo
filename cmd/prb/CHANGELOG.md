@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.246.0] - 2026-10-14
+
+### Changed
+
+- `tracker-pattern` and `tracker-resource` list and view no longer show
+  last-seen timestamps
+
 ## [0.245.0] - 2026-10-13
 
 ### Added
