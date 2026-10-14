@@ -20,7 +20,7 @@
 
 import {
   ArrowsClockwiseIcon,
-  CalendarDotIcon,
+  CalendarBlankIcon,
   CalendarXIcon,
   ClockIcon,
   DotsThreeVerticalIcon,
@@ -562,7 +562,7 @@ function TaskListItemDeadline({
   const label = deadline == null ? null : deadlineDateFormat(i18n.language, deadline);
   const icon = isOverdue
     ? <CalendarXIcon className={slots.deadlineIcon()} weight="bold" />
-    : <CalendarDotIcon className={slots.deadlineIcon()} weight="bold" />;
+    : <CalendarBlankIcon className={slots.deadlineIcon()} weight="bold" />;
 
   function commitDeadline(next: string | null) {
     if (toDateInput(next) === toDateInput(deadline)) {
