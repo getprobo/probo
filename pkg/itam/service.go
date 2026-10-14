@@ -421,7 +421,12 @@ func (s *Service) ListForOrganizationID(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DeviceOrderField],
+	filter *coredata.DeviceFilter,
 ) (*page.Page[*coredata.Device, coredata.DeviceOrderField], error) {
+	if filter == nil {
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil)
+	}
+
 	var devices coredata.Devices
 
 	err := s.pg.WithConn(
@@ -432,7 +437,7 @@ func (s *Service) ListForOrganizationID(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := devices.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor); err != nil {
+			if err := devices.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load devices: %w", err)
 			}
 
@@ -444,6 +449,37 @@ func (s *Service) ListForOrganizationID(
 	}
 
 	return page.NewPage(devices, cursor), nil
+}
+
+func (s *Service) ListAgentVersionsForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) ([]string, error) {
+	var versions []string
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			var devices coredata.Devices
+
+			loaded, err := devices.LoadAgentVersionsByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load device agent versions: %w", err)
+			}
+
+			versions = loaded
+
+			return nil
+		},
+	)
+
+	return versions, err
 }
 
 func (s *Service) ListForOrganizationIDAndOwnerID(
@@ -483,7 +519,12 @@ func (s *Service) CountForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.DeviceFilter,
 ) (int, error) {
+	if filter == nil {
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil)
+	}
+
 	var count int
 
 	err := s.pg.WithConn(
@@ -496,7 +537,7 @@ func (s *Service) CountForOrganizationID(
 
 			var ds coredata.Devices
 
-			c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID)
+			c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count devices: %w", err)
 			}

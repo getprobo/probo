@@ -25,9 +25,11 @@ export const devicesPage = tv({
     root: "flex flex-col gap-6",
     header: "flex flex-wrap items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-1",
+    title: "flex min-w-0 items-center gap-2.5",
     actions: "flex items-center gap-2",
     more: "flex justify-center",
     results: "flex flex-col gap-4",
+    list: "flex flex-col gap-4",
     sections: "flex flex-col gap-8",
     section: "flex flex-col gap-4",
     tools: "flex flex-wrap items-center justify-between gap-2",
@@ -43,7 +45,7 @@ export const devicesPage = tv({
     pending: {
       true: {
         section: "pointer-events-none opacity-50",
-        results: "pointer-events-none opacity-50",
+        list: "pointer-events-none opacity-50",
       },
     },
   },

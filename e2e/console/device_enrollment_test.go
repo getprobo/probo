@@ -27,10 +27,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -1447,4 +1449,254 @@ func TestDevicePostureReports(t *testing.T) {
 		)
 		require.Error(t, err, "another organization must not read device postures")
 	})
+}
+
+const listDevicesByOwnerQuery = `
+	query ListDevicesByOwner($orgId: ID!, $query: String) {
+		node(id: $orgId) {
+			... on Organization {
+				devices(first: 20, filter: { query: $query }) {
+					totalCount
+					edges {
+						node { id }
+					}
+				}
+			}
+		}
+	}`
+
+func TestDeviceListOwnerSearch(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	aliceProfileID := factory.CreateUser(owner, factory.Attrs{
+		"fullName": factory.SafeName("Test"),
+	})
+	bobProfileID := factory.CreateUser(owner, factory.Attrs{
+		"fullName": factory.SafeName("Test"),
+	})
+
+	aliceDevice := createDevice(t, owner, orgID, &aliceProfileID)
+	bobDevice := createDevice(t, owner, orgID, &bobProfileID)
+	createDevice(t, owner, orgID, nil)
+
+	aliceToken := ownerNameToken(t, deviceOwnerName(t, owner, aliceDevice.CreateDevice.Device.ID))
+	bobToken := ownerNameToken(t, deviceOwnerName(t, owner, bobDevice.CreateDevice.Device.ID))
+	require.NotEqual(t, aliceToken, bobToken)
+
+	matched := listDevicesByOwner(t, owner, orgID, aliceToken)
+	require.Equal(t, 1, matched.TotalCount)
+	require.Equal(t, []string{aliceDevice.CreateDevice.Device.ID}, deviceIDs(matched))
+
+	prefixed := listDevicesByOwner(t, owner, orgID, distinctPrefix(aliceToken, bobToken))
+	require.Equal(t, 1, prefixed.TotalCount)
+	require.Equal(t, aliceDevice.CreateDevice.Device.ID, prefixed.Edges[0].Node.ID)
+
+	other := listDevicesByOwner(t, owner, orgID, bobToken)
+	require.Equal(t, 1, other.TotalCount)
+	require.Equal(t, bobDevice.CreateDevice.Device.ID, other.Edges[0].Node.ID)
+
+	bothWords := listDevicesByOwner(t, owner, orgID, "Test "+aliceToken)
+	require.Equal(t, 1, bothWords.TotalCount)
+	require.Equal(t, aliceDevice.CreateDevice.Device.ID, bothWords.Edges[0].Node.ID)
+}
+
+type ownerDeviceList struct {
+	TotalCount int `json:"totalCount"`
+	Edges      []struct {
+		Node struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	} `json:"edges"`
+}
+
+func listDevicesByOwner(
+	t *testing.T,
+	client *testutil.Client,
+	organizationID string,
+	query string,
+) ownerDeviceList {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Devices ownerDeviceList `json:"devices"`
+		} `json:"node"`
+	}
+	client.MustExecute(
+		listDevicesByOwnerQuery,
+		map[string]any{"orgId": organizationID, "query": query},
+		&result,
+	)
+
+	return result.Node.Devices
+}
+
+func deviceOwnerName(t *testing.T, client *testutil.Client, deviceID string) string {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Owner *struct {
+				FullName string `json:"fullName"`
+			} `json:"owner"`
+		} `json:"node"`
+	}
+	client.MustExecute(getDeviceQuery, map[string]any{"id": deviceID}, &result)
+	require.NotNil(t, result.Node.Owner)
+	require.NotEmpty(t, result.Node.Owner.FullName)
+
+	return result.Node.Owner.FullName
+}
+
+func ownerNameToken(t *testing.T, fullName string) string {
+	t.Helper()
+
+	parts := strings.Fields(fullName)
+	require.NotEmpty(t, parts)
+
+	return parts[len(parts)-1]
+}
+
+func distinctPrefix(token, other string) string {
+	length := min(4, len(token))
+	for length < len(token) && strings.HasPrefix(other, token[:length]) {
+		length++
+	}
+
+	return token[:length]
+}
+
+func TestDeviceListFilters(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	pending := createDevice(t, owner, orgID, nil)
+	darwin := createDevice(t, owner, orgID, nil)
+	linux := createDevice(t, owner, orgID, nil)
+
+	activateDevice(
+		t,
+		darwin.CreateDevice.EnrollmentToken,
+		darwin.CreateDevice.Device.ID+"-hw",
+		"DARWIN",
+		"1.0.0",
+	)
+	activateDevice(
+		t,
+		linux.CreateDevice.EnrollmentToken,
+		linux.CreateDevice.Device.ID+"-hw",
+		"LINUX",
+		"2.0.0",
+	)
+
+	active := listDevicesFiltered(t, owner, orgID, map[string]any{"state": "ACTIVE"})
+	require.Equal(t, 2, active.Devices.TotalCount)
+	require.ElementsMatch(t, []string{
+		darwin.CreateDevice.Device.ID,
+		linux.CreateDevice.Device.ID,
+	}, deviceIDs(active.Devices))
+	require.NotContains(t, deviceIDs(active.Devices), pending.CreateDevice.Device.ID)
+
+	mac := listDevicesFiltered(t, owner, orgID, map[string]any{"platform": "DARWIN"})
+	require.Equal(t, 1, mac.Devices.TotalCount)
+	require.Equal(t, darwin.CreateDevice.Device.ID, mac.Devices.Edges[0].Node.ID)
+
+	version := listDevicesFiltered(t, owner, orgID, map[string]any{"agentVersion": "2.0.0"})
+	require.Equal(t, 1, version.Devices.TotalCount)
+	require.Equal(t, linux.CreateDevice.Device.ID, version.Devices.Edges[0].Node.ID)
+
+	require.ElementsMatch(t, []string{"1.0.0", "2.0.0"}, active.AgentVersions)
+}
+
+const listDevicesFilteredQuery = `
+	query ListDevicesFiltered($orgId: ID!, $filter: DeviceFilter) {
+		node(id: $orgId) {
+			... on Organization {
+				deviceAgentVersions
+				devices(first: 20, filter: $filter) {
+					totalCount
+					edges {
+						node { id }
+					}
+				}
+			}
+		}
+	}`
+
+type filteredDeviceList struct {
+	AgentVersions []string        `json:"deviceAgentVersions"`
+	Devices       ownerDeviceList `json:"devices"`
+}
+
+func listDevicesFiltered(
+	t *testing.T,
+	client *testutil.Client,
+	organizationID string,
+	filter map[string]any,
+) filteredDeviceList {
+	t.Helper()
+
+	var result struct {
+		Node filteredDeviceList `json:"node"`
+	}
+	client.MustExecute(
+		listDevicesFilteredQuery,
+		map[string]any{"orgId": organizationID, "filter": filter},
+		&result,
+	)
+
+	return result.Node
+}
+
+func activateDevice(
+	t *testing.T,
+	enrollmentToken string,
+	hardwareUUID string,
+	platform string,
+	agentVersion string,
+) {
+	t.Helper()
+
+	status, payload := exchangeEnrollmentToken(t, enrollmentToken)
+	require.Equal(t, http.StatusOK, status)
+	require.NotEmpty(t, payload.APIKey)
+
+	body, err := json.Marshal(map[string]any{
+		"hardware_uuid": hardwareUUID,
+		"hostname":      "e2e-host",
+		"platform":      platform,
+		"os_version":    "14.0",
+		"agent_version": agentVersion,
+	})
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		testutil.GetBaseURL()+"/api/agent/v1/heartbeat",
+		bytes.NewReader(body),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", payload.APIKey))
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func deviceIDs(list ownerDeviceList) []string {
+	ids := make([]string, len(list.Edges))
+	for i := range list.Edges {
+		ids[i] = list.Edges[i].Node.ID
+	}
+
+	return ids
 }

@@ -104,7 +104,7 @@ func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.De
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := r.itam.CountForOrganizationID(ctx, scope, obj.ParentID)
+		count, err := r.itam.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count devices", log.Error(err))
 			return 0, gqlutils.Internal(ctx)

@@ -86,6 +86,7 @@ interface DeviceListItemProps {
   fKey: DeviceListItem_device$key;
   selected?: boolean;
   onSelectedChange?: (selected: boolean) => void;
+  onRevoked?: () => void;
 }
 
 export function DeviceListItem({
@@ -96,6 +97,7 @@ export function DeviceListItem({
   fKey,
   selected,
   onSelectedChange,
+  onRevoked,
 }: DeviceListItemProps) {
   const { i18n, t } = useTranslation("organizations/devices");
   const organizationId = useOrganizationId();
@@ -137,6 +139,7 @@ export function DeviceListItem({
         open={revokeOpen}
         onOpenChange={setRevokeOpen}
         devices={[{ id: device.id, ownerName: device.owner?.fullName }]}
+        onRevoked={onRevoked}
       />
       <DeviceDeleteDialog
         open={deleteOpen}

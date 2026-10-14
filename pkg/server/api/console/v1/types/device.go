@@ -37,6 +37,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filters  *coredata.DeviceFilter
 	}
 
 	EmployeeDeviceConnection struct {
@@ -63,6 +64,7 @@ func NewDeviceConnection(
 	p *page.Page[*coredata.Device, coredata.DeviceOrderField],
 	parentType any,
 	parentID gid.GID,
+	filters *coredata.DeviceFilter,
 ) *DeviceConnection {
 	edges := make([]*DeviceEdge, len(p.Data))
 	for i := range edges {
@@ -74,6 +76,7 @@ func NewDeviceConnection(
 		PageInfo: *NewPageInfo(p),
 		Resolver: parentType,
 		ParentID: parentID,
+		Filters:  filters,
 	}
 }
 

@@ -85,6 +85,13 @@ input DeviceOrder
     field: DeviceOrderField!
 }
 
+input DeviceFilter {
+    query: String
+    state: DeviceState
+    platform: DevicePlatform
+    agentVersion: String
+}
+
 type Device implements Node {
     id: ID!
     state: DeviceState!
