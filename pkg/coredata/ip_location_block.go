@@ -47,6 +47,11 @@ type (
 	ipLocationCopySource struct {
 		source IPLocationBlockSource
 	}
+
+	ipLocationTableGrant struct {
+		Grantee   string
+		Privilege string
+	}
 )
 
 const (
@@ -182,6 +187,20 @@ ANALYZE common_ip_location_blocks_staging;
 }
 
 func SwapIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error {
+	owner, grants, err := ipLocationBlocksPrivileges(ctx, conn)
+	if err != nil {
+		return err
+	}
+
+	if err := grantIPLocationTablePrivileges(
+		ctx,
+		conn,
+		ipLocationBlocksStagingTable,
+		grants,
+	); err != nil {
+		return err
+	}
+
 	q := `
 DROP TABLE common_ip_location_blocks;
 ALTER TABLE common_ip_location_blocks_staging
@@ -196,7 +215,136 @@ ALTER INDEX idx_common_ip_location_blocks_staging_lookup
 		return fmt.Errorf("cannot swap IP location blocks staging table: %w", err)
 	}
 
+	if err := setIPLocationBlocksOwner(ctx, conn, owner); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func ipLocationBlocksPrivileges(
+	ctx context.Context,
+	conn pg.Querier,
+) (string, []ipLocationTableGrant, error) {
+	ownerRows, err := conn.Query(
+		ctx,
+		`
+SELECT pg_get_userbyid(c.relowner)
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = current_schema()
+  AND c.relname = 'common_ip_location_blocks'
+`,
+	)
+	if err != nil {
+		return "", nil, fmt.Errorf("cannot read IP location blocks owner: %w", err)
+	}
+
+	owner, err := pgx.CollectExactlyOneRow(ownerRows, pgx.RowTo[string])
+	if err != nil {
+		return "", nil, fmt.Errorf("cannot collect IP location blocks owner: %w", err)
+	}
+
+	grantRows, err := conn.Query(
+		ctx,
+		`
+SELECT
+	CASE
+		WHEN a.grantee = 0 THEN 'PUBLIC'
+		ELSE r.rolname
+	END,
+	a.privilege_type
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, '{}'::aclitem[])) AS a
+LEFT JOIN pg_roles r ON r.oid = a.grantee
+WHERE n.nspname = current_schema()
+  AND c.relname = 'common_ip_location_blocks'
+  AND (
+	a.grantee = 0
+	OR r.rolname <> CURRENT_USER
+  )
+`,
+	)
+	if err != nil {
+		return "", nil, fmt.Errorf("cannot read IP location blocks privileges: %w", err)
+	}
+
+	grants, err := pgx.CollectRows(
+		grantRows,
+		pgx.RowToStructByPos[ipLocationTableGrant],
+	)
+	if err != nil {
+		return "", nil, fmt.Errorf("cannot collect IP location blocks privileges: %w", err)
+	}
+
+	return owner, grants, nil
+}
+
+func grantIPLocationTablePrivileges(
+	ctx context.Context,
+	conn pg.Querier,
+	table string,
+	grants []ipLocationTableGrant,
+) error {
+	tableName := pgx.Identifier{table}.Sanitize()
+
+	for _, grant := range grants {
+		if !validIPLocationPrivilege(grant.Privilege) {
+			return fmt.Errorf("cannot grant unknown privilege %q on %s", grant.Privilege, table)
+		}
+
+		q := fmt.Sprintf(
+			"GRANT %s ON TABLE %s TO %s",
+			grant.Privilege,
+			tableName,
+			ipLocationGrantTarget(grant.Grantee),
+		)
+		if _, err := conn.Exec(ctx, q); err != nil {
+			return fmt.Errorf(
+				"cannot grant %s on %s to %s: %w",
+				grant.Privilege,
+				table,
+				grant.Grantee,
+				err,
+			)
+		}
+	}
+
+	return nil
+}
+
+func setIPLocationBlocksOwner(ctx context.Context, conn pg.Querier, owner string) error {
+	if owner == "" {
+		return fmt.Errorf("cannot set IP location blocks owner: empty role")
+	}
+
+	q := fmt.Sprintf(
+		"ALTER TABLE common_ip_location_blocks OWNER TO %s",
+		pgx.Identifier{owner}.Sanitize(),
+	)
+	if _, err := conn.Exec(ctx, q); err != nil {
+		return fmt.Errorf("cannot set IP location blocks owner to %s: %w", owner, err)
+	}
+
+	return nil
+}
+
+func ipLocationGrantTarget(grantee string) string {
+	if grantee == "PUBLIC" {
+		return "PUBLIC"
+	}
+
+	return pgx.Identifier{grantee}.Sanitize()
+}
+
+func validIPLocationPrivilege(privilege string) bool {
+	switch privilege {
+	case "SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER", "MAINTAIN":
+		return true
+	default:
+		return false
+	}
 }
 
 func DropIPLocationBlocksStaging(ctx context.Context, conn pg.Querier) error {
