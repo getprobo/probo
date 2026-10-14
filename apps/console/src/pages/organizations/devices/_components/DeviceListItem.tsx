@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { DotsThreeIcon, PlugsIcon, TrashIcon, UserIcon } from "@phosphor-icons/react";
+import { ChecksIcon, DotsThreeIcon, PlugsIcon, QuestionIcon, TrashIcon, UserIcon, WarningIcon, XIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Checkbox } from "@probo/ui/src/v2/Checkbox/Checkbox";
@@ -31,6 +31,9 @@ import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableLink } from "@probo/ui/src/v2/Table/TableLink";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -39,7 +42,15 @@ import { graphql } from "relay-runtime";
 import type { DeviceListItem_device$key } from "#/__generated__/core/DeviceListItem_device.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { displayValue, isDeviceDeletable, stateColor } from "../_lib/deviceDisplay";
+import {
+  displayValue,
+  isDeviceDeletable,
+  ownerLabel,
+  platformLabel,
+  postureOutcome,
+  stateColor,
+} from "../_lib/deviceDisplay";
+import { getPostureCheckLabel } from "../_lib/getPostureCheckLabel";
 import { ReassignDeviceDialog } from "../dialogs/ReassignDeviceDialog";
 
 import { DeviceDeleteDialog } from "./DeviceDeleteDialog";
@@ -49,7 +60,6 @@ const deviceListItemFragment = graphql`
   fragment DeviceListItem_device on Device {
     id
     state
-    hostname
     platform
     osVersion
     agentVersion
@@ -57,6 +67,12 @@ const deviceListItemFragment = graphql`
     owner {
       id
       fullName
+    }
+    latestPostures {
+      checkKey
+      value {
+        kind
+      }
     }
     ...ReassignDeviceDialog_device
   }
@@ -88,7 +104,21 @@ export function DeviceListItem({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const pendingLabel = t("devices.values.pending");
   const device = useFragment(deviceListItemFragment, fKey);
-  const hostnameLabel = displayValue(device.hostname, pendingLabel);
+  const name = ownerLabel(device.owner?.fullName, t("devices.values.unassigned"));
+  const checks = device.latestPostures.length;
+  const warnings: { key: string; label: string; outcome: "warning" | "unknown" }[] = [];
+  for (const posture of device.latestPostures) {
+    const outcome = postureOutcome(posture.value.kind, posture.checkKey);
+    if (outcome === "pass") {
+      continue;
+    }
+    warnings.push({
+      key: posture.checkKey,
+      label: getPostureCheckLabel(t, posture.checkKey),
+      outcome,
+    });
+  }
+  const platform = platformLabel(t, device.platform) ?? pendingLabel;
   const deletable = isDeviceDeletable(device.state);
   const showAssign = canAssignDevice && !deletable;
   const showRevoke = canRevoke && !deletable;
@@ -106,14 +136,14 @@ export function DeviceListItem({
       <DeviceRevokeDialog
         open={revokeOpen}
         onOpenChange={setRevokeOpen}
-        devices={[{ id: device.id, hostname: device.hostname }]}
+        devices={[{ id: device.id, ownerName: device.owner?.fullName }]}
       />
       <DeviceDeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         organizationId={organizationId}
         connectionId={connectionId}
-        devices={[{ id: device.id, hostname: device.hostname }]}
+        devices={[{ id: device.id, ownerName: device.owner?.fullName }]}
       />
       <TableRow align="center" interactive>
         {onSelectedChange && (
@@ -125,26 +155,57 @@ export function DeviceListItem({
                   onSelectedChange(checked);
                 }
               }}
-              aria-label={t("devices.actions.selectDevice", { hostname: hostnameLabel })}
+              aria-label={t("devices.actions.selectDevice", { owner: name })}
             />
           </TableCell>
         )}
         <TableRowHeaderCell>
           <TableLink to={`/organizations/${organizationId}/itam/devices/${device.id}`}>
-            {hostnameLabel}
+            {name}
           </TableLink>
         </TableRowHeaderCell>
-        <TableCell>{device.owner?.fullName ?? t("devices.values.unassigned")}</TableCell>
         <TableCell>
           <Badge variant="soft" color={stateColor(device.state)}>{device.state}</Badge>
         </TableCell>
-        <TableCell>{displayValue(device.platform, pendingLabel)}</TableCell>
+        <TableCell>{platform}</TableCell>
         <TableCell>{displayValue(device.osVersion, pendingLabel)}</TableCell>
         <TableCell>{displayValue(device.agentVersion, pendingLabel)}</TableCell>
         <TableCell>
           {device.lastSeenAt
             ? dateTimeFormat(i18n.language, device.lastSeenAt)
             : t("devices.values.never")}
+        </TableCell>
+        <TableCell interactive>
+          {checks > 0 && warnings.length === 0 && (
+            <Badge size={1} variant="soft" color="green" iconStart={<ChecksIcon />}>
+              {t("devices.postures.checks", { count: checks })}
+            </Badge>
+          )}
+          {warnings.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger
+                render={(
+                  <span tabIndex={0} className="inline-flex">
+                    <Badge size={1} variant="soft" color="amber" iconStart={<WarningIcon />}>
+                      {t("devices.postures.warnings", { count: warnings.length })}
+                    </Badge>
+                  </span>
+                )}
+              />
+              <TooltipPopup>
+                <ul className="flex flex-col">
+                  {warnings.map(warning => (
+                    <li key={warning.key} className="flex items-center gap-1">
+                      {warning.outcome === "unknown"
+                        ? <QuestionIcon className="size-3" aria-hidden />
+                        : <XIcon className="size-3 text-red-11" aria-hidden />}
+                      {warning.label}
+                    </li>
+                  ))}
+                </ul>
+              </TooltipPopup>
+            </Tooltip>
+          )}
         </TableCell>
         <TableCell interactive justify="end" width="3rem">
           {hasActions && (

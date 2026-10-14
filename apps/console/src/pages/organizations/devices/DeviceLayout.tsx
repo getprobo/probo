@@ -38,7 +38,7 @@ import { DeviceDeleteDialog } from "./_components/DeviceDeleteDialog";
 import { DeviceDetailsCard } from "./_components/DeviceDetailsCard";
 import { DeviceRevokeDialog } from "./_components/DeviceRevokeDialog";
 import { devicesPage } from "./_components/variants";
-import { displayValue, isDeviceDeletable } from "./_lib/deviceDisplay";
+import { isDeviceDeletable, ownerLabel } from "./_lib/deviceDisplay";
 import { useDownloadDeviceEvidence } from "./_lib/useDownloadDeviceEvidence";
 
 export const deviceLayoutQuery = graphql`
@@ -48,7 +48,9 @@ export const deviceLayoutQuery = graphql`
       ... on Device {
         id
         state
-        hostname
+        owner {
+          fullName
+        }
         ...DeviceDetailsCard_deviceFragment
         ...DeviceCurrentPostures_deviceFragment
       }
@@ -83,7 +85,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
   );
   usePageTitle(
     device.__typename === "Device"
-      ? displayValue(device.hostname, t("devices.values.pending"))
+      ? ownerLabel(device.owner?.fullName, t("devices.values.unassigned"))
       : t("devices.title"),
   );
   if (device.__typename !== "Device") {
@@ -93,7 +95,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
     throw new NotFoundError("invalid type for organization node");
   }
 
-  const hostnameLabel = displayValue(device.hostname, t("devices.values.pending"));
+  const name = ownerLabel(device.owner?.fullName, t("devices.values.unassigned"));
 
   const deletable = isDeviceDeletable(device.state);
   const canRevokeDevice = organization.canRevokeDevice ?? false;
@@ -114,7 +116,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
       <div className={header()}>
         <div className={intro()}>
           <Heading level={1} size={6} weight="medium" highContrast>
-            {hostnameLabel}
+            {name}
           </Heading>
         </div>
         <div className={actions()}>
@@ -152,13 +154,13 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
       <DeviceRevokeDialog
         open={revokeOpen}
         onOpenChange={setRevokeOpen}
-        devices={[{ id: device.id, hostname: device.hostname }]}
+        devices={[{ id: device.id, ownerName: device.owner?.fullName }]}
       />
       <DeviceDeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         organizationId={organizationId}
-        devices={[{ id: device.id, hostname: device.hostname }]}
+        devices={[{ id: device.id, ownerName: device.owner?.fullName }]}
         onDeleted={() => {
           void navigate(`/organizations/${organizationId}/itam/devices`, { replace: true });
         }}

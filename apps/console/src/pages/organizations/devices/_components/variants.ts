@@ -34,6 +34,7 @@ export const devicesPage = tv({
     filters: "flex flex-wrap items-center justify-end gap-2",
     tableFilters: "flex flex-wrap items-center justify-end gap-2",
     filter: "w-40 shrink-0",
+    platformFilter: "w-max shrink-0",
     versionFilter: "w-max shrink-0",
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     footer: "flex items-center justify-end gap-4",

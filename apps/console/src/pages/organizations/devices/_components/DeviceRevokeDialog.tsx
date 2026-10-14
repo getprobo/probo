@@ -26,12 +26,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { confirmEachDevice } from "../_lib/confirmEachDevice";
-import { displayValue } from "../_lib/deviceDisplay";
+import { ownerLabel } from "../_lib/deviceDisplay";
 import { useRevokeDevice } from "../_lib/useRevokeDevice";
 
 interface DeviceRevokeTarget {
   id: string;
-  hostname?: string | null;
+  ownerName?: string | null;
 }
 
 interface DeviceRevokeDialogProps {
@@ -51,9 +51,9 @@ export function DeviceRevokeDialog({
   const toast = useToast();
   const [revokeDevice] = useRevokeDevice();
   const [isRevoking, setIsRevoking] = useState(false);
-  const hostnameLabel = displayValue(devices[0]?.hostname, t("devices.values.pending"));
+  const name = ownerLabel(devices[0]?.ownerName, t("devices.values.unassigned"));
   const title = devices.length === 1
-    ? t("devices.confirmations.revoke", { hostname: hostnameLabel })
+    ? t("devices.confirmations.revoke", { owner: name })
     : t("devices.confirmations.revokeMany", { count: devices.length });
   const warning = devices.length === 1
     ? t("devices.confirmations.revokeWarning")

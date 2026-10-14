@@ -27,12 +27,12 @@ import { useTranslation } from "react-i18next";
 import type { DataID } from "relay-runtime";
 
 import { confirmEachDevice } from "../_lib/confirmEachDevice";
-import { displayValue } from "../_lib/deviceDisplay";
+import { ownerLabel } from "../_lib/deviceDisplay";
 import { useDeleteDevice } from "../_lib/useDeleteDevice";
 
 interface DeviceDeleteTarget {
   id: string;
-  hostname?: string | null;
+  ownerName?: string | null;
 }
 
 interface DeviceDeleteDialogProps {
@@ -56,9 +56,9 @@ export function DeviceDeleteDialog({
   const toast = useToast();
   const [remove] = useDeleteDevice({ organizationId, connectionId });
   const [isDeleting, setIsDeleting] = useState(false);
-  const hostnameLabel = displayValue(devices[0]?.hostname, t("devices.values.pending"));
+  const name = ownerLabel(devices[0]?.ownerName, t("devices.values.unassigned"));
   const title = devices.length === 1
-    ? t("devices.confirmations.delete", { hostname: hostnameLabel })
+    ? t("devices.confirmations.delete", { owner: name })
     : t("devices.confirmations.deleteMany", { count: devices.length });
   const warning = devices.length === 1
     ? t("devices.confirmations.deleteWarning")

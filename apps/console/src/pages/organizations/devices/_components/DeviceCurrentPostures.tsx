@@ -28,7 +28,7 @@ import { graphql } from "relay-runtime";
 import type { DeviceCurrentPostures_deviceFragment$key } from "#/__generated__/core/DeviceCurrentPostures_deviceFragment.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 
-import { postureValueVariant } from "../_lib/deviceDisplay";
+import { postureOutcome } from "../_lib/deviceDisplay";
 import { getPostureCheckLabel } from "../_lib/getPostureCheckLabel";
 
 import { PostureValueBadge } from "./PostureValueBadge";
@@ -57,13 +57,12 @@ export function DeviceCurrentPostures({
   const { t } = useTranslation("organizations/devices");
   const device = useFragment(deviceFragment, deviceFragmentRef);
   const { root, property } = deviceCardFields();
-  const tone = device.latestPostures.length === 0
-    ? "sand"
-    : device.latestPostures.some(
-      posture => postureValueVariant(posture.value.kind, posture.checkKey) === "danger",
+  const tone = device.latestPostures.length > 0
+    && device.latestPostures.every(
+      posture => postureOutcome(posture.value.kind, posture.checkKey) === "pass",
     )
-      ? "amber"
-      : "green";
+    ? "green"
+    : "sand";
 
   return (
     <TonedCard
