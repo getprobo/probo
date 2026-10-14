@@ -4,6 +4,19 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.312.0] - 2026-10-14
+
+### Added
+
+- Documents, tasks, comments, and risk descriptions can include images
+  and files. The file is private, and readers load it from
+  `/api/files/v1/{id}`
+- GraphQL and MCP `uploadFile` uploads a file for someone who can create
+  or edit a task, a document, or a risk
+- Task sync copies those files to Linear and maps the asset URL back to
+  the file id
+- Generated documents include those images
+
 ## [0.311.1] - 2026-10-14
 
 ### Fixed
