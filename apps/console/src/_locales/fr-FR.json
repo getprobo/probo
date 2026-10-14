@@ -1125,7 +1125,6 @@
   },
   "tasksCard": {
     "states": {
-      "all": "Toutes",
       "todo": "À faire",
       "inProgress": "En cours",
       "done": "Terminé",
@@ -1133,12 +1132,7 @@
       "canceled": "Annulé",
       "duplicate": "Doublon"
     },
-    "empty": "Aucune tâche",
-    "noResults": "Aucune tâche ne correspond à vos filtres",
-    "searchPlaceholder": "Rechercher des tâches",
     "filters": {
-      "status": "Statut",
-      "allStatuses": "Tous les statuts",
       "user": "Utilisateur",
       "allUsers": "Tous les utilisateurs",
       "internalControl": "Contrôle interne",
@@ -1151,24 +1145,7 @@
       "reorder": "Échec de la réorganisation de la tâche."
     },
     "dragInstructions": {
-      "all": "Glissez-déposez pour réorganiser les tâches ou les déplacer entre les états",
       "state": "Glissez-déposez pour réorganiser les tâches"
-    },
-    "deleteConfirmation": "Voulez-vous vraiment supprimer cette tâche ?",
-    "actions": {
-      "moveToTodo": "Déplacer vers À faire",
-      "moveToInProgress": "Déplacer vers En cours",
-      "moveToDone": "Déplacer vers Terminé",
-      "edit": "Modifier",
-      "delete": "Supprimer"
-    },
-    "metadata": {
-      "timeEstimate": "Estimation de temps",
-      "deadline": "Échéance",
-      "overdue": "En retard"
-    },
-    "recurringBadge": {
-      "tooltip": "Se répète avec un intervalle de {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {

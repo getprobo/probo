@@ -17,6 +17,11 @@
   "emptyValue": "—",
   "doesNotRepeat": "Ne se répète pas",
   "noResults": "Aucune tâche ne correspond à vos filtres",
+  "searchPlaceholder": "Rechercher des tâches",
+  "filters": {
+    "status": "Statut",
+    "allStatuses": "Tous les statuts"
+  },
   "unassigned": "Non assigné",
   "deadlinePicker": {
     "today": "Aujourd'hui",

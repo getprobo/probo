@@ -1,11 +1,6 @@
 {
   "title": "Tasks",
   "breadcrumb": "Tasks",
-  "searchPlaceholder": "Search tasks",
-  "filters": {
-    "status": "Status",
-    "allStatuses": "All statuses"
-  },
   "delete": {
     "title": "Delete task",
     "description": "Are you sure you want to delete this task?",

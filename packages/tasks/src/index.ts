@@ -34,15 +34,37 @@ export {
   type TaskListRowPosition,
   taskListRowPosition,
 } from "./flattenTaskListItems";
-export { TaskList, type TaskListItemSource, type TaskListProps } from "./TaskList";
 export {
   TaskListGroupHeader,
   type TaskListGroupHeaderProps,
 } from "./TaskListGroupHeader";
 export {
+  TaskListSearchField,
+  type TaskListSearchFieldProps,
+  TaskListStatusFilter,
+  type TaskListStatusFilterProps,
+  TaskListToolbar,
+  type TaskListToolbarProps,
+} from "./TaskListToolbar";
+export {
+  TaskListView,
+  type TaskListViewGroup,
+  type TaskListViewItem,
+  type TaskListViewProps,
+} from "./TaskListView";
+export {
   TaskListRowFrame,
   type TaskListRowFrameProps,
 } from "./TaskListRowFrame";
+export { taskListPageSize } from "./taskListPageSize";
+export {
+  type TaskListFillGroup,
+  type TaskListLoadNext,
+  type TaskListLoadNextOptions,
+  type TasksListFillRange,
+  useTasksListFill,
+  type UseTasksListFillOptions,
+} from "./useTasksListFill";
 export {
   taskListGroupHeaderGap,
   taskListGroupHeaderOffset,
@@ -91,6 +113,8 @@ export {
   taskList,
   taskListItem,
   taskListRow,
+  taskListToolbar,
+  taskListView,
   taskNameField,
   taskProperties,
 } from "./variants";

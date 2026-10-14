@@ -1,11 +1,6 @@
 {
   "title": "Taken",
   "breadcrumb": "Taken",
-  "searchPlaceholder": "Taken zoeken",
-  "filters": {
-    "status": "Status",
-    "allStatuses": "Alle statussen"
-  },
   "delete": {
     "title": "Taak verwijderen",
     "description": "Weet u zeker dat u deze taak wilt verwijderen?",

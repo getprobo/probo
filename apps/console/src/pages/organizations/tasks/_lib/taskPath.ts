@@ -18,9 +18,76 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
-export const organizationTasksConnectionKey = "TasksCardOrganization_tasks";
+export const taskListConnectionKeys = {
+  IN_PROGRESS: "useOrganizationTaskListGroups_inProgress__inProgressTasks",
+  TODO: "useOrganizationTaskListGroups_todo__todoTasks",
+  BACKLOG: "useOrganizationTaskListGroups_backlog__backlogTasks",
+  DONE: "useOrganizationTaskListGroups_done__doneTasks",
+  CANCELED: "useOrganizationTaskListGroups_canceled__canceledTasks",
+  DUPLICATE: "useOrganizationTaskListGroups_duplicate__duplicateTasks",
+} as const satisfies Record<TaskState, string>;
+
+export interface OrganizationTaskListFilter {
+  query: string | null;
+  assignedToId: string | null;
+  internalControlId: string | null;
+}
+
+export function organizationTaskListFilterVariants(
+  filter: OrganizationTaskListFilter,
+): OrganizationTaskListFilter[] {
+  const empty = {
+    query: null,
+    assignedToId: null,
+    internalControlId: null,
+  };
+  if (
+    filter.query == null
+    && filter.assignedToId == null
+    && filter.internalControlId == null
+  ) {
+    return [empty];
+  }
+
+  return [
+    {
+      query: filter.query,
+      assignedToId: filter.assignedToId,
+      internalControlId: filter.internalControlId,
+    },
+    empty,
+  ];
+}
+
+export function organizationTaskListConnectionFilters(
+  filter: OrganizationTaskListFilter,
+  state: TaskState,
+) {
+  return {
+    filter: {
+      query: filter.query,
+      state,
+      assignedToId: filter.assignedToId,
+      internalControlId: filter.internalControlId,
+    },
+  };
+}
+
+export function organizationTaskListConnectionId(
+  organizationId: string,
+  filter: OrganizationTaskListFilter,
+  state: TaskState,
+) {
+  return ConnectionHandler.getConnectionID(
+    organizationId,
+    taskListConnectionKeys[state],
+    organizationTaskListConnectionFilters(filter, state),
+  );
+}
+
 export const internalControlTasksConnectionKey = "InternalControl__tasks";
 export const taskInternalControlIdsConnectionKey = "useTaskInternalControlIds_internalControls";
 

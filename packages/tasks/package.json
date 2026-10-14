@@ -15,6 +15,7 @@
     "@probo/helpers": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@probo/ui": "1.0.0",
+    "@tanstack/react-virtual": "^3.14.19",
     "tailwind-variants": "^3.3.1"
   },
   "peerDependencies": {

@@ -26,6 +26,9 @@ export const tasksPage = tv({
     header: "flex items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-2",
     actions: "flex shrink-0 items-center gap-2",
+    list: "flex flex-col gap-4",
+    userFilter: "w-52 shrink-0 max-sm:w-full",
+    internalControlFilter: "w-56 shrink-0 max-sm:w-full",
   },
 });
 

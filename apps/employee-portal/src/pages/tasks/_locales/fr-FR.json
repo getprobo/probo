@@ -1,11 +1,6 @@
 {
   "title": "Tâches",
   "breadcrumb": "Tâches",
-  "searchPlaceholder": "Rechercher des tâches",
-  "filters": {
-    "status": "Statut",
-    "allStatuses": "Tous les statuts"
-  },
   "delete": {
     "title": "Supprimer la tâche",
     "description": "Voulez-vous vraiment supprimer cette tâche ?",

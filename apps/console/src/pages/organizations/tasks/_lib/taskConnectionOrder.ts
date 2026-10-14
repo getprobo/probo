@@ -81,7 +81,7 @@ function sortsAfter(
   return existing.getDataID() > incomingId;
 }
 
-function placeEdgeSorted(
+export function placeEdgeSorted(
   connection: TaskRecord,
   edge: TaskRecord,
   node: TaskRecord,
@@ -135,14 +135,16 @@ export function moveTaskNodeSorted(
   store: RecordSourceSelectorProxy,
   node: TaskRecord,
   connections: {
-    organizationConnectionId: string;
+    organizationConnectionId?: string;
     previousInternalControlConnectionIds?: readonly string[];
     nextInternalControlConnectionIds?: readonly string[];
     createIfMissing?: boolean;
   },
 ) {
   const nodeId = node.getDataID();
-  const organizationConnection = store.get(connections.organizationConnectionId);
+  const organizationConnection = connections.organizationConnectionId == null
+    ? null
+    : store.get(connections.organizationConnectionId);
   if (organizationConnection) {
     const edge = findEdge(organizationConnection, nodeId);
     if (edge) {

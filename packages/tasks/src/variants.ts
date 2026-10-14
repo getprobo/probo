@@ -22,18 +22,12 @@ import { tv } from "tailwind-variants/lite";
 
 export const taskList = tv({
   slots: {
-    root: "flex flex-col gap-4",
-    group: "flex flex-col gap-2",
     sectionHeader: [
       "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit",
       "flex w-full items-center gap-2 text-start outline-none",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
-      "[&_[data-slot=caret-open]]:hidden",
-      "data-panel-open:[&_[data-slot=caret-closed]]:hidden",
-      "data-panel-open:[&_[data-slot=caret-open]]:block",
     ],
     caret: "size-4 shrink-0 text-sand-11",
-    list: "divide-y divide-sand-a3",
     empty: "py-6",
   },
   variants: {
@@ -219,5 +213,28 @@ export const taskDescription = tv({
   slots: {
     root: "min-w-0",
     editor: "min-h-40",
+  },
+});
+
+export const taskListView = tv({
+  base: "transition-opacity duration-150",
+  variants: {
+    busy: {
+      true: "opacity-60",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    busy: false,
+  },
+});
+
+export const taskListToolbar = tv({
+  slots: {
+    tools: "flex flex-wrap items-center justify-between gap-2",
+    search: "w-80 max-sm:min-w-0 max-sm:w-full",
+    filters: "flex flex-wrap items-center justify-end gap-2",
+    filter: "w-40 shrink-0",
+    stateOption: "flex items-center gap-2",
   },
 });

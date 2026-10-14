@@ -27,19 +27,26 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
+import {
+  isTaskState,
+  moveOrganizationTaskListEdge,
+  readStoredTaskState,
+  resortOrganizationTaskListEdge,
+} from "./moveOrganizationTaskListEdge";
 import { moveTaskNodeSorted, syncTaskInternalControlIds } from "./taskConnectionOrder";
 import {
   internalControlTasksConnectionKey,
-  organizationTasksConnectionKey,
+  organizationTaskListFilterVariants,
   taskConnectionId,
 } from "./taskPath";
+import { useTasksCardFilters } from "./useTasksCardFilters";
 
 const updateTaskMutation = graphql`
   mutation useUpdateTaskMutation($input: UpdateTaskInput!) {
     updateTask(input: $input) {
       task {
         ...TaskDetailsPage_task
-        ...TasksCard_task
+        ...TasksPageList_task
         ...TaskListItem_task
       }
     }
@@ -50,6 +57,7 @@ export function useUpdateTask() {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const relayEnv = useRelayEnvironment();
+  const { graphqlFilter } = useTasksCardFilters();
   const [commit, isUpdating] = useMutation<useUpdateTaskMutation>(
     updateTaskMutation,
     {
@@ -73,17 +81,46 @@ export function useUpdateTask() {
     const previousSet = new Set(previousInternalControlIds);
     const nextSet = new Set(nextInternalControlIds);
 
+    const listFilter = {
+      query: graphqlFilter.query,
+      assignedToId: graphqlFilter.assignedToId,
+      internalControlId: graphqlFilter.internalControlId,
+    };
+    const filters = organizationTaskListFilterVariants(listFilter);
+    const nextState = relayConfig.variables.input.state;
+    const fromState = nextState == null
+      ? null
+      : readStoredTaskState(relayEnv, relayConfig.variables.input.taskId);
+
     return commit({
       ...relayConfig,
       updater: (store, data) => {
         const payload = store.getRootField("updateTask");
         const node = payload?.getLinkedRecord("task");
         if (node) {
-          moveTaskNodeSorted(store, node, {
-            organizationConnectionId: taskConnectionId(
+          if (fromState != null && nextState != null && fromState !== nextState) {
+            moveOrganizationTaskListEdge(store, node, {
+              fromState,
+              toState: nextState,
               organizationId,
-              organizationTasksConnectionKey,
-            ),
+              filters,
+            });
+          } else if (
+            relayConfig.variables.input.priority != null
+            || relayConfig.variables.input.rank != null
+          ) {
+            const state = node.getValue("state");
+            if (isTaskState(state)) {
+              resortOrganizationTaskListEdge(
+                store,
+                node,
+                organizationId,
+                state,
+                filters,
+              );
+            }
+          }
+          moveTaskNodeSorted(store, node, {
             previousInternalControlConnectionIds: internalControlsChanged
               ? previousInternalControlIds.map(internalControlId =>
                   taskConnectionId(internalControlId, internalControlTasksConnectionKey),

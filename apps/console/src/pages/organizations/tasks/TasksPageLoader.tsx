@@ -18,13 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import {
+  pickTaskListIncludeFlags,
+  taskListIncludeFlags,
+  taskListIncludeFlagsEqual,
+} from "./_lib/taskListIncludes";
 import { useTasksCardFilters } from "./_lib/useTasksCardFilters";
 import { TasksPage, tasksPageQuery } from "./TasksPage";
 
@@ -45,6 +50,10 @@ interface TasksPageQueryLoaderProps {
 
 function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
   const { graphqlFilter } = useTasksCardFilters();
+  const includeFlags = useMemo(
+    () => taskListIncludeFlags(graphqlFilter.state),
+    [graphqlFilter.state],
+  );
   const [queryRef, loadQuery]
     = useQueryLoader<TasksPageQuery>(tasksPageQuery);
   const [pageReady, setPageReady] = useState(false);
@@ -56,14 +65,23 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
     if (pageReady) {
       return;
     }
-    loadQuery({ organizationId, filter: graphqlFilter });
-  }, [graphqlFilter, loadQuery, organizationId, pageReady]);
+    loadQuery({
+      organizationId,
+      query: graphqlFilter.query,
+      assignedToId: graphqlFilter.assignedToId,
+      internalControlId: graphqlFilter.internalControlId,
+      ...includeFlags,
+    });
+  }, [graphqlFilter, includeFlags, loadQuery, organizationId, pageReady]);
 
   const queryMatchesPendingFilter = queryRef != null
-    && queryRef.variables.filter?.query === graphqlFilter.query
-    && queryRef.variables.filter?.state === graphqlFilter.state
-    && queryRef.variables.filter?.assignedToId === graphqlFilter.assignedToId
-    && queryRef.variables.filter?.internalControlId === graphqlFilter.internalControlId;
+    && queryRef.variables.query === graphqlFilter.query
+    && queryRef.variables.assignedToId === graphqlFilter.assignedToId
+    && queryRef.variables.internalControlId === graphqlFilter.internalControlId
+    && taskListIncludeFlagsEqual(
+      pickTaskListIncludeFlags(queryRef.variables),
+      includeFlags,
+    );
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId
     && (pageReady || queryMatchesPendingFilter)

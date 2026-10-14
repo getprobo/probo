@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskListGroupStates, type TaskState } from "@probo/tasks";
+import { taskListGroupStates, taskListPageSize, type TaskState } from "@probo/tasks";
 import { graphql, usePaginationFragment } from "react-relay";
 import type { FragmentRefs } from "relay-runtime";
 
@@ -38,7 +38,6 @@ import type { useTasksPageListGroupsInProgressQuery } from "#/__generated__/core
 import type { useTasksPageListGroupsTodoQuery } from "#/__generated__/core/useTasksPageListGroupsTodoQuery.graphql";
 
 import type { TaskListIncludeFlags } from "./taskListIncludes";
-import { taskListPageSize } from "./taskListPageSize";
 
 const inProgressGroupFragment = graphql`
   fragment useTasksPageListGroups_inProgress on Viewer

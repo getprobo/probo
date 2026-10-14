@@ -18,19 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import {
-  taskListGroupStates,
-  TASKS_NAMESPACE,
-  type TaskState,
-  TaskStateIcon,
-  taskStateKeys,
-} from "@probo/tasks";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { TaskListToolbar } from "@probo/tasks";
 import { Suspense, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -46,7 +34,6 @@ import { TasksPageList } from "./_components/TasksPageList";
 import { TasksPageListSkeleton } from "./_components/TasksPageListSkeleton";
 import { useTasksFilters } from "./_lib/useTasksFilters";
 import { useTasksSearch } from "./_lib/useTasksSearch";
-import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`
   query TasksPageQuery(
@@ -84,15 +71,12 @@ interface TasksPageProps {
 export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation("tasks");
   const { t: tApp } = useTranslation();
-  const { t: tTasks } = useTranslation(TASKS_NAMESPACE);
   const { state: selectedState, setState } = useTasksFilters();
   const [queryInput, setQueryInput] = useTasksSearch();
   const { viewer } = usePreloadedQuery<TasksPageQuery>(
     tasksPageQuery,
     queryRef,
   );
-  const slots = tasksPage();
-
   useEffect(() => {
     onReady?.();
   }, [onReady]);
@@ -105,53 +89,12 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
         title={t("title")}
       />
       <div className="flex flex-col gap-4">
-        <div className={slots.tools()}>
-          <div className={slots.search()}>
-            <TextField
-              icon={<MagnifyingGlassIcon />}
-              value={queryInput}
-              onValueChange={setQueryInput}
-              placeholder={t("searchPlaceholder")}
-              aria-label={t("searchPlaceholder")}
-            />
-          </div>
-          <div className={slots.filters()}>
-            <div className={slots.filter()}>
-              <Select
-                value={selectedState}
-                onValueChange={setState}
-              >
-                <SelectTrigger
-                  size={2}
-                  placeholder={t("filters.allStatuses")}
-                  aria-label={t("filters.status")}
-                >
-                  {(value: TaskState | null) => value == null
-                    ? t("filters.allStatuses")
-                    : (
-                        <span className={slots.stateOption()}>
-                          <TaskStateIcon state={value} />
-                          {tTasks(`states.${taskStateKeys[value]}`)}
-                        </span>
-                      )}
-                </SelectTrigger>
-                <SelectPopup align="start">
-                  <SelectItem value={null}>
-                    {t("filters.allStatuses")}
-                  </SelectItem>
-                  {taskListGroupStates.map(state => (
-                    <SelectItem key={state} value={state}>
-                      <span className={slots.stateOption()}>
-                        <TaskStateIcon state={state} />
-                        {tTasks(`states.${taskStateKeys[state]}`)}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectPopup>
-              </Select>
-            </div>
-          </div>
-        </div>
+        <TaskListToolbar
+          query={queryInput}
+          onQueryChange={setQueryInput}
+          state={selectedState}
+          onStateChange={setState}
+        />
         <Suspense fallback={<TasksPageListSkeleton />}>
           <TasksPageList viewerKey={viewer} />
         </Suspense>

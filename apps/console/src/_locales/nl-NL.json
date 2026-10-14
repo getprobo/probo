@@ -1125,7 +1125,6 @@
   },
   "tasksCard": {
     "states": {
-      "all": "Alle",
       "todo": "Te doen",
       "inProgress": "In uitvoering",
       "done": "Voltooid",
@@ -1133,12 +1132,7 @@
       "canceled": "Geannuleerd",
       "duplicate": "Duplicaat"
     },
-    "empty": "Geen taken",
-    "noResults": "Geen taken komen overeen met uw filters",
-    "searchPlaceholder": "Taken zoeken",
     "filters": {
-      "status": "Status",
-      "allStatuses": "Alle statussen",
       "user": "Gebruiker",
       "allUsers": "Alle gebruikers",
       "internalControl": "Interne controle",
@@ -1151,24 +1145,7 @@
       "reorder": "Herordenen van taak mislukt."
     },
     "dragInstructions": {
-      "all": "Sleep om taken opnieuw te ordenen of te verplaatsen tussen statussen",
       "state": "Sleep om taken opnieuw te ordenen"
-    },
-    "deleteConfirmation": "Weet u zeker dat u deze taak wilt verwijderen?",
-    "actions": {
-      "moveToTodo": "Verplaatsen naar Te doen",
-      "moveToInProgress": "Verplaatsen naar In uitvoering",
-      "moveToDone": "Verplaatsen naar Voltooid",
-      "edit": "Bewerken",
-      "delete": "Verwijderen"
-    },
-    "metadata": {
-      "timeEstimate": "Tijdsinschatting",
-      "deadline": "Deadline",
-      "overdue": "Te laat"
-    },
-    "recurringBadge": {
-      "tooltip": "Herhaalt elke {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {

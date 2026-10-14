@@ -17,6 +17,11 @@
   "emptyValue": "—",
   "doesNotRepeat": "Herhaalt niet",
   "noResults": "Geen taken komen overeen met uw filters",
+  "searchPlaceholder": "Taken zoeken",
+  "filters": {
+    "status": "Status",
+    "allStatuses": "Alle statussen"
+  },
   "unassigned": "Niet toegewezen",
   "deadlinePicker": {
     "today": "Vandaag",

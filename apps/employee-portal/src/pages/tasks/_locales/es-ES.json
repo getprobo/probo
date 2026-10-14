@@ -1,11 +1,6 @@
 {
   "title": "Tareas",
   "breadcrumb": "Tareas",
-  "searchPlaceholder": "Buscar tareas",
-  "filters": {
-    "status": "Estado",
-    "allStatuses": "Todos los estados"
-  },
   "delete": {
     "title": "Eliminar tarea",
     "description": "¿Seguro que quiere eliminar esta tarea?",

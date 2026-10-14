@@ -26,10 +26,12 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { adjustTotalCount } from "./moveOrganizationTaskListEdge";
 import { insertTaskEdgeSorted } from "./taskConnectionOrder";
 import {
   internalControlTasksConnectionKey,
-  organizationTasksConnectionKey,
+  organizationTaskListConnectionId,
+  organizationTaskListFilterVariants,
   taskConnectionId,
 } from "./taskPath";
 import type { TaskPriority, TaskState } from "./taskState";
@@ -41,7 +43,7 @@ const createTaskMutation = graphql`
       taskEdge {
         node {
           id
-          ...TasksCard_task
+          ...TasksPageList_task
           ...TaskListItem_task
         }
       }
@@ -71,20 +73,28 @@ export function useCreateTask() {
       internalControlIds?: readonly string[] | null;
       linearTeamId?: string | null;
     },
-    connectionId: string,
+    connectionId?: string,
   ) {
     const internalControlIds = [...new Set(input.internalControlIds ?? [])];
     const state = input.state ?? "TODO";
-    const connections = new Set([
-      taskConnectionId(organizationId, organizationTasksConnectionKey),
-    ]);
+    const listFilter = {
+      query: graphqlFilter.query,
+      assignedToId: graphqlFilter.assignedToId,
+      internalControlId: graphqlFilter.internalControlId,
+    };
+    const connections = new Set<string>();
+    for (const variant of organizationTaskListFilterVariants(listFilter)) {
+      if (taskMatchesFilter(
+        { name: input.name, state, internalControlIds },
+        { ...variant, state },
+      )) {
+        connections.add(organizationTaskListConnectionId(organizationId, variant, state));
+      }
+    }
     for (const internalControlId of internalControlIds) {
       connections.add(taskConnectionId(internalControlId, internalControlTasksConnectionKey));
     }
-    if (taskMatchesFilter(
-      { name: input.name, state, internalControlIds },
-      graphqlFilter,
-    )) {
+    if (connectionId != null) {
       connections.add(connectionId);
     }
 
@@ -102,7 +112,26 @@ export function useCreateTask() {
             : {}),
         },
       },
-      updater: store => insertTaskEdgeSorted(store, [...connections]),
+      updater(store) {
+        const ids = [...connections];
+        insertTaskEdgeSorted(store, ids);
+        const createdId = store.getRootField("createTask")
+          ?.getLinkedRecord("taskEdge")
+          ?.getLinkedRecord("node")
+          ?.getDataID();
+        if (createdId == null) {
+          return;
+        }
+        for (const id of ids) {
+          const connection = store.get(id);
+          const present = connection?.getLinkedRecords("edges")?.some(
+            edge => edge?.getLinkedRecord("node")?.getDataID() === createdId,
+          );
+          if (connection != null && present) {
+            adjustTotalCount(connection, 1);
+          }
+        }
+      },
     });
 
     for (const internalControlId of internalControlIds) {

@@ -21,7 +21,7 @@
 import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
@@ -29,7 +29,15 @@ import { UserSelect } from "#/components/form/UserSelect";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
-import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
+import {
+  resortOrganizationTaskListEdge,
+  taskListStateMoveUpdaters,
+} from "#/pages/organizations/tasks/_lib/moveOrganizationTaskListEdge";
+import {
+  organizationTaskListFilterVariants,
+  taskDetailsPath,
+} from "#/pages/organizations/tasks/_lib/taskPath";
+import { useTasksCardFilters } from "#/pages/organizations/tasks/_lib/useTasksCardFilters";
 
 const noneValue = "__NONE__";
 
@@ -65,7 +73,7 @@ const updateStateMutation = graphql`
   mutation TaskListItemUpdateStateMutation($input: UpdateTaskInput!) {
     updateTask(input: $input) {
       task {
-        ...TasksCard_task
+        ...TasksPageList_task
         ...TaskListItem_task
         ...TaskDetailsPage_task
       }
@@ -90,6 +98,8 @@ interface TaskListItemProps {
 export function TaskListItem(props: TaskListItemProps) {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
+  const environment = useRelayEnvironment();
+  const { graphqlFilter } = useTasksCardFilters();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const task = useFragment(taskListItemFragment, props.taskKey);
   const { canUpdate, canDelete } = task;
@@ -106,12 +116,57 @@ export function TaskListItem(props: TaskListItemProps) {
     timeEstimate?: string | null;
     recurrenceInterval?: string | null;
   }) {
+    const listFilter = {
+      query: graphqlFilter.query,
+      assignedToId: graphqlFilter.assignedToId,
+      internalControlId: graphqlFilter.internalControlId,
+    };
+    const filters = organizationTaskListFilterVariants(listFilter);
+    const move = input.state == null
+      ? null
+      : taskListStateMoveUpdaters(environment, {
+          taskId: task.id,
+          nextState: input.state,
+          organizationId,
+          filter: listFilter,
+        });
     void updateState({
       variables: {
         input: {
           taskId: task.id,
           ...input,
         },
+      },
+      optimisticUpdater(store) {
+        move?.optimisticUpdater(store);
+        if (input.state == null && input.priority != null) {
+          const node = store.get(task.id);
+          if (node != null) {
+            node.setValue(input.priority, "priority");
+            resortOrganizationTaskListEdge(
+              store,
+              node,
+              organizationId,
+              task.state,
+              filters,
+            );
+          }
+        }
+      },
+      updater(store) {
+        move?.updater(store);
+        if (input.state == null && input.priority != null) {
+          const node = store.get(task.id);
+          if (node != null) {
+            resortOrganizationTaskListEdge(
+              store,
+              node,
+              organizationId,
+              task.state,
+              filters,
+            );
+          }
+        }
       },
       onCompleted: () => {
         if (input.state != null) {

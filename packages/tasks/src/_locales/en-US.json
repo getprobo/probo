@@ -17,6 +17,11 @@
   "emptyValue": "—",
   "doesNotRepeat": "Does not repeat",
   "noResults": "No tasks match your filters",
+  "searchPlaceholder": "Search tasks",
+  "filters": {
+    "status": "Status",
+    "allStatuses": "All statuses"
+  },
   "unassigned": "Unassigned",
   "deadlinePicker": {
     "today": "Today",

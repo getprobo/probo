@@ -17,6 +17,11 @@
   "emptyValue": "—",
   "doesNotRepeat": "No se repite",
   "noResults": "Ninguna tarea coincide con los filtros",
+  "searchPlaceholder": "Buscar tareas",
+  "filters": {
+    "status": "Estado",
+    "allStatuses": "Todos los estados"
+  },
   "unassigned": "Sin asignar",
   "deadlinePicker": {
     "today": "Hoy",

@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TaskListFlatItem, TaskState } from "@probo/tasks";
 import {
   type TransitionStartFunction,
   useCallback,
@@ -26,17 +25,35 @@ import {
   useRef,
 } from "react";
 
+import { type TaskListFlatItem } from "./flattenTaskListItems";
 import { taskListPageSize } from "./taskListPageSize";
-import type { TasksPageListGroup } from "./useTasksPageListGroups";
+import type { TaskState } from "./taskState";
 
 export interface TasksListFillRange {
   startIndex: number;
   endIndex: number;
 }
 
+export interface TaskListLoadNextOptions {
+  onComplete?: (error: Error | null) => void;
+}
+
+export type TaskListLoadNext = (
+  count: number,
+  options?: TaskListLoadNextOptions,
+) => void;
+
+export interface TaskListFillGroup {
+  state: TaskState;
+  totalCount: number;
+  loadedCount: number;
+  hasNext: boolean;
+  loadNext: TaskListLoadNext;
+}
+
 export interface UseTasksListFillOptions {
   items: readonly TaskListFlatItem<unknown>[];
-  groups: readonly TasksPageListGroup[];
+  groups: readonly TaskListFillGroup[];
   range: TasksListFillRange | null;
   closedStates: ReadonlySet<TaskState>;
   selectedState: TaskState | null;
@@ -64,12 +81,12 @@ function rangeIsUncovered(
 
 function pickFillGroup(
   items: readonly TaskListFlatItem<unknown>[],
-  groups: readonly TasksPageListGroup[],
+  groups: readonly TaskListFillGroup[],
   range: TasksListFillRange,
   closedStates: ReadonlySet<TaskState>,
   selectedState: TaskState | null,
   skipped: ReadonlySet<TaskState>,
-): TasksPageListGroup | null {
+): TaskListFillGroup | null {
   const start = Math.max(0, range.startIndex);
   const end = range.endIndex;
 
@@ -111,7 +128,7 @@ function pickFillGroup(
 }
 
 function loadGroupPage(
-  group: TasksPageListGroup,
+  group: TaskListFillGroup,
   startTransition: TransitionStartFunction,
 ): Promise<void> {
   return new Promise((resolve) => {
@@ -139,7 +156,7 @@ export function useTasksListFill({
   const snapshotRef = useRef({ items, groups, range, closedStates, selectedState });
   const rangeKey = range == null ? "" : `${range.startIndex}:${range.endIndex}`;
   const groupsKey = groups
-    .map(group => `${group.state}:${group.edges.length}:${group.hasNext}`)
+    .map(group => `${group.state}:${group.loadedCount}:${group.hasNext}`)
     .join("|");
 
   useEffect(() => {
@@ -168,7 +185,7 @@ export function useTasksListFill({
       lastAttempt != null
       && snapshot.groups.some(group =>
         group.state === lastAttempt.state
-        && group.edges.length === lastAttempt.edges,
+        && group.loadedCount === lastAttempt.edges,
       )
     ) {
       skipped.add(lastAttempt.state);
@@ -189,7 +206,7 @@ export function useTasksListFill({
     fillingRef.current = true;
     lastAttemptRef.current = {
       state: group.state,
-      edges: group.edges.length,
+      edges: group.loadedCount,
     };
     try {
       await loadGroupPage(group, startTransition);
