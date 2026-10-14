@@ -4,6 +4,15 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.246.1] - 2026-10-14
+
+### Fixed
+
+- `evidence upload` sends the file's content type instead of
+  `application/octet-stream`, which the server rejected
+- File uploads reject filenames containing control characters instead of
+  writing them into the multipart headers
+
 ## [0.246.0] - 2026-10-14
 
 ### Changed
