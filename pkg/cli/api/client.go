@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
@@ -282,7 +283,12 @@ func (c *Client) doUploadRequest(
 	}
 
 	// CreateFormFile forces application/octet-stream, which evidence upload rejects.
-	part, err := writer.CreatePart(filePartHeader("0", filename))
+	header, err := filePartHeader("0", filename)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build file part: %w", err)
+	}
+
+	part, err := writer.CreatePart(header)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create form file: %w", err)
 	}
@@ -396,21 +402,35 @@ func (c *Client) tryRefreshToken() error {
 	return nil
 }
 
-func filePartHeader(fieldname, filename string) textproto.MIMEHeader {
-	h := make(textproto.MIMEHeader)
-	h.Set(
-		"Content-Disposition",
-		fmt.Sprintf(
-			`form-data; name="%s"; filename="%s"`,
-			escapeQuotes(fieldname),
-			escapeQuotes(filename),
-		),
+func filePartHeader(fieldname, filename string) (textproto.MIMEHeader, error) {
+	if !validContentDispositionValue(fieldname) || !validContentDispositionValue(filename) {
+		return nil, fmt.Errorf("cannot use filename %q in content disposition", filename)
+	}
+
+	disposition := mime.FormatMediaType(
+		"form-data",
+		map[string]string{
+			"name":     fieldname,
+			"filename": filename,
+		},
 	)
+	if disposition == "" {
+		return nil, fmt.Errorf("cannot encode content disposition for %q", filename)
+	}
+
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition", disposition)
 	h.Set("Content-Type", filevalidation.ResolveContentType("", filename))
 
-	return h
+	return h, nil
 }
 
-func escapeQuotes(s string) string {
-	return strings.NewReplacer(`\`, `\\`, `"`, `\"`).Replace(s)
+func validContentDispositionValue(value string) bool {
+	for i := 0; i < len(value); i++ {
+		if value[i] < ' ' || value[i] == 0x7f {
+			return false
+		}
+	}
+
+	return true
 }

@@ -150,3 +150,81 @@ func TestDoUpload_SetsContentTypeFromFilename(t *testing.T) {
 		})
 	}
 }
+
+func TestDoUpload_RejectsFilenameWithHeaderBreak(t *testing.T) {
+	t.Parallel()
+
+	called := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+
+		http.Error(w, "unexpected request", http.StatusInternalServerError)
+	}))
+	t.Cleanup(server.Close)
+
+	client := api.NewClient(server.URL, "token", "/graphql", 5*time.Second)
+	_, err := client.DoUpload(
+		`mutation { ok }`,
+		map[string]any{"input": map[string]any{"file": nil}},
+		"variables.input.file",
+		"report.pdf\r\nX-Injected: yes",
+		strings.NewReader("file-body"),
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot use filename")
+	assert.False(t, called)
+}
+
+func TestDoUpload_EncodesFilenameParameter(t *testing.T) {
+	t.Parallel()
+
+	var filename string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, params, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+
+			return
+		}
+
+		reader := multipart.NewReader(r.Body, params["boundary"])
+		for {
+			part, err := reader.NextPart()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+
+				return
+			}
+
+			if part.FormName() == "0" {
+				filename = part.FileName()
+			}
+
+			if _, err := io.Copy(io.Discard, part); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+
+				return
+			}
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"ok":true}}`))
+	}))
+	t.Cleanup(server.Close)
+
+	client := api.NewClient(server.URL, "token", "/graphql", 5*time.Second)
+	_, err := client.DoUpload(
+		`mutation { ok }`,
+		map[string]any{"input": map[string]any{"file": nil}},
+		"variables.input.file",
+		`report "final".pdf`,
+		strings.NewReader("file-body"),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, `report "final".pdf`, filename)
+}
