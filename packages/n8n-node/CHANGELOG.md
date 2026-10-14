@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.248.0] - 2026-10-14
+
+### Removed
+
+- Last-seen timestamp from the Tracker Pattern `Get` and `Get Many`
+  operations
+
 ## [0.247.0] - 2026-10-13
 
 ### Added
