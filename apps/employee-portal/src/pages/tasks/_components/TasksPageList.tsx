@@ -145,7 +145,9 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     query: graphqlQuery,
     includes: includeFlags,
   }));
-  const [closedStates, setClosedStates] = useState(() => new Set<TaskState>());
+  const [closedStates, setClosedStates] = useState(
+    () => new Set<TaskState>(["CANCELED", "DUPLICATE"]),
+  );
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
   const [viewer, refetch] = useRefetchableFragment<
