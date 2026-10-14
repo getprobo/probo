@@ -30,8 +30,7 @@ import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
-import { Suspense } from "react";
+import { type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, usePaginationFragment } from "react-relay";
 
@@ -47,6 +46,10 @@ import {
   taskStates,
 } from "../_lib/taskState";
 import { useUpdateTask } from "../_lib/useUpdateTask";
+import {
+  overflowInternalControls,
+  previewInternalControls,
+} from "../_lib/visibleInternalControls";
 import { taskPropertiesSection } from "../variants";
 
 import { TaskAssigneeField } from "./TaskAssigneeField";
@@ -110,9 +113,32 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
     TaskPropertiesSection_task$key
   >(taskPropertiesSectionFragment, taskKey);
   const [updateTask, isUpdating] = useUpdateTask();
-  const { root, value, names } = taskPropertiesSection();
+  const [showAllInternalControls, setShowAllInternalControls] = useState(false);
+  const { root, value, names, scroll } = taskPropertiesSection();
   const empty = t("detailsPage.empty");
   const internalControls = task.internalControls.edges.map(edge => edge.node);
+  const previewControls = previewInternalControls(internalControls);
+  const hiddenInternalControlCount = internalControls.length - previewControls.length;
+  const expanded = showAllInternalControls && hiddenInternalControlCount > 0;
+  const overflowControls = overflowInternalControls(
+    internalControls,
+    expanded,
+    task.canUpdate,
+  );
+
+  function renderInternalControlLinks(
+    controls: readonly { id: string; name: string }[],
+  ) {
+    return controls.map(internalControl => (
+      <Link
+        key={internalControl.id}
+        size={2}
+        to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}
+      >
+        {internalControl.name}
+      </Link>
+    ));
+  }
 
   function save(
     input: {
@@ -270,6 +296,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                   <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
                     <TaskInternalControlField
                       internalControls={internalControls}
+                      visibleInternalControls={previewControls}
                       disabled={isUpdating || hasNext || isLoadingNext}
                       onValueChange={(internalControlIds) => {
                         void save({ internalControlIds });
@@ -277,21 +304,31 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                     />
                   </Suspense>
                 )
-              : internalControls.length > 0
-                ? (
-                    internalControls.map(internalControl => (
-                      <Link
-                        key={internalControl.id}
-                        size={2}
-                        to={`/organizations/${organizationId}/governance/internal-controls/${internalControl.id}`}
-                      >
-                        {internalControl.name}
-                      </Link>
-                    ))
-                  )
-                : (
-                    <Text size={2} color="faint">{t("detailsPage.none")}</Text>
-                  )}
+              : internalControls.length > 0 && !expanded
+                ? renderInternalControlLinks(previewControls)
+                : internalControls.length === 0
+                  ? (
+                      <Text size={2} color="faint">{t("detailsPage.none")}</Text>
+                    )
+                  : null}
+            {overflowControls.length > 0 && (
+              <span className={scroll()}>
+                {renderInternalControlLinks(overflowControls)}
+              </span>
+            )}
+            {!expanded && hiddenInternalControlCount > 0 && (
+              <Button
+                variant="ghost"
+                color="neutral"
+                size={1}
+                className="self-start"
+                onClick={() => setShowAllInternalControls(true)}
+              >
+                {t("detailsPage.actions.showMoreInternalControls", {
+                  count: hiddenInternalControlCount,
+                })}
+              </Button>
+            )}
             {hasNext && (
               <Button
                 variant="ghost"

@@ -60,6 +60,8 @@
       "cancel": "Annuler",
       "more": "Plus d'actions",
       "loadMoreInternalControls": "Charger plus",
+      "showMoreInternalControls_one": "Afficher {{count}} contrôle interne de plus",
+      "showMoreInternalControls_other": "Afficher {{count}} contrôles internes de plus",
       "retry": "Réessayer"
     },
     "delete": {

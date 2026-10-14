@@ -60,6 +60,8 @@
       "cancel": "Annuleren",
       "more": "Meer acties",
       "loadMoreInternalControls": "Meer laden",
+      "showMoreInternalControls_one": "Nog {{count}} interne controle tonen",
+      "showMoreInternalControls_other": "Nog {{count}} interne controles tonen",
       "retry": "Opnieuw proberen"
     },
     "delete": {

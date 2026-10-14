@@ -22,27 +22,40 @@ import { useTranslation } from "react-i18next";
 
 import { InternalControlSelect } from "#/components/form/InternalControlSelect";
 
+interface InternalControlOption {
+  id: string;
+  name: string;
+}
+
 interface TaskInternalControlFieldProps {
-  internalControls: readonly { id: string; name: string }[];
+  internalControls: readonly InternalControlOption[];
+  visibleInternalControls?: readonly InternalControlOption[];
   disabled?: boolean;
   onValueChange: (value: string[]) => void;
 }
 
+function toOption(internalControl: InternalControlOption) {
+  return {
+    id: internalControl.id,
+    name: internalControl.name,
+  };
+}
+
 export function TaskInternalControlField({
   internalControls,
+  visibleInternalControls,
   disabled,
   onValueChange,
 }: TaskInternalControlFieldProps) {
   const { t } = useTranslation("organizations/tasks");
-  const value = internalControls.map(internalControl => ({
-    id: internalControl.id,
-    name: internalControl.name,
-  }));
+  const value = internalControls.map(toOption);
+  const visibleValue = visibleInternalControls?.map(toOption);
 
   return (
     <InternalControlSelect
       multiple
       value={value}
+      visibleValue={visibleValue}
       disabled={disabled}
       size={1}
       placeholder={t("detailsPage.none")}

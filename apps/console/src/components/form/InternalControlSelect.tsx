@@ -72,6 +72,7 @@ interface InternalControlSelectSingleProps extends InternalControlSelectBaseProp
 interface InternalControlSelectMultipleProps extends InternalControlSelectBaseProps {
   multiple: true;
   value: readonly InternalControlOption[];
+  visibleValue?: readonly InternalControlOption[];
   onValueChange: (value: InternalControlOption[]) => void;
   allowClear?: false;
 }
@@ -202,6 +203,7 @@ function InternalControlOptions({
 function SelectTriggerButton({
   labelText,
   lines,
+  titleText,
   placeholder,
   ariaLabel,
   disabled,
@@ -211,6 +213,7 @@ function SelectTriggerButton({
 }: {
   labelText: string | null;
   lines?: readonly InternalControlOption[];
+  titleText?: string;
   placeholder: string;
   ariaLabel: string;
   disabled?: boolean;
@@ -224,13 +227,16 @@ function SelectTriggerButton({
     variant,
     layout: stacked ? "stack" : "single",
   });
+  const fallbackTitle = stacked
+    ? lines.map(line => line.name).join("\n")
+    : labelText ?? undefined;
 
   return (
     <BaseCombobox.Trigger
       className={trigger({ className })}
       aria-label={ariaLabel}
       disabled={disabled}
-      title={stacked ? lines.map(line => line.name).join("\n") : labelText ?? undefined}
+      title={titleText ?? fallbackTitle}
     >
       {stacked
         ? (
@@ -362,6 +368,7 @@ function SingleInternalControlSelect({
 
 function MultipleInternalControlSelect({
   value,
+  visibleValue,
   onValueChange,
   placeholder,
   searchPlaceholder,
@@ -380,6 +387,10 @@ function MultipleInternalControlSelect({
     [selectedKey],
   );
   const search = useInternalControlSearch(selected);
+  const lines = visibleValue ?? selected;
+  const titleText = selected.length > 0
+    ? selected.map(option => option.name).join("\n")
+    : undefined;
 
   return (
     <Combobox<InternalControlOption, true>
@@ -409,7 +420,8 @@ function MultipleInternalControlSelect({
     >
       <SelectTriggerButton
         labelText={null}
-        lines={selected}
+        lines={lines}
+        titleText={titleText}
         placeholder={placeholder}
         ariaLabel={ariaLabel}
         disabled={disabled}
