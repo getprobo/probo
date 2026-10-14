@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { isOverdueTask, TaskDetails } from "@probo/tasks";
-import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
@@ -98,11 +97,6 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
         }}
         currentLabel={task.name}
         hideTitle
-        actions={(
-          <Link to={listTo} size={2} color="neutral" underline={false}>
-            {t("detail.back")}
-          </Link>
-        )}
       />
       <TaskDetails
         name={<TaskNameField taskKey={task} />}

@@ -9,7 +9,6 @@
   "detail": {
     "title": "Tarea",
     "breadcrumb": "Tarea",
-    "back": "Volver a las tareas",
     "notFound": "Tarea no encontrada",
     "noDescription": "Sin descripción",
     "actions": {

@@ -9,7 +9,6 @@
   "detail": {
     "title": "Task",
     "breadcrumb": "Task",
-    "back": "Back to tasks",
     "notFound": "Task not found",
     "noDescription": "No description",
     "actions": {

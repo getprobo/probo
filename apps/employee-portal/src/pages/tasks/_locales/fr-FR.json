@@ -9,7 +9,6 @@
   "detail": {
     "title": "Tâche",
     "breadcrumb": "Tâche",
-    "back": "Retour aux tâches",
     "notFound": "Tâche introuvable",
     "noDescription": "Aucune description",
     "actions": {
