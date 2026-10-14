@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.249.0] - 2026-10-14
+
+### Added
+
+- Attachment `Upload` uploads a private file for an image or file in
+  rich text. Document, task, task comment, and risk analysis content
+  can reference that file
+
 ## [0.248.0] - 2026-10-14
 
 ### Removed
