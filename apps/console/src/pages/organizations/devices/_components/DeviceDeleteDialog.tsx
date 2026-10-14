@@ -19,20 +19,14 @@
 // SOFTWARE.
 
 import { TrashIcon, WarningIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
-import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
-import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
-import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
-import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
-import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
-import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
-import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { ConfirmDialog } from "@probo/ui/src/v2/Dialog/ConfirmDialog";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { DataID } from "relay-runtime";
 
+import { confirmEachDevice } from "../_lib/confirmEachDevice";
 import { displayValue } from "../_lib/deviceDisplay";
 import { useDeleteDevice } from "../_lib/useDeleteDevice";
 
@@ -69,30 +63,28 @@ export function DeviceDeleteDialog({
   const warning = devices.length === 1
     ? t("devices.confirmations.deleteWarning")
     : t("devices.confirmations.deleteWarningMany");
+  const successMessage = devices.length === 1
+    ? t("devices.messages.deleted")
+    : t("devices.messages.deletedMany", { count: devices.length });
 
   function handleDelete() {
     setIsDeleting(true);
     void (async () => {
-      let deleted = 0;
       try {
-        for (const [index, device] of devices.entries()) {
-          const last = index === devices.length - 1;
-          await remove(device.id, {
-            successMessage: last ? deleteSuccessMessage(t, devices.length) : "",
-          });
-          deleted += 1;
-        }
-        onOpenChange(false);
-        onDeleted?.();
-      } catch {
-        if (deleted > 0) {
-          toast.add({
-            title: t("devices.messages.deletedPartial", {
-              count: deleted,
-              total: devices.length,
-            }),
-            type: "warning",
-          });
+        const confirmed = await confirmEachDevice({
+          devices,
+          successMessage,
+          confirmDevice: (deviceId, feedback) => remove(deviceId, feedback),
+          onPartial: (count, total) => {
+            toast.add({
+              title: t("devices.messages.deletedPartial", { count, total }),
+              type: "warning",
+            });
+          },
+        });
+        if (confirmed) {
+          onOpenChange(false);
+          onDeleted?.();
         }
       } finally {
         setIsDeleting(false);
@@ -101,43 +93,21 @@ export function DeviceDeleteDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          <Callout color="amber" icon={<WarningIcon weight="fill" />}>
-            {warning}
-          </Callout>
-        </DialogBody>
-        <DialogFooter>
-          <DialogClose
-            render={(
-              <Button variant="soft" color="neutral" disabled={isDeleting}>
-                {t("common.actions.close")}
-              </Button>
-            )}
-          />
-          <Button
-            variant="solid"
-            color="red"
-            iconStart={<TrashIcon />}
-            loading={isDeleting}
-            disabled={devices.length === 0}
-            onClick={handleDelete}
-          >
-            {t("devices.actions.delete")}
-          </Button>
-        </DialogFooter>
-      </DialogPopup>
-    </Dialog>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={(
+        <Callout color="amber" icon={<WarningIcon weight="fill" />}>
+          {warning}
+        </Callout>
+      )}
+      cancelLabel={t("common.actions.close")}
+      confirmLabel={t("devices.actions.delete")}
+      confirmIcon={<TrashIcon />}
+      loading={isDeleting}
+      confirmDisabled={devices.length === 0}
+      onConfirm={handleDelete}
+    />
   );
-}
-
-function deleteSuccessMessage(t: (key: string, options?: { count: number }) => string, count: number) {
-  if (count === 1) {
-    return t("devices.messages.deleted");
-  }
-  return t("devices.messages.deletedMany", { count });
 }

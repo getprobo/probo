@@ -19,19 +19,13 @@
 // SOFTWARE.
 
 import { PlugsIcon, WarningIcon } from "@phosphor-icons/react";
-import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
-import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
-import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
-import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
-import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
-import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
-import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
-import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { ConfirmDialog } from "@probo/ui/src/v2/Dialog/ConfirmDialog";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { confirmEachDevice } from "../_lib/confirmEachDevice";
 import { displayValue } from "../_lib/deviceDisplay";
 import { useRevokeDevice } from "../_lib/useRevokeDevice";
 
@@ -64,31 +58,29 @@ export function DeviceRevokeDialog({
   const warning = devices.length === 1
     ? t("devices.confirmations.revokeWarning")
     : t("devices.confirmations.revokeWarningMany");
+  const successMessage = devices.length === 1
+    ? t("devices.messages.revoked")
+    : t("devices.messages.revokedMany", { count: devices.length });
 
   function handleRevoke() {
     setIsRevoking(true);
     void (async () => {
-      let revoked = 0;
       try {
-        for (const [index, device] of devices.entries()) {
-          const last = index === devices.length - 1;
-          await revokeDevice(
-            { variables: { input: { deviceId: device.id } } },
-            { successMessage: last ? revokeSuccessMessage(t, devices.length) : "" },
-          );
-          revoked += 1;
-        }
-        onOpenChange(false);
-        onRevoked?.();
-      } catch {
-        if (revoked > 0) {
-          toast.add({
-            title: t("devices.messages.revokedPartial", {
-              count: revoked,
-              total: devices.length,
-            }),
-            type: "warning",
-          });
+        const confirmed = await confirmEachDevice({
+          devices,
+          successMessage,
+          confirmDevice: (deviceId, feedback) =>
+            revokeDevice({ variables: { input: { deviceId } } }, feedback),
+          onPartial: (count, total) => {
+            toast.add({
+              title: t("devices.messages.revokedPartial", { count, total }),
+              type: "warning",
+            });
+          },
+        });
+        if (confirmed) {
+          onOpenChange(false);
+          onRevoked?.();
         }
       } finally {
         setIsRevoking(false);
@@ -97,43 +89,21 @@ export function DeviceRevokeDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          <Callout color="amber" icon={<WarningIcon weight="fill" />}>
-            {warning}
-          </Callout>
-        </DialogBody>
-        <DialogFooter>
-          <DialogClose
-            render={(
-              <Button variant="soft" color="neutral" disabled={isRevoking}>
-                {t("common.actions.close")}
-              </Button>
-            )}
-          />
-          <Button
-            variant="solid"
-            color="red"
-            iconStart={<PlugsIcon />}
-            loading={isRevoking}
-            disabled={devices.length === 0}
-            onClick={handleRevoke}
-          >
-            {t("devices.actions.revoke")}
-          </Button>
-        </DialogFooter>
-      </DialogPopup>
-    </Dialog>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={(
+        <Callout color="amber" icon={<WarningIcon weight="fill" />}>
+          {warning}
+        </Callout>
+      )}
+      cancelLabel={t("common.actions.close")}
+      confirmLabel={t("devices.actions.revoke")}
+      confirmIcon={<PlugsIcon />}
+      loading={isRevoking}
+      confirmDisabled={devices.length === 0}
+      onConfirm={handleRevoke}
+    />
   );
-}
-
-function revokeSuccessMessage(t: (key: string, options?: { count: number }) => string, count: number) {
-  if (count === 1) {
-    return t("devices.messages.revoked");
-  }
-  return t("devices.messages.revokedMany", { count });
 }
