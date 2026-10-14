@@ -134,14 +134,8 @@ func (s EvidenceService) UploadInternalControlEvidence(
 				},
 				&req.File)
 			if err != nil {
-				if fileErr, ok := errors.AsType[*filevalidation.Error](err); ok {
-					return validator.ValidationErrors{
-						{
-							Field:   "file",
-							Code:    validator.ErrorCodeInvalidFormat,
-							Message: fileErr.Error(),
-						},
-					}
+				if validationErrors, ok := fileUploadValidationErrors(err); ok {
+					return validationErrors
 				}
 
 				return fmt.Errorf("cannot upload or file: %w", err)
@@ -164,6 +158,21 @@ func (s EvidenceService) UploadInternalControlEvidence(
 	}
 
 	return evidence, nil
+}
+
+func fileUploadValidationErrors(err error) (validator.ValidationErrors, bool) {
+	fileErr, ok := errors.AsType[*filevalidation.Error](err)
+	if !ok {
+		return nil, false
+	}
+
+	return validator.ValidationErrors{
+		{
+			Field:   "file",
+			Code:    fileErr.Code(),
+			Message: fileErr.Error(),
+		},
+	}, true
 }
 
 func (s EvidenceService) CountForInternalControlID(

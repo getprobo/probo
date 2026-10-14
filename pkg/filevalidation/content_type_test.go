@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func TestResolveContentType(t *testing.T) {
@@ -93,13 +94,30 @@ func TestResolveContentType(t *testing.T) {
 func TestValidate_ReturnsFileValidationError(t *testing.T) {
 	t.Parallel()
 
-	validator := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryDocument))
-	err := validator.Validate("payload.exe", "application/octet-stream", 128)
+	fileValidator := filevalidation.NewValidator(filevalidation.WithCategories(filevalidation.CategoryDocument))
+	err := fileValidator.Validate("payload.exe", "application/octet-stream", 128)
 	require.Error(t, err)
 
 	var fileErr *filevalidation.Error
 	require.ErrorAs(t, err, &fileErr)
 	assert.Contains(t, fileErr.Error(), "application/octet-stream")
+	assert.Equal(t, validator.ErrorCodeInvalidFormat, fileErr.Code())
+}
+
+func TestValidate_OversizeIsOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	fileValidator := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryDocument),
+		filevalidation.WithMaxFileSize(8),
+	)
+	err := fileValidator.Validate("report.pdf", "application/pdf", 9)
+	require.Error(t, err)
+
+	var fileErr *filevalidation.Error
+	require.ErrorAs(t, err, &fileErr)
+	assert.Equal(t, validator.ErrorCodeOutOfRange, fileErr.Code())
+	assert.Contains(t, fileErr.Error(), "exceeds maximum")
 }
 
 func TestResolveContentType_AcceptedByEvidenceCategories(t *testing.T) {
