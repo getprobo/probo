@@ -4,6 +4,16 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.311.1] - 2026-10-14
+
+### Fixed
+
+- Evidence uploads sent as `application/octet-stream` use the content type
+  implied by the filename instead of being rejected
+- Rejected evidence files return a validation error instead of an internal
+  server error: `OUT_OF_RANGE` when the file is too large, `INVALID_FORMAT`
+  when its type or extension is not allowed
+
 ## [0.311.0] - 2026-10-14
 
 ### Added
