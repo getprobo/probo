@@ -51,6 +51,8 @@ type (
 	ipLocationTableGrant struct {
 		Grantee   string
 		Privilege string
+		Grantable bool
+		Public    bool
 	}
 )
 
@@ -219,6 +221,15 @@ ALTER INDEX idx_common_ip_location_blocks_staging_lookup
 		return err
 	}
 
+	if err := grantIPLocationTablePrivileges(
+		ctx,
+		conn,
+		"common_ip_location_blocks",
+		grants,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -250,10 +261,12 @@ WHERE n.nspname = current_schema()
 		`
 SELECT
 	CASE
-		WHEN a.grantee = 0 THEN 'PUBLIC'
+		WHEN a.grantee = 0 THEN ''
 		ELSE r.rolname
 	END,
-	a.privilege_type
+	a.privilege_type,
+	a.is_grantable,
+	a.grantee = 0
 FROM pg_class c
 JOIN pg_namespace n ON n.oid = c.relnamespace
 CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, '{}'::aclitem[])) AS a
@@ -262,7 +275,7 @@ WHERE n.nspname = current_schema()
   AND c.relname = 'common_ip_location_blocks'
   AND (
 	a.grantee = 0
-	OR r.rolname <> CURRENT_USER
+	OR a.grantee <> c.relowner
   )
 `,
 	)
@@ -298,14 +311,18 @@ func grantIPLocationTablePrivileges(
 			"GRANT %s ON TABLE %s TO %s",
 			grant.Privilege,
 			tableName,
-			ipLocationGrantTarget(grant.Grantee),
+			ipLocationGrantTarget(grant),
 		)
+		if grant.Grantable {
+			q += " WITH GRANT OPTION"
+		}
+
 		if _, err := conn.Exec(ctx, q); err != nil {
 			return fmt.Errorf(
 				"cannot grant %s on %s to %s: %w",
 				grant.Privilege,
 				table,
-				grant.Grantee,
+				ipLocationGrantTarget(grant),
 				err,
 			)
 		}
@@ -330,12 +347,12 @@ func setIPLocationBlocksOwner(ctx context.Context, conn pg.Querier, owner string
 	return nil
 }
 
-func ipLocationGrantTarget(grantee string) string {
-	if grantee == "PUBLIC" {
+func ipLocationGrantTarget(grant ipLocationTableGrant) string {
+	if grant.Public {
 		return "PUBLIC"
 	}
 
-	return pgx.Identifier{grantee}.Sanitize()
+	return pgx.Identifier{grant.Grantee}.Sanitize()
 }
 
 func validIPLocationPrivilege(privilege string) bool {

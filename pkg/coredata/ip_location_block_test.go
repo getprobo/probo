@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
@@ -135,10 +136,12 @@ VALUES
 			}
 
 			grants := []string{
-				"GRANT SELECT ON " + quotedTable + " TO " + pgx.Identifier{readonly}.Sanitize(),
+				"GRANT SELECT ON " + quotedTable + " TO " + pgx.Identifier{readonly}.Sanitize() + " WITH GRANT OPTION",
 				"GRANT INSERT, UPDATE, DELETE ON " + quotedTable + " TO " + pgx.Identifier{readwrite}.Sanitize(),
 				"GRANT TRUNCATE, REFERENCES, TRIGGER ON " + quotedTable + " TO " + pgx.Identifier{admin}.Sanitize(),
 				"GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON " + quotedTable + " TO " + pgx.Identifier{service}.Sanitize(),
+				"GRANT SELECT ON " + quotedTable + " TO PUBLIC",
+				"GRANT SELECT ON " + quotedTable + " TO CURRENT_USER",
 			}
 			for _, grant := range grants {
 				if _, err := tx.Exec(ctx, grant); err != nil {
@@ -176,7 +179,7 @@ WHERE n.nspname = current_schema()
 				return err
 			}
 
-			require.Equal(t, appRole, owner)
+			assert.Equal(t, appRole, owner)
 
 			privileges := []struct {
 				role      string
@@ -188,7 +191,7 @@ WHERE n.nspname = current_schema()
 				{readwrite, "INSERT", true},
 				{readwrite, "UPDATE", true},
 				{readwrite, "DELETE", true},
-				{readwrite, "SELECT", false},
+				{readwrite, "SELECT", true},
 				{admin, "TRUNCATE", true},
 				{admin, "REFERENCES", true},
 				{admin, "TRIGGER", true},
@@ -211,8 +214,66 @@ WHERE n.nspname = current_schema()
 					return err
 				}
 
-				require.Equal(t, check.want, allowed, "%s %s", check.role, check.privilege)
+				assert.Equal(t, check.want, allowed, "%s %s", check.role, check.privilege)
 			}
+
+			var currentUserSelect bool
+			if err := tx.QueryRow(
+				ctx,
+				`SELECT has_table_privilege(CURRENT_USER, 'common_ip_location_blocks', 'SELECT')`,
+			).Scan(&currentUserSelect); err != nil {
+				return err
+			}
+
+			assert.True(t, currentUserSelect)
+
+			var publicSelect, currentUserGrant, readonlyGrantable bool
+			if err := tx.QueryRow(
+				ctx,
+				`
+SELECT
+	EXISTS (
+		SELECT 1
+		FROM pg_class c
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, '{}'::aclitem[])) AS a
+		WHERE n.nspname = current_schema()
+		  AND c.relname = 'common_ip_location_blocks'
+		  AND a.grantee = 0
+		  AND a.privilege_type = 'SELECT'
+	),
+	EXISTS (
+		SELECT 1
+		FROM pg_class c
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, '{}'::aclitem[])) AS a
+		JOIN pg_roles r ON r.oid = a.grantee
+		WHERE n.nspname = current_schema()
+		  AND c.relname = 'common_ip_location_blocks'
+		  AND r.rolname = CURRENT_USER
+		  AND a.privilege_type = 'SELECT'
+	),
+	EXISTS (
+		SELECT 1
+		FROM pg_class c
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, '{}'::aclitem[])) AS a
+		JOIN pg_roles r ON r.oid = a.grantee
+		WHERE n.nspname = current_schema()
+		  AND c.relname = 'common_ip_location_blocks'
+		  AND r.rolname = $1
+		  AND a.privilege_type = 'SELECT'
+		  AND a.is_grantable
+	)
+`,
+				readonly,
+			).Scan(&publicSelect, &currentUserGrant, &readonlyGrantable); err != nil {
+				return err
+			}
+
+			assert.True(t, publicSelect)
+			assert.True(t, currentUserGrant)
+			assert.True(t, readonlyGrantable)
 
 			return nil
 		},
