@@ -4,11 +4,19 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.311.0] - 2026-10-14
+
 ### Added
 
 - Every minted federation assertion logs its header and claims, and
   whether this process's key set verifies the signature. The signature
   is never logged
+
+### Changed
+
+- Cookie banner discovery hit counts are buffered in memory and flushed
+  in batches, and a hit no longer needs an existing stats row. Detected
+  trackers and patterns no longer show a last-seen timestamp
 
 ### Fixed
 
