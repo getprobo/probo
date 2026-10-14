@@ -81,6 +81,39 @@ func script(status int, body string, header http.Header) scriptedResponse {
 	return scriptedResponse{status: status, body: body, header: header}
 }
 
+// spyBody records whether a provider body was read or closed.
+type spyBody struct {
+	payload string
+	read    bool
+	closed  bool
+	offset  int
+}
+
+func (b *spyBody) Read(p []byte) (int, error) {
+	b.read = true
+
+	if b.offset >= len(b.payload) {
+		return 0, io.EOF
+	}
+
+	n := copy(p, b.payload[b.offset:])
+	b.offset += n
+
+	return n, nil
+}
+
+func (b *spyBody) Close() error {
+	b.closed = true
+
+	return nil
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
 func newRequest(t *testing.T, ctx context.Context) *http.Request {
 	t.Helper()
 
@@ -381,6 +414,121 @@ func TestRetryRoundTripper(t *testing.T) {
 	)
 
 	t.Run(
+		"closes a discarded 5xx body without reading it",
+		func(t *testing.T) {
+			t.Parallel()
+
+			discarded := &spyBody{payload: strings.Repeat("x", 4096)}
+			kept := &spyBody{payload: `{"ok":true}`}
+			calls := 0
+
+			transport := roundTripFunc(func(*http.Request) (*http.Response, error) {
+				body := io.ReadCloser(discarded)
+				status := http.StatusBadGateway
+
+				if calls > 0 {
+					body = kept
+					status = http.StatusOK
+				}
+
+				calls++
+
+				return &http.Response{
+					StatusCode: status,
+					Body:       body,
+					Header:     http.Header{},
+				}, nil
+			})
+
+			resp, err := testRetry(transport).RoundTrip(newRequest(t, t.Context()))
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			assert.True(t, discarded.closed)
+			assert.False(t, discarded.read)
+			assert.False(t, kept.closed)
+			assert.False(t, kept.read)
+
+			payload, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.Equal(t, `{"ok":true}`, string(payload))
+			assert.True(t, kept.read)
+		},
+	)
+
+	t.Run(
+		"returns the final 5xx body unread",
+		func(t *testing.T) {
+			t.Parallel()
+
+			discarded := &spyBody{payload: strings.Repeat("x", 4096)}
+			kept := &spyBody{payload: "upstream failed"}
+			calls := 0
+
+			transport := roundTripFunc(func(*http.Request) (*http.Response, error) {
+				body := io.ReadCloser(discarded)
+
+				if calls > 0 {
+					body = kept
+				}
+
+				calls++
+
+				return &http.Response{
+					StatusCode: http.StatusInternalServerError,
+					Body:       body,
+					Header:     http.Header{},
+				}, nil
+			})
+
+			rt := testRetry(transport)
+			rt.attempts = 2
+
+			resp, err := rt.RoundTrip(newRequest(t, t.Context()))
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			assert.True(t, discarded.closed)
+			assert.False(t, discarded.read)
+			assert.False(t, kept.closed)
+			assert.False(t, kept.read)
+
+			payload, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.Equal(t, "upstream failed", string(payload))
+		},
+	)
+
+	t.Run(
+		"does not retry when Retry-After overflows",
+		func(t *testing.T) {
+			t.Parallel()
+
+			header := http.Header{}
+			header.Set("Retry-After", "9223372036854775807")
+
+			stub := &stubTransport{responses: []scriptedResponse{script(http.StatusBadGateway, "boom", header)}}
+
+			var slept bool
+
+			rt := testRetry(stub)
+			rt.sleep = func(context.Context, time.Duration) error {
+				slept = true
+
+				return nil
+			}
+
+			resp, err := rt.RoundTrip(newRequest(t, t.Context()))
+			require.NoError(t, err)
+			assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+			assert.Equal(t, 1, stub.calls)
+			assert.False(t, slept)
+
+			payload, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.Equal(t, "boom", string(payload))
+		},
+	)
+
+	t.Run(
 		"stops when the body cannot be rewound",
 		func(t *testing.T) {
 			t.Parallel()
@@ -497,6 +645,56 @@ func TestRetryAfter(t *testing.T) {
 			require.True(t, ok)
 			assert.Greater(t, got, time.Duration(0))
 			assert.LessOrEqual(t, got, 2*time.Second)
+		},
+	)
+
+	t.Run(
+		"delta that overflows a duration saturates above the cap",
+		func(t *testing.T) {
+			t.Parallel()
+
+			header := http.Header{}
+			header.Set("Retry-After", "9223372036854775807")
+
+			got, ok := retryAfter(&http.Response{
+				StatusCode: http.StatusServiceUnavailable,
+				Header:     header,
+			})
+			require.True(t, ok)
+			assert.Greater(t, got, serverErrorRetryMaxWait)
+		},
+	)
+
+	t.Run(
+		"delta that does not fit in an int64 saturates above the cap",
+		func(t *testing.T) {
+			t.Parallel()
+
+			header := http.Header{}
+			header.Set("Retry-After", "9999999999999999999999")
+
+			got, ok := retryAfter(&http.Response{
+				StatusCode: http.StatusServiceUnavailable,
+				Header:     header,
+			})
+			require.True(t, ok)
+			assert.Equal(t, saturatedRetryAfter, got)
+		},
+	)
+
+	t.Run(
+		"negative delta that does not fit in an int64",
+		func(t *testing.T) {
+			t.Parallel()
+
+			header := http.Header{}
+			header.Set("Retry-After", "-9999999999999999999999")
+
+			_, ok := retryAfter(&http.Response{
+				StatusCode: http.StatusServiceUnavailable,
+				Header:     header,
+			})
+			assert.False(t, ok)
 		},
 	)
 
