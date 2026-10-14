@@ -40,7 +40,8 @@
     "recurrence": "Récurrence",
     "recurrenceUnit": "Unité de récurrence",
     "createdAt": "Créée",
-    "updatedAt": "Mise à jour"
+    "updatedAt": "Mise à jour",
+    "assignee": "Assigné"
   },
   "units": {
     "S": "Secondes",
@@ -55,7 +56,9 @@
     "addEstimate": "Ajouter une estimation",
     "clearEstimate": "Effacer l'estimation",
     "addRecurrence": "Ajouter un intervalle",
-    "clearRecurrence": "Effacer l'intervalle"
+    "clearRecurrence": "Effacer l'intervalle",
+    "more": "Plus d'actions",
+    "delete": "Supprimer"
   },
   "hints": {
     "recurrenceNeedsDeadline": "Définissez une échéance avant d'ajouter un intervalle de récurrence"

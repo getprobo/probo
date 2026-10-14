@@ -5,5 +5,13 @@
   "filters": {
     "status": "Estado",
     "allStatuses": "Todos los estados"
+  },
+  "delete": {
+    "title": "Eliminar tarea",
+    "description": "¿Seguro que quiere eliminar esta tarea?",
+    "confirm": "Eliminar",
+    "cancel": "Cancelar",
+    "deleted": "Tarea eliminada.",
+    "error": "No se pudo eliminar la tarea"
   }
 }

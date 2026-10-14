@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { TaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
+import { useState } from "react";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { TasksPageTaskListItem_task$key } from "#/__generated__/core/TasksPageTaskListItem_task.graphql";
@@ -28,6 +29,8 @@ import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteCont
 
 import { taskListStateMoveUpdaters } from "../_lib/moveTaskListEdge";
 import { useTasksFilters } from "../_lib/useTasksFilters";
+
+import { TasksPageTaskDeleteDialog } from "./TasksPageTaskDeleteDialog";
 
 const tasksPageTaskListItemFragment = graphql`
   fragment TasksPageTaskListItem_task on Task {
@@ -40,6 +43,7 @@ const tasksPageTaskListItemFragment = graphql`
     deadline
     recurrenceInterval
     canUpdate: permission(action: "core:task:update")
+    canDelete: permission(action: "core:task:delete")
     assignedTo {
       id
       fullName
@@ -74,7 +78,9 @@ export function TasksPageTaskListItem({
   const { organizationId } = useEmployeePortalRoute();
   const { graphqlQuery } = useTasksFilters();
   const environment = useRelayEnvironment();
-  const { canUpdate, ...task } = useFragment(tasksPageTaskListItemFragment, taskKey);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const task = useFragment(tasksPageTaskListItemFragment, taskKey);
+  const { canUpdate, canDelete } = task;
   const [updateState, isUpdating] = useMutation<TasksPageTaskListItemUpdateStateMutation>(
     updateStateMutation,
   );
@@ -113,45 +119,59 @@ export function TasksPageTaskListItem({
   }
 
   return (
-    <TaskListItem
-      task={{
-        id: task.id,
-        name: task.name,
-        state: task.state,
-        priority: task.priority,
-        createdAt: task.createdAt,
-        timeEstimate: task.timeEstimate,
-        deadline: task.deadline,
-        recurrenceInterval: task.recurrenceInterval,
-        assignedTo: task.assignedTo == null
-          ? null
-          : {
-              id: task.assignedTo.id,
-              fullName: task.assignedTo.fullName,
-              emailAddress: task.assignedTo.emailAddress,
-              avatarUrl: task.assignedTo.avatar?.downloadUrl,
-            },
-      }}
-      canUpdate={canUpdate}
-      isUpdating={isUpdating}
-      sectionState={sectionState}
-      onStateChange={(state) => {
-        updateTask({ state });
-      }}
-      onPriorityChange={(priority) => {
-        updateTask({ priority });
-      }}
-      onDeadlineChange={(deadline) => {
-        updateTask({
-          deadline,
-          ...(deadline == null && task.recurrenceInterval != null
-            ? { recurrenceInterval: null }
-            : {}),
-        });
-      }}
-      onTimeEstimateChange={(timeEstimate) => {
-        updateTask({ timeEstimate });
-      }}
-    />
+    <>
+      <TaskListItem
+        task={{
+          id: task.id,
+          name: task.name,
+          state: task.state,
+          priority: task.priority,
+          createdAt: task.createdAt,
+          timeEstimate: task.timeEstimate,
+          deadline: task.deadline,
+          recurrenceInterval: task.recurrenceInterval,
+          assignedTo: task.assignedTo == null
+            ? null
+            : {
+                id: task.assignedTo.id,
+                fullName: task.assignedTo.fullName,
+                emailAddress: task.assignedTo.emailAddress,
+                avatarUrl: task.assignedTo.avatar?.downloadUrl,
+              },
+        }}
+        canUpdate={canUpdate}
+        isUpdating={isUpdating}
+        sectionState={sectionState}
+        onStateChange={(state) => {
+          updateTask({ state });
+        }}
+        onPriorityChange={(priority) => {
+          updateTask({ priority });
+        }}
+        onDeadlineChange={(deadline) => {
+          updateTask({
+            deadline,
+            ...(deadline == null && task.recurrenceInterval != null
+              ? { recurrenceInterval: null }
+              : {}),
+          });
+        }}
+        onTimeEstimateChange={(timeEstimate) => {
+          updateTask({ timeEstimate });
+        }}
+        onDelete={canDelete
+          ? () => {
+              setDeleteOpen(true);
+            }
+          : undefined}
+      />
+      {canDelete && (
+        <TasksPageTaskDeleteDialog
+          taskId={task.id}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
+    </>
   );
 }

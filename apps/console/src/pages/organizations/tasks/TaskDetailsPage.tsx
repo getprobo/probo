@@ -37,6 +37,7 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
+import { useNavigate } from "react-router";
 
 import type { TaskDetailsPage_task$key } from "#/__generated__/core/TaskDetailsPage_task.graphql";
 import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQuery.graphql";
@@ -48,6 +49,7 @@ import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskEngagementSection } from "./_components/TaskEngagementSection";
 import { TaskNameField } from "./_components/TaskNameField";
 import { TaskPropertiesSection } from "./_components/TaskPropertiesSection";
+import { taskListPath } from "./_lib/taskPath";
 
 export const taskDetailsPageFragment = graphql`
   fragment TaskDetailsPage_task on Task {
@@ -87,6 +89,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     queryRef,
   );
   const { t } = useTranslation("organizations/tasks");
+  const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const taskKey = data.node?.__typename === "Task" ? data.node : null;
@@ -140,6 +143,9 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
           taskKey={task}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
+          onDeleted={() => {
+            void navigate(taskListPath(organizationId));
+          }}
         />
       )}
     </>

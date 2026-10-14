@@ -29,12 +29,9 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useNavigate } from "react-router";
 
 import type { TaskDeleteDialog_task$key } from "#/__generated__/core/TaskDeleteDialog_task.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { taskListPath } from "../_lib/taskPath";
 import { useDeleteTask } from "../_lib/useDeleteTask";
 import { useTaskInternalControlIds } from "../_lib/useTaskInternalControlIds";
 
@@ -48,16 +45,16 @@ interface TaskDeleteDialogProps {
   taskKey: TaskDeleteDialog_task$key;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
 }
 
 export function TaskDeleteDialog({
   taskKey,
   open,
   onOpenChange,
+  onDeleted,
 }: TaskDeleteDialogProps) {
   const { t } = useTranslation("organizations/tasks");
-  const navigate = useNavigate();
-  const organizationId = useOrganizationId();
   const task = useFragment(taskDeleteDialogFragment, taskKey);
   const { taskId, ids, pending, failed, retry } = useTaskInternalControlIds(task);
   const [deleteTask, isDeleting] = useDeleteTask();
@@ -70,7 +67,7 @@ export function TaskDeleteDialog({
     void deleteTask(taskId, ids).then(
       () => {
         onOpenChange(false);
-        void navigate(taskListPath(organizationId));
+        onDeleted?.();
       },
       () => {
         // Error toast is already shown by useMutation.

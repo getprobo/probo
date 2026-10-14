@@ -23,9 +23,11 @@ import {
   CalendarDotIcon,
   CalendarXIcon,
   ClockIcon,
+  DotsThreeVerticalIcon,
+  TrashIcon,
   UserIcon,
 } from "@phosphor-icons/react";
-import { formatDatetime, parseDate, todayAsDateInput, toDateInput } from "@probo/helpers";
+import { formatDatetime, parseDate, toDateInput, todayAsDateInput } from "@probo/helpers";
 import { compactDateFormat, deadlineDateFormat, formatDuration } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
@@ -38,6 +40,7 @@ import { DropdownSubmenu } from "@probo/ui/src/v2/Dropdown/DropdownSubmenu";
 import { DropdownSubmenuTrigger } from "@probo/ui/src/v2/Dropdown/DropdownSubmenuTrigger";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { DateCalendar } from "@probo/ui/src/v2/form/DateCalendar";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -56,10 +59,10 @@ import { isOverdueTask } from "./isOverdueTask";
 import { stringifyTaskDuration, taskDurationsEqual } from "./taskDuration";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
 import {
-  type TaskPriority,
-  type TaskState,
   taskPriorities,
+  type TaskPriority,
   taskPriorityKeys,
+  type TaskState,
   taskStateKeys,
   taskStates,
 } from "./taskState";
@@ -108,6 +111,8 @@ export interface TaskListItemProps {
   detailsTo?: string;
   canUpdateAssignee?: boolean;
   renderAssignee?: (avatar: ReactNode) => ReactNode;
+  renderAssigneeMenu?: () => ReactNode;
+  onDelete?: () => void;
   sectionState?: TaskState;
   canDrag?: boolean;
   isDragging?: boolean;
@@ -286,6 +291,23 @@ export function TaskListItem(props: TaskListItemProps) {
             <TooltipPopup>{t("fields.createdAt")}</TooltipPopup>
           </Tooltip>
         )}
+        <TaskListItemMenu
+          displayState={displayState}
+          taskState={props.task.state}
+          priority={props.task.priority}
+          deadline={props.task.deadline}
+          timeEstimate={props.task.timeEstimate}
+          canUpdate={props.canUpdate}
+          canUpdateAssignee={props.canUpdateAssignee === true}
+          isUpdating={props.isUpdating}
+          slots={slots}
+          renderAssigneeMenu={props.renderAssigneeMenu}
+          onStateChange={props.onStateChange}
+          onPriorityChange={props.onPriorityChange}
+          onDeadlineChange={props.onDeadlineChange}
+          onTimeEstimateChange={props.onTimeEstimateChange}
+          onDelete={props.onDelete}
+        />
       </div>
     </div>
   );
@@ -354,10 +376,7 @@ function TaskListItemPriority({
         <SelectPopup align="start">
           {taskPriorities.map(item => (
             <SelectItem key={item} value={item}>
-              <span className={slots.stateOption()}>
-                <TaskPriorityIcon priority={item} />
-                {t(`priorities.${taskPriorityKeys[item]}`)}
-              </span>
+              {priorityOption(item, slots, t)}
             </SelectItem>
           ))}
         </SelectPopup>
@@ -431,10 +450,7 @@ function TaskListItemState({
         <SelectPopup align="start">
           {taskStates.map(state => (
             <SelectItem key={state} value={state}>
-              <span className={slots.stateOption()}>
-                <TaskStateIcon state={state} />
-                {t(`states.${taskStateKeys[state]}`)}
-              </span>
+              {stateOption(state, slots, t)}
             </SelectItem>
           ))}
         </SelectPopup>
@@ -519,14 +535,7 @@ function TaskListItemEstimate({
           <TooltipPopup>{t("metadata.timeEstimate")}</TooltipPopup>
         </Tooltip>
         <SelectPopup align="end">
-          <SelectItem value={noneEstimateValue}>
-            {t("durationPicker.none")}
-          </SelectItem>
-          {options.map(value => (
-            <SelectItem key={value} value={value}>
-              {formatDuration(value, t, { style: "short", locale: i18n.language })}
-            </SelectItem>
-          ))}
+          {estimateSelectItems(options, t, i18n.language)}
         </SelectPopup>
       </Select>
     </div>
@@ -615,44 +624,12 @@ function TaskListItemDeadline({
         <TooltipPopup>{t("metadata.deadline")}</TooltipPopup>
       </Tooltip>
       <DropdownPopup size={1} align="end">
-        <DropdownRadioGroup
-          value={deadlinePreset(deadline, i18n.language)}
-          onValueChange={(preset) => {
-            if (typeof preset !== "string") {
-              return;
-            }
-            commitDeadline(deadlineFromPreset(preset, i18n.language));
-          }}
-        >
-          <DropdownRadioItem value="today">{t("deadlinePicker.today")}</DropdownRadioItem>
-          <DropdownRadioItem value="tomorrow">{t("deadlinePicker.tomorrow")}</DropdownRadioItem>
-          <DropdownRadioItem value="endOfWeek">{t("deadlinePicker.endOfWeek")}</DropdownRadioItem>
-          <DropdownRadioItem value="nextWeek">{t("deadlinePicker.nextWeek")}</DropdownRadioItem>
-        </DropdownRadioGroup>
-        <DropdownSeparator />
-        <DropdownSubmenu>
-          <DropdownSubmenuTrigger>{t("deadlinePicker.custom")}</DropdownSubmenuTrigger>
-          <DropdownPopup side="right" align="start" size={1}>
-            <div className={slots.deadlineCustom()}>
-              <DateCalendar
-                size={1}
-                locale={i18n.language}
-                value={toDateInput(deadline)}
-                onValueChange={(next) => {
-                  commitDeadline(next === "" ? null : formatDatetime(next) ?? null);
-                }}
-              />
-            </div>
-          </DropdownPopup>
-        </DropdownSubmenu>
-        <DropdownSeparator />
-        <DropdownItem
-          onClick={() => {
-            commitDeadline(null);
-          }}
-        >
-          {t("deadlinePicker.none")}
-        </DropdownItem>
+        <TaskDeadlineMenu
+          deadline={deadline}
+          locale={i18n.language}
+          slots={slots}
+          onCommit={commitDeadline}
+        />
       </DropdownPopup>
     </Dropdown>
   );
@@ -697,6 +674,313 @@ function TaskListItemAssignee({
       />
       <TooltipPopup>{label}</TooltipPopup>
     </Tooltip>
+  );
+}
+
+function TaskListItemMenu({
+  displayState,
+  taskState,
+  priority,
+  deadline,
+  timeEstimate,
+  canUpdate,
+  canUpdateAssignee,
+  isUpdating,
+  slots,
+  renderAssigneeMenu,
+  onStateChange,
+  onPriorityChange,
+  onDeadlineChange,
+  onTimeEstimateChange,
+  onDelete,
+}: {
+  displayState: TaskState;
+  taskState: TaskState;
+  priority: TaskPriority;
+  deadline?: string | null;
+  timeEstimate?: string | null;
+  canUpdate: boolean;
+  canUpdateAssignee: boolean;
+  isUpdating?: boolean;
+  slots: ReturnType<typeof taskListItem>;
+  renderAssigneeMenu?: () => ReactNode;
+  onStateChange: (state: TaskState) => void;
+  onPriorityChange: (priority: TaskPriority) => void;
+  onDeadlineChange: (deadline: string | null) => void;
+  onTimeEstimateChange: (timeEstimate: string | null) => void;
+  onDelete?: () => void;
+}): ReactNode {
+  const { t, i18n } = useTranslation(TASKS_NAMESPACE);
+  const [open, setOpen] = useState(false);
+  const showAssigneeMenu = canUpdateAssignee && renderAssigneeMenu != null;
+  const showFields = canUpdate || showAssigneeMenu;
+  const showDelete = onDelete != null;
+  if (!showFields && !showDelete) {
+    return null;
+  }
+
+  const estimateSelected = matchingEstimatePreset(timeEstimate) ?? noneEstimateValue;
+  const estimateValues = estimateOptions(timeEstimate);
+
+  function commitDeadline(next: string | null) {
+    if (toDateInput(next) === toDateInput(deadline)) {
+      return;
+    }
+    onDeadlineChange(next);
+    setOpen(false);
+  }
+
+  return (
+    <div className={slots.more()}>
+      <Dropdown
+        open={open}
+        onOpenChange={(next, details) => {
+          if (!next && isDatePickerDismiss(details)) {
+            return;
+          }
+          setOpen(next);
+        }}
+      >
+        <DropdownTrigger
+          disabled={isUpdating}
+          render={(
+            <IconButton
+              size={1}
+              variant="ghost"
+              color="neutral"
+              aria-label={t("actions.more")}
+            >
+              <DotsThreeVerticalIcon />
+            </IconButton>
+          )}
+        />
+        <DropdownPopup size={1} align="end">
+          {canUpdate && (
+            <>
+              <DropdownSubmenu>
+                <DropdownSubmenuTrigger>{t("fields.state")}</DropdownSubmenuTrigger>
+                <DropdownPopup size={1} align="start" side="right">
+                  <DropdownRadioGroup
+                    value={displayState}
+                    onValueChange={(state) => {
+                      if (typeof state !== "string" || state === taskState) {
+                        return;
+                      }
+                      onStateChange(state as TaskState);
+                      setOpen(false);
+                    }}
+                  >
+                    {taskStates.map(state => (
+                      <DropdownRadioItem key={state} value={state}>
+                        {stateOption(state, slots, t)}
+                      </DropdownRadioItem>
+                    ))}
+                  </DropdownRadioGroup>
+                </DropdownPopup>
+              </DropdownSubmenu>
+              <DropdownSubmenu>
+                <DropdownSubmenuTrigger>{t("fields.priority")}</DropdownSubmenuTrigger>
+                <DropdownPopup size={1} align="start" side="right">
+                  <DropdownRadioGroup
+                    value={priority}
+                    onValueChange={(next) => {
+                      if (typeof next !== "string" || next === priority) {
+                        return;
+                      }
+                      onPriorityChange(next as TaskPriority);
+                      setOpen(false);
+                    }}
+                  >
+                    {taskPriorities.map(item => (
+                      <DropdownRadioItem key={item} value={item}>
+                        {priorityOption(item, slots, t)}
+                      </DropdownRadioItem>
+                    ))}
+                  </DropdownRadioGroup>
+                </DropdownPopup>
+              </DropdownSubmenu>
+              <DropdownSubmenu>
+                <DropdownSubmenuTrigger>{t("fields.deadline")}</DropdownSubmenuTrigger>
+                <DropdownPopup size={1} align="start" side="right">
+                  <TaskDeadlineMenu
+                    deadline={deadline}
+                    locale={i18n.language}
+                    slots={slots}
+                    onCommit={commitDeadline}
+                  />
+                </DropdownPopup>
+              </DropdownSubmenu>
+              <DropdownSubmenu>
+                <DropdownSubmenuTrigger>{t("fields.timeEstimate")}</DropdownSubmenuTrigger>
+                <DropdownPopup size={1} align="start" side="right">
+                  <DropdownRadioGroup
+                    value={estimateSelected}
+                    onValueChange={(next) => {
+                      if (typeof next !== "string") {
+                        return;
+                      }
+                      const resolved = next === noneEstimateValue ? null : next;
+                      if (resolved === timeEstimate || (
+                        resolved != null
+                        && timeEstimate != null
+                        && taskDurationsEqual(resolved, timeEstimate)
+                      )) {
+                        return;
+                      }
+                      onTimeEstimateChange(resolved);
+                      setOpen(false);
+                    }}
+                  >
+                    {estimateRadioItems(estimateValues, t, i18n.language)}
+                  </DropdownRadioGroup>
+                </DropdownPopup>
+              </DropdownSubmenu>
+            </>
+          )}
+          {showAssigneeMenu && (
+            <DropdownSubmenu>
+              <DropdownSubmenuTrigger>{t("fields.assignee")}</DropdownSubmenuTrigger>
+              <DropdownPopup size={1} align="start" side="right">
+                {renderAssigneeMenu()}
+              </DropdownPopup>
+            </DropdownSubmenu>
+          )}
+          {showFields && showDelete && <DropdownSeparator />}
+          {showDelete && (
+            <DropdownItem
+              color="error"
+              iconStart={<TrashIcon />}
+              onClick={() => {
+                onDelete();
+              }}
+            >
+              {t("actions.delete")}
+            </DropdownItem>
+          )}
+        </DropdownPopup>
+      </Dropdown>
+    </div>
+  );
+}
+
+function TaskDeadlineMenu({
+  deadline,
+  locale,
+  slots,
+  onCommit,
+}: {
+  deadline?: string | null;
+  locale: string;
+  slots: ReturnType<typeof taskListItem>;
+  onCommit: (next: string | null) => void;
+}): ReactNode {
+  const { t } = useTranslation(TASKS_NAMESPACE);
+
+  return (
+    <>
+      <DropdownRadioGroup
+        value={deadlinePreset(deadline, locale)}
+        onValueChange={(preset) => {
+          if (typeof preset !== "string") {
+            return;
+          }
+          onCommit(deadlineFromPreset(preset, locale));
+        }}
+      >
+        <DropdownRadioItem value="today">{t("deadlinePicker.today")}</DropdownRadioItem>
+        <DropdownRadioItem value="tomorrow">{t("deadlinePicker.tomorrow")}</DropdownRadioItem>
+        <DropdownRadioItem value="endOfWeek">{t("deadlinePicker.endOfWeek")}</DropdownRadioItem>
+        <DropdownRadioItem value="nextWeek">{t("deadlinePicker.nextWeek")}</DropdownRadioItem>
+      </DropdownRadioGroup>
+      <DropdownSeparator />
+      <DropdownSubmenu>
+        <DropdownSubmenuTrigger>{t("deadlinePicker.custom")}</DropdownSubmenuTrigger>
+        <DropdownPopup side="right" align="start" size={1}>
+          <div className={slots.deadlineCustom()}>
+            <DateCalendar
+              size={1}
+              locale={locale}
+              value={toDateInput(deadline)}
+              onValueChange={(next) => {
+                onCommit(next === "" ? null : formatDatetime(next) ?? null);
+              }}
+            />
+          </div>
+        </DropdownPopup>
+      </DropdownSubmenu>
+      <DropdownSeparator />
+      <DropdownItem
+        onClick={() => {
+          onCommit(null);
+        }}
+      >
+        {t("deadlinePicker.none")}
+      </DropdownItem>
+    </>
+  );
+}
+
+function priorityOption(
+  item: TaskPriority,
+  slots: ReturnType<typeof taskListItem>,
+  t: (key: string) => string,
+): ReactNode {
+  return (
+    <span className={slots.stateOption()}>
+      <TaskPriorityIcon priority={item} />
+      {t(`priorities.${taskPriorityKeys[item]}`)}
+    </span>
+  );
+}
+
+function stateOption(
+  state: TaskState,
+  slots: ReturnType<typeof taskListItem>,
+  t: (key: string) => string,
+): ReactNode {
+  return (
+    <span className={slots.stateOption()}>
+      <TaskStateIcon state={state} />
+      {t(`states.${taskStateKeys[state]}`)}
+    </span>
+  );
+}
+
+function estimateSelectItems(
+  options: readonly string[],
+  t: (key: string, options?: { count?: number }) => string,
+  locale: string,
+): ReactNode {
+  return (
+    <>
+      <SelectItem value={noneEstimateValue}>
+        {t("durationPicker.none")}
+      </SelectItem>
+      {options.map(value => (
+        <SelectItem key={value} value={value}>
+          {formatDuration(value, t, { style: "short", locale })}
+        </SelectItem>
+      ))}
+    </>
+  );
+}
+
+function estimateRadioItems(
+  options: readonly string[],
+  t: (key: string, options?: { count?: number }) => string,
+  locale: string,
+): ReactNode {
+  return (
+    <>
+      <DropdownRadioItem value={noneEstimateValue}>
+        {t("durationPicker.none")}
+      </DropdownRadioItem>
+      {options.map(value => (
+        <DropdownRadioItem key={value} value={value}>
+          {formatDuration(value, t, { style: "short", locale })}
+        </DropdownRadioItem>
+      ))}
+    </>
   );
 }
 

@@ -40,7 +40,8 @@
     "recurrence": "Herhaalt",
     "recurrenceUnit": "Eenheid herhaling",
     "createdAt": "Aangemaakt",
-    "updatedAt": "Bijgewerkt"
+    "updatedAt": "Bijgewerkt",
+    "assignee": "Toegewezen"
   },
   "units": {
     "S": "Seconden",
@@ -55,7 +56,9 @@
     "addEstimate": "Schatting toevoegen",
     "clearEstimate": "Schatting wissen",
     "addRecurrence": "Interval toevoegen",
-    "clearRecurrence": "Interval wissen"
+    "clearRecurrence": "Interval wissen",
+    "more": "Meer acties",
+    "delete": "Verwijderen"
   },
   "hints": {
     "recurrenceNeedsDeadline": "Stel een deadline in voordat u een herhalingsinterval toevoegt"

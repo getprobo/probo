@@ -5,5 +5,13 @@
   "filters": {
     "status": "Status",
     "allStatuses": "Alle statussen"
+  },
+  "delete": {
+    "title": "Taak verwijderen",
+    "description": "Weet u zeker dat u deze taak wilt verwijderen?",
+    "confirm": "Verwijderen",
+    "cancel": "Annuleren",
+    "deleted": "Taak verwijderd.",
+    "error": "Taak verwijderen is mislukt"
   }
 }

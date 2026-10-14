@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -27,6 +28,7 @@ import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskL
 import { UserSelect } from "#/components/form/UserSelect";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
 
 const noneValue = "__NONE__";
@@ -42,6 +44,7 @@ const taskListItemFragment = graphql`
     deadline
     recurrenceInterval
     canUpdate: permission(action: "core:task:update")
+    canDelete: permission(action: "core:task:delete")
     externalLink {
       identifier
       url
@@ -54,6 +57,7 @@ const taskListItemFragment = graphql`
         downloadUrl
       }
     }
+    ...TaskDeleteDialog_task
   }
 `;
 
@@ -86,7 +90,9 @@ interface TaskListItemProps {
 export function TaskListItem(props: TaskListItemProps) {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
-  const { canUpdate, ...task } = useFragment(taskListItemFragment, props.taskKey);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const task = useFragment(taskListItemFragment, props.taskKey);
+  const { canUpdate, canDelete } = task;
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
     updateStateMutation,
   );
@@ -117,82 +123,103 @@ export function TaskListItem(props: TaskListItemProps) {
     });
   }
 
+  const assigneeSelectProps = {
+    value: assignedTo?.id ?? null,
+    disabled: isUpdating || props.ignoreClick,
+    onValueChange: (assignedToId: string | null) => {
+      updateTask({ assignedToId });
+    },
+    emptyLabel: t("detailsPage.unassigned"),
+    emptyValue: noneValue,
+    ariaLabel: t("detailsPage.fields.assignedTo"),
+    size: 1 as const,
+    contractEnded: false,
+    pinned: assignedTo == null
+      ? null
+      : {
+          id: assignedTo.id,
+          fullName: assignedTo.fullName,
+          emailAddress: assignedTo.emailAddress,
+          avatarUrl: assignedTo.avatar?.downloadUrl,
+        },
+  };
+
   return (
-    <SharedTaskListItem
-      task={{
-        id: task.id,
-        name: task.name,
-        state: task.state,
-        priority: task.priority,
-        createdAt: task.createdAt,
-        timeEstimate: task.timeEstimate,
-        deadline: task.deadline,
-        recurrenceInterval: task.recurrenceInterval,
-        externalLink: task.externalLink,
-        assignedTo: assignedTo == null
-          ? null
-          : {
-              id: assignedTo.id,
-              fullName: assignedTo.fullName,
-              emailAddress: assignedTo.emailAddress,
-              avatarUrl: assignedTo.avatar?.downloadUrl,
-            },
-      }}
-      canUpdate={canUpdate}
-      canUpdateAssignee={canUpdate}
-      isUpdating={isUpdating}
-      detailsTo={taskDetailsPath(organizationId, task.id)}
-      renderAssignee={canUpdate
-        ? avatar => (
+    <>
+      <SharedTaskListItem
+        task={{
+          id: task.id,
+          name: task.name,
+          state: task.state,
+          priority: task.priority,
+          createdAt: task.createdAt,
+          timeEstimate: task.timeEstimate,
+          deadline: task.deadline,
+          recurrenceInterval: task.recurrenceInterval,
+          externalLink: task.externalLink,
+          assignedTo: assignedTo == null
+            ? null
+            : {
+                id: assignedTo.id,
+                fullName: assignedTo.fullName,
+                emailAddress: assignedTo.emailAddress,
+                avatarUrl: assignedTo.avatar?.downloadUrl,
+              },
+        }}
+        canUpdate={canUpdate}
+        canUpdateAssignee={canUpdate}
+        isUpdating={isUpdating}
+        detailsTo={taskDetailsPath(organizationId, task.id)}
+        renderAssignee={canUpdate
+          ? avatar => (
             <UserSelect
+              {...assigneeSelectProps}
               trigger={avatar}
-              value={assignedTo?.id ?? null}
-              disabled={isUpdating || props.ignoreClick}
-              onValueChange={(assignedToId) => {
-                updateTask({ assignedToId });
-              }}
-              emptyLabel={t("detailsPage.unassigned")}
-              emptyValue={noneValue}
-              ariaLabel={t("detailsPage.fields.assignedTo")}
-              size={1}
-              contractEnded={false}
-              pinned={assignedTo == null
-                ? null
-                : {
-                    id: assignedTo.id,
-                    fullName: assignedTo.fullName,
-                    emailAddress: assignedTo.emailAddress,
-                    avatarUrl: assignedTo.avatar?.downloadUrl,
-                  }}
             />
           )
-        : undefined}
-      sectionState={props.sectionState}
-      canDrag={props.canDrag}
-      isDragging={props.isDragging}
-      isGhost={props.isGhost}
-      ignoreClick={props.ignoreClick}
-      onStateChange={(state) => {
-        updateTask({ state });
-      }}
-      onPriorityChange={(priority) => {
-        updateTask({ priority });
-      }}
-      onDeadlineChange={(deadline) => {
-        updateTask({
-          deadline,
-          ...(deadline == null && task.recurrenceInterval != null
-            ? { recurrenceInterval: null }
-            : {}),
-        });
-      }}
-      onTimeEstimateChange={(timeEstimate) => {
-        updateTask({ timeEstimate });
-      }}
-      onDragStart={props.onDragStart}
-      onDragOver={props.onDragOver}
-      onDrop={props.onDrop}
-      onDragEnd={props.onDragEnd}
-    />
+          : undefined}
+        renderAssigneeMenu={canUpdate
+          ? () => <UserSelect {...assigneeSelectProps} />
+          : undefined}
+        onDelete={canDelete
+          ? () => {
+              setDeleteOpen(true);
+            }
+          : undefined}
+        sectionState={props.sectionState}
+        canDrag={props.canDrag}
+        isDragging={props.isDragging}
+        isGhost={props.isGhost}
+        ignoreClick={props.ignoreClick}
+        onStateChange={(state) => {
+          updateTask({ state });
+        }}
+        onPriorityChange={(priority) => {
+          updateTask({ priority });
+        }}
+        onDeadlineChange={(deadline) => {
+          updateTask({
+            deadline,
+            ...(deadline == null && task.recurrenceInterval != null
+              ? { recurrenceInterval: null }
+              : {}),
+          });
+        }}
+        onTimeEstimateChange={(timeEstimate) => {
+          updateTask({ timeEstimate });
+        }}
+        onDragStart={props.onDragStart}
+        onDragOver={props.onDragOver}
+        onDrop={props.onDrop}
+        onDragEnd={props.onDragEnd}
+      />
+      {canDelete && (
+        <TaskDeleteDialog
+          taskKey={task}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
+    </>
   );
 }

@@ -40,7 +40,8 @@
     "recurrence": "Repeats",
     "recurrenceUnit": "Recurrence unit",
     "createdAt": "Created",
-    "updatedAt": "Updated"
+    "updatedAt": "Updated",
+    "assignee": "Assignee"
   },
   "units": {
     "S": "Seconds",
@@ -55,7 +56,9 @@
     "addEstimate": "Add estimate",
     "clearEstimate": "Clear estimate",
     "addRecurrence": "Add interval",
-    "clearRecurrence": "Clear interval"
+    "clearRecurrence": "Clear interval",
+    "more": "More actions",
+    "delete": "Delete"
   },
   "hints": {
     "recurrenceNeedsDeadline": "Set a deadline before adding a recurrence interval"

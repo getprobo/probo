@@ -40,7 +40,8 @@
     "recurrence": "Se repite",
     "recurrenceUnit": "Unidad de repetición",
     "createdAt": "Creada",
-    "updatedAt": "Actualizada"
+    "updatedAt": "Actualizada",
+    "assignee": "Asignado"
   },
   "units": {
     "S": "Segundos",
@@ -55,7 +56,9 @@
     "addEstimate": "Añadir estimación",
     "clearEstimate": "Borrar estimación",
     "addRecurrence": "Añadir intervalo",
-    "clearRecurrence": "Borrar intervalo"
+    "clearRecurrence": "Borrar intervalo",
+    "more": "Más acciones",
+    "delete": "Eliminar"
   },
   "hints": {
     "recurrenceNeedsDeadline": "Defina una fecha límite antes de añadir un intervalo de repetición"

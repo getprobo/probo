@@ -5,5 +5,13 @@
   "filters": {
     "status": "Statut",
     "allStatuses": "Tous les statuts"
+  },
+  "delete": {
+    "title": "Supprimer la tâche",
+    "description": "Voulez-vous vraiment supprimer cette tâche ?",
+    "confirm": "Supprimer",
+    "cancel": "Annuler",
+    "deleted": "Tâche supprimée.",
+    "error": "Échec de la suppression de la tâche"
   }
 }
