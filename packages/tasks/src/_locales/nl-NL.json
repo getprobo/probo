@@ -17,6 +17,18 @@
   "emptyValue": "—",
   "doesNotRepeat": "Herhaalt niet",
   "noResults": "Geen taken komen overeen met uw filters",
+  "unassigned": "Niet toegewezen",
+  "deadlinePicker": {
+    "today": "Vandaag",
+    "tomorrow": "Morgen",
+    "endOfWeek": "Einde van de week",
+    "nextWeek": "Volgende week",
+    "custom": "Aangepast",
+    "none": "Geen"
+  },
+  "durationPicker": {
+    "none": "Geen"
+  },
   "fields": {
     "name": "Naam",
     "description": "Beschrijving",
@@ -110,6 +122,13 @@
     "min_one": "{{count}} Minuut",
     "min_other": "{{count}} Minuten",
     "hour_one": "{{count}} Uur",
-    "hour_other": "{{count}} Uur"
+    "hour_other": "{{count}} Uur",
+    "yearShort": "{{count}} jr",
+    "monthShort": "{{count}} mnd",
+    "weekShort": "{{count}} wkn",
+    "dayShort": "{{count}} d",
+    "hourShort": "{{count}} u",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} s"
   }
 }

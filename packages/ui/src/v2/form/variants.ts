@@ -188,3 +188,38 @@ export const dateFieldSkeleton = tv({
     size: 2,
   },
 });
+
+// Always-visible calendar panel: typed input above DateMonthView.
+export const dateCalendar = tv({
+  slots: {
+    root: "flex w-72 min-w-0 flex-col gap-2",
+    surface: [
+      "flex min-w-0 w-full items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
+      "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+      "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
+    ],
+    input: [
+      "min-w-0 w-full flex-1 bg-transparent text-sand-12 outline-none",
+      "placeholder:text-sand-a9",
+    ],
+    clear: [
+      "flex size-6 shrink-0 items-center justify-center rounded-2 border-0 bg-transparent p-0",
+      "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12 hover:bg-sand-3",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    ],
+  },
+  variants: {
+    size: {
+      1: { surface: "h-7 px-2" },
+      2: { surface: "h-8 px-2" },
+    },
+    variant: {
+      classic: { surface: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
+      surface: { surface: "border border-sand-a5 bg-sand-1" },
+    },
+  },
+  defaultVariants: {
+    size: 2,
+    variant: "surface",
+  },
+});

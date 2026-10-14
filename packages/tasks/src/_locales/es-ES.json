@@ -17,6 +17,18 @@
   "emptyValue": "—",
   "doesNotRepeat": "No se repite",
   "noResults": "Ninguna tarea coincide con los filtros",
+  "unassigned": "Sin asignar",
+  "deadlinePicker": {
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "endOfWeek": "Fin de semana",
+    "nextWeek": "La semana que viene",
+    "custom": "Personalizada",
+    "none": "Ninguna"
+  },
+  "durationPicker": {
+    "none": "Ninguna"
+  },
   "fields": {
     "name": "Nombre",
     "description": "Descripción",
@@ -110,6 +122,13 @@
     "min_one": "{{count}} minuto",
     "min_other": "{{count}} minutos",
     "hour_one": "{{count}} hora",
-    "hour_other": "{{count}} horas"
+    "hour_other": "{{count}} horas",
+    "yearShort": "{{count}} a",
+    "monthShort": "{{count}} m",
+    "weekShort": "{{count}} sem.",
+    "dayShort": "{{count}} d",
+    "hourShort": "{{count}} h",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} s"
   }
 }

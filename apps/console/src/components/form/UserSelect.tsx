@@ -25,7 +25,7 @@ import { SelectList } from "@probo/ui/src/v2/Select/SelectList";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { Suspense, useMemo } from "react";
+import { type ReactNode, Suspense, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
@@ -123,6 +123,7 @@ interface UserSelectProps {
   pageSize?: number;
   contractEnded?: boolean;
   pinned?: UserOption | null;
+  trigger?: ReactNode;
 }
 
 interface UserSelectLoadedProps extends UserSelectProps {
@@ -137,16 +138,20 @@ export function UserSelect({
   pageSize = defaultPageSize,
   emptyValue = null,
   placeholder,
+  trigger,
   ...props
 }: UserSelectProps) {
   return (
-    <Suspense fallback={<SelectSkeleton size={size} className="w-full" />}>
+    <Suspense
+      fallback={trigger ?? <SelectSkeleton size={size} className="w-full" />}
+    >
       <UserSelectLoaded
         {...props}
         size={size}
         pageSize={pageSize}
         emptyValue={emptyValue}
         placeholder={placeholder ?? props.emptyLabel}
+        trigger={trigger}
       />
     </Suspense>
   );
@@ -164,6 +169,7 @@ function UserSelectLoaded({
   pageSize,
   contractEnded,
   pinned,
+  trigger,
 }: UserSelectLoadedProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
@@ -214,22 +220,28 @@ function UserSelectLoaded({
       }}
     >
       <SelectTrigger
-        size={size}
+        size={trigger == null ? size : 1}
+        variant={trigger == null ? undefined : "ghost"}
+        className={trigger == null
+          ? undefined
+          : "relative z-1 w-auto min-w-0 gap-0 px-0 [&>:last-child]:hidden"}
         aria-label={ariaLabel}
-        placeholder={placeholder}
+        placeholder={trigger == null ? placeholder : undefined}
       >
-        {(selected: string | null) => {
-          if (selected == null || selected === emptyValue) {
-            return emptyLabel;
-          }
-          return (
-            <UserSelectRow
-              id={selected}
-              users={names}
-              size={size}
-            />
-          );
-        }}
+        {trigger == null
+          ? (selected: string | null) => {
+              if (selected == null || selected === emptyValue) {
+                return emptyLabel;
+              }
+              return (
+                <UserSelectRow
+                  id={selected}
+                  users={names}
+                  size={size}
+                />
+              );
+            }
+          : () => trigger}
       </SelectTrigger>
       <SelectPopup align="start">
         <SelectList>

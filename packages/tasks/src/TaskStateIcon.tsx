@@ -53,16 +53,16 @@ export function TaskStateIcon({ state }: TaskStateIconProps) {
 
   switch (state) {
     case "BACKLOG":
-      return <CircleDashedIcon className={className} aria-hidden />;
+      return <CircleDashedIcon className={className} weight="bold" aria-hidden />;
     case "TODO":
-      return <CircleIcon className={className} aria-hidden />;
+      return <CircleIcon className={className} weight="bold" aria-hidden />;
     case "IN_PROGRESS":
       return <CircleHalfIcon className={className} weight="fill" aria-hidden />;
     case "DONE":
       return <CheckCircleIcon className={className} weight="fill" aria-hidden />;
     case "CANCELED":
-      return <XCircleIcon className={className} aria-hidden />;
+      return <XCircleIcon className={className} weight="bold" aria-hidden />;
     case "DUPLICATE":
-      return <ProhibitInsetIcon className={className} aria-hidden />;
+      return <ProhibitInsetIcon className={className} weight="bold" aria-hidden />;
   }
 }

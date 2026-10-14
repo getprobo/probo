@@ -17,6 +17,18 @@
   "emptyValue": "—",
   "doesNotRepeat": "Does not repeat",
   "noResults": "No tasks match your filters",
+  "unassigned": "Unassigned",
+  "deadlinePicker": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "endOfWeek": "End of week",
+    "nextWeek": "Next week",
+    "custom": "Custom",
+    "none": "None"
+  },
+  "durationPicker": {
+    "none": "None"
+  },
   "fields": {
     "name": "Name",
     "description": "Description",
@@ -110,6 +122,13 @@
     "min_one": "{{count}} Minute",
     "min_other": "{{count}} Minutes",
     "hour_one": "{{count}} Hour",
-    "hour_other": "{{count}} Hours"
+    "hour_other": "{{count}} Hours",
+    "yearShort": "{{count}} yr",
+    "monthShort": "{{count}} mo",
+    "weekShort": "{{count}} wk",
+    "dayShort": "{{count}} d",
+    "hourShort": "{{count}} hr",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} sec"
   }
 }

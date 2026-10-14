@@ -21,10 +21,23 @@
 import {
   ArrowsClockwiseIcon,
   CalendarDotIcon,
+  CalendarXIcon,
   ClockIcon,
+  UserIcon,
 } from "@phosphor-icons/react";
-import { dateFormat, formatDuration } from "@probo/i18n";
+import { formatDatetime, parseDate, todayAsDateInput, toDateInput } from "@probo/helpers";
+import { compactDateFormat, deadlineDateFormat, formatDuration } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownRadioGroup } from "@probo/ui/src/v2/Dropdown/DropdownRadioGroup";
+import { DropdownRadioItem } from "@probo/ui/src/v2/Dropdown/DropdownRadioItem";
+import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
+import { DropdownSubmenu } from "@probo/ui/src/v2/Dropdown/DropdownSubmenu";
+import { DropdownSubmenuTrigger } from "@probo/ui/src/v2/Dropdown/DropdownSubmenuTrigger";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { DateCalendar } from "@probo/ui/src/v2/form/DateCalendar";
 import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -40,10 +53,30 @@ import { Link } from "react-router";
 
 import { TASKS_NAMESPACE } from "./i18n";
 import { isOverdueTask } from "./isOverdueTask";
+import { stringifyTaskDuration, taskDurationsEqual } from "./taskDuration";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
-import { type TaskPriority, type TaskState, taskStateKeys, taskStates } from "./taskState";
+import {
+  type TaskPriority,
+  type TaskState,
+  taskPriorities,
+  taskPriorityKeys,
+  taskStateKeys,
+  taskStates,
+} from "./taskState";
 import { TaskStateIcon } from "./TaskStateIcon";
 import { taskListItem } from "./variants";
+
+const noneEstimateValue = "__NONE__";
+
+const estimatePresets = [
+  stringifyTaskDuration(15, "M"),
+  stringifyTaskDuration(30, "M"),
+  stringifyTaskDuration(1, "H"),
+  stringifyTaskDuration(2, "H"),
+  stringifyTaskDuration(4, "H"),
+  stringifyTaskDuration(1, "D"),
+  stringifyTaskDuration(1, "W"),
+].filter((value): value is string => value != null);
 
 export interface TaskListItemAssignee {
   id: string;
@@ -57,6 +90,7 @@ export interface TaskListItemTask {
   name: string;
   state: TaskState;
   priority: TaskPriority;
+  createdAt: string;
   timeEstimate?: string | null;
   deadline?: string | null;
   recurrenceInterval?: string | null;
@@ -72,13 +106,17 @@ export interface TaskListItemProps {
   canUpdate: boolean;
   isUpdating?: boolean;
   detailsTo?: string;
-  assigneeTo?: string;
+  canUpdateAssignee?: boolean;
+  renderAssignee?: (avatar: ReactNode) => ReactNode;
   sectionState?: TaskState;
   canDrag?: boolean;
   isDragging?: boolean;
   isGhost?: boolean;
   ignoreClick?: boolean;
   onStateChange: (state: TaskState) => void;
+  onPriorityChange: (priority: TaskPriority) => void;
+  onDeadlineChange: (deadline: string | null) => void;
+  onTimeEstimateChange: (timeEstimate: string | null) => void;
   onDragStart?: () => void;
   onDragOver?: (event: DragEvent) => void;
   onDrop?: () => void;
@@ -110,11 +148,24 @@ export function TaskListItem(props: TaskListItemProps) {
   const slots = taskListItem({
     linked: props.detailsTo != null,
     interaction: rowInteraction(props, isMouseDown),
-    overdue: isOverdue,
   });
   const { canDrag } = props;
-  const timeEstimate = formatDuration(props.task.timeEstimate, t);
-  const recurrence = formatDuration(props.task.recurrenceInterval, t);
+  const timeEstimate = formatDuration(props.task.timeEstimate, t, {
+    style: "short",
+    locale: i18n.language,
+  });
+  const recurrence = formatDuration(props.task.recurrenceInterval, t, {
+    style: "short",
+    locale: i18n.language,
+  });
+  const createdAt = compactDateFormat(i18n.language, props.task.createdAt);
+  const showAssignee = props.canUpdateAssignee === true || props.task.assignedTo != null;
+  const showEstimate = timeEstimate != null;
+  const showDeadline = props.task.deadline != null;
+  const showMeta = props.task.externalLink != null
+    || showEstimate
+    || showDeadline
+    || recurrence != null;
 
   return (
     <div
@@ -129,7 +180,13 @@ export function TaskListItem(props: TaskListItemProps) {
       onMouseLeave={canDrag ? () => setIsMouseDown(false) : undefined}
     >
       <div className={slots.main()}>
-        <TaskPriorityIcon priority={props.task.priority} />
+        <TaskListItemPriority
+          priority={props.task.priority}
+          canUpdate={props.canUpdate}
+          isUpdating={props.isUpdating}
+          slots={slots}
+          onPriorityChange={props.onPriorityChange}
+        />
         <TaskListItemState
           displayState={displayState}
           taskState={props.task.state}
@@ -156,63 +213,155 @@ export function TaskListItem(props: TaskListItemProps) {
                 </Link>
               )}
         </Text>
-        {props.task.externalLink && (
-          <Anchor
-            className={slots.externalLink()}
-            size={1}
-            color="neutral"
-            href={props.task.externalLink.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {props.task.externalLink.identifier}
-          </Anchor>
+        {showMeta && (
+          <div className={slots.metaGroup()}>
+            {props.task.externalLink && (
+              <Anchor
+                className={slots.externalLink()}
+                size={1}
+                color="neutral"
+                href={props.task.externalLink.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {props.task.externalLink.identifier}
+              </Anchor>
+            )}
+            {showEstimate && (
+              <TaskListItemEstimate
+                timeEstimate={props.task.timeEstimate}
+                label={timeEstimate}
+                canUpdate={props.canUpdate}
+                isUpdating={props.isUpdating}
+                slots={slots}
+                onTimeEstimateChange={props.onTimeEstimateChange}
+              />
+            )}
+            {showDeadline && (
+              <TaskListItemDeadline
+                deadline={props.task.deadline}
+                isOverdue={isOverdue}
+                canUpdate={props.canUpdate}
+                isUpdating={props.isUpdating}
+                slots={slots}
+                onDeadlineChange={props.onDeadlineChange}
+              />
+            )}
+            {recurrence && (
+              <span
+                className={slots.meta()}
+                title={t("recurringBadge.tooltip", { interval: recurrence })}
+              >
+                <ArrowsClockwiseIcon className={slots.metaIcon()} weight="bold" />
+                <Text size={1} color="current">
+                  {recurrence}
+                </Text>
+              </span>
+            )}
+          </div>
         )}
-        {timeEstimate && (
-          <span
-            className={slots.meta()}
-            title={t("metadata.timeEstimate")}
-          >
-            <ClockIcon />
-            <Text size={1} color="current">
-              {timeEstimate}
-            </Text>
-          </span>
-        )}
-        {props.task.deadline && (
-          <span
-            className={slots.deadline()}
-            title={t("metadata.deadline")}
-          >
-            <CalendarDotIcon />
-            <Text size={1} color="current">
-              <time dateTime={props.task.deadline}>
-                {dateFormat(i18n.language, props.task.deadline)}
-              </time>
-            </Text>
-          </span>
-        )}
-        {recurrence && (
-          <span
-            className={slots.meta()}
-            title={t("recurringBadge.tooltip", { interval: recurrence })}
-          >
-            <ArrowsClockwiseIcon />
-            <Text size={1} color="current">
-              {recurrence}
-            </Text>
-          </span>
-        )}
-        {props.task.assignedTo?.fullName && (
+        {showAssignee && (
           <div className={slots.trailing()}>
             <TaskListItemAssignee
               assignee={props.task.assignedTo}
-              to={props.assigneeTo}
+              canUpdate={props.canUpdateAssignee === true}
               className={slots.assignee()}
+              renderAssignee={props.renderAssignee}
             />
           </div>
         )}
+        {createdAt !== "" && (
+          <Tooltip>
+            <TooltipTrigger
+              render={(
+                <span className={slots.created()} aria-label={t("fields.createdAt")}>
+                  <Text size={1} color="current">
+                    <time dateTime={props.task.createdAt}>
+                      {createdAt}
+                    </time>
+                  </Text>
+                </span>
+              )}
+            />
+            <TooltipPopup>{t("fields.createdAt")}</TooltipPopup>
+          </Tooltip>
+        )}
       </div>
+    </div>
+  );
+}
+
+function TaskListItemPriority({
+  priority,
+  canUpdate,
+  isUpdating,
+  slots,
+  onPriorityChange,
+}: {
+  priority: TaskPriority;
+  canUpdate: boolean;
+  isUpdating?: boolean;
+  slots: ReturnType<typeof taskListItem>;
+  onPriorityChange: (priority: TaskPriority) => void;
+}): ReactNode {
+  const { t } = useTranslation(TASKS_NAMESPACE);
+  const label = t(`priorities.${taskPriorityKeys[priority]}`);
+  const icon = <TaskPriorityIcon priority={priority} />;
+
+  if (!canUpdate) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={(
+            <span aria-label={label}>
+              {icon}
+            </span>
+          )}
+        />
+        <TooltipPopup>{label}</TooltipPopup>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <div className={slots.state()}>
+      <Select
+        value={priority}
+        disabled={isUpdating}
+        onValueChange={(next: TaskPriority | null) => {
+          if (next != null && next !== priority) {
+            onPriorityChange(next);
+          }
+        }}
+      >
+        <Tooltip>
+          <TooltipTrigger
+            render={(
+              <SelectTrigger
+                size={1}
+                variant="ghost"
+                className={slots.iconTrigger()}
+                aria-label={label}
+              >
+                {(selected: TaskPriority | null) => selected == null
+                  ? null
+                  : <TaskPriorityIcon priority={selected} />}
+              </SelectTrigger>
+            )}
+          />
+          <TooltipPopup>{label}</TooltipPopup>
+        </Tooltip>
+        <SelectPopup align="start">
+          {taskPriorities.map(item => (
+            <SelectItem key={item} value={item}>
+              <span className={slots.stateOption()}>
+                <TaskPriorityIcon priority={item} />
+                {t(`priorities.${taskPriorityKeys[item]}`)}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
     </div>
   );
 }
@@ -268,7 +417,7 @@ function TaskListItemState({
               <SelectTrigger
                 size={1}
                 variant="ghost"
-                className={slots.stateTrigger()}
+                className={slots.iconTrigger()}
                 aria-label={label}
               >
                 {(state: TaskState | null) => state == null
@@ -294,47 +443,361 @@ function TaskListItemState({
   );
 }
 
+function TaskListItemEstimate({
+  timeEstimate,
+  label,
+  canUpdate,
+  isUpdating,
+  slots,
+  onTimeEstimateChange,
+}: {
+  timeEstimate?: string | null;
+  label: string | null;
+  canUpdate: boolean;
+  isUpdating?: boolean;
+  slots: ReturnType<typeof taskListItem>;
+  onTimeEstimateChange: (timeEstimate: string | null) => void;
+}): ReactNode {
+  const { t, i18n } = useTranslation(TASKS_NAMESPACE);
+  const chip = (
+    <span className={slots.meta()}>
+      <ClockIcon className={slots.metaIcon()} weight="bold" />
+      {label && (
+        <Text size={1} color="current">
+          {label}
+        </Text>
+      )}
+    </span>
+  );
+
+  if (!canUpdate) {
+    return (
+      <span className={slots.meta()} title={t("metadata.timeEstimate")}>
+        <ClockIcon className={slots.metaIcon()} weight="bold" />
+        {label && (
+          <Text size={1} color="current">
+            {label}
+          </Text>
+        )}
+      </span>
+    );
+  }
+
+  const selected = matchingEstimatePreset(timeEstimate) ?? noneEstimateValue;
+  const options = estimateOptions(timeEstimate);
+
+  return (
+    <div className={slots.state()}>
+      <Select
+        value={selected}
+        disabled={isUpdating}
+        onValueChange={(next: string | null) => {
+          const resolved = next == null || next === noneEstimateValue ? null : next;
+          if (resolved === timeEstimate || (
+            resolved != null
+            && timeEstimate != null
+            && taskDurationsEqual(resolved, timeEstimate)
+          )) {
+            return;
+          }
+          onTimeEstimateChange(resolved);
+        }}
+      >
+        <Tooltip>
+          <TooltipTrigger
+            render={(
+              <SelectTrigger
+                size={1}
+                variant="ghost"
+                className={slots.stateTrigger()}
+                aria-label={t("metadata.timeEstimate")}
+              >
+                {chip}
+              </SelectTrigger>
+            )}
+          />
+          <TooltipPopup>{t("metadata.timeEstimate")}</TooltipPopup>
+        </Tooltip>
+        <SelectPopup align="end">
+          <SelectItem value={noneEstimateValue}>
+            {t("durationPicker.none")}
+          </SelectItem>
+          {options.map(value => (
+            <SelectItem key={value} value={value}>
+              {formatDuration(value, t, { style: "short", locale: i18n.language })}
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
+    </div>
+  );
+}
+
+function TaskListItemDeadline({
+  deadline,
+  isOverdue,
+  canUpdate,
+  isUpdating,
+  slots,
+  onDeadlineChange,
+}: {
+  deadline?: string | null;
+  isOverdue: boolean;
+  canUpdate: boolean;
+  isUpdating?: boolean;
+  slots: ReturnType<typeof taskListItem>;
+  onDeadlineChange: (deadline: string | null) => void;
+}): ReactNode {
+  const { t, i18n } = useTranslation(TASKS_NAMESPACE);
+  const [open, setOpen] = useState(false);
+  const label = deadline == null ? null : deadlineDateFormat(i18n.language, deadline);
+  const icon = isOverdue
+    ? <CalendarXIcon className={slots.deadlineIcon()} weight="bold" />
+    : <CalendarDotIcon className={slots.deadlineIcon()} weight="bold" />;
+
+  function commitDeadline(next: string | null) {
+    if (toDateInput(next) === toDateInput(deadline)) {
+      return;
+    }
+    onDeadlineChange(next);
+    setOpen(false);
+  }
+
+  if (!canUpdate) {
+    return (
+      <span className={slots.deadline()} title={t("metadata.deadline")}>
+        {icon}
+        {label && (
+          <Text size={1} color="current">
+            <time dateTime={deadline ?? undefined}>
+              {label}
+            </time>
+          </Text>
+        )}
+      </span>
+    );
+  }
+
+  return (
+    <Dropdown
+      open={open}
+      onOpenChange={(next, details) => {
+        if (!next && isDatePickerDismiss(details)) {
+          return;
+        }
+        setOpen(next);
+      }}
+    >
+      <Tooltip>
+        <TooltipTrigger
+          render={(
+            <DropdownTrigger
+              disabled={isUpdating}
+              render={(
+                <button
+                  type="button"
+                  className={`${slots.deadline()} ${slots.chipTrigger()}`}
+                  aria-label={t("metadata.deadline")}
+                >
+                  {icon}
+                  {label && (
+                    <Text size={1} color="current">
+                      <time dateTime={deadline ?? undefined}>
+                        {label}
+                      </time>
+                    </Text>
+                  )}
+                </button>
+              )}
+            />
+          )}
+        />
+        <TooltipPopup>{t("metadata.deadline")}</TooltipPopup>
+      </Tooltip>
+      <DropdownPopup size={1} align="end">
+        <DropdownRadioGroup
+          value={deadlinePreset(deadline, i18n.language)}
+          onValueChange={(preset) => {
+            if (typeof preset !== "string") {
+              return;
+            }
+            commitDeadline(deadlineFromPreset(preset, i18n.language));
+          }}
+        >
+          <DropdownRadioItem value="today">{t("deadlinePicker.today")}</DropdownRadioItem>
+          <DropdownRadioItem value="tomorrow">{t("deadlinePicker.tomorrow")}</DropdownRadioItem>
+          <DropdownRadioItem value="endOfWeek">{t("deadlinePicker.endOfWeek")}</DropdownRadioItem>
+          <DropdownRadioItem value="nextWeek">{t("deadlinePicker.nextWeek")}</DropdownRadioItem>
+        </DropdownRadioGroup>
+        <DropdownSeparator />
+        <DropdownSubmenu>
+          <DropdownSubmenuTrigger>{t("deadlinePicker.custom")}</DropdownSubmenuTrigger>
+          <DropdownPopup side="right" align="start" size={1}>
+            <div className={slots.deadlineCustom()}>
+              <DateCalendar
+                size={1}
+                locale={i18n.language}
+                value={toDateInput(deadline)}
+                onValueChange={(next) => {
+                  commitDeadline(next === "" ? null : formatDatetime(next) ?? null);
+                }}
+              />
+            </div>
+          </DropdownPopup>
+        </DropdownSubmenu>
+        <DropdownSeparator />
+        <DropdownItem
+          onClick={() => {
+            commitDeadline(null);
+          }}
+        >
+          {t("deadlinePicker.none")}
+        </DropdownItem>
+      </DropdownPopup>
+    </Dropdown>
+  );
+}
+
 function TaskListItemAssignee({
   assignee,
-  to,
+  canUpdate,
   className,
+  renderAssignee,
 }: {
-  assignee: TaskListItemAssignee;
-  to?: string;
+  assignee?: TaskListItemAssignee | null;
+  canUpdate: boolean;
   className: string;
+  renderAssignee?: (avatar: ReactNode) => ReactNode;
 }): ReactNode {
+  const { t } = useTranslation(TASKS_NAMESPACE);
+  const label = assignee?.fullName ?? t("unassigned");
   const avatar = (
     <Avatar
       size={1}
       radius="full"
-      name={assignee.fullName}
-      email={assignee.emailAddress}
-      src={assignee.avatarUrl}
+      name={assignee?.fullName}
+      email={assignee?.emailAddress}
+      src={assignee?.avatarUrl}
+      fallback={assignee == null ? <UserIcon weight="bold" /> : undefined}
     />
   );
+
+  if (canUpdate && renderAssignee != null) {
+    return <div className={className}>{renderAssignee(avatar)}</div>;
+  }
 
   return (
     <Tooltip>
       <TooltipTrigger
-        render={
-          to === undefined
-            ? (
-                <span className={className} aria-label={assignee.fullName}>
-                  {avatar}
-                </span>
-              )
-            : (
-                <Link
-                  className={className}
-                  to={to}
-                  aria-label={assignee.fullName}
-                >
-                  {avatar}
-                </Link>
-              )
-        }
+        render={(
+          <span className={className} aria-label={label}>
+            {avatar}
+          </span>
+        )}
       />
-      <TooltipPopup>{assignee.fullName}</TooltipPopup>
+      <TooltipPopup>{label}</TooltipPopup>
     </Tooltip>
   );
+}
+
+function matchingEstimatePreset(value?: string | null): string | null {
+  if (value == null) {
+    return null;
+  }
+  return estimatePresets.find(preset => taskDurationsEqual(preset, value)) ?? value;
+}
+
+function estimateOptions(value?: string | null): string[] {
+  const selected = matchingEstimatePreset(value);
+  if (selected == null || estimatePresets.includes(selected)) {
+    return estimatePresets;
+  }
+  return [selected, ...estimatePresets];
+}
+
+function dateInputPlusDays(days: number): string {
+  const today = parseDate(todayAsDateInput());
+  const next = new Date(today.getFullYear(), today.getMonth(), today.getDate() + days);
+  const year = String(next.getFullYear()).padStart(4, "0");
+  const month = String(next.getMonth() + 1).padStart(2, "0");
+  const day = String(next.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function deadlineFromPreset(preset: string, locale: string): string | null {
+  if (preset === "none") {
+    return null;
+  }
+  if (preset === "endOfWeek") {
+    return formatDatetime(endOfWeekDateInput(locale)) ?? null;
+  }
+  const days = preset === "today" ? 0 : preset === "tomorrow" ? 1 : preset === "nextWeek" ? 7 : null;
+  if (days == null) {
+    return null;
+  }
+  return formatDatetime(dateInputPlusDays(days)) ?? null;
+}
+
+function deadlinePreset(deadline: string | null | undefined, locale: string): string {
+  const current = toDateInput(deadline);
+  if (current === "") {
+    return "none";
+  }
+  if (current === todayAsDateInput()) {
+    return "today";
+  }
+  if (current === dateInputPlusDays(1)) {
+    return "tomorrow";
+  }
+  if (current === endOfWeekDateInput(locale)) {
+    return "endOfWeek";
+  }
+  if (current === dateInputPlusDays(7)) {
+    return "nextWeek";
+  }
+  return "";
+}
+
+function endOfWeekDateInput(locale: string): string {
+  const today = parseDate(todayAsDateInput());
+  let delta = weekEndDay(locale) - today.getDay();
+  if (delta < 0) {
+    delta += 7;
+  }
+  return dateInputPlusDays(delta);
+}
+
+function weekEndDay(locale: string): number {
+  try {
+    const intlLocale = new Intl.Locale(locale);
+    const withWeekInfo = intlLocale as Intl.Locale & {
+      weekInfo?: { firstDay?: number };
+      getWeekInfo?: () => { firstDay?: number };
+    };
+    const weekInfo = typeof withWeekInfo.getWeekInfo === "function"
+      ? withWeekInfo.getWeekInfo()
+      : withWeekInfo.weekInfo;
+    const firstDay = weekInfo?.firstDay;
+    if (firstDay == null) {
+      return 0;
+    }
+    const start = firstDay === 7 ? 0 : firstDay;
+    return (start + 6) % 7;
+  } catch {
+    return 0;
+  }
+}
+
+function isDatePickerDismiss(details: {
+  reason: string;
+  event?: Event;
+}): boolean {
+  if (details.reason !== "focus-out" && details.reason !== "outside-press") {
+    return false;
+  }
+  const target = details.reason === "focus-out" && details.event instanceof FocusEvent
+    ? details.event.relatedTarget
+    : details.event?.target;
+  return target instanceof Element
+    && target.closest("[role='dialog'], [role='listbox'], [role='option']") != null;
 }

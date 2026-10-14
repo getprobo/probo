@@ -17,6 +17,18 @@
   "emptyValue": "—",
   "doesNotRepeat": "Ne se répète pas",
   "noResults": "Aucune tâche ne correspond à vos filtres",
+  "unassigned": "Non assigné",
+  "deadlinePicker": {
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "endOfWeek": "Fin de semaine",
+    "nextWeek": "La semaine prochaine",
+    "custom": "Personnalisée",
+    "none": "Aucune"
+  },
+  "durationPicker": {
+    "none": "Aucune"
+  },
   "fields": {
     "name": "Nom",
     "description": "Description",
@@ -110,6 +122,13 @@
     "min_one": "{{count}} minute",
     "min_other": "{{count}} minutes",
     "hour_one": "{{count}} heure",
-    "hour_other": "{{count}} heures"
+    "hour_other": "{{count}} heures",
+    "yearShort": "{{count}} an",
+    "monthShort": "{{count}} mois",
+    "weekShort": "{{count}} sem.",
+    "dayShort": "{{count}} j",
+    "hourShort": "{{count}} h",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} s"
   }
 }

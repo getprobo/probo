@@ -18,43 +18,62 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  CellSignalFullIcon,
-  CellSignalLowIcon,
-  CellSignalMediumIcon,
-  WarningCircleIcon,
-} from "@phosphor-icons/react";
+import { WarningDiamondIcon } from "@phosphor-icons/react";
 import { tv } from "tailwind-variants/lite";
 
 import type { TaskPriority } from "./taskState";
 
 const taskPriorityIcon = tv({
-  base: "size-4 shrink-0",
+  slots: {
+    root: "flex size-4 shrink-0 items-end justify-center gap-px p-px",
+    bar: "w-[3px] rounded-full",
+    urgent: "size-4 shrink-0 text-red-11",
+  },
   variants: {
-    priority: {
-      LOW: "text-sand-10",
-      MEDIUM: "text-sand-11",
-      HIGH: "text-sand-12",
-      URGENT: "text-red-11",
+    tone: {
+      idle: { bar: "bg-sand-6" },
+      low: { bar: "bg-sand-10" },
+      medium: { bar: "bg-sand-11" },
+      high: { bar: "bg-sand-12" },
     },
   },
 });
+
+const barHeights = ["h-1", "h-2", "h-3"] as const;
+
+const activeTone = {
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+} as const;
+
+const activeBars = {
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+} as const;
 
 export interface TaskPriorityIconProps {
   priority: TaskPriority;
 }
 
 export function TaskPriorityIcon({ priority }: TaskPriorityIconProps) {
-  const className = taskPriorityIcon({ priority });
-
-  switch (priority) {
-    case "LOW":
-      return <CellSignalLowIcon className={className} aria-hidden />;
-    case "MEDIUM":
-      return <CellSignalMediumIcon className={className} aria-hidden />;
-    case "HIGH":
-      return <CellSignalFullIcon className={className} aria-hidden />;
-    case "URGENT":
-      return <WarningCircleIcon className={className} weight="fill" aria-hidden />;
+  const slots = taskPriorityIcon();
+  if (priority === "URGENT") {
+    return <WarningDiamondIcon className={slots.urgent()} weight="fill" aria-hidden />;
   }
+
+  const filled = activeBars[priority];
+  const tone = activeTone[priority];
+
+  return (
+    <span className={slots.root()} aria-hidden>
+      {barHeights.map((height, index) => (
+        <span
+          key={height}
+          className={`${taskPriorityIcon({ tone: index < filled ? tone : "idle" }).bar()} ${height}`}
+        />
+      ))}
+    </span>
+  );
 }

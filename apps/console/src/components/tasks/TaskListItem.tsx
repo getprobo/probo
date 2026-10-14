@@ -18,14 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TaskListItem as SharedTaskListItem, type TaskState } from "@probo/tasks";
+import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
+import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
+import { UserSelect } from "#/components/form/UserSelect";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
+
+const noneValue = "__NONE__";
 
 const taskListItemFragment = graphql`
   fragment TaskListItem_task on Task {
@@ -33,6 +37,7 @@ const taskListItemFragment = graphql`
     name
     state
     priority
+    createdAt
     timeEstimate
     deadline
     recurrenceInterval
@@ -79,22 +84,33 @@ interface TaskListItemProps {
 }
 
 export function TaskListItem(props: TaskListItemProps) {
+  const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const { canUpdate, ...task } = useFragment(taskListItemFragment, props.taskKey);
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
     updateStateMutation,
   );
+  const assignedTo = task.assignedTo;
 
-  function onStateChange(state: TaskState) {
+  function updateTask(input: {
+    state?: TaskState;
+    assignedToId?: string | null;
+    priority?: TaskPriority;
+    deadline?: string | null;
+    timeEstimate?: string | null;
+    recurrenceInterval?: string | null;
+  }) {
     void updateState({
       variables: {
         input: {
           taskId: task.id,
-          state,
+          ...input,
         },
       },
       onCompleted: () => {
-        props.onStateChange?.();
+        if (input.state != null) {
+          props.onStateChange?.();
+        }
       },
     }).catch(() => {
       // Error feedback is handled by useMutation.
@@ -108,31 +124,71 @@ export function TaskListItem(props: TaskListItemProps) {
         name: task.name,
         state: task.state,
         priority: task.priority,
+        createdAt: task.createdAt,
         timeEstimate: task.timeEstimate,
         deadline: task.deadline,
         recurrenceInterval: task.recurrenceInterval,
         externalLink: task.externalLink,
-        assignedTo: task.assignedTo == null
+        assignedTo: assignedTo == null
           ? null
           : {
-              id: task.assignedTo.id,
-              fullName: task.assignedTo.fullName,
-              emailAddress: task.assignedTo.emailAddress,
-              avatarUrl: task.assignedTo.avatar?.downloadUrl,
+              id: assignedTo.id,
+              fullName: assignedTo.fullName,
+              emailAddress: assignedTo.emailAddress,
+              avatarUrl: assignedTo.avatar?.downloadUrl,
             },
       }}
       canUpdate={canUpdate}
+      canUpdateAssignee={canUpdate}
       isUpdating={isUpdating}
       detailsTo={taskDetailsPath(organizationId, task.id)}
-      assigneeTo={task.assignedTo
-        ? `/organizations/${organizationId}/settings/users/${task.assignedTo.id}`
+      renderAssignee={canUpdate
+        ? avatar => (
+            <UserSelect
+              trigger={avatar}
+              value={assignedTo?.id ?? null}
+              disabled={isUpdating || props.ignoreClick}
+              onValueChange={(assignedToId) => {
+                updateTask({ assignedToId });
+              }}
+              emptyLabel={t("detailsPage.unassigned")}
+              emptyValue={noneValue}
+              ariaLabel={t("detailsPage.fields.assignedTo")}
+              size={1}
+              contractEnded={false}
+              pinned={assignedTo == null
+                ? null
+                : {
+                    id: assignedTo.id,
+                    fullName: assignedTo.fullName,
+                    emailAddress: assignedTo.emailAddress,
+                    avatarUrl: assignedTo.avatar?.downloadUrl,
+                  }}
+            />
+          )
         : undefined}
       sectionState={props.sectionState}
       canDrag={props.canDrag}
       isDragging={props.isDragging}
       isGhost={props.isGhost}
       ignoreClick={props.ignoreClick}
-      onStateChange={onStateChange}
+      onStateChange={(state) => {
+        updateTask({ state });
+      }}
+      onPriorityChange={(priority) => {
+        updateTask({ priority });
+      }}
+      onDeadlineChange={(deadline) => {
+        updateTask({
+          deadline,
+          ...(deadline == null && task.recurrenceInterval != null
+            ? { recurrenceInterval: null }
+            : {}),
+        });
+      }}
+      onTimeEstimateChange={(timeEstimate) => {
+        updateTask({ timeEstimate });
+      }}
       onDragStart={props.onDragStart}
       onDragOver={props.onDragOver}
       onDrop={props.onDrop}

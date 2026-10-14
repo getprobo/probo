@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TaskListItem, type TaskState } from "@probo/tasks";
+import { TaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { TasksPageTaskListItem_task$key } from "#/__generated__/core/TasksPageTaskListItem_task.graphql";
@@ -35,6 +35,7 @@ const tasksPageTaskListItemFragment = graphql`
     name
     state
     priority
+    createdAt
     timeEstimate
     deadline
     recurrenceInterval
@@ -78,25 +79,33 @@ export function TasksPageTaskListItem({
     updateStateMutation,
   );
 
-  function onStateChange(state: TaskState) {
-    const move = taskListStateMoveUpdaters(environment, {
-      taskId: task.id,
-      nextState: state,
-      organizationId,
-      query: graphqlQuery,
-    });
+  function updateTask(input: {
+    state?: TaskState;
+    priority?: TaskPriority;
+    deadline?: string | null;
+    timeEstimate?: string | null;
+    recurrenceInterval?: string | null;
+  }) {
+    const move = input.state == null
+      ? null
+      : taskListStateMoveUpdaters(environment, {
+          taskId: task.id,
+          nextState: input.state,
+          organizationId,
+          query: graphqlQuery,
+        });
     void updateState({
       variables: {
         input: {
           taskId: task.id,
-          state,
+          ...input,
         },
       },
       optimisticUpdater(store) {
-        move.optimisticUpdater(store);
+        move?.optimisticUpdater(store);
       },
       updater(store) {
-        move.updater(store);
+        move?.updater(store);
       },
     }).catch(() => {
       // Error feedback is handled by useMutation.
@@ -110,6 +119,7 @@ export function TasksPageTaskListItem({
         name: task.name,
         state: task.state,
         priority: task.priority,
+        createdAt: task.createdAt,
         timeEstimate: task.timeEstimate,
         deadline: task.deadline,
         recurrenceInterval: task.recurrenceInterval,
@@ -125,7 +135,23 @@ export function TasksPageTaskListItem({
       canUpdate={canUpdate}
       isUpdating={isUpdating}
       sectionState={sectionState}
-      onStateChange={onStateChange}
+      onStateChange={(state) => {
+        updateTask({ state });
+      }}
+      onPriorityChange={(priority) => {
+        updateTask({ priority });
+      }}
+      onDeadlineChange={(deadline) => {
+        updateTask({
+          deadline,
+          ...(deadline == null && task.recurrenceInterval != null
+            ? { recurrenceInterval: null }
+            : {}),
+        });
+      }}
+      onTimeEstimateChange={(timeEstimate) => {
+        updateTask({ timeEstimate });
+      }}
     />
   );
 }
