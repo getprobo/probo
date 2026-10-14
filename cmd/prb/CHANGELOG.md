@@ -4,6 +4,18 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.247.0] - 2026-10-14
+
+### Added
+
+- `file upload` uploads a private file to embed in rich text
+
+### Changed
+
+- `--content` on document, task, task comment, and risk analysis
+  commands accepts markdown or ProseMirror JSON. Images and links to
+  `/api/files/v1/{id}` are kept
+
 ## [0.246.1] - 2026-10-14
 
 ### Fixed
