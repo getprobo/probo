@@ -21,7 +21,6 @@
 import { lazy } from "@probo/react-lazy";
 import type { AppRoute } from "@probo/routes";
 
-import { TaskDetailsPageSkeleton } from "./TaskDetailsPageSkeleton";
 import { TasksPageSkeleton } from "./TasksPageSkeleton";
 
 export const tasksRoutes = [
@@ -29,10 +28,5 @@ export const tasksRoutes = [
     path: "tasks",
     Fallback: TasksPageSkeleton,
     Component: lazy(() => import("#/pages/tasks/TasksPageLoader")),
-  },
-  {
-    path: "tasks/:taskId",
-    Fallback: TaskDetailsPageSkeleton,
-    Component: lazy(() => import("#/pages/tasks/TaskDetailsPageLoader")),
   },
 ] satisfies AppRoute[];

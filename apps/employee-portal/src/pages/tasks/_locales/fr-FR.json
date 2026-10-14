@@ -5,44 +5,5 @@
   "filters": {
     "status": "Statut",
     "allStatuses": "Tous les statuts"
-  },
-  "detail": {
-    "title": "Tâche",
-    "breadcrumb": "Tâche",
-    "notFound": "Tâche introuvable",
-    "noDescription": "Aucune description",
-    "actions": {
-      "cancel": "Annuler"
-    },
-    "messages": {
-      "updated": "Tâche mise à jour."
-    },
-    "errors": {
-      "update": "Échec de la mise à jour de la tâche",
-      "content": "Impossible d'afficher cette description"
-    },
-    "comments": {
-      "actions": {
-        "delete": "Supprimer le commentaire"
-      },
-      "delete": {
-        "title": "Supprimer le commentaire",
-        "description": "Voulez-vous vraiment supprimer ce commentaire ?",
-        "confirm": "Supprimer"
-      },
-      "messages": {
-        "created": "Commentaire ajouté.",
-        "updated": "Commentaire mis à jour.",
-        "deleted": "Commentaire supprimé."
-      },
-      "errors": {
-        "create": "Échec de l'ajout du commentaire",
-        "update": "Échec de la mise à jour du commentaire",
-        "delete": "Échec de la suppression du commentaire",
-        "content": "Impossible d'afficher ce commentaire",
-        "contentRequired": "Saisissez un commentaire",
-        "contentTooLong": "Le commentaire doit contenir au plus {{max}} caractères"
-      }
-    }
   }
 }

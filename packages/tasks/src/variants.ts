@@ -74,7 +74,7 @@ export const taskListRow = tv({
 
 export const taskListItem = tv({
   slots: {
-    root: "relative flex items-center gap-3 px-6 py-3 hover:bg-sand-2",
+    root: "relative flex items-center gap-3 px-6 py-3",
     main: "flex min-w-0 flex-1 items-center gap-3",
     title: "min-w-0 truncate",
     titleLink: "hover:underline after:absolute after:inset-0 after:content-['']",
@@ -88,6 +88,10 @@ export const taskListItem = tv({
     stateOption: "flex items-center gap-2",
   },
   variants: {
+    linked: {
+      true: { root: "hover:bg-sand-2" },
+      false: {},
+    },
     interaction: {
       idle: { root: "" },
       grab: { root: "cursor-grab select-none" },
@@ -101,6 +105,7 @@ export const taskListItem = tv({
     },
   },
   defaultVariants: {
+    linked: true,
     interaction: "idle",
     overdue: false,
   },

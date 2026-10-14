@@ -21,8 +21,6 @@
 import { type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
-export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
-
 export const taskListConnectionKeys = {
   IN_PROGRESS: "useTasksPageListGroups_inProgress__inProgressTasks",
   TODO: "useTasksPageListGroups_todo__todoTasks",
@@ -56,17 +54,5 @@ export function taskListConnectionId(
     viewerId,
     taskListConnectionKeys[state],
     taskListConnectionFilters(organizationId, query, state),
-  );
-}
-
-const taskCommentsConnectionFilters = {
-  orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
-};
-
-export function taskCommentsConnectionId(taskId: string) {
-  return ConnectionHandler.getConnectionID(
-    taskId,
-    taskCommentsConnectionKey,
-    taskCommentsConnectionFilters,
   );
 }

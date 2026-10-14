@@ -70,7 +70,7 @@ export function TasksPageTaskListItem({
   taskKey,
   sectionState,
 }: TasksPageTaskListItemProps) {
-  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const { organizationId } = useEmployeePortalRoute();
   const { graphqlQuery } = useTasksFilters();
   const environment = useRelayEnvironment();
   const { canUpdate, ...task } = useFragment(tasksPageTaskListItemFragment, taskKey);
@@ -124,7 +124,6 @@ export function TasksPageTaskListItem({
       }}
       canUpdate={canUpdate}
       isUpdating={isUpdating}
-      detailsTo={`/${employeePortalId}/tasks/${task.id}`}
       sectionState={sectionState}
       onStateChange={onStateChange}
     />

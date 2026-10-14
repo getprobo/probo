@@ -71,7 +71,7 @@ export interface TaskListItemProps {
   task: TaskListItemTask;
   canUpdate: boolean;
   isUpdating?: boolean;
-  detailsTo: string;
+  detailsTo?: string;
   assigneeTo?: string;
   sectionState?: TaskState;
   canDrag?: boolean;
@@ -108,6 +108,7 @@ export function TaskListItem(props: TaskListItemProps) {
   const displayState = props.sectionState ?? props.task.state;
   const isOverdue = isOverdueTask(props.task.deadline, displayState);
   const slots = taskListItem({
+    linked: props.detailsTo != null,
     interaction: rowInteraction(props, isMouseDown),
     overdue: isOverdue,
   });
@@ -138,18 +139,22 @@ export function TaskListItem(props: TaskListItemProps) {
           onStateChange={props.onStateChange}
         />
         <Text size={2} weight="medium" className={slots.title()}>
-          <Link
-            to={props.detailsTo}
-            className={slots.titleLink()}
-            draggable={false}
-            onClick={(event) => {
-              if (props.ignoreClick) {
-                event.preventDefault();
-              }
-            }}
-          >
-            {props.task.name}
-          </Link>
+          {props.detailsTo == null
+            ? props.task.name
+            : (
+                <Link
+                  to={props.detailsTo}
+                  className={slots.titleLink()}
+                  draggable={false}
+                  onClick={(event) => {
+                    if (props.ignoreClick) {
+                      event.preventDefault();
+                    }
+                  }}
+                >
+                  {props.task.name}
+                </Link>
+              )}
         </Text>
         {props.task.externalLink && (
           <Anchor
