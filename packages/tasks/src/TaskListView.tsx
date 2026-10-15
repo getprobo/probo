@@ -21,14 +21,19 @@
 import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { type ReactNode, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 
 import { flattenTaskListItems, type TaskListFlatItem } from "./flattenTaskListItems";
 import { TASKS_NAMESPACE } from "./i18n";
 import { TaskListGroupHeader } from "./TaskListGroupHeader";
 import { TaskListRowFrame } from "./TaskListRowFrame";
-import { taskListItemSize } from "./taskListSize";
+import {
+  taskListGroupHeaderGap,
+  taskListGroupHeaderOffset,
+  taskListGroupHeaderSize,
+  taskListItemSize,
+} from "./taskListSize";
 import type { TaskState } from "./taskState";
 import { type TaskListLoadNext, useTasksListFill } from "./useTasksListFill";
 import { taskList, taskListView } from "./variants";
@@ -67,6 +72,57 @@ function nearestOverflowParent(element: HTMLElement | null): HTMLElement | null 
   return null;
 }
 
+const pinnedHeaderHeight = taskListGroupHeaderSize + taskListGroupHeaderGap;
+
+interface PinnedTaskGroupHeader {
+  index: number;
+  shift: number;
+}
+
+function pinnedTaskGroupHeader<T>(
+  items: readonly TaskListFlatItem<T>[],
+  headerIndexes: readonly number[],
+  measurements: readonly { start: number }[],
+  scrolledIntoList: number,
+): PinnedTaskGroupHeader | null {
+  if (measurements.length !== items.length) {
+    return null;
+  }
+
+  let activeIndex = -1;
+  let nextStart: number | null = null;
+  for (const index of headerIndexes) {
+    const item = items[index];
+    if (item.type !== "header") {
+      continue;
+    }
+
+    const contentStart = measurements[index].start
+      + (item.offset ? taskListGroupHeaderOffset : 0);
+    if (contentStart > scrolledIntoList) {
+      if (activeIndex >= 0) {
+        nextStart = measurements[index].start;
+      }
+      break;
+    }
+    activeIndex = index;
+  }
+
+  if (activeIndex < 0) {
+    return null;
+  }
+
+  const shift = nextStart == null
+    ? 0
+    : Math.min(0, nextStart - scrolledIntoList - pinnedHeaderHeight);
+
+  return { index: activeIndex, shift };
+}
+
+function listOffsetInScrollParent(scroll: HTMLElement, list: HTMLElement): number {
+  return list.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop;
+}
+
 function flatItemKey<T extends TaskListViewItem>(
   item: TaskListFlatItem<T>,
   index: number,
@@ -94,6 +150,7 @@ export function TaskListView<T extends TaskListViewItem>({
   );
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+  const [listOffset, setListOffset] = useState(0);
   const [, startTransition] = useTransition();
   const visibleGroups = groups.filter(
     group => selectedState == null || group.state === selectedState,
@@ -111,6 +168,16 @@ export function TaskListView<T extends TaskListViewItem>({
     ),
     [closedStates, visibleGroups],
   );
+  const headerIndexes = useMemo(() => {
+    const indexes: number[] = [];
+    for (let index = 0; index < flatItems.length; index += 1) {
+      if (flatItems[index].type === "header") {
+        indexes.push(index);
+      }
+    }
+    return indexes;
+  }, [flatItems]);
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: flatItems.length,
     getScrollElement: () => scrollElement,
@@ -118,7 +185,17 @@ export function TaskListView<T extends TaskListViewItem>({
     overscan: 8,
     getItemKey: index => flatItemKey(flatItems[index], index),
   });
+  const scrollOffset = virtualizer.scrollOffset;
   const virtualItems = virtualizer.getVirtualItems();
+  const pinned = scrollOffset == null
+    ? null
+    : pinnedTaskGroupHeader(
+        flatItems,
+        headerIndexes,
+        virtualizer.measurementsCache,
+        scrollOffset - listOffset,
+      );
+  const pinnedItem = pinned == null ? null : flatItems[pinned.index];
   const fillRange = virtualItems.length === 0
     ? null
     : {
@@ -143,6 +220,31 @@ export function TaskListView<T extends TaskListViewItem>({
   useEffect(() => {
     setScrollElement(nearestOverflowParent(listRef.current));
   }, []);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (list == null || scrollElement == null) {
+      return;
+    }
+
+    const listElement = list;
+    const scroll = scrollElement;
+    function measure() {
+      const next = listOffsetInScrollParent(scroll, listElement);
+      setListOffset(current => (Math.abs(current - next) < 0.5 ? current : next));
+    }
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(scrollElement);
+    for (const child of scrollElement.children) {
+      observer.observe(child);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [flatItems, scrollElement]);
 
   function onGroupOpenChange(state: TaskState, open: boolean) {
     setClosedStates((current) => {
@@ -176,18 +278,36 @@ export function TaskListView<T extends TaskListViewItem>({
       aria-busy={busy || isFilling || undefined}
     >
       <TooltipProvider>
+        {pinnedItem?.type === "header" && pinned != null && (
+          <div className="sticky top-0 z-2 h-0">
+            <div
+              className="bg-sand-2"
+              style={pinned.shift === 0 ? undefined : { transform: `translateY(${pinned.shift}px)` }}
+            >
+              <TaskListGroupHeader
+                state={pinnedItem.state}
+                count={pinnedItem.count}
+                open={!closedStates.has(pinnedItem.state)}
+                offset={false}
+                onOpenChange={open => onGroupOpenChange(pinnedItem.state, open)}
+              />
+            </div>
+          </div>
+        )}
         <div
           className="relative w-full"
           style={{ height: virtualizer.getTotalSize() }}
         >
-          {virtualizer.getVirtualItems().map((virtualItem) => {
+          {virtualItems.map((virtualItem) => {
             const item = flatItems[virtualItem.index];
+            const pinnedAway = pinned != null && virtualItem.index === pinned.index;
             return (
               <div
                 key={virtualItem.key}
                 data-index={virtualItem.index}
                 ref={virtualizer.measureElement}
-                className="absolute top-0 left-0 w-full"
+                className={`absolute top-0 left-0 w-full${pinnedAway ? " invisible" : ""}`}
+                aria-hidden={pinnedAway || undefined}
                 style={{ transform: `translateY(${virtualItem.start}px)` }}
               >
                 {item.type === "header"
