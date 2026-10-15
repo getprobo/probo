@@ -597,6 +597,7 @@ func assignOperations(
 	}
 
 	states := make([]uint8, len(changes))
+	dependencyMax := make([]uint64, len(changes))
 	stack := make([]traversalFrame, 0, len(changes))
 
 	for root := range changes {
@@ -647,7 +648,11 @@ func assignOperations(
 				return fmt.Errorf("change %d start operation overflows uint64", frame.index)
 			}
 
-			changes[frame.index].StartOp = frame.dependencyMax + 1
+			// StartOp is the first operation this change actually contains.
+			// An isolated change depends on an earlier frontier but takes its
+			// counter from the document-wide maximum, so the counters between
+			// the dependency maximum and this change belong to other actors.
+			dependencyMax[frame.index] = frame.dependencyMax
 			states[frame.index] = visited
 			completedMax := changes[frame.index].MaxOp
 			stack = stack[:len(stack)-1]
@@ -657,6 +662,10 @@ func assignOperations(
 				parent.dependencyMax = max(parent.dependencyMax, completedMax)
 			}
 		}
+	}
+
+	if err := assignChangeStartOps(changes, operations, dependencyMax); err != nil {
+		return err
 	}
 
 	if err := chargeDecodedMap[opset.ActorID, []int](budget, uint64(len(changes))); err != nil {
@@ -789,6 +798,58 @@ func assignOperations(
 				changes[i].MaxOp,
 			)
 		}
+	}
+
+	return nil
+}
+
+// assignChangeStartOps sets each change's StartOp to the first counter that
+// change actually wrote. Counters are global, so a change can depend on a
+// frontier whose maximum is below its own first counter; the counters in
+// between belong to other changes.
+func assignChangeStartOps(
+	changes []opset.Change,
+	operations []opset.Operation,
+	dependencyMax []uint64,
+) error {
+	counters := make(map[opset.ActorID][]uint64, len(changes))
+
+	for _, operation := range operations {
+		counters[operation.ID.Actor] = append(counters[operation.ID.Actor], operation.ID.Counter)
+	}
+
+	for _, actorCounters := range counters {
+		slices.Sort(actorCounters)
+	}
+
+	for index := range changes {
+		if changes[index].MaxOp <= dependencyMax[index] {
+			if changes[index].MaxOp == math.MaxUint64 {
+				return fmt.Errorf("change %d start operation overflows uint64", index)
+			}
+
+			changes[index].StartOp = changes[index].MaxOp + 1
+
+			continue
+		}
+
+		changeCounters := counters[changes[index].Actor]
+		position := sort.Search(
+			len(changeCounters),
+			func(cursor int) bool {
+				return changeCounters[cursor] > dependencyMax[index]
+			},
+		)
+
+		if position < len(changeCounters) && changeCounters[position] <= changes[index].MaxOp {
+			changes[index].StartOp = changeCounters[position]
+
+			continue
+		}
+
+		// No operation falls in this change. Keep the dependency-derived start
+		// so a missing or orphaned operation is still reported below.
+		changes[index].StartOp = dependencyMax[index] + 1
 	}
 
 	return nil
