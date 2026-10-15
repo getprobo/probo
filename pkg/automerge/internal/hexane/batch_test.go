@@ -67,7 +67,6 @@ func TestColumn_BatchSpliceRandomizedDifferential(t *testing.T) {
 		}
 
 		for _, splice := range slices.Backward(splices) {
-
 			model = spliceValues(
 				model,
 				splice.Index,
@@ -181,6 +180,7 @@ func TestColumns_CachedTailAppendMatchesFreshEncoding(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if _, err := deltaColumn.Bytes(); err != nil {
 		t.Fatal(err)
 	}
@@ -194,6 +194,7 @@ func TestColumns_CachedTailAppendMatchesFreshEncoding(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if err := deltaColumn.BatchSplice([]hexane.DeltaSplice{{
 			Index:    deltaColumn.Len(),
 			Inserted: inserted,
@@ -339,6 +340,7 @@ func TestColumns_BatchSpliceFailuresAreTransactional(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	beforeDelta := delta.Values()
 
 	err = delta.BatchSplice([]hexane.DeltaSplice{{Index: 3}})

@@ -415,9 +415,11 @@ func TestGenerateMessage_SplitsChangesAboveFrameBudget(t *testing.T) {
 	closeSyncState(t, targetSync)
 
 	frames := 0
+
 	for {
 		message, ok, err := sourceSync.GenerateMessage()
 		require.NoError(t, err)
+
 		if !ok {
 			break
 		}
@@ -435,6 +437,7 @@ func TestGenerateMessage_SplitsChangesAboveFrameBudget(t *testing.T) {
 		assert.LessOrEqual(t, len(encoded), collaboration.MaxWireFrameBytes)
 
 		require.NoError(t, targetSync.ReceiveMessage(message))
+
 		frames++
 	}
 

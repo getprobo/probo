@@ -637,6 +637,7 @@ func (c *columnarState) rebuildNonCanonicalOperations() {
 func (c *columnarState) rebuildWireObjectSpans() {
 	spans := make(map[opset.ObjectID]wireObjectSpan)
 	order := make([]opset.ObjectID, 0)
+
 	for row, operation := range c.operations {
 		span, ok := spans[operation.Object]
 		if !ok {

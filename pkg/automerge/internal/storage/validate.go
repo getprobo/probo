@@ -949,6 +949,7 @@ func validateSnapshotMarkGroup(
 
 		operation := stack[current].rows[stack[current].index]
 		stack[current].index++
+
 		if _, ok := visited[operation.ID]; ok {
 			continue
 		}
@@ -993,6 +994,7 @@ func validateSnapshotMarkSeen(
 		Actor:   operation.ID.Actor,
 		Counter: operation.ID.Counter - 1,
 	}
+
 	begin, ok := byID[beginID]
 	if !ok ||
 		begin.Action != opset.ActionMark ||

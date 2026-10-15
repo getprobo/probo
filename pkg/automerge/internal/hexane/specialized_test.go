@@ -36,6 +36,7 @@ func TestDeltaColumn_EditingEncodingAndClone(t *testing.T) {
 	t.Parallel()
 
 	column := hexane.NewDeltaColumn()
+
 	err := column.Insert(
 		0,
 		hexane.Some(int64(10)),
@@ -334,6 +335,7 @@ func TestColumns_ConstructFromLogicalValues(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewDeltaColumnFromValues() error = %v", err)
 	}
+
 	if got := delta.Values(); !reflect.DeepEqual(got, deltaValues) {
 		t.Errorf("delta constructor = %#v, want %#v", got, deltaValues)
 	}

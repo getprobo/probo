@@ -808,6 +808,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 
 	batch, err := other.engine.PrepareMerge(known)
 	other.mu.Unlock()
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare Automerge merge: %w", err)
 	}
@@ -825,6 +826,7 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 
 	engineHeads, err := d.engine.ApplyMerge(batch)
 	d.mu.Unlock()
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
 	}

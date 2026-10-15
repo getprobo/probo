@@ -106,6 +106,7 @@ func assertMinimalSpliceRuns(
 		require.NotEmpty(t, run.Operations)
 		require.GreaterOrEqual(t, run.Index, 0)
 		require.LessOrEqual(t, run.Index+run.DeleteCount, len(current))
+
 		if run.Index >= len(current) {
 			continue
 		}
@@ -116,6 +117,7 @@ func assertMinimalSpliceRuns(
 			"run at %d starts on an unchanged operation",
 			run.Index,
 		)
+
 		if run.DeleteCount == 0 {
 			continue
 		}

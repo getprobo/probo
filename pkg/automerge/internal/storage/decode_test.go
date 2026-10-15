@@ -1129,6 +1129,7 @@ func TestValidateSnapshotMarkOrder_LongInsertionChain(t *testing.T) {
 
 	actor, err := opset.NewActorID([]byte{1})
 	require.NoError(t, err)
+
 	object := opset.ObjectID{OpID: opset.OpID{Actor: actor, Counter: 1}}
 
 	t.Run(
@@ -1252,6 +1253,7 @@ func insertionChain(
 	operations := make([]opset.Operation, length)
 	for i := range operations {
 		identifier := opset.OpID{Actor: actor, Counter: uint64(i + 1)}
+
 		operation := opset.Operation{
 			ID:     identifier,
 			Object: object,

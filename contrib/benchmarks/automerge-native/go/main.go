@@ -125,9 +125,11 @@ func main() {
 	}
 
 	runtime.GC()
+
 	var before runtime.MemStats
 	runtime.ReadMemStats(&before)
 	benchmarkmetrics.Reset()
+
 	startedAt := time.Now()
 
 	for range *iterations {
@@ -139,6 +141,7 @@ func main() {
 
 	total := time.Since(startedAt)
 	metrics := benchmarkmetrics.Read()
+
 	var after runtime.MemStats
 	runtime.ReadMemStats(&after)
 
@@ -147,6 +150,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+
 	output := runner.output()
 
 	if err := json.NewEncoder(os.Stdout).Encode(
@@ -221,6 +225,7 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		values, err := document.Root().Object("values")
 		if err != nil {
 			_ = document.Close()
@@ -281,6 +286,7 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		text, err := document.Text("body")
 		if err != nil {
 			_ = document.Close()
@@ -356,6 +362,7 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		var latestSave []byte
 
 		return benchmarkWorkload{
@@ -410,6 +417,7 @@ func workloadRunner(
 		}
 
 		position := uint32(size)
+
 		var latestSave []byte
 
 		return benchmarkWorkload{
@@ -417,6 +425,7 @@ func workloadRunner(
 				if err := text.Splice(position, 0, "x"); err != nil {
 					return err
 				}
+
 				position++
 
 				if _, err := document.Commit("benchmark", time.Time{}); err != nil {
@@ -442,6 +451,7 @@ func workloadRunner(
 		if workload == "concurrent-tail-reconcile" {
 			tailEdits = min(size, 100)
 		}
+
 		leftData, rightData, err := mergeFixtureData(size, tailEdits)
 		if err != nil {
 			return benchmarkWorkload{}, err
@@ -458,6 +468,7 @@ func workloadRunner(
 				_ = left.Close()
 				return nil, err
 			}
+
 			defer func() { _ = right.Close() }()
 
 			if _, err := left.Merge(right); err != nil {
@@ -483,6 +494,7 @@ func workloadRunner(
 					if err != nil {
 						return "", err
 					}
+
 					defer func() { _ = document.Close() }()
 
 					return textChecksum(document)
@@ -496,6 +508,7 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		right, err := automerge.Load(rightData, benchmarkPeerActor)
 		if err != nil {
 			_ = left.Close()
@@ -522,8 +535,11 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
-		var latest *automerge.Document
-		var latestWire []byte
+
+		var (
+			latest     *automerge.Document
+			latestWire []byte
+		)
 
 		return benchmarkWorkload{
 			run: func() error {
@@ -531,6 +547,7 @@ func workloadRunner(
 				if err != nil {
 					return err
 				}
+
 				defer func() { _ = left.Close() }()
 
 				right, err := automerge.New(benchmarkPeerActor)
@@ -542,12 +559,14 @@ func workloadRunner(
 				if err != nil {
 					return err
 				}
+
 				defer func() { _ = leftState.Close() }()
 
 				rightState, err := right.NewSyncState()
 				if err != nil {
 					return err
 				}
+
 				defer func() { _ = rightState.Close() }()
 
 				latestWire, err = synchronizeWithWire(leftState, rightState)
@@ -555,9 +574,11 @@ func workloadRunner(
 					_ = right.Close()
 					return err
 				}
+
 				if latest != nil {
 					_ = latest.Close()
 				}
+
 				latest = right
 
 				return nil
@@ -583,28 +604,35 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		left, err := automerge.Load(data, benchmarkActor)
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		right, err := automerge.Load(data, benchmarkPeerActor)
 		if err != nil {
 			_ = left.Close()
 			return benchmarkWorkload{}, err
 		}
+
 		leftState, err := left.NewSyncState()
 		if err != nil {
 			_ = left.Close()
 			_ = right.Close()
+
 			return benchmarkWorkload{}, err
 		}
+
 		rightState, err := right.NewSyncState()
 		if err != nil {
 			_ = leftState.Close()
 			_ = left.Close()
 			_ = right.Close()
+
 			return benchmarkWorkload{}, err
 		}
+
 		if err := synchronize(leftState, rightState); err != nil {
 			return benchmarkWorkload{}, err
 		}
@@ -613,27 +641,34 @@ func workloadRunner(
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		rightText, err := right.Text("body")
 		if err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		if err := leftText.Splice(uint32(size), 0, "L"); err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		if _, err := left.Commit("benchmark", time.Time{}); err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		if err := rightText.Splice(uint32(size), 0, "R"); err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		if _, err := right.Commit("benchmark", time.Time{}); err != nil {
 			return benchmarkWorkload{}, err
 		}
+
 		var latestWire []byte
 
 		return benchmarkWorkload{
 			run: func() error {
 				var err error
+
 				latestWire, err = synchronizeWithWire(leftState, rightState)
 
 				return err
@@ -643,10 +678,12 @@ func workloadRunner(
 				if err != nil {
 					return "", err
 				}
+
 				rightChecksum, err := textChecksum(right)
 				if err != nil {
 					return "", err
 				}
+
 				if leftChecksum != rightChecksum {
 					return "", fmt.Errorf("synchronized documents differ")
 				}
@@ -779,6 +816,7 @@ func mergeFixtureData(size, tailEdits int) ([]byte, []byte, error) {
 
 	baseData, err := base.Save()
 	_ = base.Close()
+
 	if err != nil {
 		return nil, nil, err
 	}
@@ -787,23 +825,27 @@ func mergeFixtureData(size, tailEdits int) ([]byte, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	defer func() { _ = left.Close() }()
 
 	right, err := automerge.Load(baseData, benchmarkPeerActor)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	defer func() { _ = right.Close() }()
 
 	leftText, err := left.Text("body")
 	if err != nil {
 		return nil, nil, err
 	}
+
 	for index := range tailEdits {
 		if err := leftText.Splice(uint32(size+index), 0, "L"); err != nil {
 			return nil, nil, err
 		}
 	}
+
 	if _, err := left.Commit("benchmark", time.Time{}); err != nil {
 		return nil, nil, err
 	}
@@ -812,11 +854,13 @@ func mergeFixtureData(size, tailEdits int) ([]byte, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	for index := range tailEdits {
 		if err := rightText.Splice(uint32(size+index), 0, "R"); err != nil {
 			return nil, nil, err
 		}
 	}
+
 	if _, err := right.Commit("benchmark", time.Time{}); err != nil {
 		return nil, nil, err
 	}
@@ -885,6 +929,7 @@ func synchronize(left, right *automerge.SyncState) error {
 
 func synchronizeWithWire(left, right *automerge.SyncState) ([]byte, error) {
 	var wire []byte
+
 	for range 100 {
 		progressed := false
 
@@ -892,11 +937,13 @@ func synchronizeWithWire(left, right *automerge.SyncState) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if ok {
 			wire = append(wire, message...)
 			if err := right.ReceiveMessage(message); err != nil {
 				return nil, err
 			}
+
 			progressed = true
 		}
 
@@ -904,11 +951,13 @@ func synchronizeWithWire(left, right *automerge.SyncState) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if ok {
 			wire = append(wire, message...)
 			if err := left.ReceiveMessage(message); err != nil {
 				return nil, err
 			}
+
 			progressed = true
 		}
 

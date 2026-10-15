@@ -111,6 +111,7 @@ func materializeObject(t *testing.T, object *automerge.Object) automerge.Value {
 	case automerge.ObjectTypeList:
 		length, err := object.Len()
 		require.NoError(t, err)
+
 		list := make([]automerge.Value, 0, length)
 		for index := range length {
 			if child, err := object.ObjectAt(index); err == nil {
@@ -120,6 +121,7 @@ func materializeObject(t *testing.T, object *automerge.Object) automerge.Value {
 
 			scalar, err := object.ScalarAt(index)
 			require.NoError(t, err)
+
 			list = append(list, automerge.Value{
 				Type:   automerge.ValueTypeScalar,
 				Scalar: scalar,
@@ -138,6 +140,7 @@ func materializeObject(t *testing.T, object *automerge.Object) automerge.Value {
 		keys, err := object.Keys()
 		require.NoError(t, err)
 		sort.Strings(keys)
+
 		properties := make(map[string]automerge.Value, len(keys))
 		for _, key := range keys {
 			if child, err := object.Object(key); err == nil {
@@ -147,6 +150,7 @@ func materializeObject(t *testing.T, object *automerge.Object) automerge.Value {
 
 			scalar, err := object.Scalar(key)
 			require.NoError(t, err)
+
 			properties[key] = automerge.Value{
 				Type:   automerge.ValueTypeScalar,
 				Scalar: scalar,
@@ -260,6 +264,7 @@ func TestRustIter_DocIter(t *testing.T) {
 		keys, err := document.Root().Keys()
 		require.NoError(t, err)
 		sort.Strings(keys)
+
 		length, err := list.Len()
 		require.NoError(t, err)
 
@@ -312,6 +317,7 @@ func TestRustTransaction_NestedObjects(t *testing.T) {
 		require.NoError(t, list.InsertScalar(0, automerge.StringScalar("first")))
 		require.NoError(t, list.InsertScalar(1, automerge.StringScalar("second")))
 		commitParity(t, document, "nested")
+
 		length, err := list.Len()
 		require.NoError(t, err)
 
@@ -483,6 +489,7 @@ func TestRustTest_ForkAtIncrementOverConflictedCounterSurvivesSaveLoad(t *testin
 		scalar := openParity(t, engine, actor(0x42))
 		require.NoError(t, scalar.Root().PutScalar("key", automerge.NullScalar()))
 		commitParity(t, scalar, "null")
+
 		_, err := document.Merge(counter)
 		require.NoError(t, err)
 		_, err = document.Merge(scalar)
@@ -509,6 +516,7 @@ func TestRustTest_DiffPreservesConflictAfterWinningValueIsDeleted(t *testing.T) 
 		second, err := document.Fork(actor(0x47))
 		require.NoError(t, err)
 		closeDocument(t, second)
+
 		third, err := document.Fork(actor(0x48))
 		require.NoError(t, err)
 		closeDocument(t, third)
@@ -518,6 +526,7 @@ func TestRustTest_DiffPreservesConflictAfterWinningValueIsDeleted(t *testing.T) 
 		commitParity(t, second, "null")
 		require.NoError(t, third.Root().PutScalar("key", automerge.IntScalar(-88)))
 		commitParity(t, third, "int")
+
 		_, err = document.Merge(second)
 		require.NoError(t, err)
 		_, err = document.Merge(third)
@@ -574,6 +583,7 @@ func TestRustTest_DiffSpansSkipLosingConflictingText(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, leftText.PutScalarAt(0, automerge.StringScalar("left")))
 		commitParity(t, left, "left")
+
 		right, err := document.Fork(actor(0x4e))
 		require.NoError(t, err)
 		closeDocument(t, right)
@@ -591,6 +601,7 @@ func TestRustTest_DiffSpansSkipLosingConflictingText(t *testing.T) {
 		require.NoError(t, err)
 
 		spliced := ""
+
 		for _, patch := range patches {
 			if patch.Action == automerge.PatchSpliceText {
 				spliced += patch.Text
@@ -677,6 +688,7 @@ func TestRustTest_DuplicateSeqInBatchAbortsWholeBatch(t *testing.T) {
 
 		_, err = base.LoadIncremental(change2)
 		require.NoError(t, err)
+
 		_, applyErr := base.LoadIncremental(append(append([]byte{}, change1...), change3...))
 
 		return parityView{Failed: applyErr != nil, Hydrate: hydrateOf(t, base)}
@@ -698,6 +710,7 @@ func TestRustTest_DuplicateSeqWithinIncomingBatchIsRejected(t *testing.T) {
 		resetSaveCursor(t, left)
 		require.NoError(t, left.Root().PutScalar("left", automerge.IntScalar(1)))
 		commitParity(t, left, "left")
+
 		right, err := base.Fork(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, right)
@@ -727,6 +740,7 @@ func TestRustTest_DuplicateSeqChangesAreRejected(t *testing.T) {
 		resetSaveCursor(t, left)
 		require.NoError(t, left.Root().PutScalar("foo", automerge.StringScalar("qux")))
 		commitParity(t, left, "qux")
+
 		right, err := base.Fork(actor(0xaa))
 		require.NoError(t, err)
 		closeDocument(t, right)
@@ -904,6 +918,7 @@ func TestRustTest_IncrementalTextDiffSurvivesIsolateIntegrateRoundtrip(t *testin
 			textObject, err := document.Root().CreateObject("text", automerge.ObjectTypeText)
 			require.NoError(t, err)
 			commitParity(t, document, "text")
+
 			text, err := textObject.Text()
 			require.NoError(t, err)
 			require.NoError(t, text.Splice(0, 0, "hello"))
@@ -943,6 +958,7 @@ func TestRustTest_IncrementalDeepTextDiffSurvivesIsolateIntegrateRoundtrip(t *te
 			textObject, err := inner.CreateObject("text", automerge.ObjectTypeText)
 			require.NoError(t, err)
 			commitParity(t, document, "deep")
+
 			text, err := textObject.Text()
 			require.NoError(t, err)
 			require.NoError(t, text.Splice(0, 0, "deep"))
@@ -963,6 +979,7 @@ func TestRustTest_IncrementalSiblingTextDiffsSurviveIsolateIntegrateRoundtrip(t 
 			rightObject, err := document.Root().CreateObject("right", automerge.ObjectTypeText)
 			require.NoError(t, err)
 			commitParity(t, document, "texts")
+
 			left, err := leftObject.Text()
 			require.NoError(t, err)
 			right, err := rightObject.Text()
@@ -1054,6 +1071,7 @@ func TestRustTest_PatchesExposeSurvivingConflictAfterDeletingOtherBranch(t *test
 		require.NoError(t, err)
 		require.NoError(t, leftText.PutScalarAt(0, automerge.StringScalar("🦊🐻")))
 		commitParity(t, left, "left")
+
 		right, err := document.Fork(actor(0x94))
 		require.NoError(t, err)
 		closeDocument(t, right)
@@ -1061,6 +1079,7 @@ func TestRustTest_PatchesExposeSurvivingConflictAfterDeletingOtherBranch(t *test
 		require.NoError(t, err)
 		require.NoError(t, rightText.PutScalarAt(0, automerge.BytesScalar(bytes.Repeat([]byte{0}, 32))))
 		commitParity(t, right, "right")
+
 		_, err = document.Merge(left)
 		require.NoError(t, err)
 		_, err = document.Merge(right)
@@ -1087,6 +1106,7 @@ func exchangeDocuments(
 	leftState, err := left.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, leftState)
+
 	rightState, err := right.NewSyncState()
 	require.NoError(t, err)
 	closeSyncState(t, rightState)
@@ -1148,7 +1168,9 @@ func TestRustTest_ForkAtRejectsEditOutsideIsolation(t *testing.T) {
 		require.NoError(t, err)
 		commitParity(t, document, "list")
 		require.NoError(t, document.Isolate(nil))
+
 		insertErr := list.InsertScalar(0, automerge.IntScalar(1))
+
 		fork, forkErr := document.Fork(actor(0x22))
 		if forkErr == nil {
 			closeDocument(t, fork)
@@ -1327,6 +1349,7 @@ func TestRustTest_IncrementalPatchesSurviveNestedEditAndListShift(t *testing.T) 
 		require.NoError(t, err)
 		require.NoError(t, first.PutScalar("id", automerge.StringScalar("a")))
 		require.NoError(t, first.PutScalar("n", automerge.IntScalar(1)))
+
 		second, err := items.InsertObject(1, automerge.ObjectTypeMap)
 		require.NoError(t, err)
 		require.NoError(t, second.PutScalar("id", automerge.StringScalar("b")))
@@ -1372,6 +1395,7 @@ func TestRustTest_IncrementalListConflictSurvivesIsolateIntegrate(t *testing.T) 
 		_, err = document.DiffIncremental()
 		require.NoError(t, err)
 		require.NoError(t, document.Isolate(beginning))
+
 		second, err := list.PutObjectAt(0, automerge.ObjectTypeText)
 		require.NoError(t, err)
 		secondText, err := second.Text()
@@ -1539,6 +1563,7 @@ func TestRustTest_QueuedChangeDoesNotCollideWithLaterLocalChange(t *testing.T) {
 
 		_, err = local.LoadIncremental(append(append([]byte{}, remote3...), dependentChange...))
 		require.NoError(t, err)
+
 		_, applyErr := local.LoadIncremental(remote2)
 		missing, err := local.MissingDependencies(nil)
 		require.NoError(t, err)

@@ -306,6 +306,7 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 				err,
 			)
 		}
+
 		if columns.snapshot == nil || columns.columnsDirty {
 			columns, err = newColumnarStateFromState(state)
 			if err != nil {
@@ -499,6 +500,7 @@ func (b *Engine) mergeDocumentSnapshot(
 	state.attachCanonical(columns)
 	b.state = state
 	b.columns = columns
+
 	b.base = append([]byte(nil), data...)
 	b.appended = appended
 	b.saveCursor = 0
@@ -1050,6 +1052,7 @@ func rejectDuplicateActorSequences(
 	seen := make(map[actorSequence]opset.ChangeHash, len(queue))
 	for hash, change := range queue {
 		key := actorSequence{actor: change.Actor, sequence: change.Sequence}
+
 		previous, ok := seen[key]
 		if ok && previous != hash {
 			return duplicateActorSequenceError{

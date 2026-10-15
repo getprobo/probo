@@ -179,6 +179,7 @@ func BenchmarkSnapshotColumnsLocalizedBatch(b *testing.B) {
 		float64(FullColumnEncodings())/float64(b.N),
 		"full-column-encode/op",
 	)
+
 	if FullColumnEncodings() != 0 {
 		b.Fatalf(
 			"incremental commit rebuilt snapshot column tables: %d",

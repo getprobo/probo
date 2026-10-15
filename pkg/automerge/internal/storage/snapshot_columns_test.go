@@ -231,6 +231,7 @@ func TestFullColumnEncodings_CountsEachRebuiltTable(t *testing.T) {
 	document, operations := benchmarkSnapshot(4)
 
 	ResetRuntimeMetrics()
+
 	_, err := NewSnapshotColumns(document, operations)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(2), FullColumnEncodings())
@@ -242,6 +243,7 @@ func TestFullColumnEncodings_CountsEachRebuiltTable(t *testing.T) {
 	}}
 
 	ResetRuntimeMetrics()
+
 	_, err = NewSnapshotColumns(&withChanges, operations)
 	require.NoError(t, err)
 	assert.Equal(t, uint64(1), FullColumnEncodings())

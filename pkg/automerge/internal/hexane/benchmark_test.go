@@ -130,7 +130,6 @@ func BenchmarkColumn_MultiSplice(b *testing.B) {
 			column := base.Clone()
 
 			for _, splice := range slices.Backward(splices) {
-
 				column.Splice(
 					splice.Index,
 					splice.DeleteCount,
@@ -184,6 +183,7 @@ func benchmarkLocalizedDelta(b *testing.B, name string, rows int) {
 				if err := cloned.Set(rows/2, hexane.Some(int64(i))); err != nil {
 					b.Fatal(err)
 				}
+
 				benchmarkDelta = cloned
 			}
 		},

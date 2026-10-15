@@ -118,6 +118,7 @@ func TestOrderedObjectsInState_OmitsLosingSequenceObject(t *testing.T) {
 	winnerHandle, _, err := right.GetObjectAt(rightItems, 0)
 	require.NoError(t, err)
 	winner := engineObject(t, right, winnerHandle)
+
 	loser := leftID
 	if winner == leftID {
 		loser = rightID

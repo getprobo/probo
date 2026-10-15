@@ -84,6 +84,7 @@ func TestApplyChanges_RejectsTruncatedTrailingChunk(t *testing.T) {
 
 	target, err := NewEngine()
 	require.NoError(t, err)
+
 	beforeChanges := target.state.changeCount()
 	beforeHeads := mustHeads(t, target)
 
@@ -118,6 +119,7 @@ func TestApplyChanges_AppliesExactChunkBuffer(t *testing.T) {
 	kept, err := target.GetScalar(0, "kept")
 	require.NoError(t, err)
 	assert.Equal(t, mustScalar(t, "kept"), kept)
+
 	second, err := target.GetScalar(0, "second")
 	require.NoError(t, err)
 	assert.Equal(t, mustScalar(t, "second"), second)
@@ -207,7 +209,9 @@ func TestApplyChanges_InvalidatesCachedSaveAfterBranchCleanup(t *testing.T) {
 
 		stayer, err := opset.NewActorID([]byte("stayer"))
 		require.NoError(t, err)
+
 		var missing opset.ChangeHash
+
 		missing[0] = 9
 		staying := mustEncodeChange(
 			t,
@@ -338,7 +342,9 @@ func queuedDuplicateFixture(t *testing.T) queuedDuplicate {
 	t.Helper()
 
 	engine, real := committedChange(t)
+
 	var missing opset.ChangeHash
+
 	missing[0] = 1
 
 	orphan := real
@@ -404,7 +410,9 @@ func queuedGapFixture(t *testing.T) queuedGap {
 	t.Helper()
 
 	engine, real := committedChange(t)
+
 	var missing opset.ChangeHash
+
 	missing[0] = 2
 
 	branch := mustEncodeChange(
@@ -592,6 +600,7 @@ func requireQueued(t *testing.T, engine *Engine, hashes ...opset.ChangeHash) {
 	t.Helper()
 
 	require.Len(t, engine.queuedChanges, len(hashes))
+
 	for _, hash := range hashes {
 		require.Contains(t, engine.queuedChanges, hash)
 	}

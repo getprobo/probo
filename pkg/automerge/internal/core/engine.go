@@ -686,6 +686,7 @@ func (b *Engine) ForkAt(heads [][32]byte) error {
 	}
 
 	pending := make([]opset.ChangeHash, 0, len(heads))
+
 	seen := make(map[opset.ChangeHash]struct{}, len(heads))
 	for _, head := range heads {
 		hash := opset.ChangeHash(head)

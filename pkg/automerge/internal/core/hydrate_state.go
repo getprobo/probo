@@ -145,6 +145,7 @@ func (s *State) hydratedListValue(
 	}
 
 	var hydrateErr error
+
 	index.eachValue(func(element sequenceValue) bool {
 		value, err := s.hydratedOperationValue(element.Operation, visited)
 		if err != nil {
@@ -154,8 +155,10 @@ func (s *State) hydratedListValue(
 		}
 
 		result.List = append(result.List, value)
+
 		return true
 	})
+
 	if hydrateErr != nil {
 		return hydratedValueWire{}, hydrateErr
 	}
@@ -282,6 +285,7 @@ func (s *State) listValue(
 	result := make([]any, 0, index.visibleCount)
 
 	var hydrateErr error
+
 	index.eachValue(func(value sequenceValue) bool {
 		element := value.Operation
 		switch element.Action {
@@ -308,8 +312,10 @@ func (s *State) listValue(
 		case opset.ActionSet:
 			result = append(result, scalarMaterializedValue(element.Value))
 		}
+
 		return true
 	})
+
 	if hydrateErr != nil {
 		return nil, hydrateErr
 	}

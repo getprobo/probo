@@ -173,6 +173,7 @@ func (c *DeltaColumn) Splice(
 	}
 
 	var boundaryDelta int64
+
 	if hasFollowing {
 		difference, err := subtractAbsolute(following, previous)
 		if err != nil {

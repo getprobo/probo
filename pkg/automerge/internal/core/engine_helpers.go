@@ -190,6 +190,7 @@ func (b *Engine) insertSequenceOperation(
 	}
 
 	sequence := b.state.sequenceIndex(object.OpID)
+
 	element, ok := sequence.visibleIndex(index, b.isTextObject(object))
 	if !ok {
 		return opset.Operation{}, fmt.Errorf(
@@ -247,6 +248,7 @@ func (b *Engine) sequenceOperation(
 	}
 
 	sequence := b.state.sequenceIndex(object.OpID)
+
 	element, length, ok := sequence.sequencePosition(index, b.isTextObject(object))
 	if !ok {
 		return sequenceValue{}, fmt.Errorf(

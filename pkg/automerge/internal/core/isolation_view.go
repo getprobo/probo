@@ -71,6 +71,7 @@ func newIsolationView(
 	}
 
 	operationIDs := make(map[opset.OpID]struct{})
+
 	changes := make([]opset.Change, 0, len(visited))
 	for i := range columns.changes {
 		change := &columns.changes[i]
@@ -93,6 +94,7 @@ func newIsolationView(
 	for i := range changes {
 		for j := range changes[i].Operations {
 			operation := &changes[i].Operations[j]
+
 			successors := operation.Successors[:0]
 			for _, successor := range operation.Successors {
 				if _, selected := operationIDs[successor]; selected {

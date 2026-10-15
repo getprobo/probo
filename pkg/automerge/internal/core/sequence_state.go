@@ -93,6 +93,7 @@ func (s *State) finalizeSequenceTails(order []opset.OpID) {
 
 func (s *State) sequence(object opset.OpID) []opset.Operation {
 	values := s.sequenceIndex(object).values()
+
 	operations := make([]opset.Operation, 0, len(values))
 	for _, value := range values {
 		if value.Operation.Action == opset.ActionSet {

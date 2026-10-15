@@ -64,10 +64,12 @@ func TestSequenceIndex_RangeMatchesFlatReference(t *testing.T) {
 	for index := uint32(0); index <= 8; index++ {
 		for deleteCount := uint32(0); deleteCount <= 10; deleteCount++ {
 			elements := engine.state.sequenceIndex(object).elements()
+
 			offsets := make([]uint32, len(elements)+1)
 			for element, operation := range elements {
 				offsets[element+1] = offsets[element] + elementLength(operation)
 			}
+
 			wantStart, wantEnd, wantPrevious, wantErr := sequenceRange(
 				elements,
 				offsets,
@@ -172,6 +174,7 @@ func TestSequenceIndex_LocalListEditsStayChunked(t *testing.T) {
 		opset.Scalar{Type: opset.ScalarInt, Int: 1},
 	)
 	require.NoError(t, err)
+
 	for index := range 600 {
 		require.NoError(t, engine.InsertScalar(list, uint64(index), value))
 	}

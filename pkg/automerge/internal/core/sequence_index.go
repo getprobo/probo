@@ -190,11 +190,13 @@ func (i *sequenceIndex) appendChunk(chunk *sequenceIndexChunk) {
 	i.chunks = append(i.chunks, chunk)
 	i.visibleCount += chunk.visibleCount
 	i.utf16Width += chunk.utf16Width
+
 	i.markCount += chunk.markCount
 	if len(i.prefixValues) == 0 {
 		i.prefixValues = append(i.prefixValues, 0)
 		i.prefixWidths = append(i.prefixWidths, 0)
 	}
+
 	i.prefixValues = append(i.prefixValues, i.visibleCount)
 	i.prefixWidths = append(i.prefixWidths, i.utf16Width)
 	i.indexChunk(chunk)
@@ -333,6 +335,7 @@ func (i *sequenceIndex) valueAt(target int) (sequenceValue, bool) {
 	}
 
 	entry := i.visibleEntry(target)
+
 	operation, ok := i.state.operation(entry.winner)
 	if !ok {
 		return sequenceValue{}, false
@@ -742,6 +745,7 @@ func (i *sequenceIndex) finishDeferredMutations(
 	for _, chunk := range i.chunks {
 		i.addChunkSummary(chunk)
 	}
+
 	i.refreshPrefixes()
 }
 

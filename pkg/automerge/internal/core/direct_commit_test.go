@@ -164,9 +164,11 @@ func TestDirectCommit_PartialMapIndexRetainsCanonicalRows(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.NoError(t, engine.PutScalar(child, "nested", value))
+
 	before := ReadRuntimeMetrics()
 	_, err = engine.Commit("object", time.Time{})
 	require.NoError(t, err)
+
 	after := ReadRuntimeMetrics()
 
 	keys, err := engine.Keys(0)
@@ -195,6 +197,7 @@ func TestDirectCommit_MapOverwritePublishesColumnSuccessors(t *testing.T) {
 	require.NoError(t, err)
 
 	var superseded *opset.Operation
+
 	for i := range engine.columns.operations {
 		operation := &engine.columns.operations[i]
 		if operation.Key.Property == nil || *operation.Key.Property != "key" {
@@ -206,6 +209,7 @@ func TestDirectCommit_MapOverwritePublishesColumnSuccessors(t *testing.T) {
 		}
 
 		superseded = operation
+
 		break
 	}
 
@@ -218,6 +222,7 @@ func TestDirectCommit_MapOverwritePublishesColumnSuccessors(t *testing.T) {
 func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
 	engine, first := isolationFixture(t)
 	require.NoError(t, engine.Isolate([][32]byte{first}))
+
 	before := ReadRuntimeMetrics()
 
 	isolated, err := engine.PutObject(0, "isolated", "map")
@@ -231,6 +236,7 @@ func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
 	require.NoError(t, err)
 
 	after := ReadRuntimeMetrics()
+
 	assert.Empty(t, engine.state.operations)
 	assert.Same(t, engine.isolationColumns, engine.state.columns)
 	assert.Equal(t, before.GeneralReconciles, after.GeneralReconciles)

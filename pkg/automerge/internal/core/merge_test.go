@@ -62,6 +62,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	retained, err := LoadEngine(retainedData)
 	require.NoError(t, err)
 	require.Len(t, retained.queuedChanges, 1)
+
 	for _, queued := range retained.queuedChanges {
 		for _, operation := range queued.Operations {
 			assert.NotContains(t, retained.state.operations, operation.ID)
@@ -69,6 +70,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 			assert.False(t, ok)
 		}
 	}
+
 	requireCanonicalRowsOwnedByColumns(t, retained)
 
 	_, err = retained.Merge(parent)
@@ -95,6 +97,7 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	_, err = separate.Merge(child)
 	require.NoError(t, err)
 	assert.Len(t, separate.queuedChanges, 1)
+
 	for _, queued := range separate.queuedChanges {
 		for _, operation := range queued.Operations {
 			assert.NotContains(t, separate.state.operations, operation.ID)
@@ -106,7 +109,9 @@ func TestBackendMerge_AppliesReversedDependentChanges(t *testing.T) {
 	before := ReadRuntimeMetrics()
 	_, err = separate.Merge(parent)
 	require.NoError(t, err)
+
 	after := ReadRuntimeMetrics()
+
 	assert.Empty(t, separate.queuedChanges)
 	assert.Equal(t, before.GeneralReconciles, after.GeneralReconciles)
 	assert.Equal(t, before.GlobalOrderFallbacks, after.GlobalOrderFallbacks)

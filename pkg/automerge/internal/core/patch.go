@@ -180,6 +180,7 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 
 		if !operation.Insert && operation.Key.Element != nil {
 			winners := sequenceElementWinners(state, operation.Object.OpID, winnersByParent)
+
 			winner, ok := winners[*operation.Key.Element]
 			if !ok || winner.ID != operation.ID {
 				return true
@@ -215,6 +216,7 @@ func sequenceElementWinners(
 	}
 
 	values := state.sequenceValues(parent)
+
 	winners := make(map[opset.OpID]opset.Operation, len(values))
 	for _, value := range values {
 		// Sequence order: the first visible value for an element wins.
@@ -236,6 +238,7 @@ func compareObjectCreationIDs(left, right opset.OpID) int {
 	}
 
 	leftBase, leftLevel := left.Actor.Concurrency()
+
 	rightBase, rightLevel := right.Actor.Concurrency()
 	if compared := leftBase.Compare(rightBase); compared != 0 {
 		return compared
@@ -425,6 +428,7 @@ func materializeObjectPatches(state *State, object opset.ObjectID) ([]patchOut, 
 			}
 
 			rendered := textElementString(operation)
+
 			runs, err := textRunsWithMarks(state, object, position, rendered)
 			if err != nil {
 				return nil, err
@@ -542,6 +546,7 @@ func (b *Engine) resetPatchLog(heads [][32]byte) {
 
 	b.patchLogActive = true
 	b.patchLog = nil
+
 	b.patchLogHeads = append([][32]byte(nil), heads...)
 }
 
@@ -797,6 +802,7 @@ func markCoveredBySplice(mark markPatchOut, patches []patchOut) bool {
 			}
 
 			start := uint32(patch.Action.Index)
+
 			end := start + uint32(utf16Width(patch.Action.Text))
 			if mark.Start >= start && mark.End <= end {
 				return true
@@ -1097,6 +1103,7 @@ func diffSequencePatches(
 		if i < len(sourceValues) && j < len(targetValues) &&
 			sourceValues[i].Element == targetValues[j].Element {
 			sourceConflict := len(source.visibleSequenceElementOperations(sourceValues[i].Element)) > 1
+
 			targetConflict := len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1
 			if sourceValues[i].Operation.ID == targetValues[j].Operation.ID &&
 				sourceConflict == targetConflict {
@@ -1164,6 +1171,7 @@ func diffSequencePatches(
 				)
 
 				rendered := textElementString(replacement)
+
 				runs, err := textRunsWithMarks(target, object, position, rendered)
 				if err != nil {
 					return nil, err
@@ -1289,6 +1297,7 @@ func diffSequencePatches(
 			operation := targetValues[j].Operation
 			if operation.Action != opset.ActionMakeMap {
 				rendered := textElementString(operation)
+
 				runs, err := textRunsWithMarks(target, object, position, rendered)
 				if err != nil {
 					return nil, err

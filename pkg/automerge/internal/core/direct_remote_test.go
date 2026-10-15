@@ -93,6 +93,7 @@ func TestDirectRemote_OutOfOrderSetPublishesOneBatch(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, firstDocument.Changes, 1)
 	require.NotNil(t, firstDocument.Changes[0].Hash)
+
 	secondDocument, err := storage.DecodePartial(second)
 	require.NoError(t, err)
 	require.Len(t, secondDocument.Changes, 1)

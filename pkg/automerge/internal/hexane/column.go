@@ -674,6 +674,7 @@ func (c *Column[T]) insertedRope(inserted *Column[T]) *ropeNode[Value[T]] {
 
 func sameCodec[T any](left, right Codec[T]) bool {
 	leftFuncs, leftOK := left.(CodecFuncs[T])
+
 	rightFuncs, rightOK := right.(CodecFuncs[T])
 	if leftOK || rightOK {
 		if !leftOK || !rightOK {

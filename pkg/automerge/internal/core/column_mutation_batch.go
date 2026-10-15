@@ -573,12 +573,12 @@ func directDivergedSequenceInsertion(
 	}
 
 	return storage.SnapshotOperationSplice{
-			Index:      index,
-			Operations: added,
-		}, []opset.Operation{
-			firstBoundary,
-			last,
-		}, true
+		Index:      index,
+		Operations: added,
+	}, []opset.Operation{
+		firstBoundary,
+		last,
+	}, true
 }
 
 func directSequenceBranchRoot(
@@ -966,6 +966,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	next.operationRows = rows
 	next.nonCanonicalOperations = columns.nonCanonicalOperations
 	clonedNonCanonicalOperations := false
+
 	for _, change := range b.appendedChanges {
 		for _, operation := range change.Operations {
 			if _, canonical := rows.lookup(operation.ID); canonical {
@@ -985,6 +986,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 			next.nonCanonicalOperations[operation.ID] = cloneOperation(operation)
 		}
 	}
+
 	next.objectSpans = updateDirectObjectSpans(
 		spanBoundaries,
 		rows,
@@ -1027,6 +1029,7 @@ func updateDirectObjectSpans(
 	spans := make(map[opset.ObjectID]wireObjectSpan, len(boundaries)+len(touched))
 	for object, boundary := range boundaries {
 		first, firstOK := rows.lookup(boundary[0])
+
 		last, lastOK := rows.lookup(boundary[1])
 		if firstOK && lastOK {
 			spans[object] = wireObjectSpan{start: first, end: last + 1}
