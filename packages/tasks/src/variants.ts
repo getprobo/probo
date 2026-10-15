@@ -85,17 +85,6 @@ export const taskListItem = tv({
     trailing: "relative z-1 flex h-6 shrink-0 items-center gap-2",
     assignee: "relative z-1 flex h-6 shrink-0 items-center",
     state: "relative z-1 flex h-6 shrink-0 items-center",
-    iconTrigger: [
-      "size-4! h-4! w-4! min-h-0! min-w-0! justify-center gap-0 p-0! px-0!",
-      "hover:bg-transparent",
-      "*:first:min-w-0 *:first:flex-none",
-      "*:last:hidden",
-    ],
-    stateTrigger: [
-      "h-6! w-auto min-w-0 items-center gap-0 px-0!",
-      "*:first:flex *:first:h-full *:first:min-w-0 *:first:items-center",
-      "*:last:hidden",
-    ],
     stateOption: "flex items-center gap-2",
   },
   variants: {

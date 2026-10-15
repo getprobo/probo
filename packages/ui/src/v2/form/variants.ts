@@ -25,17 +25,23 @@ import { tv } from "tailwind-variants/lite";
 export const textField = tv({
   slots: {
     root: [
-      "flex items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
+      "flex items-center rounded-2 text-sand-12 transition-colors",
       "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
       "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
     ],
-    icon: "flex size-4 shrink-0 items-center justify-center text-sand-a9 [&_svg]:size-4",
+    icon: "flex shrink-0 items-center justify-center text-sand-a9",
     input: "min-w-0 flex-1 bg-transparent text-sand-12 outline-none placeholder:text-sand-a9",
   },
   variants: {
     size: {
-      1: { root: "h-7 px-2" },
-      2: { root: "h-8 px-2" },
+      1: {
+        root: "h-6 gap-1 px-1.5 text-1",
+        icon: "size-3.5 [&_svg]:size-3.5",
+      },
+      2: {
+        root: "h-8 gap-2 px-2 text-2",
+        icon: "size-4 [&_svg]:size-4",
+      },
     },
     // Surface treatment. Only the accent (gold) color ships, matching Figma;
     // classic adds a recessed inset shadow, soft drops the border for a tint.
@@ -91,7 +97,7 @@ export const textFieldSkeleton = tv({
   base: "inline-block animate-pulse rounded-2 bg-sand-3 align-middle",
   variants: {
     size: {
-      1: "h-7 w-60",
+      1: "h-6 w-60",
       2: "h-8 w-60",
     },
   },

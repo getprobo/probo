@@ -25,7 +25,6 @@ import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
-import { UserSelect } from "#/components/form/UserSelect";
 import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
@@ -226,14 +225,6 @@ export function TaskListItem(props: TaskListItemProps) {
         canUpdateAssignee={canUpdate}
         isUpdating={isUpdating}
         detailsTo={taskDetailsPath(organizationId, task.id)}
-        renderAssignee={canUpdate
-          ? avatar => (
-            <UserSelect
-              {...assigneeSelectProps}
-              trigger={avatar}
-            />
-          )
-          : undefined}
         renderAssigneeMenu={canUpdate
           ? () => (
               <TaskAssigneeMenu
