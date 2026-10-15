@@ -167,7 +167,7 @@
     }
 
     .rich-image {
-        @apply block h-auto max-w-full rounded-md;
+        @apply block h-auto w-full max-w-full rounded-md;
     }
 
     .rich-image-sized {
