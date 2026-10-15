@@ -32,6 +32,10 @@ export function Default() {
   return <DateCalendar value="" />;
 }
 
+export function Small() {
+  return <DateCalendar size={1} value="" />;
+}
+
 export function Controlled() {
   const [value, setValue] = useState("2026-09-24");
   return (

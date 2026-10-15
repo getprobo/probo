@@ -50,6 +50,7 @@ export interface DateMonthViewProps {
   min?: string;
   max?: string;
   disabled?: boolean;
+  size?: 1 | 2;
   // When this changes, snap the visible month back to `value` (or today).
   resetKey?: string | number | boolean;
   onDaySelect?: (iso: string) => void;
@@ -63,13 +64,14 @@ export function DateMonthView(props: DateMonthViewProps) {
     min,
     max,
     disabled = false,
+    size = 2,
     resetKey,
     onDaySelect,
   } = props;
 
   const [visible, setVisible] = useState(() => visibleFrom(value));
   const [source, setSource] = useState({ value, resetKey });
-  const { calendar, header, monthSelect, yearSelect, weekdays, weekday, grid } = dateField();
+  const { calendar, header, monthSelect, yearSelect, weekdays, weekday, grid } = dateField({ size });
 
   if (value !== source.value || resetKey !== source.resetKey) {
     setSource({ value, resetKey });
@@ -178,6 +180,7 @@ export function DateMonthView(props: DateMonthViewProps) {
               aria-pressed={isSelected}
               aria-current={iso === todayIso ? "date" : undefined}
               className={dateFieldDay({
+                size,
                 selected: isSelected,
                 today: iso === todayIso,
                 outside: isOutside,

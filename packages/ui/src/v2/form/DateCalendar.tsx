@@ -64,7 +64,7 @@ export function DateCalendar(props: DateCalendarProps) {
     value,
     locale,
     placeholder,
-    size,
+    size = 2,
     variant,
     disabled = false,
     min,
@@ -127,6 +127,7 @@ export function DateCalendar(props: DateCalendarProps) {
         locale={locale}
         min={min}
         max={max}
+        size={size}
         disabled={disabled}
         onDaySelect={iso => onValueChange?.(iso)}
       />
