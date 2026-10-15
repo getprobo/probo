@@ -178,8 +178,6 @@ func TestColumn_InvalidBoundsPanic(t *testing.T) {
 	}
 
 	for name, operation := range cases {
-		name := name
-		operation := operation
 
 		t.Run(
 			name,

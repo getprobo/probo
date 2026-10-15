@@ -21,6 +21,7 @@
 package hexane_test
 
 import (
+	"slices"
 	"testing"
 
 	"go.probo.inc/probo/pkg/automerge/internal/hexane"
@@ -128,8 +129,8 @@ func BenchmarkColumn_MultiSplice(b *testing.B) {
 		for b.Loop() {
 			column := base.Clone()
 
-			for i := len(splices) - 1; i >= 0; i-- {
-				splice := splices[i]
+			for _, splice := range slices.Backward(splices) {
+
 				column.Splice(
 					splice.Index,
 					splice.DeleteCount,

@@ -268,17 +268,17 @@ func validateHydratedValue(root Value) error {
 
 			if value.Type == ValueTypeMap {
 				keys := sortedHydratedKeys(value.Map)
-				for index := len(keys) - 1; index >= 0; index-- {
+				for _, key := range slices.Backward(keys) {
 					stack = append(
 						stack,
-						hydratedValidationFrame{Value: value.Map[keys[index]]},
+						hydratedValidationFrame{Value: value.Map[key]},
 					)
 				}
 			} else {
-				for index := len(value.List) - 1; index >= 0; index-- {
+				for _, v := range slices.Backward(value.List) {
 					stack = append(
 						stack,
-						hydratedValidationFrame{Value: value.List[index]},
+						hydratedValidationFrame{Value: v},
 					)
 				}
 			}

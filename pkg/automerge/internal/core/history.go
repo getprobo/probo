@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"time"
 
@@ -830,9 +831,7 @@ func validateDirectRemoteQueue(
 	queue map[opset.ChangeHash]*opset.Change,
 ) ([]*opset.Change, error) {
 	remaining := make(map[opset.ChangeHash]*opset.Change, len(queue))
-	for hash, change := range queue {
-		remaining[hash] = change
-	}
+	maps.Copy(remaining, queue)
 
 	if err := rejectDuplicateActorSequences(current, queue); err != nil {
 		return nil, err

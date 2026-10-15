@@ -746,8 +746,7 @@ func (s *State) undoPending(operations []opset.Operation) {
 		return true
 	})
 
-	for i := len(operations) - 1; i >= 0; i-- {
-		operation := operations[i]
+	for _, operation := range slices.Backward(operations) {
 
 		for _, predecessor := range operation.Predecessors {
 			if !s.operationSupersedesPredecessor(operation, predecessor) {

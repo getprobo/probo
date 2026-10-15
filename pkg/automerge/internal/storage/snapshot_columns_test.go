@@ -37,7 +37,6 @@ func TestSnapshotColumns_MatchesPreparedEncoder(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, compress := range []bool{false, true} {
-		compress := compress
 		t.Run(compressionName(compress), func(t *testing.T) {
 			t.Parallel()
 

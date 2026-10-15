@@ -25,6 +25,7 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
@@ -76,9 +77,7 @@ func newColumnMutationBatch(
 	}
 
 	nextRows := make(map[opset.ChangeHash]int, len(columns.changeRows)+len(changes))
-	for hash, row := range columns.changeRows {
-		nextRows[hash] = row
-	}
+	maps.Copy(nextRows, columns.changeRows)
 
 	// Valid applied histories only add topologically ordered changes: the
 	// remote queue orders dependencies before children and local commits depend
@@ -592,12 +591,12 @@ func directDivergedSequenceInsertion(
 	}
 
 	return storage.SnapshotOperationSplice{
-			Index:      index,
-			Operations: added,
-		}, []opset.Operation{
-			columns.operations[span.start],
-			last,
-		}, true
+		Index:      index,
+		Operations: added,
+	}, []opset.Operation{
+		columns.operations[span.start],
+		last,
+	}, true
 }
 
 func directSequenceBranchRoot(
@@ -968,9 +967,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	changes := append([]opset.Change(nil), columns.changes...)
 
 	changeRows := make(map[opset.ChangeHash]int, len(columns.changeRows)+1)
-	for hash, row := range columns.changeRows {
-		changeRows[hash] = row
-	}
+	maps.Copy(changeRows, columns.changeRows)
 
 	for i := range b.appendedChanges {
 		change := cloneChange(b.appendedChanges[i])
@@ -998,9 +995,7 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 					map[opset.OpID]opset.Operation,
 					len(columns.nonCanonicalOperations)+1,
 				)
-				for identifier, current := range columns.nonCanonicalOperations {
-					next.nonCanonicalOperations[identifier] = current
-				}
+				maps.Copy(next.nonCanonicalOperations, columns.nonCanonicalOperations)
 
 				clonedNonCanonicalOperations = true
 			}

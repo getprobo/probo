@@ -66,8 +66,8 @@ func TestColumn_BatchSpliceRandomizedDifferential(t *testing.T) {
 			})
 		}
 
-		for i := len(splices) - 1; i >= 0; i-- {
-			splice := splices[i]
+		for _, splice := range slices.Backward(splices) {
+
 			model = spliceValues(
 				model,
 				splice.Index,
