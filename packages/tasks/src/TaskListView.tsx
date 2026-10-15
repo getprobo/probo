@@ -20,9 +20,9 @@
 
 import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import type { Virtualizer } from "@tanstack/react-virtual";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
-import type { Virtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
 
 import { flattenTaskListItems, type TaskListFlatItem } from "./flattenTaskListItems";
@@ -206,11 +206,20 @@ export function TaskListView<T extends TaskListViewItem>({
     if (offset == null) {
       return;
     }
+    const scrolledIntoList = offset - listOffsetRef.current;
+    if (scrolledIntoList <= 0) {
+      pinnedShiftRef.current = 0;
+      if (pinShiftRef.current != null) {
+        pinShiftRef.current.style.transform = "";
+      }
+      setPinnedIndex(current => current === null ? current : null);
+      return;
+    }
     const next = pinnedTaskGroupHeader(
       flatItemsRef.current,
       headerIndexesRef.current,
       instance.measurementsCache,
-      offset - listOffsetRef.current,
+      scrolledIntoList,
       instance.options.scrollMargin,
     );
     const shift = next?.shift ?? 0;

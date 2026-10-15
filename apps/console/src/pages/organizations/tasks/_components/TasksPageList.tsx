@@ -344,17 +344,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       return;
     }
 
-    const originalIndex = items.findIndex(item => item.id === draggedId);
-    let targetOriginalIndex = newIndex;
-    if (originalIndex !== -1 && targetOriginalIndex >= originalIndex) {
-      targetOriginalIndex += 1;
-    }
-    if (targetOriginalIndex >= items.length) {
-      targetOriginalIndex = items.length - 1;
-    }
-    const targetRank = items.length > 0
-      ? items[Math.max(0, targetOriginalIndex)].rank
-      : 1;
+    const targetRank = items[newIndex]?.rank ?? dragged.rank;
     const above = newIndex > 0 ? byId.get(order[newIndex - 1]) : undefined;
     const below = newIndex < order.length - 1 ? byId.get(order[newIndex + 1]) : undefined;
     const targetPriority = resolveDropPriority(
