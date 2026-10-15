@@ -531,9 +531,171 @@ func TestAssignOperations_DoesNotAllocateFromEncodedRange(t *testing.T) {
 	changes := []opset.Change{{Actor: actor, Sequence: 1, MaxOp: math.MaxUint32}}
 
 	err = assignOperations(changes, nil, &decodeBudget{})
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "expected")
+	require.NoError(t, err)
+	assert.Equal(t, uint64(math.MaxUint32)+1, changes[0].StartOp)
 	assert.Empty(t, changes[0].Operations)
+	assert.Zero(t, cap(changes[0].Operations))
+}
+
+func TestAssignOperations_AcceptsIsolatedEmptyChange(t *testing.T) {
+	t.Parallel()
+
+	firstActor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+	secondActor, err := opset.NewActorID([]byte{2})
+	require.NoError(t, err)
+
+	changes := []opset.Change{
+		{Actor: firstActor, Sequence: 1, MaxOp: 1},
+		{
+			Actor:             secondActor,
+			Sequence:          1,
+			MaxOp:             4,
+			DependencyIndexes: []uint64{0},
+		},
+		{
+			Actor:             firstActor,
+			Sequence:          2,
+			MaxOp:             4,
+			DependencyIndexes: []uint64{0},
+		},
+	}
+	operations := []opset.Operation{
+		{ID: opset.OpID{Actor: firstActor, Counter: 1}},
+		{ID: opset.OpID{Actor: secondActor, Counter: 2}},
+		{ID: opset.OpID{Actor: secondActor, Counter: 3}},
+		{ID: opset.OpID{Actor: secondActor, Counter: 4}},
+	}
+
+	err = assignOperations(changes, operations, &decodeBudget{})
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), changes[0].StartOp)
+	assert.Equal(t, uint64(2), changes[1].StartOp)
+	assert.Equal(t, changes[2].MaxOp+1, changes[2].StartOp)
+	assert.Empty(t, changes[2].Operations)
+}
+
+func TestAssignOperations_RejectsShortOperationSpan(t *testing.T) {
+	t.Parallel()
+
+	firstActor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+	secondActor, err := opset.NewActorID([]byte{2})
+	require.NoError(t, err)
+
+	changes := []opset.Change{
+		{Actor: firstActor, Sequence: 1, MaxOp: 1},
+		{
+			Actor:             secondActor,
+			Sequence:          1,
+			MaxOp:             2,
+			DependencyIndexes: []uint64{0},
+		},
+		{
+			Actor:             firstActor,
+			Sequence:          2,
+			MaxOp:             5,
+			DependencyIndexes: []uint64{1},
+		},
+	}
+	operations := []opset.Operation{
+		{ID: opset.OpID{Actor: firstActor, Counter: 1}},
+		{ID: opset.OpID{Actor: secondActor, Counter: 2}},
+		{ID: opset.OpID{Actor: firstActor, Counter: 4}},
+	}
+
+	err = assignOperations(changes, operations, &decodeBudget{})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "holds 1 operations, expected 2")
+}
+
+func TestAssignOperations_RejectsExhaustedIndexBudget(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	type (
+		traversalFrame struct {
+			index          int
+			nextDependency int
+			dependencyMax  uint64
+		}
+
+		counterEntry struct {
+			key   opset.ActorID
+			value []uint64
+		}
+	)
+
+	stateBytes := uint64(unsafe.Sizeof(uint8(0)))
+	frameBytes := uint64(unsafe.Sizeof(traversalFrame{}))
+	dependencyBytes := uint64(unsafe.Sizeof(uint64(0)))
+	mapBytes := uint64(unsafe.Sizeof(counterEntry{})) * 2
+	sliceBytes := uint64(unsafe.Sizeof(uint64(0))) * 2
+
+	tests := map[string]struct {
+		operations int
+		prior      uint64
+		charge     uint64
+	}{
+		"dependency max": {
+			prior:  stateBytes + frameBytes,
+			charge: dependencyBytes,
+		},
+		"actor counters map": {
+			operations: 1,
+			prior:      stateBytes + frameBytes + dependencyBytes,
+			charge:     mapBytes,
+		},
+		"actor counter slices": {
+			operations: 1,
+			prior:      stateBytes + frameBytes + dependencyBytes + mapBytes,
+			charge:     sliceBytes,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(
+			name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				run := func(budget *decodeBudget) error {
+					changes := []opset.Change{{
+						Actor:    actor,
+						Sequence: 1,
+						MaxOp:    uint64(test.operations),
+					}}
+
+					var operations []opset.Operation
+					if test.operations > 0 {
+						operations = []opset.Operation{{
+							ID: opset.OpID{Actor: actor, Counter: 1},
+						}}
+					}
+
+					return assignOperations(changes, operations, budget)
+				}
+
+				short := &decodeBudget{
+					used: maxDecodedMemoryBytes - test.prior - test.charge + 1,
+				}
+				err := run(short)
+				require.Error(t, err)
+				assert.ErrorContains(t, err, "decoded columns exceed")
+				assert.Equal(t, maxDecodedMemoryBytes-test.charge+1, short.used)
+
+				exact := &decodeBudget{
+					used: maxDecodedMemoryBytes - test.prior - test.charge,
+				}
+				err = run(exact)
+				require.Error(t, err)
+				assert.ErrorContains(t, err, "decoded columns exceed")
+				assert.Equal(t, uint64(maxDecodedMemoryBytes), exact.used)
+			},
+		)
+	}
 }
 
 func TestDecodeColumns_SharesMemoryBudget(t *testing.T) {

@@ -596,6 +596,10 @@ func assignOperations(
 		return err
 	}
 
+	if err := chargeDecoded[uint64](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
 	states := make([]uint8, len(changes))
 	dependencyMax := make([]uint64, len(changes))
 	stack := make([]traversalFrame, 0, len(changes))
@@ -664,7 +668,7 @@ func assignOperations(
 		}
 	}
 
-	if err := assignChangeStartOps(changes, operations, dependencyMax); err != nil {
+	if err := assignChangeStartOps(changes, operations, dependencyMax, budget); err != nil {
 		return err
 	}
 
@@ -811,7 +815,16 @@ func assignChangeStartOps(
 	changes []opset.Change,
 	operations []opset.Operation,
 	dependencyMax []uint64,
+	budget *decodeBudget,
 ) error {
+	if err := chargeDecodedMap[opset.ActorID, []uint64](budget, uint64(len(changes))); err != nil {
+		return err
+	}
+
+	if err := chargeDecodedSliceGrowth[uint64](budget, uint64(len(operations))); err != nil {
+		return err
+	}
+
 	counters := make(map[opset.ActorID][]uint64, len(changes))
 
 	for _, operation := range operations {
@@ -847,9 +860,12 @@ func assignChangeStartOps(
 			continue
 		}
 
-		// No operation falls in this change. Keep the dependency-derived start
-		// so a missing or orphaned operation is still reported below.
-		changes[index].StartOp = dependencyMax[index] + 1
+		if changes[index].MaxOp == math.MaxUint64 {
+			return fmt.Errorf("change %d start operation overflows uint64", index)
+		}
+
+		// This actor wrote nothing in the gap, so the change is empty.
+		changes[index].StartOp = changes[index].MaxOp + 1
 	}
 
 	return nil
