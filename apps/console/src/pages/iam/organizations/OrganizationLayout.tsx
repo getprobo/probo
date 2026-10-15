@@ -42,7 +42,12 @@ export const organizationLayoutQuery = graphql`
         ...NavPanel_organization
         ...NavSpotlight_organization
         viewer @required(action: THROW) {
+          id
           fullName
+          emailAddress
+          avatar {
+            downloadUrl
+          }
           membership @required(action: THROW) {
             role
           }
@@ -98,6 +103,12 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
                     email: viewer.email,
                     fullName: organization.viewer.fullName,
                     role: organization.viewer.membership.role,
+                    profile: {
+                      id: organization.viewer.id,
+                      fullName: organization.viewer.fullName,
+                      emailAddress: organization.viewer.emailAddress,
+                      avatarUrl: organization.viewer.avatar?.downloadUrl ?? null,
+                    },
                   }}
                 >
                   <Outlet context={organization.viewer.membership.role} />

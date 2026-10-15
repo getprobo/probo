@@ -26,6 +26,7 @@ import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
 import { UserSelect } from "#/components/form/UserSelect";
+import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
@@ -234,7 +235,15 @@ export function TaskListItem(props: TaskListItemProps) {
           )
           : undefined}
         renderAssigneeMenu={canUpdate
-          ? () => <UserSelect {...assigneeSelectProps} />
+          ? () => (
+              <TaskAssigneeMenu
+                value={assigneeSelectProps.value}
+                emptyLabel={assigneeSelectProps.emptyLabel}
+                emptyValue={assigneeSelectProps.emptyValue}
+                disabled={assigneeSelectProps.disabled}
+                onValueChange={assigneeSelectProps.onValueChange}
+              />
+            )
           : undefined}
         onDelete={canDelete
           ? () => {

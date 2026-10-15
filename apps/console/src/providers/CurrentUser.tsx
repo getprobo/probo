@@ -21,14 +21,23 @@
 import { Role } from "@probo/helpers";
 import { createContext } from "react";
 
+export type CurrentUserProfile = {
+  id: string;
+  fullName: string;
+  emailAddress: string;
+  avatarUrl: string | null;
+};
+
 type CurrentUserContextValue = {
   email: string;
   fullName: string;
   role: Role;
+  profile: CurrentUserProfile | null;
 };
 
 export const CurrentUser = createContext<CurrentUserContextValue>({
   email: "",
   fullName: "",
   role: Role.VIEWER,
+  profile: null,
 });

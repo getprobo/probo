@@ -7,6 +7,10 @@
     "noInternalControls": "No internal controls",
     "noDescription": "No description",
     "unassigned": "Unassigned",
+    "assigneeMenu": {
+      "searchPlaceholder": "Search by name or email",
+      "empty": "No users"
+    },
     "overdue": "Overdue",
     "fields": {
       "name": "Name",
