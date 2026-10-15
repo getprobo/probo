@@ -901,7 +901,7 @@ func (b *Engine) Text(handle uint32) (string, error) {
 		return "", err
 	}
 
-	return writeTextElements(b.state.sequenceValues(object.OpID)), nil
+	return writeTextElements(b.state.sequenceIndex(object.OpID)), nil
 }
 
 func (b *Engine) TextAt(
@@ -918,7 +918,7 @@ func (b *Engine) TextAt(
 		return "", fmt.Errorf("historical heads are unknown")
 	}
 
-	return writeTextElements(historical.sequenceValues(object.OpID)), nil
+	return writeTextElements(historical.sequenceIndex(object.OpID)), nil
 }
 
 func (b *Engine) TextSpans(

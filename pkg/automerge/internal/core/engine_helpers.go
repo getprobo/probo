@@ -298,12 +298,14 @@ func textElementString(operation opset.Operation) string {
 	return objectReplacementCharacter
 }
 
-func writeTextElements(values []sequenceValue) string {
+func writeTextElements(index *sequenceIndex) string {
 	var output strings.Builder
 
-	for _, value := range values {
+	index.eachValue(func(value sequenceValue) bool {
 		output.WriteString(textElementString(value.Operation))
-	}
+
+		return true
+	})
 
 	return output.String()
 }

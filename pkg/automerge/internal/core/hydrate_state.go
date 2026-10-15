@@ -178,7 +178,7 @@ func (s *State) hydratedOperationValue(
 	case opset.ActionMakeText:
 		return hydratedValueWire{
 			Type: "text",
-			Text: writeTextElements(s.sequenceValues(operation.ID)),
+			Text: writeTextElements(s.sequenceIndex(operation.ID)),
 		}, nil
 	case opset.ActionSet:
 		if operation.Value == nil {
@@ -258,7 +258,7 @@ func (s *State) mapValue(
 
 			result[property] = value
 		case opset.ActionMakeText:
-			result[property] = writeTextElements(s.sequenceValues(operation.ID))
+			result[property] = writeTextElements(s.sequenceIndex(operation.ID))
 		case opset.ActionSet:
 			result[property] = scalarMaterializedValue(operation.Value)
 		}
@@ -304,7 +304,7 @@ func (s *State) listValue(
 
 			result = append(result, value)
 		case opset.ActionMakeText:
-			result = append(result, writeTextElements(s.sequenceValues(element.ID)))
+			result = append(result, writeTextElements(s.sequenceIndex(element.ID)))
 		case opset.ActionSet:
 			result = append(result, scalarMaterializedValue(element.Value))
 		}

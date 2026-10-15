@@ -433,7 +433,7 @@ func (s *State) Text(property string) (string, error) {
 		return "", fmt.Errorf("text property %q does not exist", property)
 	}
 
-	return writeTextElements(s.sequenceValues(objectOperation.ID)), nil
+	return writeTextElements(s.sequenceIndex(objectOperation.ID)), nil
 }
 
 func (s *State) visibleMapOperation(property string, action opset.Action) (opset.Operation, bool) {
