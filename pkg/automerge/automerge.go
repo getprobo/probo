@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"go.probo.inc/probo/pkg/automerge/internal/core"
+	syncmsg "go.probo.inc/probo/pkg/automerge/internal/sync"
 )
 
 type (
@@ -67,8 +68,18 @@ type (
 		document *Document
 		handle   uint32
 		closed   bool
+
+		// pendingMessages holds the tail of a sync message that was split so
+		// each repo frame stays within the collaboration byte budget.
+		pendingMessages [][]byte
 	}
 )
+
+// maxSyncFrameChangeBytes is the change-byte budget for one generated sync
+// message. The collaboration frame allows one 64 MiB Automerge chunk plus a
+// 64 KiB envelope, so several legal changes must not share one message when
+// their bytes sum past 64 MiB.
+const maxSyncFrameChangeBytes = 64 << 20
 
 var (
 	ErrClosed          = errors.New("automerge document is closed")
@@ -1027,12 +1038,112 @@ func (s *SyncState) GenerateMessage() ([]byte, bool, error) {
 		return nil, false, ErrSyncStateClosed
 	}
 
+	if len(s.pendingMessages) > 0 {
+		message := s.pendingMessages[0]
+		s.pendingMessages = s.pendingMessages[1:]
+
+		return message, true, nil
+	}
+
 	message, ok, err := s.document.engine.GenerateSyncMessage(s.handle)
 	if err != nil {
 		return nil, false, fmt.Errorf("cannot generate Automerge sync message: %w", err)
 	}
 
-	return message, ok, nil
+	if !ok {
+		return nil, false, nil
+	}
+
+	first, rest, err := splitOversizedSyncMessage(message)
+	if err != nil {
+		return nil, false, fmt.Errorf("cannot split Automerge sync message: %w", err)
+	}
+
+	s.pendingMessages = rest
+
+	return first, true, nil
+}
+
+// splitOversizedSyncMessage keeps each emitted sync message's changes inside
+// the collaboration frame budget. One change is never split: a single chunk is
+// already capped at 64 MiB, which the frame's 64 KiB envelope can carry.
+func splitOversizedSyncMessage(data []byte) ([]byte, [][]byte, error) {
+	message, err := syncmsg.ParseMessage(data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	batches := batchSyncChanges(message.Changes, maxSyncFrameChangeBytes)
+	if len(batches) <= 1 {
+		return data, nil, nil
+	}
+
+	parts := make([][]byte, 0, len(batches))
+	for i, batch := range batches {
+		flags := message.Flags
+		if i > 0 {
+			flags = continuationSyncFlags(flags)
+		}
+
+		part := syncmsg.Message{
+			Version: message.Version,
+			Heads:   message.Heads,
+			Need:    message.Need,
+			Have:    message.Have,
+			Changes: batch,
+			Flags:   flags,
+		}
+
+		encoded, err := part.Encode()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		parts = append(parts, encoded)
+	}
+
+	return parts[0], parts[1:], nil
+}
+
+func batchSyncChanges(changes [][]byte, budget int) [][][]byte {
+	if len(changes) == 0 {
+		return nil
+	}
+
+	batches := make([][][]byte, 0, 1)
+	current := make([][]byte, 0, 1)
+	total := 0
+
+	for _, change := range changes {
+		if len(current) > 0 && total+len(change) > budget {
+			batches = append(batches, current)
+			current = nil
+			total = 0
+		}
+
+		current = append(current, change)
+		total += len(change)
+	}
+
+	if len(current) > 0 {
+		batches = append(batches, current)
+	}
+
+	return batches
+}
+
+// continuationSyncFlags repeats capability flags and clears the reset bit.
+// The engine writes flags as {length, marker|bits}; reset is bit 0 of that
+// flag byte. A later batch must not reset the peer again.
+func continuationSyncFlags(flags []byte) []byte {
+	if len(flags) < 2 {
+		return flags
+	}
+
+	cloned := append([]byte(nil), flags...)
+	cloned[1] &^= 0x01
+
+	return cloned
 }
 
 // ReceiveMessage applies a message received from the remote peer.

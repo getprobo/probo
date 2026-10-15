@@ -21,13 +21,16 @@
 package automerge_test
 
 import (
+	"crypto/sha256"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/automerge/collaboration"
 )
 
 var commitTime = time.Date(2026, time.August, 7, 12, 0, 0, 0, time.UTC)
@@ -353,6 +356,7 @@ func TestDocument_MergeRejectsNilSource(t *testing.T) {
 	_, err = document.Merge(nil)
 	require.ErrorIs(t, err, automerge.ErrNilDocument)
 }
+
 func TestFork_CommitsPendingEditsBeforeFork(t *testing.T) {
 	t.Parallel()
 
@@ -383,3 +387,64 @@ func TestFork_CommitsPendingEditsBeforeFork(t *testing.T) {
 	assert.ErrorContains(t, err, "no operations")
 }
 
+func TestGenerateMessage_SplitsChangesAboveFrameBudget(t *testing.T) {
+	t.Parallel()
+
+	source, err := automerge.New(actor(31))
+	require.NoError(t, err)
+	closeDocument(t, source)
+
+	payload := strings.Repeat("x", 32<<20+1)
+	require.NoError(t, source.PutString("first", payload))
+	_, err = source.Commit("first", commitTime)
+	require.NoError(t, err)
+	require.NoError(t, source.PutString("second", payload))
+	_, err = source.Commit("second", commitTime)
+	require.NoError(t, err)
+
+	sourceSync, err := source.NewSyncState()
+	require.NoError(t, err)
+	closeSyncState(t, sourceSync)
+
+	target, err := automerge.New(actor(32))
+	require.NoError(t, err)
+	closeDocument(t, target)
+
+	targetSync, err := target.NewSyncState()
+	require.NoError(t, err)
+	closeSyncState(t, targetSync)
+
+	frames := 0
+	for {
+		message, ok, err := sourceSync.GenerateMessage()
+		require.NoError(t, err)
+		if !ok {
+			break
+		}
+
+		encoded, err := collaboration.EncodeMessage(
+			collaboration.Message{
+				Type:       collaboration.MessageSync,
+				SenderID:   "source",
+				TargetID:   "target",
+				DocumentID: "doc",
+				Data:       message,
+			},
+		)
+		require.NoError(t, err)
+		assert.LessOrEqual(t, len(encoded), collaboration.MaxWireFrameBytes)
+
+		require.NoError(t, targetSync.ReceiveMessage(message))
+		frames++
+	}
+
+	require.GreaterOrEqual(t, frames, 2)
+
+	first, err := target.String("first")
+	require.NoError(t, err)
+	assert.Equal(t, sha256.Sum256([]byte(payload)), sha256.Sum256([]byte(first)))
+
+	second, err := target.String("second")
+	require.NoError(t, err)
+	assert.Equal(t, sha256.Sum256([]byte(payload)), sha256.Sum256([]byte(second)))
+}
