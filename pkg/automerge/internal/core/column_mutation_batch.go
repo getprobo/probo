@@ -562,18 +562,23 @@ func directDivergedSequenceInsertion(
 		index++
 	}
 
+	firstBoundary := columns.operations[span.start]
+	if index == span.start {
+		firstBoundary = added[0]
+	}
+
 	last := columns.operations[span.end-1]
 	if index == span.end {
 		last = added[len(added)-1]
 	}
 
 	return storage.SnapshotOperationSplice{
-		Index:      index,
-		Operations: added,
-	}, []opset.Operation{
-		columns.operations[span.start],
-		last,
-	}, true
+			Index:      index,
+			Operations: added,
+		}, []opset.Operation{
+			firstBoundary,
+			last,
+		}, true
 }
 
 func directSequenceBranchRoot(

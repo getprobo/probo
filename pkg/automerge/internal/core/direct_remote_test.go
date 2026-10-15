@@ -110,6 +110,63 @@ func TestDirectRemote_OutOfOrderSetPublishesOneBatch(t *testing.T) {
 	)
 }
 
+func TestDirectRemote_HeadBranchBeforeFirstRowSurvivesFollowUp(t *testing.T) {
+	t.Parallel()
+
+	base, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, base.SetActor([]byte{0x01}))
+	text, err := base.PutText(0, "body")
+	require.NoError(t, err)
+	require.NoError(t, base.SpliceText(text, 0, 0, "ab"))
+	_, err = base.Commit("base", time.Time{})
+	require.NoError(t, err)
+	baseHeads := mustHeads(t, base)
+	baseData, err := base.Save(true, false)
+	require.NoError(t, err)
+
+	remote, err := LoadEngine(baseData)
+	require.NoError(t, err)
+	require.NoError(t, remote.SetActor([]byte{0xff}))
+	remoteText, err := remote.GetText(0, "body")
+	require.NoError(t, err)
+	require.NoError(t, remote.SpliceText(remoteText, 0, 0, "R"))
+	_, err = remote.Commit("remote", time.Time{})
+	require.NoError(t, err)
+	changes, _, err := remote.ChangesSince(baseHeads)
+	require.NoError(t, err)
+	require.Len(t, changes, 1)
+
+	target, err := LoadEngine(baseData)
+	require.NoError(t, err)
+	require.NoError(t, target.SetActor([]byte{0x02}))
+	require.NoError(t, target.ApplyChanges(changes))
+
+	targetText, err := target.GetText(0, "body")
+	require.NoError(t, err)
+	inserted, err := target.Text(targetText)
+	require.NoError(t, err)
+	require.Equal(t, "Rab", inserted)
+
+	object := target.objects[targetText]
+	span, ok := target.columns.objectSpans[object]
+	require.True(t, ok)
+	require.Greater(t, span.end, span.start)
+	require.NotEmpty(t, remote.columns.changes)
+	remoteChange := remote.columns.changes[len(remote.columns.changes)-1]
+	require.NotEmpty(t, remoteChange.Operations)
+	require.Equal(t, remoteChange.Operations[0].ID, target.columns.operations[span.start].ID)
+
+	require.NoError(t, target.SpliceText(targetText, 2, 0, "Z"))
+	_, err = target.Commit("follow-up", time.Time{})
+	require.NoError(t, err)
+
+	value, err := target.Text(targetText)
+	require.NoError(t, err)
+	assert.Equal(t, "RaZb", value)
+	requireColumnarStateEquivalent(t, target)
+}
+
 func TestDirectRemote_ConcurrentSingleInsertRoundTrips(t *testing.T) {
 	base, err := NewEngine()
 	require.NoError(t, err)
