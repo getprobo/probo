@@ -59,6 +59,15 @@ export const deviceCardFields = tv({
   },
 });
 
+export const postureChecksPopover = tv({
+  slots: {
+    trigger: "inline-flex cursor-pointer border-0 bg-transparent p-0",
+    popup: "w-max",
+    list: "m-0 flex list-none flex-col p-0 text-1",
+    item: "flex items-center gap-1",
+  },
+});
+
 export const postureReport = tv({
   slots: {
     time: "inline-flex cursor-pointer items-center gap-2 whitespace-nowrap border-0 bg-transparent p-0 text-inherit",

@@ -91,6 +91,8 @@
       "checks_other": "{{count}} checks",
       "warnings_one": "{{count}} warning",
       "warnings_other": "{{count}} warnings",
+      "showWarnings_one": "Show {{count}} posture warning",
+      "showWarnings_other": "Show {{count}} posture warnings",
       "unknownHint": "The agent could not capture or interpret this check, so it reported unknown.",
       "values": {
         "on": "On",

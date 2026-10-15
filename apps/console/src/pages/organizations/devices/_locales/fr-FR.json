@@ -91,6 +91,8 @@
       "checks_other": "{{count}} contrôles",
       "warnings_one": "{{count}} avertissement",
       "warnings_other": "{{count}} avertissements",
+      "showWarnings_one": "Afficher {{count}} avertissement de posture",
+      "showWarnings_other": "Afficher {{count}} avertissements de posture",
       "unknownHint": "L'agent n'a pas pu capturer ou interpréter ce contrôle, il a donc indiqué Inconnu.",
       "values": {
         "on": "Activé",

@@ -27,13 +27,13 @@ import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { Popover } from "@probo/ui/src/v2/Popover/Popover";
+import { PopoverPopup } from "@probo/ui/src/v2/Popover/PopoverPopup";
+import { PopoverTrigger } from "@probo/ui/src/v2/Popover/PopoverTrigger";
 import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
 import { TableLink } from "@probo/ui/src/v2/Table/TableLink";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { TableRowHeaderCell } from "@probo/ui/src/v2/Table/TableRowHeaderCell";
-import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
-import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
-import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -55,6 +55,7 @@ import { ReassignDeviceDialog } from "../dialogs/ReassignDeviceDialog";
 
 import { DeviceDeleteDialog } from "./DeviceDeleteDialog";
 import { DeviceRevokeDialog } from "./DeviceRevokeDialog";
+import { postureChecksPopover } from "./variants";
 
 const deviceListItemFragment = graphql`
   fragment DeviceListItem_device on Device {
@@ -126,6 +127,7 @@ export function DeviceListItem({
   const showRevoke = canRevoke && !deletable;
   const showDelete = canDelete && deletable;
   const hasActions = showAssign || showRevoke || showDelete;
+  const { trigger, popup, list, item } = postureChecksPopover();
 
   return (
     <>
@@ -185,20 +187,24 @@ export function DeviceListItem({
             </Badge>
           )}
           {warnings.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger
+            <Popover>
+              <PopoverTrigger
                 render={(
-                  <span tabIndex={0} className="inline-flex">
-                    <Badge size={1} variant="soft" color="amber" iconStart={<WarningIcon />}>
-                      {t("devices.postures.warnings", { count: warnings.length })}
-                    </Badge>
-                  </span>
+                  <button
+                    type="button"
+                    className={trigger()}
+                    aria-label={t("devices.postures.showWarnings", { count: warnings.length })}
+                  />
                 )}
-              />
-              <TooltipPopup>
-                <ul className="flex flex-col">
+              >
+                <Badge size={1} variant="soft" color="amber" iconStart={<WarningIcon />}>
+                  {t("devices.postures.warnings", { count: warnings.length })}
+                </Badge>
+              </PopoverTrigger>
+              <PopoverPopup className={popup()} align="end">
+                <ul className={list()}>
                   {warnings.map(warning => (
-                    <li key={warning.key} className="flex items-center gap-1">
+                    <li key={warning.key} className={item()}>
                       {warning.outcome === "unknown"
                         ? <QuestionIcon className="size-3" aria-hidden />
                         : <XIcon className="size-3 text-red-11" aria-hidden />}
@@ -206,8 +212,8 @@ export function DeviceListItem({
                     </li>
                   ))}
                 </ul>
-              </TooltipPopup>
-            </Tooltip>
+              </PopoverPopup>
+            </Popover>
           )}
         </TableCell>
         <TableCell interactive justify="end" width="3rem">
