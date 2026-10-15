@@ -85,6 +85,13 @@ input DeviceOrder
     field: DeviceOrderField!
 }
 
+input DeviceFilter {
+    query: String
+    state: DeviceState
+    platform: DevicePlatform
+    agentVersion: String
+}
+
 type Device implements Node {
     id: ID!
     state: DeviceState!
@@ -242,12 +249,12 @@ type CreateDevicePayload {
     enrollmentUrl: String!
 }
 
-type RevokeDevicePayload {
-    device: Device!
+type RevokeDevicesPayload {
+    devices: [Device!]!
 }
 
-type DeleteDevicePayload {
-    deletedDeviceId: ID!
+type DeleteDevicesPayload {
+    deletedDeviceIds: [ID!]!
 }
 
 type SetDeviceOwnerPayload {
@@ -263,12 +270,12 @@ input CreateDeviceInput {
     ownerId: ID
 }
 
-input RevokeDeviceInput {
-    deviceId: ID!
+input RevokeDevicesInput {
+    deviceIds: [ID!]!
 }
 
-input DeleteDeviceInput {
-    deviceId: ID!
+input DeleteDevicesInput {
+    deviceIds: [ID!]!
 }
 
 input SetDeviceOwnerInput {
@@ -276,12 +283,23 @@ input SetDeviceOwnerInput {
     ownerId: ID
 }
 
+input DownloadDeviceEvidenceInput {
+    deviceIds: [ID!]!
+}
+
+type DownloadDeviceEvidencePayload {
+    downloadUrl: String!
+}
+
 extend type Mutation {
     enrollDevice(input: EnrollDeviceInput!): CreateDevicePayload!
     createDevice(input: CreateDeviceInput!): CreateDevicePayload!
-    revokeDevice(input: RevokeDeviceInput!): RevokeDevicePayload!
-    deleteDevice(input: DeleteDeviceInput!): DeleteDevicePayload!
+    revokeDevices(input: RevokeDevicesInput!): RevokeDevicesPayload!
+    deleteDevices(input: DeleteDevicesInput!): DeleteDevicesPayload!
     setDeviceOwner(
         input: SetDeviceOwnerInput!
     ): SetDeviceOwnerPayload!
+    downloadDeviceEvidence(
+        input: DownloadDeviceEvidenceInput!
+    ): DownloadDeviceEvidencePayload!
 }

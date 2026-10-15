@@ -21,10 +21,12 @@
 package itam
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -32,9 +34,12 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/crypto/rand"
+	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 var (
@@ -98,6 +103,9 @@ type (
 		pg                      *pg.Client
 		logger                  *log.Logger
 		enrollmentTokenValidity time.Duration
+		html2pdfConverter       *html2pdf.Converter
+		fileManager             *filemanager.Service
+		bucket                  string
 	}
 
 	CreateDeviceRequest struct {
@@ -138,6 +146,9 @@ type (
 
 	ServiceConfig struct {
 		EnrollmentTokenValidity time.Duration
+		PDF                     *html2pdf.Converter
+		FileManager             *filemanager.Service
+		Bucket                  string
 	}
 )
 
@@ -158,6 +169,9 @@ func NewService(
 		pg:                      pgClient,
 		logger:                  logger,
 		enrollmentTokenValidity: validity,
+		html2pdfConverter:       cfg.PDF,
+		fileManager:             cfg.FileManager,
+		bucket:                  cfg.Bucket,
 	}
 }
 
@@ -410,7 +424,12 @@ func (s *Service) ListForOrganizationID(
 	scope coredata.Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DeviceOrderField],
+	filter *coredata.DeviceFilter,
 ) (*page.Page[*coredata.Device, coredata.DeviceOrderField], error) {
+	if filter == nil {
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil)
+	}
+
 	var devices coredata.Devices
 
 	err := s.pg.WithConn(
@@ -421,7 +440,7 @@ func (s *Service) ListForOrganizationID(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			if err := devices.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor); err != nil {
+			if err := devices.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load devices: %w", err)
 			}
 
@@ -433,6 +452,37 @@ func (s *Service) ListForOrganizationID(
 	}
 
 	return page.NewPage(devices, cursor), nil
+}
+
+func (s *Service) ListAgentVersionsForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) ([]string, error) {
+	var versions []string
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, conn, scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			var devices coredata.Devices
+
+			loaded, err := devices.LoadAgentVersionsByOrganizationID(ctx, conn, scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load device agent versions: %w", err)
+			}
+
+			versions = loaded
+
+			return nil
+		},
+	)
+
+	return versions, err
 }
 
 func (s *Service) ListForOrganizationIDAndOwnerID(
@@ -472,7 +522,12 @@ func (s *Service) CountForOrganizationID(
 	ctx context.Context,
 	scope coredata.Scoper,
 	organizationID gid.GID,
+	filter *coredata.DeviceFilter,
 ) (int, error) {
+	if filter == nil {
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil)
+	}
+
 	var count int
 
 	err := s.pg.WithConn(
@@ -485,7 +540,7 @@ func (s *Service) CountForOrganizationID(
 
 			var ds coredata.Devices
 
-			c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID)
+			c, err := ds.CountByOrganizationID(ctx, conn, scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count devices: %w", err)
 			}
@@ -533,59 +588,60 @@ func (s *Service) CountForOrganizationIDAndOwnerID(
 	return count, err
 }
 
-func (s *Service) RevokeDevice(
-	ctx context.Context,
-	scope coredata.Scoper,
-	deviceID gid.GID,
-) (*coredata.Device, error) {
-	device := &coredata.Device{}
+const maxDeviceBatchSize = 100
 
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			if err := device.LoadByID(ctx, conn, scope, deviceID); err != nil {
-				return fmt.Errorf("cannot load device: %w", err)
-			}
+func validateDeviceIDs(deviceIDs []gid.GID, max int) error {
+	v := validator.New()
+	v.Check(deviceIDs, "device_ids", validator.Required())
+	v.Check(len(deviceIDs), "device_ids", validator.Max(max))
+	v.CheckEach(deviceIDs, "device_ids", func(index int, item any) {
+		v.Check(
+			item,
+			fmt.Sprintf("device_ids[%d]", index),
+			validator.GID(coredata.DeviceEntityType),
+		)
+	})
 
-			if err := device.Revoke(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot revoke device: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return device, nil
+	return v.Error()
 }
 
-func (s *Service) DeleteDevice(
+func sortedDeviceIDs(deviceIDs []gid.GID) []gid.GID {
+	sorted := slices.Clone(deviceIDs)
+	slices.SortFunc(sorted, func(a, b gid.GID) int {
+		return bytes.Compare(a[:], b[:])
+	})
+
+	return sorted
+}
+
+func (s *Service) RevokeDevices(
 	ctx context.Context,
 	scope coredata.Scoper,
-	deviceID gid.GID,
-) (*coredata.Device, error) {
-	device := &coredata.Device{}
+	deviceIDs []gid.GID,
+) ([]*coredata.Device, error) {
+	if err := validateDeviceIDs(deviceIDs, maxDeviceBatchSize); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	deviceIDs = gid.NewSet(deviceIDs...).Values()
+
+	revoked := make(map[gid.GID]*coredata.Device, len(deviceIDs))
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := device.LoadByIDForUpdate(ctx, conn, scope, deviceID); err != nil {
-				return fmt.Errorf("cannot load device: %w", err)
-			}
+			for _, deviceID := range sortedDeviceIDs(deviceIDs) {
+				device := &coredata.Device{}
 
-			if device.State != coredata.DeviceStateRevoked {
-				return ErrDeviceNotDeletable
-			}
+				if err := device.LoadByIDForUpdate(ctx, conn, scope, deviceID); err != nil {
+					return fmt.Errorf("cannot load device: %w", err)
+				}
 
-			if err := device.SoftDelete(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot soft delete device: %w", err)
-			}
+				if err := device.Revoke(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot revoke device: %w", err)
+				}
 
-			var token coredata.DeviceEnrollmentToken
-			if err := token.DeleteByDeviceID(ctx, conn, scope, device.ID); err != nil {
-				return fmt.Errorf("cannot delete device enrollment tokens: %w", err)
+				revoked[device.ID] = device
 			}
 
 			return nil
@@ -595,7 +651,66 @@ func (s *Service) DeleteDevice(
 		return nil, err
 	}
 
-	return device, nil
+	devices := make([]*coredata.Device, 0, len(deviceIDs))
+	for _, deviceID := range deviceIDs {
+		devices = append(devices, revoked[deviceID])
+	}
+
+	return devices, nil
+}
+
+func (s *Service) DeleteDevices(
+	ctx context.Context,
+	scope coredata.Scoper,
+	deviceIDs []gid.GID,
+) ([]*coredata.Device, error) {
+	if err := validateDeviceIDs(deviceIDs, maxDeviceBatchSize); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	deviceIDs = gid.NewSet(deviceIDs...).Values()
+
+	deleted := make(map[gid.GID]*coredata.Device, len(deviceIDs))
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			for _, deviceID := range sortedDeviceIDs(deviceIDs) {
+				device := &coredata.Device{}
+
+				if err := device.LoadByIDForUpdate(ctx, conn, scope, deviceID); err != nil {
+					return fmt.Errorf("cannot load device: %w", err)
+				}
+
+				if device.State != coredata.DeviceStateRevoked {
+					return ErrDeviceNotDeletable
+				}
+
+				if err := device.SoftDelete(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot soft delete device: %w", err)
+				}
+
+				var token coredata.DeviceEnrollmentToken
+				if err := token.DeleteByDeviceID(ctx, conn, scope, device.ID); err != nil {
+					return fmt.Errorf("cannot delete device enrollment tokens: %w", err)
+				}
+
+				deleted[device.ID] = device
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	devices := make([]*coredata.Device, 0, len(deviceIDs))
+	for _, deviceID := range deviceIDs {
+		devices = append(devices, deleted[deviceID])
+	}
+
+	return devices, nil
 }
 
 func (s *Service) SetDeviceOwner(

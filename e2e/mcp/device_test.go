@@ -21,6 +21,9 @@
 package mcp_test
 
 import (
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -142,21 +145,22 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 
 	// Revoke
 	var revokeResult struct {
-		Device mcpDevice `json:"device"`
+		Devices []mcpDevice `json:"devices"`
 	}
-	mc.CallToolInto("revokeDevice", map[string]any{
-		"id": deviceID,
+	mc.CallToolInto("revokeDevices", map[string]any{
+		"device_ids": []string{deviceID},
 	}, &revokeResult)
-	assert.Equal(t, "REVOKED", revokeResult.Device.State)
+	require.Len(t, revokeResult.Devices, 1)
+	assert.Equal(t, "REVOKED", revokeResult.Devices[0].State)
 
 	// Delete
 	var deleteResult struct {
-		DeletedDeviceID string `json:"deleted_device_id"`
+		DeletedDeviceIDs []string `json:"deleted_device_ids"`
 	}
-	mc.CallToolInto("deleteDevice", map[string]any{
-		"id": deviceID,
+	mc.CallToolInto("deleteDevices", map[string]any{
+		"device_ids": []string{deviceID},
 	}, &deleteResult)
-	assert.Equal(t, deviceID, deleteResult.DeletedDeviceID)
+	assert.Equal(t, []string{deviceID}, deleteResult.DeletedDeviceIDs)
 
 	msg := mc.CallToolExpectToolError("getDevice", map[string]any{
 		"id": deviceID,
@@ -218,8 +222,8 @@ func TestMCP_Device_CannotDeletePending(t *testing.T) {
 
 	deviceID := createDeviceViaMCP(t, mc, orgID)
 
-	msg := mc.CallToolExpectToolError("deleteDevice", map[string]any{
-		"id": deviceID,
+	msg := mc.CallToolExpectToolError("deleteDevices", map[string]any{
+		"device_ids": []string{deviceID},
 	})
 	assert.Equal(t, "device cannot be deleted", msg)
 }
@@ -234,8 +238,8 @@ func TestMCP_Device_PermissionDenied(t *testing.T) {
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
 	viewerMC := testutil.NewMCPClient(t, viewer)
 
-	msg := viewerMC.CallToolExpectToolError("revokeDevice", map[string]any{
-		"id": deviceID,
+	msg := viewerMC.CallToolExpectToolError("revokeDevices", map[string]any{
+		"device_ids": []string{deviceID},
 	})
 	assert.Contains(t, msg, "permission denied")
 
@@ -333,4 +337,79 @@ func TestMCP_Device_IncludePosturesOnDeviceWithNoChecks(t *testing.T) {
 	}
 
 	assert.True(t, found, "created device should appear in listDevices")
+}
+
+func TestMCP_Device_DownloadEvidence(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	deviceID := createDeviceViaMCP(t, mc, orgID)
+
+	var result struct {
+		DownloadURL string `json:"download_url"`
+	}
+	mc.CallToolInto("downloadDeviceEvidence", map[string]any{
+		"device_ids": []string{deviceID},
+	}, &result)
+	require.NotEmpty(t, result.DownloadURL)
+
+	resp, err := http.Get(result.DownloadURL)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 8))
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(string(body), "%PDF"))
+
+	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	employeeMC := testutil.NewMCPClient(t, employee)
+	msg := employeeMC.CallToolExpectToolError("downloadDeviceEvidence", map[string]any{
+		"device_ids": []string{deviceID},
+	})
+	assert.Contains(t, msg, "permission denied")
+}
+
+func TestMCP_Device_RevokeAndDeleteMany(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	firstID := createDeviceViaMCP(t, mc, orgID)
+	secondID := createDeviceViaMCP(t, mc, orgID)
+
+	var revokeResult struct {
+		Devices []mcpDevice `json:"devices"`
+	}
+	mc.CallToolInto("revokeDevices", map[string]any{
+		"device_ids": []string{firstID, secondID},
+	}, &revokeResult)
+	require.Len(t, revokeResult.Devices, 2)
+	assert.Equal(t, "REVOKED", revokeResult.Devices[0].State)
+	assert.Equal(t, "REVOKED", revokeResult.Devices[1].State)
+
+	pendingID := createDeviceViaMCP(t, mc, orgID)
+	msg := mc.CallToolExpectToolError("deleteDevices", map[string]any{
+		"device_ids": []string{firstID, pendingID},
+	})
+	assert.Equal(t, "device cannot be deleted", msg)
+
+	var stillThere struct {
+		Device mcpDevice `json:"device"`
+	}
+	mc.CallToolInto("getDevice", map[string]any{"id": firstID}, &stillThere)
+	assert.Equal(t, firstID, stillThere.Device.ID)
+
+	var deleteResult struct {
+		DeletedDeviceIDs []string `json:"deleted_device_ids"`
+	}
+	mc.CallToolInto("deleteDevices", map[string]any{
+		"device_ids": []string{firstID, secondID},
+	}, &deleteResult)
+	assert.Equal(t, []string{firstID, secondID}, deleteResult.DeletedDeviceIDs)
 }

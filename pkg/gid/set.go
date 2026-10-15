@@ -20,6 +20,11 @@
 
 package gid
 
+import (
+	"maps"
+	"slices"
+)
+
 type (
 	Set map[GID]struct{}
 )
@@ -38,4 +43,9 @@ func (s Set) Contains(id GID) bool {
 	_, ok := s[id]
 
 	return ok
+}
+
+// Values returns the ids in the set.
+func (s Set) Values() []GID {
+	return slices.Collect(maps.Keys(s))
 }

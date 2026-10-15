@@ -18,65 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useConfirm } from "@probo/ui";
-import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
-import type { useRevokeDeviceMutation } from "#/__generated__/core/useRevokeDeviceMutation.graphql";
+import type { useRevokeDevicesMutation } from "#/__generated__/core/useRevokeDevicesMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { displayValue } from "./deviceDisplay";
-
-const revokeDeviceMutation = graphql`
-  mutation useRevokeDeviceMutation($input: RevokeDeviceInput!) {
-    revokeDevice(input: $input) {
-      device {
+const revokeDevicesMutation = graphql`
+  mutation useRevokeDevicesMutation($input: RevokeDevicesInput!) {
+    revokeDevices(input: $input) {
+      devices {
         id
         revokedAt
         state
+        ...DeviceListItem_device
         ...DeviceDetailsCard_deviceFragment
       }
     }
   }
 `;
 
-interface RevokeDeviceInput {
-  id: string;
-  hostname: string | null | undefined;
-}
+export function useRevokeDevices() {
+  const { t } = useTranslation("organizations/devices");
 
-export function useRevokeDevice() {
-  const { t } = useTranslation();
-  const confirm = useConfirm();
-  const pendingLabel = t("devices.values.pending");
-
-  const [revokeDevice, isRevoking] = useMutation<useRevokeDeviceMutation>(
-    revokeDeviceMutation,
-    {
-      successMessage: t("devices.messages.revoked"),
-      errorToast: t("devices.errors.revoke"),
-    },
-  );
-
-  const confirmRevoke = useCallback(
-    (device: RevokeDeviceInput) => {
-      confirm(
-        () =>
-          revokeDevice({
-            variables: { input: { deviceId: device.id } },
-          }),
-        {
-          message: t("devices.confirmations.revoke", {
-            hostname: displayValue(device.hostname, pendingLabel),
-          }),
-          variant: "danger",
-          label: t("devices.actions.revoke"),
-        },
-      );
-    },
-    [t, confirm, pendingLabel, revokeDevice],
-  );
-
-  return [confirmRevoke, isRevoking] as const;
+  return useMutation<useRevokeDevicesMutation>(revokeDevicesMutation, {
+    successMessage: t("devices.messages.revoked"),
+    errorToast: t("devices.errors.revoke"),
+  });
 }

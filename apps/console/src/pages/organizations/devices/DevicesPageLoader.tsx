@@ -18,30 +18,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { useDevicesListFilters } from "./_lib/useDevicesListFilters";
 import { DevicesPage, devicesPageQuery } from "./DevicesPage";
+import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
 
 export default function DevicesPageLoader() {
   const organizationId = useOrganizationId();
+  const filters = useDevicesListFilters();
+  const filtersRef = useRef(filters);
   const [queryRef, loadQuery]
     = useQueryLoader<DevicesPageQuery>(devicesPageQuery);
 
   useEffect(() => {
-    loadQuery({ organizationId });
+    filtersRef.current = filters;
+  }, [filters]);
+
+  useEffect(() => {
+    const current = filtersRef.current;
+    loadQuery({
+      organizationId,
+      query: current.ownerQuery,
+      state: current.state,
+      platform: current.platform,
+      agentVersion: current.agentVersion,
+    }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <DevicesPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<DevicesPageSkeleton />}>
       <DevicesPage queryRef={queryRef} />
     </Suspense>
   );

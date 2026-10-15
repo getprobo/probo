@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Button } from "../Button/Button";
 import { Text } from "../typography/Text";
 
+import { ConfirmDialog } from "./ConfirmDialog";
 import { Dialog } from "./Dialog";
 import { DialogBody } from "./DialogBody";
 import { DialogClose } from "./DialogClose";
@@ -94,6 +95,27 @@ export function Controlled() {
         </DialogPopup>
       </Dialog>
     </div>
+  );
+}
+
+export function Confirm() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button variant="solid" color="red" onClick={() => setOpen(true)}>
+        Delete item
+      </Button>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="Delete this item?"
+        description="This action cannot be undone."
+        cancelLabel="Cancel"
+        confirmLabel="Delete"
+        onConfirm={() => setOpen(false)}
+      />
+    </>
   );
 }
 

@@ -18,33 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Breadcrumb,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  useDialogRef,
-} from "@probo/ui";
+import { formatError, type GraphQLError } from "@probo/helpers";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
+import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
+import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { type ReactNode, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { CreateDeviceDialogMutation } from "#/__generated__/core/CreateDeviceDialogMutation.graphql";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
 
+import { DeviceOwnerSelect } from "../_components/DeviceOwnerSelect";
 import { EnrollmentInstructions } from "../_components/EnrollmentInstructions";
 
 const createDeviceMutation = graphql`
   mutation CreateDeviceDialogMutation($input: CreateDeviceInput!) {
     createDevice(input: $input) {
       enrollmentToken
-      serverUrl
       device {
         id
       }
@@ -52,64 +49,56 @@ const createDeviceMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  ownerId: z.string().nullable().optional(),
-});
-
-type Props = {
-  children: ReactNode;
+interface CreateDeviceDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   organizationId: string;
   onCreated: () => void;
-};
+}
 
 export function CreateDeviceDialog({
-  children,
+  open,
+  onOpenChange,
   organizationId,
   onCreated,
-}: Props) {
-  const { t } = useTranslation();
+}: CreateDeviceDialogProps) {
+  const { t } = useTranslation("organizations/devices");
   const toast = useToast();
-  const dialogRef = useDialogRef();
-  const [enrollment, setEnrollment] = useState<{
-    enrollmentToken: string;
-    serverUrl: string;
-  } | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [enrollmentToken, setEnrollmentToken] = useState<string | null>(null);
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [createDevice, isCreating] = useMutation<CreateDeviceDialogMutation>(createDeviceMutation);
 
-  const { control, handleSubmit, formState, reset } = useFormWithSchema(schema, {
-    defaultValues: {
-      ownerId: "",
-    },
-  });
+  // Reset on the next open. Clearing the token while the dialog closes
+  // replaces Close with the form's submit button and creates another device.
+  if (open && !prevOpen) {
+    setPrevOpen(true);
+    setOwnerId(null);
+    setEnrollmentToken(null);
+  } else if (!open && prevOpen) {
+    setPrevOpen(false);
+  }
 
-  const [createDevice, isCreating] = useMutation<CreateDeviceDialogMutation>(
-    createDeviceMutation,
-  );
-
-  const handleClose = () => {
-    const createdDevice = enrollment !== null;
-    setEnrollment(null);
-    reset();
-    if (createdDevice) {
+  function handleOpenChange(next: boolean) {
+    if (!next && isCreating) {
+      return;
+    }
+    if (!next && enrollmentToken !== null) {
       onCreated();
     }
-  };
+    onOpenChange(next);
+  }
 
-  const closeDialog = () => {
-    handleClose();
-    dialogRef.current?.close();
-  };
-
-  const onSubmit = handleSubmit((formData) => {
-    const ownerId
-      = formData.ownerId === null
-        ? null
-        : formData.ownerId || undefined;
-
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (enrollmentToken !== null || isCreating) {
+      return;
+    }
     createDevice({
       variables: {
         input: {
           organizationId,
-          ownerId,
+          ownerId: ownerId ?? undefined,
         },
       },
       onCompleted(response, errors) {
@@ -121,11 +110,7 @@ export function CreateDeviceDialog({
           });
           return;
         }
-
-        setEnrollment({
-          enrollmentToken: response.createDevice.enrollmentToken,
-          serverUrl: response.createDevice.serverUrl,
-        });
+        setEnrollmentToken(response.createDevice.enrollmentToken);
         toast.add({
           title: t("common.success"),
           description: t("deviceEnrollment.messages.created"),
@@ -135,62 +120,50 @@ export function CreateDeviceDialog({
       onError(error) {
         toast.add({
           title: t("common.error"),
-          description: formatError(
-            t("devices.errors.create"),
-            error,
-          ),
+          description: formatError(t("devices.errors.create"), error as GraphQLError),
           type: "error",
         });
       },
     });
-  });
+  }
 
   return (
-    <Dialog
-      ref={dialogRef}
-      trigger={children}
-      onClose={handleClose}
-      closable={!isCreating}
-      title={<Breadcrumb items={[t("devices.title"), t("devices.actions.new")]} />}
-    >
-      <form onSubmit={e => void onSubmit(e)} className="space-y-4">
-        <DialogContent padded className="space-y-4">
-          {enrollment
-            ? (
-                <EnrollmentInstructions
-                  enrollmentToken={enrollment.enrollmentToken}
-                  serverUrl={enrollment.serverUrl}
-                />
-              )
-            : (
-                <PeopleSelectField
-                  organizationId={organizationId}
-                  control={control}
-                  name="ownerId"
-                  label={t("devices.fields.owner")}
-                  optional
-                />
-              )}
-        </DialogContent>
-        {enrollment
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogPopup>
+        <DialogHeader>
+          <DialogTitle>{t("devices.actions.new")}</DialogTitle>
+        </DialogHeader>
+        {enrollmentToken
           ? (
-              <footer className="flex justify-end items-center p-3 border-t border-t-border-low gap-2">
-                <Button
-                  type="button"
-                  onClick={closeDialog}
-                >
-                  {t("common.actions.close")}
-                </Button>
-              </footer>
+              <>
+                <DialogBody>
+                  <EnrollmentInstructions enrollmentToken={enrollmentToken} />
+                </DialogBody>
+                <DialogFooter>
+                  <DialogClose
+                    render={<Button>{t("common.actions.close")}</Button>}
+                  />
+                </DialogFooter>
+              </>
             )
           : (
-              <DialogFooter>
-                <Button disabled={formState.isSubmitting || isCreating} type="submit">
-                  {t("common.create")}
-                </Button>
-              </DialogFooter>
+              <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+                <DialogBody>
+                  <DeviceOwnerSelect
+                    organizationId={organizationId}
+                    profileKey={null}
+                    value={ownerId}
+                    onValueChange={setOwnerId}
+                  />
+                </DialogBody>
+                <DialogFooter>
+                  <Button type="submit" loading={isCreating}>
+                    {t("common.create")}
+                  </Button>
+                </DialogFooter>
+              </form>
             )}
-      </form>
+      </DialogPopup>
     </Dialog>
   );
 }

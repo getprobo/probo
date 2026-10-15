@@ -1140,13 +1140,13 @@ agent_postures() {
 revoke_device() {
   local device_id="$1"
 
-  prb_api "revokeDevice" '
-    mutation($input: RevokeDeviceInput!) {
-      revokeDevice(input: $input) {
-        device { id }
+  prb_api "revokeDevices" '
+    mutation($input: RevokeDevicesInput!) {
+      revokeDevices(input: $input) {
+        devices { id }
       }
     }
-  ' -f input="$(jo deviceId="$device_id")" >/dev/null
+  ' -f input="$(jo deviceIds="$(jo -a "$device_id")")" >/dev/null
 }
 
 # seed_device <owner_id> <hostname> <platform> <os_version> <serial> <CHECK_KEY:STATUS>...

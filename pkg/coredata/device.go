@@ -742,6 +742,7 @@ func (ds *Devices) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DeviceOrderField],
+	filter *DeviceFilter,
 ) error {
 	q := `
 SELECT
@@ -771,12 +772,14 @@ WHERE
 	AND organization_id = @organization_id
 	AND deleted_at IS NULL
 	AND %s
+	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -862,14 +865,16 @@ func (ds *Devices) CountByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *DeviceFilter,
 ) (int, error) {
 	q := fmt.Sprintf(`
 SELECT COUNT(id) FROM devices
-WHERE %s AND organization_id = @organization_id AND deleted_at IS NULL
-`, scope.SQLFragment())
+WHERE %s AND organization_id = @organization_id AND deleted_at IS NULL AND %s
+`, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	var count int
 	if err := conn.QueryRow(ctx, q, args).Scan(&count); err != nil {
@@ -877,6 +882,42 @@ WHERE %s AND organization_id = @organization_id AND deleted_at IS NULL
 	}
 
 	return count, nil
+}
+
+func (ds *Devices) LoadAgentVersionsByOrganizationID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	organizationID gid.GID,
+) ([]string, error) {
+	q := fmt.Sprintf(`
+SELECT DISTINCT
+	agent_version
+FROM
+	devices
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND deleted_at IS NULL
+	AND agent_version IS NOT NULL
+ORDER BY
+	agent_version ASC
+`, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query device agent versions: %w", err)
+	}
+
+	versions, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect device agent versions: %w", err)
+	}
+
+	return versions, nil
 }
 
 func (ds *Devices) CountByOrganizationIDAndOwnerID(

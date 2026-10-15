@@ -1746,8 +1746,24 @@ func (r *organizationResolver) ThirdPartiesDocument(ctx context.Context, obj *ty
 	return types.NewDocument(document), nil
 }
 
+// DeviceAgentVersions is the resolver for the deviceAgentVersions field.
+func (r *organizationResolver) DeviceAgentVersions(ctx context.Context, obj *types.Organization) ([]string, error) {
+	scope, err := r.authorize(ctx, obj.ID, itam.ActionDeviceList)
+	if err != nil {
+		return nil, err
+	}
+
+	versions, err := r.itam.ListAgentVersionsForOrganizationID(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list device agent versions", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return versions, nil
+}
+
 // Devices is the resolver for the devices field.
-func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DeviceOrderBy) (*types.DeviceConnection, error) {
+func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DeviceOrderBy, filter *types.DeviceFilter) (*types.DeviceConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, itam.ActionDeviceList)
 	if err != nil {
 		return nil, err
@@ -1766,13 +1782,23 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	devicesPage, err := r.itam.ListForOrganizationID(ctx, scope, obj.ID, cursor)
+	deviceFilter := coredata.NewDeviceFilter(nil, nil, nil, nil)
+	if filter != nil {
+		deviceFilter = coredata.NewDeviceFilter(
+			filter.Query,
+			filter.State,
+			filter.Platform,
+			filter.AgentVersion,
+		)
+	}
+
+	devicesPage, err := r.itam.ListForOrganizationID(ctx, scope, obj.ID, cursor, deviceFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list organization devices", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewDeviceConnection(devicesPage, r, obj.ID), nil
+	return types.NewDeviceConnection(devicesPage, r, obj.ID, deviceFilter), nil
 }
 
 // WebhookSubscriptions is the resolver for the webhookSubscriptions field.

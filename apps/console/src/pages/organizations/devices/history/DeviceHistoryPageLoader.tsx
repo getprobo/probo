@@ -23,10 +23,10 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { DeviceHistoryPageQuery } from "#/__generated__/core/DeviceHistoryPageQuery.graphql";
-import { LinkCardSkeleton } from "#/components/skeletons/LinkCardSkeleton";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { DeviceHistoryPage, deviceHistoryPageQuery } from "./DeviceHistoryPage";
+import { DeviceHistoryPageSkeleton } from "./DeviceHistoryPageSkeleton";
 
 function DeviceHistoryPageQueryLoader() {
   const { deviceId } = useParams();
@@ -45,11 +45,11 @@ function DeviceHistoryPageQueryLoader() {
   });
 
   if (!queryRef) {
-    return <LinkCardSkeleton />;
+    return <DeviceHistoryPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<LinkCardSkeleton />}>
+    <Suspense fallback={<DeviceHistoryPageSkeleton />}>
       <DeviceHistoryPage queryRef={queryRef} />
     </Suspense>
   );

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Device evidence</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .device {
+            break-after: page;
+            page-break-after: always;
+        }
+
+        .device:last-child {
+            break-after: auto;
+            page-break-after: auto;
+        }
+
+        h1 {
+            font-size: 18pt;
+            font-weight: 600;
+            margin: 0 0 16px;
+        }
+
+        h2 {
+            font-size: 13pt;
+            font-weight: 600;
+            margin: 24px 0 8px;
+        }
+
+        dl {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 6px 16px;
+            margin: 0;
+        }
+
+        dt {
+            color: #666;
+        }
+
+        dd {
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+
+        th {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .empty {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+{{range .Devices}}
+<section class="device">
+    <h1>{{.Hostname}}</h1>
+    <dl>
+        <dt>State</dt><dd>{{.State}}</dd>
+        <dt>Owner</dt><dd>{{.Owner}}</dd>
+        <dt>Hardware UUID</dt><dd>{{.HardwareUUID}}</dd>
+        <dt>Serial number</dt><dd>{{.SerialNumber}}</dd>
+        <dt>Platform</dt><dd>{{.Platform}}</dd>
+        <dt>OS version</dt><dd>{{.OSVersion}}</dd>
+        <dt>Agent version</dt><dd>{{.AgentVersion}}</dd>
+        <dt>Enrolled at</dt><dd>{{.EnrolledAt}}</dd>
+        <dt>Last seen</dt><dd>{{.LastSeenAt}}</dd>
+    </dl>
+    <h2>Current postures</h2>
+    {{if .Postures}}
+    <table>
+        <thead>
+            <tr>
+                <th>Check</th>
+                <th>Value</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {{range .Postures}}
+            <tr>
+                <td>{{.Check}}</td>
+                <td>{{.Value}}</td>
+                <td>{{.Status}}</td>
+            </tr>
+        {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p class="empty">No posture checks recorded</p>
+    {{end}}
+</section>
+{{end}}
+</body>
+</html>

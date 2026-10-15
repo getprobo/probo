@@ -18,15 +18,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { DesktopIcon } from "@phosphor-icons/react";
 import { dateFormat, dateTimeFormat } from "@probo/i18n";
-import { Badge, Card } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { DeviceDetailsCard_deviceFragment$key } from "#/__generated__/core/DeviceDetailsCard_deviceFragment.graphql";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 
-import { displayValue, stateVariant } from "../_lib/deviceDisplay";
+import { displayValue, stateColor } from "../_lib/deviceDisplay";
+
+import { deviceCardFields } from "./variants";
 
 const deviceFragment = graphql`
   fragment DeviceDetailsCard_deviceFragment on Device {
@@ -47,90 +53,67 @@ const deviceFragment = graphql`
 export function DeviceDetailsCard(props: {
   deviceFragmentRef: DeviceDetailsCard_deviceFragment$key;
 }) {
-  const { i18n, t } = useTranslation();
+  const { i18n, t } = useTranslation("organizations/devices");
   const pendingLabel = t("devices.values.pending");
   const device = useFragment(deviceFragment, props.deviceFragmentRef);
+  const { root, property } = deviceCardFields();
+  const tone = stateColor(device.state);
 
   return (
-    <Card className="space-y-4" padded>
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.state")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            <Badge variant={stateVariant(device.state)}>{device.state}</Badge>
-          </div>
+    <TonedCard
+      tone={tone}
+      fill={false}
+      icon={<DesktopIcon weight="duotone" />}
+      lead={(
+        <Heading level={2} size={4} weight="medium" highContrast>
+          {t("devices.detailsTitle")}
+        </Heading>
+      )}
+    >
+      <div className={root()}>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.state")}</Text>
+          <Badge variant="soft" color={tone}>{device.state}</Badge>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.owner")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {device.owner?.fullName ?? t("devices.values.unassigned")}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.owner")}</Text>
+          <Text size={2}>{device.owner?.fullName ?? t("devices.values.unassigned")}</Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.hardwareUuid")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {displayValue(device.hardwareUuid, pendingLabel)}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.hardwareUuid")}</Text>
+          <Text size={2}>{displayValue(device.hardwareUuid, pendingLabel)}</Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.serialNumber")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {displayValue(device.serialNumber, pendingLabel)}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.serialNumber")}</Text>
+          <Text size={2}>{displayValue(device.serialNumber, pendingLabel)}</Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.platform")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {displayValue(device.platform, pendingLabel)}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.platform")}</Text>
+          <Text size={2}>{displayValue(device.platform, pendingLabel)}</Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.osVersion")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {displayValue(device.osVersion, pendingLabel)}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.osVersion")}</Text>
+          <Text size={2}>{displayValue(device.osVersion, pendingLabel)}</Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.agentVersion")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {displayValue(device.agentVersion, pendingLabel)}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.agentVersion")}</Text>
+          <Text size={2}>{displayValue(device.agentVersion, pendingLabel)}</Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.enrolledAt")}
-          </div>
-          <div className="text-sm text-txt-primary">
-            {device.enrolledAt
-              ? dateFormat(i18n.language, device.enrolledAt)
-              : pendingLabel}
-          </div>
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.enrolledAt")}</Text>
+          <Text size={2}>
+            {device.enrolledAt ? dateFormat(i18n.language, device.enrolledAt) : pendingLabel}
+          </Text>
         </div>
-        <div>
-          <div className="text-xs text-txt-tertiary font-semibold mb-1">
-            {t("devices.fields.lastSeen")}
-          </div>
-          <div className="text-sm text-txt-primary">
+        <div className={property()}>
+          <Text size={1} color="faint">{t("devices.fields.lastSeen")}</Text>
+          <Text size={2}>
             {device.lastSeenAt
               ? dateTimeFormat(i18n.language, device.lastSeenAt)
               : t("devices.values.never")}
-          </div>
+          </Text>
         </div>
       </div>
-    </Card>
+    </TonedCard>
   );
 }

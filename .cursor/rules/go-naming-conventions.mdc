@@ -29,7 +29,11 @@ var compliancePortalIDKey = &ctxKey{name: "compliance_portal_id"}
 
 ## Interfaces
 
-- Define in the consumer package, not the provider
+Define an interface when the package has more than one implementation, or when several unrelated types already share a small behavior.
+
+- Do not define an interface only to inject a dependency. Pass the concrete type.
+- Do not define an interface so a test can substitute a fake. Test the decision and formatting logic directly.
+- When an interface is warranted, define it in the consumer package, not the provider
 - Keep them small
 - Verify satisfaction at compile time:
 

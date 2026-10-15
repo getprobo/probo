@@ -72,6 +72,33 @@ func TestNewSet(t *testing.T) {
 	)
 }
 
+func TestSet_Values(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+
+	t.Run(
+		"empty",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Empty(t, gid.NewSet().Values())
+		},
+	)
+
+	t.Run(
+		"members without duplicates",
+		func(t *testing.T) {
+			t.Parallel()
+
+			a := gid.New(tenantID, 1)
+			b := gid.New(tenantID, 2)
+
+			assert.ElementsMatch(t, []gid.GID{a, b}, gid.NewSet(a, b, a).Values())
+		},
+	)
+}
+
 func TestSet_Contains(t *testing.T) {
 	t.Parallel()
 

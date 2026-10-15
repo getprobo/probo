@@ -18,7 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge } from "@probo/ui";
+import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -45,16 +49,48 @@ interface PostureValueBadgeProps {
 export function PostureValueBadge({
   postureFragmentRef,
 }: PostureValueBadgeProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/devices");
   const posture = useFragment(postureFragment, postureFragmentRef);
-
   const { kind, text, number } = posture.value;
   const label = postureValueLabel(t, { kind, text, number });
-  const variant = postureValueVariant(kind, posture.checkKey);
 
-  if (!variant) {
-    return label;
+  if (kind === "UNKNOWN") {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={(
+            <span tabIndex={0} className="inline-flex">
+              <Badge variant="soft" color="amber">{label}</Badge>
+            </span>
+          )}
+        />
+        <TooltipPopup className="max-w-64">
+          {t("devices.postures.unknownHint")}
+        </TooltipPopup>
+      </Tooltip>
+    );
   }
 
-  return <Badge variant={variant}>{label}</Badge>;
+  const color = postureColor(postureValueVariant(kind, posture.checkKey));
+
+  if (!color) {
+    return <Text size={2}>{label}</Text>;
+  }
+
+  return <Badge variant="soft" color={color}>{label}</Badge>;
+}
+
+function postureColor(
+  variant: ReturnType<typeof postureValueVariant>,
+): "green" | "red" | "sky" | undefined {
+  switch (variant) {
+    case "success":
+      return "green";
+    case "danger":
+      return "red";
+    case "info":
+      return "sky";
+    default:
+      return undefined;
+  }
 }

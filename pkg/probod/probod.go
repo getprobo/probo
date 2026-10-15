@@ -902,6 +902,9 @@ func (impl *Implm) Run(
 		iamService,
 		itam.ServiceConfig{
 			EnrollmentTokenValidity: time.Duration(impl.cfg.ITAM.DeviceEnrollmentTokenValidity) * time.Second,
+			PDF:                     html2pdfConverter,
+			FileManager:             fileManagerService,
+			Bucket:                  impl.cfg.AWS.Bucket,
 		},
 		l.Named("itam"),
 	)

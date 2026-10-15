@@ -18,16 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCopy } from "@probo/hooks";
+import { CaretDownIcon, CaretRightIcon, CopyIcon } from "@phosphor-icons/react";
 import { dateTimeFormat } from "@probo/i18n";
-import {
-  IconCheckmark1,
-  IconChevronDown,
-  IconChevronRight,
-  IconSquareBehindSquare2,
-  Td,
-  Tr,
-} from "@probo/ui";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { TableCell } from "@probo/ui/src/v2/Table/TableCell";
+import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Code } from "@probo/ui/src/v2/typography/Code";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
@@ -36,6 +34,7 @@ import { graphql } from "relay-runtime";
 import type { DevicePostureReportListItemFragment$key } from "#/__generated__/core/DevicePostureReportListItemFragment.graphql";
 
 import { PostureValueBadge } from "../../_components/PostureValueBadge";
+import { postureReport } from "../../_components/variants";
 import { getPostureCheckLabel } from "../../_lib/getPostureCheckLabel";
 
 const reportFragment = graphql`
@@ -58,75 +57,77 @@ export function DevicePostureReportListItem({
   fKey,
 }: DevicePostureReportListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isCopied, copy] = useCopy();
-  const { i18n, t } = useTranslation();
-
+  const { i18n, t } = useTranslation("organizations/devices");
+  const toast = useToast();
   const report = useFragment(reportFragment, fKey);
+  const { time, correlation, checks, check, checkLabel } = postureReport();
+
+  async function copyCorrelationId() {
+    try {
+      await navigator.clipboard.writeText(report.id);
+    } catch {
+      toast.add({
+        title: t("common.error"),
+        description: t("devices.history.errors.copyCorrelationId"),
+        type: "error",
+      });
+      return;
+    }
+    toast.add({
+      title: t("devices.history.actions.correlationIdCopied"),
+      type: "success",
+    });
+  }
 
   return (
     <>
-      <Tr
-        className="cursor-pointer hover:bg-bg-hover"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <Td className="whitespace-nowrap">
-          <div className="flex items-center gap-2">
-            {isExpanded
-              ? (
-                  <IconChevronDown size={16} className="text-txt-secondary" />
-                )
-              : (
-                  <IconChevronRight size={16} className="text-txt-secondary" />
-                )}
+      <TableRow align="center">
+        <TableCell>
+          <button
+            type="button"
+            className={time()}
+            aria-expanded={isExpanded}
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? <CaretDownIcon /> : <CaretRightIcon />}
             {dateTimeFormat(i18n.language, report.createdAt)}
-          </div>
-        </Td>
-        <Td>
-          <div className="flex items-center gap-1">
-            <code className="font-mono text-xs text-txt-tertiary">
-              {report.id}
-            </code>
-            <button
-              type="button"
-              className="p-1 rounded text-txt-tertiary hover:bg-bg-hover hover:text-txt-secondary transition-colors cursor-pointer"
+          </button>
+        </TableCell>
+        <TableCell>
+          <div className={correlation()}>
+            <Code size={1}>{report.id}</Code>
+            <IconButton
+              variant="ghost"
+              color="neutral"
+              size={1}
               aria-label={t("devices.history.actions.copyCorrelationId")}
-              title={
-                isCopied
-                  ? t("devices.history.actions.correlationIdCopied")
-                  : t("devices.history.actions.copyCorrelationId")
-              }
-              onClick={(event) => {
-                event.stopPropagation();
-                copy(report.id);
+              onClick={() => {
+                void copyCorrelationId();
               }}
             >
-              {isCopied
-                ? <IconCheckmark1 size={14} />
-                : <IconSquareBehindSquare2 size={14} />}
-            </button>
+              <CopyIcon />
+            </IconButton>
           </div>
-        </Td>
-        <Td>
-          {t("devices.history.checkCount", {
-            count: report.postures.length,
-          })}
-        </Td>
-      </Tr>
+        </TableCell>
+        <TableCell>
+          {t("devices.history.checkCount", { count: report.postures.length })}
+        </TableCell>
+      </TableRow>
       {isExpanded && (
-        <Tr>
-          <Td colSpan={3} className="bg-bg-subtle">
-            <div className="py-2 pl-6 grid grid-cols-2 gap-x-8 gap-y-2">
+        <TableRow>
+          <TableCell colSpan={3}>
+            <div className={checks()}>
               {report.postures.map(posture => (
-                <div key={posture.id} className="flex items-center gap-4 text-sm">
-                  <span className="text-txt-secondary min-w-40">
+                <div key={posture.id} className={check()}>
+                  <Text size={2} color="faint" className={checkLabel()}>
                     {getPostureCheckLabel(t, posture.checkKey)}
-                  </span>
+                  </Text>
                   <PostureValueBadge postureFragmentRef={posture} />
                 </div>
               ))}
             </div>
-          </Td>
-        </Tr>
+          </TableCell>
+        </TableRow>
       )}
     </>
   );

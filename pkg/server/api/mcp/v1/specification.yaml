@@ -3762,7 +3762,7 @@ components:
             - string
             - "null"
           format: date-time
-          description: Time of the first revoke. Set once and kept on subsequent revokeDevice calls.
+          description: Time of the first revoke. Set once and kept on subsequent revokeDevices calls.
         postures_included:
           type: boolean
           description: True only when include_postures was true on this call. When false, latest_postures is always empty, even if the device has reported checks. Call again with include_postures true to load them.
@@ -3800,6 +3800,18 @@ components:
         include_postures:
           type: boolean
           description: Defaults to false. When false or omitted, postures_included is false and latest_postures is empty. Set true to load each device's newest posture result per check_key. Requires the itam:device-posture:list permission and runs one extra query per device.
+        query:
+          type: string
+          description: Search devices by owner name. Each word is a prefix match, and every word must match. Unassigned devices are excluded.
+        state:
+          $ref: "#/components/schemas/DeviceState"
+          description: Only devices in this state.
+        platform:
+          $ref: "#/components/schemas/DevicePlatform"
+          description: Only devices on this platform. Devices that have not reported a platform are excluded.
+        agent_version:
+          type: string
+          description: Only devices reporting this agent version.
 
     ListDevicesOutput:
       type: object
@@ -3866,40 +3878,52 @@ components:
           type: string
           description: probo://enroll?server=...&token=... deep link for the desktop agent.
 
-    RevokeDeviceInput:
+    RevokeDevicesInput:
       type: object
       required:
-        - id
+        - device_ids
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Device ID
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to revoke. At most 100, with no duplicates. Revoking an already revoked device keeps its original revoked_at.
+          items:
+            $ref: "#/components/schemas/GID"
 
-    RevokeDeviceOutput:
+    RevokeDevicesOutput:
       type: object
       required:
-        - device
+        - devices
       properties:
-        device:
-          $ref: "#/components/schemas/Device"
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
 
-    DeleteDeviceInput:
+    DeleteDevicesInput:
       type: object
       required:
-        - id
+        - device_ids
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Device ID
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to delete. At most 100, with no duplicates. Every device must already be REVOKED.
+          items:
+            $ref: "#/components/schemas/GID"
 
-    DeleteDeviceOutput:
+    DeleteDevicesOutput:
       type: object
       required:
-        - deleted_device_id
+        - deleted_device_ids
       properties:
-        deleted_device_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted device ID
+        deleted_device_ids:
+          type: array
+          description: IDs of the deleted devices, in request order.
+          items:
+            $ref: "#/components/schemas/GID"
 
     SetDeviceOwnerInput:
       type: object
@@ -3924,6 +3948,28 @@ components:
       properties:
         device:
           $ref: "#/components/schemas/Device"
+
+    DownloadDeviceEvidenceInput:
+      type: object
+      required:
+        - device_ids
+      properties:
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to include, in page order. At most 100, with no duplicates.
+          items:
+            $ref: "#/components/schemas/GID"
+
+    DownloadDeviceEvidenceOutput:
+      type: object
+      required:
+        - download_url
+      properties:
+        download_url:
+          type: string
+          description: Presigned download URL for the PDF. Valid for 15 minutes.
 
     DataClassification:
       type: string
@@ -17705,7 +17751,7 @@ tools:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listDevices
     title: List Devices
-    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
     hints:
       readonly: true
       destructive: false
@@ -17739,30 +17785,30 @@ tools:
       $ref: "#/components/schemas/CreateDeviceInput"
     outputSchema:
       $ref: "#/components/schemas/CreateDeviceOutput"
-  - name: revokeDevice
-    title: Revoke Device
-    description: "Irreversibly revoke a device enrollment. Immediately invalidates the device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. Call this before deleteDevice."
+  - name: revokeDevices
+    title: Revoke Devices
+    description: "Irreversibly revoke one or more device enrollments in one call. Immediately invalidates each device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. All devices must belong to one organization. If any id is missing, none are revoked. Call this before deleteDevices."
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/RevokeDeviceInput"
+      $ref: "#/components/schemas/RevokeDevicesInput"
     outputSchema:
-      $ref: "#/components/schemas/RevokeDeviceOutput"
-  - name: deleteDevice
-    title: Delete Device
-    description: "Soft-delete a device. The device must already be REVOKED — call revokeDevice first, otherwise the call fails with the error device cannot be deleted. After success the device stops appearing in listDevices/getDevice; enrollment tokens for the device are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
+      $ref: "#/components/schemas/RevokeDevicesOutput"
+  - name: deleteDevices
+    title: Delete Devices
+    description: "Soft-delete one or more devices in one call. Every device must already be REVOKED — call revokeDevices first, otherwise the call fails with the error device cannot be deleted and none are deleted. All devices must belong to one organization. After success the devices stop appearing in listDevices/getDevice; enrollment tokens for them are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteDeviceInput"
+      $ref: "#/components/schemas/DeleteDevicesInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteDeviceOutput"
+      $ref: "#/components/schemas/DeleteDevicesOutput"
   - name: setDeviceOwner
     title: Set Device Owner
     description: "Set or clear the owner of an ITAM device. owner_id is required: pass a MembershipProfile GID belonging to the same organization as the device to assign, or null to clear. Omitting the field is invalid."
@@ -17775,6 +17821,18 @@ tools:
       $ref: "#/components/schemas/SetDeviceOwnerInput"
     outputSchema:
       $ref: "#/components/schemas/SetDeviceOwnerOutput"
+  - name: downloadDeviceEvidence
+    title: Download Device Evidence
+    description: "Render one A4 PDF page per device, with identity fields and current posture checks, and return a presigned download URL valid for 15 minutes. device_ids keeps page order. At most 100 ids, with no duplicates."
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DownloadDeviceEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DownloadDeviceEvidenceOutput"
   - name: listData
     title: List Data
     description: List all data for the organization

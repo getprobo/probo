@@ -23,44 +23,51 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { DeviceLayoutQuery } from "#/__generated__/core/DeviceLayoutQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { DeviceLayout, deviceLayoutQuery } from "./DeviceLayout";
+import { DeviceLayoutSkeleton } from "./DeviceLayoutSkeleton";
 
 function DeviceLayoutQueryLoader() {
   const { deviceId } = useParams();
   const organizationId = useOrganizationId();
-  if (!deviceId) {
-    throw new Error(":deviceId missing in route params");
-  }
-
   const [queryRef, loadQuery] = useQueryLoader<DeviceLayoutQuery>(
     deviceLayoutQuery,
   );
 
   useEffect(() => {
-    if (!queryRef) {
-      loadQuery({ deviceId, organizationId });
+    if (deviceId == null) {
+      return;
     }
-  });
+    loadQuery({ deviceId, organizationId });
+  }, [deviceId, loadQuery, organizationId]);
 
-  if (!queryRef) {
-    return <PageSkeleton />;
+  if (deviceId == null) {
+    throw new Error(":deviceId missing in route params");
   }
 
-  return <DeviceLayout queryRef={queryRef} />;
+  const currentQueryRef = queryRef != null
+    && queryRef.variables.deviceId === deviceId
+    && queryRef.variables.organizationId === organizationId
+    ? queryRef
+    : null;
+
+  if (currentQueryRef == null) {
+    return <DeviceLayoutSkeleton />;
+  }
+
+  return (
+    <Suspense fallback={<DeviceLayoutSkeleton />}>
+      <DeviceLayout key={deviceId} queryRef={currentQueryRef} />
+    </Suspense>
+  );
 }
 
 export default function DeviceLayoutLoader() {
-  const { deviceId } = useParams();
-
   return (
     <CoreRelayProvider>
-      <Suspense key={deviceId} fallback={<PageSkeleton />}>
-        <DeviceLayoutQueryLoader />
-      </Suspense>
+      <DeviceLayoutQueryLoader />
     </CoreRelayProvider>
   );
 }

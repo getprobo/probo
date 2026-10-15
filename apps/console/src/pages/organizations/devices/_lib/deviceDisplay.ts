@@ -25,16 +25,53 @@ export function displayValue(
   return value && value.length > 0 ? value : pendingLabel;
 }
 
-export function stateVariant(
-  state: string,
-): "success" | "danger" | "warning" | "info" {
+export function ownerLabel(
+  fullName: string | null | undefined,
+  unassignedLabel: string,
+) {
+  const name = fullName?.trim();
+  return name && name.length > 0 ? name : unassignedLabel;
+}
+
+export const devicePlatforms = ["DARWIN", "LINUX", "FREEBSD", "WINDOWS"] as const;
+
+export type DevicePlatformName = (typeof devicePlatforms)[number];
+
+export function devicePlatformFilter(value: string | null): DevicePlatformName | null {
+  for (const platform of devicePlatforms) {
+    if (platform === value) {
+      return platform;
+    }
+  }
+  return null;
+}
+
+export function platformLabel(
+  t: Translator,
+  platform: string | null | undefined,
+): string | null {
+  switch (platform) {
+    case "DARWIN":
+      return t("devices.platforms.darwin");
+    case "LINUX":
+      return t("devices.platforms.linux");
+    case "FREEBSD":
+      return t("devices.platforms.freebsd");
+    case "WINDOWS":
+      return t("devices.platforms.windows");
+    default:
+      return null;
+  }
+}
+
+export function stateColor(state: string): "green" | "red" | "amber" {
   switch (state) {
     case "ACTIVE":
-      return "success";
+      return "green";
     case "REVOKED":
-      return "danger";
+      return "red";
     default:
-      return "warning";
+      return "amber";
   }
 }
 
@@ -109,5 +146,43 @@ export function postureValueVariant(
       return "danger";
     default:
       return undefined;
+  }
+}
+
+export type PostureOutcome = "pass" | "warning" | "unknown";
+
+// Remote login off is "info", and that is a classified pass.
+export function postureOutcome(
+  kind: string,
+  checkKey?: string,
+): PostureOutcome {
+  switch (postureValueVariant(kind, checkKey)) {
+    case "danger":
+      return "warning";
+    case "success":
+    case "info":
+      return "pass";
+    default:
+      break;
+  }
+
+  if (isRecordedMeasurement(kind)) {
+    return "pass";
+  }
+
+  return "unknown";
+}
+
+// These kinds are readings. A version, a lock delay, a password length, or a
+// named malware engine does not say whether the check failed.
+function isRecordedMeasurement(kind: string): boolean {
+  switch (kind) {
+    case "TEXT":
+    case "SECONDS":
+    case "MIN_PASSWORD_LENGTH":
+    case "CONFIGURED":
+      return true;
+    default:
+      return false;
   }
 }

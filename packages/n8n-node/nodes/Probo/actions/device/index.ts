@@ -21,6 +21,7 @@
 import type { INodeProperties } from 'n8n-workflow';
 import * as createOp from './create.operation';
 import * as deleteOp from './delete.operation';
+import * as downloadEvidenceOp from './downloadEvidence.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as revokeOp from './revoke.operation';
@@ -51,6 +52,12 @@ export const description: INodeProperties[] = [
 				action: 'Delete a device',
 			},
 			{
+				name: 'Download Evidence',
+				value: 'downloadEvidence',
+				description: 'Download a PDF with one page per device',
+				action: 'Download device evidence',
+			},
+			{
 				name: 'Get',
 				value: 'get',
 				description: 'Get an ITAM device',
@@ -79,6 +86,7 @@ export const description: INodeProperties[] = [
 	},
 	...createOp.description,
 	...deleteOp.description,
+	...downloadEvidenceOp.description,
 	...getOp.description,
 	...getAllOp.description,
 	...revokeOp.description,
@@ -88,6 +96,7 @@ export const description: INodeProperties[] = [
 export {
 	createOp as create,
 	deleteOp as delete,
+	downloadEvidenceOp as downloadEvidence,
 	getOp as get,
 	getAllOp as getAll,
 	revokeOp as revoke,

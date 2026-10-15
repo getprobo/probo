@@ -416,12 +416,15 @@ type Organization implements Node {
 
     thirdPartiesDocument: Document @goField(forceResolver: true)
 
+    deviceAgentVersions: [String!]! @goField(forceResolver: true)
+
     devices(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: DeviceOrder
+        filter: DeviceFilter
     ): DeviceConnection! @goField(forceResolver: true)
 
     webhookSubscriptions(
