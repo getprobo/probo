@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.248.0] - 2026-10-15
+
+### Changed
+
+- `access-review source list` and `access-review source view` show the
+  account name of each source
+
 ## [0.247.0] - 2026-10-14
 
 ### Added
