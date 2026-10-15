@@ -393,6 +393,15 @@ func validateChangeSnapshotDomain(change *opset.Change) error {
 				)
 			}
 		}
+
+		for _, successor := range operation.Successors {
+			if successor.Counter > math.MaxUint32 {
+				return fmt.Errorf(
+					"operation %d successor exceeds snapshot uint32 domain",
+					i,
+				)
+			}
+		}
 	}
 
 	return nil

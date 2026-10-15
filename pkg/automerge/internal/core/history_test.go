@@ -22,6 +22,7 @@ package core
 
 import (
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
@@ -30,6 +31,44 @@ import (
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
+
+func TestApplyChange_RejectsSuccessorAboveUint32(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte("successor-bound"))
+	require.NoError(t, err)
+
+	property := "key"
+	identifier := opset.OpID{Actor: actor, Counter: 1}
+	hash := opset.ChangeHash{1}
+	change := &opset.Change{
+		Hash:     &hash,
+		Actor:    actor,
+		Sequence: 1,
+		StartOp:  1,
+		MaxOp:    1,
+		Operations: []opset.Operation{{
+			ID:     identifier,
+			Object: opset.RootObject(),
+			Key:    opset.Key{Property: &property},
+			Action: opset.ActionSet,
+			Value:  &opset.Scalar{Type: opset.ScalarString, String: "value"},
+			Successors: []opset.OpID{{
+				Actor:   actor,
+				Counter: uint64(math.MaxUint32) + 1,
+			}},
+		}},
+	}
+
+	state := NewState()
+	err = state.ApplyChange(change)
+	require.ErrorContains(t, err, "successor exceeds snapshot uint32 domain")
+	assert.Zero(t, state.changeCount())
+	assert.Zero(t, state.operationCount())
+	assert.Zero(t, state.actorSequence[actor])
+	assert.False(t, state.hasOperationID(identifier))
+	assert.Empty(t, state.Heads())
+}
 
 func TestApplyChanges_RemovesQueuedDuplicateActorSequence(t *testing.T) {
 	t.Parallel()
