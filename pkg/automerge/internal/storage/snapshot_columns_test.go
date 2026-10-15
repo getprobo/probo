@@ -226,6 +226,27 @@ func TestSnapshotColumns_BatchedOperationSplicesMatchPreparedEncoder(t *testing.
 	assert.Equal(t, expected, actual)
 }
 
+// The counter is process-global, so this test stays sequential.
+func TestFullColumnEncodings_CountsEachRebuiltTable(t *testing.T) {
+	document, operations := benchmarkSnapshot(4)
+
+	ResetRuntimeMetrics()
+	_, err := NewSnapshotColumns(document, operations)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(2), FullColumnEncodings())
+
+	withChanges := *document
+	withChanges.ChangeColumns = []opset.RawColumn{{
+		Specification: 1,
+		Data:          []byte{1},
+	}}
+
+	ResetRuntimeMetrics()
+	_, err = NewSnapshotColumns(&withChanges, operations)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), FullColumnEncodings())
+}
+
 func TestSnapshotColumns_LocalizedSpliceAvoidsFullEncoding(t *testing.T) {
 	document, operations := benchmarkSnapshot(1_000)
 	columns, err := NewSnapshotColumns(document, operations)

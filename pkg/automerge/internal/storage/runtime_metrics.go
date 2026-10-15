@@ -29,7 +29,9 @@ func ResetRuntimeMetrics() {
 	fullColumnEncodings.Store(0)
 }
 
-// FullColumnEncodings reports complete snapshot-table encodings since reset.
+// FullColumnEncodings reports snapshot column tables rebuilt from semantic
+// rows since reset. The changes table and the operations table are counted
+// separately, so one snapshot that rebuilds both counts twice.
 func FullColumnEncodings() uint64 {
 	return fullColumnEncodings.Load()
 }
