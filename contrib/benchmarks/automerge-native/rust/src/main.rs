@@ -242,6 +242,9 @@ fn workload_runner(
             })
         }
         "merge-loaded" | "merge-reloaded" | "concurrent-tail-reconcile" => {
+            if workload == "concurrent-tail-reconcile" && size == 0 {
+                return Err("concurrent-tail-reconcile size must be positive".to_owned());
+            }
             let tail_edits = if workload == "concurrent-tail-reconcile" {
                 size.min(100)
             } else {
