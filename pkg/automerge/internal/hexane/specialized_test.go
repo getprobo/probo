@@ -22,10 +22,13 @@ package hexane_test
 
 import (
 	"bytes"
+	"math"
 	"math/rand/v2"
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/hexane"
 )
 
@@ -33,13 +36,16 @@ func TestDeltaColumn_EditingEncodingAndClone(t *testing.T) {
 	t.Parallel()
 
 	column := hexane.NewDeltaColumn()
-	column.Insert(
+	err := column.Insert(
 		0,
 		hexane.Some(int64(10)),
 		hexane.Some(int64(12)),
 		hexane.Null[int64](),
 		hexane.Some(int64(9)),
 	)
+	if err != nil {
+		t.Fatalf("Insert() error = %v", err)
+	}
 
 	data, err := column.Bytes()
 	if err != nil {
@@ -53,9 +59,17 @@ func TestDeltaColumn_EditingEncodingAndClone(t *testing.T) {
 	}
 
 	cloned := column.Clone()
-	column.Set(0, hexane.Some(int64(100)))
-	cloned.Delete(1, 2)
-	cloned.Insert(cloned.Len(), hexane.Some(int64(20)))
+	if err := column.Set(0, hexane.Some(int64(100))); err != nil {
+		t.Fatalf("Set() error = %v", err)
+	}
+
+	if err := cloned.Delete(1, 2); err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+
+	if err := cloned.Insert(cloned.Len(), hexane.Some(int64(20))); err != nil {
+		t.Fatalf("Insert() error = %v", err)
+	}
 
 	if got := column.Get(0); got != hexane.Some(int64(100)) {
 		t.Errorf("original Get(0) = %#v, want 100", got)
@@ -85,7 +99,10 @@ func TestDeltaColumn_RandomizedDifferential(t *testing.T) {
 		}
 	}
 
-	column := hexane.NewDeltaColumnFromValues(model...)
+	column, err := hexane.NewDeltaColumnFromValues(model...)
+	if err != nil {
+		t.Fatalf("NewDeltaColumnFromValues() error = %v", err)
+	}
 
 	for step := range 2_000 {
 		index := random.IntN(len(model) + 1)
@@ -104,7 +121,9 @@ func TestDeltaColumn_RandomizedDifferential(t *testing.T) {
 			}
 		}
 
-		column.Splice(index, deleteCount, inserted...)
+		if err := column.Splice(index, deleteCount, inserted...); err != nil {
+			t.Fatalf("step %d: Splice() error = %v", step, err)
+		}
 
 		model = spliceValues(model, index, deleteCount, inserted)
 		if got := column.Values(); !reflect.DeepEqual(got, model) {
@@ -311,7 +330,10 @@ func TestColumns_ConstructFromLogicalValues(t *testing.T) {
 		hexane.Some(int64(9)),
 	}
 
-	delta := hexane.NewDeltaColumnFromValues(deltaValues...)
+	delta, err := hexane.NewDeltaColumnFromValues(deltaValues...)
+	if err != nil {
+		t.Fatalf("NewDeltaColumnFromValues() error = %v", err)
+	}
 	if got := delta.Values(); !reflect.DeepEqual(got, deltaValues) {
 		t.Errorf("delta constructor = %#v, want %#v", got, deltaValues)
 	}
@@ -488,3 +510,117 @@ func canonicalBooleans(values []bool) []byte {
 
 	return testAppendULEB(data, count)
 }
+func TestDeltaColumn_RejectsInt64DeltaOverflow(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"constructor",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := hexane.NewDeltaColumnFromValues(
+				hexane.Some(int64(math.MinInt64)),
+				hexane.Some(int64(0)),
+			)
+			require.Error(t, err)
+			require.ErrorContains(
+				t,
+				err,
+				"absolute values differ by more than int64 can represent",
+			)
+		},
+	)
+
+	t.Run(
+		"representable extremes round trip",
+		func(t *testing.T) {
+			t.Parallel()
+
+			want := []hexane.Value[int64]{
+				hexane.Some(int64(math.MaxInt64)),
+				hexane.Some(int64(0)),
+				hexane.Some(int64(math.MinInt64)),
+			}
+			column, err := hexane.NewDeltaColumnFromValues(want...)
+			require.NoError(t, err)
+			assert.Equal(t, want, column.Values())
+		},
+	)
+
+	t.Run(
+		"splice leaves the column unchanged",
+		func(t *testing.T) {
+			t.Parallel()
+
+			column, err := hexane.NewDeltaColumnFromValues(
+				hexane.Some(int64(math.MaxInt64)),
+			)
+			require.NoError(t, err)
+
+			err = column.Insert(0, hexane.Some(int64(math.MinInt64)))
+			require.Error(t, err)
+			assert.Equal(
+				t,
+				[]hexane.Value[int64]{hexane.Some(int64(math.MaxInt64))},
+				column.Values(),
+			)
+		},
+	)
+
+	t.Run(
+		"batch append leaves the column unchanged",
+		func(t *testing.T) {
+			t.Parallel()
+
+			column, err := hexane.NewDeltaColumnFromValues(
+				hexane.Some(int64(math.MinInt64)),
+			)
+			require.NoError(t, err)
+			inserted, err := hexane.NewDeltaColumnFromValues(
+				hexane.Some(int64(0)),
+			)
+			require.NoError(t, err)
+
+			before := column.Values()
+			err = column.BatchSplice([]hexane.DeltaSplice{{
+				Index:    column.Len(),
+				Inserted: inserted,
+			}})
+			require.Error(t, err)
+			assert.Equal(t, before, column.Values())
+		},
+	)
+
+	t.Run(
+		"batch splice is transactional",
+		func(t *testing.T) {
+			t.Parallel()
+
+			column, err := hexane.NewDeltaColumnFromValues(
+				hexane.Some(int64(1)),
+				hexane.Some(int64(2)),
+				hexane.Some(int64(math.MaxInt64)),
+			)
+			require.NoError(t, err)
+			valid, err := hexane.NewDeltaColumnFromValues(hexane.Some(int64(3)))
+			require.NoError(t, err)
+			overflow, err := hexane.NewDeltaColumnFromValues(
+				hexane.Some(int64(math.MinInt64)),
+			)
+			require.NoError(t, err)
+
+			before := column.Values()
+			err = column.BatchSplice([]hexane.DeltaSplice{
+				{Index: 0, Inserted: valid},
+				{
+					Index:       2,
+					DeleteCount: 1,
+					Inserted:    overflow,
+				},
+			})
+			require.Error(t, err)
+			assert.Equal(t, before, column.Values())
+		},
+	)
+}
+

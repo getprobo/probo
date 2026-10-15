@@ -155,14 +155,34 @@ func newHexaneChangeColumnsForSplice(
 		extraData = append(extraData, data...)
 	}
 
+	sequenceColumn, err := hexane.NewDeltaColumnFromValues(sequences...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode change sequences: %w", err)
+	}
+
+	maxOpColumn, err := hexane.NewDeltaColumnFromValues(maxOps...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode change maximum operations: %w", err)
+	}
+
+	timeColumn, err := hexane.NewDeltaColumnFromValues(times...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode change times: %w", err)
+	}
+
+	dependencyColumn, err := hexane.NewDeltaColumnFromValues(dependencies...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode change dependencies: %w", err)
+	}
+
 	return &hexaneChangeColumns{
 		actors:          hexane.NewColumnFromValues(hexane.Uint64Codec(), actors...),
-		sequences:       hexane.NewDeltaColumnFromValues(sequences...),
-		maxOps:          hexane.NewDeltaColumnFromValues(maxOps...),
-		times:           hexane.NewDeltaColumnFromValues(times...),
+		sequences:       sequenceColumn,
+		maxOps:          maxOpColumn,
+		times:           timeColumn,
 		messages:        hexane.NewColumnFromValues(hexane.StringCodec(), messages...),
 		dependencySizes: hexane.NewPrefixColumnFromValues(dependencySizes...),
-		dependencies:    hexane.NewDeltaColumnFromValues(dependencies...),
+		dependencies:    dependencyColumn,
 		extraMetadata: hexane.NewColumnFromValues(
 			hexane.Uint64Codec(),
 			extraMetadata...,
@@ -216,14 +236,34 @@ func decodeHexaneChangeColumns(
 		return nil, fmt.Errorf("cannot decode change extra metadata: %w", err)
 	}
 
+	sequenceColumn, err := hexane.NewDeltaColumnFromValues(hexaneValues(sequences)...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct change sequences: %w", err)
+	}
+
+	maxOpColumn, err := hexane.NewDeltaColumnFromValues(hexaneValues(maxOps)...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct change maximum operations: %w", err)
+	}
+
+	timeColumn, err := hexane.NewDeltaColumnFromValues(hexaneValues(times)...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct change times: %w", err)
+	}
+
+	dependencyColumn, err := hexane.NewDeltaColumnFromValues(hexaneValues(dependencies)...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct change dependencies: %w", err)
+	}
+
 	return &hexaneChangeColumns{
 		actors:          hexane.NewColumnFromValues(hexane.Uint64Codec(), hexaneValues(actors)...),
-		sequences:       hexane.NewDeltaColumnFromValues(hexaneValues(sequences)...),
-		maxOps:          hexane.NewDeltaColumnFromValues(hexaneValues(maxOps)...),
-		times:           hexane.NewDeltaColumnFromValues(hexaneValues(times)...),
+		sequences:       sequenceColumn,
+		maxOps:          maxOpColumn,
+		times:           timeColumn,
 		messages:        hexane.NewColumnFromValues(hexane.StringCodec(), paddedHexaneValues(messages, count)...),
 		dependencySizes: hexane.NewPrefixColumnFromValues(presentUint64s(dependencySizes)...),
-		dependencies:    hexane.NewDeltaColumnFromValues(hexaneValues(dependencies)...),
+		dependencies:    dependencyColumn,
 		extraMetadata: hexane.NewColumnFromValues(
 			hexane.Uint64Codec(),
 			hexaneValues(extraMetadata)...,
@@ -369,6 +409,21 @@ func newHexaneOperationColumns(
 		}
 	}
 
+	keyCounterColumn, err := hexane.NewDeltaColumnFromValues(keyCounters...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode operation key counters: %w", err)
+	}
+
+	idCounterColumn, err := hexane.NewDeltaColumnFromValues(idCounters...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode operation identifier counters: %w", err)
+	}
+
+	successorCounterColumn, err := hexane.NewDeltaColumnFromValues(successorCounters...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode operation successor counters: %w", err)
+	}
+
 	return &hexaneOperationColumns{
 		objectActors: hexane.NewColumnFromValues(
 			hexane.Uint64Codec(),
@@ -382,7 +437,7 @@ func newHexaneOperationColumns(
 			hexane.Uint64Codec(),
 			keyActors...,
 		),
-		keyCounters: hexane.NewDeltaColumnFromValues(keyCounters...),
+		keyCounters: keyCounterColumn,
 		keyStrings: hexane.NewColumnFromValues(
 			hexane.StringCodec(),
 			keyStrings...,
@@ -391,7 +446,7 @@ func newHexaneOperationColumns(
 			hexane.Uint64Codec(),
 			idActors...,
 		),
-		idCounters: hexane.NewDeltaColumnFromValues(idCounters...),
+		idCounters: idCounterColumn,
 		inserts:    hexane.NewBooleanColumnFromValues(inserts...),
 		actions: hexane.NewColumnFromValues(
 			hexane.Uint64Codec(),
@@ -410,11 +465,9 @@ func newHexaneOperationColumns(
 			hexane.Uint64Codec(),
 			successorActors...,
 		),
-		successorCounters: hexane.NewDeltaColumnFromValues(
-			successorCounters...,
-		),
-		markExpands:    hexane.NewBooleanColumnFromValues(markExpands...),
-		markExpandTrue: markExpandTrue,
+		successorCounters: successorCounterColumn,
+		markExpands:       hexane.NewBooleanColumnFromValues(markExpands...),
+		markExpandTrue:    markExpandTrue,
 		markNames: hexane.NewColumnFromValues(
 			hexane.StringCodec(),
 			markNames...,
@@ -508,6 +561,25 @@ func decodeHexaneOperationColumns(
 		return nil, fmt.Errorf("cannot decode operation mark expansion: %w", err)
 	}
 
+	keyCounterColumn, err := hexane.NewDeltaColumnFromValues(
+		paddedHexaneValues(keyCounters, count)...,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct operation key counters: %w", err)
+	}
+
+	idCounterColumn, err := hexane.NewDeltaColumnFromValues(hexaneValues(idCounters)...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct operation identifier counters: %w", err)
+	}
+
+	successorCounterColumn, err := hexane.NewDeltaColumnFromValues(
+		hexaneValues(successorCounters)...,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct operation successor counters: %w", err)
+	}
+
 	return &hexaneOperationColumns{
 		objectActors: hexane.NewColumnFromValues(
 			hexane.Uint64Codec(),
@@ -521,13 +593,13 @@ func decodeHexaneOperationColumns(
 			hexane.Uint64Codec(),
 			paddedHexaneValues(keyActors, count)...,
 		),
-		keyCounters: hexane.NewDeltaColumnFromValues(paddedHexaneValues(keyCounters, count)...),
+		keyCounters: keyCounterColumn,
 		keyStrings: hexane.NewColumnFromValues(
 			hexane.StringCodec(),
 			paddedHexaneValues(keyStrings, count)...,
 		),
 		idActors:   hexane.NewColumnFromValues(hexane.Uint64Codec(), hexaneValues(idActors)...),
-		idCounters: hexane.NewDeltaColumnFromValues(hexaneValues(idCounters)...),
+		idCounters: idCounterColumn,
 		inserts:    hexane.NewBooleanColumnFromValues(inserts...),
 		actions: hexane.NewColumnFromValues(
 			hexane.Uint64Codec(),
@@ -544,7 +616,7 @@ func decodeHexaneOperationColumns(
 			hexane.Uint64Codec(),
 			hexaneValues(successorActors)...,
 		),
-		successorCounters: hexane.NewDeltaColumnFromValues(hexaneValues(successorCounters)...),
+		successorCounters: successorCounterColumn,
 		markExpands:       hexane.NewBooleanColumnFromValues(markExpands...),
 		markExpandTrue:    countTrue(markExpands),
 		markNames: hexane.NewColumnFromValues(

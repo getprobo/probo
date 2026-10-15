@@ -177,7 +177,10 @@ func TestColumns_CachedTailAppendMatchesFreshEncoding(t *testing.T) {
 
 	deltas := []hexane.Value[int64]{hexane.Some[int64](3), hexane.Some[int64](8)}
 
-	deltaColumn := hexane.NewDeltaColumnFromValues(deltas...)
+	deltaColumn, err := hexane.NewDeltaColumnFromValues(deltas...)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, err := deltaColumn.Bytes(); err != nil {
 		t.Fatal(err)
 	}
@@ -187,7 +190,10 @@ func TestColumns_CachedTailAppendMatchesFreshEncoding(t *testing.T) {
 		hexane.Null[int64](),
 		hexane.Some[int64](21),
 	} {
-		inserted := hexane.NewDeltaColumnFromValues(value)
+		inserted, err := hexane.NewDeltaColumnFromValues(value)
+		if err != nil {
+			t.Fatal(err)
+		}
 		if err := deltaColumn.BatchSplice([]hexane.DeltaSplice{{
 			Index:    deltaColumn.Len(),
 			Inserted: inserted,
@@ -202,7 +208,12 @@ func TestColumns_CachedTailAppendMatchesFreshEncoding(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		fresh, err := hexane.NewDeltaColumnFromValues(deltas...).Bytes()
+		freshColumn, err := hexane.NewDeltaColumnFromValues(deltas...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fresh, err := freshColumn.Bytes()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -321,10 +332,13 @@ func TestColumns_BatchSpliceFailuresAreTransactional(t *testing.T) {
 		t.Error("generic column overlap was not transactional")
 	}
 
-	delta := hexane.NewDeltaColumnFromValues(
+	delta, err := hexane.NewDeltaColumnFromValues(
 		hexane.Some(int64(10)),
 		hexane.Some(int64(20)),
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 	beforeDelta := delta.Values()
 
 	err = delta.BatchSplice([]hexane.DeltaSplice{{Index: 3}})
@@ -360,25 +374,38 @@ func TestColumns_BatchSpliceFailuresAreTransactional(t *testing.T) {
 func TestSpecializedColumns_BatchSpliceMatchesFlatReplacement(t *testing.T) {
 	t.Parallel()
 
-	delta := hexane.NewDeltaColumnFromValues(
+	delta, err := hexane.NewDeltaColumnFromValues(
 		hexane.Some(int64(10)),
 		hexane.Null[int64](),
 		hexane.Some(int64(20)),
 		hexane.Some(int64(30)),
 		hexane.Some(int64(40)),
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	err := delta.BatchSplice([]hexane.DeltaSplice{
+	replaced, err := hexane.NewDeltaColumnFromValues(hexane.Some(int64(31)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	inserted, err := hexane.NewDeltaColumnFromValues(
+		hexane.Some(int64(15)),
+		hexane.Some(int64(16)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = delta.BatchSplice([]hexane.DeltaSplice{
 		{
 			Index: 3, DeleteCount: 1,
-			Inserted: hexane.NewDeltaColumnFromValues(hexane.Some(int64(31))),
+			Inserted: replaced,
 		},
 		{
 			Index: 1, DeleteCount: 1,
-			Inserted: hexane.NewDeltaColumnFromValues(
-				hexane.Some(int64(15)),
-				hexane.Some(int64(16)),
-			),
+			Inserted: inserted,
 		},
 	})
 	if err != nil {

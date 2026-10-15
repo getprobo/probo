@@ -170,7 +170,10 @@ func benchmarkLocalizedDelta(b *testing.B, name string, rows int) {
 				values[i] = hexane.Some(int64(i))
 			}
 
-			base := hexane.NewDeltaColumnFromValues(values...)
+			base, err := hexane.NewDeltaColumnFromValues(values...)
+			if err != nil {
+				b.Fatal(err)
+			}
 
 			b.ReportAllocs()
 			b.ReportMetric(float64(rows), "rows")
@@ -178,7 +181,9 @@ func benchmarkLocalizedDelta(b *testing.B, name string, rows int) {
 
 			for i := 0; i < b.N; i++ {
 				cloned := base.Clone()
-				cloned.Set(rows/2, hexane.Some(int64(i)))
+				if err := cloned.Set(rows/2, hexane.Some(int64(i))); err != nil {
+					b.Fatal(err)
+				}
 				benchmarkDelta = cloned
 			}
 		},

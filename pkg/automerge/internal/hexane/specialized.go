@@ -21,8 +21,10 @@
 package hexane
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"math"
 	"slices"
 )
 
@@ -78,26 +80,36 @@ type (
 
 // NewDeltaColumn constructs an empty DeltaColumn.
 func NewDeltaColumn() *DeltaColumn {
-	return NewDeltaColumnFromValues()
+	column, err := NewDeltaColumnFromValues()
+	if err != nil {
+		panic(err)
+	}
+
+	return column
 }
 
 // NewDeltaColumnFromValues constructs a DeltaColumn from absolute values.
-func NewDeltaColumnFromValues(values ...Value[int64]) *DeltaColumn {
-	deltas := absoluteToDeltas(values)
+func NewDeltaColumnFromValues(values ...Value[int64]) (*DeltaColumn, error) {
+	deltas, err := absoluteToDeltas(values)
+	if err != nil {
+		return nil, fmt.Errorf("cannot construct delta column: %w", err)
+	}
 
 	return &DeltaColumn{
 		deltas: newColumn(
 			Int64Codec(),
 			deltas,
-			func(value Value[int64]) (uint64, int64) {
-				if !value.Valid {
-					return 0, 0
-				}
-
-				return 0, value.Value
-			},
+			deltaMetrics,
 		),
+	}, nil
+}
+
+func deltaMetrics(value Value[int64]) (uint64, int64) {
+	if !value.Valid {
+		return 0, 0
 	}
+
+	return 0, value.Value
 }
 
 // Len returns the number of values.
@@ -116,18 +128,18 @@ func (c *DeltaColumn) Get(index int) Value[int64] {
 }
 
 // Insert inserts absolute values before index.
-func (c *DeltaColumn) Insert(index int, values ...Value[int64]) {
-	c.Splice(index, 0, values...)
+func (c *DeltaColumn) Insert(index int, values ...Value[int64]) error {
+	return c.Splice(index, 0, values...)
 }
 
 // Set replaces the absolute value at index.
-func (c *DeltaColumn) Set(index int, value Value[int64]) {
-	c.Splice(index, 1, value)
+func (c *DeltaColumn) Set(index int, value Value[int64]) error {
+	return c.Splice(index, 1, value)
 }
 
 // Delete removes count values at index.
-func (c *DeltaColumn) Delete(index, count int) {
-	c.Splice(index, count)
+func (c *DeltaColumn) Delete(index, count int) error {
+	return c.Splice(index, count)
 }
 
 // Splice removes deleteCount absolute values and inserts values at index.
@@ -135,11 +147,11 @@ func (c *DeltaColumn) Splice(
 	index int,
 	deleteCount int,
 	values ...Value[int64],
-) {
+) error {
 	c.deltas.checkRange(index, deleteCount)
 
 	if deleteCount == 0 && len(values) == 0 {
-		return
+		return nil
 	}
 
 	_, previous := ropePrefix(c.deltas.root, index, c.deltas.metrics)
@@ -151,20 +163,35 @@ func (c *DeltaColumn) Splice(
 			continue
 		}
 
-		inserted[i] = Some(value.Value - previous)
+		difference, err := subtractAbsolute(value.Value, previous)
+		if err != nil {
+			return fmt.Errorf("cannot splice delta column: %w", err)
+		}
+
+		inserted[i] = Some(difference)
 		previous = value.Value
+	}
+
+	var boundaryDelta int64
+	if hasFollowing {
+		difference, err := subtractAbsolute(following, previous)
+		if err != nil {
+			return fmt.Errorf("cannot adjust delta boundary: %w", err)
+		}
+
+		boundaryDelta = difference
 	}
 
 	c.deltas.Splice(index, deleteCount, inserted...)
 
 	if !hasFollowing {
-		return
+		return nil
 	}
 
 	for boundary := index + len(inserted); boundary < c.Len(); boundary++ {
 		if c.deltas.Get(boundary).Valid {
-			c.deltas.Set(boundary, Some(following-previous))
-			return
+			c.deltas.Set(boundary, Some(boundaryDelta))
+			return nil
 		}
 	}
 
@@ -195,7 +222,12 @@ func (c *DeltaColumn) BatchSplice(splices []DeltaSplice) error {
 				continue
 			}
 
-			deltas[i] = Some(value.Value - previous)
+			difference, err := subtractAbsolute(value.Value, previous)
+			if err != nil {
+				return fmt.Errorf("cannot compute appended delta: %w", err)
+			}
+
+			deltas[i] = Some(difference)
 			previous = value.Value
 		}
 
@@ -235,7 +267,9 @@ func (c *DeltaColumn) BatchSplice(splices []DeltaSplice) error {
 			values = splice.Inserted.Values()
 		}
 
-		next.Splice(splice.Index, splice.DeleteCount, values...)
+		if err := next.Splice(splice.Index, splice.DeleteCount, values...); err != nil {
+			return fmt.Errorf("cannot apply delta column splice: %w", err)
+		}
 	}
 
 	c.deltas = next.deltas
@@ -292,7 +326,7 @@ func (c *DeltaColumn) nextPresent(index int) (int64, bool) {
 	return 0, false
 }
 
-func absoluteToDeltas(values []Value[int64]) []Value[int64] {
+func absoluteToDeltas(values []Value[int64]) ([]Value[int64], error) {
 	deltas := make([]Value[int64], len(values))
 
 	var previous int64
@@ -302,12 +336,34 @@ func absoluteToDeltas(values []Value[int64]) []Value[int64] {
 			continue
 		}
 
-		deltas[i] = Some(value.Value - previous)
+		difference, err := subtractAbsolute(value.Value, previous)
+		if err != nil {
+			return nil, err
+		}
+
+		deltas[i] = Some(difference)
 		previous = value.Value
 	}
 
-	return deltas
+	return deltas, nil
 }
+
+// Go subtraction wraps, so reject a difference int64 cannot represent.
+func subtractAbsolute(absolute, previous int64) (int64, error) {
+	if previous > 0 && absolute < math.MinInt64+previous {
+		return 0, errAbsoluteDeltaOverflow
+	}
+
+	if previous < 0 && absolute > math.MaxInt64+previous {
+		return 0, errAbsoluteDeltaOverflow
+	}
+
+	return absolute - previous, nil
+}
+
+var errAbsoluteDeltaOverflow = errors.New(
+	"absolute values differ by more than int64 can represent",
+)
 
 // NewPrefixColumn constructs an empty PrefixColumn.
 func NewPrefixColumn() *PrefixColumn {
