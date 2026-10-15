@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
@@ -166,13 +167,19 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 			return true
 		}
 
-		// A composite object concurrently assigned to the same map key as another
-		// object is a conflict alternative; only the winning value is materialized
-		// (its content spliced), matching the reference. Losing alternatives still
-		// exist but are surfaced only through the put's conflict flag.
+		// A composite object concurrently assigned to the same key or list element
+		// as another object is a conflict alternative. Only the winning value is
+		// materialized; the loser is surfaced through the conflict flag or action.
 		if !operation.Insert && operation.Key.Property != nil {
 			if winner, ok := state.visibleMapObjectValue(operation.Object, *operation.Key.Property); ok &&
 				winner.ID != operation.ID {
+				return true
+			}
+		}
+
+		if !operation.Insert && operation.Key.Element != nil {
+			winner, ok := sequenceElementWinner(state, operation.Object, *operation.Key.Element)
+			if !ok || winner.ID != operation.ID {
 				return true
 			}
 		}
@@ -194,6 +201,20 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 	}
 
 	return objects
+}
+
+func sequenceElementWinner(
+	state *State,
+	object opset.ObjectID,
+	element opset.OpID,
+) (opset.Operation, bool) {
+	for _, value := range state.sequenceValues(object.OpID) {
+		if value.Element == element {
+			return value.Operation, true
+		}
+	}
+
+	return opset.Operation{}, false
 }
 
 func compareObjectCreationIDs(left, right opset.OpID) int {
@@ -382,7 +403,36 @@ func materializeObjectPatches(state *State, object opset.ObjectID) ([]patchOut, 
 
 				run.WriteString(operation.Value.String)
 				position += uint64(utf16Width(operation.Value.String))
+
+				continue
 			}
+
+			if err := flush(); err != nil {
+				return nil, err
+			}
+
+			rendered := textElementString(operation)
+			runs, err := textRunsWithMarks(state, object, position, rendered)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, textRun := range runs {
+				patches = append(
+					patches,
+					patchOut{
+						Obj: identifier,
+						Action: patchActionOut{
+							Type:  "splice_text",
+							Index: textRun.index,
+							Text:  textRun.text,
+							Marks: textRun.marks,
+						},
+					},
+				)
+			}
+
+			position += uint64(utf16Width(rendered))
 		}
 
 		if err := flush(); err != nil {
@@ -401,7 +451,7 @@ func (b *Engine) Diff(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
 ) ([]byte, error) {
-	patches, err := b.diffPatches(beforeHeads, afterHeads)
+	patches, err := b.diffPatches(beforeHeads, afterHeads, false)
 	if err != nil {
 		return nil, err
 	}
@@ -422,8 +472,7 @@ func (b *Engine) UpdateDiffCursor() error {
 		return err
 	}
 
-	b.diffCursor = heads
-	b.isolationDiffTargets = nil
+	b.resetPatchLog(heads)
 
 	return nil
 }
@@ -442,8 +491,7 @@ func (b *Engine) DiffIncremental() ([]byte, error) {
 		return nil, err
 	}
 
-	b.diffCursor = heads
-	b.isolationDiffTargets = nil
+	b.resetPatchLog(heads)
 
 	data, err := json.Marshal(patches)
 	if err != nil {
@@ -454,51 +502,134 @@ func (b *Engine) DiffIncremental() ([]byte, error) {
 }
 
 // incrementalDiffPatches computes the incremental patches from the diff cursor
-// to the current heads. When isolation frontiers were recorded in the window,
-// the diff is chained through each of them (cursor to each isolation frontier
-// and finally to the current heads) so the patch stream matches the reference's
-// patch-log output across isolate/integrate.
+// to the current heads. When the patch log is live and the target is the full
+// document heads, Rust returns the log (including isolation transitions)
+// instead of a direct comparison. A target that is only an isolation frontier
+// misses that fast path and is a clock diff from the cursor.
 func (b *Engine) incrementalDiffPatches(heads [][32]byte) ([]patchOut, error) {
-	if len(b.isolationDiffTargets) == 0 {
-		return b.incrementalPatches(b.diffCursor, heads)
-	}
-
-	frontiers := make([][][32]byte, 0, len(b.isolationDiffTargets)+2)
-	frontiers = append(frontiers, b.diffCursor)
-	frontiers = append(frontiers, b.isolationDiffTargets...)
-	frontiers = append(frontiers, heads)
-
-	patches := make([]patchOut, 0)
-
-	for i := 0; i+1 < len(frontiers); i++ {
-		segment, err := b.incrementalPatches(frontiers[i], frontiers[i+1])
-		if err != nil {
+	if b.patchLogActive && sameHeads(heads, b.fullDocumentHeads()) {
+		if err := b.flushPatchLog(); err != nil {
 			return nil, err
 		}
 
-		patches = append(patches, segment...)
+		return append([]patchOut(nil), b.patchLog...), nil
 	}
 
-	return patches, nil
+	return b.diffPatches(b.diffCursor, heads, false)
 }
 
-func (b *Engine) incrementalPatches(
-	beforeHeads [][32]byte,
-	afterHeads [][32]byte,
-) ([]patchOut, error) {
-	return b.diffPatches(beforeHeads, afterHeads)
+// resetPatchLog matches AutoCommit::update_diff_cursor. Empty heads leave the
+// log alone; a real frontier activates it and drops everything recorded so far.
+func (b *Engine) resetPatchLog(heads [][32]byte) {
+	b.diffCursor = append([][32]byte(nil), heads...)
+
+	if len(heads) == 0 {
+		return
+	}
+
+	b.patchLogActive = true
+	b.patchLog = nil
+	b.patchLogHeads = append([][32]byte(nil), heads...)
+}
+
+// patchTo records the patches that move the current view to after, matching
+// AutoCommit::patch_to. Ops committed since the log was last caught up are
+// frozen first, then the frontier change itself is appended.
+func (b *Engine) patchTo(after [][32]byte) error {
+	if !b.patchLogActive {
+		return nil
+	}
+
+	if err := b.flushPatchLog(); err != nil {
+		return err
+	}
+
+	if sameHeads(b.patchLogHeads, after) {
+		return nil
+	}
+
+	segment, err := b.diffPatches(b.patchLogHeads, after, true)
+	if err != nil {
+		return err
+	}
+
+	b.patchLog = append(b.patchLog, segment...)
+	b.patchLogHeads = append([][32]byte(nil), after...)
+
+	return nil
+}
+
+// flushPatchLog appends the state difference between the log's frontier and
+// the heads of the current view. That is the commit half of the patch log:
+// Rust records those operations as they happen, and the next patch_to or
+// incremental diff has to see them before the frontier moves.
+func (b *Engine) flushPatchLog() error {
+	if !b.patchLogActive {
+		return nil
+	}
+
+	heads, err := b.Heads()
+	if err != nil {
+		return err
+	}
+
+	if sameHeads(b.patchLogHeads, heads) {
+		return nil
+	}
+
+	segment, err := b.diffPatches(b.patchLogHeads, heads, false)
+	if err != nil {
+		return err
+	}
+
+	b.patchLog = append(b.patchLog, segment...)
+	b.patchLogHeads = append([][32]byte(nil), heads...)
+
+	return nil
+}
+
+func (b *Engine) fullDocumentHeads() [][32]byte {
+	state := b.state
+	if b.isolationActive && b.fullState != nil {
+		state = b.fullState
+	}
+
+	return nativeToArrayHeads(state.Heads())
+}
+
+func sameHeads(left, right [][32]byte) bool {
+	if len(left) != len(right) {
+		return false
+	}
+
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (b *Engine) diffPatches(
 	beforeHeads [][32]byte,
 	afterHeads [][32]byte,
+	conflictAction bool,
 ) ([]patchOut, error) {
-	source, ok := b.state.at(nativeHashes(beforeHeads))
+	// Diffs address the full history. While isolated, the pinned view omits
+	// changes outside its frontier, but a cursor or historical head can still
+	// name those changes.
+	history := b.state
+	if b.isolationActive && b.fullState != nil {
+		history = b.fullState
+	}
+
+	source, ok := history.at(nativeHashes(beforeHeads))
 	if !ok {
 		return nil, fmt.Errorf("before heads are unknown")
 	}
 
-	target, ok := b.state.at(nativeHashes(afterHeads))
+	target, ok := history.at(nativeHashes(afterHeads))
 	if !ok {
 		return nil, fmt.Errorf("after heads are unknown")
 	}
@@ -512,7 +643,7 @@ func (b *Engine) diffPatches(
 		)
 
 		if objectVisibleInState(source, object) {
-			objectPatches, err = diffObjectPatches(source, target, object)
+			objectPatches, err = diffObjectPatches(source, target, object, conflictAction)
 		} else {
 			objectPatches, err = materializeObjectPatches(target, object)
 		}
@@ -524,12 +655,16 @@ func (b *Engine) diffPatches(
 		patches = append(patches, objectPatches...)
 	}
 
-	return patches, nil
+	return exposeIntroducedObjects(patches, target)
 }
 
 // diffObjectPatches emits patches transforming an object from the source state
 // into the target state, for an object present in both.
-func diffObjectPatches(source, target *State, object opset.ObjectID) ([]patchOut, error) {
+func diffObjectPatches(
+	source, target *State,
+	object opset.ObjectID,
+	conflictAction bool,
+) ([]patchOut, error) {
 	objectType, err := objectTypeInState(target, object)
 	if err != nil {
 		return nil, err
@@ -539,11 +674,11 @@ func diffObjectPatches(source, target *State, object opset.ObjectID) ([]patchOut
 
 	switch objectType {
 	case "map", "table":
-		return diffMapPatches(source, target, object, identifier)
+		return diffMapPatches(source, target, object, identifier, conflictAction)
 	case "list":
-		return diffSequencePatches(source, target, object, objectType, identifier)
+		return diffSequencePatches(source, target, object, objectType, identifier, conflictAction)
 	case "text":
-		patches, err := diffSequencePatches(source, target, object, objectType, identifier)
+		patches, err := diffSequencePatches(source, target, object, objectType, identifier, conflictAction)
 		if err != nil {
 			return nil, err
 		}
@@ -576,6 +711,7 @@ func mergeTextMarkPatches(
 		return nil, err
 	}
 
+	marks = uncoveredMarkPatches(marks, patches)
 	if len(marks) == 0 {
 		return patches, nil
 	}
@@ -615,6 +751,49 @@ func mergeTextMarkPatches(
 // operation identifier so they appear in application order. Each entry carries
 // the operation's literal UTF-16 range and value (null for an unmark), matching
 // the reference's operation-based diff rather than a state comparison.
+func mapConflict(state *State, object opset.ObjectID, key string) bool {
+	return len(state.visibleMapObjectOperations(object, key)) > 1
+}
+
+// uncoveredMarkPatches drops mark operations already carried by a splice that
+// covers their range. A mark applied to text inserted in the same diff rides on
+// that splice and is not repeated as a mark patch.
+func uncoveredMarkPatches(marks []markPatchOut, patches []patchOut) []markPatchOut {
+	uncovered := make([]markPatchOut, 0, len(marks))
+
+	for _, mark := range marks {
+		if markCoveredBySplice(mark, patches) {
+			continue
+		}
+
+		uncovered = append(uncovered, mark)
+	}
+
+	return uncovered
+}
+
+func markCoveredBySplice(mark markPatchOut, patches []patchOut) bool {
+	for _, patch := range patches {
+		if patch.Action.Type != "splice_text" {
+			continue
+		}
+
+		for _, candidate := range patch.Action.Marks {
+			if candidate.Name != mark.Name || string(candidate.Value) != string(mark.Value) {
+				continue
+			}
+
+			start := uint32(patch.Action.Index)
+			end := start + uint32(utf16Width(patch.Action.Text))
+			if mark.Start >= start && mark.End <= end {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func diffMarkPatches(source, target *State, object opset.ObjectID) ([]markPatchOut, error) {
 	begins := make([]opset.Operation, 0)
 
@@ -799,6 +978,7 @@ func diffMapPatches(
 	target *State,
 	object opset.ObjectID,
 	identifier string,
+	conflictAction bool,
 ) ([]patchOut, error) {
 	keys := make(map[string]struct{})
 	for _, key := range source.mapKeys(object) {
@@ -823,7 +1003,17 @@ func diffMapPatches(
 		sourceOp, sourceOK := source.visibleMapObjectValue(object, key)
 
 		switch {
-		case targetOK && (!sourceOK || targetOp.ID != sourceOp.ID):
+		case conflictAction && targetOK && sourceOK && targetOp.ID == sourceOp.ID &&
+			mapConflict(source, object, key) != mapConflict(target, object, key):
+			patches = append(
+				patches,
+				patchOut{
+					Obj:    identifier,
+					Action: patchActionOut{Type: "conflict", Key: key},
+				},
+			)
+		case targetOK && (!sourceOK || targetOp.ID != sourceOp.ID ||
+			mapConflict(source, object, key) != mapConflict(target, object, key)):
 			value, err := patchValueForOperation(target, targetOp)
 			if err != nil {
 				return nil, err
@@ -837,7 +1027,7 @@ func diffMapPatches(
 						Type:     "put_map",
 						Key:      key,
 						Value:    &value,
-						Conflict: len(target.visibleMapObjectOperations(object, key)) > 1,
+						Conflict: mapConflict(target, object, key),
 					},
 				},
 			)
@@ -861,6 +1051,7 @@ func diffSequencePatches(
 	object opset.ObjectID,
 	objectType string,
 	identifier string,
+	conflictAction bool,
 ) ([]patchOut, error) {
 	sourceValues := source.sequenceValues(object.OpID)
 	targetValues := target.sequenceValues(object.OpID)
@@ -892,7 +1083,10 @@ func diffSequencePatches(
 	for i < len(sourceValues) || j < len(targetValues) {
 		if i < len(sourceValues) && j < len(targetValues) &&
 			sourceValues[i].Element == targetValues[j].Element {
-			if sourceValues[i].Operation.ID == targetValues[j].Operation.ID {
+			sourceConflict := len(source.visibleSequenceElementOperations(sourceValues[i].Element)) > 1
+			targetConflict := len(target.visibleSequenceElementOperations(targetValues[j].Element)) > 1
+			if sourceValues[i].Operation.ID == targetValues[j].Operation.ID &&
+				sourceConflict == targetConflict {
 				position += width(targetValues[j])
 				i++
 				j++
@@ -900,13 +1094,50 @@ func diffSequencePatches(
 				continue
 			}
 
-			// Same element, different winning value. Text string replacements
-			// become a delete followed by a splice in both state-comparison and
-			// incremental diffs; lists and non-string text values use put_seq.
+			if sourceValues[i].Operation.ID == targetValues[j].Operation.ID {
+				if conflictAction {
+					patches = append(
+						patches,
+						patchOut{
+							Obj: identifier,
+							Action: patchActionOut{
+								Type:  "conflict",
+								Index: position,
+							},
+						},
+					)
+				} else {
+					value, err := patchValueForOperation(target, targetValues[j].Operation)
+					if err != nil {
+						return nil, err
+					}
+
+					patches = append(
+						patches,
+						patchOut{
+							Obj: identifier,
+							Action: patchActionOut{
+								Type:     "put_seq",
+								Index:    position,
+								Value:    &value,
+								Conflict: targetConflict,
+							},
+						},
+					)
+				}
+
+				position += width(targetValues[j])
+				i++
+				j++
+
+				continue
+			}
+
+			// Same element, different winning value. Text replacements become a
+			// deletion of the old UTF-16 width followed by a splice. A non-string
+			// winner is the object-replacement character. Lists use put_seq.
 			replacement := targetValues[j].Operation
-			if objectType == "text" &&
-				replacement.Value != nil &&
-				replacement.Value.Type == opset.ScalarString {
+			if objectType == "text" && replacement.Action != opset.ActionMakeMap {
 				patches = append(
 					patches,
 					patchOut{
@@ -919,7 +1150,8 @@ func diffSequencePatches(
 					},
 				)
 
-				runs, err := textRunsWithMarks(target, object, position, replacement.Value.String)
+				rendered := textElementString(replacement)
+				runs, err := textRunsWithMarks(target, object, position, rendered)
 				if err != nil {
 					return nil, err
 				}
@@ -939,7 +1171,7 @@ func diffSequencePatches(
 					)
 				}
 
-				position += width(targetValues[j])
+				position += uint64(utf16Width(rendered))
 			} else {
 				value, err := patchValueForOperation(target, targetValues[j].Operation)
 				if err != nil {
@@ -1040,6 +1272,35 @@ func diffSequencePatches(
 
 				continue
 			}
+
+			operation := targetValues[j].Operation
+			if operation.Action != opset.ActionMakeMap {
+				rendered := textElementString(operation)
+				runs, err := textRunsWithMarks(target, object, position, rendered)
+				if err != nil {
+					return nil, err
+				}
+
+				for _, run := range runs {
+					patches = append(
+						patches,
+						patchOut{
+							Obj: identifier,
+							Action: patchActionOut{
+								Type:  "splice_text",
+								Index: run.index,
+								Text:  run.text,
+								Marks: run.marks,
+							},
+						},
+					)
+				}
+
+				position += uint64(utf16Width(rendered))
+				j++
+
+				continue
+			}
 		}
 
 		inserts := make([]patchInsertOut, 0)
@@ -1084,4 +1345,113 @@ func diffSequencePatches(
 	}
 
 	return patches, nil
+}
+
+// exposeIntroducedObjects materializes an object that a put or insert just
+// made the visible value when that object has no patches of its own. Rust's
+// patch log exposes the object's current contents at that moment, so a view
+// that replaces the value can rebuild the text or children. A conflicted put
+// keeps the existing value and must not be rewritten.
+func exposeIntroducedObjects(patches []patchOut, target *State) ([]patchOut, error) {
+	covered := make(map[string]bool, len(patches))
+	for _, patch := range patches {
+		if patch.Obj != "" {
+			covered[patch.Obj] = true
+		}
+	}
+
+	result := make([]patchOut, 0, len(patches))
+
+	var expose func(patch patchOut) error
+
+	expose = func(patch patchOut) error {
+		result = append(result, patch)
+
+		for _, identifier := range introducedObjectIDs(patch) {
+			if covered[identifier] {
+				continue
+			}
+
+			object, ok := parseObjectID(identifier)
+			if !ok {
+				continue
+			}
+
+			covered[identifier] = true
+
+			children, err := materializeObjectPatches(target, object)
+			if err != nil {
+				return err
+			}
+
+			for _, child := range children {
+				if err := expose(child); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}
+
+	for _, patch := range patches {
+		if err := expose(patch); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+func introducedObjectIDs(patch patchOut) []string {
+	switch patch.Action.Type {
+	case "put_map", "put_seq":
+		if patch.Action.Conflict || patch.Action.Value == nil || patch.Action.Value.ID == "" {
+			return nil
+		}
+
+		return []string{patch.Action.Value.ID}
+	case "insert":
+		identifiers := make([]string, 0, len(patch.Action.Values))
+
+		for _, value := range patch.Action.Values {
+			if value.Conflict || value.Value.ID == "" {
+				continue
+			}
+
+			identifiers = append(identifiers, value.Value.ID)
+		}
+
+		return identifiers
+	default:
+		return nil
+	}
+}
+
+func parseObjectID(identifier string) (opset.ObjectID, bool) {
+	if identifier == "" || identifier == "_root" {
+		return opset.ObjectID{}, false
+	}
+
+	counterText, actorHex, ok := strings.Cut(identifier, "@")
+	if !ok {
+		return opset.ObjectID{}, false
+	}
+
+	counter, err := strconv.ParseUint(counterText, 10, 64)
+	if err != nil {
+		return opset.ObjectID{}, false
+	}
+
+	raw, err := hex.DecodeString(actorHex)
+	if err != nil {
+		return opset.ObjectID{}, false
+	}
+
+	return opset.ObjectID{
+		OpID: opset.OpID{
+			Counter: counter,
+			Actor:   opset.ActorID(raw),
+		},
+	}, true
 }

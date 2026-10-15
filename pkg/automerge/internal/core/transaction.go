@@ -79,6 +79,12 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 
 	nativeHeads := nativeHashes(heads)
 
+	// Record the move before the pinned view replaces Heads. patch_to reads the
+	// heads we are leaving.
+	if err := b.patchTo(nativeToArrayHeads(nativeHeads)); err != nil {
+		return err
+	}
+
 	pinned, pinnedColumns, ok := newIsolationView(b.columns, nativeHeads)
 	if !ok {
 		return fmt.Errorf("isolation heads are unknown")
@@ -95,13 +101,11 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 	b.baseActor = baseActor
 	b.state = pinned
 	b.actor = isolationActor(full, pinned, baseActor)
-	b.nextOp = pinned.maxOpGlobal() + 1
+	// Isolated operations take counters after the full history, matching Rust's
+	// transaction start_op. Using the pinned max would reuse counters that the
+	// hidden history already owns and lose the conflict to the older value.
+	b.nextOp = full.maxOpGlobal() + 1
 	b.revision++
-
-	b.isolationDiffTargets = append(
-		b.isolationDiffTargets,
-		append([][32]byte(nil), nativeToArrayHeads(nativeHeads)...),
-	)
 
 	return nil
 }
@@ -128,6 +132,12 @@ func (b *Engine) Integrate() error {
 		if _, err := b.Commit("", time.Time{}); err != nil {
 			return err
 		}
+	}
+
+	// patch_to runs while Heads still returns the isolation frontier. The
+	// destination is the full document, which integrate is about to restore.
+	if err := b.patchTo(b.fullDocumentHeads()); err != nil {
+		return err
 	}
 
 	b.state = b.fullState

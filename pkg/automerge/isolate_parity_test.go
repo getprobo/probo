@@ -178,9 +178,8 @@ func runCanIsolate(t *testing.T, engine rustParityEngine) canIsolateObservations
 // TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating reproduces
 // incorrect_patches_produced_when_isolating_and_integrating: a diff across an
 // isolate/integrate cycle with a conflicting object put must preserve enough
-// chronology to rebuild the integrated value. Rust 0.11 may expose an
-// intermediate conflict patch while the native state diff folds that conflict
-// into the winning put.
+// chronology to rebuild the integrated value, including the conflict action
+// recorded when isolation ends.
 func TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating(t *testing.T) {
 	t.Parallel()
 
@@ -222,24 +221,9 @@ func TestRustText_IncorrectPatchesProducedWhenIsolatingAndIntegrating(t *testing
 	native := run(rustParityEngines()[0])
 	reference := run(rustParityEngines()[1])
 
-	require.Len(t, native, 6)
-	assert.Equal(t, automerge.PatchDeleteMap, native[0].Action)
-	assert.Equal(t, "color", native[0].Key)
-	assert.Equal(t, automerge.PatchDeleteMap, native[1].Action)
-	assert.Equal(t, "name", native[1].Key)
-	assert.Equal(t, automerge.PatchPutMap, native[2].Action)
-	assert.Equal(t, "color", native[2].Key)
-	assert.True(t, native[2].Conflict)
-	assert.Equal(t, automerge.PatchPutMap, native[3].Action)
-	assert.Equal(t, "name", native[3].Key)
-	assert.False(t, native[3].Conflict)
-	assert.Equal(t, automerge.PatchSpliceText, native[4].Action)
-	assert.Equal(t, strings.Repeat("a", 100), native[4].Text)
-	assert.Equal(t, automerge.PatchSpliceText, native[5].Action)
-	assert.Equal(t, "unset", native[5].Text)
-
-	require.Len(t, reference, 7)
-	assert.Equal(t, automerge.PatchConflict, reference[4].Action)
+	require.Equal(t, reference, native)
+	require.Len(t, native, 7)
+	assert.Equal(t, automerge.PatchConflict, native[4].Action)
 }
 
 // TestRustText_UpdateTextChangeAt reproduces update_text_change_at: an isolated

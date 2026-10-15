@@ -50,6 +50,16 @@ type Engine struct {
 	unknownColumns []opset.RawColumn
 	diffCursor     [][32]byte
 
+	// patchLog records the patches Rust's AutoCommit keeps between
+	// update_diff_cursor and the next diff_incremental. Isolation moves that
+	// log with patch_to; a direct state comparison drops those transitions.
+	// The log is live only after a cursor update at non-empty heads, and
+	// diff_incremental reads it only when the requested heads are the full
+	// document heads.
+	patchLogActive bool
+	patchLog       []patchOut
+	patchLogHeads  [][32]byte
+
 	// directColumnFailure is a package-test failpoint. Production engines leave
 	// it nil; tests use it to verify that a failed batch publishes no state.
 	directColumnFailure func() error
@@ -62,13 +72,6 @@ type Engine struct {
 	isolationColumns *columnarState
 	fullState        *State
 	baseActor        opset.ActorID
-
-	// isolationDiffTargets records the frontiers isolated to since the diff
-	// cursor was last set. When present, an incremental diff replays the
-	// transition from the cursor down to each isolation frontier and back up to
-	// the current heads, matching the reference's patch-log output across
-	// isolate/integrate rather than a direct state comparison.
-	isolationDiffTargets [][][32]byte
 
 	// revision increases on every change to the committed history or the
 	// retained orphan set. The compacted save is cached against it so repeated
