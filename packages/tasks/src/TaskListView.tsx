@@ -29,7 +29,6 @@ import { TASKS_NAMESPACE } from "./i18n";
 import { TaskListGroupHeader } from "./TaskListGroupHeader";
 import { TaskListRowFrame } from "./TaskListRowFrame";
 import {
-  taskListGroupHeaderGap,
   taskListGroupHeaderOffset,
   taskListGroupHeaderSize,
   taskListItemSize,
@@ -72,7 +71,7 @@ function nearestOverflowParent(element: HTMLElement | null): HTMLElement | null 
   return null;
 }
 
-const pinnedHeaderHeight = taskListGroupHeaderSize + taskListGroupHeaderGap;
+const pinnedHeaderHeight = taskListGroupHeaderSize;
 
 interface PinnedTaskGroupHeader {
   index: number;
@@ -280,15 +279,13 @@ export function TaskListView<T extends TaskListViewItem>({
       <TooltipProvider>
         {pinnedItem?.type === "header" && pinned != null && (
           <div className="sticky top-0 z-2 h-0">
-            <div
-              className="bg-sand-2"
-              style={pinned.shift === 0 ? undefined : { transform: `translateY(${pinned.shift}px)` }}
-            >
+            <div style={pinned.shift === 0 ? undefined : { transform: `translateY(${pinned.shift}px)` }}>
               <TaskListGroupHeader
                 state={pinnedItem.state}
                 count={pinnedItem.count}
                 open={!closedStates.has(pinnedItem.state)}
                 offset={false}
+                pinned
                 onOpenChange={open => onGroupOpenChange(pinnedItem.state, open)}
               />
             </div>

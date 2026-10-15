@@ -31,8 +31,12 @@ import { tv } from "tailwind-variants/lite";
 import type { TaskState } from "./taskState";
 
 const taskStateIcon = tv({
-  base: "size-4 shrink-0",
+  base: "shrink-0",
   variants: {
+    size: {
+      1: "size-4",
+      2: "size-5",
+    },
     state: {
       BACKLOG: "text-sand-10",
       TODO: "text-sand-11",
@@ -42,14 +46,18 @@ const taskStateIcon = tv({
       DUPLICATE: "text-sand-10",
     },
   },
+  defaultVariants: {
+    size: 1,
+  },
 });
 
 export interface TaskStateIconProps {
   state: TaskState;
+  size?: 1 | 2;
 }
 
-export function TaskStateIcon({ state }: TaskStateIconProps) {
-  const className = taskStateIcon({ state });
+export function TaskStateIcon({ state, size = 1 }: TaskStateIconProps) {
+  const className = taskStateIcon({ state, size });
 
   switch (state) {
     case "BACKLOG":

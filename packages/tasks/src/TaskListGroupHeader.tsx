@@ -33,6 +33,7 @@ export interface TaskListGroupHeaderProps {
   count: number;
   open: boolean;
   offset?: boolean;
+  pinned?: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -41,27 +42,30 @@ export function TaskListGroupHeader({
   count,
   open,
   offset = false,
+  pinned = false,
   onOpenChange,
 }: TaskListGroupHeaderProps) {
   const { t } = useTranslation(TASKS_NAMESPACE);
-  const slots = taskList({ offset, spaced: true });
+  const slots = taskList({ offset, spaced: !pinned, pinned });
   const CaretIcon = open ? CaretDownIcon : CaretRightIcon;
 
   return (
-    <button
-      type="button"
-      className={slots.sectionHeader()}
-      aria-expanded={open}
-      onClick={() => {
-        onOpenChange(!open);
-      }}
-    >
-      <CaretIcon className={slots.caret()} aria-hidden />
-      <TaskStateIcon state={state} />
-      <Text size={2} weight="medium">
-        {t(`states.${taskStateKeys[state]}`)}
-      </Text>
-      <Badge>{count}</Badge>
-    </button>
+    <div className={slots.section()}>
+      <button
+        type="button"
+        className={slots.sectionHeader()}
+        aria-expanded={open}
+        onClick={() => {
+          onOpenChange(!open);
+        }}
+      >
+        <CaretIcon className={slots.caret()} aria-hidden />
+        <TaskStateIcon state={state} />
+        <Text size={2} weight="medium">
+          {t(`states.${taskStateKeys[state]}`)}
+        </Text>
+        <Badge variant="surface">{count}</Badge>
+      </button>
+    </div>
   );
 }

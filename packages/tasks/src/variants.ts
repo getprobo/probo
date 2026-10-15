@@ -22,27 +22,33 @@ import { tv } from "tailwind-variants/lite";
 
 export const taskList = tv({
   slots: {
+    section: "",
     sectionHeader: [
-      "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit",
-      "flex w-full items-center gap-2 text-start outline-none",
-      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+      "appearance-none cursor-pointer border-0 bg-gold-3 text-gold-12",
+      "flex w-full items-center gap-2 rounded-4 px-3 py-1.5 text-start outline-none",
+      "focus-visible:ring-2 focus-visible:ring-gold-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-2",
     ],
-    caret: "size-4 shrink-0 text-sand-11",
+    caret: "size-4 shrink-0 text-gold-11",
     empty: "py-6",
   },
   variants: {
     offset: {
-      true: { sectionHeader: "pt-4" },
+      true: { section: "pt-4" },
       false: {},
     },
     spaced: {
-      true: { sectionHeader: "pb-2" },
+      true: { section: "pb-2" },
+      false: {},
+    },
+    pinned: {
+      true: { sectionHeader: "shadow-2" },
       false: {},
     },
   },
   defaultVariants: {
     offset: false,
     spaced: false,
+    pinned: false,
   },
 });
 
