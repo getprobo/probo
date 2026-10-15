@@ -7991,7 +7991,7 @@ func (r *Resolver) ListDevicesTool(ctx context.Context, req *mcp.CallToolRequest
 		posturesByDeviceID[d.ID] = postures
 	}
 
-	return nil, types.NewListDevicesOutput(devicePage, posturesByDeviceID), nil
+	return nil, types.NewListDevicesOutput(devicePage, posturesByDeviceID, includePostures), nil
 }
 
 func (r *Resolver) GetDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDeviceInput) (*mcp.CallToolResult, types.GetDeviceOutput, error) {
@@ -8013,7 +8013,9 @@ func (r *Resolver) GetDeviceTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	var postures coredata.DevicePostures
 
-	if input.IncludePostures != nil && *input.IncludePostures {
+	includePostures := input.IncludePostures != nil && *input.IncludePostures
+
+	if includePostures {
 		postureScope, err := r.Authorize(ctx, input.ID, itam.ActionDevicePostureList)
 		if err != nil {
 			return nil, types.GetDeviceOutput{}, err
@@ -8028,7 +8030,7 @@ func (r *Resolver) GetDeviceTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}
 
 	return nil, types.GetDeviceOutput{
-		Device: types.NewDevice(device, postures),
+		Device: types.NewDevice(device, postures, includePostures),
 	}, nil
 }
 
@@ -8050,7 +8052,7 @@ func (r *Resolver) RevokeDeviceTool(ctx context.Context, req *mcp.CallToolReques
 	}
 
 	return nil, types.RevokeDeviceOutput{
-		Device: types.NewDevice(device, nil),
+		Device: types.NewDevice(device, nil, false),
 	}, nil
 }
 
@@ -8102,7 +8104,7 @@ func (r *Resolver) SetDeviceOwnerTool(ctx context.Context, req *mcp.CallToolRequ
 	}
 
 	return nil, types.SetDeviceOwnerOutput{
-		Device: types.NewDevice(device, nil),
+		Device: types.NewDevice(device, nil, false),
 	}, nil
 }
 
@@ -8142,7 +8144,7 @@ func (r *Resolver) CreateDeviceTool(ctx context.Context, req *mcp.CallToolReques
 	}
 
 	return nil, types.CreateDeviceOutput{
-		Device:          types.NewDevice(result.Device, nil),
+		Device:          types.NewDevice(result.Device, nil, false),
 		EnrollmentToken: result.EnrollmentToken,
 		ServerURL:       urls.ServerURL,
 		EnrollmentURL:   urls.EnrollmentURL,

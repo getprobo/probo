@@ -30,11 +30,12 @@ import (
 )
 
 type mcpDevice struct {
-	ID             string  `json:"id"`
-	OrganizationID string  `json:"organization_id"`
-	State          string  `json:"state"`
-	OwnerID        *string `json:"owner_id"`
-	LatestPostures []struct {
+	ID               string  `json:"id"`
+	OrganizationID   string  `json:"organization_id"`
+	State            string  `json:"state"`
+	OwnerID          *string `json:"owner_id"`
+	PosturesIncluded bool    `json:"postures_included"`
+	LatestPostures   []struct {
 		ID       string `json:"id"`
 		CheckKey string `json:"check_key"`
 		Status   string `json:"status"`
@@ -58,6 +59,7 @@ func createDeviceViaMCP(t *testing.T, mc *testutil.MCPClient, orgID string) stri
 	assert.NotEmpty(t, result.EnrollmentToken)
 	assert.NotEmpty(t, result.ServerURL)
 	assert.NotEmpty(t, result.EnrollmentURL)
+	assert.False(t, result.Device.PosturesIncluded)
 	assert.NotNil(t, result.Device.LatestPostures)
 	assert.Empty(t, result.Device.LatestPostures)
 
@@ -82,6 +84,7 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 	}, &getResult)
 	assert.Equal(t, deviceID, getResult.Device.ID)
 	assert.Equal(t, "PENDING", getResult.Device.State)
+	assert.False(t, getResult.Device.PosturesIncluded)
 	assert.NotNil(t, getResult.Device.LatestPostures)
 	assert.Empty(t, getResult.Device.LatestPostures)
 
@@ -100,6 +103,7 @@ func TestMCP_Device_Lifecycle(t *testing.T) {
 		if d.ID == deviceID {
 			found = true
 
+			assert.False(t, d.PosturesIncluded)
 			assert.NotNil(t, d.LatestPostures)
 
 			break
@@ -278,6 +282,7 @@ func TestMCP_Device_EmployeeCannotIncludePostures(t *testing.T) {
 		"id": deviceID,
 	}, &getResult)
 	assert.Equal(t, deviceID, getResult.Device.ID)
+	assert.False(t, getResult.Device.PosturesIncluded)
 	assert.NotNil(t, getResult.Device.LatestPostures)
 	assert.Empty(t, getResult.Device.LatestPostures)
 
@@ -286,4 +291,46 @@ func TestMCP_Device_EmployeeCannotIncludePostures(t *testing.T) {
 		"include_postures": true,
 	})
 	assert.Contains(t, msg, "permission denied")
+}
+
+func TestMCP_Device_IncludePosturesOnDeviceWithNoChecks(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	orgID := owner.GetOrganizationID().String()
+	deviceID := createDeviceViaMCP(t, mc, orgID)
+
+	var getResult struct {
+		Device mcpDevice `json:"device"`
+	}
+	mc.CallToolInto("getDevice", map[string]any{
+		"id":               deviceID,
+		"include_postures": true,
+	}, &getResult)
+	assert.True(t, getResult.Device.PosturesIncluded)
+	assert.NotNil(t, getResult.Device.LatestPostures)
+	assert.Empty(t, getResult.Device.LatestPostures)
+
+	var listResult struct {
+		Devices []mcpDevice `json:"devices"`
+	}
+	mc.CallToolInto("listDevices", map[string]any{
+		"organization_id":  orgID,
+		"include_postures": true,
+	}, &listResult)
+
+	found := false
+
+	for _, d := range listResult.Devices {
+		if d.ID == deviceID {
+			found = true
+
+			assert.True(t, d.PosturesIncluded)
+			assert.Empty(t, d.LatestPostures)
+
+			break
+		}
+	}
+
+	assert.True(t, found, "created device should appear in listDevices")
 }
