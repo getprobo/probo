@@ -780,37 +780,53 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 	other.mu.Unlock()
 
 	if !direct {
-		otherData, err := other.Save()
-		if err != nil {
-			return nil, fmt.Errorf("cannot save Automerge merge source: %w", err)
-		}
-
-		d.mu.Lock()
-		defer d.mu.Unlock()
-
-		if d.closed {
-			return nil, ErrClosed
-		}
-
-		engineHeads, err := d.engine.Merge(otherData)
-		if err != nil {
-			return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
-		}
-
-		heads := make([]Hash, len(engineHeads))
-		for i := range engineHeads {
-			heads[i] = Hash(engineHeads[i])
-		}
-
-		return heads, nil
+		return d.mergeSnapshot(other)
 	}
 
 	other.mu.Lock()
+	if other.closed {
+		other.mu.Unlock()
+		return nil, ErrClosed
+	}
+
+	// Isolation can start after the unlocked mode check above.
+	if !other.engine.CanDirectMerge() {
+		other.mu.Unlock()
+		return d.mergeSnapshot(other)
+	}
+
 	batch, err := other.engine.PrepareMerge(known)
 	other.mu.Unlock()
-
 	if err != nil {
 		return nil, fmt.Errorf("cannot prepare Automerge merge: %w", err)
+	}
+
+	d.mu.Lock()
+	if d.closed {
+		d.mu.Unlock()
+		return nil, ErrClosed
+	}
+
+	if !d.engine.CanDirectMerge() {
+		d.mu.Unlock()
+		return d.mergeSnapshot(other)
+	}
+
+	engineHeads, err := d.engine.ApplyMerge(batch)
+	d.mu.Unlock()
+	if err != nil {
+		return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
+	}
+
+	return hashesFromEngine(engineHeads), nil
+}
+
+// mergeSnapshot applies other's saved history. It locks other, then d, and
+// never holds both, matching Merge's lock order.
+func (d *Document) mergeSnapshot(other *Document) ([]Hash, error) {
+	otherData, err := other.Save()
+	if err != nil {
+		return nil, fmt.Errorf("cannot save Automerge merge source: %w", err)
 	}
 
 	d.mu.Lock()
@@ -820,17 +836,21 @@ func (d *Document) Merge(other *Document) ([]Hash, error) {
 		return nil, ErrClosed
 	}
 
-	engineHeads, err := d.engine.ApplyMerge(batch)
+	engineHeads, err := d.engine.Merge(otherData)
 	if err != nil {
 		return nil, fmt.Errorf("cannot merge Automerge document: %w", err)
 	}
 
+	return hashesFromEngine(engineHeads), nil
+}
+
+func hashesFromEngine(engineHeads [][32]byte) []Hash {
 	heads := make([]Hash, len(engineHeads))
 	for i := range engineHeads {
 		heads[i] = Hash(engineHeads[i])
 	}
 
-	return heads, nil
+	return heads
 }
 
 // NewSyncState starts synchronization with a remote peer.
