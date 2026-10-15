@@ -44,6 +44,7 @@ export default function DevicesPageLoader() {
     loadQuery({
       organizationId,
       query: current.ownerQuery,
+      hasPostureWarning: current.hasPostureWarning,
       state: current.state,
       platform: current.platform,
       agentVersion: current.agentVersion,

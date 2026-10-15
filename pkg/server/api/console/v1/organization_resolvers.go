@@ -1820,13 +1820,14 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	deviceFilter := coredata.NewDeviceFilter(nil, nil, nil, nil)
+	deviceFilter := coredata.NewDeviceFilter(nil, nil, nil, nil, nil)
 	if filter != nil {
 		deviceFilter = coredata.NewDeviceFilter(
 			filter.Query,
 			filter.State,
 			filter.Platform,
 			filter.AgentVersion,
+			filter.HasPostureWarning,
 		)
 	}
 

@@ -3812,6 +3812,9 @@ components:
         agent_version:
           type: string
           description: Only devices reporting this agent version.
+        has_posture_warning:
+          type: boolean
+          description: When true, only devices whose latest posture for some check is FAIL or UNKNOWN. PASS and NOT_APPLICABLE are not warnings.
 
     ListDevicesOutput:
       type: object

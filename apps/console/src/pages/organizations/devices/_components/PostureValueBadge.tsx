@@ -34,6 +34,7 @@ import { postureValueLabel, postureValueVariant } from "../_lib/deviceDisplay";
 const postureFragment = graphql`
   fragment PostureValueBadge_postureFragment on DevicePosture {
     checkKey
+    status
     value {
       kind
       text
@@ -53,6 +54,10 @@ export function PostureValueBadge({
   const posture = useFragment(postureFragment, postureFragmentRef);
   const { kind, text, number } = posture.value;
   const label = postureValueLabel(t, { kind, text, number });
+
+  if (posture.status === "NOT_APPLICABLE") {
+    return <Text size={2}>{label}</Text>;
+  }
 
   if (kind === "UNKNOWN") {
     return (

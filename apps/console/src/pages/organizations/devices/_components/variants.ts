@@ -32,6 +32,7 @@ export const devicesPage = tv({
     list: "flex flex-col gap-4",
     sections: "flex flex-col gap-8",
     section: "flex flex-col gap-4",
+    views: "flex flex-wrap items-center",
     tools: "flex flex-wrap items-center justify-between gap-2",
     filters: "flex flex-wrap items-center justify-end gap-2",
     tableFilters: "flex flex-wrap items-center justify-end gap-2",

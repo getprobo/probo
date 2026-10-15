@@ -130,16 +130,17 @@ type device struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg          string
-		flagLimit        int
-		flagOrderBy      string
-		flagOrderDir     string
-		flagQuery        string
-		flagState        string
-		flagPlatform     string
-		flagAgentVersion string
-		flagPostures     bool
-		flagOutput       *string
+		flagOrg             string
+		flagLimit           int
+		flagOrderBy         string
+		flagOrderDir        string
+		flagQuery           string
+		flagState           string
+		flagPlatform        string
+		flagAgentVersion    string
+		flagPostureWarnings bool
+		flagPostures        bool
+		flagOutput          *string
 	)
 
 	cmd := &cobra.Command{
@@ -232,6 +233,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			if flagAgentVersion != "" {
 				filter["agentVersion"] = flagAgentVersion
+			}
+
+			if flagPostureWarnings {
+				filter["hasPostureWarning"] = true
 			}
 
 			if len(filter) > 0 {
@@ -349,6 +354,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagState, "state", "", "Filter by state (PENDING, ACTIVE, REVOKED)")
 	cmd.Flags().StringVar(&flagPlatform, "platform", "", "Filter by platform (DARWIN, LINUX, FREEBSD, WINDOWS)")
 	cmd.Flags().StringVar(&flagAgentVersion, "agent-version", "", "Filter by agent version")
+	cmd.Flags().BoolVar(
+		&flagPostureWarnings,
+		"posture-warnings",
+		false,
+		"Only devices whose latest posture for some check is FAIL or UNKNOWN",
+	)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, UPDATED_AT, HOSTNAME, LAST_SEEN_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().BoolVar(&flagPostures, "postures", false, "Include latest posture check results")

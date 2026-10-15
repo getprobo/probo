@@ -1689,6 +1689,45 @@ func TestDeviceListFilters(t *testing.T) {
 	require.ElementsMatch(t, []string{"1.0.0", "2.0.0"}, active.AgentVersions)
 }
 
+func TestDeviceList_PostureWarningFilter(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	now := time.Now().UTC()
+
+	failing, failingKey := enrollActivateAndAuthenticateDevice(t, owner, orgID)
+	passing, passingKey := enrollActivateAndAuthenticateDevice(t, owner, orgID)
+	absent, absentKey := enrollActivateAndAuthenticateDevice(t, owner, orgID)
+
+	failingID := failing.EnrollDevice.Device.ID
+	passingID := passing.EnrollDevice.Device.ID
+	absentID := absent.EnrollDevice.Device.ID
+
+	require.Equal(t, http.StatusNoContent, reportPostures(t, failingKey, []map[string]any{
+		ufwInactivePosture(now, newPostureCorrelationID(t, failingID)),
+	}))
+	require.Equal(t, http.StatusNoContent, reportPostures(t, passingKey, []map[string]any{
+		osVersionPosture(now, "14.0", newPostureCorrelationID(t, passingID)),
+	}))
+	require.Equal(t, http.StatusNoContent, reportPostures(t, absentKey, []map[string]any{
+		{
+			"check_key":      "AUTO_UPDATE",
+			"status":         "NOT_APPLICABLE",
+			"observed_at":    now.Format(time.RFC3339Nano),
+			"correlation_id": newPostureCorrelationID(t, absentID),
+			"evidence": map[string]any{
+				"note": "no known auto-update mechanism",
+			},
+		},
+	}))
+
+	warned := listDevicesFiltered(t, owner, orgID, map[string]any{"hasPostureWarning": true})
+	require.ElementsMatch(t, []string{failingID}, deviceIDs(warned.Devices))
+	require.NotContains(t, deviceIDs(warned.Devices), passingID)
+	require.NotContains(t, deviceIDs(warned.Devices), absentID)
+}
+
 const listDevicesFilteredQuery = `
 	query ListDevicesFiltered($orgId: ID!, $filter: DeviceFilter) {
 		node(id: $orgId) {

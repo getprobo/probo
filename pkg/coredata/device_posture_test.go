@@ -211,3 +211,141 @@ func TestDevicePosture_LoadLatestByDeviceID_ReturnsLatestPerCheckKey(t *testing.
 	assert.Equal(t, coredata.DevicePostureStatusUnknown, byKey["DISK_ENCRYPTION"])
 	assert.Equal(t, coredata.DevicePostureStatusFail, byKey["FIREWALL_ENABLED"])
 }
+
+func TestDevices_LoadByOrganizationID_HasPostureWarning(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedDevicePostureFixture(t, ctx, client)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+
+	recovered := insertListedDevice(t, ctx, client, fx)
+	skipped := insertListedDevice(t, ctx, client, fx)
+	unknown := insertListedDevice(t, ctx, client, fx)
+
+	insertDevicePosture(t, ctx, client, fx, "FIREWALL_ENABLED", coredata.DevicePostureStatusFail, now)
+	insertDevicePostureOn(t, ctx, client, fx, recovered, "FIREWALL_ENABLED", coredata.DevicePostureStatusFail, now.Add(-time.Hour))
+	insertDevicePostureOn(t, ctx, client, fx, recovered, "FIREWALL_ENABLED", coredata.DevicePostureStatusPass, now)
+	insertDevicePostureOn(t, ctx, client, fx, skipped, "SCREEN_LOCK", coredata.DevicePostureStatusNotApplicable, now)
+	insertDevicePostureOn(t, ctx, client, fx, unknown, "DISK_ENCRYPTION", coredata.DevicePostureStatusUnknown, now)
+
+	warned := loadOrganizationDeviceIDs(t, ctx, client, fx, new(true))
+	assert.ElementsMatch(t, []gid.GID{fx.deviceID, unknown}, warned)
+
+	all := loadOrganizationDeviceIDs(t, ctx, client, fx, nil)
+	assert.ElementsMatch(t, []gid.GID{fx.deviceID, recovered, skipped, unknown}, all)
+}
+
+func insertListedDevice(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx devicePostureFixture,
+) gid.GID {
+	t.Helper()
+
+	deviceID := gid.New(fx.scope.GetTenantID(), coredata.DeviceEntityType)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	device := coredata.Device{
+		ID:             deviceID,
+		OrganizationID: fx.organizationID,
+		State:          coredata.DeviceStatePending,
+		APIKeyHash:     []byte("device-list-test-" + deviceID.String()),
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return device.Insert(ctx, tx, fx.scope)
+	}))
+
+	t.Cleanup(func() {
+		_ = client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			if _, err := tx.Exec(ctx, `DELETE FROM device_postures WHERE device_id = $1`, deviceID); err != nil {
+				return err
+			}
+
+			_, err := tx.Exec(ctx, `DELETE FROM devices WHERE id = $1`, deviceID)
+
+			return err
+		})
+	})
+
+	return deviceID
+}
+
+func insertDevicePostureOn(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx devicePostureFixture,
+	deviceID gid.GID,
+	checkKey string,
+	status coredata.DevicePostureStatus,
+	observedAt time.Time,
+) {
+	t.Helper()
+
+	posture := coredata.DevicePosture{
+		ID:             gid.New(fx.scope.GetTenantID(), coredata.DevicePostureEntityType),
+		OrganizationID: fx.organizationID,
+		DeviceID:       deviceID,
+		CorrelationID:  gid.New(fx.scope.GetTenantID(), coredata.DevicePostureReportEntityType),
+		CheckKey:       checkKey,
+		Status:         status,
+		Version:        coredata.DevicePostureVersionV1,
+		AgentVersion:   "0.1",
+		ObservedAt:     observedAt,
+		CreatedAt:      observedAt,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return posture.Insert(ctx, tx, fx.scope)
+	}))
+}
+
+func loadOrganizationDeviceIDs(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx devicePostureFixture,
+	hasPostureWarning *bool,
+) []gid.GID {
+	t.Helper()
+
+	var ids []gid.GID
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		cursor := page.NewCursor(
+			20,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.DeviceOrderField]{
+				Field:     coredata.DeviceOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		var devices coredata.Devices
+		if err := devices.LoadByOrganizationID(
+			ctx,
+			conn,
+			fx.scope,
+			fx.organizationID,
+			cursor,
+			coredata.NewDeviceFilter(nil, nil, nil, nil, hasPostureWarning),
+		); err != nil {
+			return err
+		}
+
+		ids = make([]gid.GID, 0, len(devices))
+		for _, device := range devices {
+			ids = append(ids, device.ID)
+		}
+
+		return nil
+	}))
+
+	return ids
+}

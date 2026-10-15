@@ -427,7 +427,7 @@ func (s *Service) ListForOrganizationID(
 	filter *coredata.DeviceFilter,
 ) (*page.Page[*coredata.Device, coredata.DeviceOrderField], error) {
 	if filter == nil {
-		filter = coredata.NewDeviceFilter(nil, nil, nil, nil)
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil, nil)
 	}
 
 	var devices coredata.Devices
@@ -525,7 +525,7 @@ func (s *Service) CountForOrganizationID(
 	filter *coredata.DeviceFilter,
 ) (int, error) {
 	if filter == nil {
-		filter = coredata.NewDeviceFilter(nil, nil, nil, nil)
+		filter = coredata.NewDeviceFilter(nil, nil, nil, nil, nil)
 	}
 
 	var count int

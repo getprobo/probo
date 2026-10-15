@@ -27,6 +27,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDarwinScreenLockModeStatus(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		mode string
+		want Status
+	}{
+		{mode: "immediate", want: StatusPass},
+		{mode: "seconds", want: StatusPass},
+		{mode: "off", want: StatusFail},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.mode, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, darwinScreenLockModeStatus(tt.mode))
+		})
+	}
+}
+
 func TestDarwinDefaultsMissing(t *testing.T) {
 	t.Parallel()
 

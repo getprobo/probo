@@ -78,11 +78,11 @@ func darwinScreenLock(ctx context.Context) Result {
 				ev["seconds"] = seconds
 			}
 
-			if mode == "immediate" {
-				return pass(ev)
+			if darwinScreenLockModeStatus(mode) == StatusFail {
+				return fail(ev)
 			}
 
-			return fail(ev)
+			return pass(ev)
 		}
 
 		if status.Err != nil {

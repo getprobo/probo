@@ -30,6 +30,11 @@
       "enrolledAt": "Geregistreerd op",
       "lastSeen": "Laatst gezien"
     },
+    "views": {
+      "allRegistered": "Alle apparaten",
+      "warningsOnly": "Alleen waarschuwingen",
+      "ariaLabel": "Apparaatlijstweergave"
+    },
     "filters": {
       "allStates": "Alle statussen",
       "pending": "In behandeling",

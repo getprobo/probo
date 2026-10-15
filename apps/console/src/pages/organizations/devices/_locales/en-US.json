@@ -30,6 +30,11 @@
       "enrolledAt": "Enrolled at",
       "lastSeen": "Last seen"
     },
+    "views": {
+      "allRegistered": "All devices",
+      "warningsOnly": "Warnings only",
+      "ariaLabel": "Device list view"
+    },
     "filters": {
       "allStates": "All states",
       "pending": "Pending",

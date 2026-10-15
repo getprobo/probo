@@ -8045,7 +8045,13 @@ func (r *Resolver) ListDevicesTool(ctx context.Context, req *mcp.CallToolRequest
 		scope,
 		input.OrganizationID,
 		cursor,
-		coredata.NewDeviceFilter(input.Query, input.State, input.Platform, input.AgentVersion),
+		coredata.NewDeviceFilter(
+			input.Query,
+			input.State,
+			input.Platform,
+			input.AgentVersion,
+			input.HasPostureWarning,
+		),
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list devices", log.Error(err))
