@@ -897,3 +897,143 @@ func TestDecode_OwnsRetainedPayloads(t *testing.T) {
 
 	assert.True(t, foundUnknown)
 }
+func TestDecode_TrailingChangeClearsSnapshotColumns(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	firstProperty := "policy"
+	firstID := opset.OpID{Actor: actor, Counter: 1}
+	first := opset.Change{
+		Actor:    actor,
+		Sequence: 1,
+		StartOp:  1,
+		MaxOp:    1,
+		Operations: []opset.Operation{
+			{
+				ID:     firstID,
+				Object: opset.RootObject(),
+				Key:    opset.Key{Property: &firstProperty},
+				Action: opset.ActionSet,
+				Value:  &opset.Scalar{Type: opset.ScalarString, String: "approved"},
+			},
+		},
+	}
+	_, err = EncodeChange(&first)
+	require.NoError(t, err)
+
+	snapshot, err := EncodeDocument(
+		&opset.Document{
+			Heads:   []opset.ChangeHash{*first.Hash},
+			Changes: []opset.Change{first},
+		},
+		[]opset.OpID{firstID},
+		false,
+	)
+	require.NoError(t, err)
+
+	secondProperty := "note"
+	secondID := opset.OpID{Actor: actor, Counter: 2}
+	second := opset.Change{
+		Actor:        actor,
+		Sequence:     2,
+		StartOp:      2,
+		MaxOp:        2,
+		Dependencies: []opset.ChangeHash{*first.Hash},
+		Operations: []opset.Operation{
+			{
+				ID:     secondID,
+				Object: opset.RootObject(),
+				Key:    opset.Key{Property: &secondProperty},
+				Action: opset.ActionSet,
+				Value:  &opset.Scalar{Type: opset.ScalarString, String: "later"},
+			},
+		},
+	}
+	change, err := EncodeChange(&second)
+	require.NoError(t, err)
+
+	t.Run(
+		"document chunk keeps canonical columns",
+		func(t *testing.T) {
+			t.Parallel()
+
+			decoded, err := Decode(snapshot)
+			require.NoError(t, err)
+			assert.NotNil(t, decoded.Canonical)
+			assert.NotEmpty(t, decoded.OperationOrder)
+			assert.NotEmpty(t, decoded.ChangeColumns)
+			assert.NotEmpty(t, decoded.OperationColumns)
+		},
+	)
+
+	t.Run(
+		"trailing change clears canonical columns",
+		func(t *testing.T) {
+			t.Parallel()
+
+			decoded, err := Decode(append(append([]byte(nil), snapshot...), change...))
+			require.NoError(t, err)
+			require.Len(t, decoded.Changes, 2)
+			require.NotEmpty(t, decoded.Changes[1].Operations)
+			assert.Equal(t, secondID, decoded.Changes[1].Operations[0].ID)
+			assert.Nil(t, decoded.Canonical)
+			assert.Nil(t, decoded.OperationOrder)
+			assert.Nil(t, decoded.ChangeColumns)
+			assert.Nil(t, decoded.OperationColumns)
+		},
+	)
+
+	t.Run(
+		"compressed trailing change clears canonical columns",
+		func(t *testing.T) {
+			t.Parallel()
+
+			decoded, err := Decode(
+				append(
+					append([]byte(nil), snapshot...),
+					compressChangeChunk(t, change)...,
+				),
+			)
+			require.NoError(t, err)
+			require.Len(t, decoded.Changes, 2)
+			require.NotEmpty(t, decoded.Changes[1].Operations)
+			assert.Equal(t, secondID, decoded.Changes[1].Operations[0].ID)
+			assert.Equal(t, opset.ChunkCompressedChange, decoded.ChunkTypes[1])
+			assert.Nil(t, decoded.Canonical)
+			assert.Nil(t, decoded.OperationOrder)
+			assert.Nil(t, decoded.ChangeColumns)
+			assert.Nil(t, decoded.OperationColumns)
+		},
+	)
+}
+
+func compressChangeChunk(t *testing.T, raw []byte) []byte {
+	t.Helper()
+
+	require.GreaterOrEqual(t, len(raw), 9)
+	require.Equal(t, opset.ChunkChange, opset.ChunkType(raw[8]))
+
+	r := &reader{data: raw, offset: 9}
+	length, err := r.uleb()
+	require.NoError(t, err)
+	content, err := r.bytes(length)
+	require.NoError(t, err)
+
+	var compressed bytes.Buffer
+
+	writer, err := flate.NewWriter(&compressed, flate.BestCompression)
+	require.NoError(t, err)
+	_, err = writer.Write(content)
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+
+	data := append([]byte(nil), raw[:8]...)
+	data = append(data, byte(opset.ChunkCompressedChange))
+	data = appendULEB(data, uint64(compressed.Len()))
+	data = append(data, compressed.Bytes()...)
+
+	return data
+}
+

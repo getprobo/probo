@@ -144,6 +144,9 @@ func decode(
 			// A trailing change extends the document beyond the snapshot roots.
 			// The combined stream must use the explicit replay/rebuild path.
 			document.Canonical = nil
+			document.OperationOrder = nil
+			document.ChangeColumns = nil
+			document.OperationColumns = nil
 
 			change, actors, unknown, err := decodeChangeChunk(
 				chunk.content,
