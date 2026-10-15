@@ -12,6 +12,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/page"
@@ -21,6 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 // Owner is the resolver for the owner field.
@@ -222,36 +224,49 @@ func (r *mutationResolver) CreateDevice(ctx context.Context, input types.CreateD
 	}, nil
 }
 
-// RevokeDevice is the resolver for the revokeDevice field.
-func (r *mutationResolver) RevokeDevice(ctx context.Context, input types.RevokeDeviceInput) (*types.RevokeDevicePayload, error) {
-	scope, err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceRevoke)
+// RevokeDevices is the resolver for the revokeDevices field.
+func (r *mutationResolver) RevokeDevices(ctx context.Context, input types.RevokeDevicesInput) (*types.RevokeDevicesPayload, error) {
+	scope, err := r.batchAuthorize(ctx, itam.ActionDeviceRevoke, input.DeviceIds)
 	if err != nil {
 		return nil, err
 	}
 
-	d, err := r.itam.RevokeDevice(ctx, scope, input.DeviceID)
+	devices, err := r.itam.RevokeDevices(ctx, scope, input.DeviceIds)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot revoke device", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot revoke devices", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RevokeDevicePayload{Device: types.NewDevice(d)}, nil
+	payload := make([]*types.Device, len(devices))
+	for i, device := range devices {
+		payload[i] = types.NewDevice(device)
+	}
+
+	return &types.RevokeDevicesPayload{Devices: payload}, nil
 }
 
-// DeleteDevice is the resolver for the deleteDevice field.
-func (r *mutationResolver) DeleteDevice(ctx context.Context, input types.DeleteDeviceInput) (*types.DeleteDevicePayload, error) {
-	scope, err := r.authorize(ctx, input.DeviceID, itam.ActionDeviceDelete)
+// DeleteDevices is the resolver for the deleteDevices field.
+func (r *mutationResolver) DeleteDevices(ctx context.Context, input types.DeleteDevicesInput) (*types.DeleteDevicesPayload, error) {
+	scope, err := r.batchAuthorize(ctx, itam.ActionDeviceDelete, input.DeviceIds)
 	if err != nil {
 		return nil, err
 	}
 
-	d, err := r.itam.DeleteDevice(ctx, scope, input.DeviceID)
+	devices, err := r.itam.DeleteDevices(ctx, scope, input.DeviceIds)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -260,12 +275,17 @@ func (r *mutationResolver) DeleteDevice(ctx context.Context, input types.DeleteD
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete device", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot delete devices", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.DeleteDevicePayload{DeletedDeviceID: d.ID}, nil
+	deletedDeviceIDs := make([]gid.GID, len(devices))
+	for i, device := range devices {
+		deletedDeviceIDs[i] = device.ID
+	}
+
+	return &types.DeleteDevicesPayload{DeletedDeviceIds: deletedDeviceIDs}, nil
 }
 
 // SetDeviceOwner is the resolver for the setDeviceOwner field.
@@ -302,6 +322,10 @@ func (r *mutationResolver) DownloadDeviceEvidence(ctx context.Context, input typ
 
 	downloadURL, err := r.itam.ExportDeviceEvidence(ctx, scope, input.DeviceIds)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}

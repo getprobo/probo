@@ -3762,7 +3762,7 @@ components:
             - string
             - "null"
           format: date-time
-          description: Time of the first revoke. Set once and kept on subsequent revokeDevice calls.
+          description: Time of the first revoke. Set once and kept on subsequent revokeDevices calls.
         postures_included:
           type: boolean
           description: True only when include_postures was true on this call. When false, latest_postures is always empty, even if the device has reported checks. Call again with include_postures true to load them.
@@ -3878,40 +3878,52 @@ components:
           type: string
           description: probo://enroll?server=...&token=... deep link for the desktop agent.
 
-    RevokeDeviceInput:
+    RevokeDevicesInput:
       type: object
       required:
-        - id
+        - device_ids
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Device ID
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to revoke. At most 100, with no duplicates. Revoking an already revoked device keeps its original revoked_at.
+          items:
+            $ref: "#/components/schemas/GID"
 
-    RevokeDeviceOutput:
+    RevokeDevicesOutput:
       type: object
       required:
-        - device
+        - devices
       properties:
-        device:
-          $ref: "#/components/schemas/Device"
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
 
-    DeleteDeviceInput:
+    DeleteDevicesInput:
       type: object
       required:
-        - id
+        - device_ids
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Device ID
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to delete. At most 100, with no duplicates. Every device must already be REVOKED.
+          items:
+            $ref: "#/components/schemas/GID"
 
-    DeleteDeviceOutput:
+    DeleteDevicesOutput:
       type: object
       required:
-        - deleted_device_id
+        - deleted_device_ids
       properties:
-        deleted_device_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted device ID
+        deleted_device_ids:
+          type: array
+          description: IDs of the deleted devices, in request order.
+          items:
+            $ref: "#/components/schemas/GID"
 
     SetDeviceOwnerInput:
       type: object
@@ -17773,30 +17785,30 @@ tools:
       $ref: "#/components/schemas/CreateDeviceInput"
     outputSchema:
       $ref: "#/components/schemas/CreateDeviceOutput"
-  - name: revokeDevice
-    title: Revoke Device
-    description: "Irreversibly revoke a device enrollment. Immediately invalidates the device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. Call this before deleteDevice."
+  - name: revokeDevices
+    title: Revoke Devices
+    description: "Irreversibly revoke one or more device enrollments in one call. Immediately invalidates each device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. All devices must belong to one organization. If any id is missing, none are revoked. Call this before deleteDevices."
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/RevokeDeviceInput"
+      $ref: "#/components/schemas/RevokeDevicesInput"
     outputSchema:
-      $ref: "#/components/schemas/RevokeDeviceOutput"
-  - name: deleteDevice
-    title: Delete Device
-    description: "Soft-delete a device. The device must already be REVOKED — call revokeDevice first, otherwise the call fails with the error device cannot be deleted. After success the device stops appearing in listDevices/getDevice; enrollment tokens for the device are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
+      $ref: "#/components/schemas/RevokeDevicesOutput"
+  - name: deleteDevices
+    title: Delete Devices
+    description: "Soft-delete one or more devices in one call. Every device must already be REVOKED — call revokeDevices first, otherwise the call fails with the error device cannot be deleted and none are deleted. All devices must belong to one organization. After success the devices stop appearing in listDevices/getDevice; enrollment tokens for them are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteDeviceInput"
+      $ref: "#/components/schemas/DeleteDevicesInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteDeviceOutput"
+      $ref: "#/components/schemas/DeleteDevicesOutput"
   - name: setDeviceOwner
     title: Set Device Owner
     description: "Set or clear the owner of an ITAM device. owner_id is required: pass a MembershipProfile GID belonging to the same organization as the device to assign, or null to clear. Omitting the field is invalid."

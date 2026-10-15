@@ -8040,52 +8040,66 @@ func (r *Resolver) GetDeviceTool(ctx context.Context, req *mcp.CallToolRequest, 
 	}, nil
 }
 
-func (r *Resolver) RevokeDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RevokeDeviceInput) (*mcp.CallToolResult, types.RevokeDeviceOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, itam.ActionDeviceRevoke)
+func (r *Resolver) RevokeDevicesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RevokeDevicesInput) (*mcp.CallToolResult, types.RevokeDevicesOutput, error) {
+	scope, err := r.AuthorizeBatch(ctx, input.DeviceIds, itam.ActionDeviceRevoke)
 	if err != nil {
-		return nil, types.RevokeDeviceOutput{}, err
+		return nil, types.RevokeDevicesOutput{}, err
 	}
 
-	device, err := r.itamSvc.RevokeDevice(ctx, scope, input.ID)
+	devices, err := r.itamSvc.RevokeDevices(ctx, scope, input.DeviceIds)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, types.RevokeDeviceOutput{}, fmt.Errorf("resource not found")
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.RevokeDevicesOutput{}, validationErrors
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot revoke device", log.Error(err))
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.RevokeDevicesOutput{}, fmt.Errorf("resource not found")
+		}
 
-		return nil, types.RevokeDeviceOutput{}, fmt.Errorf("internal server error")
+		r.logger.ErrorCtx(ctx, "cannot revoke devices", log.Error(err))
+
+		return nil, types.RevokeDevicesOutput{}, fmt.Errorf("internal server error")
 	}
 
-	return nil, types.RevokeDeviceOutput{
-		Device: types.NewDevice(device, nil, false),
-	}, nil
+	out := make([]*types.Device, len(devices))
+	for i, device := range devices {
+		out[i] = types.NewDevice(device, nil, false)
+	}
+
+	return nil, types.RevokeDevicesOutput{Devices: out}, nil
 }
 
-func (r *Resolver) DeleteDeviceTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDeviceInput) (*mcp.CallToolResult, types.DeleteDeviceOutput, error) {
-	scope, err := r.Authorize(ctx, input.ID, itam.ActionDeviceDelete)
+func (r *Resolver) DeleteDevicesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.DeleteDevicesInput) (*mcp.CallToolResult, types.DeleteDevicesOutput, error) {
+	scope, err := r.AuthorizeBatch(ctx, input.DeviceIds, itam.ActionDeviceDelete)
 	if err != nil {
-		return nil, types.DeleteDeviceOutput{}, err
+		return nil, types.DeleteDevicesOutput{}, err
 	}
 
-	device, err := r.itamSvc.DeleteDevice(ctx, scope, input.ID)
+	devices, err := r.itamSvc.DeleteDevices(ctx, scope, input.DeviceIds)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.DeleteDevicesOutput{}, validationErrors
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, types.DeleteDeviceOutput{}, fmt.Errorf("resource not found")
+			return nil, types.DeleteDevicesOutput{}, fmt.Errorf("resource not found")
 		}
 
 		if errors.Is(err, itam.ErrDeviceNotDeletable) {
-			return nil, types.DeleteDeviceOutput{}, fmt.Errorf("device cannot be deleted")
+			return nil, types.DeleteDevicesOutput{}, fmt.Errorf("device cannot be deleted")
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot delete device", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot delete devices", log.Error(err))
 
-		return nil, types.DeleteDeviceOutput{}, fmt.Errorf("internal server error")
+		return nil, types.DeleteDevicesOutput{}, fmt.Errorf("internal server error")
 	}
 
-	return nil, types.DeleteDeviceOutput{
-		DeletedDeviceID: device.ID,
-	}, nil
+	deletedDeviceIDs := make([]gid.GID, len(devices))
+	for i, device := range devices {
+		deletedDeviceIDs[i] = device.ID
+	}
+
+	return nil, types.DeleteDevicesOutput{DeletedDeviceIds: deletedDeviceIDs}, nil
 }
 
 func (r *Resolver) SetDeviceOwnerTool(ctx context.Context, req *mcp.CallToolRequest, input *types.SetDeviceOwnerInput) (*mcp.CallToolResult, types.SetDeviceOwnerOutput, error) {
@@ -10754,6 +10768,10 @@ func (r *Resolver) DownloadDeviceEvidenceTool(ctx context.Context, req *mcp.Call
 
 	downloadURL, err := r.itamSvc.ExportDeviceEvidence(ctx, scope, input.DeviceIds)
 	if err != nil {
+		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			return nil, types.DownloadDeviceEvidenceOutput{}, validationErrors
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.DownloadDeviceEvidenceOutput{}, fmt.Errorf("resource not found")
 		}

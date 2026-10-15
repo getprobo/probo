@@ -109,9 +109,11 @@ func (s *Service) ExportDeviceEvidence(
 	scope coredata.Scoper,
 	deviceIDs []gid.GID,
 ) (string, error) {
-	if err := validateDeviceEvidenceIDs(deviceIDs); err != nil {
-		return "", err
+	if err := validateDeviceIDs(deviceIDs, maxDeviceEvidenceDevices); err != nil {
+		return "", fmt.Errorf("invalid request: %w", err)
 	}
+
+	deviceIDs = gid.NewSet(deviceIDs...).Values()
 
 	var (
 		html           []byte
@@ -192,31 +194,6 @@ func (s *Service) ExportDeviceEvidence(
 	}
 
 	return downloadURL, nil
-}
-
-func validateDeviceEvidenceIDs(deviceIDs []gid.GID) error {
-	if len(deviceIDs) == 0 {
-		return fmt.Errorf("%w: device ids are required", ErrInvalidDeviceEvidenceRequest)
-	}
-
-	if len(deviceIDs) > maxDeviceEvidenceDevices {
-		return fmt.Errorf("%w: at most %d devices", ErrInvalidDeviceEvidenceRequest, maxDeviceEvidenceDevices)
-	}
-
-	seen := make(map[gid.GID]struct{}, len(deviceIDs))
-	for _, deviceID := range deviceIDs {
-		if deviceID.EntityType() != coredata.DeviceEntityType {
-			return fmt.Errorf("%w: device id has the wrong type", ErrInvalidDeviceEvidenceRequest)
-		}
-
-		if _, ok := seen[deviceID]; ok {
-			return fmt.Errorf("%w: duplicate device id", ErrInvalidDeviceEvidenceRequest)
-		}
-
-		seen[deviceID] = struct{}{}
-	}
-
-	return nil
 }
 
 func (s *Service) storeDeviceEvidencePDF(

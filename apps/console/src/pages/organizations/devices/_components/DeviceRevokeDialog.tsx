@@ -21,13 +21,10 @@
 import { PlugsIcon, WarningIcon } from "@phosphor-icons/react";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { ConfirmDialog } from "@probo/ui/src/v2/Dialog/ConfirmDialog";
-import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { confirmEachDevice } from "../_lib/confirmEachDevice";
 import { ownerLabel } from "../_lib/deviceDisplay";
-import { useRevokeDevice } from "../_lib/useRevokeDevice";
+import { useRevokeDevices } from "../_lib/useRevokeDevices";
 
 interface DeviceRevokeTarget {
   id: string;
@@ -48,9 +45,7 @@ export function DeviceRevokeDialog({
   onRevoked,
 }: DeviceRevokeDialogProps) {
   const { t } = useTranslation("organizations/devices");
-  const toast = useToast();
-  const [revokeDevice] = useRevokeDevice();
-  const [isRevoking, setIsRevoking] = useState(false);
+  const [revokeDevices, isRevoking] = useRevokeDevices();
   const name = ownerLabel(devices[0]?.ownerName, t("devices.values.unassigned"));
   const title = devices.length === 1
     ? t("devices.confirmations.revoke", { owner: name })
@@ -63,27 +58,16 @@ export function DeviceRevokeDialog({
     : t("devices.messages.revokedMany", { count: devices.length });
 
   function handleRevoke() {
-    setIsRevoking(true);
     void (async () => {
       try {
-        const confirmed = await confirmEachDevice({
-          devices,
-          successMessage,
-          confirmDevice: (deviceId, feedback) =>
-            revokeDevice({ variables: { input: { deviceId } } }, feedback),
-          onPartial: (count, total) => {
-            toast.add({
-              title: t("devices.messages.revokedPartial", { count, total }),
-              type: "warning",
-            });
-          },
-        });
-        if (confirmed) {
-          onOpenChange(false);
-          onRevoked?.();
-        }
-      } finally {
-        setIsRevoking(false);
+        await revokeDevices(
+          { variables: { input: { deviceIds: devices.map(device => device.id) } } },
+          { successMessage },
+        );
+        onOpenChange(false);
+        onRevoked?.();
+      } catch {
+        // useMutation already reported the failure.
       }
     })();
   }

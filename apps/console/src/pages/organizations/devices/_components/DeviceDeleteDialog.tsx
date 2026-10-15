@@ -21,14 +21,11 @@
 import { TrashIcon, WarningIcon } from "@phosphor-icons/react";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { ConfirmDialog } from "@probo/ui/src/v2/Dialog/ConfirmDialog";
-import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { DataID } from "relay-runtime";
 
-import { confirmEachDevice } from "../_lib/confirmEachDevice";
 import { ownerLabel } from "../_lib/deviceDisplay";
-import { useDeleteDevice } from "../_lib/useDeleteDevice";
+import { useDeleteDevices } from "../_lib/useDeleteDevices";
 
 interface DeviceDeleteTarget {
   id: string;
@@ -53,9 +50,7 @@ export function DeviceDeleteDialog({
   onDeleted,
 }: DeviceDeleteDialogProps) {
   const { t } = useTranslation("organizations/devices");
-  const toast = useToast();
-  const [remove] = useDeleteDevice({ organizationId, connectionId });
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [remove, isDeleting] = useDeleteDevices({ organizationId, connectionId });
   const name = ownerLabel(devices[0]?.ownerName, t("devices.values.unassigned"));
   const title = devices.length === 1
     ? t("devices.confirmations.delete", { owner: name })
@@ -68,26 +63,16 @@ export function DeviceDeleteDialog({
     : t("devices.messages.deletedMany", { count: devices.length });
 
   function handleDelete() {
-    setIsDeleting(true);
     void (async () => {
       try {
-        const confirmed = await confirmEachDevice({
-          devices,
-          successMessage,
-          confirmDevice: (deviceId, feedback) => remove(deviceId, feedback),
-          onPartial: (count, total) => {
-            toast.add({
-              title: t("devices.messages.deletedPartial", { count, total }),
-              type: "warning",
-            });
-          },
-        });
-        if (confirmed) {
-          onOpenChange(false);
-          onDeleted?.();
-        }
-      } finally {
-        setIsDeleting(false);
+        await remove(
+          devices.map(device => device.id),
+          { successMessage },
+        );
+        onOpenChange(false);
+        onDeleted?.();
+      } catch {
+        // useMutation already reported the failure.
       }
     })();
   }

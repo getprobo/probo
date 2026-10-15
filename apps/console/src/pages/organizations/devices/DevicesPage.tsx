@@ -391,7 +391,6 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
         open={revokeOpen}
         onOpenChange={setRevokeOpen}
         devices={selectedDevices}
-        onRevoked={refetchDevices}
       />
       <DeviceDeleteDialog
         open={deleteOpen}

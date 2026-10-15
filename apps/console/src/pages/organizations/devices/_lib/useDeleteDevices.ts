@@ -22,36 +22,34 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ConnectionHandler, type DataID, graphql } from "relay-runtime";
 
-import type { useDeleteDeviceMutation } from "#/__generated__/core/useDeleteDeviceMutation.graphql";
+import type { useDeleteDevicesMutation } from "#/__generated__/core/useDeleteDevicesMutation.graphql";
 import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
 export const DevicesConnectionKey = "DevicesPage_devices";
 
-const deleteDeviceMutation = graphql`
-  mutation useDeleteDeviceMutation(
-    $input: DeleteDeviceInput!
-    $connections: [ID!]!
-  ) {
-    deleteDevice(input: $input) {
-      # @deleteEdge only unlinks from list connections — do not use
-      # @deleteRecord; DeviceLayout reads the node with @required(action: THROW).
-      deletedDeviceId @deleteEdge(connections: $connections)
+const deleteDevicesMutation = graphql`
+  mutation useDeleteDevicesMutation($input: DeleteDevicesInput!) {
+    deleteDevices(input: $input) {
+      # @deleteEdge accepts one id. Unlink every returned id in the updater.
+      # Do not use @deleteRecord; DeviceLayout reads the node with
+      # @required(action: THROW).
+      deletedDeviceIds
     }
   }
 `;
 
-interface DeleteDeviceOptions {
+interface DeleteDevicesOptions {
   organizationId: string;
   connectionId?: DataID;
 }
 
-export function useDeleteDevice(options: DeleteDeviceOptions) {
+export function useDeleteDevices(options: DeleteDevicesOptions) {
   const { t } = useTranslation("organizations/devices");
   const organizationId = options.organizationId;
   const connectionId = options.connectionId;
 
-  const [deleteDevice, isDeleting] = useMutation<useDeleteDeviceMutation>(
-    deleteDeviceMutation,
+  const [deleteDevices, isDeleting] = useMutation<useDeleteDevicesMutation>(
+    deleteDevicesMutation,
     {
       successMessage: t("devices.messages.deleted"),
       errorToast: t("devices.errors.delete"),
@@ -59,19 +57,36 @@ export function useDeleteDevice(options: DeleteDeviceOptions) {
   );
 
   const remove = useCallback(
-    (deviceId: string, feedback?: MutationFeedback) => {
-      const connections = [
-        connectionId
-        ?? ConnectionHandler.getConnectionID(organizationId, DevicesConnectionKey),
-      ];
-      return deleteDevice({
+    (deviceIds: readonly string[], feedback?: MutationFeedback) => {
+      const connection = connectionId
+        ?? ConnectionHandler.getConnectionID(organizationId, DevicesConnectionKey);
+
+      return deleteDevices({
         variables: {
-          input: { deviceId },
-          connections,
+          input: { deviceIds },
+        },
+        updater(store) {
+          const payload = store.getRootField("deleteDevices");
+          const deleted: unknown = payload?.getValue("deletedDeviceIds");
+          const record = store.get(connection);
+          if (!record || !Array.isArray(deleted)) {
+            return;
+          }
+
+          for (const id of deleted) {
+            if (typeof id === "string") {
+              ConnectionHandler.deleteNode(record, id);
+            }
+          }
+
+          const totalCount: unknown = record.getValue("totalCount");
+          if (typeof totalCount === "number") {
+            record.setValue(Math.max(0, totalCount - deleted.length), "totalCount");
+          }
         },
       }, feedback);
     },
-    [deleteDevice, organizationId, connectionId],
+    [deleteDevices, organizationId, connectionId],
   );
 
   return [remove, isDeleting] as const;

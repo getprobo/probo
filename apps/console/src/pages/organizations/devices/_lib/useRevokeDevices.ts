@@ -21,26 +21,27 @@
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
-import type { useRevokeDeviceMutation } from "#/__generated__/core/useRevokeDeviceMutation.graphql";
+import type { useRevokeDevicesMutation } from "#/__generated__/core/useRevokeDevicesMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-const revokeDeviceMutation = graphql`
-  mutation useRevokeDeviceMutation($input: RevokeDeviceInput!) {
-    revokeDevice(input: $input) {
-      device {
+const revokeDevicesMutation = graphql`
+  mutation useRevokeDevicesMutation($input: RevokeDevicesInput!) {
+    revokeDevices(input: $input) {
+      devices {
         id
         revokedAt
         state
+        ...DeviceListItem_device
         ...DeviceDetailsCard_deviceFragment
       }
     }
   }
 `;
 
-export function useRevokeDevice() {
+export function useRevokeDevices() {
   const { t } = useTranslation("organizations/devices");
 
-  return useMutation<useRevokeDeviceMutation>(revokeDeviceMutation, {
+  return useMutation<useRevokeDevicesMutation>(revokeDevicesMutation, {
     successMessage: t("devices.messages.revoked"),
     errorToast: t("devices.errors.revoke"),
   });

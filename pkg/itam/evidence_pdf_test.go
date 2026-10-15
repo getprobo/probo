@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestRenderDeviceEvidenceHTML(t *testing.T) {
@@ -85,53 +84,6 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	assert.Contains(t, body, "No posture checks recorded")
 	assert.Contains(t, body, evidenceUnassignedLabel)
 	assert.Contains(t, body, evidenceNeverLabel)
-}
-
-func TestValidateDeviceEvidenceIDs(t *testing.T) {
-	t.Parallel()
-
-	tenantID := gid.NewTenantID()
-	deviceID := gid.New(tenantID, coredata.DeviceEntityType)
-	otherID := gid.New(tenantID, coredata.FileEntityType)
-
-	t.Run("accepts device ids", func(t *testing.T) {
-		t.Parallel()
-
-		require.NoError(t, validateDeviceEvidenceIDs([]gid.GID{deviceID}))
-	})
-
-	t.Run("rejects an empty list", func(t *testing.T) {
-		t.Parallel()
-
-		err := validateDeviceEvidenceIDs(nil)
-		require.ErrorIs(t, err, ErrInvalidDeviceEvidenceRequest)
-	})
-
-	t.Run("rejects a duplicate", func(t *testing.T) {
-		t.Parallel()
-
-		err := validateDeviceEvidenceIDs([]gid.GID{deviceID, deviceID})
-		require.ErrorIs(t, err, ErrInvalidDeviceEvidenceRequest)
-	})
-
-	t.Run("rejects a non-device id", func(t *testing.T) {
-		t.Parallel()
-
-		err := validateDeviceEvidenceIDs([]gid.GID{otherID})
-		require.ErrorIs(t, err, ErrInvalidDeviceEvidenceRequest)
-	})
-
-	t.Run("rejects more than the maximum", func(t *testing.T) {
-		t.Parallel()
-
-		ids := make([]gid.GID, maxDeviceEvidenceDevices+1)
-		for i := range ids {
-			ids[i] = gid.New(tenantID, coredata.DeviceEntityType)
-		}
-
-		err := validateDeviceEvidenceIDs(ids)
-		require.ErrorIs(t, err, ErrInvalidDeviceEvidenceRequest)
-	})
 }
 
 func TestEvidencePostureValue(t *testing.T) {

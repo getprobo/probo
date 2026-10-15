@@ -59,17 +59,17 @@ const (
 			}
 		}`
 
-	revokeDeviceMutation = `
-		mutation RevokeDevice($input: RevokeDeviceInput!) {
-			revokeDevice(input: $input) {
-				device { id state }
+	revokeDevicesMutation = `
+		mutation RevokeDevices($input: RevokeDevicesInput!) {
+			revokeDevices(input: $input) {
+				devices { id state }
 			}
 		}`
 
-	deleteDeviceMutation = `
-		mutation DeleteDevice($input: DeleteDeviceInput!) {
-			deleteDevice(input: $input) {
-				deletedDeviceId
+	deleteDevicesMutation = `
+		mutation DeleteDevices($input: DeleteDevicesInput!) {
+			deleteDevices(input: $input) {
+				deletedDeviceIds
 			}
 		}`
 
@@ -615,9 +615,9 @@ func TestDeviceEnrollment(t *testing.T) {
 
 		enrolled := enrollDevice(t, employee, orgID)
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		}, &struct {
 			RevokeDevice struct {
@@ -645,9 +645,9 @@ func TestDeviceEnrollment(t *testing.T) {
 		deviceID := enrolled.EnrollDevice.Device.ID
 		require.Equal(t, http.StatusOK, sendHeartbeat(t, payload.APIKey, deviceID+"-hw"))
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": deviceID,
+				"deviceIds": []string{deviceID},
 			},
 		}, &struct {
 			RevokeDevice struct {
@@ -673,9 +673,9 @@ func TestDeviceEnrollment(t *testing.T) {
 		enrolled := enrollAndActivateDevice(t, employee, orgID)
 		hardwareUUID := enrolled.EnrollDevice.Device.ID + "-hw"
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		}, &struct {
 			RevokeDevice struct {
@@ -929,9 +929,9 @@ func TestDeviceEnrollment(t *testing.T) {
 
 		enrolled := enrollDevice(t, employee, orgID)
 
-		_, err := employee.Do(revokeDeviceMutation, map[string]any{
+		_, err := employee.Do(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "employee should not revoke devices")
@@ -1062,18 +1062,19 @@ func TestDeviceEnrollment(t *testing.T) {
 		require.GreaterOrEqual(t, listResult.Node.Devices.TotalCount, 1)
 
 		var revokeResult struct {
-			RevokeDevice struct {
-				Device struct {
+			RevokeDevices struct {
+				Devices []struct {
 					State string `json:"state"`
-				} `json:"device"`
-			} `json:"revokeDevice"`
+				} `json:"devices"`
+			} `json:"revokeDevices"`
 		}
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": created.CreateDevice.Device.ID,
+				"deviceIds": []string{created.CreateDevice.Device.ID},
 			},
 		}, &revokeResult)
-		require.Equal(t, "REVOKED", revokeResult.RevokeDevice.Device.State)
+		require.Len(t, revokeResult.RevokeDevices.Devices, 1)
+		require.Equal(t, "REVOKED", revokeResult.RevokeDevices.Devices[0].State)
 	})
 }
 
@@ -1088,9 +1089,9 @@ func TestDeviceDelete(t *testing.T) {
 		owner := sharedOwner.ForTest(t)
 		created := createDevice(t, owner, orgID, nil)
 
-		_, err := owner.Do(deleteDeviceMutation, map[string]any{
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": created.CreateDevice.Device.ID,
+				"deviceIds": []string{created.CreateDevice.Device.ID},
 			},
 		})
 		testutil.RequireErrorCode(t, err, "CONFLICT", "pending device must be revoked before delete")
@@ -1103,8 +1104,8 @@ func TestDeviceDelete(t *testing.T) {
 		created := createDevice(t, owner, orgID, nil)
 		deviceID := created.CreateDevice.Device.ID
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		}, &struct {
 			RevokeDevice struct {
 				Device struct {
@@ -1114,14 +1115,14 @@ func TestDeviceDelete(t *testing.T) {
 		}{})
 
 		var deleteResult struct {
-			DeleteDevice struct {
-				DeletedDeviceID string `json:"deletedDeviceId"`
-			} `json:"deleteDevice"`
+			DeleteDevices struct {
+				DeletedDeviceIds []string `json:"deletedDeviceIds"`
+			} `json:"deleteDevices"`
 		}
-		owner.MustExecute(deleteDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		owner.MustExecute(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		}, &deleteResult)
-		require.Equal(t, deviceID, deleteResult.DeleteDevice.DeletedDeviceID)
+		require.Equal(t, []string{deviceID}, deleteResult.DeleteDevices.DeletedDeviceIds)
 
 		_, err := owner.Do(getDeviceQuery, map[string]any{"id": deviceID})
 		testutil.RequireErrorCode(t, err, "NOT_FOUND", "soft-deleted device must not be readable")
@@ -1134,9 +1135,9 @@ func TestDeviceDelete(t *testing.T) {
 		employee := sharedEmployee.ForTest(t)
 		enrolled, _ := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 
-		_, err := owner.Do(deleteDeviceMutation, map[string]any{
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		})
 		testutil.RequireErrorCode(t, err, "CONFLICT", "active device must not be deletable")
@@ -1150,8 +1151,8 @@ func TestDeviceDelete(t *testing.T) {
 		created := createDevice(t, owner, orgID, nil)
 		deviceID := created.CreateDevice.Device.ID
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		}, &struct {
 			RevokeDevice struct {
 				Device struct {
@@ -1160,10 +1161,85 @@ func TestDeviceDelete(t *testing.T) {
 			} `json:"revokeDevice"`
 		}{})
 
-		_, err := employee.Do(deleteDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		_, err := employee.Do(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		})
 		testutil.RequireForbiddenError(t, err, "employee should not delete devices")
+	})
+
+	t.Run("owner can revoke and delete two devices", func(t *testing.T) {
+		t.Parallel()
+
+		owner := sharedOwner.ForTest(t)
+		first := createDevice(t, owner, orgID, nil)
+		second := createDevice(t, owner, orgID, nil)
+		deviceIDs := []string{
+			first.CreateDevice.Device.ID,
+			second.CreateDevice.Device.ID,
+		}
+
+		var revokeResult struct {
+			RevokeDevices struct {
+				Devices []struct {
+					ID    string `json:"id"`
+					State string `json:"state"`
+				} `json:"devices"`
+			} `json:"revokeDevices"`
+		}
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": deviceIDs},
+		}, &revokeResult)
+		require.Len(t, revokeResult.RevokeDevices.Devices, 2)
+		require.Equal(t, "REVOKED", revokeResult.RevokeDevices.Devices[0].State)
+		require.Equal(t, "REVOKED", revokeResult.RevokeDevices.Devices[1].State)
+
+		var deleteResult struct {
+			DeleteDevices struct {
+				DeletedDeviceIds []string `json:"deletedDeviceIds"`
+			} `json:"deleteDevices"`
+		}
+		owner.MustExecute(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": deviceIDs},
+		}, &deleteResult)
+		require.Equal(t, deviceIDs, deleteResult.DeleteDevices.DeletedDeviceIds)
+	})
+
+	t.Run("delete rolls back when one device is not revoked", func(t *testing.T) {
+		t.Parallel()
+
+		owner := sharedOwner.ForTest(t)
+		revoked := createDevice(t, owner, orgID, nil)
+		pending := createDevice(t, owner, orgID, nil)
+		revokedID := revoked.CreateDevice.Device.ID
+		pendingID := pending.CreateDevice.Device.ID
+
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{revokedID}},
+		}, &struct{}{})
+
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{revokedID, pendingID}},
+		})
+		testutil.RequireErrorCode(t, err, "CONFLICT", "one pending device must roll back the batch")
+
+		var stillThere struct {
+			Node struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		}
+		owner.MustExecute(getDeviceQuery, map[string]any{"id": revokedID}, &stillThere)
+		require.Equal(t, revokedID, stillThere.Node.ID)
+	})
+
+	t.Run("rejects an empty device id list", func(t *testing.T) {
+		t.Parallel()
+
+		owner := sharedOwner.ForTest(t)
+
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{}},
+		})
+		testutil.RequireErrorCode(t, err, "INVALID", "an empty device id list must be rejected")
 	})
 }
 
