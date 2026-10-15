@@ -4009,8 +4009,8 @@
       "file": "automerge/src/autocommit.rs",
       "line": 238,
       "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff (line 238)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
     },
@@ -4020,8 +4020,8 @@
       "file": "automerge/src/autocommit.rs",
       "line": 334,
       "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::diff_incremental (line 334)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
     },
@@ -4031,8 +4031,8 @@
       "file": "automerge/src/autocommit.rs",
       "line": 683,
       "name": "automerge/src/autocommit.rs - autocommit::AutoCommit::commit_with (line 683)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
     },
@@ -4042,8 +4042,8 @@
       "file": "automerge/src/autoserde.rs",
       "line": 9,
       "name": "automerge/src/autoserde.rs - autoserde::AutoSerde (line 9)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
@@ -4053,8 +4053,8 @@
       "file": "automerge/src/patches/patch_log.rs",
       "line": 29,
       "name": "automerge/src/patches/patch_log.rs - patches::patch_log::PatchLog (line 29)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
@@ -4064,8 +4064,8 @@
       "file": "automerge/src/storage/document.rs",
       "line": 55,
       "name": "automerge/src/storage/document.rs - storage::document::Document<'a>::parse (line 55)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
     },
@@ -4075,8 +4075,8 @@
       "file": "automerge/src/storage/parse.rs",
       "line": 17,
       "name": "automerge/src/storage/parse.rs - storage::parse (line 17)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4086,8 +4086,8 @@
       "file": "automerge/src/storage/parse.rs",
       "line": 264,
       "name": "automerge/src/storage/parse.rs - storage::parse::Input<'a>::split (line 264)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4097,8 +4097,8 @@
       "file": "automerge/src/storage/parse.rs",
       "line": 325,
       "name": "automerge/src/storage/parse.rs - storage::parse::Split::remaining (line 325)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4108,8 +4108,8 @@
       "file": "automerge/src/storage/parse.rs",
       "line": 56,
       "name": "automerge/src/storage/parse.rs - storage::parse (line 56)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4119,8 +4119,8 @@
       "file": "automerge/src/storage/parse.rs",
       "line": 561,
       "name": "automerge/src/storage/parse.rs - storage::parse::range_of (line 561)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4130,8 +4130,8 @@
       "file": "automerge/src/storage/parse.rs",
       "line": 69,
       "name": "automerge/src/storage/parse.rs - storage::parse (line 69)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4141,8 +4141,8 @@
       "file": "automerge/src/sync.rs",
       "line": 25,
       "name": "automerge/src/sync.rs - sync (line 25)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust-internal storage/sync module documentation example (rustdoc doctest) for the low-level parser and sync APIs; exercises Rust library ergonomics, not cross-engine wire or state behavior."
     },
@@ -4152,8 +4152,8 @@
       "file": "automerge/src/transaction/manual_transaction.rs",
       "line": 77,
       "name": "automerge/src/transaction/manual_transaction.rs - transaction::manual_transaction::Transaction<'_>::commit_with (line 77)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust rustdoc usage example for an internal/public Rust API; the underlying behavior (diff, commit options, patch log, hydration, document parse) is covered by the differential suites. No cross-engine wire or state assertion."
     },
@@ -4163,8 +4163,8 @@
       "file": "unknown",
       "line": 483,
       "name": "automerge/src/lib.rs - (line 117)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
     },
@@ -4174,8 +4174,8 @@
       "file": "unknown",
       "line": 484,
       "name": "automerge/src/lib.rs - (line 147)",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Exercises Rust API documentation and example syntax rather than the Automerge wire format or materialized state."
     },
@@ -4326,8 +4326,8 @@
       "file": "tests/test.rs",
       "line": 38,
       "name": "applying_changes_with_patch_log_from_another_document_returns_error_not_panic",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "applying_changes_with_patch_log_from_another_document_returns_error_not_panic"
@@ -5098,8 +5098,8 @@
       "file": "tests/batch_insert.rs",
       "line": 130,
       "name": "batch_insert_scalar_fails",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust batch_create_object rejects a scalar target; the Go hydrate API intentionally accepts scalars via PutValue. API-shape contract, not cross-engine interop.",
       "runtimeName": "batch_insert_scalar_fails"
@@ -5199,10 +5199,12 @@
       "file": "tests/batch_insert.rs",
       "line": 467,
       "name": "batch_insert_with_transaction",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Rust explicit-transaction integration for batch insert; the batch result is covered elsewhere. Rust transaction-object API shape.",
+      "localTests": [
+        "TestRustBatch_InsertWithTransaction"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "batch_insert_with_transaction"
     },
     {
@@ -5935,10 +5937,12 @@
       "file": "tests/test.rs",
       "line": 4220,
       "name": "diff_exposes_list_object_when_conflict_winner_is_removed",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffExposesListObjectWhenConflictWinnerIsRemoved"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_exposes_list_object_when_conflict_winner_is_removed"
     },
     {
@@ -5947,10 +5951,12 @@
       "file": "tests/test.rs",
       "line": 3888,
       "name": "diff_from_integrated_to_isolated_heads_reconstructs_target",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffFromIntegratedToIsolatedHeads"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_from_integrated_to_isolated_heads_reconstructs_target"
     },
     {
@@ -5959,10 +5965,12 @@
       "file": "tests/test.rs",
       "line": 199,
       "name": "diff_incremental_respects_isolated_heads_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffIncrementalRespectsIsolatedHeads"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_incremental_respects_isolated_heads_from_fuzz_trace"
     },
     {
@@ -5971,10 +5979,12 @@
       "file": "tests/test.rs",
       "line": 360,
       "name": "diff_preserves_conflict_after_winning_value_is_deleted_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffPreservesConflictAfterWinningValueIsDeleted"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_preserves_conflict_after_winning_value_is_deleted_from_fuzz_trace"
     },
     {
@@ -6025,10 +6035,12 @@
       "file": "tests/test.rs",
       "line": 758,
       "name": "diff_spans_preserve_marks_on_inserted_text",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffSpansPreserveMarksOnInsertedText"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_spans_preserve_marks_on_inserted_text"
     },
     {
@@ -6037,10 +6049,12 @@
       "file": "tests/test.rs",
       "line": 792,
       "name": "diff_spans_skip_losing_conflicting_text_overwrites",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffSpansSkipLosingConflictingText"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_spans_skip_losing_conflicting_text_overwrites"
     },
     {
@@ -6049,10 +6063,12 @@
       "file": "tests/test.rs",
       "line": 4176,
       "name": "diff_to_isolated_batch_created_text_applies_to_hydrated_value_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DiffToIsolatedBatchCreatedText"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "diff_to_isolated_batch_created_text_applies_to_hydrated_value_from_fuzz_trace"
     },
     {
@@ -6119,10 +6135,12 @@
       "file": "tests/test.rs",
       "line": 3602,
       "name": "duplicate_seq_number_changes_are_rejected",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DuplicateSeqChangesAreRejected"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "duplicate_seq_number_changes_are_rejected"
     },
     {
@@ -6131,10 +6149,12 @@
       "file": "tests/test.rs",
       "line": 3526,
       "name": "duplicate_seq_number_in_batch_change_aborts_whole_batch",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DuplicateSeqInBatchAbortsWholeBatch"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "duplicate_seq_number_in_batch_change_aborts_whole_batch"
     },
     {
@@ -6143,10 +6163,12 @@
       "file": "tests/test.rs",
       "line": 3567,
       "name": "duplicate_seq_number_within_incoming_batch_is_rejected",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_DuplicateSeqWithinIncomingBatchIsRejected"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "duplicate_seq_number_within_incoming_batch_is_rejected"
     },
     {
@@ -6221,10 +6243,12 @@
       "file": "tests/test.rs",
       "line": 3496,
       "name": "failed_merge_with_duplicate_sequence_number_does_not_corrupt_save_load",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_FailedMergeDuplicateSequenceDoesNotCorruptSaveLoad"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "failed_merge_with_duplicate_sequence_number_does_not_corrupt_save_load"
     },
     {
@@ -6233,10 +6257,12 @@
       "file": "tests/test.rs",
       "line": 3815,
       "name": "fork_at_current_heads_after_interleaved_actor_changes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_ForkAtCurrentHeadsAfterInterleavedActors"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "fork_at_current_heads_after_interleaved_actor_changes"
     },
     {
@@ -6245,10 +6271,12 @@
       "file": "tests/test.rs",
       "line": 3842,
       "name": "fork_at_foreign_heads_errors_instead_of_panicking",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_ForkAtForeignHeadsErrors"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "fork_at_foreign_heads_errors_instead_of_panicking"
     },
     {
@@ -6273,10 +6301,12 @@
       "file": "tests/test.rs",
       "line": 155,
       "name": "fork_at_rejects_edit_to_object_outside_isolation_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_ForkAtRejectsEditOutsideIsolation"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "fork_at_rejects_edit_to_object_outside_isolation_from_fuzz_trace"
     },
     {
@@ -6285,10 +6315,12 @@
       "file": "tests/test.rs",
       "line": 218,
       "name": "fork_at_with_increment_over_conflicted_counter_survives_save_load_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_ForkAtIncrementOverConflictedCounterSurvivesSaveLoad"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "fork_at_with_increment_over_conflicted_counter_survives_save_load_from_fuzz_trace"
     },
     {
@@ -6383,10 +6415,12 @@
       "file": "tests/test.rs",
       "line": 172,
       "name": "historical_owned_transaction_omits_patches_for_unreachable_object_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_HistoricalTransactionOmitsUnreachableObject"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "historical_owned_transaction_omits_patches_for_unreachable_object_from_fuzz_trace"
     },
     {
@@ -6395,10 +6429,12 @@
       "file": "src/hydrate/tests.rs",
       "line": 8,
       "name": "simple_hydrate",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Rust hydrate::Value reader API; document hydration is covered via NewFrom and materialization. Rust-ergonomic reader, not cross-engine interop.",
+      "localTests": [
+        "TestRustHydrate_Simple"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "hydrate::tests::simple_hydrate"
     },
     {
@@ -6463,10 +6499,12 @@
       "file": "tests/test.rs",
       "line": 3855,
       "name": "increment_patch_clears_resolved_map_conflict",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementPatchClearsResolvedMapConflict"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "increment_patch_clears_resolved_map_conflict"
     },
     {
@@ -6475,10 +6513,12 @@
       "file": "tests/test.rs",
       "line": 4001,
       "name": "incremental_counter_diff_survives_isolate_integrate_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalCounterDiffSurvivesIsolateIntegrateRoundtrip"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_counter_diff_survives_isolate_integrate_roundtrip"
     },
     {
@@ -6487,10 +6527,12 @@
       "file": "tests/test.rs",
       "line": 4027,
       "name": "incremental_deep_text_diff_survives_isolate_integrate_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalDeepTextDiffSurvivesIsolateIntegrateRoundtrip"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_deep_text_diff_survives_isolate_integrate_roundtrip"
     },
     {
@@ -6499,10 +6541,12 @@
       "file": "tests/test.rs",
       "line": 3968,
       "name": "incremental_diff_discards_edits_inside_deleted_map",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalDiffDiscardsEditsInsideDeletedMap"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_diff_discards_edits_inside_deleted_map"
     },
     {
@@ -6511,10 +6555,12 @@
       "file": "tests/test.rs",
       "line": 3911,
       "name": "incremental_diff_survives_isolate_integrate_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalDiffSurvivesIsolateIntegrateRoundtrip"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_diff_survives_isolate_integrate_roundtrip"
     },
     {
@@ -6523,10 +6569,12 @@
       "file": "tests/test.rs",
       "line": 4147,
       "name": "incremental_list_conflict_survives_isolate_integrate_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalListConflictSurvivesIsolateIntegrate"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_list_conflict_survives_isolate_integrate_roundtrip"
     },
     {
@@ -6535,10 +6583,12 @@
       "file": "tests/test.rs",
       "line": 4111,
       "name": "incremental_load_preserves_text_encoding_for_all_change_chunk_types",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalLoadPreservesText"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_load_preserves_text_encoding_for_all_change_chunk_types"
     },
     {
@@ -6547,10 +6597,12 @@
       "file": "tests/test.rs",
       "line": 4081,
       "name": "incremental_patches_survive_nested_edit_and_list_shift_across_isolation",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalPatchesSurviveNestedEditAndListShift"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_patches_survive_nested_edit_and_list_shift_across_isolation"
     },
     {
@@ -6559,10 +6611,12 @@
       "file": "tests/test.rs",
       "line": 396,
       "name": "incremental_put_seq_in_text_applies_to_hydrated_value_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalPutSeqInText"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_put_seq_in_text_applies_to_hydrated_value_from_fuzz_trace"
     },
     {
@@ -6571,10 +6625,12 @@
       "file": "tests/test.rs",
       "line": 4054,
       "name": "incremental_sibling_text_diffs_survive_isolate_integrate_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalSiblingTextDiffsSurviveIsolateIntegrateRoundtrip"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_sibling_text_diffs_survive_isolate_integrate_roundtrip"
     },
     {
@@ -6597,10 +6653,12 @@
       "file": "tests/test.rs",
       "line": 3943,
       "name": "incremental_text_diff_survives_isolate_integrate_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_IncrementalTextDiffSurvivesIsolateIntegrateRoundtrip"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "incremental_text_diff_survives_isolate_integrate_roundtrip"
     },
     {
@@ -6721,10 +6779,12 @@
       "file": "src/iter/doc.rs",
       "line": 532,
       "name": "doc_iter",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Rust document-iterator API; document traversal is covered by current-state and value reads. Rust-ergonomic iterator, not cross-engine interop.",
+      "localTests": [
+        "TestRustIter_DocIter"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "iter::doc::tests::doc_iter"
     },
     {
@@ -7403,10 +7463,12 @@
       "file": "tests/test.rs",
       "line": 95,
       "name": "merge_patches_clear_conflict_after_losing_list_value_is_deleted_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_MergePatchesClearConflict"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "merge_patches_clear_conflict_after_losing_list_value_is_deleted_from_fuzz_trace"
     },
     {
@@ -8103,8 +8165,8 @@
       "file": "tests/test.rs",
       "line": 73,
       "name": "owned_transaction_with_patch_log_from_another_document_does_not_panic",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "owned_transaction_with_patch_log_from_another_document_does_not_panic"
@@ -8185,10 +8247,12 @@
       "file": "tests/test.rs",
       "line": 4374,
       "name": "patches_expose_surviving_conflict_after_deleting_other_branch_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_PatchesExposeSurvivingConflictAfterDeletingOtherBranch"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "patches_expose_surviving_conflict_after_deleting_other_branch_from_fuzz_trace"
     },
     {
@@ -8211,10 +8275,12 @@
       "file": "tests/test.rs",
       "line": 4329,
       "name": "queued_change_does_not_collide_with_later_local_change",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_QueuedChangeDoesNotCollideWithLaterLocalChange"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "queued_change_does_not_collide_with_later_local_change"
     },
     {
@@ -8238,10 +8304,12 @@
       "file": "tests/test.rs",
       "line": 3631,
       "name": "queued_orphan_with_conflicting_actor_seq_rejects_incoming_batch",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_QueuedOrphanWithConflictingActorSeqRejectsBatch"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "queued_orphan_with_conflicting_actor_seq_rejects_incoming_batch"
     },
     {
@@ -8376,10 +8444,12 @@
       "file": "tests/test.rs",
       "line": 450,
       "name": "reverse_diff_of_replaced_lists_applies_to_hydrated_value_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_ReverseDiffOfReplacedLists"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "reverse_diff_of_replaced_lists_applies_to_hydrated_value_from_fuzz_trace"
     },
     {
@@ -9504,8 +9574,8 @@
       "file": "src/sync.rs",
       "line": 2453,
       "name": "switch_to_read_write_with_old_peer",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::tests::switch_to_read_write_with_old_peer"
@@ -9544,8 +9614,8 @@
       "file": "src/sync/v1_compat_test/mod.rs",
       "line": 473,
       "name": "sync_from_v1_to_v2",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::v1_compat_test::sync_from_v1_to_v2"
@@ -9556,8 +9626,8 @@
       "file": "src/sync/v1_compat_test/mod.rs",
       "line": 496,
       "name": "sync_from_v2_to_v1",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::v1_compat_test::sync_from_v2_to_v1"
@@ -9568,8 +9638,8 @@
       "file": "src/sync/v1_compat_test/mod.rs",
       "line": 519,
       "name": "sync_v1_to_v2_with_compressed_change",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Legacy V1 sync protocol interoperability (V1<->V2 sessions, compressed changes in V1 sessions, and old-peer capability fallback). Out of scope: this project uses only the V2 sync protocol.",
       "runtimeName": "sync::v1_compat_test::sync_v1_to_v2_with_compressed_change"
@@ -9841,8 +9911,8 @@
       "file": "tests/test.rs",
       "line": 62,
       "name": "transaction_at_with_patch_log_from_another_document_does_not_panic",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "transaction_at_with_patch_log_from_another_document_does_not_panic"
@@ -9853,10 +9923,12 @@
       "file": "tests/test.rs",
       "line": 4254,
       "name": "transaction_patches_insert_hidden_scalar_into_utf8_text_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_TransactionPatchesInsertHiddenScalar"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction_patches_insert_hidden_scalar_into_utf8_text_from_fuzz_trace"
     },
     {
@@ -9865,10 +9937,12 @@
       "file": "tests/test.rs",
       "line": 4304,
       "name": "transaction_patches_mark_at_normalized_utf8_indexes",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_TransactionPatchesMark"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction_patches_mark_at_normalized_utf8_indexes"
     },
     {
@@ -9877,10 +9951,12 @@
       "file": "tests/test.rs",
       "line": 249,
       "name": "transaction_patches_replace_multi_character_string_in_text_from_fuzz_trace",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_TransactionPatchesReplaceMultiCharacterString"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction_patches_replace_multi_character_string_in_text_from_fuzz_trace"
     },
     {
@@ -9889,10 +9965,12 @@
       "file": "tests/test.rs",
       "line": 4283,
       "name": "transaction_patches_split_block_at_normalized_utf8_index",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises Rust historical-view, patch-stream, transaction, batch, queue, or experimental convenience behavior beyond the required wire/state interoperability gate.",
+      "localTests": [
+        "TestRustTest_TransactionPatchesSplitBlock"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction_patches_split_block_at_normalized_utf8_index"
     },
     {
@@ -9901,8 +9979,8 @@
       "file": "tests/test.rs",
       "line": 52,
       "name": "transaction_with_patch_log_from_another_document_does_not_panic",
-      "classification": "pending",
-      "requirement": "api-convenience",
+      "classification": "language-specific",
+      "requirement": "language-specific",
       "localTests": [],
       "rationale": "Rust API safety guard: using a PatchLog that belongs to another document returns an error instead of panicking. A Rust-binding safety contract with no cross-engine wire or state meaning.",
       "runtimeName": "transaction_with_patch_log_from_another_document_does_not_panic"
@@ -9925,10 +10003,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 163,
       "name": "commit_with_options",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_CommitWithOptions"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::commit_with_options"
     },
     {
@@ -9937,10 +10017,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 267,
       "name": "empty_commit_returns_none_hash",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_EmptyCommitReturnsNoHash"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::empty_commit_returns_none_hash"
     },
     {
@@ -9949,10 +10031,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 242,
       "name": "get_heads_returns_pre_tx_heads",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_HeadsStayAtPreTransactionHeads"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::get_heads_returns_pre_tx_heads"
     },
     {
@@ -9961,10 +10045,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 229,
       "name": "log_patches",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_LogPatches"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::log_patches"
     },
     {
@@ -9973,10 +10059,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 151,
       "name": "nested_objects",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_NestedObjects"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::nested_objects"
     },
     {
@@ -9985,10 +10073,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 202,
       "name": "owned_transaction_at",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_OwnedTransactionAt"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::owned_transaction_at"
     },
     {
@@ -9997,10 +10087,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 255,
       "name": "pending_ops",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_PendingOps"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::pending_ops"
     },
     {
@@ -10009,10 +10101,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 127,
       "name": "put_and_get_roundtrip",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_PutAndGetRoundtrip"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::put_and_get_roundtrip"
     },
     {
@@ -10021,10 +10115,12 @@
       "file": "src/transaction/owned_transaction.rs",
       "line": 140,
       "name": "read_during_transaction",
-      "classification": "pending",
+      "classification": "covered",
       "requirement": "api-convenience",
-      "localTests": [],
-      "rationale": "Exercises the Rust owned-transaction object API (into_transaction, pending_ops, commit/rollback tuples); the underlying state behavior is covered by the core-model, metadata, and current-state parity suites.",
+      "localTests": [
+        "TestRustTransaction_ReadDuringTransaction"
+      ],
+      "rationale": "Runs the same scenario on the native engine and the Rust reference and requires their observable results to agree.",
       "runtimeName": "transaction::owned_transaction::tests::read_during_transaction"
     },
     {
