@@ -70,6 +70,59 @@ func TestApplyChange_RejectsSuccessorAboveUint32(t *testing.T) {
 	assert.Empty(t, state.Heads())
 }
 
+func TestApplyChanges_RejectsTruncatedTrailingChunk(t *testing.T) {
+	t.Parallel()
+
+	source, _ := committedScalar(t, "truncated", "kept")
+	require.NoError(t, source.PutScalar(0, "second", mustScalar(t, "second")))
+	_, err := source.Commit("second", time.Time{})
+	require.NoError(t, err)
+
+	raw, err := source.SaveIncremental()
+	require.NoError(t, err)
+	require.Greater(t, len(raw), 8)
+
+	target, err := NewEngine()
+	require.NoError(t, err)
+	beforeChanges := target.state.changeCount()
+	beforeHeads := mustHeads(t, target)
+
+	truncated := append(append([]byte(nil), raw...), raw[:8]...)
+	err = target.ApplyChanges([][]byte{truncated})
+	require.Error(t, err)
+	assert.Equal(t, beforeChanges, target.state.changeCount())
+	assert.Equal(t, beforeHeads, mustHeads(t, target))
+
+	_, err = target.GetScalar(0, "kept")
+	require.Error(t, err)
+	_, err = target.GetScalar(0, "second")
+	require.Error(t, err)
+}
+
+func TestApplyChanges_AppliesExactChunkBuffer(t *testing.T) {
+	t.Parallel()
+
+	source, _ := committedScalar(t, "exact", "kept")
+	require.NoError(t, source.PutScalar(0, "second", mustScalar(t, "second")))
+	_, err := source.Commit("second", time.Time{})
+	require.NoError(t, err)
+
+	raw, err := source.SaveIncremental()
+	require.NoError(t, err)
+
+	target, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, target.ApplyChanges([][]byte{raw}))
+
+	assert.Equal(t, 2, target.state.changeCount())
+	kept, err := target.GetScalar(0, "kept")
+	require.NoError(t, err)
+	assert.Equal(t, mustScalar(t, "kept"), kept)
+	second, err := target.GetScalar(0, "second")
+	require.NoError(t, err)
+	assert.Equal(t, mustScalar(t, "second"), second)
+}
+
 func TestApplyChanges_RemovesQueuedDuplicateActorSequence(t *testing.T) {
 	t.Parallel()
 

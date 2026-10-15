@@ -141,7 +141,7 @@ func (b *Engine) ApplyChanges(
 
 	decoded := make([]opset.Change, 0, len(changes))
 	for i, raw := range changes {
-		document, _, err := storage.DecodeIncremental(raw)
+		document, err := storage.DecodePartial(raw)
 		if err != nil {
 			return fmt.Errorf("cannot decode native change %d: %w", i, err)
 		}
