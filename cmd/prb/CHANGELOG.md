@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.249.0] - 2026-10-15
+
+### Added
+
+- `device download` saves the PDF snapshot of device postures
+- `device list` filters by owner, state, platform, and agent version
+- Revoke and delete several devices in a single all-or-nothing call
+
 ## [0.248.0] - 2026-10-15
 
 ### Changed
