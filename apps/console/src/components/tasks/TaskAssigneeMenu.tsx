@@ -19,9 +19,11 @@
 // SOFTWARE.
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { Suspense, use, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useRefetchableFragment } from "react-relay";
@@ -35,6 +37,7 @@ import { CurrentUser, type CurrentUserProfile } from "#/providers/CurrentUser";
 
 const pageSize = 10;
 const searchDebounceMs = 300;
+const assigneeMenuSkeletonWidths = ["w-24", "w-16", "w-28", "w-20"] as const;
 
 const taskAssigneeMenuQuery = graphql`
   query TaskAssigneeMenuQuery($organizationId: ID!, $query: String) {
@@ -93,7 +96,7 @@ export interface TaskAssigneeMenuProps {
 
 export function TaskAssigneeMenu(props: TaskAssigneeMenuProps) {
   return (
-    <Suspense fallback={<AssigneeMenuSearch disabled={props.disabled} />}>
+    <Suspense fallback={<AssigneeMenuSkeleton disabled={props.disabled} />}>
       <TaskAssigneeMenuLoaded {...props} />
     </Suspense>
   );
@@ -209,6 +212,20 @@ function TaskAssigneeMenuLoaded({
           {t("detailsPage.assigneeMenu.empty")}
         </Text>
       )}
+    </div>
+  );
+}
+
+function AssigneeMenuSkeleton({ disabled }: { disabled?: boolean }) {
+  return (
+    <div className="flex w-64 flex-col gap-1" aria-busy="true">
+      <AssigneeMenuSearch disabled={disabled} />
+      {assigneeMenuSkeletonWidths.map(width => (
+        <div key={width} className="flex h-7 items-center gap-1 px-2" aria-hidden>
+          <AvatarSkeleton size={1} radius="full" className="size-4!" />
+          <TextSkeleton size={1} className={width} />
+        </div>
+      ))}
     </div>
   );
 }
