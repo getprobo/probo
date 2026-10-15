@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 func TestOperationSpliceRuns_MatchesFlatReplacement(t *testing.T) {
@@ -73,4 +74,61 @@ func TestOperationSpliceRuns_MatchesFlatReplacement(t *testing.T) {
 	}
 
 	assert.Equal(t, next, actual)
+	assertMinimalSpliceRuns(t, current, runs)
+}
+
+func TestOperationSpliceRuns_CurrentOperationAbsent(t *testing.T) {
+	t.Parallel()
+
+	current := []opset.Operation{
+		{ID: opset.OpID{Actor: "existing", Counter: 1}},
+		{ID: opset.OpID{Actor: "existing", Counter: 2}},
+		{ID: opset.OpID{Actor: "existing", Counter: 3}},
+	}
+	next := []opset.Operation{
+		current[0],
+		current[2],
+	}
+
+	runs, ok := operationSpliceRuns(current, next)
+	assert.False(t, ok)
+	assert.Nil(t, runs)
+}
+
+func assertMinimalSpliceRuns(
+	t *testing.T,
+	current []opset.Operation,
+	runs []storage.SnapshotOperationSplice,
+) {
+	t.Helper()
+
+	for _, run := range runs {
+		require.NotEmpty(t, run.Operations)
+		require.GreaterOrEqual(t, run.Index, 0)
+		require.LessOrEqual(t, run.Index+run.DeleteCount, len(current))
+		if run.Index >= len(current) {
+			continue
+		}
+
+		assert.False(
+			t,
+			wireOperationsEqual(current[run.Index], run.Operations[0]),
+			"run at %d starts on an unchanged operation",
+			run.Index,
+		)
+		if run.DeleteCount == 0 {
+			continue
+		}
+
+		end := run.Index + run.DeleteCount - 1
+		assert.False(
+			t,
+			wireOperationsEqual(
+				current[end],
+				run.Operations[len(run.Operations)-1],
+			),
+			"run at %d ends on an unchanged operation",
+			run.Index,
+		)
+	}
 }
