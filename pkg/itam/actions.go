@@ -24,16 +24,17 @@ package itam
 // Format: itam:<entity>:<action>
 const (
 	// Device actions
-	ActionDeviceList         = "itam:device:list"
-	ActionEmployeeDeviceList = "itam:employee-device:list"
-	ActionEmployeeDeviceGet  = "itam:employee-device:get"
-	ActionDeviceGet          = "itam:device:get"
-	ActionDeviceCreate       = "itam:device:create"
-	ActionDeviceEnroll       = "itam:device:enroll"
-	ActionDeviceRevoke       = "itam:device:revoke"
-	ActionDeviceDelete       = "itam:device:delete"
-	ActionDeviceAssignOwner  = "itam:device:assign"
-	ActionDeviceDownload     = "itam:device:download"
+	ActionDeviceList                  = "itam:device:list"
+	ActionEmployeeDeviceList          = "itam:employee-device:list"
+	ActionEmployeeDeviceGet           = "itam:employee-device:get"
+	ActionDeviceGet                   = "itam:device:get"
+	ActionDeviceCreate                = "itam:device:create"
+	ActionDeviceEnroll                = "itam:device:enroll"
+	ActionDeviceRevoke                = "itam:device:revoke"
+	ActionDeviceDelete                = "itam:device:delete"
+	ActionDeviceAssignOwner           = "itam:device:assign"
+	ActionDeviceDownload              = "itam:device:download"
+	ActionDeviceSendInstallationEmail = "itam:device:send-installation-email"
 
 	// DevicePosture actions
 	ActionDevicePostureList = "itam:device-posture:list"

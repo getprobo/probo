@@ -3878,6 +3878,24 @@ components:
           type: string
           description: probo://enroll?server=...&token=... deep link for the desktop agent.
 
+    SendDeviceInstallationEmailsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization whose employees without an active device agent should be emailed.
+
+    SendDeviceInstallationEmailsOutput:
+      type: object
+      required:
+        - recipient_count
+      properties:
+        recipient_count:
+          type: integer
+          description: Number of installation emails queued. Zero when every employee already has an active device.
+
     RevokeDevicesInput:
       type: object
       required:
@@ -17785,6 +17803,18 @@ tools:
       $ref: "#/components/schemas/CreateDeviceInput"
     outputSchema:
       $ref: "#/components/schemas/CreateDeviceOutput"
+  - name: sendDeviceInstallationEmails
+    title: Send Device Installation Emails
+    description: "Queue an installation email for every Employee membership profile with an open contract and state ACTIVE or PENDING who does not own an ACTIVE device. Pending and revoked devices do not count as installed. The email links to the employee portal device registration page and does not include an enrollment token. A second call sends again. Returns recipient_count 0 when nobody is missing the agent."
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/SendDeviceInstallationEmailsInput"
+    outputSchema:
+      $ref: "#/components/schemas/SendDeviceInstallationEmailsOutput"
   - name: revokeDevices
     title: Revoke Devices
     description: "Irreversibly revoke one or more device enrollments in one call. Immediately invalidates each device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. All devices must belong to one organization. If any id is missing, none are revoked. Call this before deleteDevices."

@@ -1,0 +1,12 @@
+Probo
+
+Hi {{.RecipientFullName}},
+
+{{.OrganizationName}} uses Probo to keep a record of the security posture of each work device, the computer an employee uses for {{.OrganizationName}}. The device agent checks settings such as disk encryption and screen lock, then reports the result to {{.OrganizationName}}. Install it on the computer you use for {{.OrganizationName}} so that computer is included in the record.
+
+The agent collects configuration data only, and nothing else. It never collects personal data.
+
+{{.InstallUrl}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

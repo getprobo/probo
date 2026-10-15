@@ -25,6 +25,7 @@ import * as downloadEvidenceOp from './downloadEvidence.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as revokeOp from './revoke.operation';
+import * as sendInstallationEmailsOp from './sendInstallationEmails.operation';
 import * as setOwnerOp from './setOwner.operation';
 
 export const description: INodeProperties[] = [
@@ -76,6 +77,12 @@ export const description: INodeProperties[] = [
 				action: 'Revoke a device',
 			},
 			{
+				name: 'Send Installation Emails',
+				value: 'sendInstallationEmails',
+				description: 'Email employees who have no active device agent',
+				action: 'Send device installation emails',
+			},
+			{
 				name: 'Set Owner',
 				value: 'setOwner',
 				description: 'Set or clear the owner of an ITAM device',
@@ -90,6 +97,7 @@ export const description: INodeProperties[] = [
 	...getOp.description,
 	...getAllOp.description,
 	...revokeOp.description,
+	...sendInstallationEmailsOp.description,
 	...setOwnerOp.description,
 ];
 
@@ -100,5 +108,6 @@ export {
 	getOp as get,
 	getAllOp as getAll,
 	revokeOp as revoke,
+	sendInstallationEmailsOp as sendInstallationEmails,
 	setOwnerOp as setOwner,
 };

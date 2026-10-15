@@ -338,6 +338,38 @@ func (r *mutationResolver) DownloadDeviceEvidence(ctx context.Context, input typ
 	return &types.DownloadDeviceEvidencePayload{DownloadURL: downloadURL}, nil
 }
 
+// SendDeviceInstallationEmails is the resolver for the sendDeviceInstallationEmails field.
+func (r *mutationResolver) SendDeviceInstallationEmails(ctx context.Context, input types.SendDeviceInstallationEmailsInput) (*types.SendDeviceInstallationEmailsPayload, error) {
+	scope, err := r.authorize(ctx, input.OrganizationID, itam.ActionDeviceSendInstallationEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := r.itam.SendDeviceInstallationEmails(
+		ctx,
+		scope,
+		itam.SendDeviceInstallationEmailsRequest{
+			OrganizationID: input.OrganizationID,
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(
+			ctx,
+			"cannot send device installation emails",
+			log.String("organization_id", input.OrganizationID.String()),
+			log.Error(err),
+		)
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.SendDeviceInstallationEmailsPayload{RecipientCount: count}, nil
+}
+
 // Device returns schema.DeviceResolver implementation.
 func (r *Resolver) Device() schema.DeviceResolver { return &deviceResolver{r} }
 

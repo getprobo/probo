@@ -26,6 +26,7 @@ import type { useDeleteDevicesMutation } from "#/__generated__/core/useDeleteDev
 import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 
 export const DevicesConnectionKey = "DevicesPage_devices";
+export const InstallationDevicesConnectionKey = "DevicesPage_installationDevices";
 
 const deleteDevicesMutation = graphql`
   mutation useDeleteDevicesMutation($input: DeleteDevicesInput!) {
@@ -58,8 +59,14 @@ export function useDeleteDevices(options: DeleteDevicesOptions) {
 
   const remove = useCallback(
     (deviceIds: readonly string[], feedback?: MutationFeedback) => {
-      const connection = connectionId
-        ?? ConnectionHandler.getConnectionID(organizationId, DevicesConnectionKey);
+      const connections = [
+        connectionId
+          ?? ConnectionHandler.getConnectionID(organizationId, DevicesConnectionKey),
+        ConnectionHandler.getConnectionID(
+          organizationId,
+          InstallationDevicesConnectionKey,
+        ),
+      ];
 
       return deleteDevices({
         variables: {
@@ -68,20 +75,26 @@ export function useDeleteDevices(options: DeleteDevicesOptions) {
         updater(store) {
           const payload = store.getRootField("deleteDevices");
           const deleted: unknown = payload?.getValue("deletedDeviceIds");
-          const record = store.get(connection);
-          if (!record || !Array.isArray(deleted)) {
+          if (!Array.isArray(deleted)) {
             return;
           }
 
-          for (const id of deleted) {
-            if (typeof id === "string") {
-              ConnectionHandler.deleteNode(record, id);
+          for (const connection of connections) {
+            const record = store.get(connection);
+            if (!record) {
+              continue;
             }
-          }
 
-          const totalCount: unknown = record.getValue("totalCount");
-          if (typeof totalCount === "number") {
-            record.setValue(Math.max(0, totalCount - deleted.length), "totalCount");
+            for (const id of deleted) {
+              if (typeof id === "string") {
+                ConnectionHandler.deleteNode(record, id);
+              }
+            }
+
+            const totalCount: unknown = record.getValue("totalCount");
+            if (typeof totalCount === "number") {
+              record.setValue(Math.max(0, totalCount - deleted.length), "totalCount");
+            }
           }
         },
       }, feedback);

@@ -103,6 +103,9 @@ type (
 		pg                      *pg.Client
 		logger                  *log.Logger
 		enrollmentTokenValidity time.Duration
+		invitationTokenValidity time.Duration
+		baseURL                 string
+		tokenSecret             string
 		html2pdfConverter       *html2pdf.Converter
 		fileManager             *filemanager.Service
 		bucket                  string
@@ -146,6 +149,9 @@ type (
 
 	ServiceConfig struct {
 		EnrollmentTokenValidity time.Duration
+		InvitationTokenValidity time.Duration
+		BaseURL                 string
+		TokenSecret             string
 		PDF                     *html2pdf.Converter
 		FileManager             *filemanager.Service
 		Bucket                  string
@@ -169,6 +175,9 @@ func NewService(
 		pg:                      pgClient,
 		logger:                  logger,
 		enrollmentTokenValidity: validity,
+		invitationTokenValidity: cfg.InvitationTokenValidity,
+		baseURL:                 cfg.BaseURL,
+		tokenSecret:             cfg.TokenSecret,
 		html2pdfConverter:       cfg.PDF,
 		fileManager:             cfg.FileManager,
 		bucket:                  cfg.Bucket,

@@ -38,7 +38,7 @@ var FullAccessPolicy = policy.NewPolicy(
 	policy.Allow(
 		ActionDeviceList, ActionEmployeeDeviceList, ActionDeviceGet, ActionDeviceCreate,
 		ActionDeviceEnroll, ActionDeviceRevoke, ActionDeviceDelete, ActionDeviceAssignOwner,
-		ActionDeviceDownload, ActionDevicePostureList,
+		ActionDeviceDownload, ActionDevicePostureList, ActionDeviceSendInstallationEmail,
 	).WithSID("itam-full-access").When(organizationCondition),
 	policy.Allow(ActionEmployeeDeviceGet).
 		WithSID("itam-full-access-get-own-device").

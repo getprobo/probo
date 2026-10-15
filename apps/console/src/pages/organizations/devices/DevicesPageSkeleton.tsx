@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { TableSkeleton } from "@probo/ui/src/v2/Table/TableSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
@@ -30,6 +31,7 @@ export function DevicesPageSkeleton() {
 
   return (
     <div className={root()}>
+      <CardSkeleton size={2} className="h-18" />
       <div className={header()}>
         <div className={intro()}>
           <div className={title()}>

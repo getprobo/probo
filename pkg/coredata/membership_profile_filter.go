@@ -44,6 +44,7 @@ type (
 		role                       *MembershipRole
 		kind                       *string
 		withoutCompliancePortalID  *gid.GID
+		withoutActiveDevice        *bool
 	}
 )
 
@@ -129,6 +130,11 @@ func (f *MembershipProfileFilter) WithKind(kind *string) *MembershipProfileFilte
 	return f
 }
 
+func (f *MembershipProfileFilter) WithoutActiveDevice() *MembershipProfileFilter {
+	f.withoutActiveDevice = new(true)
+	return f
+}
+
 func (f *MembershipProfileFilter) Kind() *string {
 	return f.kind
 }
@@ -159,6 +165,7 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_role":                   f.role,
 		"filter_kind":                   f.kind,
 		"without_compliance_portal_id":  f.withoutCompliancePortalID,
+		"without_active_device":         f.withoutActiveDevice,
 	}
 }
 
@@ -266,6 +273,21 @@ AND (
 				WHERE
 					a.identity_id = p.identity_id
 					AND a.compliance_portal_id = @without_compliance_portal_id
+			)
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @without_active_device::boolean IS NOT NULL AND @without_active_device::boolean = TRUE THEN
+			NOT EXISTS (
+				SELECT 1
+				FROM devices d
+				WHERE
+					d.owner_profile_id = p.id
+					AND d.organization_id = p.organization_id
+					AND d.state = 'ACTIVE'::device_state
+					AND d.deleted_at IS NULL
 			)
 		ELSE TRUE
 	END

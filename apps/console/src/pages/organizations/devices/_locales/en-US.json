@@ -3,6 +3,16 @@
     "title": "Devices",
     "detailsTitle": "Device",
     "description": "Manage computers enrolled with the Probo posture agent.",
+    "installation": {
+      "completeTitle": "All employees have an active device",
+      "incompleteTitle_one": "{{count}} employee has no active device",
+      "incompleteTitle_other": "{{count}} employees have no active device",
+      "sendEmail": "Send installation email",
+      "sendError": "Failed to send installation emails",
+      "sent_one": "Installation email queued for {{count}} employee",
+      "sent_other": "Installation emails queued for {{count}} employees",
+      "recommendation": "Send an installation email so every employee installs the posture agent. You need it on each device to collect posture evidence."
+    },
     "empty": "No devices enrolled yet",
     "actions": {
       "add": "Add device",
