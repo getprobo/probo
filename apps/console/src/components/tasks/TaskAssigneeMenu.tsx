@@ -20,17 +20,22 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { AvatarSkeleton } from "@probo/ui/src/v2/Avatar/AvatarSkeleton";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { useDropdownContext } from "@probo/ui/src/v2/Dropdown/context";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { Suspense, use, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useLazyLoadQuery, useRefetchableFragment } from "react-relay";
+import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
 import type { TaskAssigneeMenu_organization$key } from "#/__generated__/core/TaskAssigneeMenu_organization.graphql";
 import type { TaskAssigneeMenuQuery } from "#/__generated__/core/TaskAssigneeMenuQuery.graphql";
-import type { TaskAssigneeMenuRefetchQuery } from "#/__generated__/core/TaskAssigneeMenuRefetchQuery.graphql";
+import type {
+  ProfileFilter,
+  TaskAssigneeMenuRefetchQuery,
+} from "#/__generated__/core/TaskAssigneeMenuRefetchQuery.graphql";
 import { UserSelectOption } from "#/components/form/UserSelectOption";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CurrentUser, type CurrentUserProfile } from "#/providers/CurrentUser";
@@ -39,12 +44,20 @@ const pageSize = 10;
 const searchDebounceMs = 300;
 const assigneeMenuSkeletonWidths = ["w-24", "w-16", "w-28", "w-20"] as const;
 
+function assigneeFilter(query: string | null): ProfileFilter {
+  return {
+    states: ["ACTIVE", "PENDING"],
+    contractEnded: false,
+    query,
+  };
+}
+
 const taskAssigneeMenuQuery = graphql`
-  query TaskAssigneeMenuQuery($organizationId: ID!, $query: String) {
+  query TaskAssigneeMenuQuery($organizationId: ID!, $filter: ProfileFilter) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
       ... on Organization {
-        ...TaskAssigneeMenu_organization @arguments(query: $query)
+        ...TaskAssigneeMenu_organization @arguments(filter: $filter)
       }
     }
   }
@@ -54,17 +67,16 @@ const taskAssigneeMenuFragment = graphql`
   fragment TaskAssigneeMenu_organization on Organization
   @refetchable(queryName: "TaskAssigneeMenuRefetchQuery")
   @argumentDefinitions(
-    query: { type: "String", defaultValue: null }
+    first: { type: "Int", defaultValue: 10 }
+    after: { type: "CursorKey", defaultValue: null }
+    filter: { type: "ProfileFilter", defaultValue: null }
   ) {
     profiles(
-      first: 10
+      first: $first
+      after: $after
       orderBy: { direction: DESC, field: CREATED_AT }
-      filter: {
-        states: [ACTIVE, PENDING]
-        contractEnded: false
-        query: $query
-      }
-    ) {
+      filter: $filter
+    ) @connection(key: "TaskAssigneeMenu_profiles", filters: ["filter"]) {
       edges {
         node {
           id
@@ -110,6 +122,8 @@ function TaskAssigneeMenuLoaded({
   onValueChange,
 }: TaskAssigneeMenuProps) {
   const { t } = useTranslation("organizations/tasks");
+  const { t: tCommon } = useTranslation();
+  const { size } = useDropdownContext();
   const organizationId = useOrganizationId();
   const { profile } = use(CurrentUser);
   const [input, setInput] = useState("");
@@ -118,9 +132,15 @@ function TaskAssigneeMenuLoaded({
   const skipFirstRefetch = useRef(true);
   const data = useLazyLoadQuery<TaskAssigneeMenuQuery>(
     taskAssigneeMenuQuery,
-    { organizationId, query: null },
+    { organizationId, filter: assigneeFilter(null) },
   );
-  const [organization, refetch] = useRefetchableFragment<
+  const {
+    data: organization,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+    refetch,
+  } = usePaginationFragment<
     TaskAssigneeMenuRefetchQuery,
     TaskAssigneeMenu_organization$key
   >(
@@ -145,7 +165,7 @@ function TaskAssigneeMenuLoaded({
     }
 
     startTransition(() => {
-      refetch({ query: graphqlQuery }, { fetchPolicy: "store-or-network" });
+      refetch({ filter: assigneeFilter(graphqlQuery) }, { fetchPolicy: "store-or-network" });
     });
   }, [graphqlQuery, refetch]);
 
@@ -180,6 +200,7 @@ function TaskAssigneeMenuLoaded({
     <div className="flex w-64 flex-col gap-1">
       <AssigneeMenuSearch
         value={input}
+        size={size}
         disabled={disabled}
         onValueChange={setInput}
       />
@@ -203,7 +224,7 @@ function TaskAssigneeMenuLoaded({
             fullName={user.fullName}
             emailAddress={user.emailAddress}
             avatarUrl={user.avatarUrl}
-            size={1}
+            size={size}
           />
         </DropdownItem>
       ))}
@@ -212,18 +233,45 @@ function TaskAssigneeMenuLoaded({
           {t("detailsPage.assigneeMenu.empty")}
         </Text>
       )}
+      {hasNext && (
+        <Button
+          variant="ghost"
+          color="neutral"
+          size={1}
+          className="w-full"
+          loading={isLoadingNext}
+          disabled={disabled}
+          onClick={() => {
+            loadNext(pageSize);
+          }}
+        >
+          {tCommon("userSelect.loadMore")}
+        </Button>
+      )}
     </div>
   );
 }
 
 function AssigneeMenuSkeleton({ disabled }: { disabled?: boolean }) {
+  const { size } = useDropdownContext();
+
   return (
     <div className="flex w-64 flex-col gap-1" aria-busy="true">
-      <AssigneeMenuSearch disabled={disabled} />
+      <AssigneeMenuSearch size={size} disabled={disabled} />
       {assigneeMenuSkeletonWidths.map(width => (
-        <div key={width} className="flex h-7 items-center gap-1 px-2" aria-hidden>
-          <AvatarSkeleton size={1} radius="full" className="size-4!" />
-          <TextSkeleton size={1} className={width} />
+        <div
+          key={width}
+          className={size === 1
+            ? "flex h-7 items-center gap-1 px-2"
+            : "flex h-8 items-center gap-2 px-3"}
+          aria-hidden
+        >
+          <AvatarSkeleton
+            size={1}
+            radius="full"
+            className={size === 1 ? "size-4!" : undefined}
+          />
+          <TextSkeleton size={size} className={width} />
         </div>
       ))}
     </div>
@@ -232,10 +280,12 @@ function AssigneeMenuSkeleton({ disabled }: { disabled?: boolean }) {
 
 function AssigneeMenuSearch({
   value = "",
+  size,
   disabled,
   onValueChange,
 }: {
   value?: string;
+  size: 1 | 2;
   disabled?: boolean;
   onValueChange?: (value: string) => void;
 }) {
@@ -249,7 +299,7 @@ function AssigneeMenuSearch({
       }}
     >
       <TextField
-        size={1}
+        size={size}
         icon={<MagnifyingGlassIcon />}
         value={value}
         disabled={disabled}
@@ -266,7 +316,7 @@ function pinViewer(
   profile: CurrentUserProfile | null,
 ): AssigneeOption[] {
   if (profile == null || profile.id === "") {
-    return users.slice(0, pageSize);
+    return [...users];
   }
 
   const viewer = {
@@ -278,5 +328,5 @@ function pinViewer(
   return [
     viewer,
     ...users.filter(user => user.id !== profile.id),
-  ].slice(0, pageSize);
+  ];
 }
