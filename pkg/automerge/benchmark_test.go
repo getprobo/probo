@@ -392,8 +392,6 @@ func BenchmarkSaveAfterChange(b *testing.B) {
 				b.StopTimer()
 
 				for range b.N {
-					b.StartTimer()
-
 					document, err := engine.load(data, actor(211))
 					if err != nil {
 						b.Fatal(err)
@@ -403,6 +401,8 @@ func BenchmarkSaveAfterChange(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
+
+					b.StartTimer()
 
 					if err := text.Splice(10_000, 0, "x"); err != nil {
 						b.Fatal(err)
