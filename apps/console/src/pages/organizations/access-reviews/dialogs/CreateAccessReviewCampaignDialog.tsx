@@ -38,7 +38,7 @@ import type { CreateAccessReviewCampaignDialogMutation } from "#/__generated__/c
 import type { CreateAccessReviewCampaignDialogSourcesQuery } from "#/__generated__/core/CreateAccessReviewCampaignDialogSourcesQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
-import { accessReviewSourceLabel } from "#/pages/organizations/access-reviews/_lib/sourceLabel";
+import { AccessReviewSourceOptionLabel } from "#/pages/organizations/access-reviews/_components/AccessReviewSourceOptionLabel";
 
 const createCampaignMutation = graphql`
   mutation CreateAccessReviewCampaignDialogMutation(
@@ -67,6 +67,9 @@ const sourcesQuery = graphql`
             node {
               id
               name
+              connector {
+                displayName
+              }
               connectorAccount {
                 name
               }
@@ -267,12 +270,14 @@ function SourceSelector({
               checked={selectedSourceIds.includes(source.id)}
               onChange={() => onToggle(source.id)}
             />
-            <span className="text-sm">
-              {accessReviewSourceLabel({
-                name: source.name,
-                accountName: source.connectorAccount?.name,
-              })}
-            </span>
+            <AccessReviewSourceOptionLabel
+              name={source.name}
+              accountName={source.connectorAccount?.name}
+              providerName={source.connector?.displayName
+                ?? (source.connectorAccount == null
+                  ? t("addAccessReviewSourceDialog.csv.title")
+                  : null)}
+            />
           </label>
         ))}
       </div>

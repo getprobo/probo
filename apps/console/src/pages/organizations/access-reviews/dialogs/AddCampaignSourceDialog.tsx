@@ -36,7 +36,7 @@ import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
 import type { AddCampaignSourceDialogMutation } from "#/__generated__/core/AddCampaignSourceDialogMutation.graphql";
 import type { AddCampaignSourceDialogSourcesQuery } from "#/__generated__/core/AddCampaignSourceDialogSourcesQuery.graphql";
-import { accessReviewSourceLabel } from "#/pages/organizations/access-reviews/_lib/sourceLabel";
+import { AccessReviewSourceOptionLabel } from "#/pages/organizations/access-reviews/_components/AccessReviewSourceOptionLabel";
 
 const addScopeMutation = graphql`
   mutation AddCampaignSourceDialogMutation(
@@ -90,6 +90,9 @@ const sourcesQuery = graphql`
             node {
               id
               name
+              connector {
+                displayName
+              }
               connectorAccount {
                 name
               }
@@ -249,10 +252,14 @@ function SourceSelect({
     >
       {sources.map(source => (
         <Option key={source.id} value={source.id}>
-          {accessReviewSourceLabel({
-            name: source.name,
-            accountName: source.connectorAccount?.name,
-          })}
+          <AccessReviewSourceOptionLabel
+            name={source.name}
+            accountName={source.connectorAccount?.name}
+            providerName={source.connector?.displayName
+              ?? (source.connectorAccount == null
+                ? t("addAccessReviewSourceDialog.csv.title")
+                : null)}
+          />
         </Option>
       ))}
     </Select>
