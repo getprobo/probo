@@ -119,7 +119,7 @@ func NewMux(
 			Stateless: true,
 			// SessionTimeout: 30 * time.Minute,
 			EventStore: eventStore,
-			Logger:     nil, // TODO put logger here
+			Logger:     mcpx.NewSlogLogger(logger.Named("transport")),
 		},
 	)
 
