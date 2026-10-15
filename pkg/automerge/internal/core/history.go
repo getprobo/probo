@@ -135,12 +135,7 @@ func (b *Engine) ApplyChanges(
 		b.fullState = nil
 		b.isolationActive = false
 
-		defer func() {
-			b.fullState = b.state
-			b.state = pinned
-			b.isolationActive = true
-			b.nextOp = b.state.maxOpGlobal() + 1
-		}()
+		defer b.restoreIsolatedView(pinned)
 	}
 
 	decoded := make([]opset.Change, 0, len(changes))
@@ -285,12 +280,7 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 		b.fullState = nil
 		b.isolationActive = false
 
-		defer func() {
-			b.fullState = b.state
-			b.state = pinned
-			b.isolationActive = true
-			b.nextOp = b.state.maxOpGlobal() + 1
-		}()
+		defer b.restoreIsolatedView(pinned)
 	}
 
 	document, err := storage.Decode(data)
@@ -377,6 +367,17 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 	}
 
 	return b.Heads()
+}
+
+func (b *Engine) restoreIsolatedView(pinned *State) {
+	b.fullState = b.state
+	b.state = pinned
+	b.isolationActive = true
+
+	fullNext := b.fullState.maxOpGlobal() + 1
+	if fullNext > b.nextOp {
+		b.nextOp = fullNext
+	}
 }
 
 func (b *Engine) restoreDocumentChangeFrames(document *opset.Document) error {
