@@ -897,6 +897,7 @@ func TestDecode_OwnsRetainedPayloads(t *testing.T) {
 
 	assert.True(t, foundUnknown)
 }
+
 func TestDecode_TrailingChangeClearsSnapshotColumns(t *testing.T) {
 	t.Parallel()
 
@@ -1037,3 +1038,236 @@ func compressChangeChunk(t *testing.T, raw []byte) []byte {
 	return data
 }
 
+func TestValidateSnapshotMarkOrder_BeginAndEnd(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+	other, err := opset.NewActorID([]byte{2})
+	require.NoError(t, err)
+
+	t.Run(
+		"accepts begin before end",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := validateSnapshotMarkOrder(markBeginThenEnd(actor))
+			require.NoError(t, err)
+		},
+	)
+
+	t.Run(
+		"rejects end before begin",
+		func(t *testing.T) {
+			t.Parallel()
+
+			err := validateSnapshotMarkOrder(markEndBeforeBegin(actor))
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "invalid mark operation order")
+		},
+	)
+
+	t.Run(
+		"validates each object",
+		func(t *testing.T) {
+			t.Parallel()
+
+			operations := append(markBeginThenEnd(actor), markBeginThenEnd(other)...)
+			require.NoError(t, validateSnapshotMarkOrder(operations))
+
+			operations = append(markBeginThenEnd(actor), markEndBeforeBegin(other)...)
+			err := validateSnapshotMarkOrder(operations)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "invalid mark operation order")
+		},
+	)
+
+	t.Run(
+		"cycle terminates",
+		func(t *testing.T) {
+			t.Parallel()
+
+			object := opset.ObjectID{OpID: opset.OpID{Actor: actor, Counter: 1}}
+			head := opset.OpID{Actor: actor, Counter: 2}
+			next := opset.OpID{Actor: actor, Counter: 3}
+			name := "em"
+			err := validateSnapshotMarkOrder(
+				[]opset.Operation{
+					{
+						ID:       head,
+						Object:   object,
+						Key:      opset.Key{IsHead: true},
+						Insert:   true,
+						Action:   opset.ActionMark,
+						MarkName: &name,
+					},
+					{
+						ID:     next,
+						Object: object,
+						Key:    opset.Key{Element: new(head)},
+						Insert: true,
+						Action: opset.ActionSet,
+					},
+					{
+						ID:     head,
+						Object: object,
+						Key:    opset.Key{Element: new(next)},
+						Insert: true,
+						Action: opset.ActionSet,
+					},
+				},
+			)
+			require.NoError(t, err)
+		},
+	)
+}
+
+func TestValidateSnapshotMarkOrder_LongInsertionChain(t *testing.T) {
+	t.Parallel()
+
+	const depth = 50_000
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+	object := opset.ObjectID{OpID: opset.OpID{Actor: actor, Counter: 1}}
+
+	t.Run(
+		"accepts a deep begin before its end",
+		func(t *testing.T) {
+			t.Parallel()
+
+			operations := insertionChain(actor, object, depth)
+			begin := operations[depth-2]
+			end := operations[depth-1]
+			name := "em"
+			begin.Action = opset.ActionMark
+			begin.MarkName = &name
+			end.Action = opset.ActionMark
+			operations[depth-2] = begin
+			operations[depth-1] = end
+
+			require.NoError(t, validateSnapshotMarkOrder(operations))
+		},
+	)
+
+	t.Run(
+		"rejects an end before its begin at the bottom of a deep chain",
+		func(t *testing.T) {
+			t.Parallel()
+
+			operations := insertionChain(actor, object, depth)
+			parent := operations[depth-1].ID
+			beginID := opset.OpID{Actor: actor, Counter: uint64(depth + 1)}
+			endID := opset.OpID{Actor: actor, Counter: uint64(depth + 2)}
+			name := "em"
+			operations = append(
+				operations,
+				opset.Operation{
+					ID:       beginID,
+					Object:   object,
+					Key:      opset.Key{Element: new(parent)},
+					Insert:   true,
+					Action:   opset.ActionMark,
+					MarkName: &name,
+				},
+				opset.Operation{
+					ID:     endID,
+					Object: object,
+					Key:    opset.Key{Element: new(parent)},
+					Insert: true,
+					Action: opset.ActionMark,
+				},
+			)
+
+			err := validateSnapshotMarkOrder(operations)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "invalid mark operation order")
+		},
+	)
+}
+
+func markBeginThenEnd(actor opset.ActorID) []opset.Operation {
+	object := opset.ObjectID{OpID: opset.OpID{Actor: actor, Counter: 1}}
+	begin := opset.OpID{Actor: actor, Counter: 2}
+	end := opset.OpID{Actor: actor, Counter: 3}
+	name := "em"
+
+	return []opset.Operation{
+		{
+			ID:       begin,
+			Object:   object,
+			Key:      opset.Key{IsHead: true},
+			Insert:   true,
+			Action:   opset.ActionMark,
+			MarkName: &name,
+		},
+		{
+			ID:     end,
+			Object: object,
+			Key:    opset.Key{Element: new(begin)},
+			Insert: true,
+			Action: opset.ActionMark,
+		},
+	}
+}
+
+func markEndBeforeBegin(actor opset.ActorID) []opset.Operation {
+	object := opset.ObjectID{OpID: opset.OpID{Actor: actor, Counter: 1}}
+	head := opset.OpID{Actor: actor, Counter: 1}
+	begin := opset.OpID{Actor: actor, Counter: 2}
+	end := opset.OpID{Actor: actor, Counter: 3}
+	name := "em"
+
+	return []opset.Operation{
+		{
+			ID:     head,
+			Object: object,
+			Key:    opset.Key{IsHead: true},
+			Insert: true,
+			Action: opset.ActionSet,
+		},
+		{
+			ID:       begin,
+			Object:   object,
+			Key:      opset.Key{Element: new(head)},
+			Insert:   true,
+			Action:   opset.ActionMark,
+			MarkName: &name,
+		},
+		{
+			ID:     end,
+			Object: object,
+			Key:    opset.Key{Element: new(head)},
+			Insert: true,
+			Action: opset.ActionMark,
+		},
+	}
+}
+
+func insertionChain(
+	actor opset.ActorID,
+	object opset.ObjectID,
+	length int,
+) []opset.Operation {
+	operations := make([]opset.Operation, length)
+	for i := range operations {
+		identifier := opset.OpID{Actor: actor, Counter: uint64(i + 1)}
+		operation := opset.Operation{
+			ID:     identifier,
+			Object: object,
+			Insert: true,
+			Action: opset.ActionSet,
+		}
+		if i == 0 {
+			operation.Key.IsHead = true
+		} else {
+			operation.Key.Element = new(
+				opset.OpID{Actor: actor, Counter: uint64(i)},
+			)
+		}
+
+		operations[i] = operation
+	}
+
+	return operations
+}

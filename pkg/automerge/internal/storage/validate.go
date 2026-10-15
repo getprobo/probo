@@ -871,91 +871,149 @@ func assignChangeStartOps(
 	return nil
 }
 
+type (
+	snapshotMarkGroup struct {
+		head     []opset.Operation
+		children map[opset.OpID][]opset.Operation
+	}
+
+	snapshotMarkFrame struct {
+		rows  []opset.Operation
+		index int
+	}
+)
+
 func validateSnapshotMarkOrder(operations []opset.Operation) error {
 	byID := make(map[opset.OpID]opset.Operation, len(operations))
-	objects := make(map[opset.ObjectID]struct{})
+	marked := make(map[opset.ObjectID]struct{})
+	groups := make(map[opset.ObjectID]*snapshotMarkGroup)
 
 	for _, operation := range operations {
 		byID[operation.ID] = operation
 		if operation.Action == opset.ActionMark {
-			objects[operation.Object] = struct{}{}
+			marked[operation.Object] = struct{}{}
+		}
+
+		if !operation.Insert {
+			continue
+		}
+
+		group, ok := groups[operation.Object]
+		if !ok {
+			group = &snapshotMarkGroup{
+				children: make(map[opset.OpID][]opset.Operation),
+			}
+			groups[operation.Object] = group
+		}
+
+		switch {
+		case operation.Key.IsHead:
+			group.head = append(group.head, operation)
+		case operation.Key.Element != nil:
+			element := *operation.Key.Element
+			group.children[element] = append(group.children[element], operation)
 		}
 	}
 
-	for object := range objects {
-		children := make(map[opset.OpID][]opset.Operation)
-
-		var head []opset.Operation
-
-		for _, operation := range operations {
-			if operation.Object != object || !operation.Insert {
-				continue
-			}
-
-			if operation.Key.IsHead {
-				head = append(head, operation)
-			} else if operation.Key.Element != nil {
-				children[*operation.Key.Element] = append(
-					children[*operation.Key.Element],
-					operation,
-				)
-			}
+	for object := range marked {
+		group := groups[object]
+		if group == nil {
+			continue
 		}
 
-		seen := make(map[opset.OpID]struct{})
-		visited := make(map[opset.OpID]struct{})
-
-		var visit func([]opset.Operation) error
-
-		visit = func(rows []opset.Operation) error {
-			slices.SortFunc(rows, func(left, right opset.Operation) int {
-				return right.ID.Compare(left.ID)
-			})
-
-			for _, operation := range rows {
-				if _, ok := visited[operation.ID]; ok {
-					continue
-				}
-
-				visited[operation.ID] = struct{}{}
-				if operation.Action == opset.ActionMark {
-					if operation.MarkName != nil {
-						seen[operation.ID] = struct{}{}
-					} else if operation.ID.Counter > 0 {
-						beginID := opset.OpID{
-							Actor:   operation.ID.Actor,
-							Counter: operation.ID.Counter - 1,
-						}
-
-						begin, ok := byID[beginID]
-						if ok &&
-							begin.Action == opset.ActionMark &&
-							begin.MarkName != nil &&
-							begin.Object == operation.Object {
-							if _, ok := seen[beginID]; !ok {
-								return fmt.Errorf(
-									"invalid mark operation order: end %v precedes begin %v",
-									operation.ID,
-									beginID,
-								)
-							}
-						}
-					}
-				}
-
-				if err := visit(children[operation.ID]); err != nil {
-					return err
-				}
-			}
-
-			return nil
-		}
-		if err := visit(head); err != nil {
+		if err := validateSnapshotMarkGroup(byID, group); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func validateSnapshotMarkGroup(
+	byID map[opset.OpID]opset.Operation,
+	group *snapshotMarkGroup,
+) error {
+	seen := make(map[opset.OpID]struct{})
+	visited := make(map[opset.OpID]struct{})
+
+	slices.SortFunc(group.head, compareSnapshotOperationIDDescending)
+	stack := []snapshotMarkFrame{{rows: group.head}}
+
+	for len(stack) > 0 {
+		current := len(stack) - 1
+		if stack[current].index >= len(stack[current].rows) {
+			stack = stack[:current]
+
+			continue
+		}
+
+		operation := stack[current].rows[stack[current].index]
+		stack[current].index++
+		if _, ok := visited[operation.ID]; ok {
+			continue
+		}
+
+		visited[operation.ID] = struct{}{}
+		if err := validateSnapshotMarkSeen(byID, seen, operation); err != nil {
+			return err
+		}
+
+		children := group.children[operation.ID]
+		if len(children) == 0 {
+			continue
+		}
+
+		slices.SortFunc(children, compareSnapshotOperationIDDescending)
+		stack = append(stack, snapshotMarkFrame{rows: children})
+	}
+
+	return nil
+}
+
+func validateSnapshotMarkSeen(
+	byID map[opset.OpID]opset.Operation,
+	seen map[opset.OpID]struct{},
+	operation opset.Operation,
+) error {
+	if operation.Action != opset.ActionMark {
+		return nil
+	}
+
+	if operation.MarkName != nil {
+		seen[operation.ID] = struct{}{}
+
+		return nil
+	}
+
+	if operation.ID.Counter == 0 {
+		return nil
+	}
+
+	beginID := opset.OpID{
+		Actor:   operation.ID.Actor,
+		Counter: operation.ID.Counter - 1,
+	}
+	begin, ok := byID[beginID]
+	if !ok ||
+		begin.Action != opset.ActionMark ||
+		begin.MarkName == nil ||
+		begin.Object != operation.Object {
+		return nil
+	}
+
+	if _, ok := seen[beginID]; ok {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"invalid mark operation order: end %v precedes begin %v",
+		operation.ID,
+		beginID,
+	)
+}
+
+func compareSnapshotOperationIDDescending(left, right opset.Operation) int {
+	return right.ID.Compare(left.ID)
 }
 
 func validateSnapshotGraph(
