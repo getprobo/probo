@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.250.0] - 2026-10-15
+
+### Changed
+
+- Access review source options show the account name
+
 ## [0.249.0] - 2026-10-14
 
 ### Added
