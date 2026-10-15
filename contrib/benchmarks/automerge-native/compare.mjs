@@ -32,6 +32,18 @@ import {
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const repository = path.resolve(directory, "../../..");
+const baselinePath =
+  argumentValue("--baseline") ?? process.env.AUTOMERGE_BENCHMARK_BASELINE;
+const reportPath = argumentValue("--report");
+const samples = Number(
+  argumentValue("--samples") ??
+    process.env.AUTOMERGE_BENCHMARK_SAMPLES ??
+    7,
+);
+if (!Number.isInteger(samples) || samples < 3 || samples > 20) {
+  throw new Error("--samples must be an integer between 3 and 20");
+}
+
 const temporaryDirectory = fs.mkdtempSync(
   path.join(os.tmpdir(), "probo-automerge-benchmark-"),
 );
@@ -44,10 +56,6 @@ const rustBinary = path.join(
   "release",
   "probo-automerge-native-benchmark",
 );
-const baselinePath =
-  argumentValue("--baseline") ?? process.env.AUTOMERGE_BENCHMARK_BASELINE;
-const reportPath = argumentValue("--report");
-
 const scenarios = [
   { workload: "create", size: 0, iterations: 100_000 },
   { workload: "map", size: 100, iterations: 500 },
@@ -77,14 +85,6 @@ const scenarios = [
   { workload: "sync-diverged", size: 1_000, iterations: 1, warmups: 0 },
   { workload: "sync-diverged", size: 10_000, iterations: 1, warmups: 0 },
 ];
-const samples = Number(
-  argumentValue("--samples") ??
-    process.env.AUTOMERGE_BENCHMARK_SAMPLES ??
-    7,
-);
-if (!Number.isInteger(samples) || samples < 3 || samples > 20) {
-  throw new Error("--samples must be an integer between 3 and 20");
-}
 
 try {
   const goVersion = execFileSync("go", ["version"], {
