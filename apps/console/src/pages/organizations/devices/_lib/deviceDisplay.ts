@@ -151,38 +151,21 @@ export function postureValueVariant(
 
 export type PostureOutcome = "pass" | "warning" | "unknown";
 
-// Remote login off is "info", and that is a classified pass.
-export function postureOutcome(
-  kind: string,
-  checkKey?: string,
-): PostureOutcome {
-  switch (postureValueVariant(kind, checkKey)) {
-    case "danger":
-      return "warning";
-    case "success":
-    case "info":
+// Stored status is the verdict. NOT_APPLICABLE is not a warning.
+// A status this client does not know stays visible as unknown.
+export function postureStatusOutcome(
+  status: string,
+): PostureOutcome | "notApplicable" {
+  switch (status) {
+    case "PASS":
       return "pass";
+    case "FAIL":
+      return "warning";
+    case "UNKNOWN":
+      return "unknown";
+    case "NOT_APPLICABLE":
+      return "notApplicable";
     default:
-      break;
-  }
-
-  if (isRecordedMeasurement(kind)) {
-    return "pass";
-  }
-
-  return "unknown";
-}
-
-// These kinds are readings. A version, a lock delay, a password length, or a
-// named malware engine does not say whether the check failed.
-function isRecordedMeasurement(kind: string): boolean {
-  switch (kind) {
-    case "TEXT":
-    case "SECONDS":
-    case "MIN_PASSWORD_LENGTH":
-    case "CONFIGURED":
-      return true;
-    default:
-      return false;
+      return "unknown";
   }
 }

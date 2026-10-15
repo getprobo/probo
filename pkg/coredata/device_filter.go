@@ -26,10 +26,11 @@ import (
 
 type (
 	DeviceFilter struct {
-		query        *string
-		state        *DeviceState
-		platform     *DevicePlatform
-		agentVersion *string
+		query             *string
+		state             *DeviceState
+		platform          *DevicePlatform
+		agentVersion      *string
+		hasPostureWarning *bool
 	}
 )
 
@@ -38,21 +39,26 @@ func NewDeviceFilter(
 	state *DeviceState,
 	platform *DevicePlatform,
 	agentVersion *string,
+	hasPostureWarning *bool,
 ) *DeviceFilter {
 	return &DeviceFilter{
-		query:        query,
-		state:        state,
-		platform:     platform,
-		agentVersion: agentVersion,
+		query:             query,
+		state:             state,
+		platform:          platform,
+		agentVersion:      agentVersion,
+		hasPostureWarning: hasPostureWarning,
 	}
 }
 
 func (f *DeviceFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
-		"query":                f.query,
-		"filter_state":         f.state,
-		"filter_platform":      f.platform,
-		"filter_agent_version": f.agentVersion,
+		"query":                      f.query,
+		"filter_state":               f.state,
+		"filter_platform":            f.platform,
+		"filter_agent_version":       f.agentVersion,
+		"filter_has_posture_warning": f.hasPostureWarning,
+		"posture_status_fail":        DevicePostureStatusFail,
+		"posture_status_unknown":     DevicePostureStatusUnknown,
 	}
 }
 
@@ -100,6 +106,29 @@ AND
 	CASE
 		WHEN @filter_agent_version::text IS NOT NULL AND @filter_agent_version::text <> '' THEN
 			agent_version = @filter_agent_version
+		ELSE TRUE
+	END
+)
+AND
+(
+	CASE
+		WHEN @filter_has_posture_warning::boolean IS TRUE THEN
+			EXISTS (
+				SELECT 1
+				FROM (
+					SELECT DISTINCT ON (check_key)
+						status
+					FROM device_postures
+					WHERE
+						device_id = devices.id
+						AND tenant_id = devices.tenant_id
+					ORDER BY check_key, observed_at DESC
+				) latest
+				WHERE latest.status IN (
+					@posture_status_fail::device_posture_status,
+					@posture_status_unknown::device_posture_status
+				)
+			)
 		ELSE TRUE
 	END
 )`

@@ -30,6 +30,11 @@
       "enrolledAt": "Enrôlé le",
       "lastSeen": "Dernière connexion"
     },
+    "views": {
+      "allRegistered": "Tous les appareils",
+      "warningsOnly": "Avertissements seulement",
+      "ariaLabel": "Vue de la liste des appareils"
+    },
     "filters": {
       "allStates": "Tous les états",
       "pending": "En attente",

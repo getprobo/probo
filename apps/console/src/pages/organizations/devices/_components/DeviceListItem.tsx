@@ -47,7 +47,7 @@ import {
   isDeviceDeletable,
   ownerLabel,
   platformLabel,
-  postureOutcome,
+  postureStatusOutcome,
   stateColor,
 } from "../_lib/deviceDisplay";
 import { getPostureCheckLabel } from "../_lib/getPostureCheckLabel";
@@ -70,9 +70,7 @@ const deviceListItemFragment = graphql`
     }
     latestPostures {
       checkKey
-      value {
-        kind
-      }
+      status
     }
     ...ReassignDeviceDialog_device
   }
@@ -107,11 +105,13 @@ export function DeviceListItem({
   const pendingLabel = t("devices.values.pending");
   const device = useFragment(deviceListItemFragment, fKey);
   const name = ownerLabel(device.owner?.fullName, t("devices.values.unassigned"));
-  const checks = device.latestPostures.length;
+  const passes = device.latestPostures.filter(
+    posture => posture.status === "PASS",
+  ).length;
   const warnings: { key: string; label: string; outcome: "warning" | "unknown" }[] = [];
   for (const posture of device.latestPostures) {
-    const outcome = postureOutcome(posture.value.kind, posture.checkKey);
-    if (outcome === "pass") {
+    const outcome = postureStatusOutcome(posture.status);
+    if (outcome === "pass" || outcome === "notApplicable") {
       continue;
     }
     warnings.push({
@@ -179,9 +179,9 @@ export function DeviceListItem({
             : t("devices.values.never")}
         </TableCell>
         <TableCell interactive>
-          {checks > 0 && warnings.length === 0 && (
+          {passes > 0 && warnings.length === 0 && (
             <Badge size={1} variant="soft" color="green" iconStart={<ChecksIcon />}>
-              {t("devices.postures.checks", { count: checks })}
+              {t("devices.postures.checks", { count: passes })}
             </Badge>
           )}
           {warnings.length > 0 && (

@@ -134,6 +134,13 @@ export const description: INodeProperties[] = [
 				default: '',
 				description: 'Only devices in this state',
 			},
+			{
+				displayName: 'Warnings Only',
+				name: 'hasPostureWarning',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to keep only devices whose latest posture for some check is FAIL or UNKNOWN',
+			},
 		],
 	},
 ];
@@ -152,6 +159,7 @@ export async function execute(
 		state?: string;
 		platform?: string;
 		agentVersion?: string;
+		hasPostureWarning?: boolean;
 	};
 
 	const ownerFragment = options.includeOwner
@@ -190,6 +198,9 @@ export async function execute(
 	}
 	if (options.agentVersion) {
 		filter.agentVersion = options.agentVersion;
+	}
+	if (options.hasPostureWarning) {
+		filter.hasPostureWarning = true;
 	}
 	if (Object.keys(filter).length > 0) {
 		variables.filter = filter;

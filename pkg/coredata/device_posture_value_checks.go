@@ -504,18 +504,18 @@ func parseWindowsAutoUpdateStartValue(
 }
 
 func parsePasswordPolicyValue(ev map[string]any) DevicePostureValue {
-	// Linux reads PASS_MIN_LEN from /etc/login.defs.
-	if minLen, ok := numberEvidence(ev, "pass_min_len_value"); ok {
+	// Linux reads PASS_MIN_LEN from /etc/login.defs. A negative is not a length.
+	if minLen, ok := numberEvidence(ev, "pass_min_len_value"); ok && minLen >= 0 {
 		return minPasswordLengthValue(minLen)
 	}
 
-	if minLen, ok := numberEvidence(ev, "pass_min_len"); ok {
+	if minLen, ok := numberEvidence(ev, "pass_min_len"); ok && minLen >= 0 {
 		return minPasswordLengthValue(minLen)
 	}
 
 	// Windows reports the stricter of secedit and MDM DeviceLock as
 	// min_password_length. Older agents sent that key with no backend.
-	if minLen, ok := numberEvidence(ev, "min_password_length"); ok {
+	if minLen, ok := numberEvidence(ev, "min_password_length"); ok && minLen >= 0 {
 		return minPasswordLengthValue(minLen)
 	}
 

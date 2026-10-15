@@ -599,3 +599,27 @@ func TestWindowsAutoUpdateOn(t *testing.T) {
 		)
 	}
 }
+
+func TestWindowsPasswordPolicyVerdict(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		len   int
+		known bool
+		want  Status
+	}{
+		{name: "zero is a reading", len: 0, known: true, want: StatusPass},
+		{name: "short length is a reading", len: 4, known: true, want: StatusPass},
+		{name: "negative length", len: -1, known: true, want: StatusUnknown},
+		{name: "unread length", known: false, want: StatusUnknown},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, windowsPasswordPolicyVerdict(tt.len, tt.known))
+		})
+	}
+}

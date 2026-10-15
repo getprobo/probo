@@ -585,6 +585,16 @@ func TestParseDevicePostureValue_PasswordPolicy(t *testing.T) {
 				wantKind: coredata.DevicePostureValueKindNone,
 			},
 			{
+				name:     "linux login defs negative minimum",
+				checkKey: "PASSWORD_POLICY",
+				evidence: map[string]any{
+					"pass_min_len":  "-1",
+					"pass_max_days": "90",
+					"parse_error":   "invalid PASS_MIN_LEN value",
+				},
+				wantKind: coredata.DevicePostureValueKindUnknown,
+			},
+			{
 				name:       "windows min password length zero",
 				checkKey:   "PASSWORD_POLICY",
 				evidence:   map[string]any{"min_password_length": float64(0)},

@@ -29,6 +29,13 @@ import {
 const deviceStates = ["PENDING", "ACTIVE", "REVOKED"] as const;
 export type DeviceStateFilter = (typeof deviceStates)[number];
 
+const deviceListViews = ["all", "warnings"] as const;
+export type DeviceListView = (typeof deviceListViews)[number];
+
+export function isDeviceListView(value: string): value is DeviceListView {
+  return (deviceListViews as readonly string[]).includes(value);
+}
+
 export function devicesListOwnerQuery(query: string): string | null {
   const trimmed = query.trim();
   return trimmed === "" ? null : trimmed;
@@ -48,6 +55,7 @@ function textFilter(value: string | null): string | null {
 export function useDevicesListFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
+  const view: DeviceListView = searchParams.get("view") === "warnings" ? "warnings" : "all";
   const state = deviceStateFilter(searchParams.get("state"));
   const platform = devicePlatformFilter(searchParams.get("platform"));
   const agentVersion = textFilter(searchParams.get("agentVersion"));
@@ -68,6 +76,18 @@ export function useDevicesListFilters() {
     setParam("q", value || null);
   }, [setParam]);
 
+  const setView = useCallback((value: DeviceListView) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value === "warnings") {
+        next.set("view", "warnings");
+      } else {
+        next.delete("view");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   const setState = useCallback((value: DeviceStateFilter | null) => {
     setParam("state", value);
   }, [setParam]);
@@ -83,10 +103,13 @@ export function useDevicesListFilters() {
   return {
     query,
     ownerQuery: devicesListOwnerQuery(query),
+    view,
+    hasPostureWarning: view === "warnings" ? true : null,
     state,
     platform,
     agentVersion,
     setQuery,
+    setView,
     setState,
     setPlatform,
     setAgentVersion,

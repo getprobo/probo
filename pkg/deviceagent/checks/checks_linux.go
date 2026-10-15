@@ -884,29 +884,7 @@ func linuxPasswordPolicy(ctx context.Context) Result {
 	minLen := loginDefsLookup(body, "PASS_MIN_LEN")
 	maxDays := loginDefsLookup(body, "PASS_MAX_DAYS")
 
-	ev := map[string]any{
-		"pass_min_len":  minLen,
-		"pass_max_days": maxDays,
-	}
-	if minLen == "" {
-		ev["parse_error"] = "PASS_MIN_LEN not set"
-		return fail(ev)
-	}
-
-	minLenValue, err := strconv.Atoi(minLen)
-	if err != nil {
-		ev["parse_error"] = "invalid PASS_MIN_LEN value"
-		return unknown(ev)
-	}
-
-	if minLenValue >= 8 {
-		ev["pass_min_len_value"] = minLenValue
-		return pass(ev)
-	}
-
-	ev["pass_min_len_value"] = minLenValue
-
-	return fail(ev)
+	return linuxPasswordPolicyFromDefs(minLen, maxDays)
 }
 
 func linuxRemoteLogin(ctx context.Context) Result {
@@ -923,16 +901,16 @@ func linuxRemoteLogin(ctx context.Context) Result {
 	}
 
 	ev := map[string]any{"is_active": merged}
-	switch merged {
-	case "active":
+	switch linuxRemoteLoginStatus(merged) {
+	case StatusFail:
 		return fail(ev)
-	case "inactive", "failed":
+	case StatusPass:
 		return pass(ev)
-	case "":
+	case StatusNotApplicable:
 		return notApplicable(ev)
+	default:
+		return unknown(ev)
 	}
-
-	return unknown(ev)
 }
 
 // linuxMalwareProtection tracks AV/EDR agent services, not MAC frameworks.

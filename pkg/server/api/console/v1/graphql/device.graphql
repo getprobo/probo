@@ -90,6 +90,7 @@ input DeviceFilter {
     state: DeviceState
     platform: DevicePlatform
     agentVersion: String
+    hasPostureWarning: Boolean
 }
 
 type Device implements Node {

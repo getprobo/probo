@@ -19,11 +19,13 @@
 // SOFTWARE.
 
 import {
+  DesktopIcon,
   DotsThreeVerticalIcon,
   DownloadSimpleIcon,
   PlugsIcon,
   PlusIcon,
   TrashIcon,
+  WarningIcon,
 } from "@phosphor-icons/react";
 import { useList, usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
@@ -33,6 +35,8 @@ import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { SegmentedControl } from "@probo/ui/src/v2/SegmentedControl/SegmentedControl";
+import { SegmentedControlItem } from "@probo/ui/src/v2/SegmentedControl/SegmentedControlItem";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -75,6 +79,7 @@ import {
 } from "./_lib/deviceDisplay";
 import {
   type DeviceStateFilter,
+  isDeviceListView,
   useDevicesListFilters,
 } from "./_lib/useDevicesListFilters";
 import { useDownloadDeviceEvidence } from "./_lib/useDownloadDeviceEvidence";
@@ -86,6 +91,7 @@ export const devicesPageQuery = graphql`
   query DevicesPageQuery(
     $organizationId: ID!
     $query: String
+    $hasPostureWarning: Boolean
     $state: DeviceState
     $platform: DevicePlatform
     $agentVersion: String
@@ -102,6 +108,7 @@ export const devicesPageQuery = graphql`
         ...DevicesPageFragment
           @arguments(
             query: $query
+            hasPostureWarning: $hasPostureWarning
             state: $state
             platform: $platform
             agentVersion: $agentVersion
@@ -124,6 +131,7 @@ const devicesPageFragment = graphql`
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
     query: { type: "String", defaultValue: null }
+    hasPostureWarning: { type: "Boolean", defaultValue: null }
     state: { type: "DeviceState", defaultValue: null }
     platform: { type: "DevicePlatform", defaultValue: null }
     agentVersion: { type: "String", defaultValue: null }
@@ -137,6 +145,7 @@ const devicesPageFragment = graphql`
       orderBy: $order
       filter: {
         query: $query
+        hasPostureWarning: $hasPostureWarning
         state: $state
         platform: $platform
         agentVersion: $agentVersion
@@ -178,9 +187,12 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   const [isPending, startTransition] = useTransition();
   const {
     ownerQuery,
+    view,
+    hasPostureWarning,
     state,
     platform,
     agentVersion,
+    setView,
     setState,
     setPlatform,
     setAgentVersion,
@@ -212,6 +224,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
       pagination.refetch(
         {
           query: ownerQuery,
+          hasPostureWarning,
           state,
           platform,
           agentVersion,
@@ -224,7 +237,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [ownerQuery, state, platform, agentVersion, order, pagination.refetch]);
+  }, [ownerQuery, hasPostureWarning, state, platform, agentVersion, order, pagination.refetch]);
 
   const devices = pagination.data.devices.edges.map(edge => edge.node);
   const agentVersions = deviceAgentVersions(
@@ -232,6 +245,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
     agentVersion,
   );
   const hasListFilter = ownerQuery != null
+    || hasPostureWarning != null
     || state != null
     || platform != null
     || agentVersion != null;
@@ -260,6 +274,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
     more,
     results,
     list,
+    views,
     tools,
     tableFilters,
     filter,
@@ -272,6 +287,7 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
       pagination.refetch(
         {
           query: ownerQuery,
+          hasPostureWarning,
           state,
           platform,
           agentVersion,
@@ -402,6 +418,27 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
       />
 
       <div className={results()}>
+        <div className={views()}>
+          <SegmentedControl
+            size={1}
+            value={view}
+            aria-label={t("devices.views.ariaLabel")}
+            onValueChange={(value) => {
+              if (isDeviceListView(value)) {
+                setView(value);
+              }
+            }}
+          >
+            <SegmentedControlItem value="all">
+              <DesktopIcon />
+              {t("devices.views.allRegistered")}
+            </SegmentedControlItem>
+            <SegmentedControlItem value="warnings">
+              <WarningIcon />
+              {t("devices.views.warningsOnly")}
+            </SegmentedControlItem>
+          </SegmentedControl>
+        </div>
         <div className={tools()}>
           <DevicesListSearch />
           <div className={tableFilters()}>
