@@ -510,6 +510,7 @@ func canonicalBooleans(values []bool) []byte {
 
 	return testAppendULEB(data, count)
 }
+
 func TestDeltaColumn_RejectsInt64DeltaOverflow(t *testing.T) {
 	t.Parallel()
 
@@ -624,3 +625,40 @@ func TestDeltaColumn_RejectsInt64DeltaOverflow(t *testing.T) {
 	)
 }
 
+func TestBooleanColumn_AppendTrueToEncodedEmptyColumn(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		values []bool
+	}{
+		{name: "true", values: []bool{true}},
+		{name: "true true", values: []bool{true, true}},
+		{name: "true false", values: []bool{true, false}},
+		{name: "false", values: []bool{false}},
+		{name: "false true", values: []bool{false, true}},
+		{name: "false false true", values: []bool{false, false, true}},
+	}
+
+	for _, test := range tests {
+		t.Run(
+			test.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				column := hexane.NewBooleanColumn()
+				require.Empty(t, column.Bytes())
+
+				err := column.BatchSplice([]hexane.BooleanSplice{{
+					Index:    0,
+					Inserted: hexane.NewBooleanColumnFromValues(test.values...),
+				}})
+				require.NoError(t, err)
+
+				fresh := hexane.NewBooleanColumnFromValues(test.values...)
+				assert.Equal(t, fresh.Bytes(), column.Bytes())
+				assert.Equal(t, test.values, column.Values())
+			},
+		)
+	}
+}

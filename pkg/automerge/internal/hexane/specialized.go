@@ -549,8 +549,14 @@ func (c *BooleanColumn) BatchSplice(splices []BooleanSplice) error {
 				continue
 			}
 
-			c.tailOffset = len(c.encoded)
-			c.encoded = appendULEB(append([]byte(nil), c.encoded...), 1)
+			data := append([]byte(nil), c.encoded...)
+			// An empty encoding has not emitted the leading false run.
+			if len(data) == 0 && value {
+				data = appendULEB(data, 0)
+			}
+
+			c.tailOffset = len(data)
+			c.encoded = appendULEB(data, 1)
 			c.tailValue = value
 			c.tailCount = 1
 		}
