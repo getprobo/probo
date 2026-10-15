@@ -119,6 +119,7 @@ func TestEmployeeTask_AssignedIsolation(t *testing.T) {
 		for _, edge := range result.Viewer.AssignedTasks.Edges {
 			ids = append(ids, edge.Node.ID)
 		}
+
 		assert.Contains(t, ids, employeeTaskID)
 		assert.NotContains(t, ids, viewerTaskID)
 	})

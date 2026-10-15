@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 export {
+  taskPriorities,
   type TaskPriority,
   type TaskState,
-  taskPriorities,
   taskStateKeys,
   taskStates,
 } from "@probo/tasks";

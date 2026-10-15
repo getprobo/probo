@@ -32,15 +32,15 @@ import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
-import { TaskStateIcon } from "./TaskStateIcon";
 import {
-  type TaskPriority,
-  type TaskState,
   taskPriorities,
+  type TaskPriority,
   taskPriorityKeys,
+  type TaskState,
   taskStateKeys,
   taskStates,
 } from "./taskState";
+import { TaskStateIcon } from "./TaskStateIcon";
 import { taskProperties } from "./variants";
 
 export interface TaskPropertiesTask {

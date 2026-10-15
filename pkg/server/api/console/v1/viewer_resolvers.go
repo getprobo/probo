@@ -207,8 +207,11 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	var query *string
-	var state *coredata.TaskState
+	var (
+		query *string
+		state *coredata.TaskState
+	)
+
 	if filter != nil {
 		query = filter.Query
 		state = filter.State

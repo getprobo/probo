@@ -19,13 +19,13 @@
 // SOFTWARE.
 
 export {
+  type ParsedTaskDuration,
   parseTaskDuration,
   parseTaskDurationAmount,
   stringifyTaskDuration,
   taskDurationsEqual,
+  type TaskDurationUnit,
   taskDurationUnits,
   taskEstimateDurationUnits,
   taskRecurrenceDurationUnits,
-  type ParsedTaskDuration,
-  type TaskDurationUnit,
 } from "@probo/tasks";

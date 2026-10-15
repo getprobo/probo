@@ -20,12 +20,12 @@
 
 import {
   PropertyRow,
-  TASKS_NAMESPACE,
   TaskDurationField,
-  TaskProperties,
   type TaskPriority,
-  type TaskState,
+  TaskProperties,
   taskRecurrenceDurationUnits,
+  TASKS_NAMESPACE,
+  type TaskState,
 } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Link } from "@probo/ui/src/v2/Link/Link";
