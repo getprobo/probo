@@ -353,3 +353,33 @@ func TestDocument_MergeRejectsNilSource(t *testing.T) {
 	_, err = document.Merge(nil)
 	require.ErrorIs(t, err, automerge.ErrNilDocument)
 }
+func TestFork_CommitsPendingEditsBeforeFork(t *testing.T) {
+	t.Parallel()
+
+	document, err := automerge.New(actor(21))
+	require.NoError(t, err)
+	closeDocument(t, document)
+
+	require.NoError(t, document.PutString("title", "pending"))
+
+	fork, err := document.Fork(actor(22))
+	require.NoError(t, err)
+	closeDocument(t, fork)
+
+	parentValue, err := document.String("title")
+	require.NoError(t, err)
+	assert.Equal(t, "pending", parentValue)
+
+	forkValue, err := fork.String("title")
+	require.NoError(t, err)
+	assert.Equal(t, "pending", forkValue)
+
+	// AutoCommit::fork closes the open transaction, so the parent no longer
+	// has a pending change and the fork already contains the committed edit.
+	_, err = document.Commit("already committed", commitTime)
+	assert.ErrorContains(t, err, "no operations")
+
+	_, err = fork.Commit("already committed", commitTime)
+	assert.ErrorContains(t, err, "no operations")
+}
+

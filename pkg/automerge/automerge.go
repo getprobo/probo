@@ -432,7 +432,9 @@ func (d *Document) Stats() (Stats, error) {
 	return stats, nil
 }
 
-// Fork creates an independent writer with the same document history.
+// Fork creates an independent writer with the same document history. An open
+// transaction is committed on the parent first, matching AutoCommit::fork, so
+// the fork includes those edits and the parent keeps them as history.
 func (d *Document) Fork(
 	actorID ActorID,
 ) (*Document, error) {

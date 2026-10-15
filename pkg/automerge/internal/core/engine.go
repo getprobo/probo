@@ -599,8 +599,15 @@ func (b *Engine) SetActor(value []byte) error {
 }
 
 // Fork creates an independent engine and shares its immutable columnar
-// snapshot until either side mutates.
+// snapshot until either side mutates. Pending operations are committed
+// first, matching AutoCommit::fork.
 func (b *Engine) Fork(actor []byte) (*Engine, error) {
+	if len(b.pending) > 0 {
+		if _, err := b.Commit("", time.Time{}); err != nil {
+			return nil, fmt.Errorf("cannot commit pending operations before fork: %w", err)
+		}
+	}
+
 	if b.isolationActive {
 		data, err := b.isolationColumns.snapshot.Encode(
 			b.unknownColumns,
