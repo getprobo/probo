@@ -379,7 +379,8 @@ func TestRustTransaction_LogPatches(t *testing.T) {
 }
 
 // TestRustTransaction_HeadsStayAtPreTransactionHeads reproduces
-// get_heads_returns_pre_tx_heads.
+// get_heads_returns_pre_tx_heads: heads read during an open transaction stay at
+// the pre-transaction frontier.
 func TestRustTransaction_HeadsStayAtPreTransactionHeads(t *testing.T) {
 	t.Parallel()
 
@@ -389,12 +390,11 @@ func TestRustTransaction_HeadsStayAtPreTransactionHeads(t *testing.T) {
 		commitParity(t, document, "a")
 		before := hashIDs(headsOf(t, document))
 		require.NoError(t, document.Root().PutScalar("b", automerge.IntScalar(2)))
-		if engine.name == "native" {
-			assert.Equal(t, before, hashIDs(headsOf(t, document)))
-		}
+		after := hashIDs(headsOf(t, document))
+		require.Equal(t, before, after)
 		commitParity(t, document, "b")
 
-		return parityView{Heads: before, Hydrate: hydrateOf(t, document)}
+		return parityView{Heads: after, Hydrate: hydrateOf(t, document)}
 	})
 }
 
@@ -448,20 +448,26 @@ func TestRustBatch_InsertWithTransaction(t *testing.T) {
 		return parityView{Hydrate: hydrateOf(t, document), Saved: pending}
 	})
 }
+
+// TestRustTest_HistoricalTransactionOmitsUnreachableObject reproduces
+// historical_owned_transaction_omits_patches_for_unreachable_object_from_fuzz_trace.
 func TestRustTest_HistoricalTransactionOmitsUnreachableObject(t *testing.T) {
 	t.Parallel()
 
 	agreeView(t, func(t *testing.T, engine rustParityEngine) parityView {
 		document := openParity(t, engine, actor(0x34))
+		require.NoError(t, document.Root().PutScalar("seed", automerge.IntScalar(1)))
+		commitParity(t, document, "seed")
+		frontier := headsOf(t, document)
 		textObject, err := document.Root().CreateObject("text", automerge.ObjectTypeText)
 		require.NoError(t, err)
 		commitParity(t, document, "text")
-		require.NoError(t, document.Isolate(nil))
-		insertErr := textObject.InsertScalar(0, automerge.CounterScalar(-104))
-		_, commitErr := document.Commit("rejected", commitTime)
+		require.NoError(t, document.Isolate(frontier))
+		require.Error(t, textObject.InsertScalar(0, automerge.CounterScalar(-104)))
 
 		return parityView{
-			Failed:  insertErr != nil && commitErr != nil,
+			Failed:  true,
+			Heads:   hashIDs(headsOf(t, document)),
 			Hydrate: hydrateOf(t, document),
 		}
 	})
@@ -821,10 +827,7 @@ func TestRustTest_ForkAtForeignHeadsErrors(t *testing.T) {
 			second := openParity(t, engine, actor(0x62))
 			require.NoError(t, second.Root().PutScalar("x", automerge.IntScalar(2)))
 			commitParity(t, second, "x")
-			err := second.Isolate(headsOf(t, first))
-			if engine.name == "native" {
-				require.Error(t, err)
-			}
+			require.Error(t, second.ForkAt(headsOf(t, first)))
 		})
 	}
 }

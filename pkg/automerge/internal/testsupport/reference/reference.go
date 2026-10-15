@@ -270,6 +270,15 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 	return nil
 }
 
+// ForkAt rejects heads that are not in this document, mirroring AutoCommit::fork_at.
+func (b *Engine) ForkAt(heads [][32]byte) error {
+	if err := b.runBytes("am_fork_at", flattenHashes(heads)); err != nil {
+		return fmt.Errorf("cannot fork reference document at heads: %w", err)
+	}
+
+	return nil
+}
+
 // Integrate ends isolation, mirroring AutoCommit::integrate.
 func (b *Engine) Integrate() error {
 	if err := b.run("am_integrate"); err != nil {

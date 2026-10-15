@@ -662,3 +662,52 @@ func (b *Engine) Fork(actor []byte) (*Engine, error) {
 
 	return fork, nil
 }
+
+// ForkAt rejects heads that are not in this document, matching AutoCommit::fork_at.
+// Pending operations are committed first, as Rust closes the open transaction
+// before checking the heads.
+func (b *Engine) ForkAt(heads [][32]byte) error {
+	if len(b.pending) > 0 {
+		if _, err := b.Commit("", time.Time{}); err != nil {
+			return fmt.Errorf("cannot commit pending operations before fork: %w", err)
+		}
+	}
+
+	history := b.state
+	if b.isolationActive && b.fullState != nil {
+		history = b.fullState
+	}
+
+	pending := make([]opset.ChangeHash, 0, len(heads))
+	seen := make(map[opset.ChangeHash]struct{}, len(heads))
+	for _, head := range heads {
+		hash := opset.ChangeHash(head)
+		if _, ok := seen[hash]; ok {
+			continue
+		}
+
+		seen[hash] = struct{}{}
+		pending = append(pending, hash)
+	}
+
+	for len(pending) > 0 {
+		hash := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+
+		change, ok := history.change(hash)
+		if !ok {
+			return fmt.Errorf("fork heads are unknown")
+		}
+
+		for _, dependency := range change.Dependencies {
+			if _, ok := seen[dependency]; ok {
+				continue
+			}
+
+			seen[dependency] = struct{}{}
+			pending = append(pending, dependency)
+		}
+	}
+
+	return nil
+}

@@ -150,6 +150,10 @@ type (
 	changeApplier interface {
 		ApplyChanges([][]byte) error
 	}
+
+	forkAtBackend interface {
+		ForkAt([][32]byte) error
+	}
 )
 
 var (
@@ -581,6 +585,32 @@ func (d *Document) Fork(
 	}
 
 	return Load(data, actorID)
+}
+
+// ForkAt rejects heads that are not in this document, mirroring AutoCommit::fork_at.
+func (d *Document) ForkAt(heads []Hash) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.closed {
+		return ErrClosed
+	}
+
+	backend, ok := d.engine.(forkAtBackend)
+	if !ok {
+		return fmt.Errorf("cannot fork Automerge document at heads")
+	}
+
+	nativeHeads := make([][32]byte, len(heads))
+	for i, head := range heads {
+		nativeHeads[i] = [32]byte(head)
+	}
+
+	if err := backend.ForkAt(nativeHeads); err != nil {
+		return fmt.Errorf("cannot fork Automerge document at heads: %w", err)
+	}
+
+	return nil
 }
 
 // SaveIncremental serializes changes since the previous save operation.

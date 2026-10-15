@@ -2008,8 +2008,11 @@ pub extern "C" fn am_rollback() -> i64 {
 pub extern "C" fn am_heads() -> i32 {
     STATE.with(|state| {
         let mut state = state.borrow_mut();
-        state.output = state
-            .doc
+        // AutoCommit::get_heads commits the open transaction. Read a rolled-back
+        // clone so the live document stays uncommitted, matching Transaction::get_heads.
+        let mut probe = state.doc.clone();
+        probe.rollback();
+        state.output = probe
             .get_heads()
             .into_iter()
             .flat_map(|hash| hash.0)
@@ -2017,6 +2020,43 @@ pub extern "C" fn am_heads() -> i32 {
         state.error.clear();
     });
     0
+}
+
+// am_fork_at rejects heads that are not in this document, matching
+// AutoCommit::fork_at. The forked document is dropped; callers only need the
+// error.
+#[no_mangle]
+pub extern "C" fn am_fork_at(pointer: u32, length: u32) -> i32 {
+    let bytes = input_bytes(pointer, length);
+    if bytes.len() % 32 != 0 {
+        return STATE.with(|state| {
+            state
+                .borrow_mut()
+                .fail("fork heads must be a multiple of 32 bytes")
+        });
+    }
+
+    let mut heads = Vec::with_capacity(bytes.len() / 32);
+    for chunk in bytes.chunks(32) {
+        match ChangeHash::try_from(chunk) {
+            Ok(hash) => heads.push(hash),
+            Err(error) => {
+                return STATE
+                    .with(|state| state.borrow_mut().fail(format!("invalid head: {error}")));
+            }
+        }
+    }
+
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        match state.doc.fork_at(&heads) {
+            Ok(_) => {
+                state.error.clear();
+                0
+            }
+            Err(error) => state.fail(error),
+        }
+    })
 }
 
 // am_isolate pins the document to a set of heads (a concatenation of 32-byte
