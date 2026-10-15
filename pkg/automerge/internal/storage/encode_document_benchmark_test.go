@@ -117,22 +117,45 @@ func BenchmarkSnapshotColumnsLocalizedBatch(b *testing.B) {
 
 	actors := documentActorTable(changes, operations)
 
-	heads, headIndexes, err := documentHeads(changes)
-	if err != nil {
-		b.Fatal(err)
+	reference := operations[len(operations)/2].ID
+	inserted := opset.Operation{
+		ID: opset.OpID{
+			Actor:   document.Changes[0].Actor,
+			Counter: uint64(len(operations) + 1),
+		},
+		Object: opset.ObjectID{OpID: operations[0].ID},
+		Key:    opset.Key{Element: &reference},
+		Insert: true,
+		Action: opset.ActionSet,
+		Value: &opset.Scalar{
+			Type:   opset.ScalarString,
+			String: "y",
+		},
 	}
-
-	replacement := operations[len(operations)/2]
+	nextHash := opset.ChangeHash{2}
+	headIndex := uint64(len(changes))
+	dependencyIndexes[nextHash] = headIndex
+	insertedChange := &opset.Change{
+		Hash:         &nextHash,
+		Actor:        document.Changes[0].Actor,
+		Sequence:     document.Changes[0].Sequence + 1,
+		StartOp:      inserted.ID.Counter,
+		MaxOp:        inserted.ID.Counter,
+		Dependencies: []opset.ChangeHash{*document.Changes[0].Hash},
+		Operations:   []opset.Operation{inserted},
+	}
 	edit := SnapshotSplice{
 		Actors:            actors,
-		Heads:             heads,
-		HeadIndexes:       headIndexes,
+		Heads:             []opset.ChangeHash{nextHash},
+		HeadIndexes:       []uint64{headIndex},
 		DependencyIndexes: dependencyIndexes,
 		ChangeIndex:       len(changes),
+		ChangeDeleteCount: 0,
+		Changes:           []*opset.Change{insertedChange},
 		OperationSplices: []SnapshotOperationSplice{{
 			Index:       len(operations) / 2,
-			DeleteCount: 1,
-			Operations:  []opset.Operation{replacement},
+			DeleteCount: 0,
+			Operations:  []opset.Operation{inserted},
 		}},
 	}
 
@@ -156,6 +179,12 @@ func BenchmarkSnapshotColumnsLocalizedBatch(b *testing.B) {
 		float64(FullColumnEncodings())/float64(b.N),
 		"full-column-encode/op",
 	)
+	if FullColumnEncodings() != 0 {
+		b.Fatalf(
+			"incremental commit rebuilt snapshot column tables: %d",
+			FullColumnEncodings(),
+		)
+	}
 }
 
 func benchmarkSnapshot(size int) (*opset.Document, []opset.Operation) {
