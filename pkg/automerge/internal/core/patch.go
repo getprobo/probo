@@ -157,6 +157,7 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 	objects := []opset.ObjectID{opset.RootObject()}
 
 	makers := make([]opset.Operation, 0)
+	winnersByParent := make(map[opset.OpID]map[opset.OpID]opset.Operation)
 
 	state.eachOperation(func(operation opset.Operation) bool {
 		if _, err := actionObjectType(operation.Action); err != nil {
@@ -178,7 +179,8 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 		}
 
 		if !operation.Insert && operation.Key.Element != nil {
-			winner, ok := sequenceElementWinner(state, operation.Object, *operation.Key.Element)
+			winners := sequenceElementWinners(state, operation.Object.OpID, winnersByParent)
+			winner, ok := winners[*operation.Key.Element]
 			if !ok || winner.ID != operation.ID {
 				return true
 			}
@@ -203,18 +205,29 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 	return objects
 }
 
-func sequenceElementWinner(
+func sequenceElementWinners(
 	state *State,
-	object opset.ObjectID,
-	element opset.OpID,
-) (opset.Operation, bool) {
-	for _, value := range state.sequenceValues(object.OpID) {
-		if value.Element == element {
-			return value.Operation, true
-		}
+	parent opset.OpID,
+	cache map[opset.OpID]map[opset.OpID]opset.Operation,
+) map[opset.OpID]opset.Operation {
+	if winners, ok := cache[parent]; ok {
+		return winners
 	}
 
-	return opset.Operation{}, false
+	values := state.sequenceValues(parent)
+	winners := make(map[opset.OpID]opset.Operation, len(values))
+	for _, value := range values {
+		// Sequence order: the first visible value for an element wins.
+		if _, seen := winners[value.Element]; seen {
+			continue
+		}
+
+		winners[value.Element] = value.Operation
+	}
+
+	cache[parent] = winners
+
+	return winners
 }
 
 func compareObjectCreationIDs(left, right opset.OpID) int {
