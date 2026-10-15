@@ -30,25 +30,29 @@ export type DropdownCheckboxItemProps
     & {
       className?: string;
       shortcut?: ReactNode;
+      // `end` puts the check in the trailing group, before `shortcut`.
+      indicator?: "start" | "end";
     };
 
 // A menu item with a checkmark indicator. Controlled with `checked` /
 // `onCheckedChange`, like Base UI's CheckboxItem.
 export function DropdownCheckboxItem(props: DropdownCheckboxItemProps) {
-  const { className, shortcut, children, ...rest } = props;
+  const { className, shortcut, indicator = "end", children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();
+  const check = (
+    <Menu.CheckboxItemIndicator className={dropdownItemIndicator()}>
+      <CheckIcon weight="bold" />
+    </Menu.CheckboxItemIndicator>
+  );
 
   return (
     <Menu.CheckboxItem
       className={dropdownItem({ size, variant, color: "accent", highContrast, className })}
       {...rest}
     >
-      <span className={dropdownItemIndicator()}>
-        <Menu.CheckboxItemIndicator>
-          <CheckIcon weight="bold" />
-        </Menu.CheckboxItemIndicator>
-      </span>
+      {indicator === "start" && check}
       <span className={dropdownItemLabel()}>{children}</span>
+      {indicator === "end" && check}
       {shortcut != null && <span className={dropdownItemShortcut()}>{shortcut}</span>}
     </Menu.CheckboxItem>
   );

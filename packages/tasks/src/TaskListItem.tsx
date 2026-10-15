@@ -878,23 +878,29 @@ function TaskDeadlineMenu({
 
   return (
     <>
-      <DropdownRadioGroup
-        value={deadlinePreset(deadline, locale)}
-        onValueChange={(preset) => {
-          if (typeof preset !== "string") {
-            return;
-          }
-          onCommit(deadlineFromPreset(preset, locale));
-        }}
-      >
-        <DropdownRadioItem value="today">{t("deadlinePicker.today")}</DropdownRadioItem>
-        <DropdownRadioItem value="tomorrow">{t("deadlinePicker.tomorrow")}</DropdownRadioItem>
-        <DropdownRadioItem value="endOfWeek">{t("deadlinePicker.endOfWeek")}</DropdownRadioItem>
-        <DropdownRadioItem value="nextWeek">{t("deadlinePicker.nextWeek")}</DropdownRadioItem>
-      </DropdownRadioGroup>
+      {deadlinePresets.map(preset => (
+        <DropdownItem
+          key={preset}
+          iconStart={<CalendarBlankIcon className="size-4" weight="bold" />}
+          shortcut={(
+            <span className="ml-6">
+              {compactDateFormat(locale, deadlinePresetDate(preset, locale))}
+            </span>
+          )}
+          onClick={() => {
+            onCommit(deadlineFromPreset(preset, locale));
+          }}
+        >
+          {t(`deadlinePicker.${preset}`)}
+        </DropdownItem>
+      ))}
       <DropdownSeparator />
       <DropdownSubmenu>
-        <DropdownSubmenuTrigger>{t("deadlinePicker.custom")}</DropdownSubmenuTrigger>
+        <DropdownSubmenuTrigger
+          iconStart={<CalendarBlankIcon className="size-4" weight="bold" />}
+        >
+          {t("deadlinePicker.custom")}
+        </DropdownSubmenuTrigger>
         <DropdownPopup side="right" align="start" size={1}>
           <div className={slots.deadlineCustom()}>
             <DateCalendar
@@ -910,6 +916,7 @@ function TaskDeadlineMenu({
       </DropdownSubmenu>
       <DropdownSeparator />
       <DropdownItem
+        iconStart={<CalendarXIcon className="size-4" weight="bold" />}
         onClick={() => {
           onCommit(null);
         }}
@@ -999,6 +1006,15 @@ function estimateOptions(value?: string | null): string[] {
   return [selected, ...estimatePresets];
 }
 
+const deadlinePresets = ["today", "tomorrow", "endOfWeek", "nextWeek"] as const;
+
+function deadlinePresetDate(
+  preset: (typeof deadlinePresets)[number],
+  locale: string,
+): string {
+  return toDateInput(deadlineFromPreset(preset, locale));
+}
+
 function dateInputPlusDays(days: number): string {
   const today = parseDate(todayAsDateInput());
   const next = new Date(today.getFullYear(), today.getMonth(), today.getDate() + days);
@@ -1020,26 +1036,6 @@ function deadlineFromPreset(preset: string, locale: string): string | null {
     return null;
   }
   return formatDatetime(dateInputPlusDays(days)) ?? null;
-}
-
-function deadlinePreset(deadline: string | null | undefined, locale: string): string {
-  const current = toDateInput(deadline);
-  if (current === "") {
-    return "none";
-  }
-  if (current === todayAsDateInput()) {
-    return "today";
-  }
-  if (current === dateInputPlusDays(1)) {
-    return "tomorrow";
-  }
-  if (current === endOfWeekDateInput(locale)) {
-    return "endOfWeek";
-  }
-  if (current === dateInputPlusDays(7)) {
-    return "nextWeek";
-  }
-  return "";
 }
 
 function endOfWeekDateInput(locale: string): string {

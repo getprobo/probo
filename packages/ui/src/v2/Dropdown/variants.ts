@@ -87,7 +87,10 @@ export const dropdownItemShortcut = tv({
 });
 
 export const dropdownItemIndicator = tv({
-  base: "flex size-4 shrink-0 items-center justify-center [&_svg]:size-4",
+  base: [
+    "flex shrink-0 items-center justify-center [&_svg]:size-[1em]",
+    "data-unchecked:hidden",
+  ],
 });
 
 export const dropdownSubmenuCaret = tv({
