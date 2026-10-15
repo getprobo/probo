@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.251.0] - 2026-10-15
+
+### Added
+
+- Device operation to download the PDF snapshot of device postures
+- Device list filters by owner, state, platform, and agent version
+- Revoke and delete several devices in a single all-or-nothing call
+
 ## [0.250.0] - 2026-10-15
 
 ### Changed
