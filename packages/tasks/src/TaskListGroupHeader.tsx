@@ -46,7 +46,7 @@ export function TaskListGroupHeader({
   onOpenChange,
 }: TaskListGroupHeaderProps) {
   const { t } = useTranslation(TASKS_NAMESPACE);
-  const slots = taskList({ offset, spaced: !pinned, pinned });
+  const slots = taskList({ offset, pinned });
   const CaretIcon = open ? CaretDownIcon : CaretRightIcon;
 
   return (

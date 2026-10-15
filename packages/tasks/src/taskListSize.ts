@@ -18,21 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TaskListFlatItem } from "./flattenTaskListItems";
+import type { TaskListFlatItem, TaskListRowPosition } from "./flattenTaskListItems";
 
 export const taskListGroupHeaderSize = 32;
-export const taskListGroupHeaderOffset = 16;
+export const taskListGroupHeaderOffset = 8;
 export const taskListGroupHeaderGap = 8;
 export const taskListRowSize = 48;
 
 export function taskListItemSize(item: Pick<TaskListFlatItem<unknown>, "type"> & {
   offset?: boolean;
+  position?: TaskListRowPosition;
 }): number {
   if (item.type === "header") {
     return (item.offset === true ? taskListGroupHeaderOffset : 0)
-      + taskListGroupHeaderSize
-      + taskListGroupHeaderGap;
+      + taskListGroupHeaderSize;
   }
 
-  return taskListRowSize;
+  const leading = item.position === "first" || item.position === "only";
+  const trailing = item.position === "last" || item.position === "only";
+  return taskListRowSize
+    + (leading ? taskListGroupHeaderGap : 0)
+    + (trailing ? taskListGroupHeaderGap : 0);
 }

@@ -102,7 +102,6 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
           </Text>
         </div>
         <div className={actions()}>
-          <TasksSettingsDialog organizationKey={organization} />
           {organization.canCreateTask && (
             <CreateTaskDialog>
               <Button variant="solid" iconStart={<PlusIcon />}>
@@ -110,6 +109,7 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
               </Button>
             </CreateTaskDialog>
           )}
+          <TasksSettingsDialog organizationKey={organization} />
         </div>
       </div>
       <TasksPageList organizationKey={organization} />

@@ -33,11 +33,7 @@ export const taskList = tv({
   },
   variants: {
     offset: {
-      true: { section: "pt-4" },
-      false: {},
-    },
-    spaced: {
-      true: { section: "pb-2" },
+      true: { section: "pt-2" },
       false: {},
     },
     pinned: {
@@ -47,7 +43,6 @@ export const taskList = tv({
   },
   defaultVariants: {
     offset: false,
-    spaced: false,
     pinned: false,
   },
 });

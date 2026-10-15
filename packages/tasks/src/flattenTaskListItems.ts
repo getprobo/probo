@@ -61,11 +61,12 @@ export function flattenTaskListItems<T>(
       continue;
     }
 
+    const previous = items.at(-1);
     items.push({
       type: "header",
       state: group.state,
       count: group.totalCount,
-      offset: items.length > 0,
+      offset: previous?.type === "header",
     });
 
     if (!group.open) {

@@ -298,12 +298,16 @@ export function TaskListView<T extends TaskListViewItem>({
           {virtualItems.map((virtualItem) => {
             const item = flatItems[virtualItem.index];
             const pinnedAway = pinned != null && virtualItem.index === pinned.index;
+            const leading = item.type !== "header"
+              && (item.position === "first" || item.position === "only");
+            const trailing = item.type !== "header"
+              && (item.position === "last" || item.position === "only");
             return (
               <div
                 key={virtualItem.key}
                 data-index={virtualItem.index}
                 ref={virtualizer.measureElement}
-                className={`absolute top-0 left-0 w-full${pinnedAway ? " invisible" : ""}`}
+                className={`absolute top-0 left-0 w-full${leading ? " pt-2" : ""}${trailing ? " pb-2" : ""}${pinnedAway ? " invisible" : ""}`}
                 aria-hidden={pinnedAway || undefined}
                 style={{ transform: `translateY(${virtualItem.start}px)` }}
               >
