@@ -26,7 +26,6 @@ import (
 	"math"
 	"slices"
 	"sort"
-	"strings"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
@@ -434,18 +433,7 @@ func (s *State) Text(property string) (string, error) {
 		return "", fmt.Errorf("text property %q does not exist", property)
 	}
 
-	var output strings.Builder
-
-	s.sequenceIndex(objectOperation.ID).eachValue(func(value sequenceValue) bool {
-		operation := value.Operation
-		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
-			output.WriteString(operation.Value.String)
-		}
-
-		return true
-	})
-
-	return output.String(), nil
+	return writeTextElements(s.sequenceValues(objectOperation.ID)), nil
 }
 
 func (s *State) visibleMapOperation(property string, action opset.Action) (opset.Operation, bool) {

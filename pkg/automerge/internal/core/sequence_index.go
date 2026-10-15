@@ -341,6 +341,43 @@ func (i *sequenceIndex) valueAt(target int) (sequenceValue, bool) {
 	return sequenceValue{Element: entry.insertion, Operation: operation}, true
 }
 
+// sequencePosition resolves a list element index, or the text element that
+// contains a UTF-16 code unit. A code unit inside a multi-unit string still
+// addresses that whole element, matching Automerge put and delete.
+func (i *sequenceIndex) sequencePosition(position uint64, text bool) (int, uint64, bool) {
+	if !text {
+		if position >= uint64(i.visibleCount) {
+			return 0, uint64(i.visibleCount), false
+		}
+
+		return int(position), uint64(i.visibleCount), true
+	}
+
+	element, ok := i.containingTextElement(position)
+
+	return element, uint64(i.utf16Width), ok
+}
+
+// containingTextElement returns the visible element that covers a UTF-16 index.
+// Indexes that fall inside a multi-unit element address that element; an index
+// at or beyond the text width does not.
+func (i *sequenceIndex) containingTextElement(position uint64) (int, bool) {
+	if position >= uint64(i.utf16Width) {
+		return 0, false
+	}
+
+	visible, width := i.visibleBoundary(uint32(position))
+	if uint32(position) < width {
+		if visible == 0 {
+			return 0, false
+		}
+
+		return visible - 1, true
+	}
+
+	return visible, visible < i.visibleCount
+}
+
 // visibleIndex resolves either a list element index or a text UTF-16 position.
 // Text positions inside a surrogate pair advance to the following element
 // boundary, matching Automerge's sequence APIs.

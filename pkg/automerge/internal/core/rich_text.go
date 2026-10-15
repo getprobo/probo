@@ -901,18 +901,7 @@ func (b *Engine) Text(handle uint32) (string, error) {
 		return "", err
 	}
 
-	var output strings.Builder
-
-	// Materialize the winning value of every visible element so that a put over
-	// a text position replaces the original character, matching the reference.
-	for _, value := range b.state.sequenceValues(object.OpID) {
-		operation := value.Operation
-		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
-			output.WriteString(operation.Value.String)
-		}
-	}
-
-	return output.String(), nil
+	return writeTextElements(b.state.sequenceValues(object.OpID)), nil
 }
 
 func (b *Engine) TextAt(
@@ -929,15 +918,7 @@ func (b *Engine) TextAt(
 		return "", fmt.Errorf("historical heads are unknown")
 	}
 
-	var output strings.Builder
-
-	for _, operation := range historical.sequence(object.OpID) {
-		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
-			output.WriteString(operation.Value.String)
-		}
-	}
-
-	return output.String(), nil
+	return writeTextElements(historical.sequenceValues(object.OpID)), nil
 }
 
 func (b *Engine) TextSpans(

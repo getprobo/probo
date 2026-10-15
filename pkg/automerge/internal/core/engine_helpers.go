@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 
 	"go.probo.inc/probo/pkg/automerge/internal/encoding"
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
@@ -246,12 +247,12 @@ func (b *Engine) sequenceOperation(
 	}
 
 	sequence := b.state.sequenceIndex(object.OpID)
-	element, ok := sequence.visibleIndex(index, b.isTextObject(object))
+	element, length, ok := sequence.sequencePosition(index, b.isTextObject(object))
 	if !ok {
 		return sequenceValue{}, fmt.Errorf(
 			"sequence index %d is out of bounds for length %d",
 			index,
-			sequence.visibleCount,
+			length,
 		)
 	}
 
@@ -277,13 +278,34 @@ func (b *Engine) isTextObject(object opset.ObjectID) bool {
 	return ok && operation.Action == opset.ActionMakeText
 }
 
+// objectReplacementCharacter is the UTF-16 placeholder Automerge uses for a
+// non-string text element, including scalars and blocks.
+const objectReplacementCharacter = "\uFFFC"
+
 func sequenceValueUTF16Width(value sequenceValue) uint64 {
-	operation := value.Operation
-	if operation.Value != nil && operation.Value.Type == opset.ScalarString {
-		return uint64(utf16Width(operation.Value.String))
+	return uint64(utf16Width(textElementString(value.Operation)))
+}
+
+func textElementString(operation opset.Operation) string {
+	if operation.Action == opset.ActionMark {
+		return ""
 	}
 
-	return 1
+	if operation.Value != nil && operation.Value.Type == opset.ScalarString {
+		return operation.Value.String
+	}
+
+	return objectReplacementCharacter
+}
+
+func writeTextElements(values []sequenceValue) string {
+	var output strings.Builder
+
+	for _, value := range values {
+		output.WriteString(textElementString(value.Operation))
+	}
+
+	return output.String()
 }
 
 func objectAction(rawType string) (opset.Action, error) {

@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
@@ -177,18 +176,10 @@ func (s *State) hydratedOperationValue(
 	case opset.ActionMakeList:
 		return s.hydratedListValue(operation.ID, visited)
 	case opset.ActionMakeText:
-		var value strings.Builder
-
-		s.sequenceIndex(operation.ID).eachValue(func(element sequenceValue) bool {
-			if element.Operation.Value != nil &&
-				element.Operation.Value.Type == opset.ScalarString {
-				value.WriteString(element.Operation.Value.String)
-			}
-
-			return true
-		})
-
-		return hydratedValueWire{Type: "text", Text: value.String()}, nil
+		return hydratedValueWire{
+			Type: "text",
+			Text: writeTextElements(s.sequenceValues(operation.ID)),
+		}, nil
 	case opset.ActionSet:
 		if operation.Value == nil {
 			return hydratedValueWire{}, fmt.Errorf(
@@ -267,18 +258,7 @@ func (s *State) mapValue(
 
 			result[property] = value
 		case opset.ActionMakeText:
-			var value strings.Builder
-
-			s.sequenceIndex(operation.ID).eachValue(func(element sequenceValue) bool {
-				if element.Operation.Value != nil &&
-					element.Operation.Value.Type == opset.ScalarString {
-					value.WriteString(element.Operation.Value.String)
-				}
-
-				return true
-			})
-
-			result[property] = value.String()
+			result[property] = writeTextElements(s.sequenceValues(operation.ID))
 		case opset.ActionSet:
 			result[property] = scalarMaterializedValue(operation.Value)
 		}
@@ -324,18 +304,7 @@ func (s *State) listValue(
 
 			result = append(result, value)
 		case opset.ActionMakeText:
-			var value strings.Builder
-
-			s.sequenceIndex(element.ID).eachValue(func(textElement sequenceValue) bool {
-				if textElement.Operation.Value != nil &&
-					textElement.Operation.Value.Type == opset.ScalarString {
-					value.WriteString(textElement.Operation.Value.String)
-				}
-
-				return true
-			})
-
-			result = append(result, value.String())
+			result = append(result, writeTextElements(s.sequenceValues(element.ID)))
 		case opset.ActionSet:
 			result = append(result, scalarMaterializedValue(element.Value))
 		}
