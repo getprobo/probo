@@ -527,6 +527,13 @@ func documentChangeByActorSequence(
 func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 	direct, err := b.applyDirectRemoteChanges(changes)
 	if err != nil {
+		var duplicate duplicateActorSequenceError
+		if errors.As(err, &duplicate) {
+			// The conflicting change is rejected, and any queued successor of
+			// that actor sequence can never become valid.
+			b.removeActorBranchFrom(duplicate.actor, duplicate.sequence+1)
+		}
+
 		return err
 	}
 
@@ -814,6 +821,10 @@ func validateDirectRemoteQueue(
 		remaining[hash] = change
 	}
 
+	if err := rejectDuplicateActorSequences(queue); err != nil {
+		return nil, err
+	}
+
 	known := make(map[opset.ChangeHash]struct{}, len(queue))
 	sequences := make(map[opset.ActorID]uint64)
 	operationIDs := make(map[opset.OpID]struct{})
@@ -850,6 +861,13 @@ func validateDirectRemoteQueue(
 			sequence, ok := sequences[change.Actor]
 			if !ok {
 				sequence = current.sequenceForActor(change.Actor)
+			}
+
+			if change.Sequence <= sequence {
+				return nil, duplicateActorSequenceError{
+					actor:    change.Actor,
+					sequence: change.Sequence,
+				}
 			}
 
 			if change.Sequence != sequence+1 {
@@ -890,6 +908,93 @@ func validateDirectRemoteQueue(
 			return applied, nil
 		}
 	}
+}
+
+type duplicateActorSequenceError struct {
+	actor    opset.ActorID
+	sequence uint64
+}
+
+func (e duplicateActorSequenceError) Error() string {
+	return fmt.Sprintf(
+		"cannot validate merged actor sequence: duplicate actor sequence %d",
+		e.sequence,
+	)
+}
+
+// removeActorBranchFrom drops queued changes at or after an incompatible actor
+// sequence, plus every queued change that depends on that branch. It matches
+// Automerge's ChangeQueue::remove_actor_branch_from.
+func (b *Engine) removeActorBranchFrom(actor opset.ActorID, sequence uint64) {
+	removed := make(map[opset.ChangeHash]struct{})
+	dependents := make(map[opset.ChangeHash][]opset.ChangeHash)
+
+	for hash, change := range b.queuedChanges {
+		if change.Actor == actor && change.Sequence >= sequence {
+			removed[hash] = struct{}{}
+		}
+
+		for _, dependency := range change.Dependencies {
+			dependents[dependency] = append(dependents[dependency], hash)
+		}
+	}
+
+	pending := make([]opset.ChangeHash, 0, len(removed))
+	for hash := range removed {
+		pending = append(pending, hash)
+	}
+
+	for len(pending) > 0 {
+		hash := pending[0]
+		pending = pending[1:]
+
+		for _, child := range dependents[hash] {
+			if _, ok := removed[child]; ok {
+				continue
+			}
+
+			removed[child] = struct{}{}
+			pending = append(pending, child)
+		}
+	}
+
+	for hash := range removed {
+		change := b.queuedChanges[hash]
+		b.queuedBytes -= len(change.Raw)
+		delete(b.queuedChanges, hash)
+	}
+
+	if b.queuedBytes < 0 {
+		b.queuedBytes = 0
+	}
+}
+
+// rejectDuplicateActorSequences fails a batch when two different changes claim
+// the same actor sequence. A queued orphan occupies its sequence even when its
+// causal dependency is still missing, matching Automerge's DuplicateSeqNumber.
+func rejectDuplicateActorSequences(
+	queue map[opset.ChangeHash]*opset.Change,
+) error {
+	type actorSequence struct {
+		actor    opset.ActorID
+		sequence uint64
+	}
+
+	seen := make(map[actorSequence]opset.ChangeHash, len(queue))
+	for hash, change := range queue {
+		key := actorSequence{actor: change.Actor, sequence: change.Sequence}
+		previous, ok := seen[key]
+		if ok && previous != hash {
+			return fmt.Errorf(
+				"cannot validate merged actor sequence: duplicate actor sequence %d",
+				change.Sequence,
+			)
+		}
+
+		seen[key] = hash
+	}
+
+	return nil
 }
 
 func isDirectSequenceRemoteBatch(changes []*opset.Change) bool {
