@@ -23,6 +23,7 @@ import {
   CalendarBlankIcon,
   CalendarXIcon,
   ClockIcon,
+  ProhibitIcon,
   DotsThreeVerticalIcon,
   TrashIcon,
   UserIcon,
@@ -979,11 +980,18 @@ function estimateRadioItems(
 ): ReactNode {
   return (
     <>
-      <DropdownRadioItem value={noneEstimateValue}>
+      <DropdownRadioItem
+        value={noneEstimateValue}
+        iconStart={<ProhibitIcon className="size-4" weight="bold" />}
+      >
         {t("durationPicker.none")}
       </DropdownRadioItem>
       {options.map(value => (
-        <DropdownRadioItem key={value} value={value}>
+        <DropdownRadioItem
+          key={value}
+          value={value}
+          iconStart={<ClockIcon className="size-4" weight="bold" />}
+        >
           {formatDuration(value, t, { style: "short", locale })}
         </DropdownRadioItem>
       ))}
