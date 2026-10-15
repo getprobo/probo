@@ -68,6 +68,7 @@ function TaskDescriptionSectionContent({
   return (
     <RichDescriptionEditor
       saved={task.content}
+      attachmentParentId={task.id}
       canUpdate={task.canUpdate}
       ariaLabel={t("detailsPage.fields.description")}
       emptyLabel={t("detailsPage.noDescription")}

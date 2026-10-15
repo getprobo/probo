@@ -3059,6 +3059,7 @@ func renderDocumentPDF(
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 		Landscape:                   isLandscape,
 		BaseURL:                     svc.baseURL,
+		VersionID:                   version.ID.String(),
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)

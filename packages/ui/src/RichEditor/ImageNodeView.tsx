@@ -31,16 +31,17 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { attachmentPath } from "./attachments";
+import { attachmentPath, useAttachmentParentID } from "./attachments";
 import { dragImageWidth, keyboardImageWidth, loadedImagePin, snapImageWidth } from "./imageWidth";
 
 type ResizeSide = "left" | "right";
 
 export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactNodeViewProps) {
   const { t } = useTranslation();
+  const parentId = useAttachmentParentID();
   const fileId = typeof node.attrs.fileId === "string" ? node.attrs.fileId : "";
   const storedSrc = typeof node.attrs.src === "string" ? node.attrs.src.trim() : "";
-  const src = fileId ? attachmentPath(fileId) : storedSrc;
+  const src = fileId ? attachmentPath(fileId, parentId) : storedSrc;
   const alt = typeof node.attrs.alt === "string" ? node.attrs.alt : "";
   const title = typeof node.attrs.title === "string" ? node.attrs.title : undefined;
   const storedWidth = typeof node.attrs.width === "number" ? node.attrs.width : null;

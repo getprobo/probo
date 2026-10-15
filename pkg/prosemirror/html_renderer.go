@@ -40,6 +40,35 @@ func RenderHTML(node Node) (string, error) {
 	return buf.String(), nil
 }
 
+// WithParentFileHrefs rewrites file anchors to the parent-scoped attachment URL.
+func WithParentFileHrefs(htmlStr, parentID string, node Node) string {
+	parentID = strings.TrimSpace(parentID)
+	if parentID == "" {
+		return htmlStr
+	}
+
+	for _, ref := range ReferencedFiles(node) {
+		if ref.Image {
+			continue
+		}
+
+		from := AttachmentPath(ref.ID)
+		to := ParentAttachmentPath(parentID, ref.ID)
+
+		if from == "" || to == "" {
+			continue
+		}
+
+		htmlStr = strings.ReplaceAll(
+			htmlStr,
+			`href="`+html.EscapeString(from)+`"`,
+			`href="`+html.EscapeString(to)+`"`,
+		)
+	}
+
+	return htmlStr
+}
+
 func renderNode(buf *bytes.Buffer, n Node) error {
 	switch n.Type {
 	case NodeDoc:

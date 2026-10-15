@@ -29,6 +29,7 @@ import { riskAnalysisDescriptionField } from "../variants";
 
 const riskAnalysisDescriptionSectionFragment = graphql`
   fragment RiskAnalysisDescriptionSection_riskAnalysis on RiskAnalysis {
+    id
     description
   }
 `;
@@ -60,6 +61,7 @@ function RiskAnalysisDescriptionSectionContent({
       key={description}
       className={riskAnalysisDescriptionField({ density: "display" }).editor()}
       content={description}
+      attachmentParentId={riskAnalysis.id}
       disabled
       aria-label={t("riskAnalysisDetailPage.fields.description")}
     />

@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -90,6 +91,86 @@ func (s FileService) Get(
 	}
 
 	return file, nil
+}
+
+// GetReferenced returns a file embedded in a parent's rich text.
+func (s FileService) GetReferenced(
+	ctx context.Context,
+	scope coredata.Scoper,
+	parentID gid.GID,
+	fileID gid.GID,
+) (*coredata.File, error) {
+	file := &coredata.File{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			content, err := parentRichText(ctx, conn, scope, parentID)
+			if err != nil {
+				return fmt.Errorf("cannot load parent content: %w", err)
+			}
+
+			ids, err := prosemirror.FileIDs(content)
+			if err != nil || !slices.Contains(ids, fileID) {
+				return coredata.ErrResourceNotFound
+			}
+
+			if err := file.LoadByID(ctx, conn, scope, fileID); err != nil {
+				return fmt.Errorf("cannot load referenced file: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func parentRichText(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	parentID gid.GID,
+) (string, error) {
+	switch parentID.EntityType() {
+	case coredata.TaskEntityType:
+		var task coredata.Task
+		if err := task.LoadByID(ctx, conn, scope, parentID); err != nil {
+			return "", fmt.Errorf("cannot load task: %w", err)
+		}
+
+		return task.Content, nil
+	case coredata.TaskCommentEntityType:
+		var comment coredata.TaskComment
+		if err := comment.LoadByID(ctx, conn, scope, parentID); err != nil {
+			return "", fmt.Errorf("cannot load task comment: %w", err)
+		}
+
+		return comment.Content, nil
+	case coredata.DocumentVersionEntityType:
+		var version coredata.DocumentVersion
+		if err := version.LoadByID(ctx, conn, scope, parentID); err != nil {
+			return "", fmt.Errorf("cannot load document version: %w", err)
+		}
+
+		return version.Content, nil
+	case coredata.RiskAnalysisEntityType:
+		var analysis coredata.RiskAnalysis
+		if err := analysis.LoadByID(ctx, conn, scope, parentID); err != nil {
+			return "", fmt.Errorf("cannot load risk analysis: %w", err)
+		}
+
+		if analysis.Description == nil {
+			return "", nil
+		}
+
+		return *analysis.Description, nil
+	default:
+		return "", coredata.ErrResourceNotFound
+	}
 }
 
 func (s FileService) GetByIDs(
