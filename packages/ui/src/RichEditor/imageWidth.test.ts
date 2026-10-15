@@ -20,7 +20,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { dragImageWidth, imageWidthPercent, keyboardImageWidth, snapImageWidth } from "./imageWidth";
+import { dragImageWidth, imageWidthPercent, keyboardImageWidth, loadedImagePin, snapImageWidth } from "./imageWidth";
 
 describe("imageWidthPercent", () => {
   it("reads a column percentage", () => {
@@ -96,6 +96,32 @@ describe("keyboardImageWidth", () => {
     expect(keyboardImageWidth({ side: "right", key: "Tab", width: 40, targets: [] })).toBeNull();
     expect(keyboardImageWidth({ side: "right", key: "Enter", width: 96, targets: [] })).toBe(100);
     expect(keyboardImageWidth({ side: "left", key: "ArrowRight", width: 12, targets: [] })).toBe(10);
+  });
+});
+
+describe("loadedImagePin", () => {
+  it("pins a collapsed viewBox image to its natural width", () => {
+    expect(loadedImagePin({ naturalWidth: 267, naturalHeight: 150, renderedWidth: 0 })).toEqual({
+      failed: false,
+      width: 267,
+    });
+  });
+
+  it("leaves an image that already occupies a box", () => {
+    expect(loadedImagePin({ naturalWidth: 300, naturalHeight: 300, renderedWidth: 300 })).toEqual({
+      failed: false,
+      width: null,
+    });
+    expect(loadedImagePin({ naturalWidth: 2000, naturalHeight: 400, renderedWidth: 640 })).toEqual({
+      failed: false,
+      width: null,
+    });
+  });
+
+  it("treats a loaded image with no natural size as unavailable", () => {
+    expect(loadedImagePin({ naturalWidth: 0, naturalHeight: 0, renderedWidth: 0 })).toEqual({
+      failed: true,
+    });
   });
 });
 

@@ -24,6 +24,7 @@ import { NodeViewWrapper } from "@tiptap/react";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -31,7 +32,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { attachmentPath } from "./attachments";
-import { dragImageWidth, keyboardImageWidth, snapImageWidth } from "./imageWidth";
+import { dragImageWidth, keyboardImageWidth, loadedImagePin, snapImageWidth } from "./imageWidth";
 
 type ResizeSide = "left" | "right";
 
@@ -44,6 +45,9 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
   const title = typeof node.attrs.title === "string" ? node.attrs.title : undefined;
   const storedWidth = typeof node.attrs.width === "number" ? node.attrs.width : null;
   const [dragWidth, setDragWidth] = useState<number | null>(null);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<{ src: string; width: number } | null>(null);
+  const intrinsicWidth = pinned?.src === src ? pinned.width : null;
   const slotRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const stopDrag = useRef<(() => void) | null>(null);
@@ -51,7 +55,30 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
 
   useEffect(() => () => stopDrag.current?.(), []);
 
-  if (src === "") {
+  const applyLoadedImage = useCallback((image: HTMLImageElement) => {
+    const pin = loadedImagePin({
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      renderedWidth: image.getBoundingClientRect().width,
+    });
+    if (pin.failed) {
+      setFailedSrc(src);
+      return;
+    }
+
+    if (pin.width != null) {
+      setPinned({ src, width: pin.width });
+    }
+  }, [src]);
+
+  const setImageRef = useCallback((image: HTMLImageElement | null) => {
+    imageRef.current = image;
+    if (image != null && image.complete) {
+      applyLoadedImage(image);
+    }
+  }, [applyLoadedImage]);
+
+  if (src === "" || failedSrc === src) {
     return (
       <NodeViewWrapper>
         <div className="rich-image-missing" contentEditable={false}>
@@ -169,12 +196,15 @@ export function ImageNodeView({ editor, node, getPos, updateAttributes }: ReactN
           contentEditable={false}
         >
           <img
-            ref={imageRef}
+            ref={setImageRef}
             className={percent == null ? "rich-image" : "rich-image rich-image-sized"}
+            style={percent == null && intrinsicWidth != null ? { width: intrinsicWidth } : undefined}
             src={src}
             alt={alt}
             title={title}
             draggable={false}
+            onLoad={event => applyLoadedImage(event.currentTarget)}
+            onError={() => setFailedSrc(src)}
           />
           {editor.isEditable && (
             <>

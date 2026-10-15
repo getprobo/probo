@@ -98,6 +98,26 @@ function keyboardImageDelta(side: "left" | "right", key: string): number | null 
   return null;
 }
 
+// A viewBox-only SVG has no intrinsic pixel size. Inside a fit-content
+// frame its used width can resolve to 0, while an image that declares
+// width and height still paints. The natural width is the browser's
+// default object size for that SVG.
+export function loadedImagePin(input: {
+  naturalWidth: number;
+  naturalHeight: number;
+  renderedWidth: number;
+}): { failed: true } | { failed: false; width: number | null } {
+  if (input.naturalWidth < 1 || input.naturalHeight < 1) {
+    return { failed: true };
+  }
+
+  if (input.renderedWidth < 1) {
+    return { failed: false, width: input.naturalWidth };
+  }
+
+  return { failed: false, width: null };
+}
+
 export function snapImageWidth(width: number, targets: readonly number[]): number {
   const clamped = Math.min(100, Math.max(minImageWidth, Math.round(width)));
   let snapped = clamped;
