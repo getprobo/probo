@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { TaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
 import type { TasksPageTaskListItem_task$key } from "#/__generated__/core/TasksPageTaskListItem_task.graphql";
@@ -71,7 +71,7 @@ export interface TasksPageTaskListItemProps {
   sectionState?: TaskState;
 }
 
-export function TasksPageTaskListItem({
+export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
   taskKey,
   sectionState,
 }: TasksPageTaskListItemProps) {
@@ -174,4 +174,4 @@ export function TasksPageTaskListItem({
       )}
     </>
   );
-}
+});

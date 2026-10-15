@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
 
@@ -95,7 +95,19 @@ interface TaskListItemProps {
   onStateChange?: () => void;
 }
 
-export function TaskListItem(props: TaskListItemProps) {
+function taskListItemPropsAreEqual(
+  previous: TaskListItemProps,
+  next: TaskListItemProps,
+): boolean {
+  return previous.taskKey === next.taskKey
+    && previous.sectionState === next.sectionState
+    && previous.canDrag === next.canDrag
+    && previous.isDragging === next.isDragging
+    && previous.isGhost === next.isGhost
+    && previous.ignoreClick === next.ignoreClick;
+}
+
+export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps) {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const environment = useRelayEnvironment();
@@ -277,4 +289,4 @@ export function TaskListItem(props: TaskListItemProps) {
       )}
     </>
   );
-}
+}, taskListItemPropsAreEqual);

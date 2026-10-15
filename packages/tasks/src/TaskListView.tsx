@@ -22,6 +22,7 @@ import { TooltipProvider } from "@probo/ui/src/v2/Tooltip/TooltipProvider";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import type { Virtualizer } from "@tanstack/react-virtual";
 import { useTranslation } from "react-i18next";
 
 import { flattenTaskListItems, type TaskListFlatItem } from "./flattenTaskListItems";
@@ -83,6 +84,7 @@ function pinnedTaskGroupHeader<T>(
   headerIndexes: readonly number[],
   measurements: readonly { start: number }[],
   scrolledIntoList: number,
+  scrollMargin: number,
 ): PinnedTaskGroupHeader | null {
   if (measurements.length !== items.length) {
     return null;
@@ -96,11 +98,11 @@ function pinnedTaskGroupHeader<T>(
       continue;
     }
 
-    const contentStart = measurements[index].start
-      + (item.offset ? taskListGroupHeaderOffset : 0);
+    const start = measurements[index].start - scrollMargin;
+    const contentStart = start + (item.offset ? taskListGroupHeaderOffset : 0);
     if (contentStart > scrolledIntoList) {
       if (activeIndex >= 0) {
-        nextStart = measurements[index].start;
+        nextStart = start;
       }
       break;
     }
@@ -176,25 +178,52 @@ export function TaskListView<T extends TaskListViewItem>({
     }
     return indexes;
   }, [flatItems]);
+  const flatItemsRef = useRef(flatItems);
+  const headerIndexesRef = useRef(headerIndexes);
+  const listOffsetRef = useRef(listOffset);
+  const pinShiftRef = useRef<HTMLDivElement>(null);
+  const pinnedShiftRef = useRef(0);
+  flatItemsRef.current = flatItems;
+  headerIndexesRef.current = headerIndexes;
+  listOffsetRef.current = listOffset;
+  const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: flatItems.length,
     getScrollElement: () => scrollElement,
     estimateSize: index => taskListItemSize(flatItems[index]),
-    overscan: 8,
+    overscan: 24,
+    scrollMargin: listOffset,
+    directDomUpdates: true,
     getItemKey: index => flatItemKey(flatItems[index], index),
+    onChange(instance) {
+      publishPinnedHeader(instance);
+    },
   });
-  const scrollOffset = virtualizer.scrollOffset;
+
+  function publishPinnedHeader(instance: Virtualizer<HTMLElement, Element>) {
+    const offset = instance.scrollOffset;
+    if (offset == null) {
+      return;
+    }
+    const next = pinnedTaskGroupHeader(
+      flatItemsRef.current,
+      headerIndexesRef.current,
+      instance.measurementsCache,
+      offset - listOffsetRef.current,
+      instance.options.scrollMargin,
+    );
+    const shift = next?.shift ?? 0;
+    pinnedShiftRef.current = shift;
+    const node = pinShiftRef.current;
+    if (node != null) {
+      node.style.transform = shift === 0 ? "" : `translateY(${shift}px)`;
+    }
+    const nextIndex = next?.index ?? null;
+    setPinnedIndex(current => current === nextIndex ? current : nextIndex);
+  }
   const virtualItems = virtualizer.getVirtualItems();
-  const pinned = scrollOffset == null
-    ? null
-    : pinnedTaskGroupHeader(
-        flatItems,
-        headerIndexes,
-        virtualizer.measurementsCache,
-        scrollOffset - listOffset,
-      );
-  const pinnedItem = pinned == null ? null : flatItems[pinned.index];
+  const pinnedItem = pinnedIndex == null ? null : flatItems[pinnedIndex];
   const fillRange = virtualItems.length === 0
     ? null
     : {
@@ -277,9 +306,14 @@ export function TaskListView<T extends TaskListViewItem>({
       aria-busy={busy || isFilling || undefined}
     >
       <TooltipProvider>
-        {pinnedItem?.type === "header" && pinned != null && (
+        {pinnedItem?.type === "header" && pinnedIndex != null && (
           <div className="sticky top-0 z-2 h-0">
-            <div style={pinned.shift === 0 ? undefined : { transform: `translateY(${pinned.shift}px)` }}>
+            <div
+              ref={pinShiftRef}
+              style={pinnedShiftRef.current === 0
+                ? undefined
+                : { transform: `translateY(${pinnedShiftRef.current}px)` }}
+            >
               <TaskListGroupHeader
                 state={pinnedItem.state}
                 count={pinnedItem.count}
@@ -292,12 +326,12 @@ export function TaskListView<T extends TaskListViewItem>({
           </div>
         )}
         <div
+          ref={virtualizer.containerRef}
           className="relative w-full"
-          style={{ height: virtualizer.getTotalSize() }}
         >
           {virtualItems.map((virtualItem) => {
             const item = flatItems[virtualItem.index];
-            const pinnedAway = pinned != null && virtualItem.index === pinned.index;
+            const pinnedAway = pinnedIndex != null && virtualItem.index === pinnedIndex;
             const leading = item.type !== "header"
               && (item.position === "first" || item.position === "only");
             const trailing = item.type !== "header"
@@ -307,9 +341,9 @@ export function TaskListView<T extends TaskListViewItem>({
                 key={virtualItem.key}
                 data-index={virtualItem.index}
                 ref={virtualizer.measureElement}
-                className={`absolute top-0 left-0 w-full${leading ? " pt-2" : ""}${trailing ? " pb-2" : ""}${pinnedAway ? " invisible" : ""}`}
+                className={`absolute top-0 left-0 w-full overflow-hidden${leading ? " pt-2" : ""}${trailing ? " pb-2" : ""}${pinnedAway ? " invisible" : ""}`}
                 aria-hidden={pinnedAway || undefined}
-                style={{ transform: `translateY(${virtualItem.start}px)` }}
+                style={{ height: virtualItem.size }}
               >
                 {item.type === "header"
                   ? (
