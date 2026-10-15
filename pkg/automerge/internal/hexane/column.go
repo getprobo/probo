@@ -23,6 +23,7 @@ package hexane
 import (
 	"fmt"
 	"io"
+	"unsafe"
 )
 
 type (
@@ -182,15 +183,10 @@ func (c *Column[T]) BatchSplice(splices []ColumnSplice[T]) error {
 
 	ropeSplices := make([]ropeSplice[Value[T]], len(splices))
 	for i, splice := range splices {
-		var inserted *ropeNode[Value[T]]
-		if splice.Inserted != nil {
-			inserted = splice.Inserted.root
-		}
-
 		ropeSplices[i] = ropeSplice[Value[T]]{
 			index:       splice.Index,
 			deleteCount: splice.DeleteCount,
-			inserted:    inserted,
+			inserted:    c.insertedRope(splice.Inserted),
 		}
 	}
 
@@ -656,6 +652,60 @@ func (c *Column[T]) checkRange(index, count int) {
 	if index < 0 || count < 0 || index > length || count > length-index {
 		panic("hexane: column slice bounds out of range")
 	}
+}
+
+func (c *Column[T]) insertedRope(inserted *Column[T]) *ropeNode[Value[T]] {
+	if inserted == nil {
+		return nil
+	}
+
+	if sameCodec(c.codec, inserted.codec) {
+		return inserted.root
+	}
+
+	// A foreign codec caches its own wire bytes, so re-encode with this codec.
+	return ropeFrom(
+		inserted.Values(),
+		c.chunkSize,
+		c.prepareValue,
+		c.metrics,
+	)
+}
+
+func sameCodec[T any](left, right Codec[T]) bool {
+	leftFuncs, leftOK := left.(CodecFuncs[T])
+	rightFuncs, rightOK := right.(CodecFuncs[T])
+	if leftOK || rightOK {
+		if !leftOK || !rightOK {
+			return false
+		}
+
+		return closurePointer(leftFuncs.EqualFunc) == closurePointer(rightFuncs.EqualFunc) &&
+			closurePointer(leftFuncs.CloneFunc) == closurePointer(rightFuncs.CloneFunc) &&
+			closurePointer(leftFuncs.AppendFunc) == closurePointer(rightFuncs.AppendFunc)
+	}
+
+	return comparableCodec(left, right)
+}
+
+// Codec implementations may contain functions, which cannot be compared.
+func comparableCodec[T any](left, right Codec[T]) (equal bool) {
+	defer func() {
+		_ = recover()
+	}()
+
+	return left == right
+}
+
+// closurePointer identifies a function value together with its captured state.
+// The code address alone is shared by closures with the same body.
+func closurePointer(function any) unsafe.Pointer {
+	type iface struct {
+		_    unsafe.Pointer
+		data unsafe.Pointer
+	}
+
+	return (*iface)(unsafe.Pointer(&function)).data
 }
 
 type columnValueCursor[T any] struct {

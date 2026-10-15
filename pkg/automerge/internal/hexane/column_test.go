@@ -26,6 +26,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/hexane"
 )
 
@@ -386,5 +388,118 @@ func testAppendLEB(data []byte, value int64) []byte {
 		if done {
 			return data
 		}
+	}
+}
+
+func TestColumn_BatchSpliceReencodesMismatchedCodec(t *testing.T) {
+	t.Parallel()
+
+	receiver := offsetUint64Codec(0)
+	foreign := offsetUint64Codec(1)
+	foreignOnly, err := hexane.NewColumnFromValues(
+		foreign,
+		hexane.Some(uint64(2)),
+	).Bytes()
+	require.NoError(t, err)
+	receiverOnly, err := hexane.NewColumnFromValues(
+		receiver,
+		hexane.Some(uint64(2)),
+	).Bytes()
+	require.NoError(t, err)
+	require.NotEqual(t, receiverOnly, foreignOnly)
+
+	t.Run(
+		"replace",
+		func(t *testing.T) {
+			t.Parallel()
+
+			column := hexane.NewColumnFromValues(
+				receiver,
+				hexane.Some(uint64(1)),
+				hexane.Some(uint64(3)),
+			)
+			err := column.BatchSplice([]hexane.ColumnSplice[uint64]{{
+				Index:       1,
+				DeleteCount: 1,
+				Inserted: hexane.NewColumnFromValues(
+					foreign,
+					hexane.Some(uint64(2)),
+				),
+			}})
+			require.NoError(t, err)
+
+			want, err := hexane.NewColumnFromValues(
+				receiver,
+				hexane.Some(uint64(1)),
+				hexane.Some(uint64(2)),
+			).Bytes()
+			require.NoError(t, err)
+			got, err := column.Bytes()
+			require.NoError(t, err)
+			assert.Equal(t, want, got)
+		},
+	)
+
+	t.Run(
+		"append then invalidate cache",
+		func(t *testing.T) {
+			t.Parallel()
+
+			column := hexane.NewColumnFromValues(
+				receiver,
+				hexane.Some(uint64(1)),
+			)
+			_, err := column.Bytes()
+			require.NoError(t, err)
+
+			err = column.BatchSplice([]hexane.ColumnSplice[uint64]{{
+				Index: column.Len(),
+				Inserted: hexane.NewColumnFromValues(
+					foreign,
+					hexane.Some(uint64(2)),
+				),
+			}})
+			require.NoError(t, err)
+
+			want, err := hexane.NewColumnFromValues(
+				receiver,
+				hexane.Some(uint64(1)),
+				hexane.Some(uint64(2)),
+			).Bytes()
+			require.NoError(t, err)
+			got, err := column.Bytes()
+			require.NoError(t, err)
+			assert.Equal(t, want, got)
+
+			err = column.BatchSplice([]hexane.ColumnSplice[uint64]{{
+				Index:       0,
+				DeleteCount: 1,
+				Inserted: hexane.NewColumnFromValues(
+					receiver,
+					hexane.Some(uint64(4)),
+				),
+			}})
+			require.NoError(t, err)
+
+			want, err = hexane.NewColumnFromValues(
+				receiver,
+				hexane.Some(uint64(4)),
+				hexane.Some(uint64(2)),
+			).Bytes()
+			require.NoError(t, err)
+			got, err = column.Bytes()
+			require.NoError(t, err)
+			assert.Equal(t, want, got)
+		},
+	)
+}
+
+func offsetUint64Codec(offset byte) hexane.Codec[uint64] {
+	return hexane.CodecFuncs[uint64]{
+		EqualFunc: func(left, right uint64) bool { return left == right },
+		CloneFunc: func(value uint64) uint64 { return value },
+		AppendFunc: func(dst []byte, value uint64) ([]byte, error) {
+			return append(dst, byte(value)+offset), nil
+		},
 	}
 }
