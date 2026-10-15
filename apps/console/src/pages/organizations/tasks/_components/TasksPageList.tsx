@@ -27,7 +27,6 @@ import {
   type TaskState,
 } from "@probo/tasks";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type DragEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, readInlineData, useRefetchableFragment } from "react-relay";
@@ -434,11 +433,6 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     });
   }
 
-  const visibleGroups = groups.filter(
-    group => selectedState == null || group.state === selectedState,
-  );
-  const canShowDragHint = canDrag && visibleGroups.some(group => group.totalCount > 1);
-
   return (
     <div className={list()}>
       <TaskListToolbar
@@ -511,11 +505,6 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
           />
         )}
       />
-      {canShowDragHint && (
-        <Text size={2} color="faint">
-          {t("tasksCard.dragInstructions.state")}
-        </Text>
-      )}
     </div>
   );
 }

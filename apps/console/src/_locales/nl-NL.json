@@ -1143,9 +1143,6 @@
     "error": {
       "title": "Fout",
       "reorder": "Herordenen van taak mislukt."
-    },
-    "dragInstructions": {
-      "state": "Sleep om taken opnieuw te ordenen"
     }
   },
   "deleteTrustCenterReferenceDialog": {

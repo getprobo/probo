@@ -1143,9 +1143,6 @@
     "error": {
       "title": "Erreur",
       "reorder": "Échec de la réorganisation de la tâche."
-    },
-    "dragInstructions": {
-      "state": "Glissez-déposez pour réorganiser les tâches"
     }
   },
   "deleteTrustCenterReferenceDialog": {

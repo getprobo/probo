@@ -713,10 +713,7 @@
   "tasksCard": {
     "states": { "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },
     "filters": { "user": "User", "allUsers": "All users", "internalControl": "Internal control", "allInternalControls": "All internal controls", "searchInternalControls": "Search internal controls", "noInternalControls": "No internal controls" },
-    "error": { "title": "Error", "reorder": "Failed to reorder task." },
-    "dragInstructions": {
-      "state": "Drag and drop to reorder tasks"
-    }
+    "error": { "title": "Error", "reorder": "Failed to reorder task." }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Delete Reference",
