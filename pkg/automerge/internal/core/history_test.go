@@ -21,12 +21,96 @@
 package core
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
+
+func TestApplyChanges_RemovesQueuedDuplicateActorSequence(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fast path", func(t *testing.T) {
+		t.Parallel()
+
+		fixture := queuedDuplicateFixture(t)
+		before := fixture.engine.state.changeCount()
+
+		err := fixture.engine.ApplyChanges([][]byte{fixture.conflicting})
+		require.ErrorContains(
+			t,
+			err,
+			fmt.Sprintf("duplicate actor sequence %d", fixture.sequence),
+		)
+		require.Equal(t, before, fixture.engine.state.changeCount())
+		requireQueued(t, fixture.engine, fixture.unrelated, fixture.orphan)
+		require.NotContains(t, fixture.engine.queuedChanges, fixture.successor)
+	})
+
+	t.Run("pending fallback", func(t *testing.T) {
+		t.Parallel()
+
+		fixture := queuedDuplicateFixture(t)
+		value, err := encodeScalarWire(
+			opset.Scalar{Type: opset.ScalarString, String: "pending"},
+		)
+		require.NoError(t, err)
+		require.NoError(t, fixture.engine.PutScalar(0, "pending", value))
+		require.NotEmpty(t, fixture.engine.pending)
+
+		before := fixture.engine.state.changeCount()
+		err = fixture.engine.ApplyChanges([][]byte{fixture.conflicting})
+		require.ErrorContains(
+			t,
+			err,
+			fmt.Sprintf(
+				"actor sequence is %d, expected %d",
+				fixture.sequence,
+				fixture.sequence+1,
+			),
+		)
+		require.Equal(t, before, fixture.engine.state.changeCount())
+		requireQueued(t, fixture.engine, fixture.unrelated, fixture.orphan)
+		require.NotContains(t, fixture.engine.queuedChanges, fixture.successor)
+		require.NotContains(t, fixture.engine.queuedChanges, fixture.conflict)
+	})
+}
+
+func TestApplyChanges_KeepsQueuedBranchOnSequenceGap(t *testing.T) {
+	t.Parallel()
+
+	t.Run("fast path", func(t *testing.T) {
+		t.Parallel()
+
+		fixture := queuedGapFixture(t)
+		err := fixture.engine.ApplyChanges([][]byte{fixture.gap})
+		require.ErrorContains(t, err, "actor sequence is 4, expected 2")
+		requireQueued(t, fixture.engine, fixture.branch, fixture.later)
+	})
+
+	t.Run("pending fallback", func(t *testing.T) {
+		t.Parallel()
+
+		fixture := queuedGapFixture(t)
+		value, err := encodeScalarWire(
+			opset.Scalar{Type: opset.ScalarString, String: "pending"},
+		)
+		require.NoError(t, err)
+		require.NoError(t, fixture.engine.PutScalar(0, "pending", value))
+		require.NotEmpty(t, fixture.engine.pending)
+
+		err = fixture.engine.ApplyChanges([][]byte{fixture.gap})
+		require.ErrorContains(
+			t,
+			err,
+			"cannot apply merged native change: actor sequence is 4, expected 2",
+		)
+		requireQueued(t, fixture.engine, fixture.branch, fixture.later, fixture.gapHash)
+	})
+}
 
 func TestIsolate_KeepsNextOpAfterRemoteMerge(t *testing.T) {
 	t.Parallel()
@@ -80,6 +164,153 @@ func TestIsolate_KeepsNextOpAfterRemoteMerge(t *testing.T) {
 		require.Greater(t, counter, lastPending)
 		require.Greater(t, counter, fullMax)
 	})
+}
+
+type queuedDuplicate struct {
+	engine      *Engine
+	sequence    uint64
+	orphan      opset.ChangeHash
+	successor   opset.ChangeHash
+	unrelated   opset.ChangeHash
+	conflicting []byte
+	conflict    opset.ChangeHash
+}
+
+func queuedDuplicateFixture(t *testing.T) queuedDuplicate {
+	t.Helper()
+
+	engine, real := committedChange(t)
+	var missing opset.ChangeHash
+	missing[0] = 1
+
+	orphan := real
+	orphan.Message = "orphan"
+	orphan.Dependencies = []opset.ChangeHash{missing}
+	orphan = mustEncodeChange(t, orphan)
+
+	successor := opset.Change{
+		Actor:        real.Actor,
+		Sequence:     real.Sequence + 1,
+		StartOp:      real.MaxOp + 1,
+		MaxOp:        real.MaxOp,
+		Message:      "successor",
+		Dependencies: []opset.ChangeHash{*orphan.Hash},
+	}
+	successor = mustEncodeChange(t, successor)
+
+	other, err := opset.NewActorID([]byte("other"))
+	require.NoError(t, err)
+	unrelated := mustEncodeChange(
+		t,
+		opset.Change{
+			Actor:        other,
+			Sequence:     1,
+			StartOp:      1,
+			MaxOp:        0,
+			Message:      "unrelated",
+			Dependencies: []opset.ChangeHash{missing},
+		},
+	)
+
+	conflicting := real
+	conflicting.Message = "conflict"
+	conflicting = mustEncodeChange(t, conflicting)
+	require.NotEqual(t, *orphan.Hash, *conflicting.Hash)
+
+	require.NoError(
+		t,
+		engine.ApplyChanges([][]byte{orphan.Raw, successor.Raw, unrelated.Raw}),
+	)
+	requireQueued(t, engine, *orphan.Hash, *successor.Hash, *unrelated.Hash)
+
+	return queuedDuplicate{
+		engine:      engine,
+		sequence:    real.Sequence,
+		orphan:      *orphan.Hash,
+		successor:   *successor.Hash,
+		unrelated:   *unrelated.Hash,
+		conflicting: conflicting.Raw,
+		conflict:    *conflicting.Hash,
+	}
+}
+
+type queuedGap struct {
+	engine  *Engine
+	branch  opset.ChangeHash
+	later   opset.ChangeHash
+	gap     []byte
+	gapHash opset.ChangeHash
+}
+
+func queuedGapFixture(t *testing.T) queuedGap {
+	t.Helper()
+
+	engine, real := committedChange(t)
+	var missing opset.ChangeHash
+	missing[0] = 2
+
+	branch := mustEncodeChange(
+		t,
+		opset.Change{
+			Actor:        real.Actor,
+			Sequence:     2,
+			StartOp:      real.MaxOp + 1,
+			MaxOp:        real.MaxOp,
+			Message:      "branch",
+			Dependencies: []opset.ChangeHash{missing},
+		},
+	)
+	later := mustEncodeChange(
+		t,
+		opset.Change{
+			Actor:        real.Actor,
+			Sequence:     5,
+			StartOp:      real.MaxOp + 1,
+			MaxOp:        real.MaxOp,
+			Message:      "later",
+			Dependencies: []opset.ChangeHash{*branch.Hash},
+		},
+	)
+	gap := mustEncodeChange(
+		t,
+		opset.Change{
+			Actor:        real.Actor,
+			Sequence:     4,
+			StartOp:      real.MaxOp + 1,
+			MaxOp:        real.MaxOp,
+			Message:      "gap",
+			Dependencies: []opset.ChangeHash{*real.Hash},
+		},
+	)
+
+	require.NoError(t, engine.ApplyChanges([][]byte{branch.Raw, later.Raw}))
+	requireQueued(t, engine, *branch.Hash, *later.Hash)
+
+	return queuedGap{
+		engine:  engine,
+		branch:  *branch.Hash,
+		later:   *later.Hash,
+		gap:     gap.Raw,
+		gapHash: *gap.Hash,
+	}
+}
+
+func committedChange(t *testing.T) (*Engine, opset.Change) {
+	t.Helper()
+
+	engine, _ := committedScalar(t, "remote", "real")
+	require.NotEmpty(t, engine.appended)
+
+	raw := append([]byte(nil), engine.appended[len(engine.appended)-1]...)
+	document, err := storage.DecodePartial(raw)
+	require.NoError(t, err)
+	require.Len(t, document.Changes, 1)
+	change := document.Changes[0]
+	require.NotNil(t, change.Hash)
+	require.Equal(t, uint64(1), change.Sequence)
+	require.NotZero(t, change.MaxOp)
+
+	return engine, change
 }
 
 func committedScalar(t *testing.T, actor string, key string) (*Engine, [32]byte) {
@@ -150,4 +381,27 @@ func mustScalar(t *testing.T, value string) []byte {
 	require.NoError(t, err)
 
 	return encoded
+}
+
+func mustEncodeChange(t *testing.T, change opset.Change) opset.Change {
+	t.Helper()
+
+	change.Hash = nil
+	change.Raw = nil
+	change.DependencyIndexes = nil
+	_, err := storage.EncodeChange(&change)
+	require.NoError(t, err)
+	require.NotNil(t, change.Hash)
+	require.NotEmpty(t, change.Raw)
+
+	return change
+}
+
+func requireQueued(t *testing.T, engine *Engine, hashes ...opset.ChangeHash) {
+	t.Helper()
+
+	require.Len(t, engine.queuedChanges, len(hashes))
+	for _, hash := range hashes {
+		require.Contains(t, engine.queuedChanges, hash)
+	}
 }

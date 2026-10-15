@@ -528,12 +528,7 @@ func documentChangeByActorSequence(
 func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 	direct, err := b.applyDirectRemoteChanges(changes)
 	if err != nil {
-		var duplicate duplicateActorSequenceError
-		if errors.As(err, &duplicate) {
-			// The conflicting change is rejected, and any queued successor of
-			// that actor sequence can never become valid.
-			b.removeActorBranchFrom(duplicate.actor, duplicate.sequence+1)
-		}
+		b.removeDuplicateActorBranch(err)
 
 		return err
 	}
@@ -579,6 +574,23 @@ func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 			}
 
 			if err := b.state.ApplyChange(change); err != nil {
+				classified := duplicateActorSequenceFromApply(
+					change,
+					b.state.sequenceForActor(change.Actor),
+					err,
+				)
+				b.removeDuplicateActorBranch(classified)
+				// Rust rejects an already-applied sequence before enqueueing it.
+				// Drop this incoming change and keep any older queued change
+				// that already occupied the sequence.
+				if duplicate, ok := errors.AsType[duplicateActorSequenceError](classified); ok &&
+					duplicate.applied {
+					if queued, exists := b.queuedChanges[hash]; exists {
+						b.queuedBytes -= len(queued.Raw)
+						delete(b.queuedChanges, hash)
+					}
+				}
+
 				return fmt.Errorf("cannot apply merged native change: %w", err)
 			}
 
@@ -822,7 +834,7 @@ func validateDirectRemoteQueue(
 		remaining[hash] = change
 	}
 
-	if err := rejectDuplicateActorSequences(queue); err != nil {
+	if err := rejectDuplicateActorSequences(current, queue); err != nil {
 		return nil, err
 	}
 
@@ -868,6 +880,7 @@ func validateDirectRemoteQueue(
 				return nil, duplicateActorSequenceError{
 					actor:    change.Actor,
 					sequence: change.Sequence,
+					applied:  true,
 				}
 			}
 
@@ -914,6 +927,11 @@ func validateDirectRemoteQueue(
 type duplicateActorSequenceError struct {
 	actor    opset.ActorID
 	sequence uint64
+	// applied is set when this sequence is already in the document history.
+	// Rust then drops queued successors (sequence+1) and leaves the queued
+	// change at this sequence. A duplicate that only occupies the queue is
+	// rejected without removing that queued change.
+	applied bool
 }
 
 func (e duplicateActorSequenceError) Error() string {
@@ -921,6 +939,39 @@ func (e duplicateActorSequenceError) Error() string {
 		"cannot validate merged actor sequence: duplicate actor sequence %d",
 		e.sequence,
 	)
+}
+
+func (b *Engine) removeDuplicateActorBranch(err error) {
+	duplicate, ok := errors.AsType[duplicateActorSequenceError](err)
+	if !ok || !duplicate.applied {
+		return
+	}
+
+	b.removeActorBranchFrom(duplicate.actor, duplicate.sequence+1)
+}
+
+func duplicateActorSequenceFromApply(
+	change *opset.Change,
+	current uint64,
+	err error,
+) error {
+	if err == nil || change.Sequence > current {
+		return err
+	}
+
+	if err.Error() != fmt.Sprintf(
+		"actor sequence is %d, expected %d",
+		change.Sequence,
+		current+1,
+	) {
+		return err
+	}
+
+	return duplicateActorSequenceError{
+		actor:    change.Actor,
+		sequence: change.Sequence,
+		applied:  true,
+	}
 }
 
 // removeActorBranchFrom drops queued changes at or after an incompatible actor
@@ -974,6 +1025,7 @@ func (b *Engine) removeActorBranchFrom(actor opset.ActorID, sequence uint64) {
 // the same actor sequence. A queued orphan occupies its sequence even when its
 // causal dependency is still missing, matching Automerge's DuplicateSeqNumber.
 func rejectDuplicateActorSequences(
+	current *State,
 	queue map[opset.ChangeHash]*opset.Change,
 ) error {
 	type actorSequence struct {
@@ -986,10 +1038,11 @@ func rejectDuplicateActorSequences(
 		key := actorSequence{actor: change.Actor, sequence: change.Sequence}
 		previous, ok := seen[key]
 		if ok && previous != hash {
-			return fmt.Errorf(
-				"cannot validate merged actor sequence: duplicate actor sequence %d",
-				change.Sequence,
-			)
+			return duplicateActorSequenceError{
+				actor:    change.Actor,
+				sequence: change.Sequence,
+				applied:  current.sequenceForActor(change.Actor) >= change.Sequence,
+			}
 		}
 
 		seen[key] = hash
