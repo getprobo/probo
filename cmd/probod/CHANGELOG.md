@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.314.0] - 2026-10-15
+
+### Added
+
+- Device postures can be downloaded as a PDF snapshot, one page per
+  device, from the console and MCP. Employees cannot download it
+- Device list filters (owner search, state, platform, agent version)
+  apply to the whole list, including the total and later pages
+- Several devices can be revoked or deleted in a single all-or-nothing
+  call (`revokeDevices`, `deleteDevices`)
+
+### Changed
+
+- Device pages use the v2 kit. Rows show the owner and a posture
+  summary, and the list loads 25 devices at a time with the total
+- MCP `Device` has a required `postures_included` field, so an empty
+  `latest_postures` is no longer read as "no checks"
+
 ## [0.313.0] - 2026-10-15
 
 ### Added
