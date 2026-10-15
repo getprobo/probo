@@ -76,7 +76,7 @@ func assembleChunk(kind opset.ChunkType, body []byte) []byte {
 // because the decoder inflates any column whose specification carries the
 // compressed bit.
 func EncodeDocument(document *opset.Document, order []opset.OpID, compress bool) ([]byte, error) {
-	return encodeDocument(document, order, nil, compress, true)
+	return encodeDocument(document, order, nil, compress)
 }
 
 func EncodePreparedDocument(
@@ -84,18 +84,7 @@ func EncodePreparedDocument(
 	operations []opset.Operation,
 	compress bool,
 ) ([]byte, error) {
-	return encodeDocument(document, nil, operations, compress, true)
-}
-
-// EncodeTrustedPreparedDocument serializes state whose snapshot-domain
-// invariants were checked when changes entered the engine. It avoids rescanning
-// the complete operation set on every save.
-func EncodeTrustedPreparedDocument(
-	document *opset.Document,
-	operations []opset.Operation,
-	compress bool,
-) ([]byte, error) {
-	return encodeDocument(document, nil, operations, compress, false)
+	return encodeDocument(document, nil, operations, compress)
 }
 
 func encodeDocument(
@@ -103,10 +92,13 @@ func encodeDocument(
 	order []opset.OpID,
 	preparedOperations []opset.Operation,
 	compress bool,
-	validate bool,
 ) ([]byte, error) {
-	if validate {
-		if err := validateSnapshotEncodeDomain(document); err != nil {
+	if err := validateSnapshotEncodeDomain(document); err != nil {
+		return nil, err
+	}
+
+	if preparedOperations != nil {
+		if err := validatePreparedOperations(preparedOperations); err != nil {
 			return nil, err
 		}
 	}
@@ -268,6 +260,50 @@ func validateSnapshotEncodeDomain(document *opset.Document) error {
 						predecessor.Counter,
 					)
 				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// Prepared rows skip the change-set scan, so their counters are checked here.
+func validatePreparedOperations(operations []opset.Operation) error {
+	for i, operation := range operations {
+		if operation.ID.Counter > math.MaxUint32 {
+			return fmt.Errorf(
+				"prepared operation %d counter %d exceeds snapshot uint32 domain",
+				i,
+				operation.ID.Counter,
+			)
+		}
+
+		if !operation.Object.IsRoot &&
+			operation.Object.OpID.Counter > math.MaxUint32 {
+			return fmt.Errorf(
+				"prepared operation %d object counter %d exceeds snapshot uint32 domain",
+				i,
+				operation.Object.OpID.Counter,
+			)
+		}
+
+		if operation.Key.Element != nil &&
+			operation.Key.Element.Counter > math.MaxUint32 {
+			return fmt.Errorf(
+				"prepared operation %d key counter %d exceeds snapshot uint32 domain",
+				i,
+				operation.Key.Element.Counter,
+			)
+		}
+
+		for j, successor := range operation.Successors {
+			if successor.Counter > math.MaxUint32 {
+				return fmt.Errorf(
+					"prepared operation %d successor %d counter %d exceeds snapshot uint32 domain",
+					i,
+					j,
+					successor.Counter,
+				)
 			}
 		}
 	}

@@ -139,6 +139,98 @@ func TestEncodeDocument_RejectsDependencyCycle(t *testing.T) {
 	assert.ErrorContains(t, err, "cycle")
 }
 
+func operationWithinSnapshotDomain(actor opset.ActorID) opset.Operation {
+	element := opset.OpID{Actor: actor, Counter: 1}
+
+	return opset.Operation{
+		ID:     opset.OpID{Actor: actor, Counter: 2},
+		Object: opset.ObjectID{OpID: element},
+		Key:    opset.Key{Element: &element},
+		Insert: true,
+		Action: opset.ActionSet,
+		Value:  &opset.Scalar{Type: opset.ScalarString, String: "value"},
+		Successors: []opset.OpID{{
+			Actor:   actor,
+			Counter: 3,
+		}},
+	}
+}
+
+func TestEncodePreparedDocument_RejectsCounterOutsideUint32Domain(t *testing.T) {
+	t.Parallel()
+
+	actor, err := opset.NewActorID([]byte{1})
+	require.NoError(t, err)
+
+	hash := opset.ChangeHash{1}
+	document := &opset.Document{
+		Changes: []opset.Change{{
+			Hash:     &hash,
+			Actor:    actor,
+			Sequence: 1,
+			MaxOp:    1,
+		}},
+	}
+
+	_, err = EncodePreparedDocument(
+		document,
+		[]opset.Operation{operationWithinSnapshotDomain(actor)},
+		false,
+	)
+	require.NoError(t, err)
+
+	overflow := uint64(math.MaxUint32) + 1
+	tests := []struct {
+		name   string
+		mutate func(*opset.Operation)
+	}{
+		{
+			name: "operation counter",
+			mutate: func(operation *opset.Operation) {
+				operation.ID.Counter = overflow
+			},
+		},
+		{
+			name: "object counter",
+			mutate: func(operation *opset.Operation) {
+				operation.Object.OpID.Counter = overflow
+			},
+		},
+		{
+			name: "key counter",
+			mutate: func(operation *opset.Operation) {
+				operation.Key.Element.Counter = overflow
+			},
+		},
+		{
+			name: "successor counter",
+			mutate: func(operation *opset.Operation) {
+				operation.Successors[0].Counter = overflow
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(
+			test.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				operation := operationWithinSnapshotDomain(actor)
+				test.mutate(&operation)
+
+				_, err := EncodePreparedDocument(
+					document,
+					[]opset.Operation{operation},
+					false,
+				)
+				require.Error(t, err)
+				assert.ErrorContains(t, err, "uint32")
+			},
+		)
+	}
+}
+
 func TestEncodeDocument_RejectsValuesOutsideUint32Domain(t *testing.T) {
 	t.Parallel()
 
