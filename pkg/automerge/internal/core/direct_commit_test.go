@@ -182,6 +182,39 @@ func TestDirectCommit_PartialMapIndexRetainsCanonicalRows(t *testing.T) {
 	requireColumnarStateEquivalent(t, engine)
 }
 
+func TestDirectCommit_MapOverwritePublishesColumnSuccessors(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, engine.PutString(0, "key", "one"))
+	_, err = engine.Commit("one", time.Time{})
+	require.NoError(t, err)
+	require.NoError(t, engine.PutString(0, "key", "two"))
+	_, err = engine.Commit("two", time.Time{})
+	require.NoError(t, err)
+
+	var superseded *opset.Operation
+	for i := range engine.columns.operations {
+		operation := &engine.columns.operations[i]
+		if operation.Key.Property == nil || *operation.Key.Property != "key" {
+			continue
+		}
+
+		if len(operation.Successors) == 0 {
+			continue
+		}
+
+		superseded = operation
+		break
+	}
+
+	require.NotNil(t, superseded)
+	require.Len(t, superseded.Successors, 1)
+	assert.Equal(t, engine.state.successorIndex[superseded.ID], superseded.Successors)
+	requireColumnarStateEquivalent(t, engine)
+}
+
 func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
 	engine, first := isolationFixture(t)
 	require.NoError(t, engine.Isolate([][32]byte{first}))

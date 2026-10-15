@@ -38,27 +38,19 @@ var errDirectColumnsUnsupported = errors.New(
 
 const directTextWireRunGap = 32
 
-type (
-	// columnMutationBatch is a transaction prepared from the pending semantic
-	// overlay. It owns every mutable value needed to advance canonical columns,
-	// so applying it cannot partially publish a new history.
-	columnMutationBatch struct {
-		appendedChanges  []opset.Change
-		operationSplices []storage.SnapshotOperationSplice
-		successorPatches []columnSuccessorPatch
-		actors           []opset.ActorID
-		heads            []opset.ChangeHash
-		headIndexes      []uint64
-		dependencyRows   map[opset.ChangeHash]uint64
-		touchedObjects   map[opset.ObjectID][]opset.Operation
-		reuseOperations  bool
-	}
-
-	columnSuccessorPatch struct {
-		identifier opset.OpID
-		successors []opset.OpID
-	}
-)
+// columnMutationBatch is a transaction prepared from the pending semantic
+// overlay. It owns every mutable value needed to advance canonical columns,
+// so applying it cannot partially publish a new history.
+type columnMutationBatch struct {
+	appendedChanges  []opset.Change
+	operationSplices []storage.SnapshotOperationSplice
+	actors           []opset.ActorID
+	heads            []opset.ChangeHash
+	headIndexes      []uint64
+	dependencyRows   map[opset.ChangeHash]uint64
+	touchedObjects   map[opset.ObjectID][]opset.Operation
+	reuseOperations  bool
+}
 
 func newColumnMutationBatch(
 	columns *columnarState,
@@ -216,21 +208,6 @@ func newColumnMutationBatch(
 		}
 		if splice.DeleteCount > 0 || len(splice.Operations) > 0 {
 			batch.operationSplices = append(batch.operationSplices, splice)
-		}
-
-		for i := prefix; i < len(current)-suffix; i++ {
-			if i < len(replacement) && current[i].ID == replacement[i].ID {
-				batch.successorPatches = append(
-					batch.successorPatches,
-					columnSuccessorPatch{
-						identifier: replacement[i].ID,
-						successors: append(
-							[]opset.OpID(nil),
-							replacement[i].Successors...,
-						),
-					},
-				)
-			}
 		}
 	}
 
