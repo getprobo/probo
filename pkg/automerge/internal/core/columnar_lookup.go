@@ -55,28 +55,18 @@ func (c *columnarState) operation(
 	}
 
 	row, ok := c.operationRows.lookup(identifier)
-	if !ok || row < 0 || row >= len(c.operations) {
-		for _, operation := range c.operations {
-			if operation.ID == identifier {
-				return operation, true
-			}
+	if ok && row >= 0 && row < len(c.operations) {
+		operation := c.operations[row]
+		if operation.ID == identifier {
+			return operation, true
 		}
-
-		return opset.Operation{}, false
 	}
 
-	operation := c.operations[row]
-	if operation.ID != identifier {
-		for _, candidate := range c.operations {
-			if candidate.ID == identifier {
-				return candidate, true
-			}
-		}
-
-		return opset.Operation{}, false
+	if operation, ok := c.nonCanonicalOperations[identifier]; ok {
+		return operation, true
 	}
 
-	return operation, true
+	return opset.Operation{}, false
 }
 
 func (c *columnarState) change(
@@ -94,69 +84,27 @@ func (c *columnarState) change(
 	return &c.changes[row], true
 }
 
-func (c *columnarState) currentHeads() []opset.ChangeHash {
-	if c == nil {
-		return nil
-	}
-
-	return append([]opset.ChangeHash(nil), c.heads...)
-}
-
-// attachCanonical makes columns the committed authority and reduces the
-// operation/change maps to rows not represented by the canonical snapshot
-// (principally pending operations, deletes, and retained orphan data).
+// attachCanonical publishes columns as the complete committed authority. Any
+// staged change and operation rows have just been incorporated, so only a later
+// open transaction may repopulate the overlays.
 func (s *State) attachCanonical(columns *columnarState) {
-	if columns == nil ||
-		columns.snapshot == nil ||
-		columns.columnsDirty ||
-		s.columns == columns {
-		return
-	}
-
-	retainedOperationIDs := make(map[opset.OpID]struct{})
-
-	for hash, change := range s.changes {
-		if _, canonical := columns.change(hash); canonical {
-			continue
-		}
-
-		for _, operation := range change.Operations {
-			retainedOperationIDs[operation.ID] = struct{}{}
-		}
-	}
-
-	operations := make(map[opset.OpID]opset.Operation, len(retainedOperationIDs))
-	for identifier := range retainedOperationIDs {
-		if operation, ok := s.operations[identifier]; ok {
-			operations[identifier] = operation
-		}
-	}
-
-	changes := make(map[opset.ChangeHash]*opset.Change)
-	for hash, change := range s.changes {
-		if _, canonical := columns.change(hash); canonical {
-			metadata := *change
-			metadata.Operations = nil
-			metadata.Raw = nil
-			changes[hash] = &metadata
-		} else {
-			changes[hash] = change
-		}
+	if columns == nil || columns.snapshot == nil || columns.columnsDirty {
+		panic("cannot attach incomplete canonical columns")
 	}
 
 	s.columns = columns
-	s.operations = operations
-	s.changes = changes
+	clear(s.operations)
+	clear(s.changes)
 	clear(s.heads)
 	clear(s.removedHeads)
 }
 
 func (s *State) operation(identifier opset.OpID) (opset.Operation, bool) {
-	if operation, ok := s.columns.operation(identifier); ok {
+	if operation, ok := s.operations[identifier]; ok {
 		return operation, true
 	}
 
-	if operation, ok := s.operations[identifier]; ok {
+	if operation, ok := s.columns.operation(identifier); ok {
 		return operation, true
 	}
 
@@ -169,35 +117,41 @@ func (s *State) hasOperationID(identifier opset.OpID) bool {
 }
 
 func (s *State) eachOperation(yield func(opset.Operation) bool) {
+	for _, operation := range s.operations {
+		if !yield(operation) {
+			return
+		}
+	}
+
 	if s.columns != nil {
 		for _, operation := range s.columns.operations {
+			if _, overlaid := s.operations[operation.ID]; overlaid {
+				continue
+			}
+
+			if !yield(operation) {
+				return
+			}
+		}
+
+		for identifier, operation := range s.columns.nonCanonicalOperations {
+			if _, overlaid := s.operations[identifier]; overlaid {
+				continue
+			}
+
 			if !yield(operation) {
 				return
 			}
 		}
 	}
-
-	for _, operation := range s.operations {
-		if _, canonical := s.columns.operation(operation.ID); canonical {
-			continue
-		}
-
-		if !yield(operation) {
-			return
-		}
-	}
 }
 
 func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {
-	if change, ok := s.columns.change(hash); ok {
-		if _, retained := s.changes[hash]; !retained {
-			return nil, false
-		}
-
+	if change, ok := s.changes[hash]; ok {
 		return change, true
 	}
 
-	if change, ok := s.changes[hash]; ok {
+	if change, ok := s.columns.change(hash); ok {
 		return change, true
 	}
 
@@ -205,6 +159,12 @@ func (s *State) change(hash opset.ChangeHash) (*opset.Change, bool) {
 }
 
 func (s *State) eachChange(yield func(opset.ChangeHash, *opset.Change) bool) {
+	for hash, change := range s.changes {
+		if !yield(hash, change) {
+			return
+		}
+	}
+
 	if s.columns != nil {
 		for i := range s.columns.changes {
 			change := &s.columns.changes[i]
@@ -212,23 +172,13 @@ func (s *State) eachChange(yield func(opset.ChangeHash, *opset.Change) bool) {
 				continue
 			}
 
-			if _, retained := s.changes[*change.Hash]; !retained {
+			if _, overlaid := s.changes[*change.Hash]; overlaid {
 				continue
 			}
 
 			if !yield(*change.Hash, change) {
 				return
 			}
-		}
-	}
-
-	for hash, change := range s.changes {
-		if _, canonical := s.columns.change(hash); canonical {
-			continue
-		}
-
-		if !yield(hash, change) {
-			return
 		}
 	}
 }
@@ -238,94 +188,32 @@ func (s *State) operationCount() int {
 }
 
 func (s *State) changeCount() int {
-	count := 0
-
-	if s.columns != nil {
-		for i := range s.columns.changes {
-			hash := s.columns.changes[i].Hash
-			if hash != nil {
-				if _, retained := s.changes[*hash]; retained {
-					count++
-				}
-			}
+	count := len(s.changes)
+	for hash := range s.changes {
+		if _, canonical := s.columns.change(hash); canonical {
+			count--
 		}
 	}
 
-	for hash := range s.changes {
-		if _, canonical := s.columns.change(hash); !canonical {
-			count++
-		}
+	if s.columns != nil {
+		count += len(s.columns.changes)
 	}
 
 	return count
 }
 
-func (b *Engine) bindColumnarState() {
-	if b == nil ||
-		b.isolationActive ||
-		b.columns == nil ||
-		b.columns.snapshot == nil ||
-		b.columns.columnsDirty {
-		return
-	}
-
-	b.state.attachCanonical(b.columns)
-}
-
-// lookupOperation overlays uncommitted rows on the canonical columnar OpSet.
-// Historical isolation retains the row-state lookup until frontier-filtered
-// columnar views replace fullState.
 func (b *Engine) lookupOperation(
 	identifier opset.OpID,
 ) (opset.Operation, bool) {
-	b.bindColumnarState()
-
-	if operation, ok := b.state.operations[identifier]; ok {
-		return operation, true
-	}
-
-	if b.isolationActive {
-		operation, ok := b.state.operation(identifier)
-		return operation, ok
-	}
-
-	if operation, ok := b.columns.operation(identifier); ok {
-		return operation, true
-	}
-
-	// Partial/orphan streams can retain semantic rows that have no canonical
-	// operation row. Keep them readable until the columnar load view represents
-	// retained orphan operations directly.
-	operation, ok := b.state.operation(identifier)
-
-	return operation, ok
+	return b.state.operation(identifier)
 }
 
 func (b *Engine) lookupChange(
 	hash opset.ChangeHash,
 ) (*opset.Change, bool) {
-	b.bindColumnarState()
-
-	if b.isolationActive {
-		change, ok := b.state.change(hash)
-		return change, ok
-	}
-
-	if change, ok := b.columns.change(hash); ok {
-		return change, true
-	}
-
-	change, ok := b.state.change(hash)
-
-	return change, ok
+	return b.state.change(hash)
 }
 
 func (b *Engine) currentHeads() []opset.ChangeHash {
-	b.bindColumnarState()
-
-	if b.isolationActive {
-		return b.state.Heads()
-	}
-
-	return b.columns.currentHeads()
+	return b.state.Heads()
 }

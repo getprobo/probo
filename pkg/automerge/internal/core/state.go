@@ -34,25 +34,26 @@ import (
 type (
 	State struct {
 		// columns is authoritative for committed operations, changes, and heads
-		// in Engine-managed states. The maps below are a pending/applied overlay
-		// while a transaction is open or columns are being reconciled. Standalone
-		// State values retain the maps as their complete fallback authority.
+		// in Engine-managed states. The maps below stage an open local or remote
+		// mutation and are cleared atomically when columns are published.
+		// Standalone State values retain the maps as their complete authority for
+		// decoding, rescue, and low-level tests.
 		columns       *columnarState
 		changes       map[opset.ChangeHash]*opset.Change
 		actorSequence map[opset.ActorID]uint64
 		operations    map[opset.OpID]opset.Operation
-		operationIDs  map[opset.OpID]struct{}
-		superseded    map[opset.OpID]struct{}
-		heads         map[opset.ChangeHash]struct{}
-		removedHeads  map[opset.ChangeHash]struct{}
-		sequenceCache map[opset.OpID][]opset.Operation
+		// operationIDs is a semantic membership/indexing cache spanning columns
+		// and the overlay. It is not operation storage.
+		operationIDs map[opset.OpID]struct{}
+		superseded   map[opset.OpID]struct{}
+		heads        map[opset.ChangeHash]struct{}
+		removedHeads map[opset.ChangeHash]struct{}
 
 		// sequenceIndexes are built lazily per object. Their immutable chunks
 		// carry RGA positions, visible winners, and UTF-16 prefix widths; local
 		// edits replace only touched chunks, while unsafe merged changes and
 		// rollbacks discard the object entry for a full rebuild.
 		sequenceIndexes map[opset.OpID]*sequenceIndex
-		sequenceRescue  map[opset.OpID]bool
 
 		// insertOrderCache holds, per sequence object, the RGA-ordered list of
 		// insertion operation IDs (including tombstones and marks). The
@@ -62,18 +63,7 @@ type (
 		// and rollbacks invalidate the entry so it is rebuilt lazily.
 		insertOrderCache map[opset.OpID][]opset.OpID
 
-		// sequenceValuesCache and sequenceElementsCache are compatibility
-		// projections for callers that still need flat slices. Mutations discard
-		// them while preserving the localized chunked index.
-		sequenceValuesCache   map[opset.OpID][]sequenceValue
-		sequenceElementsCache map[opset.OpID][]opset.Operation
-
-		// sequenceOffsetCache holds the cumulative UTF-16 width before each
-		// element of sequenceElementsCache (with a trailing total), so a text
-		// index resolves to an element by binary search instead of a linear
-		// walk. It is kept in step with the elements cache and guarded by length.
-		sequenceOffsetCache map[opset.OpID][]uint32
-		sequenceTailCache   map[opset.OpID]sequenceTail
+		sequenceTailCache map[opset.OpID]sequenceTail
 
 		// insertOrderPositionCache maps each insert-order operation to its index,
 		// so an insertion anchor resolves in constant time instead of scanning
@@ -115,13 +105,8 @@ func NewState() *State {
 		superseded:               make(map[opset.OpID]struct{}),
 		heads:                    make(map[opset.ChangeHash]struct{}),
 		removedHeads:             make(map[opset.ChangeHash]struct{}),
-		sequenceCache:            make(map[opset.OpID][]opset.Operation),
 		sequenceIndexes:          make(map[opset.OpID]*sequenceIndex),
-		sequenceRescue:           make(map[opset.OpID]bool),
 		insertOrderCache:         make(map[opset.OpID][]opset.OpID),
-		sequenceValuesCache:      make(map[opset.OpID][]sequenceValue),
-		sequenceElementsCache:    make(map[opset.OpID][]opset.Operation),
-		sequenceOffsetCache:      make(map[opset.OpID][]uint32),
 		sequenceTailCache:        make(map[opset.OpID]sequenceTail),
 		insertOrderPositionCache: make(map[opset.OpID]map[opset.OpID]int),
 		mapKeyIndex:              make(map[opset.ObjectID]map[string][]opset.OpID),
@@ -151,6 +136,9 @@ func newStateFromDocument(
 	for i := range document.Changes {
 		operationCount += len(document.Changes[i].Operations)
 	}
+
+	runtimeMetrics.semanticChangeRows.Add(uint64(len(document.Changes)))
+	runtimeMetrics.semanticOperationRows.Add(uint64(operationCount))
 
 	state.operations = make(map[opset.OpID]opset.Operation, operationCount)
 	state.changes = make(map[opset.ChangeHash]*opset.Change, len(document.Changes))
@@ -343,10 +331,6 @@ func (s *State) ApplyChange(change *opset.Change) error {
 
 		s.operationIDs[operation.ID] = struct{}{}
 		if !operation.Object.IsRoot {
-			delete(s.sequenceCache, operation.Object.OpID)
-			delete(s.sequenceValuesCache, operation.Object.OpID)
-			delete(s.sequenceElementsCache, operation.Object.OpID)
-			delete(s.sequenceOffsetCache, operation.Object.OpID)
 			delete(s.sequenceTailCache, operation.Object.OpID)
 
 			if operation.Insert {
@@ -362,20 +346,12 @@ func (s *State) ApplyChange(change *opset.Change) error {
 		s.updateSequenceIndex(operation, false)
 	}
 
-	s.changes[*change.Hash] = change
-	s.indexActorChange(change.Actor, change.Sequence, *change.Hash)
+	s.recordAppliedChange(change)
 
-	s.actorSequence[change.Actor] = change.Sequence
-	for _, dependency := range change.Dependencies {
-		delete(s.heads, dependency)
-
-		if s.columns != nil {
-			s.removedHeads[dependency] = struct{}{}
-		}
+	if s.columns == nil {
+		runtimeMetrics.semanticChangeRows.Add(1)
+		runtimeMetrics.semanticOperationRows.Add(uint64(len(change.Operations)))
 	}
-
-	delete(s.removedHeads, *change.Hash)
-	s.heads[*change.Hash] = struct{}{}
 
 	return nil
 }
@@ -458,15 +434,16 @@ func (s *State) Text(property string) (string, error) {
 		return "", fmt.Errorf("text property %q does not exist", property)
 	}
 
-	sequence := s.sequence(objectOperation.ID)
-
 	var output strings.Builder
 
-	for _, operation := range sequence {
+	s.sequenceIndex(objectOperation.ID).eachValue(func(value sequenceValue) bool {
+		operation := value.Operation
 		if operation.Value != nil && operation.Value.Type == opset.ScalarString {
 			output.WriteString(operation.Value.String)
 		}
-	}
+
+		return true
+	})
 
 	return output.String(), nil
 }
@@ -749,7 +726,6 @@ func (s *State) applyPending(operations []opset.Operation) error {
 
 		s.operationIDs[operation.ID] = struct{}{}
 		if !operation.Object.IsRoot {
-			delete(s.sequenceCache, operation.Object.OpID)
 			delete(s.sequenceTailCache, operation.Object.OpID)
 		}
 
@@ -846,13 +822,9 @@ func (s *State) invalidateObjectCaches(object opset.ObjectID) {
 		return
 	}
 
-	delete(s.sequenceCache, object.OpID)
 	delete(s.sequenceIndexes, object.OpID)
 	delete(s.insertOrderCache, object.OpID)
 	delete(s.insertOrderPositionCache, object.OpID)
-	delete(s.sequenceValuesCache, object.OpID)
-	delete(s.sequenceElementsCache, object.OpID)
-	delete(s.sequenceOffsetCache, object.OpID)
 	delete(s.sequenceTailCache, object.OpID)
 }
 
@@ -1078,16 +1050,12 @@ func (s *State) changesSince(heads []opset.ChangeHash) ([]*opset.Change, bool) {
 
 func (s *State) allChanges() ([]*opset.Change, bool) {
 	changeCount := s.changeCount()
-	if s.columns != nil && len(s.columns.changes) == changeCount {
+	if s.columns != nil && len(s.changes) == 0 {
 		ordered := make([]*opset.Change, 0, changeCount)
 
 		for i := range s.columns.changes {
 			change := &s.columns.changes[i]
 			if change.Hash == nil {
-				return nil, false
-			}
-
-			if _, retained := s.changes[*change.Hash]; !retained {
 				return nil, false
 			}
 

@@ -130,11 +130,16 @@ func (b *Engine) ApplyChanges(
 	// Bulk changes received while isolated advance the retained full history,
 	// exactly like Merge, without changing the pinned query view.
 	if b.isolationActive && b.fullState != nil {
-		b.state, b.fullState = b.fullState, b.state
+		pinned := b.state
+		b.state = b.fullState
+		b.fullState = nil
+		b.isolationActive = false
 
 		defer func() {
-			b.state, b.fullState = b.fullState, b.state
-			b.nextOp = b.fullState.maxOpGlobal() + 1
+			b.fullState = b.state
+			b.state = pinned
+			b.isolationActive = true
+			b.nextOp = b.state.maxOpGlobal() + 1
 		}()
 	}
 
@@ -275,11 +280,16 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 	// While isolated, merged changes belong to the full history rather than the
 	// pinned view, so operate on the full state and keep the pinned view intact.
 	if b.isolationActive && b.fullState != nil {
-		b.state, b.fullState = b.fullState, b.state
+		pinned := b.state
+		b.state = b.fullState
+		b.fullState = nil
+		b.isolationActive = false
 
 		defer func() {
-			b.state, b.fullState = b.fullState, b.state
-			b.nextOp = b.fullState.maxOpGlobal() + 1
+			b.fullState = b.state
+			b.state = pinned
+			b.isolationActive = true
+			b.nextOp = b.state.maxOpGlobal() + 1
 		}()
 	}
 
@@ -298,9 +308,6 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 			return nil, fmt.Errorf("cannot initialize merged native state: %w", err)
 		}
 
-		b.state = state
-		b.nextOp = state.maxOpGlobal() + 1
-
 		columns, err := newColumnarState(document)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -308,8 +315,20 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 				err,
 			)
 		}
+		if columns.snapshot == nil || columns.columnsDirty {
+			columns, err = newColumnarStateFromState(state)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot rebuild merged document columns: %w",
+					err,
+				)
+			}
+		}
 
+		state.attachCanonical(columns)
+		b.state = state
 		b.columns = columns
+		b.nextOp = state.maxOpGlobal() + 1
 		b.unknownColumns = cloneRawColumns(document.UnknownColumns)
 
 		b.base = append([]byte(nil), data...)
@@ -472,21 +491,20 @@ func (b *Engine) mergeDocumentSnapshot(
 		appended = append(appended, append([]byte(nil), change.Raw...))
 	}
 
-	b.state = state
+	columns, err := newColumnarStateFromState(state)
+	if err != nil {
+		return fmt.Errorf("cannot rebuild merged document columns: %w", err)
+	}
 
+	state.attachCanonical(columns)
+	b.state = state
+	b.columns = columns
 	b.base = append([]byte(nil), data...)
 	b.appended = appended
 	b.saveCursor = 0
 	b.queuedChanges = make(map[opset.ChangeHash]*opset.Change)
 	b.queuedBytes = 0
 	b.nextOp = state.maxOpGlobal() + 1
-
-	columns, err := newColumnarStateFromState(state)
-	if err != nil {
-		return fmt.Errorf("cannot rebuild merged document columns: %w", err)
-	}
-
-	b.columns = columns
 
 	return nil
 }
@@ -713,7 +731,10 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 			return true, fmt.Errorf("cannot plan direct remote columns: %w", err)
 		}
 
-		batch.reuseOperations = directSequence
+		// Snapshot splicing completes before semantic publication. Once it
+		// succeeds, no recoverable step remains, so an unshared operation view
+		// can use its prepared capacity for every direct remote shape.
+		batch.reuseOperations = true
 
 		if b.directColumnFailure != nil {
 			if err := b.directColumnFailure(); err != nil {
@@ -728,17 +749,7 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 			}
 		}
 
-		nextColumns, err = batch.apply(b.columns)
-		if err != nil {
-			if preApplied {
-				b.restoreDirectRemoteState()
-			}
-
-			return false, nil
-		}
-
 		if !preApplied {
-			current.directRemoteSequence = directSequence
 			for _, change := range applied {
 				if err := current.ApplyChange(change); err != nil {
 					panic(fmt.Sprintf(
@@ -748,7 +759,16 @@ func (b *Engine) applyDirectRemoteChanges(changes []opset.Change) (bool, error) 
 				}
 			}
 
-			current.directRemoteSequence = false
+			preApplied = true
+		}
+
+		nextColumns, err = batch.apply(b.columns)
+		if err != nil {
+			if preApplied {
+				b.restoreDirectRemoteState()
+			}
+
+			return false, nil
 		}
 
 		current.attachCanonical(nextColumns)

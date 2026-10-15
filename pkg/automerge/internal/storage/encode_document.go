@@ -51,8 +51,10 @@ func assembleChunk(kind opset.ChunkType, body []byte) []byte {
 	return chunk
 }
 
-// EncodeDocument serializes a whole history as one compacted document chunk,
-// the form Rust and JavaScript write from save().
+// EncodeDocument is the test/reference byte oracle for serializing a whole
+// history as one compacted document chunk, the form Rust and JavaScript write
+// from save(). Production engines publish their maintained canonical columns
+// instead of rebuilding a document through this function.
 //
 // A document chunk is not a concatenation of changes. It stores the operation
 // set once, in operation-set order rather than per change, and reduces each

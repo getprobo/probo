@@ -651,16 +651,11 @@ func (b *Engine) Length(object uint32) (uint64, error) {
 		return 0, fmt.Errorf("object does not have a length")
 	}
 
-	sequence := b.state.sequenceValues(objectID.OpID)
+	sequence := b.state.sequenceIndex(objectID.OpID)
 
 	if operation.Action == opset.ActionMakeText {
-		total := uint64(0)
-		for _, value := range sequence {
-			total += sequenceValueUTF16Width(value)
-		}
-
-		return total, nil
+		return sequence.totalUTF16Width(), nil
 	}
 
-	return uint64(len(sequence)), nil
+	return uint64(sequence.visibleCount), nil
 }

@@ -92,48 +92,13 @@ func (s *State) finalizeSequenceTails(order []opset.OpID) {
 }
 
 func (s *State) sequence(object opset.OpID) []opset.Operation {
-	if cached, ok := s.sequenceCache[object]; ok {
-		return cached
-	}
-
-	operations := s.sequenceElements(object)
-
-	result := operations[:0]
-	for _, operation := range operations {
-		if operation.Action == opset.ActionSet {
-			result = append(result, operation)
+	values := s.sequenceIndex(object).values()
+	operations := make([]opset.Operation, 0, len(values))
+	for _, value := range values {
+		if value.Operation.Action == opset.ActionSet {
+			operations = append(operations, value.Operation)
 		}
 	}
-
-	s.sequenceCache[object] = result
-
-	return result
-}
-
-func (s *State) setSequenceCache(object opset.OpID, operations []opset.Operation) {
-	s.sequenceCache[object] = operations
-}
-
-func (s *State) sequenceElements(object opset.OpID) []opset.Operation {
-	if cached, ok := s.sequenceElementsCache[object]; ok {
-		return cached
-	}
-
-	order := s.insertOrder(object)
-
-	operations := make([]opset.Operation, 0, len(order))
-	for _, identifier := range order {
-		if s.isSuperseded(identifier) {
-			continue
-		}
-
-		if operation, ok := s.operation(identifier); ok &&
-			operation.Action != opset.ActionMark {
-			operations = append(operations, operation)
-		}
-	}
-
-	s.sequenceElementsCache[object] = operations
 
 	return operations
 }
@@ -150,15 +115,15 @@ func (s *State) sequenceIndex(object opset.OpID) *sequenceIndex {
 }
 
 func (s *State) sequenceAll(object opset.OpID) []opset.Operation {
-	order := s.insertOrder(object)
-
-	operations := make([]opset.Operation, 0, len(order))
-
-	for _, id := range order {
-		if operation, ok := s.operation(id); ok && operation.Action != opset.ActionMark {
+	index := s.sequenceIndex(object)
+	operations := make([]opset.Operation, 0, len(index.positions)-index.markCount)
+	index.eachRaw(0, func(entry sequenceIndexEntry) bool {
+		if operation, ok := s.operation(entry.insertion); ok && !entry.mark {
 			operations = append(operations, operation)
 		}
-	}
+
+		return true
+	})
 
 	return operations
 }
@@ -293,53 +258,7 @@ func (s *State) spliceInsertOrder(operation opset.Operation) {
 }
 
 func (s *State) sequenceValues(object opset.OpID) []sequenceValue {
-	if cached, ok := s.sequenceValuesCache[object]; ok {
-		return cached
-	}
-
-	if creator, ok := s.operation(object); ok &&
-		creator.Action != opset.ActionMakeText {
-		insertions := s.sequenceAll(object)
-
-		values := make([]sequenceValue, 0, len(insertions))
-		for _, insertion := range insertions {
-			if winner, visible := s.sequenceElementWinner(insertion); visible {
-				values = append(values, sequenceValue{
-					Element:   insertion.ID,
-					Operation: winner,
-				})
-			}
-		}
-
-		s.sequenceValuesCache[object] = values
-
-		return values
-	}
-
-	values := s.sequenceIndex(object).values()
-
-	s.sequenceValuesCache[object] = values
-
-	return values
-}
-
-// sequenceOffsets returns the cumulative UTF-16 width before each element of the
-// given sequence, with a trailing entry holding the total width. It is cached
-// and rebuilt whenever it does not line up with the elements, so a text index
-// can be resolved by binary search rather than a linear walk.
-func (s *State) sequenceOffsets(object opset.OpID, elements []opset.Operation) []uint32 {
-	if cached, ok := s.sequenceOffsetCache[object]; ok && len(cached) == len(elements)+1 {
-		return cached
-	}
-
-	offsets := make([]uint32, len(elements)+1)
-	for i, operation := range elements {
-		offsets[i+1] = offsets[i] + elementLength(operation)
-	}
-
-	s.sequenceOffsetCache[object] = offsets
-
-	return offsets
+	return s.sequenceIndex(object).values()
 }
 
 // insertOrderPositions returns each insert-order operation's index. Insert order
@@ -399,12 +318,16 @@ func (s *State) visibleSequenceElementOperations(element opset.OpID) []opset.Ope
 // list index, i.e. the conflict set that get_all(index) exposes. The boolean is
 // false when the index is out of range.
 func (s *State) sequenceConflicts(object opset.OpID, index uint64) ([]opset.Operation, bool) {
-	values := s.sequenceValues(object)
-	if index >= uint64(len(values)) {
+	if index > uint64(^uint(0)>>1) {
 		return nil, false
 	}
 
-	return s.visibleSequenceElementOperations(values[index].Element), true
+	value, ok := s.sequenceIndex(object).valueAt(int(index))
+	if !ok {
+		return nil, false
+	}
+
+	return s.visibleSequenceElementOperations(value.Element), true
 }
 
 func (s *State) appendSequence(

@@ -28,11 +28,12 @@ import (
 )
 
 func (s *State) RichTextSpans(object opset.OpID) ([]RichSpan, error) {
-	elements := s.sequenceElements(object)
-	marks := s.richTextMarks(object, elements)
+	values := s.sequenceValues(object)
+	marks := s.richTextMarks(object)
 	spans := make([]RichSpan, 0)
 
-	for i, operation := range elements {
+	for i, value := range values {
+		operation := value.Operation
 		switch operation.Action {
 		case opset.ActionMakeMap:
 			value, err := s.mapValue(operation.ID, make(map[opset.OpID]struct{}))
@@ -195,9 +196,7 @@ func (s *State) insertAnchorKey(object opset.OpID, base opset.Key) opset.Key {
 // closes it. Because mark operations hold positions in the sequence, text
 // inserted at an expanding boundary sits inside the range and keeps the mark
 // even after the originally marked content is deleted.
-func (s *State) richTextMarks(object opset.OpID, elements []opset.Operation) []richTextMark {
-	order := s.insertOrder(object)
-
+func (s *State) richTextMarks(object opset.OpID) []richTextMark {
 	type openMark struct {
 		start     int
 		operation opset.Operation
@@ -226,23 +225,29 @@ func (s *State) richTextMarks(object opset.OpID, elements []opset.Operation) []r
 		)
 	}
 
-	for _, id := range order {
-		operation, ok := s.operation(id)
-		if !ok || s.isSuperseded(id) {
-			continue
+	s.sequenceIndex(object).eachRaw(0, func(entry sequenceIndexEntry) bool {
+		operation, ok := s.operation(entry.insertion)
+		if !ok {
+			return true
 		}
 
 		if operation.Action != opset.ActionMark {
-			elementIndex[id] = index
-			index++
+			if entry.visible {
+				elementIndex[entry.insertion] = index
+				index++
+			}
 
-			continue
+			return true
+		}
+
+		if s.isSuperseded(operation.ID) {
+			return true
 		}
 
 		if operation.MarkName != nil {
 			open[operation.ID] = openMark{start: index, operation: operation}
 
-			continue
+			return true
 		}
 
 		begin := opset.OpID{Actor: operation.ID.Actor, Counter: operation.ID.Counter - 1}
@@ -250,7 +255,9 @@ func (s *State) richTextMarks(object opset.OpID, elements []opset.Operation) []r
 			delete(open, begin)
 			closeMark(opened, index)
 		}
-	}
+
+		return true
+	})
 
 	// A begin whose matching end operation was never created extends to the end
 	// of the text. This happens when a mark was applied with an out-of-range end
@@ -305,8 +312,6 @@ func (s *State) richTextMarks(object opset.OpID, elements []opset.Operation) []r
 		},
 	)
 
-	_ = elements
-
 	return marks
 }
 
@@ -333,8 +338,8 @@ func danglingBeginStart(anchor opset.Key, elementIndex map[opset.OpID]int, fallb
 // are merged, block markers occupy one position, and marks removed by a null
 // value are excluded.
 func (s *State) Marks(object opset.OpID) []MarkRange {
-	elements := s.sequenceElements(object)
-	marks := s.richTextMarks(object, elements)
+	values := s.sequenceValues(object)
+	marks := s.richTextMarks(object)
 
 	type openMark struct {
 		start uint32
@@ -359,7 +364,7 @@ func (s *State) Marks(object opset.OpID) []MarkRange {
 		)
 	}
 
-	for index, element := range elements {
+	for index, value := range values {
 		active := make(map[string]*opset.Scalar)
 
 		for _, mark := range marks {
@@ -388,7 +393,7 @@ func (s *State) Marks(object opset.OpID) []MarkRange {
 			}
 		}
 
-		position += elementLength(element)
+		position += elementLength(value.Operation)
 	}
 
 	for name, mark := range open {
@@ -456,11 +461,11 @@ func (s *State) markRangeHasSurvivingElement(
 // without boundary-expansion adjustment. It is used to report mark and unmark
 // operations as Mark patches, matching the reference's operation-based diff.
 func (s *State) markOpUTF16Range(object opset.OpID, begin, end opset.Operation) (uint32, uint32, bool) {
-	elements := s.sequenceElements(object)
+	values := s.sequenceValues(object)
 
-	positions := make(map[opset.OpID]int, len(elements))
-	for index, element := range elements {
-		positions[element.ID] = index
+	positions := make(map[opset.OpID]int, len(values))
+	for index, value := range values {
+		positions[value.Element] = index
 	}
 
 	beginExpand := begin.MarkExpand != nil && *begin.MarkExpand
@@ -473,7 +478,7 @@ func (s *State) markOpUTF16Range(object opset.OpID, begin, end opset.Operation) 
 		true,
 		beginExpand,
 		positions,
-		elements,
+		values,
 		false,
 		make(map[opset.OpID]struct{}),
 	)
@@ -484,7 +489,7 @@ func (s *State) markOpUTF16Range(object opset.OpID, begin, end opset.Operation) 
 		false,
 		endExpand,
 		positions,
-		elements,
+		values,
 		false,
 		make(map[opset.OpID]struct{}),
 	)
@@ -493,16 +498,16 @@ func (s *State) markOpUTF16Range(object opset.OpID, begin, end opset.Operation) 
 		return 0, 0, false
 	}
 
-	return utf16PrefixLength(elements, startIndex), utf16PrefixLength(elements, endIndex), true
+	return utf16PrefixLength(values, startIndex), utf16PrefixLength(values, endIndex), true
 }
 
 // utf16PrefixLength sums the UTF-16 width of the first count elements, so a mark
 // anchor expressed as an element index becomes a UTF-16 position.
-func utf16PrefixLength(elements []opset.Operation, count int) uint32 {
+func utf16PrefixLength(values []sequenceValue, count int) uint32 {
 	var position uint32
 
-	for i := 0; i < count && i < len(elements); i++ {
-		position += elementLength(elements[i])
+	for i := 0; i < count && i < len(values); i++ {
+		position += elementLength(values[i].Operation)
 	}
 
 	return position
@@ -515,14 +520,14 @@ func (s *State) markAnchorPosition(
 	start bool,
 	expand bool,
 	positions map[opset.OpID]int,
-	elements []opset.Operation,
+	values []sequenceValue,
 	adjustBoundary bool,
 	visited map[opset.OpID]struct{},
 ) (int, bool) {
 	if key.IsHead {
 		position := 0
 		if adjustBoundary && ((start && !expand) || (!start && expand)) {
-			position = s.markBoundaryInsertionEnd(key, marker, position, elements)
+			position = s.markBoundaryInsertionEnd(key, marker, position, values)
 		}
 
 		return position, true
@@ -535,7 +540,7 @@ func (s *State) markAnchorPosition(
 	if position, ok := positions[*key.Element]; ok {
 		position++
 		if adjustBoundary && ((start && !expand) || (!start && expand)) {
-			position = s.markBoundaryInsertionEnd(key, marker, position, elements)
+			position = s.markBoundaryInsertionEnd(key, marker, position, values)
 		}
 
 		return position, true
@@ -560,7 +565,7 @@ func (s *State) markAnchorPosition(
 			start,
 			expand,
 			positions,
-			elements,
+			values,
 			false,
 			visited,
 		)
@@ -592,7 +597,7 @@ func (s *State) markAnchorPosition(
 		start,
 		expand,
 		positions,
-		elements,
+		values,
 		false,
 		visited,
 	)
@@ -608,10 +613,15 @@ func (s *State) markBoundaryInsertionEnd(
 	key opset.Key,
 	marker opset.OpID,
 	position int,
-	elements []opset.Operation,
+	values []sequenceValue,
 ) int {
-	for position < len(elements) {
-		child, ok := s.boundaryChild(elements[position], key, make(map[opset.OpID]struct{}))
+	for position < len(values) {
+		insertion, exists := s.operation(values[position].Element)
+		if !exists {
+			break
+		}
+
+		child, ok := s.boundaryChild(insertion, key, make(map[opset.OpID]struct{}))
 		if !ok || child.Compare(marker) <= 0 {
 			break
 		}

@@ -117,7 +117,7 @@ func TestEngineEmptyCommit_UpdatesCanonicalColumnsWhileIsolated(t *testing.T) {
 	assert.True(t, loaded.state.hasChange(opset.ChangeHash(emptyHash)))
 }
 
-func TestEngineRollback_InvalidatesCreatedSequenceCaches(t *testing.T) {
+func TestEngineRollback_InvalidatesCreatedSequenceIndex(t *testing.T) {
 	t.Parallel()
 
 	for _, objectType := range []string{"list", "text"} {
@@ -133,30 +133,17 @@ func TestEngineRollback_InvalidatesCreatedSequenceCaches(t *testing.T) {
 				require.NoError(t, err)
 
 				object := engine.objects[handle].OpID
-				engine.state.sequence(object)
-				engine.state.insertOrder(object)
-				engine.state.sequenceValues(object)
-				elements := engine.state.sequenceElements(object)
-				engine.state.sequenceOffsets(object, elements)
-				engine.state.insertOrderPositions(object)
+				index := engine.state.sequenceIndex(object)
 
-				assert.Contains(t, engine.state.sequenceCache, object)
-				assert.Contains(t, engine.state.insertOrderCache, object)
-				assert.Contains(t, engine.state.insertOrderPositionCache, object)
-				assert.Contains(t, engine.state.sequenceValuesCache, object)
-				assert.Contains(t, engine.state.sequenceElementsCache, object)
-				assert.Contains(t, engine.state.sequenceOffsetCache, object)
+				assert.Same(t, index, engine.state.sequenceIndexes[object])
 
 				cancelled, err := engine.Rollback()
 				require.NoError(t, err)
 				assert.Equal(t, uint64(1), cancelled)
 
-				assert.NotContains(t, engine.state.sequenceCache, object)
+				assert.NotContains(t, engine.state.sequenceIndexes, object)
 				assert.NotContains(t, engine.state.insertOrderCache, object)
 				assert.NotContains(t, engine.state.insertOrderPositionCache, object)
-				assert.NotContains(t, engine.state.sequenceValuesCache, object)
-				assert.NotContains(t, engine.state.sequenceElementsCache, object)
-				assert.NotContains(t, engine.state.sequenceOffsetCache, object)
 			},
 		)
 	}

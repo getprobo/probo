@@ -28,7 +28,36 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
+
+func TestCompareObjectCreationIDsOrdersConcurrencyActorsTransitively(t *testing.T) {
+	t.Parallel()
+
+	base := opset.ActorID(string([]byte{0xff}))
+	unrelated := opset.ActorID(string([]byte{0x20}))
+	identifiers := []opset.OpID{
+		{Actor: base, Counter: 1},
+		{Actor: base.WithConcurrency(1), Counter: 1},
+		{Actor: unrelated, Counter: 1},
+	}
+
+	assert.Less(t, compareObjectCreationIDs(identifiers[0], identifiers[1]), 0)
+	assert.Greater(t, compareObjectCreationIDs(identifiers[1], identifiers[2]), 0)
+	assert.Greater(t, compareObjectCreationIDs(identifiers[0], identifiers[2]), 0)
+}
+
+func TestPeakSplicedLengthAccountsForIntermediateGrowth(t *testing.T) {
+	t.Parallel()
+
+	inserted := make([]opset.Operation, 100)
+	splices := []storage.SnapshotOperationSplice{
+		{Index: 100, Operations: inserted},
+		{Index: 0, DeleteCount: 100},
+	}
+
+	assert.Equal(t, 200, peakSplicedLength(100, splices))
+}
 
 func TestDirectCommit_OrdinaryCommitsAvoidCompatibilityWork(t *testing.T) {
 	engine, err := NewEngine()
@@ -118,19 +147,68 @@ func TestDirectCommit_ForkUsesCopyOnWriteColumns(t *testing.T) {
 	requireColumnarStateEquivalent(t, fork)
 }
 
-func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
-	t.Parallel()
+func TestDirectCommit_PartialMapIndexRetainsCanonicalRows(t *testing.T) {
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, engine.PutString(0, "retained", "value"))
+	_, err = engine.Commit("base", time.Time{})
+	require.NoError(t, err)
 
+	engine.state.mapKeyIndexBuilt = true
+	engine.state.mapKeyIndex[opset.RootObject()] = make(map[string][]opset.OpID)
+
+	child, err := engine.PutObject(0, "child", "map")
+	require.NoError(t, err)
+	value, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "value"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, engine.PutScalar(child, "nested", value))
+	before := ReadRuntimeMetrics()
+	_, err = engine.Commit("object", time.Time{})
+	require.NoError(t, err)
+	after := ReadRuntimeMetrics()
+
+	keys, err := engine.Keys(0)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"child", "retained"}, keys)
+	assert.Equal(t, before.GeneralReconciles, after.GeneralReconciles)
+	assert.Equal(t, before.GlobalOrderFallbacks, after.GlobalOrderFallbacks)
+	assert.Equal(t, before.SnapshotReplacements, after.SnapshotReplacements)
+	assert.Equal(t, before.FullColumnEncodings, after.FullColumnEncodings)
+	assert.Equal(t, before.QueryIndexRescues, after.QueryIndexRescues)
+	assert.Equal(t, before.DirectOperationCopies, after.DirectOperationCopies)
+	assert.Equal(t, before.DirectColumnBatches+1, after.DirectColumnBatches)
+	requireColumnarStateEquivalent(t, engine)
+}
+
+func TestDirectCommit_IsolationPreservesHiddenCanonicalRows(t *testing.T) {
 	engine, first := isolationFixture(t)
 	require.NoError(t, engine.Isolate([][32]byte{first}))
+	before := ReadRuntimeMetrics()
 
+	isolated, err := engine.PutObject(0, "isolated", "map")
+	require.NoError(t, err)
 	value, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarString, String: "isolated"},
 	)
 	require.NoError(t, err)
-	require.NoError(t, engine.PutScalar(0, "isolated", value))
+	require.NoError(t, engine.PutScalar(isolated, "value", value))
 	_, err = engine.Commit("isolated", time.Time{})
 	require.NoError(t, err)
+
+	after := ReadRuntimeMetrics()
+	assert.Empty(t, engine.state.operations)
+	assert.Same(t, engine.isolationColumns, engine.state.columns)
+	assert.Equal(t, before.GeneralReconciles, after.GeneralReconciles)
+	assert.Equal(t, before.GlobalOrderFallbacks, after.GlobalOrderFallbacks)
+	assert.Equal(t, before.SnapshotReplacements, after.SnapshotReplacements)
+	assert.Equal(t, before.FullColumnEncodings, after.FullColumnEncodings)
+	assert.Equal(t, before.QueryIndexRescues, after.QueryIndexRescues)
+	assert.Equal(t, before.SemanticChangeRows, after.SemanticChangeRows)
+	assert.Equal(t, before.SemanticOperationRows, after.SemanticOperationRows)
+	assert.Equal(t, before.DirectColumnBatches+2, after.DirectColumnBatches)
+
 	require.NoError(t, engine.Integrate())
 
 	keys, err := engine.Keys(0)

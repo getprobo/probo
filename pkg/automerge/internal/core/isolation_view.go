@@ -23,8 +23,7 @@ package core
 import "go.probo.inc/probo/pkg/automerge/internal/opset"
 
 // stateFromSharedColumns builds fork-local query indexes without cloning the
-// immutable canonical change graph. attachCanonical then retains only rows not
-// represented by those columns.
+// immutable canonical change graph.
 func stateFromSharedColumns(columns *columnarState) (*State, error) {
 	return stateFromCanonicalColumns(columns)
 }
@@ -49,16 +48,17 @@ func stateChangesFromColumns(columns *columnarState) []opset.Change {
 	return changes
 }
 
-// newIsolationView materializes only the ancestry of heads. Unlike State.at it
-// does not replay every operation through ApplyChange; it filters the immutable
-// history once and constructs just the query indexes needed by isolated reads
-// and writes.
+// newIsolationView filters the canonical columns to the ancestry of heads and
+// builds query indexes over that pinned columnar view. The full columns remain
+// untouched and continue to own changes outside the selected frontier.
 func newIsolationView(
-	full *State,
 	columns *columnarState,
 	heads []opset.ChangeHash,
-) (*State, bool) {
-	ordered := make([]opset.Change, 0)
+) (*State, *columnarState, bool) {
+	if columns == nil || columns.snapshot == nil || columns.columnsDirty {
+		return nil, nil, false
+	}
+
 	visited := make(map[opset.ChangeHash]struct{})
 
 	var visit func(opset.ChangeHash) bool
@@ -68,7 +68,7 @@ func newIsolationView(
 			return true
 		}
 
-		change, ok := full.change(hash)
+		change, ok := columns.change(hash)
 		if !ok {
 			return false
 		}
@@ -79,18 +79,6 @@ func newIsolationView(
 			}
 		}
 
-		cloned := *change
-
-		cloned.Operations = make([]opset.Operation, len(change.Operations))
-		for i, operation := range change.Operations {
-			cloned.Operations[i] = cloneOperation(operation)
-			// Snapshot changes can retain successors outside the selected
-			// frontier. Predecessors are sufficient to rebuild supersession and
-			// prevent future operations from leaking into the historical view.
-			cloned.Operations[i].Successors = nil
-		}
-
-		ordered = append(ordered, cloned)
 		visited[hash] = struct{}{}
 
 		return true
@@ -98,19 +86,67 @@ func newIsolationView(
 
 	for _, head := range heads {
 		if !visit(head) {
-			return nil, false
+			return nil, nil, false
 		}
 	}
 
-	view, err := NewStateFromDocument(
+	operationIDs := make(map[opset.OpID]struct{})
+	changes := make([]opset.Change, 0, len(visited))
+	for i := range columns.changes {
+		change := &columns.changes[i]
+		if change.Hash == nil {
+			return nil, nil, false
+		}
+
+		if _, selected := visited[*change.Hash]; !selected {
+			continue
+		}
+
+		cloned := cloneChange(*change)
+		for j := range cloned.Operations {
+			operationIDs[cloned.Operations[j].ID] = struct{}{}
+		}
+
+		changes = append(changes, cloned)
+	}
+
+	for i := range changes {
+		for j := range changes[i].Operations {
+			operation := &changes[i].Operations[j]
+			successors := operation.Successors[:0]
+			for _, successor := range operation.Successors {
+				if _, selected := operationIDs[successor]; selected {
+					successors = append(successors, successor)
+				}
+			}
+
+			operation.Successors = successors
+		}
+	}
+
+	order := make([]opset.OpID, 0, len(operationIDs))
+	for _, operation := range columns.operations {
+		if _, selected := operationIDs[operation.ID]; selected {
+			order = append(order, operation.ID)
+		}
+	}
+
+	pinnedColumns, err := newColumnarState(
 		&opset.Document{
-			Changes: ordered,
-			Heads:   append([]opset.ChangeHash(nil), heads...),
+			Actors:         append([]opset.ActorID(nil), columns.actors...),
+			Changes:        changes,
+			Heads:          append([]opset.ChangeHash(nil), heads...),
+			OperationOrder: order,
 		},
 	)
 	if err != nil {
-		return nil, false
+		return nil, nil, false
 	}
 
-	return view, true
+	view, err := stateFromCanonicalColumns(pinnedColumns)
+	if err != nil {
+		return nil, nil, false
+	}
+
+	return view, pinnedColumns, true
 }

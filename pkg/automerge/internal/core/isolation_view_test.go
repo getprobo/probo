@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
+	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
 func TestLoadEngine_BuildsCanonicalColumnsBeforeCompatibilityState(t *testing.T) {
@@ -93,8 +94,10 @@ func TestIsolationView_MatchesReplayAcrossLoadedSnapshot(t *testing.T) {
 	heads := []opset.ChangeHash{opset.ChangeHash(first)}
 	replayed, ok := loaded.state.at(heads)
 	require.True(t, ok)
-	filtered, ok := newIsolationView(loaded.state, loaded.columns, heads)
+	filtered, filteredColumns, ok := newIsolationView(loaded.columns, heads)
 	require.True(t, ok)
+	require.Same(t, filteredColumns, filtered.columns)
+	assert.Empty(t, filtered.operations)
 
 	replayedEngine := &Engine{
 		state:   replayed,
@@ -140,13 +143,27 @@ func TestIsolationView_PreservesIntegrateAndMergedHistory(t *testing.T) {
 	require.NoError(t, engine.PutScalar(0, "isolated", isolatedValue))
 	_, err = engine.Commit("isolated", time.Time{})
 	require.NoError(t, err)
+	assert.Empty(t, engine.state.operations)
 	require.NoError(t, engine.ApplyChanges(changes))
+
+	isolatedKeys, err := engine.Keys(0)
+	require.NoError(t, err)
+	assert.NotContains(t, isolatedKeys, "peer")
+	assert.Contains(t, isolatedKeys, "isolated")
+
 	require.NoError(t, engine.Integrate())
 
 	keys, err := engine.Keys(0)
 	require.NoError(t, err)
 	assert.Contains(t, keys, "peer")
 	assert.Contains(t, keys, "isolated")
+
+	saved, err := engine.Save(true, false)
+	require.NoError(t, err)
+	document, err := storage.Decode(saved)
+	require.NoError(t, err)
+	require.NotEmpty(t, document.ChunkTypes)
+	assert.Equal(t, opset.ChunkDocument, document.ChunkTypes[0])
 }
 
 func isolationFixture(t *testing.T) (*Engine, [32]byte) {

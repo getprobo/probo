@@ -152,12 +152,14 @@ func (c *columnarState) planObjectBatch(
 
 		order, ok := state.indexedObjectOrder(object)
 		if !ok {
+			runtimeMetrics.queryIndexRescues.Add(1)
 			return nil, nil, false
 		}
 
 		// Partial/orphan query indexes cannot account for every retained row.
 		// Detect them without rebuilding global operation order.
 		if len(order) != span.end-span.start+incomingRows[object] {
+			runtimeMetrics.queryIndexRescues.Add(1)
 			return nil, nil, false
 		}
 
@@ -165,6 +167,7 @@ func (c *columnarState) planObjectBatch(
 		for i, identifier := range order {
 			operation, ok := state.operation(identifier)
 			if !ok {
+				runtimeMetrics.queryIndexRescues.Add(1)
 				return nil, nil, false
 			}
 

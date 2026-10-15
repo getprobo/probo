@@ -59,8 +59,6 @@ func (b *Engine) nextOperationID() opset.OpID {
 }
 
 func (b *Engine) requireRoot(handle uint32) error {
-	b.bindColumnarState()
-
 	object, err := b.object(handle)
 	if err != nil {
 		return err
@@ -74,8 +72,6 @@ func (b *Engine) requireRoot(handle uint32) error {
 }
 
 func (b *Engine) object(handle uint32) (opset.ObjectID, error) {
-	b.bindColumnarState()
-
 	object, ok := b.objects[handle]
 	if !ok {
 		return opset.ObjectID{}, fmt.Errorf("invalid object handle %d", handle)
@@ -192,20 +188,20 @@ func (b *Engine) insertSequenceOperation(
 		return opset.Operation{}, err
 	}
 
-	sequence := b.state.sequenceValues(object.OpID)
-
-	element, ok := b.resolveSequenceIndex(object, sequence, index)
-	if !ok || element > uint64(len(sequence)) {
+	sequence := b.state.sequenceIndex(object.OpID)
+	element, ok := sequence.visibleIndex(index, b.isTextObject(object))
+	if !ok {
 		return opset.Operation{}, fmt.Errorf(
 			"sequence index %d is out of bounds for length %d",
 			index,
-			len(sequence),
+			sequence.visibleCount,
 		)
 	}
 
 	key := opset.Key{IsHead: element == 0}
 	if element > 0 {
-		key.Element = new(sequence[element-1].Element)
+		previous := sequence.visibleInsertion(element - 1)
+		key.Element = new(previous.ID)
 	}
 
 	key = b.state.insertAnchorKey(object.OpID, key)
@@ -249,54 +245,26 @@ func (b *Engine) sequenceOperation(
 		return sequenceValue{}, err
 	}
 
-	sequence := b.state.sequenceValues(object.OpID)
-
-	element, ok := b.resolveSequenceIndex(object, sequence, index)
-	if !ok || element >= uint64(len(sequence)) {
+	sequence := b.state.sequenceIndex(object.OpID)
+	element, ok := sequence.visibleIndex(index, b.isTextObject(object))
+	if !ok {
 		return sequenceValue{}, fmt.Errorf(
 			"sequence index %d is out of bounds for length %d",
 			index,
-			len(sequence),
+			sequence.visibleCount,
 		)
 	}
 
-	return sequence[element], nil
-}
-
-// resolveSequenceIndex maps a caller-supplied index to a raw element index in
-// the visible sequence. Text objects address positions in UTF-16 code units to
-// match the reference encoding, so the index is translated to the element that
-// begins at that code-unit boundary (a position inside a surrogate pair is
-// advanced to the following boundary, as upstream Rust does); other sequences
-// use element indices directly. The boolean reports whether the index resolves
-// to a boundary at or before the end of the sequence.
-func (b *Engine) resolveSequenceIndex(
-	object opset.ObjectID,
-	sequence []sequenceValue,
-	index uint64,
-) (uint64, bool) {
-	if !b.isTextObject(object) {
-		return index, true
+	value, ok := sequence.valueAt(element)
+	if !ok {
+		return sequenceValue{}, fmt.Errorf(
+			"sequence index %d is out of bounds for length %d",
+			index,
+			sequence.visibleCount,
+		)
 	}
 
-	position := uint64(0)
-
-	for i, value := range sequence {
-		if position == index {
-			return uint64(i), true
-		}
-
-		position += sequenceValueUTF16Width(value)
-		if position > index {
-			return uint64(i + 1), true
-		}
-	}
-
-	if position == index {
-		return uint64(len(sequence)), true
-	}
-
-	return 0, false
+	return value, nil
 }
 
 func (b *Engine) isTextObject(object opset.ObjectID) bool {

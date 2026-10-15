@@ -163,13 +163,14 @@ func TestChangesSince_DegradesToReachablePrefix(t *testing.T) {
 
 	var removed opset.ChangeHash
 
-	for hash, change := range base.state.changes {
+	for i := range base.columns.changes {
+		change := &base.columns.changes[i]
 		if change.Actor == deepActor && change.Sequence == 1 {
-			removed = hash
+			removed = *change.Hash
 		}
 	}
 
-	delete(base.state.changes, removed)
+	delete(base.columns.changeRows, removed)
 
 	changes, complete := base.state.changesSince(nil)
 	assert.False(t, complete, "the broken branch leaves the walk incomplete")

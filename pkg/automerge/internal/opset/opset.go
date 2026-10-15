@@ -211,6 +211,41 @@ func (a ActorID) WithConcurrency(level uint64) ActorID {
 	return ActorID(string(bytes))
 }
 
+// Concurrency returns the base actor and synthetic isolation level. Ordinary
+// actors are their own base at level zero.
+func (a ActorID) Concurrency() (ActorID, uint64) {
+	data := a.Bytes()
+	if len(data) <= len(concurrencyMagicBytes) ||
+		!bytes.Equal(data[:len(concurrencyMagicBytes)], concurrencyMagicBytes[:]) {
+		return a, 0
+	}
+
+	var (
+		level uint64
+		shift uint
+	)
+
+	for index := len(concurrencyMagicBytes); index < len(data); index++ {
+		value := data[index]
+		if shift >= 64 || shift == 63 && value > 1 {
+			return a, 0
+		}
+
+		level |= uint64(value&0x7f) << shift
+		if value&0x80 == 0 {
+			if level == 0 || index+1 == len(data) {
+				return a, 0
+			}
+
+			return ActorID(string(data[index+1:])), level
+		}
+
+		shift += 7
+	}
+
+	return a, 0
+}
+
 // String returns the lowercase hexadecimal change hash.
 func (h ChangeHash) String() string {
 	return hex.EncodeToString(h[:])

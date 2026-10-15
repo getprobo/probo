@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
@@ -87,6 +88,26 @@ func TestDirectRemote_OutOfOrderSetPublishesOneBatch(t *testing.T) {
 	assert.Zero(t, metrics.SnapshotReplacements)
 	assert.Zero(t, metrics.FullColumnEncodings)
 	assert.Empty(t, target.queuedChanges)
+
+	firstDocument, err := storage.DecodePartial(first)
+	require.NoError(t, err)
+	require.Len(t, firstDocument.Changes, 1)
+	require.NotNil(t, firstDocument.Changes[0].Hash)
+	secondDocument, err := storage.DecodePartial(second)
+	require.NoError(t, err)
+	require.Len(t, secondDocument.Changes, 1)
+	require.NotNil(t, secondDocument.Changes[0].Hash)
+	require.GreaterOrEqual(t, len(target.columns.changes), 2)
+	assert.Equal(
+		t,
+		*firstDocument.Changes[0].Hash,
+		*target.columns.changes[len(target.columns.changes)-2].Hash,
+	)
+	assert.Equal(
+		t,
+		*secondDocument.Changes[0].Hash,
+		*target.columns.changes[len(target.columns.changes)-1].Hash,
+	)
 }
 
 func TestDirectRemote_ConcurrentSingleInsertRoundTrips(t *testing.T) {
@@ -122,6 +143,59 @@ func TestDirectRemote_ConcurrentSingleInsertRoundTrips(t *testing.T) {
 	require.NoError(t, err)
 	_, err = LoadEngine(saved)
 	require.NoError(t, err)
+}
+
+func TestDirectRemote_ObjectCreationSplicesOrderedSpans(t *testing.T) {
+	base, err := NewEngine()
+	require.NoError(t, err)
+	require.NoError(t, base.SetActor([]byte("zzzz")))
+	first, err := base.PutObject(0, "first", "map")
+	require.NoError(t, err)
+	baseValue, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "base"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, base.PutScalar(first, "value", baseValue))
+	_, err = base.Commit("base object", time.Time{})
+	require.NoError(t, err)
+	baseHeads := mustHeads(t, base)
+	baseData, err := base.Save(true, false)
+	require.NoError(t, err)
+
+	source, err := LoadEngine(baseData)
+	require.NoError(t, err)
+	require.NoError(t, source.SetActor([]byte("aaaa")))
+	second, err := source.PutObject(0, "second", "map")
+	require.NoError(t, err)
+	remoteValue, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "remote"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, source.PutScalar(second, "value", remoteValue))
+	_, err = source.Commit("remote object", time.Time{})
+	require.NoError(t, err)
+	changes, _, err := source.ChangesSince(baseHeads)
+	require.NoError(t, err)
+	expected, err := source.Save(true, false)
+	require.NoError(t, err)
+
+	target, err := LoadEngine(baseData)
+	require.NoError(t, err)
+	ResetRuntimeMetrics()
+	require.NoError(t, target.ApplyChanges(changes))
+	actual, err := target.Save(true, false)
+	require.NoError(t, err)
+
+	metrics := ReadRuntimeMetrics()
+	assert.Equal(t, uint64(1), metrics.DirectColumnBatches)
+	assert.Zero(t, metrics.GeneralReconciles)
+	assert.Zero(t, metrics.GlobalOrderFallbacks)
+	assert.Zero(t, metrics.SnapshotReplacements)
+	assert.Zero(t, metrics.FullColumnEncodings)
+	assert.Zero(t, metrics.QueryIndexRescues)
+	assert.Zero(t, metrics.DirectOperationCopies)
+	assert.Equal(t, expected, actual)
+	requireColumnarStateEquivalent(t, target)
 }
 
 func directRemoteFixture(t *testing.T) ([]byte, []byte, []byte) {

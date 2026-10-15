@@ -21,6 +21,7 @@
 package core
 
 import (
+	"math"
 	"math/rand/v2"
 	"slices"
 	"strings"
@@ -31,6 +32,23 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 )
+
+func TestSequenceIndex_TotalUTF16WidthDoesNotOverflow(t *testing.T) {
+	t.Parallel()
+
+	index := &sequenceIndex{
+		chunks: []*sequenceIndexChunk{
+			{
+				entries: []sequenceIndexEntry{
+					{visible: true, width: math.MaxUint32},
+					{visible: true, width: 2},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, uint64(math.MaxUint32)+2, index.totalUTF16Width())
+}
 
 func TestSequenceIndex_RangeMatchesFlatReference(t *testing.T) {
 	t.Parallel()
@@ -45,8 +63,11 @@ func TestSequenceIndex_RangeMatchesFlatReference(t *testing.T) {
 
 	for index := uint32(0); index <= 8; index++ {
 		for deleteCount := uint32(0); deleteCount <= 10; deleteCount++ {
-			elements := engine.state.sequenceElements(object)
-			offsets := engine.state.sequenceOffsets(object, elements)
+			elements := engine.state.sequenceIndex(object).elements()
+			offsets := make([]uint32, len(elements)+1)
+			for element, operation := range elements {
+				offsets[element+1] = offsets[element] + elementLength(operation)
+			}
 			wantStart, wantEnd, wantPrevious, wantErr := sequenceRange(
 				elements,
 				offsets,
@@ -94,13 +115,88 @@ func TestSequenceIndex_LocalTextEditsCopyOnlyTouchedChunks(t *testing.T) {
 	assert.Same(t, firstChunk, index.chunks[0])
 	assert.Same(t, lastChunk, index.chunks[len(index.chunks)-1])
 	assert.Equal(t, uint32(601), index.utf16Width)
-	assert.NotContains(t, engine.state.sequenceElementsCache, object)
-	assert.NotContains(t, engine.state.sequenceValuesCache, object)
-	assert.NotContains(t, engine.state.sequenceOffsetCache, object)
 
 	value, err := engine.Text(text)
 	require.NoError(t, err)
 	assert.Equal(t, strings.Repeat("a", 300)+"😀"+strings.Repeat("a", 299), value)
+}
+
+func TestSequenceIndex_ListReadsTrackWinningValues(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	list, err := engine.PutObject(0, "items", "list")
+	require.NoError(t, err)
+
+	oldValue, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "old"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, engine.InsertScalar(list, 0, oldValue))
+
+	object := engine.objects[list].OpID
+	index := engine.state.sequenceIndex(object)
+
+	newValue, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "new"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, engine.PutScalarAt(list, 0, newValue))
+
+	assert.Same(t, index, engine.state.sequenceIndexes[object])
+	assert.Equal(t, 1, index.visibleCount)
+
+	got, err := engine.GetScalarAt(list, 0)
+	require.NoError(t, err)
+	assert.JSONEq(t, string(newValue), string(got))
+
+	hydrated, err := engine.Hydrate()
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{"type":"map","map":{"items":{"type":"list","list":[{"type":"scalar","scalar":{"type":"string","bool":false,"uint":0,"int":0,"floatBits":0,"string":"new","bytes":""}}]}}}`,
+		string(hydrated),
+	)
+}
+
+func TestSequenceIndex_LocalListEditsStayChunked(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	list, err := engine.PutObject(0, "items", "list")
+	require.NoError(t, err)
+
+	value, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarInt, Int: 1},
+	)
+	require.NoError(t, err)
+	for index := range 600 {
+		require.NoError(t, engine.InsertScalar(list, uint64(index), value))
+	}
+
+	object := engine.objects[list].OpID
+	index := engine.state.sequenceIndex(object)
+	require.Greater(t, len(index.chunks), 3)
+	firstChunk := index.chunks[0]
+	lastChunk := index.chunks[len(index.chunks)-1]
+
+	replacement, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarInt, Int: 2},
+	)
+	require.NoError(t, err)
+	require.NoError(t, engine.PutScalarAt(list, 300, replacement))
+
+	assert.Same(t, index, engine.state.sequenceIndexes[object])
+	assert.Same(t, firstChunk, index.chunks[0])
+	assert.Same(t, lastChunk, index.chunks[len(index.chunks)-1])
+	assert.Equal(t, 600, index.visibleCount)
+	assert.Equal(t, 600, index.prefixValues[len(index.prefixValues)-1])
+
+	got, err := engine.GetScalarAt(list, 300)
+	require.NoError(t, err)
+	assert.JSONEq(t, string(replacement), string(got))
 }
 
 func TestSequenceIndex_RandomEditsMatchReloadedState(t *testing.T) {
@@ -220,9 +316,6 @@ func TestSequenceIndex_ForkAndMergedUpdatesStayIndependent(t *testing.T) {
 	_, err = engine.Merge(middleData)
 	require.NoError(t, err)
 	assert.Same(t, index, engine.state.sequenceIndexes[object])
-	assert.False(t, engine.state.sequenceRescue[object])
-	assert.NotContains(t, engine.state.sequenceElementsCache, object)
-	assert.NotContains(t, engine.state.sequenceOffsetCache, object)
 
 	value, err := engine.Text(text)
 	require.NoError(t, err)
@@ -279,9 +372,6 @@ func TestSequenceIndex_RandomRichTextEditsAvoidFlatFallback(t *testing.T) {
 				))
 
 				assert.Same(t, index, engine.state.sequenceIndexes[object])
-				assert.False(t, engine.state.sequenceRescue[object])
-				assert.NotContains(t, engine.state.sequenceElementsCache, object)
-				assert.NotContains(t, engine.state.sequenceOffsetCache, object)
 			}
 
 			wantText, err := engine.Text(text)
@@ -349,9 +439,6 @@ func TestSequenceIndex_MarkedConcurrentBranchesStayLocalized(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Same(t, index, left.state.sequenceIndexes[object])
-	assert.False(t, left.state.sequenceRescue[object])
-	assert.NotContains(t, left.state.sequenceElementsCache, object)
-	assert.NotContains(t, left.state.sequenceOffsetCache, object)
 	value, err := left.Text(leftText)
 	require.NoError(t, err)
 	assert.True(t, slices.Contains([]string{"ab😀LRcd", "ab😀RLcd"}, value))
@@ -391,9 +478,6 @@ func TestDirectTextOverlay_EmitsLocalizedWireRuns(t *testing.T) {
 
 	require.Len(t, batch.touchedObjects[object], 2)
 	assert.LessOrEqual(t, len(batch.operationSplices), 80)
-	assert.False(t, engine.state.sequenceRescue[object.OpID])
-	assert.NotContains(t, engine.state.sequenceElementsCache, object.OpID)
-	assert.NotContains(t, engine.state.sequenceOffsetCache, object.OpID)
 }
 
 func TestDirectTextOverlay_MiddleInsertionReloads(t *testing.T) {

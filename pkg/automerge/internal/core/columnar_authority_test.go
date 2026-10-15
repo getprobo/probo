@@ -46,10 +46,11 @@ func TestColumnarAuthority_CommitAndPendingOverlay(t *testing.T) {
 	require.Len(t, engine.columns.operations, 1)
 	committed := engine.columns.operations[0]
 	assert.NotContains(t, engine.state.operations, committed.ID)
+	assert.Empty(t, engine.state.changes)
 	actual, ok := engine.state.operation(committed.ID)
 	require.True(t, ok)
 	assert.Equal(t, committed, actual)
-	assert.Equal(t, engine.columns.currentHeads(), engine.state.Heads())
+	assert.Equal(t, engine.columns.heads, engine.state.Heads())
 
 	pendingValue, err := encodeScalarWire(
 		opset.Scalar{Type: opset.ScalarString, String: "pending"},
@@ -69,10 +70,10 @@ func TestColumnarAuthority_CommitAndPendingOverlay(t *testing.T) {
 
 	_, ok = engine.state.operation(pending.ID)
 	assert.False(t, ok)
-	assert.Equal(t, engine.columns.currentHeads(), engine.state.Heads())
+	assert.Equal(t, engine.columns.heads, engine.state.Heads())
 }
 
-func TestColumnarAuthority_CanonicalRowsWinOverOverlayRows(
+func TestColumnarAuthority_PendingOverlayWinsOverCanonicalRows(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -103,7 +104,7 @@ func TestColumnarAuthority_CanonicalRowsWinOverOverlayRows(
 
 	actual, ok := engine.state.operation(retained.ID)
 	require.True(t, ok)
-	assert.Equal(t, "x", actual.Value.String)
+	assert.Equal(t, "shadow", actual.Value.String)
 	assert.Equal(t, "shadow", engine.state.operations[retained.ID].Value.String)
 }
 
@@ -132,7 +133,77 @@ func TestColumnarAuthority_StandaloneStateUsesMapFallback(t *testing.T) {
 	assert.Equal(t, 1, state.operationCount())
 }
 
-func TestColumnarAuthority_RepairsStalePersistentRowLookup(t *testing.T) {
+func TestColumnarAuthority_LoadedAndAppliedRowsUseColumns(t *testing.T) {
+	t.Parallel()
+
+	source, err := NewEngine()
+	require.NoError(t, err)
+	value, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "source"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, source.PutScalar(0, "key", value))
+	_, err = source.Commit("source", time.Time{})
+	require.NoError(t, err)
+
+	saved, err := source.Save(true, false)
+	require.NoError(t, err)
+	loaded, err := LoadEngine(saved)
+	require.NoError(t, err)
+	requireCanonicalRowsOwnedByColumns(t, loaded)
+
+	target, err := NewEngine()
+	require.NoError(t, err)
+	changes, _, err := source.ChangesSince(nil)
+	require.NoError(t, err)
+	require.NoError(t, target.ApplyChanges(changes))
+	requireCanonicalRowsOwnedByColumns(t, target)
+}
+
+func TestColumnarAuthority_CommittedDeleteUsesColumnarSemanticIndex(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	value, err := encodeScalarWire(
+		opset.Scalar{Type: opset.ScalarString, String: "value"},
+	)
+	require.NoError(t, err)
+	require.NoError(t, engine.PutScalar(0, "key", value))
+	_, err = engine.Commit("put", time.Time{})
+	require.NoError(t, err)
+	require.NoError(t, engine.DeleteMap(0, "key"))
+	require.Len(t, engine.pending, 1)
+	deleted := engine.pending[0]
+	_, err = engine.Commit("delete", time.Time{})
+	require.NoError(t, err)
+
+	assert.Empty(t, engine.state.operations)
+	assert.Empty(t, engine.state.changes)
+	assert.Contains(t, engine.columns.nonCanonicalOperations, deleted.ID)
+	actual, ok := engine.lookupOperation(deleted.ID)
+	require.True(t, ok)
+	assert.Equal(t, deleted, actual)
+}
+
+func TestColumnarAuthority_ChangeOverlayWinsOverColumns(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	_, err = engine.EmptyCommit("base", time.Time{})
+	require.NoError(t, err)
+	require.Len(t, engine.columns.changes, 1)
+	hash := *engine.columns.changes[0].Hash
+	change := &opset.Change{Hash: &hash, Message: "overlay"}
+	engine.state.changes[hash] = change
+
+	actual, ok := engine.lookupChange(hash)
+	require.True(t, ok)
+	assert.Same(t, change, actual)
+}
+
+func TestColumnarAuthority_RejectsStalePersistentRowLookup(t *testing.T) {
 	t.Parallel()
 
 	engine, err := NewEngine()
@@ -151,7 +222,28 @@ func TestColumnarAuthority_RepairsStalePersistentRowLookup(t *testing.T) {
 		rows: map[opset.OpID]int{expected.ID: 99},
 	}
 
-	actual, ok := engine.columns.operation(expected.ID)
-	require.True(t, ok)
-	assert.Equal(t, expected, actual)
+	_, ok := engine.columns.operation(expected.ID)
+	assert.False(t, ok)
+}
+
+func requireCanonicalRowsOwnedByColumns(t *testing.T, engine *Engine) {
+	t.Helper()
+
+	assert.Empty(t, engine.state.operations)
+	assert.Empty(t, engine.state.changes)
+
+	for _, operation := range engine.columns.operations {
+		assert.NotContains(t, engine.state.operations, operation.ID)
+		actual, ok := engine.lookupOperation(operation.ID)
+		require.True(t, ok)
+		assert.Equal(t, operation, actual)
+	}
+
+	for i := range engine.columns.changes {
+		change := &engine.columns.changes[i]
+		require.NotNil(t, change.Hash)
+		actual, ok := engine.lookupChange(*change.Hash)
+		require.True(t, ok)
+		assert.Same(t, change, actual)
+	}
 }

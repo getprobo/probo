@@ -79,7 +79,7 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 
 	nativeHeads := nativeHashes(heads)
 
-	pinned, ok := newIsolationView(full, b.columns, nativeHeads)
+	pinned, pinnedColumns, ok := newIsolationView(b.columns, nativeHeads)
 	if !ok {
 		return fmt.Errorf("isolation heads are unknown")
 	}
@@ -90,11 +90,12 @@ func (b *Engine) Isolate(heads [][32]byte) error {
 	}
 
 	b.isolationActive = true
+	b.isolationColumns = pinnedColumns
 	b.fullState = full
 	b.baseActor = baseActor
 	b.state = pinned
 	b.actor = isolationActor(full, pinned, baseActor)
-	b.nextOp = full.maxOpGlobal() + 1
+	b.nextOp = pinned.maxOpGlobal() + 1
 	b.revision++
 
 	b.isolationDiffTargets = append(
@@ -131,6 +132,7 @@ func (b *Engine) Integrate() error {
 
 	b.state = b.fullState
 	b.actor = b.baseActor
+	b.isolationColumns = nil
 	b.fullState = nil
 	b.isolationActive = false
 	b.nextOp = b.state.maxOpGlobal() + 1
@@ -189,7 +191,8 @@ func (b *Engine) Commit(
 		return [32]byte{}, fmt.Errorf("cannot encode native change: %w", err)
 	}
 
-	nextColumns, nextFullState, direct, err := b.applyDirectColumnCommit(change)
+	nextColumns, nextIsolationColumns, direct, err :=
+		b.applyDirectColumnCommit(change)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf(
 			"cannot update canonical document columns: %w",
@@ -201,10 +204,8 @@ func (b *Engine) Commit(
 	// the full history must also record it so integration sees every isolated
 	// change alongside merges. Changes and raw bytes are immutable after encode,
 	// while State copies operation values into its own mutable query indexes.
-	if b.isolationActive && b.fullState != nil {
-		if direct {
-			b.fullState = nextFullState
-		} else if err := b.fullState.ApplyChange(change); err != nil {
+	if b.isolationActive && b.fullState != nil && !direct {
+		if err := b.fullState.ApplyChange(change); err != nil {
 			return [32]byte{}, fmt.Errorf(
 				"cannot apply isolated change to full history: %w",
 				err,
@@ -221,9 +222,11 @@ func (b *Engine) Commit(
 	if direct {
 		b.columns = nextColumns
 		if b.isolationActive && b.fullState != nil {
-			b.fullState.promoteDirectCommit(change, nextColumns)
+			b.isolationColumns = nextIsolationColumns
+			b.state.promoteDirectCommit(nextIsolationColumns)
+			b.fullState.promoteDirectCommit(nextColumns)
 		} else {
-			b.state.promoteDirectCommit(change, nextColumns)
+			b.state.promoteDirectCommit(nextColumns)
 		}
 	} else {
 		if err := b.reconcileColumns(); err != nil {
@@ -231,6 +234,15 @@ func (b *Engine) Commit(
 				"cannot update canonical document columns: %w",
 				err,
 			)
+		}
+
+		if b.isolationActive {
+			if err := b.reconcileIsolationColumns(); err != nil {
+				return [32]byte{}, fmt.Errorf(
+					"cannot update isolated document columns: %w",
+					err,
+				)
+			}
 		}
 	}
 
@@ -274,7 +286,8 @@ func (b *Engine) EmptyCommit(
 		return [32]byte{}, fmt.Errorf("cannot encode native empty change: %w", err)
 	}
 
-	nextColumns, nextFullState, direct, err := b.applyDirectColumnCommit(change)
+	nextColumns, nextIsolationColumns, direct, err :=
+		b.applyDirectColumnCommit(change)
 	if err != nil {
 		return [32]byte{}, fmt.Errorf(
 			"cannot update canonical document columns: %w",
@@ -282,10 +295,8 @@ func (b *Engine) EmptyCommit(
 		)
 	}
 
-	if b.isolationActive && b.fullState != nil {
-		if direct {
-			b.fullState = nextFullState
-		} else if err := b.fullState.ApplyChange(change); err != nil {
+	if b.isolationActive && b.fullState != nil && !direct {
+		if err := b.fullState.ApplyChange(change); err != nil {
 			return [32]byte{}, fmt.Errorf(
 				"cannot apply isolated empty change to full history: %w",
 				err,
@@ -298,9 +309,11 @@ func (b *Engine) EmptyCommit(
 	if direct {
 		b.columns = nextColumns
 		if b.isolationActive && b.fullState != nil {
-			b.fullState.promoteDirectCommit(change, nextColumns)
+			b.isolationColumns = nextIsolationColumns
+			b.state.promoteDirectCommit(nextIsolationColumns)
+			b.fullState.promoteDirectCommit(nextColumns)
 		} else {
-			b.state.promoteDirectCommit(change, nextColumns)
+			b.state.promoteDirectCommit(nextColumns)
 		}
 	} else {
 		if err := b.reconcileColumns(); err != nil {
@@ -308,6 +321,15 @@ func (b *Engine) EmptyCommit(
 				"cannot update canonical document columns: %w",
 				err,
 			)
+		}
+
+		if b.isolationActive {
+			if err := b.reconcileIsolationColumns(); err != nil {
+				return [32]byte{}, fmt.Errorf(
+					"cannot update isolated document columns: %w",
+					err,
+				)
+			}
 		}
 	}
 
@@ -319,35 +341,15 @@ func (b *Engine) EmptyCommit(
 
 func (b *Engine) applyDirectColumnCommit(
 	change *opset.Change,
-) (*columnarState, *State, bool, error) {
-	planningState := b.state
-
-	var nextFullState *State
-
-	changes := []*opset.Change{change}
-
+) (*columnarState, *columnarState, bool, error) {
 	if b.isolationActive && b.fullState != nil {
-		var err error
-
-		nextFullState, changes, err = directIsolationState(
-			b.columns,
-			b.fullState,
-			change,
-		)
-		if err != nil {
-			return nil, nil, false, fmt.Errorf(
-				"cannot prepare isolated direct state: %w",
-				err,
-			)
-		}
-
-		planningState = nextFullState
+		return b.applyDirectIsolationCommit(change)
 	}
 
 	batch, err := newColumnMutationBatch(
 		b.columns,
-		planningState,
-		changes,
+		b.state,
+		[]*opset.Change{change},
 		false,
 	)
 	if errors.Is(err, errDirectColumnsUnsupported) {
@@ -357,6 +359,8 @@ func (b *Engine) applyDirectColumnCommit(
 	if err != nil {
 		return nil, nil, false, err
 	}
+
+	batch.reuseOperations = true
 
 	if b.directColumnFailure != nil {
 		if err := b.directColumnFailure(); err != nil {
@@ -372,70 +376,92 @@ func (b *Engine) applyDirectColumnCommit(
 		return nil, nil, false, err
 	}
 
-	return columns, nextFullState, true, nil
+	return columns, nil, true, nil
 }
 
-func directIsolationState(
-	columns *columnarState,
-	full *State,
+func (b *Engine) applyDirectIsolationCommit(
 	change *opset.Change,
-) (*State, []*opset.Change, error) {
-	state, err := stateFromSharedColumns(columns)
+) (*columnarState, *columnarState, bool, error) {
+	pinnedBatch, err := newColumnMutationBatch(
+		b.isolationColumns,
+		b.state,
+		[]*opset.Change{change},
+		false,
+	)
+	if errors.Is(err, errDirectColumnsUnsupported) {
+		return nil, nil, false, nil
+	}
+
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, false, err
 	}
 
-	remaining := make(map[opset.ChangeHash]*opset.Change)
-
-	full.eachChange(func(hash opset.ChangeHash, source *opset.Change) bool {
-		if _, canonical := columns.changeRows[hash]; canonical {
-			return true
-		}
-
-		cloned := cloneChange(*source)
-		remaining[hash] = &cloned
-
-		return true
-	})
-
-	applied := make([]*opset.Change, 0, len(remaining)+1)
-	for len(remaining) > 0 {
-		progressed := false
-
-		for hash, source := range remaining {
-			if !state.hasDependencies(source) {
-				continue
-			}
-
-			if err := state.ApplyChange(source); err != nil {
-				return nil, nil, fmt.Errorf(
-					"cannot replay isolated overlay change: %w",
-					err,
-				)
-			}
-
-			applied = append(applied, source)
-
-			delete(remaining, hash)
-
-			progressed = true
-		}
-
-		if !progressed {
-			return nil, nil, fmt.Errorf("cannot order isolated overlay changes")
-		}
+	pinnedColumns, err := pinnedBatch.apply(b.isolationColumns)
+	if err != nil {
+		return nil, nil, false, err
 	}
 
-	if err := state.ApplyChange(change); err != nil {
-		return nil, nil, fmt.Errorf(
-			"cannot apply isolated direct change: %w",
+	if err := b.fullState.ApplyChange(change); err != nil {
+		return nil, nil, false, fmt.Errorf(
+			"cannot stage isolated full history: %w",
 			err,
 		)
 	}
 
-	applied = append(applied, change)
+	restoreFullState := func() {
+		restored, restoreErr := stateFromSharedColumns(b.columns)
+		if restoreErr != nil {
+			panic(fmt.Sprintf(
+				"cannot restore isolated full history: %v",
+				restoreErr,
+			))
+		}
 
-	return state, applied, nil
+		b.fullState = restored
+	}
+
+	fullBatch, err := newColumnMutationBatch(
+		b.columns,
+		b.fullState,
+		[]*opset.Change{change},
+		false,
+	)
+	if errors.Is(err, errDirectColumnsUnsupported) {
+		restoreFullState()
+
+		return nil, nil, false, nil
+	}
+
+	if err != nil {
+		restoreFullState()
+
+		return nil, nil, false, err
+	}
+
+	// The pinned batch must remain rollback-safe until the full-history plan
+	// succeeds. The full columns have no later recoverable failure and can use
+	// their prepared operation capacity.
+	fullBatch.reuseOperations = true
+
+	if b.directColumnFailure != nil {
+		if err := b.directColumnFailure(); err != nil {
+			restoreFullState()
+
+			return nil, nil, false, fmt.Errorf(
+				"cannot pass direct column failpoint: %w",
+				err,
+			)
+		}
+	}
+
+	fullColumns, err := fullBatch.apply(b.columns)
+	if err != nil {
+		restoreFullState()
+
+		return nil, nil, false, err
+	}
+
+	return fullColumns, pinnedColumns, true, nil
 }
 
 func (b *Engine) Rollback() (uint64, error) {
@@ -463,9 +489,6 @@ func (b *Engine) Rollback() (uint64, error) {
 	}
 
 	b.nextOp = b.state.maxOpGlobal() + 1
-	if b.isolationActive && b.fullState != nil {
-		b.nextOp = max(b.nextOp, b.fullState.maxOpGlobal()+1)
-	}
 
 	b.pending = nil
 	b.revision++

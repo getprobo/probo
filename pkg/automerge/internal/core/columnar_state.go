@@ -29,9 +29,9 @@ import (
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
 )
 
-// columnarState is the engine's canonical wire-oriented operation and change
-// view. State's maps remain query indexes during migration; they do not own the
-// snapshot order used for export.
+// columnarState is the engine's complete committed operation, change, and head
+// authority. Its canonical rows preserve snapshot order; semantic operations
+// omitted from that wire table are indexed separately.
 type columnarState struct {
 	actors        []opset.ActorID
 	changes       []opset.Change
@@ -39,7 +39,13 @@ type columnarState struct {
 	heads         []opset.ChangeHash
 	operations    []opset.Operation
 	operationRows *operationRowIndex
-	objectSpans   map[opset.ObjectID]wireObjectSpan
+	// nonCanonicalOperations contains committed semantic operations omitted
+	// from the wire operation table, principally deletes. It keeps all committed
+	// operation lookup authority in columnarState without duplicating ordinary
+	// canonical rows.
+	nonCanonicalOperations map[opset.OpID]opset.Operation
+	objectSpans            map[opset.ObjectID]wireObjectSpan
+	objectOrder            []opset.ObjectID
 
 	changeColumns    []opset.RawColumn
 	operationColumns []opset.RawColumn
@@ -114,12 +120,19 @@ func (c *columnarState) prepareMutationCapacity() {
 func newColumnarState(document *opset.Document) (*columnarState, error) {
 	if decoded, ok := document.Canonical.(*storage.DecodedDocument); ok &&
 		decoded.Snapshot != nil {
+		operations := make(
+			[]opset.Operation,
+			len(decoded.Operations),
+			len(decoded.Operations)+64,
+		)
+		copy(operations, decoded.Operations)
+
 		columns := &columnarState{
 			actors:           document.Actors,
 			changes:          document.Changes,
 			changeRows:       make(map[opset.ChangeHash]int, len(document.Changes)),
 			heads:            document.Heads,
-			operations:       decoded.Operations,
+			operations:       operations,
 			operationRows:    newOperationRowIndex(len(decoded.Operations)),
 			changeColumns:    document.ChangeColumns,
 			operationColumns: document.OperationColumns,
@@ -140,6 +153,7 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 			columns.operationRows.rows[identifier] = i
 		}
 
+		columns.rebuildNonCanonicalOperations()
 		columns.rebuildWireObjectSpans()
 
 		return columns, nil
@@ -204,6 +218,7 @@ func newColumnarState(document *opset.Document) (*columnarState, error) {
 	}
 
 	columns.snapshot = snapshot
+	columns.rebuildNonCanonicalOperations()
 	columns.rebuildWireObjectSpans()
 
 	return columns, nil
@@ -222,16 +237,12 @@ func newColumnarStateFromState(state *State) (*columnarState, error) {
 	return columns, nil
 }
 
-// stateFromCanonicalColumns rebuilds only the semantic query indexes from the
-// canonical rows, then drops duplicate committed operation/change maps.
+// stateFromCanonicalColumns rebuilds semantic query indexes from committed
+// columnar history. State's operation and change maps remain empty overlays.
 func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 	state := NewState()
 	state.columns = columns
 	state.mapKeyIndexBuilt = true
-	state.changes = make(
-		map[opset.ChangeHash]*opset.Change,
-		len(columns.changes),
-	)
 
 	operationCount := 0
 	for i := range columns.changes {
@@ -247,10 +258,6 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 		}
 
 		if change.Hash != nil {
-			metadata := *change
-			metadata.Operations = nil
-			metadata.Raw = nil
-			state.changes[*change.Hash] = &metadata
 			state.indexActorChange(change.Actor, change.Sequence, *change.Hash)
 		}
 
@@ -268,7 +275,10 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 				operation = canonical
 				operation.Predecessors = predecessors
 			} else {
-				state.operations[operation.ID] = operation
+				return nil, fmt.Errorf(
+					"committed operation %v is absent from columns",
+					operation.ID,
+				)
 			}
 
 			state.operationIDs[operation.ID] = struct{}{}
@@ -289,10 +299,14 @@ func stateFromCanonicalColumns(columns *columnarState) (*State, error) {
 	}
 
 	for i := range columns.changes {
-		for _, identifier := range columns.changes[i].Operations {
-			operation, ok := state.operation(identifier.ID)
+		for _, changed := range columns.changes[i].Operations {
+			operation, ok := state.operation(changed.ID)
 			if !ok {
-				continue
+				if changed.Action != opset.ActionDelete {
+					continue
+				}
+
+				operation = changed
 			}
 
 			state.supersedePredecessors(operation)
@@ -335,6 +349,18 @@ func (b *Engine) reconcileColumns() error {
 
 	b.columns = next
 	state.attachCanonical(next)
+
+	return nil
+}
+
+func (b *Engine) reconcileIsolationColumns() error {
+	next := b.isolationColumns.clone()
+	if err := next.reconcile(b.state); err != nil {
+		return err
+	}
+
+	b.isolationColumns = next
+	b.state.attachCanonical(next)
 
 	return nil
 }
@@ -579,6 +605,7 @@ func (c *columnarState) reconcile(state *State) error {
 	c.heads = append([]opset.ChangeHash(nil), heads...)
 	c.operations = operations
 	c.operationRows = operationRows
+	c.rebuildNonCanonicalOperations()
 	c.rebuildWireObjectSpans()
 	c.columnsDirty = false
 	c.snapshot = snapshot
@@ -588,8 +615,28 @@ func (c *columnarState) reconcile(state *State) error {
 	return nil
 }
 
+func (c *columnarState) rebuildNonCanonicalOperations() {
+	operations := make(map[opset.OpID]opset.Operation)
+
+	for i := range c.changes {
+		for _, operation := range c.changes[i].Operations {
+			if row, ok := c.operationRows.lookup(operation.ID); ok &&
+				row >= 0 &&
+				row < len(c.operations) &&
+				c.operations[row].ID == operation.ID {
+				continue
+			}
+
+			operations[operation.ID] = cloneOperation(operation)
+		}
+	}
+
+	c.nonCanonicalOperations = operations
+}
+
 func (c *columnarState) rebuildWireObjectSpans() {
 	spans := make(map[opset.ObjectID]wireObjectSpan)
+	order := make([]opset.ObjectID, 0)
 	for row, operation := range c.operations {
 		span, ok := spans[operation.Object]
 		if !ok {
@@ -597,6 +644,7 @@ func (c *columnarState) rebuildWireObjectSpans() {
 				start: row,
 				end:   row + 1,
 			}
+			order = append(order, operation.Object)
 
 			continue
 		}
@@ -606,6 +654,7 @@ func (c *columnarState) rebuildWireObjectSpans() {
 	}
 
 	c.objectSpans = spans
+	c.objectOrder = order
 }
 
 func (c *columnarState) appendSequenceOperations(

@@ -54,13 +54,14 @@ type Engine struct {
 	// it nil; tests use it to verify that a failed batch publishes no state.
 	directColumnFailure func() error
 
-	// isolation pins reads and writes to a historical frontier. While active,
-	// state points at a view built from the isolation heads and fullState keeps
-	// the complete history; committed isolated changes are applied to both, while
-	// merged changes are applied only to fullState.
-	isolationActive bool
-	fullState       *State
-	baseActor       opset.ActorID
+	// isolation pins reads and writes to a historical columnar frontier. The
+	// ordinary columns and fullState retain complete history; isolationColumns
+	// owns only the selected ancestry plus local isolated commits. Remote changes
+	// advance the full pair and become visible after Integrate.
+	isolationActive  bool
+	isolationColumns *columnarState
+	fullState        *State
+	baseActor        opset.ActorID
 
 	// isolationDiffTargets records the frontiers isolated to since the diff
 	// cursor was last set. When present, an incremental diff replays the
@@ -598,9 +599,16 @@ func (b *Engine) SetActor(value []byte) error {
 // snapshot until either side mutates.
 func (b *Engine) Fork(actor []byte) (*Engine, error) {
 	if b.isolationActive {
-		data, err := b.Save(true, true)
+		data, err := b.isolationColumns.snapshot.Encode(
+			b.unknownColumns,
+			true,
+		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot encode isolated fork: %w", err)
+		}
+
+		for _, change := range orderedQueuedChanges(b.queuedChanges) {
+			data = append(data, maybeCompressChangeChunk(change.Raw, true)...)
 		}
 
 		fork, err := LoadEngine(data)

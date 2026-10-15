@@ -31,8 +31,6 @@ import (
 )
 
 func (b *Engine) Stats() ([]byte, error) {
-	b.bindColumnarState()
-
 	actors := make(map[opset.ActorID]struct{})
 
 	b.state.eachOperation(func(operation opset.Operation) bool {
@@ -133,8 +131,6 @@ func patchValueForOperation(state *State, operation opset.Operation) (patchValue
 // creation operation ID, with map keys in lexical order and sequence elements
 // in index order.
 func (b *Engine) CurrentState() ([]byte, error) {
-	b.bindColumnarState()
-
 	patches := make([]patchOut, 0)
 
 	for _, object := range orderedObjectsInState(b.state) {
@@ -189,7 +185,7 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 	sort.Slice(
 		makers,
 		func(i, j int) bool {
-			return makers[i].ID.Compare(makers[j].ID) < 0
+			return compareObjectCreationIDs(makers[i].ID, makers[j].ID) < 0
 		},
 	)
 
@@ -198,6 +194,27 @@ func orderedObjectsInState(state *State) []opset.ObjectID {
 	}
 
 	return objects
+}
+
+func compareObjectCreationIDs(left, right opset.OpID) int {
+	if left.Counter != right.Counter {
+		return left.Compare(right)
+	}
+
+	leftBase, leftLevel := left.Actor.Concurrency()
+	rightBase, rightLevel := right.Actor.Concurrency()
+	if compared := leftBase.Compare(rightBase); compared != 0 {
+		return compared
+	}
+
+	switch {
+	case leftLevel < rightLevel:
+		return -1
+	case leftLevel > rightLevel:
+		return 1
+	default:
+		return left.Actor.Compare(right.Actor)
+	}
 }
 
 func objectTypeInState(state *State, object opset.ObjectID) (string, error) {

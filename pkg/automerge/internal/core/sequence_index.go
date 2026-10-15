@@ -36,6 +36,8 @@ type (
 	sequenceIndex struct {
 		state        *State
 		chunks       []*sequenceIndexChunk
+		prefixValues []int
+		prefixWidths []uint32
 		positions    map[opset.OpID]sequenceIndexPosition
 		visibleCount int
 		utf16Width   uint32
@@ -71,6 +73,20 @@ type (
 		targets  []opset.Operation
 	}
 )
+
+func (i *sequenceIndex) totalUTF16Width() uint64 {
+	var width uint64
+
+	for _, chunk := range i.chunks {
+		for _, entry := range chunk.entries {
+			if entry.visible {
+				width += uint64(entry.width)
+			}
+		}
+	}
+
+	return width
+}
 
 // buildSequenceIndex constructs an object's RGA order without materializing a
 // document-wide winner map. Replacement candidates are already grouped by
@@ -175,6 +191,12 @@ func (i *sequenceIndex) appendChunk(chunk *sequenceIndexChunk) {
 	i.visibleCount += chunk.visibleCount
 	i.utf16Width += chunk.utf16Width
 	i.markCount += chunk.markCount
+	if len(i.prefixValues) == 0 {
+		i.prefixValues = append(i.prefixValues, 0)
+		i.prefixWidths = append(i.prefixWidths, 0)
+	}
+	i.prefixValues = append(i.prefixValues, i.visibleCount)
+	i.prefixWidths = append(i.prefixWidths, i.utf16Width)
 	i.indexChunk(chunk)
 }
 
@@ -276,6 +298,16 @@ func (i *sequenceIndex) elements() []opset.Operation {
 
 func (i *sequenceIndex) values() []sequenceValue {
 	values := make([]sequenceValue, 0, i.visibleCount)
+	i.eachValue(func(value sequenceValue) bool {
+		values = append(values, value)
+
+		return true
+	})
+
+	return values
+}
+
+func (i *sequenceIndex) eachValue(yield func(sequenceValue) bool) {
 	for _, chunk := range i.chunks {
 		for _, entry := range chunk.entries {
 			if entry.visible {
@@ -284,15 +316,50 @@ func (i *sequenceIndex) values() []sequenceValue {
 					continue
 				}
 
-				values = append(values, sequenceValue{
+				if !yield(sequenceValue{
 					Element:   entry.insertion,
 					Operation: operation,
-				})
+				}) {
+					return
+				}
 			}
 		}
 	}
+}
 
-	return values
+func (i *sequenceIndex) valueAt(target int) (sequenceValue, bool) {
+	if target < 0 || target >= i.visibleCount {
+		return sequenceValue{}, false
+	}
+
+	entry := i.visibleEntry(target)
+	operation, ok := i.state.operation(entry.winner)
+	if !ok {
+		return sequenceValue{}, false
+	}
+
+	return sequenceValue{Element: entry.insertion, Operation: operation}, true
+}
+
+// visibleIndex resolves either a list element index or a text UTF-16 position.
+// Text positions inside a surrogate pair advance to the following element
+// boundary, matching Automerge's sequence APIs.
+func (i *sequenceIndex) visibleIndex(position uint64, text bool) (int, bool) {
+	if !text {
+		if position > uint64(i.visibleCount) {
+			return 0, false
+		}
+
+		return int(position), true
+	}
+
+	if position > uint64(i.utf16Width) {
+		return 0, false
+	}
+
+	visible, _ := i.visibleBoundary(uint32(position))
+
+	return visible, true
 }
 
 // rangeAt resolves a UTF-16 edit directly over chunk summaries. Only the
@@ -362,57 +429,61 @@ func (i *sequenceIndex) richPosition(
 // position and the width at that boundary. A position inside a surrogate pair
 // advances to the following boundary.
 func (i *sequenceIndex) visibleBoundary(target uint32) (int, uint32) {
-	var (
-		position uint32
-		visible  int
+	chunkIndex := sort.Search(
+		len(i.chunks),
+		func(index int) bool {
+			return i.prefixWidths[index+1] >= target
+		},
 	)
-
-	for _, chunk := range i.chunks {
-		if position+chunk.utf16Width < target {
-			position += chunk.utf16Width
-			visible += chunk.visibleCount
-
-			continue
-		}
-
-		local := target - position
-		boundary := sort.Search(
-			len(chunk.prefixWidths),
-			func(index int) bool {
-				return chunk.prefixWidths[index] >= local
-			},
-		)
-
-		return visible + int(chunk.prefixValues[boundary]),
-			position + chunk.prefixWidths[boundary]
+	if chunkIndex == len(i.chunks) {
+		return i.visibleCount, i.utf16Width
 	}
 
-	return visible, position
+	chunk := i.chunks[chunkIndex]
+	local := target - i.prefixWidths[chunkIndex]
+	boundary := sort.Search(
+		len(chunk.prefixWidths),
+		func(index int) bool {
+			return chunk.prefixWidths[index] >= local
+		},
+	)
+
+	return i.prefixValues[chunkIndex] + int(chunk.prefixValues[boundary]),
+		i.prefixWidths[chunkIndex] + chunk.prefixWidths[boundary]
 }
 
 func (i *sequenceIndex) visibleInsertion(target int) opset.Operation {
-	var visible int
-	for _, chunk := range i.chunks {
-		if visible+chunk.visibleCount <= target {
-			visible += chunk.visibleCount
+	entry := i.visibleEntry(target)
+	operation, _ := i.state.operation(entry.insertion)
+
+	return operation
+}
+
+func (i *sequenceIndex) visibleEntry(target int) sequenceIndexEntry {
+	chunkIndex := sort.Search(
+		len(i.chunks),
+		func(index int) bool {
+			return i.prefixValues[index+1] > target
+		},
+	)
+	if chunkIndex == len(i.chunks) {
+		return sequenceIndexEntry{}
+	}
+
+	visible := i.prefixValues[chunkIndex]
+	for _, entry := range i.chunks[chunkIndex].entries {
+		if !entry.visible {
 			continue
 		}
 
-		for _, entry := range chunk.entries {
-			if !entry.visible {
-				continue
-			}
-
-			if visible == target {
-				operation, _ := i.state.operation(entry.insertion)
-				return operation
-			}
-
-			visible++
+		if visible == target {
+			return entry
 		}
+
+		visible++
 	}
 
-	return opset.Operation{}
+	return sequenceIndexEntry{}
 }
 
 // rawPosition returns an insertion's position in the complete RGA order,
@@ -502,6 +573,7 @@ func (i *sequenceIndex) replaceEntry(
 	refreshSequenceIndexChunk(chunk)
 	i.addChunkSummary(chunk)
 	i.indexChunk(chunk)
+	i.refreshPrefixes()
 }
 
 func (i *sequenceIndex) insertEntry(
@@ -530,6 +602,7 @@ func (i *sequenceIndex) insertEntry(
 			refreshSequenceIndexChunk(chunk)
 			i.addChunkSummary(chunk)
 			i.indexChunk(chunk)
+			i.refreshPrefixes()
 
 			return true
 		}
@@ -551,6 +624,7 @@ func (i *sequenceIndex) insertEntry(
 		i.addChunkSummary(right)
 		i.indexChunk(left)
 		i.indexChunk(right)
+		i.refreshPrefixes()
 
 		return true
 	}
@@ -631,6 +705,7 @@ func (i *sequenceIndex) finishDeferredMutations(
 	for _, chunk := range i.chunks {
 		i.addChunkSummary(chunk)
 	}
+	i.refreshPrefixes()
 }
 
 func refreshSequenceIndexChunk(chunk *sequenceIndexChunk) {
@@ -674,6 +749,29 @@ func (i *sequenceIndex) replaceChunk(index int, replacement *sequenceIndexChunk)
 	i.chunks[index] = replacement
 	i.addChunkSummary(replacement)
 	i.indexChunk(replacement)
+	i.refreshPrefixes()
+}
+
+func (i *sequenceIndex) refreshPrefixes() {
+	required := len(i.chunks) + 1
+	if cap(i.prefixValues) >= required {
+		i.prefixValues = i.prefixValues[:required]
+		clear(i.prefixValues)
+	} else {
+		i.prefixValues = make([]int, required)
+	}
+
+	if cap(i.prefixWidths) >= required {
+		i.prefixWidths = i.prefixWidths[:required]
+		clear(i.prefixWidths)
+	} else {
+		i.prefixWidths = make([]uint32, required)
+	}
+
+	for index, chunk := range i.chunks {
+		i.prefixValues[index+1] = i.prefixValues[index] + chunk.visibleCount
+		i.prefixWidths[index+1] = i.prefixWidths[index] + chunk.utf16Width
+	}
 }
 
 func (i *sequenceIndex) removeChunkSummary(chunk *sequenceIndexChunk) {
@@ -756,19 +854,9 @@ func (s *State) updateSequenceIndex(operation opset.Operation, local bool) {
 	}
 
 	object := operation.Object.OpID
-	delete(s.sequenceCache, object)
-	delete(s.sequenceValuesCache, object)
-	delete(s.sequenceElementsCache, object)
-	delete(s.sequenceOffsetCache, object)
 
 	index, ok := s.sequenceIndexes[object]
 	if !ok {
-		return
-	}
-
-	creator, ok := s.operation(object)
-	if !ok || creator.Action != opset.ActionMakeText {
-		s.invalidateSequenceIndex(object)
 		return
 	}
 
@@ -825,21 +913,9 @@ func (s *State) updateSequenceIndexes(
 		}
 
 		object := operation.Object.OpID
-		delete(s.sequenceCache, object)
-		delete(s.sequenceValuesCache, object)
-		delete(s.sequenceElementsCache, object)
-		delete(s.sequenceOffsetCache, object)
 
 		index, ok := s.sequenceIndexes[object]
 		if !ok {
-			continue
-		}
-
-		creator, ok := s.operation(object)
-		if !ok || creator.Action != opset.ActionMakeText {
-			s.invalidateSequenceIndex(object)
-			delete(dirtyByObject, object)
-
 			continue
 		}
 
@@ -896,10 +972,6 @@ func (s *State) updateSequenceIndexes(
 
 func (s *State) invalidateSequenceIndex(object opset.OpID) {
 	delete(s.sequenceIndexes, object)
-	delete(s.sequenceCache, object)
 	delete(s.insertOrderCache, object)
 	delete(s.insertOrderPositionCache, object)
-	delete(s.sequenceValuesCache, object)
-	delete(s.sequenceElementsCache, object)
-	delete(s.sequenceOffsetCache, object)
 }

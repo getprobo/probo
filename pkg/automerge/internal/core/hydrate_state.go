@@ -40,7 +40,6 @@ type hydratedValueWire struct {
 
 // Hydrate returns the current root value as a recursively typed value.
 func (b *Engine) Hydrate() ([]byte, error) {
-	b.bindColumnarState()
 	return hydrateState(b.state)
 }
 
@@ -140,19 +139,26 @@ func (s *State) hydratedListValue(
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
-	elements := s.sequenceElements(object)
+	index := s.sequenceIndex(object)
 	result := hydratedValueWire{
 		Type: "list",
-		List: make([]hydratedValueWire, 0, len(elements)),
+		List: make([]hydratedValueWire, 0, index.visibleCount),
 	}
 
-	for _, element := range elements {
-		value, err := s.hydratedOperationValue(element, visited)
+	var hydrateErr error
+	index.eachValue(func(element sequenceValue) bool {
+		value, err := s.hydratedOperationValue(element.Operation, visited)
 		if err != nil {
-			return hydratedValueWire{}, err
+			hydrateErr = err
+
+			return false
 		}
 
 		result.List = append(result.List, value)
+		return true
+	})
+	if hydrateErr != nil {
+		return hydratedValueWire{}, hydrateErr
 	}
 
 	return result, nil
@@ -173,11 +179,14 @@ func (s *State) hydratedOperationValue(
 	case opset.ActionMakeText:
 		var value strings.Builder
 
-		for _, element := range s.sequence(operation.ID) {
-			if element.Value != nil && element.Value.Type == opset.ScalarString {
-				value.WriteString(element.Value.String)
+		s.sequenceIndex(operation.ID).eachValue(func(element sequenceValue) bool {
+			if element.Operation.Value != nil &&
+				element.Operation.Value.Type == opset.ScalarString {
+				value.WriteString(element.Operation.Value.String)
 			}
-		}
+
+			return true
+		})
 
 		return hydratedValueWire{Type: "text", Text: value.String()}, nil
 	case opset.ActionSet:
@@ -260,11 +269,14 @@ func (s *State) mapValue(
 		case opset.ActionMakeText:
 			var value strings.Builder
 
-			for _, element := range s.sequence(operation.ID) {
-				if element.Value != nil && element.Value.Type == opset.ScalarString {
-					value.WriteString(element.Value.String)
+			s.sequenceIndex(operation.ID).eachValue(func(element sequenceValue) bool {
+				if element.Operation.Value != nil &&
+					element.Operation.Value.Type == opset.ScalarString {
+					value.WriteString(element.Operation.Value.String)
 				}
-			}
+
+				return true
+			})
 
 			result[property] = value.String()
 		case opset.ActionSet:
@@ -286,39 +298,51 @@ func (s *State) listValue(
 	visited[object] = struct{}{}
 	defer delete(visited, object)
 
-	elements := s.sequenceElements(object)
-	result := make([]any, 0, len(elements))
+	index := s.sequenceIndex(object)
+	result := make([]any, 0, index.visibleCount)
 
-	for _, element := range elements {
+	var hydrateErr error
+	index.eachValue(func(value sequenceValue) bool {
+		element := value.Operation
 		switch element.Action {
 		case opset.ActionMakeMap:
 			value, err := s.mapValue(element.ID, visited)
 			if err != nil {
-				return nil, err
+				hydrateErr = err
+
+				return false
 			}
 
 			result = append(result, value)
 		case opset.ActionMakeList:
 			value, err := s.listValue(element.ID, visited)
 			if err != nil {
-				return nil, err
+				hydrateErr = err
+
+				return false
 			}
 
 			result = append(result, value)
 		case opset.ActionMakeText:
 			var value strings.Builder
 
-			for _, textElement := range s.sequence(element.ID) {
-				if textElement.Value != nil &&
-					textElement.Value.Type == opset.ScalarString {
-					value.WriteString(textElement.Value.String)
+			s.sequenceIndex(element.ID).eachValue(func(textElement sequenceValue) bool {
+				if textElement.Operation.Value != nil &&
+					textElement.Operation.Value.Type == opset.ScalarString {
+					value.WriteString(textElement.Operation.Value.String)
 				}
-			}
+
+				return true
+			})
 
 			result = append(result, value.String())
 		case opset.ActionSet:
 			result = append(result, scalarMaterializedValue(element.Value))
 		}
+		return true
+	})
+	if hydrateErr != nil {
+		return nil, hydrateErr
 	}
 
 	return result, nil

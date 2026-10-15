@@ -22,6 +22,7 @@ package core
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"slices"
@@ -79,6 +80,11 @@ func newColumnMutationBatch(
 		nextRows[hash] = row
 	}
 
+	// Valid applied histories only add topologically ordered changes: the
+	// remote queue orders dependencies before children and local commits depend
+	// on the current heads. Replacing or inserting before an existing change
+	// row cannot occur here; duplicate hashes are rejected below and remain a
+	// compatibility-path concern for malformed or legacy snapshots.
 	for _, change := range changes {
 		if change.Hash == nil {
 			return nil, fmt.Errorf("direct column change has no hash")
@@ -182,28 +188,6 @@ func newColumnMutationBatch(
 			break
 		}
 
-		order, ok := state.indexedObjectOrder(object)
-		if !ok {
-			return nil, fmt.Errorf("cannot order directly mutated object %v", object)
-		}
-
-		replacement := make([]opset.Operation, len(order))
-		for i, identifier := range order {
-			operation, ok := state.operation(identifier)
-			if !ok {
-				return nil, fmt.Errorf("direct operation %v is absent", identifier)
-			}
-
-			operation.Successors = append(
-				[]opset.OpID(nil),
-				state.successorIndex[identifier]...,
-			)
-			slices.SortFunc(operation.Successors, compareOperationIDs)
-			replacement[i] = cloneOperation(operation)
-		}
-
-		batch.touchedObjects[object] = replacement
-
 		current := []opset.Operation(nil)
 
 		index := directObjectInsertionRow(columns, object)
@@ -211,6 +195,18 @@ func newColumnMutationBatch(
 			index = span.start
 			current = columns.operations[span.start:span.end]
 		}
+
+		replacement, ok := directObjectReplacement(
+			state,
+			object,
+			current,
+			changes,
+		)
+		if !ok {
+			return nil, fmt.Errorf("cannot order directly mutated object %v", object)
+		}
+
+		batch.touchedObjects[object] = replacement
 
 		prefix, suffix := commonOperationEdges(current, replacement)
 
@@ -689,21 +685,113 @@ func directObjectInsertionRow(
 	columns *columnarState,
 	object opset.ObjectID,
 ) int {
-	if object.IsRoot {
-		return 0
+	index, exists := slices.BinarySearchFunc(
+		columns.objectOrder,
+		object,
+		compareDocumentObjects,
+	)
+	if exists {
+		return columns.objectSpans[object].start
 	}
 
-	for row, operation := range columns.operations {
-		if operation.Object.IsRoot {
-			continue
-		}
-
-		if operation.Object.OpID.Compare(object.OpID) > 0 {
-			return row
-		}
+	if index < len(columns.objectOrder) {
+		return columns.objectSpans[columns.objectOrder[index]].start
 	}
 
 	return len(columns.operations)
+}
+
+// directObjectReplacement treats retained map rows as canonical input instead
+// of trusting the lazily-built map key index. Applied histories can therefore
+// mutate an object even when that query index only contains incoming rows.
+func directObjectReplacement(
+	state *State,
+	object opset.ObjectID,
+	current []opset.Operation,
+	changes []*opset.Change,
+) ([]opset.Operation, bool) {
+	mapObject := object.IsRoot
+	if !mapObject {
+		creator, ok := state.operation(object.OpID)
+		if !ok {
+			return nil, false
+		}
+
+		mapObject = isMapObject(creator.Action)
+	}
+
+	if !mapObject {
+		order, ok := state.indexedObjectOrder(object)
+		if !ok {
+			return nil, false
+		}
+
+		replacement := make([]opset.Operation, len(order))
+		for i, identifier := range order {
+			operation, ok := directWireOperation(state, identifier)
+			if !ok {
+				return nil, false
+			}
+
+			replacement[i] = operation
+		}
+
+		return replacement, true
+	}
+
+	identifiers := make(map[opset.OpID]struct{}, len(current))
+	for _, operation := range current {
+		identifiers[operation.ID] = struct{}{}
+	}
+
+	for _, change := range changes {
+		for _, operation := range change.Operations {
+			if operation.Object == object && operation.Action != opset.ActionDelete {
+				identifiers[operation.ID] = struct{}{}
+			}
+		}
+	}
+
+	replacement := make([]opset.Operation, 0, len(identifiers))
+	for identifier := range identifiers {
+		operation, ok := directWireOperation(state, identifier)
+		if !ok || operation.Key.Property == nil {
+			return nil, false
+		}
+
+		replacement = append(replacement, operation)
+	}
+
+	slices.SortFunc(
+		replacement,
+		func(left, right opset.Operation) int {
+			if order := cmp.Compare(*left.Key.Property, *right.Key.Property); order != 0 {
+				return order
+			}
+
+			return compareOperationIDs(left.ID, right.ID)
+		},
+	)
+
+	return replacement, true
+}
+
+func directWireOperation(
+	state *State,
+	identifier opset.OpID,
+) (opset.Operation, bool) {
+	operation, ok := state.operation(identifier)
+	if !ok {
+		return opset.Operation{}, false
+	}
+
+	operation.Successors = append(
+		[]opset.OpID(nil),
+		state.successorIndex[identifier]...,
+	)
+	slices.SortFunc(operation.Successors, compareOperationIDs)
+
+	return cloneOperation(operation), true
 }
 
 func commonOperationEdges(
@@ -835,15 +923,27 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 		return nil, fmt.Errorf("cannot apply direct snapshot splice: %w", err)
 	}
 
-	operationDelta := 0
-	for _, splice := range b.operationSplices {
-		operationDelta += len(splice.Operations) - splice.DeleteCount
+	peakOperationLength := peakSplicedLength(
+		len(columns.operations),
+		b.operationSplices,
+	)
+
+	spanBoundaries := make(map[opset.ObjectID][2]opset.OpID, len(columns.objectSpans))
+	for object, span := range columns.objectSpans {
+		if _, touched := b.touchedObjects[object]; touched || span.start == span.end {
+			continue
+		}
+
+		spanBoundaries[object] = [2]opset.OpID{
+			columns.operations[span.start].ID,
+			columns.operations[span.end-1].ID,
+		}
 	}
 
 	operations := columns.operations
 	if !b.reuseOperations ||
 		columns.shared ||
-		cap(operations) < len(operations)+operationDelta {
+		cap(operations) < peakOperationLength {
 		runtimeMetrics.directOperationCopies.Add(uint64(len(operations)))
 		operations = append([]opset.Operation(nil), operations...)
 	}
@@ -885,7 +985,39 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	next.heads = append([]opset.ChangeHash(nil), b.heads...)
 	next.operations = operations
 	next.operationRows = rows
-	next.objectSpans = updateDirectObjectSpans(columns, rows, b.touchedObjects)
+	next.nonCanonicalOperations = columns.nonCanonicalOperations
+	clonedNonCanonicalOperations := false
+	for _, change := range b.appendedChanges {
+		for _, operation := range change.Operations {
+			if _, canonical := rows.lookup(operation.ID); canonical {
+				continue
+			}
+
+			if !clonedNonCanonicalOperations {
+				next.nonCanonicalOperations = make(
+					map[opset.OpID]opset.Operation,
+					len(columns.nonCanonicalOperations)+1,
+				)
+				for identifier, current := range columns.nonCanonicalOperations {
+					next.nonCanonicalOperations[identifier] = current
+				}
+
+				clonedNonCanonicalOperations = true
+			}
+
+			next.nonCanonicalOperations[operation.ID] = cloneOperation(operation)
+		}
+	}
+	next.objectSpans = updateDirectObjectSpans(
+		spanBoundaries,
+		rows,
+		b.touchedObjects,
+	)
+	next.objectOrder = updateDirectObjectOrder(
+		columns.objectOrder,
+		next.objectSpans,
+		b.touchedObjects,
+	)
 	next.columnsDirty = false
 	next.snapshot = snapshot
 	next.shared = false
@@ -895,20 +1027,30 @@ func (b *columnMutationBatch) apply(columns *columnarState) (*columnarState, err
 	return next, nil
 }
 
+func peakSplicedLength(
+	initial int,
+	splices []storage.SnapshotOperationSplice,
+) int {
+	current := initial
+	peak := initial
+
+	for _, splice := range splices {
+		current += len(splice.Operations) - splice.DeleteCount
+		peak = max(peak, current)
+	}
+
+	return peak
+}
+
 func updateDirectObjectSpans(
-	columns *columnarState,
+	boundaries map[opset.ObjectID][2]opset.OpID,
 	rows *operationRowIndex,
 	touched map[opset.ObjectID][]opset.Operation,
 ) map[opset.ObjectID]wireObjectSpan {
-	spans := make(map[opset.ObjectID]wireObjectSpan, len(columns.objectSpans))
-	for object, span := range columns.objectSpans {
-		if _, changed := touched[object]; changed || span.start == span.end {
-			continue
-		}
-
-		first, firstOK := rows.lookup(columns.operations[span.start].ID)
-
-		last, lastOK := rows.lookup(columns.operations[span.end-1].ID)
+	spans := make(map[opset.ObjectID]wireObjectSpan, len(boundaries)+len(touched))
+	for object, boundary := range boundaries {
+		first, firstOK := rows.lookup(boundary[0])
+		last, lastOK := rows.lookup(boundary[1])
 		if firstOK && lastOK {
 			spans[object] = wireObjectSpan{start: first, end: last + 1}
 		}
@@ -930,19 +1072,31 @@ func updateDirectObjectSpans(
 	return spans
 }
 
-func (s *State) promoteDirectCommit(
-	change *opset.Change,
-	columns *columnarState,
-) {
-	for _, operation := range change.Operations {
-		delete(s.operations, operation.ID)
+func updateDirectObjectOrder(
+	current []opset.ObjectID,
+	spans map[opset.ObjectID]wireObjectSpan,
+	touched map[opset.ObjectID][]opset.Operation,
+) []opset.ObjectID {
+	order := append([]opset.ObjectID(nil), current...)
+
+	for object := range touched {
+		if _, exists := spans[object]; !exists {
+			continue
+		}
+
+		index, exists := slices.BinarySearchFunc(
+			order,
+			object,
+			compareDocumentObjects,
+		)
+		if !exists {
+			order = slices.Insert(order, index, object)
+		}
 	}
 
-	metadata := *change
-	metadata.Operations = nil
-	metadata.Raw = nil
-	s.changes[*change.Hash] = &metadata
-	s.columns = columns
-	clear(s.heads)
-	clear(s.removedHeads)
+	return order
+}
+
+func (s *State) promoteDirectCommit(columns *columnarState) {
+	s.attachCanonical(columns)
 }
