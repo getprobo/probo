@@ -110,6 +110,8 @@ func TestOrderedObjectsInState_OmitsLosingSequenceObject(t *testing.T) {
 	leftID := engineObject(t, left, leftChild)
 	rightID := engineObject(t, right, rightChild)
 	require.NotEqual(t, leftID, rightID)
+	require.True(t, right.state.hasOperationID(leftID.OpID))
+	require.True(t, right.state.hasOperationID(rightID.OpID))
 	assert.False(t, right.state.isSuperseded(leftID.OpID))
 	assert.False(t, right.state.isSuperseded(rightID.OpID))
 
@@ -169,6 +171,8 @@ func TestOrderedObjectsInState_OmitsLosingMapObject(t *testing.T) {
 	leftID := engineObject(t, left, leftChild)
 	rightID := engineObject(t, right, rightChild)
 	require.NotEqual(t, leftID, rightID)
+	require.True(t, right.state.hasOperationID(leftID.OpID))
+	require.True(t, right.state.hasOperationID(rightID.OpID))
 	assert.False(t, right.state.isSuperseded(leftID.OpID))
 	assert.False(t, right.state.isSuperseded(rightID.OpID))
 

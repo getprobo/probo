@@ -153,12 +153,12 @@ func (b *Engine) ApplyChanges(
 
 	beforeQueued := len(b.queuedChanges)
 	if err := b.applyMergedChanges(decoded); err != nil {
+		b.advanceRevision(beforeChanges, beforeQueued)
+
 		return err
 	}
 
-	if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
-		b.revision++
-	}
+	b.advanceRevision(beforeChanges, beforeQueued)
 
 	if next := b.state.maxOpGlobal() + 1; next > b.nextOp {
 		b.nextOp = next
@@ -345,9 +345,7 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 			return nil, err
 		}
 
-		if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
-			b.revision++
-		}
+		b.advanceRevision(beforeChanges, beforeQueued)
 
 		return b.Heads()
 	}
@@ -356,12 +354,12 @@ func (b *Engine) Merge(data []byte) ([][32]byte, error) {
 
 	beforeQueued := len(b.queuedChanges)
 	if err := b.applyMergedChanges(document.Changes); err != nil {
+		b.advanceRevision(beforeChanges, beforeQueued)
+
 		return nil, err
 	}
 
-	if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
-		b.revision++
-	}
+	b.advanceRevision(beforeChanges, beforeQueued)
 
 	if next := b.state.maxOpGlobal() + 1; next > b.nextOp {
 		b.nextOp = next
@@ -589,6 +587,9 @@ func (b *Engine) applyMergedChanges(changes []opset.Change) error {
 					if queued, exists := b.queuedChanges[hash]; exists {
 						b.queuedBytes -= len(queued.Raw)
 						delete(b.queuedChanges, hash)
+						// Error-path drop: a same-sized queue would leave a
+						// cached save holding this change.
+						b.revision++
 					}
 				}
 
@@ -1009,6 +1010,10 @@ func (b *Engine) removeActorBranchFrom(actor opset.ActorID, sequence uint64) {
 		}
 	}
 
+	if len(removed) == 0 {
+		return
+	}
+
 	for hash := range removed {
 		change := b.queuedChanges[hash]
 		b.queuedBytes -= len(change.Raw)
@@ -1017,6 +1022,16 @@ func (b *Engine) removeActorBranchFrom(actor opset.ActorID, sequence uint64) {
 
 	if b.queuedBytes < 0 {
 		b.queuedBytes = 0
+	}
+
+	// Error-path cleanup: a same-sized queue would leave a cached save
+	// holding these changes.
+	b.revision++
+}
+
+func (b *Engine) advanceRevision(beforeChanges, beforeQueued int) {
+	if b.state.changeCount() != beforeChanges || len(b.queuedChanges) != beforeQueued {
+		b.revision++
 	}
 }
 

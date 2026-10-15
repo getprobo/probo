@@ -25,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge/internal/opset"
 	"go.probo.inc/probo/pkg/automerge/internal/storage"
@@ -76,6 +77,71 @@ func TestApplyChanges_RemovesQueuedDuplicateActorSequence(t *testing.T) {
 		requireQueued(t, fixture.engine, fixture.unrelated, fixture.orphan)
 		require.NotContains(t, fixture.engine.queuedChanges, fixture.successor)
 		require.NotContains(t, fixture.engine.queuedChanges, fixture.conflict)
+	})
+}
+
+func TestApplyChanges_InvalidatesCachedSaveAfterBranchCleanup(t *testing.T) {
+	t.Parallel()
+
+	t.Run("apply changes", func(t *testing.T) {
+		t.Parallel()
+
+		assertCachedSaveDropsRemovedSuccessor(t, false)
+	})
+
+	t.Run("merge", func(t *testing.T) {
+		t.Parallel()
+
+		assertCachedSaveDropsRemovedSuccessor(t, true)
+	})
+
+	t.Run("same-sized fallback queue", func(t *testing.T) {
+		t.Parallel()
+
+		fixture := queuedDuplicateFixture(t)
+		successor := append(
+			[]byte(nil),
+			fixture.engine.queuedChanges[fixture.successor].Raw...,
+		)
+		cached, err := fixture.engine.Save(true, false)
+		require.NoError(t, err)
+		require.Contains(t, string(cached), string(successor))
+
+		require.NoError(
+			t,
+			fixture.engine.PutScalar(0, "pending", mustScalar(t, "pending")),
+		)
+		require.NotEmpty(t, fixture.engine.pending)
+
+		stayer, err := opset.NewActorID([]byte("stayer"))
+		require.NoError(t, err)
+		var missing opset.ChangeHash
+		missing[0] = 9
+		staying := mustEncodeChange(
+			t,
+			opset.Change{
+				Actor:        stayer,
+				Sequence:     1,
+				StartOp:      1,
+				MaxOp:        0,
+				Message:      "staying",
+				Dependencies: []opset.ChangeHash{missing},
+			},
+		)
+
+		beforeQueued := len(fixture.engine.queuedChanges)
+		err = fixture.engine.ApplyChanges([][]byte{staying.Raw, fixture.conflicting})
+		require.Error(t, err)
+		require.Len(t, fixture.engine.queuedChanges, beforeQueued)
+		require.NotContains(t, fixture.engine.queuedChanges, fixture.successor)
+		require.Contains(t, fixture.engine.queuedChanges, *staying.Hash)
+		assert.NotEqual(t, fixture.engine.saveCache.revision, fixture.engine.revision)
+
+		rebuilt, ok, err := fixture.engine.compact(true, false)
+		require.NoError(t, err)
+		require.True(t, ok)
+		assert.NotContains(t, string(rebuilt), string(successor))
+		assert.Contains(t, string(rebuilt), string(staying.Raw))
 	})
 }
 
@@ -395,6 +461,39 @@ func mustEncodeChange(t *testing.T, change opset.Change) opset.Change {
 	require.NotEmpty(t, change.Raw)
 
 	return change
+}
+
+func assertCachedSaveDropsRemovedSuccessor(t *testing.T, useMerge bool) {
+	t.Helper()
+
+	fixture := queuedDuplicateFixture(t)
+	successor := append(
+		[]byte(nil),
+		fixture.engine.queuedChanges[fixture.successor].Raw...,
+	)
+	unrelated := append(
+		[]byte(nil),
+		fixture.engine.queuedChanges[fixture.unrelated].Raw...,
+	)
+
+	before, err := fixture.engine.Save(true, false)
+	require.NoError(t, err)
+	require.Contains(t, string(before), string(successor))
+	require.Contains(t, string(before), string(unrelated))
+
+	if useMerge {
+		_, err = fixture.engine.Merge(fixture.conflicting)
+	} else {
+		err = fixture.engine.ApplyChanges([][]byte{fixture.conflicting})
+	}
+
+	require.Error(t, err)
+	require.NotContains(t, fixture.engine.queuedChanges, fixture.successor)
+
+	after, err := fixture.engine.Save(true, false)
+	require.NoError(t, err)
+	assert.NotContains(t, string(after), string(successor))
+	assert.Contains(t, string(after), string(unrelated))
 }
 
 func requireQueued(t *testing.T, engine *Engine, hashes ...opset.ChangeHash) {
