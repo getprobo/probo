@@ -154,10 +154,12 @@ export function ConnectorAccountListItem({
               <Heading level={2} size={3} weight="medium" highContrast className={title()}>
                 {account.name}
               </Heading>
-              <Text size={1} color="faint" className="shrink-0 font-mono">
-                #
-                {account.externalAccountId}
-              </Text>
+              {account.externalAccountId.trim() !== "" && (
+                <Text size={1} color="faint" className="shrink-0 font-mono">
+                  #
+                  {account.externalAccountId}
+                </Text>
+              )}
             </div>
             <Badge variant="soft" color={unknown ? "neutral" : "green"} size={1}>
               {t(unknown ? "detailsPage.accounts.unknown" : "detailsPage.status.CONNECTED")}

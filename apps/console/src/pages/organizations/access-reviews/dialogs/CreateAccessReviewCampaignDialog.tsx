@@ -38,6 +38,7 @@ import type { CreateAccessReviewCampaignDialogMutation } from "#/__generated__/c
 import type { CreateAccessReviewCampaignDialogSourcesQuery } from "#/__generated__/core/CreateAccessReviewCampaignDialogSourcesQuery.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
+import { accessReviewSourceLabel } from "#/pages/organizations/access-reviews/_lib/sourceLabel";
 
 const createCampaignMutation = graphql`
   mutation CreateAccessReviewCampaignDialogMutation(
@@ -266,7 +267,12 @@ function SourceSelector({
               checked={selectedSourceIds.includes(source.id)}
               onChange={() => onToggle(source.id)}
             />
-            <span className="text-sm">{source.connectorAccount?.name ?? source.name}</span>
+            <span className="text-sm">
+              {accessReviewSourceLabel({
+                name: source.name,
+                accountName: source.connectorAccount?.name,
+              })}
+            </span>
           </label>
         ))}
       </div>

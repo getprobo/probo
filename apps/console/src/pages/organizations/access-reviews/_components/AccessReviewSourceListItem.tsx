@@ -44,6 +44,7 @@ import { useMutation } from "#/lib/relay/useMutation";
 import { buildConnectorInitiateURL } from "#/pages/organizations/settings/integrations/_lib/connectorInitiate";
 
 import { connectionIssue } from "../_lib/connectionIssue";
+import { accessReviewSourceLabel } from "../_lib/sourceLabel";
 import { sourceListItem } from "../sources/_components/variants";
 
 import { AccessReviewSourceDeleteDialog } from "./AccessReviewSourceDeleteDialog";
@@ -250,7 +251,10 @@ export function AccessReviewSourceListItem({
         />
         <div className={identity()}>
           <Heading level={3} size={3} weight="medium" highContrast className={title()}>
-            {accessSource.connectorAccount?.name ?? accessSource.name}
+            {accessReviewSourceLabel({
+              name: accessSource.name,
+              accountName: accessSource.connectorAccount?.name,
+            })}
           </Heading>
           <Text size={1} color="faint">
             <time dateTime={accessSource.createdAt}>

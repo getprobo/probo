@@ -41,21 +41,29 @@ query($id: ID!) {
       connectionStatus
       createdAt
       updatedAt
+      connectorAccount {
+        name
+      }
     }
   }
 }
 `
 
+type sourceNode struct {
+	Typename         string  `json:"__typename"`
+	ID               string  `json:"id"`
+	Name             string  `json:"name"`
+	ConnectorID      *string `json:"connectorId"`
+	ConnectionStatus string  `json:"connectionStatus"`
+	CreatedAt        string  `json:"createdAt"`
+	UpdatedAt        string  `json:"updatedAt"`
+	ConnectorAccount *struct {
+		Name string `json:"name"`
+	} `json:"connectorAccount"`
+}
+
 type viewResponse struct {
-	Node *struct {
-		Typename         string  `json:"__typename"`
-		ID               string  `json:"id"`
-		Name             string  `json:"name"`
-		ConnectorID      *string `json:"connectorId"`
-		ConnectionStatus string  `json:"connectionStatus"`
-		CreatedAt        string  `json:"createdAt"`
-		UpdatedAt        string  `json:"updatedAt"`
-	} `json:"node"`
+	Node *sourceNode `json:"node"`
 }
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
@@ -122,7 +130,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render("Access Source"))
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), s.ID)
-			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Name:"), s.Name)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Name:"), sourceLabel(s))
 
 			if s.ConnectorID != nil {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Connector:"), *s.ConnectorID)
@@ -141,4 +149,12 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func sourceLabel(node *sourceNode) string {
+	if node.ConnectorAccount != nil {
+		return node.ConnectorAccount.Name
+	}
+
+	return node.Name
 }

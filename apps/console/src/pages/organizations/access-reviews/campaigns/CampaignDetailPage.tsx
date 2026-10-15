@@ -59,6 +59,7 @@ import type { CampaignDetailPageStartMutation } from "#/__generated__/core/Campa
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { isCampaignDeletableStatus } from "../_components/accessReviewHelpers";
+import { campaignSourceLabel } from "../_lib/sourceLabel";
 import { AddCampaignSourceDialog } from "../dialogs/AddCampaignSourceDialog";
 
 import { AccessEntriesSelectionBar } from "./_components/AccessEntriesSelectionBar";
@@ -150,10 +151,14 @@ export const campaignDetailPageQuery = graphql`
         canDelete: permission(action: "access-review:campaign:delete")
         sources {
           id
+          name
           source {
             id
+            name
+            connectorAccount {
+              name
+            }
           }
-          name
           ...AccessEntrySourceSection_source
         }
       }
@@ -389,7 +394,15 @@ export default function CampaignDetailPage({ queryRef }: Props) {
   const connectorOptions = useMemo(
     () => campaign.sources.map(source => ({
       value: source.id,
-      label: source.name,
+      label: campaignSourceLabel({
+        name: source.name,
+        source: source.source == null
+          ? null
+          : {
+              name: source.source.name,
+              accountName: source.source.connectorAccount?.name,
+            },
+      }),
     })),
     [campaign.sources],
   );

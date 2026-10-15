@@ -34,6 +34,7 @@ import { graphql, useFragment } from "react-relay";
 import type { AccessReviewSourceDeleteDialog_source$key } from "#/__generated__/core/AccessReviewSourceDeleteDialog_source.graphql";
 import type { AccessReviewSourceDeleteDialogMutation } from "#/__generated__/core/AccessReviewSourceDeleteDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { accessReviewSourceLabel } from "#/pages/organizations/access-reviews/_lib/sourceLabel";
 
 const accessReviewSourceDeleteDialogFragment = graphql`
   fragment AccessReviewSourceDeleteDialog_source on AccessReviewSource {
@@ -109,7 +110,12 @@ export function AccessReviewSourceDeleteDialog({
         <DialogHeader>
           <DialogTitle>{t("accessReviewSourceRow.actions.delete")}</DialogTitle>
           <DialogDescription>
-            {t("accessReviewSourceRow.deleteConfirmation", { name: source.connectorAccount?.name ?? source.name })}
+            {t("accessReviewSourceRow.deleteConfirmation", {
+              name: accessReviewSourceLabel({
+                name: source.name,
+                accountName: source.connectorAccount?.name,
+              }),
+            })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

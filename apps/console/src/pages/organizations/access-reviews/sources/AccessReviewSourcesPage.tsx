@@ -39,6 +39,7 @@ import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessRe
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
+import { accessReviewSourceLabel } from "../_lib/sourceLabel";
 
 import { sourcesPage } from "./_components/variants";
 
@@ -89,6 +90,9 @@ const sourcesFragment = graphql`
           name
           connector {
             provider
+          }
+          connectorAccount {
+            name
           }
           ...AccessReviewSourceListItem_source
         }
@@ -153,11 +157,17 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
   const filteredSources = useMemo(
     () => accessReviewSources.edges.filter(({ node }) => {
       if (!normalizedSearch) return true;
+      const label = accessReviewSourceLabel({
+        name: node.name,
+        accountName: node.connectorAccount?.name,
+      }).toLowerCase();
+      const provider = node.connector?.provider
+        ?.replaceAll("_", " ")
+        .toLowerCase() ?? "";
+
       return node.name.toLowerCase().includes(normalizedSearch)
-        || (node.connector?.provider
-          ?.replaceAll("_", " ")
-          .toLowerCase()
-          .includes(normalizedSearch) ?? false);
+        || label.includes(normalizedSearch)
+        || provider.includes(normalizedSearch);
     }),
     [accessReviewSources.edges, normalizedSearch],
   );

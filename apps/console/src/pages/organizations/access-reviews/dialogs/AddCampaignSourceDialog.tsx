@@ -36,6 +36,7 @@ import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
 import type { AddCampaignSourceDialogMutation } from "#/__generated__/core/AddCampaignSourceDialogMutation.graphql";
 import type { AddCampaignSourceDialogSourcesQuery } from "#/__generated__/core/AddCampaignSourceDialogSourcesQuery.graphql";
+import { accessReviewSourceLabel } from "#/pages/organizations/access-reviews/_lib/sourceLabel";
 
 const addScopeMutation = graphql`
   mutation AddCampaignSourceDialogMutation(
@@ -248,7 +249,10 @@ function SourceSelect({
     >
       {sources.map(source => (
         <Option key={source.id} value={source.id}>
-          {source.connectorAccount?.name ?? source.name}
+          {accessReviewSourceLabel({
+            name: source.name,
+            accountName: source.connectorAccount?.name,
+          })}
         </Option>
       ))}
     </Select>

@@ -182,6 +182,33 @@ func TestCreateCampaign_SnapshotsConnectorAccount(t *testing.T) {
 	require.NotNil(t, addedAgain.ConnectorAccountID)
 	assert.Equal(t, account.ID, *addedAgain.ConnectorAccountID)
 	assert.Equal(t, created.ID, addedAgain.ID)
+
+	sourceIDs := []gid.GID{connectorSource.ID, csvSource.ID}
+	_, err = svc.UpdateCampaign(
+		ctx,
+		scope,
+		accessreview.UpdateAccessReviewCampaignRequest{
+			CampaignID:            campaign.ID,
+			AccessReviewSourceIDs: &sourceIDs,
+		},
+	)
+	require.NoError(t, err)
+
+	merged := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, connectorSource.ID)
+	assert.Equal(t, account.Name, merged.Name)
+
+	mergedCSV := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, csvSource.ID)
+	assert.Equal(t, csvSource.Name, mergedCSV.Name)
+
+	reloaded := &coredata.AccessReviewSource{}
+
+	require.NoError(t, client.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return reloaded.LoadByID(ctx, conn, scope, connectorSource.ID)
+		},
+	))
+	assert.Equal(t, connectorSource.Name, reloaded.Name)
 }
 
 func loadCampaignSourceByLiveSource(
