@@ -356,6 +356,7 @@ func (s *Service) generateDocumentPDFOnTheFly(
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 		BaseURL:                     s.baseURL,
+		VersionID:                   version.ID.String(),
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)

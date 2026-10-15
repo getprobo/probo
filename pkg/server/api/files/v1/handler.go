@@ -36,9 +36,11 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/jsonx"
+	"go.probo.inc/probo/pkg/task"
 )
 
 const presignedURLExpiry = 1 * time.Hour
@@ -80,6 +82,7 @@ func NewMux(
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
+		r.Get("/attachments/{parentID}/{fileID}", h.handleGetAttachment)
 		r.Get("/{fileID}", h.handleGetFile)
 	})
 
@@ -135,14 +138,102 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scope, ok := h.authorize(w, r, fileID, probo.ActionFileGet)
+	if !ok {
+		return
+	}
+
+	f, err := h.probo.Files.Get(r.Context(), scope, fileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+			return
+		}
+
+		h.logger.ErrorCtx(r.Context(), "cannot get file", log.Error(err), log.String("file_id", fileIDStr))
+		jsonx.RenderInternalServerError(w)
+
+		return
+	}
+
+	h.redirectToFile(w, r, f)
+}
+
+func (h *Handler) handleGetAttachment(w http.ResponseWriter, r *http.Request) {
+	parentID, err := gid.ParseGID(chi.URLParam(r, "parentID"))
+	if err != nil {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
+	fileID, err := gid.ParseGID(chi.URLParam(r, "fileID"))
+	if err != nil {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
+	action, ok := parentViewAction(parentID)
+	if !ok {
+		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+		return
+	}
+
+	scope, ok := h.authorize(w, r, parentID, action)
+	if !ok {
+		return
+	}
+
+	f, err := h.probo.Files.GetReferenced(r.Context(), scope, parentID, fileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
+			return
+		}
+
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot get attachment",
+			log.Error(err),
+			log.String("parent_id", parentID.String()),
+			log.String("file_id", fileID.String()),
+		)
+		jsonx.RenderInternalServerError(w)
+
+		return
+	}
+
+	h.redirectToFile(w, r, f)
+}
+
+func parentViewAction(parentID gid.GID) (string, bool) {
+	switch parentID.EntityType() {
+	case coredata.TaskEntityType:
+		return task.ActionTaskGet, true
+	case coredata.TaskCommentEntityType:
+		return task.ActionTaskCommentGet, true
+	case coredata.DocumentVersionEntityType:
+		return probo.ActionDocumentVersionGet, true
+	case coredata.RiskAnalysisEntityType:
+		return riskmanagement.ActionRiskAnalysisGet, true
+	default:
+		return "", false
+	}
+}
+
+func (h *Handler) authorize(
+	w http.ResponseWriter,
+	r *http.Request,
+	resource gid.GID,
+	action string,
+) (*coredata.Scope, bool) {
 	ctx := r.Context()
 	identity := authn.IdentityFromContext(ctx)
 	session := authn.SessionFromContext(ctx)
 
 	params := iam.AuthorizeParams{
 		Principal:          identity.ID,
-		Resource:           fileID,
-		Action:             probo.ActionFileGet,
+		Resource:           resource,
+		Action:             action,
 		ResourceAttributes: make(map[string]string),
 	}
 	if session != nil {
@@ -155,35 +246,32 @@ func (h *Handler) handleGetFile(w http.ResponseWriter, r *http.Request) {
 			bearertoken.SetBearerInsufficientScope(w, h.baseURL, scopeErr.Scopes...)
 			jsonx.RenderForbidden(w)
 
-			return
+			return nil, false
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
 			jsonx.RenderForbidden(w)
-			return
+
+			return nil, false
 		}
 
 		jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
 
-		return
+		return nil, false
 	}
 
-	f, err := h.probo.Files.Get(ctx, scope, fileID)
+	return scope, true
+}
+
+func (h *Handler) redirectToFile(w http.ResponseWriter, r *http.Request, f *coredata.File) {
+	presignedURL, err := h.fileSvc.GeneratePresignedURL(r.Context(), f, presignedURLExpiry)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			jsonx.RenderNotFound(w, fmt.Errorf("file not found"))
-			return
-		}
-
-		h.logger.ErrorCtx(ctx, "cannot get file", log.Error(err), log.String("file_id", fileIDStr))
-		jsonx.RenderInternalServerError(w)
-
-		return
-	}
-
-	presignedURL, err := h.fileSvc.GeneratePresignedURL(ctx, f, presignedURLExpiry)
-	if err != nil {
-		h.logger.ErrorCtx(ctx, "cannot generate file URL", log.Error(err), log.String("file_id", fileIDStr))
+		h.logger.ErrorCtx(
+			r.Context(),
+			"cannot generate file URL",
+			log.Error(err),
+			log.String("file_id", f.ID.String()),
+		)
 		jsonx.RenderInternalServerError(w)
 
 		return

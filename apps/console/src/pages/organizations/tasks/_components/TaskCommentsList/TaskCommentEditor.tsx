@@ -52,12 +52,14 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
   const saved = comment.content;
   const [draft, setDraft] = useState(saved);
   const [savedContent, setSavedContent] = useState(saved);
+  const [persisted, setPersisted] = useState(saved);
   const [dirty, setDirty] = useState(false);
   const [editorGeneration, setEditorGeneration] = useState(0);
   const [error, setError] = useState<string | undefined>();
 
   if (saved !== savedContent) {
     setSavedContent(saved);
+    setPersisted(saved);
     if (!dirty) {
       setDraft(saved);
       setEditorGeneration(generation => generation + 1);
@@ -86,6 +88,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
             },
           },
         );
+        setPersisted(value);
         setDraft((current) => {
           if (current === value) {
             setDirty(false);
@@ -120,6 +123,8 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
         key={editorGeneration}
         className={taskCommentEditor()}
         content={draft}
+        persistedContent={persisted}
+        attachmentParentId={comment.id}
         aria-label={t("detailsPage.comments.fields.comment")}
         onUploadingChange={(uploading) => {
           uploadingRef.current = uploading;

@@ -25,8 +25,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   attachmentKind,
+  imagePreviewURL,
   maxAttachmentSize,
   prepareAttachment,
+  releaseImagePreview,
+  releaseImagePreviews,
+  rememberImagePreview,
 } from "./attachments";
 import { uploadAttachments } from "./uploadAttachments";
 
@@ -158,6 +162,42 @@ function editorView(doc: PmNode) {
   return view as unknown as EditorView;
 }
 
+describe("image previews", () => {
+  it("revokes the object URL when the last editor releases it", () => {
+    const first = {};
+    const second = {};
+    const file = new File(["x"], "scan.png", { type: "image/png" });
+    const revoked: string[] = [];
+    const revoke = URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL = (url: string) => {
+      revoked.push(url);
+      revoke(url);
+    };
+
+    try {
+      rememberImagePreview(first, "file-shared", file);
+      rememberImagePreview(second, "file-shared", file);
+      const url = imagePreviewURL(first, "file-shared");
+
+      expect(url).toMatch(/^blob:/);
+      expect(imagePreviewURL(second, "file-shared")).toBe(url);
+
+      expect(releaseImagePreview(first, "file-shared")).toBe(true);
+      expect(imagePreviewURL(first, "file-shared")).toBeNull();
+      expect(imagePreviewURL(second, "file-shared")).toBe(url);
+      expect(revoked).toEqual([]);
+
+      releaseImagePreviews(second);
+      expect(imagePreviewURL(second, "file-shared")).toBeNull();
+      expect(revoked).toEqual([url]);
+    } finally {
+      URL.revokeObjectURL = revoke;
+      releaseImagePreviews(first);
+      releaseImagePreviews(second);
+    }
+  });
+});
+
 describe("uploadAttachments", () => {
   it("reports an oversized file separately from an unsupported type", async () => {
     const oversized = new File(["x"], "scan.pdf", { type: "application/pdf" });
@@ -200,6 +240,17 @@ describe("uploadAttachments", () => {
     expect(view.state.doc.toString()).toBe(
       "doc(bulletList(listItem(paragraph(\"a\"), image, paragraph(\"b\")), listItem(paragraph(\"cd\"))))",
     );
+
+    let src: unknown = "missing";
+    view.state.doc.descendants((node) => {
+      if (node.type.name === "image") {
+        src = node.attrs.src;
+      }
+    });
+    expect(src).toBeNull();
+    expect(imagePreviewURL(view, "file-1")).toMatch(/^blob:/);
+    releaseImagePreviews(view);
+    expect(imagePreviewURL(view, "file-1")).toBeNull();
   });
 
   it("inserts a file at the caret inside a blockquote", async () => {

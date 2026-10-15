@@ -4,6 +4,23 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- Saved rich text in the console, and file links in document PDFs,
+  download through `/api/files/v1/attachments/{parent_id}/{file_id}`.
+  The caller must be allowed to read the parent, and the file must be
+  embedded in that content. `/api/files/v1/{file_id}` still serves
+  evidence, logos, and other files that are not embedded
+- Task and risk readers no longer receive `core:file:get`, so they
+  cannot download a private file by id. Uploading a file still
+  requires `core:file:upload`
+
+### Fixed
+
+- A rich text image stays visible when it is uploaded into content that
+  is not saved yet. The editor previews the local file, and the console
+  content security policy allows those `blob:` images
+
 ## [0.316.0] - 2026-10-16
 
 ### Added

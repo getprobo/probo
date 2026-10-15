@@ -45,6 +45,7 @@ export interface RichDescriptionEditorProps {
   canUpdate: boolean;
   ariaLabel: string;
   emptyLabel: string;
+  attachmentParentId?: string;
   saveDelayMs?: number;
   save: (content: string | null) => Promise<void>;
 }
@@ -54,6 +55,7 @@ export function RichDescriptionEditor({
   canUpdate,
   ariaLabel,
   emptyLabel,
+  attachmentParentId,
   saveDelayMs = defaultSaveDelayMs,
   save,
 }: RichDescriptionEditorProps) {
@@ -61,6 +63,7 @@ export function RichDescriptionEditor({
   const savedRef = useRef(saved);
   const [draft, setDraft] = useState(saved);
   const [savedContent, setSavedContent] = useState(saved);
+  const [persisted, setPersisted] = useState(saved);
   const [dirty, setDirty] = useState(false);
   const [editorGeneration, setEditorGeneration] = useState(0);
 
@@ -74,6 +77,7 @@ export function RichDescriptionEditor({
 
   if (saved !== savedContent) {
     setSavedContent(saved);
+    setPersisted(saved);
     if (!dirty) {
       setDraft(saved);
       setEditorGeneration(generation => generation + 1);
@@ -86,6 +90,7 @@ export function RichDescriptionEditor({
 
       try {
         await saveRef.current(next || null);
+        setPersisted(next);
         setDraft((current) => {
           if (current === value || normalizeContent(current) === next) {
             setDirty(false);
@@ -118,6 +123,8 @@ export function RichDescriptionEditor({
               key={editorGeneration}
               className={editor()}
               content={draft}
+              persistedContent={persisted}
+              attachmentParentId={attachmentParentId}
               aria-label={ariaLabel}
               onUploadingChange={(uploading) => {
                 uploadingRef.current = uploading;
@@ -155,6 +162,7 @@ export function RichDescriptionEditor({
                 key={editorGeneration}
                 className={editor()}
                 content={saved}
+                attachmentParentId={attachmentParentId}
                 disabled
                 aria-label={ariaLabel}
               />

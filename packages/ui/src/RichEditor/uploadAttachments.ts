@@ -21,7 +21,13 @@
 import { Fragment, type Node as PmNode } from "@tiptap/pm/model";
 import type { EditorView } from "@tiptap/pm/view";
 
-import { type AttachmentKind, attachmentKind, maxAttachmentSize, prepareAttachment } from "./attachments";
+import {
+  type AttachmentKind,
+  attachmentKind,
+  maxAttachmentSize,
+  prepareAttachment,
+  rememberImagePreview,
+} from "./attachments";
 
 export type AttachmentUploadError = {
   fileName: string;
@@ -81,6 +87,10 @@ export async function uploadAttachments(
       const uploaded = await upload(item.file);
       if (view.isDestroyed || !findUpload(view.state.doc, item.id)) {
         return;
+      }
+
+      if (item.kind === "image") {
+        rememberImagePreview(view, uploaded.id, item.file);
       }
 
       replaceUpload(view, item.id, item.kind, uploaded);

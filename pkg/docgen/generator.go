@@ -205,6 +205,7 @@ type (
 		MermaidJS                   template.JS
 		Landscape                   bool
 		BaseURL                     string
+		VersionID                   string
 	}
 
 	SignatureData struct {
@@ -647,7 +648,7 @@ const (
 
 // ProseMirrorJSONToHTML converts ProseMirror/Tiptap document JSON to an HTML fragment.
 // On parse or render failure it returns a single escaped paragraph with the raw input.
-func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
+func ProseMirrorJSONToHTML(content json.RawMessage, parentID string) template.HTML {
 	s := strings.TrimSpace(string(content))
 	if s == "" {
 		return template.HTML("")
@@ -663,7 +664,7 @@ func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
 		return template.HTML(fmt.Sprintf("<p>%s</p>", html.EscapeString(s)))
 	}
 
-	return template.HTML(htmlStr)
+	return template.HTML(prosemirror.WithParentFileHrefs(htmlStr, parentID, node))
 }
 
 func RenderHTML(data DocumentData) ([]byte, error) {
@@ -674,7 +675,7 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 		BodyHTML template.HTML
 	}{
 		DocumentData: data,
-		BodyHTML:     ProseMirrorJSONToHTML(data.Content),
+		BodyHTML:     ProseMirrorJSONToHTML(data.Content, data.VersionID),
 	}
 
 	var buf bytes.Buffer

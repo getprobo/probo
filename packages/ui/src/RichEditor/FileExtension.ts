@@ -21,7 +21,7 @@
 import { Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { attachmentPath, fileIDFromAttachmentURL } from "./attachments";
+import { attachmentParentID, attachmentPath, fileIDFromAttachmentURL } from "./attachments";
 import { FileNodeView } from "./FileNodeView";
 
 function fileIdFromHTML(element: { getAttribute(name: string): string | null }): string | null {
@@ -85,7 +85,7 @@ export const FileExtension = Node.create({
     const size = Number(node.attrs.size);
 
     return ["a", {
-      "href": fileId ? attachmentPath(fileId) : undefined,
+      "href": fileId ? attachmentPath(fileId, attachmentParentID(this.editor)) : undefined,
       "data-file-id": fileId,
       "data-size": Number.isFinite(size) && size > 0 ? String(size) : undefined,
     }, fileName];

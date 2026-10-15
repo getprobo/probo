@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Extension } from "@tiptap/core";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
 import { Code } from "@tiptap/extension-code";
@@ -40,7 +41,17 @@ import { tv } from "tailwind-variants";
 
 import useToast from "../v2/Toaster/useToast";
 
-import { fileAccept, imageAccept } from "./attachments";
+import {
+  AttachmentParentContext,
+  fileAccept,
+  imageAccept,
+  imageFileIDs,
+  ImagePreviewContext,
+  ownedImagePreviewIDs,
+  releaseImagePreview,
+  releaseImagePreviews,
+  setAttachmentParentID,
+} from "./attachments";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
@@ -61,6 +72,13 @@ import {
   type UploadAttachment,
   uploadAttachments,
 } from "./uploadAttachments";
+
+const AttachmentParentExtension = Extension.create({
+  name: "attachmentParent",
+  addStorage() {
+    return { parentId: null as string | null };
+  },
+});
 
 const extensions = [
   Document,
@@ -95,6 +113,7 @@ const extensions = [
   ImageExtension,
   FileExtension,
   ContentUploadExtension,
+  AttachmentParentExtension,
 ];
 
 const richEditorVariants = tv({
@@ -142,6 +161,8 @@ function withoutContentUploads(node: JSONContent): JSONContent {
 
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
+  persistedContent?: string;
+  attachmentParentId?: string;
   disabled?: boolean;
   placeholder?: string;
   onChangeContent?: (content: string) => void;
@@ -165,6 +186,8 @@ export function RichEditor(props: RichEditorProps) {
   const {
     className,
     content,
+    persistedContent,
+    attachmentParentId,
     disabled = false,
     placeholder,
     onChangeContent,
@@ -235,6 +258,12 @@ export function RichEditor(props: RichEditorProps) {
 
       const json = withoutContentUploads(raw);
       stripNonTextMarks(json);
+      const present = new Set(imageFileIDs(json));
+      for (const fileId of ownedImagePreviewIDs(editor.view)) {
+        if (!present.has(fileId)) {
+          releaseImagePreview(editor.view, fileId);
+        }
+      }
 
       const next = JSON.stringify(json);
       if (next === emittedRef.current && !becameSettled) {
@@ -335,50 +364,87 @@ export function RichEditor(props: RichEditorProps) {
     editor.setEditable(!disabled, false);
   }, [editor, disabled]);
 
+  useLayoutEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    setAttachmentParentID(editor, attachmentParentId ?? null);
+  }, [editor, attachmentParentId]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const view = editor.view;
+
+    return () => {
+      releaseImagePreviews(view);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor || persistedContent == null) {
+      return;
+    }
+
+    const persisted = new Set(imageFileIDs(persistedContent));
+    for (const fileId of ownedImagePreviewIDs(editor.view)) {
+      if (persisted.has(fileId)) {
+        releaseImagePreview(editor.view, fileId);
+      }
+    }
+  }, [editor, persistedContent]);
+
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled })} {...divProps}>
-      {!disabled
-        && (
-          <>
-            <BubbleMenu editor={editor} />
-            <BlockMenu
-              editor={editor}
-              onPickFiles={canUpload ? openFilePicker : undefined}
-            />
-            <OptionsMenu editor={editor} />
-            <TableSelectionOverlay editor={editor} />
-            <TableCellMenu editor={editor} />
-            <TableColumnMenu editor={editor} />
-            <TableRowMenu editor={editor} />
-          </>
-        )}
+    <AttachmentParentContext.Provider value={attachmentParentId ?? null}>
+      <ImagePreviewContext.Provider value={editor.view}>
+        <div className={richEditorVariants({ className, disabled })} {...divProps}>
+          {!disabled
+            && (
+              <>
+                <BubbleMenu editor={editor} />
+                <BlockMenu
+                  editor={editor}
+                  onPickFiles={canUpload ? openFilePicker : undefined}
+                />
+                <OptionsMenu editor={editor} />
+                <TableSelectionOverlay editor={editor} />
+                <TableCellMenu editor={editor} />
+                <TableColumnMenu editor={editor} />
+                <TableRowMenu editor={editor} />
+              </>
+            )}
 
-      <EditorContent className="h-full" editor={editor} />
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          const upload = uploadRef.current;
-          const files = Array.from(event.target.files ?? []);
-          event.target.value = "";
-          if (!upload || files.length === 0) {
-            return;
-          }
+          <EditorContent className="h-full" editor={editor} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              const upload = uploadRef.current;
+              const files = Array.from(event.target.files ?? []);
+              event.target.value = "";
+              if (!upload || files.length === 0) {
+                return;
+              }
 
-          void uploadAttachments(
-            editor.view,
-            files,
-            editor.state.selection.from,
-            upload,
-            reportUploadError,
-          );
-        }}
-      />
-    </div>
+              void uploadAttachments(
+                editor.view,
+                files,
+                editor.state.selection.from,
+                upload,
+                reportUploadError,
+              );
+            }}
+          />
+        </div>
+      </ImagePreviewContext.Provider>
+    </AttachmentParentContext.Provider>
   );
 }
 

@@ -29,15 +29,15 @@ import (
 	"go.probo.inc/probo/pkg/riskmanagement"
 )
 
-func TestOAuth2ScopeMappings_FileDownload(t *testing.T) {
+func TestOAuth2ScopeMappings_FileUpload(t *testing.T) {
 	t.Parallel()
 
 	reg := oauth2scope.NewRegistry().Register(riskmanagement.OAuth2ScopeMappings)
 	read := coredata.OAuth2Scopes{"v1:risk:read"}
 	write := coredata.OAuth2Scopes{"v1:risk"}
 
-	assert.True(t, reg.Allows(read, "core:file:get"))
-	assert.True(t, reg.Allows(write, "core:file:get"))
+	assert.False(t, reg.Allows(read, "core:file:get"))
+	assert.False(t, reg.Allows(write, "core:file:get"))
 	assert.False(t, reg.Allows(read, "core:file:upload"))
 	assert.True(t, reg.Allows(write, "core:file:upload"))
 }
