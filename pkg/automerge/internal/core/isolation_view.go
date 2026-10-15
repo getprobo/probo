@@ -28,26 +28,6 @@ func stateFromSharedColumns(columns *columnarState) (*State, error) {
 	return stateFromCanonicalColumns(columns)
 }
 
-func stateChangesFromColumns(columns *columnarState) []opset.Change {
-	changes := cloneChanges(columns.changes)
-	for i := range changes {
-		for j := range changes[i].Operations {
-			operation := &changes[i].Operations[j]
-
-			canonical, ok := columns.operation(operation.ID)
-			if !ok {
-				continue
-			}
-
-			predecessors := operation.Predecessors
-			*operation = cloneOperation(canonical)
-			operation.Predecessors = predecessors
-		}
-	}
-
-	return changes
-}
-
 // newIsolationView filters the canonical columns to the ancestry of heads and
 // builds query indexes over that pinned columnar view. The full columns remain
 // untouched and continue to own changes outside the selected frontier.
