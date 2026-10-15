@@ -592,12 +592,12 @@ func directDivergedSequenceInsertion(
 	}
 
 	return storage.SnapshotOperationSplice{
-		Index:      index,
-		Operations: added,
-	}, []opset.Operation{
-		columns.operations[span.start],
-		last,
-	}, true
+			Index:      index,
+			Operations: added,
+		}, []opset.Operation{
+			columns.operations[span.start],
+			last,
+		}, true
 }
 
 func directSequenceBranchRoot(
