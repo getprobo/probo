@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.313.0] - 2026-10-15
+
+### Added
+
+- Access review sources show the connected account name and a provider
+  tag in the console, including when picking sources for a campaign
+- MCP transport requests are logged with structured fields
+
+### Changed
+
+- SCIM provider requests that fail with a 5xx response are retried with
+  bounded memory and wait time
+
+### Fixed
+
+- Audits accept the same start and end date
+- SVG attachments display in rich text
+
 ## [0.312.0] - 2026-10-14
 
 ### Added
