@@ -54,6 +54,16 @@ var ReadAccessPolicy = policy.NewPolicy(
 	).WithSID("access-review-read-access").When(organizationCondition),
 ).WithDescription("Read-only access-review access")
 
+var AuditorDenyPolicy = policy.NewPolicy(
+	"access-review:auditor-deny",
+	"Access Review Auditor Deny",
+	policy.Deny(
+		"access-review:campaign:*",
+		"access-review:entry:*",
+		"access-review:source:*",
+	).WithSID("deny-auditor-access-review"),
+).WithDescription("Prevents auditors from accessing organization access-review data")
+
 // DriverCatalogPolicy grants every authenticated identity read access to the
 // global access-review driver catalog. The catalog is deployment-scoped and has
 // no organization scoping, so the allow has no condition.
@@ -74,5 +84,6 @@ func PolicySet() *iam.PolicySet {
 		AddRolePolicy("OWNER", FullAccessPolicy).
 		AddRolePolicy("ADMIN", FullAccessPolicy).
 		AddRolePolicy("VIEWER", ReadAccessPolicy).
+		AddRolePolicy("AUDITOR", AuditorDenyPolicy).
 		AddIdentityScopedPolicy(DriverCatalogPolicy)
 }
