@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.251.0] - 2026-10-16
+
+### Added
+
+- `audit link-framework` and `audit unlink-framework` add or remove a
+  framework on an audit
+
+### Changed
+
+- `audit create` accepts `--framework` several times, and the
+  interactive prompt selects one or more frameworks. `audit view` lists
+  every framework linked to the audit
+
 ## [0.250.0] - 2026-10-16
 
 ### Added
