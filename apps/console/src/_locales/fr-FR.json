@@ -507,6 +507,19 @@
       "title": "Erreur",
       "save": "Contenu non enregistré"
     },
+    "history": {
+      "open": "Historique",
+      "title": "Historique des versions",
+      "close": "Fermer",
+      "restore": "Restaurer cette version",
+      "empty": "Aucune modification",
+      "loading": "Chargement de l'historique...",
+      "loadMore": "Charger plus",
+      "unknownAuthor": "Inconnu",
+      "restoreFailed": "Impossible de restaurer cette version",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
     "presence": {
       "label": "Personnes en train de modifier ce document",
       "anonymous": "Collaborateur",

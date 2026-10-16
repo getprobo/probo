@@ -294,6 +294,19 @@
   "documentDescriptionPage": {
     "messages": { "successTitle": "Success", "saved": "Content saved" },
     "errors": { "title": "Error", "save": "Content not saved" },
+    "history": {
+      "open": "History",
+      "title": "Version history",
+      "close": "Close",
+      "restore": "Restore this version",
+      "empty": "No edits yet",
+      "loading": "Loading history...",
+      "loadMore": "Load more",
+      "unknownAuthor": "Unknown",
+      "restoreFailed": "Could not restore this version",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
     "presence": {
       "label": "People editing this document",
       "anonymous": "Collaborator",
