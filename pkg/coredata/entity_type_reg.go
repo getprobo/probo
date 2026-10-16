@@ -169,6 +169,7 @@ const (
 	EmployeePortalEntityType                         uint16 = 137
 	NotificationEntityType                           uint16 = 138
 	CookieBannerSampleEntityType                     uint16 = 139
+	DocumentCollaborationSessionEntityType           uint16 = 140
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
