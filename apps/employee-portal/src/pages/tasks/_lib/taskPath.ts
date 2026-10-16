@@ -50,7 +50,7 @@ export function taskListConnectionFilters(
 
 const rememberedTaskListDeadlinesList: TaskDeadlineBounds[] = [];
 
-function taskListDeadlineKey(deadline: TaskDeadlineBounds) {
+export function taskListDeadlineKey(deadline: TaskDeadlineBounds) {
   return `${deadline.deadlineOnOrBefore ?? ""}\0${deadline.deadlineOnOrAfter ?? ""}\0${deadline.hasDeadline ?? ""}`;
 }
 

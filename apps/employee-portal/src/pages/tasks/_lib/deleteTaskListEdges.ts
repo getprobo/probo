@@ -27,6 +27,7 @@ import {
   rememberedTaskListDeadlines,
   taskListConnectionFilters,
   taskListConnectionKeys,
+  taskListDeadlineKey,
 } from "./taskPath";
 
 type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
@@ -63,11 +64,11 @@ export function deleteTaskListEdges(
   for (const state of taskStates) {
     for (const filterQuery of queries) {
       for (const filterDeadline of deadlines) {
-        const deadlineKey = `${filterDeadline.deadlineOnOrBefore ?? ""}\0${filterDeadline.deadlineOnOrAfter ?? ""}\0${filterDeadline.hasDeadline ?? ""}`;
-        if (seenDeadlines.has(`${state}\0${filterQuery ?? ""}\0${deadlineKey}`)) {
+        const deadlineKey = `${state}\0${filterQuery ?? ""}\0${taskListDeadlineKey(filterDeadline)}`;
+        if (seenDeadlines.has(deadlineKey)) {
           continue;
         }
-        seenDeadlines.add(`${state}\0${filterQuery ?? ""}\0${deadlineKey}`);
+        seenDeadlines.add(deadlineKey);
         const connection = ConnectionHandler.getConnection(
           viewer,
           taskListConnectionKeys[state],
