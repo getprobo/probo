@@ -4,6 +4,8 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.252.0] - 2026-10-16
+
 ### Added
 
 - Task `Create` accepts a Linear team ID. Leave it empty to use the
@@ -16,6 +18,11 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 - Task `Create` still returns the created task when the Linear publish
   attempt fails. The GraphQL error is included in the node output
+
+### Fixed
+
+- Audit operations select `reportFile` instead of the removed
+  `reportUrl`, so those queries succeed and still return a download URL
 
 ## [0.251.0] - 2026-10-15
 
