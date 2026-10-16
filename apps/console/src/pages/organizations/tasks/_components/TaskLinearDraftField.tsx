@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { HashIcon, PlusIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -251,6 +252,8 @@ export function TaskLinearDraftField({
         }}
         itemId={issue => issue.id}
         itemLabel={issue => `${issue.identifier} ${issue.title}`}
+        itemLeading={() => <HashIcon />}
+        pinnedLeading={<PlusIcon />}
       />
     </div>
   );

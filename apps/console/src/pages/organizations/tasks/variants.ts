@@ -161,7 +161,16 @@ export const taskLinearField = tv({
 
 export const taskLinearPublishField = tv({
   slots: {
-    root: "flex flex-col gap-2",
+    root: "flex flex-col",
+  },
+  variants: {
+    spacing: {
+      compact: { root: "gap-2" },
+      relaxed: { root: "gap-4" },
+    },
+  },
+  defaultVariants: {
+    spacing: "compact",
   },
 });
 

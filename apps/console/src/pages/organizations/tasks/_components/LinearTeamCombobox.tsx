@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { UsersIcon } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
@@ -132,6 +133,7 @@ export function LinearTeamCombobox({
       onSelect={onSelect}
       itemId={team => team.id}
       itemLabel={team => linearTeamLabel(team)}
+      itemLeading={() => <UsersIcon />}
     />
   );
 }

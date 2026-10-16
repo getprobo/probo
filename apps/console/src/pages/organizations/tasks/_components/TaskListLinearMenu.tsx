@@ -19,10 +19,11 @@
 // SOFTWARE.
 
 import { Linear } from "@probo/ui/src/Atoms/ThirdParties/Linear";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownSubmenu } from "@probo/ui/src/v2/Dropdown/DropdownSubmenu";
-import { DropdownSubmenuTrigger } from "@probo/ui/src/v2/Dropdown/DropdownSubmenuTrigger";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
@@ -55,11 +56,13 @@ const unlinkMutation = graphql`
 export interface TaskListLinearMenuProps {
   taskKey: TaskListLinearMenu_task$key;
   linked: boolean;
+  onLink?: () => void;
 }
 
 export function TaskListLinearMenu({
   taskKey,
   linked,
+  onLink,
 }: TaskListLinearMenuProps) {
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskListLinearMenuFragment, taskKey);
@@ -89,20 +92,50 @@ export function TaskListLinearMenu({
   }
 
   return (
-    <DropdownSubmenu>
-      <DropdownSubmenuTrigger
-        color="linear"
-        iconStart={<Linear color="currentColor" aria-hidden />}
-      >
-        {t("detailsPage.linear.linkTo")}
-      </DropdownSubmenuTrigger>
-      <DropdownPopup size={1} align="start" side="right">
-        <div className="w-64 p-2">
+    <DropdownItem
+      color="linear"
+      iconStart={<Linear color="currentColor" aria-hidden />}
+      onClick={onLink}
+    >
+      {t("detailsPage.linear.linkTo")}
+    </DropdownItem>
+  );
+}
+
+export interface TaskListLinearDialogProps {
+  taskKey: TaskListLinearMenu_task$key;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+// Rendered beside the row menu. The menu popup unmounts when it closes, so the
+// form cannot live inside the "Link to" item.
+export function TaskListLinearDialog({
+  taskKey,
+  open,
+  onOpenChange,
+}: TaskListLinearDialogProps) {
+  const { t } = useTranslation("organizations/tasks");
+  const task = useFragment(taskListLinearMenuFragment, taskKey);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogPopup className="max-w-96!">
+        <DialogHeader>
+          <DialogTitle>{t("detailsPage.linear.linkHint")}</DialogTitle>
+        </DialogHeader>
+        <div className="px-8">
           <Suspense fallback={<SelectSkeleton size={1} className="w-full" />}>
-            <TaskLinearPublishField taskKey={task} />
+            <TaskLinearPublishField
+              taskKey={task}
+              spacing="relaxed"
+              onCompleted={() => {
+                onOpenChange(false);
+              }}
+            />
           </Suspense>
         </div>
-      </DropdownPopup>
-    </DropdownSubmenu>
+      </DialogPopup>
+    </Dialog>
   );
 }

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { HashIcon, PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
@@ -136,9 +137,15 @@ const linkMutation = graphql`
 
 interface TaskLinearPublishFieldProps {
   taskKey: TaskLinearPublishField_task$key;
+  onCompleted?: () => void;
+  spacing?: "compact" | "relaxed";
 }
 
-export function TaskLinearPublishField({ taskKey }: TaskLinearPublishFieldProps) {
+export function TaskLinearPublishField({
+  taskKey,
+  onCompleted,
+  spacing = "compact",
+}: TaskLinearPublishFieldProps) {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const task = useFragment(taskLinearPublishFieldFragment, taskKey);
@@ -161,7 +168,7 @@ export function TaskLinearPublishField({ taskKey }: TaskLinearPublishFieldProps)
       errorToast: t("detailsPage.linear.errors.link"),
     },
   );
-  const { root } = taskLinearPublishField();
+  const { root } = taskLinearPublishField({ spacing });
   const isSaving = isPublishing || isLinking;
   const linking = issueId !== NEW_ISSUE_ID;
   const newIssueLabel = t("detailsPage.linear.newIssue");
@@ -227,6 +234,8 @@ export function TaskLinearPublishField({ taskKey }: TaskLinearPublishFieldProps)
         }}
         itemId={issue => issue.id}
         itemLabel={issue => `${issue.identifier} ${issue.title}`}
+        itemLeading={() => <HashIcon />}
+        pinnedLeading={<PlusIcon />}
       />
       <Button
         size={1}
@@ -248,7 +257,14 @@ export function TaskLinearPublishField({ taskKey }: TaskLinearPublishFieldProps)
                 teamId,
               },
             },
-          });
+          }).then(
+            () => {
+              onCompleted?.();
+            },
+            () => {
+              // The Linear toast already explains the failure.
+            },
+          );
         }}
       >
         {linking ? t("detailsPage.linear.link") : t("detailsPage.linear.publish")}
@@ -292,6 +308,7 @@ export function TaskLinearPublishField({ taskKey }: TaskLinearPublishFieldProps)
                 }).then(
                   () => {
                     setConfirmLink(false);
+                    onCompleted?.();
                   },
                   () => {
                     // The Linear toast already explains the failure.

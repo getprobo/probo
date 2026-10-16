@@ -979,6 +979,26 @@ func TestClient_SearchTeamsAndIssues(t *testing.T) {
 						},
 					},
 				})
+			case strings.Contains(req.Query, "TaskSyncLinearIssueByNumber"):
+				writeJSON(w, map[string]any{
+					"data": map[string]any{
+						"issues": map[string]any{
+							"nodes": []map[string]any{
+								{
+									"id":         "issue-1",
+									"identifier": "ENG-12",
+									"title":      "Fix login",
+									"url":        "https://linear.app/eng/issue/ENG-12",
+									"updatedAt":  "2026-09-14T12:00:00Z",
+								},
+							},
+							"pageInfo": map[string]any{
+								"hasNextPage": false,
+								"endCursor":   "",
+							},
+						},
+					},
+				})
 			case strings.Contains(req.Query, "TaskSyncLinearIssueSearch"):
 				writeJSON(w, map[string]any{
 					"data": map[string]any{
@@ -1178,4 +1198,19 @@ func TestClient_CreateComment_SetsAuthor(t *testing.T) {
 			},
 		)
 	}
+}
+
+func TestIssueNumber(t *testing.T) {
+	t.Parallel()
+
+	number, ok := issueNumber("ENG-12")
+	assert.True(t, ok)
+	assert.Equal(t, float64(12), number)
+
+	number, ok = issueNumber("12")
+	assert.True(t, ok)
+	assert.Equal(t, float64(12), number)
+
+	_, ok = issueNumber("Fix login")
+	assert.False(t, ok)
 }

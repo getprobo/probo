@@ -31,7 +31,7 @@ import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
-import { TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
+import { TaskListLinearDialog, TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
 import {
   reconcileOrganizationTaskListMembership,
   resortOrganizationTaskListEdge,
@@ -120,6 +120,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
   const environment = useRelayEnvironment();
   const { graphqlFilter } = useTasksCardFilters();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [linearOpen, setLinearOpen] = useState(false);
   const task = useFragment(taskListItemFragment, props.taskKey);
   const { canUpdate, canDelete } = task;
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
@@ -316,6 +317,9 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
               <TaskListLinearMenu
                 taskKey={task}
                 linked={task.externalLink != null}
+                onLink={() => {
+                  setLinearOpen(true);
+                }}
               />
             )
           : undefined}
@@ -346,6 +350,13 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
         onDrop={props.onDrop}
         onDragEnd={props.onDragEnd}
       />
+      {props.linearConnected && canUpdate && task.externalLink == null && (
+        <TaskListLinearDialog
+          taskKey={task}
+          open={linearOpen}
+          onOpenChange={setLinearOpen}
+        />
+      )}
       {canDelete && (
         <TaskDeleteDialog
           taskKey={task}

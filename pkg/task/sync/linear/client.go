@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -774,7 +775,26 @@ func (c *Client) SearchIssues(ctx context.Context, teamID, query string, first i
 		return c.listTeamIssues(ctx, teamID, first, after)
 	}
 
-	return c.searchTeamIssues(ctx, teamID, query, first, after)
+	page, err := c.searchTeamIssues(ctx, teamID, query, first, after)
+	if err != nil {
+		return IssuePage{}, err
+	}
+
+	if after != nil && strings.TrimSpace(*after) != "" {
+		return page, nil
+	}
+
+	number, ok := issueNumber(query)
+	if !ok {
+		return page, nil
+	}
+
+	numbered, err := c.listTeamIssuesByNumber(ctx, teamID, number, first)
+	if err != nil {
+		return IssuePage{}, err
+	}
+
+	return mergeIssuePages(numbered, page), nil
 }
 
 func (c *Client) listTeamIssues(ctx context.Context, teamID string, first int, after *string) (IssuePage, error) {
@@ -825,6 +845,136 @@ query TaskSyncLinearIssueList($teamId: ID!, $first: Int!, $after: String) {
 	}
 
 	return issuePage(resp.Data.Issues.Nodes, resp.Data.Issues.PageInfo)
+}
+
+func (c *Client) listTeamIssuesByNumber(ctx context.Context, teamID string, number float64, first int) (IssuePage, error) {
+	const request = `
+query TaskSyncLinearIssueByNumber($teamId: ID!, $number: Float!, $first: Int!) {
+  issues(
+    first: $first
+    filter: {
+      team: { id: { eq: $teamId } }
+      number: { eq: $number }
+    }
+    orderBy: updatedAt
+  ) {
+    nodes {
+      id
+      identifier
+      title
+      description
+      url
+      updatedAt
+      priority
+      dueDate
+      state { type }
+      assignee { email }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Issues struct {
+				Nodes    []linearIssue `json:"nodes"`
+				PageInfo pageInfo      `json:"pageInfo"`
+			} `json:"issues"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{
+		"teamId": teamID,
+		"number": number,
+		"first":  first,
+	}, &resp); err != nil {
+		return IssuePage{}, err
+	}
+
+	return issuePage(resp.Data.Issues.Nodes, resp.Data.Issues.PageInfo)
+}
+
+func issueNumber(query string) (float64, bool) {
+	query = strings.TrimSpace(query)
+	if dash := strings.LastIndex(query, "-"); dash >= 0 {
+		if !isASCIIAlpha(query[:dash]) {
+			return 0, false
+		}
+
+		query = query[dash+1:]
+	}
+
+	if !isASCIIDigits(query) {
+		return 0, false
+	}
+
+	number, err := strconv.ParseFloat(query, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return number, true
+}
+
+func isASCIIAlpha(value string) bool {
+	if value == "" {
+		return false
+	}
+
+	for _, r := range value {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isASCIIDigits(value string) bool {
+	if value == "" {
+		return false
+	}
+
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
+}
+
+func mergeIssuePages(priority, rest IssuePage) IssuePage {
+	seen := make(map[string]struct{}, len(priority.Issues)+len(rest.Issues))
+	issues := make([]Issue, 0, len(priority.Issues)+len(rest.Issues))
+	for _, issue := range priority.Issues {
+		if _, ok := seen[issue.ID]; ok {
+			continue
+		}
+
+		seen[issue.ID] = struct{}{}
+		issues = append(issues, issue)
+	}
+
+	for _, issue := range rest.Issues {
+		if _, ok := seen[issue.ID]; ok {
+			continue
+		}
+
+		seen[issue.ID] = struct{}{}
+		issues = append(issues, issue)
+	}
+
+	return IssuePage{
+		Issues:      issues,
+		EndCursor:   rest.EndCursor,
+		HasNextPage: rest.HasNextPage,
+	}
 }
 
 func (c *Client) searchTeamIssues(ctx context.Context, teamID, query string, first int, after *string) (IssuePage, error) {
