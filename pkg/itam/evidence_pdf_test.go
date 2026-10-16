@@ -21,12 +21,14 @@
 package itam
 
 import (
+	"html/template"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -39,6 +41,11 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	serial := "SN-1"
 
 	html, err := renderDeviceEvidenceHTML(deviceEvidenceDocument{
+		OrganizationName: `Acme <script>`,
+		LogoSrc:          template.URL("data:image/png;base64,aaaa"),
+		GeneratedAt:      "16 Oct 2026, 09:19 UTC",
+		GeneratedBy:      `Ada <b>Lovelace</b>`,
+		GeneratedOn:      "https://eu.probo.com",
 		Devices: []deviceEvidencePage{
 			{
 				Hostname:     hostname,
@@ -74,8 +81,23 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 
 	body := string(html)
 	assert.Equal(t, 2, strings.Count(body, `class="device"`))
+	assert.Equal(t, 2, strings.Count(body, "M224,64v88H32V64"))
+	assert.Equal(t, 2, strings.Count(body, "M216,56v56c0,96-88,120-88,120"))
+	assert.Contains(t, body, "Acme &lt;script&gt;")
+	assert.Contains(t, body, `src="data:image/png;base64,aaaa"`)
+	assert.Contains(t, body, "Device posture evidence")
+	assert.Contains(t, body, "Document control")
+	assert.Contains(t, body, "Classification")
+	assert.Contains(t, body, "Confidential")
+	assert.Contains(t, body, "<td>Number of devices</td>")
+	assert.Contains(t, body, "<td>2</td>")
+	assert.Contains(t, body, "16 Oct 2026, 09:19 UTC")
+	assert.Contains(t, body, "Ada &lt;b&gt;Lovelace&lt;/b&gt;")
+	assert.Contains(t, body, "Generated on")
+	assert.Contains(t, body, "https://eu.probo.com")
 	assert.Contains(t, body, "laptop &lt;script&gt;")
 	assert.NotContains(t, body, "<script>")
+	assert.NotContains(t, body, "<b>")
 	assert.Contains(t, body, "Ada Lovelace")
 	assert.Contains(t, body, "Disk encryption")
 	assert.Contains(t, body, "Firewall enabled")
@@ -84,6 +106,39 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	assert.Contains(t, body, "No posture checks recorded")
 	assert.Contains(t, body, evidenceUnassignedLabel)
 	assert.Contains(t, body, evidenceNeverLabel)
+}
+
+func TestDeviceEvidenceFooterTemplate(t *testing.T) {
+	t.Parallel()
+
+	assert.Contains(t, deviceEvidenceFooterTemplate, "Powered by <svg")
+	assert.Contains(t, deviceEvidenceFooterTemplate, `viewBox="0 0 90 24"`)
+	assert.Contains(t, deviceEvidenceFooterTemplate, `<span class="pageNumber"></span>`)
+	assert.Contains(t, deviceEvidenceFooterTemplate, `<span class="totalPages"></span>`)
+}
+
+func TestEvidencePlatformURL(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "https://eu.probo.com", evidencePlatformURL(baseurl.MustParse("https://eu.probo.com")))
+	assert.Equal(t, "https://us.probo.com", evidencePlatformURL(baseurl.MustParse("https://us.probo.com/console")))
+	assert.Equal(t, "http://localhost:8080", evidencePlatformURL(baseurl.MustParse("http://localhost:8080")))
+	assert.Empty(t, evidencePlatformURL(nil))
+}
+
+func TestEvidenceAuthor(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Ada Lovelace", evidenceAuthor("  Ada Lovelace  ", "ada@example.com"))
+	assert.Equal(t, "ada@example.com", evidenceAuthor("  ", "ada@example.com"))
+}
+
+func TestDeviceEvidenceImageMIME(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, deviceEvidenceImageMIME("image/png"))
+	assert.True(t, deviceEvidenceImageMIME("image/svg+xml"))
+	assert.False(t, deviceEvidenceImageMIME("text/html"))
 }
 
 func TestEvidencePostureValue(t *testing.T) {

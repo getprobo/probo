@@ -31,6 +31,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/crypto/rand"
@@ -106,6 +107,7 @@ type (
 		html2pdfConverter       *html2pdf.Converter
 		fileManager             *filemanager.Service
 		bucket                  string
+		baseURL                 *baseurl.BaseURL
 	}
 
 	CreateDeviceRequest struct {
@@ -149,6 +151,7 @@ type (
 		PDF                     *html2pdf.Converter
 		FileManager             *filemanager.Service
 		Bucket                  string
+		BaseURL                 *baseurl.BaseURL
 	}
 )
 
@@ -172,6 +175,7 @@ func NewService(
 		html2pdfConverter:       cfg.PDF,
 		fileManager:             cfg.FileManager,
 		bucket:                  cfg.Bucket,
+		baseURL:                 cfg.BaseURL,
 	}
 }
 

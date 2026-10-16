@@ -64,6 +64,11 @@ type (
 		// GenerateDocumentOutline embeds a document outline (bookmarks). Nil defaults
 		// to true.
 		GenerateDocumentOutline *bool
+		// HeaderTemplate and FooterTemplate are Chrome print HTML. Either value
+		// enables the print header and footer. Chrome fills elements with class
+		// pageNumber and totalPages.
+		HeaderTemplate string
+		FooterTemplate string
 	}
 
 	Option func(*Converter)
@@ -195,6 +200,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		log.Bool("printBackground", cfg.PrintBackground),
 		log.Bool("generateTaggedPDF", generateTaggedPDF),
 		log.Bool("generateDocumentOutline", generateDocumentOutline),
+		log.Bool("displayHeaderFooter", cfg.HeaderTemplate != "" || cfg.FooterTemplate != ""),
 	)
 
 	htmlContent := string(htmlDocument)
@@ -248,7 +254,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		waitForExpr,
 		chromedp.ActionFunc(
 			func(ctx context.Context) (err error) {
-				pdfBytes, _, err = page.PrintToPDF().
+				printParams := page.PrintToPDF().
 					WithPrintBackground(cfg.PrintBackground).
 					WithPaperWidth(width).
 					WithPaperHeight(height).
@@ -259,8 +265,28 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 					WithScale(scale).
 					WithPreferCSSPageSize(false).
 					WithGenerateTaggedPDF(generateTaggedPDF).
-					WithGenerateDocumentOutline(generateDocumentOutline).
-					Do(ctx)
+					WithGenerateDocumentOutline(generateDocumentOutline)
+
+				if cfg.HeaderTemplate != "" || cfg.FooterTemplate != "" {
+					// Chrome draws a default date and title header when the
+					// template string is empty.
+					headerTemplate := cfg.HeaderTemplate
+					if headerTemplate == "" {
+						headerTemplate = "<span></span>"
+					}
+
+					footerTemplate := cfg.FooterTemplate
+					if footerTemplate == "" {
+						footerTemplate = "<span></span>"
+					}
+
+					printParams = printParams.
+						WithDisplayHeaderFooter(true).
+						WithHeaderTemplate(headerTemplate).
+						WithFooterTemplate(footerTemplate)
+				}
+
+				pdfBytes, _, err = printParams.Do(ctx)
 
 				return err
 			},

@@ -905,6 +905,7 @@ func (impl *Implm) Run(
 			PDF:                     html2pdfConverter,
 			FileManager:             fileManagerService,
 			Bucket:                  impl.cfg.AWS.Bucket,
+			BaseURL:                 baseURL,
 		},
 		l.Named("itam"),
 	)
