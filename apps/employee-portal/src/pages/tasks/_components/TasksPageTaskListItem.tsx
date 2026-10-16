@@ -38,7 +38,6 @@ const tasksPageTaskListItemFragment = graphql`
     name
     state
     priority
-    rank
     createdAt
     timeEstimate
     deadline

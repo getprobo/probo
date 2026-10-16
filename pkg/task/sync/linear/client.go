@@ -951,6 +951,7 @@ func isASCIIDigits(value string) bool {
 
 func mergeIssuePages(priority, rest IssuePage) IssuePage {
 	seen := make(map[string]struct{}, len(priority.Issues)+len(rest.Issues))
+
 	issues := make([]Issue, 0, len(priority.Issues)+len(rest.Issues))
 	for _, issue := range priority.Issues {
 		if _, ok := seen[issue.ID]; ok {
