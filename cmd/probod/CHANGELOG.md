@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.315.0] - 2026-10-16
+
 ### Added
 
 - Task settings can disconnect Linear Sync and update Linear settings.
@@ -21,6 +23,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   creates the task with no Linear team
 - `createTask` returns the created task and a GraphQL error when the
   Linear publish attempt fails after the task is created
+
+### Fixed
+
+- A rich-text image that only declares a viewBox no longer collapses to
+  zero width
 
 ## [0.314.0] - 2026-10-15
 
