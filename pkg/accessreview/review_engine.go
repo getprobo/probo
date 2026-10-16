@@ -75,7 +75,8 @@ func (s *Service) FetchSource(
 
 			driver, err = s.resolveDriver(ctx, tx, scope, source)
 			if err != nil {
-				return fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err)
+				// Commit a refreshed token anyway: rotated refresh tokens are single-use.
+				return pg.NoRollback(fmt.Errorf("cannot resolve driver for source %s: %w", source.Name, err))
 			}
 
 			return nil
@@ -271,7 +272,7 @@ func (s *Service) newHTTPDriver(
 	// next poll if the old refresh token is reused.
 	if oauth2Conn != nil && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
-		if err := dbConnector.Update(ctx, tx, scope, s.encryptionKey); err != nil {
+		if err := dbConnector.UpdateConnection(ctx, tx, scope, s.encryptionKey); err != nil {
 			return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
 		}
 	}

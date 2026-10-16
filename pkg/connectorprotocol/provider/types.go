@@ -453,6 +453,10 @@ type OAuth2Config struct {
 	// "scope" when empty. Slack asks for user_scope to get a user token.
 	ScopeParam string
 
+	// RefreshScopes are sent as the scope parameter of the
+	// refresh_token grant; empty sends none.
+	RefreshScopes []string
+
 	// ExtraAuthParams are provider-specific query parameters added to the
 	// authorization request. Copied per connector, never aliased.
 	ExtraAuthParams map[string]string

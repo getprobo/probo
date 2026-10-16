@@ -86,3 +86,30 @@ func TestConnectorRegistry_ConfigureConnection(t *testing.T) {
 	assert.Equal(t, "current-private-key", conn.PrivateKey)
 	assert.Equal(t, int64(42), conn.InstallationID)
 }
+
+func TestConnectorRegistry_GetOAuth2RefreshConfig(t *testing.T) {
+	t.Parallel()
+
+	registry := connectorprotocol.NewConnectorRegistry()
+	require.NoError(
+		t,
+		registry.Register(
+			"PLANETSCALE",
+			&connectorprotocol.OAuth2Connector{
+				ClientID:      "cid",
+				ClientSecret:  "secret",
+				TokenURL:      "https://auth.planetscale.com/oauth/token",
+				RefreshScopes: []string{"read_organizations", "read_user"},
+			},
+		),
+	)
+
+	cfg := registry.GetOAuth2RefreshConfig("PLANETSCALE")
+	require.NotNil(t, cfg)
+	assert.Equal(t, "cid", cfg.ClientID)
+	assert.Equal(t, "secret", cfg.ClientSecret)
+	assert.Equal(t, "https://auth.planetscale.com/oauth/token", cfg.TokenURL)
+	assert.Equal(t, []string{"read_organizations", "read_user"}, cfg.RefreshScopes)
+
+	assert.Nil(t, registry.GetOAuth2RefreshConfig("UNKNOWN"))
+}

@@ -273,41 +273,54 @@ func TestClientCredentialsClient(t *testing.T) {
 func TestClientWithOptions_ClientCredentialsMintsToken(t *testing.T) {
 	t.Parallel()
 
-	var gotAuthorization string
+	for _, tt := range []struct {
+		name        string
+		tokenStatus int
+	}{
+		{name: "200", tokenStatus: http.StatusOK},
+		{name: "201", tokenStatus: http.StatusCreated},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/token" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"access_token":"minted-token","expires_in":3600,"token_type":"Bearer"}`))
+			var gotAuthorization string
 
-			return
-		}
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/token" {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(tt.tokenStatus)
+					_, _ = w.Write([]byte(`{"access_token":"minted-token","expires_in":3600,"token_type":"Bearer"}`))
 
-		gotAuthorization = r.Header.Get("Authorization")
+					return
+				}
 
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
+				gotAuthorization = r.Header.Get("Authorization")
 
-	conn := &OAuth2Connection{
-		GrantType:    OAuth2GrantTypeClientCredentials,
-		ClientID:     "cc-client-id",
-		ClientSecret: "cc-client-secret",
-		TokenURL:     server.URL + "/token",
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer server.Close()
+
+			conn := &OAuth2Connection{
+				GrantType:    OAuth2GrantTypeClientCredentials,
+				ClientID:     "cc-client-id",
+				ClientSecret: "cc-client-secret",
+				TokenURL:     server.URL + "/token",
+			}
+
+			// httptest binds to loopback, which the SSRF-protected default transport
+			// refuses; relax just for this test.
+			client, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
+			require.NoError(t, err)
+
+			resp, err := client.Get(server.URL + "/api")
+			require.NoError(t, err)
+
+			defer func() { _ = resp.Body.Close() }()
+
+			assert.Equal(t, "Bearer minted-token", gotAuthorization)
+			assert.Equal(t, "minted-token", conn.AccessToken)
+		})
 	}
-
-	// httptest binds to loopback, which the SSRF-protected default transport
-	// refuses; relax just for this test.
-	client, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
-	require.NoError(t, err)
-
-	resp, err := client.Get(server.URL + "/api")
-	require.NoError(t, err)
-
-	defer func() { _ = resp.Body.Close() }()
-
-	assert.Equal(t, "Bearer minted-token", gotAuthorization)
-	assert.Equal(t, "minted-token", conn.AccessToken)
 }
 
 // TestClientWithOptions_AuthorizationCodeKeepsStoredToken is the other half of
@@ -351,26 +364,74 @@ func TestClientWithOptions_AuthorizationCodeKeepsStoredToken(t *testing.T) {
 func TestClientWithOptions_ClientCredentialsRejectionIsProviderVerdict(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		_, _ = w.Write([]byte(`{"error":"invalid_client","error_description":"The provided credentials are not valid"}`))
-	}))
-	defer server.Close()
+	for _, tt := range []struct {
+		name          string
+		status        int
+		body          string
+		wantErrorCode string
+		wantBody      bool
+	}{
+		{
+			name:          "401 with an error",
+			status:        http.StatusUnauthorized,
+			body:          `{"error":"invalid_client","error_description":"The provided credentials are not valid"}`,
+			wantErrorCode: "invalid_client",
+			wantBody:      true,
+		},
+		{
+			name:          "200 with an error",
+			status:        http.StatusOK,
+			body:          `{"error":"invalid_client"}`,
+			wantErrorCode: "invalid_client",
+		},
+		{
+			name:          "200 without an access token",
+			status:        http.StatusOK,
+			body:          `{}`,
+			wantErrorCode: "missing_access_token",
+		},
+		{
+			name:          "200 with a non-JSON body",
+			status:        http.StatusOK,
+			body:          `access_token=leaked`,
+			wantErrorCode: "invalid_token_response",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	conn := &OAuth2Connection{
-		GrantType:    OAuth2GrantTypeClientCredentials,
-		ClientID:     "cc-client-id",
-		ClientSecret: "expired-secret",
-		TokenURL:     server.URL,
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.status)
+				_, _ = w.Write([]byte(tt.body))
+			}))
+			defer server.Close()
+
+			conn := &OAuth2Connection{
+				GrantType:    OAuth2GrantTypeClientCredentials,
+				ClientID:     "cc-client-id",
+				ClientSecret: "expired-secret",
+				TokenURL:     server.URL,
+				AccessToken:  "previous-token",
+				ExpiresAt:    time.Now().Add(-time.Hour),
+			}
+
+			_, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
+
+			var retrieveErr *oauth2.RetrieveError
+			require.ErrorAs(t, err, &retrieveErr)
+			assert.Equal(t, tt.status, retrieveErr.Response.StatusCode)
+			assert.Equal(t, tt.wantErrorCode, retrieveErr.ErrorCode)
+
+			if tt.wantBody {
+				assert.Equal(t, tt.body, string(retrieveErr.Body))
+			} else {
+				assert.Empty(t, retrieveErr.Body)
+			}
+
+			assert.Equal(t, "previous-token", conn.AccessToken)
+		})
 	}
-
-	_, err := conn.ClientWithOptions(context.Background(), httpclient.WithSSRFAllowLoopback())
-	require.Error(t, err)
-
-	var retrieveErr *oauth2.RetrieveError
-	require.ErrorAs(t, err, &retrieveErr)
-	assert.Equal(t, http.StatusUnauthorized, retrieveErr.Response.StatusCode)
 }
 
 func TestClientCredentialsClient_ReusesValidToken(t *testing.T) {
@@ -1615,6 +1676,218 @@ func TestRefreshableClient_PublicClientOmitsSecret(t *testing.T) {
 	assert.Equal(t, "refresh_token", capturedGrant)
 	assert.Equal(t, cfg.ClientID, capturedClientID)
 	assert.False(t, hadSecret, "public-client refresh must NOT send client_secret")
+}
+
+func TestRefreshableClient_RefreshScopes(t *testing.T) {
+	t.Parallel()
+
+	type capturedRequest struct {
+		form          url.Values
+		authorization string
+		calls         int
+	}
+
+	newTokenServer := func(t *testing.T, status int, body string) (*httptest.Server, *capturedRequest) {
+		t.Helper()
+
+		captured := &capturedRequest{}
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, r.ParseForm())
+
+			captured.calls++
+			captured.form = r.PostForm
+			captured.authorization = r.Header.Get("Authorization")
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			_, _ = w.Write([]byte(body))
+		}))
+		t.Cleanup(server.Close)
+
+		return server, captured
+	}
+
+	newExpiredConnection := func() *OAuth2Connection {
+		return &OAuth2Connection{
+			AccessToken:  "stale",
+			RefreshToken: "old-refresh",
+			ExpiresAt:    time.Now().Add(-time.Hour),
+			TokenType:    "Bearer",
+		}
+	}
+
+	t.Run("sends the configured scopes with post-form auth", func(t *testing.T) {
+		t.Parallel()
+
+		server, captured := newTokenServer(
+			t,
+			http.StatusOK,
+			`{"access_token":"refreshed","token_type":"Bearer","expires_in":3600,"refresh_token":"new-refresh"}`,
+		)
+
+		conn := newExpiredConnection()
+		_, err := conn.RefreshableClient(
+			context.Background(),
+			OAuth2RefreshConfig{
+				ClientID:      "cid",
+				ClientSecret:  "secret",
+				TokenURL:      server.URL,
+				RefreshScopes: []string{"read_organizations", "read_user"},
+			},
+			httpclient.WithSSRFAllowLoopback(),
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, "refresh_token", captured.form.Get("grant_type"))
+		assert.Equal(t, "old-refresh", captured.form.Get("refresh_token"))
+		assert.Equal(t, "read_organizations read_user", captured.form.Get("scope"))
+		assert.Equal(t, "cid", captured.form.Get("client_id"))
+		assert.Equal(t, "secret", captured.form.Get("client_secret"))
+		assert.Empty(t, captured.authorization)
+
+		assert.Equal(t, "refreshed", conn.AccessToken)
+		assert.Equal(t, "new-refresh", conn.RefreshToken, "a rotated refresh token must be persisted")
+		assert.WithinDuration(t, time.Now().Add(time.Hour), conn.ExpiresAt, time.Minute)
+	})
+
+	t.Run("sends the configured scopes with basic auth", func(t *testing.T) {
+		t.Parallel()
+
+		server, captured := newTokenServer(
+			t,
+			http.StatusOK,
+			`{"access_token":"refreshed","token_type":"Bearer","expires_in":3600}`,
+		)
+
+		conn := newExpiredConnection()
+		_, err := conn.RefreshableClient(
+			context.Background(),
+			OAuth2RefreshConfig{
+				ClientID:          "cid",
+				ClientSecret:      "secret",
+				TokenURL:          server.URL,
+				TokenEndpointAuth: "basic-form",
+				RefreshScopes:     []string{"read_user"},
+			},
+			httpclient.WithSSRFAllowLoopback(),
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, "read_user", captured.form.Get("scope"))
+		assert.NotContains(t, captured.form, "client_id")
+		assert.NotContains(t, captured.form, "client_secret")
+		assert.Equal(t, "Basic "+base64.StdEncoding.EncodeToString([]byte("cid:secret")), captured.authorization)
+
+		assert.Equal(t, "refreshed", conn.AccessToken)
+		assert.Equal(t, "old-refresh", conn.RefreshToken, "an unrotated refresh token must be kept")
+	})
+
+	t.Run("sends no scope when none is configured", func(t *testing.T) {
+		t.Parallel()
+
+		server, captured := newTokenServer(
+			t,
+			http.StatusOK,
+			`{"access_token":"refreshed","token_type":"Bearer","expires_in":3600}`,
+		)
+
+		conn := newExpiredConnection()
+		_, err := conn.RefreshableClient(
+			context.Background(),
+			OAuth2RefreshConfig{ClientID: "cid", ClientSecret: "secret", TokenURL: server.URL},
+			httpclient.WithSSRFAllowLoopback(),
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, "refresh_token", captured.form.Get("grant_type"))
+		assert.NotContains(t, captured.form, "scope")
+		assert.Equal(t, "refreshed", conn.AccessToken)
+	})
+
+	t.Run("does not refresh again without scope on a short expires_in", func(t *testing.T) {
+		t.Parallel()
+
+		server, captured := newTokenServer(
+			t,
+			http.StatusOK,
+			`{"access_token":"refreshed","token_type":"Bearer","expires_in":5}`,
+		)
+
+		conn := newExpiredConnection()
+		_, err := conn.RefreshableClient(
+			context.Background(),
+			OAuth2RefreshConfig{
+				ClientID:      "cid",
+				ClientSecret:  "secret",
+				TokenURL:      server.URL,
+				RefreshScopes: []string{"read_user"},
+			},
+			httpclient.WithSSRFAllowLoopback(),
+		)
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, captured.calls)
+		assert.Equal(t, "read_user", captured.form.Get("scope"))
+		assert.Equal(t, "refreshed", conn.AccessToken)
+	})
+
+	t.Run("does not refresh a token that is still valid", func(t *testing.T) {
+		t.Parallel()
+
+		server, captured := newTokenServer(t, http.StatusOK, `{}`)
+
+		conn := newExpiredConnection()
+		conn.ExpiresAt = time.Now().Add(time.Hour)
+
+		_, err := conn.RefreshableClient(
+			context.Background(),
+			OAuth2RefreshConfig{
+				ClientID:      "cid",
+				ClientSecret:  "secret",
+				TokenURL:      server.URL,
+				RefreshScopes: []string{"read_user"},
+			},
+			httpclient.WithSSRFAllowLoopback(),
+		)
+		require.NoError(t, err)
+
+		assert.Nil(t, captured.form)
+		assert.Equal(t, "stale", conn.AccessToken)
+	})
+
+	for _, tt := range []struct {
+		name   string
+		status int
+	}{
+		{name: "a refused refresh is a provider verdict", status: http.StatusBadRequest},
+		{name: "a 200 carrying an error is a provider verdict", status: http.StatusOK},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			server, _ := newTokenServer(t, tt.status, `{"error":"invalid_scope","error_description":"bad scope"}`)
+
+			conn := newExpiredConnection()
+			_, err := conn.RefreshableClient(
+				context.Background(),
+				OAuth2RefreshConfig{
+					ClientID:      "cid",
+					ClientSecret:  "secret",
+					TokenURL:      server.URL,
+					RefreshScopes: []string{"read_user"},
+				},
+				httpclient.WithSSRFAllowLoopback(),
+			)
+
+			var retrieveErr *oauth2.RetrieveError
+			require.ErrorAs(t, err, &retrieveErr)
+			assert.Equal(t, tt.status, retrieveErr.Response.StatusCode)
+			assert.Equal(t, "invalid_scope", retrieveErr.ErrorCode)
+			assert.Equal(t, "bad scope", retrieveErr.ErrorDescription)
+			assert.Equal(t, "stale", conn.AccessToken)
+			assert.Equal(t, "old-refresh", conn.RefreshToken)
+		})
+	}
 }
 
 // TestCompleteWithState_PKCEMismatch confirms that a token endpoint

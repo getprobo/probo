@@ -833,6 +833,61 @@ WHERE
 	return nil
 }
 
+// UpdateConnection writes only encrypted_connection, so a token refresh cannot
+// revert a concurrent rename or settings save.
+func (c *Connector) UpdateConnection(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	encryptionKey cipher.EncryptionKey,
+) error {
+	q := `
+UPDATE connectors
+SET
+    encrypted_connection = @encrypted_connection,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	if c.Connection == nil {
+		return fmt.Errorf("connection is nil")
+	}
+
+	connection, err := json.Marshal(c.Connection)
+	if err != nil {
+		return fmt.Errorf("cannot marshal connection: %w", err)
+	}
+
+	encryptedConnection, err := cipher.Encrypt(connection, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot encrypt connection: %w", err)
+	}
+
+	args := pgx.StrictNamedArgs{
+		"id":                   c.ID,
+		"encrypted_connection": encryptedConnection,
+		"updated_at":           c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update connector connection: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	c.EncryptedConnection = encryptedConnection
+
+	return nil
+}
+
 // DecryptConnection hydrates Connection from EncryptedConnection already
 // present on the struct. Call it after a metadata or list load instead of
 // LoadByID, which would query the same row again.
