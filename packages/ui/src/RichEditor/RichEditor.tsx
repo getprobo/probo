@@ -367,6 +367,10 @@ export function RichEditor(props: RichEditorProps) {
       const json = withoutContentUploads(created.getJSON());
       stripNonTextMarks(json);
       emittedRef.current = JSON.stringify(json);
+      collaborationHandle?.updatePresence?.(
+        created.state.selection.anchor,
+        created.state.selection.head,
+      );
     },
     onUpdate: handleUpdate,
     onSelectionUpdate: ({ editor }) => {

@@ -515,6 +515,12 @@
     "errors": {
       "title": "Erreur",
       "save": "Contenu non enregistré"
+    },
+    "presence": {
+      "label": "Personnes en train de modifier ce document",
+      "anonymous": "Collaborateur",
+      "inactive": "{{name}} (inactif)",
+      "overflow": "{{count}} personnes de plus"
     }
   },
   "documentSignaturesPage": {

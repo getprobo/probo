@@ -36,24 +36,37 @@ import {
   type TextSelection,
 } from "@probo/ui";
 
+import { type PresenceEntry, pruneStalePresences } from "./documentPresence";
+
 // A collaboration handle for the editor, plus a close() that tears down the repo
 // and its network connection.
 export type RepoCollaborationHandle = RichEditorCollaborationHandle & {
   close: () => void;
 };
 
-// How long a remote collaborator's cursor lingers after their last update before
-// it is pruned, so a caret does not stay behind when a peer goes away without a
-// clean disconnect.
-const presenceTimeToLiveMs = 30_000;
+// How long a remote collaborator lingers after their last ephemeral before they
+// are pruned (three missed 10s heartbeats).
+export const presenceTimeToLiveMs = 30_000;
+
+// Heartbeat interval so idle peers stay listed while the tab is open.
+const presenceHeartbeatIntervalMs = 10_000;
+
+// Idle threshold: no caret/selection activity and the person is treated as
+// inactive (still connected, no caret).
+const presenceIdleMs = 60_000;
 
 const initializationTimeoutMs = 35_000;
 
 // The presence payload broadcast over repo ephemeral messages: a caret or
-// selection expressed as stable Automerge cursors.
+// selection expressed as stable Automerge cursors. displayName, identityID, and
+// avatarURL are stamped by the gateway from the authenticated connection.
 type SelectionPresence = {
   kind: "selection";
   selection: TextSelection;
+  active: boolean;
+  displayName?: string;
+  identityID?: string;
+  avatarURL?: string;
 };
 
 function isSelectionPresence(value: unknown): value is SelectionPresence {
@@ -100,6 +113,34 @@ export async function connectRepoDocument(
   const adapter = richEditorPresenceAdapter();
   const collaboration = handle as unknown as RepoCollaborationHandle;
 
+  let lastSelection: TextSelection | undefined;
+  let lastActivityAt = Date.now();
+  let lastBroadcastActive: boolean | undefined;
+  const latest = new Map<string, PresenceEntry>();
+  const listeners = new Set<(presences: RichEditorPresence[]) => void>();
+
+  const localActive = (): boolean => {
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+      return false;
+    }
+    return Date.now() - lastActivityAt < presenceIdleMs;
+  };
+
+  const broadcastSelection = (selection: TextSelection, active: boolean) => {
+    handle.broadcast({
+      kind: "selection",
+      selection,
+      active,
+    } satisfies SelectionPresence);
+    lastBroadcastActive = active;
+  };
+
+  const publishPresence = () => {
+    if (!lastSelection) return;
+    const active = localActive();
+    broadcastSelection(lastSelection, active);
+  };
+
   collaboration.updatePresence = (anchorPosition, headPosition) => {
     const document = handle.doc();
     if (!document) return;
@@ -112,68 +153,128 @@ export async function connectRepoDocument(
     );
     if (!selection) return;
 
-    handle.broadcast({
-      kind: "selection",
-      selection,
-    } satisfies SelectionPresence);
+    lastSelection = selection;
+    lastActivityAt = Date.now();
+    publishPresence();
   };
+
+  const emitPresences = () => {
+    const now = Date.now();
+    for (const [peer, entry] of latest) {
+      if (now - entry.at > presenceTimeToLiveMs) {
+        latest.delete(peer);
+      }
+    }
+    const presences = pruneStalePresences(
+      latest.values(),
+      now,
+      presenceTimeToLiveMs,
+    );
+    for (const listener of listeners) {
+      listener(presences);
+    }
+  };
+
+  const handleEphemeral = (
+    payload: DocHandleEphemeralMessagePayload<RichEditorAutomergeDocument>,
+  ) => {
+    if (!isSelectionPresence(payload.message)) return;
+
+    const document = handle.doc();
+    if (!document) return;
+
+    const resolved = pmSelectionFromPresence(
+      adapter,
+      document,
+      payload.message.selection,
+    );
+    const sender = String(payload.senderId);
+    const now = Date.now();
+    const displayName = typeof payload.message.displayName === "string"
+      ? payload.message.displayName.trim()
+      : undefined;
+    const identityID = typeof payload.message.identityID === "string"
+      && payload.message.identityID !== ""
+      ? payload.message.identityID
+      : sender;
+    const avatarURL = typeof payload.message.avatarURL === "string"
+      ? payload.message.avatarURL.trim()
+      : undefined;
+    const active = payload.message.active !== false;
+
+    const previous = latest.get(sender);
+    if (resolved) {
+      latest.set(sender, {
+        at: now,
+        presence: {
+          connectionID: sender,
+          identityID,
+          displayName: displayName || undefined,
+          avatarURL: avatarURL || undefined,
+          active,
+          anchorPosition: resolved.anchorPosition,
+          headPosition: resolved.headPosition,
+        },
+      });
+    } else if (previous) {
+      // Heartbeat / selection that no longer resolves: keep the last caret but
+      // refresh liveness and identity fields so the peer is not pruned.
+      latest.set(sender, {
+        at: now,
+        presence: {
+          ...previous.presence,
+          identityID,
+          displayName: displayName || previous.presence.displayName,
+          avatarURL: avatarURL || previous.presence.avatarURL,
+          active,
+        },
+      });
+    } else {
+      return;
+    }
+
+    emitPresences();
+  };
+
+  handle.on("ephemeral-message", handleEphemeral);
 
   collaboration.onPresence = (listener) => {
-    // Presence is decoration state: the editor replaces all remote cursors on
-    // each update, so accumulate the latest selection per peer and emit the full
-    // set, pruning peers that have gone quiet.
-    const latest = new Map<
-      string,
-      { presence: RichEditorPresence; at: number }
-    >();
-
-    const handleEphemeral = (
-      payload: DocHandleEphemeralMessagePayload<RichEditorAutomergeDocument>,
-    ) => {
-      if (!isSelectionPresence(payload.message)) return;
-
-      const document = handle.doc();
-      if (!document) return;
-
-      const resolved = pmSelectionFromPresence(
-        adapter,
-        document,
-        payload.message.selection,
-      );
-      const sender = String(payload.senderId);
-
-      const now = Date.now();
-      if (resolved) {
-        latest.set(sender, {
-          at: now,
-          presence: {
-            connectionID: sender,
-            identityID: sender,
-            anchorPosition: resolved.anchorPosition,
-            headPosition: resolved.headPosition,
-          },
-        });
-      }
-
-      const presences: RichEditorPresence[] = [];
-      for (const [peer, entry] of latest) {
-        if (now - entry.at > presenceTimeToLiveMs) {
-          latest.delete(peer);
-          continue;
-        }
-
-        presences.push(entry.presence);
-      }
-
-      listener(presences);
+    listeners.add(listener);
+    listener(
+      pruneStalePresences(latest.values(), Date.now(), presenceTimeToLiveMs),
+    );
+    return () => {
+      listeners.delete(listener);
     };
-
-    handle.on("ephemeral-message", handleEphemeral);
-
-    return () => handle.off("ephemeral-message", handleEphemeral);
   };
 
+  const heartbeat = window.setInterval(() => {
+    if (!lastSelection) return;
+    const active = localActive();
+    broadcastSelection(lastSelection, active);
+  }, presenceHeartbeatIntervalMs);
+
+  // Drop gone peers even when nobody else is broadcasting.
+  const prune = window.setInterval(() => {
+    if (latest.size === 0) return;
+    emitPresences();
+  }, presenceHeartbeatIntervalMs);
+
+  const onVisibilityChange = () => {
+    if (!lastSelection) return;
+    const active = localActive();
+    if (active === lastBroadcastActive) return;
+    broadcastSelection(lastSelection, active);
+  };
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
   collaboration.close = () => {
+    window.clearInterval(heartbeat);
+    window.clearInterval(prune);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    handle.off("ephemeral-message", handleEphemeral);
+    listeners.clear();
+    latest.clear();
     void repo.shutdown();
   };
 

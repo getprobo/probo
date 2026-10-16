@@ -514,6 +514,12 @@
     "errors": {
       "title": "Fout",
       "save": "Inhoud niet opgeslagen"
+    },
+    "presence": {
+      "label": "Mensen die dit document bewerken",
+      "anonymous": "Medewerker",
+      "inactive": "{{name}} (inactief)",
+      "overflow": "{{count}} mensen meer"
     }
   },
   "documentSignaturesPage": {
