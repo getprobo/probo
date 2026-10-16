@@ -8803,6 +8803,217 @@ components:
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
 
+    PageInfo:
+      type: object
+      required:
+        - has_next_page
+        - has_previous_page
+      properties:
+        has_next_page:
+          type: boolean
+          description: Whether more results exist after this page
+        has_previous_page:
+          type: boolean
+          description: Whether more results exist before this page
+        start_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Cursor of the first item in this page
+        end_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Cursor of the last item in this page
+
+    DocumentCollaborationHistorySessionOrderField:
+      type: string
+      enum:
+        - ENDED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentCollaborationHistorySessionOrderField
+
+    DocumentCollaborationHistorySessionOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/DocumentCollaborationHistorySessionOrderField"
+          description: Collaboration history session order field
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+          description: Sort direction
+
+    DocumentCollaborationHistorySession:
+      type: object
+      required:
+        - id
+        - heads
+        - previous_heads
+        - actor_id
+        - started_at
+        - ended_at
+        - change_count
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Collaboration history session ID
+        heads:
+          type: array
+          items:
+            type: string
+          description: Automerge change hashes at the end of this session (lowercase hex)
+        previous_heads:
+          type: array
+          items:
+            type: string
+          description: Automerge heads before this session started (lowercase hex)
+        actor_id:
+          type: string
+          description: Automerge actor ID (lowercase hex)
+        identity_id:
+          $ref: "#/components/schemas/GID"
+          description: Identity ID when the actor is mapped to an identity
+        profile_id:
+          $ref: "#/components/schemas/GID"
+          description: Profile ID when the actor is mapped to a profile
+        author_name:
+          type: string
+          description: Display name for the session author
+        started_at:
+          type: string
+          format: date-time
+          description: When the session started
+        ended_at:
+          type: string
+          format: date-time
+          description: When the session ended
+        change_count:
+          type: integer
+          description: Number of Automerge changes in this session
+
+    DocumentCollaborationHistoryHighlightKind:
+      type: string
+      enum:
+        - INSERT
+        - DELETE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKind
+
+    DocumentCollaborationHistoryHighlight:
+      type: object
+      required:
+        - kind
+        - from
+        - to
+        - text
+      properties:
+        kind:
+          $ref: "#/components/schemas/DocumentCollaborationHistoryHighlightKind"
+          description: Highlight kind
+        from:
+          type: integer
+          description: Start offset in UTF-16 code units
+        to:
+          type: integer
+          description: End offset in UTF-16 code units
+        text:
+          type: string
+          description: Highlighted text
+
+    ListDocumentCollaborationHistorySessionsInput:
+      type: object
+      required:
+        - document_version_id
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        order_by:
+          $ref: "#/components/schemas/DocumentCollaborationHistorySessionOrderBy"
+          description: Session order by (defaults to ENDED_AT descending)
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListDocumentCollaborationHistorySessionsOutput:
+      type: object
+      required:
+        - collaboration_history_sessions
+        - total_count
+        - page_info
+      properties:
+        collaboration_history_sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentCollaborationHistorySession"
+        total_count:
+          type: integer
+          description: Total number of collaboration history sessions
+        page_info:
+          $ref: "#/components/schemas/PageInfo"
+          description: Pagination metadata for this page
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Cursor for the next page; pass as cursor on the next call
+
+    GetDocumentCollaborationHistorySnapshotInput:
+      type: object
+      required:
+        - document_version_id
+        - heads
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        heads:
+          type: array
+          items:
+            type: string
+          description: Automerge heads to materialize (lowercase hex)
+        previous_heads:
+          type: array
+          items:
+            type: string
+          description: Automerge heads before the edit window; omit or empty to diff from document start
+
+    GetDocumentCollaborationHistorySnapshotOutput:
+      type: object
+      required:
+        - content
+        - highlights
+      properties:
+        content:
+          type: string
+          description: Document body in markdown at the given heads
+        highlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentCollaborationHistoryHighlight"
+
+    RestoreDocumentCollaborationHistoryInput:
+      type: object
+      required:
+        - document_version_id
+        - heads
+      properties:
+        document_version_id:
+          $ref: "#/components/schemas/GID"
+          description: Document version ID
+        heads:
+          type: array
+          items:
+            type: string
+          description: Automerge heads to restore (lowercase hex)
+
+    RestoreDocumentCollaborationHistoryOutput:
+      type: object
+      description: document_version.content is markdown
+      required:
+        - document_version
+      properties:
+        document_version:
+          $ref: "#/components/schemas/DocumentVersion"
+
     PublishDocumentInput:
       type: object
       required:
@@ -19020,6 +19231,42 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
+  - name: listDocumentCollaborationHistorySessions
+    title: List Document Collaboration History Sessions
+    description: List collaboration edit sessions for a document version
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListDocumentCollaborationHistorySessionsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListDocumentCollaborationHistorySessionsOutput"
+  - name: getDocumentCollaborationHistorySnapshot
+    title: Get Document Collaboration History Snapshot
+    description: Materialize document content at given Automerge heads with edit highlights
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetDocumentCollaborationHistorySnapshotInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetDocumentCollaborationHistorySnapshotOutput"
+  - name: restoreDocumentCollaborationHistory
+    title: Restore Document Collaboration History
+    description: Restore a draft document version to a prior collaboration history point
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/RestoreDocumentCollaborationHistoryInput"
+    outputSchema:
+      $ref: "#/components/schemas/RestoreDocumentCollaborationHistoryOutput"
   - name: publishDocument
     title: Publish Document
     description: Publish the latest draft of a document. Set minor=true to publish a minor version (no approval flow). When minor=false, providing approver_ids triggers an approval request as a new major version; otherwise the draft is published immediately as a new major version.
