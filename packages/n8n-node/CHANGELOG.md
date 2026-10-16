@@ -4,6 +4,17 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.253.0] - 2026-10-16
+
+### Added
+
+- Audit `Link Framework` and `Unlink Framework` operations
+
+### Changed
+
+- Audit `Create` takes `Framework IDs` instead of a single
+  `Framework ID`. Saved workflows that set the old field keep working
+
 ## [0.252.0] - 2026-10-16
 
 ### Added
