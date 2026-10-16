@@ -30,13 +30,16 @@ import (
 	"go.probo.inc/probo/pkg/cmd/document/list"
 	listapprovaldecisions "go.probo.inc/probo/pkg/cmd/document/list-approval-decisions"
 	listapprovalquorums "go.probo.inc/probo/pkg/cmd/document/list-approval-quorums"
+	listhistory "go.probo.inc/probo/pkg/cmd/document/list-history"
 	listversions "go.probo.inc/probo/pkg/cmd/document/list-versions"
 	"go.probo.inc/probo/pkg/cmd/document/publish"
+	restorehistory "go.probo.inc/probo/pkg/cmd/document/restore-history"
 	"go.probo.inc/probo/pkg/cmd/document/unarchive"
 	"go.probo.inc/probo/pkg/cmd/document/update"
 	"go.probo.inc/probo/pkg/cmd/document/view"
 	viewapprovaldecision "go.probo.inc/probo/pkg/cmd/document/view-approval-decision"
 	viewapprovalquorum "go.probo.inc/probo/pkg/cmd/document/view-approval-quorum"
+	viewhistorysnapshot "go.probo.inc/probo/pkg/cmd/document/view-history-snapshot"
 	viewversion "go.probo.inc/probo/pkg/cmd/document/view-version"
 )
 
@@ -54,7 +57,10 @@ func NewCmdDocument(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(archive.NewCmdArchive(f))
 	cmd.AddCommand(unarchive.NewCmdUnarchive(f))
 	cmd.AddCommand(listversions.NewCmdListVersions(f))
+	cmd.AddCommand(listhistory.NewCmdListHistory(f))
 	cmd.AddCommand(viewversion.NewCmdViewVersion(f))
+	cmd.AddCommand(viewhistorysnapshot.NewCmdViewHistorySnapshot(f))
+	cmd.AddCommand(restorehistory.NewCmdRestoreHistory(f))
 	cmd.AddCommand(deletedraft.NewCmdDeleteDraft(f))
 	cmd.AddCommand(publish.NewCmdPublish(f))
 	cmd.AddCommand(listapprovalquorums.NewCmdListApprovalQuorums(f))
