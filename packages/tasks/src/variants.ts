@@ -66,7 +66,8 @@ export const taskListItem = tv({
   slots: {
     root: "relative flex h-full items-center gap-3 px-6",
     main: "flex min-w-0 flex-1 items-center gap-3",
-    title: "min-w-0 flex-1 truncate",
+    title: "flex min-w-0 flex-1 items-center gap-1.5",
+    titleText: "min-w-0 truncate",
     titleLink: "hover:underline after:absolute after:inset-0 after:content-['']",
     metaGroup: "relative z-1 ml-auto flex h-6 shrink-0 items-center gap-3",
     meta: "flex h-6 shrink-0 items-center gap-1 text-sand-11 [&_svg]:size-3.5",
@@ -77,7 +78,6 @@ export const taskListItem = tv({
     chipTrigger: "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit",
     created: "relative z-1 flex h-6 shrink-0 items-center text-sand-11",
     more: "relative z-1 flex h-6 shrink-0 items-center",
-    externalLink: "relative z-1 flex h-6 shrink-0 items-center",
     trailing: "relative z-1 flex h-6 shrink-0 items-center gap-2",
     assignee: "relative z-1 flex h-6 shrink-0 items-center",
     state: "relative z-1 flex h-6 shrink-0 items-center",

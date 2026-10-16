@@ -155,7 +155,7 @@ function isFloatingDismiss(details: DialogOpenChangeDetails) {
 }
 
 interface CreateTaskDialogSessionProps {
-  connectionId: string;
+  connectionId?: string;
   internalControlId?: string;
   onCompleted?: () => void;
   onClose: () => void;
@@ -598,7 +598,7 @@ function CreateTaskDialogFallback({
 }
 
 interface CreateTaskDialogProps {
-  connectionId: string;
+  connectionId?: string;
   internalControlId?: string;
   children: ReactElement;
   onCompleted?: () => void;

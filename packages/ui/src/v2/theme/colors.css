@@ -93,6 +93,15 @@
     --lime-9: oklch(from #e6ff03 0.50 c h);
 }
 
+/* Linear brand purple. One solid, not a 12-step scale. */
+:root,
+.light,
+.light-theme,
+.dark,
+.dark-theme {
+    --linear: #5e6ad2;
+}
+
 /* ---------------------------------------------------------------------------
  * Base colors
  *
@@ -229,6 +238,9 @@
 
     /* lime — brand wash solid (step 9 only) */
     --color-lime-9: var(--lime-9);
+
+    /* linear — brand purple (solid only) */
+    --color-linear: var(--linear);
 }
 
 @layer base {

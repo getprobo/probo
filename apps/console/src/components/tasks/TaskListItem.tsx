@@ -30,6 +30,7 @@ import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
+import { TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
 import {
   reconcileOrganizationTaskListMembership,
   resortOrganizationTaskListEdge,
@@ -68,6 +69,7 @@ const taskListItemFragment = graphql`
       }
     }
     ...TaskDeleteDialog_task
+    ...TaskListLinearMenu_task
   }
 `;
 
@@ -90,6 +92,7 @@ interface TaskListItemProps {
   isDragging?: boolean;
   isGhost?: boolean;
   ignoreClick: boolean;
+  linearConnected?: boolean;
   onDragStart?: () => void;
   onDragOver?: (event: React.DragEvent) => void;
   onDrop?: () => void;
@@ -106,7 +109,8 @@ function taskListItemPropsAreEqual(
     && previous.canDrag === next.canDrag
     && previous.isDragging === next.isDragging
     && previous.isGhost === next.isGhost
-    && previous.ignoreClick === next.ignoreClick;
+    && previous.ignoreClick === next.ignoreClick
+    && previous.linearConnected === next.linearConnected;
 }
 
 export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps) {
@@ -269,7 +273,12 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
           timeEstimate: task.timeEstimate,
           deadline: task.deadline,
           recurrenceInterval: task.recurrenceInterval,
-          externalLink: task.externalLink,
+          externalLink: task.externalLink == null
+            ? null
+            : {
+                identifier: task.externalLink.identifier,
+                url: task.externalLink.url,
+              },
           assignedTo: assignedTo == null
             ? null
             : {
@@ -298,6 +307,14 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
           ? () => {
               setDeleteOpen(true);
             }
+          : undefined}
+        extraMenu={props.linearConnected && canUpdate
+          ? (
+              <TaskListLinearMenu
+                taskKey={task}
+                linked={task.externalLink != null}
+              />
+            )
           : undefined}
         sectionState={props.sectionState}
         canDrag={props.canDrag}

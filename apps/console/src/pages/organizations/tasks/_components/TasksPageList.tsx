@@ -80,6 +80,9 @@ const tasksPageListFragment = graphql`
     includeDuplicate: { type: "Boolean!" }
   ) {
     canUpdateTask: permission(action: "core:task:update")
+    connectors(filter: { providers: [LINEAR_SYNC] }) {
+      id
+    }
     ...useOrganizationTaskListGroups_inProgress
       @arguments(
         query: $query
@@ -542,6 +545,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
             isDragging={draggedId === item.id}
             isGhost={preview != null && draggedId === item.id}
             ignoreClick={ignoreClick}
+            linearConnected={organization.connectors.length > 0}
             onDragStart={() => {
               setIgnoreClick(true);
               draggedIdRef.current = item.id;

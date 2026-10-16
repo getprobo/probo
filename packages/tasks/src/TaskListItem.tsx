@@ -30,6 +30,7 @@ import {
 } from "@phosphor-icons/react";
 import { formatDatetime, parseDate, toDateInput, todayAsDateInput } from "@probo/helpers";
 import { compactDateFormat, deadlineDateFormat, formatDuration } from "@probo/i18n";
+import { Linear } from "@probo/ui/src/Atoms/ThirdParties/Linear";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -42,7 +43,6 @@ import { DropdownSubmenuTrigger } from "@probo/ui/src/v2/Dropdown/DropdownSubmen
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { DateCalendar } from "@probo/ui/src/v2/form/DateCalendar";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
-import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
@@ -108,6 +108,7 @@ export interface TaskListItemProps {
   detailsTo?: string;
   canUpdateAssignee?: boolean;
   renderAssigneeMenu?: () => ReactNode;
+  extraMenu?: ReactNode;
   onDelete?: () => void;
   sectionState?: TaskState;
   canDrag?: boolean;
@@ -163,8 +164,7 @@ export function TaskListItem(props: TaskListItemProps) {
   const showAssignee = props.canUpdateAssignee === true || props.task.assignedTo != null;
   const showEstimate = timeEstimate != null;
   const showDeadline = props.task.deadline != null;
-  const showMeta = props.task.externalLink != null
-    || showEstimate
+  const showMeta = showEstimate
     || showDeadline
     || recurrence != null;
 
@@ -196,37 +196,42 @@ export function TaskListItem(props: TaskListItemProps) {
           slots={slots}
           onStateChange={props.onStateChange}
         />
-        <Text size={2} weight="medium" className={slots.title()}>
-          {props.detailsTo == null
-            ? props.task.name
-            : (
-                <Link
-                  to={props.detailsTo}
-                  className={slots.titleLink()}
-                  draggable={false}
-                  onClick={(event) => {
-                    if (props.ignoreClick) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
-                  {props.task.name}
-                </Link>
-              )}
-        </Text>
-        {showMeta && (
+        <div className={slots.title()}>
+          <Text size={2} weight="medium" className={slots.titleText()}>
+            {props.detailsTo == null
+              ? props.task.name
+              : (
+                  <Link
+                    to={props.detailsTo}
+                    className={slots.titleLink()}
+                    draggable={false}
+                    onClick={(event) => {
+                      if (props.ignoreClick) {
+                        event.preventDefault();
+                      }
+                    }}
+                  >
+                    {props.task.name}
+                  </Link>
+                )}
+          </Text>
+        </div>
+        {(showMeta || props.task.externalLink != null) && (
           <div className={slots.metaGroup()}>
-            {props.task.externalLink && (
-              <Anchor
-                className={slots.externalLink()}
-                size={1}
-                color="neutral"
+            {props.task.externalLink != null && (
+              <a
+                className={`${slots.meta()} hover:underline`}
                 href={props.task.externalLink.url}
                 target="_blank"
                 rel="noreferrer"
+                draggable={false}
+                onMouseDown={event => event.stopPropagation()}
               >
-                {props.task.externalLink.identifier}
-              </Anchor>
+                <Linear aria-hidden />
+                <Text size={1} color="current">
+                  {props.task.externalLink.identifier}
+                </Text>
+              </a>
             )}
             {showEstimate && (
               <TaskListItemEstimate
@@ -299,6 +304,7 @@ export function TaskListItem(props: TaskListItemProps) {
           isUpdating={props.isUpdating}
           slots={slots}
           renderAssigneeMenu={props.renderAssigneeMenu}
+          extraMenu={props.extraMenu}
           onStateChange={props.onStateChange}
           onPriorityChange={props.onPriorityChange}
           onDeadlineChange={props.onDeadlineChange}
@@ -711,6 +717,7 @@ function TaskListItemMenu({
   isUpdating,
   slots,
   renderAssigneeMenu,
+  extraMenu,
   onStateChange,
   onPriorityChange,
   onDeadlineChange,
@@ -727,6 +734,7 @@ function TaskListItemMenu({
   isUpdating?: boolean;
   slots: ReturnType<typeof taskListItem>;
   renderAssigneeMenu?: () => ReactNode;
+  extraMenu?: ReactNode;
   onStateChange: (state: TaskState) => void;
   onPriorityChange: (priority: TaskPriority) => void;
   onDeadlineChange: (deadline: string | null) => void;
@@ -738,7 +746,8 @@ function TaskListItemMenu({
   const showAssigneeMenu = canUpdateAssignee && renderAssigneeMenu != null;
   const showFields = canUpdate || showAssigneeMenu;
   const showDelete = onDelete != null;
-  if (!showFields && !showDelete) {
+  const showExtra = extraMenu != null;
+  if (!showFields && !showDelete && !showExtra) {
     return null;
   }
 
@@ -841,7 +850,8 @@ function TaskListItemMenu({
               </DropdownPopup>
             </DropdownSubmenu>
           )}
-          {showFields && showDelete && <DropdownSeparator />}
+          {(showFields && (showExtra || showDelete)) && <DropdownSeparator />}
+          {extraMenu}
           {showDelete && (
             <DropdownItem
               color="error"

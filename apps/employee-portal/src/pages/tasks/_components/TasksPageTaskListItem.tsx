@@ -45,6 +45,10 @@ const tasksPageTaskListItemFragment = graphql`
     recurrenceInterval
     canUpdate: permission(action: "core:task:update")
     canDelete: permission(action: "core:task:delete")
+    externalLink {
+      identifier
+      url
+    }
     assignedTo {
       id
       fullName
@@ -156,6 +160,12 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
           timeEstimate: task.timeEstimate,
           deadline: task.deadline,
           recurrenceInterval: task.recurrenceInterval,
+          externalLink: task.externalLink == null
+            ? null
+            : {
+                identifier: task.externalLink.identifier,
+                url: task.externalLink.url,
+              },
           assignedTo: task.assignedTo == null
             ? null
             : {

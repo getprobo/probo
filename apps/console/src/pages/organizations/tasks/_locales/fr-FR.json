@@ -78,8 +78,9 @@
     },
     "linear": {
       "connect": "Connecter Linear",
-      "publish": "Publier",
+      "publish": "Créer",
       "link": "Lier",
+      "linkTo": "Lier à",
       "unlink": "Dissocier",
       "team": "Équipe Linear",
       "issue": "Issue Linear",
@@ -93,7 +94,7 @@
       "loadMore": "Charger plus",
       "retry": "Réessayer",
       "createWithoutTeam": "Créer sans équipe Linear",
-      "published": "Tâche publiée sur Linear.",
+      "published": "Tâche créée dans Linear.",
       "linked": "Tâche liée à Linear.",
       "confirmLink": {
         "title": "Lier l'issue Linear",
@@ -101,7 +102,7 @@
       },
       "unlinked": "Issue Linear dissociée.",
       "errors": {
-        "publish": "Échec de la publication vers Linear",
+        "publish": "Échec de la création dans Linear",
         "link": "Échec de la liaison vers Linear",
         "unlink": "Échec de la dissociation de l'issue Linear",
         "load": "Impossible d'afficher Linear"

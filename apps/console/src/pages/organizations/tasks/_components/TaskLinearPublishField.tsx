@@ -116,6 +116,7 @@ const publishMutation = graphql`
     publishTaskToLinear(input: $input) {
       task {
         ...TaskLinearField_task
+        ...TaskListItem_task
       }
     }
   }

@@ -153,7 +153,7 @@ export function TasksSettingsDialog({
   const [updateLinearSettings, isSaving] = useMutation<TasksSettingsDialogUpdateLinearSettingsMutation>(
     updateLinearSettingsMutation,
   );
-  const selectedTeam = organization.linearSettings.defaultTeam;
+  const linkedTeam = organization.linearSettings.defaultTeam ?? null;
   const canEditDefaultTeam = organization.canInitiateConnector;
 
   useEffect(() => {
@@ -281,9 +281,9 @@ export function TasksSettingsDialog({
 
   const defaultTeamCombobox = (
     <LinearTeamCombobox
-      selectedId={selectedTeam?.id ?? null}
-      selectedLabel={selectedTeam
-        ? linearTeamLabel({ name: selectedTeam.name, key: selectedTeam.key })
+      selectedId={linkedTeam?.id ?? null}
+      selectedLabel={linkedTeam
+        ? linearTeamLabel({ name: linkedTeam.name, key: linkedTeam.key })
         : t("settingsDialog.linear.noDefaultTeam")}
       ariaLabel={t("settingsDialog.linear.defaultTeam")}
       placeholder={t("detailsPage.linear.searchTeam")}
@@ -303,7 +303,7 @@ export function TasksSettingsDialog({
     <Select
       value={organization.linearSettings.issueImport}
       disabled={
-        selectedTeam == null
+        linkedTeam == null
         || !canEditDefaultTeam
         || isSaving
         || isDisconnecting
@@ -440,7 +440,7 @@ export function TasksSettingsDialog({
                       ? (
                           <li className={issueImport()}>
                             <Field label={t("settingsDialog.linear.issueImport")}>
-                              {canEditDefaultTeam && selectedTeam != null
+                              {canEditDefaultTeam && linkedTeam != null
                                 ? issueImportSelect
                                 : (
                                     <Tooltip>
@@ -452,7 +452,7 @@ export function TasksSettingsDialog({
                                         )}
                                       />
                                       <TooltipPopup>
-                                        {selectedTeam == null
+                                        {linkedTeam == null
                                           ? t("settingsDialog.linear.issueImportNeedsTeam")
                                           : t("settingsDialog.linear.issueImportReadOnly")}
                                       </TooltipPopup>

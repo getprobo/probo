@@ -78,8 +78,9 @@
     },
     "linear": {
       "connect": "Linear verbinden",
-      "publish": "Publiceren",
+      "publish": "Aanmaken",
       "link": "Koppelen",
+      "linkTo": "Koppelen aan",
       "unlink": "Ontkoppelen",
       "team": "Linear-team",
       "issue": "Linear-issue",
@@ -93,7 +94,7 @@
       "loadMore": "Meer laden",
       "retry": "Opnieuw proberen",
       "createWithoutTeam": "Aanmaken zonder Linear-team",
-      "published": "Taak gepubliceerd naar Linear.",
+      "published": "Taak aangemaakt in Linear.",
       "linked": "Taak gekoppeld aan Linear.",
       "confirmLink": {
         "title": "Linear-issue koppelen",
@@ -101,7 +102,7 @@
       },
       "unlinked": "Linear-issue ontkoppeld.",
       "errors": {
-        "publish": "Publiceren naar Linear mislukt",
+        "publish": "Taak aanmaken in Linear mislukt",
         "link": "Koppelen aan Linear mislukt",
         "unlink": "Ontkoppelen van Linear-issue mislukt",
         "load": "Linear kon niet worden weergegeven"

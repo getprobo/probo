@@ -50,6 +50,7 @@ export const dropdownItem = tv({
       accent: "text-sand-12",
       error: "text-red-11",
       success: "text-green-11",
+      linear: "text-linear",
     },
     highContrast: {
       true: "",
@@ -67,6 +68,9 @@ export const dropdownItem = tv({
     // success
     { variant: "solid", color: "success", class: "data-highlighted:bg-green-9 data-highlighted:text-white" },
     { variant: "soft", color: "success", class: "data-highlighted:bg-green-4 data-highlighted:text-green-12" },
+    // linear
+    { variant: "solid", color: "linear", class: "data-highlighted:bg-linear data-highlighted:text-white" },
+    { variant: "soft", color: "linear", class: "data-highlighted:bg-linear/16 data-highlighted:text-linear" },
   ],
   defaultVariants: {
     size: 2,

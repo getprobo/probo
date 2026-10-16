@@ -78,8 +78,9 @@
     },
     "linear": {
       "connect": "Connect Linear",
-      "publish": "Publish",
+      "publish": "Create",
       "link": "Link",
+      "linkTo": "Link to",
       "unlink": "Unlink",
       "team": "Linear team",
       "issue": "Linear issue",
@@ -93,7 +94,7 @@
       "loadMore": "Load more",
       "retry": "Try again",
       "createWithoutTeam": "Create without a Linear team",
-      "published": "Task published to Linear.",
+      "published": "Task created in Linear.",
       "linked": "Task linked to Linear.",
       "confirmLink": {
         "title": "Link Linear issue",
@@ -101,7 +102,7 @@
       },
       "unlinked": "Linear issue unlinked.",
       "errors": {
-        "publish": "Failed to publish task to Linear",
+        "publish": "Failed to create task in Linear",
         "link": "Failed to link task to Linear",
         "unlink": "Failed to unlink Linear issue",
         "load": "Could not display Linear"

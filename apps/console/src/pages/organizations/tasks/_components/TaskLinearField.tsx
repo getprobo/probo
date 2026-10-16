@@ -67,6 +67,7 @@ const unlinkMutation = graphql`
     unlinkTaskExternal(input: $input) {
       task {
         ...TaskLinearField_task
+        ...TaskListItem_task
       }
     }
   }
