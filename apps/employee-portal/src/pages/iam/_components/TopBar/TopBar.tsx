@@ -19,12 +19,16 @@
 // SOFTWARE.
 
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { Link } from "react-router";
 
 import type { TopBar_organization$key } from "#/__generated__/iam/TopBar_organization.graphql";
+import { NotificationsBell } from "#/components/notifications/NotificationsBell";
+import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { TopBarUserMenu } from "./TopBarUserMenu";
@@ -37,6 +41,7 @@ const topBarFragment = graphql`
     logo {
       downloadUrl
     }
+    canListNotifications: permission(action: "core:notification:list")
     viewer @required(action: THROW) {
       identity @required(action: THROW) {
         ...TopBarUserMenu_identity
@@ -51,7 +56,7 @@ interface TopBarProps {
 
 export function TopBar({ organizationKey }: TopBarProps) {
   const { t } = useTranslation();
-  const { employeePortalId } = useEmployeePortalRoute();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
   const organization = useFragment<TopBar_organization$key>(
     topBarFragment,
     organizationKey,
@@ -86,7 +91,21 @@ export function TopBar({ organizationKey }: TopBarProps) {
           </span>
         </Link>
 
-        <TopBarUserMenu identityKey={organization.viewer.identity} />
+        <div className={slots.actions()}>
+          {organization.canListNotifications && (
+            <RelayProvider>
+              <ErrorBoundary fallback={null}>
+                <Suspense fallback={<span className={slots.bellFallback()} />}>
+                  <NotificationsBell
+                    organizationId={organizationId}
+                    employeePortalId={employeePortalId}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </RelayProvider>
+          )}
+          <TopBarUserMenu identityKey={organization.viewer.identity} />
+        </div>
       </div>
     </header>
   );

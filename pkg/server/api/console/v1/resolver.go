@@ -47,6 +47,7 @@ import (
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
@@ -96,6 +97,7 @@ type (
 		thirdParty              *thirdparty.Service
 		itam                    *itam.Service
 		task                    *task.Service
+		notification            *notification.Service
 		logger                  *log.Logger
 		fileManager             *filemanager.Service
 		baseURL                 *baseurl.BaseURL
@@ -141,6 +143,7 @@ func NewMux(
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
+	notificationSvc *notification.Service,
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
@@ -173,6 +176,7 @@ func NewMux(
 		graphqlLimits,
 		itamSvc,
 		taskSvc,
+		notificationSvc,
 		probotIdentityBindings,
 		slackbotInstallations,
 		botDeliveryDestinations,

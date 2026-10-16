@@ -37,6 +37,8 @@ export const topBar = tv({
     brandName: "truncate",
     tagline: "truncate",
     logo: "shrink-0",
+    actions: "flex items-center gap-2",
+    bellFallback: "inline-block size-8",
   },
   variants: {
     wide: {

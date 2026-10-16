@@ -46,6 +46,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -1051,7 +1052,7 @@ func (s *DocumentService) BulkRequestSignatures(
 				}
 
 				for _, signatoryID := range req.SignatoryIDs {
-					signature, created, err := s.createSignatureRequestInTx(ctx, scope, tx, documentVersion.ID, signatoryID)
+					signature, created, err := s.createSignatureRequestInTx(ctx, scope, tx, document, documentVersion.ID, signatoryID)
 					if err != nil {
 						return fmt.Errorf("cannot create signature request for document %q and signatory %q: %w", documentID, signatoryID, err)
 					}
@@ -1091,6 +1092,7 @@ func (s *DocumentService) BulkRequestSignatures(
 func (s *DocumentService) createSignatureRequestInTx(
 	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
+	document *coredata.Document,
 	documentVersionID gid.GID,
 	signatoryID gid.GID,
 ) (*coredata.DocumentVersionSignature, bool, error) {
@@ -1137,6 +1139,21 @@ func (s *DocumentService) createSignatureRequestInTx(
 
 	if err := documentVersionSignature.Insert(ctx, tx, scope); err != nil {
 		return nil, false, fmt.Errorf("cannot insert document version signature: %w", err)
+	}
+
+	if err := notification.Insert(
+		ctx,
+		tx,
+		scope,
+		notification.InsertRequest{
+			OrganizationID:     document.OrganizationID,
+			RecipientProfileID: signatory.ID,
+			Type:               coredata.NotificationTypeDocumentSignatureRequested,
+			SubjectID:          document.ID,
+			Title:              document.Title,
+		},
+	); err != nil {
+		return nil, false, fmt.Errorf("cannot insert signature notification: %w", err)
 	}
 
 	return documentVersionSignature, true, nil
@@ -1190,7 +1207,7 @@ func (s *DocumentService) RequestSignature(
 				created bool
 			)
 
-			signature, created, err = s.createSignatureRequestInTx(ctx, scope, tx, req.DocumentVersionID, req.Signatory)
+			signature, created, err = s.createSignatureRequestInTx(ctx, scope, tx, document, req.DocumentVersionID, req.Signatory)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
 			}

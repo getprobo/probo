@@ -1,4 +1,12 @@
 {
+  "notifications": {
+    "label": "Notificaciones",
+    "unread": "{{count}} sin leer",
+    "empty": "No hay notificaciones",
+    "documentSignatureRequested": "{{title}} está listo para su firma",
+    "documentApprovalRequested": "{{title}} espera su aprobación",
+    "taskAssigned": "Se le asignó {{title}}"
+  },
   "topBar": {
     "tagline": "Portal del empleado"
   },
