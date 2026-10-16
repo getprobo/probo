@@ -88,6 +88,7 @@ export function organizationTaskListConnectionFilters(
       assignedToId: filter.assignedToId,
       internalControlId: filter.internalControlId,
       deadlineOnOrBefore: filter.deadlineOnOrBefore,
+      deadlineOnOrAfter: filter.deadlineOnOrAfter,
       hasDeadline: filter.hasDeadline,
       hasAssignee: filter.hasAssignee,
     },
@@ -155,6 +156,7 @@ function organizationTaskListFilterKey(filter: OrganizationTaskListFilter) {
     filter.assignedToId,
     filter.internalControlId,
     filter.deadlineOnOrBefore,
+    filter.deadlineOnOrAfter,
     filter.hasDeadline,
     filter.hasAssignee,
   ].join("\0");

@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
+import { taskNameMaxLength } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
@@ -37,7 +38,6 @@ import { useTranslation } from "react-i18next";
 
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
-import { taskNameMaxLength } from "../../_lib/taskNameMaxLength";
 import {
   taskPriorities,
   type TaskPriority,

@@ -2140,12 +2140,13 @@ func (r *Resolver) ListTasksTool(ctx context.Context, req *mcp.CallToolRequest, 
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil, nil)
 	if input.Filter != nil {
 		taskFilter = coredata.NewTaskFilter(
 			input.Filter.Query,
 			input.Filter.State,
 			input.Filter.AssignedToID,
+			nil,
 			nil,
 			nil,
 			nil,
@@ -2861,12 +2862,13 @@ func (r *Resolver) ListInternalControlTasksTool(ctx context.Context, req *mcp.Ca
 
 	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
 
-	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil)
+	taskFilter := coredata.NewTaskFilter(nil, nil, nil, nil, nil, nil, nil, nil)
 	if input.Filter != nil {
 		taskFilter = coredata.NewTaskFilter(
 			input.Filter.Query,
 			input.Filter.State,
 			input.Filter.AssignedToID,
+			nil,
 			nil,
 			nil,
 			nil,

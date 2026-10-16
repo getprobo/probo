@@ -91,7 +91,9 @@ export function TaskListItemEstimate({
                   <button
                     type="button"
                     className={`${slots.meta()} ${slots.chipTrigger()}`}
-                    aria-label={t("metadata.timeEstimate")}
+                    aria-label={label == null
+                      ? t("metadata.timeEstimate")
+                      : `${t("metadata.timeEstimate")}, ${label}`}
                   >
                     {chip}
                   </button>

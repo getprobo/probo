@@ -143,6 +143,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
       deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
       hasDeadline: graphqlFilter.hasDeadline,
       hasAssignee: graphqlFilter.hasAssignee,
     };

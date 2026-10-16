@@ -96,6 +96,7 @@ export {
   taskListRowSize,
 } from "./taskListSize";
 export { TaskNameField, type TaskNameFieldProps } from "./TaskNameField";
+export { taskNameMaxLength } from "./taskNameMaxLength";
 export { PropertyRow } from "./PropertyRow";
 export {
   TaskProperties,

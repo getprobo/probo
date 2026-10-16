@@ -33,6 +33,7 @@ type TaskFilter struct {
 	assignedToID       *gid.GID
 	internalControlID  *gid.GID
 	deadlineOnOrBefore *time.Time
+	deadlineOnOrAfter  *time.Time
 	hasDeadline        *bool
 	hasAssignee        *bool
 }
@@ -43,6 +44,7 @@ func NewTaskFilter(
 	assignedToID *gid.GID,
 	internalControlID *gid.GID,
 	deadlineOnOrBefore *time.Time,
+	deadlineOnOrAfter *time.Time,
 	hasDeadline *bool,
 	hasAssignee *bool,
 ) *TaskFilter {
@@ -52,6 +54,7 @@ func NewTaskFilter(
 		assignedToID:       assignedToID,
 		internalControlID:  internalControlID,
 		deadlineOnOrBefore: deadlineOnOrBefore,
+		deadlineOnOrAfter:  deadlineOnOrAfter,
 		hasDeadline:        hasDeadline,
 		hasAssignee:        hasAssignee,
 	}
@@ -96,10 +99,19 @@ func (f *TaskFilter) SQLFragment() string {
 	AND CASE
 		WHEN @filter_has_deadline::bool IS FALSE THEN
 			deadline IS NULL
-		WHEN @filter_deadline_on_or_before::timestamptz IS NOT NULL THEN
+		WHEN @filter_deadline_on_or_before::timestamptz IS NOT NULL
+			OR @filter_deadline_on_or_after::timestamptz IS NOT NULL THEN
 			deadline IS NOT NULL
-				AND (deadline AT TIME ZONE 'UTC')::date
-					<= (@filter_deadline_on_or_before AT TIME ZONE 'UTC')::date
+				AND (
+					@filter_deadline_on_or_before::timestamptz IS NULL
+					OR (deadline AT TIME ZONE 'UTC')::date
+						<= (@filter_deadline_on_or_before AT TIME ZONE 'UTC')::date
+				)
+				AND (
+					@filter_deadline_on_or_after::timestamptz IS NULL
+					OR (deadline AT TIME ZONE 'UTC')::date
+						>= (@filter_deadline_on_or_after AT TIME ZONE 'UTC')::date
+				)
 		WHEN @filter_has_deadline::bool IS TRUE THEN
 			deadline IS NOT NULL
 		ELSE TRUE
@@ -114,6 +126,7 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_assigned_to_id":        nil,
 		"filter_internal_control_id":   nil,
 		"filter_deadline_on_or_before": nil,
+		"filter_deadline_on_or_after":  nil,
 		"filter_has_deadline":          nil,
 		"filter_has_assignee":          nil,
 	}
@@ -136,6 +149,10 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.deadlineOnOrBefore != nil {
 		args["filter_deadline_on_or_before"] = *f.deadlineOnOrBefore
+	}
+
+	if f.deadlineOnOrAfter != nil {
+		args["filter_deadline_on_or_after"] = *f.deadlineOnOrAfter
 	}
 
 	if f.hasDeadline != nil {

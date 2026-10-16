@@ -635,7 +635,8 @@ WITH linked_tasks AS (
         t.tenant_id,
         t.name,
         t.state,
-        t.assigned_to_profile_id
+        t.assigned_to_profile_id,
+        t.deadline
     FROM
         tasks t
     INNER JOIN

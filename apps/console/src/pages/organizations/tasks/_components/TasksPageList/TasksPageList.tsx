@@ -71,6 +71,7 @@ const tasksPageListFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     includeInProgress: { type: "Boolean!" }
@@ -90,6 +91,7 @@ const tasksPageListFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       )
@@ -100,6 +102,7 @@ const tasksPageListFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       )
@@ -110,6 +113,7 @@ const tasksPageListFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       )
@@ -120,6 +124,7 @@ const tasksPageListFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       )
@@ -130,6 +135,7 @@ const tasksPageListFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       )
@@ -140,6 +146,7 @@ const tasksPageListFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       )
@@ -250,6 +257,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       || graphqlFilter.assignedToId !== fetched.assignedToId
       || graphqlFilter.internalControlId !== fetched.internalControlId
       || graphqlFilter.deadlineOnOrBefore !== fetched.deadlineOnOrBefore
+      || graphqlFilter.deadlineOnOrAfter !== fetched.deadlineOnOrAfter
       || graphqlFilter.hasDeadline !== fetched.hasDeadline
       || graphqlFilter.hasAssignee !== fetched.hasAssignee;
     const includesStale = taskListNeedsFetch(graphqlFilter.query, includeFlags, {
@@ -277,6 +285,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
           assignedToId: requested.assignedToId,
           internalControlId: requested.internalControlId,
           deadlineOnOrBefore: requested.deadlineOnOrBefore,
+          deadlineOnOrAfter: requested.deadlineOnOrAfter,
           hasDeadline: requested.hasDeadline,
           hasAssignee: requested.hasAssignee,
           ...requested.includes,
@@ -293,12 +302,14 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
               assignedToId: requested.assignedToId,
               internalControlId: requested.internalControlId,
               deadlineOnOrBefore: requested.deadlineOnOrBefore,
+              deadlineOnOrAfter: requested.deadlineOnOrAfter,
               hasDeadline: requested.hasDeadline,
               hasAssignee: requested.hasAssignee,
               includes: current.query === requested.query
                 && current.assignedToId === requested.assignedToId
                 && current.internalControlId === requested.internalControlId
                 && current.deadlineOnOrBefore === requested.deadlineOnOrBefore
+                && current.deadlineOnOrAfter === requested.deadlineOnOrAfter
                 && current.hasDeadline === requested.hasDeadline
                 && current.hasAssignee === requested.hasAssignee
                 ? mergeTaskListIncludeFlags(current.includes, requested.includes)
@@ -440,6 +451,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
                 assignedToId: listFilter.assignedToId,
                 internalControlId: listFilter.internalControlId,
                 deadlineOnOrBefore: listFilter.deadlineOnOrBefore,
+                deadlineOnOrAfter: listFilter.deadlineOnOrAfter,
                 hasDeadline: listFilter.hasDeadline,
                 hasAssignee: listFilter.hasAssignee,
                 ...includeFlags,

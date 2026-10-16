@@ -62,6 +62,7 @@ export function TaskListItemDeadline({
 
   function commitDeadline(next: string | null) {
     if (toDateInput(next) === toDateInput(deadline)) {
+      setOpen(false);
       return;
     }
     onDeadlineChange(next);
@@ -102,7 +103,9 @@ export function TaskListItemDeadline({
                 <button
                   type="button"
                   className={`${slots.deadline()} ${slots.chipTrigger()}`}
-                  aria-label={t("metadata.deadline")}
+                  aria-label={label == null
+                    ? t("metadata.deadline")
+                    : `${t("metadata.deadline")}, ${label}`}
                 >
                   {icon}
                   {label && (

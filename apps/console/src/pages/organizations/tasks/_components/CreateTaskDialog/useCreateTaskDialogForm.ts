@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { clampUtf8 } from "@probo/helpers";
+import { taskNameMaxLength } from "@probo/tasks";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
@@ -28,7 +29,6 @@ import type { useCreateTaskDialogFormPublishMutation } from "#/__generated__/cor
 import { useMutation } from "#/lib/relay/useMutation";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
-import { taskNameMaxLength } from "../../_lib/taskNameMaxLength";
 import type { TaskPriority, TaskState } from "../../_lib/taskState";
 import { useCreateTask } from "../../_lib/useCreateTask";
 import type { LinearDraft, LinearIssueDraft } from "../TaskLinearDraftField";

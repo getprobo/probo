@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { formatDatetime, parseDate, toDateInput, todayAsDateInput } from "@probo/helpers";
+import { weekStartDay } from "@probo/ui/src/v2/form/dateModel";
 
 export const deadlinePresets = ["today", "tomorrow", "endOfWeek", "nextWeek"] as const;
 
@@ -54,30 +55,10 @@ export function deadlineFromPreset(preset: string, locale: string): string | nul
 
 function endOfWeekDateInput(locale: string): string {
   const today = parseDate(todayAsDateInput());
-  let delta = weekEndDay(locale) - today.getDay();
+  const weekEnd = (weekStartDay(locale) + 6) % 7;
+  let delta = weekEnd - today.getDay();
   if (delta < 0) {
     delta += 7;
   }
   return dateInputPlusDays(delta);
-}
-
-function weekEndDay(locale: string): number {
-  try {
-    const intlLocale = new Intl.Locale(locale);
-    const withWeekInfo = intlLocale as Intl.Locale & {
-      weekInfo?: { firstDay?: number };
-      getWeekInfo?: () => { firstDay?: number };
-    };
-    const weekInfo = typeof withWeekInfo.getWeekInfo === "function"
-      ? withWeekInfo.getWeekInfo()
-      : withWeekInfo.weekInfo;
-    const firstDay = weekInfo?.firstDay;
-    if (firstDay == null) {
-      return 0;
-    }
-    const start = firstDay === 7 ? 0 : firstDay;
-    return (start + 6) % 7;
-  } catch {
-    return 0;
-  }
 }

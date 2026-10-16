@@ -23,9 +23,9 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
+import { taskNameMaxLength } from "./taskNameMaxLength";
 import { taskNameField } from "./variants";
 
-const taskNameMaxLength = 1000;
 const taskNameSaveDelayMs = 1000;
 
 export interface TaskNameFieldProps {

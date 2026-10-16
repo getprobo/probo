@@ -88,6 +88,11 @@ export interface TaskListItemProps {
   onDragEnd?: () => void;
 }
 
+function isInteractiveDragTarget(target: EventTarget | null) {
+  return target instanceof Element
+    && target.closest("a, button, input, textarea, select") != null;
+}
+
 function rowInteraction(
   props: TaskListItemProps,
   isMouseDown: boolean,
@@ -138,10 +143,34 @@ export function TaskListItem(props: TaskListItemProps) {
       onDragStart={canDrag ? props.onDragStart : undefined}
       onDragOver={canDrag ? props.onDragOver : undefined}
       onDrop={canDrag ? props.onDrop : undefined}
-      onDragEnd={canDrag ? props.onDragEnd : undefined}
-      onMouseDown={canDrag ? () => setIsMouseDown(true) : undefined}
-      onMouseUp={canDrag ? () => setIsMouseDown(false) : undefined}
-      onMouseLeave={canDrag ? () => setIsMouseDown(false) : undefined}
+      onDragEnd={canDrag
+        ? (event) => {
+            event.currentTarget.draggable = true;
+            setIsMouseDown(false);
+            props.onDragEnd?.();
+          }
+        : undefined}
+      onMouseDown={canDrag
+        ? (event) => {
+            if (isInteractiveDragTarget(event.target)) {
+              event.currentTarget.draggable = false;
+              return;
+            }
+            setIsMouseDown(true);
+          }
+        : undefined}
+      onMouseUp={canDrag
+        ? (event) => {
+            event.currentTarget.draggable = true;
+            setIsMouseDown(false);
+          }
+        : undefined}
+      onMouseLeave={canDrag
+        ? (event) => {
+            event.currentTarget.draggable = true;
+            setIsMouseDown(false);
+          }
+        : undefined}
     >
       <div className={slots.main()}>
         <TaskListItemPriority

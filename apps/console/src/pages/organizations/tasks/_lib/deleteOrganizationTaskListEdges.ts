@@ -68,6 +68,7 @@ export function deleteOrganizationTaskListEdges(
       variant.assignedToId,
       variant.internalControlId,
       variant.deadlineOnOrBefore,
+      variant.deadlineOnOrAfter,
       variant.hasDeadline,
       variant.hasAssignee,
     ].join("\0");

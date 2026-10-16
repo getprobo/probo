@@ -55,6 +55,7 @@ const tasksPageListFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     includeInProgress: { type: "Boolean!" }
     includeTodo: { type: "Boolean!" }
@@ -69,6 +70,7 @@ const tasksPageListFragment = graphql`
         organizationId: $organizationId
         query: $query
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       )
       @include(if: $includeInProgress)
@@ -77,6 +79,7 @@ const tasksPageListFragment = graphql`
         organizationId: $organizationId
         query: $query
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       )
       @include(if: $includeTodo)
@@ -85,6 +88,7 @@ const tasksPageListFragment = graphql`
         organizationId: $organizationId
         query: $query
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       )
       @include(if: $includeBacklog)
@@ -93,6 +97,7 @@ const tasksPageListFragment = graphql`
         organizationId: $organizationId
         query: $query
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       )
       @include(if: $includeDone)
@@ -101,6 +106,7 @@ const tasksPageListFragment = graphql`
         organizationId: $organizationId
         query: $query
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       )
       @include(if: $includeCanceled)
@@ -109,6 +115,7 @@ const tasksPageListFragment = graphql`
         organizationId: $organizationId
         query: $query
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       )
       @include(if: $includeDuplicate)
@@ -138,6 +145,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
   const [fetched, setFetched] = useState(() => ({
     query: graphqlQuery,
     deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
+    deadlineOnOrAfter: deadlineBounds.deadlineOnOrAfter,
     hasDeadline: deadlineBounds.hasDeadline,
     includes: includeFlags,
   }));
@@ -157,6 +165,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
     }
 
     const deadlineChanged = deadlineBounds.deadlineOnOrBefore !== fetched.deadlineOnOrBefore
+      || deadlineBounds.deadlineOnOrAfter !== fetched.deadlineOnOrAfter
       || deadlineBounds.hasDeadline !== fetched.hasDeadline;
     if (!deadlineChanged && !taskListNeedsFetch(graphqlQuery, includeFlags, fetched)) {
       return;
@@ -171,6 +180,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
           organizationId,
           query: requestedQuery,
           deadlineOnOrBefore: requestedDeadline.deadlineOnOrBefore,
+          deadlineOnOrAfter: requestedDeadline.deadlineOnOrAfter,
           hasDeadline: requestedDeadline.hasDeadline,
           ...requestedIncludes,
         },
@@ -184,9 +194,11 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
             setFetched(current => ({
               query: requestedQuery,
               deadlineOnOrBefore: requestedDeadline.deadlineOnOrBefore,
+              deadlineOnOrAfter: requestedDeadline.deadlineOnOrAfter,
               hasDeadline: requestedDeadline.hasDeadline,
               includes: current.query === requestedQuery
                 && current.deadlineOnOrBefore === requestedDeadline.deadlineOnOrBefore
+                && current.deadlineOnOrAfter === requestedDeadline.deadlineOnOrAfter
                 && current.hasDeadline === requestedDeadline.hasDeadline
                 ? mergeTaskListIncludeFlags(current.includes, requestedIncludes)
                 : requestedIncludes,

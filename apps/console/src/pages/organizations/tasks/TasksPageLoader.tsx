@@ -71,6 +71,7 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
       deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
       hasDeadline: graphqlFilter.hasDeadline,
       hasAssignee: graphqlFilter.hasAssignee,
       ...includeFlags,
@@ -82,6 +83,7 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
     && queryRef.variables.assignedToId === graphqlFilter.assignedToId
     && queryRef.variables.internalControlId === graphqlFilter.internalControlId
     && queryRef.variables.deadlineOnOrBefore === graphqlFilter.deadlineOnOrBefore
+    && queryRef.variables.deadlineOnOrAfter === graphqlFilter.deadlineOnOrAfter
     && queryRef.variables.hasDeadline === graphqlFilter.hasDeadline
     && queryRef.variables.hasAssignee === graphqlFilter.hasAssignee
     && taskListIncludeFlagsEqual(

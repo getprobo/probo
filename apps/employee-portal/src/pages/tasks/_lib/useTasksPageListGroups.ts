@@ -46,6 +46,7 @@ const inProgressGroupFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
@@ -59,6 +60,7 @@ const inProgressGroupFragment = graphql`
         query: $query
         state: IN_PROGRESS
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       }
     ) @connection(key: "useTasksPageListGroups_inProgress__inProgressTasks", filters: ["organizationId", "filter"]) {
@@ -81,6 +83,7 @@ const todoGroupFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
@@ -94,6 +97,7 @@ const todoGroupFragment = graphql`
         query: $query
         state: TODO
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       }
     ) @connection(key: "useTasksPageListGroups_todo__todoTasks", filters: ["organizationId", "filter"]) {
@@ -116,6 +120,7 @@ const backlogGroupFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
@@ -129,6 +134,7 @@ const backlogGroupFragment = graphql`
         query: $query
         state: BACKLOG
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       }
     ) @connection(key: "useTasksPageListGroups_backlog__backlogTasks", filters: ["organizationId", "filter"]) {
@@ -151,6 +157,7 @@ const doneGroupFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
@@ -164,6 +171,7 @@ const doneGroupFragment = graphql`
         query: $query
         state: DONE
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       }
     ) @connection(key: "useTasksPageListGroups_done__doneTasks", filters: ["organizationId", "filter"]) {
@@ -186,6 +194,7 @@ const canceledGroupFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
@@ -199,6 +208,7 @@ const canceledGroupFragment = graphql`
         query: $query
         state: CANCELED
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       }
     ) @connection(key: "useTasksPageListGroups_canceled__canceledTasks", filters: ["organizationId", "filter"]) {
@@ -221,6 +231,7 @@ const duplicateGroupFragment = graphql`
     organizationId: { type: "ID!" }
     query: { type: "String" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
@@ -234,6 +245,7 @@ const duplicateGroupFragment = graphql`
         query: $query
         state: DUPLICATE
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
       }
     ) @connection(key: "useTasksPageListGroups_duplicate__duplicateTasks", filters: ["organizationId", "filter"]) {

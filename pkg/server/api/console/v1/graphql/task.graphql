@@ -47,6 +47,7 @@ input TaskFilter {
     assignedToId: ID
     internalControlId: ID
     deadlineOnOrBefore: Datetime
+    deadlineOnOrAfter: Datetime
     hasDeadline: Boolean
     hasAssignee: Boolean
 }

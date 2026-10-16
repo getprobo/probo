@@ -33,7 +33,7 @@ import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { taskLinearPublishField } from "../variants";
 
 import { LinearTeamCombobox } from "./LinearTeamCombobox";
-import { RemoteCombobox } from "./RemoteCombobox/RemoteCombobox";
+import { RemoteCombobox } from "./RemoteCombobox";
 
 const PAGE_SIZE = 20;
 const NEW_ISSUE_ID = "__new__";

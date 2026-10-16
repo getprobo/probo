@@ -213,6 +213,7 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 		state              *coredata.TaskState
 		internalControlID  *gid.GID
 		deadlineOnOrBefore *time.Time
+		deadlineOnOrAfter  *time.Time
 		hasDeadline        *bool
 	)
 
@@ -221,6 +222,7 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 		state = filter.State
 		internalControlID = filter.InternalControlID
 		deadlineOnOrBefore = filter.DeadlineOnOrBefore
+		deadlineOnOrAfter = filter.DeadlineOnOrAfter
 		hasDeadline = filter.HasDeadline
 	}
 
@@ -230,6 +232,7 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 		&profile.ID,
 		internalControlID,
 		deadlineOnOrBefore,
+		deadlineOnOrAfter,
 		hasDeadline,
 		nil,
 	)

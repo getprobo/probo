@@ -47,6 +47,7 @@ const inProgressGroupFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
@@ -62,6 +63,7 @@ const inProgressGroupFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       }
@@ -86,6 +88,7 @@ const todoGroupFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
@@ -101,6 +104,7 @@ const todoGroupFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       }
@@ -125,6 +129,7 @@ const backlogGroupFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
@@ -140,6 +145,7 @@ const backlogGroupFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       }
@@ -164,6 +170,7 @@ const doneGroupFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
@@ -179,6 +186,7 @@ const doneGroupFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       }
@@ -203,6 +211,7 @@ const canceledGroupFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
@@ -218,6 +227,7 @@ const canceledGroupFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       }
@@ -242,6 +252,7 @@ const duplicateGroupFragment = graphql`
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
+    deadlineOnOrAfter: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
     hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
@@ -257,6 +268,7 @@ const duplicateGroupFragment = graphql`
         assignedToId: $assignedToId
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
+        deadlineOnOrAfter: $deadlineOnOrAfter
         hasDeadline: $hasDeadline
         hasAssignee: $hasAssignee
       }

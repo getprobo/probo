@@ -40,6 +40,7 @@ export const tasksPageQuery = graphql`
     $organizationId: ID!
     $query: String
     $deadlineOnOrBefore: Datetime
+    $deadlineOnOrAfter: Datetime
     $hasDeadline: Boolean
     $includeInProgress: Boolean!
     $includeTodo: Boolean!
@@ -55,6 +56,7 @@ export const tasksPageQuery = graphql`
           organizationId: $organizationId
           query: $query
           deadlineOnOrBefore: $deadlineOnOrBefore
+          deadlineOnOrAfter: $deadlineOnOrAfter
           hasDeadline: $hasDeadline
           includeInProgress: $includeInProgress
           includeTodo: $includeTodo

@@ -42,6 +42,7 @@ export function taskListConnectionFilters(
       query,
       state,
       deadlineOnOrBefore: deadline.deadlineOnOrBefore,
+      deadlineOnOrAfter: deadline.deadlineOnOrAfter,
       hasDeadline: deadline.hasDeadline,
     },
   };
@@ -50,7 +51,7 @@ export function taskListConnectionFilters(
 const rememberedTaskListDeadlinesList: TaskDeadlineBounds[] = [];
 
 function taskListDeadlineKey(deadline: TaskDeadlineBounds) {
-  return `${deadline.deadlineOnOrBefore ?? ""}\0${deadline.hasDeadline ?? ""}`;
+  return `${deadline.deadlineOnOrBefore ?? ""}\0${deadline.deadlineOnOrAfter ?? ""}\0${deadline.hasDeadline ?? ""}`;
 }
 
 export function rememberTaskListDeadline(deadline: TaskDeadlineBounds) {

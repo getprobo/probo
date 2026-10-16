@@ -27,7 +27,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { linearTeamLabel } from "../_lib/linearTeamLabel";
 
-import { RemoteCombobox } from "./RemoteCombobox/RemoteCombobox";
+import { RemoteCombobox } from "./RemoteCombobox";
 
 const PAGE_SIZE = 20;
 const NO_TEAM_ID = "__none__";

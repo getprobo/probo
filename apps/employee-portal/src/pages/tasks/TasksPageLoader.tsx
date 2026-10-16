@@ -64,6 +64,7 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
         organizationId,
         query: graphqlQuery,
         deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
+        deadlineOnOrAfter: deadlineBounds.deadlineOnOrAfter,
         hasDeadline: deadlineBounds.hasDeadline,
         ...includeFlags,
       },
@@ -74,6 +75,7 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
   const queryMatchesPendingFilter = queryRef != null
     && queryRef.variables.query === graphqlQuery
     && queryRef.variables.deadlineOnOrBefore === deadlineBounds.deadlineOnOrBefore
+    && queryRef.variables.deadlineOnOrAfter === deadlineBounds.deadlineOnOrAfter
     && queryRef.variables.hasDeadline === deadlineBounds.hasDeadline
     && taskListIncludeFlagsEqual(
       pickTaskListIncludeFlags(queryRef.variables),

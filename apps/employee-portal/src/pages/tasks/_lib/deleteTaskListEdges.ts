@@ -63,7 +63,7 @@ export function deleteTaskListEdges(
   for (const state of taskStates) {
     for (const filterQuery of queries) {
       for (const filterDeadline of deadlines) {
-        const deadlineKey = `${filterDeadline.deadlineOnOrBefore ?? ""}\0${filterDeadline.hasDeadline ?? ""}`;
+        const deadlineKey = `${filterDeadline.deadlineOnOrBefore ?? ""}\0${filterDeadline.deadlineOnOrAfter ?? ""}\0${filterDeadline.hasDeadline ?? ""}`;
         if (seenDeadlines.has(`${state}\0${filterQuery ?? ""}\0${deadlineKey}`)) {
           continue;
         }
