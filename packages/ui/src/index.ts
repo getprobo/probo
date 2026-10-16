@@ -129,6 +129,7 @@ export {
   supportsRichEditorCollaboration,
 } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
+export type { RichEditorHistoryHighlight } from "./RichEditor/historyDecorations";
 export type {
   RichEditorCollaborationHandle,
   RichEditorPresence,

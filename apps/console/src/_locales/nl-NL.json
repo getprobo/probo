@@ -515,6 +515,19 @@
       "title": "Fout",
       "save": "Inhoud niet opgeslagen"
     },
+    "history": {
+      "open": "Geschiedenis",
+      "title": "Versiegeschiedenis",
+      "close": "Sluiten",
+      "restore": "Deze versie herstellen",
+      "empty": "Nog geen bewerkingen",
+      "loading": "Geschiedenis laden...",
+      "loadMore": "Meer laden",
+      "unknownAuthor": "Onbekend",
+      "restoreFailed": "Deze versie kon niet worden hersteld",
+      "today": "Vandaag",
+      "yesterday": "Gisteren"
+    },
     "presence": {
       "label": "Mensen die dit document bewerken",
       "anonymous": "Medewerker",

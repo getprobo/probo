@@ -54,6 +54,10 @@ import {
 } from "./collaboration";
 import { ContentUploadExtension } from "./ContentUploadExtension";
 import { FileExtension } from "./FileExtension";
+import {
+  createRichEditorHistoryExtension,
+  type RichEditorHistoryHighlight,
+} from "./historyDecorations";
 import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
@@ -184,6 +188,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   onUploadingChange?: (uploading: boolean) => void;
   onUploadFile?: UploadAttachment;
   collaborationHandle?: RichEditorCollaborationHandle;
+  historyHighlights?: RichEditorHistoryHighlight[];
 };
 
 function parseContent(content: string): Content {
@@ -210,6 +215,7 @@ export function RichEditor(props: RichEditorProps) {
     onUploadingChange,
     onUploadFile,
     collaborationHandle,
+    historyHighlights,
     ...divProps
   } = props;
   const { t } = useTranslation();
@@ -292,17 +298,25 @@ export function RichEditor(props: RichEditorProps) {
   );
 
   const editorExtensions = useMemo(
-    () => collaborationHandle
-      ? [
-          ...richEditorCollaborationExtensions,
-          createRichEditorCollaborationExtension(
-            collaborationHandle,
-            richEditorCollaborationExtensions,
-          ),
-          createRichEditorPresenceExtension(collaborationHandle),
-        ]
-      : extensions,
-    [collaborationHandle],
+    () => {
+      const base = collaborationHandle
+        ? [
+            ...richEditorCollaborationExtensions,
+            createRichEditorCollaborationExtension(
+              collaborationHandle,
+              richEditorCollaborationExtensions,
+            ),
+            createRichEditorPresenceExtension(collaborationHandle),
+          ]
+        : extensions;
+
+      if (!historyHighlights?.length) {
+        return base;
+      }
+
+      return [...base, createRichEditorHistoryExtension(historyHighlights)];
+    },
+    [collaborationHandle, historyHighlights],
   );
   const initialContent = collaborationHandle
     ? richEditorAutomergeContent(
@@ -379,7 +393,7 @@ export function RichEditor(props: RichEditorProps) {
         editor.state.selection.head,
       );
     },
-  }, [collaborationHandle]);
+  }, [collaborationHandle, historyHighlights]);
 
   const openFilePicker = useCallback((kind: "image" | "file") => {
     const input = fileInputRef.current;

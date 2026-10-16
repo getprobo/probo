@@ -19,9 +19,9 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { supportsRichEditorCollaboration } from "@probo/ui";
+import { Button, IconClock, supportsRichEditorCollaboration } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useOutletContext } from "react-router";
@@ -32,6 +32,7 @@ import type { DocumentDescriptionPage_updateContentMutation } from "#/__generate
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
+import { DocumentHistoryView } from "./_components/DocumentHistoryPanel";
 import { DocumentPresence } from "./_components/DocumentPresence";
 
 import {
@@ -246,6 +247,7 @@ export function DocumentDescriptionPage(props: {
   const [prevVersionId, setPrevVersionId] = useState(currentVersion.id);
   const [dataGeneration, setDataGeneration] = useState(0);
   const [pendingExplicit, setPendingExplicit] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   if (versionChangedAt !== prevVCA) {
     setPrevVCA(versionChangedAt);
@@ -269,12 +271,46 @@ export function DocumentDescriptionPage(props: {
   }
 
   const editorKey = `${version?.id ?? document.id}-${dataGeneration}`;
+  const historyAvailable = currentVersion.status === "DRAFT"
+    && supportsRichEditorCollaboration(currentVersion.content);
+
+  if (historyOpen) {
+    return (
+      <div className="flex flex-1 min-h-0 min-w-0">
+        <Suspense
+          fallback={(
+            <div className="flex-1 px-8 py-6 text-sm text-txt-secondary">
+              {t("documentDescriptionPage.history.loading")}
+            </div>
+          )}
+        >
+          <DocumentHistoryView
+            versionId={currentVersion.id}
+            canRestore={canEdit}
+            onClose={() => setHistoryOpen(false)}
+            onRestored={() => setHistoryOpen(false)}
+          />
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 min-h-0 flex-col">
-      {collaborationHandle && (
+      {(historyAvailable || collaborationHandle) && (
         <div className="flex items-center justify-end gap-3 px-4 pb-2">
-          <DocumentPresence collaborationHandle={collaborationHandle} />
+          {collaborationHandle && (
+            <DocumentPresence collaborationHandle={collaborationHandle} />
+          )}
+          {historyAvailable && (
+            <Button
+              icon={IconClock}
+              variant="secondary"
+              onClick={() => setHistoryOpen(true)}
+            >
+              {t("documentDescriptionPage.history.open")}
+            </Button>
+          )}
         </div>
       )}
       <RichEditor
