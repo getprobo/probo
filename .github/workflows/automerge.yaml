@@ -10,6 +10,8 @@ on:
     paths:
       - "pkg/automerge/**"
       - "pkg/prosemirror/**"
+      - "packages/automerge-conformance/**"
+      - "contrib/benchmarks/automerge-native/official-fixtures/**"
       - ".github/workflows/automerge.yaml"
   pull_request:
     branches:
@@ -17,6 +19,8 @@ on:
     paths:
       - "pkg/automerge/**"
       - "pkg/prosemirror/**"
+      - "packages/automerge-conformance/**"
+      - "contrib/benchmarks/automerge-native/official-fixtures/**"
       - ".github/workflows/automerge.yaml"
   workflow_dispatch:
 
@@ -31,19 +35,17 @@ jobs:
   test:
     name: "test"
     runs-on: "runs-on=${{ github.run_id }}/runner=16cpu-linux-x64/extras=s3-cache/spot=true"
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: "read"
     steps:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
       - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "./.github/actions/setup"
-        with:
-          node: "false"
       - run: "make test-automerge"
         env:
           GOTESTSUM_JUNITFILE: "junit-automerge.xml"
-          TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out -timeout 30m"
+          TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out -timeout 45m"
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"

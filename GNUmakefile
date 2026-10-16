@@ -235,10 +235,24 @@ test-verbose: test ## Run tests with verbose output
 test-short: TEST_FLAGS+=-short
 test-short: test ## Run short tests only
 
+.PHONY: generate-automerge-official-fixtures
+generate-automerge-official-fixtures: ## Build official Automerge benchmark documents for the Go suite
+	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
+	if ! rustup run $(RUST_TOOLCHAIN) rustc --version >/dev/null 2>&1; then \
+		rustup toolchain install $(RUST_TOOLCHAIN) --profile minimal; \
+	fi
+	$(CARGO) +$(RUST_TOOLCHAIN) run --release --locked \
+		--manifest-path contrib/benchmarks/automerge-native/official-fixtures/Cargo.toml \
+		-- $(AUTOMERGE_BATTERY_FIXTURES)
+
 .PHONY: test-automerge
+test-automerge: generate-automerge-official-fixtures
 test-automerge: CGO_ENABLED=1
-test-automerge: ## Run the Automerge suite with race detection and coverage
-	$(GO_TEST) ./pkg/automerge/...
+test-automerge: ## Run the full Automerge suite, including the JS oracle and official fixtures
+	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
+	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
+	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
+		$(GO_TEST) ./pkg/automerge/...
 
 .PHONY: test-automerge-conformance
 test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
@@ -282,11 +296,8 @@ list-automerge-official-benchmarks: ## List the pinned official Automerge benchm
 	contrib/benchmarks/automerge-battery.sh list --tier all
 
 .PHONY: test-automerge-official-fixtures
+test-automerge-official-fixtures: generate-automerge-official-fixtures
 test-automerge-official-fixtures: ## Replay official benchmark-battery documents through Rust and Go
-	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
-	$(CARGO) +$(RUST_TOOLCHAIN) run --release --locked \
-		--manifest-path contrib/benchmarks/automerge-native/official-fixtures/Cargo.toml \
-		-- $(AUTOMERGE_BATTERY_FIXTURES)
 	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
 		$(GO_BASE) test -count=1 -run '^TestOfficialBenchmarkBatteryFixtures$$' \
 		./pkg/automerge
