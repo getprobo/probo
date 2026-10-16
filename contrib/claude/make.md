@@ -10,7 +10,7 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | `make build WITH_APPS=1`     | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (includes frontend apps, codegen, and Relay) |
 | `make test`                  | Run tests with race detection and coverage (packages that contain tests only; excludes e2e). `SKIP_AUTOMERGE=1` omits `./pkg/automerge/...` |
 | `make test MODULE=./pkg/foo` | Run tests for a single module                                                                          |
-| `make test-automerge`        | Automerge suite with race detection and coverage (CI: `.github/workflows/automerge.yaml`)             |
+| `make test-automerge`        | Full Automerge suite: race, coverage, JS oracle, repo interop client, and official fixtures          |
 | `make test-verbose`          | Tests with verbose output                                                                              |
 | `make test-short`            | Short tests only                                                                                       |
 | `make test-bench`            | Run benchmarks                                                                                         |
