@@ -48,6 +48,7 @@ input TaskFilter {
     internalControlId: ID
     deadlineOnOrBefore: Datetime
     hasDeadline: Boolean
+    hasAssignee: Boolean
 }
 
 type Task implements Node {

@@ -18,15 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  type TaskDueFilter,
-  taskDueFilterBounds,
-  taskDueFilterFromParam,
-  taskMatchesDeadline,
-} from "@probo/tasks";
+import { type TaskDueFilter, taskDueFilterBounds, taskDueFilterFromParam, taskMatchesDeadline } from "@probo/tasks";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
+import { unassignedAssignee } from "./taskPath";
 import { type TaskState, taskStates } from "./taskState";
 
 export interface TasksCardFilterInput {
@@ -36,6 +32,7 @@ export interface TasksCardFilterInput {
   internalControlId: string | null;
   deadlineOnOrBefore: string | null;
   hasDeadline: boolean | null;
+  hasAssignee: boolean | null;
 }
 
 function taskStateFromParam(value: string | null): TaskState | null {
@@ -60,6 +57,9 @@ export function taskMatchesFilter(
   if (filter.assignedToId != null && task.assignedToId !== filter.assignedToId) {
     return false;
   }
+  if (filter.hasAssignee === false && task.assignedToId != null) {
+    return false;
+  }
   if (
     filter.internalControlId != null
     && !task.internalControlIds?.includes(filter.internalControlId)
@@ -78,7 +78,11 @@ export function useTasksCardFilters() {
   const query = searchParams.get("q") ?? "";
   const state = taskStateFromParam(searchParams.get("status"));
   const assignedToParam = searchParams.get("assignee");
-  const assignedToId = assignedToParam === "" ? null : assignedToParam;
+  const assignee = assignedToParam === "" ? null : assignedToParam;
+  const assignedToId = assignee == null || assignee === unassignedAssignee
+    ? null
+    : assignee;
+  const hasAssignee = assignee === unassignedAssignee ? false : null;
   const internalControlParam = searchParams.get("internalControl");
   const internalControlId = internalControlParam === "" ? null : internalControlParam;
   const due = taskDueFilterFromParam(searchParams.get("due"));
@@ -90,7 +94,8 @@ export function useTasksCardFilters() {
     internalControlId,
     deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
     hasDeadline: deadlineBounds.hasDeadline,
-  }), [assignedToId, deadlineBounds, internalControlId, query, state]);
+    hasAssignee,
+  }), [assignedToId, deadlineBounds, hasAssignee, internalControlId, query, state]);
 
   const setQuery = useCallback((value: string) => {
     setSearchParams((previous) => {
@@ -155,6 +160,7 @@ export function useTasksCardFilters() {
   return {
     query,
     state,
+    assignee,
     assignedToId,
     internalControlId,
     due,

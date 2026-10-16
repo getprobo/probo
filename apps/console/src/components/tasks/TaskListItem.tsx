@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { UserCircleDashedIcon } from "@phosphor-icons/react";
 import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -140,6 +141,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       internalControlId: graphqlFilter.internalControlId,
       deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
       hasDeadline: graphqlFilter.hasDeadline,
+      hasAssignee: graphqlFilter.hasAssignee,
     };
     const filters = organizationTaskListFilterVariants(listFilter);
     const previousAssignedToId = task.assignedTo?.id ?? null;
@@ -298,6 +300,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
                 value={assigneeSelectProps.value}
                 emptyLabel={assigneeSelectProps.emptyLabel}
                 emptyValue={assigneeSelectProps.emptyValue}
+                emptyIcon={<UserCircleDashedIcon />}
                 disabled={assigneeSelectProps.disabled}
                 onValueChange={assigneeSelectProps.onValueChange}
               />

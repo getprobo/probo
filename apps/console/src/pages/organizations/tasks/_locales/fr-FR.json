@@ -6,7 +6,7 @@
     "searchInternalControls": "Rechercher des contrôles internes",
     "noInternalControls": "Aucun contrôle interne",
     "noDescription": "Aucune description",
-    "unassigned": "Non assigné",
+    "unassigned": "Pas assigné",
     "assigneeMenu": {
       "searchPlaceholder": "Rechercher par nom ou e-mail",
       "empty": "Aucun utilisateur"

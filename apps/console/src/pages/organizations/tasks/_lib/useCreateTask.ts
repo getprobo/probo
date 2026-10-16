@@ -83,6 +83,7 @@ export function useCreateTask() {
       internalControlId: graphqlFilter.internalControlId,
       deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
       hasDeadline: graphqlFilter.hasDeadline,
+      hasAssignee: graphqlFilter.hasAssignee,
     };
     const connections = new Set<string>();
     for (const variant of organizationTaskListFilterVariants(listFilter)) {

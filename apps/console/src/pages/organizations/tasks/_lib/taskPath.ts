@@ -21,6 +21,8 @@
 import { type TaskDeadlineBounds, type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
+export const unassignedAssignee = "none";
+
 export const taskListConnectionKeys = {
   IN_PROGRESS: "useOrganizationTaskListGroups_inProgress__inProgressTasks",
   TODO: "useOrganizationTaskListGroups_todo__todoTasks",
@@ -34,6 +36,7 @@ export interface OrganizationTaskListFilter extends TaskDeadlineBounds {
   query: string | null;
   assignedToId: string | null;
   internalControlId: string | null;
+  hasAssignee: boolean | null;
 }
 
 export function organizationTaskListFilterVariants(
@@ -45,6 +48,7 @@ export function organizationTaskListFilterVariants(
     internalControlId: null,
     deadlineOnOrBefore: null,
     hasDeadline: null,
+    hasAssignee: null,
   };
   if (
     filter.query == null
@@ -52,6 +56,7 @@ export function organizationTaskListFilterVariants(
     && filter.internalControlId == null
     && filter.deadlineOnOrBefore == null
     && filter.hasDeadline == null
+    && filter.hasAssignee == null
   ) {
     return [empty];
   }
@@ -63,6 +68,7 @@ export function organizationTaskListFilterVariants(
       internalControlId: filter.internalControlId,
       deadlineOnOrBefore: filter.deadlineOnOrBefore,
       hasDeadline: filter.hasDeadline,
+      hasAssignee: filter.hasAssignee,
     },
     empty,
   ];
@@ -80,6 +86,7 @@ export function organizationTaskListConnectionFilters(
       internalControlId: filter.internalControlId,
       deadlineOnOrBefore: filter.deadlineOnOrBefore,
       hasDeadline: filter.hasDeadline,
+      hasAssignee: filter.hasAssignee,
     },
   };
 }
@@ -106,6 +113,7 @@ export const emptyTaskListFilter = {
   internalControlId: null,
   deadlineOnOrBefore: null,
   hasDeadline: null,
+  hasAssignee: null,
 };
 
 const taskListConnectionFilters = {

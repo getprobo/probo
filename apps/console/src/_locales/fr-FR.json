@@ -1135,6 +1135,7 @@
     "filters": {
       "user": "Utilisateur",
       "allUsers": "Tous les utilisateurs",
+      "notAssigned": "Pas assigné",
       "internalControl": "Contrôle interne",
       "allInternalControls": "Tous les contrôles internes",
       "searchInternalControls": "Rechercher des contrôles internes",

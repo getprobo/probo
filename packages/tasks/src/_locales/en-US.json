@@ -33,7 +33,7 @@
       "none": "No due date"
     }
   },
-  "unassigned": "Unassigned",
+  "unassigned": "Not assigned",
   "deadlinePicker": {
     "today": "Today",
     "tomorrow": "Tomorrow",

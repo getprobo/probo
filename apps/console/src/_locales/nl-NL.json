@@ -1135,6 +1135,7 @@
     "filters": {
       "user": "Gebruiker",
       "allUsers": "Alle gebruikers",
+      "notAssigned": "Niet toegewezen",
       "internalControl": "Interne controle",
       "allInternalControls": "Alle interne controles",
       "searchInternalControls": "Interne controles zoeken",

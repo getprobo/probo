@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { UserCircleDashedIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -245,7 +246,13 @@ function UserSelectLoaded({
       </SelectTrigger>
       <SelectPopup align="start">
         <SelectList>
-          <SelectItem value={emptyValue}>{emptyLabel}</SelectItem>
+          <SelectItem value={emptyValue}>
+            <UserSelectOption
+              fullName={emptyLabel}
+              size={size}
+              fallback={<UserCircleDashedIcon />}
+            />
+          </SelectItem>
           {value != null && value !== emptyValue && !names.has(value) && (
             <SelectItem value={value}>
               <UserSelectRow id={value} users={names} size={size} />

@@ -48,6 +48,7 @@ const inProgressGroupFragment = graphql`
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
+    hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -62,6 +63,7 @@ const inProgressGroupFragment = graphql`
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
         hasDeadline: $hasDeadline
+        hasAssignee: $hasAssignee
       }
     ) @connection(key: "useOrganizationTaskListGroups_inProgress__inProgressTasks", filters: ["filter"]) {
       __id
@@ -85,6 +87,7 @@ const todoGroupFragment = graphql`
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
+    hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -99,6 +102,7 @@ const todoGroupFragment = graphql`
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
         hasDeadline: $hasDeadline
+        hasAssignee: $hasAssignee
       }
     ) @connection(key: "useOrganizationTaskListGroups_todo__todoTasks", filters: ["filter"]) {
       __id
@@ -122,6 +126,7 @@ const backlogGroupFragment = graphql`
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
+    hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -136,6 +141,7 @@ const backlogGroupFragment = graphql`
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
         hasDeadline: $hasDeadline
+        hasAssignee: $hasAssignee
       }
     ) @connection(key: "useOrganizationTaskListGroups_backlog__backlogTasks", filters: ["filter"]) {
       __id
@@ -159,6 +165,7 @@ const doneGroupFragment = graphql`
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
+    hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -173,6 +180,7 @@ const doneGroupFragment = graphql`
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
         hasDeadline: $hasDeadline
+        hasAssignee: $hasAssignee
       }
     ) @connection(key: "useOrganizationTaskListGroups_done__doneTasks", filters: ["filter"]) {
       __id
@@ -196,6 +204,7 @@ const canceledGroupFragment = graphql`
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
+    hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -210,6 +219,7 @@ const canceledGroupFragment = graphql`
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
         hasDeadline: $hasDeadline
+        hasAssignee: $hasAssignee
       }
     ) @connection(key: "useOrganizationTaskListGroups_canceled__canceledTasks", filters: ["filter"]) {
       __id
@@ -233,6 +243,7 @@ const duplicateGroupFragment = graphql`
     internalControlId: { type: "ID" }
     deadlineOnOrBefore: { type: "Datetime" }
     hasDeadline: { type: "Boolean" }
+    hasAssignee: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -247,6 +258,7 @@ const duplicateGroupFragment = graphql`
         internalControlId: $internalControlId
         deadlineOnOrBefore: $deadlineOnOrBefore
         hasDeadline: $hasDeadline
+        hasAssignee: $hasAssignee
       }
     ) @connection(key: "useOrganizationTaskListGroups_duplicate__duplicateTasks", filters: ["filter"]) {
       __id

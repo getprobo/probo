@@ -26,7 +26,7 @@ import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
-import { Suspense, use, useEffect, useRef, useState, useTransition } from "react";
+import { type ReactNode, Suspense, use, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
@@ -102,6 +102,15 @@ export interface TaskAssigneeMenuProps {
   value: string | null;
   emptyLabel: string;
   emptyValue: string | null;
+  // Icon shown beside the empty choice. The user filter leaves this unset
+  // because "All users" is not an assignee.
+  emptyIcon?: ReactNode;
+  // Second empty choice, used by the people filter to select tasks with no assignee.
+  unassigned?: {
+    label: string;
+    value: string;
+    icon: ReactNode;
+  };
   disabled?: boolean;
   hideEndedContracts?: boolean;
   onValueChange: (value: string | null) => void;
@@ -119,6 +128,8 @@ function TaskAssigneeMenuLoaded({
   value,
   emptyLabel,
   emptyValue,
+  emptyIcon,
+  unassigned,
   disabled,
   hideEndedContracts = true,
   onValueChange,
@@ -213,8 +224,30 @@ function TaskAssigneeMenuLoaded({
           select(emptyValue);
         }}
       >
-        {emptyLabel}
+        {emptyIcon == null
+          ? emptyLabel
+          : (
+              <UserSelectOption
+                fullName={emptyLabel}
+                size={size}
+                fallback={emptyIcon}
+              />
+            )}
       </DropdownItem>
+      {unassigned != null && (
+        <DropdownItem
+          disabled={disabled}
+          onClick={() => {
+            select(unassigned.value);
+          }}
+        >
+          <UserSelectOption
+            fullName={unassigned.label}
+            size={size}
+            fallback={unassigned.icon}
+          />
+        </DropdownItem>
+      )}
       {users.map(user => (
         <DropdownItem
           key={user.id}

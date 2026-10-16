@@ -34,6 +34,7 @@ type TaskFilter struct {
 	internalControlID  *gid.GID
 	deadlineOnOrBefore *time.Time
 	hasDeadline        *bool
+	hasAssignee        *bool
 }
 
 func NewTaskFilter(
@@ -43,6 +44,7 @@ func NewTaskFilter(
 	internalControlID *gid.GID,
 	deadlineOnOrBefore *time.Time,
 	hasDeadline *bool,
+	hasAssignee *bool,
 ) *TaskFilter {
 	return &TaskFilter{
 		query:              query,
@@ -51,6 +53,7 @@ func NewTaskFilter(
 		internalControlID:  internalControlID,
 		deadlineOnOrBefore: deadlineOnOrBefore,
 		hasDeadline:        hasDeadline,
+		hasAssignee:        hasAssignee,
 	}
 }
 
@@ -70,6 +73,10 @@ func (f *TaskFilter) SQLFragment() string {
 	AND CASE
 		WHEN @filter_assigned_to_id::text IS NOT NULL THEN
 			assigned_to_profile_id = @filter_assigned_to_id::text
+		WHEN @filter_has_assignee::bool IS FALSE THEN
+			assigned_to_profile_id IS NULL
+		WHEN @filter_has_assignee::bool IS TRUE THEN
+			assigned_to_profile_id IS NOT NULL
 		ELSE TRUE
 	END
 	AND CASE
@@ -103,6 +110,7 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_internal_control_id":   nil,
 		"filter_deadline_on_or_before": nil,
 		"filter_has_deadline":          nil,
+		"filter_has_assignee":          nil,
 	}
 
 	if f.query != nil && *f.query != "" {
@@ -127,6 +135,10 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.hasDeadline != nil {
 		args["filter_has_deadline"] = *f.hasDeadline
+	}
+
+	if f.hasAssignee != nil {
+		args["filter_has_assignee"] = *f.hasAssignee
 	}
 
 	return args

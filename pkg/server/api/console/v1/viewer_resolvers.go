@@ -231,6 +231,7 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 		internalControlID,
 		deadlineOnOrBefore,
 		hasDeadline,
+		nil,
 	)
 
 	page, err := r.task.ListForOrganizationID(ctx, scope, organizationID, cursor, taskFilter)

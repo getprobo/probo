@@ -26,7 +26,7 @@ import {
   DotsThreeVerticalIcon,
   ProhibitIcon,
   TrashIcon,
-  UserIcon,
+  UserCircleDashedIcon,
 } from "@phosphor-icons/react";
 import { formatDatetime, parseDate, toDateInput, todayAsDateInput } from "@probo/helpers";
 import { compactDateFormat, deadlineDateFormat, formatDuration } from "@probo/i18n";
@@ -649,16 +649,22 @@ function TaskListItemAssignee({
   const { t } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
   const label = assignee?.fullName ?? t("unassigned");
-  const avatar = (
-    <Avatar
-      size={1}
-      radius="full"
-      name={assignee?.fullName}
-      email={assignee?.emailAddress}
-      src={assignee?.avatarUrl}
-      fallback={assignee == null ? <UserIcon weight="bold" /> : undefined}
-    />
-  );
+  const avatar = assignee == null
+    ? (
+        <UserCircleDashedIcon
+          className="size-6 shrink-0 text-sand-8"
+          aria-hidden
+        />
+      )
+    : (
+        <Avatar
+          size={1}
+          radius="full"
+          name={assignee.fullName}
+          email={assignee.emailAddress}
+          src={assignee.avatarUrl}
+        />
+      );
 
   if (canUpdate && renderAssigneeMenu != null) {
     return (
@@ -672,18 +678,25 @@ function TaskListItemAssignee({
             setOpen(next);
           }}
         >
-          <DropdownTrigger
-            disabled={isUpdating}
-            render={(
-              <button
-                type="button"
-                className="appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit"
-                aria-label={label}
-              >
-                {avatar}
-              </button>
-            )}
-          />
+          <Tooltip>
+            <TooltipTrigger
+              render={(
+                <DropdownTrigger
+                  disabled={isUpdating}
+                  render={(
+                    <button
+                      type="button"
+                      className="appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit"
+                      aria-label={label}
+                    >
+                      {avatar}
+                    </button>
+                  )}
+                />
+              )}
+            />
+            <TooltipPopup>{label}</TooltipPopup>
+          </Tooltip>
           <DropdownPopup size={1} align="end">
             {renderAssigneeMenu()}
           </DropdownPopup>

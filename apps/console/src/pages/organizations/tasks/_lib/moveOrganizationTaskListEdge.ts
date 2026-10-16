@@ -142,6 +142,9 @@ function matchesOrganizationListFilter(
   if (filter.assignedToId != null && membership.assignedToId !== filter.assignedToId) {
     return false;
   }
+  if (filter.hasAssignee === false && membership.assignedToId != null) {
+    return false;
+  }
   if (filter.query != null && filter.query !== "") {
     const name = membership.name ?? "";
     if (!name.toLowerCase().includes(filter.query.toLowerCase())) {

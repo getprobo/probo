@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, UserCircleDashedIcon } from "@phosphor-icons/react";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
@@ -31,6 +31,7 @@ import { graphql, useLazyLoadQuery } from "react-relay";
 import type { TaskUserFilterProfileQuery } from "#/__generated__/core/TaskUserFilterProfileQuery.graphql";
 import { UserSelectOption } from "#/components/form/UserSelectOption";
 import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
+import { unassignedAssignee } from "#/pages/organizations/tasks/_lib/taskPath";
 
 const taskUserFilterProfileQuery = graphql`
   query TaskUserFilterProfileQuery($id: ID!) {
@@ -56,7 +57,9 @@ interface TaskUserFilterProps {
 export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
   const { t } = useTranslation();
   const emptyLabel = t("tasksCard.filters.allUsers");
+  const unassignedLabel = t("tasksCard.filters.notAssigned");
   const slots = selectTrigger({ size: 2 });
+  const unassignedIcon = <UserCircleDashedIcon />;
 
   return (
     <Dropdown>
@@ -64,11 +67,19 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
         <span className={slots.value()}>
           {value == null
             ? emptyLabel
-            : (
-                <Suspense fallback={<TextSkeleton size={2} className="w-24" />}>
-                  <TaskUserFilterProfile id={value} />
-                </Suspense>
-              )}
+            : value === unassignedAssignee
+              ? (
+                  <UserSelectOption
+                    fullName={unassignedLabel}
+                    size={2}
+                    fallback={unassignedIcon}
+                  />
+                )
+              : (
+                  <Suspense fallback={<TextSkeleton size={2} className="w-24" />}>
+                    <TaskUserFilterProfile id={value} />
+                  </Suspense>
+                )}
         </span>
         <span className={slots.icon()}>
           <CaretDownIcon />
@@ -80,6 +91,11 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
           emptyLabel={emptyLabel}
           emptyValue={null}
           hideEndedContracts={false}
+          unassigned={{
+            label: unassignedLabel,
+            value: unassignedAssignee,
+            icon: unassignedIcon,
+          }}
           onValueChange={onValueChange}
         />
       </DropdownPopup>

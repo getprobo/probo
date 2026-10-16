@@ -19,11 +19,14 @@
 // SOFTWARE.
 
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import type { ReactNode } from "react";
 
 interface UserSelectOptionProps {
   fullName: string;
   emailAddress?: string | null;
   avatarUrl?: string | null;
+  // Icon shown instead of initials. Used for the empty assignee.
+  fallback?: ReactNode;
   // Matches the select trigger. Size 1 is a 24px control, so the avatar is
   // 16px; size 2 is 32px, so the avatar stays 24px.
   size?: 1 | 2;
@@ -33,6 +36,7 @@ export function UserSelectOption({
   fullName,
   emailAddress,
   avatarUrl,
+  fallback,
   size = 2,
 }: UserSelectOptionProps) {
   return (
@@ -40,17 +44,29 @@ export function UserSelectOption({
       ? "flex min-w-0 items-center gap-1"
       : "flex min-w-0 items-center gap-2"}
     >
-      <Avatar
-        size={1}
-        radius="full"
-        name={fullName}
-        email={emailAddress ?? undefined}
-        src={avatarUrl}
-        alt=""
-        // Avatar size 1 is 24px. The important utility wins over that class
-        // so the compact trigger can inset the picture.
-        className={size === 1 ? "size-4!" : undefined}
-      />
+      {fallback == null
+        ? (
+            <Avatar
+              size={1}
+              radius="full"
+              name={fullName}
+              email={emailAddress ?? undefined}
+              src={avatarUrl}
+              alt=""
+              // Avatar size 1 is 24px. The important utility wins over that class
+              // so the compact trigger can inset the picture.
+              className={size === 1 ? "size-4!" : undefined}
+            />
+          )
+        : (
+            <span
+              className={size === 1
+                ? "inline-flex size-4 shrink-0 text-sand-8 [&_svg]:size-full"
+                : "inline-flex size-6 shrink-0 text-sand-8 [&_svg]:size-full"}
+            >
+              {fallback}
+            </span>
+          )}
       <span className="truncate">{fullName}</span>
     </span>
   );
