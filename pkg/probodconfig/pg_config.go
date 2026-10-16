@@ -21,10 +21,15 @@
 package probodconfig
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
+	"net"
+	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 )
 
@@ -127,4 +132,73 @@ func (cfg PgConfig) Options(options ...pg.Option) []pg.Option {
 	opts = append(opts, options...)
 
 	return opts
+}
+
+func (cfg PgConfig) ConnectionConfig() (*pgx.ConnConfig, error) {
+	config, err := pgx.ParseConfig("postgres://localhost?sslmode=disable")
+	if err != nil {
+		return nil, fmt.Errorf("cannot create base PostgreSQL connection config: %w", err)
+	}
+
+	host, portValue, err := net.SplitHostPort(cfg.Addr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PostgreSQL address: %w", err)
+	}
+
+	port, err := strconv.ParseUint(portValue, 10, 16)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse PostgreSQL port: %w", err)
+	}
+
+	config.Host = host
+	config.Port = uint16(port)
+	config.User = cfg.Username
+	config.Password = cfg.Password
+	config.Database = cfg.Database
+
+	if cfg.CACertBundle != "" {
+		certificates := parseCertificates(cfg.CACertBundle)
+		if len(certificates) == 0 {
+			return nil, fmt.Errorf("PostgreSQL CA certificate bundle has no certificates")
+		}
+
+		roots := x509.NewCertPool()
+		for _, certificate := range certificates {
+			roots.AddCert(certificate)
+		}
+
+		config.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+			RootCAs:    roots,
+			ServerName: host,
+		}
+	}
+
+	return config, nil
+}
+
+func parseCertificates(bundle string) []*x509.Certificate {
+	var certificates []*x509.Certificate
+
+	pemData := []byte(bundle)
+
+	for len(pemData) > 0 {
+		block, remaining := pem.Decode(pemData)
+		pemData = remaining
+
+		if block == nil {
+			break
+		}
+
+		if block.Type != "CERTIFICATE" {
+			continue
+		}
+
+		certificate, err := x509.ParseCertificate(block.Bytes)
+		if err == nil {
+			certificates = append(certificates, certificate)
+		}
+	}
+
+	return certificates
 }

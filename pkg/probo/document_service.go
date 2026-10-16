@@ -119,6 +119,8 @@ type (
 		Classification     *coredata.DocumentClassification
 		DocumentType       *coredata.DocumentType
 		DefaultApproverIDs *[]gid.GID
+		IdentityID         *gid.GID
+		ProfileID          *gid.GID
 	}
 
 	RequestSignatureRequest struct {
@@ -1841,6 +1843,26 @@ func (s *DocumentService) GetVersion(
 	return documentVersion, nil
 }
 
+func (s *DocumentService) GetLatestVersion(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*coredata.DocumentVersion, error) {
+	documentVersion := &coredata.DocumentVersion{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return documentVersion.LoadLatestVersion(ctx, conn, scope, documentID)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return documentVersion, nil
+}
+
 func (s *DocumentService) IsSigned(
 	ctx context.Context, scope coredata.Scoper,
 	documentID gid.GID,
@@ -2264,6 +2286,26 @@ func (s *DocumentService) Update(
 	)
 	if err != nil {
 		return nil, nil, false, err
+	}
+
+	if req.Content != nil && resultVersion != nil && req.IdentityID != nil {
+		if _, err := s.ApplyCollaborationContent(
+			ctx,
+			scope,
+			ApplyCollaborationContentRequest{
+				DocumentVersionID: resultVersion.ID,
+				Content:           resultVersion.Content,
+				IdentityID:        *req.IdentityID,
+				ProfileID:         req.ProfileID,
+			},
+		); err != nil {
+			return nil, nil, false, fmt.Errorf("cannot apply collaboration content: %w", err)
+		}
+
+		resultVersion, err = s.GetVersion(ctx, scope, resultVersion.ID)
+		if err != nil {
+			return nil, nil, false, fmt.Errorf("cannot reload document version after collaboration write: %w", err)
+		}
 	}
 
 	return document, resultVersion, draftCreated, nil

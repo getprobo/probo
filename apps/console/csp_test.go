@@ -43,6 +43,8 @@ func TestContentSecurityPolicy_SubstitutesOrigins(t *testing.T) {
 	assert.NotContains(t, policy, "AppOrigin")
 	assert.NotContains(t, policy, "FileStorageOrigin")
 	assert.Contains(t, policy, "default-src 'self'")
+	assert.Contains(t, policy, "script-src 'self' 'wasm-unsafe-eval'")
+	assert.NotContains(t, policy, "'unsafe-eval'")
 	assert.Contains(t, policy, "frame-ancestors 'none'")
 	assert.Contains(t, policy, "https://fonts.googleapis.com")
 	assert.Contains(t, policy, "https://fonts.gstatic.com")

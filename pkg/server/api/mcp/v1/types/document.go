@@ -48,6 +48,7 @@ func proseMirrorJSONToMarkdown(pmJSON string) (string, error) {
 }
 
 // richTextToMarkdown converts stored ProseMirror JSON to markdown.
+// Used by task and other MCP surfaces that still expose markdown.
 func richTextToMarkdown(s string) (string, error) {
 	return proseMirrorJSONToMarkdown(s)
 }
@@ -144,26 +145,29 @@ func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentV
 }
 
 func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
-	contentMD, err := proseMirrorJSONToMarkdown(dv.Content)
-	if err != nil {
-		panic(fmt.Errorf("cannot convert document version content to markdown: %w", err))
-	}
+	return NewDocumentVersionWithHeads(dv, nil)
+}
 
+func NewDocumentVersionWithHeads(
+	dv *coredata.DocumentVersion,
+	heads []string,
+) *DocumentVersion {
 	return &DocumentVersion{
-		ID:             dv.ID,
-		OrganizationID: dv.OrganizationID,
-		DocumentID:     dv.DocumentID,
-		Title:          dv.Title,
-		Major:          dv.Major,
-		Minor:          dv.Minor,
-		Classification: dv.Classification,
-		DocumentType:   dv.DocumentType,
-		Content:        contentMD,
-		Changelog:      dv.Changelog,
-		Status:         dv.Status,
-		PublishedAt:    dv.PublishedAt,
-		CreatedAt:      dv.CreatedAt,
-		UpdatedAt:      dv.UpdatedAt,
+		ID:                 dv.ID,
+		OrganizationID:     dv.OrganizationID,
+		DocumentID:         dv.DocumentID,
+		Title:              dv.Title,
+		Major:              dv.Major,
+		Minor:              dv.Minor,
+		Classification:     dv.Classification,
+		DocumentType:       dv.DocumentType,
+		Content:            dv.Content,
+		CollaborationHeads: heads,
+		Changelog:          dv.Changelog,
+		Status:             dv.Status,
+		PublishedAt:        dv.PublishedAt,
+		CreatedAt:          dv.CreatedAt,
+		UpdatedAt:          dv.UpdatedAt,
 	}
 }
 

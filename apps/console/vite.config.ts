@@ -53,8 +53,8 @@ function consoleContentSecurityPolicy(
     .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
     .replace(
-      /script-src 'self';/,
-      `script-src 'self' 'nonce-${scriptNonce}';`,
+      /script-src 'self'([^;]*);/,
+      `script-src 'self' 'nonce-${scriptNonce}'$1;`,
     )
     .replace(
       /connect-src 'self' ([^;]+);/,
@@ -81,6 +81,7 @@ function apiProxyTo(
   return {
     target,
     changeOrigin: true,
+    ws: true,
     configure(proxy) {
       proxy.on("proxyRes", (proxyResponse) => {
         const location = proxyResponse.headers.location;

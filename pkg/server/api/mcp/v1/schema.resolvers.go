@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -2452,19 +2453,18 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		return nil, types.AddDocumentOutput{}, err
 	}
 
-	svc := r.proboSvc
-
-	contentJSON, err := markdownToProseMirrorJSON(input.Content)
-	if err != nil {
-		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
+	if err := validateMCPDocumentContent(input.Content); err != nil {
+		return nil, types.AddDocumentOutput{}, err
 	}
+
+	svc := r.proboSvc
 
 	document, documentVersion, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
 			OrganizationID:     input.OrganizationID,
 			Title:              input.Title,
-			Content:            contentJSON,
+			Content:            input.Content,
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
@@ -2484,32 +2484,153 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	}
 
 	svc := r.proboSvc
+	identity := authn.IdentityFromContext(ctx)
+
+	latestVersion, err := svc.Documents.GetLatestVersion(ctx, scope, input.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
+		}
+
+		panic(fmt.Errorf("cannot load latest document version: %w", err))
+	}
+
+	seeded := false
+	if latestVersion.Status == coredata.DocumentVersionStatusDraft {
+		seeded, err = svc.Documents.CollaborationSeeded(ctx, scope, latestVersion.ID)
+		if err != nil {
+			panic(fmt.Errorf("cannot load document collaboration seed state: %w", err))
+		}
+	}
+
+	hasEdits := len(input.Edits) > 0
+	if hasEdits && input.Content != nil {
+		return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
+			"cannot update document: content and edits cannot be set together",
+		)
+	}
+
+	if hasEdits {
+		if !seeded {
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
+				"cannot update document: %w",
+				probo.ErrDocumentCollaborationEditsNotSeeded,
+			)
+		}
+
+		if input.Title != nil || input.Classification != nil || input.DocumentType != nil || input.DefaultApproverIds != nil {
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
+				"cannot update document: fragment edits cannot be combined with metadata updates",
+			)
+		}
+
+		baseHeads, err := probo.ParseAutomergeHashes(input.BaseHeads)
+		if err != nil {
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot parse base_heads: %w", err)
+		}
+
+		edits := make([]probo.DocumentCollaborationEdit, 0, len(input.Edits))
+		for _, edit := range input.Edits {
+			if edit == nil {
+				continue
+			}
+
+			edits = append(
+				edits,
+				probo.DocumentCollaborationEdit{
+					Target:      edit.Target,
+					Replacement: edit.Replacement,
+				},
+			)
+		}
+
+		profileID := r.collaborationProfileID(ctx, identity.ID, latestVersion.OrganizationID)
+
+		result, err := svc.Documents.ApplyCollaborationEdits(
+			ctx,
+			scope,
+			probo.ApplyCollaborationEditsRequest{
+				DocumentVersionID: latestVersion.ID,
+				BaseHeads:         baseHeads,
+				Edits:             edits,
+				IdentityID:        identity.ID,
+				ProfileID:         profileID,
+			},
+		)
+		if err != nil {
+			switch {
+			case errors.Is(err, probo.ErrDocumentCollaborationBaseHeadsUnknown),
+				errors.Is(err, probo.ErrDocumentCollaborationStale),
+				errors.Is(err, probo.ErrDocumentCollaborationEditsNotSeeded),
+				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
+				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
+			}
+
+			if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
+			}
+
+			if _, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
+			}
+
+			if _, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
+			}
+
+			panic(fmt.Errorf("cannot apply document collaboration edits: %w", err))
+		}
+
+		version, err := svc.Documents.GetVersion(ctx, scope, latestVersion.ID)
+		if err != nil {
+			panic(fmt.Errorf("cannot load document version after edits: %w", err))
+		}
+
+		document, err := svc.Documents.Get(ctx, scope, input.ID)
+		if err != nil {
+			panic(fmt.Errorf("cannot load document after edits: %w", err))
+		}
+
+		return nil, types.UpdateDocumentOutput{
+			Document: types.NewDocument(document),
+			DocumentVersion: types.NewDocumentVersionWithHeads(
+				version,
+				probo.EncodeAutomergeHashes(result.Heads),
+			),
+		}, nil
+	}
+
+	if input.Content != nil {
+		if seeded {
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
+				"cannot update document: %w",
+				probo.ErrDocumentCollaborationContentOnSeeded,
+			)
+		}
+
+		if err := validateMCPDocumentContent(*input.Content); err != nil {
+			return nil, types.UpdateDocumentOutput{}, err
+		}
+	}
 
 	var defaultApproverIDs *[]gid.GID
 	if input.DefaultApproverIds != nil {
 		defaultApproverIDs = &input.DefaultApproverIds
 	}
 
-	var content *string
-
-	if input.Content != nil {
-		c, err := markdownToProseMirrorJSON(*input.Content)
-		if err != nil {
-			panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
-		}
-
-		content = &c
-	}
+	profileID := r.collaborationProfileID(ctx, identity.ID, latestVersion.OrganizationID)
 
 	document, documentVersion, _, err := svc.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
 			DocumentID:         input.ID,
 			Title:              input.Title,
-			Content:            content,
+			Content:            input.Content,
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: defaultApproverIDs,
+			IdentityID:         &identity.ID,
+			ProfileID:          profileID,
 		},
 	)
 	if err != nil {
@@ -2521,7 +2642,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	}
 
 	if documentVersion != nil {
-		output.DocumentVersion = types.NewDocumentVersion(documentVersion)
+		output.DocumentVersion = r.documentVersionWithHeads(ctx, scope, documentVersion)
 	}
 
 	return nil, output, nil
@@ -2575,7 +2696,7 @@ func (r *Resolver) GetDocumentVersionTool(ctx context.Context, req *mcp.CallTool
 	}
 
 	return nil, types.GetDocumentVersionOutput{
-		DocumentVersion: types.NewDocumentVersion(version),
+		DocumentVersion: r.documentVersionWithHeads(ctx, scope, version),
 	}, nil
 }
 
@@ -10839,4 +10960,138 @@ func (r *Resolver) UpdateLinearSettingsTool(ctx context.Context, req *mcp.CallTo
 	}
 
 	return nil, types.UpdateLinearSettingsOutput{Settings: mcpLinearSettings(settings)}, nil
+}
+
+func (r *Resolver) ListDocumentCollaborationHistorySessionsTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListDocumentCollaborationHistorySessionsInput) (*mcp.CallToolResult, types.ListDocumentCollaborationHistorySessionsOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionGet)
+	if err != nil {
+		return nil, types.ListDocumentCollaborationHistorySessionsOutput{}, err
+	}
+
+	pageOrderBy := page.OrderBy[probo.DocumentCollaborationHistorySessionOrderField]{
+		Field:     probo.DocumentCollaborationHistorySessionOrderFieldEndedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if input.OrderBy != nil {
+		pageOrderBy = page.OrderBy[probo.DocumentCollaborationHistorySessionOrderField]{
+			Field:     input.OrderBy.Field,
+			Direction: input.OrderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, pageOrderBy)
+
+	sessions, totalCount, err := r.proboSvc.Documents.ListCollaborationHistorySessions(
+		ctx,
+		scope,
+		input.DocumentVersionID,
+		cursor,
+	)
+	if err != nil {
+		panic(fmt.Errorf("cannot list document collaboration history sessions: %w", err))
+	}
+
+	return nil, types.NewListDocumentCollaborationHistorySessionsOutput(sessions, totalCount), nil
+}
+
+func (r *Resolver) GetDocumentCollaborationHistorySnapshotTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetDocumentCollaborationHistorySnapshotInput) (*mcp.CallToolResult, types.GetDocumentCollaborationHistorySnapshotOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionGet)
+	if err != nil {
+		return nil, types.GetDocumentCollaborationHistorySnapshotOutput{}, err
+	}
+
+	parsedHeads, err := probo.ParseAutomergeHashes(input.Heads)
+	if err != nil {
+		return nil, types.GetDocumentCollaborationHistorySnapshotOutput{}, fmt.Errorf("cannot parse heads: %w", err)
+	}
+
+	previousHeads := input.PreviousHeads
+	if previousHeads == nil {
+		previousHeads = []string{}
+	}
+
+	parsedPrevious, err := probo.ParseAutomergeHashes(previousHeads)
+	if err != nil {
+		return nil, types.GetDocumentCollaborationHistorySnapshotOutput{}, fmt.Errorf("cannot parse previous_heads: %w", err)
+	}
+
+	snapshot, err := r.proboSvc.Documents.GetCollaborationHistorySnapshot(
+		ctx,
+		scope,
+		input.DocumentVersionID,
+		parsedHeads,
+		parsedPrevious,
+	)
+	if err != nil {
+		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) {
+			return nil, types.GetDocumentCollaborationHistorySnapshotOutput{}, fmt.Errorf("cannot get collaboration history snapshot: %w", err)
+		}
+
+		panic(fmt.Errorf("cannot get document collaboration history snapshot: %w", err))
+	}
+
+	return nil, types.NewGetDocumentCollaborationHistorySnapshotOutput(snapshot), nil
+}
+
+func (r *Resolver) RestoreDocumentCollaborationHistoryTool(ctx context.Context, req *mcp.CallToolRequest, input *types.RestoreDocumentCollaborationHistoryInput) (*mcp.CallToolResult, types.RestoreDocumentCollaborationHistoryOutput, error) {
+	scope, err := r.Authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionGet)
+	if err != nil {
+		return nil, types.RestoreDocumentCollaborationHistoryOutput{}, err
+	}
+
+	version, err := r.proboSvc.Documents.GetVersion(ctx, scope, input.DocumentVersionID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot restore collaboration history: %w", err)
+		}
+
+		panic(fmt.Errorf("cannot load document version for history restore: %w", err))
+	}
+
+	scope, err = r.Authorize(ctx, version.DocumentID, probo.ActionDocumentUpdate)
+	if err != nil {
+		return nil, types.RestoreDocumentCollaborationHistoryOutput{}, err
+	}
+
+	heads, err := probo.ParseAutomergeHashes(input.Heads)
+	if err != nil {
+		return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot parse heads: %w", err)
+	}
+
+	if _, err := r.proboSvc.Documents.RestoreCollaborationHistory(
+		ctx,
+		scope,
+		input.DocumentVersionID,
+		heads,
+	); err != nil {
+		switch {
+		case errors.Is(err, coredata.ErrResourceNotFound):
+			return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot restore collaboration history: %w", err)
+		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded):
+			return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot restore collaboration history: %w", err)
+		}
+
+		if _, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
+			return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot restore collaboration history: %w", err)
+		}
+
+		if _, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot restore collaboration history: %w", err)
+		}
+
+		if _, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+			return nil, types.RestoreDocumentCollaborationHistoryOutput{}, fmt.Errorf("cannot restore collaboration history: %w", err)
+		}
+
+		panic(fmt.Errorf("cannot restore document collaboration history: %w", err))
+	}
+
+	version, err = r.proboSvc.Documents.GetVersion(ctx, scope, input.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load restored document version: %w", err))
+	}
+
+	return nil, types.RestoreDocumentCollaborationHistoryOutput{
+		DocumentVersion: types.NewDocumentVersion(version),
+	}, nil
 }

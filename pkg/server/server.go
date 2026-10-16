@@ -21,6 +21,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -53,6 +54,7 @@ import (
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
+	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -75,6 +77,8 @@ type Config struct {
 	AllowedOrigins          []string
 	ExtraHeaderFields       map[string]string
 	Probo                   *probo.Service
+	CollaborationEvents     *realtime.Events
+	ShutdownContext         context.Context
 	ResourceAlias           *resourcealias.Service
 	File                    *filemanager.Service
 	IAM                     *iam.Service
@@ -143,6 +147,8 @@ func NewServer(cfg Config) (*Server, error) {
 		BaseURL:                  cfg.BaseURL,
 		AllowedOrigins:           cfg.AllowedOrigins,
 		Probo:                    cfg.Probo,
+		CollaborationEvents:      cfg.CollaborationEvents,
+		ShutdownContext:          cfg.ShutdownContext,
 		ResourceAlias:            cfg.ResourceAlias,
 		File:                     cfg.File,
 		IAM:                      cfg.IAM,

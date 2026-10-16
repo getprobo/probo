@@ -30,7 +30,6 @@ import { type Editor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { EditorFloatingPortal } from "../_lib/EditorFloatingPortal";
-import { getSlashStorage } from "../_lib/getSlashStorage";
 import { MenuButton } from "../MenuButton";
 import { deactivateSlashCommand } from "../SlashCommandExtension";
 
@@ -124,23 +123,16 @@ export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuC
   }, [slashState.active, slashState.from, editor, slashMenuRefs]);
 
   const deactivateSlash = useCallback(() => {
-    if (!editor) return;
-    const s = getSlashStorage(editor);
-    if (s) deactivateSlashCommand(s);
+    deactivateSlashCommand(editor.view);
     setSlashNav({ index: 0, query: "" });
   }, [editor]);
 
   const handleSlashAction = useCallback(
     (item: BlockItem) => {
       if (!slashState.active) return;
-      const { from } = slashState;
-      const cursorPos = editor.state.selection.from;
 
       try {
-        editor.chain()
-          .focus()
-          .deleteRange({ from, to: cursorPos })
-          .run();
+        deactivateSlash();
 
         if ("pick" in item) {
           onPickFiles?.(item.pick);
@@ -150,8 +142,6 @@ export function BlockMenuContent({ editor, slashState, onPickFiles }: BlockMenuC
       } catch {
         // Block may no longer be in the document
       }
-
-      deactivateSlash();
     },
     [editor, slashState, deactivateSlash, onPickFiles],
   );
