@@ -84,7 +84,7 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/notification"
-	"go.probo.inc/probo/pkg/pgnotify"
+	"go.probo.inc/probo/pkg/notify"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
@@ -317,7 +317,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot configure PostgreSQL notifications: %w", err)
 	}
 
-	collaborationListener := pgnotify.NewListener(
+	collaborationListener := notify.NewListener(
 		notificationConfig,
 		realtime.DocumentCollaborationChannel,
 		l.Named("document-collaboration-listener"),
