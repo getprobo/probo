@@ -51,7 +51,7 @@ while IFS= read -r changed_file; do
       exit 0
       ;;
   esac
-done <<< "$changed_files"
+done <<<"$changed_files"
 
 list_output="$(
   go list -f '{{.ImportPath}}	{{.Dir}}	{{if or .TestGoFiles .XTestGoFiles}}test{{end}}	{{join .Imports ","}}	{{join .TestImports ","}}	{{join .XTestImports ","}}' ./...
@@ -62,7 +62,7 @@ list_output="$(
 
 changed_list="$(mktemp)"
 trap 'rm -f "$changed_list"' EXIT
-printf '%s\n' "$changed_files" > "$changed_list"
+printf '%s\n' "$changed_files" >"$changed_list"
 
 awk -v root="$repository_root" -v changed_list="$changed_list" '
   function own(file,   absolute, path, dir, best, best_len) {
@@ -133,7 +133,9 @@ awk -v root="$repository_root" -v changed_list="$changed_list" '
       count = split(reverse[current], dependents, " ")
       for (j = 1; j <= count; j++) {
         dependent = dependents[j]
-        if (dependent == "" || dependent in affected) {
+        # A test-only edit is affected but not queued. Skip only packages
+        # already expanded, so this dependency edit still walks their importers.
+        if (dependent == "" || dependent in expand) {
           continue
         }
         affected[dependent] = 1
@@ -148,4 +150,4 @@ awk -v root="$repository_root" -v changed_list="$changed_list" '
       }
     }
   }
-' <<< "$list_output" | sort
+' <<<"$list_output" | sort
