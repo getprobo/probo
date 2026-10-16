@@ -462,7 +462,7 @@ jobs:
     name: "test"
     if: needs.changes.outputs.go == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache/spot=false"
     permissions:
       contents: "read"
     steps:
