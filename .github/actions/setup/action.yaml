@@ -13,6 +13,10 @@ inputs:
     description: "Prefix for the Go cache key so parallel jobs do not share a blob"
     required: false
     default: "${{ github.workflow }}-${{ github.job }}"
+  include-go-dependency-hash:
+    description: "Hash go.sum into the Go cache key"
+    required: false
+    default: "true"
 runs:
   using: "composite"
   steps:
@@ -21,6 +25,7 @@ runs:
       with:
         go-version: "1.27.2"
         cache-key-prefix: "${{ inputs.go-cache-key-prefix }}"
+        include-dependency-hash: "${{ inputs.include-go-dependency-hash }}"
     - if: inputs.go == 'true'
       shell: bash
       run: go mod download

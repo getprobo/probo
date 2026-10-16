@@ -462,7 +462,7 @@ jobs:
     name: "test"
     if: needs.changes.outputs.go == 'true'
     needs: [changes]
-    runs-on: "runs-on=${{ github.run_id }}/runner=4cpu-linux-x64/extras=s3-cache"
+    runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache"
     permissions:
       contents: "read"
     steps:
@@ -471,6 +471,8 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "./.github/actions/setup"
+        with:
+          include-go-dependency-hash: "false"
       - name: "Configure Docker image source"
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
@@ -495,13 +497,52 @@ jobs:
           echo dev-server > apps/compliance-portal/dist/index.html
           echo dev-server > apps/employee-portal/dist/index.html
       - run: "npm --workspace @probo/emails run build"
-      - run: "make test"
+      - name: "Fetch comparison commits"
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags origin \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" || true
+      - name: "Select affected test packages"
+        id: affected
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: "${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA: "${{ github.event.pull_request.head.sha }}"
+        run: |
+          selected="$(contrib/ci/affected-test-packages.sh "$BASE_SHA" "$HEAD_SHA")"
+          if [ "$selected" = all ]; then
+            echo "mode=all" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "mode=subset" >> "$GITHUB_OUTPUT"
+          unit="$(printf '%s\n' "$selected" | awk 'NF && $0 !~ /\/e2e\//' | paste -sd ' ' -)"
+          harness="$(printf '%s\n' "$selected" | awk 'NF && $0 ~ /\/e2e\/internal(\/|$)/' | paste -sd ' ' -)"
+          echo "unit=${unit}" >> "$GITHUB_OUTPUT"
+          echo "harness=${harness}" >> "$GITHUB_OUTPUT"
+      - name: "Run tests"
+        if: github.event_name != 'pull_request' || steps.affected.outputs.mode == 'all'
+        run: "make test"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
           PROBO_TEST_PG_URL: "postgres://probod:probod@localhost:5432/probod_test"
           TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out"
+      - name: "Run affected tests"
+        if: github.event_name == 'pull_request' && steps.affected.outputs.mode == 'subset' && steps.affected.outputs.unit != ''
+        run: "make test"
+        env:
+          GOTESTSUM_JUNITFILE: "junit.xml"
+          PROBO_TEST_PG_URL: "postgres://probod:probod@localhost:5432/probod_test"
+          TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out"
+          TEST_PACKAGES: "${{ steps.affected.outputs.unit }}"
       - name: "Race-test e2e harness packages"
-        run: "CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/..."
+        if: github.event_name != 'pull_request' || steps.affected.outputs.mode == 'all' || steps.affected.outputs.harness != ''
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ steps.affected.outputs.mode }}" = "subset" ]; then
+            CGO_ENABLED=1 go test -race -count=1 ${{ steps.affected.outputs.harness }}
+          else
+            CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/...
+          fi
       - name: "Upload test results"
         uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         if: "always()"
@@ -510,7 +551,9 @@ jobs:
           name: "junit-results"
           path: "junit.xml"
           retention-days: 30
-      - run: "go tool cover -html=coverage.out -o coverage.html"
+      - name: "Render coverage report"
+        if: hashFiles('coverage.out') != ''
+        run: "go tool cover -html=coverage.out -o coverage.html"
       - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
         continue-on-error: true
         with:

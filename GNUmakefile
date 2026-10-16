@@ -42,6 +42,7 @@ SHELL_SCRIPTS := \
 	cmd/probo-agent/installer/macos/uninstall.sh \
 	compose/postgres/01_probod.sh \
 	contrib/benchmarks/automerge-battery.sh \
+	contrib/ci/affected-test-packages.sh \
 	contrib/ci/classify-changes.sh \
 	contrib/ci/go-package-affected.sh \
 	contrib/lima/provision.sh \
@@ -218,7 +219,7 @@ go-lint: generate
 test: generate
 test: CGO_ENABLED=1
 test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
-	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | awk 'NF && !/\/e2e\//'))
+	$(GO_TEST) $(if $(MODULE),$(MODULE),$(if $(TEST_PACKAGES),$(TEST_PACKAGES),$(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | awk 'NF && !/\/e2e\//')))
 
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS+=-v
