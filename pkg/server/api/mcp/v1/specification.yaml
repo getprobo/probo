@@ -8415,7 +8415,20 @@ components:
           description: Document type
         content:
           type: string
-          description: Document body in markdown (converted from stored ProseMirror JSON)
+          description: >
+            ProseMirror document JSON string. Root is {"type":"doc","content":[...]}.
+            Blocks: paragraph, heading (attrs.level 1-6), blockquote, codeBlock,
+            horizontalRule, bulletList, orderedList, listItem, table, tableRow,
+            tableCell, tableHeader, image, file. Inline: text, hardBreak. Marks:
+            bold, italic, underline, strike, code, link.
+        collaboration_heads:
+          type: array
+          items:
+            type: string
+          description: >
+            Automerge heads for a seeded draft (lowercase hex). Empty when
+            collaboration is not seeded. Pass as base_heads with edits on
+            updateDocument.
         changelog:
           type: string
           description: Changelog
@@ -8654,7 +8667,12 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content in markdown format. Images and links to /api/files/v1/{id} are kept
+          description: >
+            ProseMirror document JSON string. Root is {"type":"doc","content":[...]}.
+            Blocks: paragraph, heading (attrs.level 1-6), blockquote, codeBlock,
+            horizontalRule, bulletList, orderedList, listItem, table, tableRow,
+            tableCell, tableHeader, image, file. Inline: text, hardBreak. Marks:
+            bold, italic, underline, strike, code, link.
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -8669,7 +8687,7 @@ components:
 
     AddDocumentOutput:
       type: object
-      description: Created document and version; document_version.content is markdown
+      description: Created document and version; document_version.content is ProseMirror JSON
       required:
         - document
         - document_version
@@ -8678,6 +8696,24 @@ components:
           $ref: "#/components/schemas/Document"
         document_version:
           $ref: "#/components/schemas/DocumentVersion"
+
+    DocumentCollaborationEdit:
+      type: object
+      required:
+        - target
+        - replacement
+      properties:
+        target:
+          type: string
+          description: >
+            ProseMirror node JSON, or a JSON array of sibling nodes, copied exactly
+            from getDocumentVersion. Must match exactly one contiguous sibling
+            sequence in the latest document.
+        replacement:
+          type: string
+          description: >
+            JSON array of ProseMirror sibling nodes that replace the target.
+            Use [] to delete the target.
 
     UpdateDocumentInput:
       type: object
@@ -8692,7 +8728,25 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content in markdown format. Images and links to /api/files/v1/{id} are kept
+          description: >
+            Full ProseMirror document JSON. Allowed only while the draft is not
+            seeded. Once collaboration_heads is set on getDocumentVersion, use
+            base_heads and edits instead.
+        base_heads:
+          type: array
+          items:
+            type: string
+          description: >
+            Automerge heads from getDocumentVersion.collaboration_heads. Required
+            with edits on a seeded draft.
+        edits:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentCollaborationEdit"
+          description: >
+            Fragment replacements for a seeded draft. Each target must match
+            exactly once in the latest document. Rejected while collaboration is
+            not seeded; use content then.
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -8794,7 +8848,7 @@ components:
 
     ListDocumentVersionsOutput:
       type: object
-      description: Each document_versions[].content is markdown
+      description: Each document_versions[].content is ProseMirror JSON
       required:
         - document_versions
       properties:
@@ -8817,7 +8871,7 @@ components:
 
     GetDocumentVersionOutput:
       type: object
-      description: document_version.content is markdown
+      description: document_version.content is ProseMirror JSON
       required:
         - document_version
       properties:
@@ -8930,13 +8984,13 @@ components:
           description: Highlight kind
         from:
           type: integer
-          description: Start offset in UTF-16 code units
+          description: Start offset in UTF-16 code units into the plain text body
         to:
           type: integer
-          description: End offset in UTF-16 code units
+          description: End offset in UTF-16 code units into the plain text body
         text:
           type: string
-          description: Highlighted text
+          description: Inserted or deleted plain text
 
     ListDocumentCollaborationHistorySessionsInput:
       type: object
@@ -9005,7 +9059,9 @@ components:
       properties:
         content:
           type: string
-          description: Document body in markdown at the given heads
+          description: >
+            ProseMirror document JSON at the given heads. Highlight from/to are
+            UTF-16 offsets into the plain text, not into this JSON string.
         highlights:
           type: array
           items:
@@ -9028,7 +9084,7 @@ components:
 
     RestoreDocumentCollaborationHistoryOutput:
       type: object
-      description: document_version.content is markdown
+      description: document_version.content is ProseMirror JSON
       required:
         - document_version
       properties:
@@ -9054,7 +9110,7 @@ components:
 
     PublishDocumentOutput:
       type: object
-      description: document_version.content is markdown
+      description: document_version.content is ProseMirror JSON
       required:
         - document
         - document_version

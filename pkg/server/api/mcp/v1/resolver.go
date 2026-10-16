@@ -284,3 +284,55 @@ func (r *Resolver) fillSourceConnectorIDs(
 
 	return nil
 }
+
+func validateMCPDocumentContent(content string) error {
+	if err := prosemirror.ValidateDocumentContentJSON(content); err != nil {
+		return fmt.Errorf("invalid document content: %w", err)
+	}
+
+	if strings.TrimSpace(content) == "" {
+		return fmt.Errorf("invalid document content: empty")
+	}
+
+	return nil
+}
+
+func (r *Resolver) collaborationProfileID(
+	ctx context.Context,
+	identityID gid.GID,
+	organizationID gid.GID,
+) *gid.GID {
+	profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identityID,
+		organizationID,
+	)
+	if err != nil {
+		return nil
+	}
+
+	return &profile.ID
+}
+
+func (r *Resolver) documentVersionWithHeads(
+	ctx context.Context,
+	scope *coredata.Scope,
+	version *coredata.DocumentVersion,
+) *types.DocumentVersion {
+	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, version.ID)
+	if err != nil {
+		r.logger.ErrorCtx(
+			ctx,
+			"cannot load document collaboration heads",
+			log.Error(err),
+			log.String("document_version_id", version.ID.String()),
+		)
+
+		return types.NewDocumentVersion(version)
+	}
+
+	return types.NewDocumentVersionWithHeads(
+		version,
+		probo.EncodeAutomergeHashes(heads),
+	)
+}
