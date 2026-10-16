@@ -32,6 +32,8 @@ import type { DocumentDescriptionPage_updateContentMutation } from "#/__generate
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
+import { DocumentPresence } from "./_components/DocumentPresence";
+
 import {
   connectRepoDocument,
   type RepoCollaborationHandle,
@@ -269,20 +271,27 @@ export function DocumentDescriptionPage(props: {
   const editorKey = `${version?.id ?? document.id}-${dataGeneration}`;
 
   return (
-    <RichEditor
-      key={editorKey}
-      className="flex-1"
-      content={currentVersion.content}
-      data-theme="document"
-      disabled={!canEdit || collaborationConnecting}
-      collaborationHandle={collaborationHandle}
-      onChangeContent={handleContentChange}
-      onUploadingChange={(uploading) => {
-        uploadingRef.current = uploading;
-        if (uploading) {
-          handleUpdate.cancel();
-        }
-      }}
-    />
+    <div className="flex flex-1 min-h-0 flex-col">
+      {collaborationHandle && (
+        <div className="flex items-center justify-end gap-3 px-4 pb-2">
+          <DocumentPresence collaborationHandle={collaborationHandle} />
+        </div>
+      )}
+      <RichEditor
+        key={editorKey}
+        className="flex-1"
+        content={currentVersion.content}
+        data-theme="document"
+        disabled={!canEdit || collaborationConnecting}
+        collaborationHandle={collaborationHandle}
+        onChangeContent={handleContentChange}
+        onUploadingChange={(uploading) => {
+          uploadingRef.current = uploading;
+          if (uploading) {
+            handleUpdate.cancel();
+          }
+        }}
+      />
+    </div>
   );
 }

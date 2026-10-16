@@ -293,7 +293,13 @@
   },
   "documentDescriptionPage": {
     "messages": { "successTitle": "Success", "saved": "Content saved" },
-    "errors": { "title": "Error", "save": "Content not saved" }
+    "errors": { "title": "Error", "save": "Content not saved" },
+    "presence": {
+      "label": "People editing this document",
+      "anonymous": "Collaborator",
+      "inactive": "{{name}} (inactive)",
+      "overflow": "{{count}} more people"
+    }
   },
   "documentSignaturesPage": {
     "filter": { "label": "Filter by state:" },

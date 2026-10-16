@@ -134,6 +134,11 @@ export type {
   RichEditorPresence,
 } from "./RichEditor/presence";
 export {
+  decorationsForPresences,
+  presenceColor,
+  presenceHighlightColor,
+} from "./RichEditor/presence";
+export {
   collaborationDebug,
   summarizeAutomergeSpans,
 } from "./RichEditor/collaborationDebug";
