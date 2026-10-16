@@ -8,8 +8,9 @@ The project uses a `GNUmakefile` at the root. Builds run with `--jobs=$(nproc)` 
 | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `make build`                 | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (does not include frontend apps and Relay)   |
 | `make build WITH_APPS=1`     | Build `bin/probod`, `bin/prb`, and `bin/probod-bootstrap` (includes frontend apps, codegen, and Relay) |
-| `make test`                  | Run tests with race detection and coverage (packages that contain tests only; excludes e2e)            |
+| `make test`                  | Run tests with race detection and coverage (packages that contain tests only; excludes e2e). `SKIP_AUTOMERGE=1` omits `./pkg/automerge/...` |
 | `make test MODULE=./pkg/foo` | Run tests for a single module                                                                          |
+| `make test-automerge`        | Automerge suite with race detection and coverage (CI: `.github/workflows/automerge.yaml`)             |
 | `make test-verbose`          | Tests with verbose output                                                                              |
 | `make test-short`            | Short tests only                                                                                       |
 | `make test-bench`            | Run benchmarks                                                                                         |
@@ -84,6 +85,7 @@ Individual codegen is driven by `go generate`:
 | `CGO_ENABLED`        | `0`                                       | Enable/disable CGO                         |
 | `GOOS`               | (host)                                    | Cross-compile target OS                    |
 | `TEST_FLAGS`         | `-race -cover -coverprofile=coverage.out` | Extra flags passed to `go test`            |
+| `SKIP_AUTOMERGE`     | (unset)                                   | Set to `1` to omit `./pkg/automerge/...` from `make test` |
 | `E2E_TEST_FLAGS`     | (empty)                                   | Extra flags passed to E2E test drivers     |
 | `E2E_CORE_COVER_PKGS` | Core services and API packages            | Package filter for core E2E coverage       |
 | `DOCKER_BUILD_FLAGS` | (empty)                                   | Extra flags for `docker build`             |

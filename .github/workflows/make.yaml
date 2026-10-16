@@ -495,7 +495,9 @@ jobs:
           echo dev-server > apps/compliance-portal/dist/index.html
           echo dev-server > apps/employee-portal/dist/index.html
       - run: "npm --workspace @probo/emails run build"
-      - run: "make test"
+      # pkg/automerge runs in automerge.yaml. Spot reclaim SIGTERMs this
+      # job while that package is still in flight.
+      - run: "make test SKIP_AUTOMERGE=1"
         env:
           GOTESTSUM_JUNITFILE: "junit.xml"
           PROBO_TEST_PG_URL: "postgres://probod:probod@localhost:5432/probod_test"

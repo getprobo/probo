@@ -1,0 +1,63 @@
+name: "automerge"
+
+# Spot reclaim SIGTERMs the main test job while pkg/automerge is still
+# running. This suite has its own on-demand runner, and it starts only
+# when that code changes.
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "pkg/automerge/**"
+      - "pkg/prosemirror/**"
+      - ".github/workflows/automerge.yaml"
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - "pkg/automerge/**"
+      - "pkg/prosemirror/**"
+      - ".github/workflows/automerge.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: "read"
+
+jobs:
+  test:
+    name: "test"
+    runs-on: "runs-on=${{ github.run_id }}/runner=8cpu-linux-x64/extras=s3-cache/spot=false"
+    timeout-minutes: 60
+    permissions:
+      contents: "read"
+    steps:
+      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
+      - uses: "./.github/actions/setup"
+        with:
+          node: "false"
+      - run: "make test-automerge"
+        env:
+          GOTESTSUM_JUNITFILE: "junit-automerge.xml"
+          TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out -timeout 30m"
+      - name: "Upload test results"
+        uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        if: "always()"
+        continue-on-error: true
+        with:
+          name: "junit-automerge-results"
+          path: "junit-automerge.xml"
+          retention-days: 30
+      - run: "go tool cover -html=coverage.out -o coverage.html"
+      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        continue-on-error: true
+        with:
+          name: "automerge-coverage-reports"
+          path: |
+            coverage.out
+            coverage.html
+          retention-days: 30
