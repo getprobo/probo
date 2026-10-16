@@ -355,11 +355,100 @@ type DocumentVersion implements Node {
 
     signed: Boolean! @goField(forceResolver: true)
 
+    collaborationHistory(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentCollaborationHistorySessionOrder
+    ): DocumentCollaborationHistorySessionConnection! @goField(forceResolver: true)
+
+    collaborationHistorySnapshot(
+        heads: [String!]!
+        previousHeads: [String!]
+    ): DocumentCollaborationHistorySnapshot! @goField(forceResolver: true)
+
     publishedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum DocumentCollaborationHistorySessionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistorySessionOrderField"
+    ) {
+    ENDED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistorySessionOrderFieldEndedAt"
+        )
+}
+
+input DocumentCollaborationHistorySessionOrder {
+    field: DocumentCollaborationHistorySessionOrderField!
+    direction: OrderDirection!
+}
+
+type DocumentCollaborationHistorySession
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySession"
+    ) {
+    id: ID!
+    heads: [String!]!
+    previousHeads: [String!]!
+    actorID: String!
+    authorName: String
+    authorProfile: Profile @goField(forceResolver: true)
+    startedAt: Datetime!
+    endedAt: Datetime!
+    changeCount: Int!
+}
+
+type DocumentCollaborationHistorySessionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySessionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [DocumentCollaborationHistorySessionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type DocumentCollaborationHistorySessionEdge {
+    cursor: CursorKey!
+    node: DocumentCollaborationHistorySession!
+}
+
+enum DocumentCollaborationHistoryHighlightKind
+    @goModel(
+        model: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKind"
+    ) {
+    INSERT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKindInsert"
+        )
+    DELETE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKindDelete"
+        )
+}
+
+type DocumentCollaborationHistoryHighlight
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistoryHighlight"
+    ) {
+    kind: DocumentCollaborationHistoryHighlightKind!
+    from: Int!
+    to: Int!
+    text: String!
+}
+
+type DocumentCollaborationHistorySnapshot
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySnapshot"
+    ) {
+    content: String!
+    highlights: [DocumentCollaborationHistoryHighlight!]!
 }
 
 type DocumentVersionSignature implements Node {
@@ -597,6 +686,18 @@ extend type Mutation {
     exportEmployeeDocumentVersionPDF(
         input: ExportEmployeeDocumentVersionPDFInput!
     ): ExportEmployeeDocumentVersionPDFPayload!
+    restoreDocumentCollaboration(
+        input: RestoreDocumentCollaborationInput!
+    ): RestoreDocumentCollaborationPayload!
+}
+
+input RestoreDocumentCollaborationInput {
+    documentVersionId: ID!
+    heads: [String!]!
+}
+
+type RestoreDocumentCollaborationPayload {
+    documentVersion: DocumentVersion!
 }
 
 input CreateDocumentInput {
