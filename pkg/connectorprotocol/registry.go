@@ -337,5 +337,6 @@ func (r *Registry) GetOAuth2RefreshConfig(provider string) *OAuth2RefreshConfig 
 		ClientSecret:      oauth2Connector.ClientSecret,
 		TokenURL:          oauth2Connector.TokenURL,
 		TokenEndpointAuth: oauth2Connector.TokenEndpointAuth,
+		RefreshScopes:     oauth2Connector.RefreshScopes,
 	}
 }

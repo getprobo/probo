@@ -43,10 +43,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// clientCredentialsTokenTimeout bounds the token exchange. The callers reach
-// it on a worker context with no deadline of its own, so an unbounded exchange
-// is an unbounded worker.
-const clientCredentialsTokenTimeout = 30 * time.Second
+// tokenRequestTimeout bounds a token request. The callers reach it on a
+// worker context with no deadline of its own, so an unbounded exchange is an
+// unbounded worker.
+const tokenRequestTimeout = 30 * time.Second
 
 // NOTE: the OAuth2 state token (and, for PKCE providers, the code verifier)
 // is keyed by stateSalt(). Public clients (CIMD, no client_secret) set
@@ -91,6 +91,9 @@ type (
 		// ScopeParam names the authorize query parameter carrying the
 		// scopes, "scope" when empty. Slack asks for user_scope.
 		ScopeParam string
+		// RefreshScopes are sent as the scope parameter of the
+		// refresh_token grant; empty sends none.
+		RefreshScopes []string
 		// IntegrationSlug is an operator-supplied identifier used by
 		// providers whose authorization URL embeds it as a path segment
 		// (Vercel-style integrations). It is consumed by the provider's
@@ -183,6 +186,18 @@ type (
 		ClientSecret      string
 		TokenURL          string
 		TokenEndpointAuth string // "post-form" (default), "basic-form", or "basic-json"
+		RefreshScopes     []string
+	}
+
+	// tokenResponse is a token endpoint answer or its RFC 6749 section 5.2 error.
+	tokenResponse struct {
+		AccessToken      string `json:"access_token"`
+		TokenType        string `json:"token_type"`
+		RefreshToken     string `json:"refresh_token"`
+		ExpiresIn        int64  `json:"expires_in"`
+		ErrorCode        string `json:"error"`
+		ErrorDescription string `json:"error_description"`
+		ErrorURI         string `json:"error_uri"`
 	}
 )
 
@@ -629,7 +644,7 @@ func basicAuthHeader(clientID, clientSecret string) string {
 // endpoint with the headers shared by the form-body auth methods
 // ("basic-form", "post-form", and the public-client "none"). Callers set any
 // extra auth header (e.g. Basic) on the returned request.
-func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Values, tokenURL string) (*http.Request, error) {
+func newFormTokenRequest(ctx context.Context, form url.Values, tokenURL string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -645,6 +660,75 @@ func (c *OAuth2Connector) newFormTokenRequest(ctx context.Context, form url.Valu
 	req.Header.Set("User-Agent", "Probo Connector")
 
 	return req, nil
+}
+
+// postTokenForm posts form to the token endpoint. A refusal, including a 2xx
+// carrying an error or no access token, is an *oauth2.RetrieveError.
+func postTokenForm(
+	ctx context.Context,
+	httpClient *http.Client,
+	tokenURL string,
+	form url.Values,
+	authorization string,
+) (*tokenResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, tokenRequestTimeout)
+	defer cancel()
+
+	req, err := newFormTokenRequest(ctx, form, tokenURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build token request: %w", err)
+	}
+
+	if authorization != "" {
+		req.Header.Set("Authorization", authorization)
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot post token request: %w", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return nil, fmt.Errorf("cannot read token response body: %w", err)
+	}
+
+	success := resp.StatusCode >= 200 && resp.StatusCode < 300
+
+	var rawToken tokenResponse
+	if err := json.Unmarshal(body, &rawToken); err != nil && success {
+		return nil, &oauth2.RetrieveError{
+			Response:  resp,
+			ErrorCode: "invalid_token_response",
+		}
+	}
+
+	if success && rawToken.ErrorCode == "" && rawToken.AccessToken == "" {
+		return nil, &oauth2.RetrieveError{
+			Response:  resp,
+			ErrorCode: "missing_access_token",
+		}
+	}
+
+	if !success || rawToken.ErrorCode != "" {
+		retrieveErr := &oauth2.RetrieveError{
+			Response:         resp,
+			ErrorCode:        rawToken.ErrorCode,
+			ErrorDescription: rawToken.ErrorDescription,
+			ErrorURI:         rawToken.ErrorURI,
+		}
+
+		// A 2xx body is never kept: it may carry a token.
+		if !success {
+			retrieveErr.Body = body
+		}
+
+		return nil, retrieveErr
+	}
+
+	return &rawToken, nil
 }
 
 // buildTokenRequest creates the HTTP request for the token exchange, branching
@@ -697,7 +781,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			formData.Set("code_verifier", codeVerifier)
 		}
 
-		req, err := c.newFormTokenRequest(ctx, formData, tokenURL)
+		req, err := newFormTokenRequest(ctx, formData, tokenURL)
 		if err != nil {
 			return nil, err
 		}
@@ -726,7 +810,7 @@ func (c *OAuth2Connector) buildTokenRequest(ctx context.Context, code, redirectU
 			formData.Set("code_verifier", codeVerifier)
 		}
 
-		return c.newFormTokenRequest(ctx, formData, tokenURL)
+		return newFormTokenRequest(ctx, formData, tokenURL)
 	}
 }
 
@@ -844,6 +928,22 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 	// Create a token source that will automatically refresh when expired
 	tokenSource := config.TokenSource(ctx, token)
 
+	// Used as is: x/oauth2 would refresh a short-lived token again without scope.
+	if len(cfg.RefreshScopes) > 0 && !token.Valid() {
+		refreshed, err := refreshWithScopes(
+			ctx,
+			baseClient,
+			config,
+			c.RefreshToken,
+			cfg.RefreshScopes,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot refresh token: %w", err)
+		}
+
+		tokenSource = oauth2.StaticTokenSource(refreshed)
+	}
+
 	// Get the current (possibly refreshed) token
 	newToken, err := tokenSource.Token()
 	if err != nil {
@@ -869,6 +969,58 @@ func (c *OAuth2Connection) RefreshableClient(ctx context.Context, cfg OAuth2Refr
 	}, nil
 }
 
+// refreshWithScopes performs the refresh_token grant with a scope parameter.
+func refreshWithScopes(
+	ctx context.Context,
+	httpClient *http.Client,
+	config *oauth2.Config,
+	refreshToken string,
+	scopes []string,
+) (*oauth2.Token, error) {
+	form := url.Values{}
+	form.Set("grant_type", "refresh_token")
+	form.Set("refresh_token", refreshToken)
+	form.Set("scope", strings.Join(scopes, " "))
+
+	authorization := ""
+	if config.Endpoint.AuthStyle == oauth2.AuthStyleInHeader {
+		// Form-encoded like x/oauth2's refresh (RFC 6749 section 2.3.1).
+		authorization = basicAuthHeader(
+			url.QueryEscape(config.ClientID),
+			url.QueryEscape(config.ClientSecret),
+		)
+	} else {
+		form.Set("client_id", config.ClientID)
+
+		if config.ClientSecret != "" {
+			form.Set("client_secret", config.ClientSecret)
+		}
+	}
+
+	rawToken, err := postTokenForm(
+		ctx,
+		httpClient,
+		config.Endpoint.TokenURL,
+		form,
+		authorization,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot post refresh grant: %w", err)
+	}
+
+	token := &oauth2.Token{
+		AccessToken:  rawToken.AccessToken,
+		TokenType:    rawToken.TokenType,
+		RefreshToken: cmp.Or(rawToken.RefreshToken, refreshToken),
+	}
+
+	if rawToken.ExpiresIn > 0 {
+		token.Expiry = time.Now().Add(time.Duration(rawToken.ExpiresIn) * time.Second)
+	}
+
+	return token, nil
+}
+
 // clientCredentialsClient obtains a new access token using the client_credentials
 // grant type, using the connection's own ClientID, ClientSecret, and TokenURL.
 func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...httpclient.Option) (*http.Client, error) {
@@ -888,54 +1040,17 @@ func (c *OAuth2Connection) clientCredentialsClient(ctx context.Context, opts ...
 		formData.Set("scope", c.Scope)
 	}
 
-	req, err := http.NewRequestWithContext(
+	httpClient := &http.Client{Transport: httpclient.DefaultPooledTransport(opts...)}
+
+	rawToken, err := postTokenForm(
 		ctx,
-		http.MethodPost,
+		httpClient,
 		c.TokenURL,
-		strings.NewReader(formData.Encode()),
+		formData,
+		basicAuthHeader(c.ClientID, c.ClientSecret),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create client credentials token request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "Probo Connector")
-	req.Header.Set("Authorization", basicAuthHeader(c.ClientID, c.ClientSecret))
-
-	httpClient := &http.Client{
-		Transport: httpclient.DefaultPooledTransport(opts...),
-		// The callers run on a worker context with no deadline, so an
-		// unbounded exchange holds a worker slot and its database connection.
-		Timeout: clientCredentialsTokenTimeout,
-	}
-
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot post client credentials token URL: %w", err)
-	}
-
-	defer func() { _ = resp.Body.Close() }()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read client credentials token response body: %w", err)
-	}
-
-	// RetrieveError is the shape accessreview.IsProviderVerdict recognises: a
-	// refused exchange is the provider's verdict on the customer's credential,
-	// and an untyped error here is charged to Probo instead.
-	if resp.StatusCode != http.StatusOK {
-		return nil, &oauth2.RetrieveError{Response: resp, Body: body}
-	}
-
-	var rawToken struct {
-		AccessToken string `json:"access_token"`
-		ExpiresIn   int64  `json:"expires_in"`
-		TokenType   string `json:"token_type"`
-	}
-	if err := json.Unmarshal(body, &rawToken); err != nil {
-		return nil, fmt.Errorf("cannot decode client credentials token response: %w", err)
+		return nil, fmt.Errorf("cannot exchange client credentials: %w", err)
 	}
 
 	c.AccessToken = rawToken.AccessToken
