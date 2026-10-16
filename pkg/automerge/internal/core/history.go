@@ -177,6 +177,42 @@ func (b *Engine) ChangeHashes() [][32]byte {
 	return hashes
 }
 
+// ChangeHistoryEntry is one change in causal order with authorship metadata.
+type ChangeHistoryEntry struct {
+	Hash  [32]byte
+	Actor []byte
+	Time  int64
+}
+
+// ChangeHistory returns every change reachable from the frontier in causal
+// (dependency) order. Incomplete histories return whatever prefix can be
+// enumerated; callers treat that as best-effort.
+func (b *Engine) ChangeHistory() ([]ChangeHistoryEntry, error) {
+	history := b.state
+	if b.isolationActive && b.fullState != nil {
+		history = b.fullState
+	}
+
+	changes, _ := history.allChanges()
+	entries := make([]ChangeHistoryEntry, 0, len(changes))
+	for _, change := range changes {
+		if change.Hash == nil {
+			return nil, fmt.Errorf("cannot list Automerge change history: change missing hash")
+		}
+
+		entries = append(
+			entries,
+			ChangeHistoryEntry{
+				Hash:  [32]byte(*change.Hash),
+				Actor: append([]byte(nil), change.Actor.Bytes()...),
+				Time:  change.Time,
+			},
+		)
+	}
+
+	return entries, nil
+}
+
 func (b *Engine) PrepareMerge(known [][32]byte) (*MergeBatch, error) {
 	if !b.CanDirectMerge() {
 		return nil, fmt.Errorf("cannot prepare direct merge while isolated")
