@@ -4,6 +4,33 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.316.0] - 2026-10-16
+
+### Added
+
+- Employees can view and update their assigned tasks from the employee
+  portal
+- The employee portal home groups signatures and approvals under a
+  single Documents hub
+- Audits can cover several frameworks. GraphQL adds
+  `createAuditFrameworkMapping` / `deleteAuditFrameworkMapping`, and MCP
+  adds `linkAuditFramework` / `unlinkAuditFramework`
+- The console task list groups tasks into collapsible status cards.
+  Rows change state, priority, due date, estimate, and assignee in place,
+  link, unlink, or open a Linear issue, and reorder by drag within a
+  group. Canceled and duplicate groups start collapsed
+- Tasks can be filtered by due date (overdue, due within a horizon, or
+  no deadline) and by "Not assigned". Searching opens every group with
+  a match
+
+### Changed
+
+- `Audit.framework` is replaced by the `Audit.frameworks` connection,
+  and `createAudit` takes `frameworkIds`. MCP audits use
+  `framework_ids`. Creating an audit still requires at least one
+  framework
+- The console tasks toolbar no longer filters by internal control
+
 ## [0.315.0] - 2026-10-16
 
 ### Added
