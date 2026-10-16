@@ -320,7 +320,15 @@ func (r *mutationResolver) DownloadDeviceEvidence(ctx context.Context, input typ
 		return nil, err
 	}
 
-	downloadURL, err := r.itam.ExportDeviceEvidence(ctx, scope, input.DeviceIds)
+	identity := authn.IdentityFromContext(ctx)
+
+	downloadURL, err := r.itam.ExportDeviceEvidence(
+		ctx,
+		scope,
+		input.DeviceIds,
+		identity.FullName,
+		identity.EmailAddress.String(),
+	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)

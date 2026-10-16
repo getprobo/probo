@@ -10799,7 +10799,15 @@ func (r *Resolver) DownloadDeviceEvidenceTool(ctx context.Context, req *mcp.Call
 		return nil, types.DownloadDeviceEvidenceOutput{}, err
 	}
 
-	downloadURL, err := r.itamSvc.ExportDeviceEvidence(ctx, scope, input.DeviceIds)
+	identity := authn.IdentityFromContext(ctx)
+
+	downloadURL, err := r.itamSvc.ExportDeviceEvidence(
+		ctx,
+		scope,
+		input.DeviceIds,
+		identity.FullName,
+		identity.EmailAddress.String(),
+	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, types.DownloadDeviceEvidenceOutput{}, validationErrors
