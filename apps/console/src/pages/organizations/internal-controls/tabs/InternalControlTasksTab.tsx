@@ -40,7 +40,7 @@ import type { InternalControlTasksTab_internalControl$key } from "#/__generated_
 import type { InternalControlTasksTabQuery } from "#/__generated__/core/InternalControlTasksTabQuery.graphql";
 import type { InternalControlTasksTabRefetchQuery } from "#/__generated__/core/InternalControlTasksTabRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
-import { CreateTaskDialog } from "#/pages/organizations/tasks/_components/CreateTaskDialog";
+import { CreateTaskDialog } from "#/pages/organizations/tasks/_components/CreateTaskDialog/CreateTaskDialog";
 import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
 import { emptyTaskListFilter, taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
 import { taskStateKeys } from "#/pages/organizations/tasks/_lib/taskState";

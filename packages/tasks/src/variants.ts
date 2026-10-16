@@ -149,13 +149,6 @@ export const taskEngagement = tv({
   },
 });
 
-export const taskCommentsEmpty = tv({
-  slots: {
-    root: "flex items-center gap-2 py-2",
-    icon: "text-sand-a8 [&_svg]:size-4",
-  },
-});
-
 export const taskDurationField = tv({
   slots: {
     root: "grid grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-2",

@@ -31,7 +31,8 @@ import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
-import { TaskListLinearDialog, TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
+import { TaskListLinearDialog } from "#/pages/organizations/tasks/_components/TaskListLinearDialog";
+import { TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
 import {
   reconcileOrganizationTaskListMembership,
   resortOrganizationTaskListEdge,
@@ -70,6 +71,7 @@ const taskListItemFragment = graphql`
       }
     }
     ...TaskDeleteDialog_task
+    ...TaskListLinearDialog_task
     ...TaskListLinearMenu_task
   }
 `;

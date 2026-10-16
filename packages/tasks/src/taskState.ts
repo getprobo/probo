@@ -29,6 +29,10 @@ export const taskStates = [
 
 export type TaskState = (typeof taskStates)[number];
 
+export function isTaskState(value: string): value is TaskState {
+  return taskStates.some(state => state === value);
+}
+
 export const taskStateKeys = {
   BACKLOG: "backlog",
   TODO: "todo",

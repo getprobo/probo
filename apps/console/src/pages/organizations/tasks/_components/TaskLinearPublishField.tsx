@@ -38,11 +38,13 @@ import type { TaskLinearPublishFieldMutation } from "#/__generated__/core/TaskLi
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { linearIssueOption } from "../_lib/linearIssueOption";
+import { linearTeamLabel } from "../_lib/linearTeamLabel";
 import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { taskLinearPublishField } from "../variants";
 
-import { LinearTeamCombobox, linearTeamLabel } from "./LinearTeamCombobox";
-import { RemoteCombobox } from "./RemoteCombobox";
+import { LinearTeamCombobox } from "./LinearTeamCombobox";
+import { RemoteCombobox } from "./RemoteCombobox/RemoteCombobox";
 
 const PAGE_SIZE = 20;
 const NEW_ISSUE_ID = "__new__";
@@ -54,24 +56,6 @@ interface LinearIssueOption {
   content: string | null;
   state: TaskState | null;
   priority: TaskPriority | null;
-}
-
-function linearIssueOption(node: {
-  id: string;
-  identifier: string;
-  title: string;
-  content?: string | null;
-  state?: TaskState | null;
-  priority?: TaskPriority | null;
-}): LinearIssueOption {
-  return {
-    id: node.id,
-    identifier: node.identifier,
-    title: node.title,
-    content: node.content ?? null,
-    state: node.state ?? null,
-    priority: node.priority ?? null,
-  };
 }
 
 const taskLinearPublishFieldFragment = graphql`
@@ -201,7 +185,14 @@ export function TaskLinearPublishField({
           const organization = data.node?.__typename === "Organization" ? data.node : null;
           const page = organization?.linearIssues;
           return {
-            items: page?.edges.map(edge => linearIssueOption(edge.node)) ?? [],
+            items: page?.edges.map(edge => linearIssueOption({
+              id: edge.node.id,
+              identifier: edge.node.identifier,
+              title: edge.node.title,
+              content: edge.node.content,
+              state: edge.node.state,
+              priority: edge.node.priority,
+            })) ?? [],
             hasNextPage: page?.pageInfo.hasNextPage ?? false,
             endCursor: page?.pageInfo.endCursor ?? null,
           };

@@ -30,9 +30,9 @@ import { graphql } from "relay-runtime";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
 
-import { CreateTaskDialog } from "./_components/CreateTaskDialog";
-import { TasksPageList } from "./_components/TasksPageList";
-import { TasksSettingsDialog } from "./_components/TasksSettingsDialog";
+import { CreateTaskDialog } from "./_components/CreateTaskDialog/CreateTaskDialog";
+import { TasksPageList } from "./_components/TasksPageList/TasksPageList";
+import { TasksSettingsDialog } from "./_components/TasksSettingsDialog/TasksSettingsDialog";
 import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`

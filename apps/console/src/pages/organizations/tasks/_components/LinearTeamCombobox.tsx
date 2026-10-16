@@ -25,7 +25,9 @@ import { graphql } from "react-relay";
 import type { LinearTeamComboboxQuery } from "#/__generated__/core/LinearTeamComboboxQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { RemoteCombobox } from "./RemoteCombobox";
+import { linearTeamLabel } from "../_lib/linearTeamLabel";
+
+import { RemoteCombobox } from "./RemoteCombobox/RemoteCombobox";
 
 const PAGE_SIZE = 20;
 const NO_TEAM_ID = "__none__";
@@ -73,14 +75,6 @@ export interface LinearTeamComboboxProps {
   noneLabel?: string;
   onSelect: (team: LinearTeamOption) => void;
   onClear?: () => void;
-}
-
-export function linearTeamLabel(team: { name: string; key: string }) {
-  if (team.name && team.key) {
-    return `${team.name} (${team.key})`;
-  }
-
-  return team.name || team.key;
 }
 
 export function LinearTeamCombobox({
@@ -132,7 +126,7 @@ export function LinearTeamCombobox({
       onPinnedSelect={onClear}
       onSelect={onSelect}
       itemId={team => team.id}
-      itemLabel={team => linearTeamLabel(team)}
+      itemLabel={team => linearTeamLabel({ name: team.name, key: team.key })}
       itemLeading={() => <UsersIcon />}
     />
   );

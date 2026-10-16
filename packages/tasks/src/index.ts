@@ -30,12 +30,7 @@ export {
 export { registerTasksCatalogs, TASKS_NAMESPACE } from "./i18n";
 export { isOverdueTask } from "./isOverdueTask";
 export { TaskDetails, type TaskDetailsProps } from "./TaskDetails";
-export {
-  TaskActivityEmpty,
-  TaskCommentsEmpty,
-  TaskEngagement,
-  type TaskEngagementProps,
-} from "./TaskEngagement";
+export { TaskEngagement, type TaskEngagementProps } from "./TaskEngagement";
 export {
   flattenTaskListItems,
   type TaskListFlatItem,
@@ -46,27 +41,33 @@ export {
 export {
   TaskListGroupHeader,
   type TaskListGroupHeaderProps,
-} from "./TaskListGroupHeader";
+} from "./TaskListView/TaskListGroupHeader";
 export {
   TaskListDueDateFilter,
   type TaskListDueDateFilterProps,
+} from "./TaskListToolbar/TaskListDueDateFilter";
+export {
   TaskListSearchField,
   type TaskListSearchFieldProps,
+} from "./TaskListToolbar/TaskListSearchField";
+export {
   TaskListStatusFilter,
   type TaskListStatusFilterProps,
+} from "./TaskListToolbar/TaskListStatusFilter";
+export {
   TaskListToolbar,
   type TaskListToolbarProps,
-} from "./TaskListToolbar";
+} from "./TaskListToolbar/TaskListToolbar";
 export {
   TaskListView,
   type TaskListViewGroup,
   type TaskListViewItem,
   type TaskListViewProps,
-} from "./TaskListView";
+} from "./TaskListView/TaskListView";
 export {
   TaskListRowFrame,
   type TaskListRowFrameProps,
-} from "./TaskListRowFrame";
+} from "./TaskListView/TaskListRowFrame";
 export { taskListPageSize } from "./taskListPageSize";
 export {
   type TaskListFillGroup,
@@ -84,8 +85,8 @@ export {
   taskListRowSize,
 } from "./taskListSize";
 export { TaskNameField, type TaskNameFieldProps } from "./TaskNameField";
+export { PropertyRow } from "./PropertyRow";
 export {
-  PropertyRow,
   TaskProperties,
   type TaskPropertiesChange,
   type TaskPropertiesProps,
@@ -134,7 +135,7 @@ export {
   type TaskListItemAssignee,
   type TaskListItemProps,
   type TaskListItemTask,
-} from "./TaskListItem";
+} from "./TaskListItem/TaskListItem";
 export { TaskPriorityIcon } from "./TaskPriorityIcon";
 export { TaskStateIcon } from "./TaskStateIcon";
 export {

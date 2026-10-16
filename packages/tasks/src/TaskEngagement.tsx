@@ -18,19 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ChatTextIcon, ClockCounterClockwiseIcon } from "@phosphor-icons/react";
 import { Tabs } from "@probo/ui/src/v2/Tabs/Tabs";
 import { TabsIndicator } from "@probo/ui/src/v2/Tabs/TabsIndicator";
 import { TabsList } from "@probo/ui/src/v2/Tabs/TabsList";
 import { TabsPanel } from "@probo/ui/src/v2/Tabs/TabsPanel";
 import { TabsTab } from "@probo/ui/src/v2/Tabs/TabsTab";
-import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
-import { taskCommentsEmpty, taskEngagement } from "./variants";
+import { taskEngagement } from "./variants";
 
 export interface TaskEngagementProps {
   canListComments: boolean;
@@ -95,37 +93,5 @@ export function TaskEngagement({
         </TabsPanel>
       )}
     </Tabs>
-  );
-}
-
-export function TaskCommentsEmpty() {
-  const { t } = useTranslation(TASKS_NAMESPACE);
-  const { root, icon } = taskCommentsEmpty();
-
-  return (
-    <div className={root()}>
-      <span className={icon()}>
-        <ChatTextIcon weight="light" />
-      </span>
-      <Text size={1} color="faint">
-        {t("comments.empty")}
-      </Text>
-    </div>
-  );
-}
-
-export function TaskActivityEmpty() {
-  const { t } = useTranslation(TASKS_NAMESPACE);
-  const { root, icon } = taskCommentsEmpty();
-
-  return (
-    <div className={root()}>
-      <span className={icon()}>
-        <ClockCounterClockwiseIcon weight="light" />
-      </span>
-      <Text size={1} color="faint">
-        {t("activity.empty")}
-      </Text>
-    </div>
   );
 }

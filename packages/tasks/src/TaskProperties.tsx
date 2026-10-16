@@ -31,6 +31,7 @@ import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
+import { PropertyRow } from "./PropertyRow";
 import { TaskPriorityIcon } from "./TaskPriorityIcon";
 import {
   taskPriorities,
@@ -260,23 +261,4 @@ function withDisabled(field: ReactNode, disabled: boolean): ReactNode {
   return cloneElement(element, {
     disabled: element.props.disabled || disabled,
   });
-}
-
-export function PropertyRow({
-  label,
-  children,
-  align = "center",
-}: {
-  label: string;
-  children: ReactNode;
-  align?: "center" | "start";
-}) {
-  const { row, label: labelClassName } = taskProperties({ align });
-
-  return (
-    <div className={row()}>
-      <Text size={2} color="faint" className={labelClassName()}>{label}</Text>
-      {children}
-    </div>
-  );
 }

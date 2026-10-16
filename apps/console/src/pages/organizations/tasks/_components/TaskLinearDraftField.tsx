@@ -27,11 +27,13 @@ import type { TaskLinearDraftField_organization$key } from "#/__generated__/core
 import type { TaskLinearDraftFieldIssueQuery } from "#/__generated__/core/TaskLinearDraftFieldIssueQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { linearIssueOption } from "../_lib/linearIssueOption";
+import { linearTeamLabel } from "../_lib/linearTeamLabel";
 import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { taskLinearPublishField } from "../variants";
 
-import { LinearTeamCombobox, linearTeamLabel } from "./LinearTeamCombobox";
-import { RemoteCombobox } from "./RemoteCombobox";
+import { LinearTeamCombobox } from "./LinearTeamCombobox";
+import { RemoteCombobox } from "./RemoteCombobox/RemoteCombobox";
 
 const PAGE_SIZE = 20;
 const NEW_ISSUE_ID = "__new__";
@@ -55,24 +57,6 @@ export interface LinearIssueDraft {
 export interface LinearDraft {
   teamId: string | null;
   issueId: string | null;
-}
-
-function linearIssueOption(node: {
-  id: string;
-  identifier: string;
-  title: string;
-  content?: string | null;
-  state?: TaskState | null;
-  priority?: TaskPriority | null;
-}): LinearIssueOption {
-  return {
-    id: node.id,
-    identifier: node.identifier,
-    title: node.title,
-    content: node.content ?? null,
-    state: node.state ?? null,
-    priority: node.priority ?? null,
-  };
 }
 
 const taskLinearDraftFieldFragment = graphql`
@@ -203,7 +187,14 @@ export function TaskLinearDraftField({
           const organization = data.node?.__typename === "Organization" ? data.node : null;
           const page = organization?.linearIssues;
           return {
-            items: page?.edges.map(edge => linearIssueOption(edge.node)) ?? [],
+            items: page?.edges.map(edge => linearIssueOption({
+              id: edge.node.id,
+              identifier: edge.node.identifier,
+              title: edge.node.title,
+              content: edge.node.content,
+              state: edge.node.state,
+              priority: edge.node.priority,
+            })) ?? [],
             hasNextPage: page?.pageInfo.hasNextPage ?? false,
             endCursor: page?.pageInfo.endCursor ?? null,
           };

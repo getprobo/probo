@@ -99,7 +99,7 @@ export function ThirdPartyComplianceOverviewPanel(
 
 | Rule | Convention |
 |------|------------|
-| Components per file | **One primary component per file.** Colocate non-UI modules separately (`variants.ts`, `graphql` template strings, tiny helpers). |
+| Components per file | **One primary component per file.** A complex component becomes a folder (see [Component folder](#component-folder)). |
 | File name | **Matches the component name** in PascalCase (e.g. `UserProfileHeader.tsx` → `UserProfileHeader`). |
 | Export | **Named export** (`export function UserProfileHeader`). **Exception:** route or lazy bundle **entry** components may use `export default` when the router or `lazy()` requires it (see relay.md route pages). |
 | Props type | **`ComponentNameProps`**. Prefer **`interface`**; use **`type`** when you need unions, mapped types, or **`PropsWithChildren<…>`** (e.g. wrappers whose props are only `children`). |
@@ -154,6 +154,34 @@ type ThirdPartiesPageProps = {
 export default function ThirdPartiesPage({ queryRef }: ThirdPartiesPageProps) {
   // …
 }
+```
+
+## Component folder
+
+A simple component is one file. A complex one — it has a private part or a private helper — becomes a folder named after the component. This is the same line as the v2 kit ([`contrib/claude/ui.md`](ui.md#folder-layout)): `Dialog/Dialog.tsx` next to `Dialog/DialogPopup.tsx`.
+
+- The primary component lives in the file that matches the folder name (`CreateTaskDialog/CreateTaskDialog.tsx`).
+- Parts are prefixed with that name (`CreateTaskDialogFields.tsx`). Helpers in the folder are camelCase (`isFloatingDismiss.ts`) and are not imported from outside the folder. A utility that is not specific to the component lives outside it: the resource `_lib` when the feature owns it, `@probo/helpers` or `src/lib` when it is generic.
+- Do not wrap a component that is still a single file. Do not add a nested `_components` or `_lib`, and do not add an `index.ts` in an app folder. Import the file: `.../_components/CreateTaskDialog/CreateTaskDialog`. A package barrel may re-export from that path.
+- A highly composed component regroups the descendants it renders: the list item, the empty state, the create form, and pieces those descendants render that nobody else uses. They stay in one flat folder named after the composer (`TaskCommentsList/TaskCommentListItem.tsx`). Do not nest a folder per descendant.
+- A descendant rendered by a second composer leaves the folder. Helpers go to the resource `_lib`. Parts become their own file or folder under `_components` (or the package root). A fragment spread from a hook is not a second composer.
+- A thin parent that only mounts the composer stays outside. `TaskCommentsSection` keeps its skeleton; it does not swallow the list.
+- Do not add a folder for a page. The resource folder is already that namespace.
+- A Suspense or error-boundary shell stays in the primary file. It only mounts the query or fragment under that boundary, so it is not a second component and not a reason to open a folder.
+
+```text
+// Good — the list owns its item, empty state, and the item's private pieces
+pages/organizations/tasks/_components/TaskCommentsList/
+  TaskCommentsList.tsx
+  TaskCommentListItem.tsx
+  TaskCommentsEmpty.tsx
+  TaskCommentForm.tsx
+  TaskCommentEditor.tsx
+  TaskCommentDeleteDialog.tsx
+
+// Bad — descendants of one list dumped beside it
+pages/organizations/tasks/_components/TaskCommentListItem.tsx
+pages/organizations/tasks/_components/TaskCommentsEmpty.tsx
 ```
 
 ## Naming and suffixes
