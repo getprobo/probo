@@ -53,8 +53,8 @@ function consoleContentSecurityPolicy(
     .replaceAll("{{.FileStorageOrigin}}", fileStorageOrigin)
     .trim()
     .replace(
-      /script-src 'self';/,
-      `script-src 'self' 'nonce-${scriptNonce}';`,
+      /script-src 'self'([^;]*);/,
+      `script-src 'self' 'nonce-${scriptNonce}'$1;`,
     )
     .replace(
       /connect-src 'self' ([^;]+);/,
