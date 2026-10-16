@@ -42,6 +42,7 @@
       "revoked": "Révoqué",
       "allAgentVersions": "Toutes les versions de l’agent",
       "allPlatforms": "Toutes les plateformes",
+      "selectedCount": "{{count}} sélectionnés",
       "search": "Rechercher par propriétaire",
       "empty": "Aucun appareil ne correspond à ces filtres"
     },

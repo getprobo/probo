@@ -37,15 +37,6 @@ export const devicePlatforms = ["DARWIN", "LINUX", "FREEBSD", "WINDOWS"] as cons
 
 export type DevicePlatformName = (typeof devicePlatforms)[number];
 
-export function devicePlatformFilter(value: string | null): DevicePlatformName | null {
-  for (const platform of devicePlatforms) {
-    if (platform === value) {
-      return platform;
-    }
-  }
-  return null;
-}
-
 export function platformLabel(
   t: Translator,
   platform: string | null | undefined,

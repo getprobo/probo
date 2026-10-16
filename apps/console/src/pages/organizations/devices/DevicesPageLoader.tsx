@@ -45,9 +45,9 @@ export default function DevicesPageLoader() {
       organizationId,
       query: current.ownerQuery,
       hasPostureWarning: current.hasPostureWarning,
-      state: current.state,
-      platform: current.platform,
-      agentVersion: current.agentVersion,
+      states: current.states.length === 0 ? null : current.states,
+      platforms: current.platforms.length === 0 ? null : current.platforms,
+      agentVersions: current.agentVersions.length === 0 ? null : current.agentVersions,
     }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 

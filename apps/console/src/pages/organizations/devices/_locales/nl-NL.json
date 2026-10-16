@@ -42,6 +42,7 @@
       "revoked": "Ingetrokken",
       "allAgentVersions": "Alle agentversies",
       "allPlatforms": "Alle platforms",
+      "selectedCount": "{{count}} geselecteerd",
       "search": "Zoeken op eigenaar",
       "empty": "Geen apparaten voldoen aan deze filters"
     },

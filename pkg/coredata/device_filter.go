@@ -27,25 +27,25 @@ import (
 type (
 	DeviceFilter struct {
 		query             *string
-		state             *DeviceState
-		platform          *DevicePlatform
-		agentVersion      *string
+		states            []DeviceState
+		platforms         []DevicePlatform
+		agentVersions     []string
 		hasPostureWarning *bool
 	}
 )
 
 func NewDeviceFilter(
 	query *string,
-	state *DeviceState,
-	platform *DevicePlatform,
-	agentVersion *string,
+	states []DeviceState,
+	platforms []DevicePlatform,
+	agentVersions []string,
 	hasPostureWarning *bool,
 ) *DeviceFilter {
 	return &DeviceFilter{
 		query:             query,
-		state:             state,
-		platform:          platform,
-		agentVersion:      agentVersion,
+		states:            states,
+		platforms:         platforms,
+		agentVersions:     agentVersions,
 		hasPostureWarning: hasPostureWarning,
 	}
 }
@@ -53,13 +53,26 @@ func NewDeviceFilter(
 func (f *DeviceFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
 		"query":                      f.query,
-		"filter_state":               f.state,
-		"filter_platform":            f.platform,
-		"filter_agent_version":       f.agentVersion,
+		"filter_states":              filterStrings(f.states),
+		"filter_platforms":           filterStrings(f.platforms),
+		"filter_agent_versions":      filterStrings(f.agentVersions),
 		"filter_has_posture_warning": f.hasPostureWarning,
 		"posture_status_fail":        DevicePostureStatusFail,
 		"posture_status_unknown":     DevicePostureStatusUnknown,
 	}
+}
+
+func filterStrings[T ~string](values []T) []string {
+	if len(values) == 0 {
+		return nil
+	}
+
+	encoded := make([]string, len(values))
+	for i, value := range values {
+		encoded[i] = string(value)
+	}
+
+	return encoded
 }
 
 func (f *DeviceFilter) SQLFragment() string {
@@ -88,24 +101,24 @@ func (f *DeviceFilter) SQLFragment() string {
 AND
 (
 	CASE
-		WHEN @filter_state::device_state IS NOT NULL THEN
-			state = @filter_state::device_state
+		WHEN @filter_states::device_state[] IS NOT NULL THEN
+			state = ANY(@filter_states::device_state[])
 		ELSE TRUE
 	END
 )
 AND
 (
 	CASE
-		WHEN @filter_platform::device_platform IS NOT NULL THEN
-			platform = @filter_platform::device_platform
+		WHEN @filter_platforms::device_platform[] IS NOT NULL THEN
+			platform = ANY(@filter_platforms::device_platform[])
 		ELSE TRUE
 	END
 )
 AND
 (
 	CASE
-		WHEN @filter_agent_version::text IS NOT NULL AND @filter_agent_version::text <> '' THEN
-			agent_version = @filter_agent_version
+		WHEN @filter_agent_versions::text[] IS NOT NULL THEN
+			agent_version = ANY(@filter_agent_versions::text[])
 		ELSE TRUE
 	END
 )
