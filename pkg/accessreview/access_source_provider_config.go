@@ -138,6 +138,14 @@ var providerOrgConfigs = map[coredata.ConnectorProvider]providerOrgConfig{
 		},
 		NeedsPicker: true,
 	},
+	coredata.ConnectorProviderPlanetScale: {
+		ListOrgs: drivers.ListPlanetScaleOrganizations,
+		SelectedSlug: func(c *coredata.Connector) string {
+			s, _ := coredata.ConnectorSettings[coredata.PlanetScaleConnectorSettings](c)
+			return s.Organization
+		},
+		NeedsPicker: true,
+	},
 	// DocuSign declares no APIBase, but its Identity host is exactly what
 	// ListDocuSignOrganizations calls, so ListOrgs takes the baseURL
 	// providerListBaseURL resolves directly — an Identity override must

@@ -73,6 +73,7 @@ import { OpenAI } from "./OpenAI";
 import { OpenRouter } from "./OpenRouter";
 import { OVHcloud } from "./OVHcloud";
 import { PagerDuty } from "./PagerDuty";
+import { PlanetScale } from "./PlanetScale";
 import { PostHog } from "./PostHog";
 import { Pylon } from "./Pylon";
 import { Qovery } from "./Qovery";
@@ -153,6 +154,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   OPENROUTER: OpenRouter,
   OVHCLOUD: OVHcloud,
   PAGERDUTY: PagerDuty,
+  PLANETSCALE: PlanetScale,
   POSTHOG: PostHog,
   PYLON: Pylon,
   QOVERY: Qovery,
