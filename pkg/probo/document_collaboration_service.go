@@ -252,6 +252,51 @@ func (s *DocumentService) NotifyCollaborationEphemeral(
 	})
 }
 
+// RecordCollaborationActors binds Automerge actors from an inbound sync message
+// to the authenticated identity. The first insert for an actor wins, so a later
+// replay of someone else's changes cannot overwrite authorship. Compaction does
+// not delete these rows.
+func (s *DocumentService) RecordCollaborationActors(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentVersionID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+	actors [][]byte,
+) error {
+	if len(actors) == 0 {
+		return nil
+	}
+
+	now := time.Now()
+
+	return s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			for _, actorID := range actors {
+				if len(actorID) == 0 {
+					continue
+				}
+
+				row := coredata.DocumentVersionAutomergeActor{
+					DocumentVersionID: documentVersionID,
+					OrganizationID:    organizationID,
+					ActorID:           append([]byte(nil), actorID...),
+					IdentityID:        identityID,
+					ProfileID:         profileID,
+					CreatedAt:         now,
+				}
+				if err := row.InsertIfAbsent(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot record collaboration actor: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
 func (s *DocumentService) PersistCollaboration(
 	ctx context.Context,
 	scope coredata.Scoper,

@@ -167,6 +167,7 @@ const (
 	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
 	ConnectorAccountEntityType                       uint16 = 136
 	EmployeePortalEntityType                         uint16 = 137
+	DocumentCollaborationSessionEntityType           uint16 = 138
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
