@@ -130,16 +130,17 @@ type device struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg          string
-		flagLimit        int
-		flagOrderBy      string
-		flagOrderDir     string
-		flagQuery        string
-		flagState        string
-		flagPlatform     string
-		flagAgentVersion string
-		flagPostures     bool
-		flagOutput       *string
+		flagOrg             string
+		flagLimit           int
+		flagOrderBy         string
+		flagOrderDir        string
+		flagQuery           string
+		flagState           []string
+		flagPlatform        []string
+		flagAgentVersion    []string
+		flagPostureWarnings bool
+		flagPostures        bool
+		flagOutput          *string
 	)
 
 	cmd := &cobra.Command{
@@ -159,7 +160,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb device ls --query "Ada"
 
   # List active macOS devices
-  prb device ls --state ACTIVE --platform DARWIN`,
+  prb device ls --state ACTIVE --platform DARWIN
+
+  # List active and pending devices
+  prb device ls --state ACTIVE --state PENDING`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -206,32 +210,40 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				filter["query"] = flagQuery
 			}
 
-			if flagState != "" {
-				if err := cmdutil.ValidateEnum(
-					"state",
-					flagState,
-					[]string{"PENDING", "ACTIVE", "REVOKED"},
-				); err != nil {
-					return err
+			if len(flagState) > 0 {
+				for _, state := range flagState {
+					if err := cmdutil.ValidateEnum(
+						"state",
+						state,
+						[]string{"PENDING", "ACTIVE", "REVOKED"},
+					); err != nil {
+						return err
+					}
 				}
 
-				filter["state"] = flagState
+				filter["states"] = flagState
 			}
 
-			if flagPlatform != "" {
-				if err := cmdutil.ValidateEnum(
-					"platform",
-					flagPlatform,
-					[]string{"DARWIN", "LINUX", "FREEBSD", "WINDOWS"},
-				); err != nil {
-					return err
+			if len(flagPlatform) > 0 {
+				for _, platform := range flagPlatform {
+					if err := cmdutil.ValidateEnum(
+						"platform",
+						platform,
+						[]string{"DARWIN", "LINUX", "FREEBSD", "WINDOWS"},
+					); err != nil {
+						return err
+					}
 				}
 
-				filter["platform"] = flagPlatform
+				filter["platforms"] = flagPlatform
 			}
 
-			if flagAgentVersion != "" {
-				filter["agentVersion"] = flagAgentVersion
+			if len(flagAgentVersion) > 0 {
+				filter["agentVersions"] = flagAgentVersion
+			}
+
+			if flagPostureWarnings {
+				filter["hasPostureWarning"] = true
 			}
 
 			if len(filter) > 0 {
@@ -346,9 +358,15 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of devices to list")
 	cmd.Flags().StringVar(&flagQuery, "query", "", "Search devices by owner name")
-	cmd.Flags().StringVar(&flagState, "state", "", "Filter by state (PENDING, ACTIVE, REVOKED)")
-	cmd.Flags().StringVar(&flagPlatform, "platform", "", "Filter by platform (DARWIN, LINUX, FREEBSD, WINDOWS)")
-	cmd.Flags().StringVar(&flagAgentVersion, "agent-version", "", "Filter by agent version")
+	cmd.Flags().StringSliceVar(&flagState, "state", nil, "Filter by state; repeat or comma-separate for multiple (PENDING, ACTIVE, REVOKED)")
+	cmd.Flags().StringSliceVar(&flagPlatform, "platform", nil, "Filter by platform; repeat or comma-separate for multiple (DARWIN, LINUX, FREEBSD, WINDOWS)")
+	cmd.Flags().StringSliceVar(&flagAgentVersion, "agent-version", nil, "Filter by agent version; repeat or comma-separate for multiple")
+	cmd.Flags().BoolVar(
+		&flagPostureWarnings,
+		"posture-warnings",
+		false,
+		"Only devices whose latest posture for some check is FAIL or UNKNOWN",
+	)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, UPDATED_AT, HOSTNAME, LAST_SEEN_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().BoolVar(&flagPostures, "postures", false, "Include latest posture check results")

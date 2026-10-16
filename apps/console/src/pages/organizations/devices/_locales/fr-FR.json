@@ -30,6 +30,11 @@
       "enrolledAt": "Enrôlé le",
       "lastSeen": "Dernière connexion"
     },
+    "views": {
+      "allRegistered": "Tous les appareils",
+      "warningsOnly": "Avertissements seulement",
+      "ariaLabel": "Vue de la liste des appareils"
+    },
     "filters": {
       "allStates": "Tous les états",
       "pending": "En attente",
@@ -37,6 +42,7 @@
       "revoked": "Révoqué",
       "allAgentVersions": "Toutes les versions de l’agent",
       "allPlatforms": "Toutes les plateformes",
+      "selectedCount": "{{count}} sélectionnés",
       "search": "Rechercher par propriétaire",
       "empty": "Aucun appareil ne correspond à ces filtres"
     },
@@ -86,6 +92,8 @@
       "checks_other": "{{count}} contrôles",
       "warnings_one": "{{count}} avertissement",
       "warnings_other": "{{count}} avertissements",
+      "showWarnings_one": "Afficher {{count}} avertissement de posture",
+      "showWarnings_other": "Afficher {{count}} avertissements de posture",
       "unknownHint": "L'agent n'a pas pu capturer ou interpréter ce contrôle, il a donc indiqué Inconnu.",
       "values": {
         "on": "Activé",

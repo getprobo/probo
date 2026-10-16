@@ -18,39 +18,73 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 import {
-  devicePlatformFilter,
   type DevicePlatformName,
+  devicePlatforms,
 } from "./deviceDisplay";
 
 const deviceStates = ["PENDING", "ACTIVE", "REVOKED"] as const;
 export type DeviceStateFilter = (typeof deviceStates)[number];
+
+const deviceListViews = ["all", "warnings"] as const;
+export type DeviceListView = (typeof deviceListViews)[number];
+
+export function isDeviceListView(value: string): value is DeviceListView {
+  return (deviceListViews as readonly string[]).includes(value);
+}
 
 export function devicesListOwnerQuery(query: string): string | null {
   const trimmed = query.trim();
   return trimmed === "" ? null : trimmed;
 }
 
-function deviceStateFilter(value: string | null): DeviceStateFilter | null {
-  return deviceStates.find(state => state === value) ?? null;
+function isDeviceStateFilter(value: string): value is DeviceStateFilter {
+  return (deviceStates as readonly string[]).includes(value);
 }
 
-function textFilter(value: string | null): string | null {
-  if (value == null || value.length === 0) {
-    return null;
+function isDevicePlatformName(value: string): value is DevicePlatformName {
+  return (devicePlatforms as readonly string[]).includes(value);
+}
+
+function selectedValues<T extends string>(
+  values: readonly string[],
+  isAllowed: (value: string) => value is T,
+): T[] {
+  const seen = new Set<string>();
+  const selected: T[] = [];
+  for (const value of values) {
+    if (seen.has(value) || !isAllowed(value)) {
+      continue;
+    }
+    seen.add(value);
+    selected.push(value);
   }
-  return value;
+  return selected;
+}
+
+function selectedText(values: readonly string[]): string[] {
+  return selectedValues(values, (value): value is string => value.length > 0);
 }
 
 export function useDevicesListFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
-  const state = deviceStateFilter(searchParams.get("state"));
-  const platform = devicePlatformFilter(searchParams.get("platform"));
-  const agentVersion = textFilter(searchParams.get("agentVersion"));
+  const view: DeviceListView = searchParams.get("view") === "warnings" ? "warnings" : "all";
+  const states = useMemo(
+    () => selectedValues(searchParams.getAll("state"), isDeviceStateFilter),
+    [searchParams],
+  );
+  const platforms = useMemo(
+    () => selectedValues(searchParams.getAll("platform"), isDevicePlatformName),
+    [searchParams],
+  );
+  const agentVersions = useMemo(
+    () => selectedText(searchParams.getAll("agentVersion")),
+    [searchParams],
+  );
 
   const setParam = useCallback((name: string, value: string | null) => {
     setSearchParams((previous) => {
@@ -64,31 +98,57 @@ export function useDevicesListFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setListParam = useCallback((name: string, values: readonly string[]) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.delete(name);
+      for (const value of values) {
+        next.append(name, value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   const setQuery = useCallback((value: string) => {
     setParam("q", value || null);
   }, [setParam]);
 
-  const setState = useCallback((value: DeviceStateFilter | null) => {
-    setParam("state", value);
-  }, [setParam]);
+  const setView = useCallback((value: DeviceListView) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value === "warnings") {
+        next.set("view", "warnings");
+      } else {
+        next.delete("view");
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
-  const setPlatform = useCallback((value: DevicePlatformName | null) => {
-    setParam("platform", value);
-  }, [setParam]);
+  const setStates = useCallback((values: readonly DeviceStateFilter[]) => {
+    setListParam("state", values);
+  }, [setListParam]);
 
-  const setAgentVersion = useCallback((value: string | null) => {
-    setParam("agentVersion", textFilter(value));
-  }, [setParam]);
+  const setPlatforms = useCallback((values: readonly DevicePlatformName[]) => {
+    setListParam("platform", values);
+  }, [setListParam]);
+
+  const setAgentVersions = useCallback((values: readonly string[]) => {
+    setListParam("agentVersion", selectedText(values));
+  }, [setListParam]);
 
   return {
     query,
     ownerQuery: devicesListOwnerQuery(query),
-    state,
-    platform,
-    agentVersion,
+    view,
+    hasPostureWarning: view === "warnings" ? true : null,
+    states,
+    platforms,
+    agentVersions,
     setQuery,
-    setState,
-    setPlatform,
-    setAgentVersion,
+    setView,
+    setStates,
+    setPlatforms,
+    setAgentVersions,
   };
 }

@@ -87,9 +87,10 @@ input DeviceOrder
 
 input DeviceFilter {
     query: String
-    state: DeviceState
-    platform: DevicePlatform
-    agentVersion: String
+    states: [DeviceState!]
+    platforms: [DevicePlatform!]
+    agentVersions: [String!]
+    hasPostureWarning: Boolean
 }
 
 type Device implements Node {

@@ -23,6 +23,7 @@ import { tv } from "tailwind-variants/lite";
 export const devicesPage = tv({
   slots: {
     root: "flex flex-col gap-6",
+    back: "self-start",
     header: "flex flex-wrap items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-1",
     title: "flex min-w-0 items-center gap-2.5",
@@ -32,6 +33,7 @@ export const devicesPage = tv({
     list: "flex flex-col gap-4",
     sections: "flex flex-col gap-8",
     section: "flex flex-col gap-4",
+    views: "flex flex-wrap items-center",
     tools: "flex flex-wrap items-center justify-between gap-2",
     filters: "flex flex-wrap items-center justify-end gap-2",
     tableFilters: "flex flex-wrap items-center justify-end gap-2",
@@ -55,6 +57,15 @@ export const deviceCardFields = tv({
   slots: {
     root: "grid grid-cols-3 gap-4 max-lg:grid-cols-2 max-sm:grid-cols-1 *:min-w-0",
     property: "flex min-w-0 flex-col gap-1",
+  },
+});
+
+export const postureChecksPopover = tv({
+  slots: {
+    trigger: "inline-flex cursor-pointer border-0 bg-transparent p-0",
+    popup: "w-max",
+    list: "m-0 flex list-none flex-col p-0 text-1",
+    item: "flex items-center gap-1",
   },
 });
 

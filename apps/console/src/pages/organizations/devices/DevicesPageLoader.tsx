@@ -44,9 +44,10 @@ export default function DevicesPageLoader() {
     loadQuery({
       organizationId,
       query: current.ownerQuery,
-      state: current.state,
-      platform: current.platform,
-      agentVersion: current.agentVersion,
+      hasPostureWarning: current.hasPostureWarning,
+      states: current.states.length === 0 ? null : current.states,
+      platforms: current.platforms.length === 0 ? null : current.platforms,
+      agentVersions: current.agentVersions.length === 0 ? null : current.agentVersions,
     }, { fetchPolicy: "store-and-network" });
   }, [loadQuery, organizationId]);
 

@@ -80,11 +80,11 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Agent Version',
-				name: 'agentVersion',
+				displayName: 'Agent Versions',
+				name: 'agentVersions',
 				type: 'string',
 				default: '',
-				description: 'Only devices reporting this agent version',
+				description: 'Only devices reporting one of these agent versions. Separate versions with commas.',
 			},
 			{
 				displayName: 'Include Owner',
@@ -101,18 +101,17 @@ export const description: INodeProperties[] = [
 				description: 'Whether to include latest posture check results in the response',
 			},
 			{
-				displayName: 'Platform',
-				name: 'platform',
-				type: 'options',
+				displayName: 'Platforms',
+				name: 'platforms',
+				type: 'multiOptions',
 				options: [
-					{ name: 'All', value: '' },
 					{ name: 'FreeBSD', value: 'FREEBSD' },
 					{ name: 'Linux', value: 'LINUX' },
 					{ name: 'macOS', value: 'DARWIN' },
 					{ name: 'Windows', value: 'WINDOWS' },
 				],
-				default: '',
-				description: 'Only devices on this platform. Devices that have not reported a platform are excluded.',
+				default: [],
+				description: 'Only devices on one of these platforms. Devices that have not reported a platform are excluded.',
 			},
 			{
 				displayName: 'Query',
@@ -122,17 +121,23 @@ export const description: INodeProperties[] = [
 				description: 'Search devices by owner name. Each word is a prefix match, and every word must match.',
 			},
 			{
-				displayName: 'State',
-				name: 'state',
-				type: 'options',
+				displayName: 'States',
+				name: 'states',
+				type: 'multiOptions',
 				options: [
 					{ name: 'Active', value: 'ACTIVE' },
-					{ name: 'All', value: '' },
 					{ name: 'Pending', value: 'PENDING' },
 					{ name: 'Revoked', value: 'REVOKED' },
 				],
-				default: '',
-				description: 'Only devices in this state',
+				default: [],
+				description: 'Only devices in one of these states',
+			},
+			{
+				displayName: 'Warnings Only',
+				name: 'hasPostureWarning',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to keep only devices whose latest posture for some check is FAIL or UNKNOWN',
 			},
 		],
 	},
@@ -149,9 +154,10 @@ export async function execute(
 		includeOwner?: boolean;
 		includePostures?: boolean;
 		query?: string;
-		state?: string;
-		platform?: string;
-		agentVersion?: string;
+		states?: string[];
+		platforms?: string[];
+		agentVersions?: string;
+		hasPostureWarning?: boolean;
 	};
 
 	const ownerFragment = options.includeOwner
@@ -182,14 +188,21 @@ export async function execute(
 	if (options.query) {
 		filter.query = options.query;
 	}
-	if (options.state) {
-		filter.state = options.state;
+	if (options.states?.length) {
+		filter.states = options.states;
 	}
-	if (options.platform) {
-		filter.platform = options.platform;
+	if (options.platforms?.length) {
+		filter.platforms = options.platforms;
 	}
-	if (options.agentVersion) {
-		filter.agentVersion = options.agentVersion;
+	const agentVersions = options.agentVersions
+		?.split(',')
+		.map(version => version.trim())
+		.filter(version => version.length > 0);
+	if (agentVersions?.length) {
+		filter.agentVersions = agentVersions;
+	}
+	if (options.hasPostureWarning) {
+		filter.hasPostureWarning = true;
 	}
 	if (Object.keys(filter).length > 0) {
 		variables.filter = filter;

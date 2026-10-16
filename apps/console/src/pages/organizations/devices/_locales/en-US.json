@@ -30,6 +30,11 @@
       "enrolledAt": "Enrolled at",
       "lastSeen": "Last seen"
     },
+    "views": {
+      "allRegistered": "All devices",
+      "warningsOnly": "Warnings only",
+      "ariaLabel": "Device list view"
+    },
     "filters": {
       "allStates": "All states",
       "pending": "Pending",
@@ -37,6 +42,7 @@
       "revoked": "Revoked",
       "allAgentVersions": "All agent versions",
       "allPlatforms": "All platforms",
+      "selectedCount": "{{count}} selected",
       "search": "Search by owner",
       "empty": "No devices match these filters"
     },
@@ -86,6 +92,8 @@
       "checks_other": "{{count}} checks",
       "warnings_one": "{{count}} warning",
       "warnings_other": "{{count}} warnings",
+      "showWarnings_one": "Show {{count}} posture warning",
+      "showWarnings_other": "Show {{count}} posture warnings",
       "unknownHint": "The agent could not capture or interpret this check, so it reported unknown.",
       "values": {
         "on": "On",

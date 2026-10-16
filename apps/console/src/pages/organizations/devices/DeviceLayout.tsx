@@ -77,7 +77,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
   const [revokeOpen, setRevokeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const { download: downloadEvidence, isDownloading } = useDownloadDeviceEvidence();
-  const { root, header, intro, actions, section, sections } = devicesPage();
+  const { root, back, header, intro, actions, section, sections } = devicesPage();
 
   const { device, organization } = usePreloadedQuery<DeviceLayoutQuery>(
     deviceLayoutQuery,
@@ -110,6 +110,7 @@ export function DeviceLayout({ queryRef }: DeviceLayoutProps) {
         color="neutral"
         underline={false}
         iconStart={<CaretLeftIcon />}
+        className={back()}
       >
         {t("devices.title")}
       </Link>
