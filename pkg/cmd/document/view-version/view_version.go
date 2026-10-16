@@ -40,7 +40,9 @@ query($id: ID!) {
       major
       minor
       status
-      content
+      content {
+        prosemirror
+      }
       changelog
       documentType
       classification
@@ -54,13 +56,15 @@ query($id: ID!) {
 
 type viewResponse struct {
 	Node *struct {
-		Typename       string  `json:"__typename"`
-		ID             string  `json:"id"`
-		Title          string  `json:"title"`
-		Major          int     `json:"major"`
-		Minor          int     `json:"minor"`
-		Status         string  `json:"status"`
-		Content        string  `json:"content"`
+		Typename string `json:"__typename"`
+		ID       string `json:"id"`
+		Title    string `json:"title"`
+		Major    int    `json:"major"`
+		Minor    int    `json:"minor"`
+		Status   string `json:"status"`
+		Content  struct {
+			Prosemirror string `json:"prosemirror"`
+		} `json:"content"`
 		Changelog      string  `json:"changelog"`
 		DocumentType   string  `json:"documentType"`
 		Classification string  `json:"classification"`
@@ -151,8 +155,8 @@ func NewCmdViewVersion(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(v.CreatedAt))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Updated:"), cmdutil.FormatTime(v.UpdatedAt))
 
-			if v.Content != "" {
-				_, _ = fmt.Fprintf(out, "\n%s\n%s\n", bold.Render("Content:"), v.Content)
+			if v.Content.Prosemirror != "" {
+				_, _ = fmt.Fprintf(out, "\n%s\n%s\n", bold.Render("Content:"), v.Content.Prosemirror)
 			}
 
 			return nil

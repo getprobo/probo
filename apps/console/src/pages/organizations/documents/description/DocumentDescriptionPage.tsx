@@ -55,7 +55,9 @@ export const documentDescriptionPageQuery = graphql`
       __typename
       ... on DocumentVersion {
         id
-        content
+        content {
+          prosemirror
+        }
         status
       }
     }
@@ -71,7 +73,9 @@ export const documentDescriptionPageQuery = graphql`
           edges {
             node {
               id
-              content
+              content {
+                prosemirror
+              }
               status
             }
           }
@@ -89,7 +93,9 @@ const updateContentMutation = graphql`
       }
       documentVersion {
         id
-        content
+        content {
+          prosemirror
+        }
         status
       }
     }
@@ -183,8 +189,9 @@ export function DocumentDescriptionPage(props: {
     && document.canUpdate
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED";
+  const content = currentVersion.content.prosemirror;
   const collaborationSupported = canEdit
-    && supportsRichEditorCollaboration(currentVersion.content);
+    && supportsRichEditorCollaboration(content);
   const [collaboration, setCollaboration] = useState<CollaborationState>();
 
   useEffect(() => {
@@ -272,7 +279,7 @@ export function DocumentDescriptionPage(props: {
 
   const editorKey = `${version?.id ?? document.id}-${dataGeneration}`;
   const historyAvailable = currentVersion.status === "DRAFT"
-    && supportsRichEditorCollaboration(currentVersion.content);
+    && supportsRichEditorCollaboration(content);
 
   if (historyOpen) {
     return (
@@ -316,7 +323,7 @@ export function DocumentDescriptionPage(props: {
       <RichEditor
         key={editorKey}
         className="flex-1"
-        content={currentVersion.content}
+        content={content}
         data-theme="document"
         disabled={!canEdit || collaborationConnecting}
         collaborationHandle={collaborationHandle}

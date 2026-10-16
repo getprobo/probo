@@ -316,13 +316,27 @@ type Document implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
+type DocumentContent
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentContent"
+    ) {
+    """
+    Stored ProseMirror document JSON.
+    """
+    prosemirror: String! @goField(forceResolver: true)
+    """
+    Markdown rendition. Computed only when selected.
+    """
+    markdown: String! @goField(forceResolver: true)
+}
+
 type DocumentVersion implements Node {
     id: ID!
     document: Document! @goField(forceResolver: true)
     status: DocumentVersionStatus!
     major: Int!
     minor: Int!
-    content: String!
+    content: DocumentContent!
     changelog: String!
     title: String!
     classification: DocumentClassification!
@@ -447,7 +461,7 @@ type DocumentCollaborationHistorySnapshot
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySnapshot"
     ) {
-    content: String!
+    content: DocumentContent!
     highlights: [DocumentCollaborationHistoryHighlight!]!
 }
 

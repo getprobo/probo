@@ -85,7 +85,7 @@ func NewDocumentVersion(documentVersion *coredata.DocumentVersion) *DocumentVers
 		Major:          documentVersion.Major,
 		Minor:          documentVersion.Minor,
 		Title:          documentVersion.Title,
-		Content:        documentVersion.Content,
+		Content:        NewDocumentContent(documentVersion.Content),
 		Status:         documentVersion.Status,
 		Classification: documentVersion.Classification,
 		DocumentType:   documentVersion.DocumentType,

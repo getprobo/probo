@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -20,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/clientip"
@@ -283,6 +285,32 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
 	return 0, gqlutils.Internal(ctx)
+}
+
+// Prosemirror is the resolver for the prosemirror field.
+func (r *documentContentResolver) Prosemirror(ctx context.Context, obj *types.DocumentContent) (string, error) {
+	return obj.Source, nil
+}
+
+// Markdown is the resolver for the markdown field.
+func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.DocumentContent) (string, error) {
+	if strings.TrimSpace(obj.Source) == "" {
+		return "", nil
+	}
+
+	node, err := prosemirror.Parse(obj.Source)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot parse document content", log.Error(err))
+		return "", gqlutils.Internal(ctx)
+	}
+
+	md, err := prosemirror.RenderMarkdown(node)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot render document content as markdown", log.Error(err))
+		return "", gqlutils.Internal(ctx)
+	}
+
+	return md, nil
 }
 
 // Document is the resolver for the document field.
@@ -1997,6 +2025,11 @@ func (r *Resolver) DocumentConnection() schema.DocumentConnectionResolver {
 	return &documentConnectionResolver{r}
 }
 
+// DocumentContent returns schema.DocumentContentResolver implementation.
+func (r *Resolver) DocumentContent() schema.DocumentContentResolver {
+	return &documentContentResolver{r}
+}
+
 // DocumentVersion returns schema.DocumentVersionResolver implementation.
 func (r *Resolver) DocumentVersion() schema.DocumentVersionResolver {
 	return &documentVersionResolver{r}
@@ -2062,6 +2095,7 @@ type (
 	documentCollaborationHistorySessionResolver           struct{ *Resolver }
 	documentCollaborationHistorySessionConnectionResolver struct{ *Resolver }
 	documentConnectionResolver                            struct{ *Resolver }
+	documentContentResolver                               struct{ *Resolver }
 	documentVersionResolver                               struct{ *Resolver }
 	documentVersionApprovalDecisionResolver               struct{ *Resolver }
 	documentVersionApprovalDecisionConnectionResolver     struct{ *Resolver }

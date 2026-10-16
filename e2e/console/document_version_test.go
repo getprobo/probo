@@ -522,7 +522,10 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 				documentVersion {
 					id
 					status
-					content
+					content {
+						prosemirror
+						markdown
+					}
 				}
 			}
 		}
@@ -536,7 +539,10 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 			DocumentVersion *struct {
 				ID      string `json:"id"`
 				Status  string `json:"status"`
-				Content string `json:"content"`
+				Content struct {
+					Prosemirror string `json:"prosemirror"`
+					Markdown    string `json:"markdown"`
+				} `json:"content"`
 			} `json:"documentVersion"`
 		} `json:"updateDocument"`
 	}
@@ -551,6 +557,8 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 
 	require.NotNil(t, result.UpdateDocument.DocumentVersion)
 	assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+	assert.Contains(t, result.UpdateDocument.DocumentVersion.Content.Prosemirror, "Updated content")
+	assert.Contains(t, result.UpdateDocument.DocumentVersion.Content.Markdown, "Updated content")
 }
 
 func documentVersionAutoDeleteDraft(t *testing.T, actors documentVersionActors) {

@@ -164,7 +164,9 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 								status
 								major
 								minor
-								content
+								content {
+									prosemirror
+								}
 							}
 						}
 					}
@@ -189,7 +191,9 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 							Status       string `json:"status"`
 							Major        int    `json:"major"`
 							Minor        int    `json:"minor"`
-							Content      string `json:"content"`
+							Content      struct {
+								Prosemirror string `json:"prosemirror"`
+							} `json:"content"`
 						} `json:"node"`
 					} `json:"documentVersionEdge"`
 				} `json:"publishStatementOfApplicability"`
@@ -220,7 +224,7 @@ func TestStatementOfApplicability_CreateDocument(t *testing.T) {
 			assert.Equal(t, "PUBLISHED", ver.Status)
 			assert.Equal(t, 1, ver.Major)
 			assert.Equal(t, 0, ver.Minor)
-			assert.Contains(t, ver.Content, "Purpose")
+			assert.Contains(t, ver.Content.Prosemirror, "Purpose")
 		},
 	)
 

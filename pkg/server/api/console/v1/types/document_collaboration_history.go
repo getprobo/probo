@@ -61,7 +61,7 @@ type (
 	}
 
 	DocumentCollaborationHistorySnapshot struct {
-		Content    string                                   `json:"content"`
+		Content    *DocumentContent                         `json:"content"`
 		Highlights []*DocumentCollaborationHistoryHighlight `json:"highlights"`
 	}
 )
@@ -124,7 +124,7 @@ func NewDocumentCollaborationHistorySnapshot(
 	}
 
 	return &DocumentCollaborationHistorySnapshot{
-		Content:    snapshot.Content,
+		Content:    NewDocumentContent(snapshot.Content),
 		Highlights: highlights,
 	}
 }

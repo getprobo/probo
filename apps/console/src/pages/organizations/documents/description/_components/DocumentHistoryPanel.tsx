@@ -76,7 +76,9 @@ const documentHistorySnapshotQuery = graphql`
       __typename
       ... on DocumentVersion {
         collaborationHistorySnapshot(heads: $heads, previousHeads: $previousHeads) {
-          content
+          content {
+            prosemirror
+          }
           highlights {
             kind
             from
@@ -94,7 +96,9 @@ const restoreMutation = graphql`
     restoreDocumentCollaboration(input: $input) {
       documentVersion {
         id
-        content
+        content {
+          prosemirror
+        }
         status
       }
     }
@@ -308,7 +312,7 @@ function DocumentHistoryPreview(props: {
   return (
     <RichEditor
       className="flex-1"
-      content={snapshot.content}
+      content={snapshot.content.prosemirror}
       disabled
       historyHighlights={highlights}
       data-theme="document"

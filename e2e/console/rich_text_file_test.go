@@ -196,7 +196,9 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			CreateDocument struct {
 				DocumentVersionEdge struct {
 					Node struct {
-						Content string `json:"content"`
+						Content struct {
+							Prosemirror string `json:"prosemirror"`
+						} `json:"content"`
 					} `json:"node"`
 				} `json:"documentVersionEdge"`
 			} `json:"createDocument"`
@@ -205,7 +207,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		err = owner.Client().Execute(`
 			mutation($input: CreateDocumentInput!) {
 				createDocument(input: $input) {
-					documentVersionEdge { node { content } }
+					documentVersionEdge { node { content { prosemirror } } }
 				}
 			}
 		`, map[string]any{
@@ -221,7 +223,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			return err
 		}
 
-		return expectStoredFiles(result.CreateDocument.DocumentVersionEdge.Node.Content, image)
+		return expectStoredFiles(result.CreateDocument.DocumentVersionEdge.Node.Content.Prosemirror, image)
 	})
 
 	owner.Step("saves the report on a risk analysis", func() error {

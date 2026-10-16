@@ -36,7 +36,9 @@ query($id: ID!, $heads: [String!]!, $previousHeads: [String!]) {
     __typename
     ... on DocumentVersion {
       collaborationHistorySnapshot(heads: $heads, previousHeads: $previousHeads) {
-        content
+        content {
+          prosemirror
+        }
         highlights {
           kind
           from
@@ -53,7 +55,9 @@ type snapshotResponse struct {
 	Node *struct {
 		Typename                     string `json:"__typename"`
 		CollaborationHistorySnapshot *struct {
-			Content    string `json:"content"`
+			Content struct {
+				Prosemirror string `json:"prosemirror"`
+			} `json:"content"`
 			Highlights []struct {
 				Kind string `json:"kind"`
 				From int    `json:"from"`
@@ -173,7 +177,7 @@ func NewCmdViewHistorySnapshot(f *cmdutil.Factory) *cobra.Command {
 				return cmdutil.PrintJSON(f.IOStreams.Out, snapshot)
 			}
 
-			_, _ = fmt.Fprintln(f.IOStreams.Out, snapshot.Content)
+			_, _ = fmt.Fprintln(f.IOStreams.Out, snapshot.Content.Prosemirror)
 
 			if len(snapshot.Highlights) > 0 {
 				_, _ = fmt.Fprintln(f.IOStreams.Out, "\nHighlights:")

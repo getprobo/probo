@@ -108,7 +108,9 @@ export async function execute(
 					major
 					minor
 					status
-					content
+					content {
+						prosemirror
+					}
 					changelog
 					classification
 					documentType

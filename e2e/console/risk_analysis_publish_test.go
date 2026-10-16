@@ -89,7 +89,9 @@ func TestRiskAnalysis_PublishRiskAnalysis(t *testing.T) {
 								status
 								major
 								minor
-								content
+								content {
+									prosemirror
+								}
 							}
 						}
 					}
@@ -113,7 +115,9 @@ func TestRiskAnalysis_PublishRiskAnalysis(t *testing.T) {
 							Status       string `json:"status"`
 							Major        int    `json:"major"`
 							Minor        int    `json:"minor"`
-							Content      string `json:"content"`
+							Content      struct {
+								Prosemirror string `json:"prosemirror"`
+							} `json:"content"`
 						} `json:"node"`
 					} `json:"documentVersionEdge"`
 				} `json:"publishRiskAnalysis"`
@@ -143,23 +147,23 @@ func TestRiskAnalysis_PublishRiskAnalysis(t *testing.T) {
 			assert.Equal(t, "PUBLISHED", ver.Status)
 			assert.Equal(t, 1, ver.Major)
 			assert.Equal(t, 0, ver.Minor)
-			assert.Contains(t, ver.Content, "Purpose")
-			assert.Contains(t, ver.Content, "Risk Matrix")
-			assert.Contains(t, ver.Content, "Initial")
-			assert.Contains(t, ver.Content, "Net")
-			assert.Contains(t, ver.Content, "Residual")
-			assert.Contains(t, ver.Content, "Impact")
-			assert.Contains(t, ver.Content, "Likelihood")
-			assert.Contains(t, ver.Content, "5×5")
-			assert.Contains(t, ver.Content, "Export Analysis")
-			assert.Contains(t, ver.Content, "Export analysis description")
-			assert.Contains(t, ver.Content, "Export Risk")
-			assert.Contains(t, ver.Content, "RSK-")
-			assert.Contains(t, ver.Content, "Export Internal control")
-			assert.Contains(t, ver.Content, "Export Diagram")
-			assert.Contains(t, ver.Content, "Export Node")
-			assert.Contains(t, ver.Content, "Export Scenario")
-			assert.Contains(t, ver.Content, "Export Threat")
+			assert.Contains(t, ver.Content.Prosemirror, "Purpose")
+			assert.Contains(t, ver.Content.Prosemirror, "Risk Matrix")
+			assert.Contains(t, ver.Content.Prosemirror, "Initial")
+			assert.Contains(t, ver.Content.Prosemirror, "Net")
+			assert.Contains(t, ver.Content.Prosemirror, "Residual")
+			assert.Contains(t, ver.Content.Prosemirror, "Impact")
+			assert.Contains(t, ver.Content.Prosemirror, "Likelihood")
+			assert.Contains(t, ver.Content.Prosemirror, "5×5")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Analysis")
+			assert.Contains(t, ver.Content.Prosemirror, "Export analysis description")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Risk")
+			assert.Contains(t, ver.Content.Prosemirror, "RSK-")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Internal control")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Diagram")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Node")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Scenario")
+			assert.Contains(t, ver.Content.Prosemirror, "Export Threat")
 		},
 	)
 
