@@ -112,7 +112,6 @@ export function TaskNameField({ name, canUpdate, onSave }: TaskNameFieldProps) {
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            flush();
             event.currentTarget.blur();
           }
         }}

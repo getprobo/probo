@@ -18,19 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowRightIcon, CheckIcon, FilesIcon, TrayIcon } from "@phosphor-icons/react";
-import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
-import { Card } from "@probo/ui/src/v2/Card/Card";
-import { Link } from "@probo/ui/src/v2/Link/Link";
-import { Heading } from "@probo/ui/src/v2/typography/Heading";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
+import { FilesIcon } from "@phosphor-icons/react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { DocumentsDashboardCard_viewer$key } from "#/__generated__/core/DocumentsDashboardCard_viewer.graphql";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
+import { DashboardCardFrame } from "./DashboardCardFrame";
 import { dashboardCard } from "./variants";
 
 const documentsDashboardCardFragment = graphql`
@@ -91,87 +86,16 @@ export function DocumentsDashboardCard({
   }
 
   return (
-    <Card variant="soft" padding="none" size={3} className={slots.frame()}>
-      <div className={slots.wash()} />
-      <div className={slots.header()}>
-        <FilesIcon className={slots.icon()} />
-        <div className={slots.copy()}>
-          <Heading level={2} size={2} weight="medium" highContrast>
-            {t("homePage.dashboard.documents.title")}
-          </Heading>
-          <Text size={1} color="current" className={slots.description()}>
-            {t("homePage.dashboard.documents.description")}
-          </Text>
-        </div>
-        <Link
-          to={`/${employeePortalId}/documents`}
-          size={2}
-          color="neutral"
-          underline={false}
-          className={slots.view()}
-        >
-          {t("homePage.dashboard.view")}
-        </Link>
-      </div>
-      <div className={slots.body()}>
-        <DocumentsDashboardCardBody
-          bodyState={bodyState}
-          pendingCount={pendingCount}
-          to={`/${employeePortalId}/documents`}
-        />
-      </div>
-    </Card>
-  );
-}
-
-function DocumentsDashboardCardBody({
-  bodyState,
-  pendingCount,
-  to,
-}: {
-  bodyState: "empty" | "pending" | "allDone";
-  pendingCount: number;
-  to: string;
-}): ReactNode {
-  const { t } = useTranslation();
-  const slots = dashboardCard();
-
-  if (bodyState === "empty") {
-    return (
-      <div className={slots.empty()}>
-        <TrayIcon className={slots.emptyIcon()} />
-        <Text size={2} weight="medium" color="current" className={slots.emptyLabel()}>
-          {t("homePage.dashboard.documents.empty")}
-        </Text>
-      </div>
-    );
-  }
-
-  if (bodyState === "allDone") {
-    return (
-      <div className={slots.empty()}>
-        <CheckIcon className={slots.emptyIcon()} />
-        <Text size={2} weight="medium" color="current" className={slots.emptyLabel()}>
-          {t("homePage.dashboard.allDone")}
-        </Text>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <Heading level={3} size={5} weight="medium" highContrast>
-        {t("homePage.dashboard.documents.pendingCount", { count: pendingCount })}
-      </Heading>
-      <ButtonLink
-        to={to}
-        size={2}
-        variant="soft"
-        color="neutral"
-        iconEnd={<ArrowRightIcon />}
-      >
-        {t("homePage.dashboard.documents.action")}
-      </ButtonLink>
-    </>
+    <DashboardCardFrame
+      wash={wash}
+      icon={<FilesIcon className={slots.icon()} />}
+      title={t("homePage.dashboard.documents.title")}
+      description={t("homePage.dashboard.documents.description")}
+      to={`/${employeePortalId}/documents`}
+      bodyState={bodyState}
+      pendingLabel={t("homePage.dashboard.documents.pendingCount", { count: pendingCount })}
+      emptyLabel={t("homePage.dashboard.documents.empty")}
+      actionLabel={t("homePage.dashboard.documents.action")}
+    />
   );
 }

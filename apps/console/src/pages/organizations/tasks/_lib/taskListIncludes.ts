@@ -18,85 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskListGroupStates, type TaskState } from "@probo/tasks";
-
-export const taskListIncludeFlagKeys = {
-  IN_PROGRESS: "includeInProgress",
-  TODO: "includeTodo",
-  BACKLOG: "includeBacklog",
-  DONE: "includeDone",
-  CANCELED: "includeCanceled",
-  DUPLICATE: "includeDuplicate",
-} as const satisfies Record<TaskState, `include${string}`>;
-
-export type TaskListIncludeFlagKey = (typeof taskListIncludeFlagKeys)[TaskState];
-
-export type TaskListIncludeFlags = Record<TaskListIncludeFlagKey, boolean>;
-
-export function taskListIncludeFlags(state: TaskState | null): TaskListIncludeFlags {
-  const flags = {} as TaskListIncludeFlags;
-  for (const groupState of taskListGroupStates) {
-    flags[taskListIncludeFlagKeys[groupState]] = state == null || state === groupState;
-  }
-  return flags;
-}
-
-export function pickTaskListIncludeFlags(
-  variables: TaskListIncludeFlags,
-): TaskListIncludeFlags {
-  const flags = {} as TaskListIncludeFlags;
-  for (const groupState of taskListGroupStates) {
-    const key = taskListIncludeFlagKeys[groupState];
-    flags[key] = variables[key];
-  }
-  return flags;
-}
-
-export function mergeTaskListIncludeFlags(
-  current: TaskListIncludeFlags,
-  next: TaskListIncludeFlags,
-): TaskListIncludeFlags {
-  const flags = {} as TaskListIncludeFlags;
-  for (const groupState of taskListGroupStates) {
-    const key = taskListIncludeFlagKeys[groupState];
-    flags[key] = current[key] || next[key];
-  }
-  return flags;
-}
-
-export function taskListIncludeFlagsEqual(
-  left: TaskListIncludeFlags,
-  right: TaskListIncludeFlags,
-): boolean {
-  return taskListGroupStates.every((groupState) => {
-    const key = taskListIncludeFlagKeys[groupState];
-    return left[key] === right[key];
-  });
-}
-
-export function taskListNeedsFetch(
-  query: string | null,
-  includes: TaskListIncludeFlags,
-  fetched: { query: string | null; includes: TaskListIncludeFlags },
-): boolean {
-  if (query !== fetched.query) {
-    return true;
-  }
-
-  return taskListGroupStates.some((groupState) => {
-    const key = taskListIncludeFlagKeys[groupState];
-    return includes[key] && !fetched.includes[key];
-  });
-}
-
-export function taskListReadableIncludeFlags(
-  needed: TaskListIncludeFlags,
-  fetched: TaskListIncludeFlags,
-): TaskListIncludeFlags {
-  const flags = {} as TaskListIncludeFlags;
-  for (const groupState of taskListGroupStates) {
-    const key = taskListIncludeFlagKeys[groupState];
-    flags[key] = needed[key] && fetched[key];
-  }
-  return flags;
-}
+export {
+  mergeTaskListIncludeFlags,
+  pickTaskListIncludeFlags,
+  type TaskListIncludeFlagKey,
+  taskListIncludeFlagKeys,
+  type TaskListIncludeFlags,
+  taskListIncludeFlags,
+  taskListIncludeFlagsEqual,
+  taskListNeedsFetch,
+  taskListReadableIncludeFlags,
+} from "@probo/tasks";

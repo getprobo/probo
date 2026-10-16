@@ -47,6 +47,7 @@ export function organizationTaskListFilterVariants(
     assignedToId: null,
     internalControlId: null,
     deadlineOnOrBefore: null,
+    deadlineOnOrAfter: null,
     hasDeadline: null,
     hasAssignee: null,
   };
@@ -55,6 +56,7 @@ export function organizationTaskListFilterVariants(
     && filter.assignedToId == null
     && filter.internalControlId == null
     && filter.deadlineOnOrBefore == null
+    && filter.deadlineOnOrAfter == null
     && filter.hasDeadline == null
     && filter.hasAssignee == null
   ) {
@@ -67,6 +69,7 @@ export function organizationTaskListFilterVariants(
       assignedToId: filter.assignedToId,
       internalControlId: filter.internalControlId,
       deadlineOnOrBefore: filter.deadlineOnOrBefore,
+      deadlineOnOrAfter: filter.deadlineOnOrAfter,
       hasDeadline: filter.hasDeadline,
       hasAssignee: filter.hasAssignee,
     },
@@ -112,6 +115,7 @@ export const emptyTaskListFilter = {
   assignedToId: null,
   internalControlId: null,
   deadlineOnOrBefore: null,
+  deadlineOnOrAfter: null,
   hasDeadline: null,
   hasAssignee: null,
 };
@@ -142,6 +146,30 @@ export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
 const taskCommentsConnectionFilters = {
   orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
 };
+
+const rememberedOrganizationTaskListFiltersByKey = new Map<string, OrganizationTaskListFilter>();
+
+function organizationTaskListFilterKey(filter: OrganizationTaskListFilter) {
+  return [
+    filter.query,
+    filter.assignedToId,
+    filter.internalControlId,
+    filter.deadlineOnOrBefore,
+    filter.hasDeadline,
+    filter.hasAssignee,
+  ].join("\0");
+}
+
+export function rememberOrganizationTaskListFilter(filter: OrganizationTaskListFilter) {
+  rememberedOrganizationTaskListFiltersByKey.set(
+    organizationTaskListFilterKey(filter),
+    filter,
+  );
+}
+
+export function rememberedOrganizationTaskListFilters(): OrganizationTaskListFilter[] {
+  return [...rememberedOrganizationTaskListFiltersByKey.values()];
+}
 
 export function taskCommentsConnectionId(taskId: string) {
   return ConnectionHandler.getConnectionID(

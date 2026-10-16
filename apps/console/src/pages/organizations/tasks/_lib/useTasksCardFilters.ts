@@ -31,6 +31,7 @@ export interface TasksCardFilterInput {
   assignedToId: string | null;
   internalControlId: string | null;
   deadlineOnOrBefore: string | null;
+  deadlineOnOrAfter: string | null;
   hasDeadline: boolean | null;
   hasAssignee: boolean | null;
 }
@@ -93,6 +94,7 @@ export function useTasksCardFilters() {
     assignedToId,
     internalControlId,
     deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
+    deadlineOnOrAfter: deadlineBounds.deadlineOnOrAfter,
     hasDeadline: deadlineBounds.hasDeadline,
     hasAssignee,
   }), [assignedToId, deadlineBounds, hasAssignee, internalControlId, query, state]);

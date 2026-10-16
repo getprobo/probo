@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { CaretDownIcon } from "@phosphor-icons/react";
 import { type ReactNode, useState } from "react";
 
@@ -33,6 +34,7 @@ import { ComboboxItem } from "./ComboboxItem";
 import { ComboboxJoined } from "./ComboboxJoined";
 import { ComboboxList } from "./ComboboxList";
 import { ComboboxPopup } from "./ComboboxPopup";
+import { comboboxJoined } from "./variants";
 
 export interface ComboboxPagedOption {
   id: string;
@@ -93,7 +95,8 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
     itemLeading,
   } = props;
   const [open, setOpen] = useState(false);
-  const showEmpty = !loading && !failed && items.length === 0 && pinned == null;
+  const { list } = comboboxJoined();
+  const showEmpty = !loading && !failed && items.length === 0;
 
   return (
     <Combobox
@@ -140,13 +143,19 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
               aria-label={ariaLabel}
               disabled={disabled}
             />
-            <CaretDownIcon className="size-4 shrink-0 text-sand-11" />
+            <BaseCombobox.Trigger
+              aria-label={ariaLabel}
+              disabled={disabled}
+              className="inline-flex shrink-0 items-center justify-center text-sand-11"
+            >
+              <CaretDownIcon className="size-4" />
+            </BaseCombobox.Trigger>
           </ComboboxInputGroup>
         )}
       >
         <ComboboxPopup joined>
           {(pinned != null || items.length > 0) && (
-            <ComboboxList>
+            <ComboboxList className={list()}>
               {pinned != null && (
                 <ComboboxItem
                   key={pinned.id}

@@ -27,6 +27,7 @@ import {
   organizationTaskListConnectionFilters,
   type OrganizationTaskListFilter,
   organizationTaskListFilterVariants,
+  rememberedOrganizationTaskListFilters,
   taskListConnectionKeys,
 } from "./taskPath";
 
@@ -56,7 +57,24 @@ export function deleteOrganizationTaskListEdges(
     return;
   }
 
-  for (const variant of organizationTaskListFilterVariants(filter)) {
+  const variants = [
+    ...organizationTaskListFilterVariants(filter),
+    ...rememberedOrganizationTaskListFilters(),
+  ];
+  const seen = new Set<string>();
+  for (const variant of variants) {
+    const key = [
+      variant.query,
+      variant.assignedToId,
+      variant.internalControlId,
+      variant.deadlineOnOrBefore,
+      variant.hasDeadline,
+      variant.hasAssignee,
+    ].join("\0");
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
     for (const state of taskStates) {
       const connection = ConnectionHandler.getConnection(
         organization,

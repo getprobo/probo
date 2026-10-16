@@ -30,6 +30,23 @@ import {
   parseIsoDate,
 } from "./dateModel";
 
+function placeCaret(input: HTMLInputElement, masked: string, digitsBefore: number) {
+  let seen = 0;
+  let next = masked.length;
+  for (let index = 0; index < masked.length; index += 1) {
+    if (/\d/.test(masked[index] ?? "")) {
+      seen += 1;
+      if (seen === digitsBefore) {
+        next = index + 1;
+        break;
+      }
+    }
+  }
+  requestAnimationFrame(() => {
+    input.setSelectionRange(next, next);
+  });
+}
+
 export function useDateInput({
   value,
   locale,
@@ -58,16 +75,23 @@ export function useDateInput({
   const maxDate = parseIsoDate(max ?? "");
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const raw = event.currentTarget.value;
+    const input = event.currentTarget;
+    const raw = input.value;
+    const caret = input.selectionStart ?? raw.length;
+    const digitsBefore = raw.slice(0, caret).replace(/\D/g, "").length;
     const trimmed = raw.trim();
     if (parseIsoDate(trimmed) != null && !isOutOfRange(trimmed, minDate, maxDate)) {
-      setDraft(isoToMasked(trimmed, pattern));
+      const masked = isoToMasked(trimmed, pattern);
+      setDraft(masked);
+      placeCaret(input, masked, digitsBefore);
       onCommit(trimmed);
       return;
     }
 
     const digits = raw.replace(/\D/g, "").slice(0, 8);
-    setDraft(maskDigits(digits, pattern));
+    const masked = maskDigits(digits, pattern);
+    setDraft(masked);
+    placeCaret(input, masked, digitsBefore);
 
     if (digits.length === 0) {
       if (nullable) {
@@ -114,8 +138,10 @@ export function useDateInput({
     }
   }
 
+  const committedDraft = isoToMasked(value, pattern);
   return {
     draft,
+    matchesValue: draft === committedDraft,
     placeholder: maskPlaceholder(pattern),
     onChange: handleChange,
     onBlur: handleBlur,

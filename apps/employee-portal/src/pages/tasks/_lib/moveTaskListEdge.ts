@@ -261,6 +261,78 @@ export function resortTaskListEdge(
     const edge = findEdge(connection, nodeId);
     if (edge != null) {
       placeEdgeByPriority(connection, edge, node);
+      syncPageInfo(connection);
+    }
+  }
+}
+
+function syncPageInfo(connection: TaskRecord) {
+  const edges = (connection.getLinkedRecords("edges") ?? []).filter(edge => edge != null);
+  const pageInfo = connection.getLinkedRecord("pageInfo");
+  if (pageInfo == null || edges.length === 0) {
+    return;
+  }
+
+  const startCursor: unknown = edges[0]?.getValue("cursor");
+  const endCursor: unknown = edges[edges.length - 1]?.getValue("cursor");
+  if (typeof startCursor === "string") {
+    pageInfo.setValue(startCursor, "startCursor");
+  }
+  if (typeof endCursor === "string") {
+    pageInfo.setValue(endCursor, "endCursor");
+  }
+}
+
+export function reconcileTaskListDeadline(
+  store: RecordSourceSelectorProxy,
+  node: TaskRecord,
+  {
+    state,
+    organizationId,
+    queries,
+    deadline,
+    previousDeadline,
+  }: {
+    state: TaskState;
+    organizationId: string;
+    queries: readonly (string | null)[];
+    deadline: TaskDeadlineBounds;
+    previousDeadline: string | null;
+  },
+) {
+  const viewer = getViewer(store);
+  if (viewer == null) {
+    return;
+  }
+
+  const nodeId = node.getDataID();
+  const deadlineValue = node.getValue("deadline");
+  const nextDeadline = typeof deadlineValue === "string" ? deadlineValue : null;
+  for (const query of uniqueQueries(queries)) {
+    const connection = ConnectionHandler.getConnection(
+      viewer,
+      taskListConnectionKeys[state],
+      taskListConnectionFilters(organizationId, query, state, deadline),
+    );
+    if (connection == null) {
+      continue;
+    }
+
+    const edge = findEdge(connection, nodeId);
+    const wasMember = taskMatchesDeadline(previousDeadline, deadline) !== false;
+    const isMember = taskMatchesDeadline(nextDeadline, deadline) === true;
+    if (edge != null && !isMember && wasMember) {
+      ConnectionHandler.deleteNode(connection, nodeId);
+      adjustTotalCount(connection, -1);
+      continue;
+    }
+    if (edge == null && !wasMember && isMember) {
+      placeEdgeByPriority(
+        connection,
+        ConnectionHandler.createEdge(store, connection, node, "TaskEdge"),
+        node,
+      );
+      adjustTotalCount(connection, 1);
     }
   }
 }

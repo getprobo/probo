@@ -443,6 +443,8 @@ func (a *Authorizer) evaluateMultiInTx(
 		role = membership.Role.String()
 	}
 
+	policies := a.buildPoliciesForRole(role)
+
 	var scopedPrincipalAttrs policy.Attributes
 	if membership != nil && role != "" {
 		scopedPrincipalAttrs = policy.Attributes{
@@ -450,19 +452,21 @@ func (a *Authorizer) evaluateMultiInTx(
 			"role":            membership.Role.String(),
 		}
 
-		profile := &coredata.MembershipProfile{}
-		if err := profile.LoadByIdentityIDAndOrganizationID(
-			ctx,
-			tx,
-			coredata.NewScopeFromObjectID(membership.OrganizationID),
-			params.Principal,
-			membership.OrganizationID,
-		); err != nil {
-			if !errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, nil, nil, fmt.Errorf("cannot load membership profile: %w", err)
+		if policiesReferenceProfileID(policies, params) {
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				tx,
+				coredata.NewScopeFromObjectID(membership.OrganizationID),
+				params.Principal,
+				membership.OrganizationID,
+			); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil, nil, nil, fmt.Errorf("cannot load membership profile: %w", err)
+				}
+			} else {
+				scopedPrincipalAttrs["profile_id"] = profile.ID.String()
 			}
-		} else {
-			scopedPrincipalAttrs["profile_id"] = profile.ID.String()
 		}
 	}
 
@@ -474,8 +478,6 @@ func (a *Authorizer) evaluateMultiInTx(
 	if params.Session != nil {
 		principalAttrs["session_id"] = params.Session.String()
 	}
-
-	policies := a.buildPoliciesForRole(role)
 
 	decisions := make([]error, len(params.Items))
 	itemAttrs := make([]policy.Attributes, len(params.Items))
@@ -760,6 +762,42 @@ func (a *Authorizer) buildPrincipalAttributes(
 	}
 
 	return attrs, nil
+}
+
+func policiesReferenceProfileID(policies []*policy.Policy, params AuthorizeMultiParams) bool {
+	matcher := policy.ActionMatcher{}
+
+	for _, item := range policies {
+		for _, statement := range item.Statements {
+			applies := false
+
+			for _, request := range params.Items {
+				for _, pattern := range statement.Actions {
+					if matcher.Matches(pattern, request.Action) {
+						applies = true
+					}
+				}
+			}
+
+			if !applies {
+				continue
+			}
+
+			for _, condition := range statement.Conditions {
+				if strings.Contains(condition.Key, "profile_id") {
+					return true
+				}
+
+				for _, value := range condition.Values {
+					if strings.Contains(value, "profile_id") {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func (a *Authorizer) buildPoliciesForRole(role string) []*policy.Policy {

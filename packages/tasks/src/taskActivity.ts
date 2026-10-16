@@ -66,7 +66,17 @@ export function formatTaskActivityValue(
       return value;
     }
 
-    return `${parsed.amount} ${t(`units.${parsed.unit}`)}`;
+    const unitNames = {
+      S: "seconds",
+      M: "minutes",
+      H: "hours",
+      D: "days",
+      W: "weeks",
+      MO: "months",
+      Y: "years",
+    } as const;
+    const form = parsed.amount === 1 ? "one" : "other";
+    return `${parsed.amount} ${t(`duration.${unitNames[parsed.unit]}_${form}`)}`;
   }
 
   return value;

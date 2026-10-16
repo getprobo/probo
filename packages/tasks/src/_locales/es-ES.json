@@ -37,7 +37,7 @@
   "deadlinePicker": {
     "today": "Hoy",
     "tomorrow": "Mañana",
-    "endOfWeek": "Fin de semana",
+    "endOfWeek": "Final de la semana",
     "nextWeek": "La semana que viene",
     "custom": "Personalizada",
     "none": "Ninguna"
@@ -99,7 +99,7 @@
       "descriptionUpdated": "{{actor}} actualizó la descripción",
       "stateChanged": "{{actor}} cambió el estado de {{oldValue}} a {{newValue}}",
       "priorityChanged": "{{actor}} cambió la prioridad de {{oldValue}} a {{newValue}}",
-      "assigned": "{{actor}} asignó {{newValue}}",
+      "assigned": "{{actor}} asignó a {{newValue}}",
       "reassigned": "{{actor}} reasignó de {{oldValue}} a {{newValue}}",
       "unassigned": "{{actor}} quitó la asignación de {{oldValue}}",
       "internalControlLinked": "{{actor}} vinculó {{newValue}}",

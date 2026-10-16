@@ -76,6 +76,7 @@ export function useDeleteTask() {
             assignedToId: graphqlFilter.assignedToId,
             internalControlId: graphqlFilter.internalControlId,
             deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+            deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
             hasDeadline: graphqlFilter.hasDeadline,
             hasAssignee: graphqlFilter.hasAssignee,
           },

@@ -31,11 +31,16 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 
 	identity := authn.IdentityFromContext(ctx)
 
+	ownerID := input.OwnerID
+	if _, err := r.authorize(ctx, input.TaskID, task.ActionTaskAssign); err != nil {
+		ownerID = nil
+	}
+
 	taskComment, err := r.task.CreateComment(
 		ctx, scope,
 		task.CreateTaskCommentRequest{
 			TaskID:     input.TaskID,
-			OwnerID:    input.OwnerID,
+			OwnerID:    ownerID,
 			IdentityID: identity.ID,
 			Content:    input.Content,
 		},

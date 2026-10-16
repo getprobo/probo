@@ -115,11 +115,21 @@ export function DateMonthView(props: DateMonthViewProps) {
               {(month: number | null) => (month == null ? null : months[month])}
             </SelectTrigger>
             <SelectPopup>
-              {months.map((label, month) => (
-                <SelectItem key={label} value={month}>
-                  {label}
-                </SelectItem>
-              ))}
+              {months.map((label, month) => {
+                const start = new Date(visible.year, month, 1);
+                const end = new Date(visible.year, month + 1, 0);
+                if (minDate != null && end < minDate) {
+                  return null;
+                }
+                if (maxDate != null && start > maxDate) {
+                  return null;
+                }
+                return (
+                  <SelectItem key={label} value={month}>
+                    {label}
+                  </SelectItem>
+                );
+              })}
             </SelectPopup>
           </Select>
         </div>
@@ -138,11 +148,19 @@ export function DateMonthView(props: DateMonthViewProps) {
               {(year: number | null) => year}
             </SelectTrigger>
             <SelectPopup>
-              {years.map(year => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
+              {years.map((year) => {
+                if (minDate != null && year < minDate.getFullYear()) {
+                  return null;
+                }
+                if (maxDate != null && year > maxDate.getFullYear()) {
+                  return null;
+                }
+                return (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                );
+              })}
             </SelectPopup>
           </Select>
         </div>
@@ -177,6 +195,7 @@ export function DateMonthView(props: DateMonthViewProps) {
               key={iso}
               type="button"
               disabled={isDisabled}
+              aria-label={day.toLocaleDateString(locale, { dateStyle: "full" })}
               aria-pressed={isSelected}
               aria-current={iso === todayIso ? "date" : undefined}
               className={dateFieldDay({

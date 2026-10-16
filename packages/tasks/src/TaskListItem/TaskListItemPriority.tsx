@@ -58,7 +58,7 @@ export function TaskListItemPriority({
       <Tooltip>
         <TooltipTrigger
           render={(
-            <span aria-label={label}>
+            <span className={slots.state()} aria-label={label}>
               {icon}
             </span>
           )}

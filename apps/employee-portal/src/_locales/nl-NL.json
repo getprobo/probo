@@ -55,8 +55,8 @@
         "title": "Documenten",
         "description": "Onderteken en keur toegewezen documenten goed.",
         "empty": "Nog niets om te beoordelen",
-        "pendingCount_one": "{{count}} document om te beoordelen",
-        "pendingCount_other": "{{count}} documenten om te beoordelen",
+        "pendingCount_one": "{{count}} beoordeling open",
+        "pendingCount_other": "{{count}} beoordelingen open",
         "action": "Documenten beoordelen"
       },
       "tasks": {

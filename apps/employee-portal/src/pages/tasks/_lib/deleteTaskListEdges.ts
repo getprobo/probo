@@ -24,6 +24,7 @@ import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import { adjustTotalCount } from "./moveTaskListEdge";
 import {
+  rememberedTaskListDeadlines,
   taskListConnectionFilters,
   taskListConnectionKeys,
 } from "./taskPath";
@@ -57,30 +58,39 @@ export function deleteTaskListEdges(
   }
 
   const queries = query == null ? [null] : [query, null];
+  const deadlines = [deadline].concat(rememberedTaskListDeadlines());
+  const seenDeadlines = new Set<string>();
   for (const state of taskStates) {
     for (const filterQuery of queries) {
-      const connection = ConnectionHandler.getConnection(
-        viewer,
-        taskListConnectionKeys[state],
-        taskListConnectionFilters(organizationId, filterQuery, state, deadline),
-      );
-      if (connection == null) {
-        continue;
-      }
-      const hadEdge = (connection.getLinkedRecords("edges") ?? []).some(
-        edge => edge?.getLinkedRecord("node")?.getDataID() === taskId,
-      );
-      if (!hadEdge) {
-        if (task != null && taskState === state && matchesTaskQuery(task, filterQuery)) {
-          const storedDeadline = readString(task, "deadline");
-          if (taskMatchesDeadline(storedDeadline, deadline) === true) {
-            adjustTotalCount(connection, -1);
-          }
+      for (const filterDeadline of deadlines) {
+        const deadlineKey = `${filterDeadline.deadlineOnOrBefore ?? ""}\0${filterDeadline.hasDeadline ?? ""}`;
+        if (seenDeadlines.has(`${state}\0${filterQuery ?? ""}\0${deadlineKey}`)) {
+          continue;
         }
-        continue;
+        seenDeadlines.add(`${state}\0${filterQuery ?? ""}\0${deadlineKey}`);
+        const connection = ConnectionHandler.getConnection(
+          viewer,
+          taskListConnectionKeys[state],
+          taskListConnectionFilters(organizationId, filterQuery, state, filterDeadline),
+        );
+        if (connection == null) {
+          continue;
+        }
+        const hadEdge = (connection.getLinkedRecords("edges") ?? []).some(
+          edge => edge?.getLinkedRecord("node")?.getDataID() === taskId,
+        );
+        if (!hadEdge) {
+          if (task != null && taskState === state && matchesTaskQuery(task, filterQuery)) {
+            const storedDeadline = readString(task, "deadline");
+            if (taskMatchesDeadline(storedDeadline, filterDeadline) === true) {
+              adjustTotalCount(connection, -1);
+            }
+          }
+          continue;
+        }
+        ConnectionHandler.deleteNode(connection, taskId);
+        adjustTotalCount(connection, -1);
       }
-      ConnectionHandler.deleteNode(connection, taskId);
-      adjustTotalCount(connection, -1);
     }
   }
 }

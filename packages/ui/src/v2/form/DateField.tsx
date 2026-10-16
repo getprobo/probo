@@ -122,6 +122,8 @@ export function DateField(props: DateFieldProps) {
           </PopoverTrigger>
           <PopoverPopup>
             <DateMonthView
+              size={size}
+              disabled={disabled}
               value={value}
               locale={locale}
               min={min}

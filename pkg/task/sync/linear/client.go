@@ -775,23 +775,35 @@ func (c *Client) SearchIssues(ctx context.Context, teamID, query string, first i
 		return c.listTeamIssues(ctx, teamID, first, after)
 	}
 
-	page, err := c.searchTeamIssues(ctx, teamID, query, first, after)
-	if err != nil {
-		return IssuePage{}, err
-	}
-
 	if after != nil && strings.TrimSpace(*after) != "" {
-		return page, nil
+		return c.searchTeamIssues(ctx, teamID, query, first, after)
 	}
 
-	number, ok := issueNumber(query)
-	if !ok {
-		return page, nil
+	number, numberedOK := issueNumber(query)
+
+	var numbered IssuePage
+
+	if numberedOK {
+		var err error
+
+		numbered, err = c.listTeamIssuesByNumber(ctx, teamID, number, 1)
+		if err != nil {
+			return IssuePage{}, err
+		}
 	}
 
-	numbered, err := c.listTeamIssuesByNumber(ctx, teamID, number, first)
+	searchFirst := first
+	if len(numbered.Issues) > 0 && first > 1 {
+		searchFirst = first - 1
+	}
+
+	page, err := c.searchTeamIssues(ctx, teamID, query, searchFirst, after)
 	if err != nil {
 		return IssuePage{}, err
+	}
+
+	if len(numbered.Issues) == 0 {
+		return page, nil
 	}
 
 	return mergeIssuePages(numbered, page), nil

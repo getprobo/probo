@@ -31,7 +31,7 @@ function useSerializedFieldSave(
     saveRef.current = save;
   }, [save]);
 
-  return useCallback((value: string) => {
+  const submit = useCallback((value: string) => {
     pendingRef.current = value;
 
     function pump() {
@@ -57,20 +57,33 @@ function useSerializedFieldSave(
 
     pump();
   }, []);
+
+  const followIfBusy = useCallback((value: string) => {
+    if (!inFlightRef.current && pendingRef.current == null) {
+      return false;
+    }
+
+    pendingRef.current = value;
+    return true;
+  }, []);
+
+  return { submit, followIfBusy };
 }
 
 export function useDebouncedSerializedFieldSave(
   save: (value: string) => Promise<void>,
   delayMs: number,
 ) {
-  const persist = useSerializedFieldSave(save);
+  const { submit: persist, followIfBusy } = useSerializedFieldSave(save);
   const persistRef = useRef(persist);
+  const followIfBusyRef = useRef(followIfBusy);
   const [pending, setPending] = useState<string | null>(null);
   const pendingSave = useRef<{ value: string } | null>(null);
 
   useEffect(() => {
     persistRef.current = persist;
-  }, [persist]);
+    followIfBusyRef.current = followIfBusy;
+  }, [followIfBusy, persist]);
 
   useLayoutEffect(() => {
     pendingSave.current = pending == null ? null : { value: pending };
@@ -93,6 +106,7 @@ export function useDebouncedSerializedFieldSave(
     }
 
     const timer = window.setTimeout(() => {
+      pendingSave.current = null;
       persist(pending);
       setPending(null);
     }, delayMs);
@@ -109,6 +123,7 @@ export function useDebouncedSerializedFieldSave(
 
   function flush() {
     const queued = pendingSave.current;
+    pendingSave.current = null;
     if (queued == null) {
       return;
     }
@@ -122,5 +137,15 @@ export function useDebouncedSerializedFieldSave(
     setPending(null);
   }
 
-  return { schedule, flush, cancel };
+  function revert(value: string) {
+    if (followIfBusyRef.current(value)) {
+      pendingSave.current = null;
+      setPending(null);
+      return;
+    }
+
+    cancel();
+  }
+
+  return { schedule, flush, cancel, revert };
 }

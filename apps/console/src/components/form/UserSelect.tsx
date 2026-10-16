@@ -221,15 +221,15 @@ function UserSelectLoaded({
       }}
     >
       <SelectTrigger
-        size={trigger == null ? size : 1}
-        variant={trigger == null ? undefined : "ghost"}
-        className={trigger == null
+        size={trigger == null || trigger === false ? size : 1}
+        variant={trigger == null || trigger === false ? undefined : "ghost"}
+        className={trigger == null || trigger === false
           ? undefined
-          : "relative z-1 w-auto min-w-0 gap-0 px-0 [&>:last-child]:hidden"}
+          : "relative z-1 w-auto min-w-0 gap-0 px-0 *:last:hidden"}
         aria-label={ariaLabel}
-        placeholder={trigger == null ? placeholder : undefined}
+        placeholder={trigger == null || trigger === false ? placeholder : undefined}
       >
-        {trigger == null
+        {trigger == null || trigger === false
           ? (selected: string | null) => {
               if (selected == null || selected === emptyValue) {
                 return emptyLabel;

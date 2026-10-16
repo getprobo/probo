@@ -178,7 +178,7 @@ function TaskAssigneeMenuLoaded({
     }
 
     startTransition(() => {
-      refetch({ filter: assigneeFilter(graphqlQuery, hideEndedContracts) }, { fetchPolicy: "store-or-network" });
+      refetch({ filter: assigneeFilter(graphqlQuery, hideEndedContracts) }, { fetchPolicy: "network-only" });
     });
   }, [graphqlQuery, hideEndedContracts, refetch]);
 

@@ -32,6 +32,7 @@ import {
   taskListNeedsFetch,
   taskListReadableIncludeFlags,
 } from "../_lib/taskListIncludes";
+import { rememberTaskListDeadline } from "../_lib/taskPath";
 import { useTasksFilters } from "../_lib/useTasksFilters";
 import {
   type TasksPageListGroupNode,
@@ -131,6 +132,7 @@ export interface TasksPageListProps {
 export function TasksPageList({ viewerKey }: TasksPageListProps) {
   const { organizationId } = useEmployeePortalRoute();
   const { query, graphqlQuery, deadlineBounds, due, state: selectedState, includeFlags } = useTasksFilters();
+  rememberTaskListDeadline(deadlineBounds);
   const [isPending, startTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const [fetched, setFetched] = useState(() => ({
@@ -173,7 +175,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
           ...requestedIncludes,
         },
         {
-          fetchPolicy: "store-or-network",
+          fetchPolicy: "network-only",
           onComplete(error) {
             if (error) {
               return;
@@ -197,7 +199,9 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
 
   return (
     <TaskListView<TasksPageListRowItem>
-      groups={groups.map(group => ({
+      groups={(due === "overdue"
+        ? groups.filter(group => group.state !== "DONE" && group.state !== "CANCELED" && group.state !== "DUPLICATE")
+        : groups).map(group => ({
         state: group.state,
         totalCount: group.totalCount,
         loadedItems: group.edges.map(({ node }) => ({

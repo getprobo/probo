@@ -83,10 +83,6 @@ function parseIsoDuration(value: string): IsoDurationComponents | null {
   };
 }
 
-function isWholePositive(value: number): boolean {
-  return Number.isSafeInteger(value) && value > 0;
-}
-
 export function parseTaskDurationAmount(value: string): number | null {
   const trimmed = value.trim();
   if (!/^[1-9]\d*$/.test(trimmed)) {
@@ -137,12 +133,12 @@ export function parseTaskDuration(value: string): ParsedTaskDuration | null {
   const hasClock = hours > 0 || minutes > 0 || seconds > 0;
 
   if (years > 0 || months > 0) {
-    if (weeks > 0 || days > 0 || hasClock) {
+    if (weeks > 0 || hasClock) {
       return null;
     }
 
-    const totalMonths = years * 12 + months;
-    if (!isWholePositive(totalMonths)) {
+    const totalMonths = years * 12 + months + days / 30;
+    if (!Number.isFinite(totalMonths) || totalMonths <= 0) {
       return null;
     }
 
@@ -159,28 +155,27 @@ export function parseTaskDuration(value: string): ParsedTaskDuration | null {
       + hours * secondsPerHour
       + minutes * secondsPerMinute
       + seconds;
-  const normalized = Math.round(totalSeconds);
-  if (!Number.isFinite(totalSeconds) || !isWholePositive(normalized)) {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
     return null;
   }
 
-  if (normalized % secondsPerWeek === 0) {
-    return { amount: normalized / secondsPerWeek, unit: "W" };
+  if (Number.isInteger(totalSeconds) && totalSeconds % secondsPerWeek === 0) {
+    return { amount: totalSeconds / secondsPerWeek, unit: "W" };
   }
 
-  if (normalized % secondsPerDay === 0) {
-    return { amount: normalized / secondsPerDay, unit: "D" };
+  if (Number.isInteger(totalSeconds) && totalSeconds % secondsPerDay === 0) {
+    return { amount: totalSeconds / secondsPerDay, unit: "D" };
   }
 
-  if (normalized % secondsPerHour === 0) {
-    return { amount: normalized / secondsPerHour, unit: "H" };
+  if (Number.isInteger(totalSeconds) && totalSeconds % secondsPerHour === 0) {
+    return { amount: totalSeconds / secondsPerHour, unit: "H" };
   }
 
-  if (normalized % secondsPerMinute === 0) {
-    return { amount: normalized / secondsPerMinute, unit: "M" };
+  if (Number.isInteger(totalSeconds) && totalSeconds % secondsPerMinute === 0) {
+    return { amount: totalSeconds / secondsPerMinute, unit: "M" };
   }
 
-  return { amount: normalized, unit: "S" };
+  return { amount: totalSeconds, unit: "S" };
 }
 
 export function taskDurationsEqual(left: string, right: string): boolean {

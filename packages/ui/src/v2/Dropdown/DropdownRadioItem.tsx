@@ -41,9 +41,11 @@ export function DropdownRadioItem(props: DropdownRadioItemProps) {
   const { className, iconStart, shortcut, indicator = "end", children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();
   const check = (
-    <Menu.RadioItemIndicator className={dropdownItemIndicator()}>
-      <CheckIcon weight="bold" />
-    </Menu.RadioItemIndicator>
+    <span className="flex size-4 shrink-0 items-center justify-center">
+      <Menu.RadioItemIndicator className={dropdownItemIndicator()}>
+        <CheckIcon weight="bold" />
+      </Menu.RadioItemIndicator>
+    </span>
   );
 
   return (

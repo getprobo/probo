@@ -38,6 +38,7 @@ const publishMutation = graphql`
     publishTaskToLinear(input: $input) {
       task {
         id
+        ...TaskListItem_task
       }
     }
   }

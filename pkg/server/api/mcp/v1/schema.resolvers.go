@@ -9826,6 +9826,11 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 
 	identity := authn.IdentityFromContext(ctx)
 
+	ownerID := input.OwnerID
+	if _, err := r.Authorize(ctx, input.TaskID, task.ActionTaskAssign); err != nil {
+		ownerID = nil
+	}
+
 	content, err := markdownToProseMirrorJSON(input.Content)
 	if err != nil {
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
@@ -9835,7 +9840,7 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 		ctx, scope,
 		task.CreateTaskCommentRequest{
 			TaskID:     input.TaskID,
-			OwnerID:    input.OwnerID,
+			OwnerID:    ownerID,
 			IdentityID: identity.ID,
 			Content:    content,
 		},

@@ -99,7 +99,8 @@ export function DateCalendar(props: DateCalendarProps) {
           spellCheck={false}
           disabled={disabled}
           required={required}
-          maxLength={10}
+          pattern={dateInput.matchesValue ? undefined : "a^"}
+          maxLength={dateInput.placeholder.length}
           placeholder={placeholder ?? dateInput.placeholder}
           value={dateInput.draft}
           aria-invalid={ariaInvalid}

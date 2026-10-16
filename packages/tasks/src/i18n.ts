@@ -18,26 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import enUS from "./_locales/en-US.json";
-import esES from "./_locales/es-ES.json";
-import frFR from "./_locales/fr-FR.json";
-import nlNL from "./_locales/nl-NL.json";
-
 export const TASKS_NAMESPACE = "@probo/tasks";
 
-const catalogs: Record<string, Record<string, unknown>> = {
-  "en-US": enUS,
-  "es-ES": esES,
-  "fr-FR": frFR,
-  "nl-NL": nlNL,
-};
+const catalogs = {
+  "en-US": () => import("./_locales/en-US.json"),
+  "es-ES": () => import("./_locales/es-ES.json"),
+  "fr-FR": () => import("./_locales/fr-FR.json"),
+  "nl-NL": () => import("./_locales/nl-NL.json"),
+} as const;
 
 export function registerTasksCatalogs(
   lookup: Map<string, () => Promise<{ default: unknown }>>,
   catalogKey: (namespace: string, language: string) => string,
 ) {
-  for (const [language, catalog] of Object.entries(catalogs)) {
-    lookup.set(catalogKey(TASKS_NAMESPACE, language), () =>
-      Promise.resolve({ default: catalog }));
+  for (const [language, load] of Object.entries(catalogs)) {
+    lookup.set(catalogKey(TASKS_NAMESPACE, language), load);
   }
 }

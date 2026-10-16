@@ -213,11 +213,9 @@ export function useTasksListFill({
     };
     try {
       const error = await loadGroupPage(group, startTransition);
-      if (error != null) {
-        failedRef.current.add(group.state);
-        if (lastAttemptRef.current?.state === group.state) {
-          lastAttemptRef.current = null;
-        }
+      if (error != null && lastAttemptRef.current?.state === group.state) {
+        lastAttemptRef.current = null;
+        skippedRef.current.delete(group.state);
       }
     } finally {
       fillingRef.current = false;

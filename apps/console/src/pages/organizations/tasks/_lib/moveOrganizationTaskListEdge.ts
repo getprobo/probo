@@ -57,6 +57,14 @@ export function readStoredTaskState(environment: Environment, taskId: string): T
   return record.state;
 }
 
+export function readStoredDeadline(environment: Environment, taskId: string): string | null {
+  const record = environment.getStore().getSource().get(taskId) as
+    | { readonly deadline?: unknown }
+    | null
+    | undefined;
+  return typeof record?.deadline === "string" ? record.deadline : null;
+}
+
 export function readStoredAssignedToId(environment: Environment, taskId: string): string | null {
   const record = environment.getStore().getSource().get(taskId) as
     | { readonly assignedTo?: { readonly __ref?: unknown } | null }
@@ -254,12 +262,14 @@ function shiftRanksAtOrAfter(
   nodeId: string,
   priority: TaskPriority,
   nextRank: number,
+  shifted: Set<string>,
 ) {
   for (const edge of connection.getLinkedRecords("edges") ?? []) {
     const other = edge?.getLinkedRecord("node");
-    if (other == null || other.getDataID() === nodeId) {
+    if (other == null || other.getDataID() === nodeId || shifted.has(other.getDataID())) {
       continue;
     }
+    shifted.add(other.getDataID());
     if (other.getValue("priority") !== priority) {
       continue;
     }
@@ -277,6 +287,7 @@ function shiftSiblingRanks(
   priority: string,
   previousRank: number,
   nextRank: number,
+  shifted: Set<string>,
 ) {
   if (previousRank === nextRank) {
     return;
@@ -287,9 +298,10 @@ function shiftSiblingRanks(
   const delta = nextRank < previousRank ? 1 : -1;
   for (const edge of connection.getLinkedRecords("edges") ?? []) {
     const other = edge?.getLinkedRecord("node");
-    if (other == null || other.getDataID() === nodeId) {
+    if (other == null || other.getDataID() === nodeId || shifted.has(other.getDataID())) {
       continue;
     }
+    shifted.add(other.getDataID());
     if (other.getValue("priority") !== priority) {
       continue;
     }
@@ -330,6 +342,7 @@ export function applyOrganizationTaskRankDrop(
 
   const nodeId = node.getDataID();
   const priority = node.getValue("priority");
+  const shifted = new Set<string>();
   for (const filter of filters) {
     const connection = ConnectionHandler.getConnection(
       organization,
@@ -340,12 +353,12 @@ export function applyOrganizationTaskRankDrop(
       continue;
     }
     if (nextPriority != null) {
-      shiftRanksAtOrAfter(connection, nodeId, nextPriority, nextRank);
+      shiftRanksAtOrAfter(connection, nodeId, nextPriority, nextRank, shifted);
     } else if (
       typeof priority === "string"
       && previousPriority === priority
     ) {
-      shiftSiblingRanks(connection, nodeId, priority, previousRank, nextRank);
+      shiftSiblingRanks(connection, nodeId, priority, previousRank, nextRank, shifted);
     }
     const edge = findEdge(connection, nodeId);
     if (edge != null) {
@@ -393,6 +406,7 @@ export function reconcileOrganizationTaskListMembership(
     previousAssignedToId,
     previousInternalControlIds,
     nextInternalControlIds,
+    previousDeadline,
   }: {
     organizationId: string;
     state: TaskState;
@@ -400,6 +414,7 @@ export function reconcileOrganizationTaskListMembership(
     previousAssignedToId: string | null;
     previousInternalControlIds: readonly string[] | null;
     nextInternalControlIds?: readonly string[] | null;
+    previousDeadline?: string | null;
   },
 ) {
   const organization = getOrganization(store, organizationId);
@@ -414,7 +429,7 @@ export function reconcileOrganizationTaskListMembership(
     assignedToId: previousAssignedToId,
     internalControlIds: previousInternalControlIds,
     name,
-    deadline,
+    deadline: previousDeadline === undefined ? deadline : previousDeadline,
   });
   const now = matchesOrganizationListFilter.bind(null, {
     assignedToId: currentAssignedToId,

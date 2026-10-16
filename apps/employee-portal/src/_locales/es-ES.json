@@ -55,8 +55,8 @@
         "title": "Documentos",
         "description": "Firme y apruebe los documentos asignados.",
         "empty": "No hay nada que revisar por ahora",
-        "pendingCount_one": "{{count}} documento por revisar",
-        "pendingCount_other": "{{count}} documentos por revisar",
+        "pendingCount_one": "{{count}} revisión pendiente",
+        "pendingCount_other": "{{count}} revisiones pendientes",
         "action": "Revisar documentos"
       },
       "tasks": {

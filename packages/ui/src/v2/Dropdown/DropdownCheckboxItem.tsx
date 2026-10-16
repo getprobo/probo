@@ -40,9 +40,11 @@ export function DropdownCheckboxItem(props: DropdownCheckboxItemProps) {
   const { className, shortcut, indicator = "end", children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();
   const check = (
-    <Menu.CheckboxItemIndicator className={dropdownItemIndicator()}>
-      <CheckIcon weight="bold" />
-    </Menu.CheckboxItemIndicator>
+    <span className="flex size-4 shrink-0 items-center justify-center">
+      <Menu.CheckboxItemIndicator className={dropdownItemIndicator()}>
+        <CheckIcon weight="bold" />
+      </Menu.CheckboxItemIndicator>
+    </span>
   );
 
   return (

@@ -27,7 +27,7 @@ import type { TasksPageTaskListItemUpdateStateMutation } from "#/__generated__/c
 import { useMutation } from "#/lib/relay/useMutation";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
-import { resortTaskListEdge, taskListStateMoveUpdaters } from "../_lib/moveTaskListEdge";
+import { reconcileTaskListDeadline, resortTaskListEdge, taskListStateMoveUpdaters } from "../_lib/moveTaskListEdge";
 import { useTasksFilters } from "../_lib/useTasksFilters";
 
 import { TasksPageTaskDeleteDialog } from "./TasksPageTaskDeleteDialog";
@@ -97,6 +97,24 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
     recurrenceInterval?: string | null;
   }) {
     const queries = graphqlQuery == null ? [null] : [graphqlQuery, null];
+    const previousDeadline = task.deadline ?? null;
+    function applyDeadline(store: Parameters<typeof reconcileTaskListDeadline>[0]) {
+      if (input.deadline === undefined) {
+        return;
+      }
+      const node = store.get(task.id);
+      if (node == null) {
+        return;
+      }
+      node.setValue(input.deadline, "deadline");
+      reconcileTaskListDeadline(store, node, {
+        state: task.state,
+        organizationId,
+        queries,
+        deadline: deadlineBounds,
+        previousDeadline,
+      });
+    }
     const move = input.state == null
       ? null
       : taskListStateMoveUpdaters(environment, {
@@ -114,6 +132,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
         },
       },
       optimisticUpdater(store) {
+        applyDeadline(store);
         move?.optimisticUpdater(store);
         if (input.state == null && input.priority != null) {
           const node = store.get(task.id);
@@ -129,6 +148,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
         }
       },
       updater(store) {
+        applyDeadline(store);
         move?.updater(store);
         if (input.state == null && input.priority != null) {
           const node = store.get(task.id);

@@ -70,6 +70,17 @@ export {
 } from "./TaskListView/TaskListRowFrame";
 export { taskListPageSize } from "./taskListPageSize";
 export {
+  mergeTaskListIncludeFlags,
+  pickTaskListIncludeFlags,
+  type TaskListIncludeFlagKey,
+  taskListIncludeFlagKeys,
+  type TaskListIncludeFlags,
+  taskListIncludeFlags,
+  taskListIncludeFlagsEqual,
+  taskListNeedsFetch,
+  taskListReadableIncludeFlags,
+} from "./taskListIncludes";
+export {
   type TaskListFillGroup,
   type TaskListLoadNext,
   type TaskListLoadNextOptions,

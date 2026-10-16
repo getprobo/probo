@@ -63,7 +63,7 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
 
   return (
     <Dropdown>
-      <DropdownTrigger className={slots.trigger()} aria-label={t("tasksCard.filters.user")}>
+      <DropdownTrigger className={slots.trigger()}>
         <span className={slots.value()}>
           {value == null
             ? emptyLabel

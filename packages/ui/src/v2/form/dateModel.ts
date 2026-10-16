@@ -118,12 +118,8 @@ export function digitsToIso(digits: string, { order }: DatePattern): string | nu
     values[part] = Number(digits.slice(index, index + length));
     index += length;
   }
-  const date = new Date(values.year, values.month - 1, values.day);
-  if (
-    date.getFullYear() !== values.year
-    || date.getMonth() !== values.month - 1
-    || date.getDate() !== values.day
-  ) {
+  const date = dateFromParts(values.year, values.month - 1, values.day);
+  if (date == null) {
     return null;
   }
   return toIsoDate(date);
@@ -137,7 +133,12 @@ export function parseIsoDate(value: string): Date | null {
   const year = Number(match[1]);
   const month = Number(match[2]) - 1;
   const day = Number(match[3]);
-  const date = new Date(year, month, day);
+  return dateFromParts(year, month, day);
+}
+
+function dateFromParts(year: number, month: number, day: number): Date | null {
+  const date = new Date(0);
+  date.setFullYear(year, month, day);
   if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
     return null;
   }

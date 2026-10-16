@@ -47,6 +47,28 @@ export function taskListConnectionFilters(
   };
 }
 
+const rememberedTaskListDeadlinesList: TaskDeadlineBounds[] = [];
+
+function taskListDeadlineKey(deadline: TaskDeadlineBounds) {
+  return `${deadline.deadlineOnOrBefore ?? ""}\0${deadline.hasDeadline ?? ""}`;
+}
+
+export function rememberTaskListDeadline(deadline: TaskDeadlineBounds) {
+  const key = taskListDeadlineKey(deadline);
+  const existing = rememberedTaskListDeadlinesList.findIndex(
+    item => taskListDeadlineKey(item) === key,
+  );
+  if (existing === -1) {
+    rememberedTaskListDeadlinesList.push(deadline);
+    return;
+  }
+  rememberedTaskListDeadlinesList[existing] = deadline;
+}
+
+export function rememberedTaskListDeadlines(): TaskDeadlineBounds[] {
+  return rememberedTaskListDeadlinesList;
+}
+
 export function taskListConnectionId(
   viewerId: string,
   organizationId: string,

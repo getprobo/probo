@@ -73,6 +73,9 @@ func (f *TaskFilter) SQLFragment() string {
 	AND CASE
 		WHEN @filter_assigned_to_id::text IS NOT NULL THEN
 			assigned_to_profile_id = @filter_assigned_to_id::text
+		ELSE TRUE
+	END
+	AND CASE
 		WHEN @filter_has_assignee::bool IS FALSE THEN
 			assigned_to_profile_id IS NULL
 		WHEN @filter_has_assignee::bool IS TRUE THEN
@@ -97,6 +100,8 @@ func (f *TaskFilter) SQLFragment() string {
 			deadline IS NOT NULL
 				AND (deadline AT TIME ZONE 'UTC')::date
 					<= (@filter_deadline_on_or_before AT TIME ZONE 'UTC')::date
+		WHEN @filter_has_deadline::bool IS TRUE THEN
+			deadline IS NOT NULL
 		ELSE TRUE
 	END
 )`

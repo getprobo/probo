@@ -55,8 +55,8 @@
         "title": "Documents",
         "description": "Sign and approve assigned documents.",
         "empty": "Nothing to review yet",
-        "pendingCount_one": "{{count}} document to review",
-        "pendingCount_other": "{{count}} documents to review",
+        "pendingCount_one": "{{count}} review pending",
+        "pendingCount_other": "{{count}} reviews pending",
         "action": "Review documents"
       },
       "tasks": {

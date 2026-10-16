@@ -25,11 +25,11 @@
     "anyDueDate": "Toute échéance",
     "due": {
       "overdue": "En retard",
-      "1d": "Dans 1 jour",
-      "3d": "Dans 3 jours",
-      "1w": "Dans 1 semaine",
-      "1m": "Dans 1 mois",
-      "3m": "Dans 3 mois",
+      "1d": "D'ici demain",
+      "3d": "D'ici 3 jours",
+      "1w": "D'ici 1 semaine",
+      "1m": "D'ici 1 mois",
+      "3m": "D'ici 3 mois",
       "none": "Sans échéance"
     }
   },
@@ -143,6 +143,8 @@
     "hour_one": "{{count}} heure",
     "hour_other": "{{count}} heures",
     "yearShort": "{{count}} an",
+    "yearShort_one": "{{count}} an",
+    "yearShort_other": "{{count}} ans",
     "monthShort": "{{count}} mois",
     "weekShort": "{{count}} sem.",
     "dayShort": "{{count}} j",

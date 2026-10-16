@@ -29,5 +29,5 @@ export function isNestedMenuDismiss(details: {
     ? details.event.relatedTarget
     : details.event?.target;
   return target instanceof Element
-    && target.closest("[role='dialog'], [role='menu'], [role='listbox'], [role='option'], input, textarea") != null;
+    && target.closest("[role='dialog'], [role='menu'], [role='listbox'], [role='option']") != null;
 }

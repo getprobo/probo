@@ -46,7 +46,7 @@ import {
   taskListNeedsFetch,
   taskListReadableIncludeFlags,
 } from "../../_lib/taskListIncludes";
-import { organizationTaskListFilterVariants } from "../../_lib/taskPath";
+import { organizationTaskListFilterVariants, rememberOrganizationTaskListFilter } from "../../_lib/taskPath";
 import { useOrganizationTaskListGroups } from "../../_lib/useOrganizationTaskListGroups";
 import { useTasksCardFilters } from "../../_lib/useTasksCardFilters";
 import { useTasksCardSearch } from "../../_lib/useTasksCardSearch";
@@ -197,6 +197,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     assignedToId: graphqlFilter.assignedToId,
     internalControlId: graphqlFilter.internalControlId,
     deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+    deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
     hasDeadline: graphqlFilter.hasDeadline,
     hasAssignee: graphqlFilter.hasAssignee,
     includes: includeFlags,
@@ -227,9 +228,11 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     assignedToId: graphqlFilter.assignedToId,
     internalControlId: graphqlFilter.internalControlId,
     deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+    deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
     hasDeadline: graphqlFilter.hasDeadline,
     hasAssignee: graphqlFilter.hasAssignee,
   };
+  rememberOrganizationTaskListFilter(listFilter);
   const canDrag = organization.canUpdateTask
     && query === ""
     && assignedToId == null
@@ -262,6 +265,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
       deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
       hasDeadline: graphqlFilter.hasDeadline,
       hasAssignee: graphqlFilter.hasAssignee,
       includes: includeFlags,
@@ -476,7 +480,9 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
         </div>
       </TaskListToolbar>
       <TaskListView
-        groups={groups.map(group => ({
+        groups={(due === "overdue"
+          ? groups.filter(group => group.state !== "DONE" && group.state !== "CANCELED" && group.state !== "DUPLICATE")
+          : groups).map(group => ({
           state: group.state,
           totalCount: group.totalCount,
           loadedItems: (() => {
@@ -501,7 +507,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
         }))}
         selectedState={selectedState}
         query={query}
-        filtered={assignedToId != null || internalControlId != null || due != null}
+        filtered={assignedToId != null || graphqlFilter.hasAssignee != null || internalControlId != null || due != null}
         busy={isPending}
         renderRow={(item, sectionState) => (
           <TaskListItem

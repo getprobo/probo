@@ -1061,6 +1061,17 @@ func TestClient_SearchTeamsAndIssues(t *testing.T) {
 	require.NoError(t, handlerErr)
 	require.NoError(t, err)
 	require.Len(t, issues.Issues, 1)
+
+	var numberedRequest map[string]any
+
+	for i, query := range queries {
+		if strings.Contains(query, "TaskSyncLinearIssueByNumber") {
+			numberedRequest = variables[i]
+		}
+	}
+
+	require.NotNil(t, numberedRequest)
+	assert.Equal(t, float64(12), numberedRequest["number"])
 	assert.Equal(t, "ENG-12", issues.Issues[0].Identifier)
 	assert.Equal(t, "Fix login", issues.Issues[0].Title)
 	assert.True(t, issues.HasNextPage)

@@ -124,7 +124,7 @@ export function TaskDurationField({
       (next != null && value != null && taskDurationsEqual(next, value))
       || next === value
     ) {
-      persistDebounced.cancel();
+      persistDebounced.revert(next ?? clearedDuration);
       setAmountDraft(savedAmount);
       return;
     }

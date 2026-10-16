@@ -31,6 +31,7 @@ import {
   isTaskState,
   moveOrganizationTaskListEdge,
   readStoredAssignedToId,
+  readStoredDeadline,
   readStoredTaskState,
   reconcileOrganizationTaskListMembership,
   resortOrganizationTaskListEdge,
@@ -88,6 +89,7 @@ export function useUpdateTask() {
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
       deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
       hasDeadline: graphqlFilter.hasDeadline,
       hasAssignee: graphqlFilter.hasAssignee,
     };
@@ -101,6 +103,10 @@ export function useUpdateTask() {
     const previousAssignedToId = assigneeChanged
       ? readStoredAssignedToId(relayEnv, taskId)
       : null;
+    const deadlineChanged = "deadline" in relayConfig.variables.input;
+    const previousDeadline = deadlineChanged
+      ? readStoredDeadline(relayEnv, taskId)
+      : undefined;
 
     return commit({
       ...relayConfig,
@@ -130,7 +136,7 @@ export function useUpdateTask() {
               );
             }
           }
-          if (assigneeChanged || internalControlsChanged) {
+          if (assigneeChanged || internalControlsChanged || deadlineChanged) {
             const state = node.getValue("state");
             if (isTaskState(state)) {
               reconcileOrganizationTaskListMembership(store, node, {
@@ -146,6 +152,7 @@ export function useUpdateTask() {
                 nextInternalControlIds: internalControlsChanged
                   ? nextInternalControlIds
                   : undefined,
+                previousDeadline,
               });
             }
           }

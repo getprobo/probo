@@ -81,8 +81,11 @@ export function TaskListView<T extends TaskListViewItem>({
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
   const [listOffset, setListOffset] = useState(0);
   const [, startTransition] = useTransition();
-  const visibleGroups = groups.filter(
-    group => selectedState == null || group.state === selectedState,
+  const visibleGroups = useMemo(
+    () => groups.filter(
+      group => selectedState == null || group.state === selectedState,
+    ),
+    [groups, selectedState],
   );
   const resultStatesKey = visibleGroups
     .map(group => `${group.state}:${group.totalCount > 0 ? 1 : 0}`)
