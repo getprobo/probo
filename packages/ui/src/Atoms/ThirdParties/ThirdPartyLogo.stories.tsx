@@ -51,3 +51,9 @@ export const Attio: Story = {
     thirdParty: "ATTIO",
   },
 };
+
+export const PlanetScale: Story = {
+  args: {
+    thirdParty: "PLANETSCALE",
+  },
+};

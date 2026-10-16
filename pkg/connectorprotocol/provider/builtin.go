@@ -118,6 +118,7 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		ovhcloudUSRegistration(),
 		posthogRegistration(),
 		pagerdutyRegistration(),
+		planetscaleRegistration(),
 		pylonRegistration(),
 		qoveryRegistration(),
 		railwayRegistration(),

@@ -107,6 +107,7 @@ const (
 	ConnectorProviderAzure           ConnectorProvider = "AZURE"
 	ConnectorProviderOVHcloud        ConnectorProvider = "OVHCLOUD"
 	ConnectorProviderOVHcloudUS      ConnectorProvider = "OVHCLOUD_US"
+	ConnectorProviderPlanetScale     ConnectorProvider = "PLANETSCALE"
 )
 
 var (
@@ -192,6 +193,7 @@ func ConnectorProviders() []ConnectorProvider {
 		ConnectorProviderAzure,
 		ConnectorProviderOVHcloud,
 		ConnectorProviderOVHcloudUS,
+		ConnectorProviderPlanetScale,
 	}
 }
 
@@ -273,7 +275,8 @@ func (v ConnectorProvider) IsValid() bool {
 		ConnectorProviderAttio,
 		ConnectorProviderAzure,
 		ConnectorProviderOVHcloud,
-		ConnectorProviderOVHcloudUS:
+		ConnectorProviderOVHcloudUS,
+		ConnectorProviderPlanetScale:
 		return true
 	}
 

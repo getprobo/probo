@@ -139,6 +139,8 @@ enum ConnectorProvider
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOVHcloudUS"
         )
+    PLANETSCALE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderPlanetScale")
 }
 
 enum AzureEnvironment
