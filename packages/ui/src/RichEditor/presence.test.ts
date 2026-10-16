@@ -23,6 +23,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   decorationsForPresences,
+  presenceColor,
   presenceHighlightColor,
   type RichEditorPresence,
 } from "./presence";
@@ -54,10 +55,14 @@ describe("presence highlight color", () => {
     expect(color).toMatch(/^hsl\(\d+ 70% 45% \/ 0\.28\)$/);
     expect(color).not.toMatch(/\)33$/);
   });
+
+  it("hashes distinct seeds to distinct hues", () => {
+    expect(presenceColor("tab-a")).not.toBe(presenceColor("tab-b"));
+  });
 });
 
 describe("presence decorations", () => {
-  it("skips caret decorations for inactive peers", () => {
+  it("draws a caret for every connection, including inactive tabs", () => {
     const doc = schema.node("doc", null, [
       schema.node("paragraph", null, [schema.text("hello")]),
     ]);
@@ -78,6 +83,6 @@ describe("presence decorations", () => {
       }),
     ]);
 
-    expect(decorations.find().length).toBe(1);
+    expect(decorations.find().length).toBe(2);
   });
 });

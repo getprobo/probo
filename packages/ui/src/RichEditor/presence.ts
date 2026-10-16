@@ -31,8 +31,8 @@ export type RichEditorPresence = {
   identityID: string;
   displayName?: string;
   avatarURL?: string;
-  // False when the peer is still connected but idle or in a hidden tab — keep
-  // them in the facepile, hide their caret.
+  // False when the peer is still connected but idle or in a hidden tab — the
+  // facepile dims them; the caret still draws so every open tab stays visible.
   active: boolean;
   anchorPosition: number;
   headPosition: number;
@@ -92,14 +92,14 @@ export function decorationsForPresences(
 ): DecorationSet {
   const decorations: Decoration[] = [];
   for (const presence of presences) {
-    if (!presence.active) continue;
-
     const documentSize = pmDocument.content.size;
     const anchor = clamp(presence.anchorPosition, 0, documentSize);
     const head = clamp(presence.headPosition, 0, documentSize);
     const from = Math.min(anchor, head);
     const to = Math.max(anchor, head);
-    const color = presenceColor(presence.identityID);
+    // Color follows the tab (connection), so two tabs of one person keep
+    // distinct carets while the flag still shows their shared display name.
+    const color = presenceColor(presence.connectionID);
 
     if (from !== to) {
       decorations.push(
@@ -107,7 +107,7 @@ export function decorationsForPresences(
           from,
           to,
           {
-            style: `background-color: ${presenceHighlightColor(presence.identityID)}`,
+            style: `background-color: ${presenceHighlightColor(presence.connectionID)}`,
           },
         ),
       );
@@ -157,22 +157,22 @@ export function decorationsForPresences(
   return DecorationSet.create(pmDocument, decorations);
 }
 
-function presenceHue(identityID: string): number {
+function presenceHue(seed: string): number {
   let hash = 0;
-  for (const character of identityID) {
+  for (const character of seed) {
     hash = ((hash << 5) - hash + character.charCodeAt(0)) | 0;
   }
   return Math.abs(hash) % 360;
 }
 
-export function presenceColor(identityID: string): string {
-  return `hsl(${presenceHue(identityID)} 70% 45%)`;
+export function presenceColor(seed: string): string {
+  return `hsl(${presenceHue(seed)} 70% 45%)`;
 }
 
 // Translucent fill for a remote selection range. Must stay a valid CSS color —
 // appending a hex alpha to hsl() is invalid and browsers drop the highlight.
-export function presenceHighlightColor(identityID: string): string {
-  return `hsl(${presenceHue(identityID)} 70% 45% / 0.28)`;
+export function presenceHighlightColor(seed: string): string {
+  return `hsl(${presenceHue(seed)} 70% 45% / 0.28)`;
 }
 
 function clamp(value: number, minimum: number, maximum: number): number {
