@@ -131,7 +131,7 @@ func TestNewMetadata(t *testing.T) {
 		DeviceAuthorization: "https://auth.example.com/device",
 	}
 
-	metadata := oauth2.NewMetadata(issuer, endpoints, reg.RegisteredScopes())
+	metadata := oauth2.NewMetadata(issuer, endpoints, reg.RegisteredScopes(), true)
 	require.NotNil(t, metadata)
 
 	t.Run(
@@ -363,4 +363,39 @@ func TestNewMetadata(t *testing.T) {
 			assert.True(t, metadata.ClientIDMetadataDocumentSupported)
 		},
 	)
+}
+
+func TestNewMetadata_ClientIDMetadataDocumentSupported(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name          string
+		cimdSupported bool
+	}{
+		{name: "advertised when cimd is enabled", cimdSupported: true},
+		{name: "not advertised when cimd is disabled", cimdSupported: false},
+	} {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				metadata := oauth2.NewMetadata(
+					"https://auth.example.com",
+					oauth2.Endpoints{},
+					nil,
+					tt.cimdSupported,
+				)
+
+				body, err := json.Marshal(metadata)
+				require.NoError(t, err)
+
+				var document map[string]any
+				require.NoError(t, json.Unmarshal(body, &document))
+
+				assert.Equal(t, tt.cimdSupported, metadata.ClientIDMetadataDocumentSupported)
+				assert.Equal(t, tt.cimdSupported, document["client_id_metadata_document_supported"])
+			},
+		)
+	}
 }

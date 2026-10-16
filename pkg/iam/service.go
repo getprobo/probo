@@ -255,7 +255,12 @@ func NewService(
 
 // OAuth2ServerMetadata returns the OIDC discovery document.
 func (s *Service) OAuth2ServerMetadata(endpoints oauth2.Endpoints) *oauth2.ServerMetadata {
-	return oauth2.NewMetadata(uri.URI(s.baseURL), endpoints, s.OAuth2ScopeRegistry.RegisteredScopes())
+	return oauth2.NewMetadata(
+		uri.URI(s.baseURL),
+		endpoints,
+		s.OAuth2ScopeRegistry.RegisteredScopes(),
+		s.OAuth2ServerService.CIMDSupported(),
+	)
 }
 
 // OAuth2ProtectedResourceMetadata returns the RFC 9728 protected resource metadata document.

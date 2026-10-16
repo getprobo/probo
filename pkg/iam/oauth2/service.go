@@ -67,6 +67,7 @@ type (
 		gc                        *GarbageCollector
 		cimd                      *cimdFetcher
 		cimdAllow                 CIMDAllowFunc
+		cimdSupported             bool
 		registry                  *oauth2scope.Registry
 		accessTokenDuration       time.Duration
 		refreshTokenDuration      time.Duration
@@ -180,6 +181,16 @@ func WithCIMDAllow(fn CIMDAllowFunc) Option {
 
 func (s *Service) SetCIMDAllow(fn CIMDAllowFunc) {
 	s.cimdAllow = fn
+}
+
+// SetCIMDSupported sets whether the discovery document advertises Client
+// ID Metadata Document support to third-party clients.
+func (s *Service) SetCIMDSupported(supported bool) {
+	s.cimdSupported = supported
+}
+
+func (s *Service) CIMDSupported() bool {
+	return s.cimdSupported
 }
 
 func NewService(
