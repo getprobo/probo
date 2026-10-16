@@ -51,6 +51,21 @@ func newRepoTestServer(
 ) *httptest.Server {
 	t.Helper()
 
+	return newRepoTestServerWithConfig(t, hub, scope, versionID, repoCollaborationConfig{
+		shutdown:         context.Background(),
+		publishEphemeral: publishEphemeral,
+	})
+}
+
+func newRepoTestServerWithConfig(
+	t *testing.T,
+	hub *documentCollaborationHub,
+	scope coredata.Scoper,
+	versionID gid.GID,
+	config repoCollaborationConfig,
+) *httptest.Server {
+	t.Helper()
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		connectionID, err := newDocumentCollaborationConnectionID()
 		if err != nil {
@@ -91,12 +106,14 @@ func newRepoTestServer(
 
 		defer func() { _ = syncState.Close() }()
 
-		_ = serveRepoCollaboration(r.Context(), connection, lease, syncState, repoCollaborationConfig{
-			serverPeerID:      "probo-gateway-" + connectionID,
-			documentVersionID: versionID,
-			shutdown:          context.Background(),
-			publishEphemeral:  publishEphemeral,
-		})
+		loopConfig := config
+		loopConfig.serverPeerID = "probo-gateway-" + connectionID
+		loopConfig.documentVersionID = versionID
+		if loopConfig.shutdown == nil {
+			loopConfig.shutdown = context.Background()
+		}
+
+		_ = serveRepoCollaboration(r.Context(), connection, lease, syncState, loopConfig)
 	}))
 
 	t.Cleanup(server.Close)
@@ -401,6 +418,92 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 		require.NoError(t, err)
 	case <-time.After(10 * time.Second):
 		require.Fail(t, "the second client did not receive the gossiped ephemeral")
+	}
+}
+
+// TestServeRepoCollaboration_StampsSelectionDisplayName confirms selection
+// ephemerals leave the room carrying the authenticated display name, replacing
+// anything the client put on the payload.
+func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+
+	serverDocument, err := automerge.New(automerge.ActorID{205})
+	require.NoError(t, err)
+	defer func() { _ = serverDocument.Close() }()
+
+	text, err := serverDocument.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.Splice(0, 0, "shared"))
+	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
+	require.NoError(t, err)
+
+	documents := &fakeDocumentCollaborationDocuments{
+		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+	}
+	hub := newDocumentCollaborationHub(documents, nil)
+	server := newRepoTestServerWithConfig(
+		t,
+		hub,
+		coredata.NewScope(tenantID),
+		versionID,
+		repoCollaborationConfig{
+			shutdown:    context.Background(),
+			displayName: "Ada Lovelace",
+			identityID:  "idnt_ada",
+		},
+	)
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	documentID := collaboration.DeriveDocumentID(versionID.String())
+
+	first := dialRepoClient(t, ctx, wsURL, "client-first", documentID)
+	first.waitForBody(t, ctx, "shared")
+
+	second := dialRepoClient(t, ctx, wsURL, "client-second", documentID)
+	second.waitForBody(t, ctx, "shared")
+
+	payload, err := collaboration.MarshalPresenceValue(
+		map[string]any{
+			"kind":        "selection",
+			"displayName": "spoofed",
+			"selection": map[string]any{
+				"field":  "body",
+				"anchor": "cursor-a",
+				"head":   "cursor-a",
+			},
+		},
+	)
+	require.NoError(t, err)
+
+	first.send <- payload
+
+	select {
+	case got := <-second.ephemeral:
+		name, ok := collaboration.SelectionDisplayName(got)
+		require.True(t, ok)
+		assert.Equal(t, "Ada Lovelace", name)
+
+		wrapper := collaboration.PresenceMessage{
+			Type:  collaboration.PresenceUpdate,
+			Value: got,
+		}
+		var decoded struct {
+			Kind       string `cbor:"kind"`
+			IdentityID string `cbor:"identityID"`
+		}
+		require.NoError(t, wrapper.UnmarshalValue(&decoded))
+		assert.Equal(t, "selection", decoded.Kind)
+		assert.Equal(t, "idnt_ada", decoded.IdentityID)
+	case err := <-second.errs:
+		require.NoError(t, err)
+	case <-time.After(10 * time.Second):
+		require.Fail(t, "the second client did not receive the stamped selection")
 	}
 }
 

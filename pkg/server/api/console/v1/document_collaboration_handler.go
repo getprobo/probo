@@ -81,27 +81,27 @@ func newDocumentCollaborationConnectionID() (string, error) {
 func (h *documentCollaborationHandler) authorize(
 	ctx context.Context,
 	documentVersionID gid.GID,
-) (*coredata.Scope, error) {
+) (*coredata.Scope, *coredata.DocumentVersion, error) {
 	versionScope, err := h.authorizeResource(
 		ctx,
 		documentVersionID,
 		probo.ActionDocumentVersionGet,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot authorize document version: %w", err)
+		return nil, nil, fmt.Errorf("cannot authorize document version: %w", err)
 	}
 
 	version, err := h.probo.Documents.GetVersion(ctx, versionScope, documentVersionID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load authorized document version: %w", err)
+		return nil, nil, fmt.Errorf("cannot load authorized document version: %w", err)
 	}
 
 	scope, err := h.authorizeResource(ctx, version.DocumentID, probo.ActionDocumentUpdate)
 	if err != nil {
-		return nil, fmt.Errorf("cannot authorize document update: %w", err)
+		return nil, nil, fmt.Errorf("cannot authorize document update: %w", err)
 	}
 
-	return scope, nil
+	return scope, version, nil
 }
 
 func (h *documentCollaborationHandler) authorizeResource(

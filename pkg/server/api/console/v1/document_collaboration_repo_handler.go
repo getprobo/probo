@@ -22,8 +22,10 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/coder/websocket"
@@ -34,6 +36,8 @@ import (
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/jsonx"
 )
 
@@ -69,6 +73,16 @@ type repoCollaborationConfig struct {
 	// publishEphemeral relays a gossip frame to other server instances. It may be
 	// nil, which limits ephemeral fan-out to this instance.
 	publishEphemeral func(ctx context.Context, frame []byte) error
+	// displayName, identityID, and avatarURL are stamped onto selection
+	// ephemerals so remote carets and the facepile show the authenticated
+	// person. Empty displayName leaves frames alone. Empty avatarURL strips any
+	// client-supplied picture.
+	displayName string
+	identityID  string
+	avatarURL   string
+	// recordActors binds Automerge actors from an inbound sync message to the
+	// authenticated connection. It may be nil when the loop has no database.
+	recordActors func(ctx context.Context, actors [][]byte) error
 }
 
 // handleRepo serves one document version over the automerge-repo protocol. It
@@ -86,11 +100,19 @@ func (h *documentCollaborationHandler) handleRepo(w http.ResponseWriter, r *http
 		return
 	}
 
-	scope, err := h.authorize(r.Context(), documentVersionID)
+	scope, version, err := h.authorize(r.Context(), documentVersionID)
 	if err != nil {
 		h.renderAuthorizationError(w, err)
 		return
 	}
+
+	identity := authn.IdentityFromContext(r.Context())
+	displayName, identityID, avatarURL, profileID := collaborationPresenceIdentity(
+		r.Context(),
+		h,
+		version,
+		identity,
+	)
 
 	connectionID, err := newDocumentCollaborationConnectionID()
 	if err != nil {
@@ -155,6 +177,9 @@ func (h *documentCollaborationHandler) handleRepo(w http.ResponseWriter, r *http
 		documentVersionID: documentVersionID,
 		logger:            h.logger,
 		shutdown:          h.shutdown,
+		displayName:       displayName,
+		identityID:        identityID,
+		avatarURL:         avatarURL,
 		publishEphemeral: func(ctx context.Context, frame []byte) error {
 			return h.probo.Documents.NotifyCollaborationEphemeral(
 				ctx,
@@ -165,9 +190,95 @@ func (h *documentCollaborationHandler) handleRepo(w http.ResponseWriter, r *http
 		},
 	}
 
+	if identity != nil {
+		organizationID := version.OrganizationID
+		authenticatedIdentityID := identity.ID
+		authenticatedProfileID := profileID
+
+		config.recordActors = func(ctx context.Context, actors [][]byte) error {
+			return h.probo.Documents.RecordCollaborationActors(
+				ctx,
+				scope,
+				documentVersionID,
+				organizationID,
+				authenticatedIdentityID,
+				authenticatedProfileID,
+				actors,
+			)
+		}
+	}
+
 	if err := serveRepoCollaboration(r.Context(), connection, lease, syncState, config); err != nil {
 		h.closeWithError(r.Context(), connection, documentVersionIDString, err)
 	}
+}
+
+// collaborationPresenceIdentity resolves the name and avatar shown for this
+// connection. It prefers the organization membership profile, then the identity
+// full name, then the identity email. A lookup failure leaves the caret unlabeled
+// rather than refusing the connection. Avatar URLs are public file routes when
+// the identity has an avatar file.
+func collaborationPresenceIdentity(
+	ctx context.Context,
+	h *documentCollaborationHandler,
+	version *coredata.DocumentVersion,
+	identity *coredata.Identity,
+) (displayName string, identityID string, avatarURL string, profileID *gid.GID) {
+	if identity == nil {
+		return "", "", "", nil
+	}
+
+	identityID = identity.ID.String()
+	avatarURL = collaborationPresenceAvatarURL(h, identity)
+
+	profile, err := h.iam.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identity.ID,
+		version.OrganizationID,
+	)
+	if err == nil {
+		name := strings.TrimSpace(profile.FullName)
+		if name == "" {
+			name = identity.EmailAddress.String()
+		}
+
+		return name, identityID, avatarURL, &profile.ID
+	}
+
+	if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); !ok && h.logger != nil {
+		h.logger.WarnCtx(
+			ctx,
+			"cannot load collaboration presence profile",
+			log.Error(err),
+			log.String("document_version_id", version.ID.String()),
+			log.String("identity_id", identityID),
+		)
+	}
+
+	name := strings.TrimSpace(identity.FullName)
+	if name == "" {
+		name = identity.EmailAddress.String()
+	}
+
+	return name, identityID, avatarURL, nil
+}
+
+func collaborationPresenceAvatarURL(
+	h *documentCollaborationHandler,
+	identity *coredata.Identity,
+) string {
+	if identity.AvatarFileID == nil || h.baseURL == nil {
+		return ""
+	}
+
+	avatarURL, err := h.baseURL.WithPath(
+		"/api/files/v1/public/" + identity.AvatarFileID.String(),
+	).String()
+	if err != nil {
+		return ""
+	}
+
+	return avatarURL
 }
 
 // seedRepoCollaboration converts the version's stored ProseMirror content into
@@ -303,6 +414,13 @@ func serveRepoCollaboration(
 			}
 
 			if fanout != nil {
+				fanout = collaboration.StampSelectionIdentity(
+					fanout,
+					config.displayName,
+					config.identityID,
+					config.avatarURL,
+				)
+
 				lease.BroadcastEphemeral(fanout)
 
 				// Relay to peers on other instances. A failure here (including an
@@ -322,8 +440,26 @@ func serveRepoCollaboration(
 				continue
 			}
 
-			// A sync frame may have advanced the shared document: wake the other
-			// peers so they re-sync, and schedule a debounced persist.
+			// A sync or request is the only frame that can advance the document.
+			// A gossip echo or any other non-sync frame must not schedule a persist.
+			kind, err := collaboration.FrameKind(message.Data)
+			if err != nil {
+				return fmt.Errorf("cannot read repo frame type: %w", err)
+			}
+
+			frameType := collaboration.MessageType(kind)
+			if frameType != collaboration.MessageSync && frameType != collaboration.MessageRequest {
+				continue
+			}
+
+			if config.recordActors != nil {
+				recordCollaborationActorsFromFrame(
+					ctx,
+					message.Data,
+					config,
+				)
+			}
+
 			lease.NotifyPeers()
 
 			if err := lease.PersistError(); err != nil {
@@ -424,4 +560,54 @@ func writeRepoFrames(ctx context.Context, connection *websocket.Conn, frames [][
 	}
 
 	return nil
+}
+
+// recordCollaborationActorsFromFrame attributes Automerge actors from an inbound
+// sync or request frame to the authenticated connection. Failures are logged and
+// ignored so a bad change never drops the socket.
+func recordCollaborationActorsFromFrame(
+	ctx context.Context,
+	frame []byte,
+	config repoCollaborationConfig,
+) {
+	message, err := collaboration.DecodeMessage(frame)
+	if err != nil {
+		if config.logger != nil {
+			config.logger.WarnCtx(
+				ctx,
+				"cannot decode collaboration sync frame for actor attribution",
+				log.Error(err),
+				log.String("document_version_id", config.documentVersionID.String()),
+			)
+		}
+
+		return
+	}
+
+	actors, err := automerge.ActorsFromSyncMessage(message.Data)
+	if err != nil {
+		if config.logger != nil {
+			config.logger.WarnCtx(
+				ctx,
+				"cannot read collaboration actors from sync message",
+				log.Error(err),
+				log.String("document_version_id", config.documentVersionID.String()),
+			)
+		}
+
+		return
+	}
+
+	if len(actors) == 0 {
+		return
+	}
+
+	if err := config.recordActors(ctx, actors); err != nil && config.logger != nil {
+		config.logger.WarnCtx(
+			ctx,
+			"cannot record collaboration actors",
+			log.Error(err),
+			log.String("document_version_id", config.documentVersionID.String()),
+		)
+	}
 }
