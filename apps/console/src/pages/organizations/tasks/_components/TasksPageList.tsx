@@ -36,7 +36,6 @@ import type { TasksPageList_organization$key } from "#/__generated__/core/TasksP
 import type { TasksPageList_task$key } from "#/__generated__/core/TasksPageList_task.graphql";
 import type { TasksPageListRefetchQuery } from "#/__generated__/core/TasksPageListRefetchQuery.graphql";
 import type { TasksPageListUpdateRankMutation } from "#/__generated__/core/TasksPageListUpdateRankMutation.graphql";
-import { TaskInternalControlFilter } from "#/components/tasks/TaskInternalControlFilter";
 import { TaskListItem } from "#/components/tasks/TaskListItem";
 import { TaskUserFilter } from "#/components/tasks/TaskUserFilter";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -209,7 +208,6 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     graphqlFilter,
     setState,
     setAssignedToId,
-    setInternalControlId,
   } = useTasksCardFilters();
   const [queryInput, setQueryInput] = useTasksCardSearch();
   const includeFlags = useMemo(
@@ -244,7 +242,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     updateRankMutation,
     { errorToast: false },
   );
-  const { list, userFilter, internalControlFilter } = tasksPage();
+  const { list, userFilter } = tasksPage();
   const listFilter = {
     query: graphqlFilter.query,
     assignedToId: graphqlFilter.assignedToId,
@@ -471,12 +469,6 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       >
         <div className={userFilter()}>
           <TaskUserFilter value={assignedToId} onValueChange={setAssignedToId} />
-        </div>
-        <div className={internalControlFilter()}>
-          <TaskInternalControlFilter
-            value={internalControlId}
-            onValueChange={setInternalControlId}
-          />
         </div>
       </TaskListToolbar>
       <TaskListView

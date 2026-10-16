@@ -34,7 +34,7 @@ import {
   taskListGroupHeaderSize,
   taskListItemSize,
 } from "./taskListSize";
-import type { TaskState } from "./taskState";
+import { type TaskState, taskStates } from "./taskState";
 import { type TaskListLoadNext, useTasksListFill } from "./useTasksListFill";
 import { taskList, taskListView } from "./variants";
 
@@ -58,6 +58,10 @@ export interface TaskListViewProps<T extends TaskListViewItem> {
   filtered?: boolean;
   busy?: boolean;
   renderRow: (item: T, sectionState: TaskState) => ReactNode;
+}
+
+function isTaskState(value: string): value is TaskState {
+  return taskStates.some(state => state === value);
 }
 
 function nearestOverflowParent(element: HTMLElement | null): HTMLElement | null {
@@ -149,6 +153,8 @@ export function TaskListView<T extends TaskListViewItem>({
   const [closedStates, setClosedStates] = useState(
     () => new Set<TaskState>(["CANCELED", "DUPLICATE"]),
   );
+  const closedBeforeSearchRef = useRef<Set<TaskState> | null>(null);
+  const openedSearchKeyRef = useRef<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
   const [listOffset, setListOffset] = useState(0);
@@ -156,7 +162,50 @@ export function TaskListView<T extends TaskListViewItem>({
   const visibleGroups = groups.filter(
     group => selectedState == null || group.state === selectedState,
   );
+  const resultStatesKey = visibleGroups
+    .map(group => `${group.state}:${group.totalCount > 0 ? 1 : 0}`)
+    .join("|");
   const isFilling = visibleGroups.some(group => group.isLoadingNext);
+
+  useEffect(() => {
+    if (query === "") {
+      openedSearchKeyRef.current = null;
+      if (closedBeforeSearchRef.current != null) {
+        setClosedStates(closedBeforeSearchRef.current);
+        closedBeforeSearchRef.current = null;
+      }
+      return;
+    }
+
+    const key = `${query}:${resultStatesKey}`;
+    if (openedSearchKeyRef.current === key) {
+      return;
+    }
+    openedSearchKeyRef.current = key;
+
+    const openStates = resultStatesKey.split("|").flatMap((part) => {
+      const separator = part.lastIndexOf(":");
+      if (separator === -1 || part.slice(separator + 1) !== "1") {
+        return [];
+      }
+      const state = part.slice(0, separator);
+      return isTaskState(state) ? [state] : [];
+    });
+
+    setClosedStates((current) => {
+      if (closedBeforeSearchRef.current == null) {
+        closedBeforeSearchRef.current = new Set(current);
+      }
+      const next = new Set(current);
+      let changed = false;
+      for (const state of openStates) {
+        if (next.delete(state)) {
+          changed = true;
+        }
+      }
+      return changed ? next : current;
+    });
+  }, [query, resultStatesKey]);
   const slots = taskList();
   const flatItems = useMemo(
     () => flattenTaskListItems(

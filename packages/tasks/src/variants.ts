@@ -37,7 +37,7 @@ export const taskList = tv({
       false: {},
     },
     pinned: {
-      true: { sectionHeader: "rounded-b-4 shadow-2" },
+      true: { sectionHeader: "rounded-t-none rounded-b-4 shadow-2" },
       false: { sectionHeader: "rounded-4" },
     },
   },

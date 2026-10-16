@@ -28,7 +28,6 @@ export const tasksPage = tv({
     actions: "flex shrink-0 items-center gap-2",
     list: "flex flex-col gap-4",
     userFilter: "w-52 shrink-0 max-sm:w-full",
-    internalControlFilter: "w-56 shrink-0 max-sm:w-full",
   },
 });
 
