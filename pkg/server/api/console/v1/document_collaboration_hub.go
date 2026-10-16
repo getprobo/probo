@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/automerge/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
@@ -49,6 +50,14 @@ type (
 		// oldest-style (the frame is skipped), which is acceptable for
 		// ephemeral state that the sender re-emits.
 		ephemeral chan []byte
+	}
+
+	// documentCollaborationPresenceEntry is the last selection ephemeral seen
+	// for one Automerge peer id, so a joining tab can be shown people already
+	// in the room without waiting for their next heartbeat.
+	documentCollaborationPresenceEntry struct {
+		frame []byte
+		at    time.Time
 	}
 
 	documentCollaborationDocuments interface {
@@ -80,6 +89,7 @@ type (
 		versionID     gid.GID
 		revision      atomic.Int64
 		peers         map[uint64]documentCollaborationRoomPeer
+		presence      map[string]documentCollaborationPresenceEntry
 		nextPeerID    uint64
 		dirty         chan struct{}
 		stop          chan struct{}
@@ -92,6 +102,7 @@ type (
 		documentVersionID gid.GID
 		room              *documentCollaborationRoom
 		peerID            uint64
+		remotePeerID      string
 		Wake              <-chan documentCollaborationWake
 		Ephemeral         <-chan []byte
 		seedOwner         bool
@@ -104,6 +115,9 @@ const documentCollaborationEphemeralBuffer = 64
 const (
 	documentCollaborationPersistDebounce = 50 * time.Millisecond
 	documentCollaborationPersistTimeout  = 5 * time.Second
+	// Matches the client presence TTL so a joining tab never gets a caret the
+	// facepile would already have pruned.
+	documentCollaborationPresenceTTL = 30 * time.Second
 )
 
 func newDocumentCollaborationHub(
@@ -161,6 +175,7 @@ func (h *documentCollaborationHub) acquire(
 		scope:         scope,
 		versionID:     documentVersionID,
 		peers:         make(map[uint64]documentCollaborationRoomPeer),
+		presence:      make(map[string]documentCollaborationPresenceEntry),
 		dirty:         make(chan struct{}, 1),
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
@@ -259,6 +274,8 @@ func (l *documentCollaborationRoomLease) BroadcastEphemeral(frame []byte) {
 	l.room.mu.Lock()
 	defer l.room.mu.Unlock()
 
+	l.room.rememberEphemeralLocked(frame)
+
 	for peerID, peer := range l.room.peers {
 		if peerID == l.peerID {
 			continue
@@ -268,6 +285,73 @@ func (l *documentCollaborationRoomLease) BroadcastEphemeral(frame []byte) {
 		case peer.ephemeral <- frame:
 		default:
 		}
+	}
+}
+
+// SetRemotePeerID records the Automerge peer id negotiated during the repo
+// handshake so Close can drop this connection's cached presence and so
+// ReplayPresence can skip the joiner's own frames.
+func (l *documentCollaborationRoomLease) SetRemotePeerID(remotePeerID string) {
+	l.room.mu.Lock()
+	defer l.room.mu.Unlock()
+
+	l.remotePeerID = remotePeerID
+}
+
+// ReplayPresence enqueues the room's last known selection frames onto this
+// lease so a joining tab sees people already connected without waiting for
+// their next heartbeat. Stale entries and the joiner's own sender are skipped.
+func (l *documentCollaborationRoomLease) ReplayPresence() {
+	l.room.mu.Lock()
+	defer l.room.mu.Unlock()
+
+	peer, ok := l.room.peers[l.peerID]
+	if !ok {
+		return
+	}
+
+	now := time.Now()
+	for senderID, entry := range l.room.presence {
+		if senderID == l.remotePeerID {
+			continue
+		}
+
+		if now.Sub(entry.at) > documentCollaborationPresenceTTL {
+			delete(l.room.presence, senderID)
+
+			continue
+		}
+
+		select {
+		case peer.ephemeral <- entry.frame:
+		default:
+		}
+	}
+}
+
+// rememberEphemeralLocked stores the latest selection frame for its Automerge
+// sender. Opaque or non-ephemeral frames are ignored so sync traffic never
+// pollutes the cache.
+func (r *documentCollaborationRoom) rememberEphemeralLocked(frame []byte) {
+	message, err := collaboration.DecodeMessage(frame)
+	if err != nil || message.Type != collaboration.MessageEphemeral {
+		return
+	}
+
+	if collaboration.IsDepartureEphemeral(message) {
+		delete(r.presence, message.SenderID)
+
+		return
+	}
+
+	if r.presence == nil {
+		r.presence = make(map[string]documentCollaborationPresenceEntry)
+	}
+
+	cached := append([]byte(nil), frame...)
+	r.presence[message.SenderID] = documentCollaborationPresenceEntry{
+		frame: cached,
+		at:    time.Now(),
 	}
 }
 
@@ -333,6 +417,8 @@ func (r *documentCollaborationRoom) fanoutEphemeral(frame []byte) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	r.rememberEphemeralLocked(frame)
+
 	for _, peer := range r.peers {
 		select {
 		case peer.ephemeral <- frame:
@@ -360,6 +446,9 @@ func (l *documentCollaborationRoomLease) Close() {
 		l.hub.mu.Lock()
 		l.room.mu.Lock()
 		delete(l.room.peers, l.peerID)
+		if l.remotePeerID != "" && l.room.presence != nil {
+			delete(l.room.presence, l.remotePeerID)
+		}
 
 		empty := len(l.room.peers) == 0
 

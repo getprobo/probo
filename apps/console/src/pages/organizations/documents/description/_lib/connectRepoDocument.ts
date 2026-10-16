@@ -22,6 +22,7 @@ import {
   type AutomergeUrl,
   type DocHandle,
   type DocHandleEphemeralMessagePayload,
+  type DocumentProgress,
   Repo,
 } from "@automerge/automerge-repo";
 import { WebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
@@ -75,6 +76,18 @@ function isSelectionPresence(value: unknown): value is SelectionPresence {
   return message.kind === "selection" && !!message.selection;
 }
 
+function isDeparturePresence(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  return (value as { kind?: unknown }).kind === "departure";
+}
+
+// For a plain automerge: URL (no heads or path), findWithProgress returns the
+// DocumentQuery itself, which exposes the handle before the document is ready.
+// The public DocumentProgress type omits it.
+type DocumentProgressWithHandle<T> = DocumentProgress<T> & {
+  handle?: DocHandle<T>;
+};
+
 // connectRepoDocument connects to the automerge-repo collaboration endpoint for a
 // document version, finds the (server-seeded) document, and returns a handle the
 // editor can drive. Presence rides repo ephemeral messages carrying stable
@@ -100,14 +113,13 @@ export async function connectRepoDocument(
     documentVersionID,
   )) as AutomergeUrl;
 
-  let handle: DocHandle<RichEditorAutomergeDocument>;
-  try {
-    handle = await repo.find<RichEditorAutomergeDocument>(documentURL, {
-      signal: AbortSignal.timeout(initializationTimeoutMs),
-    });
-  } catch (error) {
+  const progress = repo.findWithProgress<RichEditorAutomergeDocument>(
+    documentURL,
+  ) as DocumentProgressWithHandle<RichEditorAutomergeDocument>;
+  const handle = progress.handle;
+  if (!handle) {
     void repo.shutdown();
-    throw error;
+    throw new Error("automerge-repo did not expose the document handle before sync");
   }
 
   const adapter = richEditorPresenceAdapter();
@@ -116,6 +128,10 @@ export async function connectRepoDocument(
   let lastSelection: TextSelection | undefined;
   let lastActivityAt = Date.now();
   let lastBroadcastActive: boolean | undefined;
+  let documentReady = false;
+  const pendingEphemerals: DocHandleEphemeralMessagePayload<
+    RichEditorAutomergeDocument
+  >[] = [];
   const latest = new Map<string, PresenceEntry>();
   const listeners = new Set<(presences: RichEditorPresence[]) => void>();
 
@@ -175,9 +191,16 @@ export async function connectRepoDocument(
     }
   };
 
-  const handleEphemeral = (
+  const applyEphemeral = (
     payload: DocHandleEphemeralMessagePayload<RichEditorAutomergeDocument>,
   ) => {
+    const sender = String(payload.senderId);
+    if (isDeparturePresence(payload.message)) {
+      if (!latest.delete(sender)) return;
+      emitPresences();
+      return;
+    }
+
     if (!isSelectionPresence(payload.message)) return;
 
     const document = handle.doc();
@@ -188,7 +211,6 @@ export async function connectRepoDocument(
       document,
       payload.message.selection,
     );
-    const sender = String(payload.senderId);
     const now = Date.now();
     const displayName = typeof payload.message.displayName === "string"
       ? payload.message.displayName.trim()
@@ -203,6 +225,7 @@ export async function connectRepoDocument(
     const active = payload.message.active !== false;
 
     const previous = latest.get(sender);
+    const isNewSender = !previous;
     if (resolved) {
       latest.set(sender, {
         at: now,
@@ -234,9 +257,48 @@ export async function connectRepoDocument(
     }
 
     emitPresences();
+
+    // Answer a peer we have not seen yet so they do not wait for the idle
+    // heartbeat — including people connected through another server process.
+    if (isNewSender) {
+      publishPresence();
+    }
+  };
+
+  const handleEphemeral = (
+    payload: DocHandleEphemeralMessagePayload<RichEditorAutomergeDocument>,
+  ) => {
+    if (!isSelectionPresence(payload.message) && !isDeparturePresence(payload.message)) {
+      return;
+    }
+
+    // Join snapshots can arrive while the CRDT is still syncing; hold them
+    // until offsets can be resolved against a ready document.
+    if (!documentReady) {
+      pendingEphemerals.push(payload);
+      return;
+    }
+
+    applyEphemeral(payload);
   };
 
   handle.on("ephemeral-message", handleEphemeral);
+
+  try {
+    await progress.whenReady({
+      signal: AbortSignal.timeout(initializationTimeoutMs),
+    });
+  } catch (error) {
+    handle.off("ephemeral-message", handleEphemeral);
+    void repo.shutdown();
+    throw error;
+  }
+
+  documentReady = true;
+  for (const payload of pendingEphemerals) {
+    applyEphemeral(payload);
+  }
+  pendingEphemerals.length = 0;
 
   collaboration.onPresence = (listener) => {
     listeners.add(listener);
@@ -275,6 +337,7 @@ export async function connectRepoDocument(
     handle.off("ephemeral-message", handleEphemeral);
     listeners.clear();
     latest.clear();
+    pendingEphemerals.length = 0;
     void repo.shutdown();
   };
 

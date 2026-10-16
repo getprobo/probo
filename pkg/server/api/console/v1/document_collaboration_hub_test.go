@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
+	"go.probo.inc/probo/pkg/automerge/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
@@ -127,6 +128,186 @@ func TestDocumentCollaborationRoom_NotifiesOtherPeers(t *testing.T) {
 	assert.Contains(t, hub.rooms, versionID)
 	second.Close()
 	assert.NotContains(t, hub.rooms, versionID)
+}
+
+func TestDocumentCollaborationRoom_ReplaysPresenceOnJoin(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	document, err := automerge.New(automerge.ActorID{7})
+	require.NoError(t, err)
+
+	room := &documentCollaborationRoom{
+		collaboration: &probo.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		peers:    make(map[uint64]documentCollaborationRoomPeer),
+		presence: make(map[string]documentCollaborationPresenceEntry),
+	}
+	room.revision.Store(1)
+	hub := &documentCollaborationHub{
+		rooms: map[gid.GID]*documentCollaborationRoom{
+			versionID: room,
+		},
+	}
+
+	hub.mu.Lock()
+	first := hub.addPeerLocked(versionID, room, "first")
+	hub.mu.Unlock()
+	first.SetRemotePeerID("peer-a")
+
+	frame, err := collaboration.EncodeMessage(
+		collaboration.Message{
+			Type:       collaboration.MessageEphemeral,
+			SenderID:   "peer-a",
+			TargetID:   "gateway",
+			DocumentID: "doc",
+			SessionID:  "session-a",
+			Count:      1,
+			Data:       []byte{0x01},
+		},
+	)
+	require.NoError(t, err)
+
+	first.BroadcastEphemeral(frame)
+
+	hub.mu.Lock()
+	second := hub.addPeerLocked(versionID, room, "second")
+	hub.mu.Unlock()
+	second.SetRemotePeerID("peer-b")
+	second.ReplayPresence()
+
+	select {
+	case got := <-second.Ephemeral:
+		assert.Equal(t, frame, got)
+	default:
+		require.Fail(t, "joining peer did not receive the cached presence frame")
+	}
+
+	secondFrame, err := collaboration.EncodeMessage(
+		collaboration.Message{
+			Type:       collaboration.MessageEphemeral,
+			SenderID:   "peer-b",
+			TargetID:   "gateway",
+			DocumentID: "doc",
+			SessionID:  "session-b",
+			Count:      1,
+			Data:       []byte{0x02},
+		},
+	)
+	require.NoError(t, err)
+
+	second.BroadcastEphemeral(secondFrame)
+
+	select {
+	case got := <-first.Ephemeral:
+		assert.Equal(t, secondFrame, got)
+	default:
+		require.Fail(t, "existing peer did not receive the new presence frame")
+	}
+
+	first.Close()
+	assert.NotContains(t, room.presence, "peer-a")
+	assert.Contains(t, room.presence, "peer-b")
+
+	second.ReplayPresence()
+
+	select {
+	case <-second.Ephemeral:
+		require.Fail(t, "joining peer must not receive its own cached presence")
+	default:
+	}
+
+	require.NoError(t, document.Close())
+}
+
+func TestDocumentCollaborationRoom_DepartureDropsCachedPresence(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	document, err := automerge.New(automerge.ActorID{8})
+	require.NoError(t, err)
+
+	room := &documentCollaborationRoom{
+		collaboration: &probo.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		peers:    make(map[uint64]documentCollaborationRoomPeer),
+		presence: make(map[string]documentCollaborationPresenceEntry),
+	}
+	room.revision.Store(1)
+	hub := &documentCollaborationHub{
+		rooms: map[gid.GID]*documentCollaborationRoom{
+			versionID: room,
+		},
+	}
+
+	hub.mu.Lock()
+	first := hub.addPeerLocked(versionID, room, "first")
+	second := hub.addPeerLocked(versionID, room, "second")
+	hub.mu.Unlock()
+	first.SetRemotePeerID("peer-a")
+
+	selection, err := collaboration.EncodeMessage(
+		collaboration.Message{
+			Type:       collaboration.MessageEphemeral,
+			SenderID:   "peer-a",
+			TargetID:   "gateway",
+			DocumentID: "doc",
+			SessionID:  "session-a",
+			Count:      1,
+			Data:       []byte{0x01},
+		},
+	)
+	require.NoError(t, err)
+
+	first.BroadcastEphemeral(selection)
+
+	select {
+	case got := <-second.Ephemeral:
+		assert.Equal(t, selection, got)
+	default:
+		require.Fail(t, "peer did not receive the selection frame")
+	}
+
+	require.Contains(t, room.presence, "peer-a")
+
+	departure, err := collaboration.EncodeDepartureEphemeral(
+		"peer-a",
+		"gateway",
+		"doc",
+		"departure-session",
+	)
+	require.NoError(t, err)
+
+	first.BroadcastEphemeral(departure)
+
+	select {
+	case got := <-second.Ephemeral:
+		assert.Equal(t, departure, got)
+	default:
+		require.Fail(t, "peer did not receive the departure frame")
+	}
+
+	assert.NotContains(t, room.presence, "peer-a")
+
+	hub.mu.Lock()
+	third := hub.addPeerLocked(versionID, room, "third")
+	hub.mu.Unlock()
+	third.SetRemotePeerID("peer-c")
+	third.ReplayPresence()
+
+	select {
+	case <-third.Ephemeral:
+		require.Fail(t, "replay must not include a departed sender")
+	default:
+	}
+
+	require.NoError(t, document.Close())
 }
 
 func TestDocumentCollaborationRoom_BroadcastsEphemeralToOtherPeers(t *testing.T) {

@@ -45,7 +45,10 @@ import (
 // content seeds from, matching the frontend's default empty editor.
 const emptyRichEditorDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
-const documentCollaborationRepoRefreshInterval = 500 * time.Millisecond
+const (
+	documentCollaborationRepoRefreshInterval    = 500 * time.Millisecond
+	documentCollaborationDepartureNotifyTimeout = 2 * time.Second
+)
 
 // repoCollaborationRefresher pulls changes another server instance persisted
 // into the shared in-memory document, so a NOTIFY-driven wake or the periodic
@@ -320,6 +323,67 @@ func seedRepoCollaboration(ctx context.Context, lease *documentCollaborationRoom
 	return nil
 }
 
+// announceCollaborationDeparture tells every other peer that this connection's
+// Automerge sender left. It runs as the session ends, including when the
+// request context is already cancelled by the socket close.
+func announceCollaborationDeparture(
+	ctx context.Context,
+	conn *collaboration.ServerConn,
+	lease *documentCollaborationRoomLease,
+	config repoCollaborationConfig,
+) {
+	senderID := conn.RemotePeerID()
+	documentID := conn.DocumentID()
+	if senderID == "" || documentID == "" {
+		return
+	}
+
+	sessionID, err := newDocumentCollaborationConnectionID()
+	if err != nil {
+		return
+	}
+
+	frame, err := collaboration.EncodeDepartureEphemeral(
+		senderID,
+		config.serverPeerID,
+		documentID,
+		sessionID,
+	)
+	if err != nil {
+		if config.logger != nil {
+			config.logger.WarnCtx(
+				ctx,
+				"cannot encode collaboration departure",
+				log.Error(err),
+				log.String("document_version_id", config.documentVersionID.String()),
+			)
+		}
+
+		return
+	}
+
+	lease.BroadcastEphemeral(frame)
+
+	if config.publishEphemeral == nil {
+		return
+	}
+
+	notifyCtx, cancel := context.WithTimeout(
+		context.WithoutCancel(ctx),
+		documentCollaborationDepartureNotifyTimeout,
+	)
+	defer cancel()
+
+	if err := config.publishEphemeral(notifyCtx, frame); err != nil && config.logger != nil {
+		config.logger.WarnCtx(
+			notifyCtx,
+			"cannot relay collaboration departure across instances",
+			log.Error(err),
+			log.String("document_version_id", config.documentVersionID.String()),
+		)
+	}
+}
+
 // serveRepoCollaboration runs the automerge-repo protocol for one connection. It
 // is transport-focused glue over the tested ServerConn driver and the hub's
 // fan-out primitives, kept as a standalone function so it can be driven by a
@@ -376,6 +440,15 @@ func serveRepoCollaboration(
 		_ = connection.Close(websocket.StatusPolicyViolation, "unsupported protocol version")
 		return nil
 	}
+
+	// Replay cached presence after the handshake so the client is listening
+	// before carets and the facepile arrive. Skip the joiner's own sender.
+	lease.SetRemotePeerID(conn.RemotePeerID())
+	lease.ReplayPresence()
+
+	// The client may never send a goodbye. Announce the departure when this
+	// function returns, while the lease is still in the room.
+	defer announceCollaborationDeparture(ctx, conn, lease, config)
 
 	revision := lease.Revision()
 

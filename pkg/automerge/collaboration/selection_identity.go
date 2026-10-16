@@ -31,6 +31,7 @@ import (
 
 const (
 	selectionPresenceKind     = "selection"
+	departurePresenceKind     = "departure"
 	maxSelectionDisplayRunes  = 128
 	maxSelectionAvatarRunes   = 2048
 	selectionDisplayNameField = "displayName"
@@ -38,6 +39,73 @@ const (
 	selectionAvatarURLField   = "avatarURL"
 	selectionKindField        = "kind"
 )
+
+// EncodeDepartureEphemeral builds an ephemeral frame announcing that senderID
+// left the document. A fresh sessionID keeps the frame newer than any caret
+// that sender already gossiped.
+func EncodeDepartureEphemeral(
+	senderID string,
+	targetID string,
+	documentID string,
+	sessionID string,
+) ([]byte, error) {
+	payload, err := marshal(map[string]string{
+		selectionKindField: departurePresenceKind,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode departure ephemeral: %w", err)
+	}
+
+	frame, err := EncodeMessage(
+		Message{
+			Type:       MessageEphemeral,
+			SenderID:   senderID,
+			TargetID:   targetID,
+			DocumentID: documentID,
+			SessionID:  sessionID,
+			Count:      1,
+			Data:       payload,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode departure frame: %w", err)
+	}
+
+	return frame, nil
+}
+
+// IsDepartureEphemeral reports whether message is a departure announcement.
+func IsDepartureEphemeral(message Message) bool {
+	if message.Type != MessageEphemeral {
+		return false
+	}
+
+	kind, ok := ephemeralPayloadKind(message.Data)
+	if !ok {
+		return false
+	}
+
+	return kind == departurePresenceKind
+}
+
+func ephemeralPayloadKind(data []byte) (string, bool) {
+	var payload map[string]cbor.RawMessage
+	if err := unmarshal(data, &payload); err != nil {
+		return "", false
+	}
+
+	kindRaw, ok := payload[selectionKindField]
+	if !ok {
+		return "", false
+	}
+
+	var kind string
+	if err := unmarshal(kindRaw, &kind); err != nil {
+		return "", false
+	}
+
+	return kind, true
+}
 
 // StampSelectionIdentity overwrites the authenticated person's name, identity
 // id, and avatar URL on a selection ephemeral frame. Non-selection frames and
