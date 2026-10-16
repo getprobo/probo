@@ -83,6 +83,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
@@ -883,9 +884,12 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(employeeportalmgmt.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(task.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(notification.PolicySet())
 
 	thirdPartyService := thirdparty.NewService(pgClient, fileManagerService, thirdPartyVetter)
 	riskManagementService := riskmanagement.NewService(pgClient)
+
+	notificationService := notification.NewService(pgClient)
 
 	taskService := task.NewService(
 		pgClient,
@@ -1025,6 +1029,7 @@ func (impl *Implm) Run(
 			RiskManagement:          riskManagementService,
 			ITAM:                    itamService,
 			Task:                    taskService,
+			Notification:            notificationService,
 			Slack:                   slackService,
 			BotDeliveryDestinations: slackMessages,
 			ComplianceMessages:      complianceMessages,

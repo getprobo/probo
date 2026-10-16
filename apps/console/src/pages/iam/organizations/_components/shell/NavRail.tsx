@@ -20,12 +20,14 @@
 
 import { LifebuoyIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useDisplayMode } from "@probo/ui/src/v2/displayMode/useDisplayMode";
-import { useMemo } from "react";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { Suspense, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavRail_organization$key } from "#/__generated__/iam/NavRail_organization.graphql";
+import { NotificationsBell } from "#/components/notifications/NotificationsBell";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
   NAV_GROUPS,
@@ -37,6 +39,7 @@ import {
 } from "#/pages/iam/organizations/_lib/navigation";
 import { navPermissionsFragment } from "#/pages/iam/organizations/_lib/navPermissions";
 import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGroup";
+import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { NavRailItem } from "./NavRailItem";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
@@ -45,6 +48,7 @@ import { ViewerMembershipMenu } from "./ViewerMembershipMenu";
 
 const navRailFragment = graphql`
   fragment NavRail_organization on Organization {
+    canListNotifications: permission(action: "core:notification:list")
     ...OrganizationSwitcher_organization
     ...ViewerMembershipMenu_organization
     ...navPermissions_organization
@@ -395,6 +399,15 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
           href="mailto:support@probo.com"
           weight="regular"
         />
+        {organization.canListNotifications && (
+          <CoreRelayProvider>
+            <ErrorBoundary fallback={null}>
+              <Suspense fallback={<span className={slots.itemFallback()} />}>
+                <NotificationsBell organizationId={organizationId} />
+              </Suspense>
+            </ErrorBoundary>
+          </CoreRelayProvider>
+        )}
         <ViewerMembershipMenu organizationKey={organization} />
       </nav>
     </div>

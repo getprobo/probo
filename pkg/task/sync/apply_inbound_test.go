@@ -204,10 +204,9 @@ func TestRecordInboundActivities_SkippedWhenUnwired(t *testing.T) {
 		t.Context(),
 		nil,
 		nil,
-		gid.GID{},
 		&coredata.Task{},
 		&coredata.Task{},
-		linear.WebhookActor{},
+		nil,
 		time.Now(),
 	)
 	require.NoError(t, err)

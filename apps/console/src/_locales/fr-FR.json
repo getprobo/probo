@@ -1,4 +1,13 @@
 {
+  "notifications": {
+    "label": "Notifications",
+    "unread_one": "{{count}} notification non lue",
+    "unread_other": "{{count}} notifications non lues",
+    "empty": "Aucune notification",
+    "documentSignatureRequested": "{{title}} est prêt pour votre signature",
+    "documentApprovalRequested": "{{title}} attend votre approbation",
+    "taskAssigned": "Vous avez été assigné(e) à {{title}}"
+  },
   "size": {
     "B": "o",
     "KB": "Ko",

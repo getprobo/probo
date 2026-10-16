@@ -1,4 +1,12 @@
 {
+  "notifications": {
+    "label": "Notifications",
+    "unread": "{{count}} unread",
+    "empty": "No notifications",
+    "documentSignatureRequested": "{{title}} is ready for your signature",
+    "documentApprovalRequested": "{{title}} is waiting for your approval",
+    "taskAssigned": "You were assigned {{title}}"
+  },
   "topBar": {
     "tagline": "Employee Portal"
   },

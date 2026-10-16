@@ -50,6 +50,7 @@ import (
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
@@ -105,6 +106,7 @@ type (
 		RiskManagement          *riskmanagement.Service
 		ITAM                    *itam.Service
 		Task                    *task.Service
+		Notification            *notification.Service
 		Cookie                  securecookie.Config
 		TokenSecret             string
 		// InstallStateKey signs the app-install state tokens the connector
@@ -145,12 +147,13 @@ type (
 )
 
 var (
-	ErrMissingProboService   = errors.New("server configuration requires a valid probo.Service instance")
-	ErrMissingIAMService     = errors.New("server configuration requires a valid iam.Service instance")
-	ErrMissingSlackService   = errors.New("server configuration requires a valid slack.Service instance")
-	ErrMissingITAMService    = errors.New("server configuration requires a valid itam.Service instance")
-	ErrMissingTaskService    = errors.New("server configuration requires a valid task.Service instance")
-	ErrMissingMailmanService = errors.New("server configuration requires a valid mailman.Service instance")
+	ErrMissingProboService        = errors.New("server configuration requires a valid probo.Service instance")
+	ErrMissingIAMService          = errors.New("server configuration requires a valid iam.Service instance")
+	ErrMissingSlackService        = errors.New("server configuration requires a valid slack.Service instance")
+	ErrMissingITAMService         = errors.New("server configuration requires a valid itam.Service instance")
+	ErrMissingTaskService         = errors.New("server configuration requires a valid task.Service instance")
+	ErrMissingNotificationService = errors.New("server configuration requires a valid notification.Service instance")
+	ErrMissingMailmanService      = errors.New("server configuration requires a valid mailman.Service instance")
 )
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
@@ -196,6 +199,10 @@ func NewServer(cfg Config) (*Server, error) {
 
 	if cfg.Task == nil {
 		return nil, ErrMissingTaskService
+	}
+
+	if cfg.Notification == nil {
+		return nil, ErrMissingNotificationService
 	}
 
 	if cfg.Mailman == nil {
@@ -296,6 +303,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.GraphQLLimits,
 			cfg.ITAM,
 			cfg.Task,
+			cfg.Notification,
 			cfg.IdentityFederationIssuer,
 			cfg.AWSConnectorInstall,
 			cfg.GCPConnectorInstall,

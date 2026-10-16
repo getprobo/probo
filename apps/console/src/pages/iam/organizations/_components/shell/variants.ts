@@ -61,6 +61,7 @@ export const navRail = tv({
     // other axis to `auto` too, and items are wider than the collapsed rail.
     items: "flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto",
     icon: "flex size-10 shrink-0 items-center justify-center",
+    itemFallback: "block h-10 w-full",
     label: [
       "min-w-0 flex-1 truncate pr-2 text-left opacity-0",
       "transition-opacity duration-150 ease-out",

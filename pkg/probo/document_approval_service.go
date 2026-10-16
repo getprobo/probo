@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -120,7 +121,7 @@ func (s *DocumentApprovalService) RequestApproval(
 		return nil, fmt.Errorf("cannot insert approval quorum: %w", err)
 	}
 
-	if err := s.createDecisions(ctx, scope, tx, quorum, document.OrganizationID, approverIDs, now); err != nil {
+	if err := s.createDecisions(ctx, scope, tx, quorum, document, approverIDs, now); err != nil {
 		return nil, fmt.Errorf("cannot create approval decisions: %w", err)
 	}
 
@@ -961,7 +962,7 @@ func (s *DocumentApprovalService) createDecisions(
 	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	quorum *coredata.DocumentVersionApprovalQuorum,
-	organizationID gid.GID,
+	document *coredata.Document,
 	approverIDs []gid.GID,
 	now time.Time,
 ) error {
@@ -969,7 +970,7 @@ func (s *DocumentApprovalService) createDecisions(
 	for _, approverID := range approverIDs {
 		decisions = append(decisions, &coredata.DocumentVersionApprovalDecision{
 			ID:             gid.New(scope.GetTenantID(), coredata.DocumentVersionApprovalDecisionEntityType),
-			OrganizationID: organizationID,
+			OrganizationID: document.OrganizationID,
 			QuorumID:       quorum.ID,
 			ApproverID:     approverID,
 			State:          coredata.DocumentVersionApprovalDecisionStatePending,
@@ -980,6 +981,23 @@ func (s *DocumentApprovalService) createDecisions(
 
 	if err := decisions.BulkInsert(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot insert approval decisions: %w", err)
+	}
+
+	for _, decision := range decisions {
+		if err := notification.Insert(
+			ctx,
+			tx,
+			scope,
+			notification.InsertRequest{
+				OrganizationID:     document.OrganizationID,
+				RecipientProfileID: decision.ApproverID,
+				Type:               coredata.NotificationTypeDocumentApprovalRequested,
+				SubjectID:          document.ID,
+				Title:              document.Title,
+			},
+		); err != nil {
+			return fmt.Errorf("cannot insert approval notification: %w", err)
+		}
 	}
 
 	return nil
