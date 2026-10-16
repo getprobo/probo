@@ -34,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/prosemirror"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
@@ -279,6 +280,10 @@ func (s *Service) Create(
 				return fmt.Errorf("cannot record task created event: %w", err)
 			}
 
+			if err := notifyTaskAssignment(ctx, conn, scope, task, actorID); err != nil {
+				return err
+			}
+
 			if err := emitTaskCreated(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot emit task created webhook: %w", err)
 			}
@@ -403,6 +408,10 @@ func (s *Service) Assign(
 				now,
 			); err != nil {
 				return fmt.Errorf("cannot record task assignee event: %w", err)
+			}
+
+			if err := notifyTaskAssignment(ctx, conn, scope, task, actorID); err != nil {
+				return err
 			}
 
 			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, nil); err != nil {
@@ -663,6 +672,12 @@ func (s *Service) Update(
 				return fmt.Errorf("cannot record task update events: %w", err)
 			}
 
+			if !gidPtrEqual(oldTask.AssignedToID, task.AssignedToID) {
+				if err := notifyTaskAssignment(ctx, conn, scope, task, actorID); err != nil {
+					return err
+				}
+			}
+
 			if internalControlsReplaced {
 				if err := InsertInternalControlActivities(
 					ctx,
@@ -885,4 +900,31 @@ func syncedTaskFieldsChanged(
 	}
 
 	return !oldDeadline.Equal(*task.Deadline)
+}
+
+func notifyTaskAssignment(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	actorID *gid.GID,
+) error {
+	if task.AssignedToID == nil {
+		return nil
+	}
+
+	if err := notification.InsertTaskAssignment(
+		ctx,
+		conn,
+		scope,
+		task.OrganizationID,
+		task.ID,
+		task.Name,
+		*task.AssignedToID,
+		actorID,
+	); err != nil {
+		return fmt.Errorf("cannot insert task assignment notification: %w", err)
+	}
+
+	return nil
 }

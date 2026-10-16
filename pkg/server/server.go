@@ -49,6 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
@@ -100,6 +101,7 @@ type Config struct {
 	RiskManagement          *riskmanagement.Service
 	ITAM                    *itam.Service
 	Task                    *task.Service
+	Notification            *notification.Service
 	Cookie                  securecookie.Config
 	TokenSecret             string
 	// InstallStateKey signs the app-install state tokens the connector install
@@ -168,6 +170,7 @@ func NewServer(cfg Config) (*Server, error) {
 		RiskManagement:           cfg.RiskManagement,
 		ITAM:                     cfg.ITAM,
 		Task:                     cfg.Task,
+		Notification:             cfg.Notification,
 		Cookie:                   cfg.Cookie,
 		TokenSecret:              cfg.TokenSecret,
 		InstallStateKey:          cfg.InstallStateKey,

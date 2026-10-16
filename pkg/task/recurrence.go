@@ -70,6 +70,10 @@ func repeatLockedRecurringTask(
 		return nil, fmt.Errorf("cannot record next task created event: %w", err)
 	}
 
+	if err := notifyTaskAssignment(ctx, conn, scope, next, nil); err != nil {
+		return nil, err
+	}
+
 	if err := emitTaskCreated(ctx, conn, scope, next); err != nil {
 		return nil, fmt.Errorf("cannot emit next task created webhook: %w", err)
 	}

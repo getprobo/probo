@@ -15,6 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -295,6 +296,63 @@ func (r *viewerResolver) ProbotIdentityBindings(ctx context.Context, obj *types.
 	}
 
 	return types.NewProbotIdentityBindings(bindings), nil
+}
+
+// Notifications is the resolver for the notifications field.
+func (r *viewerResolver) Notifications(ctx context.Context, obj *types.Viewer, organizationID gid.GID, first *int, after *page.CursorKey, filter *types.NotificationFilter) (*types.NotificationConnection, error) {
+	scope, err := r.authorize(ctx, organizationID, notification.ActionNotificationList)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	if first == nil {
+		first = new(20)
+	}
+
+	cursor := types.NewCursor(
+		first,
+		after,
+		nil,
+		nil,
+		page.OrderBy[coredata.NotificationOrderField]{
+			Field:     coredata.NotificationOrderFieldCreatedAt,
+			Direction: page.OrderDirectionDesc,
+		},
+	)
+
+	notificationFilter := coredata.NewNotificationFilter(nil, nil)
+	if filter != nil {
+		notificationFilter = coredata.NewNotificationFilter(filter.Types, filter.Unread)
+	}
+
+	notifications, err := r.notification.ListNotifications(
+		ctx,
+		scope,
+		organizationID,
+		identity.ID,
+		cursor,
+		notificationFilter,
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list notifications", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	connection, err := types.NewNotificationConnection(notifications, r, organizationID, notificationFilter)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list notifications", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return connection, nil
 }
 
 // Viewer returns schema.ViewerResolver implementation.

@@ -448,6 +448,149 @@ func seedSyncedTaskComment(t *testing.T, taskID, externalCommentID string) {
 	})
 }
 
+func TestTaskLinearSync_AssigneeNotification(t *testing.T) {
+	t.Parallel()
+
+	t.Run("assignee change inserts one notification", func(t *testing.T) {
+		t.Parallel()
+
+		owner, employee, taskID, externalID := seedAssignedLinearTask(t)
+		status := postAssigneeWebhook(t, externalID, "Inbound assignment", owner.GetEmail(), employee.GetEmail(), time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return taskAssignedNotificationCount(t, employee, taskID) == 1
+		}, 30*time.Second, 200*time.Millisecond)
+	})
+
+	t.Run("unchanged assignee inserts none", func(t *testing.T) {
+		t.Parallel()
+
+		owner, employee, taskID, externalID := seedAssignedLinearTask(t)
+		status := postAssigneeWebhook(t, externalID, "Inbound assignment", owner.GetEmail(), employee.GetEmail(), time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return taskAssignedNotificationCount(t, employee, taskID) == 1
+		}, 30*time.Second, 200*time.Millisecond)
+
+		status = postAssigneeWebhook(t, externalID, "Inbound assignment renamed", owner.GetEmail(), employee.GetEmail(), 2*time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return taskName(t, owner, taskID) == "Inbound assignment renamed"
+		}, 30*time.Second, 200*time.Millisecond)
+
+		assert.Equal(t, 1, taskAssignedNotificationCount(t, employee, taskID))
+	})
+
+	t.Run("actor who is the new assignee inserts none", func(t *testing.T) {
+		t.Parallel()
+
+		owner, employee, taskID, externalID := seedAssignedLinearTask(t)
+		status := postAssigneeWebhook(t, externalID, "Self assignment", employee.GetEmail(), employee.GetEmail(), time.Hour)
+		require.Equal(t, http.StatusOK, status)
+
+		require.Eventually(t, func() bool {
+			return taskName(t, owner, taskID) == "Self assignment"
+		}, 30*time.Second, 200*time.Millisecond)
+
+		assert.Equal(t, 0, taskAssignedNotificationCount(t, employee, taskID))
+	})
+}
+
+func seedAssignedLinearTask(t *testing.T) (owner *testutil.Client, employee *testutil.Client, taskID string, externalID string) {
+	t.Helper()
+
+	owner = testutil.NewClient(t, testutil.RoleOwner)
+	employee = testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	taskID = factory.NewTaskWithoutInternalControl(owner).
+		WithName("Linear assignee source").
+		Create()
+	externalID = "linear-issue-" + factory.SafeName("assignee")
+	seedTaskLinearLink(t, owner, taskID, externalID)
+
+	return owner, employee, taskID, externalID
+}
+
+func postAssigneeWebhook(t *testing.T, externalID, title, actorEmail, assigneeEmail string, updatedAfter time.Duration) int {
+	t.Helper()
+
+	return postLinearWebhook(t, factory.SafeName("delivery"), map[string]any{
+		"action":           "update",
+		"type":             "Issue",
+		"organizationId":   e2eLinearOrganizationID,
+		"webhookTimestamp": time.Now().UnixMilli(),
+		"actor": map[string]any{
+			"id":    "linear-user-" + factory.SafeName("actor"),
+			"email": actorEmail,
+		},
+		"data": map[string]any{
+			"id":          externalID,
+			"identifier":  "ENG-99",
+			"title":       title,
+			"description": "Inbound body",
+			"priority":    1,
+			"updatedAt":   time.Now().Add(updatedAfter).Format(time.RFC3339),
+			"url":         "https://linear.app/eng/issue/ENG-99",
+			"state":       map[string]any{"type": "started"},
+			"assignee": map[string]any{
+				"id":    "linear-assignee",
+				"email": assigneeEmail,
+			},
+		},
+	})
+}
+
+func taskAssignedNotificationCount(t *testing.T, client *testutil.Client, taskID string) int {
+	t.Helper()
+
+	const query = `
+		query($organizationId: ID!) {
+			viewer {
+				notifications(
+					organizationId: $organizationId
+					filter: { types: [TASK_ASSIGNED] }
+					first: 20
+				) {
+					edges {
+						node {
+							subjectId
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Viewer struct {
+			Notifications struct {
+				Edges []struct {
+					Node struct {
+						SubjectID string `json:"subjectId"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"notifications"`
+		} `json:"viewer"`
+	}
+
+	err := client.Execute(query, map[string]any{
+		"organizationId": client.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(t, err)
+
+	count := 0
+
+	for _, edge := range result.Viewer.Notifications.Edges {
+		if edge.Node.SubjectID == taskID {
+			count++
+		}
+	}
+
+	return count
+}
+
 func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID string) {
 	t.Helper()
 

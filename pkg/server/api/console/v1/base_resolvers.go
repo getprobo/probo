@@ -23,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
@@ -663,6 +664,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				CreatedAt: version.CreatedAt,
 				UpdatedAt: version.UpdatedAt,
 			}, nil
+		}
+	case coredata.NotificationEntityType:
+		action = notification.ActionNotificationGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			identity := authn.IdentityFromContext(ctx)
+
+			notification, err := r.notification.GetNotification(ctx, scope, id, identity.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewNotification(notification)
 		}
 	default:
 	}

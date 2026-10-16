@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/webhook"
 )
@@ -166,17 +167,38 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot update task from Linear: %w", err)
 			}
 
+			actorID, err := inboundActivityActorID(ctx, tx, scope, link.OrganizationID, envelope.Actor)
+			if err != nil {
+				return fmt.Errorf("cannot resolve Linear activity actor: %w", err)
+			}
+
 			if err := s.recordInboundActivities(
 				ctx,
 				tx,
 				scope,
-				link.OrganizationID,
 				&oldTask,
 				task,
-				envelope.Actor,
+				actorID,
 				now,
 			); err != nil {
 				return err
+			}
+
+			assigneeChanged := task.AssignedToID != nil &&
+				(oldTask.AssignedToID == nil || *oldTask.AssignedToID != *task.AssignedToID)
+			if assigneeChanged {
+				if err := notification.InsertTaskAssignment(
+					ctx,
+					tx,
+					scope,
+					task.OrganizationID,
+					task.ID,
+					task.Name,
+					*task.AssignedToID,
+					actorID,
+				); err != nil {
+					return err
+				}
 			}
 
 			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, task.ID)
@@ -436,19 +458,13 @@ func (s *Service) recordInboundActivities(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	organizationID gid.GID,
 	oldTask *coredata.Task,
 	task *coredata.Task,
-	actor linear.WebhookActor,
+	actorID *gid.GID,
 	now time.Time,
 ) error {
 	if s == nil || s.recordUpdateActivities == nil {
 		return nil
-	}
-
-	actorID, err := inboundActivityActorID(ctx, tx, scope, organizationID, actor)
-	if err != nil {
-		return fmt.Errorf("cannot resolve Linear activity actor: %w", err)
 	}
 
 	if err := s.recordUpdateActivities(ctx, tx, scope, oldTask, task, actorID, now); err != nil {

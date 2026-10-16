@@ -42,6 +42,7 @@ import (
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/probo"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
@@ -78,6 +79,7 @@ func NewGraphQLHandler(
 	limits gqlutils.Limits,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
+	notificationSvc *notification.Service,
 	probotIdentityBindings *identitybinding.Service,
 	slackbotInstallations *slackchannel.InstallationService,
 	botDeliveryDestinations BotDeliveryDestinations,
@@ -111,6 +113,7 @@ func NewGraphQLHandler(
 			baseURL:                 baseURL,
 			itam:                    itamSvc,
 			task:                    taskSvc,
+			notification:            notificationSvc,
 			logger:                  logger,
 			identityFederation:      identityFederation,
 			awsConnectorInstall:     awsConnectorInstall,

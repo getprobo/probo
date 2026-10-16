@@ -167,6 +167,7 @@ const (
 	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
 	ConnectorAccountEntityType                       uint16 = 136
 	EmployeePortalEntityType                         uint16 = 137
+	NotificationEntityType                           uint16 = 138
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -425,6 +426,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &ConnectorAccount{ID: id}, true
 	case EmployeePortalEntityType:
 		return &EmployeePortal{ID: id}, true
+	case NotificationEntityType:
+		return &Notification{ID: id}, true
 	default:
 		return nil, false
 	}

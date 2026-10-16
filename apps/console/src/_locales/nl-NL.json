@@ -1,4 +1,12 @@
 {
+  "notifications": {
+    "label": "Meldingen",
+    "unread": "{{count}} ongelezen",
+    "empty": "Geen meldingen",
+    "documentSignatureRequested": "{{title}} is klaar voor uw handtekening",
+    "documentApprovalRequested": "{{title}} wacht op uw goedkeuring",
+    "taskAssigned": "{{title}} is aan u toegewezen"
+  },
   "size": {
     "B": "B",
     "KB": "KB",

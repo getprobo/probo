@@ -31,20 +31,32 @@ export type PopoverPopupProps
       side?: ComponentProps<typeof BasePopover.Positioner>["side"];
       align?: ComponentProps<typeof BasePopover.Positioner>["align"];
       sideOffset?: ComponentProps<typeof BasePopover.Positioner>["sideOffset"];
+      alignOffset?: ComponentProps<typeof BasePopover.Positioner>["alignOffset"];
+      collisionAvoidance?: ComponentProps<typeof BasePopover.Positioner>["collisionAvoidance"];
+      collisionPadding?: ComponentProps<typeof BasePopover.Positioner>["collisionPadding"];
     };
 
 // Portal + positioner + styled popup. Content-agnostic — callers compose children.
 export function PopoverPopup(props: PopoverPopupProps) {
   const {
     className, children,
-    side = "bottom", align = "start", sideOffset = 4,
+    side = "bottom", align = "start", sideOffset = 4, alignOffset = 0,
+    collisionAvoidance, collisionPadding,
     ...popupProps
   } = props;
 
   return (
     <BasePopover.Portal>
       {/* z-3 on the Positioner so the portaled root wins over in-page z-1. */}
-      <BasePopover.Positioner className="z-3" side={side} align={align} sideOffset={sideOffset}>
+      <BasePopover.Positioner
+        className="z-3"
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
+        alignOffset={alignOffset}
+        collisionAvoidance={collisionAvoidance}
+        collisionPadding={collisionPadding}
+      >
         <BasePopover.Popup className={popoverPopup({ className })} {...popupProps}>
           {children}
         </BasePopover.Popup>
