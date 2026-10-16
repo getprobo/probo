@@ -4,6 +4,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.250.0] - 2026-10-16
+
 ### Added
 
 - `task create` accepts `--linear-team` to publish the task to a Linear
