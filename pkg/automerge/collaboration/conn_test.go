@@ -368,6 +368,45 @@ func TestServerConn_RejectsForeignEphemeralBeforeDedup(t *testing.T) {
 	assert.NotNil(t, fanout, "the rejected frame must not poison deduplication")
 }
 
+// TestServerConn_DropsGossipedEphemeral keeps a connection alive when automerge-repo
+// echoes another peer's ephemeral back with the original sender id.
+func TestServerConn_DropsGossipedEphemeral(t *testing.T) {
+	t.Parallel()
+
+	conn := newConn(t, &scriptedSync{})
+	_, _, err := conn.Start(joinFixture(t))
+	require.NoError(t, err)
+
+	payload, err := EncodePresence(PresenceMessage{Type: PresenceHeartbeat})
+	require.NoError(t, err)
+
+	encode := func(senderID string) []byte {
+		frame, err := EncodeMessage(
+			Message{
+				Type:       MessageEphemeral,
+				SenderID:   senderID,
+				TargetID:   "server",
+				DocumentID: "doc-1",
+				SessionID:  "session",
+				Count:      1,
+				Data:       payload,
+			},
+		)
+		require.NoError(t, err)
+
+		return frame
+	}
+
+	reply, fanout, err := conn.Receive(encode("peer-other"))
+	require.NoError(t, err)
+	assert.Nil(t, reply)
+	assert.Nil(t, fanout)
+
+	_, fanout, err = conn.Receive(encode("peer-a"))
+	require.NoError(t, err)
+	assert.NotNil(t, fanout, "the echo must not poison deduplication")
+}
+
 // TestServerConn_RequiresStart refuses frames before the handshake.
 func TestServerConn_RequiresStart(t *testing.T) {
 	t.Parallel()

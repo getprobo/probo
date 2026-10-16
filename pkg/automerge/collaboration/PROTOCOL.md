@@ -64,6 +64,12 @@ by `(sessionId, count)`:
 The gateway must preserve `senderId`, `sessionId`, and `count` unchanged when
 relaying, and must apply the same de-duplication before re-broadcasting.
 
+automerge-repo then forwards that frame to its other peers and keeps the
+original `senderId`. On a star, the only other peer is the gateway, so the
+frame comes back on the connection that did not send it. That echo is dropped.
+It is not a routing failure, and it must not close the socket or be relayed
+again. A connection accepts new ephemerals only from the peer that joined it.
+
 ## Presence envelope
 
 Presence (`dist/presence/`) rides entirely inside the ephemeral `data`. It never
