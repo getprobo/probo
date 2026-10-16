@@ -178,6 +178,8 @@ func TestServerSession_DeduplicatesEphemeral(t *testing.T) {
 	assert.False(t, other.Duplicate)
 }
 
+// A gossiped ephemeral keeps the original sender. That echo is ignored and must
+// not consume the dedup slot. A bad target from the joined peer is still an error.
 func TestServerSession_ValidatesRouteBeforeDeduplication(t *testing.T) {
 	t.Parallel()
 
@@ -202,8 +204,9 @@ func TestServerSession_ValidatesRouteBeforeDeduplication(t *testing.T) {
 		return frame
 	}
 
-	_, err = session.Receive(encode("attacker", "server"))
-	require.Error(t, err)
+	echo, err := session.Receive(encode("attacker", "server"))
+	require.NoError(t, err)
+	assert.Equal(t, InboundIgnored, echo.Kind)
 
 	_, err = session.Receive(encode("peer-a", "other-server"))
 	require.Error(t, err)

@@ -198,6 +198,12 @@ func (s *ServerSession) receive(
 			return Inbound{}, err
 		}
 
+		// automerge-repo echoes a gossiped ephemeral with the original senderId.
+		// Dropping it keeps the socket open; rebroadcasting it would loop.
+		if message.SenderID != s.remotePeerID {
+			return Inbound{Kind: InboundIgnored}, nil
+		}
+
 		if err := s.validateRoute(message); err != nil {
 			return Inbound{}, err
 		}
