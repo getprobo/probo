@@ -1820,9 +1820,9 @@ func (r *organizationResolver) Devices(ctx context.Context, obj *types.Organizat
 	if filter != nil {
 		deviceFilter = coredata.NewDeviceFilter(
 			filter.Query,
-			filter.State,
-			filter.Platform,
-			filter.AgentVersion,
+			filter.States,
+			filter.Platforms,
+			filter.AgentVersions,
 			filter.HasPostureWarning,
 		)
 	}

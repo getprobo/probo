@@ -42,6 +42,7 @@
       "revoked": "Revoked",
       "allAgentVersions": "All agent versions",
       "allPlatforms": "All platforms",
+      "selectedCount": "{{count}} selected",
       "search": "Search by owner",
       "empty": "No devices match these filters"
     },

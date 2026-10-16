@@ -3803,15 +3803,21 @@ components:
         query:
           type: string
           description: Search devices by owner name. Each word is a prefix match, and every word must match. Unassigned devices are excluded.
-        state:
-          $ref: "#/components/schemas/DeviceState"
-          description: Only devices in this state.
-        platform:
-          $ref: "#/components/schemas/DevicePlatform"
-          description: Only devices on this platform. Devices that have not reported a platform are excluded.
-        agent_version:
-          type: string
-          description: Only devices reporting this agent version.
+        states:
+          type: array
+          description: Only devices in one of these states. Omit to include every state.
+          items:
+            $ref: "#/components/schemas/DeviceState"
+        platforms:
+          type: array
+          description: Only devices on one of these platforms. Devices that have not reported a platform are excluded. Omit to include every platform.
+          items:
+            $ref: "#/components/schemas/DevicePlatform"
+        agent_versions:
+          type: array
+          description: Only devices reporting one of these agent versions. Omit to include every version.
+          items:
+            type: string
         has_posture_warning:
           type: boolean
           description: When true, only devices whose latest posture for some check is FAIL or UNKNOWN. PASS and NOT_APPLICABLE are not warnings.
@@ -17813,7 +17819,7 @@ tools:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listDevices
     title: List Devices
-    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Pass states, platforms, or agent_versions to keep devices that match any value in that list; omit a list to leave that dimension unconstrained. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
     hints:
       readonly: true
       destructive: false

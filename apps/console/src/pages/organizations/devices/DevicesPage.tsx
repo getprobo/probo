@@ -73,12 +73,10 @@ import { DeviceRevokeDialog } from "./_components/DeviceRevokeDialog";
 import { DevicesListSearch } from "./_components/DevicesListSearch";
 import { devicesPage } from "./_components/variants";
 import {
-  type DevicePlatformName,
   devicePlatforms,
   platformLabel,
 } from "./_lib/deviceDisplay";
 import {
-  type DeviceStateFilter,
   isDeviceListView,
   useDevicesListFilters,
 } from "./_lib/useDevicesListFilters";
@@ -92,9 +90,9 @@ export const devicesPageQuery = graphql`
     $organizationId: ID!
     $query: String
     $hasPostureWarning: Boolean
-    $state: DeviceState
-    $platform: DevicePlatform
-    $agentVersion: String
+    $states: [DeviceState!]
+    $platforms: [DevicePlatform!]
+    $agentVersions: [String!]
   ) {
     organization: node(id: $organizationId) @required(action: THROW) {
       __typename
@@ -109,9 +107,9 @@ export const devicesPageQuery = graphql`
           @arguments(
             query: $query
             hasPostureWarning: $hasPostureWarning
-            state: $state
-            platform: $platform
-            agentVersion: $agentVersion
+            states: $states
+            platforms: $platforms
+            agentVersions: $agentVersions
           )
       }
     }
@@ -132,9 +130,9 @@ const devicesPageFragment = graphql`
     last: { type: "Int", defaultValue: null }
     query: { type: "String", defaultValue: null }
     hasPostureWarning: { type: "Boolean", defaultValue: null }
-    state: { type: "DeviceState", defaultValue: null }
-    platform: { type: "DevicePlatform", defaultValue: null }
-    agentVersion: { type: "String", defaultValue: null }
+    states: { type: "[DeviceState!]", defaultValue: null }
+    platforms: { type: "[DevicePlatform!]", defaultValue: null }
+    agentVersions: { type: "[String!]", defaultValue: null }
   ) {
     deviceAgentVersions
     devices(
@@ -146,9 +144,9 @@ const devicesPageFragment = graphql`
       filter: {
         query: $query
         hasPostureWarning: $hasPostureWarning
-        state: $state
-        platform: $platform
-        agentVersion: $agentVersion
+        states: $states
+        platforms: $platforms
+        agentVersions: $agentVersions
       }
     ) @connection(key: "DevicesPage_devices", filters: ["filter"]) {
       __id
@@ -189,13 +187,13 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
     ownerQuery,
     view,
     hasPostureWarning,
-    state,
-    platform,
-    agentVersion,
+    states,
+    platforms,
+    agentVersions,
     setView,
-    setState,
-    setPlatform,
-    setAgentVersion,
+    setStates,
+    setPlatforms,
+    setAgentVersions,
   } = useDevicesListFilters();
   const skipFirstRefetch = useRef(true);
 
@@ -225,9 +223,9 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
         {
           query: ownerQuery,
           hasPostureWarning,
-          state,
-          platform,
-          agentVersion,
+          states: optionalList(states),
+          platforms: optionalList(platforms),
+          agentVersions: optionalList(agentVersions),
           order,
           first: devicePageSize,
           after: null,
@@ -237,18 +235,18 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
         { fetchPolicy: "store-and-network" },
       );
     });
-  }, [ownerQuery, hasPostureWarning, state, platform, agentVersion, order, pagination.refetch]);
+  }, [ownerQuery, hasPostureWarning, states, platforms, agentVersions, order, pagination.refetch]);
 
   const devices = pagination.data.devices.edges.map(edge => edge.node);
-  const agentVersions = deviceAgentVersions(
+  const agentVersionOptions = deviceAgentVersions(
     pagination.data.deviceAgentVersions,
-    agentVersion,
+    agentVersions,
   );
   const hasListFilter = ownerQuery != null
     || hasPostureWarning != null
-    || state != null
-    || platform != null
-    || agentVersion != null;
+    || states.length > 0
+    || platforms.length > 0
+    || agentVersions.length > 0;
   const connectionId = pagination.data.devices.__id;
   const canCreate = organization.canCreateDevice ?? false;
   const canDownloadEvidence = organization.canDownloadEvidence ?? false;
@@ -288,9 +286,9 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
         {
           query: ownerQuery,
           hasPostureWarning,
-          state,
-          platform,
-          agentVersion,
+          states: optionalList(states),
+          platforms: optionalList(platforms),
+          agentVersions: optionalList(agentVersions),
           order,
           first: devicePageSize,
           after: null,
@@ -444,20 +442,23 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
           <div className={tableFilters()}>
             <div className={filter()}>
               <Select
-                value={state}
-                onValueChange={(value: DeviceStateFilter | null) => {
-                  setState(value);
-                }}
+                multiple
+                value={states}
+                onValueChange={setStates}
               >
                 <SelectTrigger
                   size={2}
                   placeholder={t("devices.filters.allStates")}
                   aria-label={t("devices.fields.state")}
                 >
-                  {(value: DeviceStateFilter | null) => deviceStateLabel(t, value)}
+                  {(value: readonly string[]) => selectedFilterLabel(
+                    value,
+                    t("devices.filters.allStates"),
+                    state => deviceStateLabel(t, state),
+                    t("devices.filters.selectedCount", { count: value.length }),
+                  )}
                 </SelectTrigger>
                 <SelectPopup align="end">
-                  <SelectItem value={null}>{t("devices.filters.allStates")}</SelectItem>
                   <SelectItem value="PENDING">{t("devices.filters.pending")}</SelectItem>
                   <SelectItem value="ACTIVE">{t("devices.filters.active")}</SelectItem>
                   <SelectItem value="REVOKED">{t("devices.filters.revoked")}</SelectItem>
@@ -466,20 +467,23 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
             </div>
             <div className={platformFilterClass()}>
               <Select
-                value={platform}
-                onValueChange={(value: DevicePlatformName | null) => {
-                  setPlatform(value);
-                }}
+                multiple
+                value={platforms}
+                onValueChange={setPlatforms}
               >
                 <SelectTrigger
                   size={2}
                   placeholder={t("devices.filters.allPlatforms")}
                   aria-label={t("devices.fields.platform")}
                 >
-                  {(value: DevicePlatformName | null) => devicePlatformLabel(t, value)}
+                  {(value: readonly string[]) => selectedFilterLabel(
+                    value,
+                    t("devices.filters.allPlatforms"),
+                    platform => platformLabel(t, platform) ?? platform,
+                    t("devices.filters.selectedCount", { count: value.length }),
+                  )}
                 </SelectTrigger>
                 <SelectPopup align="end">
-                  <SelectItem value={null}>{t("devices.filters.allPlatforms")}</SelectItem>
                   {devicePlatforms.map(platform => (
                     <SelectItem key={platform} value={platform}>
                       {platformLabel(t, platform)}
@@ -490,21 +494,24 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
             </div>
             <div className={versionFilter()}>
               <Select
-                value={agentVersion}
-                onValueChange={(value: string | null) => {
-                  setAgentVersion(value);
-                }}
+                multiple
+                value={agentVersions}
+                onValueChange={setAgentVersions}
               >
                 <SelectTrigger
                   size={2}
                   placeholder={t("devices.filters.allAgentVersions")}
                   aria-label={t("devices.fields.agentVersion")}
                 >
-                  {(value: string | null) => value ?? t("devices.filters.allAgentVersions")}
+                  {(value: readonly string[]) => selectedFilterLabel(
+                    value,
+                    t("devices.filters.allAgentVersions"),
+                    version => version,
+                    t("devices.filters.selectedCount", { count: value.length }),
+                  )}
                 </SelectTrigger>
                 <SelectPopup align="end">
-                  <SelectItem value={null}>{t("devices.filters.allAgentVersions")}</SelectItem>
-                  {agentVersions.map(version => (
+                  {agentVersionOptions.map(version => (
                     <SelectItem key={version} value={version}>
                       {version}
                     </SelectItem>
@@ -599,24 +606,39 @@ export function DevicesPage({ queryRef }: DevicesPageProps) {
   );
 }
 
+function optionalList<T>(values: readonly T[]): T[] | null {
+  return values.length === 0 ? null : [...values];
+}
+
+function selectedFilterLabel(
+  values: readonly string[],
+  emptyLabel: string,
+  label: (value: string) => string,
+  countLabel: string,
+): string {
+  if (values.length === 0) {
+    return emptyLabel;
+  }
+  if (values.length === 1) {
+    return label(values[0] ?? "");
+  }
+  return countLabel;
+}
+
 function deviceAgentVersions(
   versions: readonly string[],
-  selected: string | null,
+  selected: readonly string[],
 ): string[] {
   const unique = new Set(versions);
-  if (selected != null) {
-    unique.add(selected);
+  for (const version of selected) {
+    unique.add(version);
   }
   return [...unique].sort((left, right) => (
     left.localeCompare(right, undefined, { numeric: true })
   ));
 }
 
-function devicePlatformLabel(t: (key: string) => string, value: string | null) {
-  return platformLabel(t, value) ?? t("devices.filters.allPlatforms");
-}
-
-function deviceStateLabel(t: (key: string) => string, value: string | null) {
+function deviceStateLabel(t: (key: string) => string, value: string) {
   switch (value) {
     case "PENDING":
       return t("devices.filters.pending");
@@ -625,6 +647,6 @@ function deviceStateLabel(t: (key: string) => string, value: string | null) {
     case "REVOKED":
       return t("devices.filters.revoked");
     default:
-      return t("devices.filters.allStates");
+      return value;
   }
 }

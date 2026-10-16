@@ -8004,9 +8004,9 @@ func (r *Resolver) ListDevicesTool(ctx context.Context, req *mcp.CallToolRequest
 		cursor,
 		coredata.NewDeviceFilter(
 			input.Query,
-			input.State,
-			input.Platform,
-			input.AgentVersion,
+			input.States,
+			input.Platforms,
+			input.AgentVersions,
 			input.HasPostureWarning,
 		),
 	)

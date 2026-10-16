@@ -31,6 +31,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -1670,23 +1671,95 @@ func TestDeviceListFilters(t *testing.T) {
 		"2.0.0",
 	)
 
-	active := listDevicesFiltered(t, owner, orgID, map[string]any{"state": "ACTIVE"})
-	require.Equal(t, 2, active.Devices.TotalCount)
-	require.ElementsMatch(t, []string{
-		darwin.CreateDevice.Device.ID,
-		linux.CreateDevice.Device.ID,
-	}, deviceIDs(active.Devices))
-	require.NotContains(t, deviceIDs(active.Devices), pending.CreateDevice.Device.ID)
+	pendingID := pending.CreateDevice.Device.ID
+	darwinID := darwin.CreateDevice.Device.ID
+	linuxID := linux.CreateDevice.Device.ID
 
-	mac := listDevicesFiltered(t, owner, orgID, map[string]any{"platform": "DARWIN"})
-	require.Equal(t, 1, mac.Devices.TotalCount)
-	require.Equal(t, darwin.CreateDevice.Device.ID, mac.Devices.Edges[0].Node.ID)
+	t.Run("matches one state", func(t *testing.T) {
+		t.Parallel()
 
-	version := listDevicesFiltered(t, owner, orgID, map[string]any{"agentVersion": "2.0.0"})
-	require.Equal(t, 1, version.Devices.TotalCount)
-	require.Equal(t, linux.CreateDevice.Device.ID, version.Devices.Edges[0].Node.ID)
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"states": []string{"ACTIVE"},
+		})
 
-	require.ElementsMatch(t, []string{"1.0.0", "2.0.0"}, active.AgentVersions)
+		assert.Equal(t, 2, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches any listed state", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"states": []string{"ACTIVE", "PENDING"},
+		})
+
+		assert.Equal(t, 3, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{pendingID, darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches one platform", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"platforms": []string{"DARWIN"},
+		})
+
+		assert.Equal(t, 1, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches any listed platform", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"platforms": []string{"DARWIN", "LINUX"},
+		})
+
+		assert.Equal(t, 2, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("intersects state and platform", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"states":    []string{"ACTIVE", "PENDING"},
+			"platforms": []string{"DARWIN"},
+		})
+
+		assert.Equal(t, 1, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches one agent version", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"agentVersions": []string{"2.0.0"},
+		})
+
+		assert.Equal(t, 1, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches any listed agent version", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"agentVersions": []string{"1.0.0", "2.0.0"},
+		})
+
+		assert.Equal(t, 2, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("reports enrolled agent versions", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{})
+
+		assert.ElementsMatch(t, []string{"1.0.0", "2.0.0"}, listed.AgentVersions)
+	})
 }
 
 func TestDeviceList_PostureWarningFilter(t *testing.T) {
