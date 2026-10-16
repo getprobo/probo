@@ -18,7 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type TaskState, taskStates } from "@probo/tasks";
+import {
+  type TaskDueFilter,
+  taskDueFilterBounds,
+  taskDueFilterFromParam,
+  type TaskState,
+  taskStates,
+} from "@probo/tasks";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
@@ -34,7 +40,9 @@ export function useTasksFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q") ?? "";
   const state = taskStateFromParam(searchParams.get("status"));
+  const due = taskDueFilterFromParam(searchParams.get("due"));
   const graphqlQuery = query === "" ? null : query;
+  const deadlineBounds = useMemo(() => taskDueFilterBounds(due), [due]);
   const includeFlags = useMemo(() => taskListIncludeFlags(state), [state]);
 
   const setQuery = useCallback((value: string) => {
@@ -61,12 +69,27 @@ export function useTasksFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setDue = useCallback((value: TaskDueFilter | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value == null) {
+        next.delete("due");
+      } else {
+        next.set("due", value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return {
     query,
     graphqlQuery,
     state,
+    due,
+    deadlineBounds,
     includeFlags,
     setQuery,
     setState,
+    setDue,
   };
 }

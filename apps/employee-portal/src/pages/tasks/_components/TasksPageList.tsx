@@ -53,6 +53,8 @@ const tasksPageListFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     includeInProgress: { type: "Boolean!" }
     includeTodo: { type: "Boolean!" }
     includeBacklog: { type: "Boolean!" }
@@ -62,22 +64,52 @@ const tasksPageListFragment = graphql`
   )
   @throwOnFieldError {
     ...useTasksPageListGroups_inProgress
-      @arguments(organizationId: $organizationId, query: $query)
+      @arguments(
+        organizationId: $organizationId
+        query: $query
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      )
       @include(if: $includeInProgress)
     ...useTasksPageListGroups_todo
-      @arguments(organizationId: $organizationId, query: $query)
+      @arguments(
+        organizationId: $organizationId
+        query: $query
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      )
       @include(if: $includeTodo)
     ...useTasksPageListGroups_backlog
-      @arguments(organizationId: $organizationId, query: $query)
+      @arguments(
+        organizationId: $organizationId
+        query: $query
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      )
       @include(if: $includeBacklog)
     ...useTasksPageListGroups_done
-      @arguments(organizationId: $organizationId, query: $query)
+      @arguments(
+        organizationId: $organizationId
+        query: $query
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      )
       @include(if: $includeDone)
     ...useTasksPageListGroups_canceled
-      @arguments(organizationId: $organizationId, query: $query)
+      @arguments(
+        organizationId: $organizationId
+        query: $query
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      )
       @include(if: $includeCanceled)
     ...useTasksPageListGroups_duplicate
-      @arguments(organizationId: $organizationId, query: $query)
+      @arguments(
+        organizationId: $organizationId
+        query: $query
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      )
       @include(if: $includeDuplicate)
   }
 `;
@@ -98,11 +130,13 @@ export interface TasksPageListProps {
 
 export function TasksPageList({ viewerKey }: TasksPageListProps) {
   const { organizationId } = useEmployeePortalRoute();
-  const { query, graphqlQuery, state: selectedState, includeFlags } = useTasksFilters();
+  const { query, graphqlQuery, deadlineBounds, due, state: selectedState, includeFlags } = useTasksFilters();
   const [isPending, startTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
   const [fetched, setFetched] = useState(() => ({
     query: graphqlQuery,
+    deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
+    hasDeadline: deadlineBounds.hasDeadline,
     includes: includeFlags,
   }));
   const [viewer, refetch] = useRefetchableFragment<
@@ -120,17 +154,22 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
       return;
     }
 
-    if (!taskListNeedsFetch(graphqlQuery, includeFlags, fetched)) {
+    const deadlineChanged = deadlineBounds.deadlineOnOrBefore !== fetched.deadlineOnOrBefore
+      || deadlineBounds.hasDeadline !== fetched.hasDeadline;
+    if (!deadlineChanged && !taskListNeedsFetch(graphqlQuery, includeFlags, fetched)) {
       return;
     }
 
     const requestedQuery = graphqlQuery;
+    const requestedDeadline = deadlineBounds;
     const requestedIncludes = includeFlags;
     startTransition(() => {
       refetch(
         {
           organizationId,
           query: requestedQuery,
+          deadlineOnOrBefore: requestedDeadline.deadlineOnOrBefore,
+          hasDeadline: requestedDeadline.hasDeadline,
           ...requestedIncludes,
         },
         {
@@ -142,7 +181,11 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
 
             setFetched(current => ({
               query: requestedQuery,
+              deadlineOnOrBefore: requestedDeadline.deadlineOnOrBefore,
+              hasDeadline: requestedDeadline.hasDeadline,
               includes: current.query === requestedQuery
+                && current.deadlineOnOrBefore === requestedDeadline.deadlineOnOrBefore
+                && current.hasDeadline === requestedDeadline.hasDeadline
                 ? mergeTaskListIncludeFlags(current.includes, requestedIncludes)
                 : requestedIncludes,
             }));
@@ -150,7 +193,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
         },
       );
     });
-  }, [fetched, graphqlQuery, includeFlags, organizationId, refetch]);
+  }, [deadlineBounds, fetched, graphqlQuery, includeFlags, organizationId, refetch]);
 
   return (
     <TaskListView<TasksPageListRowItem>
@@ -167,6 +210,7 @@ export function TasksPageList({ viewerKey }: TasksPageListProps) {
       }))}
       selectedState={selectedState}
       query={query}
+      filtered={due != null}
       busy={isPending}
       renderRow={(item, sectionState) => (
         <TasksPageTaskListItem

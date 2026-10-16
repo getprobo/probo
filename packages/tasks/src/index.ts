@@ -18,6 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+export {
+  emptyDeadlineBounds,
+  type TaskDeadlineBounds,
+  type TaskDueFilter,
+  taskDueFilterBounds,
+  taskDueFilterFromParam,
+  taskDueFilters,
+  taskMatchesDeadline,
+} from "./taskDueFilter";
 export { registerTasksCatalogs, TASKS_NAMESPACE } from "./i18n";
 export { isOverdueTask } from "./isOverdueTask";
 export { TaskDetails, type TaskDetailsProps } from "./TaskDetails";
@@ -39,6 +48,8 @@ export {
   type TaskListGroupHeaderProps,
 } from "./TaskListGroupHeader";
 export {
+  TaskListDueDateFilter,
+  type TaskListDueDateFilterProps,
   TaskListSearchField,
   type TaskListSearchFieldProps,
   TaskListStatusFilter,

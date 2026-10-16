@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { taskStates } from "@probo/tasks";
+import { type TaskDeadlineBounds, taskMatchesDeadline, taskStates } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
@@ -28,21 +28,30 @@ import {
   taskListConnectionKeys,
 } from "./taskPath";
 
+type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
+
+function readString(record: TaskRecord, field: string) {
+  const value = record.getValue(field);
+  return typeof value === "string" ? value : null;
+}
+
 export function deleteTaskListEdges(
   store: RecordSourceSelectorProxy,
   {
     taskId,
     organizationId,
     query,
+    deadline,
   }: {
     taskId: string;
     organizationId: string;
     query: string | null;
+    deadline: TaskDeadlineBounds;
   },
 ) {
   const viewer = store.getRoot().getLinkedRecord("viewer");
   const task = store.get(taskId);
-  const taskState = task?.getValue("state");
+  const taskState = task == null ? null : readString(task, "state");
   if (viewer == null) {
     return;
   }
@@ -53,7 +62,7 @@ export function deleteTaskListEdges(
       const connection = ConnectionHandler.getConnection(
         viewer,
         taskListConnectionKeys[state],
-        taskListConnectionFilters(organizationId, filterQuery, state),
+        taskListConnectionFilters(organizationId, filterQuery, state, deadline),
       );
       if (connection == null) {
         continue;
@@ -63,7 +72,10 @@ export function deleteTaskListEdges(
       );
       if (!hadEdge) {
         if (task != null && taskState === state && matchesTaskQuery(task, filterQuery)) {
-          adjustTotalCount(connection, -1);
+          const storedDeadline = readString(task, "deadline");
+          if (taskMatchesDeadline(storedDeadline, deadline) === true) {
+            adjustTotalCount(connection, -1);
+          }
         }
         continue;
       }

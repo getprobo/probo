@@ -19,6 +19,8 @@
 // SOFTWARE.
 
 import {
+  type TaskDeadlineBounds,
+  taskMatchesDeadline,
   taskPriorities,
   type TaskPriority,
   type TaskState,
@@ -42,6 +44,7 @@ export interface MoveTaskListEdgeOptions {
   toState: TaskState;
   organizationId: string;
   queries: readonly (string | null)[];
+  deadline: TaskDeadlineBounds;
 }
 
 export interface TaskListStateMoveOptions {
@@ -49,6 +52,7 @@ export interface TaskListStateMoveOptions {
   nextState?: TaskState | null;
   organizationId: string;
   query: string | null;
+  deadline: TaskDeadlineBounds;
 }
 
 function isTaskState(value: unknown): value is TaskState {
@@ -165,6 +169,7 @@ export function moveTaskListEdge(
     toState,
     organizationId,
     queries,
+    deadline,
   }: MoveTaskListEdgeOptions,
 ) {
   if (fromState === toState) {
@@ -177,16 +182,18 @@ export function moveTaskListEdge(
   }
 
   const nodeId = node.getDataID();
+  const deadlineValue = node.getValue("deadline");
+  const storedDeadline = typeof deadlineValue === "string" ? deadlineValue : null;
   for (const query of uniqueQueries(queries)) {
     const fromConnection = ConnectionHandler.getConnection(
       viewer,
       taskListConnectionKeys[fromState],
-      taskListConnectionFilters(organizationId, query, fromState),
+      taskListConnectionFilters(organizationId, query, fromState, deadline),
     );
     const toConnection = ConnectionHandler.getConnection(
       viewer,
       taskListConnectionKeys[toState],
-      taskListConnectionFilters(organizationId, query, toState),
+      taskListConnectionFilters(organizationId, query, toState, deadline),
     );
 
     if (toConnection != null && findEdge(toConnection, nodeId) != null) {
@@ -197,12 +204,18 @@ export function moveTaskListEdge(
       continue;
     }
 
-    if (fromConnection != null && findEdge(fromConnection, nodeId) != null) {
+    const hadFrom = fromConnection != null && findEdge(fromConnection, nodeId) != null;
+    if (hadFrom && fromConnection != null) {
       ConnectionHandler.deleteNode(fromConnection, nodeId);
       adjustTotalCount(fromConnection, -1);
     }
 
     if (toConnection == null) {
+      continue;
+    }
+
+    const matches = taskMatchesDeadline(storedDeadline, deadline);
+    if (matches === false || (matches == null && !hadFrom)) {
       continue;
     }
 
@@ -222,10 +235,12 @@ export function resortTaskListEdge(
     state,
     organizationId,
     queries,
+    deadline,
   }: {
     state: TaskState;
     organizationId: string;
     queries: readonly (string | null)[];
+    deadline: TaskDeadlineBounds;
   },
 ) {
   const viewer = getViewer(store);
@@ -238,7 +253,7 @@ export function resortTaskListEdge(
     const connection = ConnectionHandler.getConnection(
       viewer,
       taskListConnectionKeys[state],
-      taskListConnectionFilters(organizationId, query, state),
+      taskListConnectionFilters(organizationId, query, state, deadline),
     );
     if (connection == null) {
       continue;
@@ -257,6 +272,7 @@ export function taskListStateMoveUpdaters(
     nextState,
     organizationId,
     query,
+    deadline,
   }: TaskListStateMoveOptions,
 ) {
   const fromState = nextState == null ? null : readStoredTaskState(environment, taskId);
@@ -277,6 +293,7 @@ export function taskListStateMoveUpdaters(
       toState: nextState,
       organizationId,
       queries,
+      deadline,
     });
   }
 

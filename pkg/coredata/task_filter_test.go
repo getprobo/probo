@@ -22,6 +22,7 @@ package coredata_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
@@ -32,7 +33,7 @@ func TestTaskFilter_SQLArguments_EscapesLikeWildcards(t *testing.T) {
 	t.Parallel()
 
 	query := `a%b_c\`
-	filter := coredata.NewTaskFilter(&query, nil, nil, nil)
+	filter := coredata.NewTaskFilter(&query, nil, nil, nil, nil, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, `a\%b\_c\\`, args["filter_query"])
@@ -43,7 +44,7 @@ func TestTaskFilter_SQLArguments_LeavesPlainQueryUnchanged(t *testing.T) {
 	t.Parallel()
 
 	query := "access"
-	filter := coredata.NewTaskFilter(&query, nil, nil, nil)
+	filter := coredata.NewTaskFilter(&query, nil, nil, nil, nil, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, "access", args["filter_query"])
@@ -53,7 +54,7 @@ func TestTaskFilter_SQLArguments_SetsAssignedToID(t *testing.T) {
 	t.Parallel()
 
 	assignedToID := gid.New(gid.NilTenant, 1)
-	filter := coredata.NewTaskFilter(nil, nil, &assignedToID, nil)
+	filter := coredata.NewTaskFilter(nil, nil, &assignedToID, nil, nil, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, assignedToID, args["filter_assigned_to_id"])
@@ -67,7 +68,7 @@ func TestTaskFilter_SQLArguments_SetsInternalControlID(t *testing.T) {
 	t.Parallel()
 
 	internalControlID := gid.New(gid.NilTenant, 2)
-	filter := coredata.NewTaskFilter(nil, nil, nil, &internalControlID)
+	filter := coredata.NewTaskFilter(nil, nil, nil, &internalControlID, nil, nil)
 	args := filter.SQLArguments()
 
 	assert.Equal(t, internalControlID, args["filter_internal_control_id"])
@@ -76,4 +77,18 @@ func TestTaskFilter_SQLArguments_SetsInternalControlID(t *testing.T) {
 	assert.Nil(t, args["filter_assigned_to_id"])
 	assert.Contains(t, filter.SQLFragment(), "filter_ict.internal_control_id = @filter_internal_control_id")
 	assert.Contains(t, filter.SQLFragment(), "filter_ict.tenant_id = @tenant_id")
+}
+
+func TestTaskFilter_SQLArguments_SetsDeadlineBounds(t *testing.T) {
+	t.Parallel()
+
+	deadline := time.Date(2026, 10, 16, 0, 0, 0, 0, time.UTC)
+	hasDeadline := false
+	filter := coredata.NewTaskFilter(nil, nil, nil, nil, &deadline, &hasDeadline)
+	args := filter.SQLArguments()
+
+	assert.Equal(t, deadline, args["filter_deadline_on_or_before"])
+	assert.Equal(t, false, args["filter_has_deadline"])
+	assert.Contains(t, filter.SQLFragment(), "deadline IS NULL")
+	assert.Contains(t, filter.SQLFragment(), "filter_deadline_on_or_before")
 }

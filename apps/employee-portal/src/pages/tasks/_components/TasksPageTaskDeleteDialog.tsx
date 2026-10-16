@@ -58,7 +58,7 @@ export function TasksPageTaskDeleteDialog({
 }: TasksPageTaskDeleteDialogProps) {
   const { t } = useTranslation("tasks");
   const { organizationId } = useEmployeePortalRoute();
-  const { graphqlQuery } = useTasksFilters();
+  const { graphqlQuery, deadlineBounds } = useTasksFilters();
   const [deleteTask, isDeleting] = useMutation<TasksPageTaskDeleteDialogMutation>(
     deleteTaskMutation,
     {
@@ -77,6 +77,7 @@ export function TasksPageTaskDeleteDialog({
           taskId,
           organizationId,
           query: graphqlQuery,
+          deadline: deadlineBounds,
         });
       },
     }).then(

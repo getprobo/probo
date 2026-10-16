@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type TaskPriority, type TaskState, taskStates } from "@probo/tasks";
+import { taskMatchesDeadline, type TaskPriority, type TaskState, taskStates } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 import type { Environment, RecordSourceSelectorProxy } from "relay-runtime";
 
@@ -88,6 +88,12 @@ interface TaskListMembership {
   assignedToId: string | null;
   internalControlIds: readonly string[] | null;
   name: string | null;
+  deadline: string | null;
+}
+
+function readDeadline(node: TaskRecord) {
+  const deadline = node.getValue("deadline");
+  return typeof deadline === "string" ? deadline : null;
 }
 
 function readName(node: TaskRecord) {
@@ -124,6 +130,7 @@ function readMembership(
       ? readInternalControlIds(node)
       : internalControlIds,
     name: readName(node),
+    deadline: readDeadline(node),
   };
 }
 
@@ -148,6 +155,13 @@ function matchesOrganizationListFilter(
     if (!membership.internalControlIds.includes(filter.internalControlId)) {
       return false;
     }
+  }
+  const deadlineMatch = taskMatchesDeadline(membership.deadline, filter);
+  if (deadlineMatch == null) {
+    return null;
+  }
+  if (!deadlineMatch) {
+    return false;
   }
   return true;
 }
@@ -392,10 +406,12 @@ export function reconcileOrganizationTaskListMembership(
 
   const currentAssignedToId = readAssignedToId(node);
   const name = readName(node);
+  const deadline = readDeadline(node);
   const before = matchesOrganizationListFilter.bind(null, {
     assignedToId: previousAssignedToId,
     internalControlIds: previousInternalControlIds,
     name,
+    deadline,
   });
   const now = matchesOrganizationListFilter.bind(null, {
     assignedToId: currentAssignedToId,
@@ -403,6 +419,7 @@ export function reconcileOrganizationTaskListMembership(
       ? previousInternalControlIds
       : nextInternalControlIds,
     name,
+    deadline,
   });
   const nodeId = node.getDataID();
 

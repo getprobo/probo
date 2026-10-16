@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type TaskState } from "@probo/tasks";
+import { type TaskDeadlineBounds, type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
 export const taskListConnectionKeys = {
@@ -34,12 +34,15 @@ export function taskListConnectionFilters(
   organizationId: string,
   query: string | null,
   state: TaskState,
+  deadline: TaskDeadlineBounds,
 ) {
   return {
     organizationId,
     filter: {
       query,
       state,
+      deadlineOnOrBefore: deadline.deadlineOnOrBefore,
+      hasDeadline: deadline.hasDeadline,
     },
   };
 }
@@ -49,10 +52,11 @@ export function taskListConnectionId(
   organizationId: string,
   query: string | null,
   state: TaskState,
+  deadline: TaskDeadlineBounds,
 ) {
   return ConnectionHandler.getConnectionID(
     viewerId,
     taskListConnectionKeys[state],
-    taskListConnectionFilters(organizationId, query, state),
+    taskListConnectionFilters(organizationId, query, state, deadline),
   );
 }

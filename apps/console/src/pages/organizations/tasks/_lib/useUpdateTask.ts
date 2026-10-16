@@ -87,6 +87,8 @@ export function useUpdateTask() {
       query: graphqlFilter.query,
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      hasDeadline: graphqlFilter.hasDeadline,
     };
     const filters = organizationTaskListFilterVariants(listFilter);
     const taskId = relayConfig.variables.input.taskId;

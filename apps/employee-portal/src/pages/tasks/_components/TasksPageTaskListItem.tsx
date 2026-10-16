@@ -77,7 +77,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
   sectionState,
 }: TasksPageTaskListItemProps) {
   const { organizationId } = useEmployeePortalRoute();
-  const { graphqlQuery } = useTasksFilters();
+  const { graphqlQuery, deadlineBounds } = useTasksFilters();
   const environment = useRelayEnvironment();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const task = useFragment(tasksPageTaskListItemFragment, taskKey);
@@ -101,6 +101,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
           nextState: input.state,
           organizationId,
           query: graphqlQuery,
+          deadline: deadlineBounds,
         });
     void updateState({
       variables: {
@@ -119,6 +120,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
               state: task.state,
               organizationId,
               queries,
+              deadline: deadlineBounds,
             });
           }
         }
@@ -132,6 +134,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
               state: task.state,
               organizationId,
               queries,
+              deadline: deadlineBounds,
             });
           }
         }

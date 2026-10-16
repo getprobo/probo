@@ -20,7 +20,18 @@
   "searchPlaceholder": "Taken zoeken",
   "filters": {
     "status": "Status",
-    "allStatuses": "Alle statussen"
+    "allStatuses": "Alle statussen",
+    "dueDate": "Deadline",
+    "anyDueDate": "Elke deadline",
+    "due": {
+      "overdue": "Te laat",
+      "1d": "Over 1 dag",
+      "3d": "Over 3 dagen",
+      "1w": "Over 1 week",
+      "1m": "Over 1 maand",
+      "3m": "Over 3 maanden",
+      "none": "Geen deadline"
+    }
   },
   "unassigned": "Niet toegewezen",
   "deadlinePicker": {

@@ -20,7 +20,18 @@
   "searchPlaceholder": "Rechercher des tâches",
   "filters": {
     "status": "Statut",
-    "allStatuses": "Tous les statuts"
+    "allStatuses": "Tous les statuts",
+    "dueDate": "Échéance",
+    "anyDueDate": "Toute échéance",
+    "due": {
+      "overdue": "En retard",
+      "1d": "Dans 1 jour",
+      "3d": "Dans 3 jours",
+      "1w": "Dans 1 semaine",
+      "1m": "Dans 1 mois",
+      "3m": "Dans 3 mois",
+      "none": "Sans échéance"
+    }
   },
   "unassigned": "Non assigné",
   "deadlinePicker": {

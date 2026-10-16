@@ -134,6 +134,8 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       query: graphqlFilter.query,
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      hasDeadline: graphqlFilter.hasDeadline,
     };
     const filters = organizationTaskListFilterVariants(listFilter);
     const previousAssignedToId = task.assignedTo?.id ?? null;

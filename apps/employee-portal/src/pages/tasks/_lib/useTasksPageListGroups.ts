@@ -45,6 +45,8 @@ const inProgressGroupFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -53,7 +55,12 @@ const inProgressGroupFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: { query: $query, state: IN_PROGRESS }
+      filter: {
+        query: $query
+        state: IN_PROGRESS
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      }
     ) @connection(key: "useTasksPageListGroups_inProgress__inProgressTasks", filters: ["organizationId", "filter"]) {
       __id
       totalCount
@@ -73,6 +80,8 @@ const todoGroupFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -81,7 +90,12 @@ const todoGroupFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: { query: $query, state: TODO }
+      filter: {
+        query: $query
+        state: TODO
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      }
     ) @connection(key: "useTasksPageListGroups_todo__todoTasks", filters: ["organizationId", "filter"]) {
       __id
       totalCount
@@ -101,6 +115,8 @@ const backlogGroupFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -109,7 +125,12 @@ const backlogGroupFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: { query: $query, state: BACKLOG }
+      filter: {
+        query: $query
+        state: BACKLOG
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      }
     ) @connection(key: "useTasksPageListGroups_backlog__backlogTasks", filters: ["organizationId", "filter"]) {
       __id
       totalCount
@@ -129,6 +150,8 @@ const doneGroupFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -137,7 +160,12 @@ const doneGroupFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: { query: $query, state: DONE }
+      filter: {
+        query: $query
+        state: DONE
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      }
     ) @connection(key: "useTasksPageListGroups_done__doneTasks", filters: ["organizationId", "filter"]) {
       __id
       totalCount
@@ -157,6 +185,8 @@ const canceledGroupFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -165,7 +195,12 @@ const canceledGroupFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: { query: $query, state: CANCELED }
+      filter: {
+        query: $query
+        state: CANCELED
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      }
     ) @connection(key: "useTasksPageListGroups_canceled__canceledTasks", filters: ["organizationId", "filter"]) {
       __id
       totalCount
@@ -185,6 +220,8 @@ const duplicateGroupFragment = graphql`
   @argumentDefinitions(
     organizationId: { type: "ID!" }
     query: { type: "String" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -193,7 +230,12 @@ const duplicateGroupFragment = graphql`
       first: $first
       after: $after
       orderBy: { field: PRIORITY_RANK, direction: ASC }
-      filter: { query: $query, state: DUPLICATE }
+      filter: {
+        query: $query
+        state: DUPLICATE
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
+      }
     ) @connection(key: "useTasksPageListGroups_duplicate__duplicateTasks", filters: ["organizationId", "filter"]) {
       __id
       totalCount

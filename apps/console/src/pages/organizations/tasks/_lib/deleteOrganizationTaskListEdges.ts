@@ -30,6 +30,13 @@ import {
   taskListConnectionKeys,
 } from "./taskPath";
 
+type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
+
+function readString(record: TaskRecord, field: string) {
+  const value = record.getValue(field);
+  return typeof value === "string" ? value : null;
+}
+
 export function deleteOrganizationTaskListEdges(
   store: RecordSourceSelectorProxy,
   {
@@ -44,7 +51,7 @@ export function deleteOrganizationTaskListEdges(
 ) {
   const organization = store.get(organizationId);
   const task = store.get(taskId);
-  const taskState = task?.getValue("state");
+  const taskState = task == null ? null : readString(task, "state");
   if (organization == null) {
     return;
   }

@@ -21,23 +21,36 @@
 package coredata
 
 import (
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"go.probo.inc/probo/pkg/gid"
 )
 
 type TaskFilter struct {
-	query             *string
-	state             *TaskState
-	assignedToID      *gid.GID
-	internalControlID *gid.GID
+	query              *string
+	state              *TaskState
+	assignedToID       *gid.GID
+	internalControlID  *gid.GID
+	deadlineOnOrBefore *time.Time
+	hasDeadline        *bool
 }
 
-func NewTaskFilter(query *string, state *TaskState, assignedToID *gid.GID, internalControlID *gid.GID) *TaskFilter {
+func NewTaskFilter(
+	query *string,
+	state *TaskState,
+	assignedToID *gid.GID,
+	internalControlID *gid.GID,
+	deadlineOnOrBefore *time.Time,
+	hasDeadline *bool,
+) *TaskFilter {
 	return &TaskFilter{
-		query:             query,
-		state:             state,
-		assignedToID:      assignedToID,
-		internalControlID: internalControlID,
+		query:              query,
+		state:              state,
+		assignedToID:       assignedToID,
+		internalControlID:  internalControlID,
+		deadlineOnOrBefore: deadlineOnOrBefore,
+		hasDeadline:        hasDeadline,
 	}
 }
 
@@ -70,15 +83,26 @@ func (f *TaskFilter) SQLFragment() string {
 			)
 		ELSE TRUE
 	END
+	AND CASE
+		WHEN @filter_has_deadline::bool IS FALSE THEN
+			deadline IS NULL
+		WHEN @filter_deadline_on_or_before::timestamptz IS NOT NULL THEN
+			deadline IS NOT NULL
+				AND (deadline AT TIME ZONE 'UTC')::date
+					<= (@filter_deadline_on_or_before AT TIME ZONE 'UTC')::date
+		ELSE TRUE
+	END
 )`
 }
 
 func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 	args := pgx.StrictNamedArgs{
-		"filter_query":               nil,
-		"filter_state":               nil,
-		"filter_assigned_to_id":      nil,
-		"filter_internal_control_id": nil,
+		"filter_query":                 nil,
+		"filter_state":                 nil,
+		"filter_assigned_to_id":        nil,
+		"filter_internal_control_id":   nil,
+		"filter_deadline_on_or_before": nil,
+		"filter_has_deadline":          nil,
 	}
 
 	if f.query != nil && *f.query != "" {
@@ -95,6 +119,14 @@ func (f *TaskFilter) SQLArguments() pgx.StrictNamedArgs {
 
 	if f.internalControlID != nil {
 		args["filter_internal_control_id"] = *f.internalControlID
+	}
+
+	if f.deadlineOnOrBefore != nil {
+		args["filter_deadline_on_or_before"] = *f.deadlineOnOrBefore
+	}
+
+	if f.hasDeadline != nil {
+		args["filter_has_deadline"] = *f.hasDeadline
 	}
 
 	return args

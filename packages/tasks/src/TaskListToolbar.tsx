@@ -28,6 +28,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
+import { type TaskDueFilter, taskDueFilters } from "./taskDueFilter";
 import { taskListGroupStates, type TaskState, taskStateKeys } from "./taskState";
 import { TaskStateIcon } from "./TaskStateIcon";
 import { taskListToolbar } from "./variants";
@@ -112,7 +113,51 @@ export interface TaskListToolbarProps {
   onQueryChange: (value: string) => void;
   state: TaskState | null;
   onStateChange: (value: TaskState | null) => void;
+  due: TaskDueFilter | null;
+  onDueChange: (value: TaskDueFilter | null) => void;
   children?: ReactNode;
+}
+
+export interface TaskListDueDateFilterProps {
+  value: TaskDueFilter | null;
+  onValueChange: (value: TaskDueFilter | null) => void;
+}
+
+export function TaskListDueDateFilter({
+  value,
+  onValueChange,
+}: TaskListDueDateFilterProps) {
+  const { t } = useTranslation(TASKS_NAMESPACE);
+  const { dueFilter } = taskListToolbar();
+
+  return (
+    <div className={dueFilter()}>
+      <Select<TaskDueFilter | null>
+        value={value}
+        onValueChange={onValueChange}
+      >
+        <SelectTrigger
+          size={2}
+          placeholder={t("filters.anyDueDate")}
+          aria-label={t("filters.dueDate")}
+        >
+          {(selected: TaskDueFilter | null) => selected == null
+            ? t("filters.anyDueDate")
+            : t(`filters.due.${selected}`)}
+        </SelectTrigger>
+        <SelectPopup align="start">
+          <SelectItem value={null}>
+            {t("filters.anyDueDate")}
+          </SelectItem>
+          {taskDueFilters.map(filter => (
+            <SelectItem key={filter} value={filter}>
+              {t(`filters.due.${filter}`)}
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
+    </div>
+  );
 }
 
 export function TaskListToolbar({
@@ -120,6 +165,8 @@ export function TaskListToolbar({
   onQueryChange,
   state,
   onStateChange,
+  due,
+  onDueChange,
   children,
 }: TaskListToolbarProps) {
   const { tools, filters } = taskListToolbar();
@@ -129,6 +176,7 @@ export function TaskListToolbar({
       <TaskListSearchField value={query} onValueChange={onQueryChange} />
       <div className={filters()}>
         <TaskListStatusFilter value={state} onValueChange={onStateChange} />
+        <TaskListDueDateFilter value={due} onValueChange={onDueChange} />
         {children}
       </div>
     </div>

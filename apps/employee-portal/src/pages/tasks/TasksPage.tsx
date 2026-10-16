@@ -39,6 +39,8 @@ export const tasksPageQuery = graphql`
   query TasksPageQuery(
     $organizationId: ID!
     $query: String
+    $deadlineOnOrBefore: Datetime
+    $hasDeadline: Boolean
     $includeInProgress: Boolean!
     $includeTodo: Boolean!
     $includeBacklog: Boolean!
@@ -52,6 +54,8 @@ export const tasksPageQuery = graphql`
         @arguments(
           organizationId: $organizationId
           query: $query
+          deadlineOnOrBefore: $deadlineOnOrBefore
+          hasDeadline: $hasDeadline
           includeInProgress: $includeInProgress
           includeTodo: $includeTodo
           includeBacklog: $includeBacklog
@@ -71,7 +75,7 @@ interface TasksPageProps {
 export function TasksPage({ queryRef, onReady }: TasksPageProps) {
   const { t } = useTranslation("tasks");
   const { t: tApp } = useTranslation();
-  const { state: selectedState, setState } = useTasksFilters();
+  const { state: selectedState, setState, due, setDue } = useTasksFilters();
   const [queryInput, setQueryInput] = useTasksSearch();
   const { viewer } = usePreloadedQuery<TasksPageQuery>(
     tasksPageQuery,
@@ -94,6 +98,8 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
           onQueryChange={setQueryInput}
           state={selectedState}
           onStateChange={setState}
+          due={due}
+          onDueChange={setDue}
         />
         <Suspense fallback={<TasksPageListSkeleton />}>
           <TasksPageList viewerKey={viewer} />

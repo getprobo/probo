@@ -20,7 +20,18 @@
   "searchPlaceholder": "Search tasks",
   "filters": {
     "status": "Status",
-    "allStatuses": "All statuses"
+    "allStatuses": "All statuses",
+    "dueDate": "Due date",
+    "anyDueDate": "Any due date",
+    "due": {
+      "overdue": "Overdue",
+      "1d": "1 day from now",
+      "3d": "3 days from now",
+      "1w": "1 week from now",
+      "1m": "1 month from now",
+      "3m": "3 months from now",
+      "none": "No due date"
+    }
   },
   "unassigned": "Unassigned",
   "deadlinePicker": {

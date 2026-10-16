@@ -70,6 +70,8 @@ const tasksPageListFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     includeInProgress: { type: "Boolean!" }
     includeTodo: { type: "Boolean!" }
     includeBacklog: { type: "Boolean!" }
@@ -83,6 +85,8 @@ const tasksPageListFragment = graphql`
         query: $query
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       )
       @include(if: $includeInProgress)
     ...useOrganizationTaskListGroups_todo
@@ -90,6 +94,8 @@ const tasksPageListFragment = graphql`
         query: $query
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       )
       @include(if: $includeTodo)
     ...useOrganizationTaskListGroups_backlog
@@ -97,6 +103,8 @@ const tasksPageListFragment = graphql`
         query: $query
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       )
       @include(if: $includeBacklog)
     ...useOrganizationTaskListGroups_done
@@ -104,6 +112,8 @@ const tasksPageListFragment = graphql`
         query: $query
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       )
       @include(if: $includeDone)
     ...useOrganizationTaskListGroups_canceled
@@ -111,6 +121,8 @@ const tasksPageListFragment = graphql`
         query: $query
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       )
       @include(if: $includeCanceled)
     ...useOrganizationTaskListGroups_duplicate
@@ -118,6 +130,8 @@ const tasksPageListFragment = graphql`
         query: $query
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       )
       @include(if: $includeDuplicate)
   }
@@ -205,9 +219,11 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     state: selectedState,
     assignedToId,
     internalControlId,
+    due,
     graphqlFilter,
     setState,
     setAssignedToId,
+    setDue,
   } = useTasksCardFilters();
   const [queryInput, setQueryInput] = useTasksCardSearch();
   const includeFlags = useMemo(
@@ -220,6 +236,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     query: graphqlFilter.query,
     assignedToId: graphqlFilter.assignedToId,
     internalControlId: graphqlFilter.internalControlId,
+    deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+    hasDeadline: graphqlFilter.hasDeadline,
     includes: includeFlags,
   }));
   const [organization, refetch] = useRefetchableFragment<
@@ -247,11 +265,14 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     query: graphqlFilter.query,
     assignedToId: graphqlFilter.assignedToId,
     internalControlId: graphqlFilter.internalControlId,
+    deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+    hasDeadline: graphqlFilter.hasDeadline,
   };
   const canDrag = organization.canUpdateTask
     && query === ""
     && assignedToId == null
-    && internalControlId == null;
+    && internalControlId == null
+    && due == null;
 
   useEffect(() => {
     if (skipFirstRefetch.current) {
@@ -261,7 +282,9 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
 
     const filtersChanged = graphqlFilter.query !== fetched.query
       || graphqlFilter.assignedToId !== fetched.assignedToId
-      || graphqlFilter.internalControlId !== fetched.internalControlId;
+      || graphqlFilter.internalControlId !== fetched.internalControlId
+      || graphqlFilter.deadlineOnOrBefore !== fetched.deadlineOnOrBefore
+      || graphqlFilter.hasDeadline !== fetched.hasDeadline;
     const includesStale = taskListNeedsFetch(graphqlFilter.query, includeFlags, {
       query: fetched.query,
       includes: fetched.includes,
@@ -274,6 +297,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       query: graphqlFilter.query,
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      hasDeadline: graphqlFilter.hasDeadline,
       includes: includeFlags,
     };
     startTransition(() => {
@@ -282,6 +307,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
           query: requested.query,
           assignedToId: requested.assignedToId,
           internalControlId: requested.internalControlId,
+          deadlineOnOrBefore: requested.deadlineOnOrBefore,
+          hasDeadline: requested.hasDeadline,
           ...requested.includes,
         },
         {
@@ -295,9 +322,13 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
               query: requested.query,
               assignedToId: requested.assignedToId,
               internalControlId: requested.internalControlId,
+              deadlineOnOrBefore: requested.deadlineOnOrBefore,
+              hasDeadline: requested.hasDeadline,
               includes: current.query === requested.query
                 && current.assignedToId === requested.assignedToId
                 && current.internalControlId === requested.internalControlId
+                && current.deadlineOnOrBefore === requested.deadlineOnOrBefore
+                && current.hasDeadline === requested.hasDeadline
                 ? mergeTaskListIncludeFlags(current.includes, requested.includes)
                 : requested.includes,
             }));
@@ -436,6 +467,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
                 query: listFilter.query,
                 assignedToId: listFilter.assignedToId,
                 internalControlId: listFilter.internalControlId,
+                deadlineOnOrBefore: listFilter.deadlineOnOrBefore,
+                hasDeadline: listFilter.hasDeadline,
                 ...includeFlags,
               },
               { fetchPolicy: "network-only" },
@@ -466,6 +499,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
         onQueryChange={setQueryInput}
         state={selectedState}
         onStateChange={setState}
+        due={due}
+        onDueChange={setDue}
       >
         <div className={userFilter()}>
           <TaskUserFilter value={assignedToId} onValueChange={setAssignedToId} />
@@ -497,7 +532,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
         }))}
         selectedState={selectedState}
         query={query}
-        filtered={assignedToId != null || internalControlId != null}
+        filtered={assignedToId != null || internalControlId != null || due != null}
         busy={isPending}
         renderRow={(item, sectionState) => (
           <TaskListItem

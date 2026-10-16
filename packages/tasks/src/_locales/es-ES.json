@@ -20,7 +20,18 @@
   "searchPlaceholder": "Buscar tareas",
   "filters": {
     "status": "Estado",
-    "allStatuses": "Todos los estados"
+    "allStatuses": "Todos los estados",
+    "dueDate": "Fecha límite",
+    "anyDueDate": "Cualquier fecha",
+    "due": {
+      "overdue": "Vencida",
+      "1d": "Dentro de 1 día",
+      "3d": "Dentro de 3 días",
+      "1w": "Dentro de 1 semana",
+      "1m": "Dentro de 1 mes",
+      "3m": "Dentro de 3 meses",
+      "none": "Sin fecha límite"
+    }
   },
   "unassigned": "Sin asignar",
   "deadlinePicker": {

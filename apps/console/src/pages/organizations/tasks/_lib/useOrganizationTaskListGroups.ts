@@ -46,6 +46,8 @@ const inProgressGroupFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -58,6 +60,8 @@ const inProgressGroupFragment = graphql`
         state: IN_PROGRESS
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       }
     ) @connection(key: "useOrganizationTaskListGroups_inProgress__inProgressTasks", filters: ["filter"]) {
       __id
@@ -79,6 +83,8 @@ const todoGroupFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -91,6 +97,8 @@ const todoGroupFragment = graphql`
         state: TODO
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       }
     ) @connection(key: "useOrganizationTaskListGroups_todo__todoTasks", filters: ["filter"]) {
       __id
@@ -112,6 +120,8 @@ const backlogGroupFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -124,6 +134,8 @@ const backlogGroupFragment = graphql`
         state: BACKLOG
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       }
     ) @connection(key: "useOrganizationTaskListGroups_backlog__backlogTasks", filters: ["filter"]) {
       __id
@@ -145,6 +157,8 @@ const doneGroupFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -157,6 +171,8 @@ const doneGroupFragment = graphql`
         state: DONE
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       }
     ) @connection(key: "useOrganizationTaskListGroups_done__doneTasks", filters: ["filter"]) {
       __id
@@ -178,6 +194,8 @@ const canceledGroupFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -190,6 +208,8 @@ const canceledGroupFragment = graphql`
         state: CANCELED
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       }
     ) @connection(key: "useOrganizationTaskListGroups_canceled__canceledTasks", filters: ["filter"]) {
       __id
@@ -211,6 +231,8 @@ const duplicateGroupFragment = graphql`
     query: { type: "String" }
     assignedToId: { type: "ID" }
     internalControlId: { type: "ID" }
+    deadlineOnOrBefore: { type: "Datetime" }
+    hasDeadline: { type: "Boolean" }
     first: { type: "Int", defaultValue: 40 }
     after: { type: "CursorKey", defaultValue: null }
   ) {
@@ -223,6 +245,8 @@ const duplicateGroupFragment = graphql`
         state: DUPLICATE
         assignedToId: $assignedToId
         internalControlId: $internalControlId
+        deadlineOnOrBefore: $deadlineOnOrBefore
+        hasDeadline: $hasDeadline
       }
     ) @connection(key: "useOrganizationTaskListGroups_duplicate__duplicateTasks", filters: ["filter"]) {
       __id

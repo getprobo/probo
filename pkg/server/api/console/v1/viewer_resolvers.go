@@ -8,6 +8,7 @@ package console_v1
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
@@ -208,18 +209,29 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 	}
 
 	var (
-		query             *string
-		state             *coredata.TaskState
-		internalControlID *gid.GID
+		query              *string
+		state              *coredata.TaskState
+		internalControlID  *gid.GID
+		deadlineOnOrBefore *time.Time
+		hasDeadline        *bool
 	)
 
 	if filter != nil {
 		query = filter.Query
 		state = filter.State
 		internalControlID = filter.InternalControlID
+		deadlineOnOrBefore = filter.DeadlineOnOrBefore
+		hasDeadline = filter.HasDeadline
 	}
 
-	taskFilter := coredata.NewTaskFilter(query, state, &profile.ID, internalControlID)
+	taskFilter := coredata.NewTaskFilter(
+		query,
+		state,
+		&profile.ID,
+		internalControlID,
+		deadlineOnOrBefore,
+		hasDeadline,
+	)
 
 	page, err := r.task.ListForOrganizationID(ctx, scope, organizationID, cursor, taskFilter)
 	if err != nil {

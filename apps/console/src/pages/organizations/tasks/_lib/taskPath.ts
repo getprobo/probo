@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type TaskState } from "@probo/tasks";
+import { type TaskDeadlineBounds, type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
 export const taskListConnectionKeys = {
@@ -30,7 +30,7 @@ export const taskListConnectionKeys = {
   DUPLICATE: "useOrganizationTaskListGroups_duplicate__duplicateTasks",
 } as const satisfies Record<TaskState, string>;
 
-export interface OrganizationTaskListFilter {
+export interface OrganizationTaskListFilter extends TaskDeadlineBounds {
   query: string | null;
   assignedToId: string | null;
   internalControlId: string | null;
@@ -43,11 +43,15 @@ export function organizationTaskListFilterVariants(
     query: null,
     assignedToId: null,
     internalControlId: null,
+    deadlineOnOrBefore: null,
+    hasDeadline: null,
   };
   if (
     filter.query == null
     && filter.assignedToId == null
     && filter.internalControlId == null
+    && filter.deadlineOnOrBefore == null
+    && filter.hasDeadline == null
   ) {
     return [empty];
   }
@@ -57,6 +61,8 @@ export function organizationTaskListFilterVariants(
       query: filter.query,
       assignedToId: filter.assignedToId,
       internalControlId: filter.internalControlId,
+      deadlineOnOrBefore: filter.deadlineOnOrBefore,
+      hasDeadline: filter.hasDeadline,
     },
     empty,
   ];
@@ -72,6 +78,8 @@ export function organizationTaskListConnectionFilters(
       state,
       assignedToId: filter.assignedToId,
       internalControlId: filter.internalControlId,
+      deadlineOnOrBefore: filter.deadlineOnOrBefore,
+      hasDeadline: filter.hasDeadline,
     },
   };
 }
@@ -96,6 +104,8 @@ export const emptyTaskListFilter = {
   state: null,
   assignedToId: null,
   internalControlId: null,
+  deadlineOnOrBefore: null,
+  hasDeadline: null,
 };
 
 const taskListConnectionFilters = {

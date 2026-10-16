@@ -75,6 +75,8 @@ export function useDeleteTask() {
             query: graphqlFilter.query,
             assignedToId: graphqlFilter.assignedToId,
             internalControlId: graphqlFilter.internalControlId,
+            deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+            hasDeadline: graphqlFilter.hasDeadline,
           },
         });
       },

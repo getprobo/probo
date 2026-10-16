@@ -81,6 +81,8 @@ export function useCreateTask() {
       query: graphqlFilter.query,
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      hasDeadline: graphqlFilter.hasDeadline,
     };
     const connections = new Set<string>();
     for (const variant of organizationTaskListFilterVariants(listFilter)) {

@@ -41,6 +41,8 @@ export const tasksPageQuery = graphql`
     $query: String
     $assignedToId: ID
     $internalControlId: ID
+    $deadlineOnOrBefore: Datetime
+    $hasDeadline: Boolean
     $includeInProgress: Boolean!
     $includeTodo: Boolean!
     $includeBacklog: Boolean!
@@ -57,6 +59,8 @@ export const tasksPageQuery = graphql`
             query: $query
             assignedToId: $assignedToId
             internalControlId: $internalControlId
+            deadlineOnOrBefore: $deadlineOnOrBefore
+            hasDeadline: $hasDeadline
             includeInProgress: $includeInProgress
             includeTodo: $includeTodo
             includeBacklog: $includeBacklog

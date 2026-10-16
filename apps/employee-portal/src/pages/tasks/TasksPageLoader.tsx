@@ -48,7 +48,7 @@ interface TasksPageQueryLoaderProps {
 }
 
 function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
-  const { graphqlQuery, includeFlags } = useTasksFilters();
+  const { graphqlQuery, deadlineBounds, includeFlags } = useTasksFilters();
   const [queryRef, loadQuery] = useQueryLoader<TasksPageQuery>(tasksPageQuery);
   const [pageReady, setPageReady] = useState(false);
   const onReady = useCallback(() => {
@@ -60,13 +60,21 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
       return;
     }
     loadQuery(
-      { organizationId, query: graphqlQuery, ...includeFlags },
+      {
+        organizationId,
+        query: graphqlQuery,
+        deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
+        hasDeadline: deadlineBounds.hasDeadline,
+        ...includeFlags,
+      },
       { fetchPolicy: "store-and-network" },
     );
-  }, [graphqlQuery, includeFlags, loadQuery, organizationId, pageReady]);
+  }, [deadlineBounds, graphqlQuery, includeFlags, loadQuery, organizationId, pageReady]);
 
   const queryMatchesPendingFilter = queryRef != null
     && queryRef.variables.query === graphqlQuery
+    && queryRef.variables.deadlineOnOrBefore === deadlineBounds.deadlineOnOrBefore
+    && queryRef.variables.hasDeadline === deadlineBounds.hasDeadline
     && taskListIncludeFlagsEqual(
       pickTaskListIncludeFlags(queryRef.variables),
       includeFlags,

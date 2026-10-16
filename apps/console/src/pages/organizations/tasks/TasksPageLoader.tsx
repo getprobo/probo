@@ -70,6 +70,8 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
       query: graphqlFilter.query,
       assignedToId: graphqlFilter.assignedToId,
       internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      hasDeadline: graphqlFilter.hasDeadline,
       ...includeFlags,
     });
   }, [graphqlFilter, includeFlags, loadQuery, organizationId, pageReady]);
@@ -78,6 +80,8 @@ function TasksPageQueryLoader({ organizationId }: TasksPageQueryLoaderProps) {
     && queryRef.variables.query === graphqlFilter.query
     && queryRef.variables.assignedToId === graphqlFilter.assignedToId
     && queryRef.variables.internalControlId === graphqlFilter.internalControlId
+    && queryRef.variables.deadlineOnOrBefore === graphqlFilter.deadlineOnOrBefore
+    && queryRef.variables.hasDeadline === graphqlFilter.hasDeadline
     && taskListIncludeFlagsEqual(
       pickTaskListIncludeFlags(queryRef.variables),
       includeFlags,

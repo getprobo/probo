@@ -220,6 +220,7 @@ export const taskListToolbar = tv({
     search: "w-80 max-sm:min-w-0 max-sm:w-full",
     filters: "flex flex-wrap items-center justify-end gap-2",
     filter: "w-40 shrink-0",
+    dueFilter: "w-48 shrink-0",
     stateOption: "flex items-center gap-2",
   },
 });

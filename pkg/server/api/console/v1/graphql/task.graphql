@@ -46,6 +46,8 @@ input TaskFilter {
     state: TaskState
     assignedToId: ID
     internalControlId: ID
+    deadlineOnOrBefore: Datetime
+    hasDeadline: Boolean
 }
 
 type Task implements Node {
