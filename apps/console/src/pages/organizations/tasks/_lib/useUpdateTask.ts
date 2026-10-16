@@ -30,7 +30,9 @@ import { type MutationFeedback, useMutation } from "#/lib/relay/useMutation";
 import {
   isTaskState,
   moveOrganizationTaskListEdge,
+  readStoredAssignedToId,
   readStoredTaskState,
+  reconcileOrganizationTaskListMembership,
   resortOrganizationTaskListEdge,
 } from "./moveOrganizationTaskListEdge";
 import { moveTaskNodeSorted, syncTaskInternalControlIds } from "./taskConnectionOrder";
@@ -87,10 +89,15 @@ export function useUpdateTask() {
       internalControlId: graphqlFilter.internalControlId,
     };
     const filters = organizationTaskListFilterVariants(listFilter);
+    const taskId = relayConfig.variables.input.taskId;
     const nextState = relayConfig.variables.input.state;
     const fromState = nextState == null
       ? null
-      : readStoredTaskState(relayEnv, relayConfig.variables.input.taskId);
+      : readStoredTaskState(relayEnv, taskId);
+    const assigneeChanged = "assignedToId" in relayConfig.variables.input;
+    const previousAssignedToId = assigneeChanged
+      ? readStoredAssignedToId(relayEnv, taskId)
+      : null;
 
     return commit({
       ...relayConfig,
@@ -118,6 +125,25 @@ export function useUpdateTask() {
                 state,
                 filters,
               );
+            }
+          }
+          if (assigneeChanged || internalControlsChanged) {
+            const state = node.getValue("state");
+            if (isTaskState(state)) {
+              reconcileOrganizationTaskListMembership(store, node, {
+                organizationId,
+                state,
+                filters,
+                previousAssignedToId: assigneeChanged
+                  ? previousAssignedToId
+                  : (node.getLinkedRecord("assignedTo")?.getDataID() ?? null),
+                previousInternalControlIds: internalControlsChanged
+                  ? previousInternalControlIds
+                  : null,
+                nextInternalControlIds: internalControlsChanged
+                  ? nextInternalControlIds
+                  : undefined,
+              });
             }
           }
           moveTaskNodeSorted(store, node, {

@@ -27,7 +27,7 @@ import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
@@ -177,9 +177,11 @@ export function TaskProperties({
         </PropertyRow>
         {extraProperties}
         <PropertyRow label={t("fields.timeEstimate")}>
-          {timeEstimateField ?? (
-            <Text size={2}>{formatDuration(task.timeEstimate, t) ?? empty}</Text>
-          )}
+          {timeEstimateField != null
+            ? withDisabled(timeEstimateField, isUpdating)
+            : (
+                <Text size={2}>{formatDuration(task.timeEstimate, t) ?? empty}</Text>
+              )}
         </PropertyRow>
         <PropertyRow label={t("fields.deadline")}>
           {canUpdate
@@ -218,15 +220,17 @@ export function TaskProperties({
                 )}
         </PropertyRow>
         <PropertyRow label={t("fields.recurrence")}>
-          {recurrenceField ?? (
-            task.recurrenceInterval
-              ? (
-                  <Text size={2}>{formatDuration(task.recurrenceInterval, t)}</Text>
-                )
-              : (
-                  <Text size={2} color="faint">{t("doesNotRepeat")}</Text>
-                )
-          )}
+          {recurrenceField != null
+            ? withDisabled(recurrenceField, isUpdating)
+            : (
+                task.recurrenceInterval
+                  ? (
+                      <Text size={2}>{formatDuration(task.recurrenceInterval, t)}</Text>
+                    )
+                  : (
+                      <Text size={2} color="faint">{t("doesNotRepeat")}</Text>
+                    )
+              )}
         </PropertyRow>
         <PropertyRow label={t("fields.createdAt")}>
           <Text size={2}>
@@ -245,6 +249,17 @@ export function TaskProperties({
       </div>
     </Card>
   );
+}
+
+function withDisabled(field: ReactNode, disabled: boolean): ReactNode {
+  if (!disabled || !isValidElement<{ disabled?: boolean }>(field)) {
+    return field;
+  }
+
+  const element = field as ReactElement<{ disabled?: boolean }>;
+  return cloneElement(element, {
+    disabled: element.props.disabled || disabled,
+  });
 }
 
 export function PropertyRow({

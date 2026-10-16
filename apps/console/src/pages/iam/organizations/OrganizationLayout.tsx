@@ -24,6 +24,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 
 import type { OrganizationLayoutQuery } from "#/__generated__/iam/OrganizationLayoutQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 import { CurrentUser } from "#/providers/CurrentUser";
 
@@ -31,6 +32,7 @@ import { NavPanel } from "./_components/shell/NavPanel";
 import { NavRail } from "./_components/shell/NavRail";
 import { NavSpotlight } from "./_components/shell/NavSpotlight";
 import { organizationLayout } from "./_components/shell/variants";
+import { OrganizationLayoutSkeleton } from "./OrganizationLayoutSkeleton";
 
 export const organizationLayoutQuery = graphql`
   query OrganizationLayoutQuery($organizationId: ID!) {
@@ -65,13 +67,17 @@ export interface OrganizationLayoutProps {
 }
 
 export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
+  const routeOrganizationId = useOrganizationId();
   const { organization, viewer, slackbotAvailable } = usePreloadedQuery<OrganizationLayoutQuery>(
     organizationLayoutQuery,
     queryRef,
   );
-
   const [hasDrawer, setDrawer] = useState(false);
   const drawerContext = useMemo(() => ({ setDrawer }), []);
+
+  if (queryRef.variables.organizationId !== routeOrganizationId) {
+    return <OrganizationLayoutSkeleton />;
+  }
 
   if (organization.__typename !== "Organization") {
     throw new Error("invalid type for organization node");

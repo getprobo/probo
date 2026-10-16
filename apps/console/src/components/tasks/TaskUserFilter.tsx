@@ -79,6 +79,7 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
           value={value}
           emptyLabel={emptyLabel}
           emptyValue={null}
+          hideEndedContracts={false}
           onValueChange={onValueChange}
         />
       </DropdownPopup>

@@ -168,6 +168,32 @@ function resolveDropPriority(
   return undefined;
 }
 
+function destinationRank(
+  items: readonly { id: string; rank: number; priority: TaskPriority }[],
+  order: readonly string[],
+  newIndex: number,
+  dragged: { id: string; rank: number; priority: TaskPriority },
+  targetPriority: TaskPriority | undefined,
+): { rank: number; send: boolean } {
+  if (targetPriority == null) {
+    return { rank: items[newIndex]?.rank ?? dragged.rank, send: true };
+  }
+
+  const nextId = order[newIndex + 1];
+  const next = nextId == null ? undefined : items.find(item => item.id === nextId);
+  if (next != null && next.priority === targetPriority) {
+    return { rank: next.rank, send: true };
+  }
+
+  const peers = items.filter(item =>
+    item.priority === targetPriority && item.id !== dragged.id,
+  );
+  const rank = peers.length === 0
+    ? 1
+    : Math.max(...peers.map(item => item.rank)) + 1;
+  return { rank, send: false };
+}
+
 export interface TasksPageListProps {
   organizationKey: TasksPageList_organization$key;
 }
@@ -209,6 +235,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
   const toast = useToast();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [draggedState, setDraggedState] = useState<TaskState | null>(null);
+  const draggedIdRef = useRef<string | null>(null);
+  const draggedStateRef = useRef<TaskState | null>(null);
   const [preview, setPreview] = useState<{ state: TaskState; ids: string[] } | null>(null);
   const [ignoreClick, setIgnoreClick] = useState(false);
   const droppedRef = useRef(false);
@@ -282,6 +310,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
   }, [fetched, graphqlFilter, includeFlags, refetch]);
 
   function resetDragState() {
+    draggedIdRef.current = null;
+    draggedStateRef.current = null;
     setDraggedId(null);
     setDraggedState(null);
     setPreview(null);
@@ -293,6 +323,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
     hoveredState: TaskState,
   ) {
     event.preventDefault();
+    const draggedId = draggedIdRef.current;
+    const draggedState = draggedStateRef.current;
     if (
       draggedId == null
       || draggedState == null
@@ -344,13 +376,19 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       return;
     }
 
-    const targetRank = items[newIndex]?.rank ?? dragged.rank;
     const above = newIndex > 0 ? byId.get(order[newIndex - 1]) : undefined;
     const below = newIndex < order.length - 1 ? byId.get(order[newIndex + 1]) : undefined;
     const targetPriority = resolveDropPriority(
       dragged.priority,
       above?.priority,
       below?.priority,
+    );
+    const targetRank = destinationRank(
+      items,
+      order,
+      newIndex,
+      dragged,
+      targetPriority,
     );
     const taskId = draggedId;
     const state = draggedState;
@@ -371,7 +409,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
         filters,
         {
           previousRank,
-          nextRank: targetRank,
+          nextRank: targetRank.rank,
           nextPriority: targetPriority,
         },
       );
@@ -381,7 +419,7 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
       variables: {
         input: {
           taskId,
-          rank: targetRank,
+          ...(targetRank.send ? { rank: targetRank.rank } : {}),
           ...(targetPriority != null ? { priority: targetPriority } : {}),
         },
       },
@@ -479,6 +517,8 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
             ignoreClick={ignoreClick}
             onDragStart={() => {
               setIgnoreClick(true);
+              draggedIdRef.current = item.id;
+              draggedStateRef.current = sectionState;
               setDraggedId(item.id);
               setDraggedState(sectionState);
             }}

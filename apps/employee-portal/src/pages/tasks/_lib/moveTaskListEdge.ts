@@ -82,19 +82,46 @@ export function adjustTotalCount(connection: TaskRecord, delta: number) {
   connection.setValue(Math.max(0, current + delta), "totalCount");
 }
 
-function priorityIndex(node: TaskRecord) {
-  const index = taskPriorities.indexOf(node.getValue("priority") as TaskPriority);
-  return index === -1 ? taskPriorities.length : index;
+function priorityRank(node: TaskRecord) {
+  const priorityIndex = taskPriorities.indexOf(node.getValue("priority") as TaskPriority);
+  const rank = node.getValue("rank");
+  return (
+    (priorityIndex === -1 ? taskPriorities.length : priorityIndex) * 1_000_000
+    + (typeof rank === "number" ? rank : 0)
+  );
+}
+
+function priorityRankCursorValue(node: TaskRecord) {
+  const priorityIndex = taskPriorities.indexOf(node.getValue("priority") as TaskPriority);
+  const rank = node.getValue("rank");
+  if (priorityIndex === -1 || typeof rank !== "number") {
+    return null;
+  }
+
+  return (priorityIndex + 1) * 1_000_000 + rank;
+}
+
+function setPriorityRankCursor(edge: TaskRecord, node: TaskRecord) {
+  const value = priorityRankCursorValue(node);
+  if (value == null) {
+    return;
+  }
+
+  const json = JSON.stringify([node.getDataID(), value]);
+  edge.setValue(
+    btoa(json).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/u, ""),
+    "cursor",
+  );
 }
 
 function sortsAfter(
   existing: TaskRecord,
-  incomingPriority: number,
+  incomingRank: number,
   incomingId: string,
 ) {
-  const existingPriority = priorityIndex(existing);
-  if (existingPriority !== incomingPriority) {
-    return existingPriority > incomingPriority;
+  const existingRank = priorityRank(existing);
+  if (existingRank !== incomingRank) {
+    return existingRank > incomingRank;
   }
 
   return existing.getDataID() > incomingId;
@@ -105,13 +132,14 @@ function placeEdgeByPriority(
   edge: TaskRecord,
   node: TaskRecord,
 ) {
+  setPriorityRankCursor(edge, node);
   const nodeId = node.getDataID();
-  const incomingPriority = priorityIndex(node);
+  const incomingRank = priorityRank(node);
   const edges = (connection.getLinkedRecords("edges") ?? [])
     .filter(existing => existing?.getLinkedRecord("node")?.getDataID() !== nodeId);
   const insertAt = edges.findIndex((existing) => {
     const existingNode = existing?.getLinkedRecord("node");
-    return existingNode != null && sortsAfter(existingNode, incomingPriority, nodeId);
+    return existingNode != null && sortsAfter(existingNode, incomingRank, nodeId);
   });
   connection.setLinkedRecords(
     insertAt === -1
@@ -184,6 +212,41 @@ export function moveTaskListEdge(
       node,
     );
     adjustTotalCount(toConnection, 1);
+  }
+}
+
+export function resortTaskListEdge(
+  store: RecordSourceSelectorProxy,
+  node: TaskRecord,
+  {
+    state,
+    organizationId,
+    queries,
+  }: {
+    state: TaskState;
+    organizationId: string;
+    queries: readonly (string | null)[];
+  },
+) {
+  const viewer = getViewer(store);
+  if (viewer == null) {
+    return;
+  }
+
+  const nodeId = node.getDataID();
+  for (const query of uniqueQueries(queries)) {
+    const connection = ConnectionHandler.getConnection(
+      viewer,
+      taskListConnectionKeys[state],
+      taskListConnectionFilters(organizationId, query, state),
+    );
+    if (connection == null) {
+      continue;
+    }
+    const edge = findEdge(connection, nodeId);
+    if (edge != null) {
+      placeEdgeByPriority(connection, edge, node);
+    }
   }
 }
 

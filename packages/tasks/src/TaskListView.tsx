@@ -254,9 +254,10 @@ export function TaskListView<T extends TaskListViewItem>({
     startTransition,
   });
 
+  const hasRows = flatItems.length > 0;
   useEffect(() => {
     setScrollElement(nearestOverflowParent(listRef.current));
-  }, []);
+  }, [hasRows]);
 
   useLayoutEffect(() => {
     const list = listRef.current;

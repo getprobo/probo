@@ -27,6 +27,7 @@ import {
   organizationTaskListConnectionFilters,
   type OrganizationTaskListFilter,
   organizationTaskListFilterVariants,
+  taskInternalControlIdsConnectionKey,
   taskListConnectionKeys,
 } from "./taskPath";
 
@@ -56,6 +57,15 @@ export function readStoredTaskState(environment: Environment, taskId: string): T
   return record.state;
 }
 
+export function readStoredAssignedToId(environment: Environment, taskId: string): string | null {
+  const record = environment.getStore().getSource().get(taskId) as
+    | { readonly assignedTo?: { readonly __ref?: unknown } | null }
+    | null
+    | undefined;
+  const ref = record?.assignedTo?.__ref;
+  return typeof ref === "string" ? ref : null;
+}
+
 function findEdge(connection: TaskRecord, nodeId: string) {
   return (connection.getLinkedRecords("edges") ?? [])
     .find(existing => existing?.getLinkedRecord("node")?.getDataID() === nodeId);
@@ -72,6 +82,82 @@ export function adjustTotalCount(connection: TaskRecord, delta: number) {
 
 function getOrganization(store: RecordSourceSelectorProxy, organizationId: string) {
   return store.get(organizationId);
+}
+
+interface TaskListMembership {
+  assignedToId: string | null;
+  internalControlIds: readonly string[] | null;
+  name: string | null;
+}
+
+function readName(node: TaskRecord) {
+  const name = node.getValue("name");
+  return typeof name === "string" ? name : null;
+}
+
+function readAssignedToId(node: TaskRecord) {
+  return node.getLinkedRecord("assignedTo")?.getDataID() ?? null;
+}
+
+function readInternalControlIds(node: TaskRecord) {
+  const connection = ConnectionHandler.getConnection(
+    node,
+    taskInternalControlIdsConnectionKey,
+  );
+  if (connection == null) {
+    return null;
+  }
+
+  return (connection.getLinkedRecords("edges") ?? []).flatMap((edge) => {
+    const id = edge?.getLinkedRecord("node")?.getDataID();
+    return id == null ? [] : [id];
+  });
+}
+
+function readMembership(
+  node: TaskRecord,
+  internalControlIds?: readonly string[] | null,
+): TaskListMembership {
+  return {
+    assignedToId: readAssignedToId(node),
+    internalControlIds: internalControlIds === undefined
+      ? readInternalControlIds(node)
+      : internalControlIds,
+    name: readName(node),
+  };
+}
+
+// null means the control link is not loaded, so membership cannot be proved.
+function matchesOrganizationListFilter(
+  membership: TaskListMembership,
+  filter: OrganizationTaskListFilter,
+): boolean | null {
+  if (filter.assignedToId != null && membership.assignedToId !== filter.assignedToId) {
+    return false;
+  }
+  if (filter.query != null && filter.query !== "") {
+    const name = membership.name ?? "";
+    if (!name.toLowerCase().includes(filter.query.toLowerCase())) {
+      return false;
+    }
+  }
+  if (filter.internalControlId != null) {
+    if (membership.internalControlIds == null) {
+      return null;
+    }
+    if (!membership.internalControlIds.includes(filter.internalControlId)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function taskBelongsInOrganizationList(
+  node: TaskRecord,
+  filter: OrganizationTaskListFilter,
+  internalControlIds?: readonly string[] | null,
+) {
+  return matchesOrganizationListFilter(readMembership(node, internalControlIds), filter);
 }
 
 export function moveOrganizationTaskListEdge(
@@ -114,12 +200,18 @@ export function moveOrganizationTaskListEdge(
       continue;
     }
 
-    if (fromConnection != null && findEdge(fromConnection, nodeId) != null) {
+    const hadFrom = fromConnection != null && findEdge(fromConnection, nodeId) != null;
+    if (hadFrom && fromConnection != null) {
       ConnectionHandler.deleteNode(fromConnection, nodeId);
       adjustTotalCount(fromConnection, -1);
     }
 
-    if (toConnection == null) {
+    if (toConnection == null || findEdge(toConnection, nodeId) != null) {
+      continue;
+    }
+
+    const membership = taskBelongsInOrganizationList(node, filter);
+    if (membership === false || (membership == null && !hadFrom)) {
       continue;
     }
 
@@ -140,6 +232,28 @@ function readRank(node: TaskRecord) {
 // UpdateRank shifts every other task in the same state and priority whose
 // rank sits between the old and new values. The mutation payload only returns
 // the dragged task, so the list has to apply that shift itself.
+function shiftRanksAtOrAfter(
+  connection: TaskRecord,
+  nodeId: string,
+  priority: TaskPriority,
+  nextRank: number,
+) {
+  for (const edge of connection.getLinkedRecords("edges") ?? []) {
+    const other = edge?.getLinkedRecord("node");
+    if (other == null || other.getDataID() === nodeId) {
+      continue;
+    }
+    if (other.getValue("priority") !== priority) {
+      continue;
+    }
+    const rank = readRank(other);
+    if (rank == null || rank < nextRank) {
+      continue;
+    }
+    other.setValue(rank + 1, "rank");
+  }
+}
+
 function shiftSiblingRanks(
   connection: TaskRecord,
   nodeId: string,
@@ -208,9 +322,10 @@ export function applyOrganizationTaskRankDrop(
     if (connection == null) {
       continue;
     }
-    if (
-      nextPriority == null
-      && typeof priority === "string"
+    if (nextPriority != null) {
+      shiftRanksAtOrAfter(connection, nodeId, nextPriority, nextRank);
+    } else if (
+      typeof priority === "string"
       && previousPriority === priority
     ) {
       shiftSiblingRanks(connection, nodeId, priority, previousRank, nextRank);
@@ -247,6 +362,75 @@ export function resortOrganizationTaskListEdge(
     const edge = findEdge(connection, nodeId);
     if (edge != null) {
       placeEdgeSorted(connection, edge, node);
+    }
+  }
+}
+
+export function reconcileOrganizationTaskListMembership(
+  store: RecordSourceSelectorProxy,
+  node: TaskRecord,
+  {
+    organizationId,
+    state,
+    filters,
+    previousAssignedToId,
+    previousInternalControlIds,
+    nextInternalControlIds,
+  }: {
+    organizationId: string;
+    state: TaskState;
+    filters: readonly OrganizationTaskListFilter[];
+    previousAssignedToId: string | null;
+    previousInternalControlIds: readonly string[] | null;
+    nextInternalControlIds?: readonly string[] | null;
+  },
+) {
+  const organization = getOrganization(store, organizationId);
+  if (organization == null) {
+    return;
+  }
+
+  const currentAssignedToId = readAssignedToId(node);
+  const name = readName(node);
+  const before = matchesOrganizationListFilter.bind(null, {
+    assignedToId: previousAssignedToId,
+    internalControlIds: previousInternalControlIds,
+    name,
+  });
+  const now = matchesOrganizationListFilter.bind(null, {
+    assignedToId: currentAssignedToId,
+    internalControlIds: nextInternalControlIds === undefined
+      ? previousInternalControlIds
+      : nextInternalControlIds,
+    name,
+  });
+  const nodeId = node.getDataID();
+
+  for (const filter of filters) {
+    const connection = ConnectionHandler.getConnection(
+      organization,
+      taskListConnectionKeys[state],
+      organizationTaskListConnectionFilters(filter, state),
+    );
+    if (connection == null) {
+      continue;
+    }
+
+    const edge = findEdge(connection, nodeId);
+    const wasMember = before(filter);
+    const isMember = now(filter);
+    if (edge != null && isMember === false && wasMember !== false) {
+      ConnectionHandler.deleteNode(connection, nodeId);
+      adjustTotalCount(connection, -1);
+      continue;
+    }
+    if (edge == null && wasMember === false && isMember === true) {
+      placeEdgeSorted(
+        connection,
+        ConnectionHandler.createEdge(store, connection, node, "TaskEdge"),
+        node,
+      );
+      adjustTotalCount(connection, 1);
     }
   }
 }

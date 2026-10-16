@@ -160,4 +160,11 @@ describe("deadlineDateFormat", () => {
     expect(deadlineDateFormat("en-US", new Date(2026, 7, 25), now)).toBe("Aug 25");
     expect(deadlineDateFormat("en-US", new Date(2025, 7, 25), now)).toBe("Aug 25, 2025");
   });
+
+  it("keeps a UTC-midnight deadline on its calendar day", () => {
+    const relative = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
+    expect(deadlineDateFormat("en-US", "2026-10-15T00:00:00Z", now)).toBe(
+      relative.format(1, "day"),
+    );
+  });
 });

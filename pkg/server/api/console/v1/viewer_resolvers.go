@@ -208,16 +208,18 @@ func (r *viewerResolver) AssignedTasks(ctx context.Context, obj *types.Viewer, o
 	}
 
 	var (
-		query *string
-		state *coredata.TaskState
+		query             *string
+		state             *coredata.TaskState
+		internalControlID *gid.GID
 	)
 
 	if filter != nil {
 		query = filter.Query
 		state = filter.State
+		internalControlID = filter.InternalControlID
 	}
 
-	taskFilter := coredata.NewTaskFilter(query, state, &profile.ID, nil)
+	taskFilter := coredata.NewTaskFilter(query, state, &profile.ID, internalControlID)
 
 	page, err := r.task.ListForOrganizationID(ctx, scope, organizationID, cursor, taskFilter)
 	if err != nil {

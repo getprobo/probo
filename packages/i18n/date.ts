@@ -111,6 +111,19 @@ export function compactDateFormat(
   return dateFormat(language, dateValue, options);
 }
 
+function asCalendarDate(date: Date | string): Date {
+  if (typeof date !== "string") {
+    return date;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (match == null) {
+    return parseDate(date);
+  }
+
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
 export function deadlineDateFormat(
   language: string,
   date: Date | string | null | undefined,
@@ -118,7 +131,7 @@ export function deadlineDateFormat(
 ): string {
   if (!date) return "";
 
-  const dateValue = typeof date === "string" ? parseDate(date) : date;
+  const dateValue = asCalendarDate(date);
   const diff = calendarDayDiff(dateValue, now);
   if (diff >= -1 && diff <= 1) {
     return new Intl.RelativeTimeFormat(language, { numeric: "auto" }).format(diff, "day");

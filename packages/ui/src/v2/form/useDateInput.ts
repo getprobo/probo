@@ -61,6 +61,7 @@ export function useDateInput({
     const raw = event.currentTarget.value;
     const trimmed = raw.trim();
     if (parseIsoDate(trimmed) != null && !isOutOfRange(trimmed, minDate, maxDate)) {
+      setDraft(isoToMasked(trimmed, pattern));
       onCommit(trimmed);
       return;
     }

@@ -27,7 +27,7 @@ import type { TasksPageTaskListItemUpdateStateMutation } from "#/__generated__/c
 import { useMutation } from "#/lib/relay/useMutation";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
-import { taskListStateMoveUpdaters } from "../_lib/moveTaskListEdge";
+import { resortTaskListEdge, taskListStateMoveUpdaters } from "../_lib/moveTaskListEdge";
 import { useTasksFilters } from "../_lib/useTasksFilters";
 
 import { TasksPageTaskDeleteDialog } from "./TasksPageTaskDeleteDialog";
@@ -38,6 +38,7 @@ const tasksPageTaskListItemFragment = graphql`
     name
     state
     priority
+    rank
     createdAt
     timeEstimate
     deadline
@@ -92,6 +93,7 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
     timeEstimate?: string | null;
     recurrenceInterval?: string | null;
   }) {
+    const queries = graphqlQuery == null ? [null] : [graphqlQuery, null];
     const move = input.state == null
       ? null
       : taskListStateMoveUpdaters(environment, {
@@ -109,9 +111,30 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
       },
       optimisticUpdater(store) {
         move?.optimisticUpdater(store);
+        if (input.state == null && input.priority != null) {
+          const node = store.get(task.id);
+          if (node != null) {
+            node.setValue(input.priority, "priority");
+            resortTaskListEdge(store, node, {
+              state: task.state,
+              organizationId,
+              queries,
+            });
+          }
+        }
       },
       updater(store) {
         move?.updater(store);
+        if (input.state == null && input.priority != null) {
+          const node = store.get(task.id);
+          if (node != null) {
+            resortTaskListEdge(store, node, {
+              state: task.state,
+              organizationId,
+              queries,
+            });
+          }
+        }
       },
     }).catch(() => {
       // Error feedback is handled by useMutation.

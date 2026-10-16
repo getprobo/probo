@@ -197,20 +197,16 @@ func (s *Service) CreateComment(
 			taskComment.OrganizationID = task.OrganizationID
 
 			owner := &coredata.MembershipProfile{}
-			if req.OwnerID != nil {
-				if err := owner.LoadByID(ctx, conn, scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner profile: %w", err)
-				}
-			} else {
-				if err := owner.LoadByIdentityIDAndOrganizationID(
-					ctx,
-					conn,
-					scope,
-					req.IdentityID,
-					task.OrganizationID,
-				); err != nil {
-					return fmt.Errorf("cannot load owner profile: %w", err)
-				}
+			// The caller owns the comment. A supplied profile id is not used,
+			// so an employee cannot attribute the comment to someone else.
+			if err := owner.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				req.IdentityID,
+				task.OrganizationID,
+			); err != nil {
+				return fmt.Errorf("cannot load owner profile: %w", err)
 			}
 
 			if owner.OrganizationID != task.OrganizationID {

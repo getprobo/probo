@@ -25,7 +25,7 @@ export const taskList = tv({
     section: "",
     sectionHeader: [
       "appearance-none cursor-pointer border-0 bg-gold-3 text-gold-12",
-      "flex w-full items-center gap-2 rounded-4 px-3 py-1.5 text-start outline-none",
+      "flex w-full items-center gap-2 px-3 py-1.5 text-start outline-none",
       "focus-visible:ring-2 focus-visible:ring-gold-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-2",
     ],
     caret: "size-4 shrink-0 text-gold-11",
@@ -37,8 +37,8 @@ export const taskList = tv({
       false: {},
     },
     pinned: {
-      true: { sectionHeader: "shadow-2" },
-      false: {},
+      true: { sectionHeader: "rounded-b-4 shadow-2" },
+      false: { sectionHeader: "rounded-4" },
     },
   },
   defaultVariants: {

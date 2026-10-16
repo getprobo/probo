@@ -22,7 +22,7 @@ import { taskStates } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
-import { adjustTotalCount } from "./moveOrganizationTaskListEdge";
+import { adjustTotalCount, taskBelongsInOrganizationList } from "./moveOrganizationTaskListEdge";
 import {
   organizationTaskListConnectionFilters,
   type OrganizationTaskListFilter,
@@ -43,6 +43,8 @@ export function deleteOrganizationTaskListEdges(
   },
 ) {
   const organization = store.get(organizationId);
+  const task = store.get(taskId);
+  const taskState = task?.getValue("state");
   if (organization == null) {
     return;
   }
@@ -61,6 +63,13 @@ export function deleteOrganizationTaskListEdges(
         edge => edge?.getLinkedRecord("node")?.getDataID() === taskId,
       );
       if (!hadEdge) {
+        if (
+          task != null
+          && taskState === state
+          && taskBelongsInOrganizationList(task, variant) === true
+        ) {
+          adjustTotalCount(connection, -1);
+        }
         continue;
       }
       ConnectionHandler.deleteNode(connection, taskId);

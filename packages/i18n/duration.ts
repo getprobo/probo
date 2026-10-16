@@ -150,7 +150,11 @@ function formatDurationShortIntl(
     return null;
   }
 
-  return new DurationFormat(locale, { style: "short" }).format(value);
+  try {
+    return new DurationFormat(locale, { style: "short" }).format(value);
+  } catch {
+    return null;
+  }
 }
 
 function normalizeDuration(components: IsoDurationComponents): IsoDurationComponents {

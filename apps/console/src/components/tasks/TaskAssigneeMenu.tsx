@@ -44,10 +44,10 @@ const pageSize = 10;
 const searchDebounceMs = 300;
 const assigneeMenuSkeletonWidths = ["w-24", "w-16", "w-28", "w-20"] as const;
 
-function assigneeFilter(query: string | null): ProfileFilter {
+function assigneeFilter(query: string | null, hideEndedContracts: boolean): ProfileFilter {
   return {
     states: ["ACTIVE", "PENDING"],
-    contractEnded: false,
+    ...(hideEndedContracts ? { contractEnded: false } : {}),
     query,
   };
 }
@@ -103,6 +103,7 @@ export interface TaskAssigneeMenuProps {
   emptyLabel: string;
   emptyValue: string | null;
   disabled?: boolean;
+  hideEndedContracts?: boolean;
   onValueChange: (value: string | null) => void;
 }
 
@@ -119,6 +120,7 @@ function TaskAssigneeMenuLoaded({
   emptyLabel,
   emptyValue,
   disabled,
+  hideEndedContracts = true,
   onValueChange,
 }: TaskAssigneeMenuProps) {
   const { t } = useTranslation("organizations/tasks");
@@ -132,7 +134,7 @@ function TaskAssigneeMenuLoaded({
   const skipFirstRefetch = useRef(true);
   const data = useLazyLoadQuery<TaskAssigneeMenuQuery>(
     taskAssigneeMenuQuery,
-    { organizationId, filter: assigneeFilter(null) },
+    { organizationId, filter: assigneeFilter(null, hideEndedContracts) },
   );
   const {
     data: organization,
@@ -165,9 +167,9 @@ function TaskAssigneeMenuLoaded({
     }
 
     startTransition(() => {
-      refetch({ filter: assigneeFilter(graphqlQuery) }, { fetchPolicy: "store-or-network" });
+      refetch({ filter: assigneeFilter(graphqlQuery, hideEndedContracts) }, { fetchPolicy: "store-or-network" });
     });
-  }, [graphqlQuery, refetch]);
+  }, [graphqlQuery, hideEndedContracts, refetch]);
 
   if (organization == null) {
     return null;
@@ -190,10 +192,11 @@ function TaskAssigneeMenuLoaded({
     : loaded;
 
   function select(next: string | null) {
-    if (next === value) {
+    const resolved = next === emptyValue ? null : next;
+    if (resolved === value) {
       return;
     }
-    onValueChange(next);
+    onValueChange(resolved);
   }
 
   return (

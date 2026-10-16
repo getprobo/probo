@@ -41,6 +41,8 @@ export function deleteTaskListEdges(
   },
 ) {
   const viewer = store.getRoot().getLinkedRecord("viewer");
+  const task = store.get(taskId);
+  const taskState = task?.getValue("state");
   if (viewer == null) {
     return;
   }
@@ -60,10 +62,24 @@ export function deleteTaskListEdges(
         edge => edge?.getLinkedRecord("node")?.getDataID() === taskId,
       );
       if (!hadEdge) {
+        if (task != null && taskState === state && matchesTaskQuery(task, filterQuery)) {
+          adjustTotalCount(connection, -1);
+        }
         continue;
       }
       ConnectionHandler.deleteNode(connection, taskId);
       adjustTotalCount(connection, -1);
     }
   }
+}
+
+function matchesTaskQuery(
+  task: NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>,
+  query: string | null,
+) {
+  if (query == null || query === "") {
+    return true;
+  }
+  const name = task.getValue("name");
+  return typeof name === "string" && name.toLowerCase().includes(query.toLowerCase());
 }

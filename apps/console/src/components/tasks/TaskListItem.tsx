@@ -22,6 +22,7 @@ import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState }
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
+import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
@@ -30,6 +31,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
 import {
+  reconcileOrganizationTaskListMembership,
   resortOrganizationTaskListEdge,
   taskListStateMoveUpdaters,
 } from "#/pages/organizations/tasks/_lib/moveOrganizationTaskListEdge";
@@ -134,6 +136,8 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       internalControlId: graphqlFilter.internalControlId,
     };
     const filters = organizationTaskListFilterVariants(listFilter);
+    const previousAssignedToId = task.assignedTo?.id ?? null;
+    const assigneeChanged = "assignedToId" in input;
     const move = input.state == null
       ? null
       : taskListStateMoveUpdaters(environment, {
@@ -142,6 +146,43 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
           organizationId,
           filter: listFilter,
         });
+
+    function linkAssignee(store: RecordSourceSelectorProxy) {
+      if (!assigneeChanged) {
+        return;
+      }
+      const node = store.get(task.id);
+      if (node == null) {
+        return;
+      }
+      const assignedToId = input.assignedToId ?? null;
+      if (assignedToId == null) {
+        node.setValue(null, "assignedTo");
+        return;
+      }
+      const profile = store.get(assignedToId);
+      if (profile != null) {
+        node.setLinkedRecord(profile, "assignedTo");
+      }
+    }
+
+    function reconcileAssignee(store: RecordSourceSelectorProxy) {
+      if (!assigneeChanged) {
+        return;
+      }
+      const node = store.get(task.id);
+      if (node == null) {
+        return;
+      }
+      reconcileOrganizationTaskListMembership(store, node, {
+        organizationId,
+        state: input.state ?? task.state,
+        filters,
+        previousAssignedToId,
+        previousInternalControlIds: null,
+      });
+    }
+
     void updateState({
       variables: {
         input: {
@@ -151,6 +192,8 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       },
       optimisticUpdater(store) {
         move?.optimisticUpdater(store);
+        linkAssignee(store);
+        reconcileAssignee(store);
         if (input.state == null && input.priority != null) {
           const node = store.get(task.id);
           if (node != null) {
@@ -167,6 +210,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       },
       updater(store) {
         move?.updater(store);
+        reconcileAssignee(store);
         if (input.state == null && input.priority != null) {
           const node = store.get(task.id);
           if (node != null) {

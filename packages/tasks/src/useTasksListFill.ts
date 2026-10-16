@@ -130,12 +130,12 @@ function pickFillGroup(
 function loadGroupPage(
   group: TaskListFillGroup,
   startTransition: TransitionStartFunction,
-): Promise<void> {
+): Promise<Error | null> {
   return new Promise((resolve) => {
     startTransition(() => {
       group.loadNext(taskListPageSize, {
-        onComplete() {
-          resolve();
+        onComplete(error) {
+          resolve(error ?? null);
         },
       });
     });
@@ -152,6 +152,7 @@ export function useTasksListFill({
 }: UseTasksListFillOptions): (nextRange?: TasksListFillRange | null) => Promise<void> {
   const fillingRef = useRef(false);
   const skippedRef = useRef(new Set<TaskState>());
+  const failedRef = useRef(new Set<TaskState>());
   const lastAttemptRef = useRef<{ state: TaskState; edges: number } | null>(null);
   const snapshotRef = useRef({ items, groups, range, closedStates, selectedState });
   const rangeKey = range == null ? "" : `${range.startIndex}:${range.endIndex}`;
@@ -165,6 +166,7 @@ export function useTasksListFill({
 
   useEffect(() => {
     skippedRef.current = new Set();
+    failedRef.current = new Set();
     lastAttemptRef.current = null;
   }, [rangeKey, selectedState]);
 
@@ -183,6 +185,7 @@ export function useTasksListFill({
     const lastAttempt = lastAttemptRef.current;
     if (
       lastAttempt != null
+      && !failedRef.current.has(lastAttempt.state)
       && snapshot.groups.some(group =>
         group.state === lastAttempt.state
         && group.loadedCount === lastAttempt.edges,
@@ -197,7 +200,7 @@ export function useTasksListFill({
       currentRange,
       snapshot.closedStates,
       snapshot.selectedState,
-      skipped,
+      new Set([...skipped, ...failedRef.current]),
     );
     if (group == null) {
       return;
@@ -209,7 +212,13 @@ export function useTasksListFill({
       edges: group.loadedCount,
     };
     try {
-      await loadGroupPage(group, startTransition);
+      const error = await loadGroupPage(group, startTransition);
+      if (error != null) {
+        failedRef.current.add(group.state);
+        if (lastAttemptRef.current?.state === group.state) {
+          lastAttemptRef.current = null;
+        }
+      }
     } finally {
       fillingRef.current = false;
     }
