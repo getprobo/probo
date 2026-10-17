@@ -174,7 +174,11 @@ func TestCompliancePortal_ExternalTLSLinkedDomains(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Body, &oauthErr), "authorize body: %s", resp.Body)
 
 			assert.Equal(t, "invalid_client", oauthErr.Code)
-			assert.NotEqual(t, "client_id is not allowed for client metadata documents", oauthErr.Description)
+			assert.Contains(
+				t,
+				[]string{"cannot fetch client metadata document", "client metadata document unavailable"},
+				oauthErr.Description,
+			)
 		},
 	)
 }
