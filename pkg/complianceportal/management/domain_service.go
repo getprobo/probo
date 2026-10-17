@@ -141,6 +141,9 @@ func (s *Service) RemoveCustomDomain(
 }
 
 func (s *Service) IsCustomDomainVerified(ctx context.Context, host string) (bool, error) {
+	// Without a certificate nothing proves who controls a hostname, so any
+	// domain stored for a portal counts as verified. The proxy routing in
+	// front of Probo is the only ownership check in this mode.
 	if s.externallyTerminatedTLS {
 		return s.isStoredDomain(ctx, host)
 	}
