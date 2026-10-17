@@ -595,6 +595,7 @@ func (b *Builder) Build() (*probodconfig.FullConfig, error) {
 		"CALENDLY",
 		"ATTIO",
 		"OVHCLOUD",
+		"PLANETSCALE",
 	} {
 		clientID := b.resolver.getEnv("PROBOD_CONNECTOR_" + provider + "_CLIENT_ID")
 		if clientID == "" {
@@ -822,6 +823,7 @@ func (b *Builder) validateRequired() error {
 		{"CONNECTOR_ATTIO", []string{"CLIENT_SECRET"}},
 		{"CONNECTOR_VERCEL", []string{"CLIENT_SECRET", "INTEGRATION_SLUG"}},
 		{"CONNECTOR_OVHCLOUD", []string{"CLIENT_SECRET"}},
+		{"CONNECTOR_PLANETSCALE", []string{"CLIENT_SECRET"}},
 	}
 
 	for _, p := range oauthProviders {

@@ -627,7 +627,7 @@ func (s *Service) httpClientFor(
 		if err := s.pg.WithTx(
 			ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				return dbConnector.Update(ctx, tx, scope, s.encryptionKey)
+				return dbConnector.UpdateConnection(ctx, tx, scope, s.encryptionKey)
 			},
 		); err != nil {
 			return nil, fmt.Errorf("cannot persist refreshed token: %w", err)

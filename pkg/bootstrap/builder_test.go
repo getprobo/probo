@@ -814,7 +814,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
 		"CAL_COM", "CALENDLY", "ATTIO",
-		"OVHCLOUD",
+		"OVHCLOUD", "PLANETSCALE",
 	}
 
 	env := requiredEnv()

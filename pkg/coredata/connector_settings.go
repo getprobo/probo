@@ -309,6 +309,10 @@ type (
 		SubscriptionID string `json:"subscription_id"`
 		Environment    string `json:"environment"`
 	}
+
+	PlanetScaleConnectorSettings struct {
+		Organization string `json:"organization"`
+	}
 )
 
 // GrantType returns the OAuth2 grant type recorded on the connector's

@@ -1,0 +1,115 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.planetscale.com
+        form:
+            page:
+                - "1"
+            per_page:
+                - "100"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.planetscale.com/v1/organizations?page=1&per_page=100
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1245
+        uncompressed: true
+        body: '{"current_page":1,"data":[{"allow_llm_usage":true,"billing_email":"billing@example.com","created_at":"2026-10-16T09:35:48.821Z","database_count":0,"features":{"insights":false,"insights_collect_queries":true,"sso":false,"single_tenancy":false},"flags":{"block_new_keyspaces_if_other_keyspaces_unready":"full","custom_shard_size_self_service":"full","external_keyspaces":"full","insights_extra_digit":"on","installed_oauth_applications":"full","neki_allow_new_platform_preview_organizations":"full","postgres_resize_parameter_constraints":"full","vitess_disk_autoscaling_settings":"full"},"has_card":false,"id":"org000000001","idp_managed_roles":false,"idp_sso_managed_roles":false,"invoice_budget_alerts":false,"invoice_budget_amount":"0.0","keyspace_shard_limit":16,"managed_tenancy":false,"mcp_access_level":"read_write","name":"oauth-service-accounts","neki_router_replicas_per_cell_limit":32,"payment_info_required":true,"plan":"developer","single_tenancy":false,"sso":false,"sso_directory":false,"type":"Organization","unrestricted_idp_organization_membership":true,"updated_at":"2026-10-16T09:35:49.065Z","valid_billing_info":false}],"next_page":null,"next_page_url":null,"per_page":100,"prev_page":null,"prev_page_url":null,"type":"list"}'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Content-Security-Policy:
+                - default-src 'none'; font-src 'self'; connect-src 'self'; img-src 'self'; manifest-src 'self'; object-src 'none'; script-src 'self' 'nonce-ZkjTjVUGyKrIzidJ/xtZINBIAifEPAG9pDyGHrT3iIA='; style-src 'self'; style-src-elem 'self' 'sha256-WAyOw4V+FqDc35lQPyRADLBWbuNK8ahvYEaQIYF1+Ps='
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 16 Oct 2026 10:08:18 GMT
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Vary:
+                - Origin,Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Download-Options:
+                - noopen
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Request-Id:
+                - 2ed9e58c-41ee-4e04-a13c-f63e7c205193
+            X-Runtime:
+                - "0.075494"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 366.077208ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api.planetscale.com
+        form:
+            page:
+                - "1"
+            per_page:
+                - "1"
+        headers:
+            Accept:
+                - application/json
+        url: https://api.planetscale.com/v1/organizations/oauth-service-accounts/members?page=1&per_page=1
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 597
+        uncompressed: true
+        body: '{"current_page":1,"data":[{"created_at":"2026-10-16T09:35:48.859Z","id":"membership01","role":"admin","type":"OrganizationMembership","updated_at":"2026-10-16T09:35:48.859Z","user":{"avatar_url":"https://avatars.example.com/1.png","created_at":"2026-10-16T09:35:48.774Z","display_name":"member1@example.com","email":"member1@example.com","id":"user00000001","name":null,"two_factor_auth_configured":false,"type":"User","updated_at":"2026-10-16T09:36:14.729Z"}}],"next_page":null,"next_page_url":null,"per_page":1,"prev_page":null,"prev_page_url":null,"total_count":1,"total_pages":1,"type":"list"}'
+        headers:
+            Cache-Control:
+                - max-age=0, private, must-revalidate
+            Content-Security-Policy:
+                - default-src 'none'; font-src 'self'; connect-src 'self'; img-src 'self'; manifest-src 'self'; object-src 'none'; script-src 'self' 'nonce-O31QWB3ofOqld/gDwsh/EQdbxwQX2t+Kp1JSAnms7Ww='; style-src 'self'; style-src-elem 'self' 'sha256-WAyOw4V+FqDc35lQPyRADLBWbuNK8ahvYEaQIYF1+Ps='
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 16 Oct 2026 10:08:18 GMT
+            Referrer-Policy:
+                - strict-origin-when-cross-origin
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Vary:
+                - Origin,Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Download-Options:
+                - noopen
+            X-Frame-Options:
+                - SAMEORIGIN
+            X-Permitted-Cross-Domain-Policies:
+                - none
+            X-Request-Id:
+                - 4daec0e7-f32c-47a9-b509-2fcfda8335b8
+            X-Runtime:
+                - "0.052127"
+            X-Xss-Protection:
+                - "0"
+        status: 200 OK
+        code: 200
+        duration: 141.701792ms

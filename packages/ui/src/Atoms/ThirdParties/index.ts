@@ -51,6 +51,7 @@ export { OpenAI } from "./OpenAI";
 export { OpenRouter } from "./OpenRouter";
 export { OVHcloud } from "./OVHcloud";
 export { PagerDuty } from "./PagerDuty";
+export { PlanetScale } from "./PlanetScale";
 export { PostHog } from "./PostHog";
 export { Pylon } from "./Pylon";
 export { Qovery } from "./Qovery";
