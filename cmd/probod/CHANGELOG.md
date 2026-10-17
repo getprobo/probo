@@ -4,6 +4,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- In external compliance portal TLS mode, custom domains and the managed
+  default domain are served and verified without a Probo-issued
+  certificate. The portal public URL, e-mail links, the canonical
+  redirect and visitor sign-in now use the hostname the proxy routes
+  instead of staying pending and rejecting sign-in with `invalid_client`
+
 ## [0.316.0] - 2026-10-16
 
 ### Added

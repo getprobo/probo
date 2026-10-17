@@ -46,6 +46,7 @@ type (
 	IsolatedEnv struct {
 		BaseURL        string
 		MailpitBaseURL string
+		TrustHTTPAddr  string
 
 		cmd       *exec.Cmd
 		done      chan error
@@ -53,7 +54,8 @@ type (
 	}
 
 	IsolatedEnvOptions struct {
-		DisableSignup bool
+		DisableSignup           bool
+		CompliancePortalTLSMode string
 	}
 
 	lockedBuffer struct {
@@ -130,6 +132,7 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 			MetricsAddr:    "localhost:" + metricsPort.port,
 			TrustHTTPAddr:  ":" + trustHTTPPort.port,
 			TrustHTTPSAddr: ":" + trustHTTPSPort.port,
+			TrustTLSMode:   opts.CompliancePortalTLSMode,
 		},
 	)
 	require.NoError(t, err, "cannot generate isolated env config")
@@ -137,6 +140,7 @@ func StartIsolatedEnv(t testing.TB, opts IsolatedEnvOptions) *IsolatedEnv {
 	env := &IsolatedEnv{
 		BaseURL:        baseURL,
 		MailpitBaseURL: GetMailpitBaseURL(),
+		TrustHTTPAddr:  "127.0.0.1:" + trustHTTPPort.port,
 		done:           make(chan error, 1),
 		outputBuf:      &lockedBuffer{},
 	}

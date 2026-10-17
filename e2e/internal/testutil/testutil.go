@@ -60,6 +60,7 @@ type configOptions struct {
 	MetricsAddr    string
 	TrustHTTPAddr  string
 	TrustHTTPSAddr string
+	TrustTLSMode   string
 }
 
 type switchableWriter struct {
@@ -318,6 +319,11 @@ func generateConfig(opts configOptions) (string, error) {
 		trustHTTPSAddr = ":8443"
 	}
 
+	trustTLSMode := opts.TrustTLSMode
+	if trustTLSMode == "" {
+		trustTLSMode = "direct"
+	}
+
 	disableSignup := "false"
 	if opts.DisableSignup {
 		disableSignup = "true"
@@ -387,7 +393,7 @@ func generateConfig(opts configOptions) (string, error) {
 		"PROBOD_TRUST_CENTER_HTTP_ADDR":   trustHTTPAddr,
 		"PROBOD_TRUST_CENTER_HTTPS_ADDR":  trustHTTPSAddr,
 		"PROBOD_TRUST_CENTER_BASE_DOMAIN": "probopage.localhost",
-		"PROBOD_TRUST_CENTER_TLS_MODE":    "direct",
+		"PROBOD_TRUST_CENTER_TLS_MODE":    trustTLSMode,
 
 		// Keep certificate provisioning snappy so trust-center e2e flows do not
 		// wait on the default 30s poll (step-ca validates HTTP-01 via port 80).
