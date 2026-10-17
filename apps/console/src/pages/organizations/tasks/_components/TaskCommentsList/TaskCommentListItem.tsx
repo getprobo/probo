@@ -37,6 +37,7 @@ import { TaskCommentEditor } from "./TaskCommentEditor";
 
 const taskCommentListItemFragment = graphql`
   fragment TaskCommentListItem_taskComment on TaskComment {
+    id
     content
     createdAt
     owner {
@@ -126,6 +127,7 @@ export function TaskCommentListItem({ taskCommentKey }: TaskCommentListItemProps
                 <RichEditor
                   className={taskCommentEditor()}
                   content={comment.content}
+                  attachmentParentId={comment.id}
                   disabled
                   aria-label={t("detailsPage.comments.fields.comment")}
                 />

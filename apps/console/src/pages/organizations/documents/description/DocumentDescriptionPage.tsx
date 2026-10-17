@@ -208,6 +208,7 @@ export function DocumentDescriptionPage(props: {
       key={editorKey}
       className="flex-1"
       content={currentVersion.content}
+      attachmentParentId={currentVersion.id}
       data-theme="document"
       disabled={!canEdit}
       onChangeContent={handleContentChange}

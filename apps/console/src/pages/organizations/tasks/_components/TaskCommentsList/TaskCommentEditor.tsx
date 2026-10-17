@@ -120,6 +120,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
         key={editorGeneration}
         className={taskCommentEditor()}
         content={draft}
+        attachmentParentId={comment.id}
         aria-label={t("detailsPage.comments.fields.comment")}
         onUploadingChange={(uploading) => {
           uploadingRef.current = uploading;

@@ -26,6 +26,7 @@ import {
   acceptSpreadsheet,
   acceptText,
 } from "@probo/helpers";
+import { createContext, useContext } from "react";
 export const maxAttachmentSize = 50 * 1024 * 1024;
 
 type AcceptMap = Record<string, readonly string[]>;
@@ -56,8 +57,52 @@ export type AttachmentKind = "image" | "file";
 const privateFilePathPrefix = "/api/files/v1/";
 const attachmentPathPrefix = "/api/files/v1/attachments/";
 
-export function attachmentPath(fileId: string) {
-  return `${privateFilePathPrefix}${encodeURIComponent(fileId)}`;
+export const AttachmentParentContext = createContext<string | null>(null);
+
+export function useAttachmentParentID() {
+  return useContext(AttachmentParentContext);
+}
+
+export function setAttachmentParentID(editor: unknown, parentId: string | null) {
+  const storage = attachmentParentStorage(editor);
+  if (storage == null) {
+    return;
+  }
+
+  storage.parentId = parentId;
+}
+
+export function attachmentParentID(editor: unknown) {
+  const parentId = attachmentParentStorage(editor)?.parentId;
+
+  return typeof parentId === "string" && parentId !== "" ? parentId : null;
+}
+
+function attachmentParentStorage(editor: unknown): { parentId: string | null } | null {
+  if (editor == null || typeof editor !== "object" || !("storage" in editor)) {
+    return null;
+  }
+
+  const storage = editor.storage;
+  if (storage == null || typeof storage !== "object" || !("attachmentParent" in storage)) {
+    return null;
+  }
+
+  const parent = storage.attachmentParent;
+  if (parent == null || typeof parent !== "object" || !("parentId" in parent)) {
+    return null;
+  }
+
+  return parent as { parentId: string | null };
+}
+
+export function attachmentPath(fileId: string, parentId?: string | null) {
+  const file = encodeURIComponent(fileId);
+  if (parentId != null && parentId !== "") {
+    return `${attachmentPathPrefix}${encodeURIComponent(parentId)}/${file}`;
+  }
+
+  return `${privateFilePathPrefix}${file}`;
 }
 
 export function fileIDFromAttachmentURL(src: string | null | undefined) {
@@ -86,16 +131,14 @@ export function fileIDFromAttachmentURL(src: string | null | undefined) {
     pathname = pathname.slice(0, end);
   }
 
-  let id: string;
-  if (pathname.startsWith(attachmentPathPrefix)) {
-    id = pathname.slice(attachmentPathPrefix.length);
-  } else if (pathname.startsWith(privateFilePathPrefix)) {
-    id = pathname.slice(privateFilePathPrefix.length);
-  } else {
+  const encoded = encodedFileID(pathname);
+  if (encoded == null) {
     return null;
   }
+
+  let id: string;
   try {
-    id = decodeURIComponent(id);
+    id = decodeURIComponent(encoded);
   } catch {
     return null;
   }
@@ -106,6 +149,39 @@ export function fileIDFromAttachmentURL(src: string | null | undefined) {
   }
 
   return id;
+}
+
+function encodedFileID(pathname: string) {
+  if (pathname.startsWith(attachmentPathPrefix)) {
+    return fileSegment(pathname.slice(attachmentPathPrefix.length));
+  }
+
+  if (pathname.startsWith(privateFilePathPrefix)) {
+    return singleSegment(pathname.slice(privateFilePathPrefix.length));
+  }
+
+  return null;
+}
+
+function singleSegment(rest: string) {
+  if (rest === "" || rest.includes("/")) {
+    return null;
+  }
+
+  return rest;
+}
+
+function fileSegment(rest: string) {
+  const parts = rest.split("/");
+  if (parts.length === 1) {
+    return singleSegment(parts[0] ?? "");
+  }
+
+  if (parts.length === 2 && parts[0] !== "" && parts[1] !== "") {
+    return parts[1] ?? null;
+  }
+
+  return null;
 }
 
 export function prepareAttachment(file: File) {

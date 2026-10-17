@@ -46,6 +46,18 @@ func AttachmentPath(fileID string) string {
 	return "/api/files/v1/" + url.PathEscape(id)
 }
 
+// ParentAttachmentPath is the authenticated URL for a file embedded in a parent.
+func ParentAttachmentPath(parentID, fileID string) string {
+	parent := strings.TrimSpace(parentID)
+	file := strings.TrimSpace(fileID)
+
+	if parent == "" || file == "" {
+		return ""
+	}
+
+	return "/api/files/v1/attachments/" + url.PathEscape(parent) + "/" + url.PathEscape(file)
+}
+
 // ParseAttachmentID returns the file id stored in an attachment URL.
 // The URL may be the path alone or an absolute http(s) URL with that path.
 // Other schemes and protocol-relative URLs are ignored.
@@ -72,7 +84,7 @@ func ParseAttachmentID(raw string) (string, bool) {
 	)
 
 	if after, ok := strings.CutPrefix(path, attachmentPrefix); ok {
-		return fileIDFromPath(after)
+		return attachmentFileID(after)
 	}
 
 	if after, ok := strings.CutPrefix(path, filePrefix); ok {
@@ -95,6 +107,23 @@ func attachmentURLAllowed(u *url.URL) bool {
 	}
 
 	return true
+}
+
+func attachmentFileID(escaped string) (string, bool) {
+	parent, file, ok := strings.Cut(escaped, "/")
+	if !ok {
+		return fileIDFromPath(escaped)
+	}
+
+	if strings.Contains(file, "/") {
+		return "", false
+	}
+
+	if _, ok := fileIDFromPath(parent); !ok {
+		return "", false
+	}
+
+	return fileIDFromPath(file)
 }
 
 func fileIDFromPath(escaped string) (string, bool) {

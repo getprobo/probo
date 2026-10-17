@@ -45,6 +45,7 @@ export interface RichDescriptionEditorProps {
   canUpdate: boolean;
   ariaLabel: string;
   emptyLabel: string;
+  attachmentParentId?: string;
   saveDelayMs?: number;
   save: (content: string | null) => Promise<void>;
 }
@@ -54,6 +55,7 @@ export function RichDescriptionEditor({
   canUpdate,
   ariaLabel,
   emptyLabel,
+  attachmentParentId,
   saveDelayMs = defaultSaveDelayMs,
   save,
 }: RichDescriptionEditorProps) {
@@ -118,6 +120,7 @@ export function RichDescriptionEditor({
               key={editorGeneration}
               className={editor()}
               content={draft}
+              attachmentParentId={attachmentParentId}
               aria-label={ariaLabel}
               onUploadingChange={(uploading) => {
                 uploadingRef.current = uploading;
@@ -155,6 +158,7 @@ export function RichDescriptionEditor({
                 key={editorGeneration}
                 className={editor()}
                 content={saved}
+                attachmentParentId={attachmentParentId}
                 disabled
                 aria-label={ariaLabel}
               />

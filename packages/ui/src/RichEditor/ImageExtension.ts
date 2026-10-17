@@ -21,7 +21,7 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { attachmentPath, fileIDFromAttachmentURL } from "./attachments";
+import { attachmentParentID, attachmentPath, fileIDFromAttachmentURL } from "./attachments";
 import { ImageNodeView } from "./ImageNodeView";
 import { imageWidthPercent } from "./imageWidth";
 
@@ -87,7 +87,7 @@ export const ImageExtension = Node.create({
   renderHTML({ node }) {
     const fileId = typeof node.attrs.fileId === "string" ? node.attrs.fileId : null;
     const src = fileId
-      ? attachmentPath(fileId)
+      ? attachmentPath(fileId, attachmentParentID(this.editor))
       : typeof node.attrs.src === "string" ? node.attrs.src : null;
     const alt = typeof node.attrs.alt === "string" ? node.attrs.alt : null;
     const title = typeof node.attrs.title === "string" ? node.attrs.title : null;

@@ -202,8 +202,9 @@ func TestRenderHTML_FileLink(t *testing.T) {
 	t.Parallel()
 
 	result, err := RenderHTML(DocumentData{
-		Title:   "Files",
-		BaseURL: "http://localhost:8080",
+		Title:     "Files",
+		BaseURL:   "http://localhost:8080",
+		VersionID: "version-1",
 		Content: json.RawMessage([]byte(
 			`{"type":"doc","content":[{"type":"file","attrs":{"fileId":"file-1","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}]}`,
 		)),
@@ -212,11 +213,12 @@ func TestRenderHTML_FileLink(t *testing.T) {
 
 	html := string(result)
 	assert.Contains(t, html, `<base href="http://localhost:8080">`)
-	assert.Contains(t, html, `<a href="/api/files/v1/file-1" class="document-file">policy.pdf</a>`)
+	assert.Contains(t, html, `<a href="/api/files/v1/attachments/version-1/file-1" class="document-file">policy.pdf</a>`)
 
 	escaped, err := RenderHTML(DocumentData{
-		Title:   "Files",
-		BaseURL: "http://localhost:8080",
+		Title:     "Files",
+		BaseURL:   "http://localhost:8080",
+		VersionID: "version-1",
 		Content: json.RawMessage([]byte(
 			`{"type":"doc","content":[{"type":"file","attrs":{"fileId":"file-1","fileName":"<script>alert(1).pdf","mimeType":"application/pdf","size":12}}]}`,
 		)),
@@ -224,7 +226,7 @@ func TestRenderHTML_FileLink(t *testing.T) {
 	require.NoError(t, err)
 
 	escapedHTML := string(escaped)
-	assert.Contains(t, escapedHTML, `<a href="/api/files/v1/file-1" class="document-file">&lt;script&gt;alert(1).pdf</a>`)
+	assert.Contains(t, escapedHTML, `<a href="/api/files/v1/attachments/version-1/file-1" class="document-file">&lt;script&gt;alert(1).pdf</a>`)
 	assert.NotContains(t, escapedHTML, "<script>alert(1).pdf")
 }
 
@@ -271,18 +273,18 @@ func TestTemplateFunctions(t *testing.T) {
 	t.Run("ProseMirrorJSONToHTML", func(t *testing.T) {
 		result := ProseMirrorJSONToHTML(json.RawMessage(
 			[]byte(`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"plain "},{"type":"text","marks":[{"type":"bold"}],"text":"bold"}]}]}`),
-		))
+		), "")
 		assert.Contains(t, string(result), "<strong>bold</strong>")
 
 		result = ProseMirrorJSONToHTML(json.RawMessage(
 			[]byte(`{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"simple text"}]}]}`),
-		))
+		), "")
 		assert.Contains(t, string(result), "<p>simple text</p>")
 
-		result = ProseMirrorJSONToHTML(json.RawMessage([]byte("**not** json")))
+		result = ProseMirrorJSONToHTML(json.RawMessage([]byte("**not** json")), "")
 		assert.Contains(t, string(result), "<p>**not** json</p>")
 
-		result = ProseMirrorJSONToHTML(nil)
+		result = ProseMirrorJSONToHTML(nil, "")
 		assert.Equal(t, template.HTML(""), result)
 	})
 }

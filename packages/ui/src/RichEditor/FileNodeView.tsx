@@ -24,17 +24,18 @@ import type { ReactNodeViewProps } from "@tiptap/react";
 import { NodeViewWrapper } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
 
-import { attachmentPath } from "./attachments";
+import { attachmentPath, useAttachmentParentID } from "./attachments";
 
 export function FileNodeView({ node }: ReactNodeViewProps) {
   const { t } = useTranslation();
+  const parentId = useAttachmentParentID();
   const fileId = typeof node.attrs.fileId === "string" ? node.attrs.fileId : "";
   const fileName
     = typeof node.attrs.fileName === "string" && node.attrs.fileName !== ""
       ? node.attrs.fileName
       : t("ui.richEditor.file");
   const size = Number(node.attrs.size ?? 0);
-  const href = fileId ? attachmentPath(fileId) : undefined;
+  const href = fileId ? attachmentPath(fileId, parentId) : undefined;
 
   return (
     <NodeViewWrapper>

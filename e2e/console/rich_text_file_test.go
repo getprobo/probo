@@ -105,7 +105,12 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		return nil
 	})
 
-	var taskID string
+	var (
+		taskID            string
+		commentID         string
+		documentVersionID string
+		riskAnalysisID    string
+	)
 
 	owner.Step("saves the diagram and the report on a task", func() error {
 		content, err := richTextContent(
@@ -161,6 +166,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			CreateTaskComment struct {
 				TaskCommentEdge struct {
 					Node struct {
+						ID      string `json:"id"`
 						Content string `json:"content"`
 					} `json:"node"`
 				} `json:"taskCommentEdge"`
@@ -170,7 +176,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		err = owner.Client().Execute(`
 			mutation($input: CreateTaskCommentInput!) {
 				createTaskComment(input: $input) {
-					taskCommentEdge { node { content } }
+					taskCommentEdge { node { id content } }
 				}
 			}
 		`, map[string]any{
@@ -182,6 +188,8 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		if err != nil {
 			return err
 		}
+
+		commentID = result.CreateTaskComment.TaskCommentEdge.Node.ID
 
 		return expectStoredFiles(result.CreateTaskComment.TaskCommentEdge.Node.Content, report)
 	})
@@ -196,6 +204,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			CreateDocument struct {
 				DocumentVersionEdge struct {
 					Node struct {
+						ID      string `json:"id"`
 						Content string `json:"content"`
 					} `json:"node"`
 				} `json:"documentVersionEdge"`
@@ -205,7 +214,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		err = owner.Client().Execute(`
 			mutation($input: CreateDocumentInput!) {
 				createDocument(input: $input) {
-					documentVersionEdge { node { content } }
+					documentVersionEdge { node { id content } }
 				}
 			}
 		`, map[string]any{
@@ -221,6 +230,8 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			return err
 		}
 
+		documentVersionID = result.CreateDocument.DocumentVersionEdge.Node.ID
+
 		return expectStoredFiles(result.CreateDocument.DocumentVersionEdge.Node.Content, image)
 	})
 
@@ -234,6 +245,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			CreateRiskAnalysis struct {
 				RiskAnalysisEdge struct {
 					Node struct {
+						ID          string `json:"id"`
 						Description string `json:"description"`
 					} `json:"node"`
 				} `json:"riskAnalysisEdge"`
@@ -243,7 +255,7 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		err = owner.Client().Execute(`
 			mutation($input: CreateRiskAnalysisInput!) {
 				createRiskAnalysis(input: $input) {
-					riskAnalysisEdge { node { description } }
+					riskAnalysisEdge { node { id description } }
 				}
 			}
 		`, map[string]any{
@@ -258,7 +270,54 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 			return err
 		}
 
+		riskAnalysisID = result.CreateRiskAnalysis.RiskAnalysisEdge.Node.ID
+
 		return expectStoredFiles(result.CreateRiskAnalysis.RiskAnalysisEdge.Node.Description, report)
+	})
+
+	viewer.Step("downloads files through the parent that contains them", func() error {
+		gotImage, err := downloadAttachment(viewer.Client(), taskID, image.ID)
+		if err != nil {
+			return err
+		}
+
+		if string(gotImage) != string(png) {
+			return fmt.Errorf("task diagram bytes differ")
+		}
+
+		gotReport, err := downloadAttachment(viewer.Client(), commentID, report.ID)
+		if err != nil {
+			return err
+		}
+
+		if string(gotReport) != string(pdf) {
+			return fmt.Errorf("comment report bytes differ")
+		}
+
+		gotImage, err = downloadAttachment(viewer.Client(), documentVersionID, image.ID)
+		if err != nil {
+			return err
+		}
+
+		if string(gotImage) != string(png) {
+			return fmt.Errorf("document diagram bytes differ")
+		}
+
+		gotReport, err = downloadAttachment(viewer.Client(), riskAnalysisID, report.ID)
+		if err != nil {
+			return err
+		}
+
+		if string(gotReport) != string(pdf) {
+			return fmt.Errorf("risk analysis report bytes differ")
+		}
+
+		resp := viewer.Client().GetNoRedirect(attachmentURL(viewer.Client(), commentID, image.ID))
+		if resp.StatusCode != http.StatusNotFound {
+			return fmt.Errorf("comment diagram status %d", resp.StatusCode)
+		}
+
+		return nil
 	})
 
 	viewer.Step("downloads the diagram and the report", func() error {
@@ -283,6 +342,19 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 		return nil
 	})
 
+	outsider.Step("cannot download the diagram through the task", func() error {
+		resp := outsider.Client().GetNoRedirect(attachmentURL(outsider.Client(), taskID, image.ID))
+		if resp.StatusCode == http.StatusTemporaryRedirect {
+			return fmt.Errorf("outsider was redirected to the attachment")
+		}
+
+		if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusNotFound {
+			return fmt.Errorf("outsider attachment status %d", resp.StatusCode)
+		}
+
+		return nil
+	})
+
 	outsider.Step("cannot download the diagram", func() error {
 		resp := outsider.Client().GetNoRedirect(privateFileURL(outsider.Client(), image.ID))
 		if resp.StatusCode == http.StatusTemporaryRedirect {
@@ -291,6 +363,15 @@ func TestRichTextFile_SaveAndDownload(t *testing.T) {
 
 		if resp.StatusCode != http.StatusForbidden && resp.StatusCode != http.StatusNotFound {
 			return fmt.Errorf("outsider download status %d", resp.StatusCode)
+		}
+
+		return nil
+	})
+
+	guest.Step("cannot download the diagram through the task", func() error {
+		resp := guest.Client().GetNoRedirect(attachmentURL(guest.Client(), taskID, image.ID))
+		if resp.StatusCode != http.StatusUnauthorized {
+			return fmt.Errorf("guest attachment status %d", resp.StatusCode)
 		}
 
 		return nil
@@ -406,8 +487,20 @@ func privateFileURL(client *testutil.Client, fileID string) string {
 	return client.BaseURL() + "/api/files/v1/" + fileID
 }
 
+func attachmentURL(client *testutil.Client, parentID, fileID string) string {
+	return client.BaseURL() + "/api/files/v1/attachments/" + parentID + "/" + fileID
+}
+
+func downloadAttachment(client *testutil.Client, parentID, fileID string) ([]byte, error) {
+	return downloadRedirect(client, attachmentURL(client, parentID, fileID))
+}
+
 func downloadPrivateFile(client *testutil.Client, fileID string) ([]byte, error) {
-	resp := client.GetNoRedirect(privateFileURL(client, fileID))
+	return downloadRedirect(client, privateFileURL(client, fileID))
+}
+
+func downloadRedirect(client *testutil.Client, rawURL string) ([]byte, error) {
+	resp := client.GetNoRedirect(rawURL)
 	if resp.StatusCode != http.StatusTemporaryRedirect {
 		return nil, fmt.Errorf("file status %d", resp.StatusCode)
 	}

@@ -161,6 +161,7 @@ export function UpdateRiskAnalysisDialog({
                 <RichEditor
                   className={riskAnalysisDescriptionField().editor()}
                   content={field.value}
+                  attachmentParentId={riskAnalysis.id}
                   disabled={isUpdating}
                   placeholder={t("updateRiskAnalysisDialog.placeholders.description")}
                   aria-label={t("updateRiskAnalysisDialog.fields.description")}
