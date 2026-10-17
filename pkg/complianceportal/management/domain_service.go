@@ -141,6 +141,10 @@ func (s *Service) RemoveCustomDomain(
 }
 
 func (s *Service) IsCustomDomainVerified(ctx context.Context, host string) (bool, error) {
+	if s.externallyTerminatedTLS {
+		return s.isStoredDomain(ctx, host)
+	}
+
 	certificate, err := s.certManager.GetByHostname(ctx, host)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -156,6 +160,26 @@ func (s *Service) IsCustomDomainVerified(ctx context.Context, host string) (bool
 	default:
 		return false, nil
 	}
+}
+
+func (s *Service) isStoredDomain(ctx context.Context, host string) (bool, error) {
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			domain := &coredata.CustomDomain{}
+
+			return domain.LoadByDomain(ctx, conn, coredata.NewNoScope(), host)
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("cannot load custom domain: %w", err)
+	}
+
+	return true, nil
 }
 
 // GetDomain returns a custom domain by ID.
