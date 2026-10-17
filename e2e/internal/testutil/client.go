@@ -75,12 +75,18 @@ type Client struct {
 func NewClient(t testing.TB, role TestRole) *Client {
 	t.Helper()
 
+	return NewClientFor(t, GetBaseURL(), role)
+}
+
+func NewClientFor(t testing.TB, baseURL string, role TestRole) *Client {
+	t.Helper()
+
 	jar, err := cookiejar.New(nil)
 	require.NoError(t, err, "cannot create cookie jar")
 
 	client := &Client{
 		T:              t,
-		baseURL:        GetBaseURL(),
+		baseURL:        baseURL,
 		mailpitBaseURL: GetMailpitBaseURL(),
 		role:           role,
 		httpClient: &http.Client{
