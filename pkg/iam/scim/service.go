@@ -246,6 +246,7 @@ func (s *Service) CreateUser(
 					profile.IdentityID = identity.ID
 					profile.EmailAddress = emailAddr
 					applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
+					profile.SCIMRemovedAt = nil
 
 					if err := profile.Update(ctx, tx, scope); err != nil {
 						return fmt.Errorf("cannot update profile: %w", err)
@@ -282,7 +283,8 @@ func (s *Service) CreateUser(
 				previousProfile = &snapshot
 			}
 
-			if profile.Source == coredata.ProfileSourceSCIM {
+			removedFromList := profile.State == coredata.ProfileStateDeactivated && profile.SCIMRemovedAt != nil
+			if profile.Source == coredata.ProfileSourceSCIM && !removedFromList {
 				return scimerrors.ScimErrorUniqueness
 			}
 
@@ -299,6 +301,7 @@ func (s *Service) CreateUser(
 			}
 
 			applyUserAttributes(profile, attrs, externalIdPtr, profileState, now)
+			profile.SCIMRemovedAt = nil
 
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update profile: %w", err)
@@ -422,7 +425,7 @@ func (s *Service) ListUsers(
 	//    when they don't exist in the identity provider.
 	// 2. When a manual user exists in the identity provider but not in the
 	//    SCIM list, CreateUser is called which enrolls them into SCIM management.
-	filter.WithSource(coredata.ProfileSourceSCIM)
+	filter.WithSource(coredata.ProfileSourceSCIM).WithoutSCIMRemoved()
 
 	scope := coredata.NewScopeFromObjectID(config.OrganizationID)
 
@@ -772,6 +775,8 @@ func (s *Service) updateUser(
 				}
 			}
 
+			profile.SCIMRemovedAt = nil
+
 			if err := profile.Update(ctx, tx, scope); err != nil {
 				if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 					return scimerrors.ScimErrorUniqueness
@@ -930,11 +935,13 @@ func (s *Service) DeleteUser(
 			)
 			if deleteErr != nil {
 				if errors.Is(deleteErr, coredata.ErrResourceInUse) {
-					s.logger.WarnCtx(
-						ctx,
-						"SCIM user delete skipped, profile is in use",
-						log.String("profile_id", profileID.String()),
-					)
+					if profile.State != coredata.ProfileStateDeactivated {
+						s.logger.WarnCtx(
+							ctx,
+							"SCIM user delete skipped, profile is in use",
+							log.String("profile_id", profileID.String()),
+						)
+					}
 
 					if err := s.deactivateProfileInTx(ctx, tx, scope, config, profile, membership); err != nil {
 						return fmt.Errorf("cannot deactivate profile: %w", err)
@@ -982,13 +989,19 @@ func (s *Service) deactivateProfileInTx(
 	profile *coredata.MembershipProfile,
 	membership *coredata.Membership,
 ) error {
+	now := time.Now()
+	profile.SCIMRemovedAt = &now
+
 	if profile.State == coredata.ProfileStateDeactivated {
+		profile.UpdatedAt = now
+		if err := profile.Update(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot update profile: %w", err)
+		}
+
 		return nil
 	}
 
 	previousUser := webhooktypes.NewUser(profile, membership)
-
-	now := time.Now()
 	profile.MarkDeactivated(now)
 
 	if err := profile.Update(ctx, tx, scope); err != nil {

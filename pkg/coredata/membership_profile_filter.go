@@ -44,6 +44,7 @@ type (
 		role                       *MembershipRole
 		kind                       *string
 		withoutCompliancePortalID  *gid.GID
+		withoutSCIMRemoved         *bool
 	}
 )
 
@@ -94,6 +95,11 @@ func (f *MembershipProfileFilter) States() []ProfileState {
 
 func (f *MembershipProfileFilter) WithSource(source ProfileSource) *MembershipProfileFilter {
 	f.source = &source
+	return f
+}
+
+func (f *MembershipProfileFilter) WithoutSCIMRemoved() *MembershipProfileFilter {
+	f.withoutSCIMRemoved = new(true)
 	return f
 }
 
@@ -159,6 +165,7 @@ func (f *MembershipProfileFilter) SQLArguments() pgx.StrictNamedArgs {
 		"filter_role":                   f.role,
 		"filter_kind":                   f.kind,
 		"without_compliance_portal_id":  f.withoutCompliancePortalID,
+		"without_scim_removed":          f.withoutSCIMRemoved,
 	}
 }
 
@@ -267,6 +274,13 @@ AND (
 					a.identity_id = p.identity_id
 					AND a.compliance_portal_id = @without_compliance_portal_id
 			)
+		ELSE TRUE
+	END
+)
+AND (
+	CASE
+		WHEN @without_scim_removed::boolean IS NOT NULL AND @without_scim_removed::boolean = TRUE THEN
+			p.scim_removed_at IS NULL
 		ELSE TRUE
 	END
 )

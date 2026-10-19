@@ -197,6 +197,23 @@ func TestSCIM_CreateUser(t *testing.T) {
 		_, status = sc.createUser(email, "Dup User", "ext-dup-1", true)
 		assert.Equal(t, http.StatusConflict, status)
 	})
+
+	t.Run("deactivated user still returns 409", func(t *testing.T) {
+		t.Parallel()
+
+		email := factory.SafeEmail()
+		body, status := sc.createUser(email, "Inactive Dup", "ext-dup-inactive", true)
+		require.Equal(t, http.StatusCreated, status, body)
+
+		var created map[string]any
+		require.NoError(t, json.Unmarshal([]byte(body), &created))
+
+		_, status = sc.replaceUser(created["id"].(string), email, "Inactive Dup", "ext-dup-inactive", false)
+		require.Equal(t, http.StatusOK, status)
+
+		_, status = sc.createUser(email, "Inactive Dup", "ext-dup-inactive", true)
+		assert.Equal(t, http.StatusConflict, status)
+	})
 }
 
 func TestSCIM_ListUsers(t *testing.T) {
@@ -333,6 +350,8 @@ func TestSCIM_DeleteUser(t *testing.T) {
 // signature archives the profile (state INACTIVE) instead of failing. The
 // signature's RESTRICT foreign key makes the hard delete fail; the service must
 // fall back to deactivation and return 204, not surface an opaque 500.
+// The profile stays SCIM-managed and readable by id, but leaves the user
+// list so the next sync does not delete it again.
 func TestSCIM_DeleteUser_ArchivesWhenProfileInUse(t *testing.T) {
 	t.Parallel()
 
@@ -373,6 +392,30 @@ func TestSCIM_DeleteUser_ArchivesWhenProfileInUse(t *testing.T) {
 	var fetched map[string]any
 	require.NoError(t, json.Unmarshal([]byte(body), &fetched))
 	assert.Equal(t, false, fetched["active"], "profile should be archived (inactive), not deleted")
+
+	body, status = sc.listUsers()
+	require.Equal(t, http.StatusOK, status, body)
+	assert.NotContains(t, body, scimUserID)
+
+	body, status = sc.deleteUser(scimUserID)
+	require.Equal(t, http.StatusNoContent, status, body)
+
+	body, status = sc.getUser(scimUserID)
+	require.Equal(t, http.StatusOK, status, body)
+	require.NoError(t, json.Unmarshal([]byte(body), &fetched))
+	assert.Equal(t, false, fetched["active"])
+
+	body, status = sc.createUser(signer.GetEmail(), "Signer User", "ext-signed-1", true)
+	require.Equal(t, http.StatusCreated, status, body)
+
+	var restored map[string]any
+	require.NoError(t, json.Unmarshal([]byte(body), &restored))
+	assert.Equal(t, scimUserID, restored["id"])
+	assert.Equal(t, true, restored["active"])
+
+	body, status = sc.listUsers()
+	require.Equal(t, http.StatusOK, status, body)
+	assert.Contains(t, body, scimUserID)
 }
 
 func TestSCIM_Unauthorized(t *testing.T) {

@@ -72,6 +72,7 @@ type (
 		ManagerValue             *string       `db:"manager_value"`
 		ActivatedAt              *time.Time    `db:"activated_at"`
 		DeactivatedAt            *time.Time    `db:"deactivated_at"`
+		SCIMRemovedAt            *time.Time    `db:"scim_removed_at"`
 		CreatedAt                time.Time     `db:"created_at"`
 		UpdatedAt                time.Time     `db:"updated_at"`
 	}
@@ -227,6 +228,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM
@@ -306,6 +308,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM
@@ -394,6 +397,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM
@@ -477,6 +481,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM
@@ -559,6 +564,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM
@@ -636,6 +642,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM
@@ -711,6 +718,7 @@ WITH profiles AS (
         p.manager_value,
         p.activated_at,
         p.deactivated_at,
+        p.scim_removed_at,
         p.created_at,
         p.updated_at
     FROM
@@ -756,6 +764,7 @@ SELECT
     manager_value,
     activated_at,
     deactivated_at,
+    scim_removed_at,
     created_at,
     updated_at
 FROM profiles
@@ -828,6 +837,7 @@ WITH profiles AS (
         p.manager_value,
         p.activated_at,
         p.deactivated_at,
+        p.scim_removed_at,
         p.created_at,
         p.updated_at,
         o.name AS organization_name
@@ -874,6 +884,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -956,6 +967,7 @@ profiles AS (
         mp.manager_value,
         mp.activated_at,
         mp.deactivated_at,
+        mp.scim_removed_at,
         mp.created_at,
         mp.updated_at
     FROM
@@ -1000,6 +1012,7 @@ SELECT
     p.manager_value,
     p.activated_at,
     p.deactivated_at,
+    p.scim_removed_at,
     p.created_at,
     p.updated_at
 FROM profiles p
@@ -1217,6 +1230,7 @@ INSERT INTO
         manager_value,
         activated_at,
         deactivated_at,
+        scim_removed_at,
         created_at,
         updated_at
     )
@@ -1254,6 +1268,7 @@ VALUES (
     @manager_value,
     @activated_at,
     @deactivated_at,
+    @scim_removed_at,
     @created_at,
     @updated_at
 )
@@ -1293,6 +1308,7 @@ VALUES (
 		"manager_value":              p.ManagerValue,
 		"activated_at":               p.ActivatedAt,
 		"deactivated_at":             p.DeactivatedAt,
+		"scim_removed_at":            p.SCIMRemovedAt,
 		"created_at":                 p.CreatedAt,
 		"updated_at":                 p.UpdatedAt,
 	}
@@ -1353,6 +1369,7 @@ SET
     manager_value = @manager_value,
     activated_at = @activated_at,
     deactivated_at = @deactivated_at,
+    scim_removed_at = @scim_removed_at,
     updated_at = @updated_at
 WHERE
     id = @id
@@ -1393,6 +1410,7 @@ WHERE
 		"manager_value":              p.ManagerValue,
 		"activated_at":               p.ActivatedAt,
 		"deactivated_at":             p.DeactivatedAt,
+		"scim_removed_at":            p.SCIMRemovedAt,
 		"updated_at":                 p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
