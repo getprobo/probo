@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -159,8 +160,8 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 	return &types.SignOutPayload{Success: true}, nil
 }
 
-// ActivateAccount is the resolver for the activateAccount field.
-func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.ActivateAccountInput) (*types.ActivateAccountPayload, error) {
+// ActivateAccountFromInvitation is the resolver for the activateAccountFromInvitation field.
+func (r *mutationResolver) ActivateAccountFromInvitation(ctx context.Context, input types.ActivateAccountFromInvitationInput) (*types.ActivateAccountFromInvitationPayload, error) {
 	session := authn.SessionFromContext(ctx)
 
 	if session != nil {
@@ -177,9 +178,9 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		r.sessionCookie.Clear(w)
 	}
 
-	user, err := r.iam.AuthService.ActivateAccount(
+	user, err := r.iam.AuthService.ActivateAccountFromInvitation(
 		ctx,
-		&iam.ActivateAccountRequest{
+		&iam.ActivateAccountFromInvitationRequest{
 			InvitationToken: input.Token,
 		},
 	)
@@ -229,9 +230,65 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		ssoLoginURL = new(r.SSOLoginURL(samlConfig.ID))
 	}
 
-	return &types.ActivateAccountPayload{
+	return &types.ActivateAccountFromInvitationPayload{
 		SsoLoginURL: ssoLoginURL,
 		Profile:     types.NewProfile(user),
+	}, nil
+}
+
+// AcceptInvitation is the resolver for the acceptInvitation field.
+func (r *mutationResolver) AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error) {
+	identity := authn.IdentityFromContext(ctx)
+
+	invitation, err := r.iam.AuthService.LoadPendingInvitationForIdentity(
+		ctx,
+		identity.ID,
+		input.OrganizationID,
+	)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrPendingInvitationNotFound](err); ok {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load pending invitation", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if _, err := r.authorize(
+		ctx,
+		invitation.ID,
+		iam.ActionInvitationAccept,
+		authz.WithSkipAssumptionCheck(),
+	); err != nil {
+		return nil, err
+	}
+
+	profile, err := r.iam.AuthService.AcceptInvitation(ctx, identity.ID, invitation.ID)
+	if err != nil {
+		if _, ok := errors.AsType[*iam.ErrInvitationNotFound](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInvitationExpired](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrInvitationAlreadyAccepted](err); ok {
+			return nil, gqlutils.AccountAlreadyActivated(ctx, err)
+		}
+
+		if _, ok := errors.AsType[*iam.ErrActivationNotRequired](err); ok {
+			return nil, gqlutils.ActivationNotRequired(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot accept invitation", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.AcceptInvitationPayload{
+		Profile: types.NewProfile(profile),
 	}, nil
 }
 

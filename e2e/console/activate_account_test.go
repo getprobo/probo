@@ -52,8 +52,8 @@ func TestActivateAccount_ReusedIdentityDoesNotSetPassword(t *testing.T) {
 	invitationToken := pollMailToken(t, attacker, `to:`+email+` subject:"Invitation to join"`)
 
 	const passwordTokenMutation = `
-		mutation($input: ActivateAccountInput!) {
-			activateAccount(input: $input) {
+		mutation($input: ActivateAccountFromInvitationInput!) {
+			activateAccountFromInvitation(input: $input) {
 				createPasswordToken
 			}
 		}
@@ -67,20 +67,20 @@ func TestActivateAccount_ReusedIdentityDoesNotSetPassword(t *testing.T) {
 	assert.ErrorContains(t, err, "createPasswordToken")
 
 	const activateAccountMutation = `
-		mutation($input: ActivateAccountInput!) {
-			activateAccount(input: $input) {
+		mutation($input: ActivateAccountFromInvitationInput!) {
+			activateAccountFromInvitation(input: $input) {
 				profile { id state }
 			}
 		}
 	`
 
 	var activated struct {
-		ActivateAccount struct {
+		ActivateAccountFromInvitation struct {
 			Profile struct {
 				ID    string `json:"id"`
 				State string `json:"state"`
 			} `json:"profile"`
-		} `json:"activateAccount"`
+		} `json:"activateAccountFromInvitation"`
 	}
 
 	err = attacker.ExecuteConnect(activateAccountMutation, map[string]any{
@@ -89,8 +89,8 @@ func TestActivateAccount_ReusedIdentityDoesNotSetPassword(t *testing.T) {
 		},
 	}, &activated)
 	require.NoError(t, err, "activateAccount mutation failed")
-	assert.Equal(t, profileB, activated.ActivateAccount.Profile.ID)
-	assert.Equal(t, "ACTIVE", activated.ActivateAccount.Profile.State)
+	assert.Equal(t, profileB, activated.ActivateAccountFromInvitation.Profile.ID)
+	assert.Equal(t, "ACTIVE", activated.ActivateAccountFromInvitation.Profile.State)
 	assert.Equal(t, "PENDING", profileState(t, orgA, profileA))
 
 	const chosenPassword = "AttackerPassword123!"

@@ -36,9 +36,9 @@ import { useSafeContinueUrl } from "#/hooks/useSafeContinueUrl";
 
 const activateAccountMutation = graphql`
   mutation ActivateAccountPageMutation(
-    $input: ActivateAccountInput!
+    $input: ActivateAccountFromInvitationInput!
   ) {
-    activateAccount(input: $input) {
+    activateAccountFromInvitation(input: $input) {
       ssoLoginUrl
     }
   }
@@ -108,14 +108,14 @@ export default function ActivateAccountPage() {
           type: "success",
         });
 
-        const { activateAccount } = response;
+        const { activateAccountFromInvitation } = response;
 
-        if (!activateAccount) {
+        if (!activateAccountFromInvitation) {
           throw new Error("mutation data missing");
         }
 
-        if (activateAccount.ssoLoginUrl) {
-          const url = new URL(activateAccount.ssoLoginUrl);
+        if (activateAccountFromInvitation.ssoLoginUrl) {
+          const url = new URL(activateAccountFromInvitation.ssoLoginUrl);
           url.searchParams.set("continue", safeContinueUrl.toString());
 
           window.location.href = url.toString();

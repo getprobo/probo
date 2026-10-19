@@ -70,9 +70,10 @@ export const membershipsPageQuery = graphql`
 
 interface MembershipsPageProps {
   queryRef: PreloadedQuery<MembershipsPageQuery>;
+  onAccepted: () => void;
 }
 
-export function MembershipsPage({ queryRef }: MembershipsPageProps) {
+export function MembershipsPage({ queryRef, onAccepted }: MembershipsPageProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
 
@@ -119,6 +120,7 @@ export function MembershipsPage({ queryRef }: MembershipsPageProps) {
             <InvitingOrganizationListItem
               key={organization.id}
               organizationKey={organization}
+              onAccepted={onAccepted}
             />
           ))}
         </List>

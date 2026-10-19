@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
 
 import type { MembershipsPageQuery } from "#/__generated__/iam/MembershipsPageQuery.graphql";
@@ -31,6 +31,10 @@ function MembershipsPageQueryLoader() {
   const [queryRef, loadQuery]
     = useQueryLoader<MembershipsPageQuery>(membershipsPageQuery);
 
+  const reload = useCallback(() => {
+    loadQuery({}, { fetchPolicy: "network-only" });
+  }, [loadQuery]);
+
   useEffect(() => {
     loadQuery({});
   }, [loadQuery]);
@@ -41,7 +45,7 @@ function MembershipsPageQueryLoader() {
 
   return (
     <Suspense fallback={<MembershipsPageSkeleton />}>
-      <MembershipsPage queryRef={queryRef} />
+      <MembershipsPage queryRef={queryRef} onAccepted={reload} />
     </Suspense>
   );
 }

@@ -2014,7 +2014,12 @@
     }
   },
   "invitingOrganizationCard": {
-    "checkEmail": "Consultez votre e-mail"
+    "actions": {
+      "join": "Rejoindre"
+    },
+    "errors": {
+      "joinFailed": "Impossible de rejoindre cette organisation"
+    }
   },
   "membershipCard": {
     "status": {

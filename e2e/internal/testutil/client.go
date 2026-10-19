@@ -588,8 +588,8 @@ func (c *Client) pollForLinkToken(searchQuery string) string {
 
 func (c *Client) activateUser(token string) {
 	const query = `
-		mutation($input: ActivateAccountInput!) {
-			activateAccount(input: $input) {
+		mutation($input: ActivateAccountFromInvitationInput!) {
+			activateAccountFromInvitation(input: $input) {
 				profile { id }
 			}
 		}

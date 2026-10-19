@@ -1322,7 +1322,10 @@
       "description": "This organization does not have an employee portal yet. Ask an administrator to create one."
     }
   },
-  "invitingOrganizationCard": { "checkEmail": "Check your email" },
+  "invitingOrganizationCard": {
+    "actions": { "join": "Join" },
+    "errors": { "joinFailed": "Could not join this organization" }
+  },
   "membershipCard": {
     "status": { "authenticated": "Authenticated", "sessionExpired": "Session expired", "authenticationRequired": "Authentication required" },
     "actions": { "open": "Open", "continue": "Continue" }

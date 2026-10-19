@@ -33,6 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/crypto/hash"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -52,8 +53,13 @@ type (
 		NewPassword     string
 	}
 
-	ActivateAccountRequest struct {
+	ActivateAccountFromInvitationRequest struct {
 		InvitationToken string
+	}
+
+	AcceptInvitationRequest struct {
+		IdentityID     gid.GID
+		OrganizationID gid.GID
 	}
 
 	CreateIdentityWithPasswordRequest struct {
@@ -93,7 +99,7 @@ func NewAuthService(svc *Service) *AuthService {
 	return &AuthService{Service: svc}
 }
 
-func (req ActivateAccountRequest) Validate() error {
+func (req ActivateAccountFromInvitationRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(req.InvitationToken, "invitationToken", validator.NotEmpty())
@@ -132,9 +138,9 @@ func (req *CreateIdentityWithPasswordRequest) Validate() error {
 	return v.Error()
 }
 
-func (s *AuthService) ActivateAccount(
+func (s *AuthService) ActivateAccountFromInvitation(
 	ctx context.Context,
-	req *ActivateAccountRequest,
+	req *ActivateAccountFromInvitationRequest,
 ) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -188,17 +194,8 @@ func (s *AuthService) ActivateAccount(
 			}
 
 			if profileVerifiedByProvisioner(profile.Source) {
-				invitations := &coredata.Invitations{}
-
-				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-				if err := invitations.ExpireByUserID(
-					ctx,
-					tx,
-					coredata.NewScopeFromObjectID(invitation.OrganizationID),
-					invitation.UserID,
-					onlyPending,
-				); err != nil {
-					return fmt.Errorf("cannot expire pending invitations: %w", err)
+				if err := expirePendingInvitations(ctx, tx, invitation); err != nil {
+					return err
 				}
 
 				activationNotRequired = true
@@ -236,18 +233,8 @@ func (s *AuthService) ActivateAccount(
 				return fmt.Errorf("cannot update invitation: %w", err)
 			}
 
-			// Expire other pending invitations for user
-			invitations := &coredata.Invitations{}
-
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByUserID(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(invitation.OrganizationID),
-				invitation.UserID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations: %w", err)
+			if err := expirePendingInvitations(ctx, tx, invitation); err != nil {
+				return err
 			}
 
 			return nil
@@ -261,6 +248,193 @@ func (s *AuthService) ActivateAccount(
 	}
 
 	return profile, nil
+}
+
+func (s *AuthService) LoadPendingInvitationForIdentity(
+	ctx context.Context,
+	identityID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Invitation, error) {
+	var invitation *coredata.Invitation
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			loaded, err := pendingInvitationForIdentity(ctx, conn, identityID, organizationID)
+			if err != nil {
+				return err
+			}
+
+			invitation = loaded
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return invitation, nil
+}
+
+func (s *AuthService) AcceptInvitation(
+	ctx context.Context,
+	identityID gid.GID,
+	invitationID gid.GID,
+) (*coredata.MembershipProfile, error) {
+	var (
+		scope                 = coredata.NewScopeFromObjectID(invitationID)
+		invitation            = &coredata.Invitation{}
+		profile               *coredata.MembershipProfile
+		now                   = time.Now()
+		activationNotRequired bool
+	)
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			err := invitation.LoadByID(ctx, tx, scope, invitationID)
+			if err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewInvitationNotFoundError(invitationID)
+				}
+
+				return fmt.Errorf("cannot load invitation: %w", err)
+			}
+
+			if invitation.AcceptedAt != nil {
+				return NewInvitationAlreadyAcceptedError(invitation.ID)
+			}
+
+			profile = &coredata.MembershipProfile{}
+			if err := profile.LoadByID(ctx, tx, scope, invitation.UserID); err != nil {
+				if err == coredata.ErrResourceNotFound && invitation.ExpiresAt.Before(now) {
+					return NewInvitationExpiredError(invitation.ID)
+				}
+
+				return fmt.Errorf("cannot load profile: %w", err)
+			}
+
+			if profile.IdentityID != identityID || profile.OrganizationID != invitation.OrganizationID {
+				return fmt.Errorf("invitation %q does not belong to identity %q", invitation.ID, identityID)
+			}
+
+			if invitation.ExpiresAt.Before(now) {
+				if profileVerifiedByProvisioner(profile.Source) {
+					activationNotRequired = true
+					return nil
+				}
+
+				return NewInvitationExpiredError(invitation.ID)
+			}
+
+			if profileVerifiedByProvisioner(profile.Source) {
+				if err := expirePendingInvitations(ctx, tx, invitation); err != nil {
+					return err
+				}
+
+				activationNotRequired = true
+
+				return nil
+			}
+
+			if profile.State == coredata.ProfileStatePending {
+				profile.MarkActive(now)
+
+				if err := profile.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update profile: %w", err)
+				}
+			}
+
+			invitation.AcceptedAt = &now
+			if err := invitation.Update(ctx, tx, scope); err != nil {
+				if err == coredata.ErrResourceNotFound {
+					return NewInvitationNotFoundError(invitation.ID)
+				}
+
+				return fmt.Errorf("cannot update invitation: %w", err)
+			}
+
+			if err := expirePendingInvitations(ctx, tx, invitation); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if activationNotRequired {
+		return nil, NewActivationNotRequiredError(profile.ID, profile.Source)
+	}
+
+	return profile, nil
+}
+
+func pendingInvitationForIdentity(
+	ctx context.Context,
+	conn pg.Querier,
+	identityID gid.GID,
+	organizationID gid.GID,
+) (*coredata.Invitation, error) {
+	scope := coredata.NewScopeFromObjectID(organizationID)
+	profile := &coredata.MembershipProfile{}
+
+	if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, organizationID); err != nil {
+		if err == coredata.ErrResourceNotFound {
+			return nil, NewPendingInvitationNotFoundError()
+		}
+
+		return nil, fmt.Errorf("cannot load profile: %w", err)
+	}
+
+	invitations := coredata.Invitations{}
+	cursor := page.NewCursor(
+		20,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.InvitationOrderField]{
+			Field:     coredata.InvitationOrderFieldCreatedAt,
+			Direction: page.OrderDirectionDesc,
+		},
+	)
+	onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+
+	if err := invitations.LoadByUserID(ctx, conn, scope, profile.ID, cursor, onlyPending); err != nil {
+		return nil, fmt.Errorf("cannot load invitations: %w", err)
+	}
+
+	now := time.Now()
+	for _, invitation := range invitations {
+		if invitation.AcceptedAt == nil && invitation.ExpiresAt.After(now) {
+			return invitation, nil
+		}
+	}
+
+	return nil, NewPendingInvitationNotFoundError()
+}
+
+func expirePendingInvitations(
+	ctx context.Context,
+	conn pg.Querier,
+	invitation *coredata.Invitation,
+) error {
+	invitations := &coredata.Invitations{}
+	onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+
+	if err := invitations.ExpireByUserID(
+		ctx,
+		conn,
+		coredata.NewScopeFromObjectID(invitation.OrganizationID),
+		invitation.UserID,
+		onlyPending,
+	); err != nil {
+		return fmt.Errorf("cannot expire pending invitations: %w", err)
+	}
+
+	return nil
 }
 
 func profileVerifiedByProvisioner(source coredata.ProfileSource) bool {

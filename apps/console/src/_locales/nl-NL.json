@@ -2014,7 +2014,12 @@
     }
   },
   "invitingOrganizationCard": {
-    "checkEmail": "Controleer uw e-mail"
+    "actions": {
+      "join": "Deelnemen"
+    },
+    "errors": {
+      "joinFailed": "Kan niet deelnemen aan deze organisatie"
+    }
   },
   "membershipCard": {
     "status": {

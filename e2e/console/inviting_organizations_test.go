@@ -148,3 +148,70 @@ func TestInvitingOrganizations_List(t *testing.T) {
 		assert.Contains(t, ids, inviter2.GetOrganizationID().String())
 	})
 }
+
+func TestAcceptInvitation_SignedInInviteeJoinsWithoutEndingSession(t *testing.T) {
+	t.Parallel()
+
+	inviter := testutil.NewClient(t, testutil.RoleOwner)
+	invitee := testutil.NewClient(t, testutil.RoleOwner)
+	stranger := testutil.NewClient(t, testutil.RoleOwner)
+
+	profileID := factory.CreateUser(inviter, factory.Attrs{
+		"emailAddress": invitee.GetEmail(),
+	})
+	factory.InviteUser(inviter, profileID)
+
+	const acceptInvitationMutation = `
+		mutation($input: AcceptInvitationInput!) {
+			acceptInvitation(input: $input) {
+				profile { id state }
+			}
+		}
+	`
+
+	acceptInput := map[string]any{
+		"input": map[string]any{
+			"organizationId": inviter.GetOrganizationID().String(),
+		},
+	}
+
+	err := stranger.ExecuteConnectShouldFail(acceptInvitationMutation, acceptInput)
+	testutil.RequireErrorCode(t, err, "NOT_FOUND")
+
+	var accepted struct {
+		AcceptInvitation struct {
+			Profile struct {
+				ID    string `json:"id"`
+				State string `json:"state"`
+			} `json:"profile"`
+		} `json:"acceptInvitation"`
+	}
+
+	err = invitee.ExecuteConnect(acceptInvitationMutation, acceptInput, &accepted)
+	require.NoError(t, err, "acceptInvitation mutation failed")
+	assert.Equal(t, profileID, accepted.AcceptInvitation.Profile.ID)
+	assert.Equal(t, "ACTIVE", accepted.AcceptInvitation.Profile.State)
+
+	var viewer struct {
+		Viewer struct {
+			ID                    string `json:"id"`
+			InvitingOrganizations []struct {
+				ID string `json:"id"`
+			} `json:"invitingOrganizations"`
+		} `json:"viewer"`
+	}
+
+	const viewerQuery = `
+		query {
+			viewer {
+				id
+				invitingOrganizations { id }
+			}
+		}
+	`
+
+	err = invitee.ExecuteConnect(viewerQuery, nil, &viewer)
+	require.NoError(t, err, "viewer query failed after accept")
+	assert.Equal(t, invitee.GetUserID().String(), viewer.Viewer.ID)
+	assert.Empty(t, viewer.Viewer.InvitingOrganizations)
+}

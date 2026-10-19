@@ -18,34 +18,88 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { EnvelopeSimpleIcon } from "@phosphor-icons/react";
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { formatError, type GraphQLError } from "@probo/helpers";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ListItem } from "@probo/ui/src/v2/List/ListItem";
 import { ListItemContent } from "@probo/ui/src/v2/List/ListItemContent";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useMutation } from "react-relay";
 
 import type { InvitingOrganizationListItem_organization$key } from "#/__generated__/iam/InvitingOrganizationListItem_organization.graphql";
+import type { InvitingOrganizationListItemAcceptMutation } from "#/__generated__/iam/InvitingOrganizationListItemAcceptMutation.graphql";
 
 const invitingOrganizationListItemFragment = graphql`
   fragment InvitingOrganizationListItem_organization on Organization {
+    id
     name
+  }
+`;
+
+const acceptInvitationMutation = graphql`
+  mutation InvitingOrganizationListItemAcceptMutation(
+    $input: AcceptInvitationInput!
+  ) {
+    acceptInvitation(input: $input) {
+      profile {
+        id
+      }
+    }
   }
 `;
 
 interface InvitingOrganizationListItemProps {
   organizationKey: InvitingOrganizationListItem_organization$key;
+  onAccepted: () => void;
 }
 
 export function InvitingOrganizationListItem({
   organizationKey,
+  onAccepted,
 }: InvitingOrganizationListItemProps) {
   const { t } = useTranslation();
+  const toast = useToast();
   const organization = useFragment(
     invitingOrganizationListItemFragment,
     organizationKey,
   );
+  const [acceptInvitation, isAccepting]
+    = useMutation<InvitingOrganizationListItemAcceptMutation>(acceptInvitationMutation);
+
+  const handleAccept = () => {
+    acceptInvitation({
+      variables: {
+        input: { organizationId: organization.id },
+      },
+      onCompleted: (_response, errors: GraphQLError[] | null) => {
+        if (errors) {
+          for (const err of errors) {
+            if (err.extensions?.code === "ACTIVATION_NOT_REQUIRED") {
+              onAccepted();
+              return;
+            }
+          }
+
+          toast.add({
+            title: t("invitingOrganizationCard.errors.joinFailed"),
+            description: formatError(t("invitingOrganizationCard.errors.joinFailed"), errors),
+            type: "error",
+          });
+          return;
+        }
+
+        onAccepted();
+      },
+      onError: (e) => {
+        toast.add({
+          title: t("invitingOrganizationCard.errors.joinFailed"),
+          description: e.message,
+          type: "error",
+        });
+      },
+    });
+  };
 
   return (
     <ListItem>
@@ -54,9 +108,16 @@ export function InvitingOrganizationListItem({
           {organization.name}
         </Text>
       </ListItemContent>
-      <Badge color="neutral" variant="soft" iconStart={<EnvelopeSimpleIcon />}>
-        {t("invitingOrganizationCard.checkEmail")}
-      </Badge>
+      <Button
+        type="button"
+        size={1}
+        variant="soft"
+        color="neutral"
+        loading={isAccepting}
+        onClick={handleAccept}
+      >
+        {t("invitingOrganizationCard.actions.join")}
+      </Button>
     </ListItem>
   );
 }

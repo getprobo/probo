@@ -8,9 +8,14 @@ extend type Mutation {
   signIn(input: SignInInput!): SignInPayload @authentication(required: OPTIONAL)
   signUp(input: SignUpInput!): SignUpPayload @authentication(required: NONE)
   signOut: SignOutPayload @authentication(required: PRESENT) @sessionOnly
-  activateAccount(
-    input: ActivateAccountInput!
-  ): ActivateAccountPayload @authentication(required: OPTIONAL)
+  activateAccountFromInvitation(
+    input: ActivateAccountFromInvitationInput!
+  ): ActivateAccountFromInvitationPayload @authentication(required: OPTIONAL)
+  acceptInvitation(
+    input: AcceptInvitationInput!
+  ): AcceptInvitationPayload
+    @authentication(required: PRESENT)
+    @sessionOnly
   forgotPassword(input: ForgotPasswordInput!): ForgotPasswordPayload
     @authentication(required: NONE)
   resetPassword(input: ResetPasswordInput!): ResetPasswordPayload
@@ -91,8 +96,12 @@ input SignUpInput {
   fullName: String!
 }
 
-input ActivateAccountInput {
+input ActivateAccountFromInvitationInput {
   token: String!
+}
+
+input AcceptInvitationInput {
+  organizationId: ID!
 }
 
 input ForgotPasswordInput {
@@ -149,8 +158,12 @@ type SignOutPayload {
   success: Boolean!
 }
 
-type ActivateAccountPayload {
+type ActivateAccountFromInvitationPayload {
   ssoLoginUrl: String
+  profile: Profile
+}
+
+type AcceptInvitationPayload {
   profile: Profile
 }
 

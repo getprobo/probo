@@ -84,6 +84,16 @@ func NewInvitationExpiredError(invitationID gid.GID) error {
 	return &ErrInvitationExpired{InvitationID: invitationID}
 }
 
+type ErrPendingInvitationNotFound struct{}
+
+func NewPendingInvitationNotFoundError() error {
+	return &ErrPendingInvitationNotFound{}
+}
+
+func (e ErrPendingInvitationNotFound) Error() string {
+	return "pending invitation not found"
+}
+
 func (e ErrInvitationExpired) Error() string {
 	return fmt.Sprintf("invitation %q expired", e.InvitationID)
 }
