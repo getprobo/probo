@@ -49,3 +49,59 @@ func TestOVHcloudRegistration(t *testing.T) {
 	assert.Equal(t, []string{"account/all"}, reg.OAuth2.Scopes)
 	assert.True(t, reg.OAuth2.RequiresPKCE)
 }
+
+// TestOVHcloudRegions pins each region's connector to that region's hosts.
+// A credential from one region is unknown to the others, so the hosts are
+// fixed on the registration rather than chosen per connection.
+func TestOVHcloudRegions(t *testing.T) {
+	t.Parallel()
+
+	registry := provider.NewBuiltinRegistry()
+
+	for _, tc := range []struct {
+		provider  coredata.ConnectorProvider
+		wantAuth  string
+		wantToken string
+		wantProbe string
+		wantAPI   string
+	}{
+		{
+			provider:  coredata.ConnectorProviderOVHcloud,
+			wantAuth:  "https://www.ovh.com/auth/oauth2/authorize",
+			wantToken: "https://www.ovh.com/auth/oauth2/token",
+			wantProbe: "https://eu.api.ovh.com/1.0/me/identity/user",
+			wantAPI:   "https://eu.api.ovh.com/1.0",
+		},
+		{
+			provider:  coredata.ConnectorProviderOVHcloudUS,
+			wantAuth:  "https://us.ovhcloud.com/auth/oauth2/authorize",
+			wantToken: "https://us.ovhcloud.com/auth/oauth2/token",
+			wantProbe: "https://api.us.ovhcloud.com/1.0/me/identity/user",
+			wantAPI:   "https://api.us.ovhcloud.com/1.0",
+		},
+		{
+			provider:  coredata.ConnectorProviderOVHcloudCA,
+			wantAuth:  "https://ca.ovh.com/auth/oauth2/authorize",
+			wantToken: "https://ca.ovh.com/auth/oauth2/token",
+			wantProbe: "https://ca.api.ovh.com/1.0/me/identity/user",
+			wantAPI:   "https://ca.api.ovh.com/1.0",
+		},
+	} {
+		t.Run(string(tc.provider), func(t *testing.T) {
+			t.Parallel()
+
+			reg, ok := registry.Get(tc.provider)
+			require.True(t, ok)
+			assert.Equal(t, "OVHcloud", reg.DisplayName)
+			assert.Equal(t, tc.wantAuth, reg.Endpoints.Auth)
+			assert.Equal(t, tc.wantToken, reg.Endpoints.Token)
+			assert.Equal(t, tc.wantProbe, reg.Endpoints.Probe)
+			assert.Equal(t, tc.wantAPI, reg.Endpoints.APIBase)
+			require.NotNil(t, reg.OAuth2)
+			assert.Nil(t, reg.OAuth2.BuildAuthURLForSite)
+			assert.Nil(t, reg.OAuth2.BuildTokenURLForSite)
+			assert.True(t, reg.SupportsClientCredentials())
+			assert.Nil(t, reg.ClientCredentials.BuildTokenURL)
+		})
+	}
+}

@@ -115,6 +115,8 @@ func NewBuiltinRegistryWith(opts ...Option) (*Registry, error) {
 		openaiRegistration(),
 		openrouterRegistration(),
 		ovhcloudRegistration(),
+		ovhcloudCARegistration(),
+		ovhcloudUSRegistration(),
 		posthogRegistration(),
 		pagerdutyRegistration(),
 		pylonRegistration(),

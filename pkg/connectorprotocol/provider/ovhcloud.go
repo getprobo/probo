@@ -23,37 +23,33 @@ package provider
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-// ovhcloudRegistration is OVHcloud, EU region.
+// ovhcloudRegistration is OVHcloud in the EU region.
 //
 // Two connect paths, both single-tenant: an OVHcloud credential is bound to
-// exactly one account, so there is no organisation to pick and no settings
-// struct. OVHcloud's OAuth2 client namespace is global, so one Probo-side app
-// serves every customer on the authorization-code path.
-//
-// EU only: OAuth2 clients are region-local and Endpoints.Token is one pinned
-// value. Another region needs its own Probo account and client. The commit body
-// carries the rest of the reasoning.
+// exactly one account, so there is no organisation to pick. US and Canada are
+// separate connectors; each region runs its own identity service.
 func ovhcloudRegistration() *Registration {
+	return ovhcloudRegistrationFor(
+		coredata.ConnectorProviderOVHcloud,
+		"OVHcloud",
+		connectorprotocol.OVHcloudRegionEU,
+	)
+}
+
+func ovhcloudRegistrationFor(provider coredata.ConnectorProvider, displayName, region string) *Registration {
 	return &Registration{
-		Provider:         coredata.ConnectorProviderOVHcloud,
-		DisplayName:      "OVHcloud",
+		Provider:         provider,
+		DisplayName:      displayName,
 		DocumentationURL: accessReviewDocsURL("ovhcloud"),
-		Endpoints: Endpoints{
-			Auth:  "https://www.ovh.com/auth/oauth2/authorize",
-			Token: "https://www.ovh.com/auth/oauth2/token",
-			// Every route the driver and resolver touch hangs off the
-			// versioned root, so the version segment stays in APIBase.
-			APIBase: "https://eu.api.ovh.com/1.0",
-			// The roster endpoint itself, so the probe exercises the exact
-			// dependency: 401 on a dead credential, 403 on a missing IAM action.
-			Probe: "https://eu.api.ovh.com/1.0/me/identity/user",
-		},
+		Endpoints:        ovhcloudEndpoints(region),
 		OAuth2: &OAuth2Config{
 			// "account/all" is the narrowest scope reaching every route the
 			// driver reads; the bare "all" spans every product the customer
@@ -62,7 +58,6 @@ func ovhcloudRegistration() *Registration {
 			Scopes:       []string{"account/all"},
 			RequiresPKCE: true,
 		},
-		// No ExtraSettings: the credential already identifies the account.
 		ClientCredentials: &ClientCredentialsConfig{},
 		NewDriver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) (drivers.Driver, error) {
 			return drivers.NewOVHcloudDriver(c, ep.APIBase), nil
@@ -70,5 +65,34 @@ func ovhcloudRegistration() *Registration {
 		NewNameResolver: func(_ context.Context, c *http.Client, _ *coredata.Connector, _ *log.Logger, ep Endpoints) drivers.NameResolver {
 			return drivers.NewOVHcloudNameResolver(c, ep.APIBase)
 		},
+	}
+}
+
+func ovhcloudEndpoints(region string) Endpoints {
+	authURL, err := connectorprotocol.OVHcloudAuthorizeURL(region)
+	if err != nil {
+		panic(err)
+	}
+
+	tokenURL, err := connectorprotocol.OVHcloudTokenURL(region)
+	if err != nil {
+		panic(err)
+	}
+
+	apiBase, err := connectorprotocol.OVHcloudAPIBase(region)
+	if err != nil {
+		panic(err)
+	}
+
+	probe, err := url.JoinPath(apiBase, "me", "identity", "user")
+	if err != nil {
+		panic(err)
+	}
+
+	return Endpoints{
+		Auth:    authURL,
+		Token:   tokenURL,
+		Probe:   probe,
+		APIBase: apiBase,
 	}
 }

@@ -34,6 +34,7 @@ import type { ConnectorProviderListItem_provider$key } from "#/__generated__/cor
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ConnectorDocumentationLink } from "../../_components/ConnectorDocumentationLink";
+import { ConnectorProviderName } from "../../_components/ConnectorProviderName";
 import { connectMethods } from "../../_lib/connectMethods";
 import { connectVendorPath } from "../../_lib/integrationPath";
 import { connectorCard } from "../../variants";
@@ -66,7 +67,7 @@ export function ConnectorProviderListItem({
   const { t } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
   const provider = useFragment(connectorProviderListItemFragment, providerKey);
-  const { card, title } = connectorCard();
+  const { card } = connectorCard();
   const methods = connectMethods({
     configuredProtocols: provider.configuredProtocols,
     apiKeySupported: provider.apiKeySupported,
@@ -98,8 +99,8 @@ export function ConnectorProviderListItem({
           className="size-8 shrink-0"
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <Heading level={2} size={3} weight="medium" highContrast className={title()}>
-            {provider.displayName}
+          <Heading level={2} size={3} weight="medium" highContrast className="flex min-w-0 leading-tight">
+            <ConnectorProviderName provider={provider.provider} name={provider.displayName} />
           </Heading>
           <div className="pointer-events-auto relative z-1">
             <ConnectorDocumentationLink providerKey={provider} />

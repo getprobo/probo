@@ -68,6 +68,7 @@ const sourcesQuery = graphql`
               id
               name
               connector {
+                provider
                 displayName
               }
               connectorAccount {
@@ -273,6 +274,7 @@ function SourceSelector({
             <AccessReviewSourceOptionLabel
               name={source.name}
               accountName={source.connectorAccount?.name}
+              provider={source.connector?.provider}
               providerName={source.connector?.displayName
                 ?? (source.connectorAccount == null
                   ? t("addAccessReviewSourceDialog.csv.title")

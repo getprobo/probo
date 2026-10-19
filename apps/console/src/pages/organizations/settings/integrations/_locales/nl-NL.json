@@ -52,7 +52,8 @@
       "region": "Regio",
       "regionPlaceholder": "Selecteer een regio",
       "regionUnitedStates": "Verenigde Staten",
-      "regionEurope": "Europa"
+      "regionEurope": "Europa",
+      "regionCanada": "Canada"
     },
     "workloadIdentity": {
       "propagationHint": "Federatie kan enkele minuten duren. Als de connector als verbroken wordt weergegeven, wacht dan en probeer het opnieuw.",

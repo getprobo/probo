@@ -31,6 +31,7 @@ import type { ConnectVendorChooser_provider$key } from "#/__generated__/core/Con
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ConnectorMethodIcon } from "../../../_components/ConnectorMethodIcon";
+import { ConnectorRegionFlag } from "../../../_components/ConnectorProviderName";
 import { connectMethods, connectVendorMethodPath } from "../../../_lib/connectMethods";
 import { marketplacePath } from "../../../_lib/integrationPath";
 
@@ -79,8 +80,9 @@ export function ConnectVendorChooser({
         >
           {t("marketplacePage.title")}
         </Link>
-        <Heading level={1} size={6} weight="medium" highContrast>
+        <Heading level={1} size={6} weight="medium" highContrast className="flex flex-wrap items-center gap-2">
           {t("marketplacePage.connectTitle", { provider: driver.displayName })}
+          <ConnectorRegionFlag provider={driver.provider} size={18} />
         </Heading>
         <Text size={2} color="faint">
           {t("marketplacePage.choose", { provider: driver.displayName })}

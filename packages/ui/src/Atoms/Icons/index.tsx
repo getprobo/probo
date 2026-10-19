@@ -111,6 +111,9 @@ export { IconBrandFacebook } from "./IconBrandFacebook";
 export { IconBrandLinkedin } from "./IconBrandLinkedin";
 export { IconBrandX } from "./IconBrandX";
 export { IconGlobe } from "./IconGlobe";
+export { IconFlagEU } from "./IconFlagEU";
+export { IconFlagUS } from "./IconFlagUS";
+export { IconFlagCA } from "./IconFlagCA";
 export {
   ArrowsClockwise as IconArrowsClockwise,
   Eject as IconEject,

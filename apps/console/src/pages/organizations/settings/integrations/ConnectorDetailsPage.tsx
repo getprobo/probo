@@ -39,6 +39,7 @@ import { connectorAccountListQuery } from "./_components/ConnectorAccountList";
 import { ConnectorAccountsDrawer } from "./_components/ConnectorAccountsDrawer";
 import { ConnectorDocumentationLink } from "./_components/ConnectorDocumentationLink";
 import { ConnectorListItem } from "./_components/ConnectorListItem";
+import { ConnectorProviderName } from "./_components/ConnectorProviderName";
 import { createdConnectorId } from "./_lib/discoveredAccounts";
 import { connectVendorPath, integrationListPath } from "./_lib/integrationPath";
 import { connectorDetailsPage } from "./variants";
@@ -147,8 +148,12 @@ export function ConnectorDetailsPage({ queryRef }: ConnectorDetailsPageProps) {
               thirdParty={vendor.provider}
               className="size-8 shrink-0"
             />
-            <Heading level={1} size={6} weight="medium" highContrast>
-              {vendor.displayName}
+            <Heading level={1} size={6} weight="medium" highContrast className="flex min-w-0">
+              <ConnectorProviderName
+                provider={vendor.provider}
+                name={vendor.displayName}
+                flagSize={18}
+              />
             </Heading>
           </div>
           <ConnectorDocumentationLink connectorKey={vendor} />

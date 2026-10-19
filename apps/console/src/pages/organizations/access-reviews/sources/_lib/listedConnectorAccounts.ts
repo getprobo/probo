@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { connectorProviderMatchesSearch } from "#/pages/organizations/settings/integrations/_lib/connectorProviderLabel";
+
 // A connector-name match lists every account. An account-name match lists only
 // those accounts. No accounts, or no match, hides the connector.
 export function listedConnectorAccounts<TAccount extends { name: string }>(
@@ -32,8 +34,11 @@ export function listedConnectorAccounts<TAccount extends { name: string }>(
     return accounts;
   }
 
-  const connectorMatches = connector.displayName.toLowerCase().includes(normalizedSearch)
-    || connector.provider.replaceAll("_", " ").toLowerCase().includes(normalizedSearch);
+  const connectorMatches = connectorProviderMatchesSearch(
+    connector.provider,
+    connector.displayName,
+    normalizedSearch,
+  );
   if (connectorMatches) {
     return accounts;
   }

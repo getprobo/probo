@@ -52,7 +52,8 @@
       "region": "Région",
       "regionPlaceholder": "Sélectionner une région",
       "regionUnitedStates": "États-Unis",
-      "regionEurope": "Europe"
+      "regionEurope": "Europe",
+      "regionCanada": "Canada"
     },
     "workloadIdentity": {
       "propagationHint": "La fédération peut prendre quelques minutes. Si le connecteur s’affiche comme déconnecté, attendez puis réessayez.",

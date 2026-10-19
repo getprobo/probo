@@ -47,6 +47,8 @@ import {
   connectionSignalFrom,
   presentConnection,
 } from "#/pages/organizations/_lib/connectorStatus";
+import { ConnectorProviderName } from "#/pages/organizations/settings/integrations/_components/ConnectorProviderName";
+import { connectorProviderAccessibleName } from "#/pages/organizations/settings/integrations/_lib/connectorProviderLabel";
 import { connectorDetailsPath } from "#/pages/organizations/settings/integrations/_lib/integrationPath";
 
 import { listedConnectorAccounts } from "../_lib/listedConnectorAccounts";
@@ -172,7 +174,7 @@ export function ResolvedAddableConnectorCard({
   const hasNext = pages.some(page => page.hasNext);
   const selectable = visibleAddable.length > 0 && !hasNext;
   const selected = selectable && face != null && selectedProviders.has(face.provider);
-  const { title, controls, checkbox, menu, badges, frame } = addableConnectorCard({
+  const { controls, checkbox, menu, badges, frame } = addableConnectorCard({
     selectable,
   });
   if (face == null || (listed.length === 0 && !hasNext)) {
@@ -180,7 +182,7 @@ export function ResolvedAddableConnectorCard({
   }
 
   const selectLabel = t("newAccessReviewSourcePage.actions.select", {
-    name: face.displayName,
+    name: connectorProviderAccessibleName(face.provider, face.displayName),
   });
 
   return children({
@@ -208,8 +210,8 @@ export function ResolvedAddableConnectorCard({
           <ThirdPartyLogo thirdParty={face.provider} />
         )}
         lead={(
-          <Heading level={3} size={3} weight="medium" highContrast className={title()}>
-            {face.displayName}
+          <Heading level={3} size={3} weight="medium" highContrast className="flex min-w-0">
+            <ConnectorProviderName provider={face.provider} name={face.displayName} />
           </Heading>
         )}
         control={(

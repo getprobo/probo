@@ -143,6 +143,7 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 			registry,
 			coredata.ConnectorProviderMongoDBAtlas,
 			supplied("https://attacker.example/token"),
+			nil,
 		)
 		require.NoError(t, err)
 		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
@@ -151,7 +152,7 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 	t.Run("a pinning provider needs nothing from the client", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := clientCredentialsTokenURL(registry, coredata.ConnectorProviderMongoDBAtlas, nil)
+		got, err := clientCredentialsTokenURL(registry, coredata.ConnectorProviderMongoDBAtlas, nil, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
 	})
@@ -165,9 +166,38 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 			registry,
 			coredata.ConnectorProviderOnePassword,
 			supplied("https://api.1password.eu/v1beta1/users/oauth2/token"),
+			nil,
 		)
 		require.NoError(t, err)
 		assert.Equal(t, "https://api.1password.eu/v1beta1/users/oauth2/token", got)
+	})
+
+	// Each OVHcloud region pins its own token endpoint. A client-supplied URL
+	// is ignored.
+	t.Run("ovhcloud regions pin their token url", func(t *testing.T) {
+		t.Parallel()
+
+		for _, tc := range []struct {
+			provider coredata.ConnectorProvider
+			want     string
+		}{
+			{provider: coredata.ConnectorProviderOVHcloud, want: "https://www.ovh.com/auth/oauth2/token"},
+			{provider: coredata.ConnectorProviderOVHcloudUS, want: "https://us.ovhcloud.com/auth/oauth2/token"},
+			{provider: coredata.ConnectorProviderOVHcloudCA, want: "https://ca.ovh.com/auth/oauth2/token"},
+		} {
+			t.Run(string(tc.provider), func(t *testing.T) {
+				t.Parallel()
+
+				got, err := clientCredentialsTokenURL(
+					registry,
+					tc.provider,
+					supplied("https://attacker.example/token"),
+					nil,
+				)
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, got)
+			})
+		}
 	})
 
 	// An unregistered provider has no registration to consult, so there is no
@@ -179,6 +209,7 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 			provider.NewRegistry(),
 			coredata.ConnectorProviderMongoDBAtlas,
 			supplied("https://cloud.mongodb.com/api/oauth/token"),
+			nil,
 		)
 		assert.Error(t, err)
 	})
@@ -208,6 +239,7 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 					registry,
 					coredata.ConnectorProviderOnePassword,
 					tc.supplied,
+					nil,
 				)
 				assert.Error(t, err)
 			})
@@ -236,6 +268,32 @@ func TestPinnedClientCredentialsTokenURL(t *testing.T) {
 	slack, ok := registry.Get(coredata.ConnectorProviderSlack)
 	require.True(t, ok)
 	assert.Empty(t, pinnedClientCredentialsTokenURL(slack))
+}
+
+// TestClientCredentialsTokenURLRequired covers whether the connect form asks
+// for a Token URL: only when the server can neither pin nor derive one.
+func TestClientCredentialsTokenURLRequired(t *testing.T) {
+	t.Parallel()
+
+	registry := provider.NewBuiltinRegistry()
+
+	for _, tc := range []struct {
+		provider coredata.ConnectorProvider
+		want     bool
+	}{
+		{provider: coredata.ConnectorProviderMongoDBAtlas, want: false},
+		{provider: coredata.ConnectorProviderOnePassword, want: true},
+		{provider: coredata.ConnectorProviderOVHcloud, want: false},
+		{provider: coredata.ConnectorProviderSlack, want: false},
+	} {
+		t.Run(string(tc.provider), func(t *testing.T) {
+			t.Parallel()
+
+			reg, ok := registry.Get(tc.provider)
+			require.True(t, ok)
+			assert.Equal(t, tc.want, clientCredentialsTokenURLRequired(reg))
+		})
+	}
 }
 
 func TestApiKeyConnectorSettings_InstanceBaseURL(t *testing.T) {

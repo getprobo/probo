@@ -135,6 +135,14 @@ enum ConnectorProvider
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderAzure")
     OVHCLOUD
         @goEnum(value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOVHcloud")
+    OVHCLOUD_US
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOVHcloudUS"
+        )
+    OVHCLOUD_CA
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOVHcloudCA"
+        )
 }
 
 enum AzureEnvironment
@@ -238,6 +246,14 @@ type ConnectorProviderInfo {
     effect.
     """
     clientCredentialsTokenUrl: String
+    """
+    clientCredentialsTokenUrlRequired is true when the client-credentials
+    connect form must ask for the token endpoint. False when the provider pins
+    one (clientCredentialsTokenUrl) or derives it from a validated setting
+    (OVHcloud, whose host follows its region), and false for a provider with
+    no client-credentials path.
+    """
+    clientCredentialsTokenUrlRequired: Boolean!
     """
     workloadIdentitySupported is true when this provider connects by federating
     a Probo-issued OIDC token into the customer's cloud account, and this
@@ -631,9 +647,10 @@ input CreateClientCredentialsConnectorInput {
     clientSecret: String!
     """
     Token endpoint for the client-credentials exchange. Optional: a provider
-    that declares a constant token endpoint pins it server-side and ignores any
-    value sent here. Required only for a provider whose token host follows a
-    per-connection setting, and then it must be an absolute https URL.
+    that declares a constant token endpoint, or derives it from a validated
+    setting, sets it server-side and ignores any value sent here. Required only
+    when clientCredentialsTokenUrlRequired is true, and then it must be an
+    absolute https URL.
     """
     tokenUrl: String
     scope: String

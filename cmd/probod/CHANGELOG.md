@@ -4,6 +4,15 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- OVHcloud US and OVHcloud Canada are separate connectors, next to
+  OVHcloud EU. Each region has its own app, configured with
+  `PROBOD_CONNECTOR_OVHCLOUD_US_*` and `PROBOD_CONNECTOR_OVHCLOUD_CA_*`
+  beside the existing EU pair. The console labels each one OVHcloud
+  and shows the region as a flag. Connectors created before regions
+  existed stay on OVHcloud EU.
+
 ## [0.319.0] - 2026-10-20
 
 ### Added

@@ -35,6 +35,7 @@ import type { ConnectVendorPageQuery } from "#/__generated__/core/ConnectVendorP
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { ConnectorRegionFlag } from "../../../_components/ConnectorProviderName";
 import type { ConnectMethod } from "../../../_lib/connectMethods";
 import { marketplacePath } from "../../../_lib/integrationPath";
 
@@ -112,8 +113,9 @@ export function ConnectVendorMethod({
       </Link>
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-2">
-          <Heading level={1} size={6} weight="medium" highContrast>
+          <Heading level={1} size={6} weight="medium" highContrast className="flex flex-wrap items-center gap-2">
             {t("marketplacePage.connectTitle", { provider: driver.displayName })}
+            <ConnectorRegionFlag provider={driver.provider} size={18} />
           </Heading>
           <Text size={2} color="faint">
             {t(`marketplacePage.methodDescriptions.${method}`)}

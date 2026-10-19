@@ -103,11 +103,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
   # Client secret from the environment
   PROBO_CONNECTOR_CLIENT_SECRET=<secret> prb connector create \
-    --protocol client-credentials --provider OVHCLOUD \
+    --protocol client-credentials --provider MONGODB_ATLAS \
     --name production --client-id <id>
 
   # Or omit the secret and type it at the prompt
-  prb connector create --protocol client-credentials --provider OVHCLOUD \
+  prb connector create --protocol client-credentials --provider MONGODB_ATLAS \
     --name production --client-id <id>`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

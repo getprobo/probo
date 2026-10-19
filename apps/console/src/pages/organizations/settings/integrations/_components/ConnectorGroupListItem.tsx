@@ -45,6 +45,7 @@ import {
 } from "#/pages/organizations/_lib/connectorStatus";
 
 import { buildConnectorInitiateURL } from "../_lib/connectorInitiate";
+import { connectorProviderAccessibleName, connectorProviderVisibleName } from "../_lib/connectorProviderLabel";
 import { connectorDetailsPath } from "../_lib/integrationPath";
 import { connectorCard } from "../variants";
 
@@ -53,6 +54,7 @@ import { ConnectorAPIKeyDialog } from "./ConnectorAPIKeyDialog";
 import { ConnectorConnectionBadge } from "./ConnectorConnectionBadge";
 import { ConnectorConnectMore } from "./ConnectorConnectMore";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
+import { ConnectorProviderName } from "./ConnectorProviderName";
 
 // connectionStatus probes the vendor on every read, so this list pays one
 // outbound call per connected connector. providerOrganizations does too, for
@@ -112,7 +114,7 @@ export function ConnectorGroupListItem({
   const organization = useFragment(connectorGroupListItemOrganizationFragment, organizationKey);
   const connectors = useFragment(connectorGroupListItemFragment, connectorKeys);
   const provider = useFragment(connectorGroupListItemProviderFragment, providerKey ?? null);
-  const { card, controls, identity, name, tags, title } = connectorCard();
+  const { card, controls, identity, name, tags } = connectorCard();
   const [face] = connectors;
   if (face == null) {
     return null;
@@ -178,7 +180,10 @@ export function ConnectorGroupListItem({
           ? (
               <CardLink
                 to={connectorDetailsPath(organizationId, face.provider)}
-                aria-label={face.displayName}
+                aria-label={connectorProviderAccessibleName(
+                  face.provider,
+                  connectorProviderVisibleName(face.provider, face.displayName),
+                )}
               />
             )
           : undefined}
@@ -189,8 +194,8 @@ export function ConnectorGroupListItem({
           <div className={identity()}>
             <div className={name()}>
               <div className="flex min-w-0 flex-col">
-                <Heading level={2} size={3} weight="medium" highContrast className={title()}>
-                  {face.displayName}
+                <Heading level={2} size={3} weight="medium" highContrast className="flex min-w-0 leading-tight">
+                  <ConnectorProviderName provider={face.provider} name={face.displayName} />
                 </Heading>
                 {single != null && (
                   <Text size={1} color="faint" className="truncate">

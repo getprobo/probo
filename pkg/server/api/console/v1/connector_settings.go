@@ -439,6 +439,17 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 	return nil, nil
 }
 
+// clientCredentialsTokenURLRequired reports whether the customer must supply
+// the token endpoint: the provider neither pins one nor derives it from the
+// connector's settings.
+func clientCredentialsTokenURLRequired(reg *provider.Registration) bool {
+	if reg == nil || !reg.SupportsClientCredentials() {
+		return false
+	}
+
+	return pinnedClientCredentialsTokenURL(reg) == "" && reg.ClientCredentials.BuildTokenURL == nil
+}
+
 // pinnedClientCredentialsTokenURL returns the token endpoint a provider fixes
 // at compile time, or "" when its token host varies per connection and only
 // the customer can supply it.
@@ -476,16 +487,18 @@ func clientCredentialsScope(
 // clientCredentialsTokenURL decides which token endpoint a client-credentials
 // connector will POST its client secret to.
 //
-// A provider that pins one wins outright and the client-supplied value is
-// discarded: the server already knows the URL and the customer has no way to
-// know a better one. Only a provider whose token host varies per connection
-// falls back to the input, and that value is checked to be an absolute https
-// URL first — it is the address a client secret is sent to, and nothing else
-// in the request constrains it.
+// A provider that pins one, or derives it from the validated settings, wins
+// outright and the client-supplied value is discarded: the server already
+// knows the URL and the customer has no way to know a better one. Only a
+// provider whose token host varies per connection falls back to the input,
+// and that value is checked to be an absolute https URL first — it is the
+// address a client secret is sent to, and nothing else in the request
+// constrains it.
 func clientCredentialsTokenURL(
 	registry *provider.Registry,
 	p coredata.ConnectorProvider,
 	supplied *string,
+	rawSettings json.RawMessage,
 ) (string, error) {
 	// An unregistered provider has no registration to consult, so there is no
 	// basis for deciding whether it pins an endpoint. Trusting client input
@@ -497,6 +510,17 @@ func clientCredentialsTokenURL(
 
 	if pinned := pinnedClientCredentialsTokenURL(reg); pinned != "" {
 		return pinned, nil
+	}
+
+	if reg.SupportsClientCredentials() && reg.ClientCredentials.BuildTokenURL != nil {
+		tokenURL, err := reg.ClientCredentials.BuildTokenURL(
+			&coredata.Connector{Provider: p, RawSettings: []byte(rawSettings)},
+		)
+		if err != nil {
+			return "", fmt.Errorf("cannot derive the token URL from the connector settings")
+		}
+
+		return tokenURL, nil
 	}
 
 	if supplied == nil || strings.TrimSpace(*supplied) == "" {

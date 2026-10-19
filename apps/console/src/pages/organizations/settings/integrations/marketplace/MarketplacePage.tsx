@@ -37,6 +37,7 @@ import type { MarketplacePageQuery } from "#/__generated__/core/MarketplacePageQ
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
+import { connectorProviderMatchesSearch } from "../_lib/connectorProviderLabel";
 import { integrationListPath } from "../_lib/integrationPath";
 import { integrationsList, integrationsPage } from "../variants";
 
@@ -125,10 +126,14 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
             return true;
           }
 
-          return provider.displayName.toLowerCase().includes(normalizedSearch)
-            || provider.provider.replaceAll("_", " ").toLowerCase().includes(normalizedSearch);
+          return connectorProviderMatchesSearch(
+            provider.provider,
+            provider.displayName,
+            normalizedSearch,
+          );
         })
-        .sort((a, b) => a.displayName.localeCompare(b.displayName))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName)
+          || a.provider.localeCompare(b.provider))
     : [];
   const connectableThirdParties = connectorProviders
     .filter(provider => isConnectableThirdParty(provider.provider))

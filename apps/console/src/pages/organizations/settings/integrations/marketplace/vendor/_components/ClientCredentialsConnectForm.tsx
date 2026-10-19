@@ -41,7 +41,7 @@ import { ConnectForm } from "./ConnectForm";
 const clientCredentialsConnectFormFragment = graphql`
   fragment ClientCredentialsConnectForm_provider on ConnectorProviderInfo {
     provider
-    clientCredentialsTokenUrl
+    clientCredentialsTokenUrlRequired
     clientCredentialsExtraSettings {
       key
       label
@@ -79,9 +79,15 @@ export function ClientCredentialsConnectForm({
   const [createClientCredentialsConnector] = useMutation<ClientCredentialsConnectFormCreateMutation>(
     createClientCredentialsConnectorMutation,
   );
-  const tokenReady = Boolean(provider.clientCredentialsTokenUrl) || tokenUrl.trim() !== "";
+  const tokenReady = !provider.clientCredentialsTokenUrlRequired || tokenUrl.trim() !== "";
   const extrasValid = hasRequiredExtraSettings(provider.clientCredentialsExtraSettings, extras);
   const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && tokenReady && extrasValid;
+  // OVHcloud declares account/all and the create mutation uses that, so a
+  // typed scope cannot take effect. Each region is its own provider.
+  const scopeField
+    = provider.provider !== "OVHCLOUD"
+      && provider.provider !== "OVHCLOUD_US"
+      && provider.provider !== "OVHCLOUD_CA";
 
   return (
     <ConnectForm
@@ -96,8 +102,8 @@ export function ClientCredentialsConnectForm({
               provider: provider.provider,
               clientId: clientId.trim(),
               clientSecret: clientSecret.trim(),
-              tokenUrl: provider.clientCredentialsTokenUrl ? null : tokenUrl.trim(),
-              scope: scope.trim() || null,
+              tokenUrl: provider.clientCredentialsTokenUrlRequired ? tokenUrl.trim() : null,
+              scope: scopeField ? scope.trim() || null : null,
               ...buildExtraFields(
                 provider.provider,
                 provider.clientCredentialsExtraSettings,
@@ -128,7 +134,7 @@ export function ClientCredentialsConnectForm({
           onValueChange={setClientSecret}
         />
       </Field>
-      {provider.clientCredentialsTokenUrl == null && (
+      {provider.clientCredentialsTokenUrlRequired && (
         <Field required label={t("marketplacePage.fields.tokenUrl")}>
           <TextField
             name="tokenUrl"
@@ -138,19 +144,37 @@ export function ClientCredentialsConnectForm({
           />
         </Field>
       )}
-      <Field label={t("marketplacePage.fields.scope")}>
-        <TextField name="scope" value={scope} onValueChange={setScope} />
-      </Field>
-      {provider.clientCredentialsExtraSettings.map(setting => (
-        <Field key={setting.key} required={setting.required} label={setting.label}>
-          <TextField
-            name={setting.key}
-            required={setting.required}
-            value={extras[setting.key] ?? ""}
-            onValueChange={value => setExtras({ ...extras, [setting.key]: value })}
-          />
+      {scopeField && (
+        <Field label={t("marketplacePage.fields.scope")}>
+          <TextField name="scope" value={scope} onValueChange={setScope} />
         </Field>
-      ))}
+      )}
+      {provider.clientCredentialsExtraSettings.map(setting => extraSettingField({
+        setting,
+        value: extras[setting.key] ?? "",
+        onValueChange: value => setExtras({ ...extras, [setting.key]: value }),
+      }))}
     </ConnectForm>
+  );
+}
+
+function extraSettingField({
+  setting,
+  value,
+  onValueChange,
+}: {
+  setting: { readonly key: string; readonly label: string; readonly required: boolean };
+  value: string;
+  onValueChange: (value: string) => void;
+}) {
+  return (
+    <Field key={setting.key} required={setting.required} label={setting.label}>
+      <TextField
+        name={setting.key}
+        required={setting.required}
+        value={value}
+        onValueChange={onValueChange}
+      />
+    </Field>
   );
 }

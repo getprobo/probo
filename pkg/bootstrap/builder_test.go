@@ -814,7 +814,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
 		"CAL_COM", "CALENDLY", "ATTIO",
-		"OVHCLOUD",
+		"OVHCLOUD", "OVHCLOUD_US", "OVHCLOUD_CA",
 	}
 
 	env := requiredEnv()
@@ -846,6 +846,61 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		assert.NotEmpty(t, raw.ClientSecret, "%s client-secret", provider)
 		assert.Empty(t, raw.IntegrationSlug, "%s should not carry integration-slug", provider)
 	}
+}
+
+func TestBuilder_Build_OVHcloudConnector(t *testing.T) {
+	t.Run("one connector per configured region", func(t *testing.T) {
+		env := requiredEnv()
+		env["PROBOD_CONNECTOR_OVHCLOUD_CLIENT_ID"] = "eu-id"
+		env["PROBOD_CONNECTOR_OVHCLOUD_CLIENT_SECRET"] = "eu-secret"
+		env["PROBOD_CONNECTOR_OVHCLOUD_US_CLIENT_ID"] = "us-id"
+		env["PROBOD_CONNECTOR_OVHCLOUD_US_CLIENT_SECRET"] = "us-secret"
+		env["PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_ID"] = "ca-id"
+		env["PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_SECRET"] = "ca-secret"
+
+		b := NewBuilder(NewResolver(mockEnv(env)))
+		b.samlCertificate = "test-cert"
+		b.samlPrivateKey = testSigningKeyPEM()
+
+		cfg, err := b.Build()
+		require.NoError(t, err)
+
+		require.Len(t, cfg.Probod.Connectors, 3)
+
+		byProvider := map[string]probodconfig.ConnectorConfig{}
+		for _, c := range cfg.Probod.Connectors {
+			byProvider[c.Provider] = c
+		}
+
+		for _, tc := range []struct {
+			provider string
+			clientID string
+			secret   string
+		}{
+			{"OVHCLOUD", "eu-id", "eu-secret"},
+			{"OVHCLOUD_US", "us-id", "us-secret"},
+			{"OVHCLOUD_CA", "ca-id", "ca-secret"},
+		} {
+			c := byProvider[tc.provider]
+			assert.Equal(t, "oauth2", string(c.Protocol))
+			raw := c.RawConfig.(probodconfig.ConnectorConfigOAuth2)
+			assert.Equal(t, tc.clientID, raw.ClientID)
+			assert.Equal(t, tc.secret, raw.ClientSecret)
+		}
+	})
+
+	t.Run("a region without its secret fails validation", func(t *testing.T) {
+		env := requiredEnv()
+		env["PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_ID"] = "ca-id"
+
+		b := NewBuilder(NewResolver(mockEnv(env)))
+		b.samlCertificate = "test-cert"
+		b.samlPrivateKey = testSigningKeyPEM()
+
+		_, err := b.Build()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_SECRET")
+	})
 }
 
 func TestBuilder_Build_VercelConnector(t *testing.T) {

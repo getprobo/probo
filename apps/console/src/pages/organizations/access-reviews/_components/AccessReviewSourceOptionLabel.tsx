@@ -20,17 +20,21 @@
 
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 
+import { ConnectorProviderName } from "#/pages/organizations/settings/integrations/_components/ConnectorProviderName";
+
 import { accessReviewSourceLabel } from "../_lib/sourceLabel";
 
 interface AccessReviewSourceOptionLabelProps {
   name: string;
   accountName?: string | null;
+  provider?: string | null;
   providerName?: string | null;
 }
 
 export function AccessReviewSourceOptionLabel({
   name,
   accountName,
+  provider,
   providerName,
 }: AccessReviewSourceOptionLabelProps) {
   return (
@@ -40,7 +44,15 @@ export function AccessReviewSourceOptionLabel({
       </span>
       {providerName != null && (
         <Badge size={1} className="shrink-0 uppercase">
-          {providerName}
+          {provider == null
+            ? providerName
+            : (
+                <ConnectorProviderName
+                  provider={provider}
+                  name={providerName}
+                  flagSize={12}
+                />
+              )}
         </Badge>
       )}
     </span>

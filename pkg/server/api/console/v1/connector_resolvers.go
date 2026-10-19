@@ -497,7 +497,12 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		return nil, err
 	}
 
-	tokenURL, err := clientCredentialsTokenURL(r.providerRegistry, input.Provider, input.TokenURL)
+	raw, err := clientCredentialsConnectorSettings(input)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	tokenURL, err := clientCredentialsTokenURL(r.providerRegistry, input.Provider, input.TokenURL, raw)
 	if err != nil {
 		return nil, gqlutils.Invalid(ctx, err)
 	}
@@ -517,14 +522,8 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		Provider:       input.Provider,
 		Protocol:       coredata.ConnectorProtocolOAuth2,
 		Connection:     oauth2Conn,
+		RawSettings:    raw,
 	}
-
-	raw, err := clientCredentialsConnectorSettings(input)
-	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
-	}
-
-	req.RawSettings = raw
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
