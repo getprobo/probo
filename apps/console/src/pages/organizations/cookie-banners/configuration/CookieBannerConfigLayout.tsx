@@ -66,15 +66,6 @@ export const cookieBannerConfigLayoutQuery = graphql`
             count
           }
         }
-        samples(first: 5) {
-          edges {
-            node {
-              id
-              createdAt
-              frozenAt
-            }
-          }
-        }
       }
     }
   }
@@ -102,15 +93,6 @@ const publishMutation = graphql`
           pageLoads {
             family
             count
-          }
-        }
-        samples(first: 5) {
-          edges {
-            node {
-              id
-              createdAt
-              frozenAt
-            }
           }
         }
         publishedVersion {
@@ -146,15 +128,6 @@ const startSampleMutation = graphql`
             count
           }
         }
-        samples(first: 5) {
-          edges {
-            node {
-              id
-              createdAt
-              frozenAt
-            }
-          }
-        }
       }
     }
   }
@@ -183,15 +156,6 @@ const stopSampleMutation = graphql`
             count
           }
         }
-        samples(first: 5) {
-          edges {
-            node {
-              id
-              createdAt
-              frozenAt
-            }
-          }
-        }
       }
     }
   }
@@ -204,7 +168,7 @@ interface CookieBannerConfigLayoutProps {
 export function CookieBannerConfigLayout({
   queryRef,
 }: CookieBannerConfigLayoutProps) {
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
   const toast = useToast();
   const {
     root,
@@ -219,7 +183,6 @@ export function CookieBannerConfigLayout({
     sampleLogo,
     sampleSeparator,
     sampleActions,
-    samplePast,
   } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
@@ -261,16 +224,13 @@ export function CookieBannerConfigLayout({
   const inSample = latestSample != null && latestSample.frozenAt == null;
   const version = banner.latestVersion?.version;
   const pageLoads = latestSample?.pageLoads ?? [];
-  const pastSamples = banner.samples.edges
-    .map(edge => edge.node)
-    .filter(node => latestSample == null || node.id !== latestSample.id);
 
   let message: string;
   if (isDeactivated && hasDraft && version != null) {
     message = t("configLayout.callout.deactivatedDraft", { version });
   } else if (isDeactivated) {
     message = t("configLayout.callout.deactivated");
-  } else if (inSample && version == null) {
+  } else if (inSample && hasDraft) {
     message = t("configLayout.callout.samplingUnpublished");
   } else if (inSample) {
     message = t("configLayout.callout.sampling");
@@ -459,32 +419,9 @@ export function CookieBannerConfigLayout({
                 </div>
               )
             : null}
-          {pastSamples.length > 0
-            ? (
-                <div className={samplePast()}>
-                  {pastSamples.map(node => (
-                    <Text key={node.id} size={2} color="faint">
-                      {node.frozenAt != null
-                        ? t("configLayout.sample.pastFrozen", {
-                            date: formatSampleDate(node.createdAt, i18n.language),
-                          })
-                        : t("configLayout.sample.pastOpen", {
-                            date: formatSampleDate(node.createdAt, i18n.language),
-                          })}
-                    </Text>
-                  ))}
-                </div>
-              )
-            : null}
         </div>
       </TonedCard>
       <Outlet />
     </div>
   );
-}
-
-function formatSampleDate(value: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-  }).format(new Date(value));
 }
