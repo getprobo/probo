@@ -92,6 +92,7 @@ export interface BannerConfig {
   layout: BannerLayout;
   show_branding: boolean;
   resource_reporting_enabled: boolean;
+  sample_active?: boolean;
   tcf?: BannerTCF;
   categories: Category[];
   texts: BannerTexts;

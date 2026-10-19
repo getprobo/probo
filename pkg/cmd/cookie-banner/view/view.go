@@ -51,11 +51,19 @@ query($id: ID!) {
       defaultLanguage
       publisherCountryCode
       tcfCmpId
-      discoveryPageLoads {
-        family
-        count
+      latestSample {
+        id
+        createdAt
+        frozenAt
+        pageLoads {
+          family
+          count
+        }
+        consentingPageLoads {
+          family
+          count
+        }
       }
-      discoveryFrozenAt
       createdAt
       updatedAt
     }
@@ -82,13 +90,21 @@ type viewResponse struct {
 		DefaultLanguage      string `json:"defaultLanguage"`
 		PublisherCountryCode string `json:"publisherCountryCode"`
 		TcfCmpId             int    `json:"tcfCmpId"`
-		DiscoveryPageLoads   []struct {
-			Family string `json:"family"`
-			Count  int    `json:"count"`
-		} `json:"discoveryPageLoads"`
-		DiscoveryFrozenAt *string `json:"discoveryFrozenAt"`
-		CreatedAt         string  `json:"createdAt"`
-		UpdatedAt         string  `json:"updatedAt"`
+		LatestSample         *struct {
+			ID        string  `json:"id"`
+			CreatedAt string  `json:"createdAt"`
+			FrozenAt  *string `json:"frozenAt"`
+			PageLoads []struct {
+				Family string `json:"family"`
+				Count  int    `json:"count"`
+			} `json:"pageLoads"`
+			ConsentingPageLoads []struct {
+				Family string `json:"family"`
+				Count  int    `json:"count"`
+			} `json:"consentingPageLoads"`
+		} `json:"latestSample"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -166,19 +182,34 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Privacy Policy:"), *v.PrivacyPolicyUrl)
 			}
 
-			if len(v.DiscoveryPageLoads) == 0 {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Loads:"), "none")
+			if v.LatestSample == nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), "none")
 			} else {
-				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Discovery Loads:"))
-				for _, load := range v.DiscoveryPageLoads {
-					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
+				sample := v.LatestSample
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), sample.ID)
+				if sample.FrozenAt != nil {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), cmdutil.FormatTime(*sample.FrozenAt))
+				} else {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), "no")
 				}
-			}
 
-			if v.DiscoveryFrozenAt != nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Frozen:"), cmdutil.FormatTime(*v.DiscoveryFrozenAt))
-			} else {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Frozen:"), "no")
+				if len(sample.PageLoads) == 0 {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Loads:"), "none")
+				} else {
+					_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Loads:"))
+					for _, load := range sample.PageLoads {
+						_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
+					}
+				}
+
+				if len(sample.ConsentingPageLoads) == 0 {
+					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Consenting Loads:"), "none")
+				} else {
+					_, _ = fmt.Fprintf(out, "%s\n", label.Render("Consenting Loads:"))
+					for _, load := range sample.ConsentingPageLoads {
+						_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
+					}
+				}
 			}
 
 			_, _ = fmt.Fprintln(out)

@@ -108,6 +108,28 @@ describe("ReportQueue", () => {
     await expect(sentData.text()).resolves.toBe(JSON.stringify({ page_view: true }));
   });
 
+  it("includes consent_action when set", async () => {
+    vi.useFakeTimers();
+
+    const sendBeacon = vi.fn((_url: string, _data?: BodyInit | null) => true);
+    vi.stubGlobal("navigator", { sendBeacon });
+
+    const queue = new ReportQueue(new URL("https://api.example.com/banner/report"));
+    queue.setConsentAction("ACCEPT_ALL");
+    queue.reportPageView();
+    queue.stop();
+
+    expect(sendBeacon).toHaveBeenCalledOnce();
+    const sentData: unknown = sendBeacon.mock.calls[0]?.[1];
+    expect(sentData).toBeInstanceOf(Blob);
+    if (!(sentData instanceof Blob)) {
+      throw new Error("expected sendBeacon to receive a Blob");
+    }
+    await expect(sentData.text()).resolves.toBe(
+      JSON.stringify({ page_view: true, consent_action: "ACCEPT_ALL" }),
+    );
+  });
+
   it("omits discovery_hit after the first sighting is sent", async () => {
     vi.useFakeTimers();
 

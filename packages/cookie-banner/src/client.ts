@@ -150,7 +150,12 @@ export class CookieBannerClient {
     for (const integration of this.integrations) {
       integration.setDefaults(config.categories);
     }
-    this.ignorePublishedCookieNames(config);
+    if (!config.sample_active) {
+      this.ignorePublishedCookieNames(config);
+    }
+    if (config.sample_active) {
+      this.reportQueue?.reportPageView();
+    }
     this.scanExistingCookies();
     this.startResourceDetector(config);
 
@@ -166,6 +171,7 @@ export class CookieBannerClient {
           tc: cookie.tc,
         };
         this._gpcApplied = cookie.action === "GPC";
+        this.reportQueue?.setConsentAction(cookie.action);
         const cookieData = this.projectedConsent(cookie.data, cookie.tc);
         this.activate(cookieData);
         getConsent()._setReady(cookieData, true);
@@ -190,6 +196,7 @@ export class CookieBannerClient {
       if (apiConsent && apiConsent.version === config.version) {
         this.consent = apiConsent;
         this._gpcApplied = apiConsent.action === "GPC";
+        this.reportQueue?.setConsentAction(apiConsent.action);
         const restored: ConsentCookie = {
           bid: this.bannerId,
           v: apiConsent.version,
@@ -345,6 +352,7 @@ export class CookieBannerClient {
       consent_data: consentData,
       created_at: "",
     };
+    this.reportQueue?.setConsentAction(action);
     if (tc) {
       this.consent.tc = tc;
     }

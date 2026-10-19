@@ -154,38 +154,79 @@ type CookieBannerCapabilities
     corsless: Boolean!
 }
 
-enum DiscoveryBrowserFamily
+enum BrowserFamily
     @goModel(
-        model: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamily"
+        model: "go.probo.inc/probo/pkg/coredata.BrowserFamily"
     ) {
     CHROME
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyChrome"
+            value: "go.probo.inc/probo/pkg/coredata.BrowserFamilyChrome"
         )
     EDGE
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyEdge"
+            value: "go.probo.inc/probo/pkg/coredata.BrowserFamilyEdge"
         )
     FIREFOX
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyFirefox"
+            value: "go.probo.inc/probo/pkg/coredata.BrowserFamilyFirefox"
         )
     SAFARI
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilySafari"
+            value: "go.probo.inc/probo/pkg/coredata.BrowserFamilySafari"
         )
     OTHER
         @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyOther"
+            value: "go.probo.inc/probo/pkg/coredata.BrowserFamilyOther"
         )
 }
 
-type DiscoveryFamilyCount
+type SampleFamilyCount
     @goModel(
-        model: "go.probo.inc/probo/pkg/cookiebanner.DiscoveryFamilyCount"
+        model: "go.probo.inc/probo/pkg/cookiebanner.SampleFamilyCount"
     ) {
-    family: DiscoveryBrowserFamily!
+    family: BrowserFamily!
     count: Int!
+}
+
+type CookieBannerSample implements Node {
+    id: ID!
+    cookieBanner: CookieBanner! @goField(forceResolver: true)
+    pageLoads: [SampleFamilyCount!]!
+    consentingPageLoads: [SampleFamilyCount!]!
+    frozenAt: Datetime
+    createdAt: Datetime!
+}
+
+enum CookieBannerSampleOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerSampleOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerSampleOrderFieldCreatedAt"
+        )
+}
+
+input CookieBannerSampleOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerSampleOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerSampleOrderField!
+}
+
+type CookieBannerSampleConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerSampleConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerSampleEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerSampleEdge {
+    cursor: CursorKey!
+    node: CookieBannerSample!
 }
 
 type CookieBanner implements Node {
@@ -268,18 +309,15 @@ type CookieBanner implements Node {
 
     gvlVendorIds: [Int!]! @goField(forceResolver: true)
 
-    """
-    Discovery page loads by browser family. Families with zero page
-    loads are omitted. Frozen on first publish.
-    """
-    discoveryPageLoads: [DiscoveryFamilyCount!]!
-        @goField(forceResolver: true)
+    latestSample: CookieBannerSample @goField(forceResolver: true)
 
-    """
-    When discovery counting stopped. Null while page loads and
-    pattern hits are still being recorded.
-    """
-    discoveryFrozenAt: Datetime @goField(forceResolver: true)
+    samples(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerSampleOrder
+    ): CookieBannerSampleConnection! @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -410,12 +448,7 @@ type TrackerPattern implements Node
     source: CookieSource
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
-    """
-    Discovery first-sighting hits by browser family. Only families
-    with page loads are included, so a zero is a sampled miss.
-    Frozen on first publish.
-    """
-    discoveryHits: [DiscoveryFamilyCount!]!
+    sampleHits(sampleId: ID): [SampleFamilyCount!]!
         @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -730,6 +763,12 @@ extend type Mutation {
     updateCookieBanner(
         input: UpdateCookieBannerInput!
     ): UpdateCookieBannerPayload!
+    startCookieBannerSample(
+        input: StartCookieBannerSampleInput!
+    ): StartCookieBannerSamplePayload!
+    stopCookieBannerSample(
+        input: StopCookieBannerSampleInput!
+    ): StopCookieBannerSamplePayload!
     deleteCookieBanner(
         input: DeleteCookieBannerInput!
     ): DeleteCookieBannerPayload!
@@ -814,6 +853,24 @@ input UpdateCookieBannerInput {
     defaultLanguage: String
     publisherCountryCode: String
     capabilities: CookieBannerCapabilitiesInput
+}
+
+input StartCookieBannerSampleInput {
+    cookieBannerId: ID!
+}
+
+type StartCookieBannerSamplePayload {
+    cookieBannerSample: CookieBannerSample!
+    cookieBanner: CookieBanner!
+}
+
+input StopCookieBannerSampleInput {
+    cookieBannerId: ID!
+}
+
+type StopCookieBannerSamplePayload {
+    cookieBannerSample: CookieBannerSample!
+    cookieBanner: CookieBanner!
 }
 
 input DeleteCookieBannerInput {

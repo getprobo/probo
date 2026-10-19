@@ -47,4 +47,5 @@ var (
 	ErrTCFNotEnabled              = errors.New("tcf is not enabled for this cookie banner")
 	ErrGVLVendorNotFound          = errors.New("gvl vendor not found")
 	ErrGVLVendorDeleted           = errors.New("gvl vendor has been deleted from the catalog")
+	ErrSampleNotFound             = errors.New("cookie banner sample not found")
 )

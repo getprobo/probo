@@ -268,6 +268,7 @@ type detectedCookieEntry struct {
 	CookieDomain  *string `json:"cookie_domain,omitempty"`
 	HostOnly      *bool   `json:"host_only,omitempty"`
 	DiscoveryHit  bool    `json:"discovery_hit,omitempty"`
+	SampleHit     bool    `json:"sample_hit,omitempty"`
 }
 
 type reportDetectedCookiesBody struct {
@@ -480,6 +481,7 @@ type detectedStorageEntry struct {
 	Source       string  `json:"source"`
 	InitiatorURL *string `json:"initiator_url,omitempty"`
 	DiscoveryHit bool    `json:"discovery_hit,omitempty"`
+	SampleHit    bool    `json:"sample_hit,omitempty"`
 }
 
 type detectedResourceEntry struct {
@@ -488,10 +490,11 @@ type detectedResourceEntry struct {
 }
 
 type reportDetectedTrackersBody struct {
-	Cookies   []detectedCookieEntry   `json:"cookies"`
-	Storage   []detectedStorageEntry  `json:"storage"`
-	Resources []detectedResourceEntry `json:"resources"`
-	PageView  bool                    `json:"page_view,omitempty"`
+	Cookies       []detectedCookieEntry         `json:"cookies"`
+	Storage       []detectedStorageEntry        `json:"storage"`
+	Resources     []detectedResourceEntry       `json:"resources"`
+	PageView      bool                          `json:"page_view,omitempty"`
+	ConsentAction *coredata.CookieConsentAction `json:"consent_action,omitempty"`
 }
 
 const maxDetectedTrackersPerRequest = 100
@@ -524,8 +527,12 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 	}
 
 	req := cookiebanner.ReportDetectedTrackersRequest{
-		PageView: body.PageView,
-		Family:   cookiebanner.BrowserFamily(r.UserAgent()),
+		PageView:      body.PageView,
+		ConsentAction: body.ConsentAction,
+		Family:        cookiebanner.BrowserFamily(r.UserAgent()),
+	}
+	if req.ConsentAction != nil && !req.ConsentAction.IsValid() {
+		req.ConsentAction = nil
 	}
 
 	for _, c := range body.Cookies {
@@ -571,7 +578,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
 				CookieDomain:  cookieDomain,
 				HostOnly:      hostOnly,
-				DiscoveryHit:  c.DiscoveryHit,
+				SampleHit:     c.DiscoveryHit || c.SampleHit,
 			},
 		)
 	}
@@ -629,7 +636,7 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 				ValueSize:    sanitizeInt4(s.ValueSize),
 				Source:       &source,
 				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
-				DiscoveryHit: s.DiscoveryHit,
+				SampleHit:    s.DiscoveryHit || s.SampleHit,
 			},
 		)
 	}

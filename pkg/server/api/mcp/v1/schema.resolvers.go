@@ -5892,19 +5892,14 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 
 	out := types.NewCookieBanner(banner, r.cookieBanner.TCFCmpID())
 
-	loads, err := r.cookieBanner.GetDiscoveryPageLoads(ctx, scope, input.ID)
-	if err != nil {
-		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get discovery page loads: %w", err)
+	sample, err := r.cookieBanner.GetLatestCookieBannerSample(ctx, scope, input.ID)
+	if err != nil && !errors.Is(err, cookiebanner.ErrSampleNotFound) {
+		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get latest cookie banner sample: %w", err)
 	}
 
-	out.DiscoveryPageLoads = types.NewDiscoveryFamilyCounts(loads)
-
-	frozenAt, err := r.cookieBanner.GetDiscoveryFrozenAt(ctx, scope, input.ID)
-	if err != nil {
-		return nil, types.GetCookieBannerOutput{}, fmt.Errorf("cannot get discovery frozen at: %w", err)
+	if sample != nil {
+		out.LatestSample = types.NewCookieBannerSample(sample)
 	}
-
-	out.DiscoveryFrozenAt = frozenAt
 
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
 		published, err := r.cookieBanner.GetLatestPublishedCookieBannerVersion(ctx, scope, input.ID)
@@ -6201,14 +6196,75 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
 	}
 
-	hits, err := r.cookieBanner.GetDiscoveryHits(ctx, scope, input.ID)
+	hits, err := r.cookieBanner.GetSampleHits(ctx, scope, input.ID, input.SampleID)
 	if err != nil {
-		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get discovery hits: %w", err)
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get sample hits: %w", err)
 	}
 
-	mapped.DiscoveryHits = types.NewDiscoveryFamilyCounts(hits)
+	mapped.SampleHits = types.NewSampleFamilyCounts(hits)
 
 	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
+}
+
+func (r *Resolver) ListCookieBannerSamplesTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListCookieBannerSamplesInput) (*mcp.CallToolResult, types.ListCookieBannerSamplesOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.ListCookieBannerSamplesOutput{}, err
+	}
+
+	cursor := types.NewCursor(input.Size, input.Cursor, page.OrderBy[coredata.CookieBannerSampleOrderField]{
+		Field:     coredata.CookieBannerSampleOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	})
+
+	samples, err := r.cookieBanner.ListCookieBannerSamples(ctx, scope, input.CookieBannerID, cursor)
+	if err != nil {
+		return nil, types.ListCookieBannerSamplesOutput{}, fmt.Errorf("cannot list cookie banner samples: %w", err)
+	}
+
+	return nil, types.NewListCookieBannerSamplesOutput(page.NewPage(samples, cursor)), nil
+}
+
+func (r *Resolver) GetCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerSampleInput) (*mcp.CallToolResult, types.GetCookieBannerSampleOutput, error) {
+	scope, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return nil, types.GetCookieBannerSampleOutput{}, err
+	}
+
+	sample, err := r.cookieBanner.GetCookieBannerSample(ctx, scope, input.ID)
+	if err != nil {
+		return nil, types.GetCookieBannerSampleOutput{}, fmt.Errorf("cannot get cookie banner sample: %w", err)
+	}
+
+	return nil, types.GetCookieBannerSampleOutput{CookieBannerSample: types.NewCookieBannerSample(sample)}, nil
+}
+
+func (r *Resolver) StartCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartCookieBannerSampleInput) (*mcp.CallToolResult, types.StartCookieBannerSampleOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.StartCookieBannerSampleOutput{}, err
+	}
+
+	sample, err := r.cookieBanner.StartCookieBannerSample(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.StartCookieBannerSampleOutput{}, fmt.Errorf("cannot start cookie banner sample: %w", err)
+	}
+
+	return nil, types.StartCookieBannerSampleOutput{CookieBannerSample: types.NewCookieBannerSample(sample)}, nil
+}
+
+func (r *Resolver) StopCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StopCookieBannerSampleInput) (*mcp.CallToolResult, types.StopCookieBannerSampleOutput, error) {
+	scope, err := r.Authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, types.StopCookieBannerSampleOutput{}, err
+	}
+
+	sample, err := r.cookieBanner.StopCookieBannerSample(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		return nil, types.StopCookieBannerSampleOutput{}, fmt.Errorf("cannot stop cookie banner sample: %w", err)
+	}
+
+	return nil, types.StopCookieBannerSampleOutput{CookieBannerSample: types.NewCookieBannerSample(sample)}, nil
 }
 
 func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
@@ -10965,3 +11021,78 @@ func (r *Resolver) UnlinkAuditFrameworkTool(ctx context.Context, req *mcp.CallTo
 		DeletedFrameworkID: input.FrameworkID,
 	}, nil
 }
+
+func auditIDs(audits []*coredata.Audit) []gid.GID {
+	ids := make([]gid.GID, 0, len(audits))
+	for _, audit := range audits {
+		ids = append(ids, audit.ID)
+	}
+
+	return ids
+}
+
+func (r *Resolver) auditFrameworkIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	ids []gid.GID,
+) (map[gid.GID][]gid.GID, error) {
+	frameworkIDs, err := r.proboSvc.Audits.ListFrameworkIDsByAuditIDs(ctx, scope, ids)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list audit frameworks: %w", err)
+	}
+
+	return frameworkIDs, nil
+}
+
+func (r *Resolver) newAudit(
+	ctx context.Context,
+	scope coredata.Scoper,
+	audit *coredata.Audit,
+	file *coredata.File,
+) (*types.Audit, error) {
+	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, []gid.GID{audit.ID})
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewAudit(audit, file, types.FrameworkIDsFor(frameworkIDs, audit.ID)), nil
+}
+
+// ==============================================================================
+// Orphaned Handlers
+// ==============================================================================
+// The following handlers were found in the resolver file but are no longer
+// defined in the MCP specification. They have been preserved here as comments
+// in case you need to reference or restore them.
+// ==============================================================================
+
+// Orphaned: newAudit
+// Uncomment and update signature if you want to restore this handler.
+// func (r *Resolver) newAudit(
+// 	ctx context.Context,
+// 	scope coredata.Scoper,
+// 	audit *coredata.Audit,
+// 	file *coredata.File,
+// ) (*types.Audit, error) {
+// 	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, []gid.GID{audit.ID})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return types.NewAudit(audit, file, types.FrameworkIDsFor(frameworkIDs, audit.ID)), nil
+// }
+
+// Orphaned: auditFrameworkIDs
+// Uncomment and update signature if you want to restore this handler.
+// func (r *Resolver) auditFrameworkIDs(
+// 	ctx context.Context,
+// 	scope coredata.Scoper,
+// 	ids []gid.GID,
+// ) (map[gid.GID][]gid.GID, error) {
+// 	frameworkIDs, err := r.proboSvc.Audits.ListFrameworkIDsByAuditIDs(ctx, scope, ids)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("cannot list audit frameworks: %w", err)
+// 	}
+
+// 	return frameworkIDs, nil
+// }

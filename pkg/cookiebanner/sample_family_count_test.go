@@ -27,42 +27,61 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestDiscoveryPageLoads_OmitsZeroFamilies(t *testing.T) {
+func TestSamplePageLoads_OmitsZeroFamilies(t *testing.T) {
 	t.Parallel()
 
-	stats := coredata.CookieBannerDiscoveryStats{
+	sample := coredata.CookieBannerSample{
 		ChromePageLoads:  10,
 		FirefoxPageLoads: 3,
 	}
 
 	assert.Equal(
 		t,
-		[]DiscoveryFamilyCount{
-			{Family: coredata.DiscoveryBrowserFamilyChrome, Count: 10},
-			{Family: coredata.DiscoveryBrowserFamilyFirefox, Count: 3},
+		[]SampleFamilyCount{
+			{Family: coredata.BrowserFamilyChrome, Count: 10},
+			{Family: coredata.BrowserFamilyFirefox, Count: 3},
 		},
-		discoveryPageLoads(stats),
+		samplePageLoads(sample),
 	)
 }
 
-func TestDiscoveryHits_UsesPageLoadFamilies(t *testing.T) {
+func TestSampleConsentingPageLoads_OmitsZeroFamilies(t *testing.T) {
 	t.Parallel()
 
-	stats := coredata.CookieBannerDiscoveryStats{
+	sample := coredata.CookieBannerSample{
+		ChromeConsentingPageLoads: 4,
+		SafariConsentingPageLoads: 2,
+		FirefoxPageLoads:          9,
+	}
+
+	assert.Equal(
+		t,
+		[]SampleFamilyCount{
+			{Family: coredata.BrowserFamilyChrome, Count: 4},
+			{Family: coredata.BrowserFamilySafari, Count: 2},
+		},
+		sampleConsentingPageLoads(sample),
+	)
+}
+
+func TestSampleHits_UsesPageLoadFamilies(t *testing.T) {
+	t.Parallel()
+
+	sample := coredata.CookieBannerSample{
 		ChromePageLoads:  10,
 		FirefoxPageLoads: 3,
 	}
 
 	assert.Equal(
 		t,
-		[]DiscoveryFamilyCount{
-			{Family: coredata.DiscoveryBrowserFamilyChrome, Count: 0},
-			{Family: coredata.DiscoveryBrowserFamilyFirefox, Count: 0},
+		[]SampleFamilyCount{
+			{Family: coredata.BrowserFamilyChrome, Count: 0},
+			{Family: coredata.BrowserFamilyFirefox, Count: 0},
 		},
-		discoveryHits(stats, nil),
+		sampleHits(sample, nil),
 	)
 
-	hits := &coredata.TrackerPatternDiscoveryHits{
+	hits := &coredata.TrackerPatternSampleHits{
 		ChromeHits:  4,
 		SafariHits:  9,
 		FirefoxHits: 1,
@@ -70,10 +89,10 @@ func TestDiscoveryHits_UsesPageLoadFamilies(t *testing.T) {
 
 	assert.Equal(
 		t,
-		[]DiscoveryFamilyCount{
-			{Family: coredata.DiscoveryBrowserFamilyChrome, Count: 4},
-			{Family: coredata.DiscoveryBrowserFamilyFirefox, Count: 1},
+		[]SampleFamilyCount{
+			{Family: coredata.BrowserFamilyChrome, Count: 4},
+			{Family: coredata.BrowserFamilyFirefox, Count: 1},
 		},
-		discoveryHits(stats, hits),
+		sampleHits(sample, hits),
 	)
 }

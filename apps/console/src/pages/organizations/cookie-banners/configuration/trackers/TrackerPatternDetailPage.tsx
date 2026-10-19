@@ -25,7 +25,7 @@ import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/Tracker
 
 import { TrackerPatternDetailHeader } from "./_components/TrackerPatternDetailHeader";
 import { TrackerPatternDetectedTrackersSection } from "./_components/TrackerPatternDetectedTrackersSection";
-import { TrackerPatternDiscoveryHitsSection } from "./_components/TrackerPatternDiscoveryHitsSection";
+import { TrackerPatternSampleHitsSection } from "./_components/TrackerPatternSampleHitsSection";
 import { TrackerPatternPropertiesSection } from "./_components/TrackerPatternPropertiesSection";
 
 export const trackerPatternDetailPageQuery = graphql`
@@ -37,7 +37,7 @@ export const trackerPatternDetailPageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...TrackerPatternPropertiesSection_cookieBanner
-        ...TrackerPatternDiscoveryHitsSection_cookieBanner
+        ...TrackerPatternSampleHitsSection_cookieBanner
       }
     }
     node(id: $trackerPatternId) @required(action: THROW) {
@@ -45,7 +45,7 @@ export const trackerPatternDetailPageQuery = graphql`
       ... on TrackerPattern {
         pattern
         ...TrackerPatternDetailHeader_trackerPattern
-        ...TrackerPatternDiscoveryHitsSection_trackerPattern
+        ...TrackerPatternSampleHitsSection_trackerPattern
         ...TrackerPatternPropertiesSection_trackerPattern
         ...TrackerPatternDetectedTrackersSection_trackerPattern
       }
@@ -76,7 +76,7 @@ export default function TrackerPatternDetailPage({
     <div className="space-y-6">
       <TrackerPatternDetailHeader trackerPatternKey={pattern} />
 
-      <TrackerPatternDiscoveryHitsSection
+      <TrackerPatternSampleHitsSection
         trackerPatternKey={pattern}
         cookieBannerKey={data.cookieBanner}
       />

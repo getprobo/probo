@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
@@ -430,41 +429,53 @@ func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.Cook
 	return ids, nil
 }
 
-// DiscoveryPageLoads is the resolver for the discoveryPageLoads field.
-func (r *cookieBannerResolver) DiscoveryPageLoads(ctx context.Context, obj *types.CookieBanner) ([]*cookiebanner.DiscoveryFamilyCount, error) {
+// LatestSample is the resolver for the latestSample field.
+func (r *cookieBannerResolver) LatestSample(ctx context.Context, obj *types.CookieBanner) (*types.CookieBannerSample, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := r.cookieBanner.GetDiscoveryPageLoads(ctx, scope, obj.ID)
+	sample, err := r.cookieBanner.GetLatestCookieBannerSample(ctx, scope, obj.ID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner discovery page loads", log.Error(err))
+		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get latest cookie banner sample", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	out := make([]*cookiebanner.DiscoveryFamilyCount, len(counts))
-	for i := range counts {
-		out[i] = &counts[i]
-	}
-
-	return out, nil
+	return types.NewCookieBannerSample(sample), nil
 }
 
-// DiscoveryFrozenAt is the resolver for the discoveryFrozenAt field.
-func (r *cookieBannerResolver) DiscoveryFrozenAt(ctx context.Context, obj *types.CookieBanner) (*time.Time, error) {
+// Samples is the resolver for the samples field.
+func (r *cookieBannerResolver) Samples(ctx context.Context, obj *types.CookieBanner, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.CookieBannerSampleOrderBy) (*types.CookieBannerSampleConnection, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
 	if err != nil {
 		return nil, err
 	}
 
-	frozenAt, err := r.cookieBanner.GetDiscoveryFrozenAt(ctx, scope, obj.ID)
+	pageOrderBy := page.OrderBy[coredata.CookieBannerSampleOrderField]{
+		Field:     coredata.CookieBannerSampleOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.CookieBannerSampleOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	samples, err := r.cookieBanner.ListCookieBannerSamples(ctx, scope, obj.ID, cursor)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get cookie banner discovery frozen at", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot list cookie banner samples", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return frozenAt, nil
+	return types.NewCookieBannerSampleConnection(page.NewPage(samples, cursor), r, obj.ID), nil
 }
 
 // UncategorisedTrackerResources is the resolver for the uncategorisedTrackerResources field.
@@ -518,6 +529,48 @@ func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	count, err := r.cookieBanner.CountCookieBannersForOrganization(ctx, scope, obj.ParentID, coredata.NewCookieBannerFilter(nil))
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie banners", log.Error(err))
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
+// CookieBanner is the resolver for the cookieBanner field.
+func (r *cookieBannerSampleResolver) CookieBanner(ctx context.Context, obj *types.CookieBannerSample) (*types.CookieBanner, error) {
+	if obj.CookieBanner == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.CookieBanner.ID, probo.ActionCookieBannerGet); err != nil {
+		return nil, err
+	}
+
+	loaders := dataloader.FromContext(ctx)
+
+	banner, err := loaders.CookieBanner.Load(ctx, obj.CookieBanner.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewCookieBanner(banner), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *cookieBannerSampleConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerSampleConnection) (int, error) {
+	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
+	if err != nil {
+		return 0, err
+	}
+
+	count, err := r.cookieBanner.CountCookieBannerSamples(ctx, scope, obj.ParentID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot count cookie banner samples", log.Error(err))
 		return 0, gqlutils.Internal(ctx)
 	}
 
@@ -838,6 +891,64 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 
 	return &types.UpdateCookieBannerPayload{
 		CookieBanner: types.NewCookieBanner(banner),
+	}, nil
+}
+
+// StartCookieBannerSample is the resolver for the startCookieBannerSample field.
+func (r *mutationResolver) StartCookieBannerSample(ctx context.Context, input types.StartCookieBannerSampleInput) (*types.StartCookieBannerSamplePayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	sample, err := r.cookieBanner.StartCookieBannerSample(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot start cookie banner sample", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.StartCookieBannerSamplePayload{
+		CookieBannerSample: types.NewCookieBannerSample(sample),
+		CookieBanner:       types.NewCookieBanner(banner),
+	}, nil
+}
+
+// StopCookieBannerSample is the resolver for the stopCookieBannerSample field.
+func (r *mutationResolver) StopCookieBannerSample(ctx context.Context, input types.StopCookieBannerSampleInput) (*types.StopCookieBannerSamplePayload, error) {
+	scope, err := r.authorize(ctx, input.CookieBannerID, probo.ActionCookieBannerUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	sample, err := r.cookieBanner.StopCookieBannerSample(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrSampleNotFound) || errors.Is(err, cookiebanner.ErrBannerNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot stop cookie banner sample", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return &types.StopCookieBannerSamplePayload{
+		CookieBannerSample: types.NewCookieBannerSample(sample),
+		CookieBanner:       types.NewCookieBanner(banner),
 	}, nil
 }
 
@@ -1713,25 +1824,24 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	return count, nil
 }
 
-// DiscoveryHits is the resolver for the discoveryHits field.
-func (r *trackerPatternResolver) DiscoveryHits(ctx context.Context, obj *types.TrackerPattern) ([]*cookiebanner.DiscoveryFamilyCount, error) {
+// SampleHits is the resolver for the sampleHits field.
+func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := r.cookieBanner.GetDiscoveryHits(ctx, scope, obj.ID)
+	counts, err := r.cookieBanner.GetSampleHits(ctx, scope, obj.ID, sampleID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot get tracker pattern discovery hits", log.Error(err))
+		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	out := make([]*cookiebanner.DiscoveryFamilyCount, len(counts))
-	for i := range counts {
-		out[i] = &counts[i]
-	}
-
-	return out, nil
+	return cookiebanner.NewSampleFamilyCountPtrs(counts), nil
 }
 
 // CommonThirdParty is the resolver for the commonThirdParty field.
@@ -1948,6 +2058,16 @@ func (r *Resolver) CookieBannerConnection() schema.CookieBannerConnectionResolve
 	return &cookieBannerConnectionResolver{r}
 }
 
+// CookieBannerSample returns schema.CookieBannerSampleResolver implementation.
+func (r *Resolver) CookieBannerSample() schema.CookieBannerSampleResolver {
+	return &cookieBannerSampleResolver{r}
+}
+
+// CookieBannerSampleConnection returns schema.CookieBannerSampleConnectionResolver implementation.
+func (r *Resolver) CookieBannerSampleConnection() schema.CookieBannerSampleConnectionResolver {
+	return &cookieBannerSampleConnectionResolver{r}
+}
+
 // CookieBannerVersion returns schema.CookieBannerVersionResolver implementation.
 func (r *Resolver) CookieBannerVersion() schema.CookieBannerVersionResolver {
 	return &cookieBannerVersionResolver{r}
@@ -1992,6 +2112,8 @@ func (r *Resolver) TrackerResourceConnection() schema.TrackerResourceConnectionR
 type (
 	cookieBannerResolver                  struct{ *Resolver }
 	cookieBannerConnectionResolver        struct{ *Resolver }
+	cookieBannerSampleResolver            struct{ *Resolver }
+	cookieBannerSampleConnectionResolver  struct{ *Resolver }
 	cookieBannerVersionResolver           struct{ *Resolver }
 	cookieBannerVersionConnectionResolver struct{ *Resolver }
 	cookieCategoryResolver                struct{ *Resolver }

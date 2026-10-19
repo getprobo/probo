@@ -876,7 +876,7 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 	})
 }
 
-func TestCookieBanner_DiscoveryPageLoads(t *testing.T) {
+func TestCookieBanner_Samples(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -886,11 +886,26 @@ func TestCookieBanner_DiscoveryPageLoads(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on CookieBanner {
-					discoveryPageLoads {
-						family
-						count
+					latestSample {
+						id
+						frozenAt
+						pageLoads {
+							family
+							count
+						}
+						consentingPageLoads {
+							family
+							count
+						}
 					}
-					discoveryFrozenAt
+					samples {
+						totalCount
+						edges {
+							node {
+								id
+							}
+						}
+					}
 				}
 			}
 		}
@@ -898,17 +913,68 @@ func TestCookieBanner_DiscoveryPageLoads(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			DiscoveryPageLoads []struct {
-				Family string `json:"family"`
-				Count  int    `json:"count"`
-			} `json:"discoveryPageLoads"`
-			DiscoveryFrozenAt *string `json:"discoveryFrozenAt"`
+			LatestSample *struct {
+				ID        string  `json:"id"`
+				FrozenAt  *string `json:"frozenAt"`
+				PageLoads []struct {
+					Family string `json:"family"`
+					Count  int    `json:"count"`
+				} `json:"pageLoads"`
+				ConsentingPageLoads []struct {
+					Family string `json:"family"`
+					Count  int    `json:"count"`
+				} `json:"consentingPageLoads"`
+			} `json:"latestSample"`
+			Samples struct {
+				TotalCount int `json:"totalCount"`
+				Edges      []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"samples"`
 		} `json:"node"`
 	}
 
 	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
-	assert.Empty(t, result.Node.DiscoveryPageLoads)
-	assert.Nil(t, result.Node.DiscoveryFrozenAt)
+	assert.Nil(t, result.Node.LatestSample)
+	assert.Zero(t, result.Node.Samples.TotalCount)
+
+	const startQuery = `
+		mutation StartCookieBannerSample($input: StartCookieBannerSampleInput!) {
+			startCookieBannerSample(input: $input) {
+				cookieBannerSample {
+					id
+					frozenAt
+				}
+				cookieBanner {
+					id
+				}
+			}
+		}
+	`
+
+	var startResult struct {
+		StartCookieBannerSample struct {
+			CookieBannerSample struct {
+				ID       string  `json:"id"`
+				FrozenAt *string `json:"frozenAt"`
+			} `json:"cookieBannerSample"`
+		} `json:"startCookieBannerSample"`
+	}
+
+	require.NoError(t, owner.Execute(startQuery, map[string]any{
+		"input": map[string]any{"cookieBannerId": bannerID},
+	}, &startResult))
+	assert.NotEmpty(t, startResult.StartCookieBannerSample.CookieBannerSample.ID)
+	assert.Nil(t, startResult.StartCookieBannerSample.CookieBannerSample.FrozenAt)
+
+	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+	require.NotNil(t, result.Node.LatestSample)
+	assert.Equal(t, startResult.StartCookieBannerSample.CookieBannerSample.ID, result.Node.LatestSample.ID)
+	assert.Nil(t, result.Node.LatestSample.FrozenAt)
+	assert.Empty(t, result.Node.LatestSample.PageLoads)
+	assert.Equal(t, 1, result.Node.Samples.TotalCount)
 
 	const publishQuery = `
 		mutation PublishCookieBannerVersion($input: PublishCookieBannerVersionInput!) {
@@ -933,5 +999,31 @@ func TestCookieBanner_DiscoveryPageLoads(t *testing.T) {
 	}, &publishResult))
 
 	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
-	assert.NotNil(t, result.Node.DiscoveryFrozenAt)
+	require.NotNil(t, result.Node.LatestSample)
+	assert.NotNil(t, result.Node.LatestSample.FrozenAt)
+
+	const stopQuery = `
+		mutation StopCookieBannerSample($input: StopCookieBannerSampleInput!) {
+			stopCookieBannerSample(input: $input) {
+				cookieBannerSample {
+					id
+					frozenAt
+				}
+			}
+		}
+	`
+
+	var stopResult struct {
+		StopCookieBannerSample struct {
+			CookieBannerSample struct {
+				ID       string  `json:"id"`
+				FrozenAt *string `json:"frozenAt"`
+			} `json:"cookieBannerSample"`
+		} `json:"stopCookieBannerSample"`
+	}
+
+	require.NoError(t, owner.Execute(stopQuery, map[string]any{
+		"input": map[string]any{"cookieBannerId": bannerID},
+	}, &stopResult))
+	assert.NotNil(t, stopResult.StopCookieBannerSample.CookieBannerSample.FrozenAt)
 }

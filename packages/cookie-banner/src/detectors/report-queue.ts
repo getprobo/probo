@@ -43,6 +43,7 @@ type QueuedItem =
 
 interface Batch {
   page_view?: boolean;
+  consent_action?: string;
   cookies?: DetectedCookieEntry[];
   storage?: DetectedStorageEntry[];
   resources?: DetectedResourceEntry[];
@@ -143,6 +144,7 @@ export class ReportQueue {
   private readonly uncounted: Set<string> = new Set();
   private pageViewPending = false;
   private pageViewSent = false;
+  private consentAction: string | null = null;
 
   constructor(reportUrl: URL) {
     this.reportUrl = reportUrl;
@@ -166,6 +168,10 @@ export class ReportQueue {
 
     this.pageViewPending = true;
     this.scheduleFlush();
+  }
+
+  setConsentAction(action: string | null): void {
+    this.consentAction = action;
   }
 
   onNotFound(cb: () => void): void {
@@ -313,6 +319,7 @@ export class ReportQueue {
     const pageView = this.pageViewPending;
     const body: Batch = {};
     if (pageView) body.page_view = true;
+    if (this.consentAction) body.consent_action = this.consentAction;
     if (cookies.length > 0) body.cookies = cookies;
     if (storage.length > 0) body.storage = storage;
     if (resources.length > 0) body.resources = resources;

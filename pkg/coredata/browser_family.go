@@ -25,58 +25,58 @@ import (
 	"fmt"
 )
 
-type DiscoveryBrowserFamily string
+type BrowserFamily string
 
 const (
-	DiscoveryBrowserFamilyChrome  DiscoveryBrowserFamily = "CHROME"
-	DiscoveryBrowserFamilyEdge    DiscoveryBrowserFamily = "EDGE"
-	DiscoveryBrowserFamilyFirefox DiscoveryBrowserFamily = "FIREFOX"
-	DiscoveryBrowserFamilySafari  DiscoveryBrowserFamily = "SAFARI"
-	DiscoveryBrowserFamilyOther   DiscoveryBrowserFamily = "OTHER"
+	BrowserFamilyChrome  BrowserFamily = "CHROME"
+	BrowserFamilyEdge    BrowserFamily = "EDGE"
+	BrowserFamilyFirefox BrowserFamily = "FIREFOX"
+	BrowserFamilySafari  BrowserFamily = "SAFARI"
+	BrowserFamilyOther   BrowserFamily = "OTHER"
 )
 
 var (
-	_ fmt.Stringer             = DiscoveryBrowserFamily("")
-	_ encoding.TextMarshaler   = DiscoveryBrowserFamily("")
-	_ encoding.TextUnmarshaler = (*DiscoveryBrowserFamily)(nil)
+	_ fmt.Stringer             = BrowserFamily("")
+	_ encoding.TextMarshaler   = BrowserFamily("")
+	_ encoding.TextUnmarshaler = (*BrowserFamily)(nil)
 )
 
-func DiscoveryBrowserFamilies() []DiscoveryBrowserFamily {
-	return []DiscoveryBrowserFamily{
-		DiscoveryBrowserFamilyChrome,
-		DiscoveryBrowserFamilyEdge,
-		DiscoveryBrowserFamilyFirefox,
-		DiscoveryBrowserFamilySafari,
-		DiscoveryBrowserFamilyOther,
+func BrowserFamilies() []BrowserFamily {
+	return []BrowserFamily{
+		BrowserFamilyChrome,
+		BrowserFamilyEdge,
+		BrowserFamilyFirefox,
+		BrowserFamilySafari,
+		BrowserFamilyOther,
 	}
 }
 
-func (v DiscoveryBrowserFamily) IsValid() bool {
+func (v BrowserFamily) IsValid() bool {
 	switch v {
 	case
-		DiscoveryBrowserFamilyChrome,
-		DiscoveryBrowserFamilyEdge,
-		DiscoveryBrowserFamilyFirefox,
-		DiscoveryBrowserFamilySafari,
-		DiscoveryBrowserFamilyOther:
+		BrowserFamilyChrome,
+		BrowserFamilyEdge,
+		BrowserFamilyFirefox,
+		BrowserFamilySafari,
+		BrowserFamilyOther:
 		return true
 	}
 
 	return false
 }
 
-func (v DiscoveryBrowserFamily) String() string {
+func (v BrowserFamily) String() string {
 	return string(v)
 }
 
-func (v DiscoveryBrowserFamily) MarshalText() ([]byte, error) {
+func (v BrowserFamily) MarshalText() ([]byte, error) {
 	return []byte(v.String()), nil
 }
 
-func (v *DiscoveryBrowserFamily) UnmarshalText(text []byte) error {
-	val := DiscoveryBrowserFamily(text)
+func (v *BrowserFamily) UnmarshalText(text []byte) error {
+	val := BrowserFamily(text)
 	if !val.IsValid() {
-		return fmt.Errorf("invalid DiscoveryBrowserFamily value: %q", string(text))
+		return fmt.Errorf("invalid BrowserFamily value: %q", string(text))
 	}
 
 	*v = val

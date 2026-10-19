@@ -13737,32 +13737,62 @@ components:
         published_version:
           $ref: "#/components/schemas/CookieBannerVersion"
           description: Latest published cookie banner version, if any
-        discovery_page_loads:
+        latest_sample:
+          anyOf:
+            - $ref: "#/components/schemas/CookieBannerSample"
+            - type: "null"
+          description: Most recent cookie banner sample window, if any
+
+    CookieBannerSample:
+      type: object
+      required:
+        - id
+        - cookie_banner_id
+        - page_loads
+        - consenting_page_loads
+        - created_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner sample ID
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        page_loads:
           type: array
           items:
-            $ref: "#/components/schemas/DiscoveryFamilyCount"
-          description: Discovery page loads by browser family. Families with zero page loads are omitted. Frozen on first publish.
-        discovery_frozen_at:
+            $ref: "#/components/schemas/SampleFamilyCount"
+          description: Page loads by browser family. Families with zero page loads are omitted.
+        consenting_page_loads:
+          type: array
+          items:
+            $ref: "#/components/schemas/SampleFamilyCount"
+          description: ACCEPT_ALL and ACKNOWLEDGE page loads by browser family. Families with zero consenting loads are omitted.
+        frozen_at:
           type:
             - string
             - "null"
           format: date-time
-          description: When discovery counting stopped. Null while page loads and pattern hits are still being recorded.
+          description: When this sample stopped counting. Null while the window is open.
+        created_at:
+          type: string
+          format: date-time
+          description: When this sample started
 
-    DiscoveryBrowserFamily:
+    BrowserFamily:
       type: string
       enum: [CHROME, EDGE, FIREFOX, SAFARI, OTHER]
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamily
-      description: Coarse browser family used for discovery sampling
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.BrowserFamily
+      description: Coarse browser family used for sample counting
 
-    DiscoveryFamilyCount:
+    SampleFamilyCount:
       type: object
       required:
         - family
         - count
       properties:
         family:
-          $ref: "#/components/schemas/DiscoveryBrowserFamily"
+          $ref: "#/components/schemas/BrowserFamily"
           description: Browser family
         count:
           type: integer
@@ -14056,11 +14086,11 @@ components:
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
-        discovery_hits:
+        sample_hits:
           type: array
           items:
-            $ref: "#/components/schemas/DiscoveryFamilyCount"
-          description: Discovery first-sighting hits by browser family. Only families with page loads are included. Frozen on first publish.
+            $ref: "#/components/schemas/SampleFamilyCount"
+          description: Sample first-sighting hits by browser family for the selected or latest sample. Only families with page loads are included.
         common_tracker_pattern_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -14329,6 +14359,82 @@ components:
       properties:
         cookie_banner:
           $ref: "#/components/schemas/CookieBanner"
+
+    ListCookieBannerSamplesInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+        size:
+          type: integer
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+
+    ListCookieBannerSamplesOutput:
+      type: object
+      required:
+        - cookie_banner_samples
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+        cookie_banner_samples:
+          type: array
+          items:
+            $ref: "#/components/schemas/CookieBannerSample"
+
+    GetCookieBannerSampleInput:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner sample ID
+
+    GetCookieBannerSampleOutput:
+      type: object
+      required:
+        - cookie_banner_sample
+      properties:
+        cookie_banner_sample:
+          $ref: "#/components/schemas/CookieBannerSample"
+
+    StartCookieBannerSampleInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    StartCookieBannerSampleOutput:
+      type: object
+      required:
+        - cookie_banner_sample
+      properties:
+        cookie_banner_sample:
+          $ref: "#/components/schemas/CookieBannerSample"
+
+    StopCookieBannerSampleInput:
+      type: object
+      required:
+        - cookie_banner_id
+      properties:
+        cookie_banner_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner ID
+
+    StopCookieBannerSampleOutput:
+      type: object
+      required:
+        - cookie_banner_sample
+      properties:
+        cookie_banner_sample:
+          $ref: "#/components/schemas/CookieBannerSample"
 
     AddCookieBannerInput:
       type: object
@@ -14660,6 +14766,9 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
+        sample_id:
+          $ref: "#/components/schemas/GID"
+          description: Cookie banner sample to read hits from. Defaults to the latest sample.
 
     GetTrackerPatternOutput:
       type: object
@@ -20565,6 +20674,54 @@ tools:
       $ref: "#/components/schemas/GetCookieBannerInput"
     outputSchema:
       $ref: "#/components/schemas/GetCookieBannerOutput"
+  - name: listCookieBannerSamples
+    title: List Cookie Banner Samples
+    description: List sample windows for a cookie banner
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListCookieBannerSamplesInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListCookieBannerSamplesOutput"
+  - name: getCookieBannerSample
+    title: Get Cookie Banner Sample
+    description: Get a cookie banner sample by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetCookieBannerSampleInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetCookieBannerSampleOutput"
+  - name: startCookieBannerSample
+    title: Start Cookie Banner Sample
+    description: Start a new open sample window for a cookie banner
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/StartCookieBannerSampleInput"
+    outputSchema:
+      $ref: "#/components/schemas/StartCookieBannerSampleOutput"
+  - name: stopCookieBannerSample
+    title: Stop Cookie Banner Sample
+    description: Freeze the open sample window for a cookie banner
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/StopCookieBannerSampleInput"
+    outputSchema:
+      $ref: "#/components/schemas/StopCookieBannerSampleOutput"
   - name: addCookieBanner
     title: Add Cookie Banner
     description: Create a new cookie banner for an organization

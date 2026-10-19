@@ -168,6 +168,7 @@ const (
 	ConnectorAccountEntityType                       uint16 = 136
 	EmployeePortalEntityType                         uint16 = 137
 	NotificationEntityType                           uint16 = 138
+	CookieBannerSampleEntityType                     uint16 = 139
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -428,6 +429,8 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &EmployeePortal{ID: id}, true
 	case NotificationEntityType:
 		return &Notification{ID: id}, true
+	case CookieBannerSampleEntityType:
+		return &CookieBannerSample{ID: id}, true
 	default:
 		return nil, false
 	}

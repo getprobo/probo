@@ -271,26 +271,28 @@
       "version": "v{{version}}",
       "deactivated": "Cette bannière est désactivée et n’est pas affichée aux visiteurs.",
       "deactivatedDraft": "Cette bannière est désactivée et n’est pas affichée aux visiteurs. Cette version contient des modifications non publiées.",
-      "discovery": "Cette bannière est en découverte. Les chargements de page et les signalements de trackers sont comptés jusqu’à la publication. Cette version n’est pas encore en ligne.",
+      "samplingUnpublished": "Cette bannière échantillonne les chargements de page et les signalements de trackers. Publier fige toujours la fenêtre ouverte. Cette version n’est pas encore en ligne.",
+      "sampling": "Échantillonnage des chargements de page et des signalements de trackers, y compris les cookies déjà inventoriés. Arrêtez pour figer cette fenêtre. Les taux après publication nécessitent le script actuel.",
       "draft": "Cette version contient des modifications non publiées.",
-      "published": "Cette version est publiée et en ligne.",
-      "publishedUnknown": "Cette bannière est publiée et en ligne."
+      "published": "Cette version est publiée et en ligne. Démarrez un échantillon pour mesurer la prévalence des trackers, y compris les cookies déjà inventoriés. Nécessite le script actuel.",
+      "unpublished": "Cette bannière n’a pas encore été publiée."
     },
-    "messages": { "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
-    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
+    "messages": { "copiedTitle": "Copié", "activated": "Bannière activée", "deactivated": "Bannière désactivée", "published": "Version publiée", "sampleStarted": "Échantillon démarré", "sampleStopped": "Échantillon arrêté", "idCopied": "ID de la bannière copié dans le presse-papiers", "deleted": "Bannière de cookies supprimée avec succès" },
+    "errors": { "title": "Erreur", "activate": "Échec de l’activation", "deactivate": "Échec de la désactivation", "publish": "Échec de la publication", "startSample": "Échec du démarrage de l’échantillon", "stopSample": "Échec de l’arrêt de l’échantillon", "delete": "Échec de la suppression de la bannière de cookies", "copy": "Échec de la copie de l’ID de la bannière" },
     "deleteConfirmation": "Cette action supprimera définitivement la bannière de cookies \"{{name}}\". Elle est irréversible.",
     "dialogs": { "deleteTitle": "Supprimer la bannière de cookies" },
     "status": { "active": "Active", "inactive": "Inactive" },
-    "actions": { "publish": "Publier les modifications", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" },
-    "discovery": { "pageLoads": "Chargements de page", "empty": "Aucun pour le moment" }
+    "actions": { "publish": "Publier les modifications", "startSample": "Démarrer l’échantillon", "stopSample": "Arrêter l’échantillon", "activate": "Activer", "deactivate": "Désactiver", "delete": "Supprimer", "cancel": "Annuler", "copyId": "Copier l’ID de la bannière" },
+    "sample": { "pageLoads": "Chargements de page", "empty": "Aucun pour le moment", "pastFrozen": "Échantillon précédent du {{date}}", "pastOpen": "Échantillon ouvert du {{date}}" }
   },
-  "trackerDiscovery": {
-    "title": "Découverte",
-    "description": "Les statistiques sont comptabilisées jusqu’à la première publication.",
+  "trackerSample": {
     "empty": "Aucun signalement pour le moment.",
     "hits": "signalements",
     "loads": "chargements",
     "hitRate": "taux de signalement",
+    "consentingHitRate": "parmi les vues consentantes"
+  },
+  "trackerDiscovery": {
     "families": {
       "chrome": "Chrome",
       "edge": "Edge",

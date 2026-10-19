@@ -712,7 +712,7 @@ func TestTrackerPattern_CommonTrackerPatternID(t *testing.T) {
 	})
 }
 
-func TestTrackerPattern_DiscoveryHits(t *testing.T) {
+func TestTrackerPattern_SampleHits(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -724,7 +724,7 @@ func TestTrackerPattern_DiscoveryHits(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on TrackerPattern {
-					discoveryHits {
+					sampleHits {
 						family
 						count
 					}
@@ -735,15 +735,15 @@ func TestTrackerPattern_DiscoveryHits(t *testing.T) {
 
 	var result struct {
 		Node struct {
-			DiscoveryHits []struct {
+			SampleHits []struct {
 				Family string `json:"family"`
 				Count  int    `json:"count"`
-			} `json:"discoveryHits"`
+			} `json:"sampleHits"`
 		} `json:"node"`
 	}
 
 	require.NoError(t, owner.Execute(query, map[string]any{"id": patternID}, &result))
-	assert.Empty(t, result.Node.DiscoveryHits)
+	assert.Empty(t, result.Node.SampleHits)
 }
 
 func seedCommonTrackerPattern(t *testing.T) gid.GID {

@@ -22,38 +22,47 @@ import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 
-import { discoveryFamilyCounts } from "../../variants";
+import { sampleFamilyCounts } from "../../variants";
 import { familyLabel } from "../_lib/familyLabel";
 
 import { FamilyLogo } from "./FamilyLogo";
 
-export interface DiscoveryFamilyCountItem {
+export interface SampleFamilyCountItem {
   family: string;
   count: number;
 }
 
-export interface DiscoveryFamilyCountsProps {
-  items: readonly DiscoveryFamilyCountItem[];
-  denominators?: readonly DiscoveryFamilyCountItem[];
+export interface SampleFamilyCountsProps {
+  items: readonly SampleFamilyCountItem[];
+  denominators?: readonly SampleFamilyCountItem[];
+  consentingDenominators?: readonly SampleFamilyCountItem[];
 }
 
-export function DiscoveryFamilyCounts({
+export function SampleFamilyCounts({
   items,
   denominators,
-}: DiscoveryFamilyCountsProps) {
+  consentingDenominators,
+}: SampleFamilyCountsProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const { root, card, family, logo, stats, stat, value }
-    = discoveryFamilyCounts();
+    = sampleFamilyCounts();
   const loadsByFamily = new Map(
     (denominators ?? []).map(entry => [entry.family, entry.count]),
+  );
+  const consentingByFamily = new Map(
+    (consentingDenominators ?? []).map(entry => [entry.family, entry.count]),
   );
 
   return (
     <div className={root()}>
       {items.map((entry) => {
         const loads = loadsByFamily.get(entry.family);
+        const consentingLoads = consentingByFamily.get(entry.family);
         const rate = loads != null && loads > 0
           ? formatHitRate(entry.count, loads, i18n.language)
+          : null;
+        const consentingRate = consentingLoads != null && consentingLoads > 0
+          ? formatHitRate(entry.count, consentingLoads, i18n.language)
           : null;
 
         return (
@@ -78,7 +87,17 @@ export function DiscoveryFamilyCounts({
                     <Text size={4} weight="bold" highContrast className={value()}>
                       {rate}
                     </Text>
-                    <Text size={2}>{t("trackerDiscovery.hitRate")}</Text>
+                    <Text size={2}>{t("trackerSample.hitRate")}</Text>
+                  </div>
+                )
+              : null}
+            {consentingRate != null
+              ? (
+                  <div className={stat()}>
+                    <Text size={4} weight="bold" highContrast className={value()}>
+                      {consentingRate}
+                    </Text>
+                    <Text size={2}>{t("trackerSample.consentingHitRate")}</Text>
                   </div>
                 )
               : null}
@@ -87,7 +106,7 @@ export function DiscoveryFamilyCounts({
                 <Text size={4} weight="bold" highContrast className={value()}>
                   {entry.count}
                 </Text>
-                <Text size={2}>{t("trackerDiscovery.hits")}</Text>
+                <Text size={2}>{t("trackerSample.hits")}</Text>
               </div>
               {loads != null
                 ? (
@@ -97,7 +116,7 @@ export function DiscoveryFamilyCounts({
                         <Text size={4} weight="bold" highContrast className={value()}>
                           {loads}
                         </Text>
-                        <Text size={2}>{t("trackerDiscovery.loads")}</Text>
+                        <Text size={2}>{t("trackerSample.loads")}</Text>
                       </div>
                     </>
                   )

@@ -54,12 +54,23 @@ func NewCookieBanner(b *coredata.CookieBanner, tcfCmpID int) *CookieBanner {
 	}
 }
 
-func NewDiscoveryFamilyCounts(counts []cookiebanner.DiscoveryFamilyCount) []*DiscoveryFamilyCount {
-	out := make([]*DiscoveryFamilyCount, 0, len(counts))
+func NewCookieBannerSample(s *coredata.CookieBannerSample) *CookieBannerSample {
+	return &CookieBannerSample{
+		ID:                  s.ID,
+		CookieBannerID:      s.CookieBannerID,
+		PageLoads:           NewSampleFamilyCounts(cookiebanner.SamplePageLoads(*s)),
+		ConsentingPageLoads: NewSampleFamilyCounts(cookiebanner.SampleConsentingPageLoads(*s)),
+		FrozenAt:            s.FrozenAt,
+		CreatedAt:           s.CreatedAt,
+	}
+}
+
+func NewSampleFamilyCounts(counts []cookiebanner.SampleFamilyCount) []*SampleFamilyCount {
+	out := make([]*SampleFamilyCount, 0, len(counts))
 	for _, count := range counts {
 		out = append(
 			out,
-			&DiscoveryFamilyCount{
+			&SampleFamilyCount{
 				Family: count.Family,
 				Count:  count.Count,
 			},
@@ -67,6 +78,27 @@ func NewDiscoveryFamilyCounts(counts []cookiebanner.DiscoveryFamilyCount) []*Dis
 	}
 
 	return out
+}
+
+func NewListCookieBannerSamplesOutput(
+	p *page.Page[*coredata.CookieBannerSample, coredata.CookieBannerSampleOrderField],
+) ListCookieBannerSamplesOutput {
+	samples := make([]*CookieBannerSample, 0, len(p.Data))
+	for _, sample := range p.Data {
+		samples = append(samples, NewCookieBannerSample(sample))
+	}
+
+	var nextCursor *page.CursorKey
+
+	if len(p.Data) > 0 {
+		cursorKey := p.Data[len(p.Data)-1].CursorKey(p.Cursor.OrderBy.Field)
+		nextCursor = &cursorKey
+	}
+
+	return ListCookieBannerSamplesOutput{
+		NextCursor:          nextCursor,
+		CookieBannerSamples: samples,
+	}
 }
 
 func NewListCookieBannersOutput(

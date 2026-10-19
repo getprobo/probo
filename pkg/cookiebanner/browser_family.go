@@ -29,17 +29,17 @@ import (
 // BrowserFamily classifies a User-Agent into a coarse family. Edge is
 // checked before Chrome because Chromium Edge contains both tokens.
 // Brave and other Chromium shells are indistinguishable from Chrome.
-func BrowserFamily(userAgent string) coredata.DiscoveryBrowserFamily {
+func BrowserFamily(userAgent string) coredata.BrowserFamily {
 	switch {
 	case strings.Contains(userAgent, "Edg/") || strings.Contains(userAgent, "EdgiOS") || strings.Contains(userAgent, "EdgA"):
-		return coredata.DiscoveryBrowserFamilyEdge
+		return coredata.BrowserFamilyEdge
 	case strings.Contains(userAgent, "Chrome/") || strings.Contains(userAgent, "CriOS"):
-		return coredata.DiscoveryBrowserFamilyChrome
+		return coredata.BrowserFamilyChrome
 	case strings.Contains(userAgent, "Firefox/") || strings.Contains(userAgent, "FxiOS"):
-		return coredata.DiscoveryBrowserFamilyFirefox
+		return coredata.BrowserFamilyFirefox
 	case strings.Contains(userAgent, "Safari/"):
-		return coredata.DiscoveryBrowserFamilySafari
+		return coredata.BrowserFamilySafari
 	default:
-		return coredata.DiscoveryBrowserFamilyOther
+		return coredata.BrowserFamilyOther
 	}
 }

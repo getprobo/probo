@@ -33,52 +33,52 @@ func TestBrowserFamily(t *testing.T) {
 	tests := []struct {
 		name      string
 		userAgent string
-		want      coredata.DiscoveryBrowserFamily
+		want      coredata.BrowserFamily
 	}{
 		{
 			name:      "chrome",
 			userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-			want:      coredata.DiscoveryBrowserFamilyChrome,
+			want:      coredata.BrowserFamilyChrome,
 		},
 		{
 			name:      "chrome ios",
 			userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.6099.119 Mobile/15E148 Safari/604.1",
-			want:      coredata.DiscoveryBrowserFamilyChrome,
+			want:      coredata.BrowserFamilyChrome,
 		},
 		{
 			name:      "edge",
 			userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-			want:      coredata.DiscoveryBrowserFamilyEdge,
+			want:      coredata.BrowserFamilyEdge,
 		},
 		{
 			name:      "edge ios",
 			userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) EdgiOS/120.0.2210.105 Version/17.0 Mobile/15E148 Safari/604.1",
-			want:      coredata.DiscoveryBrowserFamilyEdge,
+			want:      coredata.BrowserFamilyEdge,
 		},
 		{
 			name:      "edge android",
 			userAgent: "Mozilla/5.0 (Linux; Android 10; HD1913) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36 EdgA/120.0.2210.141",
-			want:      coredata.DiscoveryBrowserFamilyEdge,
+			want:      coredata.BrowserFamilyEdge,
 		},
 		{
 			name:      "firefox",
 			userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0",
-			want:      coredata.DiscoveryBrowserFamilyFirefox,
+			want:      coredata.BrowserFamilyFirefox,
 		},
 		{
 			name:      "firefox ios",
 			userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/120.0 Mobile/15E148 Safari/605.1.15",
-			want:      coredata.DiscoveryBrowserFamilyFirefox,
+			want:      coredata.BrowserFamilyFirefox,
 		},
 		{
 			name:      "safari",
 			userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-			want:      coredata.DiscoveryBrowserFamilySafari,
+			want:      coredata.BrowserFamilySafari,
 		},
 		{
 			name:      "empty",
 			userAgent: "",
-			want:      coredata.DiscoveryBrowserFamilyOther,
+			want:      coredata.BrowserFamilyOther,
 		},
 	}
 

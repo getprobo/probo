@@ -158,7 +158,7 @@ type (
 		InitiatorURL  *string
 		CookieDomain  *string
 		HostOnly      *bool
-		DiscoveryHit  bool
+		SampleHit     bool
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -171,7 +171,7 @@ type (
 		ValueSize    *int
 		Source       *coredata.CookieSource
 		InitiatorURL *string
-		DiscoveryHit bool
+		SampleHit    bool
 	}
 
 	DetectedResourceItem struct {
@@ -180,11 +180,12 @@ type (
 	}
 
 	ReportDetectedTrackersRequest struct {
-		Cookies   []DetectedCookie
-		Storage   []DetectedStorageItem
-		Resources []DetectedResourceItem
-		PageView  bool
-		Family    coredata.DiscoveryBrowserFamily
+		Cookies       []DetectedCookie
+		Storage       []DetectedStorageItem
+		Resources     []DetectedResourceItem
+		PageView      bool
+		ConsentAction *coredata.CookieConsentAction
+		Family        coredata.BrowserFamily
 	}
 
 	CreateTrackerPatternRequest struct {
@@ -253,6 +254,7 @@ type (
 		Layout                   Layout                                         `json:"layout"`
 		ShowBranding             bool                                           `json:"show_branding"`
 		ResourceReportingEnabled bool                                           `json:"resource_reporting_enabled"`
+		SampleActive             bool                                           `json:"sample_active,omitempty"`
 		TCF                      *BannerTCF                                     `json:"tcf,omitempty"`
 		Categories               []coredata.CookieBannerVersionSnapshotCategory `json:"categories"`
 		Texts                    map[string]string                              `json:"texts"`
@@ -947,22 +949,22 @@ func (s *Service) GetCookieBannersByIDs(
 	return banners, nil
 }
 
-func (s *Service) GetDiscoveryPageLoads(
+func (s *Service) GetCookieBannerSample(
 	ctx context.Context,
 	scope coredata.Scoper,
-	cookieBannerID gid.GID,
-) ([]DiscoveryFamilyCount, error) {
-	var stats coredata.CookieBannerDiscoveryStats
+	sampleID gid.GID,
+) (*coredata.CookieBannerSample, error) {
+	var sample coredata.CookieBannerSample
 
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := stats.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := sample.LoadByID(ctx, tx, scope, sampleID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil
+					return ErrSampleNotFound
 				}
 
-				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+				return fmt.Errorf("cannot load cookie banner sample: %w", err)
 			}
 
 			return nil
@@ -972,25 +974,25 @@ func (s *Service) GetDiscoveryPageLoads(
 		return nil, err
 	}
 
-	return discoveryPageLoads(stats), nil
+	return &sample, nil
 }
 
-func (s *Service) GetDiscoveryFrozenAt(
+func (s *Service) GetLatestCookieBannerSample(
 	ctx context.Context,
 	scope coredata.Scoper,
 	cookieBannerID gid.GID,
-) (*time.Time, error) {
-	var stats coredata.CookieBannerDiscoveryStats
+) (*coredata.CookieBannerSample, error) {
+	var sample coredata.CookieBannerSample
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := stats.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
+			if err := sample.LoadLatestByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil
+					return ErrSampleNotFound
 				}
 
-				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
 			}
 
 			return nil
@@ -1000,23 +1002,184 @@ func (s *Service) GetDiscoveryFrozenAt(
 		return nil, err
 	}
 
-	return stats.FrozenAt, nil
+	return &sample, nil
 }
 
-func (s *Service) GetDiscoveryHits(
+func (s *Service) ListCookieBannerSamples(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+	cursor *page.Cursor[coredata.CookieBannerSampleOrderField],
+) (coredata.CookieBannerSamples, error) {
+	var samples coredata.CookieBannerSamples
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := samples.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID, cursor); err != nil {
+				return fmt.Errorf("cannot list cookie banner samples: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return samples, nil
+}
+
+func (s *Service) CountCookieBannerSamples(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) (int, error) {
+	var count int
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var samples coredata.CookieBannerSamples
+			n, err := samples.CountByCookieBannerID(ctx, conn, scope, cookieBannerID)
+			if err != nil {
+				return err
+			}
+
+			count = n
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Service) StartCookieBannerSample(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) (*coredata.CookieBannerSample, error) {
+	_ = s.FlushSampleCounts(ctx)
+
+	var sample coredata.CookieBannerSample
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var banner coredata.CookieBanner
+			if err := banner.LoadByID(ctx, tx, scope, cookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrBannerNotFound
+				}
+
+				return fmt.Errorf("cannot load cookie banner: %w", err)
+			}
+
+			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, cookieBannerID); err != nil {
+				return err
+			}
+
+			now := time.Now()
+			sample = coredata.CookieBannerSample{
+				ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
+				OrganizationID: banner.OrganizationID,
+				CookieBannerID: cookieBannerID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+			if err := sample.Insert(ctx, tx, scope); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sample, nil
+}
+
+func (s *Service) StopCookieBannerSample(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) (*coredata.CookieBannerSample, error) {
+	_ = s.FlushSampleCounts(ctx)
+
+	var sample coredata.CookieBannerSample
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, cookieBannerID); err != nil {
+				return err
+			}
+
+			if err := sample.LoadLatestByCookieBannerID(ctx, tx, scope, cookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSampleNotFound
+				}
+
+				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &sample, nil
+}
+
+func (s *Service) GetSamplePageLoads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	sampleID gid.GID,
+) ([]SampleFamilyCount, error) {
+	sample, err := s.GetCookieBannerSample(ctx, scope, sampleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return samplePageLoads(*sample), nil
+}
+
+func (s *Service) GetSampleConsentingPageLoads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	sampleID gid.GID,
+) ([]SampleFamilyCount, error) {
+	sample, err := s.GetCookieBannerSample(ctx, scope, sampleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return sampleConsentingPageLoads(*sample), nil
+}
+
+func (s *Service) GetSampleHits(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trackerPatternID gid.GID,
-) ([]DiscoveryFamilyCount, error) {
+	sampleID *gid.GID,
+) ([]SampleFamilyCount, error) {
 	var (
-		pattern coredata.TrackerPattern
-		stats   coredata.CookieBannerDiscoveryStats
-		hits    *coredata.TrackerPatternDiscoveryHits
+		sample coredata.CookieBannerSample
+		hits   *coredata.TrackerPatternSampleHits
 	)
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
+			var pattern coredata.TrackerPattern
 			if err := pattern.LoadByID(ctx, conn, scope, trackerPatternID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerPatternNotFound
@@ -1025,21 +1188,33 @@ func (s *Service) GetDiscoveryHits(
 				return fmt.Errorf("cannot load tracker pattern: %w", err)
 			}
 
-			if err := stats.LoadByCookieBannerID(ctx, conn, scope, pattern.CookieBannerID); err != nil {
+			if sampleID != nil {
+				if err := sample.LoadByID(ctx, conn, scope, *sampleID); err != nil {
+					if errors.Is(err, coredata.ErrResourceNotFound) {
+						return ErrSampleNotFound
+					}
+
+					return fmt.Errorf("cannot load cookie banner sample: %w", err)
+				}
+
+				if sample.CookieBannerID != pattern.CookieBannerID {
+					return ErrSampleNotFound
+				}
+			} else if err := sample.LoadLatestByCookieBannerID(ctx, conn, scope, pattern.CookieBannerID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil
 				}
 
-				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
 			}
 
-			var loaded coredata.TrackerPatternDiscoveryHits
-			if err := loaded.LoadByTrackerPatternID(ctx, conn, scope, trackerPatternID); err != nil {
+			var loaded coredata.TrackerPatternSampleHits
+			if err := loaded.LoadBySampleAndPattern(ctx, conn, scope, sample.ID, trackerPatternID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return nil
 				}
 
-				return fmt.Errorf("cannot load tracker pattern discovery hits: %w", err)
+				return fmt.Errorf("cannot load tracker pattern sample hits: %w", err)
 			}
 
 			hits = &loaded
@@ -1051,7 +1226,11 @@ func (s *Service) GetDiscoveryHits(
 		return nil, err
 	}
 
-	return discoveryHits(stats, hits), nil
+	if sample.ID == (gid.GID{}) {
+		return nil, nil
+	}
+
+	return sampleHits(sample, hits), nil
 }
 
 func (s *Service) ListCommonGVLVendors(
@@ -1530,7 +1709,7 @@ func (s *Service) PublishCookieBannerVersion(
 ) (*coredata.CookieBannerVersion, error) {
 	// Best-effort: a leftover write for another banner must not
 	// block this publish. Freeze still closes this banner's window.
-	_ = s.FlushDiscoveryCounts(ctx)
+	_ = s.FlushSampleCounts(ctx)
 
 	var version coredata.CookieBannerVersion
 
@@ -1556,8 +1735,35 @@ func (s *Service) PublishCookieBannerVersion(
 				return fmt.Errorf("cannot publish version: %w", err)
 			}
 
-			if err := coredata.FreezeDiscoveryStats(ctx, tx, scope, bannerID); err != nil {
-				return fmt.Errorf("cannot freeze discovery stats: %w", err)
+			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, bannerID); err != nil {
+				return fmt.Errorf("cannot freeze cookie banner sample: %w", err)
+			}
+
+			var samples coredata.CookieBannerSamples
+			count, err := samples.CountByCookieBannerID(ctx, tx, scope, bannerID)
+			if err != nil {
+				return err
+			}
+
+			if count == 0 {
+				var banner coredata.CookieBanner
+				if err := banner.LoadByID(ctx, tx, scope, bannerID); err != nil {
+					return fmt.Errorf("cannot load cookie banner: %w", err)
+				}
+
+				now := time.Now()
+				frozenAt := now
+				empty := coredata.CookieBannerSample{
+					ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
+					OrganizationID: banner.OrganizationID,
+					CookieBannerID: bannerID,
+					FrozenAt:       &frozenAt,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+				if err := empty.Insert(ctx, tx, scope); err != nil && !coredata.IsOpenSampleConflict(err) {
+					return err
+				}
 			}
 
 			banner := coredata.CookieBanner{ID: bannerID}
@@ -2365,6 +2571,15 @@ func (s *Service) GetActiveBannerConfig(
 			resolved := resolveTranslations(translations, categories)
 			config = buildBannerConfig(&banner, &version, &snapshot, resolved, lang)
 
+			var open coredata.CookieBannerSample
+			if err := open.LoadOpenByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load open cookie banner sample: %w", err)
+				}
+			} else {
+				config.SampleActive = true
+			}
+
 			if banner.Capabilities.TCF && tcfServesGVL(regulation) {
 				if err := s.attachTCFVendors(ctx, conn, config, snapshot.IABVendorIDs, banner.PublisherCountryCode); err != nil {
 					return err
@@ -2875,7 +3090,7 @@ func (s *Service) ReportDetectedTrackers(
 						InitiatorURL:  dc.InitiatorURL,
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
-						DiscoveryHit:  dc.DiscoveryHit,
+						SampleHit:     dc.SampleHit,
 					},
 					&inserted,
 					countedHits,
@@ -2898,7 +3113,7 @@ func (s *Service) ReportDetectedTrackers(
 						ValueSize:    ds.ValueSize,
 						Source:       ds.Source,
 						InitiatorURL: ds.InitiatorURL,
-						DiscoveryHit: ds.DiscoveryHit,
+						SampleHit:    ds.SampleHit,
 					},
 					&inserted,
 					countedHits,
@@ -2939,7 +3154,13 @@ func (s *Service) ReportDetectedTrackers(
 		return err
 	}
 
-	s.recordDiscoveryIncrements(bannerID, req.Family, req.PageView, countedHits)
+	s.recordSampleIncrements(
+		bannerID,
+		req.Family,
+		req.PageView,
+		isConsentingSampleAction(req.ConsentAction),
+		countedHits,
+	)
 
 	return nil
 }
@@ -2953,7 +3174,7 @@ type detectedTrackerInfo struct {
 	InitiatorURL  *string
 	CookieDomain  *string
 	HostOnly      *bool
-	DiscoveryHit  bool
+	SampleHit     bool
 }
 
 func (s *Service) reportDetectedTracker(
@@ -3099,7 +3320,7 @@ func (s *Service) reportDetectedTracker(
 		return fmt.Errorf("cannot insert detected tracker: %w", err)
 	}
 
-	if info.DiscoveryHit && patternID != nil {
+	if info.SampleHit && patternID != nil {
 		countedHits[*patternID] = struct{}{}
 	}
 

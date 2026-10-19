@@ -248,7 +248,7 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 						return fmt.Errorf("cannot relink detected trackers from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
-					if err := coredata.AddDiscoveryHits(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
+					if err := coredata.AddSampleHits(ctx, tx, scope, exactPattern.ID, globPattern.ID); err != nil {
 						return fmt.Errorf("cannot add discovery hits from pattern %q: %w", exactPattern.Pattern, err)
 					}
 
@@ -933,7 +933,7 @@ func (h *patternAnalysisHandler) adoptUncategorisedPatterns(
 			}
 		}
 
-		if err := coredata.AddDiscoveryHits(ctx, tx, scope, ep.ID, match.ID); err != nil {
+		if err := coredata.AddSampleHits(ctx, tx, scope, ep.ID, match.ID); err != nil {
 			return false, fmt.Errorf("cannot add discovery hits from pattern %q: %w", ep.Pattern, err)
 		}
 

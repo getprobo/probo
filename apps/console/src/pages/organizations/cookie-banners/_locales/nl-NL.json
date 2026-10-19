@@ -271,26 +271,28 @@
       "version": "v{{version}}",
       "deactivated": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers.",
       "deactivatedDraft": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers. Deze versie heeft ongepubliceerde wijzigingen.",
-      "discovery": "Deze banner is in ontdekkingsmodus. Paginaladingen en tracker-hits worden geteld tot de eerste publicatie. Deze versie is nog niet live.",
+      "samplingUnpublished": "Deze banner meet paginaladingen en tracker-hits. Publiceren bevriest nog steeds het open venster. Deze versie is nog niet live.",
+      "sampling": "Paginaladingen en tracker-hits worden geteld, inclusief bekende cookies. Stop om dit venster te bevriezen. Cijfers na publicatie vereisen het huidige bannerscript.",
       "draft": "Deze versie heeft ongepubliceerde wijzigingen.",
-      "published": "Deze versie is gepubliceerd en live.",
-      "publishedUnknown": "Deze banner is gepubliceerd en live."
+      "published": "Deze versie is gepubliceerd en live. Start een sample om trackerprevalentie te meten, inclusief bekende cookies. Vereist het huidige bannerscript.",
+      "unpublished": "Deze banner is nog niet gepubliceerd."
     },
-    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
-    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
+    "messages": { "copiedTitle": "Gekopieerd", "activated": "Banner geactiveerd", "deactivated": "Banner gedeactiveerd", "published": "Versie gepubliceerd", "sampleStarted": "Sample gestart", "sampleStopped": "Sample gestopt", "idCopied": "Banner-ID gekopieerd naar klembord", "deleted": "Cookiebanner succesvol verwijderd" },
+    "errors": { "title": "Fout", "activate": "Activeren mislukt", "deactivate": "Deactiveren mislukt", "publish": "Publiceren mislukt", "startSample": "Sample starten mislukt", "stopSample": "Sample stoppen mislukt", "delete": "Cookiebanner verwijderen mislukt", "copy": "Banner-ID kopiëren mislukt" },
     "deleteConfirmation": "Hiermee wordt de cookiebanner \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
-    "actions": { "publish": "Wijzigingen publiceren", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
-    "discovery": { "pageLoads": "Paginaladingen", "empty": "Nog geen" }
+    "actions": { "publish": "Wijzigingen publiceren", "startSample": "Sample starten", "stopSample": "Sample stoppen", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
+    "sample": { "pageLoads": "Paginaladingen", "empty": "Nog geen", "pastFrozen": "Eerdere sample van {{date}}", "pastOpen": "Open sample van {{date}}" }
   },
-  "trackerDiscovery": {
-    "title": "Ontdekking",
-    "description": "Geteld tot de eerste publicatie.",
+  "trackerSample": {
     "empty": "Nog geen hits.",
     "hits": "hits",
     "loads": "paginaladingen",
     "hitRate": "hitrate",
+    "consentingHitRate": "onder toestemmende weergaven"
+  },
+  "trackerDiscovery": {
     "families": {
       "chrome": "Chrome",
       "edge": "Edge",

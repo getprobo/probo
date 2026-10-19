@@ -93,4 +93,42 @@ func TestCookieBanner_RBAC(t *testing.T) {
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to delete cookie banner")
 	})
+
+	t.Run("viewer cannot start sample", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+
+		_, err := viewer.Do(`
+			mutation StartCookieBannerSample($input: StartCookieBannerSampleInput!) {
+				startCookieBannerSample(input: $input) {
+					cookieBannerSample { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{"cookieBannerId": bannerID},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to start cookie banner sample")
+	})
+
+	t.Run("viewer cannot stop sample", func(t *testing.T) {
+		t.Parallel()
+		owner := testutil.NewClient(t, testutil.RoleOwner)
+		viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+		bannerID := factory.CreateCookieBanner(owner)
+
+		_, err := viewer.Do(`
+			mutation StopCookieBannerSample($input: StopCookieBannerSampleInput!) {
+				stopCookieBannerSample(input: $input) {
+					cookieBannerSample { id }
+				}
+			}
+		`, map[string]any{
+			"input": map[string]any{"cookieBannerId": bannerID},
+		})
+		testutil.RequireForbiddenError(t, err, "viewer should not be able to stop cookie banner sample")
+	})
 }

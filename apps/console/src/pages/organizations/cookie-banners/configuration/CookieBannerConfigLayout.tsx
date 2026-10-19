@@ -33,6 +33,8 @@ import { graphql } from "relay-runtime";
 
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
+import type { CookieBannerConfigLayoutStartSampleMutation } from "#/__generated__/core/CookieBannerConfigLayoutStartSampleMutation.graphql";
+import type { CookieBannerConfigLayoutStopSampleMutation } from "#/__generated__/core/CookieBannerConfigLayoutStopSampleMutation.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import type { TonedCardTone } from "#/components/TonedCard/variants";
 import { useMutation } from "#/lib/relay/useMutation";
@@ -55,10 +57,23 @@ export const cookieBannerConfigLayoutQuery = graphql`
           version
           state
         }
-        discoveryFrozenAt
-        discoveryPageLoads {
-          family
-          count
+        latestSample {
+          id
+          createdAt
+          frozenAt
+          pageLoads {
+            family
+            count
+          }
+        }
+        samples(first: 5) {
+          edges {
+            node {
+              id
+              createdAt
+              frozenAt
+            }
+          }
         }
       }
     }
@@ -80,11 +95,102 @@ const publishMutation = graphql`
           version
           state
         }
-        discoveryFrozenAt
+        latestSample {
+          id
+          createdAt
+          frozenAt
+          pageLoads {
+            family
+            count
+          }
+        }
+        samples(first: 5) {
+          edges {
+            node {
+              id
+              createdAt
+              frozenAt
+            }
+          }
+        }
         publishedVersion {
           id
           gvlVendorCount
           gvlVendorIds
+        }
+      }
+    }
+  }
+`;
+
+const startSampleMutation = graphql`
+  mutation CookieBannerConfigLayoutStartSampleMutation($input: StartCookieBannerSampleInput!) {
+    startCookieBannerSample(input: $input) {
+      cookieBannerSample {
+        id
+        createdAt
+        frozenAt
+        pageLoads {
+          family
+          count
+        }
+      }
+      cookieBanner {
+        id
+        latestSample {
+          id
+          createdAt
+          frozenAt
+          pageLoads {
+            family
+            count
+          }
+        }
+        samples(first: 5) {
+          edges {
+            node {
+              id
+              createdAt
+              frozenAt
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const stopSampleMutation = graphql`
+  mutation CookieBannerConfigLayoutStopSampleMutation($input: StopCookieBannerSampleInput!) {
+    stopCookieBannerSample(input: $input) {
+      cookieBannerSample {
+        id
+        createdAt
+        frozenAt
+        pageLoads {
+          family
+          count
+        }
+      }
+      cookieBanner {
+        id
+        latestSample {
+          id
+          createdAt
+          frozenAt
+          pageLoads {
+            family
+            count
+          }
+        }
+        samples(first: 5) {
+          edges {
+            node {
+              id
+              createdAt
+              frozenAt
+            }
+          }
         }
       }
     }
@@ -98,7 +204,7 @@ interface CookieBannerConfigLayoutProps {
 export function CookieBannerConfigLayout({
   queryRef,
 }: CookieBannerConfigLayoutProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
+  const { t, i18n } = useTranslation("organizations/cookie-banners");
   const toast = useToast();
   const {
     root,
@@ -107,11 +213,13 @@ export function CookieBannerConfigLayout({
     meta,
     id,
     version: versionClass,
-    discovery,
-    discoveryRow,
-    discoveryItem,
-    discoveryLogo,
-    discoverySeparator,
+    sample,
+    sampleRow,
+    sampleItem,
+    sampleLogo,
+    sampleSeparator,
+    sampleActions,
+    samplePast,
   } = cookieBannerConfigLayout();
 
   const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
@@ -132,26 +240,46 @@ export function CookieBannerConfigLayout({
       errorToast: t("configLayout.errors.publish"),
     },
   );
+  const [startSample, isStartingSample] = useMutation<CookieBannerConfigLayoutStartSampleMutation>(
+    startSampleMutation,
+    {
+      successMessage: t("configLayout.messages.sampleStarted"),
+      errorToast: t("configLayout.errors.startSample"),
+    },
+  );
+  const [stopSample, isStoppingSample] = useMutation<CookieBannerConfigLayoutStopSampleMutation>(
+    stopSampleMutation,
+    {
+      successMessage: t("configLayout.messages.sampleStopped"),
+      errorToast: t("configLayout.errors.stopSample"),
+    },
+  );
 
   const hasDraft = banner.latestVersion?.state === "DRAFT";
   const isDeactivated = banner.state !== "ACTIVE";
-  const inDiscovery = banner.discoveryFrozenAt == null;
+  const latestSample = banner.latestSample;
+  const inSample = latestSample != null && latestSample.frozenAt == null;
   const version = banner.latestVersion?.version;
-  const pageLoads = banner.discoveryPageLoads;
+  const pageLoads = latestSample?.pageLoads ?? [];
+  const pastSamples = banner.samples.edges
+    .map(edge => edge.node)
+    .filter(node => latestSample == null || node.id !== latestSample.id);
 
   let message: string;
   if (isDeactivated && hasDraft && version != null) {
     message = t("configLayout.callout.deactivatedDraft", { version });
   } else if (isDeactivated) {
     message = t("configLayout.callout.deactivated");
-  } else if (inDiscovery) {
-    message = t("configLayout.callout.discovery");
+  } else if (inSample && version == null) {
+    message = t("configLayout.callout.samplingUnpublished");
+  } else if (inSample) {
+    message = t("configLayout.callout.sampling");
   } else if (hasDraft && version != null) {
-    message = t("configLayout.callout.draft", { version });
+    message = t("configLayout.callout.draft");
   } else if (version != null) {
-    message = t("configLayout.callout.published", { version });
+    message = t("configLayout.callout.published");
   } else {
-    message = t("configLayout.callout.publishedUnknown");
+    message = t("configLayout.callout.unpublished");
   }
 
   let tone: TonedCardTone;
@@ -159,7 +287,7 @@ export function CookieBannerConfigLayout({
   if (isDeactivated) {
     tone = "amber";
     icon = <WarningIcon size={24} weight="duotone" />;
-  } else if (inDiscovery) {
+  } else if (inSample) {
     tone = "sky";
     icon = <InfoIcon size={24} weight="duotone" />;
   } else if (hasDraft) {
@@ -226,34 +354,73 @@ export function CookieBannerConfigLayout({
             </div>
           </div>
         )}
-        control={hasDraft
-          ? (
-              <Button
-                size={2}
-                variant="solid"
-                color="neutral"
-                highContrast
-                loading={isPublishing}
-                onClick={() => {
-                  void publish({
-                    variables: { input: { cookieBannerId: banner.id } },
-                  }).catch(() => {
-                    // Error toast is already shown by useMutation.
-                  });
-                }}
-              >
-                {t("configLayout.actions.publish")}
-              </Button>
-            )
-          : undefined}
+        control={(
+          <div className={sampleActions()}>
+            {inSample
+              ? (
+                  <Button
+                    size={2}
+                    variant="soft"
+                    color="neutral"
+                    loading={isStoppingSample}
+                    onClick={() => {
+                      void stopSample({
+                        variables: { input: { cookieBannerId: banner.id } },
+                      }).catch(() => {
+                        // Error toast is already shown by useMutation.
+                      });
+                    }}
+                  >
+                    {t("configLayout.actions.stopSample")}
+                  </Button>
+                )
+              : (
+                  <Button
+                    size={2}
+                    variant="soft"
+                    color="neutral"
+                    loading={isStartingSample}
+                    onClick={() => {
+                      void startSample({
+                        variables: { input: { cookieBannerId: banner.id } },
+                      }).catch(() => {
+                        // Error toast is already shown by useMutation.
+                      });
+                    }}
+                  >
+                    {t("configLayout.actions.startSample")}
+                  </Button>
+                )}
+            {hasDraft
+              ? (
+                  <Button
+                    size={2}
+                    variant="solid"
+                    color="neutral"
+                    highContrast
+                    loading={isPublishing}
+                    onClick={() => {
+                      void publish({
+                        variables: { input: { cookieBannerId: banner.id } },
+                      }).catch(() => {
+                        // Error toast is already shown by useMutation.
+                      });
+                    }}
+                  >
+                    {t("configLayout.actions.publish")}
+                  </Button>
+                )
+              : null}
+          </div>
+        )}
       >
-        <div className={discovery()}>
+        <div className={sample()}>
           <Text size={2} color="neutral">{message}</Text>
-          {inDiscovery
+          {latestSample != null
             ? (
-                <div className={discoveryRow()}>
+                <div className={sampleRow()}>
                   <Text size={2} color="faint">
-                    {t("configLayout.discovery.pageLoads")}
+                    {t("configLayout.sample.pageLoads")}
                   </Text>
                   {pageLoads.length > 0
                     ? pageLoads.map((entry, index) => (
@@ -263,17 +430,17 @@ export function CookieBannerConfigLayout({
                                 <Text
                                   size={2}
                                   color="faint"
-                                  className={discoverySeparator()}
+                                  className={sampleSeparator()}
                                 >
                                   ·
                                 </Text>
                               )
                             : null}
-                          <div className={discoveryItem()}>
+                          <div className={sampleItem()}>
                             <FamilyLogo
                               family={entry.family}
                               size={16}
-                              className={discoveryLogo()}
+                              className={sampleLogo()}
                             />
                             <Text size={2} color="faint">
                               {familyLabel(entry.family, t)}
@@ -286,9 +453,26 @@ export function CookieBannerConfigLayout({
                       ))
                     : (
                         <Text size={2} color="faint">
-                          {t("configLayout.discovery.empty")}
+                          {t("configLayout.sample.empty")}
                         </Text>
                       )}
+                </div>
+              )
+            : null}
+          {pastSamples.length > 0
+            ? (
+                <div className={samplePast()}>
+                  {pastSamples.map(node => (
+                    <Text key={node.id} size={2} color="faint">
+                      {node.frozenAt != null
+                        ? t("configLayout.sample.pastFrozen", {
+                            date: formatSampleDate(node.createdAt, i18n.language),
+                          })
+                        : t("configLayout.sample.pastOpen", {
+                            date: formatSampleDate(node.createdAt, i18n.language),
+                          })}
+                    </Text>
+                  ))}
                 </div>
               )
             : null}
@@ -297,4 +481,10 @@ export function CookieBannerConfigLayout({
       <Outlet />
     </div>
   );
+}
+
+function formatSampleDate(value: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }

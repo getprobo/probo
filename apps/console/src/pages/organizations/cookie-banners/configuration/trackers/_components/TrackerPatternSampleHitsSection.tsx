@@ -23,64 +23,67 @@ import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { TrackerPatternDiscoveryHitsSection_cookieBanner$key } from "#/__generated__/core/TrackerPatternDiscoveryHitsSection_cookieBanner.graphql";
-import type { TrackerPatternDiscoveryHitsSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternDiscoveryHitsSection_trackerPattern.graphql";
+import type { TrackerPatternSampleHitsSection_cookieBanner$key } from "#/__generated__/core/TrackerPatternSampleHitsSection_cookieBanner.graphql";
+import type { TrackerPatternSampleHitsSection_trackerPattern$key } from "#/__generated__/core/TrackerPatternSampleHitsSection_trackerPattern.graphql";
 
-import { DiscoveryFamilyCounts } from "../../_components/DiscoveryFamilyCounts";
+import { SampleFamilyCounts } from "../../_components/SampleFamilyCounts";
 
 const cookieBannerFragment = graphql`
-  fragment TrackerPatternDiscoveryHitsSection_cookieBanner on CookieBanner {
-    publishedVersion {
-      __typename
-    }
-    discoveryPageLoads {
-      family
-      count
+  fragment TrackerPatternSampleHitsSection_cookieBanner on CookieBanner {
+    latestSample {
+      pageLoads {
+        family
+        count
+      }
+      consentingPageLoads {
+        family
+        count
+      }
     }
   }
 `;
 
 const trackerPatternFragment = graphql`
-  fragment TrackerPatternDiscoveryHitsSection_trackerPattern on TrackerPattern {
-    discoveryHits {
+  fragment TrackerPatternSampleHitsSection_trackerPattern on TrackerPattern {
+    sampleHits {
       family
       count
     }
   }
 `;
 
-interface TrackerPatternDiscoveryHitsSectionProps {
-  trackerPatternKey: TrackerPatternDiscoveryHitsSection_trackerPattern$key;
-  cookieBannerKey: TrackerPatternDiscoveryHitsSection_cookieBanner$key;
+interface TrackerPatternSampleHitsSectionProps {
+  trackerPatternKey: TrackerPatternSampleHitsSection_trackerPattern$key;
+  cookieBannerKey: TrackerPatternSampleHitsSection_cookieBanner$key;
 }
 
-export function TrackerPatternDiscoveryHitsSection({
+export function TrackerPatternSampleHitsSection({
   trackerPatternKey,
   cookieBannerKey,
-}: TrackerPatternDiscoveryHitsSectionProps) {
+}: TrackerPatternSampleHitsSectionProps) {
   const { t } = useTranslation("organizations/cookie-banners");
   const banner = useFragment(cookieBannerFragment, cookieBannerKey);
   const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
 
-  if (pattern.discoveryHits.length === 0 && banner.publishedVersion != null) {
-    return null;
-  }
-
-  if (pattern.discoveryHits.length === 0) {
+  if (pattern.sampleHits.length === 0) {
     return (
       <Text size={2} color="faint">
-        {t("trackerDiscovery.empty")}
+        {t("trackerSample.empty")}
       </Text>
     );
   }
 
   return (
-    <DiscoveryFamilyCounts
-      items={pattern.discoveryHits.map(hit => ({
+    <SampleFamilyCounts
+      items={pattern.sampleHits.map(hit => ({
         family: hit.family,
         count: hit.count,
       }))}
-      denominators={banner.discoveryPageLoads.map(load => ({
+      denominators={(banner.latestSample?.pageLoads ?? []).map(load => ({
+        family: load.family,
+        count: load.count,
+      }))}
+      consentingDenominators={(banner.latestSample?.consentingPageLoads ?? []).map(load => ({
         family: load.family,
         count: load.count,
       }))}

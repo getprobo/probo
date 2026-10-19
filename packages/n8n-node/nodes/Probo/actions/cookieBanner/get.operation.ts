@@ -60,8 +60,13 @@ export async function execute(
 					defaultLanguage
 					publisherCountryCode
 					tcfCmpId
-					discoveryPageLoads { family count }
-					discoveryFrozenAt
+					latestSample {
+						id
+						createdAt
+						frozenAt
+						pageLoads { family count }
+						consentingPageLoads { family count }
+					}
 					createdAt
 					updatedAt
 					publishedVersion {

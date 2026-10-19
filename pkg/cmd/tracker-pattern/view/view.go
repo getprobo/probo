@@ -45,7 +45,7 @@ query($id: ID!) {
       excluded
       commonTrackerPatternId
       attribution
-      discoveryHits {
+      sampleHits {
         family
         count
       }
@@ -69,10 +69,10 @@ type viewResponse struct {
 		Excluded               bool    `json:"excluded"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
-		DiscoveryHits          []struct {
+		SampleHits             []struct {
 			Family string `json:"family"`
 			Count  int    `json:"count"`
-		} `json:"discoveryHits"`
+		} `json:"sampleHits"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
@@ -158,11 +158,11 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Attribution:"), *v.Attribution)
 			}
 
-			if len(v.DiscoveryHits) == 0 {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Hits:"), "none")
+			if len(v.SampleHits) == 0 {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Hits:"), "none")
 			} else {
-				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Discovery Hits:"))
-				for _, hit := range v.DiscoveryHits {
+				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Hits:"))
+				for _, hit := range v.SampleHits {
 					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), hit.Family, hit.Count)
 				}
 			}
