@@ -21,6 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/page"
@@ -51,6 +52,20 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			}
 
 			return types.NewOrganization(organization), nil
+		}
+	case coredata.MembershipProfileEntityType:
+		action = iam.ActionMembershipProfileGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			profiles, err := r.iam.OrganizationService.GetProfilesByIDs(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(profiles) == 0 {
+				return nil, coredata.ErrResourceNotFound
+			}
+
+			return types.NewProfile(profiles[0]), nil
 		}
 	case coredata.ThirdPartyEntityType:
 		action = probo.ActionThirdPartyGet

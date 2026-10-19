@@ -32,7 +32,6 @@ import type { TaskUserFilterProfileQuery } from "#/__generated__/core/TaskUserFi
 import { UserSelectOption } from "#/components/form/UserSelectOption";
 import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { unassignedAssignee } from "#/pages/organizations/tasks/_lib/taskPath";
-import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 const taskUserFilterProfileQuery = graphql`
   query TaskUserFilterProfileQuery($id: ID!) {
@@ -78,9 +77,7 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
                 )
               : (
                   <Suspense fallback={<TextSkeleton size={2} className="w-24" />}>
-                    <IAMRelayProvider>
-                      <TaskUserFilterProfile id={value} />
-                    </IAMRelayProvider>
+                    <TaskUserFilterProfile id={value} />
                   </Suspense>
                 )}
         </span>
