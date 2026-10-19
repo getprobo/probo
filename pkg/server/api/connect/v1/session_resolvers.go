@@ -200,6 +200,10 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 			return nil, gqlutils.AccountAlreadyActivated(ctx, err)
 		}
 
+		if _, ok := errors.AsType[*iam.ErrActivationNotRequired](err); ok {
+			return nil, gqlutils.ActivationNotRequired(ctx, err)
+		}
+
 		r.logger.ErrorCtx(ctx, "cannot activate account from invitation", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)

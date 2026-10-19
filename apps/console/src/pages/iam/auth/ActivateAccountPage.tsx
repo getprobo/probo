@@ -81,7 +81,10 @@ export default function ActivateAccountPage() {
       onCompleted: (response: ActivateAccountPageMutation$data, errors: GraphQLError[] | null) => {
         if (errors) {
           for (const err of errors) {
-            if (err.extensions?.code === "ACCOUNT_ALREADY_ACTIVATED") {
+            if (
+              err.extensions?.code === "ACCOUNT_ALREADY_ACTIVATED" ||
+              err.extensions?.code === "ACTIVATION_NOT_REQUIRED"
+            ) {
               void navigate({
                 pathname: safeContinueUrl.pathname,
                 search: safeContinueUrl.search,

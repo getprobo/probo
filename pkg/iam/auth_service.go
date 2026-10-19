@@ -146,11 +146,12 @@ func (s *AuthService) ActivateAccount(
 	}
 
 	var (
-		scope      = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
-		invitation = &coredata.Invitation{}
-		profile    *coredata.MembershipProfile
-		identity   *coredata.Identity
-		now        = time.Now()
+		scope                 = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
+		invitation            = &coredata.Invitation{}
+		profile               *coredata.MembershipProfile
+		identity              *coredata.Identity
+		now                   = time.Now()
+		activationNotRequired bool
 	)
 
 	if err = s.pg.WithTx(
@@ -169,17 +170,40 @@ func (s *AuthService) ActivateAccount(
 				return NewInvitationAlreadyAcceptedError(payload.Data.InvitationID)
 			}
 
-			if invitation.ExpiresAt.Before(now) {
-				return NewInvitationExpiredError(payload.Data.InvitationID)
-			}
-
 			profile = &coredata.MembershipProfile{}
 			if err := profile.LoadByID(ctx, tx, scope, invitation.UserID); err != nil {
+				if err == coredata.ErrResourceNotFound && invitation.ExpiresAt.Before(now) {
+					return NewInvitationExpiredError(payload.Data.InvitationID)
+				}
+
 				return fmt.Errorf("cannot load user: %w", err)
 			}
 
-			if profile.Source == coredata.ProfileSourceSCIM {
-				return NewUserManagedBySCIMError(profile.ID)
+			if invitation.ExpiresAt.Before(now) {
+				if profileVerifiedByProvisioner(profile.Source) {
+					activationNotRequired = true
+					return nil
+				}
+
+				return NewInvitationExpiredError(payload.Data.InvitationID)
+			}
+
+			if profileVerifiedByProvisioner(profile.Source) {
+				invitations := &coredata.Invitations{}
+
+				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+				if err := invitations.ExpireByUserID(
+					ctx,
+					tx,
+					coredata.NewScopeFromObjectID(invitation.OrganizationID),
+					invitation.UserID,
+					onlyPending,
+				); err != nil {
+					return fmt.Errorf("cannot expire pending invitations: %w", err)
+				}
+
+				activationNotRequired = true
+				return nil
 			}
 
 			if profile.State == coredata.ProfileStatePending {
@@ -232,7 +256,20 @@ func (s *AuthService) ActivateAccount(
 		return nil, nil, err
 	}
 
+	if activationNotRequired {
+		return nil, nil, NewActivationNotRequiredError(profile.ID, profile.Source)
+	}
+
 	return identity, profile, nil
+}
+
+func profileVerifiedByProvisioner(source coredata.ProfileSource) bool {
+	switch source {
+	case coredata.ProfileSourceSAML, coredata.ProfileSourceSCIM:
+		return true
+	default:
+		return false
+	}
 }
 
 func (s AuthService) GetResetPasswordToken(ctx context.Context, email mail.Addr) (string, error) {

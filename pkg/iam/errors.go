@@ -162,6 +162,19 @@ func (e ErrUserInactive) Error() string {
 	return fmt.Sprintf("user %q is inactive", e.ProfileID)
 }
 
+type ErrActivationNotRequired struct {
+	ProfileID gid.GID
+	Source    coredata.ProfileSource
+}
+
+func NewActivationNotRequiredError(profileID gid.GID, source coredata.ProfileSource) error {
+	return &ErrActivationNotRequired{ProfileID: profileID, Source: source}
+}
+
+func (e ErrActivationNotRequired) Error() string {
+	return fmt.Sprintf("profile %q does not need activation: verified by %s", e.ProfileID, e.Source)
+}
+
 type ErrUserManagedBySCIM struct {
 	ProfileID gid.GID
 }

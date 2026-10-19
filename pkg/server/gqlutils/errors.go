@@ -108,6 +108,16 @@ func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
 	}
 }
 
+func ActivationNotRequired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "ACTIVATION_NOT_REQUIRED",
+		},
+	}
+}
+
 // MembershipRequired reports that the identity is authenticated but belongs to
 // no organization on an instance where signup is disabled. It is distinct from
 // FORBIDDEN so the frontend can offer a sign-out screen instead of rendering a
