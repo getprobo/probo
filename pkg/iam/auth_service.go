@@ -203,6 +203,7 @@ func (s *AuthService) ActivateAccount(
 				}
 
 				activationNotRequired = true
+
 				return nil
 			}
 

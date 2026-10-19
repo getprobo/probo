@@ -82,8 +82,8 @@ export default function ActivateAccountPage() {
         if (errors) {
           for (const err of errors) {
             if (
-              err.extensions?.code === "ACCOUNT_ALREADY_ACTIVATED" ||
-              err.extensions?.code === "ACTIVATION_NOT_REQUIRED"
+              err.extensions?.code === "ACCOUNT_ALREADY_ACTIVATED"
+              || err.extensions?.code === "ACTIVATION_NOT_REQUIRED"
             ) {
               void navigate({
                 pathname: safeContinueUrl.pathname,
