@@ -349,6 +349,12 @@ func (r *Registry) Register(reg *Registration) error {
 				return fmt.Errorf("cannot register connector provider %q: %s declares duplicate setting key %q", reg.Provider, list.field, s.Key)
 			}
 
+			switch s.Control {
+			case "", ExtraSettingControlText, ExtraSettingControlRegion:
+			default:
+				return fmt.Errorf("cannot register connector provider %q: %s setting %q has unknown control %q", reg.Provider, list.field, s.Key, s.Control)
+			}
+
 			seen[s.Key] = true
 		}
 	}

@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { Field } from "@probo/ui/src/v2/form/Field";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -29,6 +28,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { APIKeyExtraFields_provider$key } from "#/__generated__/core/APIKeyExtraFields_provider.graphql";
 
+import { ExtraSettingField } from "./ExtraSettingField";
 import { PostHogDeploymentField } from "./PostHogDeploymentField";
 
 const apiKeyExtraFieldsFragment = graphql`
@@ -36,8 +36,7 @@ const apiKeyExtraFieldsFragment = graphql`
     provider
     apiKeyExtraSettings {
       key
-      label
-      required
+      ...ExtraSettingField_setting
     }
   }
 `;
@@ -91,13 +90,11 @@ export function APIKeyExtraFields({
   }
 
   return extraSettings.map(setting => (
-    <Field key={setting.key} required={setting.required} label={setting.label}>
-      <TextField
-        name={setting.key}
-        required={setting.required}
-        value={extras[setting.key] ?? ""}
-        onValueChange={value => onChange({ ...extras, [setting.key]: value })}
-      />
-    </Field>
+    <ExtraSettingField
+      key={setting.key}
+      settingKey={setting}
+      value={extras[setting.key] ?? ""}
+      onValueChange={value => onChange({ ...extras, [setting.key]: value })}
+    />
   ));
 }

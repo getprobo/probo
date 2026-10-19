@@ -122,6 +122,24 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 		OnePasswordAccountID: &accountID,
 	})
 	require.Error(t, err)
+
+	lower := "eu"
+	raw, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
+		Provider:             coredata.ConnectorProviderOnePassword,
+		OnePasswordAccountID: &accountID,
+		OnePasswordRegion:    &lower,
+	})
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "EU", settings.Region)
+
+	unknown := "uk"
+	_, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
+		Provider:             coredata.ConnectorProviderOnePassword,
+		OnePasswordAccountID: &accountID,
+		OnePasswordRegion:    &unknown,
+	})
+	require.Error(t, err)
 }
 
 // TestClientCredentialsTokenURL pins which endpoint a client-credentials

@@ -57,7 +57,7 @@ func onePasswordRegistration() *Registration {
 		ClientCredentials: &ClientCredentialsConfig{
 			ExtraSettings: []ExtraSetting{
 				{Key: "accountId", Label: "Account ID", Required: true},
-				{Key: "region", Label: "Region", Required: true},
+				{Key: "region", Label: "Region", Required: true, Control: ExtraSettingControlRegion},
 			},
 		},
 		// Two settings shapes, one per connect path, because a different

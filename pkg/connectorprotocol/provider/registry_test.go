@@ -630,6 +630,25 @@ func TestRegistry_Register(t *testing.T) {
 		assert.Contains(t, err.Error(), "WorkloadIdentity.ExtraSettings declares a setting with an empty Key or Label")
 	})
 
+	t.Run("setting with an unknown control", func(t *testing.T) {
+		t.Parallel()
+
+		r := provider.NewRegistry()
+		err := r.Register(&provider.Registration{
+			Provider:    coredata.ConnectorProviderSlack,
+			DisplayName: "Slack",
+			ClientCredentials: &provider.ClientCredentialsConfig{
+				ExtraSettings: []provider.ExtraSetting{{
+					Key:     "region",
+					Label:   "Region",
+					Control: "DROPDOWN",
+				}},
+			},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `ClientCredentials.ExtraSettings setting "region" has unknown control "DROPDOWN"`)
+	})
+
 	t.Run("setting with an empty Label", func(t *testing.T) {
 		t.Parallel()
 

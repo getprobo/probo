@@ -42,7 +42,7 @@ func (r *connectorResolver) CanReconnect(ctx context.Context, obj *types.Connect
 }
 
 // CanReplaceAPIKey is the resolver for the canReplaceAPIKey field.
-func (r *connectorResolver) CanReplaceAPIKey(_ context.Context, obj *types.Connector) (bool, error) {
+func (r *connectorResolver) CanReplaceAPIKey(ctx context.Context, obj *types.Connector) (bool, error) {
 	if obj.Protocol != coredata.ConnectorProtocolAPIKey {
 		return false, nil
 	}

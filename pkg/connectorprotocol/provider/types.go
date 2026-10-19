@@ -686,10 +686,20 @@ func (r *Registration) WorkloadIdentityExtraSettings() []ExtraSetting {
 	return r.WorkloadIdentity.ExtraSettings
 }
 
+// ExtraSettingControl is how the connect form renders one extra setting.
+// The zero value is a text field.
+type ExtraSettingControl string
+
+const (
+	ExtraSettingControlText   ExtraSettingControl = "TEXT"
+	ExtraSettingControlRegion ExtraSettingControl = "REGION"
+)
+
 // ExtraSetting describes one extra per-provider settings field
 // surfaced on ConnectorProviderInfo for the frontend to render.
 type ExtraSetting struct {
 	Key      string
 	Label    string
 	Required bool
+	Control  ExtraSettingControl
 }

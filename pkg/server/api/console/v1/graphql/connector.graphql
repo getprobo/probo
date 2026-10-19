@@ -308,10 +308,32 @@ type AzureConnectorSetup {
     terraformSnippet: String!
 }
 
+"""
+How the connect form renders one extra setting. TEXT is a single-line input.
+REGION is the flagged EU, US and CA select.
+"""
+enum ConnectorProviderSettingControl
+    @goModel(
+        model: "go.probo.inc/probo/pkg/connectorprotocol/provider.ExtraSettingControl"
+    ) {
+    TEXT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/connectorprotocol/provider.ExtraSettingControlText"
+        )
+    REGION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/connectorprotocol/provider.ExtraSettingControlRegion"
+        )
+}
+
 type ConnectorProviderSettingInfo {
     key: String!
     label: String!
     required: Boolean!
+    """
+    control is how the connect form renders this setting. TEXT is the default.
+    """
+    control: ConnectorProviderSettingControl!
 }
 
 """

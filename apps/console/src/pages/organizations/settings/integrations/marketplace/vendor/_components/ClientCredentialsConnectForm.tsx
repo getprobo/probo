@@ -37,6 +37,7 @@ import {
 } from "../_lib/extraSettings";
 
 import { ConnectForm } from "./ConnectForm";
+import { ExtraSettingField } from "./ExtraSettingField";
 
 const clientCredentialsConnectFormFragment = graphql`
   fragment ClientCredentialsConnectForm_provider on ConnectorProviderInfo {
@@ -44,8 +45,8 @@ const clientCredentialsConnectFormFragment = graphql`
     clientCredentialsTokenUrlRequired
     clientCredentialsExtraSettings {
       key
-      label
       required
+      ...ExtraSettingField_setting
     }
     ...ConnectForm_provider
   }
@@ -80,7 +81,11 @@ export function ClientCredentialsConnectForm({
     createClientCredentialsConnectorMutation,
   );
   const tokenReady = !provider.clientCredentialsTokenUrlRequired || tokenUrl.trim() !== "";
-  const extrasValid = hasRequiredExtraSettings(provider.clientCredentialsExtraSettings, extras);
+  const extraSettings = provider.clientCredentialsExtraSettings.map(setting => ({
+    key: setting.key,
+    required: setting.required,
+  }));
+  const extrasValid = hasRequiredExtraSettings(extraSettings, extras);
   const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && tokenReady && extrasValid;
   // OVHcloud declares account/all and the create mutation uses that, so a
   // typed scope cannot take effect. Each region is its own provider.
@@ -149,32 +154,14 @@ export function ClientCredentialsConnectForm({
           <TextField name="scope" value={scope} onValueChange={setScope} />
         </Field>
       )}
-      {provider.clientCredentialsExtraSettings.map(setting => extraSettingField({
-        setting,
-        value: extras[setting.key] ?? "",
-        onValueChange: value => setExtras({ ...extras, [setting.key]: value }),
-      }))}
+      {provider.clientCredentialsExtraSettings.map(setting => (
+        <ExtraSettingField
+          key={setting.key}
+          settingKey={setting}
+          value={extras[setting.key] ?? ""}
+          onValueChange={value => setExtras({ ...extras, [setting.key]: value })}
+        />
+      ))}
     </ConnectForm>
-  );
-}
-
-function extraSettingField({
-  setting,
-  value,
-  onValueChange,
-}: {
-  setting: { readonly key: string; readonly label: string; readonly required: boolean };
-  value: string;
-  onValueChange: (value: string) => void;
-}) {
-  return (
-    <Field key={setting.key} required={setting.required} label={setting.label}>
-      <TextField
-        name={setting.key}
-        required={setting.required}
-        value={value}
-        onValueChange={onValueChange}
-      />
-    </Field>
   );
 }

@@ -426,13 +426,20 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 	switch input.Provider {
 	case coredata.ConnectorProviderOnePassword:
 		if input.OnePasswordAccountID == nil || *input.OnePasswordAccountID == "" ||
-			input.OnePasswordRegion == nil || *input.OnePasswordRegion == "" {
+			input.OnePasswordRegion == nil || strings.TrimSpace(*input.OnePasswordRegion) == "" {
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordAccountId and onePasswordRegion are required")
+		}
+
+		region := strings.ToUpper(strings.TrimSpace(*input.OnePasswordRegion))
+		switch region {
+		case "US", "EU", "CA":
+		default:
+			return nil, fmt.Errorf("cannot create 1password connector: onePasswordRegion must be US, EU or CA")
 		}
 
 		return json.Marshal(&coredata.OnePasswordUsersAPISettings{
 			AccountID: *input.OnePasswordAccountID,
-			Region:    *input.OnePasswordRegion,
+			Region:    region,
 		})
 	}
 

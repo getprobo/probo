@@ -36,10 +36,16 @@ func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.Co
 	out := make([]*types.ConnectorProviderSettingInfo, 0, len(settings))
 
 	for _, s := range settings {
+		control := s.Control
+		if control == "" {
+			control = provider.ExtraSettingControlText
+		}
+
 		out = append(out, &types.ConnectorProviderSettingInfo{
 			Key:      s.Key,
 			Label:    s.Label,
 			Required: s.Required,
+			Control:  control,
 		})
 	}
 

@@ -63,6 +63,7 @@ func TestOnePasswordRegistrationMetadata(t *testing.T) {
 	assert.Equal(t, "region", reg.ClientCredentialsExtraSettings()[1].Key)
 	assert.Equal(t, "Region", reg.ClientCredentialsExtraSettings()[1].Label)
 	assert.True(t, reg.ClientCredentialsExtraSettings()[1].Required)
+	assert.Equal(t, provider.ExtraSettingControlRegion, reg.ClientCredentialsExtraSettings()[1].Control)
 }
 
 // TestOnePassword_NewDriver_DispatchByGrantType is the pre-merge gate

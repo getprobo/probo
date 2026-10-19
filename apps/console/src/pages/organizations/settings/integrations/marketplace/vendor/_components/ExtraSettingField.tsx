@@ -1,0 +1,71 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+import { Field } from "@probo/ui/src/v2/form/Field";
+import { TextField } from "@probo/ui/src/v2/form/TextField";
+import { graphql, useFragment } from "react-relay";
+
+import type { ExtraSettingField_setting$key } from "#/__generated__/core/ExtraSettingField_setting.graphql";
+
+import { RegionSettingField } from "./RegionSettingField";
+
+const extraSettingFieldFragment = graphql`
+  fragment ExtraSettingField_setting on ConnectorProviderSettingInfo {
+    key
+    label
+    required
+    control
+  }
+`;
+
+interface ExtraSettingFieldProps {
+  settingKey: ExtraSettingField_setting$key;
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+export function ExtraSettingField({
+  settingKey,
+  value,
+  onValueChange,
+}: ExtraSettingFieldProps) {
+  const setting = useFragment(extraSettingFieldFragment, settingKey);
+
+  if (setting.control === "REGION") {
+    return (
+      <RegionSettingField
+        required={setting.required}
+        value={value || null}
+        onValueChange={onValueChange}
+      />
+    );
+  }
+
+  return (
+    <Field required={setting.required} label={setting.label}>
+      <TextField
+        name={setting.key}
+        required={setting.required}
+        value={value}
+        onValueChange={onValueChange}
+      />
+    </Field>
+  );
+}
