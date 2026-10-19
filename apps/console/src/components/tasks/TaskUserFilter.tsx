@@ -107,7 +107,7 @@ function TaskUserFilterProfile({ id }: { id: string }) {
   const data = useLazyLoadQuery<TaskUserFilterProfileQuery>(
     taskUserFilterProfileQuery,
     { id },
-    { fetchPolicy: "store-or-network" },
+    { fetchPolicy: "network-only" },
   );
   const profile = data.node?.__typename === "Profile" ? data.node : null;
   if (profile == null) {

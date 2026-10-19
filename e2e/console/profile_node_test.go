@@ -36,6 +36,7 @@ func TestNode_ProfileScopedToOrganization(t *testing.T) {
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const visibleName = "Org1 Visible Member"
+
 	profileID := factory.CreateUser(org1Owner, factory.Attrs{"fullName": visibleName})
 	otherProfileID := factory.CreateUser(org2Owner, factory.Attrs{"fullName": "Org2 Hidden Member"})
 
@@ -62,13 +63,6 @@ func TestNode_ProfileScopedToOrganization(t *testing.T) {
 	assert.Equal(t, profileID, sameOrg.Node.ID)
 	assert.Equal(t, visibleName, sameOrg.Node.FullName)
 
-	var otherOrg struct {
-		Node *struct {
-			ID       string `json:"id"`
-			FullName string `json:"fullName"`
-		} `json:"node"`
-	}
-
-	err = org1Owner.Execute(query, map[string]any{"id": otherProfileID}, &otherOrg)
-	testutil.AssertNodeNotAccessible(t, err, otherOrg.Node == nil, "profile")
+	_, err = org1Owner.Do(query, map[string]any{"id": otherProfileID})
+	testutil.RequireErrorCode(t, err, "FORBIDDEN", "profile from another organization")
 }

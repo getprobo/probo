@@ -320,7 +320,7 @@ function UserSelectProfile({ id, size }: { id: string; size: 1 | 2 }) {
   const data = useLazyLoadQuery<UserSelectProfileQuery>(
     userSelectProfileQuery,
     { id },
-    { fetchPolicy: "store-or-network" },
+    { fetchPolicy: "network-only" },
   );
   const profile = data.node?.__typename === "Profile" ? data.node : null;
   if (profile == null) {
