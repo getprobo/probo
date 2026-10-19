@@ -20,7 +20,7 @@
 
 import { usePageTitle } from "@probo/hooks";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
@@ -57,9 +57,19 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
 
   const callbackConnectorId = searchParams.get("connector_id");
   const callbackError = searchParams.get("error");
+  // useToast() returns a new object whenever a toast is added. Listing it
+  // in the effect deps re-enters this callback and adds another toast until
+  // React hits its maximum update depth.
+  const handledOAuthCallback = useRef(false);
 
   useEffect(() => {
+    if (handledOAuthCallback.current) {
+      return;
+    }
+
     if (callbackConnectorId) {
+      handledOAuthCallback.current = true;
+
       if (callbackError) {
         toast.add({
           title: t("listPage.messages.error"),
@@ -78,6 +88,7 @@ export function IntegrationsPage({ queryRef }: IntegrationsPageProps) {
     }
 
     if (callbackError) {
+      handledOAuthCallback.current = true;
       toast.add({
         title: t("listPage.messages.error"),
         description: callbackError,

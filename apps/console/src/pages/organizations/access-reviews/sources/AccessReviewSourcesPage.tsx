@@ -27,7 +27,7 @@ import { TextField } from "@probo/ui/src/v2/form/TextField";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, usePaginationFragment, usePreloadedQuery } from "react-relay";
@@ -177,12 +177,17 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
     ? (hasNext ? null : filteredSources.length)
     : accessReviewSources.totalCount;
   const callbackError = searchParams.get("error");
+  // useToast() returns a new object whenever a toast is added. Listing it
+  // in the effect deps re-enters this callback and adds another toast until
+  // React hits its maximum update depth.
+  const handledOAuthCallback = useRef(false);
 
   useEffect(() => {
-    if (!callbackError) {
+    if (handledOAuthCallback.current || !callbackError) {
       return;
     }
 
+    handledOAuthCallback.current = true;
     toast.add({
       title: t("accessReviewSourcesPage.messages.error"),
       description: callbackError,
