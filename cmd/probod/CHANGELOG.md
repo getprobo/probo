@@ -4,6 +4,21 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.318.0] - 2026-10-19
+
+### Changed
+
+- Risk treatment, scores, and owner are read-only on catalog risks; they
+  now live on treatment plans. Existing values stay visible on the risk
+  detail page and in read responses. GraphQL `createRisk`/`updateRisk`
+  and MCP risk create/update no longer accept `treatment`, likelihood,
+  impact, or owner, and the console risk list drops those columns and
+  both risk matrices
+
+### Fixed
+
+- The task assignee picker and filter show assignee names again
+
 ## [0.317.0] - 2026-10-19
 
 ### Added
