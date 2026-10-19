@@ -10,75 +10,158 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            color: #1a1a1a;
             margin: 0;
+            color: #171a18;
+            font-family: Inter, "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+            font-size: 11pt;
+            line-height: 1.35;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        .device {
+        .page {
             break-after: page;
             page-break-after: always;
         }
 
-        .device:last-child {
+        .page:last-child {
             break-after: auto;
             page-break-after: auto;
         }
 
-        h1 {
-            font-size: 18pt;
-            font-weight: 600;
-            margin: 0 0 16px;
+        .masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin: 0 0 22px;
+            padding: 0 0 10px;
+            border-bottom: 1px solid #dce1d6;
         }
 
-        h2 {
-            font-size: 13pt;
-            font-weight: 600;
-            margin: 24px 0 8px;
+        .masthead p {
+            margin: 0;
+            color: #687360;
+            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
+            font-size: 8pt;
+            letter-spacing: 0.06em;
+            line-height: 1.2;
+            text-transform: uppercase;
         }
 
-        .heading {
+        .masthead-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .heading h1,
-        .heading h2 {
-            margin: 0;
+            gap: 8px;
             min-width: 0;
         }
 
-        .device-heading {
-            margin: 0 0 16px;
+        .masthead-brand span {
+            min-width: 0;
+            overflow-wrap: anywhere;
         }
 
-        .posture-heading {
-            margin: 24px 0 8px;
-        }
-
-        .heading-icon {
-            width: 24px;
-            height: 24px;
+        .org-logo {
+            display: block;
             flex: none;
-            fill: currentColor;
+            height: 16px;
+            width: auto;
+            max-width: 80px;
+            object-fit: contain;
         }
 
-        dl {
+        .masthead-title {
+            flex: none;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .kicker {
+            display: inline-block;
+            margin: 0 0 14px;
+            padding: 3px 4px;
+            background: #e3ff32;
+            color: #1b2112;
+            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
+            font-size: 8pt;
+            letter-spacing: 0.04em;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .title {
+            margin: 0 0 28px;
+        }
+
+        h1 {
+            margin: 0;
+            color: #171a18;
+            font-size: 32pt;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            line-height: 1.05;
+            overflow-wrap: anywhere;
+        }
+
+        .subtitle {
+            margin: 10px 0 0;
+            color: #687360;
+            font-size: 12pt;
+        }
+
+        .meta {
             display: grid;
-            grid-template-columns: 160px 1fr;
-            gap: 6px 16px;
-            margin: 0;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px 24px;
+            margin: 0 0 28px;
+            padding: 12px 0;
+            border-top: 1px solid #dce1d6;
+            border-bottom: 1px solid #dce1d6;
         }
 
-        dt {
-            color: #666;
+        .meta dt {
+            margin: 0 0 4px;
+            color: #687360;
+            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
+            font-size: 8pt;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            line-height: 1.2;
+            text-transform: uppercase;
         }
 
-        dd {
+        .meta dd {
             margin: 0;
+            color: #171a18;
+            font-size: 11pt;
+            overflow-wrap: anywhere;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 14px;
+        }
+
+        .index {
+            display: inline-block;
+            padding: 3px 4px;
+            background: #e3ff32;
+            color: #1b2112;
+            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
+            font-size: 8pt;
+            letter-spacing: 0.04em;
+            line-height: 1;
+        }
+
+        h2 {
+            margin: 0;
+            color: #171a18;
+            font-size: 16pt;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
         }
 
         table {
@@ -86,172 +169,222 @@
             border-collapse: collapse;
         }
 
+        col.inset-left {
+            width: 5%;
+        }
+
+        col.inset-right {
+            width: 15%;
+        }
+
         th,
         td {
-            text-align: left;
-            padding: 6px 8px;
-            border-bottom: 1px solid #ddd;
+            padding: 12px 10px;
+            text-align: center;
             vertical-align: top;
         }
 
         th {
-            color: #666;
-            font-weight: 600;
+            background: #ebefe7;
+            color: #687360;
+            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
+            font-size: 8pt;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
 
-        .empty {
-            color: #666;
-        }
-
-        .document-header {
-            break-after: page;
-            page-break-after: always;
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        .document-title {
-            font-size: 18pt;
-            font-weight: 600;
-            margin: 16px 0 0;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 0 0 8px;
-        }
-
-        .logo {
-            display: block;
-            max-height: 48px;
-            max-width: 200px;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .organization-name {
-            font-size: 16pt;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        .document-meta {
-            font-size: 9pt;
-        }
-
-        .meta-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 1px solid #333;
-        }
-
-        .meta-table td {
-            padding: 6px 8px;
-            border: 1px solid #333;
+        td {
+            border-bottom: 1px solid #dce1d6;
+            color: #424a40;
+            font-size: 11pt;
             vertical-align: middle;
         }
 
-        .meta-table td:first-child {
-            font-weight: 600;
-            width: 25%;
-            background: #f8f8f8;
-            color: #333;
+        .inset {
+            padding: 0;
         }
 
-        .classification {
-            font-weight: bold;
-            text-transform: uppercase;
+        .check {
+            text-align: left;
+        }
+
+        td.check {
+            color: #171a18;
+        }
+
+        .status {
+            width: 4.5rem;
+            text-align: center;
+        }
+
+        .mark {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
+
+        .mark-pass {
+            fill: #218358;
+        }
+
+        .mark-fail {
+            fill: #ce2c31;
+        }
+
+        .mark-unknown {
+            fill: #e2a100;
+        }
+
+        .callout {
+            margin: 0;
+            padding: 16px 18px;
+            background: #f5f6f2;
+            border-left: 3px solid #e3ff32;
+        }
+
+        .callout .kicker {
+            margin-bottom: 10px;
+        }
+
+        .callout p:last-child {
+            margin: 0;
+            color: #171a18;
+            font-size: 12pt;
+            font-weight: 500;
+            line-height: 1.35;
         }
     </style>
 </head>
 <body>
-<header class="document-header">
-    <div class="brand">
-        {{if .LogoSrc}}
-        <img class="logo" src="{{.LogoSrc}}" alt="">
-        {{end}}
-        <p class="organization-name">{{.OrganizationName}}</p>
+<section class="page">
+    <header class="masthead">
+        <p class="masthead-brand">
+            {{if $.LogoSrc}}
+            <img class="org-logo" src="{{$.LogoSrc}}" alt="">
+            {{end}}
+            <span>{{$.OrganizationName}}</span>
+        </p>
+        <p class="masthead-title">Device posture evidence</p>
+    </header>
+    <p class="kicker">{{.Kicker}}</p>
+    <div class="title">
+        <h1>Device posture evidence</h1>
     </div>
-    <h1 class="document-title">Device posture evidence</h1>
-    <h2>Document control</h2>
-    <div class="document-meta">
-        <table class="meta-table">
-            <tbody>
-                <tr>
-                    <td>Classification</td>
-                    <td><span class="classification">Confidential</span></td>
-                </tr>
-                <tr>
-                    <td>Number of devices</td>
-                    <td>{{len .Devices}}</td>
-                </tr>
-                <tr>
-                    <td>Generated</td>
-                    <td>{{.GeneratedAt}}</td>
-                </tr>
-                <tr>
-                    <td>Generated by</td>
-                    <td>{{.GeneratedBy}}</td>
-                </tr>
-                <tr>
-                    <td>Generated on</td>
-                    <td>{{.GeneratedOn}}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</header>
-{{range .Devices}}
-<section class="device">
-    <div class="heading device-heading">
-        <svg class="heading-icon" viewBox="0 0 256 256" aria-hidden="true">
-            <path d="M224,64v88H32V64A16,16,0,0,1,48,48H208A16,16,0,0,1,224,64Z" opacity="0.2"></path>
-            <path d="M208,40H48A24,24,0,0,0,24,64V176a24,24,0,0,0,24,24h72v16H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V200h72a24,24,0,0,0,24-24V64A24,24,0,0,0,208,40ZM48,56H208a8,8,0,0,1,8,8v80H40V64A8,8,0,0,1,48,56ZM208,184H48a8,8,0,0,1-8-8V160H216v16A8,8,0,0,1,208,184Z"></path>
-        </svg>
-        <h1>{{.Hostname}}</h1>
-    </div>
-    <dl>
-        <dt>State</dt><dd>{{.State}}</dd>
-        <dt>Owner</dt><dd>{{.Owner}}</dd>
-        <dt>Hardware UUID</dt><dd>{{.HardwareUUID}}</dd>
-        <dt>Serial number</dt><dd>{{.SerialNumber}}</dd>
-        <dt>Platform</dt><dd>{{.Platform}}</dd>
-        <dt>OS version</dt><dd>{{.OSVersion}}</dd>
-        <dt>Agent version</dt><dd>{{.AgentVersion}}</dd>
-        <dt>Enrolled at</dt><dd>{{.EnrolledAt}}</dd>
-        <dt>Last seen</dt><dd>{{.LastSeenAt}}</dd>
+    <dl class="meta">
+        <div>
+            <dt>Number of devices</dt>
+            <dd>{{len .Devices}}</dd>
+        </div>
+        <div>
+            <dt>Generated</dt>
+            <dd>{{.GeneratedAt}}</dd>
+        </div>
+        <div>
+            <dt>Generated by</dt>
+            <dd>{{.GeneratedBy}}</dd>
+        </div>
+        <div>
+            <dt>Classification</dt>
+            <dd>CONFIDENTIAL</dd>
+        </div>
+        <div>
+            <dt>Generated on</dt>
+            <dd>{{.GeneratedOn}}</dd>
+        </div>
     </dl>
-    <div class="heading posture-heading">
-        <svg class="heading-icon" viewBox="0 0 256 256" aria-hidden="true">
-            <path d="M216,56v56c0,96-88,120-88,120S40,208,40,112V56a8,8,0,0,1,8-8H208A8,8,0,0,1,216,56Z" opacity="0.2"></path>
-            <path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"></path>
-        </svg>
+</section>
+{{range .Devices}}
+<section class="page">
+    <header class="masthead">
+        <p class="masthead-brand">
+            {{if $.LogoSrc}}
+            <img class="org-logo" src="{{$.LogoSrc}}" alt="">
+            {{end}}
+            <span>{{$.OrganizationName}}</span>
+        </p>
+        <p class="masthead-title">Device posture evidence</p>
+    </header>
+    <p class="kicker">{{.State}}</p>
+    <div class="title">
+        <h1>{{.Hostname}}</h1>
+        <p class="subtitle">{{.Owner}} · {{.Platform}}</p>
+    </div>
+    <dl class="meta">
+        <div>
+            <dt>Hardware UUID</dt>
+            <dd>{{.HardwareUUID}}</dd>
+        </div>
+        <div>
+            <dt>Serial number</dt>
+            <dd>{{.SerialNumber}}</dd>
+        </div>
+        <div>
+            <dt>OS version</dt>
+            <dd>{{.OSVersion}}</dd>
+        </div>
+        <div>
+            <dt>Agent version</dt>
+            <dd>{{.AgentVersion}}</dd>
+        </div>
+        <div>
+            <dt>Enrolled on</dt>
+            <dd>{{.EnrolledAt}}</dd>
+        </div>
+        <div>
+            <dt>Last seen</dt>
+            <dd>{{.LastSeenAt}}</dd>
+        </div>
+    </dl>
+    <div class="section-heading">
+        <span class="index">&gt;</span>
         <h2>Current postures</h2>
     </div>
     {{if .Postures}}
     <table>
+        <colgroup>
+            <col class="inset-left">
+            <col>
+            <col class="status">
+            <col class="inset-right">
+        </colgroup>
         <thead>
             <tr>
-                <th>Check</th>
-                <th>Value</th>
-                <th>Status</th>
+                <th class="inset"></th>
+                <th class="check">Check</th>
+                <th class="status">Status</th>
+                <th class="inset"></th>
             </tr>
         </thead>
         <tbody>
         {{range .Postures}}
             <tr>
-                <td>{{.Check}}</td>
-                <td>{{.Value}}</td>
-                <td>{{.Status}}</td>
+                <td class="inset"></td>
+                <td class="check">{{.Check}}</td>
+                <td class="status">
+                    {{if eq .Status "Pass"}}
+                    <svg class="mark mark-pass" viewBox="0 0 256 256" role="img" aria-label="Pass"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"></path></svg>
+                    {{else if eq .Status "Fail"}}
+                    <svg class="mark mark-fail" viewBox="0 0 256 256" role="img" aria-label="Fail"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"></path></svg>
+                    {{else if eq .Status "Unknown"}}
+                    <svg class="mark mark-unknown" viewBox="0 0 256 256" role="img" aria-label="Unknown"><path d="M144,180a16,16,0,1,1-16-16A16,16,0,0,1,144,180Zm92-52A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-24,0a84,84,0,1,0-84,84A84.09,84.09,0,0,0,212,128ZM128,64c-24.26,0-44,17.94-44,40v4a12,12,0,0,0,24,0v-4c0-8.82,9-16,20-16s20,7.18,20,16-9,16-20,16a12,12,0,0,0-12,12v8a12,12,0,0,0,23.73,2.56C158.31,137.88,172,122.37,172,104,172,81.94,152.26,64,128,64Z"></path></svg>
+                    {{else if eq .Status "Not applicable"}}
+                    N/A
+                    {{else}}
+                    {{.Status}}
+                    {{end}}
+                </td>
+                <td class="inset"></td>
             </tr>
         {{end}}
         </tbody>
     </table>
     {{else}}
-    <p class="empty">No posture checks recorded</p>
+    <div class="callout">
+        <p class="kicker">No checks</p>
+        <p>No posture checks recorded</p>
+    </div>
     {{end}}
 </section>
 {{end}}

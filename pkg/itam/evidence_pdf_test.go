@@ -43,6 +43,7 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	html, err := renderDeviceEvidenceHTML(deviceEvidenceDocument{
 		OrganizationName: `Acme <script>`,
 		LogoSrc:          template.URL("data:image/png;base64,aaaa"),
+		Kicker:           "16 Oct 2026 / Security & trust",
 		GeneratedAt:      "16 Oct 2026, 09:19 UTC",
 		GeneratedBy:      `Ada <b>Lovelace</b>`,
 		GeneratedOn:      "https://eu.probo.com",
@@ -61,6 +62,8 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 				Postures: []deviceEvidencePosture{
 					{Check: "Disk encryption", Value: "On", Status: "Pass"},
 					{Check: "Firewall enabled", Value: "Off", Status: "Fail"},
+					{Check: "Screen lock", Value: "Unknown", Status: "Unknown"},
+					{Check: "Remote login", Value: "None", Status: "Not applicable"},
 				},
 			},
 			{
@@ -80,17 +83,18 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	require.NoError(t, err)
 
 	body := string(html)
-	assert.Equal(t, 2, strings.Count(body, `class="device"`))
-	assert.Equal(t, 2, strings.Count(body, "M224,64v88H32V64"))
-	assert.Equal(t, 2, strings.Count(body, "M216,56v56c0,96-88,120-88,120"))
-	assert.Contains(t, body, "Acme &lt;script&gt;")
+	assert.Equal(t, 3, strings.Count(body, `class="page"`))
+	assert.Equal(t, 1, strings.Count(body, "Security &amp; trust"))
+	assert.Equal(t, 5, strings.Count(body, "Device posture evidence"))
+	assert.Equal(t, 3, strings.Count(body, `class="org-logo"`))
 	assert.Contains(t, body, `src="data:image/png;base64,aaaa"`)
-	assert.Contains(t, body, "Device posture evidence")
-	assert.Contains(t, body, "Document control")
+	assert.Contains(t, body, "Acme &lt;script&gt;")
+	assert.Contains(t, body, "16 Oct 2026 / Security &amp; trust")
+	assert.NotContains(t, body, "Device evidence</p>")
+	assert.Contains(t, body, ">Number of devices<")
+	assert.Contains(t, body, "<dd>2</dd>")
 	assert.Contains(t, body, "Classification")
-	assert.Contains(t, body, "Confidential")
-	assert.Contains(t, body, "<td>Number of devices</td>")
-	assert.Contains(t, body, "<td>2</td>")
+	assert.Contains(t, body, "CONFIDENTIAL")
 	assert.Contains(t, body, "16 Oct 2026, 09:19 UTC")
 	assert.Contains(t, body, "Ada &lt;b&gt;Lovelace&lt;/b&gt;")
 	assert.Contains(t, body, "Generated on")
@@ -99,22 +103,49 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	assert.NotContains(t, body, "<script>")
 	assert.NotContains(t, body, "<b>")
 	assert.Contains(t, body, "Ada Lovelace")
+	assert.Contains(t, body, "Current postures")
 	assert.Contains(t, body, "Disk encryption")
 	assert.Contains(t, body, "Firewall enabled")
+	assert.NotContains(t, body, "<th>Value</th>")
+	assert.NotContains(t, body, "<td>On</td>")
+	assert.Contains(t, body, `class="mark mark-pass"`)
+	assert.Contains(t, body, `aria-label="Pass"`)
+	assert.Contains(t, body, `class="mark mark-fail"`)
+	assert.Contains(t, body, `aria-label="Fail"`)
+	assert.Contains(t, body, `class="mark mark-unknown"`)
+	assert.Contains(t, body, `aria-label="Unknown"`)
+	assert.Contains(t, body, "N/A")
+	assert.NotContains(t, body, "Not applicable")
+	assert.Contains(t, body, "Hardware UUID")
 	assert.Contains(t, body, "2 Mar 2026")
 	assert.Contains(t, body, "4 Mar 2026, 14:30 UTC")
+	assert.Contains(t, body, "No checks")
 	assert.Contains(t, body, "No posture checks recorded")
 	assert.Contains(t, body, evidenceUnassignedLabel)
 	assert.Contains(t, body, evidenceNeverLabel)
+	assert.NotContains(t, body, "Powered by")
 }
 
 func TestDeviceEvidenceFooterTemplate(t *testing.T) {
 	t.Parallel()
 
-	assert.Contains(t, deviceEvidenceFooterTemplate, "Powered by <svg")
 	assert.Contains(t, deviceEvidenceFooterTemplate, `viewBox="0 0 90 24"`)
+	assert.Contains(t, deviceEvidenceFooterTemplate, "CONFIDENTIAL")
+	assert.Contains(t, deviceEvidenceFooterTemplate, "background-color:#e5484d")
+	assert.Contains(t, deviceEvidenceFooterTemplate, "-webkit-print-color-adjust:exact")
+	assert.Contains(t, deviceEvidenceFooterTemplate, "color:#fff")
 	assert.Contains(t, deviceEvidenceFooterTemplate, `<span class="pageNumber"></span>`)
 	assert.Contains(t, deviceEvidenceFooterTemplate, `<span class="totalPages"></span>`)
+	assert.NotContains(t, deviceEvidenceFooterTemplate, "Powered by")
+	assert.NotContains(t, deviceEvidenceFooterTemplate, "Device evidence")
+}
+
+func TestDeviceEvidenceImageMIME(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, deviceEvidenceImageMIME("image/png"))
+	assert.True(t, deviceEvidenceImageMIME("image/svg+xml"))
+	assert.False(t, deviceEvidenceImageMIME("text/html"))
 }
 
 func TestEvidencePlatformURL(t *testing.T) {
@@ -131,14 +162,6 @@ func TestEvidenceAuthor(t *testing.T) {
 
 	assert.Equal(t, "Ada Lovelace", evidenceAuthor("  Ada Lovelace  ", "ada@example.com"))
 	assert.Equal(t, "ada@example.com", evidenceAuthor("  ", "ada@example.com"))
-}
-
-func TestDeviceEvidenceImageMIME(t *testing.T) {
-	t.Parallel()
-
-	assert.True(t, deviceEvidenceImageMIME("image/png"))
-	assert.True(t, deviceEvidenceImageMIME("image/svg+xml"))
-	assert.False(t, deviceEvidenceImageMIME("text/html"))
 }
 
 func TestEvidencePostureValue(t *testing.T) {
