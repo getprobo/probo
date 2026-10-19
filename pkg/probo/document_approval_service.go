@@ -409,7 +409,6 @@ func (s *DocumentApprovalService) Approve(
 					SignerIPAddr:   req.SignerIPAddr,
 					SignerUA:       req.SignerUA,
 					ConsentText:    DocumentApprovalConsentText,
-					EmailSubject:   fmt.Sprintf("Your approved %s - Certificate of Completion", document.Title),
 				},
 			)
 			if err != nil {

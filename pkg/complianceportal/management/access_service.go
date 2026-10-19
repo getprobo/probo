@@ -384,6 +384,12 @@ func (s *Service) CreateAccess(
 						FileID:         *compliancePortal.NonDisclosureAgreementFileID,
 						SignerEmail:    identity.EmailAddress,
 						ConsentText:    NDAConsentText(ref.UnrefOrZero(compliancePortal.Email)),
+						EmailSubject: &esign.EmailSubject{
+							Text: fmt.Sprintf(
+								"Your signed %s - Certificate of Completion",
+								coredata.ElectronicSignatureDocumentTypeNDA.DisplayName(),
+							),
+						},
 					},
 				)
 				if err != nil {
