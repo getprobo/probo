@@ -4,6 +4,15 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.253.0] - 2026-10-19
+
+### Changed
+
+- `risk create` and `risk update` no longer accept `--treatment`,
+  `--inherent-likelihood`, `--inherent-impact`, `--residual-likelihood`,
+  `--residual-impact`, or `--owner`; these now live on treatment plans.
+  `risk view` still shows existing values
+
 ## [0.252.0] - 2026-10-19
 
 ### Changed
