@@ -1599,8 +1599,7 @@ func TestTask_Recurrence(t *testing.T) {
 
 		node := result.CreateTask.TaskEdge.Node
 		assert.NotEmpty(t, node.ID)
-		require.NotNil(t, node.Deadline)
-		assert.Equal(t, "2026-01-15T00:00:00Z", *node.Deadline)
+		requireSameInstant(t, "2026-01-15T00:00:00Z", node.Deadline)
 		require.NotNil(t, node.RecurrenceInterval)
 		assert.Equal(t, "P21D", *node.RecurrenceInterval)
 	})
@@ -1740,7 +1739,8 @@ func TestTask_Recurrence(t *testing.T) {
 
 		require.NotEmpty(t, sourceID)
 
-		expectedDeadline := deadline.Add(21 * 24 * time.Hour)
+		// P21D keeps the local clock, including across a daylight-saving change.
+		expectedDeadline := deadline.In(time.Local).AddDate(0, 0, 21)
 
 		type recurringTask struct {
 			ID                 string  `json:"id"`
@@ -1939,8 +1939,7 @@ func TestTask_Recurrence(t *testing.T) {
 		assert.Equal(t, "DONE", completed.State)
 		require.NotNil(t, completed.RecurrenceInterval)
 		assert.Equal(t, "P21D", *completed.RecurrenceInterval)
-		require.NotNil(t, completed.Deadline)
-		assert.Equal(t, "2027-01-15T00:00:00Z", *completed.Deadline)
+		requireSameInstant(t, "2027-01-15T00:00:00Z", completed.Deadline)
 	})
 
 	t.Run("completing a monthly task does not clone", func(t *testing.T) {
@@ -1998,8 +1997,7 @@ func TestTask_Recurrence(t *testing.T) {
 		assert.Equal(t, "DONE", updated.UpdateTask.Task.State)
 		require.NotNil(t, updated.UpdateTask.Task.RecurrenceInterval)
 		assert.Equal(t, "P1M", *updated.UpdateTask.Task.RecurrenceInterval)
-		require.NotNil(t, updated.UpdateTask.Task.Deadline)
-		assert.Equal(t, "2027-01-31T00:00:00Z", *updated.UpdateTask.Task.Deadline)
+		requireSameInstant(t, "2027-01-31T00:00:00Z", updated.UpdateTask.Task.Deadline)
 	})
 
 	t.Run("canceling a recurring task does not clone", func(t *testing.T) {
@@ -2135,4 +2133,18 @@ func TestTask_Recurrence(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "deadline")
 	})
+}
+
+func requireSameInstant(t *testing.T, expected string, got *string) {
+	t.Helper()
+
+	require.NotNil(t, got)
+
+	want, err := time.Parse(time.RFC3339, expected)
+	require.NoError(t, err)
+
+	actual, err := time.Parse(time.RFC3339Nano, *got)
+	require.NoError(t, err)
+
+	assert.True(t, want.Equal(actual), "expected %s, got %s", expected, *got)
 }

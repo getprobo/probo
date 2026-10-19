@@ -54,6 +54,24 @@ func TestNextRecurrenceDeadline(t *testing.T) {
 	)
 
 	t.Run(
+		"day interval keeps the local time across daylight saving",
+		func(t *testing.T) {
+			t.Parallel()
+
+			loc, err := time.LoadLocation("Europe/Paris")
+			require.NoError(t, err)
+
+			deadline := time.Date(2026, 10, 19, 10, 0, 0, 0, loc)
+			now := deadline.Add(time.Hour)
+
+			next, err := nextRecurrenceDeadline(deadline, mustInterval(t, "P21D"), now)
+			require.NoError(t, err)
+			assert.Equal(t, deadline.Hour(), next.In(loc).Hour())
+			assert.True(t, next.Equal(deadline.AddDate(0, 0, 21)))
+		},
+	)
+
+	t.Run(
 		"repeats when the deadline is this instant",
 		func(t *testing.T) {
 			t.Parallel()
