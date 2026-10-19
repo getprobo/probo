@@ -4,6 +4,15 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.254.0] - 2026-10-19
+
+### Changed
+
+- Device `Get Many` filters by several `States`, `Platforms`, and
+  `Agent Versions` (comma-separated). These options replace the single
+  `State`, `Platform`, and `Agent Version` fields, so saved workflows
+  that set the old fields must select the filters again
+
 ## [0.253.0] - 2026-10-16
 
 ### Added
