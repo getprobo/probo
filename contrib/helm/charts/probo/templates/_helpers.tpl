@@ -131,8 +131,12 @@ S3 access key
 {{- define "probo.s3.accessKeyId" -}}
 {{- if .Values.seaweedfs.enabled }}
 {{- .Values.seaweedfs.auth.accessKey | required "seaweedfs.auth.accessKey is required when seaweedfs.enabled=true" }}
+{{- else if and .Values.s3.endpoint (not .Values.s3.accessKeyId) }}
+{{- fail "s3.accessKeyId is required when s3.endpoint is set. Non-AWS S3-compatible storage has no workload-identity fallback; set both keys, or leave s3.endpoint empty for AWS." }}
+{{- else if and .Values.s3.secretAccessKey (not .Values.s3.accessKeyId) }}
+{{- fail "s3.accessKeyId is required when s3.secretAccessKey is set. Leave both keys empty, and s3.endpoint empty, to use AWS workload identity instead of static credentials." }}
 {{- else }}
-{{- .Values.s3.accessKeyId | required "s3.accessKeyId is required when seaweedfs.enabled=false" }}
+{{- .Values.s3.accessKeyId }}
 {{- end }}
 {{- end }}
 
@@ -142,8 +146,12 @@ S3 secret key
 {{- define "probo.s3.secretAccessKey" -}}
 {{- if .Values.seaweedfs.enabled }}
 {{- .Values.seaweedfs.auth.secretKey | required "seaweedfs.auth.secretKey is required when seaweedfs.enabled=true" }}
+{{- else if and .Values.s3.endpoint (not .Values.s3.secretAccessKey) }}
+{{- fail "s3.secretAccessKey is required when s3.endpoint is set. Non-AWS S3-compatible storage has no workload-identity fallback; set both keys, or leave s3.endpoint empty for AWS." }}
+{{- else if and .Values.s3.accessKeyId (not .Values.s3.secretAccessKey) }}
+{{- fail "s3.secretAccessKey is required when s3.accessKeyId is set. Leave both keys empty, and s3.endpoint empty, to use AWS workload identity instead of static credentials." }}
 {{- else }}
-{{- .Values.s3.secretAccessKey | required "s3.secretAccessKey is required when seaweedfs.enabled=false" }}
+{{- .Values.s3.secretAccessKey }}
 {{- end }}
 {{- end }}
 

@@ -181,8 +181,14 @@ All deployments require:
 - `probo.oauth2.signingKey` - PEM private key used to sign OAuth2 tokens
 - `postgresql.host` - PostgreSQL server hostname
 - `postgresql.password` - Database password
-- `s3.accessKeyId` - S3 access credentials
-- `s3.secretAccessKey` - S3 secret key
+
+S3 credentials are conditionally required, and only when
+`seaweedfs.enabled=false`. The chart default (`seaweedfs.enabled=true`) deploys
+bundled SeaweedFS and does not read `s3.accessKeyId` or `s3.secretAccessKey`.
+On AWS, set `seaweedfs.enabled=false` and leave `s3.endpoint`,
+`s3.accessKeyId`, and `s3.secretAccessKey` blank to authenticate via EKS Pod
+Identity or IRSA. On other S3-compatible storage, set `s3.endpoint` and both
+keys.
 
 See [values.yaml](charts/probo/values.yaml) for all available options.
 
@@ -534,8 +540,8 @@ regenerate the config from all `PROBOD_*` env vars.
 | s3.region                                               | string  | `"us-east-1"`                                      | S3 region                                                                                           |
 | s3.bucket                                               | string  | `"probod"`                                         | S3 bucket name                                                                                      |
 | s3.endpoint                                             | string  | `""`                                               | S3 endpoint (leave empty for AWS S3, set for S3-compatible storage)                                 |
-| s3.accessKeyId                                          | string  | `""`                                               | **REQUIRED** (when seaweedfs.enabled=false) S3 access key                                           |
-| s3.secretAccessKey                                      | string  | `""`                                               | **REQUIRED** (when seaweedfs.enabled=false) S3 secret key                                           |
+| s3.accessKeyId                                          | string  | `""`                                               | S3 access key. Set with secretAccessKey. Leave both blank only for AWS workload identity (seaweedfs.enabled=false and empty s3.endpoint) |
+| s3.secretAccessKey                                      | string  | `""`                                               | S3 secret key. Set with accessKeyId. Leave both blank only for AWS workload identity (seaweedfs.enabled=false and empty s3.endpoint)     |
 | seaweedfs.enabled                                       | bool    | `true`                                             | Enable included SeaweedFS for demo purposes (NOT for production)                                    |
 | seaweedfs.image.repository                              | string  | `"chrislusf/seaweedfs"`                            | SeaweedFS container image repository                                                                |
 | seaweedfs.image.tag                                     | string  | `"latest"`                                         | SeaweedFS image tag                                                                                 |

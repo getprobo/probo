@@ -170,8 +170,15 @@ The following parameters **must** be configured:
 | `probo.oauth2.signingKey` | PEM-encoded OAuth2 private signing key |
 | `postgresql.host` | PostgreSQL hostname |
 | `postgresql.password` | PostgreSQL password |
-| `s3.accessKeyId` | S3 access key ID |
-| `s3.secretAccessKey` | S3 secret access key |
+
+S3 credentials are conditionally required, and only when
+`seaweedfs.enabled=false`. The chart default (`seaweedfs.enabled=true`) deploys
+bundled SeaweedFS and does not read `s3.accessKeyId` or `s3.secretAccessKey`.
+On AWS, set `seaweedfs.enabled=false` and leave `s3.endpoint`,
+`s3.accessKeyId`, and `s3.secretAccessKey` blank to authenticate via EKS Pod
+Identity or IRSA. In that mode, setting only one of the two keys fails at
+install time. Off AWS, set `seaweedfs.enabled=false`, set `s3.endpoint`, and
+set both keys; an empty pair is rejected when `s3.endpoint` is set.
 
 ### Secret Format Quick Reference
 

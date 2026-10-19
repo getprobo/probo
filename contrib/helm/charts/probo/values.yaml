@@ -576,8 +576,16 @@ s3:
   # For AWS S3, leave endpoint empty
   # For S3-compatible storage (SeaweedFS, DigitalOcean Spaces, etc.), set the endpoint
   endpoint: ""
-  accessKeyId: ""  # REQUIRED when seaweedfs.enabled=false: S3 access key
-  secretAccessKey: ""  # REQUIRED when seaweedfs.enabled=false: S3 secret key
+  # Set both to authenticate with a static key pair. On AWS, set
+  # seaweedfs.enabled=false and leave endpoint, accessKeyId, and
+  # secretAccessKey empty to use the AWS SDK default credential chain
+  # (EKS Pod Identity, IRSA, instance role). Setting only one key is
+  # rejected at render time. A non-empty endpoint (DigitalOcean Spaces,
+  # GCS, and so on) has no fallback: both keys are required, and an empty
+  # pair fails at render time. These values are unused while
+  # seaweedfs.enabled=true (the default).
+  accessKeyId: ""  # Ignored while seaweedfs.enabled=true (the default)
+  secretAccessKey: ""  # Ignored while seaweedfs.enabled=true (the default)
   # Use path-style URLs for selected S3-compatible services
   # When true: https://endpoint/bucket/key
   # When false (default): https://bucket.endpoint/key
