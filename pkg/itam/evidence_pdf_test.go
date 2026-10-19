@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filetemplate"
 )
 
 func TestRenderDeviceEvidenceHTML(t *testing.T) {
@@ -41,12 +42,16 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	serial := "SN-1"
 
 	html, err := renderDeviceEvidenceHTML(deviceEvidenceDocument{
-		OrganizationName: `Acme <script>`,
-		LogoSrc:          template.URL("data:image/png;base64,aaaa"),
-		Kicker:           "16 Oct 2026 / Security & trust",
-		GeneratedAt:      "16 Oct 2026, 09:19 UTC",
-		GeneratedBy:      `Ada <b>Lovelace</b>`,
-		GeneratedOn:      "https://eu.probo.com",
+		Layout: filetemplate.Layout{
+			Title:            "Device posture evidence",
+			OrganizationName: `Acme <script>`,
+			LogoSrc:          template.URL("data:image/png;base64,aaaa"),
+			Classification:   deviceEvidenceClassification,
+		},
+		Kicker:      "16 Oct 2026 / Security & trust",
+		GeneratedAt: "16 Oct 2026, 09:19 UTC",
+		GeneratedBy: `Ada <b>Lovelace</b>`,
+		GeneratedOn: "https://eu.probo.com",
 		Devices: []deviceEvidencePage{
 			{
 				Hostname:     hostname,
@@ -124,20 +129,6 @@ func TestRenderDeviceEvidenceHTML(t *testing.T) {
 	assert.Contains(t, body, evidenceUnassignedLabel)
 	assert.Contains(t, body, evidenceNeverLabel)
 	assert.NotContains(t, body, "Powered by")
-}
-
-func TestDeviceEvidenceFooterTemplate(t *testing.T) {
-	t.Parallel()
-
-	assert.Contains(t, deviceEvidenceFooterTemplate, `viewBox="0 0 90 24"`)
-	assert.Contains(t, deviceEvidenceFooterTemplate, "CONFIDENTIAL")
-	assert.Contains(t, deviceEvidenceFooterTemplate, "background-color:#e5484d")
-	assert.Contains(t, deviceEvidenceFooterTemplate, "-webkit-print-color-adjust:exact")
-	assert.Contains(t, deviceEvidenceFooterTemplate, "color:#fff")
-	assert.Contains(t, deviceEvidenceFooterTemplate, `<span class="pageNumber"></span>`)
-	assert.Contains(t, deviceEvidenceFooterTemplate, `<span class="totalPages"></span>`)
-	assert.NotContains(t, deviceEvidenceFooterTemplate, "Powered by")
-	assert.NotContains(t, deviceEvidenceFooterTemplate, "Device evidence")
 }
 
 func TestDeviceEvidenceImageMIME(t *testing.T) {

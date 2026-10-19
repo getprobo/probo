@@ -1,346 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Device posture evidence</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 16mm;
-        }
-
-        body {
-            margin: 0;
-            color: #171a18;
-            font-family: Inter, "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-            font-size: 11pt;
-            line-height: 1.35;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        .page {
-            break-after: page;
-            page-break-after: always;
-        }
-
-        .page:last-child {
-            break-after: auto;
-            page-break-after: auto;
-        }
-
-        .masthead {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-            margin: 0 0 22px;
-            padding: 0 0 10px;
-            border-bottom: 1px solid #dce1d6;
-        }
-
-        .masthead p {
-            margin: 0;
-            color: #687360;
-            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
-            font-size: 8pt;
-            letter-spacing: 0.06em;
-            line-height: 1.2;
-            text-transform: uppercase;
-        }
-
-        .masthead-brand {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-        }
-
-        .masthead-brand span {
-            min-width: 0;
-            overflow-wrap: anywhere;
-        }
-
-        .org-logo {
-            display: block;
-            flex: none;
-            height: 16px;
-            width: auto;
-            max-width: 80px;
-            object-fit: contain;
-        }
-
-        .masthead-title {
-            flex: none;
-            letter-spacing: 0;
-            text-transform: none;
-        }
-
-        .kicker {
-            display: inline-block;
-            margin: 0 0 14px;
-            padding: 3px 4px;
-            background: #e3ff32;
-            color: #1b2112;
-            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
-            font-size: 8pt;
-            letter-spacing: 0.04em;
-            line-height: 1;
-            text-transform: uppercase;
-        }
-
-        .title {
-            margin: 0 0 28px;
-        }
-
-        h1 {
-            margin: 0;
-            color: #171a18;
-            font-size: 32pt;
-            font-weight: 500;
-            letter-spacing: -0.02em;
-            line-height: 1.05;
-            overflow-wrap: anywhere;
-        }
-
-        .subtitle {
-            margin: 10px 0 0;
-            color: #687360;
-            font-size: 12pt;
-        }
-
-        .meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 16px 24px;
-            margin: 0 0 28px;
-            padding: 12px 0;
-            border-top: 1px solid #dce1d6;
-            border-bottom: 1px solid #dce1d6;
-        }
-
-        .meta dt {
-            margin: 0 0 4px;
-            color: #687360;
-            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
-            font-size: 8pt;
-            font-weight: 400;
-            letter-spacing: 0.04em;
-            line-height: 1.2;
-            text-transform: uppercase;
-        }
-
-        .meta dd {
-            margin: 0;
-            color: #171a18;
-            font-size: 11pt;
-            overflow-wrap: anywhere;
-        }
-
-        .section-heading {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0 0 14px;
-        }
-
-        .index {
-            display: inline-block;
-            padding: 3px 4px;
-            background: #e3ff32;
-            color: #1b2112;
-            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
-            font-size: 8pt;
-            letter-spacing: 0.04em;
-            line-height: 1;
-        }
-
-        h2 {
-            margin: 0;
-            color: #171a18;
-            font-size: 16pt;
-            font-weight: 500;
-            letter-spacing: -0.01em;
-            line-height: 1.2;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        col.inset-left {
-            width: 5%;
-        }
-
-        col.inset-right {
-            width: 15%;
-        }
-
-        th,
-        td {
-            padding: 12px 10px;
-            text-align: center;
-            vertical-align: top;
-        }
-
-        th {
-            background: #ebefe7;
-            color: #687360;
-            font-family: Menlo, Consolas, "Liberation Mono", Monaco, monospace;
-            font-size: 8pt;
-            font-weight: 400;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        td {
-            border-bottom: 1px solid #dce1d6;
-            color: #424a40;
-            font-size: 11pt;
-            vertical-align: middle;
-        }
-
-        .inset {
-            padding: 0;
-        }
-
-        .check {
-            text-align: left;
-        }
-
-        td.check {
-            color: #171a18;
-        }
-
-        .status {
-            width: 4.5rem;
-            text-align: center;
-        }
-
-        .mark {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            vertical-align: middle;
-        }
-
-        .mark-pass {
-            fill: #218358;
-        }
-
-        .mark-fail {
-            fill: #ce2c31;
-        }
-
-        .mark-unknown {
-            fill: #e2a100;
-        }
-
-        .callout {
-            margin: 0;
-            padding: 16px 18px;
-            background: #f5f6f2;
-            border-left: 3px solid #e3ff32;
-        }
-
-        .callout .kicker {
-            margin-bottom: 10px;
-        }
-
-        .callout p:last-child {
-            margin: 0;
-            color: #171a18;
-            font-size: 12pt;
-            font-weight: 500;
-            line-height: 1.35;
-        }
-    </style>
-</head>
-<body>
+{{define "body"}}
 <section class="page">
-    <header class="masthead">
-        <p class="masthead-brand">
-            {{if $.LogoSrc}}
-            <img class="org-logo" src="{{$.LogoSrc}}" alt="">
-            {{end}}
-            <span>{{$.OrganizationName}}</span>
-        </p>
-        <p class="masthead-title">Device posture evidence</p>
-    </header>
-    <p class="kicker">{{.Kicker}}</p>
-    <div class="title">
-        <h1>Device posture evidence</h1>
-    </div>
+    {{template "masthead" .Layout}}
+    {{template "kicker" .Kicker}}
+    {{template "title" (titleBlock "Device posture evidence" "")}}
+
     <dl class="meta">
-        <div>
-            <dt>Number of devices</dt>
-            <dd>{{len .Devices}}</dd>
-        </div>
-        <div>
-            <dt>Generated</dt>
-            <dd>{{.GeneratedAt}}</dd>
-        </div>
-        <div>
-            <dt>Generated by</dt>
-            <dd>{{.GeneratedBy}}</dd>
-        </div>
-        <div>
-            <dt>Classification</dt>
-            <dd>CONFIDENTIAL</dd>
-        </div>
-        <div>
-            <dt>Generated on</dt>
-            <dd>{{.GeneratedOn}}</dd>
-        </div>
+        {{template "metaEntry" (meta "Number of devices" (printf "%d" (len .Devices)))}}
+        {{template "metaEntry" (meta "Generated" .GeneratedAt)}}
+        {{template "metaEntry" (meta "Generated by" .GeneratedBy)}}
+        {{template "metaEntry" (meta "Classification" .Layout.Classification)}}
+        {{template "metaEntry" (meta "Generated on" .GeneratedOn)}}
     </dl>
 </section>
 {{range .Devices}}
 <section class="page">
-    <header class="masthead">
-        <p class="masthead-brand">
-            {{if $.LogoSrc}}
-            <img class="org-logo" src="{{$.LogoSrc}}" alt="">
-            {{end}}
-            <span>{{$.OrganizationName}}</span>
-        </p>
-        <p class="masthead-title">Device posture evidence</p>
-    </header>
-    <p class="kicker">{{.State}}</p>
-    <div class="title">
-        <h1>{{.Hostname}}</h1>
-        <p class="subtitle">{{.Owner}} · {{.Platform}}</p>
-    </div>
+    {{template "masthead" $.Layout}}
+    {{template "kicker" .State}}
+    {{template "title" (titleBlock .Hostname (printf "%s · %s" .Owner .Platform))}}
+
     <dl class="meta">
-        <div>
-            <dt>Hardware UUID</dt>
-            <dd>{{.HardwareUUID}}</dd>
-        </div>
-        <div>
-            <dt>Serial number</dt>
-            <dd>{{.SerialNumber}}</dd>
-        </div>
-        <div>
-            <dt>OS version</dt>
-            <dd>{{.OSVersion}}</dd>
-        </div>
-        <div>
-            <dt>Agent version</dt>
-            <dd>{{.AgentVersion}}</dd>
-        </div>
-        <div>
-            <dt>Enrolled on</dt>
-            <dd>{{.EnrolledAt}}</dd>
-        </div>
-        <div>
-            <dt>Last seen</dt>
-            <dd>{{.LastSeenAt}}</dd>
-        </div>
+        {{template "metaEntry" (meta "Hardware UUID" .HardwareUUID)}}
+        {{template "metaEntry" (meta "Serial number" .SerialNumber)}}
+        {{template "metaEntry" (meta "OS version" .OSVersion)}}
+        {{template "metaEntry" (meta "Agent version" .AgentVersion)}}
+        {{template "metaEntry" (meta "Enrolled on" .EnrolledAt)}}
+        {{template "metaEntry" (meta "Last seen" .LastSeenAt)}}
     </dl>
-    <div class="section-heading">
-        <span class="index">&gt;</span>
-        <h2>Current postures</h2>
-    </div>
+
+    {{template "section" (heading ">" "Current postures")}}
     {{if .Postures}}
     <table>
         <colgroup>
@@ -358,35 +45,19 @@
             </tr>
         </thead>
         <tbody>
-        {{range .Postures}}
+            {{range .Postures}}
             <tr>
                 <td class="inset"></td>
                 <td class="check">{{.Check}}</td>
-                <td class="status">
-                    {{if eq .Status "Pass"}}
-                    <svg class="mark mark-pass" viewBox="0 0 256 256" role="img" aria-label="Pass"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"></path></svg>
-                    {{else if eq .Status "Fail"}}
-                    <svg class="mark mark-fail" viewBox="0 0 256 256" role="img" aria-label="Fail"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"></path></svg>
-                    {{else if eq .Status "Unknown"}}
-                    <svg class="mark mark-unknown" viewBox="0 0 256 256" role="img" aria-label="Unknown"><path d="M144,180a16,16,0,1,1-16-16A16,16,0,0,1,144,180Zm92-52A108,108,0,1,1,128,20,108.12,108.12,0,0,1,236,128Zm-24,0a84,84,0,1,0-84,84A84.09,84.09,0,0,0,212,128ZM128,64c-24.26,0-44,17.94-44,40v4a12,12,0,0,0,24,0v-4c0-8.82,9-16,20-16s20,7.18,20,16-9,16-20,16a12,12,0,0,0-12,12v8a12,12,0,0,0,23.73,2.56C158.31,137.88,172,122.37,172,104,172,81.94,152.26,64,128,64Z"></path></svg>
-                    {{else if eq .Status "Not applicable"}}
-                    N/A
-                    {{else}}
-                    {{.Status}}
-                    {{end}}
-                </td>
+                <td class="status">{{template "status" .Status}}</td>
                 <td class="inset"></td>
             </tr>
-        {{end}}
+            {{end}}
         </tbody>
     </table>
     {{else}}
-    <div class="callout">
-        <p class="kicker">No checks</p>
-        <p>No posture checks recorded</p>
-    </div>
+    {{template "callout" (callout "No checks" "No posture checks recorded")}}
     {{end}}
 </section>
 {{end}}
-</body>
-</html>
+{{end}}
