@@ -4,6 +4,38 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.317.0] - 2026-10-19
+
+### Added
+
+- The console device list filters by posture warnings, keeping devices
+  whose latest posture is failing or unknown. The warning badge opens
+  its list of failing checks in a popover that stays open until closed
+
+### Changed
+
+- Device list filters accept several values and keep devices that match
+  any of them. GraphQL `state`, `platform`, and `agentVersion` become
+  `states`, `platforms`, and `agentVersions`. MCP `state`, `platform`,
+  and `agent_version` become `states`, `platforms`, and
+  `agent_versions`
+- The device evidence PDF uses the same masthead, kickers, and table
+  style as the compliance documents
+- The Linear connector card is named Linear Task Sync and shows the
+  Linear logo
+
+### Fixed
+
+- Device posture badges match the stored agent verdicts. A screen-lock
+  delay and a recorded password length no longer show as failures, and
+  a check that does not apply is no longer shown as a warning
+- The device details back link only covers its label and icon
+- The compliance portal audit list shows the translated "To book" state
+  instead of a raw key
+- Accepting an invitation on a SAML or SCIM profile no longer fails as
+  an internal error. The page follows the continue URL, and SCIM
+  expires pending invitations when it leaves the profile active
+
 ## [0.316.0] - 2026-10-16
 
 ### Added
