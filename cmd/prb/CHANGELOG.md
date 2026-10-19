@@ -4,6 +4,13 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.252.0] - 2026-10-19
+
+### Changed
+
+- `device list` accepts `--state`, `--platform`, and `--agent-version`
+  several times and keeps devices that match any value
+
 ## [0.251.0] - 2026-10-16
 
 ### Added
