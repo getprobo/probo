@@ -1764,26 +1764,6 @@
       "v1:webhook": "Gérer les webhooks"
     }
   },
-  "createPasswordPage": {
-    "pageTitle": "Créer un mot de passe",
-    "title": "Créer un mot de passe",
-    "description": "Définissez un mot de passe pour votre compte, comportant au moins 8 caractères",
-    "alreadyHaveAccount": "Vous avez déjà un compte ?",
-    "messages": {
-      "created": "Compte créé avec succès"
-    },
-    "errors": {
-      "creationFailed": "Échec de la création du mot de passe",
-      "missingToken": "Veuillez utiliser le lien de création de mot de passe envoyé par e-mail"
-    },
-    "fields": {
-      "password": "Mot de passe"
-    },
-    "actions": {
-      "save": "Enregistrer",
-      "logIn": "Connectez-vous ici"
-    }
-  },
   "deviceActivationPage": {
     "pageTitle": "Activation de l’appareil",
     "title": "Activation de l’appareil",

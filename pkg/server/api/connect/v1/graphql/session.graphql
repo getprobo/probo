@@ -150,7 +150,6 @@ type SignOutPayload {
 }
 
 type ActivateAccountPayload {
-  createPasswordToken: String
   ssoLoginUrl: String
   profile: Profile
 }

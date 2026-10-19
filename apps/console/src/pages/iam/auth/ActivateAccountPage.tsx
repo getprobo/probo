@@ -39,7 +39,6 @@ const activateAccountMutation = graphql`
     $input: ActivateAccountInput!
   ) {
     activateAccount(input: $input) {
-      createPasswordToken
       ssoLoginUrl
     }
   }
@@ -120,21 +119,6 @@ export default function ActivateAccountPage() {
           url.searchParams.set("continue", safeContinueUrl.toString());
 
           window.location.href = url.toString();
-          return;
-        }
-
-        if (activateAccount.createPasswordToken) {
-          const search = new URLSearchParams([
-            ["token", activateAccount.createPasswordToken],
-            ["continue", safeContinueUrl.toString()],
-          ]);
-          void navigate(
-            {
-              pathname: "/auth/create-password",
-              search: "?" + search.toString(),
-            },
-            { replace: true },
-          );
           return;
         }
 

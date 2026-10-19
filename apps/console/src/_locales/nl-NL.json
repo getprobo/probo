@@ -1764,26 +1764,6 @@
       "v1:webhook": "Webhooks beheren"
     }
   },
-  "createPasswordPage": {
-    "pageTitle": "Wachtwoord aanmaken",
-    "title": "Maak een wachtwoord aan",
-    "description": "Stel een wachtwoord in voor uw account, van minimaal 8 tekens",
-    "alreadyHaveAccount": "Heeft u al een account?",
-    "messages": {
-      "created": "Account succesvol aangemaakt"
-    },
-    "errors": {
-      "creationFailed": "Aanmaken van wachtwoord mislukt",
-      "missingToken": "Gebruik de wachtwoordinstellink uit uw e-mail"
-    },
-    "fields": {
-      "password": "Wachtwoord"
-    },
-    "actions": {
-      "save": "Opslaan",
-      "logIn": "Hier inloggen"
-    }
-  },
   "deviceActivationPage": {
     "pageTitle": "Apparaatactivering",
     "title": "Apparaatactivering",

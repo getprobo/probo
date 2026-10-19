@@ -177,7 +177,7 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		r.sessionCookie.Clear(w)
 	}
 
-	identity, user, err := r.iam.AuthService.ActivateAccount(
+	user, err := r.iam.AuthService.ActivateAccount(
 		ctx,
 		&iam.ActivateAccountRequest{
 			InvitationToken: input.Token,
@@ -229,30 +229,9 @@ func (r *mutationResolver) ActivateAccount(ctx context.Context, input types.Acti
 		ssoLoginURL = new(r.SSOLoginURL(samlConfig.ID))
 	}
 
-	if ssoLoginURL != nil {
-		return &types.ActivateAccountPayload{
-			CreatePasswordToken: nil,
-			SsoLoginURL:         ssoLoginURL,
-			Profile:             types.NewProfile(user),
-		}, nil
-	}
-
-	var createPasswordToken *string
-
-	if identity.HashedPassword == nil {
-		token, err := r.iam.AuthService.GetResetPasswordToken(ctx, identity.EmailAddress)
-		if err != nil {
-			r.logger.ErrorCtx(ctx, "cannot generate password create token", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		createPasswordToken = &token
-	}
-
 	return &types.ActivateAccountPayload{
-		CreatePasswordToken: createPasswordToken,
-		SsoLoginURL:         nil,
-		Profile:             types.NewProfile(user),
+		SsoLoginURL: ssoLoginURL,
+		Profile:     types.NewProfile(user),
 	}, nil
 }
 

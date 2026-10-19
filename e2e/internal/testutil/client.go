@@ -161,7 +161,9 @@ func (c *Client) SetupTestUserInOrg(ownerClient *Client) {
 	ownerClient.inviteUser(profileID)
 
 	token := c.getActivationToken(email)
-	passwordToken := c.activateUser(token)
+	c.activateUser(token)
+	c.forgotPassword(email)
+	passwordToken := c.getPasswordResetToken(email)
 	c.resetPassword(password, passwordToken)
 	c.signIn(email, password)
 
@@ -584,29 +586,42 @@ func (c *Client) pollForLinkToken(searchQuery string) string {
 	return ""
 }
 
-func (c *Client) activateUser(token string) string {
+func (c *Client) activateUser(token string) {
 	const query = `
 		mutation($input: ActivateAccountInput!) {
 			activateAccount(input: $input) {
-				createPasswordToken
+				profile { id }
 			}
 		}
 	`
-
-	var result struct {
-		ActivateAccount struct {
-			CreatePasswordToken string `json:"createPasswordToken"`
-		} `json:"activateAccount"`
-	}
 
 	err := c.ExecuteConnect(query, map[string]any{
 		"input": map[string]any{
 			"token": token,
 		},
-	}, &result)
+	}, nil)
 	require.NoError(c.T, err, "activateAccount mutation failed")
+}
 
-	return result.ActivateAccount.CreatePasswordToken
+func (c *Client) forgotPassword(email string) {
+	const query = `
+		mutation($input: ForgotPasswordInput!) {
+			forgotPassword(input: $input) {
+				success
+			}
+		}
+	`
+
+	err := c.ExecuteConnect(query, map[string]any{
+		"input": map[string]any{
+			"email": email,
+		},
+	}, nil)
+	require.NoError(c.T, err, "forgotPassword mutation failed")
+}
+
+func (c *Client) getPasswordResetToken(email string) string {
+	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Reset your password\"", email))
 }
 
 func (c *Client) resetPassword(password string, token string) {

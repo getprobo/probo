@@ -135,21 +135,20 @@ func (req *CreateIdentityWithPasswordRequest) Validate() error {
 func (s *AuthService) ActivateAccount(
 	ctx context.Context,
 	req *ActivateAccountRequest,
-) (*coredata.Identity, *coredata.MembershipProfile, error) {
+) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
-		return nil, nil, fmt.Errorf("invalid request: %w", err)
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	payload, err := statelesstoken.ValidateToken[InvitationTokenData](s.tokenSecret, TokenTypeOrganizationInvitation, req.InvitationToken)
 	if err != nil {
-		return nil, nil, NewInvalidTokenError()
+		return nil, NewInvalidTokenError()
 	}
 
 	var (
 		scope                 = coredata.NewScopeFromObjectID(payload.Data.InvitationID)
 		invitation            = &coredata.Invitation{}
 		profile               *coredata.MembershipProfile
-		identity              *coredata.Identity
 		now                   = time.Now()
 		activationNotRequired bool
 	)
@@ -215,7 +214,7 @@ func (s *AuthService) ActivateAccount(
 				}
 			}
 
-			identity = &coredata.Identity{}
+			identity := &coredata.Identity{}
 			if err := identity.LoadByID(ctx, tx, profile.IdentityID); err != nil {
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
@@ -254,14 +253,14 @@ func (s *AuthService) ActivateAccount(
 			return nil
 		},
 	); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if activationNotRequired {
-		return nil, nil, NewActivationNotRequiredError(profile.ID, profile.Source)
+		return nil, NewActivationNotRequiredError(profile.ID, profile.Source)
 	}
 
-	return identity, profile, nil
+	return profile, nil
 }
 
 func profileVerifiedByProvisioner(source coredata.ProfileSource) bool {

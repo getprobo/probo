@@ -1207,16 +1207,6 @@
       "v1:webhook": "Manage webhooks"
     }
   },
-  "createPasswordPage": {
-    "pageTitle": "Create Password",
-    "title": "Create a password",
-    "description": "Set a password for your account, with at least 8 characters",
-    "alreadyHaveAccount": "Already have an account?",
-    "messages": { "created": "Account created successfully" },
-    "errors": { "creationFailed": "Password creation failed", "missingToken": "Please use the password setup link from your email" },
-    "fields": { "password": "Password" },
-    "actions": { "save": "Save", "logIn": "Log in here" }
-  },
   "deviceActivationPage": {
     "pageTitle": "Device Activation",
     "title": "Device Activation",
