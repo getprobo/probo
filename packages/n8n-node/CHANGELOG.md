@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.255.0] - 2026-10-19
+
+### Changed
+
+- Risk `Create` and `Update` no longer take `Treatment`, likelihood,
+  impact, or `Owner ID`; these now live on treatment plans. Saved
+  workflows that set those fields must remove them
+
 ## [0.254.0] - 2026-10-19
 
 ### Changed
