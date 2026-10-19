@@ -27,7 +27,7 @@ import (
 func linearSyncRegistration() *Registration {
 	return &Registration{
 		Provider:    coredata.ConnectorProviderLinearSync,
-		DisplayName: "Linear Sync",
+		DisplayName: "Linear Task Sync",
 		Endpoints: Endpoints{
 			Auth:  "https://linear.app/oauth/authorize",
 			Token: "https://api.linear.app/oauth/token",

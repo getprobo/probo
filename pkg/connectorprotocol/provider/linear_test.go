@@ -50,7 +50,7 @@ func TestLinearSyncRegistrationScopes(t *testing.T) {
 	reg, ok := r.Get(coredata.ConnectorProviderLinearSync)
 	require.True(t, ok, "linear sync provider must be registered")
 
-	assert.Equal(t, "Linear Sync", reg.DisplayName)
+	assert.Equal(t, "Linear Task Sync", reg.DisplayName)
 	assert.Equal(t, []string{"read", "write", "issues:create"}, reg.OAuth2.Scopes)
 	assert.Equal(t, ",", reg.OAuth2.ScopeSeparator)
 	assert.Equal(t, "app", reg.OAuth2.ExtraAuthParams["actor"])

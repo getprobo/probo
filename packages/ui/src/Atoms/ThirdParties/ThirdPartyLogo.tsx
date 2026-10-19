@@ -135,6 +135,7 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   INTERCOM: Intercom,
   LANGFUSE: Langfuse,
   LINEAR: Linear,
+  LINEAR_SYNC: Linear,
   MERCURY: Mercury,
   METABASE: Metabase,
   MICROSOFT: Microsoft,
