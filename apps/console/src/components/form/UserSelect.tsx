@@ -38,6 +38,7 @@ import type {
   UserSelectQuery,
 } from "#/__generated__/core/UserSelectQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
 import { UserSelectOption } from "./UserSelectOption";
 
@@ -310,9 +311,11 @@ function UserSelectRow({
   }
 
   return (
-    <Suspense fallback={id}>
-      <UserSelectProfile id={id} size={size} />
-    </Suspense>
+    <IAMRelayProvider>
+      <Suspense fallback={id}>
+        <UserSelectProfile id={id} size={size} />
+      </Suspense>
+    </IAMRelayProvider>
   );
 }
 
