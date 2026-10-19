@@ -241,6 +241,8 @@
     "untitled": "Sans titre",
     "noFrameworks": "Aucun référentiel",
     "states": {
+      "to_book": "À réserver",
+      "audit_booked": "Audit réservé",
       "not_started": "Non commencé",
       "in_progress": "En cours",
       "completed": "Terminé",

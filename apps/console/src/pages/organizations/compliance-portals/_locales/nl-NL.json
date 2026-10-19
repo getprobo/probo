@@ -200,7 +200,7 @@
     "noExpiry": "Geen vervaldatum",
     "untitled": "Zonder titel",
     "noFrameworks": "Geen frameworks",
-    "states": { "not_started": "Niet gestart", "in_progress": "In behandeling", "completed": "Voltooid", "rejected": "Afgewezen", "outdated": "Verouderd" }
+    "states": { "to_book": "Te boeken", "audit_booked": "Audit geboekt", "not_started": "Niet gestart", "in_progress": "In behandeling", "completed": "Voltooid", "rejected": "Afgewezen", "outdated": "Verouderd" }
   },
   "brandPage": {
     "messages": { "updated": "Huisstijl van compliancepagina succesvol bijgewerkt" },
