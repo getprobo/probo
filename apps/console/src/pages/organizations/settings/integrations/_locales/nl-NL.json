@@ -10,6 +10,14 @@
   "marketplacePage": {
     "title": "Marketplace",
     "description": "Leveranciers waarmee Probo verbinding kan maken.",
+    "thirdParties": {
+      "title": "Sommige van uw derde partijen kunnen worden verbonden",
+      "description": "Het gloeilampictogram markeert een leverancier die al in uw lijst met derde partijen staat, maar nog niet is verbonden.",
+      "iconLabel": "In uw lijst met derde partijen",
+      "all": "Alle leveranciers",
+      "filter": "Voorgestelde leveranciers",
+      "filterAction": "Toon voorgestelde leveranciers"
+    },
     "permissionDenied": "U heeft geen rechten om leveranciers te verbinden.",
     "connect": "Verbinden",
     "credentialCount_one": "{{count}} credential verbonden",

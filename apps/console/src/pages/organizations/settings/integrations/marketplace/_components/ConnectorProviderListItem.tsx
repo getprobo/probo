@@ -18,11 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { PlugIcon } from "@phosphor-icons/react";
+import { LightbulbIcon, PlugIcon } from "@phosphor-icons/react";
 import { ThirdPartyLogo } from "@probo/ui";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -52,11 +55,13 @@ const connectorProviderListItemFragment = graphql`
 interface ConnectorProviderListItemProps {
   providerKey: ConnectorProviderListItem_provider$key;
   credentialCount: number;
+  matchesThirdParty: boolean;
 }
 
 export function ConnectorProviderListItem({
   providerKey,
   credentialCount,
+  matchesThirdParty,
 }: ConnectorProviderListItemProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
@@ -71,6 +76,7 @@ export function ConnectorProviderListItem({
     installSupported: provider.installSupported,
   });
   const connectLabel = t("marketplacePage.connect");
+  const thirdPartyLabel = t("marketplacePage.thirdParties.iconLabel");
 
   return (
     <Card
@@ -99,17 +105,36 @@ export function ConnectorProviderListItem({
             <ConnectorDocumentationLink providerKey={provider} />
           </div>
         </div>
-        {credentialCount > 0 && (
-          <Badge
-            variant="soft"
-            color="sky"
-            size={1}
-            iconStart={<PlugIcon />}
-            aria-label={t("marketplacePage.credentialCount", { count: credentialCount })}
-            className="shrink-0"
-          >
-            {credentialCount}
-          </Badge>
+        {(matchesThirdParty || credentialCount > 0) && (
+          <div className="flex shrink-0 items-center gap-2">
+            {matchesThirdParty && (
+              <Tooltip>
+                <TooltipTrigger
+                  render={(
+                    <span
+                      tabIndex={0}
+                      aria-label={thirdPartyLabel}
+                      className="pointer-events-auto relative z-1 inline-flex text-amber-11"
+                    >
+                      <LightbulbIcon weight="duotone" className="size-5" />
+                    </span>
+                  )}
+                />
+                <TooltipPopup>{thirdPartyLabel}</TooltipPopup>
+              </Tooltip>
+            )}
+            {credentialCount > 0 && (
+              <Badge
+                variant="soft"
+                color="sky"
+                size={1}
+                iconStart={<PlugIcon />}
+                aria-label={t("marketplacePage.credentialCount", { count: credentialCount })}
+              >
+                {credentialCount}
+              </Badge>
+            )}
+          </div>
         )}
       </div>
     </Card>

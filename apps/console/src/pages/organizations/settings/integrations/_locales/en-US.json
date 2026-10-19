@@ -10,6 +10,14 @@
   "marketplacePage": {
     "title": "Marketplace",
     "description": "Vendors Probo can connect to.",
+    "thirdParties": {
+      "title": "Some of your third parties can be connected",
+      "description": "The lightbulb icon marks a vendor that is already in your third-party list, but not connected yet.",
+      "iconLabel": "In your third parties",
+      "all": "All vendors",
+      "filter": "Suggested",
+      "filterAction": "Show suggested"
+    },
     "permissionDenied": "You do not have permission to connect vendors.",
     "connect": "Connect",
     "credentialCount_one": "{{count}} credential connected",

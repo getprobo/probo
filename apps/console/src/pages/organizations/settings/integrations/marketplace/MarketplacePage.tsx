@@ -23,9 +23,13 @@ import { usePageTitle } from "@probo/hooks";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import { Select } from "@probo/ui/src/v2/Select/Select";
+import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
+import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
+import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
@@ -37,9 +41,12 @@ import { integrationListPath } from "../_lib/integrationPath";
 import { integrationsList, integrationsPage } from "../variants";
 
 import { ConnectorProviderListItem } from "./_components/ConnectorProviderListItem";
+import { MarketplaceThirdPartyMatches } from "./_components/MarketplaceThirdPartyMatches";
+import { MarketplaceThirdPartyNotice } from "./_components/MarketplaceThirdPartyNotice";
 
 export const marketplacePageQuery = graphql`
   query MarketplacePageQuery($organizationId: ID!) {
+    ...MarketplaceThirdPartyMatches_query
     connectorProviders {
       provider
       displayName
@@ -49,6 +56,7 @@ export const marketplacePageQuery = graphql`
       __typename
       ... on Organization {
         canCreateConnector: permission(action: "core:connector:create")
+        canListThirdParties: permission(action: "core:thirdParty:list")
         connectors {
           id
           provider
@@ -77,9 +85,20 @@ interface MarketplacePageProps {
 export function MarketplacePage({ queryRef }: MarketplacePageProps) {
   const { t } = useTranslation("organizations/settings/integrations");
   const [searchQuery, setSearchQuery] = useState("");
+  const [thirdPartyOnly, setThirdPartyOnly] = useState(false);
+  const [matchedProviders, setMatchedProviders] = useState<ReadonlySet<string>>(() => new Set());
+  const handleMatchedProviders = useCallback((next: ReadonlySet<string>) => {
+    setMatchedProviders((current) => {
+      if (current.size === next.size && [...next].every(provider => current.has(provider))) {
+        return current;
+      }
+
+      return next;
+    });
+  }, []);
   const organizationId = useOrganizationId();
-  const { organization, connectorProviders }
-    = usePreloadedQuery<MarketplacePageQuery>(marketplacePageQuery, queryRef);
+  const data = usePreloadedQuery<MarketplacePageQuery>(marketplacePageQuery, queryRef);
+  const { organization, connectorProviders } = data;
 
   usePageTitle(t("marketplacePage.title"));
 
@@ -89,11 +108,19 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
 
   const credentialCounts = credentialCountByProvider(organization.connectors);
   const canCreateConnector = organization.canCreateConnector;
+  const canListThirdParties = organization.canListThirdParties;
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const isSearching = normalizedSearch !== "";
+  const isConnectableThirdParty = (provider: string) =>
+    matchedProviders.has(provider)
+    && (credentialCounts.get(provider) ?? 0) === 0;
   const providers = canCreateConnector
     ? connectorProviders
         .filter((provider) => {
+          if (thirdPartyOnly && !isConnectableThirdParty(provider.provider)) {
+            return false;
+          }
+
           if (!isSearching) {
             return true;
           }
@@ -103,12 +130,26 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
         })
         .sort((a, b) => a.displayName.localeCompare(b.displayName))
     : [];
-
+  const connectableThirdParties = connectorProviders
+    .filter(provider => isConnectableThirdParty(provider.provider))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
   const { root, header, intro } = integrationsPage();
-  const { root: list, tools, search, marketplaceGrid, empty } = integrationsList();
+  const { root: list, tools, search, filters, filter, marketplaceGrid, empty } = integrationsList();
 
   return (
     <div className={root()}>
+      {canCreateConnector && canListThirdParties && (
+        <MarketplaceThirdPartyMatches
+          queryKey={data}
+          onMatched={handleMatchedProviders}
+        />
+      )}
+      {connectableThirdParties.length > 0 && (
+        <MarketplaceThirdPartyNotice
+          providers={connectableThirdParties}
+          onSuggest={() => setThirdPartyOnly(true)}
+        />
+      )}
       <div className={header()}>
         <div className={intro()}>
           <Link
@@ -121,9 +162,16 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
           >
             {t("listPage.title")}
           </Link>
-          <Heading level={1} size={6} weight="medium" highContrast>
-            {t("marketplacePage.title")}
-          </Heading>
+          <div className="flex items-baseline gap-2">
+            <Heading level={1} size={6} weight="medium" highContrast>
+              {t("marketplacePage.title")}
+            </Heading>
+            {canCreateConnector && (
+              <Text size={2} color="faint">
+                {connectorProviders.length}
+              </Text>
+            )}
+          </div>
           <Text size={2} color="faint">
             {t("marketplacePage.description")}
           </Text>
@@ -142,6 +190,38 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
                 autoFocus
               />
             </div>
+            {connectableThirdParties.length > 0 && (
+              <div className={filters()}>
+                <div className={filter()}>
+                  <Select
+                    value={thirdPartyOnly ? "connectable" : null}
+                    onValueChange={(value: string | null) => {
+                      setThirdPartyOnly(value === "connectable");
+                    }}
+                  >
+                    <SelectTrigger
+                      size={2}
+                      placeholder={t("marketplacePage.thirdParties.all")}
+                      aria-label={t("marketplacePage.thirdParties.filter")}
+                    >
+                      {(value: string | null) => (
+                        value === "connectable"
+                          ? t("marketplacePage.thirdParties.filter")
+                          : t("marketplacePage.thirdParties.all")
+                      )}
+                    </SelectTrigger>
+                    <SelectPopup align="end">
+                      <SelectItem value={null}>
+                        {t("marketplacePage.thirdParties.all")}
+                      </SelectItem>
+                      <SelectItem value="connectable">
+                        {t("marketplacePage.thirdParties.filter")}
+                      </SelectItem>
+                    </SelectPopup>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
         )}
         {!canCreateConnector
@@ -173,6 +253,7 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
                       key={provider.provider}
                       providerKey={provider}
                       credentialCount={credentialCounts.get(provider.provider) ?? 0}
+                      matchesThirdParty={isConnectableThirdParty(provider.provider)}
                     />
                   ))}
                 </div>
