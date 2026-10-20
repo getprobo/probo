@@ -122,6 +122,7 @@ func TestReportConsentAction(t *testing.T) {
 	t.Parallel()
 
 	var body reportDetectedTrackersBody
+
 	err := json.Unmarshal([]byte(`{"page_view":true,"consent_action":"NOT_A_REAL_ACTION"}`), &body)
 	require.NoError(t, err)
 	assert.Nil(t, reportConsentAction(body.ConsentAction))

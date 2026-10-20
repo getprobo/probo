@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -537,6 +536,43 @@ WHERE
 	return nil
 }
 
+// FreezeCookieBannerSample freezes one sample. Stop uses this instead of
+// FreezeOpenCookieBannerSample so a concurrent Start, which closes the
+// loaded row and opens a new one, is not undone by a banner-wide update.
+func FreezeCookieBannerSample(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	sampleID gid.GID,
+) error {
+	now := time.Now()
+
+	q := `
+UPDATE cookie_banner_samples
+SET
+	frozen_at = @now,
+	updated_at = @now
+WHERE
+	%s
+	AND id = @sample_id
+	AND frozen_at IS NULL
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"sample_id": sampleID,
+		"now":       now,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := tx.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot freeze cookie banner sample: %w", err)
+	}
+
+	return nil
+}
+
 func RecordSamplePageLoads(
 	ctx context.Context,
 	tx pg.Tx,
@@ -604,13 +640,4 @@ WHERE
 	}
 
 	return nil
-}
-
-func IsOpenSampleConflict(err error) bool {
-	var pgErr *pgconn.PgError
-	if !errors.As(err, &pgErr) {
-		return false
-	}
-
-	return pgErr.Code == "23505" && pgErr.ConstraintName == "cookie_banner_samples_open_uidx"
 }

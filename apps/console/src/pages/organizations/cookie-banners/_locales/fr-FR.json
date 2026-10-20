@@ -290,7 +290,7 @@
     "hits": "signalements",
     "loads": "chargements",
     "hitRate": "taux de signalement",
-    "expectedHitRate": "lorsque autorisé"
+    "expectedHitRate": "lorsque le tracker est autorisé"
   },
   "trackerDiscovery": {
     "families": {

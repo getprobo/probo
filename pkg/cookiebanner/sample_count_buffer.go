@@ -322,6 +322,7 @@ func resolveWritableSample(
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
+
 	inserted, err := sample.InsertOpen(ctx, tx, scope)
 	if err != nil {
 		return gid.GID{}, false, err

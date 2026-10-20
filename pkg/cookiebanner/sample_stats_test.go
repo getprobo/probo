@@ -491,6 +491,33 @@ func TestStopCookieBannerSample_RequiresOpenSample(t *testing.T) {
 	require.ErrorIs(t, err, ErrSampleNotFound)
 }
 
+func TestFreezeCookieBannerSample_LeavesNewerOpenSample(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	first, err := svc.StartCookieBannerSample(ctx, fx.scope, fx.banner.ID)
+	require.NoError(t, err)
+
+	second, err := svc.StartCookieBannerSample(ctx, fx.scope, fx.banner.ID)
+	require.NoError(t, err)
+	require.NotEqual(t, first.ID, second.ID)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return coredata.FreezeCookieBannerSample(ctx, tx, fx.scope, first.ID)
+	}))
+
+	reloadedFirst := loadSample(t, ctx, client, fx, first.ID)
+	require.NotNil(t, reloadedFirst.FrozenAt)
+
+	open := loadLatestSample(t, ctx, client, fx)
+	assert.Equal(t, second.ID, open.ID)
+	assert.Nil(t, open.FrozenAt)
+}
+
 func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 	t.Parallel()
 
@@ -577,6 +604,10 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		requireFlushSampleCounts(t, ctx, svc)
 
 		sample := loadLatestSample(t, ctx, client, fx)
+		assert.Equal(t, 1, sample.ChromePageLoads)
+		assert.Equal(t, 1, sample.FirefoxPageLoads)
+		assert.Equal(t, 1, sample.SafariPageLoads)
+		assert.Equal(t, 1, sample.EdgePageLoads)
 		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
 		assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
 		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
@@ -611,6 +642,10 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		requireFlushSampleCounts(t, ctx, svc)
 
 		sample := loadLatestSample(t, ctx, client, fx)
+		assert.Equal(t, 1, sample.ChromePageLoads)
+		assert.Equal(t, 1, sample.FirefoxPageLoads)
+		assert.Equal(t, 1, sample.SafariPageLoads)
+		assert.Equal(t, 0, sample.EdgePageLoads)
 		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
 		assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
 		assert.Equal(t, 0, sample.SafariConsentingPageLoads)

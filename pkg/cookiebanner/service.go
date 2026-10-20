@@ -1128,7 +1128,7 @@ func (s *Service) StopCookieBannerSample(
 				return fmt.Errorf("cannot load open cookie banner sample: %w", err)
 			}
 
-			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, cookieBannerID); err != nil {
+			if err := coredata.FreezeCookieBannerSample(ctx, tx, scope, sample.ID); err != nil {
 				return err
 			}
 
@@ -1770,7 +1770,7 @@ func (s *Service) PublishCookieBannerVersion(
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
-				if err := empty.Insert(ctx, tx, scope); err != nil && !coredata.IsOpenSampleConflict(err) {
+				if err := empty.Insert(ctx, tx, scope); err != nil {
 					return err
 				}
 			}
