@@ -21,9 +21,7 @@
 package console_test
 
 import (
-	"net/url"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -49,7 +47,7 @@ func TestActivateAccount_ReusedIdentityDoesNotSetPassword(t *testing.T) {
 	factory.InviteUser(orgB, profileB)
 
 	attacker := testutil.NewUnauthenticatedClient(t)
-	invitationToken := pollMailToken(t, attacker, `to:`+email+` subject:"Invitation to join"`)
+	invitationToken := attacker.PollForLinkToken(`to:` + email + ` subject:"Invitation to join"`)
 
 	const passwordTokenMutation = `
 		mutation($input: ActivateAccountFromInvitationInput!) {
@@ -112,7 +110,7 @@ func TestActivateAccount_ReusedIdentityDoesNotSetPassword(t *testing.T) {
 	}, nil)
 	require.NoError(t, err, "forgotPassword mutation failed")
 
-	resetToken := pollMailToken(t, attacker, `to:`+email+` subject:"Reset your password"`)
+	resetToken := attacker.PollForLinkToken(`to:` + email + ` subject:"Reset your password"`)
 
 	const resetPasswordMutation = `
 		mutation($input: ResetPasswordInput!) {
@@ -153,35 +151,4 @@ func profileState(t *testing.T, client *testutil.Client, profileID string) strin
 	require.NoError(t, err, "cannot load profile")
 
 	return result.Node.State
-}
-
-func pollMailToken(t *testing.T, client *testutil.Client, searchQuery string) string {
-	t.Helper()
-
-	deadline := time.Now().Add(10 * time.Second)
-
-	for time.Now().Before(deadline) {
-		searchMails, err := client.SearchMails(searchQuery)
-		require.NoError(t, err, "mailpit messages search failed")
-
-		for _, msg := range searchMails.Messages {
-			links, err := client.CheckMessageLinks(msg.ResolvedID())
-			require.NoError(t, err, "mailpit link check failed")
-
-			for _, link := range links.Links {
-				linkURL, err := url.Parse(link.URL)
-				require.NoError(t, err, "mailpit link invalid URL")
-
-				if token := linkURL.Query().Get("token"); token != "" {
-					return token
-				}
-			}
-		}
-
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	t.Fatal("link token not found in mailpit")
-
-	return ""
 }

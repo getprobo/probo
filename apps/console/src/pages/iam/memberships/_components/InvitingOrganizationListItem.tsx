@@ -75,7 +75,10 @@ export function InvitingOrganizationListItem({
       onCompleted: (_response, errors: GraphQLError[] | null) => {
         if (errors) {
           for (const err of errors) {
-            if (err.extensions?.code === "ACTIVATION_NOT_REQUIRED") {
+            if (
+              err.extensions?.code === "ACTIVATION_NOT_REQUIRED"
+              || err.extensions?.code === "ACCOUNT_ALREADY_ACTIVATED"
+            ) {
               onAccepted();
               return;
             }

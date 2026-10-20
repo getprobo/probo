@@ -400,13 +400,13 @@ func (c *Client) inviteUser(profileID gid.GID) {
 }
 
 func (c *Client) getActivationToken(email string) string {
-	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
+	return c.PollForLinkToken(fmt.Sprintf("to:%s subject:\"Invitation to join\"", email))
 }
 
 func (c *Client) GetEmailConfirmationToken(email string) string {
 	c.T.Helper()
 
-	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Confirm your email address\"", email))
+	return c.PollForLinkToken(fmt.Sprintf("to:%s subject:\"Confirm your email address\"", email))
 }
 
 func (c *Client) verifyEmail(token string) {
@@ -544,7 +544,7 @@ func (c *Client) SignInWithMagicLink(email string) {
 	continueURL := c.baseURL + "/"
 	c.postConnectMagicLink(email, continueURL)
 
-	token := c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Connect to\"", email))
+	token := c.PollForLinkToken(fmt.Sprintf("to:%s subject:\"Connect to\"", email))
 	resp := c.postConnectMagicLinkVerify(c.httpClient, token)
 	require.Equal(
 		c.T,
@@ -554,9 +554,11 @@ func (c *Client) SignInWithMagicLink(email string) {
 	)
 }
 
-// pollForLinkToken polls mailpit for a message matching searchQuery and
+// PollForLinkToken polls mailpit for a message matching searchQuery and
 // returns the first "token" query parameter found among its links.
-func (c *Client) pollForLinkToken(searchQuery string) string {
+func (c *Client) PollForLinkToken(searchQuery string) string {
+	c.T.Helper()
+
 	deadline := time.Now().Add(10 * time.Second)
 
 	for time.Now().Before(deadline) {
@@ -621,7 +623,7 @@ func (c *Client) forgotPassword(email string) {
 }
 
 func (c *Client) getPasswordResetToken(email string) string {
-	return c.pollForLinkToken(fmt.Sprintf("to:%s subject:\"Reset your password\"", email))
+	return c.PollForLinkToken(fmt.Sprintf("to:%s subject:\"Reset your password\"", email))
 }
 
 func (c *Client) resetPassword(password string, token string) {
@@ -752,7 +754,7 @@ func (c *Client) connectViaCIMD(email string) {
 
 	c.postConnectMagicLink(email, continueURL)
 
-	token := c.pollForLinkToken(fmt.Sprintf("to:%s", email))
+	token := c.PollForLinkToken(fmt.Sprintf("to:%s", email))
 	verifyResp := c.postConnectMagicLinkVerify(c.proboHTTPClient, token)
 	require.Equal(
 		c.T,
