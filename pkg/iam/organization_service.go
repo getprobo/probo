@@ -62,12 +62,14 @@ type (
 
 	CreateOrganizationRequest struct {
 		Name               string
+		LegalName          *string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
 	}
 
 	UpdateOrganizationRequest struct {
 		Name               *string
+		LegalName          **string
 		LogoFile           *UploadedFile
 		HorizontalLogoFile *UploadedFile
 	}
@@ -151,9 +153,10 @@ var (
 const (
 	TokenTypeAPIKey = "api_key"
 
-	NameMaxLength    = 100
-	TitleMaxLength   = 1000
-	ContentMaxLength = 5000
+	NameMaxLength          = 100
+	TitleMaxLength         = 1000
+	ContentMaxLength       = 5000
+	organizationNameMaxLen = 255
 
 	maxOrganizationLogoFileSize = 5 << 20
 
@@ -170,7 +173,19 @@ var (
 	)
 )
 
-func (req CreateOrganizationRequest) Validate() error {
+func trimLegalName(legalName *string) *string {
+	if legalName == nil {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(*legalName)
+
+	return &trimmed
+}
+
+func (req *CreateOrganizationRequest) Validate() error {
+	req.LegalName = trimLegalName(req.LegalName)
+
 	v := validator.New()
 
 	if req.LogoFile != nil {
@@ -191,15 +206,22 @@ func (req CreateOrganizationRequest) Validate() error {
 		}
 	}
 
-	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(255))
+	v.Check(req.Name, "name", validator.Required(), validator.SafeTextNoNewLine(organizationNameMaxLen))
+	v.Check(req.LegalName, "legalName", validator.SafeTextNoNewLine(organizationNameMaxLen))
 
 	return v.Error()
 }
 
-func (req UpdateOrganizationRequest) Validate() error {
+func (req *UpdateOrganizationRequest) Validate() error {
+	if req.LegalName != nil {
+		trimmed := trimLegalName(*req.LegalName)
+		req.LegalName = &trimmed
+	}
+
 	v := validator.New()
 
-	v.Check(req.Name, "name", validator.SafeTextNoNewLine(255))
+	v.Check(req.Name, "name", validator.SafeTextNoNewLine(organizationNameMaxLen))
+	v.Check(req.LegalName, "legalName", validator.SafeTextNoNewLine(organizationNameMaxLen))
 	v.Check(req.LogoFile, "logo_file", validator.NotEmpty())
 
 	if req.LogoFile != nil {
@@ -604,6 +626,7 @@ func (s *OrganizationService) CreateOrganization(
 			ID:        organizationID,
 			TenantID:  tenantID,
 			Name:      req.Name,
+			LegalName: req.LegalName,
 			CreatedAt: now,
 			UpdatedAt: now,
 		}
@@ -786,6 +809,21 @@ func (s *OrganizationService) CreateOrganization(
 				return fmt.Errorf("cannot insert thirdParty: %w", err)
 			}
 
+			employeePortal := &coredata.EmployeePortal{
+				ID:             gid.New(scope.GetTenantID(), coredata.EmployeePortalEntityType),
+				OrganizationID: organization.ID,
+				Name:           organization.Name,
+				Active:         true,
+				Capabilities:   coredata.DefaultEmployeePortalCapabilities(),
+				LogoFileID:     organization.LogoFileID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+			}
+
+			if err := employeePortal.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert employee portal: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -901,6 +939,10 @@ func (s *OrganizationService) UpdateOrganization(ctx context.Context, organizati
 				organization.Name = *req.Name
 			}
 
+			if req.LegalName != nil {
+				organization.LegalName = *req.LegalName
+			}
+
 			if logoFile != nil {
 				if err := logoFile.Insert(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot insert file: %w", err)
@@ -967,7 +1009,7 @@ func deleteOrganizationDependencies(
 	organizationID gid.GID,
 ) error {
 	// These tables restrict deleting a membership profile that still owns
-	// them, a risk that is still linked to a scenario or measure, or a
+	// them, a risk that is still linked to a scenario or internal control, or a
 	// document that is still linked from a mapping table. They must be
 	// removed before organizations cascade-deletes those rows.
 	if err := new(coredata.ControlDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
@@ -978,12 +1020,12 @@ func deleteOrganizationDependencies(
 		return fmt.Errorf("cannot delete risk document mappings: %w", err)
 	}
 
-	if err := new(coredata.MeasureDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot delete measure document mappings: %w", err)
+	if err := new(coredata.InternalControlDocuments).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete internal control document mappings: %w", err)
 	}
 
-	if err := new(coredata.RiskMeasures).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
-		return fmt.Errorf("cannot delete risk measure mappings: %w", err)
+	if err := new(coredata.RiskInternalControls).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
+		return fmt.Errorf("cannot delete risk internal control mappings: %w", err)
 	}
 
 	if err := new(coredata.TreatmentPlanEvents).DeleteByOrganizationID(ctx, tx, scope, organizationID); err != nil {
@@ -1763,17 +1805,6 @@ func (s OrganizationService) CreateSCIMConfiguration(
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
 
-			sources := &coredata.AccessReviewSources{}
-
-			sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, *connectorID)
-			if err != nil {
-				return fmt.Errorf("cannot count access sources for connector: %w", err)
-			}
-
-			if sourceCount > 0 {
-				return fmt.Errorf("cannot create SCIM bridge: connector is used by an access review source: %w", coredata.ErrResourceInUse)
-			}
-
 			var bridgeType coredata.SCIMBridgeType
 
 			switch existingConnector.Provider {
@@ -1782,7 +1813,16 @@ func (s OrganizationService) CreateSCIMConfiguration(
 			case coredata.ConnectorProviderMicrosoft365:
 				bridgeType = coredata.SCIMBridgeTypeMicrosoft365
 			default:
-				return fmt.Errorf("connector provider %s is not supported for SCIM bridge", existingConnector.Provider)
+				return NewSCIMBridgeProviderNotSupportedError(existingConnector.Provider)
+			}
+
+			auditCount, err := connectorAuditSourceCount(ctx, tx, scope, *connectorID)
+			if err != nil {
+				return err
+			}
+
+			if auditCount > 0 {
+				return fmt.Errorf("cannot create SCIM bridge: connector is used by an access review source: %w", coredata.ErrResourceInUse)
 			}
 
 			bridge = &coredata.SCIMBridge{
@@ -1811,6 +1851,25 @@ func (s OrganizationService) CreateSCIMConfiguration(
 	return config, bridge, token, nil
 }
 
+// connectorAuditSourceCount is the audit modules that must not share a
+// connector with SCIM. Access review is the only one today; a later asset
+// or security source adds its count here.
+func connectorAuditSourceCount(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (int, error) {
+	sources := &coredata.AccessReviewSources{}
+
+	count, err := sources.CountByConnectorID(ctx, conn, scope, connectorID)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count access review sources for connector: %w", err)
+	}
+
+	return count, nil
+}
+
 func (s OrganizationService) DeleteSCIMConfiguration(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -1824,8 +1883,7 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			config := &coredata.SCIMConfiguration{}
 
 			// A concurrent bridge insert FK-blocks on this row lock, so
-			// no bridge can appear after the lookup below and die via
-			// the cascade with its connector stranded.
+			// the lookup below sees every bridge this delete must remove.
 			err := config.LoadByIDForUpdate(ctx, tx, scope, configID)
 			if err != nil {
 				if err == coredata.ErrResourceNotFound {
@@ -1854,18 +1912,9 @@ func (s OrganizationService) DeleteSCIMConfiguration(
 			}
 
 			if err == nil {
-				// The bridge FK restricts the connector delete: bridge
-				// first, then its connector, in the same transaction.
 				err = bridge.Delete(ctx, tx, scope)
 				if err != nil {
 					return fmt.Errorf("cannot delete SCIM bridge: %w", err)
-				}
-
-				if bridge.ConnectorID != nil {
-					connector := &coredata.Connector{ID: *bridge.ConnectorID}
-					if err := connector.Delete(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot delete connector: %w", err)
-					}
 				}
 			}
 

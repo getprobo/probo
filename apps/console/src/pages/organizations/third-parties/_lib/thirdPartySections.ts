@@ -26,7 +26,7 @@ export type ThirdPartySectionId
     | "assurance"
     | "agreements"
     | "risks"
-    | "measures";
+    | "internalControls";
 
 export type ThirdPartySectionGroup = "compliance" | "risk";
 
@@ -78,9 +78,9 @@ export const THIRD_PARTY_SECTIONS: ThirdPartySection[] = [
     group: "risk",
   },
   {
-    id: "measures",
-    path: "measures",
-    labelKey: "nav.thirdPartyMeasures",
+    id: "internalControls",
+    path: "internal-controls",
+    labelKey: "nav.thirdPartyInternalControls",
     group: "risk",
   },
 ];

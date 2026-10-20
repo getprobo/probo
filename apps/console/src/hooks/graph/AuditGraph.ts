@@ -24,6 +24,8 @@ import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
+import { auditFrameworkNames } from "#/components/audits/formatAuditFrameworkNames";
+
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 /* eslint-disable relay/unused-fields, relay/must-colocate-fragment-spreads */
@@ -34,6 +36,33 @@ export const auditsQuery = graphql`
       ... on Organization {
         canCreateAudit: permission(action: "core:audit:create")
         ...AuditsPageFragment
+      }
+    }
+  }
+`;
+
+export const auditFrameworksFragment = graphql`
+  fragment AuditGraphFrameworks_audit on Audit
+  @refetchable(queryName: "AuditGraphFrameworksPaginationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 100 }
+    after: { type: "CursorKey", defaultValue: null }
+  ) {
+    frameworks(first: $first, after: $after)
+      @connection(key: "AuditGraph_frameworks") {
+      __id
+      edges {
+        cursor
+        node {
+          id
+          name
+          lightLogo {
+            downloadUrl
+          }
+          darkLogo {
+            downloadUrl
+          }
+        }
       }
     }
   }
@@ -63,16 +92,7 @@ export const auditNodeQuery = graphql`
           createdAt
         }
         state
-        framework {
-          id
-          name
-          lightLogo {
-            downloadUrl
-          }
-          darkLogo {
-            downloadUrl
-          }
-        }
+        ...AuditGraphFrameworks_audit
         organization {
           id
           name
@@ -81,6 +101,8 @@ export const auditNodeQuery = graphql`
         updatedAt
         canUpdate: permission(action: "core:audit:update")
         canDelete: permission(action: "core:audit:delete")
+        canLinkFramework: permission(action: "core:audit:create-framework-mapping")
+        canUnlinkFramework: permission(action: "core:audit:delete-framework-mapping")
       }
     }
   }
@@ -110,10 +132,7 @@ export const createAuditMutation = graphql`
             fileName
           }
           state
-          framework {
-            id
-            name
-          }
+          ...AuditFrameworkNames_audit
           createdAt
           canUpdate: permission(action: "core:audit:update")
           canDelete: permission(action: "core:audit:delete")
@@ -143,10 +162,6 @@ export const updateAuditMutation = graphql`
           fileName
         }
         state
-        framework {
-          id
-          name
-        }
         updatedAt
       }
     }
@@ -165,7 +180,10 @@ export const deleteAuditMutation = graphql`
 `;
 
 export const useDeleteAudit = (
-  audit: { id: string; framework?: { name: string } | null },
+  audit: {
+    id: string;
+    frameworks?: Parameters<typeof auditFrameworkNames>[0];
+  },
   connectionId: string,
   onSuccess?: () => void,
 ) => {
@@ -190,7 +208,9 @@ export const useDeleteAudit = (
         onSuccess?.();
       },
       {
-        message: t("auditGraph.deleteConfirmation", { frameworkName: audit.framework?.name ?? "" }),
+        message: t("auditGraph.deleteConfirmation", {
+          frameworkName: auditFrameworkNames(audit.frameworks),
+        }),
       },
     );
   };
@@ -203,7 +223,7 @@ export const useCreateAudit = (connectionId: string) => {
 
   return (input: {
     organizationId: string;
-    frameworkId: string;
+    frameworkIds: string[];
     name?: string | null;
     firm?: string | null;
     validity?: Period | null;
@@ -215,7 +235,7 @@ export const useCreateAudit = (connectionId: string) => {
     if (!input.organizationId) {
       return alert(t("auditGraph.errors.createOrganizationRequired"));
     }
-    if (!input.frameworkId) {
+    if (input.frameworkIds.length === 0) {
       return alert(t("auditGraph.errors.createFrameworkRequired"));
     }
 
@@ -223,7 +243,7 @@ export const useCreateAudit = (connectionId: string) => {
       variables: {
         input: {
           organizationId: input.organizationId,
-          frameworkId: input.frameworkId,
+          frameworkIds: input.frameworkIds,
           name: input.name,
           firm: input.firm,
           validity: input.validity,
@@ -346,6 +366,80 @@ export const useDeleteAuditReport = () => {
         input: {
           auditId: input.auditId,
         },
+      },
+    });
+  };
+};
+
+export const linkAuditFrameworkMutation = graphql`
+  mutation AuditGraphLinkFrameworkMutation(
+    $input: CreateAuditFrameworkMappingInput!
+    $connections: [ID!]!
+  ) {
+    createAuditFrameworkMapping(input: $input) {
+      frameworkEdge @prependEdge(connections: $connections) {
+        cursor
+        node {
+          id
+          name
+          lightLogo {
+            downloadUrl
+          }
+          darkLogo {
+            downloadUrl
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const useLinkAuditFramework = (connectionId: string) => {
+  const { t } = useTranslation();
+  const [mutate] = useMutationWithToasts(linkAuditFrameworkMutation, {
+    successMessage: t("auditDetailsPage.frameworks.linked"),
+    errorMessage: t("auditDetailsPage.frameworks.linkError"),
+  });
+
+  return (auditId: string, frameworkId: string) => {
+    return mutate({
+      variables: {
+        input: {
+          auditId,
+          frameworkId,
+        },
+        connections: [connectionId],
+      },
+    });
+  };
+};
+
+export const unlinkAuditFrameworkMutation = graphql`
+  mutation AuditGraphUnlinkFrameworkMutation(
+    $input: DeleteAuditFrameworkMappingInput!
+    $connections: [ID!]!
+  ) {
+    deleteAuditFrameworkMapping(input: $input) {
+      deletedFrameworkId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export const useUnlinkAuditFramework = (connectionId: string) => {
+  const { t } = useTranslation();
+  const [mutate] = useMutationWithToasts(unlinkAuditFrameworkMutation, {
+    successMessage: t("auditDetailsPage.frameworks.unlinked"),
+    errorMessage: t("auditDetailsPage.frameworks.unlinkError"),
+  });
+
+  return (auditId: string, frameworkId: string) => {
+    return mutate({
+      variables: {
+        input: {
+          auditId,
+          frameworkId,
+        },
+        connections: [connectionId],
       },
     });
   };

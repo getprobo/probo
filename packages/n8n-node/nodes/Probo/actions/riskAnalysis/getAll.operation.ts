@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { proboApiRequestAllItems, withPlainTextDescription } from '../../GenericFunctions';
+import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -122,7 +122,7 @@ export async function execute(
 	);
 
 	return {
-		json: { riskAnalyses: riskAnalyses.map(withPlainTextDescription) },
+		json: { riskAnalyses },
 		pairedItem: { item: itemIndex },
 	};
 }

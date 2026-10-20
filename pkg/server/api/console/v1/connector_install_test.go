@@ -104,7 +104,7 @@ func TestInstallAuthorizationFailure(t *testing.T) {
 }
 
 // TestRedirectInstallOutcome pins that an authorized customer whose install
-// failed lands back on their own connections page with a readable reason,
+// failed lands back on their own integrations page with a readable reason,
 // rather than on a JSON error body mid-top-level-navigation. The page toasts
 // `error` when no connector_id came with it.
 func TestRedirectInstallOutcome(t *testing.T) {
@@ -132,7 +132,7 @@ func TestRedirectInstallOutcome(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		"https://console.example/organizations/"+organizationID.String()+"/access-reviews/connections",
+		"https://console.example/organizations/"+organizationID.String()+"/settings/integrations",
 		location.Scheme+"://"+location.Host+location.Path,
 	)
 	assert.Equal(t, installMessageAlreadyUsed, location.Query().Get("error"))

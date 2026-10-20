@@ -24,9 +24,18 @@ import type { ComponentProps } from "react";
 // Root of the edge drawer. Controlled the same way as Base UI's Drawer:
 // `open` / `onOpenChange`, plus `swipeDirection` for dismiss gestures. Pair
 // `swipeDirection` with `DrawerPopup`'s `side` (right↔right, left↔left,
-// bottom↔down, top↔up). See contrib/claude/ui.md.
-export type DrawerProps = ComponentProps<typeof BaseDrawer.Root>;
+// bottom↔down, top↔up). `Drawer.createHandle()` opens a mounted root with
+// `openWithPayload`. See contrib/claude/ui.md.
+export type DrawerProps<Payload = unknown> = ComponentProps<typeof BaseDrawer.Root<Payload>>;
 
-export function Drawer(props: DrawerProps) {
-  return <BaseDrawer.Root {...props} />;
+function DrawerRoot<Payload = unknown>(props: DrawerProps<Payload>) {
+  return <BaseDrawer.Root<Payload> {...props} />;
 }
+
+type DrawerComponent = typeof DrawerRoot & {
+  createHandle: typeof BaseDrawer.createHandle;
+};
+
+export const Drawer: DrawerComponent = Object.assign(DrawerRoot, {
+  createHandle: BaseDrawer.createHandle,
+});

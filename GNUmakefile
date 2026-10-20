@@ -2,6 +2,7 @@ NPROC ?=	$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || getconf _
 MAKEFLAGS := --jobs=$(NPROC)
 
 CAT ?=	cat
+CARGO ?=	cargo
 CP ?=	cp
 DOCKER ?=	docker
 GO ?=	go
@@ -9,10 +10,12 @@ GRYPE ?=	grype
 TRIVY ?=	trivy
 MKCERT ?=	mkcert
 MKDIR ?=	mkdir -p
+NODE ?=	node
 NPM ?=	npm
 NPX ?=	npx
 OPENSSL ?=	openssl
 SED ?= sed
+SHA256SUM ?= shasum -a 256
 SYFT ?=	syft
 TAIL ?= tail
 ECHO ?= echo
@@ -28,6 +31,7 @@ swift_sources = $(shell find $(SWIFT_ENROLL_UI) \( -name '*.swift' ! -name '*.ge
 SHELLCHECKCMD ?= shellcheck
 SHFMTCMD ?= shfmt
 SHFMTFLAGS ?= -i 2 -ci -bn
+RUST_TOOLCHAIN ?= 1.90.0
 
 # First-party shell scripts linted by lint-shell / fmt-shell (CI).
 # Add every new first-party *.sh here; do not include vendored/submodule scripts.
@@ -37,6 +41,7 @@ SHELL_SCRIPTS := \
 	cmd/probo-agent/installer/macos/reinstall.sh \
 	cmd/probo-agent/installer/macos/uninstall.sh \
 	compose/postgres/01_probod.sh \
+	contrib/benchmarks/automerge-battery.sh \
 	contrib/ci/classify-changes.sh \
 	contrib/ci/go-package-affected.sh \
 	contrib/lima/provision.sh \
@@ -76,6 +81,9 @@ GO_VET=	$(GO_BASE) vet
 GO_TOOL=	$(GO_BASE) tool
 
 TEST_FLAGS?=	-race -cover -coverprofile=coverage.out
+# CI sets this so ./pkg/automerge/... runs in .github/workflows/automerge.yaml.
+# Spot reclaim SIGTERMs the main test job while that package is still running.
+SKIP_AUTOMERGE?=
 E2E_TEST_FLAGS?=
 
 E2E_CONFIG ?= $(CURDIR)/e2e/console/testdata/config.yaml
@@ -107,6 +115,11 @@ EMBEDDED= apps/console/dist/index.html \
 	apps/compliance-portal/dist/index.html \
 	apps/employee-portal/dist/index.html \
 	@probo/emails
+
+AUTOMERGE_REFERENCE_DIR=	pkg/automerge/internal/testsupport/reference
+AUTOMERGE_REFERENCE_WASM=	$(AUTOMERGE_REFERENCE_DIR)/reference.wasm
+AUTOMERGE_BATTERY_OUTPUT?=	/tmp/probo-automerge-battery.json
+AUTOMERGE_BATTERY_FIXTURES?=	/tmp/probo-automerge-battery-fixtures
 
 PROBOD_BIN_EXTRA_DEPS=
 PROBOD_BIN=	bin/probod
@@ -204,11 +217,15 @@ go-fix: generate embed
 go-lint: generate
 	$(GOLINTCMD) run ./...
 
+ifeq ($(SKIP_AUTOMERGE),1)
+TEST_LIST_FILTER = | grep -v '/pkg/automerge'
+endif
+
 .PHONY: test
 test: generate
 test: CGO_ENABLED=1
-test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module])
-	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | awk 'NF && !/\/e2e\//'))
+test: ## Run tests with race detection and coverage (usage: make test [MODULE=./pkg/some/module] [SKIP_AUTOMERGE=1])
+	$(GO_TEST) $(if $(MODULE),$(MODULE),$(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | awk 'NF && !/\/e2e\//' $(TEST_LIST_FILTER)))
 
 .PHONY: test-verbose
 test-verbose: TEST_FLAGS+=-v
@@ -217,6 +234,92 @@ test-verbose: test ## Run tests with verbose output
 .PHONY: test-short
 test-short: TEST_FLAGS+=-short
 test-short: test ## Run short tests only
+
+.PHONY: generate-automerge-official-fixtures
+generate-automerge-official-fixtures: ## Build official Automerge benchmark documents for the Go suite
+	rm -rf $(AUTOMERGE_BATTERY_FIXTURES)
+	if ! rustup run $(RUST_TOOLCHAIN) rustc --version >/dev/null 2>&1; then \
+		rustup toolchain install $(RUST_TOOLCHAIN) --profile minimal; \
+	fi
+	$(CARGO) +$(RUST_TOOLCHAIN) run --release --locked \
+		--manifest-path contrib/benchmarks/automerge-native/official-fixtures/Cargo.toml \
+		-- $(AUTOMERGE_BATTERY_FIXTURES)
+
+.PHONY: test-automerge
+test-automerge: generate-automerge-official-fixtures
+test-automerge: CGO_ENABLED=1
+test-automerge: ## Run the full Automerge suite, including the JS oracle and official fixtures
+	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
+	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
+	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
+		$(GO_TEST) ./pkg/automerge/...
+
+.PHONY: test-automerge-conformance
+test-automerge-conformance: ## Test Go binary compatibility with official Automerge JS
+	AUTOMERGE_JS_ORACLE=$(CURDIR)/packages/automerge-conformance/oracle.mjs \
+		$(GO_BASE) test -count=1 ./pkg/automerge
+
+.PHONY: audit-automerge-parity
+audit-automerge-parity: test-automerge-conformance
+audit-automerge-parity: ## Require every pinned upstream Automerge test to be mapped
+	AUTOMERGE_REQUIRE_FULL_PARITY=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: audit-automerge-interop
+audit-automerge-interop: test-automerge-conformance
+audit-automerge-interop: ## Require complete Rust/JS wire and state interoperability
+	AUTOMERGE_REQUIRE_FULL_INTEROP=1 \
+		$(GO_BASE) test -count=1 -run '^TestUpstreamParityManifest$$' ./pkg/automerge
+
+.PHONY: benchmark-automerge
+benchmark-automerge: ## Benchmark Go and Rust/WASM Automerge implementations
+	$(GO_BASE) test -run '^$$' -bench . -benchmem ./pkg/automerge
+
+.PHONY: benchmark-automerge-native
+benchmark-automerge-native: ## Compare optimized native Go and native Rust
+	$(NODE) contrib/benchmarks/automerge-native/compare.mjs
+
+.PHONY: benchmark-automerge-gate
+benchmark-automerge-gate: ## Enforce portable Automerge Go/Rust ratio gates
+	$(NODE) contrib/benchmarks/automerge-native/compare.mjs \
+		--baseline pkg/automerge/testdata/benchmark-baseline.json
+
+.PHONY: benchmark-automerge-official
+benchmark-automerge-official: ## Run the pinned official Automerge fast benchmark battery
+	@mkdir -p $(dir $(AUTOMERGE_BATTERY_OUTPUT))
+	contrib/benchmarks/automerge-battery.sh run \
+		--tier fast \
+		--output $(AUTOMERGE_BATTERY_OUTPUT)
+
+.PHONY: list-automerge-official-benchmarks
+list-automerge-official-benchmarks: ## List the pinned official Automerge benchmark battery
+	contrib/benchmarks/automerge-battery.sh list --tier all
+
+.PHONY: test-automerge-official-fixtures
+test-automerge-official-fixtures: generate-automerge-official-fixtures
+test-automerge-official-fixtures: ## Replay official benchmark-battery documents through Rust and Go
+	AUTOMERGE_OFFICIAL_BATTERY_FIXTURES=$(AUTOMERGE_BATTERY_FIXTURES) \
+		$(GO_BASE) test -count=1 -run '^TestOfficialBenchmarkBatteryFixtures$$' \
+		./pkg/automerge
+
+.PHONY: generate-automerge-collaboration-fixtures
+generate-automerge-collaboration-fixtures: ## Regenerate automerge-repo protocol fixtures from the pinned JS packages
+	$(NODE) packages/automerge-conformance/generate-collaboration-fixtures.mjs
+
+.PHONY: test-automerge-repo-interop
+test-automerge-repo-interop: ## Sync a real automerge-repo JS client against the Go gateway
+	AUTOMERGE_REPO_INTEROP_CLIENT=$(CURDIR)/packages/automerge-conformance/collaboration-interop-client.mjs \
+		$(GO_BASE) test -count=1 -run '^TestInterop_' ./pkg/automerge/collaboration
+
+.PHONY: fuzz-automerge
+fuzz-automerge: ## Fuzz Automerge public, wire, sync, and projection surfaces
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzLoad$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzCoreOperations$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecode$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/core
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzParseSyncMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/internal/core
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzRender$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/prosemirror
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodePresence$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
+	$(GO_BASE) test -run '^$$' -fuzz '^FuzzDecodeMessage$$' -fuzztime=$(AUTOMERGE_FUZZ_TIME) ./pkg/automerge/collaboration
 
 .PHONY: coverage-report
 coverage-report: test ## Generate HTML coverage report
@@ -455,6 +558,18 @@ pkg/server/api/complianceportal/v1/schema.graphql: pkg/server/api/complianceport
 
 .PHONY: generate
 generate: $(GENERATED)
+
+.PHONY: generate-automerge-reference
+generate-automerge-reference: ## Rebuild the internal Automerge WASM test oracle
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		CARGO_TARGET_DIR=target $(CARGO) +$(RUST_TOOLCHAIN) build --locked --release --target wasm32-wasip1
+	$(CP) $(AUTOMERGE_REFERENCE_DIR)/wasm/target/wasm32-wasip1/release/probo_automerge_reference.wasm $(AUTOMERGE_REFERENCE_WASM)
+	cd $(AUTOMERGE_REFERENCE_DIR) && $(SHA256SUM) reference.wasm > reference.wasm.sha256
+
+.PHONY: audit-automerge-reference
+audit-automerge-reference: ## Audit Automerge Rust advisories, licenses, bans, and sources
+	cd $(AUTOMERGE_REFERENCE_DIR)/wasm && \
+		$(CARGO) +$(RUST_TOOLCHAIN) deny check
 
 .PHONY: embed
 embed: $(EMBEDDED)

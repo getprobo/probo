@@ -50,7 +50,9 @@ Commitments must trace to controls the company genuinely has. The source of trut
 1. **Find the Probo MCP and the organization.** This environment may expose more than one Probo MCP
    server (the plugin ships hosted `probo-us` and `probo-eu`, and self-hosted instances add their own).
    Call `listOrganizations` on each until you find the one that returns the target company, and use that
-   server for every later call. Match the organization the user named and capture its `id`.
+   server for every later call. Match the organization the user named on `name` (the operating name) and
+   capture its `id`. `legal_name` is the registered legal name when set. The public group title still uses
+   the operating name. Use `legal_name` only when a commitment must name the legal entity.
 2. **List the published policies.** Call `listDocuments` with `document_types: ["POLICY"]`. Policies with
    a `current_published_major` are published.
 3. **Read the actual content.** `getDocument` returns metadata only. To get the text, call

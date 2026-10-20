@@ -27,11 +27,10 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { SlackCard_organization$key } from "#/__generated__/core/SlackCard_organization.graphql";
 import type { SlackCard_viewer$key } from "#/__generated__/core/SlackCard_viewer.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard, deviceCard } from "./variants";
 
@@ -58,15 +57,11 @@ export interface SlackCardProps {
 
 export function SlackCard({ viewerKey, organizationKey }: SlackCardProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = dashboardCard();
   const status = deviceCard();
   const viewer = useFragment(slackCardViewerFragment, viewerKey);
   const organization = useFragment(slackCardOrganizationFragment, organizationKey);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (organization.slackbotInstallation?.active !== true) {
     return null;
@@ -87,7 +82,7 @@ export function SlackCard({ viewerKey, organizationKey }: SlackCardProps) {
           </Text>
         </div>
         <Link
-          to={`/${organizationId}/bindings`}
+          to={`/${employeePortalId}/bindings`}
           size={2}
           color="neutral"
           underline={false}

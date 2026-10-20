@@ -80,7 +80,11 @@ export async function execute(
 						start
 						end
 					}
-					reportUrl
+					reportFile {
+						id
+						fileName
+						downloadUrl
+					}
 					createdAt
 					updatedAt
 				}

@@ -20,7 +20,7 @@
 
 import { AssumptionRequiredError, UnAuthenticatedError } from "@probo/relay";
 import { Suspense } from "react";
-import { useParams, useRouteError } from "react-router";
+import { useRouteError } from "react-router";
 
 import { redirectToLogin } from "#/lib/auth/redirectToLogin";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
@@ -34,10 +34,8 @@ import { GlobalError } from "./GlobalError";
 // error without the app chrome.
 export function RootErrorBoundary() {
   const error = useRouteError();
-  const { organizationId } = useParams();
-
   if (error instanceof UnAuthenticatedError) {
-    redirectToLogin({ organizationId });
+    redirectToLogin();
     return null;
   }
 

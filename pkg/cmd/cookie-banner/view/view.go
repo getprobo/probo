@@ -46,10 +46,16 @@ query($id: ID!) {
       capabilities {
         resourceReporting
         tcf
+        corsless
       }
       defaultLanguage
       publisherCountryCode
       tcfCmpId
+      discoveryPageLoads {
+        family
+        count
+      }
+      discoveryFrozenAt
       createdAt
       updatedAt
     }
@@ -71,12 +77,18 @@ type viewResponse struct {
 		Capabilities      struct {
 			ResourceReporting bool `json:"resourceReporting"`
 			TCF               bool `json:"tcf"`
+			Corsless          bool `json:"corsless"`
 		} `json:"capabilities"`
 		DefaultLanguage      string `json:"defaultLanguage"`
 		PublisherCountryCode string `json:"publisherCountryCode"`
 		TcfCmpId             int    `json:"tcfCmpId"`
-		CreatedAt            string `json:"createdAt"`
-		UpdatedAt            string `json:"updatedAt"`
+		DiscoveryPageLoads   []struct {
+			Family string `json:"family"`
+			Count  int    `json:"count"`
+		} `json:"discoveryPageLoads"`
+		DiscoveryFrozenAt *string `json:"discoveryFrozenAt"`
+		CreatedAt         string  `json:"createdAt"`
+		UpdatedAt         string  `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -147,10 +159,26 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("Resource Reporting:"), v.Capabilities.ResourceReporting)
+			_, _ = fmt.Fprintf(out, "%s%t\n", label.Render("CORSless:"), v.Capabilities.Corsless)
 
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Cookie Policy:"), v.CookiePolicyUrl)
 			if v.PrivacyPolicyUrl != nil && *v.PrivacyPolicyUrl != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Privacy Policy:"), *v.PrivacyPolicyUrl)
+			}
+
+			if len(v.DiscoveryPageLoads) == 0 {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Loads:"), "none")
+			} else {
+				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Discovery Loads:"))
+				for _, load := range v.DiscoveryPageLoads {
+					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
+				}
+			}
+
+			if v.DiscoveryFrozenAt != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Frozen:"), cmdutil.FormatTime(*v.DiscoveryFrozenAt))
+			} else {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Frozen:"), "no")
 			}
 
 			_, _ = fmt.Fprintln(out)

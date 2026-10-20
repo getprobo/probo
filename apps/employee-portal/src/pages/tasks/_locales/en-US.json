@@ -1,0 +1,12 @@
+{
+  "title": "Tasks",
+  "breadcrumb": "Tasks",
+  "delete": {
+    "title": "Delete task",
+    "description": "Are you sure you want to delete this task?",
+    "confirm": "Delete",
+    "cancel": "Cancel",
+    "deleted": "Task deleted.",
+    "error": "Failed to delete task"
+  }
+}

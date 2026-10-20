@@ -153,9 +153,9 @@ func (s ControlService) ListForDocumentID(
 	return page.NewPage(controls, cursor), nil
 }
 
-func (s ControlService) CountForMeasureID(
+func (s ControlService) CountForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *coredata.ControlFilter,
 ) (int, error) {
 	var count int
@@ -165,7 +165,7 @@ func (s ControlService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			controls := &coredata.Controls{}
 
-			count, err = controls.CountByMeasureID(ctx, conn, scope, measureID, filter)
+			count, err = controls.CountByInternalControlID(ctx, conn, scope, internalControlID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count controls: %w", err)
 			}
@@ -180,24 +180,24 @@ func (s ControlService) CountForMeasureID(
 	return count, nil
 }
 
-func (s ControlService) ListForMeasureID(
+func (s ControlService) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.ControlOrderField],
 	filter *coredata.ControlFilter,
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
 
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, conn, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internalControl: %w", err)
 			}
 
-			return controls.LoadByMeasureID(ctx, conn, scope, measureID, cursor, filter)
+			return controls.LoadByInternalControlID(ctx, conn, scope, internalControlID, cursor, filter)
 		},
 	)
 	if err != nil {
@@ -383,13 +383,13 @@ func (s ControlService) ListForRiskID(
 	return page.NewPage(controls, cursor), nil
 }
 
-func (s ControlService) CreateMeasureMapping(
+func (s ControlService) CreateInternalControlMapping(
 	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,
-	measureID gid.GID,
-) (*coredata.Control, *coredata.Measure, error) {
+	internalControlID gid.GID,
+) (*coredata.Control, *coredata.InternalControl, error) {
 	control := &coredata.Control{}
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -398,35 +398,35 @@ func (s ControlService) CreateMeasureMapping(
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, conn, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internalControl: %w", err)
 			}
 
-			controlMeasure := &coredata.ControlMeasure{
-				ControlID:      controlID,
-				MeasureID:      measureID,
-				OrganizationID: control.OrganizationID,
-				TenantID:       scope.GetTenantID(),
-				CreatedAt:      time.Now(),
+			controlInternalControl := &coredata.ControlInternalControl{
+				ControlID:         controlID,
+				InternalControlID: internalControlID,
+				OrganizationID:    control.OrganizationID,
+				TenantID:          scope.GetTenantID(),
+				CreatedAt:         time.Now(),
 			}
 
-			return controlMeasure.Upsert(ctx, conn, scope)
+			return controlInternalControl.Upsert(ctx, conn, scope)
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create control measure mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot create control internal control mapping: %w", err)
 	}
 
-	return control, measure, nil
+	return control, internalControl, nil
 }
 
-func (s ControlService) DeleteMeasureMapping(
+func (s ControlService) DeleteInternalControlMapping(
 	ctx context.Context, scope coredata.Scoper,
 	controlID gid.GID,
-	measureID gid.GID,
-) (*coredata.Control, *coredata.Measure, error) {
+	internalControlID gid.GID,
+) (*coredata.Control, *coredata.InternalControl, error) {
 	control := &coredata.Control{}
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -435,23 +435,23 @@ func (s ControlService) DeleteMeasureMapping(
 				return fmt.Errorf("cannot load control: %w", err)
 			}
 
-			if err := measure.LoadByID(ctx, tx, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, tx, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internalControl: %w", err)
 			}
 
-			controlMeasure := &coredata.ControlMeasure{}
-			if err := controlMeasure.Delete(ctx, tx, scope, control.ID, measure.ID); err != nil {
-				return fmt.Errorf("cannot delete control measure mapping: %w", err)
+			controlInternalControl := &coredata.ControlInternalControl{}
+			if err := controlInternalControl.Delete(ctx, tx, scope, control.ID, internalControl.ID); err != nil {
+				return fmt.Errorf("cannot delete control internal control mapping: %w", err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot delete control measure mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot delete control internal control mapping: %w", err)
 	}
 
-	return control, measure, nil
+	return control, internalControl, nil
 }
 
 func (s ControlService) CreateDocumentMapping(

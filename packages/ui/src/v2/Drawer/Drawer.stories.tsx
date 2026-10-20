@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "../Button/Button";
 import { Text } from "../typography/Text";
@@ -112,6 +112,63 @@ export function Controlled() {
         </DrawerPopup>
       </Drawer>
     </div>
+  );
+}
+
+export function NonModal() {
+  return (
+    <div className="flex flex-col items-start gap-3">
+      <Text size={2} color="neutral">
+        The page stays clickable while the drawer is open.
+      </Text>
+      <Drawer modal={false} disablePointerDismissal swipeDirection="right">
+        <DrawerTrigger render={<Button variant="solid" color="neutral" highContrast>Open drawer</Button>} />
+        <DrawerPopup side="right" modal={false}>
+          <DrawerHeader>
+            <DrawerTitle>Accounts</DrawerTitle>
+            <DrawerClose render={<Button variant="soft" color="neutral" highContrast>Close</Button>} />
+          </DrawerHeader>
+          <DrawerBody>
+            <Text size={2} color="neutral">
+              No backdrop. Outside clicks do not dismiss the drawer.
+            </Text>
+          </DrawerBody>
+        </DrawerPopup>
+      </Drawer>
+    </div>
+  );
+}
+
+export function WithPayload() {
+  const handle = useMemo(() => Drawer.createHandle<string>(), []);
+
+  return (
+    <>
+      <Button
+        variant="solid"
+        color="neutral"
+        highContrast
+        onClick={() => handle.openWithPayload("account-1")}
+      >
+        Open with payload
+      </Button>
+      <Drawer<string> handle={handle} swipeDirection="right">
+        {({ payload }) => (
+          <DrawerPopup side="right">
+            <DrawerHeader>
+              <DrawerTitle>{payload ?? "Account"}</DrawerTitle>
+              <DrawerClose render={<Button variant="soft" color="neutral" highContrast>Close</Button>} />
+            </DrawerHeader>
+            <DrawerBody>
+              <Text size={2} color="neutral">
+                The payload stays set while the drawer closes, so the body does
+                not blank during the animation.
+              </Text>
+            </DrawerBody>
+          </DrawerPopup>
+        )}
+      </Drawer>
+    </>
   );
 }
 

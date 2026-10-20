@@ -12,39 +12,34 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { createUseMutation, type MutationNotifier } from "@probo/relay";
-import { useToast } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
  * Binds the shared awaitable useMutation (`@probo/relay`) to this app's
- * feedback stack: `@probo/ui` toasts, i18n titles, and `formatError`
+ * feedback stack: Base UI toasts, i18n titles, and `formatError`
  * descriptions. This is the only place those opinions are wired.
  *
  * Always import useMutation from `#/lib/relay/useMutation` — never useMutation
  * from react-relay.
  */
 function useMutationNotifier(): MutationNotifier {
-  const { toast } = useToast();
+  const toast = useToast();
   const { t } = useTranslation();
 
   return useMemo<MutationNotifier>(
     () => ({
-      notifySuccess: (message) => {
-        toast({
-          title: t("common.success"),
-          description: message,
-          variant: "success",
-        });
+      notifySuccess: (title) => {
+        toast.add({ title, type: "success" });
       },
       notifyError: (error, title) => {
-        const errorTitle = title ?? t("mutation.errors.commit");
-        toast({
-          title: t("common.error"),
-          description: formatError(errorTitle, error),
-          variant: "error",
+        toast.add({
+          title: title ?? t("common.error"),
+          description: formatError(t("mutation.errors.commit"), error as GraphQLError),
+          type: "error",
         });
       },
     }),

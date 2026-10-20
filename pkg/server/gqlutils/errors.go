@@ -28,6 +28,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -102,6 +104,16 @@ func AccountAlreadyActivated(ctx context.Context, err error) *gqlerror.Error {
 		Path:    graphql.GetPath(ctx),
 		Extensions: map[string]any{
 			"code": "ACCOUNT_ALREADY_ACTIVATED",
+		},
+	}
+}
+
+func ActivationNotRequired(ctx context.Context, err error) *gqlerror.Error {
+	return &gqlerror.Error{
+		Message: err.Error(),
+		Path:    graphql.GetPath(ctx),
+		Extensions: map[string]any{
+			"code": "ACTIVATION_NOT_REQUIRED",
 		},
 	}
 }
@@ -257,6 +269,23 @@ func Internal(ctx context.Context) *gqlerror.Error {
 			"code": "INTERNAL",
 		},
 	}
+}
+
+// MapError turns a service error into the GraphQL error a client should see.
+// coredata.ErrResourceNotFound becomes NOT_FOUND and validator.ValidationErrors
+// become INVALID. Any other error is logged and returned as INTERNAL.
+func MapError(ctx context.Context, logger *log.Logger, message string, err error) error {
+	if errors.Is(err, coredata.ErrResourceNotFound) {
+		return NotFound(ctx, err)
+	}
+
+	if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
+		return InvalidValidationErrors(ctx, validationErrors)
+	}
+
+	logger.ErrorCtx(ctx, message, log.Error(err))
+
+	return Internal(ctx)
 }
 
 func Unavailable(ctx context.Context, err error) *gqlerror.Error {

@@ -87,9 +87,9 @@ export const thirdPartyRoutes = [
         Component: lazy(() => import("./risks/ThirdPartyRiskAssessmentPageLoader")),
       },
       {
-        path: "measures",
+        path: "internal-controls",
         Fallback: LinkCardSkeleton,
-        Component: lazy(() => import("./measures/ThirdPartyMeasuresPageLoader")),
+        Component: lazy(() => import("./internal-controls/ThirdPartyInternalControlsPageLoader")),
       },
       {
         path: "overview",

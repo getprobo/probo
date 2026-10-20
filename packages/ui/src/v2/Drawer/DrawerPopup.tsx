@@ -29,21 +29,24 @@ export type DrawerPopupProps
     & VariantProps<typeof drawer>
     & {
       className?: string;
+      // When false, no dimmed backdrop is rendered. Pair with `modal={false}`
+      // on `Drawer` so the rest of the page stays clickable.
+      modal?: boolean;
     };
 
-// Portal + dimmed backdrop + edge-aligned popup. Children compose the header /
-// body / footer regions inside Base UI's Content (swipe-safe text selection).
-// `ref` lands on the Viewport (not the swipe Popup): nested Select/Menu portals
-// must mount on a non-transformed ancestor. The Popup keeps a CSS transform for
-// swipe/enter animation, which would re-root `position: fixed` and misalign
-// Base UI's modal inert cutout so the trigger looks unclickable.
+// Portal + edge-aligned popup. Children compose the header / body / footer
+// regions inside Base UI's Content (swipe-safe text selection). `ref` lands on
+// the Viewport (not the swipe Popup): nested Select/Menu portals must mount on
+// a non-transformed ancestor. The Popup keeps a CSS transform for swipe/enter
+// animation, which would re-root `position: fixed` and misalign Base UI's
+// modal inert cutout so the trigger looks unclickable.
 export function DrawerPopup(props: DrawerPopupProps) {
-  const { className, children, side, size, ref, ...popupProps } = props;
+  const { className, children, side, size, modal = true, ref, ...popupProps } = props;
   const slots = drawer({ side, size });
 
   return (
     <BaseDrawer.Portal>
-      <BaseDrawer.Backdrop className={slots.backdrop()} />
+      {modal && <BaseDrawer.Backdrop className={slots.backdrop()} />}
       <BaseDrawer.Viewport ref={ref} className={slots.viewport()}>
         <BaseDrawer.Popup className={slots.popup({ className })} {...popupProps}>
           <BaseDrawer.Content className={slots.content()}>

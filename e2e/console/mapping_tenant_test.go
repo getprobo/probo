@@ -28,50 +28,50 @@ import (
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
-func TestControlMeasureMapping_TenantIsolation(t *testing.T) {
+func TestControlInternalControlMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	frameworkID := factory.CreateFramework(org1Owner)
 	controlID := factory.CreateControl(org1Owner, frameworkID)
-	org2MeasureID := factory.NewMeasure(org2Owner).Create()
+	org2MeasureID := factory.NewInternalControl(org2Owner).Create()
 
 	_, err := org1Owner.Do(`
-		mutation($input: CreateControlMeasureMappingInput!) {
-			createControlMeasureMapping(input: $input) {
+		mutation($input: CreateControlInternalControlMappingInput!) {
+			createControlInternalControlMapping(input: $input) {
 				controlEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"controlId": controlID,
-			"measureId": org2MeasureID,
+			"controlId":         controlID,
+			"internalControlId": org2MeasureID,
 		},
 	})
-	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a control to a measure from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a control to an internal control from another organization")
 }
-func TestRiskMeasureMapping_TenantIsolation(t *testing.T) {
+func TestRiskInternalControlMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	riskID := factory.CreateRisk(org1Owner)
-	org2MeasureID := factory.NewMeasure(org2Owner).Create()
+	org2MeasureID := factory.NewInternalControl(org2Owner).Create()
 
 	_, err := org1Owner.Do(`
-		mutation($input: CreateRiskMeasureMappingInput!) {
-			createRiskMeasureMapping(input: $input) {
+		mutation($input: CreateRiskInternalControlMappingInput!) {
+			createRiskInternalControlMapping(input: $input) {
 				riskEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskId":    riskID,
-			"measureId": org2MeasureID,
+			"riskId":            riskID,
+			"internalControlId": org2MeasureID,
 		},
 	})
-	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a risk to a measure from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a risk to an internal control from another organization")
 }
 func TestControlDocumentMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
@@ -197,25 +197,25 @@ func TestRiskObligationMapping_TenantIsolation(t *testing.T) {
 	})
 	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a risk to an obligation from another organization")
 }
-func TestMeasureDocumentMapping_TenantIsolation(t *testing.T) {
+func TestInternalControlDocumentMapping_TenantIsolation(t *testing.T) {
 	t.Parallel()
 	org1Owner := testutil.NewClient(t, testutil.RoleOwner)
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
-	measureID := factory.NewMeasure(org1Owner).Create()
+	internalControlID := factory.NewInternalControl(org1Owner).Create()
 	org2DocumentID := factory.NewDocument(org2Owner).Create()
 
 	_, err := org1Owner.Do(`
-		mutation($input: CreateMeasureDocumentMappingInput!) {
-			createMeasureDocumentMapping(input: $input) {
-				measureEdge { node { id } }
+		mutation($input: CreateInternalControlDocumentMappingInput!) {
+			createInternalControlDocumentMapping(input: $input) {
+				internalControlEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"measureId":  measureID,
-			"documentId": org2DocumentID,
+			"internalControlId": internalControlID,
+			"documentId":        org2DocumentID,
 		},
 	})
-	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link a measure to a document from another organization")
+	testutil.RequireErrorCode(t, err, "INTERNAL", "must not link an internal control to a document from another organization")
 }

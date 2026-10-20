@@ -119,7 +119,23 @@ func sanitizeImageNode(n *Node) {
 		return
 	}
 
-	attrs.Src = safeImageSrc(attrs.Src)
+	if attrs.FileID != nil {
+		id := strings.TrimSpace(*attrs.FileID)
+		if id == "" {
+			attrs.FileID = nil
+		} else {
+			attrs.FileID = &id
+			attrs.Src = ""
+		}
+	}
+
+	if attrs.FileID == nil {
+		attrs.Src = persistedImageSrc(attrs.Src)
+	}
+
+	if attrs.Width != nil && (*attrs.Width < 1 || *attrs.Width > 100) {
+		attrs.Width = nil
+	}
 
 	raw, err := json.Marshal(attrs)
 	if err != nil {

@@ -54,6 +54,9 @@
       "trustedBy": "深受信赖",
       "recentUpdates": "最新动态"
     },
+    "compliance": {
+      "viewDocuments": "查看文档"
+    },
     "recentUpdates": {
       "viewAll": "查看全部"
     }

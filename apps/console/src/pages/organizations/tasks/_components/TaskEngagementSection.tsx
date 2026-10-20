@@ -18,18 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Tabs } from "@probo/ui/src/v2/Tabs/Tabs";
-import { TabsIndicator } from "@probo/ui/src/v2/Tabs/TabsIndicator";
-import { TabsList } from "@probo/ui/src/v2/Tabs/TabsList";
-import { TabsPanel } from "@probo/ui/src/v2/Tabs/TabsPanel";
-import { TabsTab } from "@probo/ui/src/v2/Tabs/TabsTab";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { TaskEngagement } from "@probo/tasks";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskEngagementSection_task$key } from "#/__generated__/core/TaskEngagementSection_task.graphql";
-
-import { taskEngagementSection } from "../variants";
 
 import { TaskActivitySection } from "./TaskActivitySection";
 import { TaskCommentsSection } from "./TaskCommentsSection";
@@ -48,62 +40,14 @@ interface TaskEngagementSectionProps {
 }
 
 export function TaskEngagementSection({ taskKey }: TaskEngagementSectionProps) {
-  const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskEngagementSectionFragment, taskKey);
-  const { root, panel } = taskEngagementSection();
-  const defaultTab = task.canListComments ? "comments" : "activity";
-  const [tab, setTab] = useState(defaultTab);
-  const [activityVisited, setActivityVisited] = useState(
-    defaultTab === "activity",
-  );
-
-  if (!task.canListComments && !task.canListActivities) {
-    return null;
-  }
 
   return (
-    <Tabs
-      className={root()}
-      value={tab}
-      onValueChange={(next) => {
-        const value = next as string;
-        setTab(value);
-        if (value === "activity") {
-          setActivityVisited(true);
-        }
-      }}
-    >
-      <TabsList>
-        {task.canListComments && (
-          <TabsTab value="comments">
-            {t("detailsPage.comments.title")}
-          </TabsTab>
-        )}
-        {task.canListActivities && (
-          <TabsTab value="activity">
-            {t("detailsPage.activity.title")}
-          </TabsTab>
-        )}
-        <TabsIndicator />
-      </TabsList>
-      {task.canListComments && (
-        <TabsPanel
-          value="comments"
-          keepMounted
-          className={panel()}
-        >
-          <TaskCommentsSection taskKey={task} />
-        </TabsPanel>
-      )}
-      {task.canListActivities && (
-        <TabsPanel
-          value="activity"
-          keepMounted={activityVisited}
-          className={panel()}
-        >
-          <TaskActivitySection taskKey={task} />
-        </TabsPanel>
-      )}
-    </Tabs>
+    <TaskEngagement
+      canListComments={task.canListComments}
+      canListActivities={task.canListActivities}
+      comments={<TaskCommentsSection taskKey={task} />}
+      activity={<TaskActivitySection taskKey={task} />}
+    />
   );
 }

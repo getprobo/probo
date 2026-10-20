@@ -61,23 +61,22 @@ The factory lives in `@probo/relay` and stays free of UI/i18n dependencies — i
 
 ```ts
 // src/lib/relay/useMutation.ts — the only place feedback is wired
-import { Toast } from "@base-ui/react/toast";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { createUseMutation, type MutationNotifier } from "@probo/relay";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 function useMutationNotifier(): MutationNotifier {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
   return useMemo<MutationNotifier>(
     () => ({
       notifySuccess: (title) => toast.add({ title, type: "success" }),
       notifyError: (error, title) => {
-        const finalTitle = title ?? t("common.error");
         toast.add({
-          title: finalTitle,
-          description: formatError(finalTitle, error as GraphQLError),
+          title: title ?? t("common.error"),
+          description: formatError(t("mutation.errors.commit"), error as GraphQLError),
           type: "error",
         });
       },

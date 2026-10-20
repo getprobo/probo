@@ -25,7 +25,7 @@ import (
 	"net/url"
 
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -54,7 +54,7 @@ func (r *Resolver) emptyOrganizationsRemediationURL(ctx context.Context, provide
 		return nil
 	}
 
-	oauth2Connector, ok := c.(*connector.OAuth2Connector)
+	oauth2Connector, ok := c.(*connectorprotocol.OAuth2Connector)
 	if !ok || oauth2Connector.ClientID == "" {
 		return nil
 	}

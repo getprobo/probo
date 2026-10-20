@@ -21,6 +21,7 @@
 package delete
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/charmbracelet/huh"
@@ -30,23 +31,29 @@ import (
 )
 
 const deleteMutation = `
-mutation($input: DeleteDeviceInput!) {
-  deleteDevice(input: $input) {
-    deletedDeviceId
+mutation($input: DeleteDevicesInput!) {
+  deleteDevices(input: $input) {
+    deletedDeviceIds
   }
 }
 `
+
+type deleteResponse struct {
+	DeleteDevices struct {
+		DeletedDeviceIds []string `json:"deletedDeviceIds"`
+	} `json:"deleteDevices"`
+}
 
 func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 	var flagYes bool
 
 	cmd := &cobra.Command{
-		Use:   "delete <id>",
-		Short: "Delete a revoked ITAM device",
-		Example: `  # Revoke a device, then delete it
-  prb device revoke <device-id>
-  prb device delete <device-id>`,
-		Args: cobra.ExactArgs(1),
+		Use:   "delete <id>...",
+		Short: "Delete one or more revoked ITAM devices",
+		Example: `  # Revoke devices, then delete them
+  prb device revoke <device-id> [<device-id>...]
+  prb device delete <device-id> [<device-id>...]`,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
 				if !f.IOStreams.IsInteractive() {
@@ -55,8 +62,13 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 
 				var confirmed bool
 
+				title := fmt.Sprintf("Delete device %s?", args[0])
+				if len(args) > 1 {
+					title = fmt.Sprintf("Delete %d devices?", len(args))
+				}
+
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Delete device %s?", args[0])).
+					Title(title).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -86,11 +98,11 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				cmdutil.TokenRefreshOption(cfg, host, hc),
 			)
 
-			_, err = client.Do(
+			data, err := client.Do(
 				deleteMutation,
 				map[string]any{
 					"input": map[string]any{
-						"deviceId": args[0],
+						"deviceIds": args,
 					},
 				},
 			)
@@ -98,11 +110,18 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			_, _ = fmt.Fprintf(
-				f.IOStreams.Out,
-				"Deleted device %s\n",
-				args[0],
-			)
+			var resp deleteResponse
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			for _, deviceID := range resp.DeleteDevices.DeletedDeviceIds {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Deleted device %s\n",
+					deviceID,
+				)
+			}
 
 			return nil
 		},

@@ -20,21 +20,27 @@
 
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
 import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
+import type { ReactNode } from "react";
 
 import { cookieBannerPageHeader } from "../variants";
 
 interface CookieBannerPageHeaderSkeletonProps {
   titleClassName: string;
+  actions?: ReactNode;
 }
 
 export function CookieBannerPageHeaderSkeleton({
   titleClassName,
+  actions,
 }: CookieBannerPageHeaderSkeletonProps) {
-  const { root } = cookieBannerPageHeader();
+  const { root, titleRow } = cookieBannerPageHeader();
 
   return (
     <div className={root()}>
-      <HeadingSkeleton size={6} className={titleClassName} />
+      <div className={titleRow()}>
+        <HeadingSkeleton size={6} className={titleClassName} />
+        {actions}
+      </div>
       <TextSkeleton size={2} className="w-96" />
     </div>
   );

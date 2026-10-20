@@ -39,9 +39,10 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/geoloc"
@@ -98,6 +99,7 @@ type (
 		ProbotCapabilities      *probot.CapabilityRegistry
 		Mailman                 *mailman.Service
 		CookieBanner            *cookiebanner.Service
+		EmployeePortal          *employeeportalmgmt.Service
 		Geoloc                  *geoloc.Service
 		ThirdParty              *thirdparty.Service
 		RiskManagement          *riskmanagement.Service
@@ -108,7 +110,7 @@ type (
 		// InstallStateKey signs the app-install state tokens the connector
 		// install ceremony carries across the vendor.
 		InstallStateKey   string
-		ConnectorRegistry *connector.Registry
+		ConnectorRegistry *connectorprotocol.Registry
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
 		GraphQLLimits     gqlutils.Limits
@@ -276,6 +278,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.AgentExecution,
 			cfg.Mailman,
 			cfg.CookieBanner,
+			cfg.EmployeePortal,
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.InstallStateKey,
@@ -322,6 +325,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.AccessReview,
 			cfg.CookieBanner,
+			cfg.EmployeePortal,
 			cfg.RiskManagement,
 			cfg.ITAM,
 			cfg.Task,
@@ -353,6 +357,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Cookie,
 			cfg.TokenSecret,
 			cfg.File,
+			cfg.EmployeePortal,
 			cfg.BaseURL,
 			saferedirect.Any(
 				saferedirect.StaticHosts(cfg.BaseURL.Host()),

@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 2,
+  "description": "Staged direct-column runtime gates. Portable ratios are paired with Go allocation, byte, exact cached-save output, and diagnostic fallback bounds. Host-specific self-regression references are intentionally generous first-stage baselines.",
+  "gates": [
+    {
+      "workload": "load",
+      "size": 10000,
+      "maxGoToRustRatio": 5.5,
+      "maxGoAllocsPerOp": 70000,
+      "maxGoBytesAllocatedPerOp": 32000000,
+      "maxMetrics": {
+        "fullColumnEncodings": 0,
+        "semanticChangeRows": 0,
+        "semanticOperationRows": 0
+      }
+    },
+    {
+      "workload": "text",
+      "size": 1000,
+      "maxGoToRustRatio": 1.3
+    },
+    {
+      "workload": "text-edit",
+      "size": 1000,
+      "maxGoToRustRatio": 1.3,
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    },
+    {
+      "workload": "save",
+      "size": 10000,
+      "maxGoAllocsPerOp": 4,
+      "maxGoBytesAllocatedPerOp": 1024,
+      "goOutputBytes": 261,
+      "goOutputHash": "7c8b9cad7ad81fbb3ddabd2cccdfb3d37c5b7a5be14fd94cf2853a7f47e8122c",
+      "maxMetrics": {
+        "fullColumnEncodings": 0
+      }
+    },
+    {
+      "workload": "save-after-loaded-change",
+      "size": 10000,
+      "maxGoToRustRatio": 18,
+      "maxGoAllocsPerOp": 800,
+      "maxGoBytesAllocatedPerOp": 1200000,
+      "goOutputBytes": 268,
+      "goOutputHash": "eac15a74c536167b6110ad0a9da3b97af938d6241e7fc330e1612a261f9d80ef",
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    },
+    {
+      "workload": "merge-loaded",
+      "size": 1000,
+      "maxGoToRustRatio": 12,
+      "maxGoAllocsPerOp": 30000,
+      "maxGoBytesAllocatedPerOp": 3500000,
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    },
+    {
+      "workload": "merge-loaded",
+      "size": 10000,
+      "maxGoToRustRatio": 13,
+      "scaleFromSize": 1000,
+      "maxGoScaleRatio": 12,
+      "maxGoAllocsPerOp": 260000,
+      "maxGoBytesAllocatedPerOp": 40000000,
+      "referenceGoNsPerOp": 13300000,
+      "maxGoSelfRegression": 2,
+      "selfRegressionHost": "darwin/arm64",
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    },
+    {
+      "workload": "concurrent-tail-reconcile",
+      "size": 10000,
+      "maxGoToRustRatio": 18,
+      "maxGoAllocsPerOp": 300000,
+      "maxGoBytesAllocatedPerOp": 50000000,
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    },
+    {
+      "workload": "merge-reloaded",
+      "size": 10000,
+      "maxGoToRustRatio": 8,
+      "maxGoAllocsPerOp": 330000,
+      "maxGoBytesAllocatedPerOp": 100000000
+    },
+    {
+      "workload": "sync-initial",
+      "size": 1000,
+      "maxGoToRustRatio": 6.5,
+      "maxGoAllocsPerOp": 50000,
+      "maxGoBytesAllocatedPerOp": 9000000,
+      "goOutputBytes": 1195,
+      "goOutputHash": "d7bbdad39fb4cfabbb241794c390196242498563d6c7862aebe228e2da28c133"
+    },
+    {
+      "workload": "sync-diverged",
+      "size": 1000,
+      "maxGoToRustRatio": 8,
+      "maxGoAllocsPerOp": 18000,
+      "maxGoBytesAllocatedPerOp": 7000000,
+      "goOutputBytes": 572,
+      "goOutputHash": "6a3356b3104821f6e70937c3ebbd79901a8130fae7f9113a96e7cfd3eb9510eb",
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    },
+    {
+      "workload": "sync-diverged",
+      "size": 10000,
+      "maxGoToRustRatio": 8,
+      "scaleFromSize": 1000,
+      "maxGoScaleRatio": 12,
+      "maxGoAllocsPerOp": 170000,
+      "maxGoBytesAllocatedPerOp": 75000000,
+      "referenceGoNsPerOp": 25600000,
+      "maxGoSelfRegression": 2,
+      "selfRegressionHost": "darwin/arm64",
+      "goOutputBytes": 574,
+      "goOutputHash": "743855070705efd8ed588996b25b3a08951aefcabee038e467f0fab8eaaac4f4",
+      "maxMetrics": {
+        "globalOrderFallbacks": 0,
+        "snapshotReplacements": 0,
+        "fullColumnEncodings": 0,
+        "queryIndexRescues": 0
+      }
+    }
+  ]
+}

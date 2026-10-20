@@ -72,8 +72,8 @@ function AccessReviewNavPanelInner({ queryRef, group }: AccessReviewNavPanelInne
       )}
       {organization.canListAccessReviewSources && (
         <NavPanelItem
-          label={t("nav.connections")}
-          to={navHref(organizationId, group, "connections")}
+          label={t("nav.sources")}
+          to={navHref(organizationId, group, "sources")}
         />
       )}
     </>

@@ -24,13 +24,13 @@ import type {
 } from "#/__generated__/core/TrackerPatternDetectedTrackersSectionRefetchQuery.graphql";
 
 export const defaultDetectedTrackersOrder: DetectedTrackerOrder = {
-  field: "LAST_DETECTED_AT",
+  field: "CREATED_AT",
   direction: "DESC",
 };
 
 const firstDetectedTrackersDirection: Record<DetectedTrackerOrderField, DetectedTrackerOrder["direction"]> = {
+  CREATED_AT: "DESC",
   INITIATOR_URL: "ASC",
-  LAST_DETECTED_AT: "DESC",
 };
 
 export function detectedTrackersHeaderSort(

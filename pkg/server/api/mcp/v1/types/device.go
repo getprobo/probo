@@ -58,34 +58,36 @@ func NewDevicePostures(ps coredata.DevicePostures) []*DevicePosture {
 	return out
 }
 
-func NewDevice(d *coredata.Device, postures coredata.DevicePostures) *Device {
+func NewDevice(d *coredata.Device, postures coredata.DevicePostures, posturesIncluded bool) *Device {
 	return &Device{
-		ID:             d.ID,
-		OrganizationID: d.OrganizationID,
-		State:          d.State,
-		Hostname:       d.Hostname,
-		SerialNumber:   d.SerialNumber,
-		HardwareUUID:   d.HardwareUUID,
-		Platform:       d.Platform,
-		OsVersion:      d.OSVersion,
-		AgentVersion:   d.AgentVersion,
-		OwnerID:        d.OwnerID,
-		EnrolledAt:     d.EnrolledAt,
-		LastSeenAt:     d.LastSeenAt,
-		RevokedAt:      d.RevokedAt,
-		LatestPostures: NewDevicePostures(postures),
-		CreatedAt:      d.CreatedAt,
-		UpdatedAt:      d.UpdatedAt,
+		ID:               d.ID,
+		OrganizationID:   d.OrganizationID,
+		State:            d.State,
+		Hostname:         d.Hostname,
+		SerialNumber:     d.SerialNumber,
+		HardwareUUID:     d.HardwareUUID,
+		Platform:         d.Platform,
+		OsVersion:        d.OSVersion,
+		AgentVersion:     d.AgentVersion,
+		OwnerID:          d.OwnerID,
+		EnrolledAt:       d.EnrolledAt,
+		LastSeenAt:       d.LastSeenAt,
+		RevokedAt:        d.RevokedAt,
+		PosturesIncluded: posturesIncluded,
+		LatestPostures:   NewDevicePostures(postures),
+		CreatedAt:        d.CreatedAt,
+		UpdatedAt:        d.UpdatedAt,
 	}
 }
 
 func NewListDevicesOutput(
 	devicePage *page.Page[*coredata.Device, coredata.DeviceOrderField],
 	posturesByDeviceID map[gid.GID]coredata.DevicePostures,
+	posturesIncluded bool,
 ) ListDevicesOutput {
 	devices := make([]*Device, 0, len(devicePage.Data))
 	for _, d := range devicePage.Data {
-		devices = append(devices, NewDevice(d, posturesByDeviceID[d.ID]))
+		devices = append(devices, NewDevice(d, posturesByDeviceID[d.ID], posturesIncluded))
 	}
 
 	var nextCursor *page.CursorKey

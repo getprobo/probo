@@ -25,11 +25,12 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { HomePageQuery } from "#/__generated__/core/HomePageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
-import { ApprovalDashboardCard } from "#/pages/_components/ApprovalDashboardCard";
 import { DeviceCard } from "#/pages/_components/DeviceCard";
+import { DocumentsDashboardCard } from "#/pages/_components/DocumentsDashboardCard";
 import { GetStartedCard } from "#/pages/_components/GetStartedCard";
-import { SignatureDashboardCard } from "#/pages/_components/SignatureDashboardCard";
 import { SlackCard } from "#/pages/_components/SlackCard";
+import { TasksDashboardCard } from "#/pages/_components/TasksDashboardCard";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 import { useViewerFirstName } from "#/pages/iam/_lib/ViewerIdentityContext";
 
 export const homePageQuery = graphql`
@@ -59,9 +60,27 @@ export const homePageQuery = graphql`
       ) {
         totalCount
       }
+      inProgressTasks: assignedTasks(
+        organizationId: $organizationId
+        filter: { state: IN_PROGRESS }
+      ) {
+        totalCount
+      }
+      todoTasks: assignedTasks(
+        organizationId: $organizationId
+        filter: { state: TODO }
+      ) {
+        totalCount
+      }
+      backlogTasks: assignedTasks(
+        organizationId: $organizationId
+        filter: { state: BACKLOG }
+      ) {
+        totalCount
+      }
       ...GetStartedCard_viewer @arguments(organizationId: $organizationId)
-      ...SignatureDashboardCard_viewer @arguments(organizationId: $organizationId)
-      ...ApprovalDashboardCard_viewer @arguments(organizationId: $organizationId)
+      ...DocumentsDashboardCard_viewer @arguments(organizationId: $organizationId)
+      ...TasksDashboardCard_viewer @arguments(organizationId: $organizationId)
       ...DeviceCard_viewer @arguments(organizationId: $organizationId)
       ...SlackCard_viewer
     }
@@ -85,6 +104,7 @@ interface HomePageProps {
 export function HomePage({ queryRef }: HomePageProps) {
   const { t } = useTranslation();
   const firstName = useViewerFirstName();
+  const { deviceAgent } = useEmployeePortalRoute();
   const { viewer, organization } = usePreloadedQuery<HomePageQuery>(
     homePageQuery,
     queryRef,
@@ -98,6 +118,10 @@ export function HomePage({ queryRef }: HomePageProps) {
     = (viewer.pendingSignatures.totalCount > 0 || viewer.pendingApprovals.totalCount > 0)
       && viewer.completedSignatures.totalCount === 0
       && viewer.approvedDocuments.totalCount === 0;
+  const pendingTaskCount
+    = viewer.inProgressTasks.totalCount
+      + viewer.todoTasks.totalCount
+      + viewer.backlogTasks.totalCount;
 
   const welcome = firstName === ""
     ? t("homePage.welcomeFallback")
@@ -119,18 +143,24 @@ export function HomePage({ queryRef }: HomePageProps) {
             <GetStartedCard viewerKey={viewer} />
           </div>
         )}
-        <SignatureDashboardCard
+        <DocumentsDashboardCard
           viewerKey={viewer}
-          wash={!showGetStarted && viewer.pendingSignatures.totalCount > 0}
+          wash={
+            !showGetStarted
+            && (viewer.pendingSignatures.totalCount > 0
+              || viewer.pendingApprovals.totalCount > 0)
+          }
         />
-        <ApprovalDashboardCard
+        <TasksDashboardCard
           viewerKey={viewer}
-          wash={!showGetStarted && viewer.pendingApprovals.totalCount > 0}
+          wash={!showGetStarted && pendingTaskCount > 0}
         />
-        <DeviceCard
-          viewerKey={viewer}
-          organizationKey={organization}
-        />
+        {deviceAgent && (
+          <DeviceCard
+            viewerKey={viewer}
+            organizationKey={organization}
+          />
+        )}
         {organization.slackbotInstallation?.active === true && (
           <SlackCard
             viewerKey={viewer}

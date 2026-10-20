@@ -25,17 +25,23 @@ import { tv } from "tailwind-variants/lite";
 export const textField = tv({
   slots: {
     root: [
-      "flex items-center gap-2 rounded-2 text-2 text-sand-12 transition-colors",
+      "flex items-center rounded-2 text-sand-12 transition-colors",
       "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
       "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
     ],
-    icon: "flex size-4 shrink-0 items-center justify-center text-sand-a9 [&_svg]:size-4",
+    icon: "flex shrink-0 items-center justify-center text-sand-a9",
     input: "min-w-0 flex-1 bg-transparent text-sand-12 outline-none placeholder:text-sand-a9",
   },
   variants: {
     size: {
-      1: { root: "h-7 px-2" },
-      2: { root: "h-8 px-2" },
+      1: {
+        root: "h-6 gap-1 px-1.5 text-1",
+        icon: "size-3.5 [&_svg]:size-3.5",
+      },
+      2: {
+        root: "h-8 gap-2 px-2 text-2",
+        icon: "size-4 [&_svg]:size-4",
+      },
     },
     // Surface treatment. Only the accent (gold) color ships, matching Figma;
     // classic adds a recessed inset shadow, soft drops the border for a tint.
@@ -91,7 +97,7 @@ export const textFieldSkeleton = tv({
   base: "inline-block animate-pulse rounded-2 bg-sand-3 align-middle",
   variants: {
     size: {
-      1: "h-7 w-60",
+      1: "h-6 w-60",
       2: "h-8 w-60",
     },
   },
@@ -124,18 +130,28 @@ export const dateField = tv({
       "cursor-pointer text-sand-a9 outline-none [&_svg]:size-4 hover:text-sand-12 hover:bg-sand-3",
       "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
     ],
-    calendar: "flex w-72 flex-col gap-2",
+    calendar: "flex flex-col",
     header: "flex items-center gap-1",
-    monthSelect: "min-w-0 flex-1",
-    yearSelect: "w-20 shrink-0",
+    monthSelect: "min-w-0",
+    yearSelect: "shrink-0",
     weekdays: "grid grid-cols-7",
     weekday: "py-1 text-center text-1 font-medium text-sand-11",
     grid: "grid grid-cols-7",
   },
   variants: {
     size: {
-      1: { surface: "h-7 px-2" },
-      2: { surface: "h-8 px-2" },
+      1: {
+        surface: "h-7 px-2",
+        calendar: "w-56 gap-1",
+        monthSelect: "w-20 shrink-0",
+        yearSelect: "w-16",
+      },
+      2: {
+        surface: "h-8 px-2",
+        calendar: "w-72 gap-2",
+        monthSelect: "flex-1",
+        yearSelect: "w-20",
+      },
     },
     variant: {
       classic: { surface: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
@@ -150,12 +166,16 @@ export const dateField = tv({
 
 export const dateFieldDay = tv({
   base: [
-    "flex size-8 items-center justify-center rounded-2 text-2 text-sand-12",
+    "flex items-center justify-center rounded-2 text-sand-12",
     "cursor-pointer outline-none hover:bg-sand-4",
     "focus-visible:ring-2 focus-visible:ring-sand-8",
     "disabled:pointer-events-none disabled:opacity-50",
   ],
   variants: {
+    size: {
+      1: "size-6 text-1",
+      2: "size-8 text-2",
+    },
     selected: {
       true: "bg-sand-5 hover:bg-sand-5",
       false: "",
@@ -170,6 +190,7 @@ export const dateFieldDay = tv({
     },
   },
   defaultVariants: {
+    size: 2,
     selected: false,
     today: false,
     outside: false,
@@ -186,5 +207,48 @@ export const dateFieldSkeleton = tv({
   },
   defaultVariants: {
     size: 2,
+  },
+});
+
+// Always-visible calendar panel: typed input above DateMonthView.
+export const dateCalendar = tv({
+  slots: {
+    root: "flex min-w-0 flex-col",
+    surface: [
+      "flex min-w-0 w-full items-center gap-2 rounded-2 text-sand-12 transition-colors",
+      "focus-within:ring-2 focus-within:ring-sand-8 focus-within:ring-offset-1 focus-within:ring-offset-sand-1",
+      "has-[input:disabled]:pointer-events-none has-[input:disabled]:opacity-50",
+    ],
+    input: [
+      "min-w-0 w-full flex-1 bg-transparent text-sand-12 outline-none",
+      "placeholder:text-sand-a9",
+    ],
+    clear: [
+      "flex shrink-0 items-center justify-center rounded-2 border-0 bg-transparent p-0",
+      "cursor-pointer text-sand-a9 outline-none hover:text-sand-12 hover:bg-sand-3",
+      "focus-visible:ring-2 focus-visible:ring-sand-8 focus-visible:ring-offset-1 focus-visible:ring-offset-sand-1",
+    ],
+  },
+  variants: {
+    size: {
+      1: {
+        root: "w-56 gap-1",
+        surface: "h-7 px-2 text-1",
+        clear: "size-5 [&_svg]:size-3",
+      },
+      2: {
+        root: "w-72 gap-2",
+        surface: "h-8 px-2 text-2",
+        clear: "size-6 [&_svg]:size-4",
+      },
+    },
+    variant: {
+      classic: { surface: "border border-sand-a5 bg-sand-1 inset-shadow-2" },
+      surface: { surface: "border border-sand-a5 bg-sand-1" },
+    },
+  },
+  defaultVariants: {
+    size: 2,
+    variant: "surface",
   },
 });

@@ -29,8 +29,8 @@ import {
   Thead,
   Tr,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useTranslation } from "react-i18next";
@@ -89,7 +89,7 @@ type Props = {
 
 export default function AuditsPage(props: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
 
   const data = usePreloadedQuery<AuditGraphListQuery>(auditsQuery, props.queryRef);
@@ -118,10 +118,10 @@ export default function AuditsPage(props: Props) {
       setIsDragging(false);
       dragCounterRef.current = 0;
       if (fileRejections.length > 0) {
-        toast({
+        toast.add({
           title: t("auditsPage.errors.unsupportedFileType.title"),
           description: t("auditsPage.errors.unsupportedFileType.description"),
-          variant: "error",
+          type: "error",
         });
         return;
       }

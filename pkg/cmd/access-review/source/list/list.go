@@ -41,6 +41,9 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AccessReviewSourceOrde
             id
             name
             createdAt
+            connectorAccount {
+              name
+            }
           }
         }
         pageInfo {
@@ -54,9 +57,12 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: AccessReviewSourceOrde
 `
 
 type sourceNode struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	CreatedAt string `json:"createdAt"`
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	CreatedAt        string `json:"createdAt"`
+	ConnectorAccount *struct {
+		Name string `json:"name"`
+	} `json:"connectorAccount"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -171,7 +177,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			for _, s := range sources {
 				rows = append(rows, []string{
 					s.ID,
-					s.Name,
+					s.label(),
 					cmdutil.FormatTime(s.CreatedAt),
 				})
 			}
@@ -200,4 +206,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd
+}
+
+func (s sourceNode) label() string {
+	if s.ConnectorAccount != nil {
+		return s.ConnectorAccount.Name
+	}
+
+	return s.Name
 }

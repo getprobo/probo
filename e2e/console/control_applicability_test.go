@@ -211,7 +211,7 @@ func TestControlApplicability_Lifecycle(t *testing.T) {
 	assert.Equal(t, orgID, relations.Organization.ID)
 	assert.True(t, relations.Regulatory, "LEGAL obligation mapping should set regulatory")
 	assert.True(t, relations.Contractual, "CONTRACTUAL obligation mapping should set contractual")
-	assert.True(t, relations.RiskAssessment, "control-measure-risk chain should set riskAssessment")
+	assert.True(t, relations.RiskAssessment, "control-internal-control-risk chain should set riskAssessment")
 	assert.Equal(t, 2, relations.Obligations.TotalCount)
 	assert.Equal(t, 1, relations.Documents.TotalCount)
 	assert.Equal(t, 1, relations.Audits.TotalCount)
@@ -233,8 +233,8 @@ func setupControlRelationMappings(
 ) {
 	t.Helper()
 
-	measureID := factory.NewMeasure(owner).
-		WithName(factory.SafeName("Relations measure")).
+	internalControlID := factory.NewInternalControl(owner).
+		WithName(factory.SafeName("Relations internal control")).
 		Create()
 	riskID := factory.CreateRisk(owner, factory.Attrs{"name": factory.SafeName("Relations risk")})
 	documentID := factory.NewDocument(owner).
@@ -246,16 +246,16 @@ func setupControlRelationMappings(
 
 	require.NoError(t, owner.Execute(
 		`
-			mutation($input: CreateControlMeasureMappingInput!) {
-				createControlMeasureMapping(input: $input) {
+			mutation($input: CreateControlInternalControlMappingInput!) {
+				createControlInternalControlMapping(input: $input) {
 					controlEdge { node { id } }
 				}
 			}
 		`,
 		map[string]any{
 			"input": map[string]any{
-				"controlId": controlID,
-				"measureId": measureID,
+				"controlId":         controlID,
+				"internalControlId": internalControlID,
 			},
 		},
 		nil,
@@ -263,16 +263,16 @@ func setupControlRelationMappings(
 
 	require.NoError(t, owner.Execute(
 		`
-			mutation($input: CreateRiskMeasureMappingInput!) {
-				createRiskMeasureMapping(input: $input) {
+			mutation($input: CreateRiskInternalControlMappingInput!) {
+				createRiskInternalControlMapping(input: $input) {
 					riskEdge { node { id } }
 				}
 			}
 		`,
 		map[string]any{
 			"input": map[string]any{
-				"riskId":    riskID,
-				"measureId": measureID,
+				"riskId":            riskID,
+				"internalControlId": internalControlID,
 			},
 		},
 		nil,

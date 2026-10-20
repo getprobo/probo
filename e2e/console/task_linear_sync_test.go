@@ -49,7 +49,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear sync source").
 		Create()
 
@@ -315,7 +315,7 @@ func TestTaskLinearSync_CommentRemoveDeletesProboComment(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear comment remove").
 		Create()
 
@@ -353,7 +353,7 @@ func TestTaskLinearSync_IssueRemoveUnlinksTask(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithName("Linear issue remove").
 		Create()
 
@@ -472,9 +472,9 @@ func seedTaskLinearLink(t *testing.T, owner *testutil.Client, taskID, externalID
 
 	_, err = conn.Exec(ctx, `
 		INSERT INTO connectors (
-			id, tenant_id, organization_id, provider, protocol, settings, encrypted_connection, created_at, updated_at
+			id, tenant_id, organization_id, provider, protocol, name, settings, encrypted_connection, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, 'LINEAR_SYNC', 'OAUTH2', '{}', '\x', $4, $4
+			$1, $2, $3, 'LINEAR_SYNC', 'OAUTH2', 'Linear sync', '{}', '\x', $4, $4
 		)
 	`, connectorID, tenantID, orgID, now)
 	require.NoError(t, err)
@@ -762,7 +762,7 @@ func TestTask_UnlinkExternalWhenNotLinked(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	const mutation = `
 		mutation($input: UnlinkTaskExternalInput!) {
@@ -797,4 +797,40 @@ func TestTaskLinearSync_InvalidSignatureRejected(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestTask_UpdateLinearSettingsWhenNotConnected(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+
+	const mutation = `
+		mutation($input: UpdateLinearSettingsInput!) {
+			updateLinearSettings(input: $input) {
+				organization {
+					linearSettings {
+						issueImport
+					}
+				}
+			}
+		}
+	`
+
+	ownerErr := owner.ExecuteShouldFail(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"defaultTeamId":  "team-id",
+			"issueImport":    "ACTIVE",
+		},
+	})
+	testutil.RequireErrorCode(t, ownerErr, "INVALID")
+
+	viewerErr := viewer.ExecuteShouldFail(mutation, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"issueImport":    "ACTIVE",
+		},
+	})
+	testutil.RequireForbiddenError(t, viewerErr)
 }

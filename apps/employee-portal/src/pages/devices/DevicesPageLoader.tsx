@@ -20,34 +20,26 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
 import type { DevicesPageQuery } from "#/__generated__/core/DevicesPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DevicesPage, devicesPageQuery } from "./DevicesPage";
 import { DevicesPageSkeleton } from "./DevicesPageSkeleton";
 
 export default function DevicesPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<DevicesPageQuery>(
     devicesPageQuery,
   );
 
   useEffect(() => {
-    if (organizationId === undefined) {
-      return;
-    }
     loadQuery(
       { organizationId, first: DOCUMENT_LIST_PAGE_SIZE },
       { fetchPolicy: "network-only" },
     );
   }, [organizationId, loadQuery]);
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (queryRef === undefined || queryRef === null
     || queryRef.variables.organizationId !== organizationId) {

@@ -180,6 +180,43 @@ export const SortableHeaders: Story = {
   },
 };
 
+const longToken = "https://cdn.example.com/vendor/analytics/v2/collect?id=_ga_XXXXXXXXXXXXXXXXXXXX";
+
+export const OverflowColumn: Story = {
+  render: () => (
+    <div className="flex w-80 flex-col gap-6">
+      <Table variant="surface" layout="fixed">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell overflow="truncate">Truncate</TableColumnHeaderCell>
+            <TableColumnHeaderCell width="5rem">Meta</TableColumnHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableRowHeaderCell overflow="truncate">{longToken}</TableRowHeaderCell>
+            <TableCell>Cookie</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+      <Table variant="surface" layout="fixed">
+        <TableHeader>
+          <TableRow>
+            <TableColumnHeaderCell overflow="break">Break</TableColumnHeaderCell>
+            <TableColumnHeaderCell width="5rem">Meta</TableColumnHeaderCell>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableRowHeaderCell overflow="break">{longToken}</TableRowHeaderCell>
+            <TableCell>Cookie</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+  ),
+};
+
 // Title TableLink stretches across the row; the trailing ButtonLink sits
 // above the overlay via TableCell interactive.
 export const InteractiveRows: Story = {

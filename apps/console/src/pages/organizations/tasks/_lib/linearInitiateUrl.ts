@@ -23,6 +23,7 @@ export function linearInitiateUrl(
   options?: {
     connectorId?: string;
     continuePath?: string;
+    name?: string;
   },
 ) {
   const url = new URL(
@@ -36,6 +37,9 @@ export function linearInitiateUrl(
   }
   if (options?.connectorId) {
     url.searchParams.set("connector_id", options.connectorId);
+  }
+  if (options?.name) {
+    url.searchParams.set("name", options.name);
   }
 
   return url.toString();

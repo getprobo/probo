@@ -22,10 +22,10 @@ import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { usePageTitle } from "@probo/hooks";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback } from "react";
@@ -47,7 +47,7 @@ const verifyEmailMutation = graphql`
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const queryToken = searchParams.get("token")?.trim() ?? "";
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
@@ -59,10 +59,10 @@ export default function VerifyEmailPage() {
 
   const handleSubmit = useCallback((token: string) => {
     if (token === "") {
-      toast({
+      toast.add({
         title: t("common.error"),
         description: t("verifyEmailPage.errors.tokenRequired"),
-        variant: "error",
+        type: "error",
       });
       return;
     }
@@ -75,9 +75,9 @@ export default function VerifyEmailPage() {
       },
       onCompleted: (_, errors) => {
         if (errors && !errors.some(error => (error as GraphQLError).extensions?.code === "EMAIL_ALREADY_VERIFIED")) {
-          toast({
+          toast.add({
             title: t("common.error"), description: formatError(t("verifyEmailPage.errors.confirm"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -85,9 +85,9 @@ export default function VerifyEmailPage() {
         window.location.href = postAuthRedirectUrl;
       },
       onError: (err) => {
-        toast({
+        toast.add({
           title: t("common.error"), description: err.message || t("verifyEmailPage.errors.confirm"),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -34,7 +34,7 @@ func TestTaskComment_RBAC(t *testing.T) {
 
 	org := testutil.NewOrganizationRoles(t)
 	owner := org.Client(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	const updateMutation = `
 		mutation UpdateTaskComment($input: UpdateTaskCommentInput!) {

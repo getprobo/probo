@@ -387,11 +387,14 @@ func windowsPasswordPolicy(ctx context.Context) Result {
 	}
 
 	ev["min_password_length"] = minLen
-	if minLen > 0 {
+	switch windowsPasswordPolicyVerdict(minLen, true) {
+	case StatusUnknown:
+		return unknown(ev)
+	case StatusPass:
 		return pass(ev)
+	default:
+		return fail(ev)
 	}
-
-	return fail(ev)
 }
 
 func windowsMalwareProtection(ctx context.Context) Result {

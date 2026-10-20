@@ -27,6 +27,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -37,11 +38,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 const (
@@ -274,15 +276,19 @@ func exchangeTestIssuer(t *testing.T) *identityfederation.Issuer {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
-	keyRing, err := jose.NewKeyRing(
-		[]jose.SigningKey{{PrivateKey: key, KID: "test", Active: true}},
+	issuer, err := identityfederation.NewIssuer(
+		log.NewLogger(log.WithOutput(io.Discard)),
+		probodconfig.IdentityFederationConfig{
+			Enabled:       true,
+			IssuerBaseURL: "https://proboidentity.com",
+			SigningKeys: []probodconfig.IdentityFederationSigningKeyConfig{{
+				PrivateKey: probodconfig.RSAPrivateKeyFromKey(key),
+				KID:        "test",
+				Active:     true,
+			}},
+		},
+		baseurl.MustParse("https://app.probo.com"),
 	)
-	require.NoError(t, err)
-
-	base, err := baseurl.Parse("https://proboidentity.com")
-	require.NoError(t, err)
-
-	issuer, err := identityfederation.NewIssuer(base, keyRing, identityfederation.DefaultTokenTTL)
 	require.NoError(t, err)
 
 	return issuer

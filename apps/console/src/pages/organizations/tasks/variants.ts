@@ -26,6 +26,8 @@ export const tasksPage = tv({
     header: "flex items-start justify-between gap-4",
     intro: "flex min-w-0 flex-col gap-2",
     actions: "flex shrink-0 items-center gap-2",
+    list: "flex flex-col gap-4",
+    userFilter: "w-52 shrink-0 max-sm:w-full",
   },
 });
 
@@ -64,8 +66,19 @@ export const taskEngagementSection = tv({
 export const taskPropertiesSection = tv({
   slots: {
     root: "flex flex-col",
-    row: "grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-3 border-b border-sand-6 py-2.5 last:border-b-0",
+    row: "grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 border-b border-sand-6 py-2.5 last:border-b-0",
+    label: "",
+    names: "flex min-w-0 flex-col gap-1 break-words",
     value: "flex min-w-0 items-center gap-2",
+  },
+  variants: {
+    align: {
+      center: { row: "items-center" },
+      start: { row: "items-start", label: "pt-1" },
+    },
+  },
+  defaultVariants: {
+    align: "center",
   },
 });
 
@@ -135,6 +148,8 @@ export const createTaskDialog = tv({
       "[&_.tiptap>p:first-child]:mt-0 [&_.tiptap>p:last-child]:mb-0",
     ],
     value: "flex items-center gap-2",
+    linearFallback: "flex flex-col items-start gap-2",
+    linearFallbackChoice: "flex items-center gap-2",
   },
 });
 
@@ -146,7 +161,16 @@ export const taskLinearField = tv({
 
 export const taskLinearPublishField = tv({
   slots: {
-    root: "flex flex-col gap-2",
+    root: "flex flex-col",
+  },
+  variants: {
+    spacing: {
+      compact: { root: "gap-2" },
+      relaxed: { root: "gap-4" },
+    },
+  },
+  defaultVariants: {
+    spacing: "compact",
   },
 });
 
@@ -155,8 +179,11 @@ export const tasksSettingsDialog = tv({
     sections: "flex flex-col gap-6",
     section: "flex flex-col gap-3",
     intro: "flex flex-col gap-1",
-    list: "flex flex-col",
+    list: "flex flex-col gap-3",
     row: "flex items-start justify-between gap-4",
+    defaultTeam: "flex flex-col gap-2 border-t border-sand-6 pt-3",
+    defaultTeamControl: "block w-full",
+    issueImport: "flex flex-col gap-2",
     identity: "flex min-w-0 flex-col gap-1",
     heading: "flex flex-wrap items-center gap-2",
   },

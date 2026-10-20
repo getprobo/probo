@@ -30,6 +30,9 @@ const organizationSourcesQuery = `
 						node {
 							id
 							name
+							connectorAccount {
+								name
+							}
 						}
 					}
 					pageInfo {
@@ -63,9 +66,24 @@ function mapSources(responseData: IDataObject): INodePropertyOptions[] {
 		.map((edge) => edge.node)
 		.filter((node): node is IDataObject => node !== undefined && typeof node.id === 'string')
 		.map((node) => ({
-			name: String(node.name ?? node.id),
+			name: sourceOptionName(node),
 			value: String(node.id),
 		}));
+}
+
+function sourceOptionName(node: IDataObject): string {
+	const account = node.connectorAccount as IDataObject | undefined;
+	if (account != null && typeof account.name === 'string') {
+		return account.name;
+	}
+
+	return stringField(node, 'name') || String(node.id);
+}
+
+function stringField(value: IDataObject | undefined, field: string): string {
+	const fieldValue = value?.[field];
+
+	return typeof fieldValue === 'string' ? fieldValue : '';
 }
 
 function getAccessReviewSourcesConnection(responseData: IDataObject): IDataObject | undefined {

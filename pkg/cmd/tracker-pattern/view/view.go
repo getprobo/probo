@@ -44,9 +44,12 @@ query($id: ID!) {
       description
       source
       excluded
-      lastMatchedAt
       commonTrackerPatternId
       attribution
+      discoveryHits {
+        family
+        count
+      }
       createdAt
       updatedAt
     }
@@ -66,11 +69,14 @@ type viewResponse struct {
 		Description            *string `json:"description"`
 		Source                 string  `json:"source"`
 		Excluded               bool    `json:"excluded"`
-		LastMatchedAt          *string `json:"lastMatchedAt"`
 		CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 		Attribution            *string `json:"attribution"`
-		CreatedAt              string  `json:"createdAt"`
-		UpdatedAt              string  `json:"updatedAt"`
+		DiscoveryHits          []struct {
+			Family string `json:"family"`
+			Count  int    `json:"count"`
+		} `json:"discoveryHits"`
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
 	} `json:"node"`
 }
 
@@ -144,10 +150,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Description:"), *v.Description)
 			}
 
-			if v.LastMatchedAt != nil {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Last Matched:"), cmdutil.FormatTime(*v.LastMatchedAt))
-			}
-
 			if v.CommonTrackerPatternID != nil && *v.CommonTrackerPatternID != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Common Pattern:"), *v.CommonTrackerPatternID)
 			} else {
@@ -156,6 +158,15 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 
 			if v.Attribution != nil && *v.Attribution != "" {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Attribution:"), *v.Attribution)
+			}
+
+			if len(v.DiscoveryHits) == 0 {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Discovery Hits:"), "none")
+			} else {
+				_, _ = fmt.Fprintf(out, "%s\n", label.Render("Discovery Hits:"))
+				for _, hit := range v.DiscoveryHits {
+					_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), hit.Family, hit.Count)
+				}
 			}
 
 			_, _ = fmt.Fprintln(out)

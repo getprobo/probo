@@ -25,6 +25,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -88,6 +90,8 @@ var FileTypes = []FileType{
 	{MimeType: "text/json", Extensions: []string{".json"}, Category: CategoryData},
 	{MimeType: "text/csv", Extensions: []string{".csv"}, Category: CategoryData},
 	{MimeType: "application/csv", Extensions: []string{".csv"}, Category: CategoryData},
+	// Windows browsers report .csv as the legacy Excel type.
+	{MimeType: "application/vnd.ms-excel", Extensions: []string{".csv"}, Category: CategoryData},
 
 	// Video types
 	{MimeType: "video/mp4", Extensions: []string{".mp4"}, Category: CategoryVideo},
@@ -95,6 +99,29 @@ var FileTypes = []FileType{
 	{MimeType: "video/quicktime", Extensions: []string{".mov"}, Category: CategoryVideo},
 	{MimeType: "video/x-msvideo", Extensions: []string{".avi"}, Category: CategoryVideo},
 	{MimeType: "video/webm", Extensions: []string{".webm"}, Category: CategoryVideo},
+}
+
+// Error is a file rejected by Validate. Callers should report it to the
+// client; it is not an internal failure. Code is the validation cause.
+type Error struct {
+	message string
+	code    validator.ErrorCode
+}
+
+func (e *Error) Error() string {
+	return e.message
+}
+
+// Code returns the validation cause for this rejection.
+func (e *Error) Code() validator.ErrorCode {
+	return e.code
+}
+
+func validationError(code validator.ErrorCode, format string, args ...any) error {
+	return &Error{
+		message: fmt.Sprintf(format, args...),
+		code:    code,
+	}
 }
 
 // FileValidator is a configurable file validator
@@ -201,40 +228,83 @@ func NewValidator(opts ...Option) *FileValidator {
 	return v
 }
 
+// NewAttachmentValidator returns the validator used for attachment uploads.
+func NewAttachmentValidator() *FileValidator {
+	return NewValidator(
+		WithCategories(
+			CategoryDocument,
+			CategorySpreadsheet,
+			CategoryPresentation,
+			CategoryText,
+			CategoryImage,
+			CategoryData,
+		),
+	)
+}
+
+// ContentTypeForAttachment returns the MIME type accepted for filename.
+func ContentTypeForAttachment(filename string) (string, bool) {
+	return NewAttachmentValidator().ContentTypeForFilename(filename)
+}
+
 // WithMaxFileSize sets the maximum file size and returns the validator
 func (v *FileValidator) WithMaxFileSize(maxSize int64) *FileValidator {
 	v.MaxFileSize = maxSize
 	return v
 }
 
+// ContentTypeForFilename returns the first allowed MIME type for filename's extension.
+func (v *FileValidator) ContentTypeForFilename(filename string) (string, bool) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == "" {
+		return "", false
+	}
+
+	contentTypes := v.AllowedExtensions[ext]
+	if len(contentTypes) == 0 {
+		return "", false
+	}
+
+	return contentTypes[0], true
+}
+
 // Validate validates that the file meets the configured requirements
 func (v *FileValidator) Validate(filename string, contentType string, size int64) error {
 	if size == 0 {
-		return fmt.Errorf("file can't be empty")
+		return validationError(validator.ErrorCodeOutOfRange, "file can't be empty")
 	}
 
 	if size > v.MaxFileSize {
-		return fmt.Errorf("file size exceeds maximum allowed size of %d bytes", v.MaxFileSize)
+		return validationError(
+			validator.ErrorCodeOutOfRange,
+			"file size exceeds maximum allowed size of %d bytes",
+			v.MaxFileSize,
+		)
 	}
 
 	if !v.AllowedMimeTypes[contentType] {
-		return fmt.Errorf("content type %q is not allowed", contentType)
+		return validationError(validator.ErrorCodeInvalidFormat, "content type %q is not allowed", contentType)
 	}
 
 	ext := strings.ToLower(filepath.Ext(filename))
 	if ext == "" {
-		return fmt.Errorf("file has no extension")
+		return validationError(validator.ErrorCodeInvalidFormat, "file has no extension")
 	}
 
 	allowedTypes, extAllowed := v.AllowedExtensions[ext]
 	if !extAllowed {
-		return fmt.Errorf("file extension %q is not allowed", ext)
+		return validationError(validator.ErrorCodeInvalidFormat, "file extension %q is not allowed", ext)
 	}
 
 	validType := slices.Contains(allowedTypes, contentType)
 
 	if !validType {
-		return fmt.Errorf("content type %q does not match extension %q", contentType, ext)
+		return validationError(
+			validator.ErrorCodeInvalidFormat,
+			"content type %q does not match extension %q",
+			contentType,
+			ext,
+		)
 	}
 
 	return nil

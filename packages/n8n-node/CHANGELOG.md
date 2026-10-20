@@ -4,6 +4,170 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.255.0] - 2026-10-19
+
+### Changed
+
+- Risk `Create` and `Update` no longer take `Treatment`, likelihood,
+  impact, or `Owner ID`; these now live on treatment plans. Saved
+  workflows that set those fields must remove them
+
+## [0.254.0] - 2026-10-19
+
+### Changed
+
+- Device `Get Many` filters by several `States`, `Platforms`, and
+  `Agent Versions` (comma-separated). These options replace the single
+  `State`, `Platform`, and `Agent Version` fields, so saved workflows
+  that set the old fields must select the filters again
+
+## [0.253.0] - 2026-10-16
+
+### Added
+
+- Audit `Link Framework` and `Unlink Framework` operations
+
+### Changed
+
+- Audit `Create` takes `Framework IDs` instead of a single
+  `Framework ID`. Saved workflows that set the old field keep working
+
+## [0.252.0] - 2026-10-16
+
+### Added
+
+- Task `Create` accepts a Linear team ID. Leave it empty to use the
+  organization's default Linear team. Enter `none` to create the task
+  with no Linear team
+- Task `Update Linear Settings` sets the organization's default Linear
+  team and whether new issues on that team are imported
+
+### Changed
+
+- Task `Create` still returns the created task when the Linear publish
+  attempt fails. The GraphQL error is included in the node output
+
+### Fixed
+
+- Audit operations select `reportFile` instead of the removed
+  `reportUrl`, so those queries succeed and still return a download URL
+
+## [0.251.0] - 2026-10-15
+
+### Added
+
+- Device operation to download the PDF snapshot of device postures
+- Device list filters by owner, state, platform, and agent version
+- Revoke and delete several devices in a single all-or-nothing call
+
+## [0.250.0] - 2026-10-15
+
+### Changed
+
+- Access review source options show the account name
+
+## [0.249.0] - 2026-10-14
+
+### Added
+
+- Attachment `Upload` uploads a private file for an image or file in
+  rich text. Document, task, task comment, and risk analysis content
+  can reference that file
+
+## [0.248.0] - 2026-10-14
+
+### Removed
+
+- Last-seen timestamp from the Tracker Pattern `Get` and `Get Many`
+  operations
+
+## [0.247.0] - 2026-10-13
+
+### Added
+
+- Connector `Create API Key` and `Create Client Credentials` for providers
+  that need no extra setting, plus `Create AWS Workload Identity
+  Federation`, `Create GCP Workload Identity Federation`, and `Create
+  Azure Workload Identity Federation`
+
+### Changed
+
+- **Breaking**: Access Review Source `Create` no longer takes a cloud
+  provider and its credentials. Pass a connector that already exists, or
+  CSV data
+- Connector `Create Organization Connector` is marked deprecated. Saved
+  workflows that already use it keep working
+
+### Fixed
+
+- A node fails when the GraphQL response contains errors, instead of
+  continuing with an error payload
+
+## [0.246.0] - 2026-10-09
+
+### Added
+
+- Cookie Banner `Get` returns discovery page loads by browser family, and
+  Tracker Pattern `Get` returns discovery hits by browser family
+
+
+## [0.245.0] - 2026-10-09
+
+### Added
+
+- Connector `Update` operation renames a connector
+
+### Changed
+
+- **Breaking**: Connector `Create Org` and Access Review Source `Create` require a `Name` that identifies the connector, so several connections to one provider stay distinct. Connector `Get` and `Get Many` return it
+
+## [0.244.0] - 2026-10-08
+
+### Added
+
+- Employee Portal resource with `Get`, `Get Many`, and `Update`
+  operations
+
+## [0.243.0] - 2026-10-07
+
+### Changed
+
+- **Breaking**: Task `Create`, `Update`, `Get`, and `Get Many` treat `content` as a ProseMirror document JSON string, matching Document content. Plain text is no longer wrapped into a document, and reads return the stored JSON
+- **Breaking**: Task Comment `Create`, `Update`, `Get`, and `Get Many` treat `content` the same way. Risk Analysis `Create`, `Update`, `Fork`, `Get`, and `Get Many` treat `description` the same way
+
+## [0.242.0] - 2026-10-06
+
+### Changed
+
+- **Breaking**: the `Measure` resource is renamed to `Internal Control`
+  (resource value `measure` -> `internalControl`). Parameters named
+  `measureId` are now `internalControlId`, so saved values are dropped
+  and default to empty. `Get Many` returns `internalControls` instead
+  of `measures`. Existing workflows must reselect the resource and
+  parameters, and update expressions that read `measures`.
+- Task `Update` no longer returns the next occurrence. A recurring
+  task's next occurrence is created when its deadline passes, and the
+  interval stays on the current task until then
+
+## [0.241.0] - 2026-10-05
+
+### Added
+
+- Organization `Create` and `Update` accept a `Legal Name`, and `Update`
+  can remove it with `Clear Legal Name`. `Get` and `Get Many` return it
+- Cookie banner operations return the `corsless` capability
+- Cookie consent record `Get` and `Get Many` return the `origin`
+
+## [0.240.0] - 2026-10-05
+
+### Added
+
+- Measure `Create`, `Update`, `Get` and `Get Many` support the internal
+  control fields: `Code`, `Control Type`, `Nature`, `Operating Mode`,
+  `Operating Interval`, `Operating Event`, `Evidence Cadence`,
+  `Testing Cadence`, `Implementation Status`, `Owner ID` and
+  `Reviewer ID`
+
 ## [0.239.0] - 2026-09-30
 
 ### Added

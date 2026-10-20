@@ -22,7 +22,12 @@ export function attributionCopy(
   translate: (key: string, options?: { name?: string }) => string,
   attribution: string | null | undefined,
   thirdPartyName: string | null,
+  source?: string | null,
 ): string | null {
+  if (source === "EXTENSION") {
+    return translate("trackerProperties.attribution.visitorSoftware");
+  }
+
   if (thirdPartyName != null) {
     return translate("trackerProperties.attribution.thirdParty", { name: thirdPartyName });
   }

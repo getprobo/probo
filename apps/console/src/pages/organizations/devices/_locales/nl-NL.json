@@ -1,0 +1,154 @@
+{
+  "devices": {
+    "title": "Apparaten",
+    "detailsTitle": "Apparaat",
+    "description": "Beheer computers die zijn geregistreerd met de Probo posture agent.",
+    "empty": "Nog geen apparaten geregistreerd",
+    "actions": {
+      "add": "Apparaat toevoegen",
+      "new": "Nieuw apparaat",
+      "reassign": "Opnieuw toewijzen",
+      "revoke": "Intrekken",
+      "delete": "Verwijderen",
+      "downloadAsEvidence": "Downloaden als bewijs",
+      "downloadAsEvidenceCount": "Downloaden als bewijs ({{count}})",
+      "clearSelection": "Selectie wissen",
+      "selectAll": "Alles selecteren",
+      "menu": "Apparaatacties",
+      "selectDevice": "{{owner}} selecteren"
+    },
+    "fields": {
+      "organization": "Organisatie",
+      "owner": "Eigenaar",
+      "postures": "Posturen",
+      "state": "Status",
+      "platform": "Platform",
+      "osVersion": "OS-versie",
+      "hardwareUuid": "Hardware-UUID",
+      "serialNumber": "Serienummer",
+      "agentVersion": "Agentversie",
+      "enrolledAt": "Geregistreerd op",
+      "lastSeen": "Laatst gezien"
+    },
+    "views": {
+      "allRegistered": "Alle apparaten",
+      "warningsOnly": "Alleen waarschuwingen",
+      "ariaLabel": "Apparaatlijstweergave"
+    },
+    "filters": {
+      "allStates": "Alle statussen",
+      "pending": "In behandeling",
+      "active": "Actief",
+      "revoked": "Ingetrokken",
+      "allAgentVersions": "Alle agentversies",
+      "allPlatforms": "Alle platforms",
+      "selectedCount": "{{count}} geselecteerd",
+      "search": "Zoeken op eigenaar",
+      "empty": "Geen apparaten voldoen aan deze filters"
+    },
+    "platforms": {
+      "darwin": "macOS",
+      "linux": "Linux",
+      "freebsd": "FreeBSD",
+      "windows": "Windows"
+    },
+    "values": {
+      "pending": "(in behandeling)",
+      "never": "Nooit",
+      "unassigned": "Niet toegewezen"
+    },
+    "messages": {
+      "ownerUpdated": "Apparaateigenaar bijgewerkt",
+      "revoked": "Apparaat ingetrokken",
+      "revokedMany": "{{count}} apparaten ingetrokken",
+      "revokedPartial_one": "{{count}} van {{total}} apparaten ingetrokken",
+      "revokedPartial_other": "{{count}} van {{total}} apparaten ingetrokken",
+      "deleted": "Apparaat verwijderd",
+      "deletedMany": "{{count}} apparaten verwijderd",
+      "deletedPartial_one": "{{count}} van {{total}} apparaten verwijderd",
+      "deletedPartial_other": "{{count}} van {{total}} apparaten verwijderd"
+    },
+    "errors": {
+      "create": "Aanmaken van apparaat mislukt",
+      "reassign": "Opnieuw toewijzen van apparaat mislukt",
+      "revoke": "Intrekken van apparaat mislukt",
+      "delete": "Verwijderen van apparaat mislukt",
+      "downloadEvidence": "Downloaden van het bewijs is mislukt"
+    },
+    "confirmations": {
+      "revoke": "Apparaat \"{{owner}}\" intrekken?",
+      "revokeMany": "{{count}} apparaten intrekken?",
+      "revokeWarning": "De agent op het apparaat stopt met rapporteren en moet opnieuw worden geregistreerd.",
+      "revokeWarningMany": "De agents stoppen met rapporteren en moeten opnieuw worden geregistreerd.",
+      "delete": "Apparaat \"{{owner}}\" verwijderen?",
+      "deleteMany": "{{count}} apparaten verwijderen?",
+      "deleteWarning": "Dit verwijdert het definitief uit de inventaris.",
+      "deleteWarningMany": "Dit verwijdert ze definitief uit de inventaris."
+    },
+    "postures": {
+      "currentTitle": "Huidige posturen",
+      "empty": "Geen postuurcontroles geregistreerd",
+      "checks_one": "{{count}} controle",
+      "checks_other": "{{count}} controles",
+      "warnings_one": "{{count}} waarschuwing",
+      "warnings_other": "{{count}} waarschuwingen",
+      "showWarnings_one": "Toon {{count}} postuurwaarschuwing",
+      "showWarnings_other": "Toon {{count}} postuurwaarschuwingen",
+      "unknownHint": "De agent kon deze controle niet vastleggen of interpreteren en rapporteerde daarom onbekend.",
+      "values": {
+        "on": "Aan",
+        "off": "Uit",
+        "immediate": "Onmiddellijk",
+        "seconds": "{{seconds}}s",
+        "minPasswordLength": "Min. lengte {{length}}",
+        "configured": "Geconfigureerd",
+        "none": "Geen",
+        "unknown": "Onbekend"
+      },
+      "checks": {
+        "diskEncryption": "Schijfversleuteling",
+        "screenLock": "Schermvergrendeling",
+        "firewallEnabled": "Firewall ingeschakeld",
+        "timeSync": "Tijdsynchronisatie",
+        "osVersion": "OS-versie",
+        "autoUpdate": "Automatische update",
+        "passwordPolicy": "Wachtwoordbeleid",
+        "remoteLogin": "Extern inloggen",
+        "malwareProtection": "Malwarebescherming"
+      }
+    },
+    "history": {
+      "title": "Rapportgeschiedenis",
+      "empty": "Nog geen postuurrapporten",
+      "checkCount_one": "{{count}} controle gerapporteerd",
+      "checkCount_other": "{{count}} controles gerapporteerd",
+      "columns": {
+        "time": "Tijd",
+        "checks": "Controles",
+        "correlationId": "Correlatie-ID"
+      },
+      "actions": {
+        "copyCorrelationId": "Correlatie-ID kopiëren",
+        "correlationIdCopied": "Correlatie-ID gekopieerd"
+      },
+      "errors": {
+        "copyCorrelationId": "Kopiëren van de correlatie-ID is mislukt"
+      }
+    },
+    "selected_one": "{{count}} apparaat geselecteerd",
+    "selected_other": "{{count}} apparaten geselecteerd"
+  },
+  "deviceEnrollment": {
+    "token": {
+      "title": "Registratietoken gegenereerd",
+      "label": "Registratietoken",
+      "description": "Deel deze registratietoken alleen met de apparaateigenaar via een beveiligd kanaal. Deze kan één keer worden gebruikt en verloopt na zeven dagen."
+    },
+    "messages": {
+      "created": "Apparaat aangemaakt. Kopieer de registratietoken nu — deze wordt niet opnieuw getoond."
+    },
+    "errors": {
+      "copyToClipboard": "Kopiëren naar klembord mislukt"
+    }
+  }
+}

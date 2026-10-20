@@ -23,8 +23,8 @@ import { proboApiMultipartRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure to upload evidence for',
+		description: 'The ID of the internal control to upload evidence for',
 		required: true,
 	},
 	{
@@ -56,7 +56,7 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const measureId = this.getNodeParameter('measureId', itemIndex) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
 	const binaryPropertyName = this.getNodeParameter('binaryPropertyName', itemIndex) as string;
 
 	const binaryData = this.helpers.assertBinaryData(itemIndex, binaryPropertyName);
@@ -66,8 +66,8 @@ export async function execute(
 	const mimeType = binaryData.mimeType || 'application/octet-stream';
 
 	const query = `
-		mutation UploadMeasureEvidence($input: UploadMeasureEvidenceInput!) {
-			uploadMeasureEvidence(input: $input) {
+		mutation UploadInternalControlEvidence($input: UploadInternalControlEvidenceInput!) {
+			uploadInternalControlEvidence(input: $input) {
 				evidenceEdge {
 					node {
 						id
@@ -84,7 +84,7 @@ export async function execute(
 
 	const variables = {
 		input: {
-			measureId,
+			internalControlId,
 			file: null,
 		},
 	};

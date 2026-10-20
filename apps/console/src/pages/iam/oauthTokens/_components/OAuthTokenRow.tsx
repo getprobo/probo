@@ -28,8 +28,8 @@ import {
   DialogFooter,
   Td,
   Tr,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import * as Popover from "@radix-ui/react-popover";
 import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, useFragment, useMutation } from "react-relay";
@@ -69,7 +69,7 @@ export function OAuthTokenRow(props: {
 }) {
   const { tokenKey, identityId } = props;
   const { t, i18n } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const token = useFragment(fragment, tokenKey);
   const visibleScopes = token.scopes.slice(0, VISIBLE_SCOPE_COUNT);
@@ -90,25 +90,25 @@ export function OAuthTokenRow(props: {
       },
       onCompleted: (_response, errors) => {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("common.error"),
             description: formatError(
               t("oauthTokenRow.errors.revoke"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("common.success"), description: t("oauthTokenRow.messages.revoked"),
-          variant: "success",
+          type: "success",
         });
       },
       onError: (error) => {
-        toast({
+        toast.add({
           title: t("common.error"), description: formatError(t("oauthTokenRow.errors.revoke"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

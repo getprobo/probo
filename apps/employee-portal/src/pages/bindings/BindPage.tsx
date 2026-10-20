@@ -20,11 +20,11 @@
 
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate } from "react-router";
 
 import type { BindPageQuery } from "#/__generated__/core/BindPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { PageHeader } from "#/pages/_components/PageHeader";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { BindConfirmCard } from "./_components/BindConfirmCard";
 import { bindingsPage } from "./_components/variants";
@@ -50,18 +50,14 @@ export function BindPage({ queryRef, token }: BindPageProps) {
   const { t } = useTranslation("bindings");
   const { t: tApp } = useTranslation();
   const navigate = useNavigate();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = bindingsPage();
   const { preview } = usePreloadedQuery<BindPageQuery>(bindPageQuery, queryRef);
   const [confirmBinding, isConfirming] = useConfirmIdentityBinding();
 
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
-
   async function handleConfirm() {
     await confirmBinding({ variables: { input: { token } } });
-    void navigate(`/${organizationId}/bindings`, { replace: true });
+    void navigate(`/${employeePortalId}/bindings`, { replace: true });
   }
 
   return (
@@ -70,7 +66,7 @@ export function BindPage({ queryRef, token }: BindPageProps) {
         homeLabel={tApp("homePage.breadcrumb")}
         parent={{
           label: t("list.breadcrumb"),
-          to: `/${organizationId}/bindings`,
+          to: `/${employeePortalId}/bindings`,
         }}
         currentLabel={t("bind.breadcrumb")}
         title={t("bind.title")}

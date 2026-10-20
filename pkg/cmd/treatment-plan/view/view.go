@@ -47,16 +47,16 @@ query($id: ID!) {
       netLikelihood
       netImpact
       netRiskScore
-      measures(first: 0) {
+      internalControls(first: 0) {
         totalCount
       }
-      implementedMeasures: measures(first: 0, filter: { state: IMPLEMENTED }) {
+      implementedInternalControls: internalControls(first: 0, filter: { state: IMPLEMENTED }) {
         totalCount
       }
-      inProgressMeasures: measures(first: 0, filter: { state: IN_PROGRESS }) {
+      inProgressInternalControls: internalControls(first: 0, filter: { state: IN_PROGRESS }) {
         totalCount
       }
-      notImplementedMeasures: measures(first: 0, filter: { state: NOT_IMPLEMENTED }) {
+      notImplementedInternalControls: internalControls(first: 0, filter: { state: NOT_IMPLEMENTED }) {
         totalCount
       }
       createdAt
@@ -91,18 +91,18 @@ type viewResponse struct {
 		NetLikelihood      int    `json:"netLikelihood"`
 		NetImpact          int    `json:"netImpact"`
 		NetRiskScore       int    `json:"netRiskScore"`
-		Measures           struct {
+		InternalControls   struct {
 			TotalCount int `json:"totalCount"`
-		} `json:"measures"`
-		ImplementedMeasures struct {
+		} `json:"internalControls"`
+		ImplementedInternalControls struct {
 			TotalCount int `json:"totalCount"`
-		} `json:"implementedMeasures"`
-		InProgressMeasures struct {
+		} `json:"implementedInternalControls"`
+		InProgressInternalControls struct {
 			TotalCount int `json:"totalCount"`
-		} `json:"inProgressMeasures"`
-		NotImplementedMeasures struct {
+		} `json:"inProgressInternalControls"`
+		NotImplementedInternalControls struct {
 			TotalCount int `json:"totalCount"`
-		} `json:"notImplementedMeasures"`
+		} `json:"notImplementedInternalControls"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
 		Owner     struct {
@@ -218,11 +218,11 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(
 				out,
 				"%s%d done, %d in progress, %d not implemented, %d total\n",
-				label.Render("Measures:"),
-				p.ImplementedMeasures.TotalCount,
-				p.InProgressMeasures.TotalCount,
-				p.NotImplementedMeasures.TotalCount,
-				p.Measures.TotalCount,
+				label.Render("Internal Controls:"),
+				p.ImplementedInternalControls.TotalCount,
+				p.InProgressInternalControls.TotalCount,
+				p.NotImplementedInternalControls.TotalCount,
+				p.InternalControls.TotalCount,
 			)
 
 			_, _ = fmt.Fprintln(out)

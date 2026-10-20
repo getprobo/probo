@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, type UseMutationConfig } from "react-relay";
@@ -36,7 +36,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
   },
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
-  const { toast } = useToast();
+  const toast = useToast();
   const { t } = useTranslation();
   const mutateWithToast = useCallback(
     (
@@ -54,10 +54,10 @@ export function useMutationWithToasts<T extends MutationParameters>(
             options.onCompleted?.(response, error);
             if (error) {
               const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
-              toast({
-                title: t("common.error"),
-                description: formatError(errorTitle, error),
-                variant: "error",
+              toast.add({
+                title: errorTitle,
+                description: formatError(t("common.error"), error),
+                type: "error",
               });
               reject(new Error(errorTitle));
               return;
@@ -66,22 +66,19 @@ export function useMutationWithToasts<T extends MutationParameters>(
               ? options.successMessage(response)
               : options.successMessage;
 
-            toast({
-              title: t("common.success"),
-              description:
-                successMessage
-                ?? t("mutation.messages.completed"),
-              variant: "success",
+            toast.add({
+              title: successMessage ?? t("mutation.messages.completed"),
+              type: "success",
             });
             options.onSuccess?.();
             resolve();
           },
           onError: (error) => {
             const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
-            toast({
-              title: t("common.error"),
-              description: formatError(errorTitle, error),
-              variant: "error",
+            toast.add({
+              title: errorTitle,
+              description: formatError(t("common.error"), error),
+              type: "error",
             });
             reject(error);
           },

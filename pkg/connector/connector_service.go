@@ -1,0 +1,867 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package connector
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/worker"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
+)
+
+const (
+	NameMaxLength  = 100
+	TitleMaxLength = 1000
+)
+
+func (s *Service) initialAccount(c *coredata.Connector) (string, string, error) {
+	if s.providerRegistry == nil || c == nil {
+		return "", "", nil
+	}
+
+	reg, ok := s.providerRegistry.Get(c.Provider)
+	if !ok {
+		return "", "", nil
+	}
+
+	externalID, name, err := reg.ResolveInitialAccount(c)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot resolve initial account: %w", err)
+	}
+
+	return externalID, name, nil
+}
+
+// resolveStoredInitialAccount is the account this credential is. A connector
+// with no tenant in settings is still that one account, keyed by the connector
+// id. Organization installs with nothing resolved yet have no such account.
+func (s *Service) resolveStoredInitialAccount(c *coredata.Connector) (string, string, error) {
+	if c == nil {
+		return "", "", nil
+	}
+
+	externalID, name, err := s.initialAccount(c)
+	if err != nil {
+		return "", "", err
+	}
+
+	if externalID == "" && !s.organizationInstall(c) {
+		return c.ID.String(), s.implicitAccountName(c), nil
+	}
+
+	return externalID, name, nil
+}
+
+// protectedAccount is the account recorded at creation. Create inserts that
+// row before any other, so it stays the earliest one when settings change.
+// An organization install with nothing resolved yet has none.
+func (s *Service) protectedAccount(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) (*coredata.ConnectorAccount, error) {
+	externalID, _, err := s.resolveStoredInitialAccount(cnnctr)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve initial connector account: %w", err)
+	}
+
+	if externalID == "" {
+		return nil, nil
+	}
+
+	var accounts coredata.ConnectorAccounts
+
+	cursor := page.NewCursor(
+		1,
+		nil,
+		page.Head,
+		page.OrderBy[coredata.ConnectorAccountOrderField]{
+			Field:     coredata.ConnectorAccountOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+	)
+
+	if err := accounts.LoadByConnectorID(ctx, conn, scope, cnnctr.ID, cursor); err != nil {
+		return nil, fmt.Errorf("cannot load initial connector account: %w", err)
+	}
+
+	if len(accounts) == 0 {
+		return nil, nil
+	}
+
+	return accounts[0], nil
+}
+
+func (s *Service) InitialAccountExternalID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) (string, error) {
+	var externalID string
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			cnnctr := &coredata.Connector{}
+			if err := cnnctr.LoadMetadataByID(ctx, conn, scope, connectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			protected, err := s.protectedAccount(ctx, conn, scope, cnnctr)
+			if err != nil {
+				return fmt.Errorf("cannot load protected connector account: %w", err)
+			}
+
+			if protected != nil {
+				externalID = protected.ExternalAccountID
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve initial connector account: %w", err)
+	}
+
+	return externalID, nil
+}
+
+// recordInitialAccount stores the account present at create time. A connector
+// with no tenant in settings is still that one account. Organization installs
+// wait for discover.
+func (s *Service) recordInitialAccount(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	cnnctr *coredata.Connector,
+) error {
+	externalID, name, err := s.resolveStoredInitialAccount(cnnctr)
+	if err != nil {
+		return err
+	}
+
+	if _, err := coredata.UpsertInitialAccount(ctx, tx, scope, cnnctr, externalID, name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) organizationInstall(c *coredata.Connector) bool {
+	if s.providerRegistry == nil || c == nil {
+		return false
+	}
+
+	reg, ok := s.providerRegistry.Get(c.Provider)
+	if !ok {
+		return false
+	}
+
+	return reg.SupportsOrganizationInstall()
+}
+
+func (s *Service) ProviderRegistry() *provider.Registry {
+	return s.providerRegistry
+}
+
+func (s *Service) implicitAccountName(c *coredata.Connector) string {
+	if s.providerRegistry != nil {
+		if reg, ok := s.providerRegistry.Get(c.Provider); ok && reg.DisplayName != "" {
+			return reg.DisplayName
+		}
+	}
+
+	return string(c.Provider)
+}
+
+// ErrInstallStateAlreadyUsed is returned when an install callback replays a
+// state another request already claimed or completed. The vendor's proof stays
+// valid (unlike an OAuth code, which the vendor itself burns) and the
+// (organization_id, provider, protocol) unique index was dropped in
+// 20260819T142937Z, so without this a browser refresh or a link-preview
+// prefetch would create a second connector.
+var ErrInstallStateAlreadyUsed = errors.New("connector install state already used")
+
+type (
+	Service struct {
+		pg                *pg.Client
+		encryptionKey     cipher.EncryptionKey
+		providerRegistry  *provider.Registry
+		connectorRegistry *connectorprotocol.Registry
+		federation        *identityfederation.Issuer
+		logger            *log.Logger
+
+		nameWorker *worker.Worker[coredata.ConnectorAccount]
+	}
+
+	CreateConnectorRequest struct {
+		OrganizationID gid.GID
+		Name           string
+		Provider       coredata.ConnectorProvider
+		Protocol       coredata.ConnectorProtocol
+		Connection     connectorprotocol.Connection
+		// RawSettings is the provider-specific settings payload as
+		// already-marshalled JSON. Callers build it from the typed
+		// gqlgen input (or OAuth callback metadata); the service layer
+		// never sees the typed structs.
+		RawSettings json.RawMessage
+	}
+
+	ReconnectConnectorRequest struct {
+		ConnectorID    gid.GID
+		OrganizationID gid.GID
+		Provider       coredata.ConnectorProvider
+		Connection     connectorprotocol.Connection
+		// RawSettings, when non-empty, replaces the connector's
+		// provider-specific settings on reconnect. Datadog captures its
+		// per-customer API domain on every OAuth callback (the domain
+		// drives the driver's API host), so a reconnect must refresh it;
+		// empty leaves the existing settings intact.
+		RawSettings json.RawMessage
+	}
+
+	UpdateConnectorRequest struct {
+		ConnectorID gid.GID
+		Name        string
+	}
+
+	// CompleteConnectorInstallRequest carries the verified outcome of an
+	// app-install ceremony: the vendor tenant id the callback proved control
+	// of, and the single-use state claim that proof was spent against.
+	CompleteConnectorInstallRequest struct {
+		OrganizationID gid.GID
+		Provider       coredata.ConnectorProvider
+		// SettingsKey is the JSON key inside RawSettings carrying the vendor
+		// tenant id (provider.InstallConfig.SettingsResourceKey). It is what
+		// the idempotency lookup reads back out of settings.
+		SettingsKey string
+		// ResourceID is the CANONICALIZED vendor tenant id. A second spelling
+		// of the same tenant takes a different advisory lock and misses the
+		// idempotency lookup, so it would bind twice.
+		ResourceID string
+		Connection connectorprotocol.Connection
+		// Name is stored only when this completion inserts a row. A repeat
+		// install of the same tenant reuses the existing connector and keeps
+		// the name already on it.
+		Name string
+		// State and ProcessingToken identify the claim this completion burns,
+		// in the same transaction as the insert.
+		State           string
+		ProcessingToken string
+	}
+)
+
+func (car *CreateConnectorRequest) Validate() error {
+	car.Name = strings.TrimSpace(car.Name)
+
+	v := validator.New()
+	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
+	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
+	v.Check(car.Connection, "connection", validator.Required())
+	v.Check(car.RawSettings, "raw_settings", validJSONRawMessage)
+
+	return v.Error()
+}
+
+func (r *UpdateConnectorRequest) Validate() error {
+	r.Name = strings.TrimSpace(r.Name)
+
+	v := validator.New()
+	v.Check(r.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
+	v.Check(r.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	return v.Error()
+}
+
+// NormalizeConnectorName trims a connector name and applies the same rules as
+// create and update. Initiate handlers call it before a redirect so a blank
+// name never starts a ceremony that would fail when the row is inserted.
+func NormalizeConnectorName(name string) (string, error) {
+	trimmed := strings.TrimSpace(name)
+
+	v := validator.New()
+	v.Check(trimmed, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	if err := v.Error(); err != nil {
+		return "", err
+	}
+
+	return trimmed, nil
+}
+
+// validJSONRawMessage rejects a non-empty RawSettings that does not
+// parse as JSON. Empty RawSettings is allowed (providers without
+// extra settings).
+func validJSONRawMessage(value any) *validator.ValidationError {
+	raw, ok := value.(json.RawMessage)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+
+	if !json.Valid(raw) {
+		return &validator.ValidationError{
+			Code:    validator.ErrorCodeInvalidFormat,
+			Message: "must be valid JSON",
+		}
+	}
+
+	return nil
+}
+
+func (rcr *ReconnectConnectorRequest) Validate() error {
+	v := validator.New()
+	v.Check(rcr.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
+	v.Check(rcr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(rcr.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
+	v.Check(rcr.Connection, "connection", validator.Required())
+	v.Check(rcr.RawSettings, "raw_settings", validJSONRawMessage)
+
+	return v.Error()
+}
+
+func (s *Service) ListForOrganizationID(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	cursor *page.Cursor[coredata.ConnectorOrderField],
+	filter *coredata.ConnectorFilter,
+) (*page.Page[*coredata.Connector, coredata.ConnectorOrderField], error) {
+	var connectors coredata.Connectors
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return connectors.LoadByOrganizationIDWithoutDecryptedConnection(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+				cursor,
+				filter,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list connectors: %w", err)
+	}
+
+	return page.NewPage(connectors, cursor), nil
+}
+
+func (s *Service) ListAllForOrganizationID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	filter *coredata.ConnectorFilter,
+) (coredata.Connectors, error) {
+	var connectors coredata.Connectors
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+				filter,
+			)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list all connectors: %w", err)
+	}
+
+	return connectors, nil
+}
+
+// GetWithConnection loads a specific connector by ID and returns the
+// full *coredata.Connector with Connection populated. Used by the
+// initiate handler's explicit reconnect path (?connector_id=<id>),
+// which needs to read the stored scope set to compute the union.
+// Contrast with Get, which uses LoadMetadataByID and returns a
+// connector with Connection == nil.
+func (s *Service) GetWithConnection(
+	ctx context.Context, scope coredata.Scoper,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	cnnctr := &coredata.Connector{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return cnnctr.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get connector: %w", err)
+	}
+
+	return cnnctr, nil
+}
+
+func (s *Service) Get(
+	ctx context.Context, scope coredata.Scoper,
+	connectorID gid.GID,
+) (*coredata.Connector, error) {
+	connector := &coredata.Connector{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return connector.LoadMetadataByID(ctx, conn, scope, connectorID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get connector: %w", err)
+	}
+
+	return connector, nil
+}
+
+func (s *Service) Delete(
+	ctx context.Context, scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := refuseReferencedConnector(ctx, tx, scope, connectorID); err != nil {
+				return err
+			}
+
+			cnnctr := &coredata.Connector{ID: connectorID}
+
+			return cnnctr.Delete(ctx, tx, scope)
+		},
+	)
+}
+
+// refuseReferencedConnector names the module still holding the credential.
+// The foreign key that fires first names the account, because connector_accounts
+// cascades while the source restricts. Accounts are not counted: they cascade
+// with the connector, so a connector with accounts and no source stays deletable.
+func refuseReferencedConnector(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	sources := &coredata.AccessReviewSources{}
+
+	sourceCount, err := sources.CountByConnectorID(ctx, tx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count access review sources for connector: %w", err)
+	}
+
+	if sourceCount > 0 {
+		return fmt.Errorf("cannot delete connector: it is used by an access review source: %w", coredata.ErrResourceInUse)
+	}
+
+	bridges := &coredata.SCIMBridges{}
+
+	bridgeCount, err := bridges.CountByConnectorID(ctx, tx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count SCIM bridges for connector: %w", err)
+	}
+
+	if bridgeCount > 0 {
+		return fmt.Errorf("cannot delete connector: it is used by a SCIM configuration: %w", coredata.ErrResourceInUse)
+	}
+
+	return nil
+}
+
+func (s *Service) Create(
+	ctx context.Context, scope coredata.Scoper,
+	req CreateConnectorRequest,
+) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	id := gid.New(scope.GetTenantID(), coredata.ConnectorEntityType)
+	now := time.Now()
+
+	newConnector := &coredata.Connector{
+		ID:             id,
+		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
+		Provider:       req.Provider,
+		Protocol:       req.Protocol,
+		Connection:     req.Connection,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+
+	if len(req.RawSettings) > 0 {
+		newConnector.RawSettings = []byte(req.RawSettings)
+	}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := newConnector.Insert(ctx, tx, scope, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot create connector: %w", err)
+			}
+
+			return s.recordInitialAccount(ctx, tx, scope, newConnector)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return newConnector, nil
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpdateConnectorRequest,
+) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	cnnctr := &coredata.Connector{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			if err := cnnctr.LoadMetadataByID(ctx, tx, scope, req.ConnectorID); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			cnnctr.Name = req.Name
+			cnnctr.UpdatedAt = time.Now()
+
+			if err := cnnctr.UpdateName(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update connector name: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return cnnctr, nil
+}
+
+// Reconnect updates an existing OAuth2 connector's connection (token)
+// in place. It validates that the loaded connector belongs to the
+// expected org and provider inside the same transaction, blocking
+// cross-org and cross-provider corruption via a crafted connector_id
+// in the initiate URL. Refresh tokens and Slack webhook settings are
+// preserved from the existing connection when the new one omits them.
+func (s *Service) Reconnect(
+	ctx context.Context, scope coredata.Scoper,
+	req ReconnectConnectorRequest,
+) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("cannot reconnect connector: %w", err)
+	}
+
+	cnnctr := &coredata.Connector{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			cnnctr.ID = req.ConnectorID
+			if err := cnnctr.LockByID(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot lock connector: %w", err)
+			}
+
+			if err := cnnctr.LoadByID(ctx, conn, scope, req.ConnectorID, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			if cnnctr.OrganizationID != req.OrganizationID {
+				return fmt.Errorf("cannot reconnect connector: organization mismatch")
+			}
+
+			if cnnctr.Provider != req.Provider {
+				return fmt.Errorf("cannot reconnect connector: provider mismatch")
+			}
+
+			expectedProtocol := coredata.ConnectorProtocol(req.Connection.Type())
+			if cnnctr.Protocol != expectedProtocol {
+				return fmt.Errorf("cannot reconnect connector: protocol mismatch")
+			}
+
+			preserveConnectionFields(req.Connection, cnnctr.Connection)
+			cnnctr.Connection = req.Connection
+
+			if len(req.RawSettings) > 0 {
+				cnnctr.RawSettings = []byte(req.RawSettings)
+			}
+
+			cnnctr.UpdatedAt = time.Now()
+
+			return cnnctr.Update(ctx, conn, scope, s.encryptionKey)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot reconnect connector: %w", err)
+	}
+
+	return cnnctr, nil
+}
+
+// ClaimInstallState takes exclusive ownership of an app-install state for this
+// request and returns the processing token the later Release, Burn or Complete
+// must present. It runs before any outbound call to the vendor, so a replay
+// cannot race a legitimate completion. Returns ErrInstallStateAlreadyUsed when
+// the state is already held or already spent.
+func (s *Service) ClaimInstallState(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	state string,
+) (string, error) {
+	processingToken, err := uuid.NewV7()
+	if err != nil {
+		return "", fmt.Errorf("cannot generate connector install processing token: %w", err)
+	}
+
+	claim := coredata.NewConnectorInstallStateClaim(organizationID, state)
+	claimed := false
+
+	err = s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			var err error
+
+			claimed, err = claim.Claim(
+				ctx,
+				tx,
+				scope,
+				processingToken.String(),
+				time.Now(),
+				coredata.InstallStateStaleAfter,
+			)
+
+			return err
+		},
+	)
+	if err != nil {
+		return "", fmt.Errorf("cannot persist connector install state claim: %w", err)
+	}
+
+	if !claimed {
+		return "", ErrInstallStateAlreadyUsed
+	}
+
+	return processingToken.String(), nil
+}
+
+// ReleaseInstallState hands the state back unspent. It is the right answer only
+// to a failure a retry could fix, so a vendor blip does not cost the customer
+// the rest of their window.
+func (s *Service) ReleaseInstallState(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	state string,
+	processingToken string,
+) error {
+	claim := coredata.NewConnectorInstallStateClaim(organizationID, state)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return claim.Release(ctx, conn, scope, processingToken)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot release connector install state: %w", err)
+	}
+
+	return nil
+}
+
+// BurnInstallState spends the state without creating anything. It is what a
+// refused vendor proof costs: the same state cannot be presented twice, so a
+// forged callback gets exactly one attempt.
+func (s *Service) BurnInstallState(
+	ctx context.Context, scope coredata.Scoper,
+	organizationID gid.GID,
+	state string,
+	processingToken string,
+) error {
+	claim := coredata.NewConnectorInstallStateClaim(organizationID, state)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return claim.Complete(ctx, conn, scope, processingToken, time.Now())
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot burn connector install state: %w", err)
+	}
+
+	return nil
+}
+
+// CompleteInstall persists the connector an app-install ceremony yielded and
+// burns its state in one transaction: a crash between the two would otherwise
+// spend the customer's state and leave nothing to show for it.
+//
+// It is find-or-create on the vendor tenant id, so a customer re-installing the
+// same tenant lands on their existing connector instead of a second one.
+// Nothing is updated on the reuse path: the tenant id is the ceremony's only
+// durable output and it already matches.
+func (s *Service) CompleteInstall(
+	ctx context.Context, scope coredata.Scoper,
+	req CompleteConnectorInstallRequest,
+) (*coredata.Connector, error) {
+	claim := coredata.NewConnectorInstallStateClaim(req.OrganizationID, req.State)
+	cnnctr := &coredata.Connector{}
+
+	// Built here, never by the provider: LockConnectorInstallResource keys on
+	// ResourceID and the idempotency lookup reads settings ->> SettingsKey back
+	// out, so the two must be the same value. A provider returning its own
+	// marshalled settings could put something else under that key and every
+	// re-install would insert another row.
+	rawSettings, err := json.Marshal(map[string]string{req.SettingsKey: req.ResourceID})
+	if err != nil {
+		return nil, fmt.Errorf("cannot marshal connector install settings: %w", err)
+	}
+
+	err = s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			// Before the load, not after: FOR UPDATE on a row that does not
+			// exist yet locks nothing, so two concurrent first installs of one
+			// tenant would both miss and both insert.
+			if err := coredata.LockConnectorInstallResource(
+				ctx,
+				tx,
+				req.OrganizationID,
+				req.Provider,
+				req.ResourceID,
+			); err != nil {
+				return err
+			}
+
+			err := cnnctr.LoadByOrganizationIDProviderAndSettingForUpdate(
+				ctx,
+				tx,
+				scope,
+				req.OrganizationID,
+				req.Provider,
+				req.SettingsKey,
+				req.ResourceID,
+			)
+
+			switch {
+			case err == nil:
+				// Reuse the existing row as-is.
+			case errors.Is(err, coredata.ErrResourceNotFound):
+				now := time.Now()
+
+				name, err := NormalizeConnectorName(req.Name)
+				if err != nil {
+					return fmt.Errorf("invalid connector name: %w", err)
+				}
+
+				*cnnctr = coredata.Connector{
+					ID:             gid.New(scope.GetTenantID(), coredata.ConnectorEntityType),
+					OrganizationID: req.OrganizationID,
+					Name:           name,
+					Provider:       req.Provider,
+					Protocol:       coredata.ConnectorProtocolAPIKey,
+					Connection:     req.Connection,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				cnnctr.RawSettings = rawSettings
+
+				if err := cnnctr.Insert(ctx, tx, scope, s.encryptionKey); err != nil {
+					return fmt.Errorf("cannot create connector: %w", err)
+				}
+
+				if err := s.recordInitialAccount(ctx, tx, scope, cnnctr); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			if err := claim.Complete(ctx, tx, scope, req.ProcessingToken, time.Now()); err != nil {
+				return fmt.Errorf("cannot complete connector install state: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return cnnctr, nil
+}
+
+// preserveConnectionFields copies refresh token and Slack webhook
+// settings from oldConn into newConn when newConn omits them. Google
+// omits refresh_token on incremental-auth reuse; a Slack access-review
+// reconnect with no incoming-webhook scope omits the webhook settings.
+func preserveConnectionFields(newConn, oldConn connectorprotocol.Connection) {
+	switch n := newConn.(type) {
+	case *connectorprotocol.OAuth2Connection:
+		if o, ok := oldConn.(*connectorprotocol.OAuth2Connection); ok {
+			if n.RefreshToken == "" {
+				n.RefreshToken = o.RefreshToken
+			}
+		}
+	case *connectorprotocol.SlackConnection:
+		if o, ok := oldConn.(*connectorprotocol.SlackConnection); ok {
+			if n.RefreshToken == "" {
+				n.RefreshToken = o.RefreshToken
+			}
+
+			if n.Settings.WebhookURL == "" {
+				n.Settings.WebhookURL = o.Settings.WebhookURL
+				n.Settings.Channel = o.Settings.Channel
+				n.Settings.ChannelID = o.Settings.ChannelID
+			}
+		}
+	}
+}

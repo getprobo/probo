@@ -106,8 +106,8 @@ export function CompliancePortalStatusSection({
           description={t("statusSection.activation.description")}
           icon={
             compliancePortal.active
-              ? <GlobeIcon size={24} weight="duotone" />
-              : <GlobeXIcon size={24} weight="duotone" />
+              ? <GlobeIcon weight="duotone" />
+              : <GlobeXIcon weight="duotone" />
           }
           checked={compliancePortal.active}
           disabled={!compliancePortal.canUpdate}
@@ -116,7 +116,7 @@ export function CompliancePortalStatusSection({
         <CompliancePortalStatusCard
           title={t("statusSection.indexing.title")}
           description={t("statusSection.indexing.description")}
-          icon={<MagnifyingGlassIcon size={24} weight="duotone" />}
+          icon={<MagnifyingGlassIcon weight="duotone" />}
           checked={
             compliancePortal.active && compliancePortal.searchEngineIndexing === "INDEXABLE"
           }

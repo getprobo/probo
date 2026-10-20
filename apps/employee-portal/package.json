@@ -17,6 +17,7 @@
     "@probo/react-lazy": "1.0.0",
     "@probo/relay": "1.0.0",
     "@probo/routes": "1.0.0",
+    "@probo/tasks": "1.0.0",
     "@probo/ui": "1.0.0",
     "i18next": "^26.4.0",
     "pdfjs-dist": "5.4.296",

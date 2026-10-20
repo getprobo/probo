@@ -26,7 +26,7 @@ import type { TaskActivitySection_task$key } from "#/__generated__/core/TaskActi
 
 import { taskCommentsSection } from "../variants";
 
-import { TaskActivityList } from "./TaskActivityList";
+import { TaskActivityList } from "./TaskActivityList/TaskActivityList";
 
 const taskActivitySectionFragment = graphql`
   fragment TaskActivitySection_task on Task {

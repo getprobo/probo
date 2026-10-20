@@ -23,17 +23,20 @@ import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Device ID',
-		name: 'deviceId',
+		displayName: 'Device IDs',
+		name: 'deviceIds',
 		type: 'string',
+		typeOptions: {
+			multipleValues: true,
+		},
 		displayOptions: {
 			show: {
 				resource: ['device'],
 				operation: ['delete'],
 			},
 		},
-		default: '',
-		description: 'The ID of the revoked device to delete',
+		default: [],
+		description: 'IDs of the revoked devices to delete. At most 100.',
 		required: true,
 	},
 ];
@@ -42,18 +45,18 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const deviceId = this.getNodeParameter('deviceId', itemIndex) as string;
+	const deviceIds = this.getNodeParameter('deviceIds', itemIndex) as string[];
 
 	const query = `
-		mutation DeleteDevice($input: DeleteDeviceInput!) {
-			deleteDevice(input: $input) {
-				deletedDeviceId
+		mutation DeleteDevices($input: DeleteDevicesInput!) {
+			deleteDevices(input: $input) {
+				deletedDeviceIds
 			}
 		}
 	`;
 
 	const responseData = await proboApiRequest.call(this, query, {
-		input: { deviceId },
+		input: { deviceIds },
 	});
 
 	return {

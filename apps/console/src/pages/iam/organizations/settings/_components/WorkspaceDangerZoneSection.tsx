@@ -67,7 +67,7 @@ export function WorkspaceDangerZoneSection({
       </div>
       <TonedCard
         tone="red"
-        icon={<WarningCircleIcon size={24} weight="duotone" />}
+        icon={<WarningCircleIcon weight="duotone" />}
         lead={(
           <Text size={3} weight="medium" highContrast className="truncate">
             {t("dangerZone.delete.title")}

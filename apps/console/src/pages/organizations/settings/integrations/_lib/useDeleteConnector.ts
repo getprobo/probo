@@ -44,11 +44,12 @@ export function useDeleteConnector() {
     },
   );
 
-  async function deleteConnector(connectorId: string) {
+  async function deleteConnector(connectorId: string, provider: string) {
     await commit({
       variables: { input: { connectorId } },
       // Organization.connectors is a plain list, so there is no edge for
-      // @deleteEdge to remove.
+      // @deleteEdge to remove. The vendor page reads the same field with a
+      // provider filter, which Relay stores separately.
       updater: (store) => {
         const deletedId = store
           .getRootField("deleteConnector")
@@ -59,15 +60,24 @@ export function useDeleteConnector() {
         }
 
         const organization = store.get(organizationId);
-        const connectors = organization?.getLinkedRecords("connectors");
-
-        if (organization && connectors) {
-          organization.setLinkedRecords(
-            connectors.filter(
-              connector => connector?.getDataID() !== deletedId,
-            ),
-            "connectors",
-          );
+        if (organization) {
+          const fieldArgs = [
+            undefined,
+            { filter: { providers: [provider] } },
+          ] as const;
+          for (const args of fieldArgs) {
+            const connectors = organization.getLinkedRecords("connectors", args);
+            if (!connectors) {
+              continue;
+            }
+            organization.setLinkedRecords(
+              connectors.filter(
+                connector => connector?.getDataID() !== deletedId,
+              ),
+              "connectors",
+              args,
+            );
+          }
         }
 
         store.delete(deletedId);

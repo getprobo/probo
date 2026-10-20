@@ -22,11 +22,9 @@ import { StampIcon } from "@phosphor-icons/react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { ApprovalsPendingList_viewer$key } from "#/__generated__/core/ApprovalsPendingList_viewer.graphql";
 import type { ApprovalsPendingListRefetchQuery } from "#/__generated__/core/ApprovalsPendingListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { type CursorPaginationVariables, useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentEmpty } from "#/pages/_components/DocumentEmpty";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
@@ -34,6 +32,7 @@ import { DocumentQueueSummary } from "#/pages/_components/DocumentQueueSummary";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const approvalsPendingListFragment = graphql`
   fragment ApprovalsPendingList_viewer on Viewer
@@ -85,7 +84,7 @@ export interface ApprovalsPendingListProps {
 export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const { advancing, startQueue } = useDocumentQueue();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsPendingListRefetchQuery,
@@ -102,10 +101,6 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
     pendingDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = pendingDocuments.totalCount;
   const emptyKey = historyCount.totalCount === 0 ? "none" : "allDone";
@@ -146,7 +141,7 @@ export function ApprovalsPendingList({ viewerKey }: ApprovalsPendingListProps) {
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/approvals/${node.id}`}
+          to={`/${employeePortalId}/approvals/${node.id}`}
           trailing="action"
           actionLabel={t("pending.itemAction")}
         />

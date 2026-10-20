@@ -60,6 +60,7 @@ export async function execute(
 					countryCode
 					subdivisionCode
 					tc
+					origin
 					createdAt
 				}
 			}

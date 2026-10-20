@@ -33,8 +33,8 @@ import {
   Select,
   Textarea,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -70,7 +70,7 @@ export function CreateObligationDialog({
   connection,
 }: CreateObligationDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
 
   const createObligation = useCreateObligation(connection || "");
@@ -120,19 +120,19 @@ export function CreateObligationDialog({
         status: formData.status,
       });
 
-      toast({
+      toast.add({
         title: t("createObligationDialog.messages.success"),
         description: t("createObligationDialog.messages.created"),
-        variant: "success",
+        type: "success",
       });
 
       reset();
       dialogRef.current?.close();
     } catch (error) {
-      toast({
+      toast.add({
         title: t("createObligationDialog.messages.error"),
         description: formatError(t("createObligationDialog.errors.create"), error as GraphQLError),
-        variant: "error",
+        type: "error",
       });
     }
   };

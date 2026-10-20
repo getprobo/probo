@@ -31,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { AuditListItem_audit$key } from "#/__generated__/core/AuditListItem_audit.graphql";
+import { useAuditFrameworkNames } from "#/components/audits/AuditFrameworkNames";
 import { useDeleteAudit } from "#/hooks/graph/AuditGraph";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -52,10 +53,7 @@ const auditListItemFragment = graphql`
       id
     }
     state
-    framework {
-      id
-      name
-    }
+    ...AuditFrameworkNames_audit
     canDelete: permission(action: "core:audit:delete")
   }
 `;
@@ -74,7 +72,16 @@ export function AuditListItem({
   const audit = useFragment(auditListItemFragment, auditKey);
   const organizationId = useOrganizationId();
   const { i18n, t } = useTranslation();
-  const deleteAudit = useDeleteAudit(audit, connectionId);
+  const { label: frameworkLabel, names: frameworkNames } = useAuditFrameworkNames(audit);
+  const deleteAudit = useDeleteAudit(
+    {
+      id: audit.id,
+      frameworks: {
+        edges: frameworkNames.map(name => ({ node: { name } })),
+      },
+    },
+    connectionId,
+  );
 
   function formatPeriod(
     start: string | null | undefined,
@@ -94,7 +101,7 @@ export function AuditListItem({
     <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>{audit.name || t("auditsPage.row.untitled")}</Td>
       <Td>
-        {audit.framework?.name ?? t("auditsPage.row.unknownFramework")}
+        {frameworkLabel || t("auditsPage.row.unknownFramework")}
       </Td>
       <Td>
         <Badge variant={getAuditStateVariant(audit.state)}>

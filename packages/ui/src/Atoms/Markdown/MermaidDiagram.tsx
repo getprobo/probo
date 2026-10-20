@@ -21,7 +21,7 @@
 import { useEffect, useId, useState } from "react";
 
 import { mermaidRenderErrorToast, renderMermaidDiagram } from "../../lib/mermaid";
-import { useToast } from "../Toasts/Toasts";
+import useToast from "../../v2/Toaster/useToast";
 
 type Props = {
   chart: string;
@@ -40,7 +40,7 @@ export function MermaidDiagram({ chart }: Props) {
     svg: null,
     hasError: false,
   });
-  const { toast } = useToast();
+  const toast = useToast();
 
   const source = (chart ?? "").trim();
   const svg = renderState.source === source ? renderState.svg : null;
@@ -70,7 +70,7 @@ export function MermaidDiagram({ chart }: Props) {
             svg: null,
             hasError: true,
           });
-          toast(mermaidRenderErrorToast);
+          toast.add(mermaidRenderErrorToast);
         }
       });
 

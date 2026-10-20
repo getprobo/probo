@@ -27,7 +27,7 @@ import { table } from "./variants";
 
 export type TableCellProps
   = Omit<ComponentProps<"td">, "width">
-    & Pick<VariantProps<typeof table>, "justify" | "interactive">
+    & Pick<VariantProps<typeof table>, "justify" | "interactive" | "overflow">
     & {
       width?: string;
       minWidth?: string;
@@ -37,10 +37,11 @@ export type TableCellProps
 // Basic data cell (Radix "Table.Cell"). Renders a <td>. Padding follows the
 // parent Table's size. `justify` replaces HTML `align` for horizontal space.
 // Set `interactive` to lift a Button / ButtonLink above a TableLink overlay.
+// `overflow` is the fluid column under `layout="fixed"` (truncate or break).
 export function TableCell(props: TableCellProps) {
-  const { justify, width, minWidth, maxWidth, interactive, className, style, ...rest } = props;
+  const { justify, width, minWidth, maxWidth, interactive, overflow, className, style, ...rest } = props;
   const size = useTableContext();
-  const { cell } = table({ size, justify, interactive });
+  const { cell } = table({ size, justify, interactive, overflow });
 
   return (
     <td

@@ -1114,20 +1114,20 @@ func TestRiskAnalysis_MatrixAsOf(t *testing.T) {
 	assert.False(t, asOfPlan.CanDelete)
 	assert.Equal(t, 1, asOfMatrixCellCount(asOfResult.Node.MatrixCells, "NET", 4, 4))
 
-	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Matrix mitigation"})
+	internalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Matrix mitigation"})
 	createdPlanID := livePlan.ID
-	factory.LinkTreatmentPlanMeasure(owner, createdPlanID, measureID)
-	updateMeasureState(t, owner, measureID, "IMPLEMENTED")
+	factory.LinkTreatmentPlanInternalControl(owner, createdPlanID, internalControlID)
+	updateInternalControlState(t, owner, internalControlID, "IMPLEMENTED")
 
 	afterImplement := queryPlans(nil, 10)
 	require.Len(t, afterImplement.Node.TreatmentPlans.Edges, 1)
 	afterPlan := afterImplement.Node.TreatmentPlans.Edges[0].Node
 	assert.Equal(t, 1, afterPlan.NetLikelihood)
 	assert.Equal(t, 2, afterPlan.NetImpact)
-	require.Len(t, afterPlan.Measures.Edges, 1)
-	assert.Equal(t, measureID, afterPlan.Measures.Edges[0].Node.ID)
-	assert.Equal(t, "Matrix mitigation", afterPlan.Measures.Edges[0].Node.Name)
-	assert.Equal(t, "IMPLEMENTED", afterPlan.Measures.Edges[0].Node.State)
+	require.Len(t, afterPlan.InternalControls.Edges, 1)
+	assert.Equal(t, internalControlID, afterPlan.InternalControls.Edges[0].Node.ID)
+	assert.Equal(t, "Matrix mitigation", afterPlan.InternalControls.Edges[0].Node.Name)
+	assert.Equal(t, "IMPLEMENTED", afterPlan.InternalControls.Edges[0].Node.State)
 	assert.Equal(t, 1, afterPlan.Progress.Total)
 	assert.Equal(t, 1, afterPlan.Progress.Done)
 	assert.Equal(t, 1, asOfMatrixCellCount(afterImplement.Node.MatrixCells, "NET", 1, 2))
@@ -1166,15 +1166,15 @@ func TestRiskAnalysis_MatrixAsOf(t *testing.T) {
 	assert.NotEmpty(t, restoredPlan.Owner.FullName)
 	assert.False(t, restoredPlan.CanUpdate)
 	assert.False(t, restoredPlan.CanDelete)
-	require.Len(t, restoredPlan.Measures.Edges, 1)
-	assert.Equal(t, measureID, restoredPlan.Measures.Edges[0].Node.ID)
-	assert.Equal(t, "IMPLEMENTED", restoredPlan.Measures.Edges[0].Node.State)
+	require.Len(t, restoredPlan.InternalControls.Edges, 1)
+	assert.Equal(t, internalControlID, restoredPlan.InternalControls.Edges[0].Node.ID)
+	assert.Equal(t, "IMPLEMENTED", restoredPlan.InternalControls.Edges[0].Node.State)
 	assert.Equal(t, 1, restoredPlan.Progress.Total)
 	assert.Equal(t, 1, restoredPlan.Progress.Done)
 	assert.Equal(t, 1, asOfMatrixCellCount(restored.Node.MatrixCells, "NET", 1, 2))
 }
 
-func TestRiskAnalysis_ListMeasuresAsOfViaNode(t *testing.T) {
+func TestRiskAnalysis_ListInternalControlsAsOfViaNode(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1186,49 +1186,49 @@ func TestRiskAnalysis_ListMeasuresAsOfViaNode(t *testing.T) {
 		"inherentLikelihood": 3,
 		"inherentImpact":     3,
 	})
-	olderMeasureID := factory.CreateMeasure(owner, factory.Attrs{
-		"name":     "Older as-of measure",
+	olderInternalControlID := factory.CreateInternalControl(owner, factory.Attrs{
+		"name":     "Older as-of internal control",
 		"category": "POLICY",
 	})
-	newerMeasureID := factory.CreateMeasure(owner, factory.Attrs{
-		"name":     "Newer as-of measure",
+	newerInternalControlID := factory.CreateInternalControl(owner, factory.Attrs{
+		"name":     "Newer as-of internal control",
 		"category": "TECHNICAL",
 	})
-	factory.LinkTreatmentPlanMeasure(owner, planID, olderMeasureID)
-	factory.LinkTreatmentPlanMeasure(owner, planID, newerMeasureID)
-	updateMeasureState(t, owner, olderMeasureID, "IMPLEMENTED")
+	factory.LinkTreatmentPlanInternalControl(owner, planID, olderInternalControlID)
+	factory.LinkTreatmentPlanInternalControl(owner, planID, newerInternalControlID)
+	updateInternalControlState(t, owner, olderInternalControlID, "IMPLEMENTED")
 
 	asOf := time.Now().UTC().Format(time.RFC3339Nano)
 
-	updateMeasureState(t, owner, olderMeasureID, "NOT_IMPLEMENTED")
+	updateInternalControlState(t, owner, olderInternalControlID, "NOT_IMPLEMENTED")
 	_, err := owner.Do(`
-		mutation($input: UpdateMeasureInput!) {
-			updateMeasure(input: $input) { measure { id } }
+		mutation($input: UpdateInternalControlInput!) {
+			updateInternalControl(input: $input) { internalControl { id } }
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"id":       olderMeasureID,
+			"id":       olderInternalControlID,
 			"category": "TRAINING",
 		},
 	})
 	require.NoError(t, err)
 
-	queryMeasures := func(asOf *string, first int, after *string, filter map[string]any) asOfMeasureConnection {
+	queryInternalControls := func(asOf *string, first int, after *string, filter map[string]any) asOfInternalControlConnection {
 		t.Helper()
 
-		result := queryTreatmentPlanMeasuresAsOf(t, owner, planID, asOf, first, after, filter)
+		result := queryTreatmentPlanInternalControlsAsOf(t, owner, planID, asOf, first, after, filter)
 		assert.Equal(t, "TreatmentPlan", result.Typename)
 		assert.Nil(t, result.AsOf)
 
-		return result.Measures
+		return result.InternalControls
 	}
 
-	firstPage := queryMeasures(&asOf, 1, nil, nil)
+	firstPage := queryInternalControls(&asOf, 1, nil, nil)
 	require.True(t, firstPage.PageInfo.HasNextPage)
 	require.NotNil(t, firstPage.PageInfo.EndCursor)
 	require.Len(t, firstPage.Edges, 1)
 
-	secondPage := queryMeasures(&asOf, 1, firstPage.PageInfo.EndCursor, nil)
+	secondPage := queryInternalControls(&asOf, 1, firstPage.PageInfo.EndCursor, nil)
 	require.Len(t, secondPage.Edges, 1)
 	assert.False(t, secondPage.PageInfo.HasNextPage)
 
@@ -1242,21 +1242,21 @@ func TestRiskAnalysis_ListMeasuresAsOfViaNode(t *testing.T) {
 			Category: secondPage.Edges[0].Node.Category,
 		},
 	}
-	assert.Contains(t, historical, olderMeasureID)
-	assert.Contains(t, historical, newerMeasureID)
-	assert.Equal(t, "IMPLEMENTED", historical[olderMeasureID].State)
-	assert.Equal(t, "POLICY", historical[olderMeasureID].Category)
-	assert.Equal(t, "TECHNICAL", historical[newerMeasureID].Category)
+	assert.Contains(t, historical, olderInternalControlID)
+	assert.Contains(t, historical, newerInternalControlID)
+	assert.Equal(t, "IMPLEMENTED", historical[olderInternalControlID].State)
+	assert.Equal(t, "POLICY", historical[olderInternalControlID].Category)
+	assert.Equal(t, "TECHNICAL", historical[newerInternalControlID].Category)
 
-	filtered := queryMeasures(&asOf, 10, nil, map[string]any{"category": "POLICY"})
+	filtered := queryInternalControls(&asOf, 10, nil, map[string]any{"category": "POLICY"})
 	require.Len(t, filtered.Edges, 1)
-	assert.Equal(t, olderMeasureID, filtered.Edges[0].Node.ID)
+	assert.Equal(t, olderInternalControlID, filtered.Edges[0].Node.ID)
 
-	filteredByState := queryMeasures(&asOf, 10, nil, map[string]any{"state": "IMPLEMENTED"})
+	filteredByState := queryInternalControls(&asOf, 10, nil, map[string]any{"state": "IMPLEMENTED"})
 	require.Len(t, filteredByState.Edges, 1)
-	assert.Equal(t, olderMeasureID, filteredByState.Edges[0].Node.ID)
+	assert.Equal(t, olderInternalControlID, filteredByState.Edges[0].Node.ID)
 
-	live := queryMeasures(nil, 10, nil, nil)
+	live := queryInternalControls(nil, 10, nil, nil)
 	require.Len(t, live.Edges, 2)
 	states := map[string]string{
 		live.Edges[0].Node.ID: live.Edges[0].Node.State,
@@ -1267,11 +1267,11 @@ func TestRiskAnalysis_ListMeasuresAsOfViaNode(t *testing.T) {
 		live.Edges[1].Node.ID: live.Edges[1].Node.Category,
 	}
 
-	assert.Equal(t, "NOT_IMPLEMENTED", states[olderMeasureID])
-	assert.Equal(t, "TRAINING", categories[olderMeasureID])
+	assert.Equal(t, "NOT_IMPLEMENTED", states[olderInternalControlID])
+	assert.Equal(t, "TRAINING", categories[olderInternalControlID])
 }
 
-func TestRiskAnalysis_DeleteMeasureKeepsAsOfHistory(t *testing.T) {
+func TestRiskAnalysis_DeleteInternalControlKeepsAsOfHistory(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1283,52 +1283,52 @@ func TestRiskAnalysis_DeleteMeasureKeepsAsOfHistory(t *testing.T) {
 		"inherentLikelihood": 3,
 		"inherentImpact":     3,
 	})
-	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Keep after delete"})
-	factory.LinkTreatmentPlanMeasure(owner, planID, measureID)
+	internalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Keep after delete"})
+	factory.LinkTreatmentPlanInternalControl(owner, planID, internalControlID)
 
 	asOf := time.Now().UTC().Format(time.RFC3339Nano)
 
 	_, err := owner.Do(`
-		mutation($input: UpdateMeasureInput!) {
-			updateMeasure(input: $input) { measure { id name } }
+		mutation($input: UpdateInternalControlInput!) {
+			updateInternalControl(input: $input) { internalControl { id name } }
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"id":   measureID,
+			"id":   internalControlID,
 			"name": "Gone live",
 		},
 	})
 	require.NoError(t, err)
 
 	var deleted struct {
-		DeleteMeasure struct {
-			DeletedMeasureID string `json:"deletedMeasureId"`
-		} `json:"deleteMeasure"`
+		DeleteInternalControl struct {
+			DeletedInternalControlID string `json:"deletedInternalControlId"`
+		} `json:"deleteInternalControl"`
 	}
 
 	err = owner.Execute(`
-		mutation($input: DeleteMeasureInput!) {
-			deleteMeasure(input: $input) { deletedMeasureId }
+		mutation($input: DeleteInternalControlInput!) {
+			deleteInternalControl(input: $input) { deletedInternalControlId }
 		}
 	`, map[string]any{
-		"input": map[string]any{"measureId": measureID},
+		"input": map[string]any{"internalControlId": internalControlID},
 	}, &deleted)
 	require.NoError(t, err)
-	assert.Equal(t, measureID, deleted.DeleteMeasure.DeletedMeasureID)
+	assert.Equal(t, internalControlID, deleted.DeleteInternalControl.DeletedInternalControlID)
 
-	queryMeasures := func(asOf *string) []asOfMeasureNode {
+	queryInternalControls := func(asOf *string) []asOfInternalControlNode {
 		t.Helper()
 
-		return asOfMeasureNodes(
-			queryTreatmentPlanMeasuresAsOf(t, owner, planID, asOf, 10, nil, nil).Measures,
+		return asOfInternalControlNodes(
+			queryTreatmentPlanInternalControlsAsOf(t, owner, planID, asOf, 10, nil, nil).InternalControls,
 		)
 	}
 
-	assert.Empty(t, queryMeasures(nil))
+	assert.Empty(t, queryInternalControls(nil))
 
-	historical := queryMeasures(&asOf)
+	historical := queryInternalControls(&asOf)
 	require.Len(t, historical, 1)
-	assert.Equal(t, measureID, historical[0].ID)
+	assert.Equal(t, internalControlID, historical[0].ID)
 	assert.Equal(t, "Keep after delete", historical[0].Name)
 	require.NotNil(t, historical[0].AsOf)
 	assert.Equal(t, 1, historical[0].TreatmentPlans.TotalCount)
@@ -1337,7 +1337,7 @@ func TestRiskAnalysis_DeleteMeasureKeepsAsOfHistory(t *testing.T) {
 	require.NotNil(t, historical[0].TreatmentPlans.Edges[0].Node.AsOf)
 
 	afterDelete := time.Now().UTC().Format(time.RFC3339Nano)
-	assert.Empty(t, queryMeasures(&afterDelete))
+	assert.Empty(t, queryInternalControls(&afterDelete))
 }
 
 func TestRiskAnalysis_TreatmentPlanCategoryAsOf(t *testing.T) {
@@ -1435,26 +1435,26 @@ func TestRiskAnalysis_NestedTreatmentPlansAsOf(t *testing.T) {
 		"inherentLikelihood": 4,
 		"inherentImpact":     4,
 	})
-	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Nested as-of plans"})
-	factory.LinkTreatmentPlanMeasure(owner, historicalPlanID, measureID)
+	internalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Nested as-of plans"})
+	factory.LinkTreatmentPlanInternalControl(owner, historicalPlanID, internalControlID)
 
 	asOf := time.Now().UTC().Format(time.RFC3339Nano)
 
-	factory.UnlinkTreatmentPlanMeasure(owner, historicalPlanID, measureID)
-	factory.LinkTreatmentPlanMeasure(owner, livePlanID, measureID)
+	factory.UnlinkTreatmentPlanInternalControl(owner, historicalPlanID, internalControlID)
+	factory.LinkTreatmentPlanInternalControl(owner, livePlanID, internalControlID)
 
-	historical := queryTreatmentPlanMeasuresAsOf(t, owner, historicalPlanID, &asOf, 10, nil, nil)
-	require.Len(t, historical.Measures.Edges, 1)
+	historical := queryTreatmentPlanInternalControlsAsOf(t, owner, historicalPlanID, &asOf, 10, nil, nil)
+	require.Len(t, historical.InternalControls.Edges, 1)
 
-	historicalMeasure := historical.Measures.Edges[0].Node
-	assert.Equal(t, measureID, historicalMeasure.ID)
-	require.NotNil(t, historicalMeasure.AsOf)
-	assert.Equal(t, 1, historicalMeasure.TreatmentPlans.TotalCount)
-	require.Len(t, historicalMeasure.TreatmentPlans.Edges, 1)
-	assert.Equal(t, historicalPlanID, historicalMeasure.TreatmentPlans.Edges[0].Node.ID)
-	require.NotNil(t, historicalMeasure.TreatmentPlans.Edges[0].Node.AsOf)
+	historicalInternalControl := historical.InternalControls.Edges[0].Node
+	assert.Equal(t, internalControlID, historicalInternalControl.ID)
+	require.NotNil(t, historicalInternalControl.AsOf)
+	assert.Equal(t, 1, historicalInternalControl.TreatmentPlans.TotalCount)
+	require.Len(t, historicalInternalControl.TreatmentPlans.Edges, 1)
+	assert.Equal(t, historicalPlanID, historicalInternalControl.TreatmentPlans.Edges[0].Node.ID)
+	require.NotNil(t, historicalInternalControl.TreatmentPlans.Edges[0].Node.AsOf)
 
-	live := queryMeasureTreatmentPlansAsOf(t, owner, measureID, nil)
+	live := queryInternalControlTreatmentPlansAsOf(t, owner, internalControlID, nil)
 	assert.Equal(t, 1, live.TotalCount)
 	require.Len(t, live.Edges, 1)
 	assert.Equal(t, livePlanID, live.Edges[0].Node.ID)

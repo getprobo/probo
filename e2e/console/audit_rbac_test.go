@@ -114,7 +114,7 @@ func TestAudit_RBAC(t *testing.T) {
 							map[string]any{
 								"input": map[string]any{
 									"organizationId": client.GetOrganizationID().String(),
-									"frameworkId":    frameworkID,
+									"frameworkIds":   []string{frameworkID},
 									"name":           factory.SafeName("RBAC create " + string(tt.role)),
 								},
 							},

@@ -243,9 +243,9 @@ func (s ThirdPartyService) ListForOrganizationID(
 	return page.NewPage(thirdParties, cursor), nil
 }
 
-func (s ThirdPartyService) CountForMeasureID(
+func (s ThirdPartyService) CountForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 ) (int, error) {
 	var count int
 
@@ -254,7 +254,7 @@ func (s ThirdPartyService) CountForMeasureID(
 		func(ctx context.Context, conn pg.Querier) (err error) {
 			thirdParties := coredata.ThirdParties{}
 
-			count, err = thirdParties.CountByMeasureID(ctx, conn, scope, measureID)
+			count, err = thirdParties.CountByInternalControlID(ctx, conn, scope, internalControlID)
 			if err != nil {
 				return fmt.Errorf("cannot count thirdParties: %w", err)
 			}
@@ -269,27 +269,27 @@ func (s ThirdPartyService) CountForMeasureID(
 	return count, nil
 }
 
-func (s ThirdPartyService) ListForMeasureID(
+func (s ThirdPartyService) ListForInternalControlID(
 	ctx context.Context, scope coredata.Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[coredata.ThirdPartyOrderField],
 ) (*page.Page[*coredata.ThirdParty, coredata.ThirdPartyOrderField], error) {
 	var thirdParties coredata.ThirdParties
 
-	measure := &coredata.Measure{}
+	internalControl := &coredata.InternalControl{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			if err := measure.LoadByID(ctx, conn, scope, measureID); err != nil {
-				return fmt.Errorf("cannot load measure: %w", err)
+			if err := internalControl.LoadByID(ctx, conn, scope, internalControlID); err != nil {
+				return fmt.Errorf("cannot load internalControl: %w", err)
 			}
 
-			if err := thirdParties.LoadByMeasureID(
+			if err := thirdParties.LoadByInternalControlID(
 				ctx,
 				conn,
 				scope,
-				measure.ID,
+				internalControl.ID,
 				cursor,
 			); err != nil {
 				return fmt.Errorf("cannot load thirdParties: %w", err)

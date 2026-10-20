@@ -26,8 +26,8 @@ import {
   DialogFooter,
   Spinner,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
@@ -59,7 +59,7 @@ export function DeleteDataPrivacyAgreementDialog({
   const { t } = useTranslation();
   const ref = useDialogRef();
 
-  const { toast } = useToast();
+  const toast = useToast();
   const [deleteAgreement, isDeleting]
     = useMutation<DeleteDataPrivacyAgreementDialogMutation>(
       deleteDataPrivacyAgreementMutation,
@@ -74,32 +74,32 @@ export function DeleteDataPrivacyAgreementDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("deleteDataPrivacyAgreementDialog.messages.error"),
             description: formatError(
               t("deleteDataPrivacyAgreementDialog.errors.delete"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("deleteDataPrivacyAgreementDialog.messages.success"),
           description: t("deleteDataPrivacyAgreementDialog.messages.deleted"),
-          variant: "success",
+          type: "success",
         });
         onSuccess?.();
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("deleteDataPrivacyAgreementDialog.messages.error"),
           description: formatError(
             t("deleteDataPrivacyAgreementDialog.errors.delete"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -90,14 +90,14 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 				"parentBoundaryId": graph.boundaryID,
 			},
 		)
-		measureID := factory.CreateMeasure(owner)
+		internalControlID := factory.CreateInternalControl(owner)
 		tpID := factory.CreateTreatmentPlan(
 			owner,
 			graph.riskID,
 			graph.assessmentID,
 			factory.Attrs{"inherentLikelihood": 3, "inherentImpact": 4},
 		)
-		factory.LinkTreatmentPlanMeasure(owner, tpID, measureID)
+		factory.LinkTreatmentPlanInternalControl(owner, tpID, internalControlID)
 
 		var sourcePlan struct {
 			Node struct {
@@ -218,28 +218,28 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 							Risk               struct {
 								ID string `json:"id"`
 							} `json:"risk"`
-							Measures struct {
+							InternalControls struct {
 								Edges []struct {
 									Node struct {
 										ID string `json:"id"`
 									} `json:"node"`
 								} `json:"edges"`
-							} `json:"measures"`
+							} `json:"internalControls"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"treatmentPlans"`
 				AsOfPlans struct {
 					Edges []struct {
 						Node struct {
-							ID        string `json:"id"`
-							CreatedAt string `json:"createdAt"`
-							Measures  struct {
+							ID               string `json:"id"`
+							CreatedAt        string `json:"createdAt"`
+							InternalControls struct {
 								Edges []struct {
 									Node struct {
 										ID string `json:"id"`
 									} `json:"node"`
 								} `json:"edges"`
-							} `json:"measures"`
+							} `json:"internalControls"`
 						} `json:"node"`
 					} `json:"edges"`
 				} `json:"asOfPlans"`
@@ -288,7 +288,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 									inherentLikelihood
 									inherentImpact
 									risk { id }
-									measures(first: 10) { edges { node { id } } }
+									internalControls(first: 10) { edges { node { id } } }
 								}
 							}
 						}
@@ -297,7 +297,7 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 								node {
 									id
 									createdAt
-									measures(first: 10) { edges { node { id } } }
+									internalControls(first: 10) { edges { node { id } } }
 								}
 							}
 						}
@@ -392,12 +392,12 @@ func TestRiskAnalysis_Fork(t *testing.T) {
 
 		copiedCreatedAt := parseDatetime(t, copiedTP.CreatedAt)
 		assert.False(t, copiedCreatedAt.Before(sourceCreatedAt))
-		require.Len(t, copiedTP.Measures.Edges, 1)
-		assert.Equal(t, measureID, copiedTP.Measures.Edges[0].Node.ID)
+		require.Len(t, copiedTP.InternalControls.Edges, 1)
+		assert.Equal(t, internalControlID, copiedTP.InternalControls.Edges[0].Node.ID)
 		require.Len(t, copied.Node.AsOfPlans.Edges, 1)
 		assert.Equal(t, copiedTP.CreatedAt, copied.Node.AsOfPlans.Edges[0].Node.CreatedAt)
-		require.Len(t, copied.Node.AsOfPlans.Edges[0].Node.Measures.Edges, 1)
-		assert.Equal(t, measureID, copied.Node.AsOfPlans.Edges[0].Node.Measures.Edges[0].Node.ID)
+		require.Len(t, copied.Node.AsOfPlans.Edges[0].Node.InternalControls.Edges, 1)
+		assert.Equal(t, internalControlID, copied.Node.AsOfPlans.Edges[0].Node.InternalControls.Edges[0].Node.ID)
 
 		var beforeFork struct {
 			Node struct {

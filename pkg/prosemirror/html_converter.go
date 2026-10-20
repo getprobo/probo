@@ -32,14 +32,19 @@ import (
 
 // htmlBlockSanitizePolicy matches tags and attributes we can represent as
 // ProseMirror/Tiptap JSON and strips scripts, event handlers, and unsafe URLs.
-var htmlBlockSanitizePolicy = bluemonday.UGCPolicy()
+var htmlBlockSanitizePolicy = func() *bluemonday.Policy {
+	policy := bluemonday.UGCPolicy()
+	policy.AllowAttrs("width").OnElements("img")
+
+	return policy
+}()
 
 func sanitizeHTMLBlockContent(s string) string {
 	return htmlBlockSanitizePolicy.Sanitize(s)
 }
 
 // convertProseMirrorFromInlineHTML sanitizes inline raw HTML and maps it to
-// ProseMirror paragraph-level children (text, hardBreak, image, marks).
+// ProseMirror inline children (text, hardBreak, marks) and image blocks.
 func convertProseMirrorFromInlineHTML(raw string) ([]Node, error) {
 	sanitized := strings.TrimSpace(sanitizeHTMLBlockContent(raw))
 	if sanitized == "" {
@@ -97,6 +102,12 @@ func convertProseMirrorFromHTMLBlock(raw string) ([]Node, error) {
 	}
 
 	return []Node{paragraphWithPlainText(plain)}, nil
+}
+
+// promotedParagraphBlocks turns a paragraph that is only an attachment link
+// into a file block, the same way markdown import does.
+func promotedParagraphBlocks(inlines []Node) []Node {
+	return promoteAttachmentBlocks(blocksFromInlines(NodeParagraph, nil, inlines))
 }
 
 func paragraphWithPlainText(s string) Node {
@@ -194,7 +205,7 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 			return nil, err
 		}
 
-		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+		return promotedParagraphBlocks(inlines), nil
 	case "h1", "h2", "h3", "h4", "h5", "h6":
 		level := int(n.Data[1] - '0')
 
@@ -208,11 +219,7 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 			return nil, fmt.Errorf("cannot marshal heading attrs: %w", err)
 		}
 
-		return []Node{{
-			Type:    NodeHeading,
-			Attrs:   attrs,
-			Content: inlines,
-		}}, nil
+		return blocksFromInlines(NodeHeading, attrs, inlines), nil
 	case "blockquote":
 		return c.convertBlockquote(n)
 	case "pre":
@@ -240,10 +247,7 @@ func (c *htmlBlockConverter) convertBlockElement(n *html.Node) ([]Node, error) {
 			return nil, nil
 		}
 
-		return []Node{{
-			Type:    NodeParagraph,
-			Content: []Node{*img},
-		}}, nil
+		return []Node{*img}, nil
 	case "div", "section", "article", "aside", "main", "header", "footer", "nav",
 		"center", "figure", "body", "html", "span":
 		return c.unwrapBlockElement(n)
@@ -263,7 +267,7 @@ func (c *htmlBlockConverter) unwrapBlockElement(n *html.Node) ([]Node, error) {
 			return nil, nil
 		}
 
-		return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+		return promotedParagraphBlocks(inlines), nil
 	}
 
 	return c.convertBlockChildren(n)
@@ -301,7 +305,7 @@ func (c *htmlBlockConverter) convertBlockquote(n *html.Node) ([]Node, error) {
 
 	var content []Node
 	if len(inlines) > 0 {
-		content = []Node{{Type: NodeParagraph, Content: inlines}}
+		content = promotedParagraphBlocks(inlines)
 	}
 
 	return []Node{{Type: NodeBlockquote, Content: content}}, nil
@@ -442,20 +446,33 @@ func parseOlStart(n *html.Node) int {
 }
 
 func (c *htmlBlockConverter) convertListItem(li *html.Node) ([]Node, error) {
+	var nodes []Node
+
 	if hasBlockElementChild(li) {
-		return c.convertBlockChildren(li)
+		children, err := c.convertBlockChildren(li)
+		if err != nil {
+			return nil, fmt.Errorf("cannot convert list item blocks: %w", err)
+		}
+
+		nodes = children
+	} else {
+		inlines, err := c.convertInlineFragments(li)
+		if err != nil {
+			return nil, fmt.Errorf("cannot convert list item text: %w", err)
+		}
+
+		if len(inlines) == 0 {
+			return nil, nil
+		}
+
+		nodes = promotedParagraphBlocks(inlines)
 	}
 
-	inlines, err := c.convertInlineFragments(li)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(inlines) == 0 {
+	if len(nodes) == 0 {
 		return nil, nil
 	}
 
-	return []Node{{Type: NodeParagraph, Content: inlines}}, nil
+	return ensureLeadingParagraph(nodes), nil
 }
 
 func hasBlockElementChild(n *html.Node) bool {
@@ -589,7 +606,7 @@ func (c *htmlBlockConverter) convertTableCell(n *html.Node, typ NodeType) (*Node
 		return nil, err
 	}
 
-	content := []Node{{Type: NodeParagraph, Content: inlines}}
+	content := promotedParagraphBlocks(inlines)
 
 	return &Node{Type: typ, Attrs: attrs, Content: content}, nil
 }
@@ -719,12 +736,33 @@ func (c *htmlBlockConverter) convertImageElement(n *html.Node) (*Node, error) {
 		title = &t
 	}
 
-	attrs, err := json.Marshal(ImageAttrs{Src: src, Alt: alt, Title: title})
+	imgAttrs := ImageAttrs{Src: src, Alt: alt, Title: title, Width: imageWidthPercent(attrVal(n, "width"))}
+	if fileID, ok := ParseAttachmentID(src); ok {
+		imgAttrs.FileID = &fileID
+		imgAttrs.Src = ""
+	}
+
+	attrs, err := json.Marshal(imgAttrs)
 	if err != nil {
 		return nil, fmt.Errorf("cannot marshal image attrs: %w", err)
 	}
 
 	return &Node{Type: NodeImage, Attrs: attrs}, nil
+}
+
+// imageWidthPercent reads a column percentage from 1 through 100.
+func imageWidthPercent(raw string) *int {
+	raw = strings.TrimSpace(raw)
+	if !strings.HasSuffix(raw, "%") {
+		return nil
+	}
+
+	width, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(raw, "%")))
+	if err != nil || width < 1 || width > 100 {
+		return nil
+	}
+
+	return &width
 }
 
 func attrVal(n *html.Node, key string) string {

@@ -318,6 +318,26 @@ func TestResetStaleMappings(t *testing.T) {
 	fresh := newPattern("fresh_unfinished", now, nil)
 	completed := newPattern("completed_mapping", old, &commonPattern.ID)
 
+	extSource := coredata.CookieSourceExtension
+	staleExtension := &coredata.TrackerPattern{
+		ID:               gid.New(fx.scope.GetTenantID(), coredata.TrackerPatternEntityType),
+		OrganizationID:   fx.organizationID,
+		CookieBannerID:   fx.cookieBannerID,
+		CookieCategoryID: fx.cookieCategoryID,
+		TrackerType:      coredata.TrackerTypeCookie,
+		Pattern:          "stale_extension",
+		MatchType:        coredata.TrackerPatternMatchTypeExact,
+		DisplayName:      "stale_extension",
+		MaxAgeSeconds:    &maxAge,
+		Source:           &extSource,
+		CreatedAt:        old,
+		UpdatedAt:        old,
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return staleExtension.Insert(ctx, tx, fx.scope)
+	}))
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return coredata.ResetStaleMappings(ctx, conn, 10*time.Minute)
 	}))
@@ -335,6 +355,7 @@ func TestResetStaleMappings(t *testing.T) {
 	assert.NotNil(t, load(stale.ID).MappingRequestedAt, "claimed-but-unfinished idle row must be re-armed")
 	assert.Nil(t, load(fresh.ID).MappingRequestedAt, "recently claimed row must not be re-armed before the window elapses")
 	assert.Nil(t, load(completed.ID).MappingRequestedAt, "completed mapping (catalog row assigned) must never be re-armed")
+	assert.Nil(t, load(staleExtension.ID).MappingRequestedAt, "unlinked EXTENSION must not be re-armed")
 }
 
 // TestRequestMappingForUnmappedByInitiatorDomains pins the new-domain
@@ -429,7 +450,6 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Identifier:       identifier,
 			InitiatorDomain:  &d,
-			LastDetectedAt:   now,
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		}

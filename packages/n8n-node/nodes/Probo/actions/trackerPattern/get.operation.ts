@@ -56,9 +56,9 @@ export async function execute(
 					description
 					source
 					excluded
-					lastMatchedAt
 					commonTrackerPatternId
 					attribution
+					discoveryHits { family count }
 					createdAt
 					updatedAt
 				}

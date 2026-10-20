@@ -46,3 +46,42 @@ func (r *Resolver) loadFile(
 
 	return types.NewFile(file, r.fileManager), nil
 }
+
+func (r *Resolver) evidenceFilesByID(
+	ctx context.Context,
+	scope *coredata.Scope,
+	evidences []*coredata.Evidence,
+) (map[gid.GID]*types.File, error) {
+	ids := make([]gid.GID, 0, len(evidences))
+	seen := make(map[gid.GID]struct{}, len(evidences))
+
+	for _, evidence := range evidences {
+		if evidence.EvidenceFileId == nil {
+			continue
+		}
+
+		fileID := *evidence.EvidenceFileId
+		if _, ok := seen[fileID]; ok {
+			continue
+		}
+
+		seen[fileID] = struct{}{}
+		ids = append(ids, fileID)
+	}
+
+	filesByID := make(map[gid.GID]*types.File, len(ids))
+	if len(ids) == 0 {
+		return filesByID, nil
+	}
+
+	files, err := r.proboSvc.Files.GetByIDs(ctx, scope, ids...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load evidence files: %w", err)
+	}
+
+	for _, file := range files {
+		filesByID[file.ID] = types.NewFile(file, r.fileManager)
+	}
+
+	return filesByID, nil
+}

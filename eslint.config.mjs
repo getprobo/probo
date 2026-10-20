@@ -5,7 +5,13 @@ import { defineConfig, globalIgnores } from "eslint/config";
 // sets below; everything else is ignored so a bare `eslint .` keeps the same
 // scope as the previous per-workspace configs.
 const appDirs = ["apps/console/**", "apps/compliance-portal/**", "apps/employee-portal/**"];
-const reactDirs = [...appDirs, "packages/ui/**", "packages/relay/**", "packages/routes/**"];
+const reactDirs = [
+  ...appDirs,
+  "packages/ui/**",
+  "packages/relay/**",
+  "packages/routes/**",
+  "packages/tasks/**",
+];
 const lintedDirs = [...reactDirs, "packages/eslint-config/**"];
 
 export default defineConfig([

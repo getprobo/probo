@@ -1,0 +1,153 @@
+{
+  "states": {
+    "backlog": "Backlog",
+    "todo": "Por hacer",
+    "inProgress": "En curso",
+    "done": "Hecho",
+    "canceled": "Cancelado",
+    "duplicate": "Duplicado"
+  },
+  "priorities": {
+    "urgent": "Urgente",
+    "high": "Alta",
+    "medium": "Media",
+    "low": "Baja"
+  },
+  "empty": "No hay tareas",
+  "emptyValue": "—",
+  "doesNotRepeat": "No se repite",
+  "noResults": "Ninguna tarea coincide con los filtros",
+  "searchPlaceholder": "Buscar tareas",
+  "filters": {
+    "status": "Estado",
+    "allStatuses": "Todos los estados",
+    "dueDate": "Fecha límite",
+    "anyDueDate": "Cualquier fecha",
+    "due": {
+      "overdue": "Vencida",
+      "1d": "Dentro de 1 día",
+      "3d": "Dentro de 3 días",
+      "1w": "Dentro de 1 semana",
+      "1m": "Dentro de 1 mes",
+      "3m": "Dentro de 3 meses",
+      "none": "Sin fecha límite"
+    }
+  },
+  "unassigned": "No asignado",
+  "deadlinePicker": {
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "endOfWeek": "Final de la semana",
+    "nextWeek": "La semana que viene",
+    "custom": "Personalizada",
+    "none": "Ninguna"
+  },
+  "durationPicker": {
+    "none": "Ninguna"
+  },
+  "fields": {
+    "name": "Nombre",
+    "description": "Descripción",
+    "state": "Estado",
+    "priority": "Prioridad",
+    "timeEstimate": "Estimación",
+    "timeEstimateUnit": "Unidad de estimación",
+    "deadline": "Fecha límite",
+    "recurrence": "Se repite",
+    "recurrenceUnit": "Unidad de repetición",
+    "createdAt": "Creada",
+    "updatedAt": "Actualizada",
+    "assignee": "Asignado"
+  },
+  "units": {
+    "S": "Segundos",
+    "M": "Minutos",
+    "H": "Horas",
+    "D": "Días",
+    "W": "Semanas",
+    "MO": "Meses",
+    "Y": "Años"
+  },
+  "actions": {
+    "addEstimate": "Añadir estimación",
+    "clearEstimate": "Borrar estimación",
+    "addRecurrence": "Añadir intervalo",
+    "clearRecurrence": "Borrar intervalo",
+    "more": "Más acciones",
+    "delete": "Eliminar"
+  },
+  "hints": {
+    "recurrenceNeedsDeadline": "Defina una fecha límite antes de añadir un intervalo de repetición"
+  },
+  "comments": {
+    "title": "Comentarios",
+    "empty": "Aún no hay comentarios",
+    "placeholder": "Dejar un comentario",
+    "submit": "Añadir comentario",
+    "showMore": "Mostrar más",
+    "authorFallback": "Alguien"
+  },
+  "activity": {
+    "title": "Actividad",
+    "empty": "Aún no hay actividad",
+    "showMore": "Mostrar más",
+    "actorFallback": "Alguien",
+    "sentences": {
+      "created": "{{actor}} creó esta tarea",
+      "updated": "{{actor}} actualizó esta tarea",
+      "renamed": "{{actor}} cambió el nombre de {{oldValue}} a {{newValue}}",
+      "descriptionUpdated": "{{actor}} actualizó la descripción",
+      "stateChanged": "{{actor}} cambió el estado de {{oldValue}} a {{newValue}}",
+      "priorityChanged": "{{actor}} cambió la prioridad de {{oldValue}} a {{newValue}}",
+      "assigned": "{{actor}} asignó a {{newValue}}",
+      "reassigned": "{{actor}} reasignó de {{oldValue}} a {{newValue}}",
+      "unassigned": "{{actor}} quitó la asignación de {{oldValue}}",
+      "internalControlLinked": "{{actor}} vinculó {{newValue}}",
+      "internalControlChanged": "{{actor}} movió de {{oldValue}} a {{newValue}}",
+      "internalControlUnlinked": "{{actor}} desvinculó {{oldValue}}",
+      "deadlineSet": "{{actor}} estableció la fecha límite en {{newValue}}",
+      "deadlineChanged": "{{actor}} cambió la fecha límite de {{oldValue}} a {{newValue}}",
+      "deadlineRemoved": "{{actor}} eliminó la fecha límite",
+      "timeEstimateSet": "{{actor}} estableció la estimación en {{newValue}}",
+      "timeEstimateChanged": "{{actor}} cambió la estimación de {{oldValue}} a {{newValue}}",
+      "timeEstimateRemoved": "{{actor}} eliminó la estimación"
+    }
+  },
+  "metadata": {
+    "timeEstimate": "Estimación",
+    "deadline": "Fecha límite",
+    "overdue": "Atrasada"
+  },
+  "recurringBadge": {
+    "tooltip": "Se repite cada {{interval}}"
+  },
+  "duration": {
+    "seconds_one": "segundo",
+    "seconds_other": "segundos",
+    "minutes_one": "minuto",
+    "minutes_other": "minutos",
+    "hours_one": "hora",
+    "hours_other": "horas",
+    "days_one": "día",
+    "days_other": "días",
+    "weeks_one": "semana",
+    "weeks_other": "semanas",
+    "months_one": "mes",
+    "months_other": "meses",
+    "years_one": "año",
+    "years_other": "años",
+    "sec_one": "{{count}} segundo",
+    "sec_other": "{{count}} segundos",
+    "min_one": "{{count}} minuto",
+    "min_other": "{{count}} minutos",
+    "hour_one": "{{count}} hora",
+    "hour_other": "{{count}} horas",
+    "yearShort": "{{count}} a",
+    "monthShort": "{{count}} m",
+    "weekShort": "{{count}} sem.",
+    "dayShort": "{{count}} d",
+    "hourShort": "{{count}} h",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} s"
+  }
+}

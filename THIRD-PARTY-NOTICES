@@ -31,3 +31,20 @@ to reject sign-ups from throwaway email providers.
 
 Released under CC0 1.0 Universal (public domain).
 https://creativecommons.org/publicdomain/zero/1.0/
+
+================================================================================
+
+Natural Earth
+https://www.naturalearthdata.com/
+
+Public-domain vector map data used for consent-record location maps.
+Country outlines come from the world-atlas npm package
+(countries-110m.json, Natural Earth Admin 0 at 1:110m). US and CA
+subdivision outlines are vendored under
+apps/console/src/pages/organizations/cookie-banners/configuration/consent-records/_lib/subdivisions/
+(Natural Earth Admin 1 at 1:50m).
+
+All versions of Natural Earth raster + vector map data are in the
+public domain.
+
+https://www.naturalearthdata.com/about/terms-of-use/

@@ -27,14 +27,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	"go.gearno.de/kit/httpclient"
 )
 
 type (
 	Client struct {
-		httpClient *http.Client
-		endpoint   string
+		httpClient           *http.Client
+		endpoint             string
+		uploadHTTP           *http.Client
+		connectionGeneration string
 	}
 
 	Team struct {
@@ -104,6 +109,11 @@ type (
 		UserEmail string
 	}
 
+	CommentAuthor struct {
+		Name      string
+		AvatarURL string
+	}
+
 	graphqlRequest struct {
 		Query     string `json:"query"`
 		Variables any    `json:"variables"`
@@ -134,10 +144,34 @@ var (
 // than pinning, so an endpoint override moves task sync along with the OAuth
 // handshake that mints the token they carry.
 func NewClient(httpClient *http.Client, endpoint string) *Client {
+	uploadHTTP := httpclient.DefaultPooledClient(httpclient.WithSSRFProtection())
+	uploadHTTP.Timeout = linearUploadTimeout
+
 	return &Client{
 		httpClient: httpClient,
 		endpoint:   endpoint,
+		uploadHTTP: uploadHTTP,
 	}
+}
+
+// SetConnectionGeneration records which Linear connection uploaded assets
+// for this client. An in-place reconnect uses a new generation so cached
+// asset URLs from the previous account are not reused.
+func (c *Client) SetConnectionGeneration(generation string) {
+	if c == nil {
+		return
+	}
+
+	c.connectionGeneration = generation
+}
+
+// ConnectionGeneration returns the Linear connection recorded for this client.
+func (c *Client) ConnectionGeneration() string {
+	if c == nil {
+		return ""
+	}
+
+	return c.connectionGeneration
 }
 
 func (c *Client) ViewerID(ctx context.Context) (string, error) {
@@ -670,10 +704,23 @@ query TaskSyncLinearTeamSearch($first: Int!, $after: String, $filter: TeamFilter
 }
 
 func (c *Client) HasTeam(ctx context.Context, teamID string) (bool, error) {
+	team, err := c.TeamByID(ctx, teamID)
+	if err != nil {
+		return false, err
+	}
+
+	return team != nil, nil
+}
+
+func (c *Client) TeamByID(ctx context.Context, teamID string) (*Team, error) {
 	const request = `
 query TaskSyncLinearTeamByID($id: ID!) {
   teams(first: 1, filter: { id: { eq: $id } }) {
-    nodes { id }
+    nodes {
+      id
+      name
+      key
+    }
   }
 }
 `
@@ -682,7 +729,9 @@ query TaskSyncLinearTeamByID($id: ID!) {
 		Data struct {
 			Teams struct {
 				Nodes []struct {
-					ID string `json:"id"`
+					ID   string `json:"id"`
+					Name string `json:"name"`
+					Key  string `json:"key"`
 				} `json:"nodes"`
 			} `json:"teams"`
 		} `json:"data"`
@@ -690,10 +739,20 @@ query TaskSyncLinearTeamByID($id: ID!) {
 	}
 
 	if err := c.do(ctx, request, map[string]any{"id": teamID}, &resp); err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return len(resp.Data.Teams.Nodes) > 0, nil
+	if len(resp.Data.Teams.Nodes) == 0 {
+		return nil, nil
+	}
+
+	node := resp.Data.Teams.Nodes[0]
+
+	return &Team{
+		ID:   node.ID,
+		Name: node.Name,
+		Key:  node.Key,
+	}, nil
 }
 
 func teamSearchFilter(query string) any {
@@ -716,7 +775,38 @@ func (c *Client) SearchIssues(ctx context.Context, teamID, query string, first i
 		return c.listTeamIssues(ctx, teamID, first, after)
 	}
 
-	return c.searchTeamIssues(ctx, teamID, query, first, after)
+	if after != nil && strings.TrimSpace(*after) != "" {
+		return c.searchTeamIssues(ctx, teamID, query, first, after)
+	}
+
+	number, numberedOK := issueNumber(query)
+
+	var numbered IssuePage
+
+	if numberedOK {
+		var err error
+
+		numbered, err = c.listTeamIssuesByNumber(ctx, teamID, number, 1)
+		if err != nil {
+			return IssuePage{}, err
+		}
+	}
+
+	searchFirst := first
+	if len(numbered.Issues) > 0 && first > 1 {
+		searchFirst = first - 1
+	}
+
+	page, err := c.searchTeamIssues(ctx, teamID, query, searchFirst, after)
+	if err != nil {
+		return IssuePage{}, err
+	}
+
+	if len(numbered.Issues) == 0 {
+		return page, nil
+	}
+
+	return mergeIssuePages(numbered, page), nil
 }
 
 func (c *Client) listTeamIssues(ctx context.Context, teamID string, first int, after *string) (IssuePage, error) {
@@ -767,6 +857,137 @@ query TaskSyncLinearIssueList($teamId: ID!, $first: Int!, $after: String) {
 	}
 
 	return issuePage(resp.Data.Issues.Nodes, resp.Data.Issues.PageInfo)
+}
+
+func (c *Client) listTeamIssuesByNumber(ctx context.Context, teamID string, number float64, first int) (IssuePage, error) {
+	const request = `
+query TaskSyncLinearIssueByNumber($teamId: ID!, $number: Float!, $first: Int!) {
+  issues(
+    first: $first
+    filter: {
+      team: { id: { eq: $teamId } }
+      number: { eq: $number }
+    }
+    orderBy: updatedAt
+  ) {
+    nodes {
+      id
+      identifier
+      title
+      description
+      url
+      updatedAt
+      priority
+      dueDate
+      state { type }
+      assignee { email }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+`
+
+	var resp struct {
+		Data struct {
+			Issues struct {
+				Nodes    []linearIssue `json:"nodes"`
+				PageInfo pageInfo      `json:"pageInfo"`
+			} `json:"issues"`
+		} `json:"data"`
+		Errors []graphqlError `json:"errors"`
+	}
+
+	if err := c.do(ctx, request, map[string]any{
+		"teamId": teamID,
+		"number": number,
+		"first":  first,
+	}, &resp); err != nil {
+		return IssuePage{}, err
+	}
+
+	return issuePage(resp.Data.Issues.Nodes, resp.Data.Issues.PageInfo)
+}
+
+func issueNumber(query string) (float64, bool) {
+	query = strings.TrimSpace(query)
+	if dash := strings.LastIndex(query, "-"); dash >= 0 {
+		if !isASCIIAlpha(query[:dash]) {
+			return 0, false
+		}
+
+		query = query[dash+1:]
+	}
+
+	if !isASCIIDigits(query) {
+		return 0, false
+	}
+
+	number, err := strconv.ParseFloat(query, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return number, true
+}
+
+func isASCIIAlpha(value string) bool {
+	if value == "" {
+		return false
+	}
+
+	for _, r := range value {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isASCIIDigits(value string) bool {
+	if value == "" {
+		return false
+	}
+
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
+}
+
+func mergeIssuePages(priority, rest IssuePage) IssuePage {
+	seen := make(map[string]struct{}, len(priority.Issues)+len(rest.Issues))
+
+	issues := make([]Issue, 0, len(priority.Issues)+len(rest.Issues))
+	for _, issue := range priority.Issues {
+		if _, ok := seen[issue.ID]; ok {
+			continue
+		}
+
+		seen[issue.ID] = struct{}{}
+		issues = append(issues, issue)
+	}
+
+	for _, issue := range rest.Issues {
+		if _, ok := seen[issue.ID]; ok {
+			continue
+		}
+
+		seen[issue.ID] = struct{}{}
+		issues = append(issues, issue)
+	}
+
+	return IssuePage{
+		Issues:      issues,
+		EndCursor:   rest.EndCursor,
+		HasNextPage: rest.HasNextPage,
+	}
 }
 
 func (c *Client) searchTeamIssues(ctx context.Context, teamID, query string, first int, after *string) (IssuePage, error) {
@@ -984,7 +1205,12 @@ query TaskSyncLinearIssueComments($id: String!, $first: Int!, $after: String) {
 	return nil, fmt.Errorf("cannot list Linear comments: pagination limit reached")
 }
 
-func (c *Client) CreateComment(ctx context.Context, issueID, body string) (*Comment, error) {
+func (c *Client) CreateComment(
+	ctx context.Context,
+	issueID string,
+	body string,
+	author CommentAuthor,
+) (*Comment, error) {
 	const query = `
 mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
   commentCreate(input: $input) {
@@ -1015,10 +1241,7 @@ mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
 	}
 
 	if err := c.do(ctx, query, map[string]any{
-		"input": map[string]any{
-			"issueId": issueID,
-			"body":    body,
-		},
+		"input": commentCreateInput(issueID, body, author),
 	}, &resp); err != nil {
 		return nil, err
 	}
@@ -1029,6 +1252,26 @@ mutation TaskSyncLinearCommentCreate($input: CommentCreateInput!) {
 	}
 
 	return commentFromPayload(created.Comment.ID, created.Comment.Body, created.Comment.CreatedAt, created.Comment.UpdatedAt, ""), nil
+}
+
+func commentCreateInput(issueID, body string, author CommentAuthor) map[string]any {
+	input := map[string]any{
+		"issueId": issueID,
+		"body":    body,
+	}
+
+	name := strings.TrimSpace(author.Name)
+	if name == "" {
+		return input
+	}
+
+	input["createAsUser"] = name
+
+	if avatarURL := strings.TrimSpace(author.AvatarURL); avatarURL != "" {
+		input["displayIconUrl"] = avatarURL
+	}
+
+	return input
 }
 
 func (c *Client) UpdateComment(ctx context.Context, commentID, body string) (*Comment, error) {

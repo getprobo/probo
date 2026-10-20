@@ -29,16 +29,15 @@ import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { DevicesList_organization$key } from "#/__generated__/core/DevicesList_organization.graphql";
 import type { DevicesList_viewer$key } from "#/__generated__/core/DevicesList_viewer.graphql";
 import type { DevicesListRefetchQuery } from "#/__generated__/core/DevicesListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { PageHeader } from "#/pages/_components/PageHeader";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DeviceListItem } from "./DeviceListItem";
 import { DevicesEmpty } from "./DevicesEmpty";
@@ -96,7 +95,7 @@ export function DevicesList({
 }: DevicesListProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const organization = useFragment(devicesListOrganizationFragment, organizationKey);
   const [data, refetch] = useRefetchableFragment<
     DevicesListRefetchQuery,
@@ -115,15 +114,11 @@ export function DevicesList({
   );
   const slots = devicesList({ busy: isPending });
 
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
-
   const empty = enrolledDevices.edges.length === 0
     && !enrolledDevices.pageInfo.hasPreviousPage;
   const canEnroll = organization.canEnrollDevice;
-  const registerTo = `/${organizationId}/devices/register`;
-  const addManuallyTo = `/${organizationId}/devices/add-manually`;
+  const registerTo = `/${employeePortalId}/devices/register`;
+  const addManuallyTo = `/${employeePortalId}/devices/add-manually`;
   const addManuallyLink = (
     <ButtonLink
       to={addManuallyTo}

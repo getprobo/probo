@@ -26,7 +26,41 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/gid"
 )
+
+func TestParseMarkdown_BlockHTMLFileLink(t *testing.T) {
+	t.Parallel()
+
+	fileID := gid.New(gid.TenantID{}, 25).String()
+	path := "/api/files/v1/attachments/" + fileID
+
+	doc, err := ParseMarkdown(`<a href="` + path + `" class="document-file">policy.pdf</a>` + "\n")
+	require.NoError(t, err)
+	require.Len(t, doc.Content, 1)
+	require.Equal(t, NodeFile, doc.Content[0].Type)
+	attrs, err := doc.Content[0].FileAttrs()
+	require.NoError(t, err)
+	assert.Equal(t, fileID, attrs.FileID)
+	assert.Equal(t, "policy.pdf", attrs.FileName)
+
+	wrapped, err := ParseMarkdown(`<p><a href="` + path + `">policy.pdf</a></p>` + "\n")
+	require.NoError(t, err)
+	require.Len(t, wrapped.Content, 1)
+	require.Equal(t, NodeFile, wrapped.Content[0].Type)
+
+	mixed, err := ParseMarkdown(`<p>see <a href="` + path + `">policy.pdf</a></p>` + "\n")
+	require.NoError(t, err)
+	require.Len(t, mixed.Content, 1)
+	assert.Equal(t, NodeParagraph, mixed.Content[0].Type)
+
+	cell, err := ParseMarkdown("<table><tr><td><a href=\"" + path + "\">policy.pdf</a></td></tr></table>\n")
+	require.NoError(t, err)
+	require.Len(t, cell.Content, 1)
+	td := cell.Content[0].Content[0].Content[0]
+	require.Len(t, td.Content, 1)
+	assert.Equal(t, NodeFile, td.Content[0].Type)
+}
 
 func TestParseMarkdown_BlockHTML(t *testing.T) {
 	t.Parallel()
@@ -116,6 +150,30 @@ func TestParseMarkdown_BlockHTMLListAndBlockquote(t *testing.T) {
 	require.Len(t, doc.Content, 2)
 	assert.Equal(t, NodeBulletList, doc.Content[0].Type)
 	assert.Equal(t, NodeBlockquote, doc.Content[1].Type)
+}
+
+func TestParseMarkdown_BlockHTMLImagesInQuoteAndCell(t *testing.T) {
+	t.Parallel()
+
+	doc, err := ParseMarkdown("<blockquote><img src=\"https://example.com/quote.png\" alt=\"diagram\"></blockquote>\n<table><tr><td><img src=\"https://example.com/cell.png\" alt=\"cell\"></td><th>Head <img src=\"https://example.com/head.png\" alt=\"head\"></th></tr></table>\n")
+	require.NoError(t, err)
+	require.NoError(t, validateDocument(doc))
+	require.Len(t, doc.Content, 2)
+
+	quote := doc.Content[0]
+	assert.Equal(t, NodeBlockquote, quote.Type)
+	require.Len(t, quote.Content, 1)
+	assert.Equal(t, NodeImage, quote.Content[0].Type)
+
+	row := doc.Content[1].Content[0]
+	cell := row.Content[0]
+	require.Len(t, cell.Content, 1)
+	assert.Equal(t, NodeImage, cell.Content[0].Type)
+
+	header := row.Content[1]
+	require.Len(t, header.Content, 2)
+	assert.Equal(t, NodeParagraph, header.Content[0].Type)
+	assert.Equal(t, NodeImage, header.Content[1].Type)
 }
 
 func TestParseMarkdown_BlockHTMLTable(t *testing.T) {

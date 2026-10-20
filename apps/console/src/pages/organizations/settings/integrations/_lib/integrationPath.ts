@@ -22,15 +22,19 @@ export function integrationListPath(organizationId: string) {
   return `/organizations/${organizationId}/settings/integrations`;
 }
 
-export function connectorDetailsPath(
-  organizationId: string,
-  connectorId: string,
-) {
-  return `${integrationListPath(organizationId)}/${connectorId}`;
+export function connectorDetailsPath(organizationId: string, provider: string) {
+  const slug = provider.toLowerCase().replaceAll("_", "-");
+  return `${integrationListPath(organizationId)}/${slug}`;
 }
 
-// Connecting still lives under access reviews, which also creates the source.
-// The connect flow moves here in the phase that retargets the OAuth callbacks.
-export function connectProviderPath(organizationId: string) {
-  return `/organizations/${organizationId}/access-reviews/connections`;
+export function marketplacePath(organizationId: string) {
+  return `${integrationListPath(organizationId)}/marketplace`;
+}
+
+export function connectVendorPath(organizationId: string, provider: string) {
+  return `${marketplacePath(organizationId)}/${provider.toLowerCase().replaceAll("_", "-")}`;
+}
+
+export function providerFromSlug(slug: string) {
+  return slug.toUpperCase().replaceAll("-", "_");
 }

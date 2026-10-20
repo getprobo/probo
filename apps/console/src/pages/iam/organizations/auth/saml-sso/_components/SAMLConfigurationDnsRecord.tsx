@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -37,23 +37,23 @@ export function SAMLConfigurationDnsRecord({
   domainVerificationToken,
 }: SAMLConfigurationDnsRecordProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const { record, recordField, recordValue, code } = samlConfigurationListItem();
   const value = `probo-verification=${domainVerificationToken}`;
 
   async function copyToClipboard(text: string, description: string) {
     try {
       await navigator.clipboard.writeText(text);
-      toast({
+      toast.add({
         title: t("samlConfigurationList.messages.copied"),
         description,
-        variant: "success",
+        type: "success",
       });
     } catch {
-      toast({
+      toast.add({
         title: t("samlConfigurationList.errors.copy"),
         description,
-        variant: "error",
+        type: "error",
       });
     }
   }

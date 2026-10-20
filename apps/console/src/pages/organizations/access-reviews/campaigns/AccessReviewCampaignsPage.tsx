@@ -31,8 +31,8 @@ import {
   Thead,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import type { PreloadedQuery } from "react-relay";
 import { graphql, useMutation, usePaginationFragment, usePreloadedQuery } from "react-relay";
@@ -108,7 +108,7 @@ export function AccessReviewCampaignsPage({ queryRef }: AccessReviewCampaignsPag
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   usePageTitle(t("accessReviewCampaignsPage.title"));
 
@@ -144,30 +144,30 @@ export function AccessReviewCampaignsPage({ queryRef }: AccessReviewCampaignsPag
           },
           onCompleted(_, errors) {
             if (errors?.length) {
-              toast({
+              toast.add({
                 title: t("accessReviewCampaignsPage.messages.error"),
                 description: formatError(
                   t("accessReviewCampaignsPage.errors.delete"),
                   errors,
                 ),
-                variant: "error",
+                type: "error",
               });
               return;
             }
-            toast({
+            toast.add({
               title: t("accessReviewCampaignsPage.messages.success"),
               description: t("accessReviewCampaignsPage.messages.deleted"),
-              variant: "success",
+              type: "success",
             });
           },
           onError(error) {
-            toast({
+            toast.add({
               title: t("accessReviewCampaignsPage.messages.error"),
               description: formatError(
                 t("accessReviewCampaignsPage.errors.delete"),
                 error,
               ),
-              variant: "error",
+              type: "error",
             });
           },
         });

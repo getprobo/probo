@@ -29,18 +29,49 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { TasksPageQuery } from "#/__generated__/core/TasksPageQuery.graphql";
-import { OrganizationTasksCard } from "#/components/tasks/TasksCard";
 
-import { CreateTaskDialog } from "./_components/CreateTaskDialog";
-import { TasksSettingsDialog } from "./_components/TasksSettingsDialog";
+import { CreateTaskDialog } from "./_components/CreateTaskDialog/CreateTaskDialog";
+import { TasksPageList } from "./_components/TasksPageList/TasksPageList";
+import { TasksSettingsDialog } from "./_components/TasksSettingsDialog/TasksSettingsDialog";
 import { tasksPage } from "./variants";
 
 export const tasksPageQuery = graphql`
-  query TasksPageQuery($organizationId: ID!, $filter: TaskFilter) {
+  query TasksPageQuery(
+    $organizationId: ID!
+    $query: String
+    $assignedToId: ID
+    $internalControlId: ID
+    $deadlineOnOrBefore: Datetime
+    $deadlineOnOrAfter: Datetime
+    $hasDeadline: Boolean
+    $hasAssignee: Boolean
+    $includeInProgress: Boolean!
+    $includeTodo: Boolean!
+    $includeBacklog: Boolean!
+    $includeDone: Boolean!
+    $includeCanceled: Boolean!
+    $includeDuplicate: Boolean!
+  ) {
     organization: node(id: $organizationId) {
       __typename
       ... on Organization {
-        ...TasksCardOrganizationFragment @arguments(filter: $filter)
+        canCreateTask: permission(action: "core:task:create")
+        ...TasksPageList_organization
+          @arguments(
+            query: $query
+            assignedToId: $assignedToId
+            internalControlId: $internalControlId
+            deadlineOnOrBefore: $deadlineOnOrBefore
+            deadlineOnOrAfter: $deadlineOnOrAfter
+            hasDeadline: $hasDeadline
+            hasAssignee: $hasAssignee
+            includeInProgress: $includeInProgress
+            includeTodo: $includeTodo
+            includeBacklog: $includeBacklog
+            includeDone: $includeDone
+            includeCanceled: $includeCanceled
+            includeDuplicate: $includeDuplicate
+          )
         ...TasksSettingsDialog_organization
       }
     }
@@ -69,31 +100,27 @@ export function TasksPage({ queryRef, onReady }: TasksPageProps) {
 
   return (
     <div className={root()}>
-      <OrganizationTasksCard
-        organizationRef={organization}
-        header={({ connectionId, canCreateTask, refetch }) => (
-          <div className={header()}>
-            <div className={intro()}>
-              <Heading level={1} size={6} weight="medium" highContrast>
-                {t("tasks.title")}
-              </Heading>
-              <Text size={2} color="faint">
-                {t("tasks.description")}
-              </Text>
-            </div>
-            <div className={actions()}>
-              <TasksSettingsDialog organizationKey={organization} />
-              {canCreateTask && (
-                <CreateTaskDialog connectionId={connectionId} onCompleted={refetch}>
-                  <Button variant="solid" iconStart={<PlusIcon />}>
-                    {t("tasks.actions.create")}
-                  </Button>
-                </CreateTaskDialog>
-              )}
-            </div>
-          </div>
-        )}
-      />
+      <div className={header()}>
+        <div className={intro()}>
+          <Heading level={1} size={6} weight="medium" highContrast>
+            {t("tasks.title")}
+          </Heading>
+          <Text size={2} color="faint">
+            {t("tasks.description")}
+          </Text>
+        </div>
+        <div className={actions()}>
+          {organization.canCreateTask && (
+            <CreateTaskDialog>
+              <Button variant="solid" iconStart={<PlusIcon />}>
+                {t("tasks.actions.create")}
+              </Button>
+            </CreateTaskDialog>
+          )}
+          <TasksSettingsDialog organizationKey={organization} />
+        </div>
+      </div>
+      <TasksPageList organizationKey={organization} />
     </div>
   );
 }

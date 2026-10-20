@@ -76,6 +76,16 @@ enum CookieBannerOrderField
         )
 }
 
+enum CookieBannerVersionOrderField
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.CookieBannerVersionOrderField"
+    ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.CookieBannerVersionOrderFieldCreatedAt"
+        )
+}
+
 enum CookieCategoryOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.CookieCategoryOrderField"
@@ -112,6 +122,14 @@ input CookieBannerOrder
     field: CookieBannerOrderField!
 }
 
+input CookieBannerVersionOrder
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerVersionOrderBy"
+    ) {
+    direction: OrderDirection!
+    field: CookieBannerVersionOrderField!
+}
+
 input CookieCategoryOrder
     @goModel(
         model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieCategoryOrderBy"
@@ -133,6 +151,41 @@ type CookieBannerCapabilities
     ) {
     resourceReporting: Boolean!
     tcf: Boolean! @goField(name: "TCF")
+    corsless: Boolean!
+}
+
+enum DiscoveryBrowserFamily
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamily"
+    ) {
+    CHROME
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyChrome"
+        )
+    EDGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyEdge"
+        )
+    FIREFOX
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyFirefox"
+        )
+    SAFARI
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilySafari"
+        )
+    OTHER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamilyOther"
+        )
+}
+
+type DiscoveryFamilyCount
+    @goModel(
+        model: "go.probo.inc/probo/pkg/cookiebanner.DiscoveryFamilyCount"
+    ) {
+    family: DiscoveryBrowserFamily!
+    count: Int!
 }
 
 type CookieBanner implements Node {
@@ -168,6 +221,14 @@ type CookieBanner implements Node {
 
     latestVersion: CookieBannerVersion @goField(forceResolver: true)
     publishedVersion: CookieBannerVersion @goField(forceResolver: true)
+
+    versions(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: CookieBannerVersionOrder
+    ): CookieBannerVersionConnection @goField(forceResolver: true)
 
     policyDocument: Document @goField(forceResolver: true)
 
@@ -206,6 +267,19 @@ type CookieBanner implements Node {
     ): CommonGVLVendorConnection @goField(forceResolver: true)
 
     gvlVendorIds: [Int!]! @goField(forceResolver: true)
+
+    """
+    Discovery page loads by browser family. Families with zero page
+    loads are omitted. Frozen on first publish.
+    """
+    discoveryPageLoads: [DiscoveryFamilyCount!]!
+        @goField(forceResolver: true)
+
+    """
+    When discovery counting stopped. Null while page loads and
+    pattern hits are still being recorded.
+    """
+    discoveryFrozenAt: Datetime @goField(forceResolver: true)
 
     uncategorisedTrackerResources(
         first: Int
@@ -312,10 +386,6 @@ enum TrackerPatternOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldName"
         )
-    LAST_MATCHED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldLastMatchedAt"
-        )
     UPDATED_AT
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerPatternOrderFieldUpdatedAt"
@@ -341,7 +411,13 @@ type TrackerPattern implements Node
     source: CookieSource
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
-    lastMatchedAt: Datetime
+    """
+    Discovery first-sighting hits by browser family. Only families
+    with page loads are included, so a zero is a sampled miss.
+    Frozen on first publish.
+    """
+    discoveryHits: [DiscoveryFamilyCount!]!
+        @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -364,7 +440,9 @@ type TrackerPattern implements Node
 
     """
     Catalog verdict inherited from the linked common tracker pattern.
-    Null when the org pattern has no catalog link.
+    Null when the org pattern has no catalog link, except when source
+    is EXTENSION: that is always NOT_ATTRIBUTABLE (visitor software),
+    even if a catalog row is already linked.
     """
     attribution: CommonTrackerPatternAttribution
         @goField(forceResolver: true)
@@ -416,15 +494,26 @@ input TrackerPatternFilter
     common_tracker_patterns.
     """
     thirdPartyId: ID
+    """
+    When true, only excluded patterns. When false, only patterns
+    that are not excluded.
+    """
+    excluded: Boolean
+    """
+    When true, only patterns in a non-uncategorised category.
+    When false, only uncategorised patterns.
+    """
+    categorized: Boolean
 }
 
 type DetectedTracker implements Node {
     id: ID!
     identifier: String!
     initiatorUrl: String
+    cookieDomain: String
+    hostOnly: Boolean
     maxAgeSeconds: Int
     source: CookieSource
-    lastDetectedAt: Datetime!
     createdAt: Datetime!
 }
 
@@ -432,13 +521,13 @@ enum DetectedTrackerOrderField
     @goModel(
         model: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField"
     ) {
+    CREATED_AT
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldCreatedAt"
+        )
     INITIATOR_URL
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldInitiatorURL"
-        )
-    LAST_DETECTED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderFieldLastDetectedAt"
         )
 }
 
@@ -512,10 +601,6 @@ enum TrackerResourceOrderField
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldCreatedAt"
         )
-    LAST_DETECTED_AT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldLastDetectedAt"
-        )
     ORIGIN
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TrackerResourceOrderFieldOrigin"
@@ -535,7 +620,6 @@ type TrackerResource implements Node {
     displayName: String!
     description: String!
     excluded: Boolean!
-    lastDetectedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -596,6 +680,20 @@ type CookieBannerVersionCookie {
     trackerType: TrackerType!
     maxAgeSeconds: Int
     description: String!
+}
+
+type CookieBannerVersionConnection
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.CookieBannerVersionConnection"
+    ) {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [CookieBannerVersionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type CookieBannerVersionEdge {
+    cursor: CursorKey!
+    node: CookieBannerVersion!
 }
 
 type CookieBannerConnection

@@ -412,17 +412,20 @@ The project mutation primitive — awaitable, preserves every `UseMutationConfig
 The mechanics live in `@probo/relay` as `createUseMutation(useNotifier)` — a factory that wraps `react-relay`'s `useMutation` (promise wrapping, `onCompleted`/`onError` dispatch, `errorToast` semantics) but knows nothing about toasts or i18n. Each app binds it once to its own feedback stack via a `MutationNotifier` and re-exports the result as the canonical `useMutation`:
 
 ```tsx
-// apps/compliance-portal/src/lib/relay/useMutation.ts — the only place feedback is wired
+// apps/console/src/lib/relay/useMutation.ts — the only place feedback is wired
 import { createUseMutation, type MutationNotifier } from "@probo/relay";
 
 function useMutationNotifier(): MutationNotifier {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
   return useMemo<MutationNotifier>(() => ({
     notifySuccess: (title) => toast.add({ title, type: "success" }),
     notifyError: (error, title) => {
-      const finalTitle = title ?? t("common.error");
-      toast.add({ title: finalTitle, description: formatError(finalTitle, error as GraphQLError), type: "error" });
+      toast.add({
+        title: title ?? t("common.error"),
+        description: formatError(t("mutation.errors.commit"), error as GraphQLError),
+        type: "error",
+      });
     },
   }), [toast, t]);
 }
@@ -461,10 +464,10 @@ createCookieBanner({ variables: { ... } });
 const [deleteThirdParty] = useMutation<ThirdPartyGraphDeleteMutation>(deleteThirdPartyMutation);
 ```
 
-For mutations with user feedback, queue a toast with Base UI's toast manager (`Toast.useToastManager()`; see [`ui.md`](ui.md#user-feedback-toasts)) from the `onCompleted` / `onError` callbacks:
+For mutations with user feedback, queue a toast with `useToast()` (see [`ui.md`](ui.md#user-feedback-toasts)) from the `onCompleted` / `onError` callbacks:
 
 ```tsx
-const toast = Toast.useToastManager();
+const toast = useToast();
 const [createObligation, isCreating] = useMutation<CreateObligationMutation>(createObligationMutation);
 
 const onSubmit = (input: ObligationInput) => {

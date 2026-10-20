@@ -26,7 +26,6 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { useParams } from "react-router";
 
 import type { AddManuallyPageQuery } from "#/__generated__/core/AddManuallyPageQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
@@ -34,6 +33,7 @@ import { PageHeader } from "#/pages/_components/PageHeader";
 import { EnrollmentInstructions } from "#/pages/devices/_components/EnrollmentInstructions";
 import { addManuallyPage } from "#/pages/devices/_components/variants";
 import { useEnrollDeviceManually } from "#/pages/devices/_lib/useEnrollDeviceManually";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 export const addManuallyPageQuery = graphql`
   query AddManuallyPageQuery($organizationId: ID!) @throwOnFieldError {
@@ -53,7 +53,7 @@ interface AddManuallyPageProps {
 export function AddManuallyPage({ queryRef }: AddManuallyPageProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = addManuallyPage();
   const { organization } = usePreloadedQuery<AddManuallyPageQuery>(
     addManuallyPageQuery,
@@ -70,10 +70,6 @@ export function AddManuallyPage({ queryRef }: AddManuallyPageProps) {
     start();
   }, [canEnroll, start]);
 
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
-
   if (organization?.__typename !== "Organization") {
     throw new NotFoundError("invalid type for organization node");
   }
@@ -83,13 +79,13 @@ export function AddManuallyPage({ queryRef }: AddManuallyPageProps) {
       homeLabel={tApp("homePage.breadcrumb")}
       parent={{
         label: t("breadcrumb"),
-        to: `/${organizationId}/devices`,
+        to: `/${employeePortalId}/devices`,
       }}
       currentLabel={t("addManuallyBreadcrumb")}
       title={t("addManually.title")}
     />
   );
-  const devicesTo = `/${organizationId}/devices`;
+  const devicesTo = `/${employeePortalId}/devices`;
 
   if (!canEnroll) {
     return (
@@ -100,7 +96,7 @@ export function AddManuallyPage({ queryRef }: AddManuallyPageProps) {
           description={t("unavailable.description")}
           actions={(
             <ButtonLink
-              to={`/${organizationId}`}
+              to={`/${employeePortalId}`}
               size={3}
               variant="solid"
               color="neutral"

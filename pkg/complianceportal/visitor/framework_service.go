@@ -24,10 +24,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 func (s *Service) GetFramework(
@@ -108,4 +110,121 @@ func (s *Service) GetFrameworkForCompliancePortalID(
 	}
 
 	return framework, nil
+}
+
+// frameworkNamesByAuditID loads every framework linked to the given audits in
+// two queries. Names stay in framework creation order, matching
+// ListFrameworksForAuditID.
+func (s *Service) frameworkNamesByAuditID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditIDs []gid.GID,
+) (map[gid.GID][]string, error) {
+	namesByAudit := make(map[gid.GID][]string, len(auditIDs))
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var links coredata.AuditFrameworks
+
+			if err := links.LoadByAuditIDs(ctx, conn, scope, auditIDs); err != nil {
+				return fmt.Errorf("cannot load audit frameworks: %w", err)
+			}
+
+			frameworkIDs := make([]gid.GID, 0, len(links))
+			seen := make(map[gid.GID]struct{}, len(links))
+
+			for _, link := range links {
+				if _, ok := seen[link.FrameworkID]; ok {
+					continue
+				}
+
+				seen[link.FrameworkID] = struct{}{}
+				frameworkIDs = append(frameworkIDs, link.FrameworkID)
+			}
+
+			byID := make(map[gid.GID]*coredata.Framework, len(frameworkIDs))
+
+			if len(frameworkIDs) > 0 {
+				var frameworks coredata.Frameworks
+
+				if err := frameworks.LoadByIDs(ctx, conn, scope, frameworkIDs); err != nil {
+					return fmt.Errorf("cannot load frameworks: %w", err)
+				}
+
+				for _, framework := range frameworks {
+					byID[framework.ID] = framework
+				}
+			}
+
+			grouped := make(map[gid.GID][]*coredata.Framework, len(auditIDs))
+
+			for _, link := range links {
+				framework, ok := byID[link.FrameworkID]
+				if !ok {
+					continue
+				}
+
+				grouped[link.AuditID] = append(grouped[link.AuditID], framework)
+			}
+
+			for auditID, frameworks := range grouped {
+				sort.Slice(frameworks, func(i, j int) bool {
+					if frameworks[i].CreatedAt.Equal(frameworks[j].CreatedAt) {
+						return frameworks[i].ID.String() < frameworks[j].ID.String()
+					}
+
+					return frameworks[i].CreatedAt.Before(frameworks[j].CreatedAt)
+				})
+
+				names := make([]string, len(frameworks))
+
+				for i, framework := range frameworks {
+					names[i] = framework.Name
+				}
+
+				namesByAudit[auditID] = names
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return namesByAudit, nil
+}
+
+func (s *Service) ListFrameworksForAuditID(
+	ctx context.Context,
+	scope coredata.Scoper,
+	auditID gid.GID,
+) (coredata.Frameworks, error) {
+	return page.LoadAll(
+		ctx,
+		page.OrderBy[coredata.FrameworkOrderField]{
+			Field:     coredata.FrameworkOrderFieldCreatedAt,
+			Direction: page.OrderDirectionAsc,
+		},
+		func(ctx context.Context, cursor *page.Cursor[coredata.FrameworkOrderField]) ([]*coredata.Framework, error) {
+			var batch coredata.Frameworks
+
+			err := s.pg.WithConn(
+				ctx,
+				func(ctx context.Context, conn pg.Querier) error {
+					if err := batch.LoadByAuditID(ctx, conn, scope, auditID, cursor); err != nil {
+						return fmt.Errorf("cannot load frameworks: %w", err)
+					}
+
+					return nil
+				},
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			return batch, nil
+		},
+	)
 }

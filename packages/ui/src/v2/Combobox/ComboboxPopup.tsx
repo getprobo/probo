@@ -23,8 +23,8 @@ import { type ComponentProps, useContext } from "react";
 
 import { overlayPortalContainer, OverlayPortalRootContext } from "../../lib/overlayPortalRoot";
 
-import { useComboboxInputNode } from "./context";
-import { comboboxPopup } from "./variants";
+import { useComboboxInputNode, useComboboxJoined } from "./context";
+import { comboboxJoined, comboboxPopup } from "./variants";
 
 export type ComboboxPopupProps
   = & Omit<ComponentProps<typeof BaseCombobox.Popup>, "className">
@@ -37,17 +37,28 @@ export type ComboboxPopupProps
       side?: ComponentProps<typeof BaseCombobox.Positioner>["side"];
       align?: ComponentProps<typeof BaseCombobox.Positioner>["align"];
       sideOffset?: ComponentProps<typeof BaseCombobox.Positioner>["sideOffset"];
+      // Override the default input anchor. Used when the list should stick to
+      // the whole field, not the text caret.
+      anchor?: ComponentProps<typeof BaseCombobox.Positioner>["anchor"];
+      // Joined chrome for the Linear pickers. Leaves the default popup unchanged.
+      joined?: boolean;
     };
 
 // Portal + positioner + styled popup holding the filtered items.
 export function ComboboxPopup(props: ComboboxPopupProps) {
   const {
-    className, children, container,
+    className, children, container, anchor, joined = false,
     side = "bottom", align = "start", sideOffset = 4,
     ...popupProps
   } = props;
   const input = useComboboxInputNode();
+  const joinedFrame = useComboboxJoined();
   const overlayRoot = useContext(OverlayPortalRootContext);
+  const popupClass = joined
+    ? comboboxJoined().popup({ className })
+    : comboboxPopup({ className });
+  const joinedAnchor = joined ? joinedFrame.anchor : undefined;
+  const joinedWidth = joined ? joinedFrame.width : 0;
 
   return (
     <BaseCombobox.Portal container={overlayPortalContainer(container, overlayRoot)}>
@@ -56,13 +67,19 @@ export function ComboboxPopup(props: ComboboxPopupProps) {
           the preferred side runs out of horizontal room. */}
       <BaseCombobox.Positioner
         className="z-3"
-        anchor={input?.inputNode ?? undefined}
+        anchor={joinedAnchor ?? anchor ?? input?.inputNode ?? undefined}
         side={side}
-        align={align}
-        sideOffset={sideOffset}
+        align={joined ? "start" : align}
+        sideOffset={joined ? -1 : sideOffset}
         collisionAvoidance={{ align: "flip", fallbackAxisSide: "none" }}
       >
-        <BaseCombobox.Popup className={comboboxPopup({ className })} {...popupProps}>
+        <BaseCombobox.Popup
+          className={popupClass}
+          {...popupProps}
+          style={joined && joinedWidth > 0
+            ? { ...popupProps.style, width: joinedWidth }
+            : popupProps.style}
+        >
           {children}
         </BaseCombobox.Popup>
       </BaseCombobox.Positioner>

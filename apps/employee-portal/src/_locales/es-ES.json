@@ -51,6 +51,22 @@
     "dashboard": {
       "view": "Ver",
       "allDone": "Ya está todo listo",
+      "documents": {
+        "title": "Documentos",
+        "description": "Firme y apruebe los documentos asignados.",
+        "empty": "No hay nada que revisar por ahora",
+        "pendingCount_one": "{{count}} revisión pendiente",
+        "pendingCount_other": "{{count}} revisiones pendientes",
+        "action": "Revisar documentos"
+      },
+      "tasks": {
+        "title": "Tareas",
+        "description": "Revise y complete las tareas asignadas.",
+        "empty": "No hay nada que hacer por ahora",
+        "pendingCount_one": "{{count}} tarea por hacer",
+        "pendingCount_other": "{{count}} tareas por hacer",
+        "action": "Ir a las tareas"
+      },
       "signatures": {
         "title": "Firmas",
         "description": "Firme los documentos asignados.",

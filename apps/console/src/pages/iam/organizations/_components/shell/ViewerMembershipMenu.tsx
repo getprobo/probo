@@ -24,8 +24,7 @@ import {
   KeyIcon,
   SignOutIcon,
 } from "@phosphor-icons/react";
-import { formatError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
+import { catchResultValue, formatError } from "@probo/helpers";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownGroup } from "@probo/ui/src/v2/Dropdown/DropdownGroup";
@@ -34,6 +33,7 @@ import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
 import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { EditableAvatarButton } from "@probo/ui/src/v2/EditableAvatarButton/EditableAvatarButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -42,7 +42,6 @@ import { Link } from "react-router";
 
 import type { ViewerMembershipMenu_organization$key } from "#/__generated__/iam/ViewerMembershipMenu_organization.graphql";
 import type { ViewerMembershipMenuSignOutMutation } from "#/__generated__/iam/ViewerMembershipMenuSignOutMutation.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { employeePortalHref } from "#/lib/employeePortalHref";
 import { IdentityAvatarDialog } from "#/pages/iam/_components/IdentityAvatarDialog";
 
@@ -50,6 +49,16 @@ import { navRail } from "./variants";
 
 const viewerMembershipMenuFragment = graphql`
   fragment ViewerMembershipMenu_organization on Organization {
+    employeePortals(
+      first: 1
+      orderBy: { field: CREATED_AT, direction: ASC }
+    ) @catch(to: RESULT) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
     viewer @required(action: THROW) {
       fullName
       identity @required(action: THROW) {
@@ -80,15 +89,19 @@ export interface ViewerMembershipMenuProps {
 
 export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuProps) {
   const { t } = useTranslation();
-  const organizationId = useOrganizationId();
-  const { toast } = useToast();
+  const toast = useToast();
 
+  const organization = useFragment(viewerMembershipMenuFragment, organizationKey);
   const {
     viewer: {
       fullName,
       identity,
     },
-  } = useFragment(viewerMembershipMenuFragment, organizationKey);
+  } = organization;
+  const employeePortalId = catchResultValue(
+    organization.employeePortals,
+    "cannot list employee portals",
+  )?.edges[0]?.node.id ?? null;
   const { canListOAuth2AccessTokens, email, avatar } = identity;
   const [signOut, isSigningOut] = useMutation<ViewerMembershipMenuSignOutMutation>(signOutMutation);
   const [avatarOpen, setAvatarOpen] = useState(false);
@@ -101,10 +114,10 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
       variables: {},
       onCompleted: (_, errors) => {
         if (errors) {
-          toast({
+          toast.add({
             title: t("viewerMembershipDropdown.errors.requestFailed"),
             description: formatError(t("viewerMembershipDropdown.errors.cannotSignOut"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -113,10 +126,10 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
         window.location.href = "/auth/login";
       },
       onError: (error) => {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: error.message,
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -174,12 +187,14 @@ export function ViewerMembershipMenu({ organizationKey }: ViewerMembershipMenuPr
               {t("viewerMembershipDropdown.actions.oauthTokens")}
             </DropdownItem>
           )}
-          <DropdownItem
-            iconStart={<FileTextIcon />}
-            render={<a href={employeePortalHref(organizationId)} />}
-          >
-            {t("viewerMembershipDropdown.actions.employeePortal")}
-          </DropdownItem>
+          {employeePortalId != null && (
+            <DropdownItem
+              iconStart={<FileTextIcon />}
+              render={<a href={employeePortalHref(employeePortalId)} />}
+            >
+              {t("viewerMembershipDropdown.actions.employeePortal")}
+            </DropdownItem>
+          )}
           <DropdownSeparator />
           <DropdownItem
             color="error"

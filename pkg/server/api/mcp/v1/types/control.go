@@ -41,7 +41,7 @@ func NewControl(c *coredata.Control) *Control {
 	}
 }
 
-func NewListMeasureControlsOutput(controlPage *page.Page[*coredata.Control, coredata.ControlOrderField]) ListMeasureControlsOutput {
+func NewListInternalControlControlsOutput(controlPage *page.Page[*coredata.Control, coredata.ControlOrderField]) ListInternalControlControlsOutput {
 	controls := make([]*Control, 0, len(controlPage.Data))
 	for _, c := range controlPage.Data {
 		controls = append(controls, NewControl(c))
@@ -54,7 +54,7 @@ func NewListMeasureControlsOutput(controlPage *page.Page[*coredata.Control, core
 		nextCursor = &cursorKey
 	}
 
-	return ListMeasureControlsOutput{
+	return ListInternalControlControlsOutput{
 		NextCursor: nextCursor,
 		Controls:   controls,
 	}

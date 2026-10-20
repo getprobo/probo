@@ -29,26 +29,34 @@ export type DropdownRadioItemProps
   = & Omit<ComponentProps<typeof Menu.RadioItem>, "className">
     & {
       className?: string;
+      iconStart?: ReactNode;
       shortcut?: ReactNode;
+      // `end` puts the check in the trailing group, before `shortcut`.
+      indicator?: "start" | "end";
     };
 
 // A menu item with a checkmark for the selected value. Used inside a
 // DropdownRadioGroup (same indicator treatment as DropdownCheckboxItem).
 export function DropdownRadioItem(props: DropdownRadioItemProps) {
-  const { className, shortcut, children, ...rest } = props;
+  const { className, iconStart, shortcut, indicator = "end", children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();
+  const check = (
+    <span className="flex size-4 shrink-0 items-center justify-center">
+      <Menu.RadioItemIndicator className={dropdownItemIndicator()}>
+        <CheckIcon weight="bold" />
+      </Menu.RadioItemIndicator>
+    </span>
+  );
 
   return (
     <Menu.RadioItem
       className={dropdownItem({ size, variant, color: "accent", highContrast, className })}
       {...rest}
     >
-      <span className={dropdownItemIndicator()}>
-        <Menu.RadioItemIndicator>
-          <CheckIcon weight="bold" />
-        </Menu.RadioItemIndicator>
-      </span>
+      {indicator === "start" && check}
+      {iconStart}
       <span className={dropdownItemLabel()}>{children}</span>
+      {indicator === "end" && check}
       {shortcut != null && <span className={dropdownItemShortcut()}>{shortcut}</span>}
     </Menu.RadioItem>
   );

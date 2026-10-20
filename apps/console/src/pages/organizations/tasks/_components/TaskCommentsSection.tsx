@@ -23,7 +23,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { TaskCommentsSection_task$key } from "#/__generated__/core/TaskCommentsSection_task.graphql";
 
-import { TaskCommentsList } from "./TaskCommentsList";
+import { TaskCommentsList } from "./TaskCommentsList/TaskCommentsList";
 import { TaskCommentsSectionSkeleton } from "./TaskCommentsSectionSkeleton";
 
 const taskCommentsSectionFragment = graphql`

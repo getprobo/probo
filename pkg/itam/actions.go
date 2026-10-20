@@ -33,6 +33,7 @@ const (
 	ActionDeviceRevoke       = "itam:device:revoke"
 	ActionDeviceDelete       = "itam:device:delete"
 	ActionDeviceAssignOwner  = "itam:device:assign"
+	ActionDeviceDownload     = "itam:device:download"
 
 	// DevicePosture actions
 	ActionDevicePostureList = "itam:device-posture:list"

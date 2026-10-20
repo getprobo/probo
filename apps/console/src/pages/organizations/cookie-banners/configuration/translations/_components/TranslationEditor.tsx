@@ -18,16 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import { Button, useToast } from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { TranslationEditorMutation } from "#/__generated__/core/TranslationEditorMutation.graphql";
+import { useMutation } from "#/lib/relay/useMutation";
 
+import { cookieBannerTranslationsPage } from "../../../variants";
 import {
   ALL_KEYS,
   type CategoryInfo,
@@ -81,10 +81,14 @@ export function TranslationEditor({
   necessaryCategoryName,
 }: TranslationEditorProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
-
-  const [upsertTranslation, isUpserting]
-    = useMutation<TranslationEditorMutation>(upsertTranslationMutation);
+  const { form, actions } = cookieBannerTranslationsPage();
+  const [upsertTranslation, isUpserting] = useMutation<TranslationEditorMutation>(
+    upsertTranslationMutation,
+    {
+      successMessage: t("translationEditor.messages.saved"),
+      errorToast: t("translationEditor.errors.save"),
+    },
+  );
 
   const defaultValues = useMemo(() => {
     const translations: Record<string, string> = {};
@@ -93,9 +97,9 @@ export function TranslationEditor({
     }
 
     const catDefaults: CategoryTranslations = {};
-    for (const cat of categories) {
-      const existing = existingCategoryTranslations?.[cat.id];
-      catDefaults[cat.id] = {
+    for (const category of categories) {
+      const existing = existingCategoryTranslations?.[category.id];
+      catDefaults[category.id] = {
         name: existing?.name ?? "",
         description: existing?.description ?? "",
       };
@@ -111,7 +115,7 @@ export function TranslationEditor({
     defaultValues,
   });
 
-  const handleSave = (formData: TranslationFormValues) => {
+  function handleSave(formData: TranslationFormValues) {
     const { categories: catTranslations, ...translations } = formData;
     const payload: Record<string, unknown> = { ...translations };
 
@@ -125,7 +129,7 @@ export function TranslationEditor({
       payload.categories = nonEmpty;
     }
 
-    upsertTranslation({
+    void upsertTranslation({
       variables: {
         input: {
           cookieBannerId,
@@ -133,31 +137,16 @@ export function TranslationEditor({
           translations: JSON.stringify(payload),
         },
       },
-      onCompleted() {
-        toast({
-          title: t("translationEditor.messages.successTitle"),
-          description: t("translationEditor.messages.saved"),
-          variant: "success",
-        });
-      },
-      onError(error) {
-        toast({
-          title: t("translationEditor.errors.title"),
-          description: formatError(
-            t("translationEditor.errors.save"),
-            error,
-          ),
-          variant: "error",
-        });
-      },
+    }).catch(() => {
+      // Error toast is already shown by useMutation.
     });
-  };
+  }
 
   return (
     <FormProvider {...methods}>
       <form
-        className="space-y-8"
-        onSubmit={e => void methods.handleSubmit(handleSave)(e)}
+        className={form()}
+        onSubmit={event => void methods.handleSubmit(handleSave)(event)}
       >
         <BannerTranslationSection showBranding={showBranding} />
         <PanelTranslationSection
@@ -171,12 +160,17 @@ export function TranslationEditor({
             ?? t("translationEditor.exampleCategory")
           }
         />
-
-        <Button type="submit" disabled={isUpserting}>
-          {isUpserting
-            ? t("translationEditor.actions.saving")
-            : t("translationEditor.actions.save")}
-        </Button>
+        <div className={actions()}>
+          <Button
+            type="submit"
+            variant="solid"
+            color="neutral"
+            highContrast
+            loading={isUpserting}
+          >
+            {t("translationEditor.actions.save")}
+          </Button>
+        </div>
       </form>
     </FormProvider>
   );

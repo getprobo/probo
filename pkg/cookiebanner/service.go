@@ -26,9 +26,11 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"go.gearno.de/kit/pg"
@@ -45,9 +47,16 @@ const (
 )
 
 type Service struct {
-	pg           *pg.Client
-	showBranding bool
-	tcfCmpID     int
+	pg               *pg.Client
+	showBranding     bool
+	tcfCmpID         int
+	pageLoadCounts   sync.Map
+	patternHitCounts sync.Map
+	// afterPatternLookup runs after FindMatchingPattern in
+	// reportDetectedTracker. Tests use it to hold a SCRIPT first-insert
+	// until a PRE_EXISTING sibling has committed, so the loser hits
+	// InsertIfNotExists instead of a later FindMatchingPattern promote.
+	afterPatternLookup func(source *coredata.CookieSource)
 }
 
 func NewService(pgClient *pg.Client, showBranding bool, tcfCmpID int) *Service {
@@ -139,6 +148,7 @@ type (
 		SubdivisionCode  *coredata.SubdivisionCode
 		ConsentMode      *coredata.CookieConsentMode
 		TC               *string
+		Origin           string
 	}
 
 	DetectedCookie struct {
@@ -146,6 +156,9 @@ type (
 		MaxAgeSeconds *int
 		Source        coredata.CookieSource
 		InitiatorURL  *string
+		CookieDomain  *string
+		HostOnly      *bool
+		DiscoveryHit  bool
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -158,6 +171,7 @@ type (
 		ValueSize    *int
 		Source       *coredata.CookieSource
 		InitiatorURL *string
+		DiscoveryHit bool
 	}
 
 	DetectedResourceItem struct {
@@ -169,6 +183,8 @@ type (
 		Cookies   []DetectedCookie
 		Storage   []DetectedStorageItem
 		Resources []DetectedResourceItem
+		PageView  bool
+		Family    coredata.DiscoveryBrowserFamily
 	}
 
 	CreateTrackerPatternRequest struct {
@@ -586,6 +602,22 @@ func CanonicalizeOrigin(raw string) string {
 	return u.Scheme + "://" + host
 }
 
+func IsReflectableOrigin(raw string) bool {
+	if raw == "" || raw == "null" {
+		return false
+	}
+
+	return validator.Origin()(raw) == nil
+}
+
+func storedConsentOrigin(raw string) *string {
+	if !IsReflectableOrigin(raw) {
+		return nil
+	}
+
+	return &raw
+}
+
 func (s *Service) ensureDraftVersion(
 	ctx context.Context,
 	tx pg.Tx,
@@ -916,6 +948,113 @@ func (s *Service) GetCookieBannersByIDs(
 	}
 
 	return banners, nil
+}
+
+func (s *Service) GetDiscoveryPageLoads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) ([]DiscoveryFamilyCount, error) {
+	var stats coredata.CookieBannerDiscoveryStats
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := stats.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryPageLoads(stats), nil
+}
+
+func (s *Service) GetDiscoveryFrozenAt(
+	ctx context.Context,
+	scope coredata.Scoper,
+	cookieBannerID gid.GID,
+) (*time.Time, error) {
+	var stats coredata.CookieBannerDiscoveryStats
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := stats.LoadByCookieBannerID(ctx, conn, scope, cookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return stats.FrozenAt, nil
+}
+
+func (s *Service) GetDiscoveryHits(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+) ([]DiscoveryFamilyCount, error) {
+	var (
+		pattern coredata.TrackerPattern
+		stats   coredata.CookieBannerDiscoveryStats
+		hits    *coredata.TrackerPatternDiscoveryHits
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := pattern.LoadByID(ctx, conn, scope, trackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrTrackerPatternNotFound
+				}
+
+				return fmt.Errorf("cannot load tracker pattern: %w", err)
+			}
+
+			if err := stats.LoadByCookieBannerID(ctx, conn, scope, pattern.CookieBannerID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load cookie banner discovery stats: %w", err)
+			}
+
+			var loaded coredata.TrackerPatternDiscoveryHits
+			if err := loaded.LoadByTrackerPatternID(ctx, conn, scope, trackerPatternID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return nil
+				}
+
+				return fmt.Errorf("cannot load tracker pattern discovery hits: %w", err)
+			}
+
+			hits = &loaded
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryHits(stats, hits), nil
 }
 
 func (s *Service) ListCommonGVLVendors(
@@ -1362,6 +1501,21 @@ func (s *Service) UpdateCookieBanner(
 				}
 			}
 
+			if nameChanged && banner.Capabilities.Corsless {
+				var published coredata.CookieBannerVersion
+
+				err := published.LoadLatestPublishedByCookieBannerID(ctx, tx, scope, banner.ID)
+				if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load latest published version: %w", err)
+				}
+
+				if err == nil {
+					if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+						return fmt.Errorf("cannot request tracker policy generation: %w", err)
+					}
+				}
+			}
+
 			return nil
 		},
 	)
@@ -1377,6 +1531,10 @@ func (s *Service) PublishCookieBannerVersion(
 	scope coredata.Scoper,
 	bannerID gid.GID,
 ) (*coredata.CookieBannerVersion, error) {
+	// Best-effort: a leftover write for another banner must not
+	// block this publish. Freeze still closes this banner's window.
+	_ = s.FlushDiscoveryCounts(ctx)
+
 	var version coredata.CookieBannerVersion
 
 	err := s.pg.WithTx(
@@ -1399,6 +1557,10 @@ func (s *Service) PublishCookieBannerVersion(
 
 			if err := version.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
+			}
+
+			if err := coredata.FreezeDiscoveryStats(ctx, tx, scope, bannerID); err != nil {
+				return fmt.Errorf("cannot freeze discovery stats: %w", err)
 			}
 
 			banner := coredata.CookieBanner{ID: bannerID}
@@ -2632,6 +2794,7 @@ func (s *Service) RecordConsent(
 				SubdivisionCode:       req.SubdivisionCode,
 				ConsentMode:           req.ConsentMode,
 				TC:                    optionalNonEmptyString(req.TC),
+				Origin:                storedConsentOrigin(req.Origin),
 				CreatedAt:             time.Now(),
 			}
 
@@ -2671,7 +2834,9 @@ func (s *Service) ReportDetectedTrackers(
 	bannerID gid.GID,
 	req ReportDetectedTrackersRequest,
 ) error {
-	return s.pg.WithTx(
+	countedHits := make(map[gid.GID]struct{})
+
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			scope := coredata.NewScopeFromObjectID(bannerID)
@@ -2697,8 +2862,6 @@ func (s *Service) ReportDetectedTrackers(
 			inserted := 0
 			now := time.Now()
 
-			var matchedPatternIDs []gid.GID
-
 			for _, dc := range req.Cookies {
 				if err := s.reportDetectedTracker(
 					ctx,
@@ -2713,9 +2876,12 @@ func (s *Service) ReportDetectedTrackers(
 						MaxAgeSeconds: dc.MaxAgeSeconds,
 						Source:        &dc.Source,
 						InitiatorURL:  dc.InitiatorURL,
+						CookieDomain:  dc.CookieDomain,
+						HostOnly:      dc.HostOnly,
+						DiscoveryHit:  dc.DiscoveryHit,
 					},
 					&inserted,
-					&matchedPatternIDs,
+					countedHits,
 				); err != nil {
 					return err
 				}
@@ -2735,9 +2901,10 @@ func (s *Service) ReportDetectedTrackers(
 						ValueSize:    ds.ValueSize,
 						Source:       ds.Source,
 						InitiatorURL: ds.InitiatorURL,
+						DiscoveryHit: ds.DiscoveryHit,
 					},
 					&inserted,
-					&matchedPatternIDs,
+					countedHits,
 				); err != nil {
 					return err
 				}
@@ -2762,13 +2929,6 @@ func (s *Service) ReportDetectedTrackers(
 				}
 			}
 
-			if len(matchedPatternIDs) > 0 {
-				var patterns coredata.TrackerPatterns
-				if err := patterns.UpdateLastMatchedAt(ctx, tx, scope, matchedPatternIDs, now); err != nil {
-					return fmt.Errorf("cannot update tracker pattern last_matched_at: %w", err)
-				}
-			}
-
 			if inserted > 0 {
 				if err := banner.SetPatternAnalysisRequested(ctx, tx); err != nil {
 					return fmt.Errorf("cannot request pattern analysis: %w", err)
@@ -2778,6 +2938,13 @@ func (s *Service) ReportDetectedTrackers(
 			return nil
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	s.recordDiscoveryIncrements(bannerID, req.Family, req.PageView, countedHits)
+
+	return nil
 }
 
 type detectedTrackerInfo struct {
@@ -2787,6 +2954,9 @@ type detectedTrackerInfo struct {
 	Source        *coredata.CookieSource
 	ValueSize     *int
 	InitiatorURL  *string
+	CookieDomain  *string
+	HostOnly      *bool
+	DiscoveryHit  bool
 }
 
 func (s *Service) reportDetectedTracker(
@@ -2798,11 +2968,17 @@ func (s *Service) reportDetectedTracker(
 	now time.Time,
 	info detectedTrackerInfo,
 	inserted *int,
-	matchedPatternIDs *[]gid.GID,
+	countedHits map[gid.GID]struct{},
 ) error {
 	if len(info.Identifier) > MaxTrackerIdentifierLength {
 		return nil
 	}
+
+	// PostgreSQL INTEGER (int4) is the column type. A cookie Max-Age
+	// like 251610986978 decodes into Go's 64-bit int and then fails
+	// the upsert for the whole batch. Drop the field and keep the row.
+	info.MaxAgeSeconds = int4OrNil(info.MaxAgeSeconds)
+	info.ValueSize = int4OrNil(info.ValueSize)
 
 	var matchedPattern coredata.TrackerPattern
 
@@ -2811,14 +2987,21 @@ func (s *Service) reportDetectedTracker(
 		return fmt.Errorf("cannot find matching tracker pattern: %w", err)
 	}
 
+	if s.afterPatternLookup != nil {
+		s.afterPatternLookup(info.Source)
+	}
+
 	if err == nil && matchedPattern.Excluded {
 		return nil
 	}
 
-	var patternID *gid.GID
+	var (
+		patternID     *gid.GID
+		needsMetadata bool
+	)
+
 	if err == nil {
 		patternID = &matchedPattern.ID
-		*matchedPatternIDs = append(*matchedPatternIDs, matchedPattern.ID)
 
 		// A glob (or exact) pattern already covers this
 		// identifier, so no new exact pattern will be created
@@ -2829,28 +3012,20 @@ func (s *Service) reportDetectedTracker(
 		// otherwise a pattern that started life as PRE_EXISTING
 		// (or EXTENSION) never advances even when subsequent
 		// SCRIPT-source detections confirm it as a real page
-		// tracker — last_matched_at would move forward but
-		// source would stay stale. shouldPromoteSource is a
-		// no-op when info.Source is nil or weaker, so storage
-		// items without a source and weaker re-detections cost
+		// tracker. shouldPromoteSource is a no-op when
+		// info.Source is nil or weaker, so storage items
+		// without a source and weaker re-detections cost
 		// nothing.
-		if shouldPromoteSource(matchedPattern.Source, info.Source) {
-			matchedPattern.Source = info.Source
-			matchedPattern.UpdatedAt = now
-
-			if err := matchedPattern.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", matchedPattern.Pattern, err)
-			}
-
-			// A stronger source can unblock mapping: the detection
-			// upserted below carries a fresh initiator domain that
-			// matchByDomain/matchBySiblingOrigin can now use. Re-arm
-			// mapping so the worker revisits the pattern.
-			if err := matchedPattern.SetMappingRequested(ctx, tx); err != nil {
-				return fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", matchedPattern.Pattern, err)
-			}
+		needsMetadata, err = applyIncomingPatternMetadata(ctx, tx, scope, &matchedPattern, info, now)
+		if err != nil {
+			return err
 		}
 	} else {
+		var mappingRequestedAt *time.Time
+		if info.Source == nil || *info.Source != coredata.CookieSourceExtension {
+			mappingRequestedAt = &now
+		}
+
 		newPattern := &coredata.TrackerPattern{
 			ID:                 gid.New(scope.GetTenantID(), coredata.TrackerPatternEntityType),
 			OrganizationID:     banner.OrganizationID,
@@ -2863,8 +3038,7 @@ func (s *Service) reportDetectedTracker(
 			Description:        "",
 			MaxAgeSeconds:      info.MaxAgeSeconds,
 			Source:             info.Source,
-			LastMatchedAt:      &now,
-			MappingRequestedAt: &now,
+			MappingRequestedAt: mappingRequestedAt,
 			CreatedAt:          now,
 			UpdatedAt:          now,
 		}
@@ -2883,7 +3057,16 @@ func (s *Service) reportDetectedTracker(
 				return fmt.Errorf("cannot load existing tracker pattern: %w", err)
 			}
 
+			if existingPattern.Excluded {
+				return nil
+			}
+
 			patternID = &existingPattern.ID
+
+			needsMetadata, err = applyIncomingPatternMetadata(ctx, tx, scope, &existingPattern, info, now)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -2906,16 +3089,80 @@ func (s *Service) reportDetectedTracker(
 		ValueSize:        info.ValueSize,
 		InitiatorURL:     info.InitiatorURL,
 		InitiatorDomain:  initiatorDomain,
-		LastDetectedAt:   now,
+		CookieDomain:     info.CookieDomain,
+		HostOnly:         info.HostOnly,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
 
-	if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot upsert detected tracker: %w", err)
+	if needsMetadata {
+		if _, err := tracker.Upsert(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot upsert detected tracker: %w", err)
+		}
+	} else if _, err := tracker.InsertIfNotExists(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert detected tracker: %w", err)
+	}
+
+	if info.DiscoveryHit && patternID != nil {
+		countedHits[*patternID] = struct{}{}
 	}
 
 	return nil
+}
+
+// applyIncomingPatternMetadata promotes source and fills max-age on
+// an already-persisted pattern when the incoming detection is
+// richer. Used both when FindMatchingPattern hits and when
+// InsertIfNotExists loses a first-insert race, so a PRE_EXISTING
+// winner still advances to SCRIPT on the same request.
+func applyIncomingPatternMetadata(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	pattern *coredata.TrackerPattern,
+	info detectedTrackerInfo,
+	now time.Time,
+) (bool, error) {
+	promoted := shouldPromoteSource(pattern.Source, info.Source)
+	if promoted {
+		pattern.Source = info.Source
+	}
+
+	filledMaxAge := pattern.MatchType == coredata.TrackerPatternMatchTypeExact &&
+		pattern.MaxAgeSeconds == nil && info.MaxAgeSeconds != nil
+	if filledMaxAge {
+		pattern.MaxAgeSeconds = info.MaxAgeSeconds
+	}
+
+	needsMetadata := promoted || filledMaxAge
+	if !needsMetadata {
+		return false, nil
+	}
+
+	pattern.UpdatedAt = now
+
+	if err := pattern.Update(ctx, tx, scope); err != nil {
+		return false, fmt.Errorf("cannot promote source on matched tracker pattern %q: %w", pattern.Pattern, err)
+	}
+
+	if promoted {
+		if err := pattern.SetMappingRequested(ctx, tx); err != nil {
+			return false, fmt.Errorf("cannot request mapping after source promotion on tracker pattern %q: %w", pattern.Pattern, err)
+		}
+	}
+
+	return true, nil
+}
+
+// int4OrNil keeps a value only when it fits in PostgreSQL INTEGER.
+// Zero and negative durations are treated as unknown, same as the
+// SDK omitting Max-Age.
+func int4OrNil(v *int) *int {
+	if v == nil || *v <= 0 || *v > math.MaxInt32 {
+		return nil
+	}
+
+	return v
 }
 
 func (s *Service) reportDetectedResource(
@@ -2949,7 +3196,6 @@ func (s *Service) reportDetectedResource(
 		Path:             path,
 		DisplayName:      u.Host + path,
 		Description:      "",
-		LastDetectedAt:   &now,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}

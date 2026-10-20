@@ -24,12 +24,12 @@ import { GlobalError } from "#/components/errors/GlobalError";
 import { NotFoundError } from "#/lib/relay/errors";
 
 export default function NotFoundPage() {
-  const { organizationId } = useParams();
+  const { employeePortalId } = useParams();
 
   return (
     <GlobalError
       error={new NotFoundError()}
-      fullPage={organizationId == null}
+      fullPage={employeePortalId == null}
     />
   );
 }

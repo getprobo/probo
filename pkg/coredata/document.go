@@ -786,11 +786,11 @@ SELECT * FROM base WHERE %s
 	return nil
 }
 
-func (p *Documents) CountByMeasureID(
+func (p *Documents) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *DocumentFilter,
 ) (int, error) {
 	q := `
@@ -803,13 +803,13 @@ WITH scoped_documents AS (
 )
 SELECT COUNT(scoped_documents.id)
 FROM scoped_documents
-INNER JOIN measures_documents md ON scoped_documents.id = md.document_id
-WHERE md.measure_id = @measure_id
+INNER JOIN internal_controls_documents md ON scoped_documents.id = md.document_id
+WHERE md.internal_control_id = @internal_control_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"measure_id": measureID}
+	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -823,11 +823,11 @@ WHERE md.measure_id = @measure_id
 	return count, nil
 }
 
-func (p *Documents) LoadByMeasureID(
+func (p *Documents) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[DocumentOrderField],
 	filter *DocumentFilter,
 ) error {
@@ -858,15 +858,15 @@ base AS (
 		COALESCE(lv.title, '') AS title,
 		COALESCE(lv.document_type, 'OTHER') AS document_type
 	FROM scoped_documents sd
-	INNER JOIN measures_documents md ON sd.id = md.document_id
+	INNER JOIN internal_controls_documents md ON sd.id = md.document_id
 	LEFT JOIN latest_versions lv ON lv.document_id = sd.id
-	WHERE md.measure_id = @measure_id
+	WHERE md.internal_control_id = @internal_control_id
 )
 SELECT * FROM base WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"measure_id": measureID}
+	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())

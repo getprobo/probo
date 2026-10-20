@@ -20,30 +20,22 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
 import type { RegisterDevicePageQuery } from "#/__generated__/core/RegisterDevicePageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { RegisterDevicePage, registerDevicePageQuery } from "./RegisterDevicePage";
 import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
 
 export default function RegisterDevicePageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<RegisterDevicePageQuery>(
     registerDevicePageQuery,
   );
 
   useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
     loadQuery({ organizationId }, { fetchPolicy: "network-only" });
   }, [organizationId, loadQuery]);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId

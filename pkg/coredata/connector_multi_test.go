@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -76,7 +76,7 @@ func insertConnector(
 			OrganizationID: organizationID,
 			Provider:       provider,
 			Protocol:       coredata.ConnectorProtocolOAuth2,
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				AccessToken: "test-token",
 				TokenType:   "Bearer",
 			},
@@ -160,7 +160,7 @@ func TestLoadSlackMessagingConnector(t *testing.T) {
 
 	insertSlack := func(createdAt time.Time, channelID string) gid.GID {
 		id := gid.New(scope.GetTenantID(), coredata.ConnectorEntityType)
-		conn := &connector.SlackConnection{
+		conn := &connectorprotocol.SlackConnection{
 			AccessToken: "test-token",
 			TokenType:   "Bearer",
 		}

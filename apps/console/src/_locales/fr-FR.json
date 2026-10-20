@@ -962,14 +962,17 @@
       "add": "Ajouter un e-mail"
     }
   },
-  "measureSelectField": {
-    "placeholder": "Sélectionner une mesure",
+  "internalControlSelectField": {
+    "placeholder": "Sélectionner un contrôle interne",
     "none": "Aucune"
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Ajouter des personnes...",
     "empty": "Aucune personne disponible",
     "remove": "Retirer {{name}}"
+  },
+  "userSelect": {
+    "loadMore": "Charger plus"
   },
   "peopleSelectField": {
     "placeholder": "Sélectionner un propriétaire",
@@ -1025,22 +1028,22 @@
     "empty": "Aucun tiers disponible",
     "remove": "Retirer {{name}}"
   },
-  "linkedMeasuresCard": {
-    "title": "Mesures",
+  "linkedInternalControlsCard": {
+    "title": "Contrôles internes",
     "columns": {
       "name": "Nom",
       "state": "État"
     },
-    "empty": "Aucune mesure associée",
+    "empty": "Aucun contrôle interne associé",
     "actions": {
-      "link": "Associer une mesure",
+      "link": "Associer un contrôle interne",
       "unlink": "Dissocier",
       "showMore": "Afficher {{count}} de plus"
     }
   },
-  "linkedMeasuresDialog": {
-    "title": "Associer des mesures",
-    "searchPlaceholder": "Rechercher des mesures...",
+  "linkedInternalControlsDialog": {
+    "title": "Associer des contrôles internes",
+    "searchPlaceholder": "Rechercher des contrôles internes...",
     "allCategories": "Toutes les catégories",
     "actions": {
       "close": "Fermer",
@@ -1122,7 +1125,6 @@
   },
   "tasksCard": {
     "states": {
-      "all": "Toutes",
       "todo": "À faire",
       "inProgress": "En cours",
       "done": "Terminé",
@@ -1130,37 +1132,18 @@
       "canceled": "Annulé",
       "duplicate": "Doublon"
     },
-    "empty": "Aucune tâche",
-    "noResults": "Aucune tâche ne correspond à vos filtres",
-    "searchPlaceholder": "Rechercher des tâches",
     "filters": {
-      "status": "Statut",
-      "allStatuses": "Tous les statuts",
       "user": "Utilisateur",
-      "allUsers": "Tous les utilisateurs"
+      "allUsers": "Tous les utilisateurs",
+      "notAssigned": "Pas assigné",
+      "internalControl": "Contrôle interne",
+      "allInternalControls": "Tous les contrôles internes",
+      "searchInternalControls": "Rechercher des contrôles internes",
+      "noInternalControls": "Aucun contrôle interne"
     },
     "error": {
       "title": "Erreur",
       "reorder": "Échec de la réorganisation de la tâche."
-    },
-    "dragInstructions": {
-      "all": "Glissez-déposez pour réorganiser les tâches ou les déplacer entre les états",
-      "state": "Glissez-déposez pour réorganiser les tâches"
-    },
-    "deleteConfirmation": "Voulez-vous vraiment supprimer cette tâche ?",
-    "actions": {
-      "moveToTodo": "Déplacer vers À faire",
-      "moveToInProgress": "Déplacer vers En cours",
-      "moveToDone": "Déplacer vers Terminé",
-      "edit": "Modifier",
-      "delete": "Supprimer"
-    },
-    "metadata": {
-      "timeEstimate": "Estimation de temps",
-      "deadline": "Échéance"
-    },
-    "recurringBadge": {
-      "tooltip": "Se répète avec un intervalle de {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {
@@ -1226,7 +1209,7 @@
     "errors": {
       "delete": "Échec de la suppression de l’audit",
       "createOrganizationRequired": "Échec de la création de l’audit : l’organisation est requise",
-      "createFrameworkRequired": "Échec de la création de l’audit : le référentiel est requis",
+      "createFrameworkRequired": "Échec de la création de l’audit : au moins un référentiel est requis",
       "updateIdRequired": "Échec de la mise à jour de l’audit : l’identifiant de l’audit est requis",
       "uploadReport": "Échec du téléversement du rapport d’audit",
       "uploadReportIdRequired": "Échec du téléversement du rapport : l’identifiant de l’audit est requis",
@@ -1264,14 +1247,14 @@
       "delete": "Échec de la suppression du référentiel"
     }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
-      "deleted": "Mesure supprimée avec succès.",
-      "updated": "Mesure mise à jour avec succès."
+      "deleted": "Contrôle interne supprimé avec succès.",
+      "updated": "Contrôle interne mis à jour avec succès."
     },
     "errors": {
-      "delete": "Échec de la suppression de la mesure",
-      "update": "Échec de la mise à jour de la mesure"
+      "delete": "Échec de la suppression du contrôle interne",
+      "update": "Échec de la mise à jour du contrôle interne"
     }
   },
   "obligationGraph": {
@@ -1399,6 +1382,13 @@
       "secret": "Secret"
     },
     "measureState": {
+      "implemented": "Mise en œuvre",
+      "inProgress": "En cours",
+      "notApplicable": "Non applicable",
+      "notStarted": "Non commencée",
+      "notImplemented": "Non mise en œuvre"
+    },
+    "internalControlState": {
       "implemented": "Mise en œuvre",
       "inProgress": "En cours",
       "notApplicable": "Non applicable",
@@ -1541,6 +1531,16 @@
         "generic": "Une erreur est survenue"
       }
     },
+    "richEditor": {
+      "file": "Fichier",
+      "imageUnavailable": "Image indisponible",
+      "resizeImage": "Redimensionner l'image",
+      "uploading": "Envoi de {{fileName}}…",
+      "uploadFailed": "Échec de l’envoi",
+      "couldNotUpload": "Impossible d’envoyer {{fileName}}",
+      "tooLarge": "{{fileName}} est trop volumineux",
+      "unsupported": "{{fileName}} n’est pas un fichier pris en charge"
+    },
     "documentClassification": {
       "public": "Public",
       "internal": "Interne",
@@ -1572,6 +1572,14 @@
       "unknown": "Inconnu",
       "not_implemented": "Non mise en œuvre"
     },
+    "internalControlState": {
+      "implemented": "Mise en œuvre",
+      "in_progress": "En cours",
+      "not_applicable": "Non applicable",
+      "not_started": "Non commencée",
+      "unknown": "Inconnu",
+      "not_implemented": "Non mise en œuvre"
+    },
     "confirmDialog": {
       "defaultTitle": "Êtes-vous sûr ?"
     },
@@ -1590,6 +1598,10 @@
     },
     "measureImplementation": {
       "title": "Mise en œuvre de la mesure",
+      "complete": "Terminée"
+    },
+    "internalControlImplementation": {
+      "title": "Mise en œuvre du contrôle interne",
       "complete": "Terminée"
     },
     "impactOptions": {
@@ -2015,6 +2027,12 @@
       "signOut": "Se déconnecter"
     }
   },
+  "redirectToEmployeePortal": {
+    "missing": {
+      "title": "Portail employés indisponible",
+      "description": "Cette organisation n'a pas encore de portail employés. Demandez à un administrateur d'en créer un."
+    }
+  },
   "invitingOrganizationCard": {
     "checkEmail": "Consultez votre e-mail"
   },
@@ -2189,11 +2207,13 @@
     "groups": {
       "governance": "Gouvernance",
       "privacy": "Confidentialité",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "Gestion des actifs informatiques",
       "riskManagement": "Gestion des risques",
       "registries": "Registres",
       "compliancePortal": "Portail de conformité",
+      "employeePortal": "Portail employé",
       "accessReview": "Revue d’accès",
       "settings": "Paramètres"
     },
@@ -2203,7 +2223,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTÉGRATIONS",
     "tasks": "Tâches",
-    "measures": "Mesures",
+    "internalControls": "Contrôles internes",
     "risks": "Risques",
     "allRisks": "Tous les risques",
     "riskAnalyses": "Analyses des risques",
@@ -2225,7 +2245,7 @@
     "thirdPartyServices": "Services",
     "thirdPartySupplyChain": "Chaîne d’approvisionnement",
     "thirdPartyRisks": "Évaluations des risques",
-    "thirdPartyMeasures": "Mesures",
+    "thirdPartyInternalControls": "Contrôles internes",
     "documents": "Documents",
     "assets": "Actifs",
     "devices": "Appareils",
@@ -2241,7 +2261,9 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Demandes d’exercice de droits",
     "campaigns": "Campagnes",
-    "connections": "Connexions",
+    "connections": "Connecteurs",
+    "sources": "Sources",
+    "employeePortalSettings": "Paramètres",
     "compliancePortals": "Portails de conformité",
     "compliancePortalsSettings": "Paramètres",
     "compliancePortalsHosting": "Hébergement",
@@ -2254,7 +2276,9 @@
     "compliancePortalsUpdates": "Mises à jour",
     "compliancePortalsRightRequests": "Demandes de droits",
     "cookieBanners": "Bannières de cookies",
-    "cookieBannersConfigure": "Configurer",
+    "cookieBannersSettings": "Paramètres",
+    "cookieBannersInstall": "Installer",
+    "cookieBannersTranslations": "Traductions",
     "cookieBannersTrackers": "Traceurs",
     "cookieBannersResources": "Ressources",
     "cookieBannersTrail": "Journal",
@@ -2791,7 +2815,6 @@
     }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV" },
     "errors": {
       "delete": "Échec de la suppression de la source d’accès",
       "configure": "Échec de la configuration de la source"
@@ -2799,12 +2822,14 @@
     "messages": {
       "error": "Erreur",
       "success": "Succès",
+      "deleted": "Source d’accès supprimée avec succès.",
       "organizationUpdated": "Organisation mise à jour."
     },
     "deleteConfirmation": "Cette action supprimera définitivement « {{name}} ». Cette action est irréversible.",
     "actions": {
       "reconnect": "Reconnecter",
-      "delete": "Supprimer"
+      "delete": "Supprimer",
+      "cancel": "Annuler"
     },
     "loading": "Chargement...",
     "selectOrganization": "Sélectionner une organisation",
@@ -3017,13 +3042,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": {
-      "connectWithOAuth": "OAuth",
-      "connectWithGitHubApp": "Application GitHub",
-      "connectWithApiKey": "Clé API",
-      "connectWithClientCredentials": "Identifiants client",
-      "connectWithWorkloadIdentity": "Identité de charge de travail",
-      "connectWithAppInstall": "Installation de l’application",
-      "chooseAnotherMethod": "Choisir une autre méthode de connexion",
       "open": "Ouvrir"
     },
     "csv": {
@@ -3073,7 +3091,7 @@
     "actions": {
       "create": "Créer"
     },
-    "emptySources": "Aucune connexion disponible. Ajoutez d’abord des connexions sur la page Connexions."
+    "emptySources": "Aucune source disponible. Ajoutez d’abord des sources sur la page Sources."
   },
   "postHogDeploymentField": {
     "deployment": {
@@ -3085,133 +3103,25 @@
     },
     "instanceUrl": "URL de l’instance"
   },
-  "apiKeyConnectorDialog": {
-    "title": "Connecter le fournisseur",
-    "titleWithProvider": "Connecter {{provider}}",
-    "managedDescription": "Connectez {{provider}} en tant que source d’accès. Renseignez les informations ci-dessous pour terminer.",
-    "apiKeyDescription": "Saisissez la clé API de {{provider}} pour le connecter en tant que source d’accès.",
-    "apiKey": "Clé API",
-    "messages": {
-      "connectionFailed": "Connexion échouée"
-    },
-    "errors": {
-      "managedConnect": "Échec de la connexion du fournisseur. Vérifiez vos paramètres, puis réessayez.",
-      "apiKeyConnect": "Échec de la connexion du fournisseur. Vérifiez votre clé API et réessayez.",
-      "apiKeyFormat": "Cela ne ressemble pas à la clé attendue. Forme attendue : {{example}}",
-      "rejected": {
-        "better_stack_team_not_found": "Better Stack n’a aucune équipe portant ce nom pour ce jeton API. Les noms d’équipe sont sensibles à la casse : copiez le nom exact depuis Settings > Teams dans Better Stack, ou utilisez un jeton API d’équipe.",
-        "supabase_organization_not_found": "Supabase n’a aucune organisation avec ce slug. Copiez-le depuis l’URL de l’organisation dans le tableau de bord Supabase (supabase.com/dashboard/org/<slug>).",
-        "supabase_organization_not_accessible": "Ce jeton d’accès ne peut pas lire les membres de cette organisation. Créez un jeton avec un accès aux ressources de type Organization incluant cette organisation, et Organization Members réglé sur Read."
-      }
-    },
-    "actions": {
-      "connect": "Connecter",
-      "connecting": "Connexion..."
-    }
-  },
-  "clientCredentialsConnectorDialog": {
-    "title": "Connecter un fournisseur",
-    "titleWithProvider": "Connecter {{provider}}",
-    "description": "Saisissez les identifiants client de {{provider}} pour le connecter comme source d’accès.",
-    "messages": {
-      "connectionFailed": "Échec de la connexion"
-    },
-    "errors": {
-      "connect": "Échec de la connexion au fournisseur. Vérifiez vos identifiants et réessayez."
-    },
-    "fields": {
-      "clientId": "ID client",
-      "clientSecret": "Secret client",
-      "tokenUrl": "URL du jeton",
-      "scope": "Portée"
-    },
-    "region": {
-      "placeholder": "Sélectionner une région",
-      "us": "États-Unis (US)",
-      "ca": "Canada (CA)",
-      "eu": "Europe (EU)"
-    },
-    "actions": {
-      "connect": "Connecter",
-      "connecting": "Connexion..."
-    }
-  },
-  "createAwsAccessReviewSourcePage": {
-    "pageTitle": "Connecter AWS",
-    "title": "Connecter AWS",
-    "description": "Déployez le rôle d’audit. Saisissez ensuite son ARN.",
+  "newAccessReviewSourcePage": {
+    "title": "Ajouter des sources",
+    "description": "Ajoutez une source à partir d'un compte déjà connecté dans les paramètres.",
     "permissionDenied": "Vous n’avez pas la permission de créer des sources d’accès.",
-    "fields": {
-      "roleArn": "ARN du rôle",
-      "issuer": "Émetteur",
-      "audience": "Audience",
-      "subject": "Sujet",
-      "roleArnHelp": "ex. arn:aws:iam::123456789012:role/ProboAudit"
-    },
-    "messages": {
-      "copyFailed": "Échec de la copie",
-      "copied": "Copié dans le presse-papiers",
-      "copiedIssuer": "Émetteur copié.",
-      "copiedAudience": "Audience copiée.",
-      "copiedSubject": "Sujet copié.",
-      "copiedTerraform": "Extrait Terraform copié.",
-      "error": "Erreur",
-      "success": "Succès",
-      "created": "Source d’accès créée avec succès."
-    },
-    "errors": {
-      "roleArn": "Saisissez un ARN de rôle IAM valide.",
-      "create": "Échec de la création du connecteur. Vérifiez l’ARN du rôle et réessayez.",
-      "disconnected": "Probo n’a pas pu endosser le rôle d’audit. Vérifiez que la stack est déployée dans ce compte et que l’émetteur et le sujet correspondent aux valeurs affichées lors de la configuration.",
-      "delete": "Impossible de supprimer le connecteur. Réessayez.",
-      "source": "Échec de la création de la source d’accès",
-      "copy": "Copiez la valeur manuellement."
-    },
-    "actions": {
-      "copy": "Copier",
-      "connect": "Connecter",
-      "back": "Retour",
-      "installViaCloudFormation": "Installer via CloudFormation",
-      "installViaTerraform": "Installer via Terraform",
-      "chooseAnotherInstallMethod": "Choisir une autre méthode d’installation"
-    }
+    "searchPlaceholder": "Rechercher des connecteurs",
+    "actions": { "new": "Nouveau", "add": "Ajouter", "addCount": "Ajouter ({{count}})", "select": "Sélectionner {{name}}" }
   },
-  "oauthExtraDialog": {
-    "actions": {
-      "continue": "Continuer"
-    },
-    "datadog": {
-      "title": "Connecter Datadog",
-      "description": "Sélectionnez votre site Datadog, puis continuez pour autoriser l’accès.",
-      "siteLabel": "Site Datadog",
-      "sitePlaceholder": "Sélectionnez un site"
-    },
-    "zendesk": {
-      "title": "Connecter Zendesk",
-      "description": "Saisissez votre sous-domaine Zendesk, puis continuez pour autoriser l’accès.",
-      "subdomainLabel": "Sous-domaine Zendesk",
-      "subdomainPlaceholder": "acme",
-      "subdomainHelp": "La partie <subdomain> de <subdomain>.zendesk.com"
-    }
-  },
-  "useCreateAccessReviewSource": {
-    "errors": {
-      "create": "Échec de la création de la source d’accès"
-    },
-    "messages": {
-      "error": "Erreur",
-      "success": "Succès",
-      "created": "Source d’accès créée avec succès."
-    }
-  },
-  "accessReviewConnectionsPage": {
-    "title": "Connexions",
-    "description": "Connectez les systèmes dont vous souhaitez revoir les accès.",
+  "accessReviewSourcesPage": {
+    "title": "Sources",
+    "description": "Sources utilisées dans les revues d’accès.",
     "errors": { "create": "Échec de la création de la source d’accès" },
     "messages": { "error": "Erreur", "success": "Succès", "created": "Source d’accès créée avec succès." },
-    "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer" },
-    "sections": { "connected": "Connectées", "available": "Disponibles" },
-    "searchPlaceholder": "Rechercher des sources et des fournisseurs...",
+    "actions": { "loading": "Chargement...", "loadMore": "Charger plus", "retry": "Réessayer", "more": "Plus d’actions", "addAll": "Tout ajouter", "edit": "Modifier", "addSources": "Ajouter des sources" },
+    "accountCount_one": "{{count}} compte",
+    "accountCount_other": "{{count}} comptes",
+    "sections": { "connected": "Sources" },
+    "needsOrganization": "Choisissez d'abord une organisation dans les paramètres.",
+    "emptyAccounts": "Aucun compte n'est prêt. Connectez d'abord un fournisseur dans les paramètres.",
+    "searchPlaceholder": "Rechercher des sources",
     "emptyConnected": "Aucune source d’accès n’est encore connectée.",
     "emptyConnectedSearch": "Aucune source connectée ne correspond à votre recherche.",
     "searchLoadFailed": "Certaines sources n’ont pas pu être chargées, la recherche est donc incomplète. Réessayez pour toutes les rechercher.",
@@ -3501,6 +3411,17 @@
       "auditStartDate": "Date de début de l’audit",
       "auditEndDate": "Date de fin de l’audit"
     },
+    "frameworks": {
+      "title": "Référentiels",
+      "empty": "Aucun référentiel lié.",
+      "addPlaceholder": "Lier un référentiel",
+      "unlink": "Délier",
+      "linked": "Référentiel lié",
+      "unlinked": "Référentiel délié",
+      "linkError": "Échec de la liaison du référentiel",
+      "unlinkError": "Échec de la suppression du lien avec le référentiel",
+      "retry": "Réessayer"
+    },
     "actions": {
       "delete": "Supprimer",
       "update": "Mettre à jour",
@@ -3530,7 +3451,7 @@
     },
     "columns": {
       "name": "Nom",
-      "framework": "Référentiel",
+      "framework": "Référentiels",
       "state": "État",
       "auditPeriod": "Période d’audit",
       "validityPeriod": "Période de validité",
@@ -3563,7 +3484,7 @@
       "newAudit": "Nouvel audit"
     },
     "validation": {
-      "frameworkRequired": "Le référentiel est obligatoire"
+      "frameworkRequired": "Au moins un référentiel est obligatoire"
     },
     "messages": {
       "success": "Succès",
@@ -3577,8 +3498,8 @@
     "fileSize": "{{value}} Mo",
     "loading": "Chargement...",
     "fields": {
-      "framework": "Référentiel",
-      "frameworkPlaceholder": "Sélectionner un référentiel",
+      "framework": "Référentiels",
+      "frameworkPlaceholder": "Sélectionner des référentiels",
       "name": "Nom",
       "namePlaceholder": "Nom de l’audit",
       "firm": "Cabinet d’audit",
@@ -3599,7 +3520,9 @@
       "outdated": "Obsolète"
     },
     "actions": {
-      "create": "Créer"
+      "create": "Créer",
+      "remove": "Retirer {{name}}",
+      "retry": "Réessayer"
     }
   },
   "context": {
@@ -3672,8 +3595,8 @@
       "optimizing": "5 - Optimisé"
     },
     "errors": {
-      "linkMeasure": "Échec de l’association de la mesure",
-      "unlinkMeasure": "Échec de la dissociation de la mesure",
+      "linkInternalControl": "Échec de l’association du contrôle interne",
+      "unlinkInternalControl": "Échec de la dissociation du contrôle interne",
       "linkDocument": "Échec de l’association du document",
       "unlinkDocument": "Échec de la dissociation du document",
       "linkAudit": "Échec de l’association de l’audit",
@@ -3761,10 +3684,28 @@
       "update": "Mettre à jour le référentiel"
     }
   },
-  "measureDetailPage": {
-    "deleteConfirmation": "Cette action supprimera définitivement la mesure « {{name}} ». Elle est irréversible.",
+  "internalControlDetailPage": {
+    "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Elle est irréversible.",
     "fields": {
-      "selectState": "Sélectionner un état"
+      "selectState": "Sélectionner un statut",
+      "code": "Code",
+      "owner": "Responsable",
+      "reviewer": "Relecteur",
+      "operatingFrequency": "Fréquence d’exploitation",
+      "evidenceCadence": "Cadence des preuves",
+      "testingCadence": "Cadence des tests",
+      "nextEvidenceDue": "Preuve due",
+      "nextTestDue": "Test dû"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Lors d’un événement"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Non mis en œuvre",
+      "in_progress": "En cours",
+      "implemented": "Mis en œuvre",
+      "operating": "En exploitation"
     },
     "actions": {
       "edit": "Modifier",
@@ -3787,30 +3728,30 @@
       "thirdParties": "Tiers"
     }
   },
-  "measuresPage": {
-    "title": "Mesures",
-    "description": "Les mesures sont des actions mises en œuvre pour réduire le risque. Ajoutez-en pour suivre leur état de mise en œuvre.",
+  "internalControlsPage": {
+    "title": "Contrôles internes",
+    "description": "Les contrôles internes sont des dispositifs nommés, avec un responsable, qui tournent selon une cadence, produisent des preuves et couvrent plusieurs exigences de référentiel.",
     "messages": {
-      "imported": "Mesures importées avec succès.",
+      "imported": "Contrôles internes importés avec succès.",
       "error": "Erreur",
       "success": "Succès",
-      "deleted": "Mesure supprimée avec succès"
+      "deleted": "Contrôle interne supprimé avec succès"
     },
     "errors": {
-      "import": "Échec de l’importation des mesures",
-      "delete": "Échec de la suppression de la mesure"
+      "import": "Échec de l’importation des contrôles internes",
+      "delete": "Échec de la suppression du contrôle interne"
     },
-    "deleteConfirmation": "Cette action supprimera définitivement la mesure « {{name}} ». Cette action est irréversible.",
+    "deleteConfirmation": "Cette action supprimera définitivement le contrôle interne « {{name}} ». Cette action est irréversible.",
     "actions": {
       "import": "Importer",
-      "newMeasure": "Nouvelle mesure",
+      "newInternalControl": "Nouveau contrôle interne",
       "loading": "Chargement...",
       "loadMore": "Charger plus",
       "edit": "Modifier",
       "delete": "Supprimer"
     },
     "filters": {
-      "searchPlaceholder": "Rechercher des mesures...",
+      "searchPlaceholder": "Rechercher des contrôles internes...",
       "allStates": "Tous les états",
       "allCategories": "Toutes les catégories"
     },
@@ -3821,13 +3762,15 @@
       "not_started": "Non commencé"
     },
     "columns": {
-      "measure": "Mesure",
+      "internalControl": "Contrôle interne",
+      "code": "Code",
       "category": "Catégorie",
-      "state": "État"
+      "state": "État",
+      "status": "Statut"
     },
     "empty": {
-      "title": "Aucune mesure pour l’instant",
-      "description": "Créez votre première mesure pour commencer."
+      "title": "Aucun contrôle interne pour l’instant",
+      "description": "Créez votre premier contrôle interne pour commencer."
     }
   },
   "linkedThirdPartiesCard": {
@@ -3851,7 +3794,7 @@
   },
   "createEvidenceDialog": {
     "breadcrumb": {
-      "measureDetail": "Détail de la mesure",
+      "internalControlDetail": "Détails du contrôle interne",
       "createEvidence": "Créer une preuve"
     },
     "tabs": {
@@ -3912,31 +3855,46 @@
       "download": "Télécharger le fichier"
     }
   },
-  "measureFormDialog": {
+  "internalControlFormDialog": {
     "breadcrumb": {
-      "measures": "Mesures",
-      "editMeasure": "Modifier la mesure",
-      "newMeasure": "Nouvelle mesure"
+      "internalControls": "Contrôles internes",
+      "editInternalControl": "Modifier le contrôle interne",
+      "newInternalControl": "Nouveau contrôle interne"
     },
     "messages": {
-      "created": "Mesure créée avec succès."
+      "created": "Contrôle interne créé avec succès."
     },
     "errors": {
-      "create": "Échec de la création de la mesure"
+      "create": "Échec de la création du contrôle interne"
     },
     "validation": {
       "nameRequired": "Le nom est requis",
-      "categoryRequired": "La catégorie est requise"
+      "categoryRequired": "La catégorie est requise",
+      "reviewerDistinct": "Le relecteur doit être une personne différente du responsable",
+      "operatingIntervalRequired": "Indiquez tous les combien le contrôle s’exécute"
     },
     "fields": {
-      "name": "Nom de la mesure",
-      "namePlaceholder": "Titre de la mesure",
+      "name": "Nom",
+      "namePlaceholder": "Titre du contrôle",
       "description": "Description",
       "descriptionPlaceholder": "Ajouter une description",
       "category": "Catégorie",
       "categoryPlaceholder": "Sélectionner une catégorie",
       "state": "État",
-      "statePlaceholder": "Sélectionner un état"
+      "statePlaceholder": "Sélectionner un état",
+      "code": "Code",
+      "codePlaceholder": "IC-ACCESS-01",
+      "notSet": "Non défini",
+      "controlType": "Type",
+      "nature": "Nature",
+      "operatingFrequency": "Fréquence d’exploitation",
+      "operatingEvent": "Événement",
+      "operatingEventPlaceholder": "lorsqu’une personne part",
+      "evidenceCadence": "Cadence des preuves",
+      "testingCadence": "Cadence des tests",
+      "implementationStatus": "Statut de mise en œuvre",
+      "owner": "Responsable",
+      "reviewer": "Relecteur"
     },
     "properties": "Propriétés",
     "states": {
@@ -3947,12 +3905,33 @@
       "unknown": "Inconnu",
       "not_implemented": "Non mis en œuvre"
     },
+    "controlTypes": {
+      "preventive": "Préventif",
+      "detective": "Détectif",
+      "corrective": "Correctif"
+    },
+    "natures": {
+      "manual": "Manuel"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Lorsqu’un événement se produit",
+      "periodic": "Tous les"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Non mis en œuvre",
+      "in_progress": "En cours",
+      "implemented": "Mis en œuvre",
+      "operating": "En exploitation"
+    },
     "actions": {
-      "create": "Créer une mesure",
-      "update": "Mettre à jour la mesure"
+      "create": "Créer le contrôle interne",
+      "update": "Mettre à jour le contrôle interne",
+      "addDuration": "Ajouter une durée",
+      "clearDuration": "Effacer la durée"
     }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Preuves",
     "columns": {
       "name": "Nom",
@@ -3975,9 +3954,28 @@
       "delete": "Supprimer"
     }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
+    "empty": "Aucune tâche",
+    "columns": {
+      "name": "Nom",
+      "state": "État"
+    },
     "actions": {
-      "newTask": "Nouvelle tâche"
+      "newTask": "Nouvelle tâche",
+      "link": "Lier une tâche",
+      "unlink": "Délier",
+      "retry": "Réessayer",
+      "showMore": "Afficher {{count}} de plus"
+    },
+    "dialog": {
+      "title": "Lier des tâches",
+      "searchPlaceholder": "Rechercher des tâches",
+      "empty": "Aucune tâche",
+      "actions": {
+        "close": "Fermer",
+        "link": "Lier",
+        "unlink": "Délier"
+      }
     }
   },
   "obligationDetailsPage": {
@@ -4450,7 +4448,7 @@
     },
     "tabs": {
       "overview": "Vue d’ensemble",
-      "measures": "Mesures",
+      "internalControls": "Contrôles internes",
       "documents": "Documents",
       "controls": "Contrôles",
       "obligations": "Obligations",
@@ -4996,13 +4994,13 @@
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "Aucune mesure",
+    "progressEmpty": "Aucun contrôle interne",
     "actions": {
       "tasks": "Tâches",
       "edit": "Modifier",
       "delete": "Supprimer",
-      "expand": "Afficher les mesures",
-      "collapse": "Masquer les mesures"
+      "expand": "Afficher les contrôles internes",
+      "collapse": "Masquer les contrôles internes"
     }
   },
   "riskTreatmentPlansPage": {
@@ -5018,26 +5016,26 @@
     "deleteConfirmation": "Cela supprimera définitivement le plan de traitement de « {{name}} ». Cette action est irréversible.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "actions": {
-      "measures": "Mesures",
+      "internalControls": "Contrôles internes",
       "edit": "Modifier",
       "delete": "Supprimer"
     }
   },
-  "treatmentPlanMeasureList": {
-    "title": "Mesures",
-    "empty": "Aucune mesure liée pour le moment.",
-    "deleted": "Mesure supprimée",
-    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de mesures liées.",
+  "treatmentPlanInternalControlList": {
+    "title": "Contrôles internes",
+    "empty": "Aucun contrôle interne lié pour le moment.",
+    "deleted": "Contrôle interne supprimé",
+    "acceptedEmpty": "Les risques acceptés ne peuvent pas avoir de contrôles internes liés.",
     "actions": {
-      "create": "Nouvelle mesure",
-      "link": "Lier une mesure",
+      "create": "Nouveau contrôle interne",
+      "link": "Lier un contrôle interne",
       "unlink": "Délier",
       "showMore": "Afficher plus"
     }
   },
-  "treatmentPlanMeasuresDialog": {
-    "title": "Mesures du plan de traitement",
-    "loading": "Chargement des mesures…",
+  "treatmentPlanInternalControlsDialog": {
+    "title": "Contrôles internes du plan de traitement",
+    "loading": "Chargement des contrôles internes…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
@@ -6094,119 +6092,6 @@
     "default": {
       "title": "Échec de l’authentification",
       "description": "Nous n’avons pas pu terminer votre connexion. Veuillez réessayer."
-    }
-  },
-  "accessReviewSource": {
-    "documentation": "Documentation",
-    "regions": {
-      "label": "Région",
-      "placeholder": "Sélectionner une région",
-      "unitedStates": "États-Unis",
-      "europe": "Europe"
-    }
-  },
-  "devices": {
-    "title": "Appareils",
-    "description": "Gérez les ordinateurs enrôlés avec l’agent de posture Probo.",
-    "empty": "Aucun appareil enrôlé pour le moment",
-    "actions": {
-      "add": "Ajouter un appareil",
-      "new": "Nouvel appareil",
-      "reassign": "Réattribuer",
-      "revoke": "Révoquer",
-      "delete": "Supprimer"
-    },
-    "fields": {
-      "organization": "Organisation",
-      "hostname": "Nom d’hôte",
-      "owner": "Propriétaire",
-      "state": "État",
-      "platform": "Plateforme",
-      "osVersion": "Version du système",
-      "hardwareUuid": "UUID matériel",
-      "serialNumber": "Numéro de série",
-      "agentVersion": "Version de l’agent",
-      "enrolledAt": "Enrôlé le",
-      "lastSeen": "Dernière connexion"
-    },
-    "values": {
-      "pending": "(en attente)",
-      "never": "Jamais",
-      "unassigned": "Non attribué"
-    },
-    "messages": {
-      "ownerUpdated": "Propriétaire de l’appareil mis à jour",
-      "revoked": "Appareil révoqué",
-      "deleted": "Appareil supprimé"
-    },
-    "errors": {
-      "create": "Échec de la création de l’appareil",
-      "reassign": "Échec de la réattribution de l’appareil",
-      "revoke": "Échec de la révocation de l’appareil",
-      "delete": "Échec de la suppression de l’appareil"
-    },
-    "confirmations": {
-      "revoke": "Révoquer l’appareil « {{hostname}} » ? L’agent sur l’appareil arrêtera de transmettre des données et devra être réenrôlé.",
-      "delete": "Supprimer l’appareil « {{hostname}} » ? Il sera retiré de l’inventaire."
-    },
-    "postures": {
-      "currentTitle": "Postures actuelles",
-      "empty": "Aucun contrôle de posture enregistré",
-      "values": {
-        "on": "Activé",
-        "off": "Désactivé",
-        "immediate": "Immédiat",
-        "seconds": "{{seconds}} s",
-        "minPasswordLength": "Longueur min. {{length}}",
-        "configured": "Configurée",
-        "none": "Aucune",
-        "unknown": "Inconnu"
-      },
-      "checks": {
-        "diskEncryption": "Chiffrement du disque",
-        "screenLock": "Verrouillage de l’écran",
-        "firewallEnabled": "Pare-feu activé",
-        "timeSync": "Synchronisation de l’heure",
-        "osVersion": "Version du système",
-        "autoUpdate": "Mise à jour automatique",
-        "passwordPolicy": "Politique de mot de passe",
-        "remoteLogin": "Connexion à distance",
-        "malwareProtection": "Protection contre les logiciels malveillants"
-      }
-    },
-    "history": {
-      "title": "Historique des rapports",
-      "empty": "Aucun rapport de posture pour le moment",
-      "checkCount_one": "{{count}} contrôle rapporté",
-      "checkCount_other": "{{count}} contrôles rapportés",
-      "columns": {
-        "time": "Heure",
-        "checks": "Contrôles",
-        "correlationId": "ID de corrélation"
-      },
-      "actions": {
-        "copyCorrelationId": "Copier l’ID de corrélation",
-        "correlationIdCopied": "ID de corrélation copié"
-      }
-    }
-  },
-  "deviceEnrollment": {
-    "token": {
-      "title": "Jeton d’enrôlement généré",
-      "description": "Ne partagez ce jeton d’enrôlement qu’avec le propriétaire de l’appareil, via un canal sécurisé. Il ne peut être utilisé qu’une seule fois et expire après sept jours.",
-      "manualInstall": "Installation manuelle (CLI / MDM)",
-      "releaseListHint": "Consultez les <link>versions probo-agent sur GitHub</link> (tags probo-agent/v*), puis choisissez l’archive correspondant à votre OS et architecture (par exemple probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz ou probo-agent_Windows_x86_64.zip). Remplacez vX.Y.Z, OS et ARCH dans la commande de téléchargement par les valeurs de l’asset choisi.",
-      "installUnix": "Installer sur macOS ou Linux (exécuter depuis un shell avec accès sudo)",
-      "installWindows": "Installer sur Windows (exécuter depuis une session PowerShell élevée)",
-      "downloadStep": "Télécharger et placer le binaire",
-      "enrollStep": "Configurer l’appareil et démarrer l’agent",
-      "securityNotice": "Le jeton est transmis sous forme d’indicateur CLI (et non via un curl redirigé vers un shell ou des variables d’environnement sudo). Une fois installé, l’agent se met à jour automatiquement depuis les GitHub Releases avec vérification de signature cosign."
-    },
-    "messages": {
-      "created": "Appareil créé. Copiez le jeton d’enrôlement maintenant — il ne sera plus affiché par la suite."
-    },
-    "errors": {
-      "copyToClipboard": "Échec de la copie dans le presse-papiers"
     }
   },
   "thirdPartyRiskAssessmentRow": {

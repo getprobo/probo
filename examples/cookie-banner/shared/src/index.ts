@@ -27,6 +27,6 @@ export { ConfigForm } from "./ConfigForm";
 export { DebugPanel } from "./DebugPanel";
 export { EventLog } from "./EventLog";
 export { ExampleShell } from "./ExampleShell";
-export { enableNamedLoggers, getExampleLogger } from "./logger";
+export { enableNamedLoggers, getExampleLogger, scheduleEnableNamedLoggers } from "./logger";
 export { useConfig, type Config } from "./useConfig";
 export { useEventLog, type EventEntry } from "./useEventLog";

@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	asOfMeasureNodeSelection = `
+	asOfInternalControlNodeSelection = `
 		id
 		name
 		category
@@ -55,7 +55,7 @@ const (
 		progress { done inProgress notImplemented total }
 		owner { fullName }
 		risk { id name category }
-		measures(first: 10, asOf: $asOf) {
+		internalControls(first: 10, asOf: $asOf) {
 			asOf
 			edges { node { id name category state } }
 		}
@@ -84,17 +84,17 @@ const (
 		}
 	`
 
-	treatmentPlanMeasuresAsOfQuery = `
-		query($id: ID!, $asOf: Datetime, $first: Int, $after: CursorKey, $filter: MeasureFilter) {
+	treatmentPlanInternalControlsAsOfQuery = `
+		query($id: ID!, $asOf: Datetime, $first: Int, $after: CursorKey, $filter: InternalControlFilter) {
 			node(id: $id) {
 				... on TreatmentPlan {
 					__typename
 					asOf
-					measures(first: $first, after: $after, asOf: $asOf, filter: $filter) {
+					internalControls(first: $first, after: $after, asOf: $asOf, filter: $filter) {
 						asOf
 						edges {
 							node {
-								` + asOfMeasureNodeSelection + `
+								` + asOfInternalControlNodeSelection + `
 							}
 						}
 						pageInfo { hasNextPage endCursor }
@@ -104,10 +104,10 @@ const (
 		}
 	`
 
-	measureTreatmentPlansAsOfQuery = `
+	internalControlTreatmentPlansAsOfQuery = `
 		query($id: ID!, $asOf: Datetime) {
 			node(id: $id) {
-				... on Measure {
+				... on InternalControl {
 					treatmentPlans(asOf: $asOf) {
 						totalCount
 						edges { node { id asOf } }
@@ -119,7 +119,7 @@ const (
 )
 
 type (
-	asOfMeasureNode struct {
+	asOfInternalControlNode struct {
 		ID             string  `json:"id"`
 		Name           string  `json:"name"`
 		Category       string  `json:"category"`
@@ -136,10 +136,10 @@ type (
 		} `json:"treatmentPlans"`
 	}
 
-	asOfMeasureConnection struct {
+	asOfInternalControlConnection struct {
 		AsOf  *string `json:"asOf"`
 		Edges []struct {
-			Node asOfMeasureNode `json:"node"`
+			Node asOfInternalControlNode `json:"node"`
 		} `json:"edges"`
 		PageInfo struct {
 			HasNextPage bool    `json:"hasNextPage"`
@@ -173,7 +173,7 @@ type (
 			Name     string `json:"name"`
 			Category string `json:"category"`
 		} `json:"risk"`
-		Measures asOfMeasureConnection `json:"measures"`
+		InternalControls asOfInternalControlConnection `json:"internalControls"`
 	}
 
 	asOfMatrixCell struct {
@@ -195,10 +195,10 @@ type (
 		} `json:"node"`
 	}
 
-	asOfTreatmentPlanMeasuresResult struct {
-		Typename string
-		AsOf     *string
-		Measures asOfMeasureConnection
+	asOfTreatmentPlanInternalControlsResult struct {
+		Typename         string
+		AsOf             *string
+		InternalControls asOfInternalControlConnection
 	}
 
 	asOfPlanRefConnection struct {
@@ -239,7 +239,7 @@ func queryRiskAnalysisPlansAsOf(
 	return result
 }
 
-func queryTreatmentPlanMeasuresAsOf(
+func queryTreatmentPlanInternalControlsAsOf(
 	t *testing.T,
 	client *testutil.Client,
 	planID string,
@@ -247,19 +247,19 @@ func queryTreatmentPlanMeasuresAsOf(
 	first int,
 	after *string,
 	filter map[string]any,
-) asOfTreatmentPlanMeasuresResult {
+) asOfTreatmentPlanInternalControlsResult {
 	t.Helper()
 
 	var result struct {
 		Node struct {
-			Typename string                `json:"__typename"`
-			AsOf     *string               `json:"asOf"`
-			Measures asOfMeasureConnection `json:"measures"`
+			Typename         string                        `json:"__typename"`
+			AsOf             *string                       `json:"asOf"`
+			InternalControls asOfInternalControlConnection `json:"internalControls"`
 		} `json:"node"`
 	}
 
 	err := client.Execute(
-		treatmentPlanMeasuresAsOfQuery,
+		treatmentPlanInternalControlsAsOfQuery,
 		map[string]any{
 			"id":     planID,
 			"asOf":   asOf,
@@ -271,17 +271,17 @@ func queryTreatmentPlanMeasuresAsOf(
 	)
 	require.NoError(t, err)
 
-	return asOfTreatmentPlanMeasuresResult{
-		Typename: result.Node.Typename,
-		AsOf:     result.Node.AsOf,
-		Measures: result.Node.Measures,
+	return asOfTreatmentPlanInternalControlsResult{
+		Typename:         result.Node.Typename,
+		AsOf:             result.Node.AsOf,
+		InternalControls: result.Node.InternalControls,
 	}
 }
 
-func queryMeasureTreatmentPlansAsOf(
+func queryInternalControlTreatmentPlansAsOf(
 	t *testing.T,
 	client *testutil.Client,
-	measureID string,
+	internalControlID string,
 	asOf *string,
 ) asOfPlanRefConnection {
 	t.Helper()
@@ -293,8 +293,8 @@ func queryMeasureTreatmentPlansAsOf(
 	}
 
 	err := client.Execute(
-		measureTreatmentPlansAsOfQuery,
-		map[string]any{"id": measureID, "asOf": asOf},
+		internalControlTreatmentPlansAsOfQuery,
+		map[string]any{"id": internalControlID, "asOf": asOf},
 		&result,
 	)
 	require.NoError(t, err)
@@ -325,13 +325,13 @@ func asOfPlanNodes(result asOfPlansResult) []asOfPlanNode {
 	return plans
 }
 
-func asOfMeasureNodes(conn asOfMeasureConnection) []asOfMeasureNode {
-	measures := make([]asOfMeasureNode, 0, len(conn.Edges))
+func asOfInternalControlNodes(conn asOfInternalControlConnection) []asOfInternalControlNode {
+	internalControls := make([]asOfInternalControlNode, 0, len(conn.Edges))
 	for _, edge := range conn.Edges {
-		measures = append(measures, edge.Node)
+		internalControls = append(internalControls, edge.Node)
 	}
 
-	return measures
+	return internalControls
 }
 
 func asOfPlanIDs(plans []asOfPlanNode) []string {

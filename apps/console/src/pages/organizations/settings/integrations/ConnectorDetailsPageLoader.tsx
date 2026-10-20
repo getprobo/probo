@@ -18,12 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 
 import type { ConnectorDetailsPageQuery } from "#/__generated__/core/ConnectorDetailsPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { createdConnectorId } from "./_lib/discoveredAccounts";
+import { providerFromSlug } from "./_lib/integrationPath";
 import {
   ConnectorDetailsPage,
   connectorDetailsPageQuery,
@@ -31,23 +34,36 @@ import {
 import { ConnectorDetailsPageSkeleton } from "./ConnectorDetailsPageSkeleton";
 
 export default function ConnectorDetailsPageLoader() {
-  const { connectorId } = useParams<{ connectorId: string }>();
+  const organizationId = useOrganizationId();
+  const location = useLocation();
+  const [fetchPolicy] = useState<"network-only" | "store-and-network">(() => (
+    createdConnectorId(location.state) != null
+      ? "network-only"
+      : "store-and-network"
+  ));
+  const { provider: providerSlug } = useParams<{ provider: string }>();
+  const provider = providerSlug == null ? null : providerFromSlug(providerSlug);
   const [queryRef, loadQuery] = useQueryLoader<ConnectorDetailsPageQuery>(
     connectorDetailsPageQuery,
   );
 
   useEffect(() => {
-    if (connectorId) {
-      loadQuery({ connectorId });
+    if (provider == null) {
+      return;
     }
-  }, [loadQuery, connectorId]);
+    loadQuery({
+      organizationId,
+      provider: provider as ConnectorDetailsPageQuery["variables"]["provider"],
+    }, { fetchPolicy });
+  }, [fetchPolicy, loadQuery, organizationId, provider]);
 
-  if (connectorId == null) {
-    throw new Error(":connectorId missing in route params");
+  if (provider == null) {
+    throw new Error(":provider missing in route params");
   }
 
   const currentQueryRef = queryRef != null
-    && queryRef.variables.connectorId === connectorId
+    && queryRef.variables.organizationId === organizationId
+    && queryRef.variables.provider === provider
     ? queryRef
     : null;
 
@@ -57,7 +73,7 @@ export default function ConnectorDetailsPageLoader() {
 
   return (
     <Suspense fallback={<ConnectorDetailsPageSkeleton />}>
-      <ConnectorDetailsPage key={connectorId} queryRef={currentQueryRef} />
+      <ConnectorDetailsPage key={provider} queryRef={currentQueryRef} />
     </Suspense>
   );
 }

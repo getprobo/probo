@@ -17,7 +17,10 @@ first.
    `claude mcp login probo-us` to complete the OAuth 2.0 sign-in.
 2. Identify the target organization. List organizations if the user did not
    provide one, and when several servers are connected use the one that returns
-   the target organization.
+   the target organization. `listOrganizations` returns `name` (the operating
+   name) and `legal_name` (the registered legal name, null when unset). Match
+   the organization on `name`. When a policy, contract, or other legal document
+   must name the company, use `legal_name` when it is set and `name` otherwise.
 3. Prefer MCP tools over manual API calls. The Probo MCP API mirrors the
    platform's GraphQL surface.
 
@@ -32,7 +35,7 @@ first.
 
 ### Control and obligation tracking
 
-1. List controls, measures, or obligations relevant to the user's question.
+1. List controls, internal controls, or obligations relevant to the user's question.
 2. Link evidence (documents, audits) where appropriate.
 3. Report gaps between required and implemented controls.
 

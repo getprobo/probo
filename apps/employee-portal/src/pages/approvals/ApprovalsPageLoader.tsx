@@ -20,34 +20,26 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
 import type { ApprovalsPageQuery } from "#/__generated__/core/ApprovalsPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { ApprovalsPage, approvalsPageQuery } from "./ApprovalsPage";
 import { ApprovalsPageSkeleton } from "./ApprovalsPageSkeleton";
 
 export default function ApprovalsPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<ApprovalsPageQuery>(
     approvalsPageQuery,
   );
 
   useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
     loadQuery(
       { organizationId, first: DOCUMENT_LIST_PAGE_SIZE },
       { fetchPolicy: "network-only" },
     );
   }, [organizationId, loadQuery]);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId

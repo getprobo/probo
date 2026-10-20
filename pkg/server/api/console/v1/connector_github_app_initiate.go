@@ -27,7 +27,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -39,7 +39,7 @@ func handleConnectorGitHubAppInitiate(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
@@ -79,14 +79,22 @@ func handleConnectorGitHubAppInitiate(
 			return
 		}
 
-		if _, err := connectorRegistry.GetProtocol(connector.GitHubProvider, connector.ProtocolGitHubApp); err != nil {
+		if _, err := connectorRegistry.GetProtocol(connectorprotocol.GitHubProvider, connectorprotocol.ProtocolGitHubApp); err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("github app is not configured"))
 			return
 		}
 
-		opts := connector.InitiateOptions{}
+		reconnecting := r.URL.Query().Get("connector_id") != ""
 
-		if r.URL.Query().Get("connector_id") != "" {
+		name, err := initiateConnectorName(r, reconnecting)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, err)
+			return
+		}
+
+		opts := connectorprotocol.InitiateOptions{Name: name}
+
+		if reconnecting {
 			existing, err := loadExistingGitHubAppConnector(
 				r,
 				proboSvc,

@@ -27,7 +27,7 @@ type CatalogModule = { default: ResourceKey };
 
 // Vite turns each translation JSON into its own lazily-imported chunk. The keys
 // are project-root-absolute paths, e.g.
-// "/src/pages/organizations/measures/_locales/en-US.json".
+// "/src/pages/organizations/internal-controls/_locales/en-US.json".
 const catalogs = import.meta.glob<CatalogModule>("/src/**/_locales/*.json");
 
 const CATALOG_PATH = /^\/src\/(.*)_locales\/([^/]+)\.json$/;

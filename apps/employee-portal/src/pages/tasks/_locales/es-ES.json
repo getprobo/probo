@@ -1,0 +1,12 @@
+{
+  "title": "Tareas",
+  "breadcrumb": "Tareas",
+  "delete": {
+    "title": "Eliminar tarea",
+    "description": "¿Seguro que quiere eliminar esta tarea?",
+    "confirm": "Eliminar",
+    "cancel": "Cancelar",
+    "deleted": "Tarea eliminada.",
+    "error": "No se pudo eliminar la tarea"
+  }
+}

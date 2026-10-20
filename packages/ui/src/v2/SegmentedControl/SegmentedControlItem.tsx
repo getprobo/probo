@@ -21,6 +21,7 @@
 import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import type { ComponentProps } from "react";
 
+import { useSegmentedControlContext } from "./context";
 import { segmentedControl } from "./variants";
 
 export type SegmentedControlItemProps
@@ -34,7 +35,8 @@ export type SegmentedControlItemProps
 // A single segment. Pressed state is driven by Base UI (`data-pressed`).
 export function SegmentedControlItem(props: SegmentedControlItemProps) {
   const { className, ...rest } = props;
-  const { item } = segmentedControl();
+  const size = useSegmentedControlContext();
+  const { item } = segmentedControl({ size });
 
   return <BaseToggle className={item({ className })} {...rest} />;
 }

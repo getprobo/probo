@@ -26,11 +26,10 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { DeviceCard_organization$key } from "#/__generated__/core/DeviceCard_organization.graphql";
 import type { DeviceCard_viewer$key } from "#/__generated__/core/DeviceCard_viewer.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { dashboardCard, deviceCard } from "./variants";
 
@@ -68,15 +67,11 @@ export function DeviceCard({
   organizationKey,
 }: DeviceCardProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = dashboardCard();
   const status = deviceCard();
   const viewer = useFragment(deviceCardViewerFragment, viewerKey);
   const organization = useFragment(deviceCardOrganizationFragment, organizationKey);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const connected = viewer.enrolledDevices.edges.some(({ node }) => {
     return node.state === "ACTIVE" || node.state === "PENDING";
@@ -96,7 +91,7 @@ export function DeviceCard({
           </Text>
         </div>
         <Link
-          to={`/${organizationId}/devices`}
+          to={`/${employeePortalId}/devices`}
           size={2}
           color="neutral"
           underline={false}
@@ -124,7 +119,7 @@ export function DeviceCard({
                 {canEnroll
                   ? (
                       <ButtonLink
-                        to={`/${organizationId}/devices/register`}
+                        to={`/${employeePortalId}/devices/register`}
                         size={2}
                         variant="soft"
                         color="neutral"

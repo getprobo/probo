@@ -5,6 +5,25 @@ documented in this file.
 
 ## Unreleased
 
+## [0.7.3-rc.1] - 2026-10-19
+
+### Fixed
+
+- Posture checks now report the same verdicts as the console. A macOS
+  screen lock with a delay, and a Linux or Windows password policy with
+  a recorded minimum length, are passes instead of failures. A Linux
+  remote login service that is still starting or stopping is judged by
+  its direction, and an unrecognized state is reported as unknown.
+
+## [0.7.2] - 2026-10-08
+
+### Fixed
+
+- macOS 27 no longer reports the automatic software update check as
+  unknown on Macs without a managed profile. A missing Software Update
+  preference domain is now treated as unset, so the check falls back to
+  the system setting.
+
 ## [0.7.1] - 2026-09-14
 
 ### Fixed

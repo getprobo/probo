@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { formatDatetime, getAssignableRoles, getMembershipRole, getMembershipRoles, peopleRoles, type Role } from "@probo/helpers";
+import { emptyToNull, formatDatetime, getAssignableRoles, getMembershipRole, getMembershipRoles, peopleRoles, type Role } from "@probo/helpers";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { DateField } from "@probo/ui/src/v2/form/DateField";
@@ -36,7 +36,6 @@ import { useTranslation } from "react-i18next";
 
 import { CurrentUser } from "#/providers/CurrentUser";
 
-import { emptyToNull } from "../_lib/useUpdateUser";
 import { isUsersListKind, isUsersListRole } from "../_lib/useUsersListFilters";
 import { newUserPage, userIdentitySection, userPropertiesSection } from "../variants";
 

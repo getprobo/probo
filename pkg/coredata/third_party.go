@@ -1830,11 +1830,11 @@ LIMIT 1;
 	return nil
 }
 
-func (v *ThirdParties) CountByMeasureID(
+func (v *ThirdParties) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 ) (int, error) {
 	q := `
 WITH tps AS (
@@ -1844,9 +1844,9 @@ WITH tps AS (
 	FROM
 		third_parties v
 	INNER JOIN
-		measures_third_parties mtp ON v.id = mtp.third_party_id
+		internal_controls_third_parties mtp ON v.id = mtp.third_party_id
 	WHERE
-		mtp.measure_id = @measure_id
+		mtp.internal_control_id = @internal_control_id
 )
 SELECT
 	COUNT(id)
@@ -1856,7 +1856,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	args := pgx.StrictNamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -1870,11 +1870,11 @@ WHERE %s
 	return count, nil
 }
 
-func (v *ThirdParties) LoadByMeasureID(
+func (v *ThirdParties) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[ThirdPartyOrderField],
 ) error {
 	q := `
@@ -1913,9 +1913,9 @@ WITH tps AS (
 	FROM
 		third_parties v
 	INNER JOIN
-		measures_third_parties mtp ON v.id = mtp.third_party_id
+		internal_controls_third_parties mtp ON v.id = mtp.third_party_id
 	WHERE
-		mtp.measure_id = @measure_id
+		mtp.internal_control_id = @internal_control_id
 )
 SELECT
 	id,
@@ -1954,7 +1954,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	args := pgx.StrictNamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 

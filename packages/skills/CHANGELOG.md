@@ -5,6 +5,18 @@ this file.
 
 ## Unreleased
 
+## [0.4.1] - 2026-10-09
+
+### Changed
+
+- The `open-source-compliance` skill and the MCP specification call linked safeguards internal controls instead of measures
+
+## [0.4.0] - 2026-10-05
+
+### Added
+
+- `listOrganizations` exposes `legal_name`, the organization's registered legal name, alongside `name` (the operating name). Skills that draft legal documents use `legal_name` when it is set.
+
 ## [0.3.2] - 2026-09-04
 
 ### Changed

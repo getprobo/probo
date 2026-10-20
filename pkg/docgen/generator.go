@@ -204,6 +204,7 @@ type (
 		CompanyHorizontalLogoBase64 string
 		MermaidJS                   template.JS
 		Landscape                   bool
+		BaseURL                     string
 	}
 
 	SignatureData struct {
@@ -281,18 +282,10 @@ type (
 	}
 
 	RiskListRow struct {
-		Name               string
-		Description        string
-		Category           string
-		Treatment          string
-		Owner              string
-		InherentLikelihood string
-		InherentImpact     string
-		InherentRiskScore  string
-		ResidualLikelihood string
-		ResidualImpact     string
-		ResidualRiskScore  string
-		Note               string
+		Name        string
+		Description string
+		Category    string
+		Note        string
 	}
 
 	RiskAnalysisData struct {
@@ -330,10 +323,10 @@ type (
 		ResidualLikelihood string
 		ResidualImpact     string
 		ResidualRiskScore  string
-		Measures           []RiskAnalysisMeasure
+		InternalControls   []RiskAnalysisInternalControl
 	}
 
-	RiskAnalysisMeasure struct {
+	RiskAnalysisInternalControl struct {
 		Name  string
 		State string
 	}

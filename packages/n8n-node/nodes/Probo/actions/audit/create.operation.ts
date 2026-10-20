@@ -37,17 +37,20 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Framework ID',
-		name: 'frameworkId',
+		displayName: 'Framework IDs',
+		name: 'frameworkIds',
 		type: 'string',
+		typeOptions: {
+			multipleValues: true,
+		},
 		displayOptions: {
 			show: {
 				resource: ['audit'],
 				operation: ['create'],
 			},
 		},
-		default: '',
-		description: 'The ID of the framework',
+		default: [],
+		description: 'The IDs of the frameworks this audit covers',
 		required: true,
 	},
 	{
@@ -150,7 +153,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const frameworkId = this.getNodeParameter('frameworkId', itemIndex) as string;
+	const frameworkIds = frameworkIDsForCreate(this, itemIndex);
 	const additionalFields = this.getNodeParameter('additionalFields', itemIndex, {}) as {
 		name?: string;
 		firm?: string;
@@ -178,7 +181,11 @@ export async function execute(
 							start
 							end
 						}
-						reportUrl
+						reportFile {
+							id
+							fileName
+							downloadUrl
+						}
 						createdAt
 						updatedAt
 					}
@@ -189,7 +196,7 @@ export async function execute(
 
 	const input: Record<string, unknown> = {
 		organizationId,
-		frameworkId,
+		frameworkIds,
 	};
 	if (additionalFields.name) input.name = additionalFields.name;
 	if (additionalFields.firm) input.firm = additionalFields.firm;
@@ -205,4 +212,24 @@ export async function execute(
 		json: responseData,
 		pairedItem: { item: itemIndex },
 	};
+}
+
+// Saved workflows keep the pre-rename scalar `frameworkId`. The node is still
+// version 1, so read that value when the current list is empty.
+function frameworkIDsForCreate(
+	executeFunctions: IExecuteFunctions,
+	itemIndex: number,
+): string[] {
+	const current = executeFunctions.getNodeParameter('frameworkIds', itemIndex, []) as string[] | string;
+	const frameworkIds = (Array.isArray(current) ? current : [current]).filter(id => id !== '');
+	if (frameworkIds.length > 0) {
+		return frameworkIds;
+	}
+
+	const legacyFrameworkId = executeFunctions.getNodeParameter('frameworkId', itemIndex, '') as string;
+	if (legacyFrameworkId === '') {
+		return [];
+	}
+
+	return [legacyFrameworkId];
 }

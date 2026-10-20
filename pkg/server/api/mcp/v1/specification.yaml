@@ -699,7 +699,12 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Organization name
+          description: Operating name
+        legal_name:
+          type:
+            - string
+            - "null"
+          description: Registered legal name. Use this in legal documents when it is set; name is the operating name.
         created_at:
           type: string
           format: date-time
@@ -2018,9 +2023,6 @@ components:
         - organization_id
         - name
         - category
-        - treatment
-        - inherent_likelihood
-        - inherent_impact
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
@@ -2034,24 +2036,6 @@ components:
         category:
           type: string
           description: Risk category
-        owner_id:
-          $ref: "#/components/schemas/GID"
-          description: Owner ID
-        treatment:
-          $ref: "#/components/schemas/RiskTreatment"
-          description: Risk treatment
-        inherent_likelihood:
-          type: integer
-          description: Initial likelihood
-        inherent_impact:
-          type: integer
-          description: Initial impact
-        residual_likelihood:
-          type: integer
-          description: Residual likelihood
-        residual_impact:
-          type: integer
-          description: Residual impact
         note:
           type: string
           description: Risk note
@@ -2082,28 +2066,6 @@ components:
         category:
           type: string
           description: Risk category
-        owner_id:
-          anyOf:
-            - type: string
-              $ref: "#/components/schemas/GID"
-            - type: "null"
-          description: Owner ID
-          go.probo.inc/mcpgen/omittable: true
-        treatment:
-          $ref: "#/components/schemas/RiskTreatment"
-          description: Risk treatment
-        inherent_likelihood:
-          type: integer
-          description: Initial likelihood
-        inherent_impact:
-          type: integer
-          description: Initial impact
-        residual_likelihood:
-          type: integer
-          description: Residual likelihood
-        residual_impact:
-          type: integer
-          description: Residual impact
         note:
           type: string
           description: Risk note
@@ -2214,10 +2176,10 @@ components:
         - net_likelihood
         - net_impact
         - net_risk_score
-        - measures_total
-        - measures_done
-        - measures_in_progress
-        - measures_not_implemented
+        - internal_controls_total
+        - internal_controls_done
+        - internal_controls_in_progress
+        - internal_controls_not_implemented
         - owner_id
         - created_at
         - updated_at
@@ -2263,30 +2225,30 @@ components:
           description: Residual risk score
         net_likelihood:
           type: integer
-          description: Net likelihood after linked measures
+          description: Net likelihood after linked internal controls
         net_impact:
           type: integer
-          description: Net impact after linked measures
+          description: Net impact after linked internal controls
         net_risk_score:
           type: integer
-          description: Net risk score after linked measures
-        measures_total:
+          description: Net risk score after linked internal controls
+        internal_controls_total:
           type: integer
-          description: Number of linked measures
-        measures_done:
+          description: Number of linked internal controls
+        internal_controls_done:
           type: integer
-          description: Number of completed linked measures
-        measures_in_progress:
+          description: Number of completed linked internal controls
+        internal_controls_in_progress:
           type: integer
-          description: Number of in-progress linked measures
-        measures_not_implemented:
+          description: Number of in-progress linked internal controls
+        internal_controls_not_implemented:
           type: integer
-          description: Number of not-implemented linked measures
-        measures:
+          description: Number of not-implemented linked internal controls
+        internal_controls:
           type: array
-          description: Linked measures as of the requested instant. Present when listing with as_of.
+          description: Linked internal controls as of the requested instant. Present when listing with as_of.
           items:
-            $ref: "#/components/schemas/TreatmentPlanMeasure"
+            $ref: "#/components/schemas/TreatmentPlanInternalControl"
         created_at:
           type: string
           format: date-time
@@ -2458,7 +2420,7 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted treatment plan ID
 
-    TreatmentPlanMeasure:
+    TreatmentPlanInternalControl:
       type: object
       required:
         - id
@@ -2466,15 +2428,102 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         name:
           type: string
-          description: Measure name. Absent when the measure has been deleted.
+          description: Internal control name. Absent when the internal control has been deleted.
         state:
-          $ref: "#/components/schemas/MeasureState"
-          description: Measure state as of the requested instant
+          $ref: "#/components/schemas/InternalControlState"
+          description: Internal control state as of the requested instant
 
-    MeasureState:
+    InternalControlType:
+      type: string
+      enum:
+        - PREVENTIVE
+        - DETECTIVE
+        - CORRECTIVE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlType
+
+    InternalControlNature:
+      type: string
+      enum:
+        - MANUAL
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlNature
+
+    InternalControlOperatingMode:
+      type: string
+      enum:
+        - CONTINUOUS
+        - EVENT
+        - PERIODIC
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOperatingMode
+
+    InternalControlOperatingFrequency:
+      type: object
+      required:
+        - mode
+      oneOf:
+        - title: Continuous
+          properties:
+            mode:
+              type: string
+              enum:
+                - CONTINUOUS
+            interval:
+              type: "null"
+            event:
+              type: "null"
+          required:
+            - mode
+        - title: Event
+          properties:
+            mode:
+              type: string
+              enum:
+                - EVENT
+            interval:
+              type: "null"
+          required:
+            - mode
+        - title: Periodic
+          properties:
+            mode:
+              type: string
+              enum:
+                - PERIODIC
+            interval:
+              $ref: "#/components/schemas/TimeSpan"
+            event:
+              type: "null"
+          required:
+            - mode
+            - interval
+      properties:
+        mode:
+          $ref: "#/components/schemas/InternalControlOperatingMode"
+          description: Continuous, event, or periodic
+        interval:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+          description: ISO-8601 duration, required when the mode is periodic and forbidden otherwise
+        event:
+          type:
+            - string
+            - "null"
+          description: What triggers an event-driven control, for example when someone leaves
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOperatingFrequency
+
+    InternalControlImplementationStatus:
+      type: string
+      enum:
+        - NOT_IMPLEMENTED
+        - IN_PROGRESS
+        - IMPLEMENTED
+        - OPERATING
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlImplementationStatus
+
+    InternalControlState:
       type: string
       enum:
         - NOT_STARTED
@@ -2483,55 +2532,113 @@ components:
         - IMPLEMENTED
         - UNKNOWN
         - NOT_IMPLEMENTED
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeasureState
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlState
 
-    MeasureOrderField:
+    InternalControlOrderField:
       type: string
       enum:
         - CREATED_AT
         - NAME
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.MeasureOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.InternalControlOrderField
 
-    MeasureOrderBy:
+    InternalControlOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/MeasureOrderField"
-          description: Measure order field
+          $ref: "#/components/schemas/InternalControlOrderField"
+          description: Internal control order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
-          description: Measure order direction
+          description: Internal control order direction
 
-    Measure:
+    InternalControl:
       type: object
       required:
         - id
         - category
         - name
         - state
+        - implementation_status
         - created_at
         - updated_at
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         category:
           type: string
-          description: Measure category
+          description: Internal control category
         name:
           type: string
-          description: Measure name
+          description: Internal control name
         description:
           type:
             - string
             - "null"
-          description: Measure description
+          description: Internal control description
         state:
-          $ref: "#/components/schemas/MeasureState"
-          description: Measure state
+          $ref: "#/components/schemas/InternalControlState"
+          description: Internal control state
+        code:
+          type:
+            - string
+            - "null"
+          description: Stable human reference, for example IC-ACCESS-01
+        control_type:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlType"
+            - type: "null"
+          description: Preventive, detective, or corrective
+        nature:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlNature"
+            - type: "null"
+          description: Manual
+        operating_frequency:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlOperatingFrequency"
+            - type: "null"
+          description: Whether the control runs continuously, when an event occurs, or on a duration
+        evidence_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+          description: How often evidence is collected, as an ISO-8601 duration
+        testing_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+          description: How often effectiveness is tested, as an ISO-8601 duration
+        next_evidence_due:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next evidence collection, derived from the evidence cadence
+        next_test_due:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Next effectiveness test, derived from the testing cadence
+        implementation_status:
+          $ref: "#/components/schemas/InternalControlImplementationStatus"
+          description: Whether the control is not implemented, in progress, implemented, or operating
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+        reviewer_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Reviewer profile ID
         created_at:
           type: string
           format: date-time
@@ -2541,7 +2648,7 @@ components:
           format: date-time
           description: Update timestamp
 
-    ListMeasuresInput:
+    ListInternalControlsInput:
       type: object
       required:
         - organization_id
@@ -2550,8 +2657,8 @@ components:
           $ref: "#/components/schemas/GID"
           description: Organization ID
         order_by:
-          $ref: "#/components/schemas/MeasureOrderBy"
-          description: Measure order by
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
         size:
           type: integer
           description: Page size
@@ -2565,33 +2672,33 @@ components:
               type: string
               description: Search query
             state:
-              $ref: "#/components/schemas/MeasureState"
-              description: Measure state filter
+              $ref: "#/components/schemas/InternalControlState"
+              description: Internal control state filter
             category:
               type: string
-              description: Filter by measure category
+              description: Filter by internal control category
 
-    ListMeasuresOutput:
+    ListInternalControlsOutput:
       type: object
       required:
-        - measures
+        - internal_controls
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        measures:
+        internal_controls:
           type: array
           items:
-            $ref: "#/components/schemas/Measure"
+            $ref: "#/components/schemas/InternalControl"
 
-    ListMeasureRisksInput:
+    ListInternalControlRisksInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2602,7 +2709,7 @@ components:
           $ref: "#/components/schemas/RiskOrderBy"
           description: Risk order by
 
-    ListMeasureRisksOutput:
+    ListInternalControlRisksOutput:
       type: object
       required:
         - risks
@@ -2615,14 +2722,14 @@ components:
           items:
             $ref: "#/components/schemas/Risk"
 
-    ListMeasureControlsInput:
+    ListInternalControlControlsInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2633,7 +2740,7 @@ components:
           $ref: "#/components/schemas/ControlOrderBy"
           description: Control order by
 
-    ListMeasureControlsOutput:
+    ListInternalControlControlsOutput:
       type: object
       required:
         - controls
@@ -2646,14 +2753,14 @@ components:
           items:
             $ref: "#/components/schemas/Control"
 
-    ListMeasureDocumentsInput:
+    ListInternalControlDocumentsInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2664,7 +2771,7 @@ components:
           $ref: "#/components/schemas/DocumentOrderBy"
           description: Document order by
 
-    ListMeasureDocumentsOutput:
+    ListInternalControlDocumentsOutput:
       type: object
       required:
         - documents
@@ -2677,14 +2784,14 @@ components:
           items:
             $ref: "#/components/schemas/Document"
 
-    ListMeasureTasksInput:
+    ListInternalControlTasksInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2709,7 +2816,7 @@ components:
                 - type: "null"
               description: Filter by assigned profile ID. Defaults to null which returns every assignee.
 
-    ListMeasureTasksOutput:
+    ListInternalControlTasksOutput:
       type: object
       required:
         - tasks
@@ -2722,14 +2829,14 @@ components:
           items:
             $ref: "#/components/schemas/Task"
 
-    ListMeasureEvidencesInput:
+    ListInternalControlEvidencesInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
@@ -2737,7 +2844,7 @@ components:
           type: integer
           description: Page size
 
-    ListMeasureEvidencesOutput:
+    ListInternalControlEvidencesOutput:
       type: object
       required:
         - evidences
@@ -2755,7 +2862,7 @@ components:
       required:
         - id
         - organization_id
-        - measure_id
+        - internal_control_id
         - state
         - reference_id
         - type
@@ -2767,7 +2874,7 @@ components:
           $ref: "#/components/schemas/GID"
         organization_id:
           $ref: "#/components/schemas/GID"
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
         task_id:
           $ref: "#/components/schemas/GID"
@@ -2788,9 +2895,12 @@ components:
             - FILE
             - LINK
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EvidenceType
+        file:
+          $ref: "#/components/schemas/File"
+          description: Attached file when the evidence type is FILE
         url:
           type: string
-          description: URL
+          description: Link URL, or the attached file download URL when the evidence type is FILE
         description:
           type: string
           description: Description
@@ -2822,56 +2932,56 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted evidence ID
 
-    LinkMeasureInput:
+    LinkInternalControlInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
         - resource_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the resource to link (control, risk, document, third party, or treatment plan)
 
-    LinkMeasureOutput:
+    LinkInternalControlOutput:
       type: object
 
-    UnlinkMeasureInput:
+    UnlinkInternalControlInput:
       type: object
       required:
-        - measure_id
+        - internal_control_id
         - resource_id
       properties:
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         resource_id:
           $ref: "#/components/schemas/GID"
           description: ID of the resource to unlink (control, risk, document, third party, or treatment plan)
 
-    UnlinkMeasureOutput:
+    UnlinkInternalControlOutput:
       type: object
 
-    GetMeasureInput:
+    GetInternalControlInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
 
-    GetMeasureOutput:
+    GetInternalControlOutput:
       type: object
       required:
-        - measure
+        - internal_control
       properties:
-        measure:
-          $ref: "#/components/schemas/Measure"
+        internal_control:
+          $ref: "#/components/schemas/InternalControl"
 
-    AddMeasureInput:
+    AddInternalControlInput:
       type: object
       required:
         - organization_id
@@ -2883,69 +2993,147 @@ components:
           description: Organization ID
         name:
           type: string
-          description: Measure name
+          description: Internal control name
         description:
           type: string
-          description: Measure description
+          description: Internal control description
         category:
           type: string
-          description: Measure category
+          description: Internal control category
+        code:
+          type: string
+          description: Stable human reference, for example IC-ACCESS-01
+        control_type:
+          $ref: "#/components/schemas/InternalControlType"
+          description: Preventive, detective, or corrective
+        nature:
+          $ref: "#/components/schemas/InternalControlNature"
+          description: Manual
+        operating_frequency:
+          $ref: "#/components/schemas/InternalControlOperatingFrequency"
+          description: Whether the control runs continuously, when an event occurs, or on a duration
+        evidence_cadence:
+          $ref: "#/components/schemas/TimeSpan"
+          description: How often evidence is collected, as an ISO-8601 duration
+        testing_cadence:
+          $ref: "#/components/schemas/TimeSpan"
+          description: How often effectiveness is tested, as an ISO-8601 duration
+        implementation_status:
+          $ref: "#/components/schemas/InternalControlImplementationStatus"
+          description: Whether the control is not implemented, in progress, implemented, or operating
+        owner_id:
+          $ref: "#/components/schemas/GID"
+          description: Owner profile ID
+        reviewer_id:
+          $ref: "#/components/schemas/GID"
+          description: Reviewer profile ID
 
-    AddMeasureOutput:
+    AddInternalControlOutput:
       type: object
       required:
-        - measure
+        - internal_control
       properties:
-        measure:
-          $ref: "#/components/schemas/Measure"
+        internal_control:
+          $ref: "#/components/schemas/InternalControl"
 
-    UpdateMeasureInput:
+    UpdateInternalControlInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         name:
           type: string
-          description: Measure name
+          description: Internal control name
         description:
           type: ["string", "null"]
-          description: Measure description
+          description: Internal control description
           go.probo.inc/mcpgen/omittable: true
         category:
           type: string
-          description: Measure category
+          description: Internal control category
         state:
-          $ref: "#/components/schemas/MeasureState"
-          description: Measure state
+          $ref: "#/components/schemas/InternalControlState"
+          description: Internal control state
+        code:
+          type: ["string", "null"]
+          description: Stable human reference, for example IC-ACCESS-01
+          go.probo.inc/mcpgen/omittable: true
+        control_type:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlType"
+            - type: "null"
+          description: Preventive, detective, or corrective
+          go.probo.inc/mcpgen/omittable: true
+        nature:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlNature"
+            - type: "null"
+          description: Manual
+          go.probo.inc/mcpgen/omittable: true
+        operating_frequency:
+          anyOf:
+            - $ref: "#/components/schemas/InternalControlOperatingFrequency"
+            - type: "null"
+          description: Whether the control runs continuously, when an event occurs, or on a duration
+          go.probo.inc/mcpgen/omittable: true
+        evidence_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+          description: How often evidence is collected, as an ISO-8601 duration
+          go.probo.inc/mcpgen/omittable: true
+        testing_cadence:
+          anyOf:
+            - $ref: "#/components/schemas/TimeSpan"
+            - type: "null"
+          description: How often effectiveness is tested, as an ISO-8601 duration
+          go.probo.inc/mcpgen/omittable: true
+        implementation_status:
+          $ref: "#/components/schemas/InternalControlImplementationStatus"
+          description: Whether the control is not implemented, in progress, implemented, or operating
+        owner_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Owner profile ID
+          go.probo.inc/mcpgen/omittable: true
+        reviewer_id:
+          anyOf:
+            - type: string
+              $ref: "#/components/schemas/GID"
+            - type: "null"
+          description: Reviewer profile ID
+          go.probo.inc/mcpgen/omittable: true
 
-    UpdateMeasureOutput:
+    UpdateInternalControlOutput:
       type: object
       required:
-        - measure
+        - internal_control
       properties:
-        measure:
-          $ref: "#/components/schemas/Measure"
+        internal_control:
+          $ref: "#/components/schemas/InternalControl"
 
-    DeleteMeasureInput:
+    DeleteInternalControlInput:
       type: object
       required:
         - id
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
 
-    DeleteMeasureOutput:
+    DeleteInternalControlOutput:
       type: object
       required:
-        - deleted_measure_id
+        - deleted_internal_control_id
       properties:
-        deleted_measure_id:
+        deleted_internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Deleted measure ID
+          description: Deleted internal control ID
 
     FrameworkOrderField:
       type: string
@@ -3464,6 +3652,7 @@ components:
         - id
         - organization_id
         - state
+        - postures_included
         - latest_postures
         - created_at
         - updated_at
@@ -3530,12 +3719,15 @@ components:
             - string
             - "null"
           format: date-time
-          description: Time of the first revoke. Set once and kept on subsequent revokeDevice calls.
+          description: Time of the first revoke. Set once and kept on subsequent revokeDevices calls.
+        postures_included:
+          type: boolean
+          description: True only when include_postures was true on this call. When false, latest_postures is always empty, even if the device has reported checks. Call again with include_postures true to load them.
         latest_postures:
           type: array
           items:
             $ref: "#/components/schemas/DevicePosture"
-          description: Newest posture result per check_key when include_postures was true on listDevices or getDevice; otherwise empty. Also empty for PENDING devices that have never reported.
+          description: When postures_included is false, this array is empty because include_postures was omitted or false, even if the device has reported checks. When postures_included is true, this is the newest result per check_key, and an empty array means the device has not reported checks.
         created_at:
           type: string
           format: date-time
@@ -3564,7 +3756,28 @@ components:
           description: Opaque cursor from a previous next_cursor; omit on the first page.
         include_postures:
           type: boolean
-          description: When true, include each device's latest posture check results. Requires the itam:device-posture:list permission and runs one extra query per device.
+          description: Defaults to false. When false or omitted, postures_included is false and latest_postures is empty. Set true to load each device's newest posture result per check_key. Requires the itam:device-posture:list permission and runs one extra query per device.
+        query:
+          type: string
+          description: Search devices by owner name. Each word is a prefix match, and every word must match. Unassigned devices are excluded.
+        states:
+          type: array
+          description: Only devices in one of these states. Omit to include every state.
+          items:
+            $ref: "#/components/schemas/DeviceState"
+        platforms:
+          type: array
+          description: Only devices on one of these platforms. Devices that have not reported a platform are excluded. Omit to include every platform.
+          items:
+            $ref: "#/components/schemas/DevicePlatform"
+        agent_versions:
+          type: array
+          description: Only devices reporting one of these agent versions. Omit to include every version.
+          items:
+            type: string
+        has_posture_warning:
+          type: boolean
+          description: When true, only devices whose latest posture for some check is FAIL or UNKNOWN. PASS and NOT_APPLICABLE are not warnings.
 
     ListDevicesOutput:
       type: object
@@ -3589,7 +3802,7 @@ components:
           description: Device ID
         include_postures:
           type: boolean
-          description: When true, include the device's latest posture check results. Requires the itam:device-posture:list permission.
+          description: Defaults to false. When false or omitted, postures_included is false and latest_postures is empty. Set true to load the device's newest posture result per check_key. Requires the itam:device-posture:list permission.
 
     GetDeviceOutput:
       type: object
@@ -3631,40 +3844,52 @@ components:
           type: string
           description: probo://enroll?server=...&token=... deep link for the desktop agent.
 
-    RevokeDeviceInput:
+    RevokeDevicesInput:
       type: object
       required:
-        - id
+        - device_ids
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Device ID
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to revoke. At most 100, with no duplicates. Revoking an already revoked device keeps its original revoked_at.
+          items:
+            $ref: "#/components/schemas/GID"
 
-    RevokeDeviceOutput:
+    RevokeDevicesOutput:
       type: object
       required:
-        - device
+        - devices
       properties:
-        device:
-          $ref: "#/components/schemas/Device"
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Device"
 
-    DeleteDeviceInput:
+    DeleteDevicesInput:
       type: object
       required:
-        - id
+        - device_ids
       properties:
-        id:
-          $ref: "#/components/schemas/GID"
-          description: Device ID
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to delete. At most 100, with no duplicates. Every device must already be REVOKED.
+          items:
+            $ref: "#/components/schemas/GID"
 
-    DeleteDeviceOutput:
+    DeleteDevicesOutput:
       type: object
       required:
-        - deleted_device_id
+        - deleted_device_ids
       properties:
-        deleted_device_id:
-          $ref: "#/components/schemas/GID"
-          description: Deleted device ID
+        deleted_device_ids:
+          type: array
+          description: IDs of the deleted devices, in request order.
+          items:
+            $ref: "#/components/schemas/GID"
 
     SetDeviceOwnerInput:
       type: object
@@ -3689,6 +3914,28 @@ components:
       properties:
         device:
           $ref: "#/components/schemas/Device"
+
+    DownloadDeviceEvidenceInput:
+      type: object
+      required:
+        - device_ids
+      properties:
+        device_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Device IDs to include, in page order. At most 100, with no duplicates.
+          items:
+            $ref: "#/components/schemas/GID"
+
+    DownloadDeviceEvidenceOutput:
+      type: object
+      required:
+        - download_url
+      properties:
+        download_url:
+          type: string
+          description: Presigned download URL for the PDF. Valid for 15 minutes.
 
     DataClassification:
       type: string
@@ -6204,7 +6451,7 @@ components:
       required:
         - id
         - organization_id
-        - framework_id
+        - framework_ids
         - state
         - has_report
         - created_at
@@ -6216,9 +6463,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        framework_id:
-          $ref: "#/components/schemas/GID"
-          description: Framework ID
+        framework_ids:
+          type: array
+          description: Framework IDs linked to the audit
+          items:
+            $ref: "#/components/schemas/GID"
         name:
           type:
             - string
@@ -6347,14 +6596,17 @@ components:
       type: object
       required:
         - organization_id
-        - framework_id
+        - framework_ids
       properties:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        framework_id:
-          $ref: "#/components/schemas/GID"
-          description: Framework ID
+        framework_ids:
+          type: array
+          minItems: 1
+          description: Framework IDs linked to the audit
+          items:
+            $ref: "#/components/schemas/GID"
         name:
           type: string
           description: Audit name
@@ -6433,6 +6685,56 @@ components:
         deleted_audit_id:
           $ref: "#/components/schemas/GID"
           description: Deleted audit ID
+
+    LinkAuditFrameworkInput:
+      type: object
+      required:
+        - audit_id
+        - framework_id
+      properties:
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+
+    LinkAuditFrameworkOutput:
+      type: object
+      required:
+        - audit
+        - framework
+      properties:
+        audit:
+          $ref: "#/components/schemas/Audit"
+        framework:
+          $ref: "#/components/schemas/Framework"
+
+    UnlinkAuditFrameworkInput:
+      type: object
+      required:
+        - audit_id
+        - framework_id
+      properties:
+        audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Framework ID
+
+    UnlinkAuditFrameworkOutput:
+      type: object
+      required:
+        - deleted_audit_id
+        - deleted_framework_id
+      properties:
+        deleted_audit_id:
+          $ref: "#/components/schemas/GID"
+          description: Audit ID
+        deleted_framework_id:
+          $ref: "#/components/schemas/GID"
+          description: Unlinked framework ID
 
     ControlOrderField:
       type: string
@@ -6681,7 +6983,7 @@ components:
           description: Control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (measure, document, audit, or obligation)
+          description: ID of the resource to link (internal control, document, audit, or obligation)
 
     LinkControlOutput:
       type: object
@@ -6697,7 +6999,7 @@ components:
           description: Control ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (measure, document, audit, or obligation)
+          description: ID of the resource to unlink (internal control, document, audit, or obligation)
 
     UnlinkControlOutput:
       type: object
@@ -6733,7 +7035,7 @@ components:
           items:
             $ref: "#/components/schemas/Obligation"
 
-    ListControlMeasuresInput:
+    ListControlInternalControlsInput:
       type: object
       required:
         - control_id
@@ -6748,21 +7050,21 @@ components:
           type: integer
           description: Page size
         order_by:
-          $ref: "#/components/schemas/MeasureOrderBy"
-          description: Measure order by
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
 
-    ListControlMeasuresOutput:
+    ListControlInternalControlsOutput:
       type: object
       required:
-        - measures
+        - internal_controls
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        measures:
+        internal_controls:
           type: array
           items:
-            $ref: "#/components/schemas/Measure"
+            $ref: "#/components/schemas/InternalControl"
 
     ListControlDocumentsInput:
       type: object
@@ -6857,7 +7159,7 @@ components:
           items:
             $ref: "#/components/schemas/Obligation"
 
-    ListRiskMeasuresInput:
+    ListRiskInternalControlsInput:
       type: object
       required:
         - risk_id
@@ -6872,21 +7174,21 @@ components:
           type: integer
           description: Page size
         order_by:
-          $ref: "#/components/schemas/MeasureOrderBy"
-          description: Measure order by
+          $ref: "#/components/schemas/InternalControlOrderBy"
+          description: Internal control order by
 
-    ListRiskMeasuresOutput:
+    ListRiskInternalControlsOutput:
       type: object
       required:
-        - measures
+        - internal_controls
       properties:
         next_cursor:
           $ref: "#/components/schemas/CursorKey"
           description: Next cursor
-        measures:
+        internal_controls:
           type: array
           items:
-            $ref: "#/components/schemas/Measure"
+            $ref: "#/components/schemas/InternalControl"
 
     LinkRiskInput:
       type: object
@@ -6899,7 +7201,7 @@ components:
           description: Risk ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to link (document, measure, or obligation)
+          description: ID of the resource to link (document, internal control, or obligation)
 
     LinkRiskOutput:
       type: object
@@ -6915,7 +7217,7 @@ components:
           description: Risk ID
         resource_id:
           $ref: "#/components/schemas/GID"
-          description: ID of the resource to unlink (document, measure, or obligation)
+          description: ID of the resource to unlink (document, internal control, or obligation)
 
     UnlinkRiskOutput:
       type: object
@@ -6965,6 +7267,7 @@ components:
       required:
         - id
         - organization_id
+        - internal_control_ids
         - name
         - content
         - state
@@ -6979,13 +7282,11 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        measure_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Measure ID
-            - type: "null"
-              description: No measure
-          description: Measure ID
+        internal_control_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Internal control IDs
         name:
           type: string
           description: Task name
@@ -7147,6 +7448,54 @@ components:
             - type: "null"
           description: Next page cursor. Null when this is the last page.
 
+    LinearIssueImport:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+
+    LinearSettings:
+      type: object
+      required:
+        - issue_import
+      properties:
+        default_team:
+          anyOf:
+            - $ref: "#/components/schemas/LinearTeam"
+            - type: "null"
+          description: Default Linear team. Null when no default team is set.
+        issue_import:
+          $ref: "#/components/schemas/LinearIssueImport"
+          description: Whether new issues on the default Linear team are imported.
+
+    UpdateLinearSettingsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        default_team_id:
+          anyOf:
+            - type: string
+              description: Linear team ID
+            - type: "null"
+              description: Clear the default Linear team
+          description: Linear team ID. Omit it to keep the current team. Null clears the team and turns issue import off.
+        issue_import:
+          $ref: "#/components/schemas/LinearIssueImport"
+          description: Issue import status. Omit it to keep the current status. Active requires a default team.
+
+    UpdateLinearSettingsOutput:
+      type: object
+      required:
+        - settings
+      properties:
+        settings:
+          $ref: "#/components/schemas/LinearSettings"
+          description: Linear settings after the update.
+
     ListLinearIssuesInput:
       type: object
       required:
@@ -7256,9 +7605,9 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        measure_id:
+        internal_control_id:
           $ref: "#/components/schemas/GID"
-          description: Measure ID
+          description: Internal control ID
         order_by:
           $ref: "#/components/schemas/TaskOrderBy"
           description: Task order by
@@ -7325,19 +7674,17 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
-        measure_id:
-          anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Measure ID
-            - type: "null"
-              description: No measure
-          description: Measure ID
+        internal_control_ids:
+          type: array
+          items:
+            $ref: "#/components/schemas/GID"
+          description: Internal control IDs
         name:
           type: string
           description: Task name
         content:
           type: string
-          description: Task content in markdown format
+          description: Task content in markdown format. Images and links to /api/files/v1/{id} are kept
         time_estimate:
           $ref: "#/components/schemas/TimeSpan"
           description: Time estimate
@@ -7363,6 +7710,14 @@ components:
           $ref: "#/components/schemas/TaskPriority"
           description: Task priority level (defaults to MEDIUM if not specified)
           default: MEDIUM
+        linear_team_id:
+          anyOf:
+            - type: string
+              description: Linear team ID
+            - type: "null"
+              description: No Linear team
+          description: Linear team to publish the new task to. Omit this field to use the organization's default Linear team when one is set. Pass null to create the task with no Linear team. If the Linear publish attempt fails after the task is created, linear_publish_error explains why.
+          go.probo.inc/mcpgen/omittable: true
 
     AddTaskOutput:
       type: object
@@ -7371,6 +7726,9 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
+        linear_publish_error:
+          type: string
+          description: Set when the task was created but publishing it to Linear failed. The task exists; publish that task again instead of creating another one.
 
     UpdateTaskInput:
       type: object
@@ -7385,7 +7743,7 @@ components:
           description: Task name
         content:
           type: ["string", "null"]
-          description: Task content in markdown format
+          description: Task content in markdown format. Images and links to /api/files/v1/{id} are kept
           go.probo.inc/mcpgen/omittable: true
         state:
           anyOf:
@@ -7435,13 +7793,13 @@ components:
               description: Not assigned
           description: Assigned to person ID
           go.probo.inc/mcpgen/omittable: true
-        measure_id:
+        internal_control_ids:
           anyOf:
-            - $ref: "#/components/schemas/GID"
-              description: Measure ID
+            - type: array
+              items:
+                $ref: "#/components/schemas/GID"
             - type: "null"
-              description: No measure
-          description: Measure ID
+          description: Internal control IDs. Replaces the internal controls linked to the task. An empty list clears every link.
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskOutput:
@@ -7451,9 +7809,6 @@ components:
       properties:
         task:
           $ref: "#/components/schemas/Task"
-        next_task:
-          $ref: "#/components/schemas/Task"
-          description: Next occurrence created when a recurring task is marked done
 
     AssignTaskInput:
       type: object
@@ -7630,7 +7985,7 @@ components:
           description: Owner membership profile ID. Defaults to the caller's profile in the task organization when omitted.
         content:
           type: string
-          description: Task comment content in markdown format
+          description: Task comment content in markdown format. Images and links to /api/files/v1/{id} are kept
 
     AddTaskCommentOutput:
       type: object
@@ -7653,7 +8008,7 @@ components:
           description: Owner membership profile ID
         content:
           type: ["string", "null"]
-          description: Task comment content in markdown format
+          description: Task comment content in markdown format. Images and links to /api/files/v1/{id} are kept
           go.probo.inc/mcpgen/omittable: true
 
     UpdateTaskCommentOutput:
@@ -7697,7 +8052,7 @@ components:
         - STATE
         - PRIORITY
         - ASSIGNED_TO
-        - MEASURE
+        - INTERNAL_CONTROL
         - DEADLINE
         - TIME_ESTIMATE
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityField
@@ -8299,7 +8654,7 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content in markdown format
+          description: Document content in markdown format. Images and links to /api/files/v1/{id} are kept
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -8337,7 +8692,7 @@ components:
           description: Document title
         content:
           type: string
-          description: Document content in markdown format
+          description: Document content in markdown format. Images and links to /api/files/v1/{id} are kept
         classification:
           $ref: "#/components/schemas/DocumentClassification"
           description: Document classification
@@ -10427,15 +10782,11 @@ components:
           items:
             $ref: "#/components/schemas/AccessReviewSource"
 
-    CreateAccessReviewSourceMCPInput:
+    AccessReviewSourceCreateMCPInput:
       type: object
       required:
-        - organization_id
         - name
       properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
         connector_id:
           $ref: "#/components/schemas/GID"
           description: Connector ID (optional)
@@ -10449,7 +10800,23 @@ components:
           type: string
           description: CSV data for manual sources (optional)
 
-    CreateAccessReviewSourceMCPOutput:
+    CreateAccessReviewSourcesMCPInput:
+      type: object
+      required:
+        - organization_id
+        - sources
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        sources:
+          type: array
+          minItems: 1
+          description: Access sources to create. A list of one creates a single source.
+          items:
+            $ref: "#/components/schemas/AccessReviewSourceCreateMCPInput"
+
+    CreateAccessReviewSourceResultMCPOutput:
       type: object
       required:
         - access_review_source
@@ -10460,9 +10827,19 @@ components:
         created:
           type: boolean
           description: >-
-            False when a source already existed for the requested connector
-            account: creation is idempotent per connector account and the
-            existing source is returned instead of a duplicate.
+            False when this connector account already has a source. The
+            existing source is returned instead of a duplicate. CSV items
+            always insert.
+
+    CreateAccessReviewSourcesMCPOutput:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateAccessReviewSourceResultMCPOutput"
 
     UpdateAccessReviewSourceMCPInput:
       type: object
@@ -10533,6 +10910,7 @@ components:
       type: object
       required:
         - id
+        - name
         - provider
         - protocol
         - connection_status
@@ -10541,6 +10919,11 @@ components:
         id:
           $ref: "#/components/schemas/GID"
           description: Connector ID
+        name:
+          type: string
+          description: >-
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
         provider:
           type: string
           description: Connector provider
@@ -10554,6 +10937,83 @@ components:
           type: string
           format: date-time
           description: Creation timestamp
+
+    ConnectorProviderSetting:
+      type: object
+      required:
+        - key
+        - label
+        - required
+      properties:
+        key:
+          type: string
+          description: Catalog key for an extra setting
+        label:
+          type: string
+          description: Label shown on the connect form
+        required:
+          type: boolean
+          description: Whether the connect form requires this setting
+
+    ConnectorProviderCatalogEntry:
+      type: object
+      required:
+        - provider
+        - display_name
+        - api_key_supported
+        - api_key_managed
+        - install_supported
+        - api_key_extra_settings
+        - client_credentials_supported
+        - client_credentials_extra_settings
+      properties:
+        provider:
+          type: string
+          description: Connector provider
+        display_name:
+          type: string
+          description: Provider name shown to a user
+        api_key_supported:
+          type: boolean
+          description: Whether the customer can connect this provider with an API key
+        api_key_managed:
+          type: boolean
+          description: Whether Probo supplies the API key
+        install_supported:
+          type: boolean
+          description: Whether this provider connects through an install ceremony
+        api_key_extra_settings:
+          type: array
+          description: Extra settings the API-key form requires. Empty when the console form needs no extra setting.
+          items:
+            $ref: "#/components/schemas/ConnectorProviderSetting"
+        client_credentials_supported:
+          type: boolean
+          description: Whether the customer can connect this provider with client credentials
+        client_credentials_token_url:
+          type:
+            - string
+            - "null"
+          description: Token URL the provider pins. Null when the customer supplies it.
+        client_credentials_extra_settings:
+          type: array
+          description: Extra settings the client-credentials form requires. Empty when the console form needs no extra setting.
+          items:
+            $ref: "#/components/schemas/ConnectorProviderSetting"
+
+    ListConnectorProvidersMCPInput:
+      type: object
+      properties: {}
+
+    ListConnectorProvidersMCPOutput:
+      type: object
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConnectorProviderCatalogEntry"
 
     AWSConnectorSetup:
       type: object
@@ -10643,16 +11103,6 @@ components:
         setup:
           $ref: "#/components/schemas/GCPConnectorSetup"
 
-    AzureEnvironment:
-      type: string
-      enum:
-        - AZURE_PUBLIC
-        - AZURE_GOVERNMENT
-        - AZURE_GOVERNMENT_DOD
-        - AZURE_CHINA
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/cloud/azure.Environment
-      description: Azure cloud environment. Defaults to AZURE_PUBLIC. GCC uses AZURE_PUBLIC; only GCC High and DoD use Government.
-
     AzureConnectorSetup:
       type: object
       required:
@@ -10695,85 +11145,6 @@ components:
         setup:
           $ref: "#/components/schemas/AzureConnectorSetup"
 
-    WorkloadIdentityConnectorProvider:
-      type: string
-      enum:
-        - AWS
-        - GCP
-        - AZURE
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.ConnectorProvider
-      description: Connector provider that supports workload identity
-
-    CreateWorkloadIdentityConnectorMCPInput:
-      type: object
-      required:
-        - organization_id
-        - provider
-      oneOf:
-        - title: AWS
-          properties:
-            provider:
-              type: string
-              enum:
-                - AWS
-          required:
-            - aws_role_arn
-        - title: GCP
-          properties:
-            provider:
-              type: string
-              enum:
-                - GCP
-          required:
-            - gcp_workload_identity_provider
-            - gcp_service_account_email
-        - title: Azure
-          properties:
-            provider:
-              type: string
-              enum:
-                - AZURE
-          required:
-            - azure_tenant_id
-            - azure_client_id
-            - azure_subscription_id
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/GID"
-          description: Organization ID
-        provider:
-          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
-          description: Connector provider (AWS, GCP, or Azure)
-        aws_role_arn:
-          type: string
-          description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
-        gcp_workload_identity_provider:
-          type: string
-          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
-        gcp_service_account_email:
-          type: string
-          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
-        azure_tenant_id:
-          type: string
-          description: Entra directory (tenant) ID. Required when provider is Azure.
-        azure_client_id:
-          type: string
-          description: Entra application (client) ID. Required when provider is Azure.
-        azure_subscription_id:
-          type: string
-          description: Azure subscription ID. Required when provider is Azure.
-        azure_environment:
-          $ref: "#/components/schemas/AzureEnvironment"
-          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
-
-    CreateWorkloadIdentityConnectorMCPOutput:
-      type: object
-      required:
-        - connector
-      properties:
-        connector:
-          $ref: "#/components/schemas/Connector"
-
     ConnectorAccount:
       type: object
       required:
@@ -10808,12 +11179,16 @@ components:
       required:
         - external_account_id
         - name
+        - enabled
       properties:
         external_account_id:
           type: string
           description: Provider-specific external account identifier. AWS account ID, GCP project number, or Azure subscription ID.
         name:
           type: string
+        enabled:
+          type: boolean
+          description: True when this external account is already stored on the connector.
 
     ListConnectorsMCPInput:
       type: object
@@ -10851,81 +11226,28 @@ components:
         connector:
           $ref: "#/components/schemas/Connector"
 
-    CreateOrganizationConnectorMCPInput:
+    UpdateConnectorMCPInput:
       type: object
       required:
-        - organization_id
-        - provider
-      oneOf:
-        - title: AWS
-          properties:
-            provider:
-              type: string
-              enum:
-                - AWS
-          required:
-            - aws_role_arn
-        - title: GCP
-          properties:
-            provider:
-              type: string
-              enum:
-                - GCP
-          required:
-            - gcp_workload_identity_provider
-            - gcp_service_account_email
-        - title: Azure
-          properties:
-            provider:
-              type: string
-              enum:
-                - AZURE
-          required:
-            - azure_tenant_id
-            - azure_client_id
+        - connector_id
+        - name
       properties:
-        organization_id:
+        connector_id:
           $ref: "#/components/schemas/GID"
-          description: Organization ID
-        provider:
-          $ref: "#/components/schemas/WorkloadIdentityConnectorProvider"
-          description: Connector provider (AWS, GCP, or Azure)
-        aws_role_arn:
+          description: Connector ID
+        name:
           type: string
-          description: IAM role ARN, including partition, account, and role name. Required when provider is AWS.
-        aws_member_role_name:
-          type: string
-        gcp_workload_identity_provider:
-          type: string
-          description: Workload identity provider resource, including the S3NS IAM host when applicable. Required when provider is GCP.
-        gcp_service_account_email:
-          type: string
-          description: Service account email to impersonate, including the universe-specific suffix. Required when provider is GCP.
-        gcp_parent:
-          type: string
-          description: Cloud Asset parent (organizations/{number} or folders/{number})
-        azure_tenant_id:
-          type: string
-          description: Entra directory (tenant) ID. Required when provider is Azure.
-        azure_client_id:
-          type: string
-          description: Entra application (client) ID. Required when provider is Azure.
-        azure_environment:
-          $ref: "#/components/schemas/AzureEnvironment"
-          description: Azure cloud environment. Defaults to AZURE_PUBLIC when omitted.
+          description: >-
+            A name that distinguishes this credential from other credentials
+            for the same provider. For example, production or main.
 
-    CreateOrganizationConnectorMCPOutput:
+    UpdateConnectorMCPOutput:
       type: object
       required:
         - connector
-        - discovered_accounts
       properties:
         connector:
           $ref: "#/components/schemas/Connector"
-        discovered_accounts:
-          type: array
-          items:
-            $ref: "#/components/schemas/DiscoveredConnectorAccount"
 
     DiscoverConnectorAccountsMCPInput:
       type: object
@@ -12220,6 +12542,153 @@ components:
           $ref: "#/components/schemas/GID"
           description: Deleted compliance portal ID
 
+    EmployeePortalCapabilities:
+      type: object
+      required:
+        - device_agent
+      properties:
+        device_agent:
+          type: boolean
+          description: Whether the employee app offers the device agent
+
+    EmployeePortalCapabilitiesInput:
+      type: object
+      description: Partial update; an omitted capability keeps its current value
+      properties:
+        device_agent:
+          type:
+            - boolean
+            - "null"
+          description: Whether the employee app offers the device agent
+
+    EmployeePortal:
+      type: object
+      required:
+        - id
+        - organization_id
+        - name
+        - active
+        - capabilities
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+        organization_id:
+          $ref: "#/components/schemas/GID"
+        name:
+          type: string
+        active:
+          type: boolean
+        capabilities:
+          $ref: "#/components/schemas/EmployeePortalCapabilities"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EmployeePortalOrderField:
+      type: string
+      enum:
+        - CREATED_AT
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.EmployeePortalOrderField
+
+    EmployeePortalOrderBy:
+      type: object
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          $ref: "#/components/schemas/EmployeePortalOrderField"
+        direction:
+          $ref: "#/components/schemas/OrderDirection"
+
+    ListEmployeePortalsInput:
+      type: object
+      required:
+        - organization_id
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        order_by:
+          $ref: "#/components/schemas/EmployeePortalOrderBy"
+          description: Employee portal order by
+        size:
+          type: integer
+          description: Page size
+        cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Page cursor
+
+    ListEmployeePortalsOutput:
+      type: object
+      required:
+        - employee_portals
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/CursorKey"
+          description: Next cursor
+        employee_portals:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmployeePortal"
+
+    GetEmployeePortalInput:
+      type: object
+      required:
+        - employee_portal_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+
+    GetEmployeePortalOutput:
+      type: object
+      required:
+        - employee_portal
+      properties:
+        employee_portal:
+          $ref: "#/components/schemas/EmployeePortal"
+
+    UpdateEmployeePortalInput:
+      type: object
+      required:
+        - employee_portal_id
+      properties:
+        employee_portal_id:
+          $ref: "#/components/schemas/GID"
+          description: Employee portal ID
+        name:
+          type:
+            - string
+            - "null"
+          description: Display name of the employee portal
+          go.probo.inc/mcpgen/omittable: true
+        active:
+          type:
+            - boolean
+            - "null"
+          description: Whether the employee portal is active
+          go.probo.inc/mcpgen/omittable: true
+        capabilities:
+          anyOf:
+            - $ref: "#/components/schemas/EmployeePortalCapabilitiesInput"
+            - type: "null"
+          description: Capabilities to change on the employee portal
+          go.probo.inc/mcpgen/omittable: true
+
+    UpdateEmployeePortalOutput:
+      type: object
+      required:
+        - employee_portal
+      properties:
+        employee_portal:
+          $ref: "#/components/schemas/EmployeePortal"
+
     UpdateCompliancePortalDocumentVisibilityInput:
       type: object
       required:
@@ -13175,6 +13644,7 @@ components:
       required:
         - resource_reporting
         - tcf
+        - corsless
       properties:
         resource_reporting:
           type: boolean
@@ -13182,6 +13652,9 @@ components:
         tcf:
           type: boolean
           description: Whether IAB TCF is enabled for this banner
+        corsless:
+          type: boolean
+          description: Whether this banner accepts any website origin
 
     CookieBannerCapabilitiesInput:
       type: object
@@ -13264,6 +13737,36 @@ components:
         published_version:
           $ref: "#/components/schemas/CookieBannerVersion"
           description: Latest published cookie banner version, if any
+        discovery_page_loads:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryFamilyCount"
+          description: Discovery page loads by browser family. Families with zero page loads are omitted. Frozen on first publish.
+        discovery_frozen_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: When discovery counting stopped. Null while page loads and pattern hits are still being recorded.
+
+    DiscoveryBrowserFamily:
+      type: string
+      enum: [CHROME, EDGE, FIREFOX, SAFARI, OTHER]
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DiscoveryBrowserFamily
+      description: Coarse browser family used for discovery sampling
+
+    DiscoveryFamilyCount:
+      type: object
+      required:
+        - family
+        - count
+      properties:
+        family:
+          $ref: "#/components/schemas/DiscoveryBrowserFamily"
+          description: Browser family
+        count:
+          type: integer
+          description: Page loads or first-sighting hits for this family
 
     CommonGVLVendorMembership:
       type: string
@@ -13557,12 +14060,11 @@ components:
         excluded:
           type: boolean
           description: Whether this pattern is excluded from the consent banner
-        last_matched_at:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when a cookie last matched this pattern
+        discovery_hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryFamilyCount"
+          description: Discovery first-sighting hits by browser family. Only families with page loads are included. Frozen on first publish.
         common_tracker_pattern_id:
           anyOf:
             - $ref: "#/components/schemas/GID"
@@ -13573,7 +14075,7 @@ components:
             - type: string
               enum: [UNDETERMINED, THIRD_PARTY, FIRST_PARTY, NOT_ATTRIBUTABLE]
             - type: "null"
-          description: Catalog verdict inherited from the linked common tracker pattern. Null when the org pattern has no catalog link.
+          description: "Catalog verdict inherited from the linked common tracker pattern. Null when the org pattern has no catalog link, except when source is EXTENSION: that is always NOT_ATTRIBUTABLE (visitor software), even if a catalog row is already linked."
         created_at:
           type: string
           format: date-time
@@ -13630,12 +14132,6 @@ components:
         excluded:
           type: boolean
           description: Whether this resource is excluded from the consent banner
-        last_detected_at:
-          type:
-            - string
-            - "null"
-          format: date-time
-          description: Timestamp when this resource was last detected
         created_at:
           type: string
           format: date-time
@@ -13784,6 +14280,11 @@ components:
             - string
             - "null"
           description: IAB TCF consent string
+        origin:
+          type:
+            - string
+            - "null"
+          description: Request origin that recorded this consent
         created_at:
           type: string
           format: date-time
@@ -15311,7 +15812,7 @@ components:
           description: Risk analysis name
         description:
           type: string
-          description: Risk analysis description in markdown format
+          description: Risk analysis description in markdown format. Images and links to /api/files/v1/{id} are kept
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period
@@ -15340,7 +15841,7 @@ components:
           description: Risk analysis name
         description:
           type: ["string", "null"]
-          description: Risk analysis description in markdown format
+          description: Risk analysis description in markdown format. Images and links to /api/files/v1/{id} are kept
           go.probo.inc/mcpgen/omittable: true
         period:
           $ref: "#/components/schemas/Period"
@@ -15386,7 +15887,7 @@ components:
           description: Forked risk analysis name
         description:
           type: string
-          description: Forked risk analysis description in markdown format
+          description: Forked risk analysis description in markdown format. Images and links to /api/files/v1/{id} are kept
         period:
           $ref: "#/components/schemas/Period"
           description: Analysis period (not copied from the source)
@@ -16463,7 +16964,7 @@ components:
     # --- Detected trackers ---
     DetectedTrackerOrderField:
       type: string
-      enum: [INITIATOR_URL, LAST_DETECTED_AT]
+      enum: [CREATED_AT, INITIATOR_URL]
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DetectedTrackerOrderField
 
     DetectedTrackerOrderBy:
@@ -16477,7 +16978,7 @@ components:
 
     DetectedTracker:
       type: object
-      required: [id, identifier, last_detected_at, created_at]
+      required: [id, identifier, created_at]
       properties:
         id:
           $ref: "#/components/schemas/GID"
@@ -16485,6 +16986,12 @@ components:
           type: string
         initiator_url:
           type: string
+          nullable: true
+        cookie_domain:
+          type: string
+          nullable: true
+        host_only:
+          type: boolean
           nullable: true
         max_age_seconds:
           type: integer
@@ -16494,9 +17001,6 @@ components:
           enum: [SCRIPT, PRE_EXISTING, HTTP, EXTENSION]
           nullable: true
           go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.CookieSource
-        last_detected_at:
-          type: string
-          format: date-time
         created_at:
           type: string
           format: date-time
@@ -16637,6 +17141,44 @@ components:
       properties:
         deleted_compliance_portal_framework_id:
           $ref: "#/components/schemas/GID"
+
+    UploadFileInput:
+      type: object
+      required:
+        - organization_id
+        - file_name
+        - content_base64
+      properties:
+        organization_id:
+          $ref: "#/components/schemas/GID"
+          description: Organization ID
+        file_name:
+          type: string
+          description: File name
+        mime_type:
+          type: string
+          description: MIME type. Inferred from the file name when omitted
+        content_base64:
+          type: string
+          description: File bytes encoded as base64
+
+    UploadFileOutput:
+      type: object
+      required: [id, file_name, mime_type, size]
+      properties:
+        id:
+          $ref: "#/components/schemas/GID"
+          description: "File ID. Use ![alt](/api/files/v1/{id}) for an image and [name](/api/files/v1/{id}) for a file in markdown content"
+        file_name:
+          type: string
+          description: File name
+        mime_type:
+          type: string
+          description: MIME type
+        size:
+          type: integer
+          format: int64
+          description: File size in bytes
 
 tools:
   - name: listOrganizations
@@ -17011,114 +17553,114 @@ tools:
       $ref: "#/components/schemas/DeleteRiskInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteRiskOutput"
-  - name: listMeasures
-    title: List Measures
-    description: List all measures for the organization
+  - name: listInternalControls
+    title: List Internal controls
+    description: List all internal controls for the organization
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasuresInput"
+      $ref: "#/components/schemas/ListInternalControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasuresOutput"
-  - name: getMeasure
-    title: Get Measure
-    description: Get a measure by ID
+      $ref: "#/components/schemas/ListInternalControlsOutput"
+  - name: getInternalControl
+    title: Get Internal control
+    description: Get an internal control by ID
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetMeasureInput"
+      $ref: "#/components/schemas/GetInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/GetMeasureOutput"
-  - name: addMeasure
-    title: Add Measure
-    description: Add a new measure to the organization
+      $ref: "#/components/schemas/GetInternalControlOutput"
+  - name: addInternalControl
+    title: Add Internal control
+    description: Add a new internal control to the organization
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/AddMeasureInput"
+      $ref: "#/components/schemas/AddInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/AddMeasureOutput"
-  - name: updateMeasure
-    title: Update Measure
-    description: Update an existing measure
+      $ref: "#/components/schemas/AddInternalControlOutput"
+  - name: updateInternalControl
+    title: Update Internal control
+    description: Update an existing internal control
     hints:
       readonly: false
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UpdateMeasureInput"
+      $ref: "#/components/schemas/UpdateInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/UpdateMeasureOutput"
-  - name: deleteMeasure
-    title: Delete Measure
-    description: Delete a measure
+      $ref: "#/components/schemas/UpdateInternalControlOutput"
+  - name: deleteInternalControl
+    title: Delete Internal control
+    description: Delete an internal control
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteMeasureInput"
+      $ref: "#/components/schemas/DeleteInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteMeasureOutput"
-  - name: listMeasureRisks
-    title: List Measure Risks
-    description: List risks linked to a measure
+      $ref: "#/components/schemas/DeleteInternalControlOutput"
+  - name: listInternalControlRisks
+    title: List Internal control Risks
+    description: List risks linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureRisksInput"
+      $ref: "#/components/schemas/ListInternalControlRisksInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureRisksOutput"
-  - name: listMeasureControls
-    title: List Measure Controls
-    description: List controls linked to a measure
+      $ref: "#/components/schemas/ListInternalControlRisksOutput"
+  - name: listInternalControlControls
+    title: List Internal control Controls
+    description: List controls linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureControlsInput"
+      $ref: "#/components/schemas/ListInternalControlControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureControlsOutput"
-  - name: listMeasureTasks
-    title: List Measure Tasks
-    description: List tasks linked to a measure
+      $ref: "#/components/schemas/ListInternalControlControlsOutput"
+  - name: listInternalControlTasks
+    title: List Internal control Tasks
+    description: List tasks linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureTasksInput"
+      $ref: "#/components/schemas/ListInternalControlTasksInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureTasksOutput"
-  - name: listMeasureEvidences
-    title: List Measure Evidences
-    description: List evidences linked to a measure
+      $ref: "#/components/schemas/ListInternalControlTasksOutput"
+  - name: listInternalControlEvidences
+    title: List Internal control Evidences
+    description: List evidences linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureEvidencesInput"
+      $ref: "#/components/schemas/ListInternalControlEvidencesInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureEvidencesOutput"
+      $ref: "#/components/schemas/ListInternalControlEvidencesOutput"
   - name: deleteEvidence
     title: Delete Evidence
     description: Delete an evidence
@@ -17131,42 +17673,42 @@ tools:
       $ref: "#/components/schemas/DeleteEvidenceInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteEvidenceOutput"
-  - name: linkMeasure
-    title: Link Measure
-    description: Link a measure to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
+  - name: linkInternalControl
+    title: Link Internal control
+    description: Link an internal control to a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/LinkMeasureInput"
+      $ref: "#/components/schemas/LinkInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/LinkMeasureOutput"
-  - name: unlinkMeasure
-    title: Unlink Measure
-    description: Unlink a measure from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
+      $ref: "#/components/schemas/LinkInternalControlOutput"
+  - name: unlinkInternalControl
+    title: Unlink Internal control
+    description: Unlink an internal control from a resource (control, risk, document, third party, or treatment plan). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/UnlinkMeasureInput"
+      $ref: "#/components/schemas/UnlinkInternalControlInput"
     outputSchema:
-      $ref: "#/components/schemas/UnlinkMeasureOutput"
-  - name: listMeasureDocuments
-    title: List Measure Documents
-    description: List documents linked to a measure
+      $ref: "#/components/schemas/UnlinkInternalControlOutput"
+  - name: listInternalControlDocuments
+    title: List Internal control Documents
+    description: List documents linked to an internal control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListMeasureDocumentsInput"
+      $ref: "#/components/schemas/ListInternalControlDocumentsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListMeasureDocumentsOutput"
+      $ref: "#/components/schemas/ListInternalControlDocumentsOutput"
   - name: listFrameworks
     title: List Frameworks
     description: List all frameworks for the organization
@@ -17289,7 +17831,7 @@ tools:
       $ref: "#/components/schemas/DeleteAssetOutput"
   - name: listDevices
     title: List Devices
-    description: "List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. latest_postures is empty unless include_postures is true; when loaded it holds the newest result per check_key and is empty for PENDING devices. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. List ITAM devices for an organization. Use createDevice to issue a PENDING device and a one-shot enrollment token for the agent installer. Device states: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices. Pass query to search by the owner's name; each word is a prefix match and every word must match. Pass states, platforms, or agent_versions to keep devices that match any value in that list; omit a list to leave that dimension unconstrained. Page with size and cursor; when next_cursor is present, pass it as cursor on the next call."
     hints:
       readonly: true
       destructive: false
@@ -17301,7 +17843,7 @@ tools:
       $ref: "#/components/schemas/ListDevicesOutput"
   - name: getDevice
     title: Get Device
-    description: "Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. latest_postures is empty unless include_postures is true; when loaded it holds the newest result per check_key and is empty for PENDING devices."
+    description: "include_postures defaults to false. When it is false, postures_included is false and latest_postures is empty. Get one ITAM device by ID (soft-deleted devices are not returned). Same state machine as listDevices: PENDING (enrollment token issued, agent has never checked in), ACTIVE (agent heartbeating), REVOKED (enrollment revoked). Use last_seen_at as the staleness signal. When include_postures is true, latest_postures holds the newest result per check_key and is empty for PENDING devices."
     hints:
       readonly: true
       destructive: false
@@ -17323,30 +17865,30 @@ tools:
       $ref: "#/components/schemas/CreateDeviceInput"
     outputSchema:
       $ref: "#/components/schemas/CreateDeviceOutput"
-  - name: revokeDevice
-    title: Revoke Device
-    description: "Irreversibly revoke a device enrollment. Immediately invalidates the device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. Call this before deleteDevice."
+  - name: revokeDevices
+    title: Revoke Devices
+    description: "Irreversibly revoke one or more device enrollments in one call. Immediately invalidates each device agent API key so the agent stops authenticating and reporting; there is no un-revoke tool. Safe to call more than once: state stays REVOKED and revoked_at keeps its original value. All devices must belong to one organization. If any id is missing, none are revoked. Call this before deleteDevices."
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/RevokeDeviceInput"
+      $ref: "#/components/schemas/RevokeDevicesInput"
     outputSchema:
-      $ref: "#/components/schemas/RevokeDeviceOutput"
-  - name: deleteDevice
-    title: Delete Device
-    description: "Soft-delete a device. The device must already be REVOKED — call revokeDevice first, otherwise the call fails with the error device cannot be deleted. After success the device stops appearing in listDevices/getDevice; enrollment tokens for the device are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
+      $ref: "#/components/schemas/RevokeDevicesOutput"
+  - name: deleteDevices
+    title: Delete Devices
+    description: "Soft-delete one or more devices in one call. Every device must already be REVOKED — call revokeDevices first, otherwise the call fails with the error device cannot be deleted and none are deleted. All devices must belong to one organization. After success the devices stop appearing in listDevices/getDevice; enrollment tokens for them are removed. Eligible orphan rows are later hard-deleted by the ITAM garbage collector."
     hints:
       readonly: false
       destructive: true
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/DeleteDeviceInput"
+      $ref: "#/components/schemas/DeleteDevicesInput"
     outputSchema:
-      $ref: "#/components/schemas/DeleteDeviceOutput"
+      $ref: "#/components/schemas/DeleteDevicesOutput"
   - name: setDeviceOwner
     title: Set Device Owner
     description: "Set or clear the owner of an ITAM device. owner_id is required: pass a MembershipProfile GID belonging to the same organization as the device to assign, or null to clear. Omitting the field is invalid."
@@ -17359,6 +17901,18 @@ tools:
       $ref: "#/components/schemas/SetDeviceOwnerInput"
     outputSchema:
       $ref: "#/components/schemas/SetDeviceOwnerOutput"
+  - name: downloadDeviceEvidence
+    title: Download Device Evidence
+    description: "Render one A4 PDF page per device, with identity fields and current posture checks, and return a presigned download URL valid for 15 minutes. device_ids keeps page order. At most 100 ids, with no duplicates."
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/DownloadDeviceEvidenceInput"
+    outputSchema:
+      $ref: "#/components/schemas/DownloadDeviceEvidenceOutput"
   - name: listData
     title: List Data
     description: List all data for the organization
@@ -17935,6 +18489,30 @@ tools:
       $ref: "#/components/schemas/DeleteAuditInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteAuditOutput"
+  - name: linkAuditFramework
+    title: Link Audit Framework
+    description: Link a framework to an audit
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/LinkAuditFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/LinkAuditFrameworkOutput"
+  - name: unlinkAuditFramework
+    title: Unlink Audit Framework
+    description: Unlink a framework from an audit
+    hints:
+      readonly: false
+      destructive: true
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UnlinkAuditFrameworkInput"
+    outputSchema:
+      $ref: "#/components/schemas/UnlinkAuditFrameworkOutput"
   - name: getAuditReportUrl
     title: Get Audit Report URL
     description: Get a presigned download URL for an audit's attached report. Returns a time-limited URL valid for 15 minutes. The audit must have an attached report.
@@ -18021,7 +18599,7 @@ tools:
       $ref: "#/components/schemas/DeleteControlOutput"
   - name: linkControl
     title: Link Control
-    description: Link a resource to a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
+    description: Link a resource to a control (internal control, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -18033,7 +18611,7 @@ tools:
       $ref: "#/components/schemas/LinkControlOutput"
   - name: unlinkControl
     title: Unlink Control
-    description: Unlink a resource from a control (measure, document, audit, or obligation). The resource type is determined from the resource_id GID.
+    description: Unlink a resource from a control (internal control, document, audit, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -18055,18 +18633,18 @@ tools:
       $ref: "#/components/schemas/ListControlObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListControlObligationsOutput"
-  - name: listControlMeasures
-    title: List Control Measures
-    description: List measures linked to a control
+  - name: listControlInternalControls
+    title: List Control Internal controls
+    description: List internal controls linked to a control
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListControlMeasuresInput"
+      $ref: "#/components/schemas/ListControlInternalControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListControlMeasuresOutput"
+      $ref: "#/components/schemas/ListControlInternalControlsOutput"
   - name: listControlDocuments
     title: List Control Documents
     description: List documents linked to a control
@@ -18103,21 +18681,21 @@ tools:
       $ref: "#/components/schemas/ListRiskObligationsInput"
     outputSchema:
       $ref: "#/components/schemas/ListRiskObligationsOutput"
-  - name: listRiskMeasures
-    title: List Risk Measures
-    description: List measures linked to a risk
+  - name: listRiskInternalControls
+    title: List Risk Internal controls
+    description: List internal controls linked to a risk
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListRiskMeasuresInput"
+      $ref: "#/components/schemas/ListRiskInternalControlsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListRiskMeasuresOutput"
+      $ref: "#/components/schemas/ListRiskInternalControlsOutput"
   - name: linkRisk
     title: Link Risk
-    description: Link a risk to a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
+    description: Link a risk to a resource (document, internal control, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: false
@@ -18129,7 +18707,7 @@ tools:
       $ref: "#/components/schemas/LinkRiskOutput"
   - name: unlinkRisk
     title: Unlink Risk
-    description: Unlink a risk from a resource (document, measure, or obligation). The resource type is determined from the resource_id GID.
+    description: Unlink a risk from a resource (document, internal control, or obligation). The resource type is determined from the resource_id GID.
     hints:
       readonly: false
       destructive: true
@@ -18141,7 +18719,7 @@ tools:
       $ref: "#/components/schemas/UnlinkRiskOutput"
   - name: listTasks
     title: List Tasks
-    description: List all tasks for the organization or measure
+    description: List all tasks for the organization or internal control
     hints:
       readonly: true
       destructive: false
@@ -18165,7 +18743,7 @@ tools:
       $ref: "#/components/schemas/GetTaskOutput"
   - name: addTask
     title: Add Task
-    description: Add a new task to the organization
+    description: Add a new task to the organization. Omit linear_team_id to publish the task to the organization's default Linear team when one is set. Pass null to create the task with no Linear team. If the Linear publish attempt fails after the task is created, linear_publish_error explains why. Publish that task again instead of creating another one.
     hints:
       readonly: false
       destructive: false
@@ -18235,6 +18813,18 @@ tools:
       $ref: "#/components/schemas/ListLinearTeamsInput"
     outputSchema:
       $ref: "#/components/schemas/ListLinearTeamsOutput"
+  - name: updateLinearSettings
+    title: Update Linear Settings
+    description: Update the organization's Linear settings. Omit a field to leave it unchanged. Null default_team_id clears the default team and turns issue import off.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: true
+    inputSchema:
+      $ref: "#/components/schemas/UpdateLinearSettingsInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateLinearSettingsOutput"
   - name: listLinearIssues
     title: List Linear Issues
     description: Search Linear issues in a team
@@ -18967,18 +19557,22 @@ tools:
       $ref: "#/components/schemas/ListAccessReviewSourcesInput"
     outputSchema:
       $ref: "#/components/schemas/ListAccessReviewSourcesOutput"
-  - name: createAccessReviewSource
-    title: Create Access Review Source
-    description: Create a new access source for an organization
+  - name: createAccessReviewSources
+    title: Create Access Review Sources
+    description: >-
+      Create access sources for an organization. Connect the provider in the
+      console first, then pass that connector id here. This operation does not
+      collect credentials. A CSV source is the path with no provider. One call
+      accepts the whole list and skips an account that already has a source.
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/CreateAccessReviewSourceMCPInput"
+      $ref: "#/components/schemas/CreateAccessReviewSourcesMCPInput"
     outputSchema:
-      $ref: "#/components/schemas/CreateAccessReviewSourceMCPOutput"
+      $ref: "#/components/schemas/CreateAccessReviewSourcesMCPOutput"
   - name: updateAccessReviewSource
     title: Update Access Review Source
     description: Update an existing access source
@@ -19039,18 +19633,21 @@ tools:
       $ref: "#/components/schemas/AzureConnectorSetupMCPInput"
     outputSchema:
       $ref: "#/components/schemas/AzureConnectorSetupMCPOutput"
-  - name: createWorkloadIdentityConnector
-    title: Create Workload Identity Connector
-    description: Create a workload-identity connector (AWS, GCP, or Azure) and report whether the audit identity can be assumed
+  - name: listConnectorProviders
+    title: List Connector Providers
+    description: >-
+      List connector providers and which connection methods each one supports.
+      Creating a connector is not available on this API. Connect the provider
+      in the console.
     hints:
-      readonly: false
+      readonly: true
       destructive: false
-      idempotent: false
-      openWorld: true
+      idempotent: true
+      openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPInput"
+      $ref: "#/components/schemas/ListConnectorProvidersMCPInput"
     outputSchema:
-      $ref: "#/components/schemas/CreateWorkloadIdentityConnectorMCPOutput"
+      $ref: "#/components/schemas/ListConnectorProvidersMCPOutput"
   - name: listConnectors
     title: List Connectors
     description: List connectors for an organization
@@ -19075,18 +19672,18 @@ tools:
       $ref: "#/components/schemas/GetConnectorMCPInput"
     outputSchema:
       $ref: "#/components/schemas/GetConnectorMCPOutput"
-  - name: createOrganizationConnector
-    title: Create Organization Connector
-    description: Create an organization-scoped workload-identity connector and list discovered accounts
+  - name: updateConnector
+    title: Update Connector
+    description: Rename a connector
     hints:
       readonly: false
       destructive: false
-      idempotent: false
-      openWorld: true
+      idempotent: true
+      openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/CreateOrganizationConnectorMCPInput"
+      $ref: "#/components/schemas/UpdateConnectorMCPInput"
     outputSchema:
-      $ref: "#/components/schemas/CreateOrganizationConnectorMCPOutput"
+      $ref: "#/components/schemas/UpdateConnectorMCPOutput"
   - name: discoverConnectorAccounts
     title: Discover Connector Accounts
     description: List vendor accounts a connector can enable
@@ -19543,6 +20140,42 @@ tools:
       $ref: "#/components/schemas/DeleteCompliancePortalInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalOutput"
+  - name: listEmployeePortals
+    title: List Employee Portals
+    description: List employee portals for an organization
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/ListEmployeePortalsInput"
+    outputSchema:
+      $ref: "#/components/schemas/ListEmployeePortalsOutput"
+  - name: getEmployeePortal
+    title: Get Employee Portal
+    description: Get an employee portal by ID
+    hints:
+      readonly: true
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/GetEmployeePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/GetEmployeePortalOutput"
+  - name: updateEmployeePortal
+    title: Update Employee Portal
+    description: Update an employee portal's settings
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: true
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UpdateEmployeePortalInput"
+    outputSchema:
+      $ref: "#/components/schemas/UpdateEmployeePortalOutput"
   - name: updateCompliancePortalDocumentVisibility
     title: Update Compliance Portal Document Visibility
     description: Update a document's visibility on a compliance portal
@@ -21175,3 +21808,15 @@ tools:
       $ref: "#/components/schemas/DeleteCompliancePortalFrameworkInput"
     outputSchema:
       $ref: "#/components/schemas/DeleteCompliancePortalFrameworkOutput"
+  - name: uploadFile
+    title: Upload File
+    description: Upload a private file for an image or file node in rich text.
+    hints:
+      readonly: false
+      destructive: false
+      idempotent: false
+      openWorld: false
+    inputSchema:
+      $ref: "#/components/schemas/UploadFileInput"
+    outputSchema:
+      $ref: "#/components/schemas/UploadFileOutput"

@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    {{- if .BaseURL}}
+    <base href="{{.BaseURL}}">
+    {{- end}}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
     <style>
@@ -169,6 +172,24 @@
             text-align: justify;
             orphans: 3;
             widows: 3;
+        }
+
+        .document-content img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 8px auto;
+        }
+
+        .document-content a {
+            color: #1155cc;
+            text-decoration: underline;
+        }
+
+        .document-content a.document-file {
+            display: block;
+            width: fit-content;
+            margin: 8px 0;
         }
 
         .document-content ul,

@@ -18,15 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskDueFilter, taskDueFilterBounds, taskDueFilterFromParam, taskMatchesDeadline } from "@probo/tasks";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
+import { unassignedAssignee } from "./taskPath";
 import { type TaskState, taskStates } from "./taskState";
 
 export interface TasksCardFilterInput {
   query: string | null;
   state: TaskState | null;
   assignedToId: string | null;
+  internalControlId: string | null;
+  deadlineOnOrBefore: string | null;
+  deadlineOnOrAfter: string | null;
+  hasDeadline: boolean | null;
+  hasAssignee: boolean | null;
 }
 
 function taskStateFromParam(value: string | null): TaskState | null {
@@ -36,7 +43,13 @@ function taskStateFromParam(value: string | null): TaskState | null {
 }
 
 export function taskMatchesFilter(
-  task: { name: string; state: TaskState; assignedToId?: string | null },
+  task: {
+    name: string;
+    state: TaskState;
+    assignedToId?: string | null;
+    internalControlIds?: readonly string[];
+    deadline?: string | null;
+  },
   filter: TasksCardFilterInput,
 ): boolean {
   if (filter.state != null && task.state !== filter.state) {
@@ -45,11 +58,20 @@ export function taskMatchesFilter(
   if (filter.assignedToId != null && task.assignedToId !== filter.assignedToId) {
     return false;
   }
-  if (filter.query == null) {
-    return true;
+  if (filter.hasAssignee === false && task.assignedToId != null) {
+    return false;
+  }
+  if (
+    filter.internalControlId != null
+    && !task.internalControlIds?.includes(filter.internalControlId)
+  ) {
+    return false;
+  }
+  if (filter.query != null && !task.name.toLowerCase().includes(filter.query.toLowerCase())) {
+    return false;
   }
 
-  return task.name.toLowerCase().includes(filter.query.toLowerCase());
+  return taskMatchesDeadline(task.deadline ?? null, filter) !== false;
 }
 
 export function useTasksCardFilters() {
@@ -57,12 +79,25 @@ export function useTasksCardFilters() {
   const query = searchParams.get("q") ?? "";
   const state = taskStateFromParam(searchParams.get("status"));
   const assignedToParam = searchParams.get("assignee");
-  const assignedToId = assignedToParam === "" ? null : assignedToParam;
+  const assignee = assignedToParam === "" ? null : assignedToParam;
+  const assignedToId = assignee == null || assignee === unassignedAssignee
+    ? null
+    : assignee;
+  const hasAssignee = assignee === unassignedAssignee ? false : null;
+  const internalControlParam = searchParams.get("internalControl");
+  const internalControlId = internalControlParam === "" ? null : internalControlParam;
+  const due = taskDueFilterFromParam(searchParams.get("due"));
+  const deadlineBounds = useMemo(() => taskDueFilterBounds(due), [due]);
   const graphqlFilter = useMemo<TasksCardFilterInput>(() => ({
     query: query === "" ? null : query,
     state,
     assignedToId,
-  }), [assignedToId, query, state]);
+    internalControlId,
+    deadlineOnOrBefore: deadlineBounds.deadlineOnOrBefore,
+    deadlineOnOrAfter: deadlineBounds.deadlineOnOrAfter,
+    hasDeadline: deadlineBounds.hasDeadline,
+    hasAssignee,
+  }), [assignedToId, deadlineBounds, hasAssignee, internalControlId, query, state]);
 
   const setQuery = useCallback((value: string) => {
     setSearchParams((previous) => {
@@ -100,13 +135,42 @@ export function useTasksCardFilters() {
     }, { replace: true });
   }, [setSearchParams]);
 
+  const setInternalControlId = useCallback((value: string | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value == null || value === "") {
+        next.delete("internalControl");
+      } else {
+        next.set("internalControl", value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setDue = useCallback((value: TaskDueFilter | null) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value == null) {
+        next.delete("due");
+      } else {
+        next.set("due", value);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return {
     query,
     state,
+    assignee,
     assignedToId,
+    internalControlId,
+    due,
     graphqlFilter,
     setQuery,
     setState,
     setAssignedToId,
+    setInternalControlId,
+    setDue,
   };
 }

@@ -1354,10 +1354,10 @@ func TestShouldPromoteSource(t *testing.T) {
 			want:      true,
 		},
 		{
-			name:      "EXTENSION promotes to HTTP (real server cookie outranks extension state)",
+			name:      "EXTENSION does not promote to HTTP (cookieStore echo must not outrank extension)",
 			existing:  &extension,
 			candidate: &http,
-			want:      true,
+			want:      false,
 		},
 		{
 			name:      "HTTP promotes to SCRIPT",
@@ -1366,10 +1366,10 @@ func TestShouldPromoteSource(t *testing.T) {
 			want:      true,
 		},
 		{
-			name:      "HTTP does not promote to EXTENSION",
+			name:      "HTTP promotes to EXTENSION",
 			existing:  &http,
 			candidate: &extension,
-			want:      false,
+			want:      true,
 		},
 		{
 			name:      "HTTP does not promote to PRE_EXISTING",

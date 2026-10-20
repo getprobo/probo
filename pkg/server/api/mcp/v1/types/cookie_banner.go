@@ -21,6 +21,7 @@
 package types
 
 import (
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/page"
 )
@@ -29,6 +30,7 @@ func NewCookieBannerCapabilities(c coredata.CookieBannerCapabilities) *CookieBan
 	return &CookieBannerCapabilities{
 		ResourceReporting: c.ResourceReporting,
 		Tcf:               c.TCF,
+		Corsless:          c.Corsless,
 	}
 }
 
@@ -50,6 +52,21 @@ func NewCookieBanner(b *coredata.CookieBanner, tcfCmpID int) *CookieBanner {
 		CreatedAt:            b.CreatedAt,
 		UpdatedAt:            b.UpdatedAt,
 	}
+}
+
+func NewDiscoveryFamilyCounts(counts []cookiebanner.DiscoveryFamilyCount) []*DiscoveryFamilyCount {
+	out := make([]*DiscoveryFamilyCount, 0, len(counts))
+	for _, count := range counts {
+		out = append(
+			out,
+			&DiscoveryFamilyCount{
+				Family: count.Family,
+				Count:  count.Count,
+			},
+		)
+	}
+
+	return out
 }
 
 func NewListCookieBannersOutput(

@@ -80,6 +80,13 @@ export const description: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Agent Versions',
+				name: 'agentVersions',
+				type: 'string',
+				default: '',
+				description: 'Only devices reporting one of these agent versions. Separate versions with commas.',
+			},
+			{
 				displayName: 'Include Owner',
 				name: 'includeOwner',
 				type: 'boolean',
@@ -92,6 +99,45 @@ export const description: INodeProperties[] = [
 				type: 'boolean',
 				default: false,
 				description: 'Whether to include latest posture check results in the response',
+			},
+			{
+				displayName: 'Platforms',
+				name: 'platforms',
+				type: 'multiOptions',
+				options: [
+					{ name: 'FreeBSD', value: 'FREEBSD' },
+					{ name: 'Linux', value: 'LINUX' },
+					{ name: 'macOS', value: 'DARWIN' },
+					{ name: 'Windows', value: 'WINDOWS' },
+				],
+				default: [],
+				description: 'Only devices on one of these platforms. Devices that have not reported a platform are excluded.',
+			},
+			{
+				displayName: 'Query',
+				name: 'query',
+				type: 'string',
+				default: '',
+				description: 'Search devices by owner name. Each word is a prefix match, and every word must match.',
+			},
+			{
+				displayName: 'States',
+				name: 'states',
+				type: 'multiOptions',
+				options: [
+					{ name: 'Active', value: 'ACTIVE' },
+					{ name: 'Pending', value: 'PENDING' },
+					{ name: 'Revoked', value: 'REVOKED' },
+				],
+				default: [],
+				description: 'Only devices in one of these states',
+			},
+			{
+				displayName: 'Warnings Only',
+				name: 'hasPostureWarning',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to keep only devices whose latest posture for some check is FAIL or UNKNOWN',
 			},
 		],
 	},
@@ -107,6 +153,11 @@ export async function execute(
 	const options = this.getNodeParameter('options', itemIndex, {}) as {
 		includeOwner?: boolean;
 		includePostures?: boolean;
+		query?: string;
+		states?: string[];
+		platforms?: string[];
+		agentVersions?: string;
+		hasPostureWarning?: boolean;
 	};
 
 	const ownerFragment = options.includeOwner
@@ -132,11 +183,41 @@ export async function execute(
 		}`
 		: '';
 
+	const variables: IDataObject = { organizationId };
+	const filter: IDataObject = {};
+	if (options.query) {
+		filter.query = options.query;
+	}
+	if (options.states?.length) {
+		filter.states = options.states;
+	}
+	if (options.platforms?.length) {
+		filter.platforms = options.platforms;
+	}
+	const agentVersions = options.agentVersions
+		?.split(',')
+		.map(version => version.trim())
+		.filter(version => version.length > 0);
+	if (agentVersions?.length) {
+		filter.agentVersions = agentVersions;
+	}
+	if (options.hasPostureWarning) {
+		filter.hasPostureWarning = true;
+	}
+	if (Object.keys(filter).length > 0) {
+		variables.filter = filter;
+	}
+
 	const query = `
-		query GetDevices($organizationId: ID!, $first: Int, $after: CursorKey) {
+		query GetDevices(
+			$organizationId: ID!
+			$first: Int
+			$after: CursorKey
+			$filter: DeviceFilter
+		) {
 			node(id: $organizationId) {
 				... on Organization {
-					devices(first: $first, after: $after) {
+					devices(first: $first, after: $after, filter: $filter) {
 						edges {
 							node {
 								id
@@ -168,7 +249,7 @@ export async function execute(
 	const devices = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ organizationId },
+		variables,
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

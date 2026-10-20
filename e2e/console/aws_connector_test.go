@@ -130,6 +130,20 @@ type organizationConnectorStatusResult struct {
 	} `json:"node"`
 }
 
+func connectorStatus(t *testing.T, listed organizationConnectorStatusResult, connectorID string) string {
+	t.Helper()
+
+	for _, connector := range listed.Node.Connectors {
+		if connector.ID == connectorID {
+			return connector.ConnectionStatus
+		}
+	}
+
+	t.Fatalf("connector %s missing from organization list", connectorID)
+
+	return ""
+}
+
 func TestAWSConnectorSetup(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -165,6 +179,7 @@ func TestCreateWorkloadIdentityConnector(t *testing.T) {
 	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     awsFixtureRoleARN,
 		},
@@ -184,6 +199,7 @@ func TestCreateWorkloadIdentityConnector(t *testing.T) {
 		err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsSecondRoleARN,
 			},
@@ -203,6 +219,7 @@ func TestCreateWorkloadIdentityConnector_MissingRoleARN(t *testing.T) {
 	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Test",
 			"provider":       "AWS",
 		},
 	}, &createWorkloadIdentityConnectorResult{})
@@ -217,6 +234,7 @@ func TestCreateWorkloadIdentityConnector_InvalidRoleARN(t *testing.T) {
 	err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": owner.GetOrganizationID().String(),
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     bogus,
 		},
@@ -238,6 +256,7 @@ func TestConnectorConnectionStatus_AssumeRoleFailure(t *testing.T) {
 	resp, err := owner.Do(createWorkloadIdentityConnectorWithStatusMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": orgID,
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     awsFixtureRoleARN,
 		},
@@ -278,6 +297,7 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		err := viewer.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsFixtureRoleARN,
 			},
@@ -285,9 +305,7 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create aws connector")
 	})
 
-	// A viewer may list connectors but not read one, so the status field is
-	// what it is refused, not the listing around it.
-	t.Run("viewer cannot read connection status", func(t *testing.T) {
+	t.Run("viewer can read connection status", func(t *testing.T) {
 		t.Parallel()
 
 		var created createWorkloadIdentityConnectorResult
@@ -295,16 +313,23 @@ func TestAWSConnector_RBAC(t *testing.T) {
 		err := owner.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsFixtureRoleARN,
 			},
 		}, &created)
 		require.NoError(t, err)
 
+		connectorID := created.CreateWorkloadIdentityConnector.Connector.ID
+		require.NotEmpty(t, connectorID)
+
+		var listed organizationConnectorStatusResult
+
 		err = viewer.Execute(organizationConnectorStatusQuery, map[string]any{
 			"id": orgID,
-		}, &organizationConnectorStatusResult{})
-		testutil.RequireForbiddenError(t, err, "viewer should not be able to read aws connector status")
+		}, &listed)
+		require.NoError(t, err)
+		assert.Equal(t, "DISCONNECTED", connectorStatus(t, listed, connectorID))
 	})
 }
 
@@ -318,6 +343,7 @@ func TestAWSConnector_TenantIsolation(t *testing.T) {
 	err := org1.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 		"input": map[string]any{
 			"organizationId": org1ID,
+			"name":           "Test",
 			"provider":       "AWS",
 			"awsRoleArn":     awsFixtureRoleARN,
 		},
@@ -339,6 +365,7 @@ func TestAWSConnector_TenantIsolation(t *testing.T) {
 		err := org2.Execute(createWorkloadIdentityConnectorMutation, map[string]any{
 			"input": map[string]any{
 				"organizationId": org1ID,
+				"name":           "Test",
 				"provider":       "AWS",
 				"awsRoleArn":     awsFixtureRoleARN,
 			},

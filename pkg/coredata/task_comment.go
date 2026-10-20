@@ -157,8 +157,8 @@ LIMIT 1;
 	return nil
 }
 
-// LoadByIDForUpdate is LoadByID under FOR UPDATE so two outbound comment
-// sync jobs cannot both record a Linear mapping for the same comment.
+// LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent work on one
+// comment is serialized. That includes attachments and outbound sync.
 func (tc *TaskComment) LoadByIDForUpdate(
 	ctx context.Context,
 	conn pg.Tx,

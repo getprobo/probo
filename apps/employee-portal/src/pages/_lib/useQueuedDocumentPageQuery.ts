@@ -24,6 +24,7 @@ import { useParams } from "react-router";
 import type { GraphQLTaggedNode, OperationType } from "relay-runtime";
 
 import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { DOCUMENT_QUEUE_ID_PAGE_SIZE } from "./documentQueue";
 import { DOCUMENT_VERSION_PAGE_SIZE } from "./documentVersion";
@@ -37,11 +38,10 @@ type QueuedDocumentPageVariables = {
 
 function matchesRoute<TQuery extends OperationType>(
   queryRef: PreloadedQuery<TQuery> | null | undefined,
-  organizationId: string | undefined,
+  organizationId: string,
   documentId: string | undefined,
 ): queryRef is PreloadedQuery<TQuery> {
   return queryRef != null
-    && organizationId != null
     && documentId != null
     && queryRef.variables.organizationId === organizationId
     && queryRef.variables.documentId === documentId;
@@ -54,11 +54,12 @@ function matchesRoute<TQuery extends OperationType>(
 export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
   query: GraphQLTaggedNode,
 ): PreloadedQuery<TQuery> | null {
-  const { organizationId, documentId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
+  const { documentId } = useParams();
   const [queryRef, loadQuery] = useQueryLoader<TQuery>(query);
 
   useEffect(() => {
-    if (organizationId == null || documentId == null) {
+    if (documentId == null) {
       return;
     }
     loadQuery(
@@ -72,8 +73,8 @@ export function useQueuedDocumentPageQuery<TQuery extends OperationType>(
     );
   }, [organizationId, documentId, loadQuery]);
 
-  if (organizationId == null || documentId == null) {
-    throw new NotFoundError("organizationId and documentId are required");
+  if (documentId == null) {
+    throw new NotFoundError("documentId is required");
   }
 
   return matchesRoute(queryRef, organizationId, documentId) ? queryRef : null;

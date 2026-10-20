@@ -27,7 +27,8 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { useSearchParams } from "react-router";
 
-import type { EnrollPageQuery } from "#/__generated__/iam/EnrollPageQuery.graphql";
+import type { EnrollPageQuery$data, EnrollPageQuery } from "#/__generated__/iam/EnrollPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
 import { RelayProvider } from "#/lib/relay/RelayProvider";
 import { DownloadStep } from "#/pages/devices/_components/DownloadStep";
 import { OpenAgentStep } from "#/pages/devices/_components/OpenAgentStep";
@@ -63,6 +64,18 @@ export const enrollPageQuery = graphql`
             organization @required(action: THROW) {
               id
               canEnrollDevice: permission(action: "itam:device:enroll")
+              employeePortals(
+                first: 1
+                orderBy: { field: CREATED_AT, direction: ASC }
+              ) @catch(to: RESULT) {
+                edges {
+                  node {
+                    capabilities {
+                      deviceAgent
+                    }
+                  }
+                }
+              }
             }
             ...OrganizationStep_profile
           }
@@ -76,6 +89,16 @@ interface EnrollPageProps {
   queryRef: PreloadedQuery<EnrollPageQuery>;
 }
 
+function portalDeviceAgentEnabled(
+  portals: EnrollPageQuery$data["viewer"]["profiles"]["edges"][number]["node"]["organization"]["employeePortals"],
+): boolean {
+  if (portals == null || portals.ok !== true || portals.value == null) {
+    return false;
+  }
+
+  return portals.value.edges[0]?.node.capabilities.deviceAgent === true;
+}
+
 export function EnrollPage({ queryRef }: EnrollPageProps) {
   const { t } = useTranslation("enroll");
   const { t: tDevices } = useTranslation("devices");
@@ -85,9 +108,11 @@ export function EnrollPage({ queryRef }: EnrollPageProps) {
   const bar = topBar();
   const tagline = tApp("topBar.tagline");
   const { viewer } = usePreloadedQuery<EnrollPageQuery>(enrollPageQuery, queryRef);
-  const profiles = viewer.profiles.edges
-    .map(({ node }) => node)
-    .filter(profile => profile.organization.canEnrollDevice);
+  const nodes = viewer.profiles.edges.map(({ node }) => node);
+  const enrollable = nodes.filter(profile => profile.organization.canEnrollDevice);
+  const profiles = enrollable.filter(profile =>
+    portalDeviceAgentEnabled(profile.organization.employeePortals),
+  );
   const organizationIds = useMemo(
     () => new Set(profiles.map(profile => profile.organization.id)),
     [profiles],
@@ -176,6 +201,10 @@ export function EnrollPage({ queryRef }: EnrollPageProps) {
       params.delete("step");
       return params;
     }, { replace: true });
+  }
+
+  if (profiles.length === 0 && enrollable.length > 0) {
+    throw new NotFoundError();
   }
 
   return (
@@ -281,7 +310,7 @@ function EnrollOpenAgent({ organizationId }: { organizationId: string }) {
   return (
     <OpenAgentStep
       enrollment={enrollment}
-      organizationId={organizationId}
+      homeTo="/"
     />
   );
 }

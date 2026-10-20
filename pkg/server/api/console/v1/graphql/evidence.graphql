@@ -35,7 +35,7 @@ type Evidence implements Node {
     description: String
 
     task: Task @goField(forceResolver: true)
-    measure: Measure! @goField(forceResolver: true)
+    internalControl: InternalControl! @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -59,17 +59,17 @@ type EvidenceEdge {
 
 extend type Mutation {
     deleteEvidence(input: DeleteEvidenceInput!): DeleteEvidencePayload!
-    uploadMeasureEvidence(
-        input: UploadMeasureEvidenceInput!
-    ): UploadMeasureEvidencePayload!
+    uploadInternalControlEvidence(
+        input: UploadInternalControlEvidenceInput!
+    ): UploadInternalControlEvidencePayload!
 }
 
 input DeleteEvidenceInput {
     evidenceId: ID!
 }
 
-input UploadMeasureEvidenceInput {
-    measureId: ID!
+input UploadInternalControlEvidenceInput {
+    internalControlId: ID!
     file: Upload!
 }
 
@@ -77,6 +77,6 @@ type DeleteEvidencePayload {
     deletedEvidenceId: ID!
 }
 
-type UploadMeasureEvidencePayload {
+type UploadInternalControlEvidencePayload {
     evidenceEdge: EvidenceEdge!
 }

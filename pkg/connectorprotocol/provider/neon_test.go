@@ -1,0 +1,112 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package provider_test
+
+import (
+	"context"
+	"encoding/json"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/httpclient"
+	"go.probo.inc/probo/pkg/accessreview/drivers"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
+	"go.probo.inc/probo/pkg/coredata"
+)
+
+func TestNeonRegistrationMetadata(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderNeon)
+	require.True(t, ok, "neon provider must be registered")
+
+	assert.Equal(t, "Neon", reg.DisplayName)
+	assert.True(t, reg.SupportsAPIKey())
+	assert.Equal(t, provider.APIKeyAuthBearer, reg.APIKey.Auth.Mode)
+	require.Len(t, reg.APIKeyExtraSettings(), 1)
+	assert.Equal(t, "organizationId", reg.APIKeyExtraSettings()[0].Key)
+	assert.Equal(t, "Organization ID", reg.APIKeyExtraSettings()[0].Label)
+	assert.True(t, reg.APIKeyExtraSettings()[0].Required)
+}
+
+func TestNeonNewDriver(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderNeon)
+	require.True(t, ok, "neon provider must be registered")
+	require.NotNil(t, reg.NewDriver, "neon NewDriver closure must be wired")
+
+	t.Run("creates driver with valid organization_id", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := json.Marshal(&coredata.NeonConnectorSettings{
+			OrganizationID: "org-cool-breeze-12345678",
+		})
+		require.NoError(t, err)
+
+		conn := &coredata.Connector{
+			Provider:    coredata.ConnectorProviderNeon,
+			RawSettings: raw,
+		}
+
+		drv, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		require.NoError(t, err)
+		assert.IsType(t, &drivers.NeonDriver{}, drv)
+	})
+
+	t.Run("errors when organization_id is missing", func(t *testing.T) {
+		t.Parallel()
+
+		conn := &coredata.Connector{
+			Provider:    coredata.ConnectorProviderNeon,
+			RawSettings: []byte(`{}`),
+		}
+
+		_, err := reg.NewDriver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "organization_id is required")
+	})
+}
+
+func TestNeonNewNameResolver(t *testing.T) {
+	t.Parallel()
+
+	r := provider.NewBuiltinRegistry()
+	reg, ok := r.Get(coredata.ConnectorProviderNeon)
+	require.True(t, ok, "neon provider must be registered")
+	require.NotNil(t, reg.NewNameResolver, "neon NewNameResolver closure must be wired")
+
+	raw, err := json.Marshal(&coredata.NeonConnectorSettings{
+		OrganizationID: "org-cool-breeze-12345678",
+	})
+	require.NoError(t, err)
+
+	conn := &coredata.Connector{
+		Provider:    coredata.ConnectorProviderNeon,
+		RawSettings: raw,
+	}
+
+	resolver := reg.NewNameResolver(context.Background(), httpclient.DefaultClient(httpclient.WithSSRFProtection()), conn, nil, reg.Endpoints)
+	require.NotNil(t, resolver, "neon name resolver must be constructed for a valid connector")
+}

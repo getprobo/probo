@@ -123,10 +123,9 @@ func TestAccessReviewSourceInsert_IdempotentPerConnectorAccount(t *testing.T) {
 	require.True(t, inserted, "CSV sources never conflict")
 }
 
-// TestAccessReviewSourceDeleteReturningConnectorID pins the connector
-// handoff read: the delete returns the connector referenced at delete
-// time and ErrResourceNotFound for a missing source.
-func TestAccessReviewSourceDeleteReturningConnectorID(t *testing.T) {
+// TestAccessReviewSourceDelete pins source deletion: the row is removed
+// and a second delete returns ErrResourceNotFound.
+func TestAccessReviewSourceDelete(t *testing.T) {
 	t.Parallel()
 
 	client := test.PGClient(t)
@@ -142,21 +141,11 @@ func TestAccessReviewSourceDeleteReturningConnectorID(t *testing.T) {
 	require.True(t, inserted)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		returned, err := source.DeleteReturningConnectorID(ctx, tx, scope)
-		if err != nil {
-			return err
-		}
-
-		require.NotNil(t, returned)
-		require.Equal(t, connectorID, *returned)
-
-		return nil
+		return source.Delete(ctx, tx, scope)
 	}))
 
 	err = client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		_, err := source.DeleteReturningConnectorID(ctx, tx, scope)
-
-		return err
+		return source.Delete(ctx, tx, scope)
 	})
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }

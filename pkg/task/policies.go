@@ -25,21 +25,33 @@ import (
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
+const (
+	// actionFileGet is probo.ActionFileGet. People who can read a task can
+	// download its private files through the existing file handler.
+	actionFileGet = "core:file:get"
+	// actionFileUpload is probo.ActionFileUpload. People who can create or
+	// edit a task can upload a file.
+	actionFileUpload = "core:file:upload"
+)
+
 var (
 	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
 	ownerCondition        = policy.Equals("principal.id", "resource.owner_id")
+	assignedCondition     = policy.Equals("principal.profile_id", "resource.assigned_to_profile_id")
 )
 
 var readActions = []string{
-	ActionTaskGet, ActionTaskList,
+	ActionTaskGet, ActionTaskList, ActionEmployeeTaskList,
 	ActionTaskCommentGet, ActionTaskCommentList,
 	ActionTaskActivityGet, ActionTaskActivityList,
+	actionFileGet,
 }
 
 var writeActions = []string{
 	ActionTaskCreate, ActionTaskUpdate, ActionTaskDelete,
 	ActionTaskAssign, ActionTaskUnassign,
 	ActionTaskCommentCreate, ActionTaskCommentUpdate, ActionTaskCommentDelete,
+	actionFileUpload,
 }
 
 // FullAccessPolicy grants complete task access to organization owners and
@@ -78,6 +90,23 @@ var TaskCommentOwnershipPolicy = policy.NewPolicy(
 		When(organizationCondition, ownerCondition),
 ).WithDescription("Authors can update and delete their own task comments; nobody else can update them")
 
+// EmployeePolicy grants assigned-only task access to organization employees.
+// Employee-task list mirrors itam:employee-device:list: a dedicated surface so
+// employees can read their assigned tasks without core:task:list.
+var EmployeePolicy = policy.NewPolicy(
+	"task:employee",
+	"Task Employee",
+	policy.Allow(ActionEmployeeTaskList).
+		WithSID("task-employee-list-assigned").
+		When(organizationCondition),
+	policy.Allow(
+		ActionTaskGet, ActionTaskUpdate,
+		ActionTaskCommentGet, ActionTaskCommentList, ActionTaskCommentCreate,
+		ActionTaskActivityGet, ActionTaskActivityList,
+	).WithSID("task-employee-assigned").
+		When(organizationCondition, assignedCondition),
+).WithDescription("Employees can list and update tasks assigned to them")
+
 // PolicySet returns the PolicySet for the task service. It is owned by this
 // package and registered into the authorizer at composition time so task
 // authorization rules live alongside the domain logic instead of in the
@@ -86,5 +115,6 @@ func PolicySet() *iam.PolicySet {
 	return iam.NewPolicySet().
 		AddRolePolicy("OWNER", FullAccessPolicy, TaskCommentOwnershipPolicy).
 		AddRolePolicy("ADMIN", FullAccessPolicy, TaskCommentOwnershipPolicy).
-		AddRolePolicy("VIEWER", ReadAccessPolicy, TaskCommentOwnershipPolicy)
+		AddRolePolicy("VIEWER", ReadAccessPolicy, TaskCommentOwnershipPolicy).
+		AddRolePolicy("EMPLOYEE", EmployeePolicy, TaskCommentOwnershipPolicy)
 }

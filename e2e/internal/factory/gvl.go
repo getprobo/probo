@@ -165,6 +165,25 @@ SET
 	require.NoError(t, err, "test setup: cannot seed common gvl catalog state")
 }
 
+// EnableCookieBannerCorsless flips the hidden corsless capability on a banner.
+func EnableCookieBannerCorsless(t *testing.T, bannerID string) {
+	t.Helper()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+
+	err := client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		_, err := conn.Exec(ctx, `
+UPDATE cookie_banners
+SET capabilities = capabilities || '{"corsless": true}'::jsonb
+WHERE id = $1
+`, bannerID)
+
+		return err
+	})
+	require.NoError(t, err, "test setup: cannot enable cookie banner corsless")
+}
+
 // EnableCookieBannerTCF flips the hidden tcf capability on a banner.
 func EnableCookieBannerTCF(t *testing.T, bannerID string) {
 	t.Helper()

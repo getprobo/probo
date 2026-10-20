@@ -33,7 +33,7 @@ func TestMCP_TaskComment_ListOldestFirst(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	firstID := factory.NewTaskComment(owner, taskID).WithContent("Oldest MCP comment").Create()
 	secondID := factory.NewTaskComment(owner, taskID).WithContent("Newest MCP comment").Create()
 
@@ -57,7 +57,7 @@ func TestMCP_TaskComment_CRUD(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	mc := testutil.NewMCPClient(t, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	var addResult struct {
 		TaskComment struct {

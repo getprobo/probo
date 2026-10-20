@@ -88,12 +88,6 @@ func NewTask(t *coredata.Task) *Task {
 		UpdatedAt:          t.UpdatedAt,
 	}
 
-	if t.MeasureID != nil {
-		node.Measure = &Measure{
-			ID: *t.MeasureID,
-		}
-	}
-
 	if t.AssignedToID != nil {
 		node.AssignedTo = &Profile{
 			ID: *t.AssignedToID,

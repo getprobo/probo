@@ -20,7 +20,8 @@
 
 import { documentClassifications, documentTypes } from "@probo/helpers";
 import { dateFormat } from "@probo/i18n";
-import { Badge, Button, Card, IconCheckmark1, IconCrossLargeX, IconPencil, useToast } from "@probo/ui";
+import { Badge, Button, Card, IconCheckmark1, IconCrossLargeX, IconPencil } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -149,7 +150,7 @@ export function DocumentDetailsCard(props: {
   const [isEditingClassification, setIsEditingClassification] = useState(false);
   const [isEditingApprovers, setIsEditingApprovers] = useState(false);
 
-  const { toast } = useToast();
+  const toast = useToast();
   const document = useFragment<DocumentDetailsCard_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentDetailsCard_versionFragment$key>(versionFragment, versionFragmentRef);
 
@@ -214,17 +215,17 @@ export function DocumentDetailsCard(props: {
       onCompleted: () => {
         setIsEditingType(false);
         onDocumentUpdated();
-        toast({
+        toast.add({
           title: t("documentDetails.messages.successTitle"),
           description: t("documentDetails.messages.typeUpdated"),
-          variant: "success",
+          type: "success",
         });
       },
       onError: () => {
-        toast({
+        toast.add({
           title: t("documentDetails.errors.title"),
           description: t("documentDetails.errors.updateType"),
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -243,17 +244,17 @@ export function DocumentDetailsCard(props: {
       onCompleted: () => {
         setIsEditingClassification(false);
         onDocumentUpdated();
-        toast({
+        toast.add({
           title: t("documentDetails.messages.successTitle"),
           description: t("documentDetails.messages.classificationUpdated"),
-          variant: "success",
+          type: "success",
         });
       },
       onError: () => {
-        toast({
+        toast.add({
           title: t("documentDetails.errors.title"),
           description: t("documentDetails.errors.updateClassification"),
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -269,17 +270,17 @@ export function DocumentDetailsCard(props: {
       },
       onCompleted: () => {
         setIsEditingApprovers(false);
-        toast({
+        toast.add({
           title: t("documentDetails.messages.successTitle"),
           description: t("documentDetails.messages.approversUpdated"),
-          variant: "success",
+          type: "success",
         });
       },
       onError: () => {
-        toast({
+        toast.add({
           title: t("documentDetails.errors.title"),
           description: t("documentDetails.errors.updateApprovers"),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -35,8 +35,8 @@ import {
   Input,
   PageHeader,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -152,7 +152,7 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   if (!statementOfApplicabilityId || !statementOfApplicability) {
     throw new Error(
@@ -186,13 +186,13 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
             void navigate(`/organizations/${organizationId}/governance/statements-of-applicability`);
           })
           .catch((error) => {
-            toast({
+            toast.add({
               title: t("statementOfApplicabilityDetailPage.messages.error"),
               description: formatError(
                 t("statementOfApplicabilityDetailPage.errors.delete"),
                 error as GraphQLError,
               ),
-              variant: "error",
+              type: "error",
             });
           }),
       {
@@ -235,22 +235,22 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
         },
       },
       onCompleted() {
-        toast({
+        toast.add({
           title: t("statementOfApplicabilityDetailPage.messages.success"),
           description: t("statementOfApplicabilityDetailPage.messages.updated"),
-          variant: "success",
+          type: "success",
         });
         setIsEditingName(false);
         resetName({ name: data.name });
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("statementOfApplicabilityDetailPage.messages.error"),
           description: formatError(
             t("statementOfApplicabilityDetailPage.errors.update"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -292,21 +292,21 @@ export default function StatementOfApplicabilityDetailPage(props: Props) {
         },
       },
       onCompleted() {
-        toast({
+        toast.add({
           title: t("statementOfApplicabilityDetailPage.messages.success"),
           description: t("statementOfApplicabilityDetailPage.messages.approversUpdated"),
-          variant: "success",
+          type: "success",
         });
         setIsEditingApprovers(false);
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("statementOfApplicabilityDetailPage.messages.error"),
           description: formatError(
             t("statementOfApplicabilityDetailPage.errors.updateApprovers"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

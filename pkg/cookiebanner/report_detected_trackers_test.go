@@ -22,7 +22,9 @@ package cookiebanner
 
 import (
 	"context"
+	"math"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -326,4 +328,352 @@ func TestReportDetectedTrackers_ResourceReportingEnabled(t *testing.T) {
 	)
 	assert.Equal(t, "https://cdn.example.com", resource.Origin)
 	assert.Equal(t, "/pixel.js", resource.Path)
+}
+
+// TestReportDetectedTrackers_SeparatesHostOnlyAndDomain asserts that
+// a host-only (or unknown-domain) cookie and a Domain-scoped cookie
+// with the same name are stored as two detections under one pattern.
+func TestReportDetectedTrackers_SeparatesHostOnlyAndDomain(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:   "_ga",
+						Source: coredata.CookieSourceScript,
+					},
+				},
+			},
+		),
+	)
+
+	domain := "example.com"
+	hostOnly := false
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:         "_ga",
+						Source:       coredata.CookieSourcePreExisting,
+						CookieDomain: &domain,
+						HostOnly:     &hostOnly,
+					},
+				},
+			},
+		),
+	)
+
+	trackers := loadDetectedTrackersByPattern(t, ctx, client, fx, "_ga")
+	require.Len(t, trackers, 2)
+
+	var hostOnlyTracker, domainTracker *coredata.DetectedTracker
+
+	for _, tracker := range trackers {
+		if tracker.CookieDomain == nil {
+			hostOnlyTracker = tracker
+			continue
+		}
+
+		domainTracker = tracker
+	}
+
+	require.NotNil(t, hostOnlyTracker)
+	require.NotNil(t, hostOnlyTracker.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *hostOnlyTracker.Source)
+
+	require.NotNil(t, domainTracker)
+	require.NotNil(t, domainTracker.Source)
+	assert.Equal(t, coredata.CookieSourcePreExisting, *domainTracker.Source)
+	require.NotNil(t, domainTracker.CookieDomain)
+	assert.Equal(t, domain, *domainTracker.CookieDomain)
+	require.NotNil(t, domainTracker.HostOnly)
+	assert.False(t, *domainTracker.HostOnly)
+
+	assert.NotEqual(t, hostOnlyTracker.ID, domainTracker.ID)
+	require.NotNil(t, hostOnlyTracker.TrackerPatternID)
+	require.NotNil(t, domainTracker.TrackerPatternID)
+	assert.Equal(t, *hostOnlyTracker.TrackerPatternID, *domainTracker.TrackerPatternID)
+}
+
+// TestReportDetectedTrackers_ExtensionSkipsMappingRequest asserts that
+// a new EXTENSION pattern stays uncategorised and does not arm the
+// mapping worker.
+func TestReportDetectedTrackers_ExtensionSkipsMappingRequest(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:   "ext_session",
+						Source: coredata.CookieSourceExtension,
+					},
+				},
+			},
+		),
+	)
+
+	var pattern coredata.TrackerPattern
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return pattern.LoadByBannerIDTypeAndPattern(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					"ext_session",
+					nil,
+				)
+			},
+		),
+	)
+
+	require.NotNil(t, pattern.Source)
+	assert.Equal(t, coredata.CookieSourceExtension, *pattern.Source)
+	assert.Equal(t, fx.uncategorisedID, pattern.CookieCategoryID)
+	assert.False(t, pattern.Excluded)
+	assert.Nil(t, pattern.MappingRequestedAt)
+	assert.Nil(t, pattern.CommonTrackerPatternID)
+}
+
+func TestInt4OrNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, int4OrNil(nil))
+	assert.Nil(t, int4OrNil(new(0)))
+	assert.Nil(t, int4OrNil(new(-1)))
+	assert.Nil(t, int4OrNil(new(251610986978)))
+
+	got := int4OrNil(new(math.MaxInt32))
+	require.NotNil(t, got)
+	assert.Equal(t, math.MaxInt32, *got)
+
+	got = int4OrNil(new(3600))
+	require.NotNil(t, got)
+	assert.Equal(t, 3600, *got)
+}
+
+// TestReportDetectedTrackers_DropsOversizedMaxAge asserts that a
+// cookie Max-Age larger than PostgreSQL INTEGER does not fail the
+// upsert. The tracker is stored and the duration is omitted.
+func TestReportDetectedTrackers_DropsOversizedMaxAge(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+	oversized := 251610986978
+
+	require.NoError(
+		t,
+		svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{
+					{
+						Name:          "_ga",
+						MaxAgeSeconds: &oversized,
+						Source:        coredata.CookieSourceScript,
+					},
+				},
+			},
+		),
+	)
+
+	trackers := loadDetectedTrackersByPattern(t, ctx, client, fx, "_ga")
+	require.Len(t, trackers, 1)
+
+	assert.Nil(t, trackers[0].MaxAgeSeconds)
+	require.NotNil(t, trackers[0].Source)
+	assert.Equal(t, coredata.CookieSourceScript, *trackers[0].Source)
+}
+
+func loadDetectedTrackersByPattern(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx workerFixture,
+	pattern string,
+) []*coredata.DetectedTracker {
+	t.Helper()
+
+	var trackers []*coredata.DetectedTracker
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		var tp coredata.TrackerPattern
+		if err := tp.LoadByBannerIDTypeAndPattern(
+			ctx,
+			conn,
+			fx.scope,
+			fx.banner.ID,
+			coredata.TrackerTypeCookie,
+			pattern,
+			nil,
+		); err != nil {
+			return err
+		}
+
+		loaded, err := page.LoadAll(
+			ctx,
+			page.OrderBy[coredata.DetectedTrackerOrderField]{
+				Field:     coredata.DetectedTrackerOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+			func(ctx context.Context, cursor *page.Cursor[coredata.DetectedTrackerOrderField]) ([]*coredata.DetectedTracker, error) {
+				var batch coredata.DetectedTrackers
+				if err := batch.LoadByTrackerPatternID(ctx, conn, fx.scope, tp.ID, cursor); err != nil {
+					return nil, err
+				}
+
+				return batch, nil
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		trackers = loaded
+
+		return nil
+	}))
+
+	return trackers
+}
+
+// TestReportDetectedTrackers_PromotesSourceOnInsertConflict holds the
+// SCRIPT first-insert until PRE_EXISTING has committed, after both
+// lookups have seen no pattern. The SCRIPT report then loses
+// InsertIfNotExists and must still promote the PRE_EXISTING row.
+func TestReportDetectedTrackers_PromotesSourceOnInsertConflict(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	const name = "_ph_insert_conflict"
+
+	scriptLookedUp := make(chan struct{})
+	preExistingCommitted := make(chan struct{})
+
+	svc.afterPatternLookup = func(source *coredata.CookieSource) {
+		if source == nil {
+			return
+		}
+
+		switch *source {
+		case coredata.CookieSourcePreExisting:
+			<-scriptLookedUp
+		case coredata.CookieSourceScript:
+			select {
+			case <-scriptLookedUp:
+			default:
+				close(scriptLookedUp)
+			}
+
+			<-preExistingCommitted
+		}
+	}
+
+	var wg sync.WaitGroup
+
+	errs := make(chan error, 2)
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+
+		err := svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{{
+					Name:   name,
+					Source: coredata.CookieSourcePreExisting,
+				}},
+			},
+		)
+
+		close(preExistingCommitted)
+
+		errs <- err
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		errs <- svc.ReportDetectedTrackers(
+			ctx,
+			fx.banner.ID,
+			ReportDetectedTrackersRequest{
+				Cookies: []DetectedCookie{{
+					Name:   name,
+					Source: coredata.CookieSourceScript,
+				}},
+			},
+		)
+	}()
+
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	var loaded coredata.TrackerPattern
+
+	require.NoError(
+		t,
+		client.WithConn(
+			ctx,
+			func(ctx context.Context, conn pg.Querier) error {
+				return loaded.LoadByBannerIDTypeAndPattern(
+					ctx,
+					conn,
+					fx.scope,
+					fx.banner.ID,
+					coredata.TrackerTypeCookie,
+					name,
+					nil,
+				)
+			},
+		),
+	)
+
+	require.NotNil(t, loaded.Source)
+	assert.Equal(t, coredata.CookieSourceScript, *loaded.Source)
 }

@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { CopyIcon } from "@phosphor-icons/react";
-import { useToast } from "@probo/ui";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Code } from "@probo/ui/src/v2/typography/Code";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
@@ -35,22 +35,22 @@ export function SAMLConfigurationSsoUrl({
   testLoginUrl,
 }: SAMLConfigurationSsoUrlProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const { url, urlRow, urlValue } = samlConfigurationListItem();
 
   async function handleCopyUrl() {
     try {
       await navigator.clipboard.writeText(testLoginUrl);
-      toast({
+      toast.add({
         title: t("samlConfigurationList.messages.copied"),
         description: t("samlConfigurationList.fields.ssoUrl"),
-        variant: "success",
+        type: "success",
       });
     } catch {
-      toast({
+      toast.add({
         title: t("samlConfigurationList.errors.copy"),
         description: t("samlConfigurationList.fields.ssoUrl"),
-        variant: "error",
+        type: "error",
       });
     }
   }

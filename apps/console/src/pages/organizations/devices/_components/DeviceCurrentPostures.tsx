@@ -18,22 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui";
+import { ShieldCheckIcon } from "@phosphor-icons/react";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { DeviceCurrentPostures_deviceFragment$key } from "#/__generated__/core/DeviceCurrentPostures_deviceFragment.graphql";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
 
 import { getPostureCheckLabel } from "../_lib/getPostureCheckLabel";
 
 import { PostureValueBadge } from "./PostureValueBadge";
+import { deviceCardFields } from "./variants";
 
 const deviceFragment = graphql`
   fragment DeviceCurrentPostures_deviceFragment on Device {
     latestPostures {
       id
       checkKey
+      status
       ...PostureValueBadge_postureFragment
     }
   }
@@ -46,36 +51,41 @@ interface DeviceCurrentPosturesProps {
 export function DeviceCurrentPostures({
   deviceFragmentRef,
 }: DeviceCurrentPosturesProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("organizations/devices");
   const device = useFragment(deviceFragment, deviceFragmentRef);
+  const { root, property } = deviceCardFields();
+  const tone = device.latestPostures.some(posture => posture.status === "PASS")
+    && device.latestPostures.every(
+      posture => posture.status === "PASS" || posture.status === "NOT_APPLICABLE",
+    )
+    ? "green"
+    : "sand";
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-medium">
-        {t("devices.postures.currentTitle")}
-      </h2>
-      <Card className="space-y-4" padded>
-        {device.latestPostures.length === 0
-          ? (
-              <div className="text-sm text-txt-secondary">
-                {t("devices.postures.empty")}
-              </div>
-            )
-          : (
-              <div className="grid grid-cols-3 gap-4">
-                {device.latestPostures.map(posture => (
-                  <div key={posture.id}>
-                    <div className="text-xs text-txt-tertiary font-semibold mb-1">
-                      {getPostureCheckLabel(t, posture.checkKey)}
-                    </div>
-                    <div className="text-sm text-txt-primary">
-                      <PostureValueBadge postureFragmentRef={posture} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-      </Card>
-    </div>
+    <TonedCard
+      tone={tone}
+      fill={false}
+      icon={<ShieldCheckIcon weight="duotone" />}
+      lead={(
+        <Heading level={2} size={4} weight="medium" highContrast>
+          {t("devices.postures.currentTitle")}
+        </Heading>
+      )}
+    >
+      {device.latestPostures.length === 0
+        ? <Text size={2} color="faint" align="center">{t("devices.postures.empty")}</Text>
+        : (
+            <div className={root()}>
+              {device.latestPostures.map(posture => (
+                <div key={posture.id} className={property()}>
+                  <Text size={1} color="faint">
+                    {getPostureCheckLabel(t, posture.checkKey)}
+                  </Text>
+                  <PostureValueBadge postureFragmentRef={posture} />
+                </div>
+              ))}
+            </div>
+          )}
+    </TonedCard>
   );
 }

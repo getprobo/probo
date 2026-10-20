@@ -31,7 +31,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
@@ -66,15 +66,16 @@ func (j *jsonRawMessageOrNull) Scan(src any) error {
 
 type (
 	Connector struct {
-		ID                  gid.GID              `db:"id"`
-		OrganizationID      gid.GID              `db:"organization_id"`
-		Provider            ConnectorProvider    `db:"provider"`
-		Protocol            ConnectorProtocol    `db:"protocol"`
-		RawSettings         jsonRawMessageOrNull `db:"settings"`
-		Connection          connector.Connection `db:"-"`
-		EncryptedConnection []byte               `db:"encrypted_connection"`
-		CreatedAt           time.Time            `db:"created_at"`
-		UpdatedAt           time.Time            `db:"updated_at"`
+		ID                  gid.GID                      `db:"id"`
+		OrganizationID      gid.GID                      `db:"organization_id"`
+		Provider            ConnectorProvider            `db:"provider"`
+		Protocol            ConnectorProtocol            `db:"protocol"`
+		Name                string                       `db:"name"`
+		RawSettings         jsonRawMessageOrNull         `db:"settings"`
+		Connection          connectorprotocol.Connection `db:"-"`
+		EncryptedConnection []byte                       `db:"encrypted_connection"`
+		CreatedAt           time.Time                    `db:"created_at"`
+		UpdatedAt           time.Time                    `db:"updated_at"`
 	}
 
 	Connectors []*Connector
@@ -151,6 +152,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
     created_at,
@@ -216,8 +218,9 @@ func (c *Connectors) LoadAllByOrganizationIDWithoutDecryptedConnection(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ConnectorFilter,
 ) error {
-	return c.loadAllByOrganizationID(ctx, conn, scope, organizationID)
+	return c.loadAllByOrganizationID(ctx, conn, scope, organizationID, filter)
 }
 
 func (c *Connector) LoadByID(
@@ -252,6 +255,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
     created_at,
@@ -329,6 +333,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
     created_at,
@@ -498,6 +503,7 @@ INSERT INTO connectors (
 	organization_id,
 	provider,
 	protocol,
+	name,
 	settings,
 	encrypted_connection,
 	created_at,
@@ -508,6 +514,7 @@ INSERT INTO connectors (
 	@organization_id,
 	@provider,
 	@protocol,
+	@name,
 	@settings,
 	@encrypted_connection,
 	@created_at,
@@ -520,7 +527,7 @@ INSERT INTO connectors (
 	}
 
 	if c.Provider == ConnectorProviderSlack {
-		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+		if slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection); ok {
 			_ = c.SetSettings(
 				&SlackConnectorSettings{
 					Channel:   slackConn.Settings.Channel,
@@ -551,6 +558,7 @@ INSERT INTO connectors (
 		"organization_id":      c.OrganizationID,
 		"provider":             c.Provider,
 		"protocol":             c.Protocol,
+		"name":                 c.Name,
 		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"created_at":           c.CreatedAt,
@@ -581,6 +589,7 @@ SELECT
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
 	created_at,
@@ -621,13 +630,19 @@ func (c *Connectors) loadAllByOrganizationID(
 	conn pg.Querier,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ConnectorFilter,
 ) error {
+	if filter == nil {
+		filter = &ConnectorFilter{}
+	}
+
 	q := `
 SELECT
     id,
     organization_id,
     provider,
     protocol,
+    name,
     settings,
     encrypted_connection,
 	created_at,
@@ -637,14 +652,16 @@ FROM
 WHERE
 	%s
     AND organization_id = @organization_id
+	AND %s
 ORDER BY
 	created_at ASC
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -670,6 +687,7 @@ func (c *Connector) Update(
 	q := `
 UPDATE connectors
 SET
+    name = @name,
     settings = @settings,
     encrypted_connection = @encrypted_connection,
     updated_at = @updated_at
@@ -685,7 +703,7 @@ WHERE
 	}
 
 	if c.Provider == ConnectorProviderSlack {
-		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+		if slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection); ok {
 			_ = c.SetSettings(
 				&SlackConnectorSettings{
 					Channel:   slackConn.Settings.Channel,
@@ -712,6 +730,7 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                   c.ID,
+		"name":                 c.Name,
 		"settings":             settingsArg,
 		"encrypted_connection": encryptedConnection,
 		"updated_at":           c.UpdatedAt,
@@ -732,6 +751,88 @@ WHERE
 	return nil
 }
 
+// UpdateName writes only the user-facing name. Reconnect uses Update, which
+// writes the name already loaded on the row, so a token refresh cannot clear it.
+func (c *Connector) UpdateName(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE connectors
+SET
+    name = @name,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         c.ID,
+		"name":       c.Name,
+		"updated_at": c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update connector name: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
+// UpdateSettings writes only settings. Update also writes name and
+// encrypted_connection from the loaded row, so a settings save cannot revert
+// a concurrent rename or token refresh.
+func (c *Connector) UpdateSettings(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE connectors
+SET
+    settings = @settings,
+    updated_at = @updated_at
+WHERE
+    %s
+    AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	var settingsArg any
+	if len(c.RawSettings) > 0 {
+		settingsArg = []byte(c.RawSettings)
+	}
+
+	args := pgx.StrictNamedArgs{
+		"id":         c.ID,
+		"settings":   settingsArg,
+		"updated_at": c.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update connector settings: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
+	}
+
+	return nil
+}
+
 // DecryptConnection hydrates Connection from EncryptedConnection already
 // present on the struct. Call it after a metadata or list load instead of
 // LoadByID, which would query the same row again.
@@ -745,18 +846,71 @@ func (c *Connector) DecryptConnection(encryptionKey cipher.EncryptionKey) error 
 		return fmt.Errorf("cannot decrypt connection for %s: %w", c.Provider, err)
 	}
 
-	c.Connection, err = connector.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
+	c.Connection, err = connectorprotocol.UnmarshalConnection(c.Protocol.String(), c.Provider.String(), decryptedConnection)
 	if err != nil {
 		return fmt.Errorf("cannot unmarshal connection for %s: %w", c.Provider, err)
 	}
 
 	if c.Provider == ConnectorProviderSlack {
-		if slackConn, ok := c.Connection.(*connector.SlackConnection); ok {
+		if slackConn, ok := c.Connection.(*connectorprotocol.SlackConnection); ok {
 			settings, _ := ConnectorSettings[SlackConnectorSettings](c)
 			slackConn.Settings.Channel = settings.Channel
 			slackConn.Settings.ChannelID = settings.ChannelID
 		}
 	}
+
+	return nil
+}
+
+func (c *Connectors) LoadByProviderAndSettings(
+	ctx context.Context,
+	conn pg.Querier,
+	provider ConnectorProvider,
+	settings map[string]any,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    provider,
+    protocol,
+    name,
+    settings,
+    encrypted_connection,
+    created_at,
+    updated_at
+FROM
+    connectors
+WHERE
+    provider = @provider
+    AND settings @> @settings::jsonb
+ORDER BY
+    created_at, id
+`
+
+	if len(settings) == 0 {
+		return fmt.Errorf("connector settings filter is empty")
+	}
+
+	encoded, err := json.Marshal(settings)
+	if err != nil {
+		return fmt.Errorf("cannot encode connector settings filter: %w", err)
+	}
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{
+		"provider": provider,
+		"settings": string(encoded),
+	})
+	if err != nil {
+		return fmt.Errorf("cannot query connectors: %w", err)
+	}
+
+	connectors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Connector])
+	if err != nil {
+		return fmt.Errorf("cannot collect connectors: %w", err)
+	}
+
+	*c = connectors
 
 	return nil
 }

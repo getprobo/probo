@@ -30,8 +30,8 @@ import (
 type DetectedTrackerOrderField string
 
 const (
-	DetectedTrackerOrderFieldInitiatorURL   DetectedTrackerOrderField = "INITIATOR_URL"
-	DetectedTrackerOrderFieldLastDetectedAt DetectedTrackerOrderField = "LAST_DETECTED_AT"
+	DetectedTrackerOrderFieldCreatedAt    DetectedTrackerOrderField = "CREATED_AT"
+	DetectedTrackerOrderFieldInitiatorURL DetectedTrackerOrderField = "INITIATOR_URL"
 )
 
 var (
@@ -43,8 +43,8 @@ var (
 
 func DetectedTrackerOrderFields() []DetectedTrackerOrderField {
 	return []DetectedTrackerOrderField{
+		DetectedTrackerOrderFieldCreatedAt,
 		DetectedTrackerOrderFieldInitiatorURL,
-		DetectedTrackerOrderFieldLastDetectedAt,
 	}
 }
 
@@ -66,10 +66,10 @@ func (v *DetectedTrackerOrderField) UnmarshalText(text []byte) error {
 
 func (p DetectedTrackerOrderField) Column() string {
 	switch p {
+	case DetectedTrackerOrderFieldCreatedAt:
+		return "created_at"
 	case DetectedTrackerOrderFieldInitiatorURL:
 		return "COALESCE(initiator_url, '')"
-	case DetectedTrackerOrderFieldLastDetectedAt:
-		return "last_detected_at"
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", p))

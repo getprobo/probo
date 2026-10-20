@@ -41,6 +41,31 @@ export function faviconUrl(url?: string | null): string | null {
     }
 }
 
+export function clampUtf8(value: string, maxBytes: number): string {
+    const encoder = new TextEncoder();
+    let result = "";
+    let bytes = 0;
+
+    for (const char of value) {
+        const size = encoder.encode(char).length;
+        if (bytes + size > maxBytes) {
+            break;
+        }
+
+        result += char;
+        bytes += size;
+    }
+
+    return result;
+}
+
+export function emptyToNull(value: string | null | undefined): string | null {
+    if (value == null || value.trim() === "") {
+        return null;
+    }
+    return value;
+}
+
 export function slugify(str: string): string {
     return str
         .normalize("NFD") // split an accented letter in the base letter and the acent

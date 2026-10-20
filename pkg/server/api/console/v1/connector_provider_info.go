@@ -21,15 +21,15 @@
 package console_v1
 
 import (
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
 // connectorProviderSettingInfos projects one connect path's settings list onto
 // the GraphQL type. A Registration declares one list per connect path, so
-// AccessReviewDrivers calls this once per path. The result is never nil: both
+// ConnectorProviders calls this once per path. The result is never nil: both
 // schema fields are non-null lists, and a provider with no settings on a path
 // returns an empty one.
 func connectorProviderSettingInfos(settings []provider.ExtraSetting) []*types.ConnectorProviderSettingInfo {
@@ -60,7 +60,7 @@ func connectorAPIKeyFormat(reg *provider.Registration) *types.ConnectorAPIKeyFor
 	}
 }
 
-func connectorProtocols(protocols []connector.ProtocolType) []coredata.ConnectorProtocol {
+func connectorProtocols(protocols []connectorprotocol.ProtocolType) []coredata.ConnectorProtocol {
 	out := make([]coredata.ConnectorProtocol, 0, len(protocols))
 	for _, protocol := range protocols {
 		out = append(out, coredata.ConnectorProtocol(protocol))

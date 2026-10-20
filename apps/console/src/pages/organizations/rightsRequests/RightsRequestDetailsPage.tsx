@@ -37,8 +37,8 @@ import {
   Option,
   Select,
   Textarea,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -80,7 +80,7 @@ export default function RightsRequestDetailsPage(props: Props) {
   );
   const request = data.node;
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
 
   const updateRequest = useUpdateRightsRequest();
@@ -123,19 +123,19 @@ export default function RightsRequestDetailsPage(props: Props) {
         actionTaken: formData.actionTaken || undefined,
       });
 
-      toast({
+      toast.add({
         title: t("rightsRequestDetailsPage.messages.success"),
         description: t("rightsRequestDetailsPage.messages.updated"),
-        variant: "success",
+        type: "success",
       });
     } catch (error) {
-      toast({
+      toast.add({
         title: t("rightsRequestDetailsPage.messages.error"),
         description: formatError(
           t("rightsRequestDetailsPage.errors.update"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     }
   });

@@ -2,7 +2,7 @@
 
 This document records the treatment plans produced by a single risk analysis.
 It captures each linked risk's classification, treatment, ownership, linked
-measures, and initial and residual scoring (likelihood × impact). Initial,
+internal controls, and initial and residual scoring (likelihood × impact). Initial,
 net, and residual matrices are shown below. Diagrams from the analysis are
 included as Mermaid charts, each with a list of scenarios and their linked
 risks and threats.
@@ -67,14 +67,14 @@ No treatment plans recorded.
 | --- | --- | --- |
 | {{ $r.ResidualLikelihood }} | {{ $r.ResidualImpact }} | {{ $r.ResidualRiskScore }} |
 
-### 3.{{ add $i 1 }}.4 Measures
+### 3.{{ add $i 1 }}.4 Internal controls
 
-{{ if not $r.Measures -}}
-No measures linked.
+{{ if not $r.InternalControls -}}
+No internal controls linked.
 {{ else -}}
-| Measure | State |
+| Internal control | State |
 | --- | --- |
-{{ range $r.Measures -}}
+{{ range $r.InternalControls -}}
 | {{ .Name }} | {{ .State }} |
 {{ end -}}
 {{ end }}

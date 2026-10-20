@@ -29,7 +29,6 @@ import {
   IconPlusLarge,
   Input,
   Option,
-  RichEditor,
   useDialogRef,
 } from "@probo/ui";
 import { useState } from "react";
@@ -41,6 +40,7 @@ import type { CreateRiskAnalysisDialogCreateMutation } from "#/__generated__/cor
 import { ControlledField } from "#/components/form/ControlledField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
 import { riskAnalysisDescriptionField } from "../variants";
@@ -83,6 +83,7 @@ export function CreateRiskAnalysisDialog(props: {
   const dialogRef = useDialogRef();
   const [createRiskAnalysis, isCreating] = useMutation<CreateRiskAnalysisDialogCreateMutation>(createMutation);
   const [editorKey, setEditorKey] = useState(0);
+  const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, reset, control, formState } = useForm<FormData>({
     defaultValues: {
       name: "",
@@ -94,6 +95,10 @@ export function CreateRiskAnalysisDialog(props: {
   });
 
   const onSubmit = async (data: FormData) => {
+    if (uploading) {
+      return;
+    }
+
     const period = toPeriod(
       formatDatetime(data.periodStart),
       formatDatetime(data.periodEnd),
@@ -157,6 +162,7 @@ export function CreateRiskAnalysisDialog(props: {
                   placeholder={t("createRiskAnalysisDialog.placeholders.description")}
                   aria-label={t("createRiskAnalysisDialog.fields.description")}
                   onChangeContent={field.onChange}
+                  onUploadingChange={setUploading}
                 />
               )}
             />
@@ -197,7 +203,7 @@ export function CreateRiskAnalysisDialog(props: {
           </Field>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isCreating}>
+          <Button type="submit" disabled={isCreating || uploading}>
             {t("createRiskAnalysisDialog.actions.create")}
           </Button>
         </DialogFooter>

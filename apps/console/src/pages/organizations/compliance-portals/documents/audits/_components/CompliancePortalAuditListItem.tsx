@@ -38,6 +38,7 @@ import type {
 import type {
   CompliancePortalAuditListItem_updateVisibilityMutation,
 } from "#/__generated__/core/CompliancePortalAuditListItem_updateVisibilityMutation.graphql";
+import { useAuditFrameworkNames } from "#/components/audits/AuditFrameworkNames";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -53,9 +54,7 @@ const auditFragment = graphql`
   @argumentDefinitions(compliancePortalId: { type: "ID!" }) {
     id
     name
-    framework {
-      name
-    }
+    ...AuditFrameworkNames_audit
     validity {
       end
     }
@@ -122,6 +121,7 @@ export function CompliancePortalAuditListItem(props: {
     auditFragment,
     props.auditKey,
   );
+  const { label: frameworkLabel } = useAuditFrameworkNames(audit);
   const catalogAudit = audit.compliancePortalAudit;
   const serverLinked = catalogAudit !== null;
   const [pendingLinked, setPendingLinked] = useState<boolean | null>(null);
@@ -254,7 +254,9 @@ export function CompliancePortalAuditListItem(props: {
         />
       </Td>
       <Td>
-        <div className="flex gap-4 items-center">{audit.framework?.name}</div>
+        <div className="flex gap-4 items-center">
+          {frameworkLabel || t("auditListItem.noFrameworks")}
+        </div>
       </Td>
       <Td>{auditTitle}</Td>
       <Td>{validUntilFormatted}</Td>

@@ -1,0 +1,153 @@
+{
+  "states": {
+    "backlog": "Backlog",
+    "todo": "To do",
+    "inProgress": "In progress",
+    "done": "Done",
+    "canceled": "Canceled",
+    "duplicate": "Duplicate"
+  },
+  "priorities": {
+    "urgent": "Urgent",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
+  "empty": "No tasks",
+  "emptyValue": "—",
+  "doesNotRepeat": "Does not repeat",
+  "noResults": "No tasks match your filters",
+  "searchPlaceholder": "Search tasks",
+  "filters": {
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "dueDate": "Due date",
+    "anyDueDate": "Any due date",
+    "due": {
+      "overdue": "Overdue",
+      "1d": "1 day from now",
+      "3d": "3 days from now",
+      "1w": "1 week from now",
+      "1m": "1 month from now",
+      "3m": "3 months from now",
+      "none": "No due date"
+    }
+  },
+  "unassigned": "Not assigned",
+  "deadlinePicker": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "endOfWeek": "End of week",
+    "nextWeek": "Next week",
+    "custom": "Custom",
+    "none": "None"
+  },
+  "durationPicker": {
+    "none": "None"
+  },
+  "fields": {
+    "name": "Name",
+    "description": "Description",
+    "state": "State",
+    "priority": "Priority",
+    "timeEstimate": "Time estimate",
+    "timeEstimateUnit": "Time estimate unit",
+    "deadline": "Deadline",
+    "recurrence": "Repeats",
+    "recurrenceUnit": "Recurrence unit",
+    "createdAt": "Created",
+    "updatedAt": "Updated",
+    "assignee": "Assignee"
+  },
+  "units": {
+    "S": "Seconds",
+    "M": "Minutes",
+    "H": "Hours",
+    "D": "Days",
+    "W": "Weeks",
+    "MO": "Months",
+    "Y": "Years"
+  },
+  "actions": {
+    "addEstimate": "Add estimate",
+    "clearEstimate": "Clear estimate",
+    "addRecurrence": "Add interval",
+    "clearRecurrence": "Clear interval",
+    "more": "More actions",
+    "delete": "Delete"
+  },
+  "hints": {
+    "recurrenceNeedsDeadline": "Set a deadline before adding a recurrence interval"
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "No comments yet",
+    "placeholder": "Leave a comment",
+    "submit": "Add comment",
+    "showMore": "Show more",
+    "authorFallback": "Someone"
+  },
+  "activity": {
+    "title": "Activity",
+    "empty": "No activity yet",
+    "showMore": "Show more",
+    "actorFallback": "Someone",
+    "sentences": {
+      "created": "{{actor}} created this task",
+      "updated": "{{actor}} updated this task",
+      "renamed": "{{actor}} renamed from {{oldValue}} to {{newValue}}",
+      "descriptionUpdated": "{{actor}} updated the description",
+      "stateChanged": "{{actor}} changed status from {{oldValue}} to {{newValue}}",
+      "priorityChanged": "{{actor}} changed priority from {{oldValue}} to {{newValue}}",
+      "assigned": "{{actor}} assigned {{newValue}}",
+      "reassigned": "{{actor}} reassigned from {{oldValue}} to {{newValue}}",
+      "unassigned": "{{actor}} unassigned {{oldValue}}",
+      "internalControlLinked": "{{actor}} linked {{newValue}}",
+      "internalControlChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
+      "internalControlUnlinked": "{{actor}} unlinked {{oldValue}}",
+      "deadlineSet": "{{actor}} set the deadline to {{newValue}}",
+      "deadlineChanged": "{{actor}} changed the deadline from {{oldValue}} to {{newValue}}",
+      "deadlineRemoved": "{{actor}} removed the deadline",
+      "timeEstimateSet": "{{actor}} set the time estimate to {{newValue}}",
+      "timeEstimateChanged": "{{actor}} changed the time estimate from {{oldValue}} to {{newValue}}",
+      "timeEstimateRemoved": "{{actor}} removed the time estimate"
+    }
+  },
+  "metadata": {
+    "timeEstimate": "Time estimate",
+    "deadline": "Deadline",
+    "overdue": "Overdue"
+  },
+  "recurringBadge": {
+    "tooltip": "Repeats every {{interval}}"
+  },
+  "duration": {
+    "seconds_one": "second",
+    "seconds_other": "seconds",
+    "minutes_one": "minute",
+    "minutes_other": "minutes",
+    "hours_one": "hour",
+    "hours_other": "hours",
+    "days_one": "day",
+    "days_other": "days",
+    "weeks_one": "week",
+    "weeks_other": "weeks",
+    "months_one": "month",
+    "months_other": "months",
+    "years_one": "year",
+    "years_other": "years",
+    "sec_one": "{{count}} Second",
+    "sec_other": "{{count}} Seconds",
+    "min_one": "{{count}} Minute",
+    "min_other": "{{count}} Minutes",
+    "hour_one": "{{count}} Hour",
+    "hour_other": "{{count}} Hours",
+    "yearShort": "{{count}} yr",
+    "monthShort": "{{count}} mo",
+    "weekShort": "{{count}} wk",
+    "dayShort": "{{count}} d",
+    "hourShort": "{{count}} hr",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} sec"
+  }
+}

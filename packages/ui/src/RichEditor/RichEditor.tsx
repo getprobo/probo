@@ -34,12 +34,19 @@ import { Text } from "@tiptap/extension-text";
 import { Underline } from "@tiptap/extension-underline";
 import { Dropcursor, UndoRedo } from "@tiptap/extensions";
 import { type Content, Editor, EditorContent, type JSONContent, useEditor } from "@tiptap/react";
-import { type ComponentProps, useCallback, useEffect, useLayoutEffect } from "react";
+import { type ComponentProps, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants";
 
+import useToast from "../v2/Toaster/useToast";
+
+import { fileAccept, imageAccept } from "./attachments";
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
+import { ContentUploadExtension } from "./ContentUploadExtension";
+import { FileExtension } from "./FileExtension";
+import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
@@ -49,6 +56,11 @@ import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
 import { TableRowMenu } from "./TableRowMenu/TableRowMenu";
 import { TableSelectionOverlay } from "./TableSelectionOverlay";
+import {
+  type AttachmentUploadError,
+  type UploadAttachment,
+  uploadAttachments,
+} from "./uploadAttachments";
 
 const extensions = [
   Document,
@@ -80,6 +92,9 @@ const extensions = [
   }),
   MarkdownPasteExtension,
   PlaceholderExtension,
+  ImageExtension,
+  FileExtension,
+  ContentUploadExtension,
 ];
 
 const richEditorVariants = tv({
@@ -97,11 +112,41 @@ function stripNonTextMarks(node: JSONContent) {
   node.content?.forEach(stripNonTextMarks);
 }
 
+function hasContentUpload(node: JSONContent): boolean {
+  if (node.type === "contentUpload") {
+    return true;
+  }
+
+  return node.content?.some(hasContentUpload) ?? false;
+}
+
+function withoutContentUploads(node: JSONContent): JSONContent {
+  if (!node.content) {
+    return node;
+  }
+
+  const content = node.content
+    .filter(child => child.type !== "contentUpload")
+    .map(withoutContentUploads);
+  const needsBlock = node.type === "doc"
+    || node.type === "blockquote"
+    || node.type === "listItem"
+    || node.type === "tableCell"
+    || node.type === "tableHeader";
+
+  return {
+    ...node,
+    content: needsBlock && content.length === 0 ? [{ type: "paragraph" }] : content,
+  };
+}
+
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
   placeholder?: string;
   onChangeContent?: (content: string) => void;
+  onUploadingChange?: (uploading: boolean) => void;
+  onUploadFile?: UploadAttachment;
 };
 
 function parseContent(content: string): Content {
@@ -123,8 +168,56 @@ export function RichEditor(props: RichEditorProps) {
     disabled = false,
     placeholder,
     onChangeContent,
+    onUploadingChange,
+    onUploadFile,
     ...divProps
   } = props;
+  const { t } = useTranslation();
+  const uploadRef = useRef<UploadAttachment | null>(null);
+  const onChangeContentRef = useRef(onChangeContent);
+  const onUploadingChangeRef = useRef(onUploadingChange);
+  const uploadingRef = useRef(false);
+  const emittedRef = useRef<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+  const reportUploadErrorRef = useRef<(error: AttachmentUploadError) => void>(() => {});
+  const canUpload = Boolean(onUploadFile && !disabled);
+
+  useLayoutEffect(() => {
+    onChangeContentRef.current = onChangeContent;
+    onUploadingChangeRef.current = onUploadingChange;
+  }, [onChangeContent, onUploadingChange]);
+
+  useEffect(() => {
+    return () => {
+      if (!uploadingRef.current) {
+        return;
+      }
+
+      uploadingRef.current = false;
+      onUploadingChangeRef.current?.(false);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (onUploadFile == null || disabled) {
+      uploadRef.current = null;
+    } else {
+      uploadRef.current = onUploadFile;
+    }
+
+    reportUploadErrorRef.current = (error) => {
+      toast.add({
+        title: t("ui.richEditor.uploadFailed"),
+        description: describeUploadError(t, error),
+        type: "error",
+      });
+    };
+  }, [disabled, onUploadFile, t, toast]);
+
+  const reportUploadError = useCallback((error: AttachmentUploadError) => {
+    reportUploadErrorRef.current(error);
+  }, []);
 
   const handleUpdate = useCallback(
     ({ editor }: { editor: Editor }) => {
@@ -132,12 +225,26 @@ export function RichEditor(props: RichEditorProps) {
         return;
       }
 
-      const json = editor.getJSON();
+      const raw = editor.getJSON();
+      const uploading = hasContentUpload(raw);
+      const becameSettled = uploadingRef.current && !uploading;
+      if (uploading !== uploadingRef.current) {
+        uploadingRef.current = uploading;
+        onUploadingChangeRef.current?.(uploading);
+      }
+
+      const json = withoutContentUploads(raw);
       stripNonTextMarks(json);
 
-      onChangeContent?.(JSON.stringify(json));
+      const next = JSON.stringify(json);
+      if (next === emittedRef.current && !becameSettled) {
+        return;
+      }
+
+      emittedRef.current = next;
+      onChangeContentRef.current?.(next);
     },
-    [onChangeContent],
+    [],
   );
 
   const editor = useEditor({
@@ -145,12 +252,72 @@ export function RichEditor(props: RichEditorProps) {
       attributes: {
         class: "h-full",
       },
+      handlePaste(view, event) {
+        const upload = uploadRef.current;
+        if (!upload || !view.editable) {
+          return false;
+        }
+
+        const files = Array.from(event.clipboardData?.files ?? []);
+        if (files.length === 0) {
+          return false;
+        }
+
+        event.preventDefault();
+        void uploadAttachments(view, files, view.state.selection.from, upload, reportUploadError);
+
+        return true;
+      },
+      handleDrop(view, event, _slice, moved) {
+        if (moved) {
+          return false;
+        }
+
+        const upload = uploadRef.current;
+        if (!upload || !view.editable) {
+          return false;
+        }
+
+        const files = Array.from(event.dataTransfer?.files ?? []);
+        if (files.length === 0) {
+          return false;
+        }
+
+        event.preventDefault();
+        const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+        void uploadAttachments(
+          view,
+          files,
+          coords?.pos ?? view.state.selection.from,
+          upload,
+          reportUploadError,
+        );
+
+        return true;
+      },
     },
     editable: !disabled,
     extensions,
     content: parseContent(content),
+    onCreate: ({ editor: created }) => {
+      const json = withoutContentUploads(created.getJSON());
+      stripNonTextMarks(json);
+      emittedRef.current = JSON.stringify(json);
+    },
     onUpdate: handleUpdate,
   });
+
+  const openFilePicker = useCallback((kind: "image" | "file") => {
+    const input = fileInputRef.current;
+    const upload = uploadRef.current;
+    if (!input || !upload || !editor) {
+      return;
+    }
+
+    input.accept = kind === "image" ? imageAccept : fileAccept;
+    input.value = "";
+    input.click();
+  }, [editor]);
 
   useLayoutEffect(() => {
     if (!editor) {
@@ -176,7 +343,10 @@ export function RichEditor(props: RichEditorProps) {
         && (
           <>
             <BubbleMenu editor={editor} />
-            <BlockMenu editor={editor} />
+            <BlockMenu
+              editor={editor}
+              onPickFiles={canUpload ? openFilePicker : undefined}
+            />
             <OptionsMenu editor={editor} />
             <TableSelectionOverlay editor={editor} />
             <TableCellMenu editor={editor} />
@@ -186,6 +356,42 @@ export function RichEditor(props: RichEditorProps) {
         )}
 
       <EditorContent className="h-full" editor={editor} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          const upload = uploadRef.current;
+          const files = Array.from(event.target.files ?? []);
+          event.target.value = "";
+          if (!upload || files.length === 0) {
+            return;
+          }
+
+          void uploadAttachments(
+            editor.view,
+            files,
+            editor.state.selection.from,
+            upload,
+            reportUploadError,
+          );
+        }}
+      />
     </div>
   );
+}
+
+function describeUploadError(
+  t: (key: string, options: { fileName: string }) => string,
+  error: AttachmentUploadError,
+) {
+  switch (error.reason) {
+    case "tooLarge":
+      return t("ui.richEditor.tooLarge", { fileName: error.fileName });
+    case "unsupported":
+      return t("ui.richEditor.unsupported", { fileName: error.fileName });
+    case "failed":
+      return t("ui.richEditor.couldNotUpload", { fileName: error.fileName });
+  }
 }

@@ -38,36 +38,18 @@ import {
   Option,
   Select,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense } from "react";
-import { type Control, Controller } from "react-hook-form";
+import { type Control } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useLazyLoadQuery } from "react-relay";
-import { graphql } from "relay-runtime";
 
-import type { CreateAuditDialogFrameworksQuery } from "#/__generated__/core/CreateAuditDialogFrameworksQuery.graphql";
+import { useOrganizationFrameworkOptions } from "#/components/audits/useOrganizationFrameworkOptions";
 import { ControlledField } from "#/components/form/ControlledField";
+import { EntityMultiSelectField } from "#/components/form/EntityMultiSelectField";
 import { useCreateAudit } from "#/hooks/graph/AuditGraph";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
-
-const frameworksQuery = graphql`
-  query CreateAuditDialogFrameworksQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      ... on Organization {
-        frameworks(first: 100) {
-          edges {
-            node {
-              id
-              name
-            }
-          }
-        }
-      }
-    }
-  }
-`;
 
 type Props = {
   children?: React.ReactNode;
@@ -87,9 +69,9 @@ export function CreateAuditDialog({
   onClose,
 }: Props) {
   const { i18n, t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const schema = z.object({
-    frameworkId: z.string().min(1, t("createAuditDialog.validation.frameworkRequired")),
+    frameworkIds: z.array(z.string()).min(1, t("createAuditDialog.validation.frameworkRequired")),
     name: z.string().optional(),
     firm: z.string().optional(),
     validFrom: z.string().optional(),
@@ -101,7 +83,7 @@ export function CreateAuditDialog({
   const { control, handleSubmit, register, formState, reset }
     = useFormWithSchema(schema, {
       defaultValues: {
-        frameworkId: "",
+        frameworkIds: [],
         name: "",
         firm: "",
         validFrom: "",
@@ -119,7 +101,7 @@ export function CreateAuditDialog({
     try {
       await createAudit({
         organizationId,
-        frameworkId: data.frameworkId,
+        frameworkIds: data.frameworkIds,
         name: data.name || null,
         firm: data.firm || null,
         validity: toPeriod(
@@ -137,21 +119,21 @@ export function CreateAuditDialog({
       ref.current?.close();
       reset();
       onClose?.();
-      toast({
+      toast.add({
         title: t("createAuditDialog.messages.success"),
         description: file
           ? t("createAuditDialog.messages.createdWithReport")
           : t("createAuditDialog.messages.created"),
-        variant: "success",
+        type: "success",
       });
     } catch (error) {
-      toast({
+      toast.add({
         title: t("createAuditDialog.messages.error"),
         description: formatError(
           t("createAuditDialog.errors.create"),
           error as GraphQLError,
         ),
-        variant: "error",
+        type: "error",
       });
     }
   };
@@ -193,7 +175,10 @@ export function CreateAuditDialog({
             </div>
           )}
 
-          <Field label={t("createAuditDialog.fields.framework")}>
+          <Field
+            label={t("createAuditDialog.fields.framework")}
+            error={formState.errors.frameworkIds?.message}
+          >
             <Suspense
               fallback={(
                 <Select
@@ -206,7 +191,6 @@ export function CreateAuditDialog({
               <FrameworkSelect
                 organizationId={organizationId}
                 control={control}
-                name="frameworkId"
               />
             </Suspense>
           </Field>
@@ -262,7 +246,7 @@ export function CreateAuditDialog({
 }
 
 type FormSchema = {
-  frameworkId: string;
+  frameworkIds: string[];
   name?: string;
   firm?: string;
   validFrom?: string;
@@ -275,44 +259,34 @@ type FormSchema = {
 function FrameworkSelect({
   organizationId,
   control,
-  name,
 }: {
   organizationId: string;
   control: Control<FormSchema>;
-  name: keyof FormSchema;
 }) {
   const { t } = useTranslation();
-  const data = useLazyLoadQuery<CreateAuditDialogFrameworksQuery>(
-    frameworksQuery,
-    { organizationId },
-    { fetchPolicy: "network-only" },
+  const { frameworks, failed, retry } = useOrganizationFrameworkOptions(
+    organizationId,
+    "network-only",
   );
-  const frameworks
-    = data?.organization?.frameworks?.edges
-      ?.map(edge => edge.node)
-      .filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <Select
-          id={name}
-          variant="editor"
-          placeholder={t("createAuditDialog.fields.frameworkPlaceholder")}
-          onValueChange={field.onChange}
-          {...field}
-          className="w-full"
-          value={field.value ?? ""}
-        >
-          {frameworks.map(framework => (
-            <Option key={framework.id} value={framework.id}>
-              {framework.name}
-            </Option>
-          ))}
-        </Select>
+    <div className="space-y-2">
+      <EntityMultiSelectField
+        control={control}
+        name="frameworkIds"
+        items={frameworks}
+        placeholder={t("createAuditDialog.fields.frameworkPlaceholder")}
+        emptyLabel={t("createAuditDialog.validation.frameworkRequired")}
+        renderOption={framework => framework.name}
+        renderBadgeLabel={framework => framework.name}
+        getRemoveAriaLabel={framework =>
+          t("createAuditDialog.actions.remove", { name: framework.name })}
+      />
+      {failed && (
+        <Button type="button" variant="tertiary" onClick={retry}>
+          {t("createAuditDialog.actions.retry")}
+        </Button>
       )}
-    />
+    </div>
   );
 }

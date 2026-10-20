@@ -623,7 +623,7 @@ func TestTreatmentPlan_List(t *testing.T) {
 	})
 }
 
-func TestTreatmentPlan_LinkMeasure(t *testing.T) {
+func TestTreatmentPlan_LinkInternalControl(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -631,20 +631,20 @@ func TestTreatmentPlan_LinkMeasure(t *testing.T) {
 	analysisID := factory.CreateRiskAnalysis(owner)
 	factory.LinkRiskToAnalysis(owner, riskID, analysisID)
 	tpID := factory.CreateTreatmentPlan(owner, riskID, analysisID)
-	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Access reviews"})
+	internalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Access reviews"})
 
-	factory.LinkTreatmentPlanMeasure(owner, tpID, measureID)
+	factory.LinkTreatmentPlanInternalControl(owner, tpID, internalControlID)
 
 	var listResult struct {
 		Node struct {
-			Measures struct {
+			InternalControls struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
 						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"measures"`
+			} `json:"internalControls"`
 		} `json:"node"`
 	}
 
@@ -652,7 +652,7 @@ func TestTreatmentPlan_LinkMeasure(t *testing.T) {
 		query($id: ID!) {
 			node(id: $id) {
 				... on TreatmentPlan {
-					measures(first: 10) {
+					internalControls(first: 10) {
 						totalCount
 						edges { node { id } }
 					}
@@ -661,12 +661,12 @@ func TestTreatmentPlan_LinkMeasure(t *testing.T) {
 		}
 	`, map[string]any{"id": tpID}, &listResult)
 	require.NoError(t, err)
-	assert.Equal(t, 1, listResult.Node.Measures.TotalCount)
-	require.Len(t, listResult.Node.Measures.Edges, 1)
-	assert.Equal(t, measureID, listResult.Node.Measures.Edges[0].Node.ID)
+	assert.Equal(t, 1, listResult.Node.InternalControls.TotalCount)
+	require.Len(t, listResult.Node.InternalControls.Edges, 1)
+	assert.Equal(t, internalControlID, listResult.Node.InternalControls.Edges[0].Node.ID)
 }
 
-func TestTreatmentPlan_NetFromMeasureProgress(t *testing.T) {
+func TestTreatmentPlan_NetFromInternalControlProgress(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -683,22 +683,22 @@ func TestTreatmentPlan_NetFromMeasureProgress(t *testing.T) {
 
 	assertTreatmentPlanNet(t, owner, tpID, 4, 4, 16)
 
-	measureIDs := []string{
-		factory.CreateMeasure(owner, factory.Attrs{"name": "First mitigation measure"}),
-		factory.CreateMeasure(owner, factory.Attrs{"name": "Second mitigation measure"}),
+	internalControlIDs := []string{
+		factory.CreateInternalControl(owner, factory.Attrs{"name": "First mitigation internal control"}),
+		factory.CreateInternalControl(owner, factory.Attrs{"name": "Second mitigation internal control"}),
 	}
-	factory.LinkTreatmentPlanMeasure(owner, tpID, measureIDs[0])
-	factory.LinkTreatmentPlanMeasure(owner, tpID, measureIDs[1])
+	factory.LinkTreatmentPlanInternalControl(owner, tpID, internalControlIDs[0])
+	factory.LinkTreatmentPlanInternalControl(owner, tpID, internalControlIDs[1])
 
 	assertTreatmentPlanNet(t, owner, tpID, 4, 4, 16)
 
-	updateMeasureState(t, owner, measureIDs[0], "IN_PROGRESS")
+	updateInternalControlState(t, owner, internalControlIDs[0], "IN_PROGRESS")
 	assertTreatmentPlanNet(t, owner, tpID, 4, 4, 16)
 
-	updateMeasureState(t, owner, measureIDs[0], "IMPLEMENTED")
+	updateInternalControlState(t, owner, internalControlIDs[0], "IMPLEMENTED")
 	assertTreatmentPlanNet(t, owner, tpID, 4, 4, 16)
 
-	updateMeasureState(t, owner, measureIDs[1], "IMPLEMENTED")
+	updateInternalControlState(t, owner, internalControlIDs[1], "IMPLEMENTED")
 	assertTreatmentPlanNet(t, owner, tpID, 1, 2, 2)
 }
 
@@ -720,7 +720,7 @@ func TestTreatmentPlan_AcceptedEmptyNet(t *testing.T) {
 	assertTreatmentPlanNet(t, owner, tpID, 4, 4, 16)
 }
 
-func TestTreatmentPlan_AcceptedRejectsMeasureLink(t *testing.T) {
+func TestTreatmentPlan_AcceptedRejectsInternalControlLink(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -730,21 +730,21 @@ func TestTreatmentPlan_AcceptedRejectsMeasureLink(t *testing.T) {
 	tpID := factory.CreateTreatmentPlan(owner, riskID, analysisID, factory.Attrs{
 		"treatment": "ACCEPTED",
 	})
-	measureID := factory.CreateMeasure(owner)
+	internalControlID := factory.CreateInternalControl(owner)
 
 	_, err := owner.Do(`
-		mutation($input: CreateTreatmentPlanMeasureMappingInput!) {
-			createTreatmentPlanMeasureMapping(input: $input) {
-				measureEdge { node { id } }
+		mutation($input: CreateTreatmentPlanInternalControlMappingInput!) {
+			createTreatmentPlanInternalControlMapping(input: $input) {
+				internalControlEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"treatmentPlanId": tpID,
-			"measureId":       measureID,
+			"treatmentPlanId":   tpID,
+			"internalControlId": internalControlID,
 		},
 	})
-	testutil.RequireErrorCode(t, err, "INVALID", "accepted treatment plan cannot link measures")
+	testutil.RequireErrorCode(t, err, "INVALID", "accepted treatment plan cannot link internal controls")
 }
 
 type treatmentPlanNet struct {
@@ -782,32 +782,32 @@ func assertTreatmentPlanNet(
 	assert.Equal(t, score, result.Node.NetRiskScore)
 }
 
-func updateMeasureState(t *testing.T, owner *testutil.Client, measureID, state string) {
+func updateInternalControlState(t *testing.T, owner *testutil.Client, internalControlID, state string) {
 	t.Helper()
 
 	var result struct {
-		UpdateMeasure struct {
-			Measure struct {
+		UpdateInternalControl struct {
+			InternalControl struct {
 				ID    string `json:"id"`
 				State string `json:"state"`
-			} `json:"measure"`
-		} `json:"updateMeasure"`
+			} `json:"internalControl"`
+		} `json:"updateInternalControl"`
 	}
 
 	err := owner.Execute(`
-		mutation($input: UpdateMeasureInput!) {
-			updateMeasure(input: $input) {
-				measure { id state }
+		mutation($input: UpdateInternalControlInput!) {
+			updateInternalControl(input: $input) {
+				internalControl { id state }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"id":    measureID,
+			"id":    internalControlID,
 			"state": state,
 		},
 	}, &result)
 	require.NoError(t, err)
-	assert.Equal(t, state, result.UpdateMeasure.Measure.State)
+	assert.Equal(t, state, result.UpdateInternalControl.InternalControl.State)
 }
 
 func TestTreatmentPlan_FilterByMatrixCell(t *testing.T) {
@@ -841,16 +841,16 @@ func TestTreatmentPlan_FilterByMatrixCell(t *testing.T) {
 	assertFilteredPlanIDs(t, owner, analysisID, "INHERENT", 2, 3, lowPlanID)
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 1, 2)
 
-	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Close residual gap"})
-	factory.LinkTreatmentPlanMeasure(owner, highPlanID, measureID)
-	updateMeasureState(t, owner, measureID, "IMPLEMENTED")
+	internalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Close residual gap"})
+	factory.LinkTreatmentPlanInternalControl(owner, highPlanID, internalControlID)
+	updateInternalControlState(t, owner, internalControlID, "IMPLEMENTED")
 
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 1, 2, highPlanID)
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 4, 4)
 	assertFilteredPlanIDs(t, owner, analysisID, "INHERENT", 4, 4, highPlanID)
 
-	openMeasureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Still in progress"})
-	factory.LinkTreatmentPlanMeasure(owner, highPlanID, openMeasureID)
+	openInternalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Still in progress"})
+	factory.LinkTreatmentPlanInternalControl(owner, highPlanID, openInternalControlID)
 
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 4, 4, highPlanID)
 	assertFilteredPlanIDs(t, owner, analysisID, "NET", 1, 2)
@@ -983,9 +983,9 @@ func TestTreatmentPlan_MatrixCounts(t *testing.T) {
 	assert.Equal(t, 1, matrixCellCount(counts, "NET", 2, 3))
 	assert.Equal(t, 0, matrixCellCount(counts, "NET", 1, 2))
 
-	measureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Finish mitigation"})
-	factory.LinkTreatmentPlanMeasure(owner, highPlanID, measureID)
-	updateMeasureState(t, owner, measureID, "IMPLEMENTED")
+	internalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Finish mitigation"})
+	factory.LinkTreatmentPlanInternalControl(owner, highPlanID, internalControlID)
+	updateInternalControlState(t, owner, internalControlID, "IMPLEMENTED")
 
 	counts = queryMatrixCells(t, owner, analysisID)
 	assert.Equal(t, 1, matrixCellCount(counts, "INHERENT", 4, 4))
@@ -994,8 +994,8 @@ func TestTreatmentPlan_MatrixCounts(t *testing.T) {
 	assert.Equal(t, 1, matrixCellCount(counts, "NET", 2, 3))
 	assert.Equal(t, 0, matrixCellCount(counts, "NET", 4, 4))
 
-	openMeasureID := factory.CreateMeasure(owner, factory.Attrs{"name": "Still in progress"})
-	factory.LinkTreatmentPlanMeasure(owner, highPlanID, openMeasureID)
+	openInternalControlID := factory.CreateInternalControl(owner, factory.Attrs{"name": "Still in progress"})
+	factory.LinkTreatmentPlanInternalControl(owner, highPlanID, openInternalControlID)
 
 	counts = queryMatrixCells(t, owner, analysisID)
 	assert.Equal(t, 1, matrixCellCount(counts, "INHERENT", 4, 4))

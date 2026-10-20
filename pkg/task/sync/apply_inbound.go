@@ -77,7 +77,11 @@ func (s *Service) ApplyInboundIssue(
 
 			link, ok := PickLinkForLinearOrganization(links, envelope.OrganizationID)
 			if !ok {
-				return nil
+				if envelope.Action != "create" {
+					return nil
+				}
+
+				return s.importCreatedLinearIssue(ctx, tx, envelope, data)
 			}
 
 			if isAppActor(link.Metadata, envelope.Actor.ID) {
@@ -111,7 +115,7 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot load task %q: %w", link.TaskID, err)
 			}
 
-			mapped, err := mapInboundIssue(task, data)
+			mapped, err := mapInboundIssue(task, data, attachmentsFromMetadata(link.Metadata))
 			if err != nil {
 				return err
 			}
@@ -175,7 +179,12 @@ func (s *Service) ApplyInboundIssue(
 				return err
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task); err != nil {
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, task.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -227,7 +236,11 @@ type inboundMappedFields struct {
 	Deadline *time.Time
 }
 
-func mapInboundIssue(task *coredata.Task, data *linear.IssueWebhookData) (inboundMappedFields, error) {
+func mapInboundIssue(
+	task *coredata.Task,
+	data *linear.IssueWebhookData,
+	files map[string]string,
+) (inboundMappedFields, error) {
 	markdown, err := ContentToMarkdown(task.Content)
 	if err != nil {
 		return inboundMappedFields{}, err
@@ -247,7 +260,7 @@ func mapInboundIssue(task *coredata.Task, data *linear.IssueWebhookData) (inboun
 	}
 
 	if data.Has("description") {
-		content, err := MarkdownToContent(data.Description)
+		content, err := MarkdownToContent(restoreLinearFiles(data.Description, files))
 		if err != nil {
 			return inboundMappedFields{}, err
 		}

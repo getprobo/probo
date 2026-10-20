@@ -21,6 +21,14 @@ type Framework implements Node {
 
     organization: Organization! @goField(forceResolver: true)
 
+    audits(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: AuditOrder
+    ): AuditConnection! @goField(forceResolver: true)
+
     controls(
         first: Int
         after: CursorKey

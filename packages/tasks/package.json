@@ -1,0 +1,31 @@
+{
+  "name": "@probo/tasks",
+  "version": "1.0.0",
+  "description": "Shared task list and detail UI",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "@probo/helpers": "1.0.0",
+    "@probo/i18n": "1.0.0",
+    "@probo/ui": "1.0.0",
+    "@tanstack/react-virtual": "^3.14.19",
+    "tailwind-variants": "^3.3.1"
+  },
+  "peerDependencies": {
+    "i18next": "^26.4.0",
+    "react": "^19.2.7",
+    "react-i18next": "^17.0.12",
+    "react-router": "^8.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "6.0.2"
+  }
+}

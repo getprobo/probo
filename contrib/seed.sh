@@ -539,127 +539,121 @@ echo "  Creating risks..."
 create_risk() {
   local name="$1"
   local category="$2"
-  local treatment="$3"
-  local likelihood="$4"
-  local impact="$5"
 
   $PRB risk create \
     --org "$ORG_ID" \
     --name "$name" \
-    --category "$category" \
-    --treatment "$treatment" \
-    --inherent-likelihood "$likelihood" \
-    --inherent-impact "$impact" >/dev/null
+    --category "$category" >/dev/null
 }
 
 create_risk \
   "Unauthorized access to production systems" \
-  SECURITY MITIGATED 4 5
+  SECURITY
 create_risk \
   "Sensitive data exfiltration by insider threat" \
-  SECURITY MITIGATED 2 5
+  SECURITY
 create_risk \
   "Phishing campaign targeting employees" \
-  SECURITY MITIGATED 4 3
+  SECURITY
 create_risk \
   "Ransomware via supply chain compromise" \
-  SECURITY MITIGATED 2 5
+  SECURITY
 create_risk \
   "Credential stuffing on customer login portal" \
-  SECURITY MITIGATED 3 4
+  SECURITY
 create_risk \
   "Stolen developer laptop with source code" \
-  SECURITY MITIGATED 3 3
+  SECURITY
 create_risk \
   "API key leaked in public repository" \
-  SECURITY MITIGATED 3 4
+  SECURITY
 create_risk \
   "Social engineering of support staff" \
-  SECURITY MITIGATED 3 3
+  SECURITY
 create_risk \
   "Brute force attack on admin panel" \
-  SECURITY MITIGATED 2 4
+  SECURITY
 create_risk \
   "Man-in-the-middle attack on internal network" \
-  SECURITY MITIGATED 1 4
+  SECURITY
 create_risk \
   "Malicious browser extension on corporate devices" \
-  SECURITY MITIGATED 2 3
+  SECURITY
 create_risk \
   "Unauthorized physical access to server room" \
-  SECURITY MITIGATED 1 5
+  SECURITY
 
 create_risk \
   "Third-party SaaS data breach" \
-  OPERATIONAL TRANSFERRED 3 4
+  OPERATIONAL
 create_risk \
   "Cloud region outage causing service disruption" \
-  OPERATIONAL ACCEPTED 2 4
+  OPERATIONAL
 create_risk \
   "Database corruption from failed migration" \
-  OPERATIONAL MITIGATED 2 5
+  OPERATIONAL
 create_risk \
   "Loss of key personnel with critical knowledge" \
-  OPERATIONAL MITIGATED 3 3
+  OPERATIONAL
 create_risk \
   "Backup restoration failure during disaster recovery" \
-  OPERATIONAL MITIGATED 2 5
+  OPERATIONAL
 create_risk \
   "DNS hijacking of company domain" \
-  OPERATIONAL MITIGATED 1 5
+  OPERATIONAL
 create_risk \
   "CDN provider outage affecting content delivery" \
-  OPERATIONAL ACCEPTED 2 3
+  OPERATIONAL
 create_risk \
   "Email service compromise leaking internal comms" \
-  OPERATIONAL MITIGATED 2 4
+  OPERATIONAL
 
 create_risk \
   "Non-compliance with GDPR data subject rights" \
-  COMPLIANCE MITIGATED 2 4
+  COMPLIANCE
 create_risk \
   "Failure to meet SOC 2 audit requirements" \
-  COMPLIANCE MITIGATED 2 4
+  COMPLIANCE
 create_risk \
   "Breach notification deadline missed" \
-  COMPLIANCE MITIGATED 1 5
+  COMPLIANCE
 create_risk \
   "Inadequate data processing agreements with third parties" \
-  COMPLIANCE MITIGATED 3 3
+  COMPLIANCE
 create_risk \
   "Employee data retained beyond legal period" \
-  COMPLIANCE MITIGATED 2 3
+  COMPLIANCE
 create_risk \
   "Cross-border data transfer without safeguards" \
-  COMPLIANCE MITIGATED 2 4
+  COMPLIANCE
 create_risk \
   "Cookie consent mechanism non-compliant" \
-  COMPLIANCE MITIGATED 3 2
+  COMPLIANCE
 create_risk \
   "Incomplete records of processing activities" \
-  COMPLIANCE MITIGATED 3 3
+  COMPLIANCE
 
 create_risk \
   "Cloud infrastructure misconfiguration exposing data" \
-  TECHNICAL MITIGATED 3 4
+  TECHNICAL
 create_risk \
   "Loss of encryption keys for production database" \
-  TECHNICAL MITIGATED 1 5
+  TECHNICAL
 create_risk \
   "Denial of service attack on customer-facing APIs" \
-  TECHNICAL MITIGATED 3 3
+  TECHNICAL
 create_risk \
   "TLS certificate expiration causing service outage" \
-  TECHNICAL MITIGATED 2 3
+  TECHNICAL
 create_risk \
   "Container escape vulnerability in production cluster" \
-  TECHNICAL MITIGATED 1 5
+  TECHNICAL
 create_risk \
   "Dependency with known CVE deployed to production" \
-  TECHNICAL MITIGATED 3 4
+  TECHNICAL
 create_risk \
   "Logging pipeline failure hiding security incidents" \
-  TECHNICAL MITIGATED 2 4
+  TECHNICAL
 
 echo "    35 risks created"
 
@@ -735,17 +729,17 @@ create_third_party "Snowflake" \
 
 echo "    20 third parties created"
 
-echo "  Creating measures..."
+echo "  Creating internal controls..."
 
-create_measure() {
+create_internal_control() {
   local name="$1"
   local category="$2"
 
   local resp
-  resp=$(prb_api "createMeasure: $name" '
-    mutation($input: CreateMeasureInput!) {
-      createMeasure(input: $input) {
-        measureEdge {
+  resp=$(prb_api "createInternalControl: $name" '
+    mutation($input: CreateInternalControlInput!) {
+      createInternalControl(input: $input) {
+        internalControlEdge {
           node { id }
         }
       }
@@ -757,47 +751,47 @@ create_measure() {
       category="$category"
   )")
   local id
-  id=$(echo "$resp" | jq -r '.data.createMeasure.measureEdge.node.id // empty')
+  id=$(echo "$resp" | jq -r '.data.createInternalControl.internalControlEdge.node.id // empty')
   if [ -z "$id" ]; then
-    echo "ERROR (createMeasure: $name): no measure id in response" >&2
+    echo "ERROR (createInternalControl: $name): no internal control id in response" >&2
     exit 1
   fi
 }
 
-create_measure "Information Security Policy" \
+create_internal_control "Information Security Policy" \
   "POLICY"
-create_measure "Access Control Policy" \
+create_internal_control "Access Control Policy" \
   "POLICY"
-create_measure "Incident Response Plan" \
+create_internal_control "Incident Response Plan" \
   "POLICY"
-create_measure "Data Classification Policy" \
+create_internal_control "Data Classification Policy" \
   "POLICY"
-create_measure "Acceptable Use Policy" \
+create_internal_control "Acceptable Use Policy" \
   "POLICY"
 
-create_measure "Multi-Factor Authentication" \
+create_internal_control "Multi-Factor Authentication" \
   "TECHNICAL"
-create_measure "Endpoint Detection and Response" \
+create_internal_control "Endpoint Detection and Response" \
   "TECHNICAL"
-create_measure "Full Disk Encryption" \
+create_internal_control "Full Disk Encryption" \
   "TECHNICAL"
-create_measure "Automated Vulnerability Scanning" \
+create_internal_control "Automated Vulnerability Scanning" \
   "TECHNICAL"
-create_measure "Network Segmentation and Firewall Rules" \
+create_internal_control "Network Segmentation and Firewall Rules" \
   "TECHNICAL"
-create_measure "TLS Encryption in Transit" \
+create_internal_control "TLS Encryption in Transit" \
   "TECHNICAL"
 
-create_measure "Annual Security Awareness Training" \
+create_internal_control "Annual Security Awareness Training" \
   "ORGANIZATIONAL"
-create_measure "Quarterly Access Reviews" \
+create_internal_control "Quarterly Access Reviews" \
   "ORGANIZATIONAL"
-create_measure "Background Checks for New Hires" \
+create_internal_control "Background Checks for New Hires" \
   "ORGANIZATIONAL"
-create_measure "Tabletop Disaster Recovery Exercises" \
+create_internal_control "Tabletop Disaster Recovery Exercises" \
   "ORGANIZATIONAL"
 
-echo "    15 measures created"
+echo "    15 internal controls created"
 
 echo "  Creating devices..."
 
@@ -1140,13 +1134,13 @@ agent_postures() {
 revoke_device() {
   local device_id="$1"
 
-  prb_api "revokeDevice" '
-    mutation($input: RevokeDeviceInput!) {
-      revokeDevice(input: $input) {
-        device { id }
+  prb_api "revokeDevices" '
+    mutation($input: RevokeDevicesInput!) {
+      revokeDevices(input: $input) {
+        devices { id }
       }
     }
-  ' -f input="$(jo deviceId="$device_id")" >/dev/null
+  ' -f input="$(jo deviceIds="$(jo -a "$device_id")")" >/dev/null
 }
 
 # seed_device <owner_id> <hostname> <platform> <os_version> <serial> <CHECK_KEY:STATUS>...
@@ -1231,7 +1225,7 @@ echo "  Created:"
 echo "    3 frameworks, 43 controls"
 echo "    35 risks"
 echo "    20 third parties"
-echo "    15 measures"
+echo "    15 internal controls"
 echo "    8 people"
 echo "    8 devices (6 active, 1 pending, 1 revoked)"
 echo ""

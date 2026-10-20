@@ -24,6 +24,7 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import type { ApprovalsPageQuery } from "#/__generated__/core/ApprovalsPageQuery.graphql";
 import { PageHeader } from "#/pages/_components/PageHeader";
 import { useClearDocumentQueueOnMount } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { ApprovalsHistoryList } from "./_components/ApprovalsHistoryList";
 import { ApprovalsPendingList } from "./_components/ApprovalsPendingList";
@@ -44,6 +45,8 @@ interface ApprovalsPageProps {
 export function ApprovalsPage({ queryRef }: ApprovalsPageProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
+  const { t: tDocuments } = useTranslation("documents");
+  const { employeePortalId } = useEmployeePortalRoute();
   useClearDocumentQueueOnMount();
   const { viewer } = usePreloadedQuery<ApprovalsPageQuery>(
     approvalsPageQuery,
@@ -54,6 +57,10 @@ export function ApprovalsPage({ queryRef }: ApprovalsPageProps) {
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
       <PageHeader
         homeLabel={tApp("homePage.breadcrumb")}
+        parent={{
+          label: tDocuments("breadcrumb"),
+          to: `/${employeePortalId}/documents`,
+        }}
         currentLabel={t("breadcrumb")}
         title={t("title")}
       />

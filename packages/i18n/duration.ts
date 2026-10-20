@@ -119,17 +119,45 @@ export function humanizeSeconds(
   return parts.length > 0 ? parts.join(", ") : t("duration.session");
 }
 
-export function formatDuration(
-  duration?: string | null,
-  t?: Translator,
-): string | null {
-  if (!duration || !t) return null;
+export type FormatDurationOptions = {
+  style?: "long" | "short";
+  locale?: string;
+};
 
-  const components = parseIsoDuration(duration);
-  if (!components) {
+type DurationFormatCtor = new (
+  locales?: string | string[],
+  options?: { style?: "long" | "short" | "narrow" },
+) => { format: (value: Record<string, number>) => string };
+
+function formatDurationShortIntl(
+  locale: string,
+  components: IsoDurationComponents,
+): string | null {
+  const DurationFormat = (Intl as typeof Intl & {
+    DurationFormat?: DurationFormatCtor;
+  }).DurationFormat;
+  if (DurationFormat == null) {
     return null;
   }
 
+  const value: Record<string, number> = {};
+  for (const [unit, amount] of Object.entries(components)) {
+    if (amount > 0) {
+      value[unit] = amount;
+    }
+  }
+  if (Object.keys(value).length === 0) {
+    return null;
+  }
+
+  try {
+    return new DurationFormat(locale, { style: "short" }).format(value);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeDuration(components: IsoDurationComponents): IsoDurationComponents {
   let { weeks, days } = components;
   const { years, months, hours, minutes, seconds } = components;
   if (
@@ -146,27 +174,87 @@ export function formatDuration(
     days = 0;
   }
 
+  return { years, months, weeks, days, hours, minutes, seconds };
+}
+
+export function formatDuration(
+  duration?: string | null,
+  t?: Translator,
+  options?: FormatDurationOptions,
+): string | null {
+  if (!duration) return null;
+
+  const style = options?.style ?? "long";
+  if (style === "long" && !t) return null;
+
+  const parsed = parseIsoDuration(duration);
+  if (!parsed) {
+    return null;
+  }
+
+  const components = normalizeDuration(parsed);
+  if (style === "short") {
+    if (options?.locale != null) {
+      const intl = formatDurationShortIntl(options.locale, components);
+      if (intl != null) {
+        return intl;
+      }
+    }
+    if (t == null) {
+      return null;
+    }
+
+    const parts: string[] = [];
+    if (components.years > 0) {
+      parts.push(t("duration.yearShort", { count: components.years }));
+    }
+    if (components.months > 0) {
+      parts.push(t("duration.monthShort", { count: components.months }));
+    }
+    if (components.weeks > 0) {
+      parts.push(t("duration.weekShort", { count: components.weeks }));
+    }
+    if (components.days > 0) {
+      parts.push(t("duration.dayShort", { count: components.days }));
+    }
+    if (components.hours > 0) {
+      parts.push(t("duration.hourShort", { count: components.hours }));
+    }
+    if (components.minutes > 0) {
+      parts.push(t("duration.minShort", { count: components.minutes }));
+    }
+    if (components.seconds > 0) {
+      parts.push(t("duration.secShort", { count: components.seconds }));
+    }
+
+    return parts.length > 0 ? parts.join(", ") : null;
+  }
+
+  if (t == null) {
+    return null;
+  }
+
   const parts: string[] = [];
-  if (years > 0) {
-    parts.push(`${years} ${t("duration.years", { count: years })}`);
+  if (components.years > 0) {
+    parts.push(`${components.years} ${t("duration.years", { count: components.years })}`);
   }
-  if (months > 0) {
-    parts.push(`${months} ${t("duration.months", { count: months })}`);
+  if (components.months > 0) {
+    parts.push(`${components.months} ${t("duration.months", { count: components.months })}`);
   }
-  if (weeks > 0) {
-    parts.push(`${weeks} ${t("duration.weeks", { count: weeks })}`);
+  if (components.weeks > 0) {
+    parts.push(`${components.weeks} ${t("duration.weeks", { count: components.weeks })}`);
   }
-  if (days > 0) {
-    parts.push(`${days} ${t("duration.days", { count: days })}`);
+  if (components.days > 0) {
+    parts.push(`${components.days} ${t("duration.days", { count: components.days })}`);
   }
-  if (hours > 0) {
-    parts.push(t("duration.hour", { count: hours }));
+  if (components.hours > 0) {
+    parts.push(t("duration.hour", { count: components.hours }));
   }
-  if (minutes > 0) {
-    parts.push(t("duration.min", { count: minutes }));
+  if (components.minutes > 0) {
+    parts.push(t("duration.min", { count: components.minutes }));
   }
-  if (seconds > 0) {
-    parts.push(t("duration.sec", { count: seconds }));
+  if (components.seconds > 0) {
+    parts.push(t("duration.sec", { count: components.seconds }));
   }
 
   return parts.length > 0 ? parts.join(", ") : null;

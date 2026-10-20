@@ -23,6 +23,7 @@ package types
 import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
@@ -37,10 +38,14 @@ func NewCompliancePortalCatalogDocument(
 	}
 }
 
-func NewCompliancePortalCatalogAudit(entry *management.PortalAudit, reportFile *coredata.File) *CompliancePortalCatalogAudit {
+func NewCompliancePortalCatalogAudit(
+	entry *management.PortalAudit,
+	reportFile *coredata.File,
+	frameworkIDs []gid.GID,
+) *CompliancePortalCatalogAudit {
 	return &CompliancePortalCatalogAudit{
 		ID:         entry.ID,
-		Audit:      NewAudit(entry.Audit, reportFile),
+		Audit:      NewAudit(entry.Audit, reportFile, frameworkIDs),
 		Visibility: entry.Visibility,
 	}
 }

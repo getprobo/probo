@@ -162,6 +162,19 @@ func (e ErrUserInactive) Error() string {
 	return fmt.Sprintf("user %q is inactive", e.ProfileID)
 }
 
+type ErrActivationNotRequired struct {
+	ProfileID gid.GID
+	Source    coredata.ProfileSource
+}
+
+func NewActivationNotRequiredError(profileID gid.GID, source coredata.ProfileSource) error {
+	return &ErrActivationNotRequired{ProfileID: profileID, Source: source}
+}
+
+func (e ErrActivationNotRequired) Error() string {
+	return fmt.Sprintf("profile %q does not need activation: verified by %s", e.ProfileID, e.Source)
+}
+
 type ErrUserManagedBySCIM struct {
 	ProfileID gid.GID
 }
@@ -468,6 +481,18 @@ func NewSCIMBridgeNotFoundError(bridgeID gid.GID) error {
 
 func (e ErrSCIMBridgeNotFound) Error() string {
 	return fmt.Sprintf("SCIM bridge %q not found", e.BridgeID)
+}
+
+type ErrSCIMBridgeProviderNotSupported struct {
+	Provider coredata.ConnectorProvider
+}
+
+func NewSCIMBridgeProviderNotSupportedError(provider coredata.ConnectorProvider) error {
+	return &ErrSCIMBridgeProviderNotSupported{Provider: provider}
+}
+
+func (e ErrSCIMBridgeProviderNotSupported) Error() string {
+	return fmt.Sprintf("connector provider %s is not supported for SCIM bridge", e.Provider)
 }
 
 type ErrConnectorNotFound struct{ ConnectorID gid.GID }

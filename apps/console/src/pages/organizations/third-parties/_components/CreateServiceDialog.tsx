@@ -27,8 +27,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "react-relay";
@@ -80,7 +80,7 @@ export function CreateServiceDialog({
       },
     },
   );
-  const { toast } = useToast();
+  const toast = useToast();
   const [createService, isCreating] = useMutation<CreateServiceDialogMutation>(
     createServiceMutation,
   );
@@ -98,26 +98,26 @@ export function CreateServiceDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("createThirdPartyServiceDialog.messages.error"),
             description: formatError(t("createThirdPartyServiceDialog.errors.create"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("createThirdPartyServiceDialog.messages.success"),
           description: t("createThirdPartyServiceDialog.messages.created"),
-          variant: "success",
+          type: "success",
         });
         dialogRef.current?.close();
         reset();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("createThirdPartyServiceDialog.messages.error"),
           description: formatError(t("createThirdPartyServiceDialog.errors.create"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

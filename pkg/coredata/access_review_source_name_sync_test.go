@@ -43,15 +43,14 @@ import (
 // package is running alongside.
 var nameSyncEpoch = time.Date(1991, time.August, 6, 0, 0, 0, 0, time.UTC)
 
-// seedNameSyncSource inserts an organization, a connector and one
-// connector-backed access source with its name unresolved, which is the state
-// the source-name worker claims from.
-func seedNameSyncSource(
+// seedNameSyncAccount inserts an organization, a connector and one account
+// whose name is unresolved, which is the state the name worker claims from.
+func seedNameSyncAccount(
 	t *testing.T,
 	ctx context.Context,
 	client *pg.Client,
 	createdAt time.Time,
-) (coredata.Scoper, *coredata.AccessReviewSource, gid.GID) {
+) (coredata.Scoper, *coredata.ConnectorAccount, gid.GID) {
 	t.Helper()
 
 	scope, organizationID := seedConnectorOrg(t, ctx, client)
@@ -61,49 +60,34 @@ func seedNameSyncSource(
 	connectorID, err := insertConnector(ctx, client, scope, organizationID, coredata.ConnectorProviderMetabase, key)
 	require.NoError(t, err)
 
-	account, err := insertConnectorAccount(
-		ctx,
-		client,
-		scope,
-		organizationID,
-		connectorID,
-		"implied",
-		"implied",
-	)
-	require.NoError(t, err)
-
-	source := &coredata.AccessReviewSource{
-		ID:                 gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID:     organizationID,
-		ConnectorAccountID: &account.ID,
-		Name:               "Metabase",
-		CreatedAt:          createdAt,
-		UpdatedAt:          time.Now().UTC(),
+	account := &coredata.ConnectorAccount{
+		ID:                gid.New(scope.GetTenantID(), coredata.ConnectorAccountEntityType),
+		OrganizationID:    organizationID,
+		ConnectorID:       connectorID,
+		ExternalAccountID: "implied",
+		Name:              "Metabase",
+		CreatedAt:         createdAt,
+		UpdatedAt:         time.Now().UTC(),
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		inserted, err := source.Insert(ctx, tx, scope)
-		if err != nil {
-			return err
-		}
+		_, err := account.Upsert(ctx, tx, scope)
 
-		require.True(t, inserted)
-
-		return nil
+		return err
 	}))
 
 	// A backdated unsynced row left behind would be claimed ahead of every
 	// later test's fixture, so it must not outlive this one.
 	t.Cleanup(func() {
 		err := client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
-			_, err := tx.Exec(ctx, `DELETE FROM access_review_sources WHERE id = $1`, source.ID)
+			_, err := tx.Exec(ctx, `DELETE FROM connector_accounts WHERE id = $1`, account.ID)
 
 			return err
 		})
-		assert.NoError(t, err, "cleanup: cannot delete seeded access review source %s", source.ID)
+		assert.NoError(t, err, "cleanup: cannot delete seeded connector account %s", account.ID)
 	})
 
-	return scope, source, connectorID
+	return scope, account, connectorID
 }
 
 // TestRecordNameSyncAttemptHoldsSourceOutOfQueue pins the invariant the
@@ -115,10 +99,10 @@ func TestRecordNameSyncAttemptHoldsSourceOutOfQueue(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, _ := seedNameSyncAccount(t, ctx, client, nameSyncEpoch)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var claimed coredata.AccessReviewSource
+		var claimed coredata.ConnectorAccount
 
 		require.NoError(t, claimed.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx))
 		require.Equal(t, source.ID, claimed.ID)
@@ -129,21 +113,21 @@ func TestRecordNameSyncAttemptHoldsSourceOutOfQueue(t *testing.T) {
 
 	// A second claim in a fresh transaction must not see it.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var claimed coredata.AccessReviewSource
+		var claimed coredata.ConnectorAccount
 
 		err := claimed.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx)
 		if err == nil {
-			assert.NotEqual(t, source.ID, claimed.ID, "a charged source must not be re-claimed before its backoff")
+			assert.NotEqual(t, source.ID, claimed.ID, "a charged account must not be re-claimed before its backoff")
 
 			return nil
 		}
 
-		require.ErrorIs(t, err, coredata.ErrNoAccessReviewSourceNameSyncAvailable)
+		require.ErrorIs(t, err, coredata.ErrNoConnectorAccountNameSyncAvailable)
 
 		return nil
 	}))
 
-	var reloaded coredata.AccessReviewSource
+	var reloaded coredata.ConnectorAccount
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return reloaded.LoadByID(ctx, tx, scope, source.ID)
@@ -171,8 +155,8 @@ func TestNameSyncClaimYieldsToOtherSources(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	olderScope, older, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
-	_, newer, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch.Add(time.Hour))
+	olderScope, older, _ := seedNameSyncAccount(t, ctx, client, nameSyncEpoch)
+	_, newer, _ := seedNameSyncAccount(t, ctx, client, nameSyncEpoch.Add(time.Hour))
 
 	// Charge the older source, which is the one the failing provider owns.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -180,7 +164,7 @@ func TestNameSyncClaimYieldsToOtherSources(t *testing.T) {
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var claimed coredata.AccessReviewSource
+		var claimed coredata.ConnectorAccount
 
 		require.NoError(t, claimed.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx))
 		assert.Equal(t, newer.ID, claimed.ID, "a backing-off source must not block the queue")
@@ -195,7 +179,7 @@ func TestNameSyncClaimYieldsToOtherSources(t *testing.T) {
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var claimed coredata.AccessReviewSource
+		var claimed coredata.ConnectorAccount
 
 		require.NoError(t, claimed.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx))
 		assert.Equal(t, older.ID, claimed.ID)
@@ -211,7 +195,7 @@ func TestMarkNameSyncedYieldsToConcurrentReset(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source, connectorID := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, connectorID := seedNameSyncAccount(t, ctx, client, nameSyncEpoch)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return source.RecordNameSyncAttempt(ctx, tx, scope, time.Minute)
@@ -219,7 +203,7 @@ func TestMarkNameSyncedYieldsToConcurrentReset(t *testing.T) {
 
 	// A reconnect resets the budget while the resolve is still in flight.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		sources := coredata.AccessReviewSources{}
+		sources := coredata.ConnectorAccounts{}
 
 		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, connectorID)
 	}))
@@ -227,19 +211,21 @@ func TestMarkNameSyncedYieldsToConcurrentReset(t *testing.T) {
 	// The worker finishes and writes the name it resolved against the old
 	// connector. It must not land.
 	stale := *source
-	stale.Name = "Metabase / Stale Instance"
+	stale.Name = "Stale Instance"
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return stale.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+		_, err := stale.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+
+		return err
 	}))
 
-	var reloaded coredata.AccessReviewSource
+	var reloaded coredata.ConnectorAccount
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return reloaded.LoadByID(ctx, tx, scope, source.ID)
 	}))
 
-	assert.Nil(t, reloaded.NameSyncedAt, "the reconnect must keep the source claimable")
+	assert.Nil(t, reloaded.NameSyncedAt, "the reconnect must keep the account claimable")
 	assert.Equal(t, 0, reloaded.NameSyncAttempts, "the fresh budget must survive")
 	assert.Equal(t, "Metabase", reloaded.Name)
 }
@@ -251,20 +237,20 @@ func TestResetNameSyncByConnectorIDReleasesBackedOffSource(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source, connectorID := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, connectorID := seedNameSyncAccount(t, ctx, client, nameSyncEpoch)
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return source.RecordNameSyncAttempt(ctx, tx, scope, time.Hour)
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		sources := coredata.AccessReviewSources{}
+		sources := coredata.ConnectorAccounts{}
 
 		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, connectorID)
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var claimed coredata.AccessReviewSource
+		var claimed coredata.ConnectorAccount
 
 		require.NoError(t, claimed.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx))
 		assert.Equal(t, source.ID, claimed.ID)
@@ -283,7 +269,7 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source, connectorID := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, connectorID := seedNameSyncAccount(t, ctx, client, nameSyncEpoch)
 
 	// The in-flight worker claims and starts resolving.
 	inFlight := *source
@@ -296,7 +282,7 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 	// A reconnect lands, then a second worker claims the freed row. Both
 	// claims now sit at attempt 1.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		sources := coredata.AccessReviewSources{}
+		sources := coredata.ConnectorAccounts{}
 
 		return sources.ResetNameSyncByConnectorID(ctx, tx, scope, connectorID)
 	}))
@@ -310,13 +296,15 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 
 	// The first worker finishes and writes the name it resolved against the
 	// connector that has since been replaced.
-	inFlight.Name = "Metabase / Stale Instance"
+	inFlight.Name = "Stale Instance"
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return inFlight.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+		_, err := inFlight.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+
+		return err
 	}))
 
-	var reloaded coredata.AccessReviewSource
+	var reloaded coredata.ConnectorAccount
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return reloaded.LoadByID(ctx, tx, scope, source.ID)
@@ -326,10 +314,12 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 	assert.Equal(t, "Metabase", reloaded.Name, "the stale name must not land")
 
 	// The claim that actually owns the row still retires it.
-	reclaimed.Name = "Metabase / Current Instance"
+	reclaimed.Name = "Current Instance"
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return reclaimed.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+		_, err := reclaimed.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+
+		return err
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
@@ -337,7 +327,7 @@ func TestMarkNameSyncedYieldsToAReclaimAtTheSameAttemptCount(t *testing.T) {
 	}))
 
 	assert.NotNil(t, reloaded.NameSyncedAt)
-	assert.Equal(t, "Metabase / Current Instance", reloaded.Name)
+	assert.Equal(t, "Current Instance", reloaded.Name)
 }
 
 // TestNameSyncBudgetIsSpentOverFiveAttempts walks the whole budget the way a
@@ -347,14 +337,14 @@ func TestNameSyncBudgetIsSpentOverFiveAttempts(t *testing.T) {
 	ctx := context.Background()
 	client := test.PGClient(t)
 
-	scope, source, _ := seedNameSyncSource(t, ctx, client, nameSyncEpoch)
+	scope, source, _ := seedNameSyncAccount(t, ctx, client, nameSyncEpoch)
 
 	// The schedule the worker charges: 1m, 2m, 4m, 8m, 16m.
 	backoffs := []time.Duration{time.Minute, 2 * time.Minute, 4 * time.Minute, 8 * time.Minute, 16 * time.Minute}
 
 	for attempt, backoff := range backoffs {
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-			var claimed coredata.AccessReviewSource
+			var claimed coredata.ConnectorAccount
 
 			// Each attempt starts from a claim, so the row must still be
 			// visible to the queue at every step below the ceiling.
@@ -371,7 +361,7 @@ func TestNameSyncBudgetIsSpentOverFiveAttempts(t *testing.T) {
 		}))
 	}
 
-	var reloaded coredata.AccessReviewSource
+	var reloaded coredata.ConnectorAccount
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return reloaded.LoadByID(ctx, tx, scope, source.ID)
@@ -384,20 +374,22 @@ func TestNameSyncBudgetIsSpentOverFiveAttempts(t *testing.T) {
 
 	// Retiring it at the exhausted count is what takes it out of the queue.
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return reloaded.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+		_, err := reloaded.MarkNameSynced(ctx, tx, scope, time.Now().UTC())
+
+		return err
 	}))
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		var claimed coredata.AccessReviewSource
+		var claimed coredata.ConnectorAccount
 
 		err := claimed.LoadNextUnsyncedNameForUpdateSkipLocked(ctx, tx)
 		if err == nil {
-			assert.NotEqual(t, source.ID, claimed.ID, "a retired source must leave the queue")
+			assert.NotEqual(t, source.ID, claimed.ID, "a retired account must leave the queue")
 
 			return nil
 		}
 
-		require.ErrorIs(t, err, coredata.ErrNoAccessReviewSourceNameSyncAvailable)
+		require.ErrorIs(t, err, coredata.ErrNoConnectorAccountNameSyncAvailable)
 
 		return nil
 	}))

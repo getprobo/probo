@@ -40,11 +40,11 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListTasks,
   },
   {
-    id: "measures",
+    id: "internalControls",
     group: "governance",
-    labelKey: "nav.measures",
-    path: "measures",
-    isVisible: permissions => permissions.canListMeasures,
+    labelKey: "nav.internalControls",
+    path: "internal-controls",
+    isVisible: permissions => permissions.canListInternalControls,
   },
   {
     id: "frameworks",
@@ -180,6 +180,13 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canGetCompliancePortal,
   },
   {
+    id: "employee-portal",
+    group: "employeePortal",
+    labelKey: "nav.employeePortalSettings",
+    path: "",
+    isVisible: permissions => permissions.canGetEmployeePortal,
+  },
+  {
     id: "campaigns",
     group: "accessReview",
     labelKey: "nav.campaigns",
@@ -187,10 +194,10 @@ const NAV_DESTINATIONS = [
     isVisible: permissions => permissions.canListAccessReviewCampaigns,
   },
   {
-    id: "connections",
+    id: "sources",
     group: "accessReview",
-    labelKey: "nav.connections",
-    path: "connections",
+    labelKey: "nav.sources",
+    path: "sources",
     isVisible: permissions => permissions.canListAccessReviewSources,
   },
   {

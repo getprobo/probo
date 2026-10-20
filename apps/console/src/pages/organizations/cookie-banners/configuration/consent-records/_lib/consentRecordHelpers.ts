@@ -18,23 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export function getActionVariant(
+export function getActionBadgeColor(
   action: string,
-): "success" | "danger" | "warning" | "neutral" {
+): "green" | "red" | "amber" | "neutral" {
   switch (action) {
     case "ACCEPT_ALL":
-      return "success";
+      return "green";
     case "REJECT_ALL":
-      return "danger";
+      return "red";
     case "CUSTOMIZE":
-      return "warning";
-    case "GPC":
-      return "neutral";
-    case "ACKNOWLEDGE":
-      return "neutral";
+      return "amber";
     default:
       return "neutral";
   }
+}
+
+export function formatLocation(
+  countryCode: string | null | undefined,
+  subdivisionCode: string | null | undefined,
+): string {
+  if (countryCode == null || countryCode === "") {
+    return "";
+  }
+  if (subdivisionCode == null || subdivisionCode === "") {
+    return countryCode;
+  }
+  const prefix = `${countryCode.toUpperCase()}-`;
+  const region = subdivisionCode.toUpperCase().startsWith(prefix)
+    ? subdivisionCode.slice(prefix.length)
+    : subdivisionCode;
+  return `${countryCode} · ${region}`;
 }
 
 export function formatAnonymizedIp(ip: string): string {

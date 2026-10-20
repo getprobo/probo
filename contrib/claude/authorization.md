@@ -259,7 +259,7 @@ and `r.AuthorizeBatch` (MCP) — keep the returned scope and pass it down.
 | OAuth2 scope constants (per domain) | `pkg/<service>/oauth2_scopes.go` |
 | OAuth2 discovery + request context | `pkg/iam/oauth2/` |
 | GraphQL authz helper | `pkg/server/api/authz/authorization.go` |
-| MCP authz + recovery | `pkg/server/api/mcp/v1/resolver.go`, `mcputils/recovery.go` |
+| MCP authz + recovery | `pkg/server/api/mcp/v1/resolver.go`, `mcpx/recovery.go` |
 
 ## Action constants
 

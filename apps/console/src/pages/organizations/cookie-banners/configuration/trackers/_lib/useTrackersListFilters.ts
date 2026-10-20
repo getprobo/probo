@@ -18,11 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { emptyToNull } from "@probo/helpers";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
+import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
+
+import { TRACKERS_PAGE_SIZE } from "./pageSize";
+
 export const cookieSources = ["SCRIPT", "PRE_EXISTING", "HTTP", "EXTENSION"] as const;
 export type CookieSource = (typeof cookieSources)[number];
+
+export const trackersListViews = ["all", "on-banner"] as const;
+export type TrackersListView = (typeof trackersListViews)[number];
 
 export const trackerTypes = [
   "COOKIE",
@@ -33,7 +41,7 @@ export const trackerTypes = [
 ] as const;
 export type TrackerType = (typeof trackerTypes)[number];
 
-export const trackerPatternOrderFields = ["NAME", "SOURCE", "LAST_MATCHED_AT"] as const;
+export const trackerPatternOrderFields = ["NAME", "SOURCE", "CREATED_AT"] as const;
 export type TrackerPatternOrderField = (typeof trackerPatternOrderFields)[number];
 export type OrderDirection = "ASC" | "DESC";
 
@@ -50,7 +58,7 @@ export const defaultTrackersListOrder: TrackersListOrder = {
 const firstTrackersListDirection: Record<TrackerPatternOrderField, OrderDirection> = {
   NAME: "ASC",
   SOURCE: "ASC",
-  LAST_MATCHED_AT: "DESC",
+  CREATED_AT: "DESC",
 };
 
 export type TrackersListGraphqlFilter = {
@@ -59,10 +67,16 @@ export type TrackersListGraphqlFilter = {
   trackerType: TrackerType | null;
   cookieCategoryId: string | null;
   thirdPartyId: string | null;
+  excluded: boolean | null;
+  categorized: boolean | null;
 };
 
 export function isCookieSource(value: string): value is CookieSource {
   return (cookieSources as readonly string[]).includes(value);
+}
+
+export function isTrackersListView(value: string): value is TrackersListView {
+  return (trackersListViews as readonly string[]).includes(value);
 }
 
 export function isTrackerType(value: string): value is TrackerType {
@@ -106,6 +120,7 @@ function writeTrackersListOrder(
 }
 
 export function trackersListGraphqlFilter(filters: {
+  view: TrackersListView;
   query: string;
   source: CookieSource | null;
   type: TrackerType | null;
@@ -113,12 +128,18 @@ export function trackersListGraphqlFilter(filters: {
   party: string | null;
 }): TrackersListGraphqlFilter | null {
   const query = filters.query.trim() || null;
+  const onBanner = filters.view === "on-banner";
+  const category = onBanner ? null : filters.category;
+  const excluded = onBanner ? false : null;
+  const categorized = onBanner ? true : null;
   if (
     query == null
     && filters.source == null
     && filters.type == null
-    && filters.category == null
+    && category == null
     && filters.party == null
+    && excluded == null
+    && categorized == null
   ) {
     return null;
   }
@@ -127,12 +148,48 @@ export function trackersListGraphqlFilter(filters: {
     query,
     source: filters.source,
     trackerType: filters.type,
-    cookieCategoryId: filters.category,
+    cookieCategoryId: category,
     thirdPartyId: filters.party,
+    excluded,
+    categorized,
   };
 }
 
+export function trackersListGraphqlPagination(
+  after: string | null,
+  before: string | null,
+): CursorPaginationVariables {
+  if (after != null) {
+    return {
+      first: TRACKERS_PAGE_SIZE,
+      after,
+      last: null,
+      before: null,
+    };
+  }
+  if (before != null) {
+    return {
+      first: null,
+      after: null,
+      last: TRACKERS_PAGE_SIZE,
+      before,
+    };
+  }
+  return {
+    first: TRACKERS_PAGE_SIZE,
+    after: null,
+    last: null,
+    before: null,
+  };
+}
+
+function clearPagination(params: URLSearchParams) {
+  params.delete("after");
+  params.delete("before");
+}
+
 export interface TrackersListFilters {
+  view: TrackersListView;
   query: string;
   source: CookieSource | null;
   type: TrackerType | null;
@@ -140,17 +197,23 @@ export interface TrackersListFilters {
   party: string | null;
   graphqlFilter: TrackersListGraphqlFilter | null;
   graphqlOrder: TrackersListOrder;
+  graphqlPagination: CursorPaginationVariables;
   hasActiveFilters: boolean;
+  setView: (value: TrackersListView) => void;
   setQuery: (value: string) => void;
   setSource: (value: CookieSource | null) => void;
   setType: (value: TrackerType | null) => void;
   setCategory: (value: string | null) => void;
   setParty: (value: string | null) => void;
   setOrder: (field: TrackerPatternOrderField) => void;
+  setAfter: (cursor: string) => void;
+  setBefore: (cursor: string) => void;
+  resetPagination: () => void;
 }
 
 export function useTrackersListFilters(): TrackersListFilters {
   const [searchParams, setSearchParams] = useSearchParams();
+  const rawView = searchParams.get("view") ?? "";
   const query = searchParams.get("q") ?? "";
   const rawSource = searchParams.get("source") ?? "";
   const rawType = searchParams.get("type") ?? "";
@@ -158,9 +221,12 @@ export function useTrackersListFilters(): TrackersListFilters {
   const rawParty = searchParams.get("party") ?? "";
   const rawSort = searchParams.get("sort") ?? "";
   const rawDir = searchParams.get("dir") ?? "";
+  const after = emptyToNull(searchParams.get("after"));
+  const before = after == null ? emptyToNull(searchParams.get("before")) : null;
+  const view: TrackersListView = rawView === "all" ? "all" : "on-banner";
   const source = isCookieSource(rawSource) ? rawSource : null;
   const type = isTrackerType(rawType) ? rawType : null;
-  const category = rawCategory === "" ? null : rawCategory;
+  const category = view === "on-banner" || rawCategory === "" ? null : rawCategory;
   const party = rawParty === "" ? null : rawParty;
   const field = isTrackerPatternOrderField(rawSort)
     ? rawSort
@@ -174,8 +240,12 @@ export function useTrackersListFilters(): TrackersListFilters {
   );
 
   const graphqlFilter = useMemo(
-    () => trackersListGraphqlFilter({ query, source, type, category, party }),
-    [query, source, type, category, party],
+    () => trackersListGraphqlFilter({ view, query, source, type, category, party }),
+    [category, party, query, source, type, view],
+  );
+  const graphqlPagination = useMemo(
+    () => trackersListGraphqlPagination(after, before),
+    [after, before],
   );
 
   const setParam = useCallback((key: string, value: string) => {
@@ -186,6 +256,21 @@ export function useTrackersListFilters(): TrackersListFilters {
       } else {
         next.delete(key);
       }
+      clearPagination(next);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setView = useCallback((value: TrackersListView) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (value === "all") {
+        next.set("view", "all");
+      } else {
+        next.delete("view");
+        next.delete("category");
+      }
+      clearPagination(next);
       return next;
     }, { replace: true });
   }, [setSearchParams]);
@@ -210,10 +295,12 @@ export function useTrackersListFilters(): TrackersListFilters {
       const firstDirection = firstTrackersListDirection[nextField];
       if (nextField !== field) {
         writeTrackersListOrder(next, nextField, firstDirection);
+        clearPagination(next);
         return next;
       }
       if (direction === firstDirection) {
         writeTrackersListOrder(next, nextField, direction === "ASC" ? "DESC" : "ASC");
+        clearPagination(next);
         return next;
       }
       writeTrackersListOrder(
@@ -221,11 +308,42 @@ export function useTrackersListFilters(): TrackersListFilters {
         defaultTrackersListOrder.field,
         defaultTrackersListOrder.direction,
       );
+      clearPagination(next);
       return next;
     }, { replace: true });
   }, [direction, field, setSearchParams]);
 
+  const setAfter = useCallback((cursor: string) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set("after", cursor);
+      next.delete("before");
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setBefore = useCallback((cursor: string) => {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      next.set("before", cursor);
+      next.delete("after");
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const resetPagination = useCallback(() => {
+    setSearchParams((previous) => {
+      if (!previous.has("after") && !previous.has("before")) {
+        return previous;
+      }
+      const next = new URLSearchParams(previous);
+      clearPagination(next);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
   return {
+    view,
     query,
     source,
     type,
@@ -233,17 +351,22 @@ export function useTrackersListFilters(): TrackersListFilters {
     party,
     graphqlFilter,
     graphqlOrder,
+    graphqlPagination,
     hasActiveFilters:
       query.trim() !== ""
       || source != null
       || type != null
       || category != null
       || party != null,
+    setView,
     setQuery,
     setSource,
     setType,
     setCategory,
     setParty,
     setOrder,
+    setAfter,
+    setBefore,
+    resetPagination,
   };
 }

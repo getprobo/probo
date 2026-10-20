@@ -43,6 +43,7 @@ import { graphql } from "relay-runtime";
 import type { LinkedAuditsCardFragment$key } from "#/__generated__/core/LinkedAuditsCardFragment.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
+import { useAuditFrameworkNames } from "./AuditFrameworkNames";
 import { LinkedAuditsDialog } from "./LinkedAuditsDialog";
 
 const linkedAuditFragment = graphql`
@@ -50,10 +51,7 @@ const linkedAuditFragment = graphql`
     id
     name
     state
-    framework {
-      id
-      name
-    }
+    ...AuditFrameworkNames_audit
   }
 `;
 
@@ -196,13 +194,14 @@ function AuditRow(props: {
   const audit = useFragment(linkedAuditFragment, props.audit);
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
+  const { label: frameworkLabel } = useAuditFrameworkNames(audit);
 
   return (
     <Tr to={`/organizations/${organizationId}/governance/audits/${audit.id}`}>
       <Td>
         <div className="flex flex-col">
-          <div className="font-medium">{audit.framework?.name}</div>
-          {audit.name && (
+          <div className="font-medium">{frameworkLabel || audit.name}</div>
+          {frameworkLabel && audit.name && (
             <div className="text-sm text-txt-secondary">{audit.name}</div>
           )}
         </div>

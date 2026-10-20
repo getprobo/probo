@@ -316,12 +316,61 @@ func (s *Service) syncCampaignSources(
 		return fmt.Errorf("cannot load access sources: %w", err)
 	}
 
+	named, err := snapshotSourceNames(ctx, conn, scope, sources)
+	if err != nil {
+		return err
+	}
+
 	var campaignSources coredata.AccessReviewCampaignSources
-	if err := campaignSources.MergeByCampaignID(ctx, conn, scope, campaign.ID, sources); err != nil {
+	if err := campaignSources.MergeByCampaignID(ctx, conn, scope, campaign.ID, named); err != nil {
 		return fmt.Errorf("cannot merge campaign sources: %w", err)
 	}
 
 	return nil
+}
+
+// snapshotSourceNames copies each source and replaces the name with the
+// connector account name, the same value upsertCampaignSource stores. The
+// live access_review_sources row is left unchanged.
+func snapshotSourceNames(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	sources coredata.AccessReviewSources,
+) (coredata.AccessReviewSources, error) {
+	accountIDs := make([]gid.GID, 0, len(sources))
+	for _, source := range sources {
+		if source.ConnectorAccountID != nil {
+			accountIDs = append(accountIDs, *source.ConnectorAccountID)
+		}
+	}
+
+	var accounts coredata.ConnectorAccounts
+	if err := accounts.LoadByIDs(ctx, conn, scope, accountIDs); err != nil {
+		return nil, fmt.Errorf("cannot load connector accounts: %w", err)
+	}
+
+	names := make(map[gid.GID]string, len(accounts))
+	for _, account := range accounts {
+		names[account.ID] = account.Name
+	}
+
+	snapshotted := make(coredata.AccessReviewSources, 0, len(sources))
+	for _, source := range sources {
+		copied := *source
+		if source.ConnectorAccountID != nil {
+			name, ok := names[*source.ConnectorAccountID]
+			if !ok {
+				return nil, fmt.Errorf("cannot load connector account: %w", coredata.ErrResourceNotFound)
+			}
+
+			copied.Name = name
+		}
+
+		snapshotted = append(snapshotted, &copied)
+	}
+
+	return snapshotted, nil
 }
 
 func (s *Service) StartCampaign(
@@ -460,9 +509,18 @@ func (s *Service) upsertCampaignSource(
 	now := time.Now()
 	sourceID := source.ID
 
-	connectorID, err := accountConnectorID(ctx, tx, scope, source.ConnectorAccountID)
-	if err != nil {
-		return err
+	name := source.Name
+
+	var connectorID *gid.GID
+
+	if source.ConnectorAccountID != nil {
+		account := &coredata.ConnectorAccount{}
+		if err := account.LoadByID(ctx, tx, scope, *source.ConnectorAccountID); err != nil {
+			return fmt.Errorf("cannot load connector account: %w", err)
+		}
+
+		name = account.Name
+		connectorID = &account.ConnectorID
 	}
 
 	campaignSource := &coredata.AccessReviewCampaignSource{
@@ -470,7 +528,7 @@ func (s *Service) upsertCampaignSource(
 		OrganizationID:         source.OrganizationID,
 		AccessReviewCampaignID: campaignID,
 		AccessReviewSourceID:   &sourceID,
-		Name:                   source.Name,
+		Name:                   name,
 		ConnectorID:            connectorID,
 		ConnectorAccountID:     source.ConnectorAccountID,
 		CreatedAt:              now,

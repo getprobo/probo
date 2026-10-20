@@ -113,6 +113,7 @@ type UpdateOrganizationContextPayload {
 type Organization implements Node {
     id: ID!
     name: String!
+    legalName: String
     logo: File @goField(forceResolver: true)
     horizontalLogo: File @goField(forceResolver: true)
 
@@ -127,7 +128,7 @@ type Organization implements Node {
         filter: ProfileFilter
     ): ProfileConnection! @goField(forceResolver: true)
 
-    measureCategories: [String!]! @goField(forceResolver: true)
+    internalControlCategories: [String!]! @goField(forceResolver: true)
 
     accessReviewSources(
         first: Int
@@ -202,6 +203,7 @@ type Organization implements Node {
     connectors(filter: ConnectorFilter): [Connector!]! @goField(forceResolver: true)
     linearTeams(first: Int, after: String, query: String): LinearTeamConnection!
         @goField(forceResolver: true)
+    linearSettings: LinearSettings! @goField(forceResolver: true)
     linearIssues(
         teamId: String!
         first: Int
@@ -268,14 +270,14 @@ type Organization implements Node {
         orderBy: FrameworkOrder
     ): FrameworkConnection! @goField(forceResolver: true)
 
-    measures(
+    internalControls(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
-    ): MeasureConnection! @goField(forceResolver: true)
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     obligationsDocument: Document @goField(forceResolver: true)
 
@@ -388,6 +390,14 @@ type Organization implements Node {
         orderBy: CompliancePortalOrder
     ): CompliancePortalConnection! @goField(forceResolver: true)
 
+    employeePortals(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: EmployeePortalOrder
+    ): EmployeePortalConnection @goField(forceResolver: true)
+
     cookieBanners(
         first: Int
         after: CursorKey
@@ -407,12 +417,15 @@ type Organization implements Node {
 
     thirdPartiesDocument: Document @goField(forceResolver: true)
 
+    deviceAgentVersions: [String!]! @goField(forceResolver: true)
+
     devices(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
         orderBy: DeviceOrder
+        filter: DeviceFilter
     ): DeviceConnection! @goField(forceResolver: true)
 
     webhookSubscriptions(

@@ -65,6 +65,7 @@ type (
 		CompliancePortal   CompliancePortalConfig   `json:"trust-center"`
 		AWS                AWSConfig                `json:"aws"`
 		Notifications      NotificationsConfig      `json:"notifications"`
+		TaskRecurrence     TaskRecurrenceConfig     `json:"task-recurrence"`
 		Connectors         []ConnectorConfig        `json:"connectors,omitempty"`
 		// ConnectorEndpoints repoints a provider at different hosts (a vendor
 		// sandbox on a staging deployment) keyed by provider name, e.g.

@@ -1,0 +1,182 @@
+// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package coredata
+
+import (
+	"context"
+	"fmt"
+	"maps"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+)
+
+type (
+	ControlInternalControl struct {
+		ControlID         gid.GID      `db:"control_id"`
+		InternalControlID gid.GID      `db:"internal_control_id"`
+		OrganizationID    gid.GID      `db:"organization_id"`
+		TenantID          gid.TenantID `db:"tenant_id"`
+		CreatedAt         time.Time    `db:"created_at"`
+	}
+
+	ControlInternalControls []*ControlInternalControl
+)
+
+func (cm ControlInternalControl) Upsert(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+) error {
+	q := `
+INSERT INTO
+    controls_internal_controls (
+        control_id,
+        internal_control_id,
+        organization_id,
+        tenant_id,
+        created_at
+    )
+VALUES (
+    @control_id,
+    @internal_control_id,
+    @organization_id,
+    @tenant_id,
+    @created_at
+)
+ON CONFLICT (control_id, internal_control_id) DO NOTHING;
+`
+
+	args := pgx.StrictNamedArgs{
+		"control_id":          cm.ControlID,
+		"internal_control_id": cm.InternalControlID,
+		"organization_id":     cm.OrganizationID,
+		"tenant_id":           scope.GetTenantID(),
+		"created_at":          cm.CreatedAt,
+	}
+	_, err := conn.Exec(ctx, q, args)
+
+	return err
+}
+
+func (cm ControlInternalControl) Delete(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	controlID gid.GID,
+	internalControlID gid.GID,
+) error {
+	q := `
+DELETE
+FROM
+    controls_internal_controls
+WHERE
+    %s
+    AND control_id = @control_id
+    AND internal_control_id = @internal_control_id;
+`
+
+	args := pgx.StrictNamedArgs{
+		"control_id":          controlID,
+		"internal_control_id": internalControlID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	_, err := conn.Exec(ctx, q, args)
+
+	return err
+}
+
+type ControlWithRisk struct {
+	ControlID gid.GID `db:"control_id"`
+}
+
+type ControlsWithRisk []*ControlWithRisk
+
+func (cwrs *ControlsWithRisk) LoadByControlIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	controlIDs []gid.GID,
+) error {
+	q := `
+WITH control_risks_via_internal_controls AS (
+	SELECT DISTINCT
+		cm.control_id,
+		rm.risk_id,
+		r.tenant_id
+	FROM
+		controls_internal_controls cm
+	INNER JOIN
+		risks_internal_controls rm ON cm.internal_control_id = rm.internal_control_id
+	INNER JOIN
+		risks r ON rm.risk_id = r.id
+	WHERE
+		cm.control_id = ANY(@control_ids)
+),
+control_risks_via_documents AS (
+	SELECT DISTINCT
+		cd.control_id,
+		rd.risk_id,
+		r.tenant_id
+	FROM
+		controls_documents cd
+	INNER JOIN
+		risks_documents rd ON cd.document_id = rd.document_id
+	INNER JOIN
+		risks r ON rd.risk_id = r.id
+	WHERE
+		cd.control_id = ANY(@control_ids)
+),
+control_risks AS (
+	SELECT control_id, risk_id, tenant_id FROM control_risks_via_internal_controls
+	UNION
+	SELECT control_id, risk_id, tenant_id FROM control_risks_via_documents
+)
+SELECT DISTINCT
+	control_id
+FROM
+	control_risks
+WHERE
+	%s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{"control_ids": controlIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query control risks: %w", err)
+	}
+
+	controlsWithRisk, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ControlWithRisk])
+	if err != nil {
+		return fmt.Errorf("cannot collect control risks: %w", err)
+	}
+
+	*cwrs = controlsWithRisk
+
+	return nil
+}

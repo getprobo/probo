@@ -66,10 +66,17 @@ func newCORSMiddleware(logger *log.Logger, cookieBannerSvc *cookiebanner.Service
 					return
 				}
 
-				canonicalOrigin := cookiebanner.CanonicalizeOrigin(origin)
-				if banner.Origin != canonicalOrigin {
-					jsonx.RenderForbidden(w)
-					return
+				if banner.Capabilities.Corsless {
+					if !cookiebanner.IsReflectableOrigin(origin) {
+						jsonx.RenderForbidden(w)
+						return
+					}
+				} else {
+					canonicalOrigin := cookiebanner.CanonicalizeOrigin(origin)
+					if banner.Origin != canonicalOrigin {
+						jsonx.RenderForbidden(w)
+						return
+					}
 				}
 
 				w.Header().Set("Access-Control-Allow-Origin", origin)

@@ -18,32 +18,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
-import {
-  Breadcrumb,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  useDialogRef,
-  useToast,
-} from "@probo/ui";
-import { useEffect, useMemo, useState } from "react";
+import { formatError, type GraphQLError } from "@probo/helpers";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
+import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
+import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
+import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
+import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
+import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { type FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { ReassignDeviceDialog_device$key } from "#/__generated__/core/ReassignDeviceDialog_device.graphql";
 import type { ReassignDeviceDialogMutation } from "#/__generated__/core/ReassignDeviceDialogMutation.graphql";
-import { PeopleSelectField } from "#/components/form/PeopleSelectField";
-import { useFormWithSchema } from "#/hooks/useFormWithSchema";
-import { z } from "#/lib/zod";
+
+import { DeviceOwnerSelect } from "../_components/DeviceOwnerSelect";
 
 const reassignDeviceDialogFragment = graphql`
   fragment ReassignDeviceDialog_device on Device {
     id
     owner {
       id
+      ...DeviceOwnerSelect_profile
     }
   }
 `;
@@ -62,118 +61,97 @@ const reassignDeviceMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  ownerId: z.string().nullable().optional(),
-});
-
 interface ReassignDeviceDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   deviceKey: ReassignDeviceDialog_device$key;
   organizationId: string;
-  ref?: ReturnType<typeof useDialogRef>;
 }
 
 export function ReassignDeviceDialog({
+  open,
+  onOpenChange,
   deviceKey,
   organizationId,
-  ref: refProps,
 }: ReassignDeviceDialogProps) {
-  const { t } = useTranslation();
-  const { toast } = useToast();
-  const dialogRef = useDialogRef();
-  const ref = refProps ?? dialogRef;
-
+  const { t } = useTranslation("organizations/devices");
+  const toast = useToast();
   const device = useFragment(reassignDeviceDialogFragment, deviceKey);
-  const [open, setOpen] = useState(false);
+  const serverOwnerId = device.owner?.id ?? null;
+  const [ownerId, setOwnerId] = useState<string | null>(serverOwnerId);
+  const [prevServerOwnerId, setPrevServerOwnerId] = useState(serverOwnerId);
+  if (serverOwnerId !== prevServerOwnerId) {
+    setPrevServerOwnerId(serverOwnerId);
+    setOwnerId(serverOwnerId);
+  }
+  const [setDeviceOwner, isUpdating] = useMutation<ReassignDeviceDialogMutation>(reassignDeviceMutation);
 
-  const defaultValues = useMemo(
-    () => ({
-      ownerId: device.owner?.id ?? null,
-    }),
-    [device.owner?.id],
-  );
+  function handleOpenChange(next: boolean) {
+    if (!next) {
+      setOwnerId(serverOwnerId);
+    }
+    onOpenChange(next);
+  }
 
-  const { control, handleSubmit, formState, reset } = useFormWithSchema(schema, {
-    defaultValues,
-  });
-
-  useEffect(() => {
-    reset(defaultValues);
-  }, [defaultValues, reset]);
-
-  const handleClose = () => {
-    reset(defaultValues);
-  };
-
-  const [setDeviceOwner, isInFlight] = useMutation<ReassignDeviceDialogMutation>(
-    reassignDeviceMutation,
-  );
-
-  const onSubmit = (formData: z.infer<typeof schema>) => {
-    const ownerId = formData.ownerId ?? undefined;
-
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setDeviceOwner({
       variables: {
         input: {
           deviceId: device.id,
-          ownerId,
+          ownerId: ownerId ?? undefined,
         },
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("common.error"),
             description: errors[0].message,
-            variant: "error",
+            type: "error",
           });
           return;
         }
-
-        toast({
+        toast.add({
           title: t("common.success"),
           description: t("devices.messages.ownerUpdated"),
-          variant: "success",
+          type: "success",
         });
-        handleClose();
-        ref.current?.close();
+        onOpenChange(false);
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("common.error"),
-          description: formatError(
-            t("devices.errors.reassign"),
-            error,
-          ),
-          variant: "error",
+          description: formatError(t("devices.errors.reassign"), error as GraphQLError),
+          type: "error",
         });
       },
     });
-  };
+  }
 
   return (
-    <Dialog
-      ref={ref}
-      onClose={handleClose}
-      onOpenChange={setOpen}
-      title={<Breadcrumb items={[t("devices.title"), t("devices.actions.reassign")]} />}
-    >
-      <form onSubmit={e => void handleSubmit(onSubmit)(e)} className="space-y-4">
-        <DialogContent padded className="space-y-4">
-          {open && (
-            <PeopleSelectField
-              organizationId={organizationId}
-              control={control}
-              name="ownerId"
-              label={t("devices.fields.owner")}
-              optional
-            />
-          )}
-        </DialogContent>
-        <DialogFooter>
-          <Button disabled={formState.isSubmitting || isInFlight} type="submit">
-            {t("devices.actions.reassign")}
-          </Button>
-        </DialogFooter>
-      </form>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogPopup>
+        <DialogHeader>
+          <DialogTitle>{t("devices.actions.reassign")}</DialogTitle>
+        </DialogHeader>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <DialogBody>
+            {open && (
+              <DeviceOwnerSelect
+                organizationId={organizationId}
+                profileKey={device.owner ?? null}
+                value={ownerId}
+                onValueChange={setOwnerId}
+              />
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button type="submit" loading={isUpdating}>
+              {t("devices.actions.reassign")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogPopup>
     </Dialog>
   );
 }

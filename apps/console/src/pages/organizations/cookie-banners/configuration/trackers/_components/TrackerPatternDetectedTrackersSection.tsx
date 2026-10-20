@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { CaretDownIcon } from "@phosphor-icons/react";
-import { dateTimeFormat } from "@probo/i18n";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Table } from "@probo/ui/src/v2/Table/Table";
@@ -55,13 +54,12 @@ export const trackerPatternDetectedTrackersSectionFragment = graphql`
   @refetchable(queryName: "TrackerPatternDetectedTrackersSectionRefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
-    order: { type: "DetectedTrackerOrder", defaultValue: { field: LAST_DETECTED_AT, direction: DESC } }
+    order: { type: "DetectedTrackerOrder", defaultValue: { field: CREATED_AT, direction: DESC } }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
   ) {
     detectedCount
-    lastMatchedAt
     detectedTrackers(
       first: $first
       after: $after
@@ -86,7 +84,7 @@ interface TrackerPatternDetectedTrackersSectionProps {
 export function TrackerPatternDetectedTrackersSection({
   trackerPatternKey,
 }: TrackerPatternDetectedTrackersSectionProps) {
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
   const [order, setOrder] = useState<DetectedTrackerOrder>(defaultDetectedTrackersOrder);
   const [isSortPending, startSortTransition] = useTransition();
 
@@ -100,12 +98,7 @@ export function TrackerPatternDetectedTrackersSection({
     pending: isPending,
   });
   const trackers = data.detectedTrackers?.edges.map(edge => edge.node) ?? [];
-  const summary = data.lastMatchedAt == null
-    ? t("detectedTrackersSection.summaryNever", { count: data.detectedCount })
-    : t("detectedTrackersSection.summary", {
-        count: data.detectedCount,
-        date: dateTimeFormat(i18n.language, data.lastMatchedAt),
-      });
+  const summary = t("detectedTrackersSection.summary", { count: data.detectedCount });
 
   function handleSort(field: DetectedTrackerOrderField) {
     const next = nextDetectedTrackersOrder(field, order);
@@ -136,31 +129,36 @@ export function TrackerPatternDetectedTrackersSection({
         ? (
             <>
               <div aria-busy={isPending} className={results()}>
-                <Table variant="surface">
+                <Table variant="surface" layout="fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell overflow="truncate">
                         {t("detectedTrackersSection.columns.identifier")}
                       </TableColumnHeaderCell>
+                      <TableColumnHeaderCell overflow="truncate">
+                        {t("detectedTrackersSection.columns.domain")}
+                      </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        overflow="truncate"
                         sort={detectedTrackersHeaderSort("INITIATOR_URL", order)}
                         onSort={() => handleSort("INITIATOR_URL")}
                         aria-label={t("detectedTrackersSection.sort.initiatorUrl")}
                       >
                         {t("detectedTrackersSection.columns.initiatorUrl")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem">
                         {t("detectedTrackersSection.columns.maxAge")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem">
                         {t("detectedTrackersSection.columns.source")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
-                        sort={detectedTrackersHeaderSort("LAST_DETECTED_AT", order)}
-                        onSort={() => handleSort("LAST_DETECTED_AT")}
-                        aria-label={t("detectedTrackersSection.sort.detectionTime")}
+                        width="10rem"
+                        sort={detectedTrackersHeaderSort("CREATED_AT", order)}
+                        onSort={() => handleSort("CREATED_AT")}
+                        aria-label={t("detectedTrackersSection.sort.firstSeen")}
                       >
-                        {t("detectedTrackersSection.columns.detectionTime")}
+                        {t("detectedTrackersSection.columns.firstSeen")}
                       </TableColumnHeaderCell>
                     </TableRow>
                   </TableHeader>

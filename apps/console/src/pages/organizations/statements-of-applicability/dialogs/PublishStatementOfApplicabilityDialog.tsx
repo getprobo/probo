@@ -27,8 +27,8 @@ import {
   IconSend,
   IconUpload,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -69,7 +69,7 @@ export function PublishStatementOfApplicabilityDialog({
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
 
@@ -108,12 +108,12 @@ export function PublishStatementOfApplicabilityDialog({
       onCompleted(response) {
         const documentId = response.publishStatementOfApplicability?.documentEdge?.node?.id;
         if (documentId) {
-          toast({
+          toast.add({
             title: t("publishStatementOfApplicabilityDialog.messages.success"),
             description: hasApprovers
               ? t("publishStatementOfApplicabilityDialog.messages.approvalRequested")
               : t("publishStatementOfApplicabilityDialog.messages.published"),
-            variant: "success",
+            type: "success",
           });
           dialogRef.current?.close();
           reset();
@@ -121,13 +121,13 @@ export function PublishStatementOfApplicabilityDialog({
         }
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("publishStatementOfApplicabilityDialog.messages.error"),
           description: formatError(
             t("publishStatementOfApplicabilityDialog.errors.publish"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -55,7 +55,7 @@ export const trackerResourceListFragment = graphql`
     last: { type: "Int", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     filter: { type: "TrackerResourceFilter", defaultValue: null }
-    order: { type: "TrackerResourceOrder", defaultValue: { field: LAST_DETECTED_AT, direction: DESC } }
+    order: { type: "TrackerResourceOrder", defaultValue: { field: CREATED_AT, direction: DESC } }
   ) {
     ...MoveToCategorySelect_cookieBanner
     uncategorisedTrackerResources(
@@ -186,33 +186,27 @@ export function TrackerResourceList({ cookieBannerKey }: TrackerResourceListProp
         : (
             <>
               <div aria-busy={isPending} className={results()}>
-                <Table variant="surface">
+                <Table variant="surface" layout="fixed">
                   <TableHeader>
                     <TableRow>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem">
                         {t("resourcesPage.columns.type")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        overflow="truncate"
                         sort={resourcesListHeaderSort("ORIGIN", graphqlOrder)}
                         onSort={() => setOrder("ORIGIN")}
                         aria-label={t("resourcesPage.sort.origin")}
                       >
                         {t("resourcesPage.columns.origin")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell overflow="truncate">
                         {t("resourcesPage.columns.path")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="10rem">
                         {t("resourcesPage.columns.category")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell
-                        sort={resourcesListHeaderSort("LAST_DETECTED_AT", graphqlOrder)}
-                        onSort={() => setOrder("LAST_DETECTED_AT")}
-                        aria-label={t("resourcesPage.sort.lastDetected")}
-                      >
-                        {t("resourcesPage.columns.lastDetected")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell />
+                      <TableColumnHeaderCell width="3rem" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>

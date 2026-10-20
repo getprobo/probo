@@ -249,6 +249,7 @@ type CookieConsentRecord implements Node {
     countryCode: CountryCode
     subdivisionCode: String
     tc: String
+    origin: String
     createdAt: Datetime!
 }
 

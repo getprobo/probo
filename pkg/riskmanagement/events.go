@@ -36,13 +36,13 @@ func insertTreatmentPlanEvent(
 	scope coredata.Scoper,
 	tp *coredata.TreatmentPlan,
 	eventType coredata.TreatmentPlanEventType,
-	measureIDs []gid.GID,
+	internalControlIDs []gid.GID,
 	now time.Time,
 ) error {
 	event := coredata.NewTreatmentPlanEvent(
 		tp,
 		eventType,
-		measureIDs,
+		internalControlIDs,
 		now,
 	)
 
@@ -53,20 +53,20 @@ func insertTreatmentPlanEvent(
 	return nil
 }
 
-func loadTreatmentPlanMeasureIDs(
+func loadTreatmentPlanInternalControlIDs(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
 	planID gid.GID,
 ) ([]gid.GID, error) {
-	var mappings coredata.TreatmentPlanMeasures
+	var mappings coredata.TreatmentPlanInternalControls
 	if err := mappings.LoadByTreatmentPlanIDs(ctx, conn, scope, []gid.GID{planID}); err != nil {
-		return nil, fmt.Errorf("cannot load treatment plan measures: %w", err)
+		return nil, fmt.Errorf("cannot load treatment plan internal controls: %w", err)
 	}
 
 	ids := make([]gid.GID, 0, len(mappings))
 	for _, mapping := range mappings {
-		ids = append(ids, mapping.MeasureID)
+		ids = append(ids, mapping.InternalControlID)
 	}
 
 	return ids, nil

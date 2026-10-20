@@ -32,6 +32,36 @@ import (
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
+func TestLinearIssueCreateForImport(t *testing.T) {
+	t.Parallel()
+
+	t.Run("updates are not imported", func(t *testing.T) {
+		t.Parallel()
+
+		keep, err := linearIssueCreateForImport(t.Context(), nil, []byte(`{
+			"action":"update",
+			"type":"Issue",
+			"organizationId":"org-1",
+			"data":{"id":"issue-1","team":{"id":"team-1"}}
+		}`))
+		require.NoError(t, err)
+		assert.False(t, keep)
+	})
+
+	t.Run("creates without a team are not imported", func(t *testing.T) {
+		t.Parallel()
+
+		keep, err := linearIssueCreateForImport(t.Context(), nil, []byte(`{
+			"action":"create",
+			"type":"Issue",
+			"organizationId":"org-1",
+			"data":{"id":"issue-1","title":"Hello"}
+		}`))
+		require.NoError(t, err)
+		assert.False(t, keep)
+	})
+}
+
 func TestWebhookIssueIdentity(t *testing.T) {
 	t.Parallel()
 
@@ -260,7 +290,7 @@ func TestMapInboundIssue_PartialPayloadKeepsOmittedFields(t *testing.T) {
 	data, err := envelope.IssueData()
 	require.NoError(t, err)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", mapped.Name)
 	assert.Equal(t, content, mapped.Content)
@@ -290,7 +320,7 @@ func TestMapInboundIssue_UnsetLinearPriorityKeepsExisting(t *testing.T) {
 	require.True(t, data.Has("priority"))
 	assert.Equal(t, 0, data.Priority)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", mapped.Name)
 	assert.Equal(t, coredata.TaskPriorityHigh, mapped.Priority)
@@ -327,7 +357,7 @@ func TestMapInboundIssue_DescriptionHashMatchesOutboundRender(t *testing.T) {
 	data, err := envelope.IssueData()
 	require.NoError(t, err)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 
 	inboundHash := ContentHash(

@@ -274,6 +274,23 @@ func (h *outboundHandler) processUpdate(
 			return err
 		}
 
+		description, _, _, embedErr := h.svc.embedLinearDescription(
+			ctx,
+			client,
+			scope,
+			payload.ConnectorID,
+			payload.ExternalID,
+			task.OrganizationID,
+			task.ID,
+			markdown,
+			task.Content,
+		)
+		// A failed attachment stays in the text. The issue update still sends
+		// the title, state, priority, and assignee, and the job retries the file.
+		if embedErr != nil && !isPartialLinearEmbed(embedErr) {
+			return fmt.Errorf("cannot embed Linear files: %w", embedErr)
+		}
+
 		dueDate := DeadlineToLinearDate(task.Deadline)
 
 		issue, err := client.UpdateIssue(
@@ -281,7 +298,7 @@ func (h *outboundHandler) processUpdate(
 			payload.ExternalID,
 			linear.IssueUpdateInput{
 				Title:       &task.Name,
-				Description: &markdown,
+				Description: &description,
 				StateID:     &stateID,
 				Priority:    priority,
 				DueDate:     dueDate,
@@ -291,6 +308,10 @@ func (h *outboundHandler) processUpdate(
 		)
 		if err != nil {
 			return fmt.Errorf("cannot update Linear issue: %w", err)
+		}
+
+		if embedErr != nil {
+			return fmt.Errorf("cannot embed Linear files: %w", embedErr)
 		}
 
 		sent = true

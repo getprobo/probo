@@ -31,9 +31,9 @@ import (
 )
 
 const revokeMutation = `
-mutation($input: RevokeDeviceInput!) {
-  revokeDevice(input: $input) {
-    device {
+mutation($input: RevokeDevicesInput!) {
+  revokeDevices(input: $input) {
+    devices {
       id
       state
     }
@@ -42,21 +42,22 @@ mutation($input: RevokeDeviceInput!) {
 `
 
 type revokeResponse struct {
-	RevokeDevice struct {
-		Device struct {
+	RevokeDevices struct {
+		Devices []struct {
 			ID    string `json:"id"`
 			State string `json:"state"`
-		} `json:"device"`
-	} `json:"revokeDevice"`
+		} `json:"devices"`
+	} `json:"revokeDevices"`
 }
 
 func NewCmdRevoke(f *cmdutil.Factory) *cobra.Command {
 	var flagYes bool
 
 	cmd := &cobra.Command{
-		Use:   "revoke <id>",
-		Short: "Revoke an ITAM device enrollment",
-		Args:  cobra.ExactArgs(1),
+		Use:     "revoke <id>...",
+		Short:   "Revoke one or more ITAM device enrollments",
+		Example: "  prb device revoke <device-id> [<device-id>...]",
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !flagYes {
 				if !f.IOStreams.IsInteractive() {
@@ -65,8 +66,13 @@ func NewCmdRevoke(f *cmdutil.Factory) *cobra.Command {
 
 				var confirmed bool
 
+				title := fmt.Sprintf("Revoke device %s?", args[0])
+				if len(args) > 1 {
+					title = fmt.Sprintf("Revoke %d devices?", len(args))
+				}
+
 				err := huh.NewConfirm().
-					Title(fmt.Sprintf("Revoke device %s?", args[0])).
+					Title(title).
 					Value(&confirmed).
 					Run()
 				if err != nil {
@@ -100,7 +106,7 @@ func NewCmdRevoke(f *cmdutil.Factory) *cobra.Command {
 				revokeMutation,
 				map[string]any{
 					"input": map[string]any{
-						"deviceId": args[0],
+						"deviceIds": args,
 					},
 				},
 			)
@@ -113,12 +119,14 @@ func NewCmdRevoke(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			_, _ = fmt.Fprintf(
-				f.IOStreams.Out,
-				"Revoked device %s (%s)\n",
-				resp.RevokeDevice.Device.ID,
-				resp.RevokeDevice.Device.State,
-			)
+			for _, device := range resp.RevokeDevices.Devices {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.Out,
+					"Revoked device %s (%s)\n",
+					device.ID,
+					device.State,
+				)
+			}
 
 			return nil
 		},

@@ -575,14 +575,17 @@
       "add": "Add email"
     }
   },
-  "measureSelectField": {
-    "placeholder": "Select a measure",
+  "internalControlSelectField": {
+    "placeholder": "Select an internal control",
     "none": "None"
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Add people...",
     "empty": "No people available",
     "remove": "Remove {{name}}"
+  },
+  "userSelect": {
+    "loadMore": "Load more"
   },
   "peopleSelectField": {
     "placeholder": "Select an owner",
@@ -638,19 +641,19 @@
     "empty": "No third parties available",
     "remove": "Remove {{name}}"
   },
-  "linkedMeasuresCard": {
-    "title": "Measures",
+  "linkedInternalControlsCard": {
+    "title": "Internal controls",
     "columns": { "name": "Name", "state": "State" },
-    "empty": "No measures linked",
+    "empty": "No internal controls linked",
     "actions": {
-      "link": "Link measure",
+      "link": "Link internal control",
       "unlink": "Unlink",
       "showMore": "Show {{count}} more"
     }
   },
-  "linkedMeasuresDialog": {
-    "title": "Link measures",
-    "searchPlaceholder": "Search measures...",
+  "linkedInternalControlsDialog": {
+    "title": "Link internal controls",
+    "searchPlaceholder": "Search internal controls...",
     "allCategories": "All categories",
     "actions": { "close": "Close", "link": "Link", "unlink": "Unlink" }
   },
@@ -708,22 +711,9 @@
     "actions": { "showMore": "Show more" }
   },
   "tasksCard": {
-    "states": { "all": "All", "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },
-    "empty": "No tasks",
-    "noResults": "No tasks match your filters",
-    "searchPlaceholder": "Search tasks",
-    "filters": { "status": "Status", "allStatuses": "All statuses", "user": "User", "allUsers": "All users" },
-    "error": { "title": "Error", "reorder": "Failed to reorder task." },
-    "dragInstructions": {
-      "all": "Drag and drop to reorder tasks or move them between states",
-      "state": "Drag and drop to reorder tasks"
-    },
-    "deleteConfirmation": "Are you sure you want to delete this task?",
-    "actions": { "moveToTodo": "Move to To do", "moveToInProgress": "Move to In progress", "moveToDone": "Move to Done", "edit": "Edit", "delete": "Delete" },
-    "metadata": { "timeEstimate": "Time estimate", "deadline": "Deadline" },
-    "recurringBadge": {
-      "tooltip": "Repeats every {{interval}}"
-    }
+    "states": { "backlog": "Backlog", "todo": "To do", "inProgress": "In progress", "done": "Done", "canceled": "Canceled", "duplicate": "Duplicate" },
+    "filters": { "user": "User", "allUsers": "All users", "notAssigned": "Not assigned", "internalControl": "Internal control", "allInternalControls": "All internal controls", "searchInternalControls": "Search internal controls", "noInternalControls": "No internal controls" },
+    "error": { "title": "Error", "reorder": "Failed to reorder task." }
   },
   "deleteTrustCenterReferenceDialog": {
     "title": "Delete Reference",
@@ -764,7 +754,7 @@
     "errors": {
       "delete": "Failed to delete audit",
       "createOrganizationRequired": "Failed to create audit: organization is required",
-      "createFrameworkRequired": "Failed to create audit: framework is required",
+      "createFrameworkRequired": "Failed to create audit: at least one framework is required",
       "updateIdRequired": "Failed to update audit: audit ID is required",
       "uploadReport": "Failed to upload audit report",
       "uploadReportIdRequired": "Failed to upload report: audit ID is required",
@@ -794,12 +784,12 @@
     "messages": { "deleted": "Framework deleted successfully" },
     "errors": { "delete": "Failed to delete framework" }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
-      "deleted": "Measure deleted successfully.",
-      "updated": "Measure updated successfully."
+      "deleted": "Internal control deleted successfully.",
+      "updated": "Internal control updated successfully."
     },
-    "errors": { "delete": "Failed to delete measure", "update": "Failed to update measure" }
+    "errors": { "delete": "Failed to delete internal control", "update": "Failed to update internal control" }
   },
   "obligationGraph": {
     "deleteConfirmation": "This will permanently delete this obligation. This action cannot be undone.",
@@ -923,6 +913,13 @@
       "notStarted": "Not Started",
       "notImplemented": "Not Implemented"
     },
+    "internalControlState": {
+      "implemented": "Implemented",
+      "inProgress": "In Progress",
+      "notApplicable": "Not Applicable",
+      "notStarted": "Not Started",
+      "notImplemented": "Not Implemented"
+    },
     "obligationStatus": {
       "nonCompliant": "Non-compliant",
       "partiallyCompliant": "Partially compliant",
@@ -1024,6 +1021,16 @@
         "generic": "Something went wrong"
       }
     },
+    "richEditor": {
+      "file": "File",
+      "imageUnavailable": "Image unavailable",
+      "resizeImage": "Resize image",
+      "uploading": "Uploading {{fileName}}…",
+      "uploadFailed": "Upload failed",
+      "couldNotUpload": "Could not upload {{fileName}}",
+      "tooLarge": "{{fileName}} is too large",
+      "unsupported": "{{fileName}} is not a supported file"
+    },
     "documentClassification": {
       "public": "Public",
       "internal": "Internal",
@@ -1055,6 +1062,14 @@
       "unknown": "Unknown",
       "not_implemented": "Not Implemented"
     },
+    "internalControlState": {
+      "implemented": "Implemented",
+      "in_progress": "In Progress",
+      "not_applicable": "Not Applicable",
+      "not_started": "Not Started",
+      "unknown": "Unknown",
+      "not_implemented": "Not Implemented"
+    },
     "confirmDialog": { "defaultTitle": "Are you sure?" },
     "durationPicker": {
       "minutes": "Minutes",
@@ -1067,6 +1082,7 @@
       "custom": { "title": "Custom framework", "description": "Start from scratch" }
     },
     "measureImplementation": { "title": "Measure implementation", "complete": "Complete" },
+    "internalControlImplementation": { "title": "Internal control implementation", "complete": "Complete" },
     "impactOptions": {
       "low": "Minimal impact on business",
       "medium": "Moderate impact on business",
@@ -1310,6 +1326,12 @@
     "errors": { "requestFailed": "Request failed", "cannotSignOut": "Cannot sign out" },
     "actions": { "signOut": "Sign out" }
   },
+  "redirectToEmployeePortal": {
+    "missing": {
+      "title": "Employee portal unavailable",
+      "description": "This organization does not have an employee portal yet. Ask an administrator to create one."
+    }
+  },
   "invitingOrganizationCard": { "checkEmail": "Check your email" },
   "membershipCard": {
     "status": { "authenticated": "Authenticated", "sessionExpired": "Session expired", "authenticationRequired": "Authentication required" },
@@ -1390,11 +1412,13 @@
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "IT Asset Management",
       "riskManagement": "Risk Management",
       "registries": "Registries",
       "compliancePortal": "Compliance Portal",
+      "employeePortal": "Employee Portal",
       "accessReview": "Access Review",
       "settings": "Settings"
     },
@@ -1403,7 +1427,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTEGRATIONS",
     "tasks": "Tasks",
-    "measures": "Measures",
+    "internalControls": "Internal controls",
     "risks": "Risks",
     "allRisks": "All Risks",
     "riskAnalyses": "Risk Analyses",
@@ -1425,7 +1449,7 @@
     "thirdPartyServices": "Services",
     "thirdPartySupplyChain": "Supply chain",
     "thirdPartyRisks": "Risk assessments",
-    "thirdPartyMeasures": "Measures",
+    "thirdPartyInternalControls": "Internal controls",
     "documents": "Documents",
     "assets": "Assets",
     "devices": "Devices",
@@ -1441,7 +1465,9 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Rights Requests",
     "campaigns": "Campaigns",
-    "connections": "Connections",
+    "connections": "Connectors",
+    "sources": "Sources",
+    "employeePortalSettings": "Settings",
     "compliancePortals": "Compliance Portals",
     "compliancePortalsSettings": "Settings",
     "compliancePortalsHosting": "Hosting",
@@ -1454,7 +1480,9 @@
     "compliancePortalsUpdates": "Updates",
     "compliancePortalsRightRequests": "Right Requests",
     "cookieBanners": "Cookie Banners",
-    "cookieBannersConfigure": "Configure",
+    "cookieBannersSettings": "Settings",
+    "cookieBannersInstall": "Install",
+    "cookieBannersTranslations": "Translations",
     "cookieBannersTrackers": "Trackers",
     "cookieBannersResources": "Resources",
     "cookieBannersTrail": "Trail",
@@ -1771,11 +1799,10 @@
     "actions": { "back": "Back", "create": "Create" }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV" },
     "errors": { "delete": "Failed to delete access source", "configure": "Failed to configure source" },
-    "messages": { "error": "Error", "success": "Success", "organizationUpdated": "Organization updated." },
+    "messages": { "error": "Error", "success": "Success", "deleted": "Access source deleted successfully.", "organizationUpdated": "Organization updated." },
     "deleteConfirmation": "This will permanently delete \"{{name}}\". This action cannot be undone.",
-    "actions": { "reconnect": "Reconnect", "delete": "Delete" },
+    "actions": { "reconnect": "Reconnect", "delete": "Delete", "cancel": "Cancel" },
     "loading": "Loading...",
     "selectOrganization": "Select organization",
     "organizationSlugPlaceholder": "org-slug",
@@ -1865,7 +1892,7 @@
     "note": { "title": "Decision note", "description": "Please provide a reason for this decision.", "label": "Note" }
   },
   "addAccessReviewSourceDialog": {
-    "actions": { "connectWithOAuth": "OAuth", "connectWithGitHubApp": "GitHub App", "connectWithApiKey": "API Key", "connectWithClientCredentials": "Client Credentials", "connectWithWorkloadIdentity": "Workload Identity", "connectWithAppInstall": "App Install", "chooseAnotherMethod": "Choose another connection method", "open": "Open" },
+    "actions": { "open": "Open" },
     "csv": { "title": "CSV", "description": "Upload CSV data directly as an access source." }
   },
   "addCampaignSourceDialog": {
@@ -1884,89 +1911,31 @@
     "fields": { "name": "Name", "description": "Description", "sources": "Sources" },
     "loadingSources": "Loading sources...",
     "actions": { "create": "Create" },
-    "emptySources": "No connections available. Add connections on the Connections page first."
+    "emptySources": "No sources available. Add sources on the Sources page first."
   },
   "postHogDeploymentField": {
     "deployment": { "label": "Deployment", "placeholder": "Select a deployment", "usCloud": "PostHog Cloud (US)", "euCloud": "PostHog Cloud (EU)", "selfHosted": "Self-hosted" },
     "instanceUrl": "Instance URL"
   },
-  "apiKeyConnectorDialog": {
-    "title": "Connect provider",
-    "titleWithProvider": "Connect {{provider}}",
-    "managedDescription": "Connect {{provider}} as an access source. Provide the details below to finish.",
-    "apiKeyDescription": "Enter the API key for {{provider}} to connect it as an access source.",
-    "apiKey": "API Key",
-    "messages": { "connectionFailed": "Connection failed" },
-    "errors": { "managedConnect": "Failed to connect provider. Please check your settings and try again.", "apiKeyConnect": "Failed to connect provider. Please check your API key and try again.", "apiKeyFormat": "This does not look like the expected key. Expected form: {{example}}", "rejected": { "better_stack_team_not_found": "Better Stack has no team with this name for this API token. Team names are case-sensitive: copy the exact name from Settings > Teams in Better Stack, or use a team-based API token.", "supabase_organization_not_found": "Supabase has no organization with this slug. Copy it from the organization URL in the Supabase dashboard (supabase.com/dashboard/org/<slug>).", "supabase_organization_not_accessible": "This access token cannot read the members of this organization. Create a token with Organization resource access that includes this organization, and Organization Members set to Read." } },
-    "actions": { "connect": "Connect", "connecting": "Connecting..." }
-  },
-  "clientCredentialsConnectorDialog": {
-    "title": "Connect provider",
-    "titleWithProvider": "Connect {{provider}}",
-    "description": "Enter the client credentials for {{provider}} to connect it as an access source.",
-    "messages": { "connectionFailed": "Connection failed" },
-    "errors": { "connect": "Failed to connect provider. Please check your credentials and try again." },
-    "fields": { "clientId": "Client ID", "clientSecret": "Client Secret", "tokenUrl": "Token URL", "scope": "Scope" },
-    "region": { "placeholder": "Select a region", "us": "United States (US)", "ca": "Canada (CA)", "eu": "Europe (EU)" },
-    "actions": { "connect": "Connect", "connecting": "Connecting..." }
-  },
-  "createAwsAccessReviewSourcePage": {
-    "pageTitle": "Connect AWS",
-    "title": "Connect AWS",
-    "description": "Deploy the audit role. Then enter its ARN.",
+  "newAccessReviewSourcePage": {
+    "title": "Add sources",
+    "description": "Add a source from an account already connected in Settings.",
     "permissionDenied": "You do not have permission to create access sources.",
-    "fields": {
-      "roleArn": "Role ARN",
-      "issuer": "Issuer",
-      "audience": "Audience",
-      "subject": "Subject",
-      "roleArnHelp": "e.g. arn:aws:iam::123456789012:role/ProboAudit"
-    },
-    "messages": {
-      "copyFailed": "Copy failed",
-      "copied": "Copied to clipboard",
-      "copiedIssuer": "Issuer copied.",
-      "copiedAudience": "Audience copied.",
-      "copiedSubject": "Subject copied.",
-      "copiedTerraform": "Terraform snippet copied.",
-      "error": "Error",
-      "success": "Success",
-      "created": "Access source created successfully."
-    },
-    "errors": {
-      "roleArn": "Enter a valid IAM role ARN.",
-      "create": "Could not create the connector. Check the role ARN and try again.",
-      "disconnected": "Probo could not assume the audit role. Confirm the stack is deployed in this account and that the issuer and subject match the values shown during setup.",
-      "delete": "Could not delete the connector. Try again.",
-      "source": "Failed to create access source",
-      "copy": "Copy the value manually."
-    },
-    "actions": {
-      "copy": "Copy",
-      "connect": "Connect",
-      "back": "Back",
-      "installViaCloudFormation": "Install via CloudFormation",
-      "installViaTerraform": "Install via Terraform",
-      "chooseAnotherInstallMethod": "Choose another install method"
-    }
+    "searchPlaceholder": "Search connectors",
+    "actions": { "new": "New", "add": "Add", "addCount": "Add ({{count}})", "select": "Select {{name}}" }
   },
-  "oauthExtraDialog": {
-    "actions": { "continue": "Continue" },
-    "datadog": { "title": "Connect Datadog", "description": "Select your Datadog site, then continue to authorize access.", "siteLabel": "Datadog site", "sitePlaceholder": "Select a site" },
-    "zendesk": { "title": "Connect Zendesk", "description": "Enter your Zendesk subdomain, then continue to authorize access.", "subdomainLabel": "Zendesk subdomain", "subdomainPlaceholder": "acme", "subdomainHelp": "The <subdomain> part of <subdomain>.zendesk.com" }
-  },
-  "useCreateAccessReviewSource": {
-    "errors": { "create": "Failed to create access source" },
-    "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." }
-  },
-  "accessReviewConnectionsPage": {
-    "title": "Connections",
-    "description": "Connect the systems whose access you want to review.",
+  "accessReviewSourcesPage": {
+    "title": "Sources",
+    "description": "Sources used in access reviews.",
     "errors": { "create": "Failed to create access source" },
     "messages": { "error": "Error", "success": "Success", "created": "Access source created successfully." },
-    "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry" },
-    "sections": { "connected": "Connected", "available": "Available" },
-    "searchPlaceholder": "Search sources and providers...",
+    "actions": { "loading": "Loading...", "loadMore": "Load more", "retry": "Retry", "more": "More actions", "addAll": "Add all", "edit": "Edit", "addSources": "Add sources" },
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "sections": { "connected": "Sources" },
+    "needsOrganization": "Pick an organization in Settings first.",
+    "emptyAccounts": "No account is ready. Connect a vendor in Settings first.",
+    "searchPlaceholder": "Search sources",
     "emptyConnected": "No access sources are connected yet.",
     "emptyConnectedSearch": "No connected sources match your search.",
     "searchLoadFailed": "Some sources could not be loaded, so the search is incomplete. Retry to search them all.",
@@ -2189,6 +2158,7 @@
     "deleteReportConfirmation": "This will permanently delete the audit report \"{{name}}\". This action cannot be undone.",
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "fields": { "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "frameworks": { "title": "Frameworks", "empty": "No frameworks linked.", "addPlaceholder": "Link a framework", "unlink": "Unlink", "linked": "Framework linked", "unlinked": "Framework unlinked", "linkError": "Failed to link framework", "unlinkError": "Failed to unlink framework", "retry": "Retry" },
     "actions": { "delete": "Delete", "update": "Update", "updating": "Updating...", "download": "Download" },
     "report": { "title": "Audit Report", "uploaded": "Uploaded {{date}}", "uploadDescription": "Upload the final audit report document (PDF recommended)", "dropzoneDescription": "Only PDF up to 25MB are allowed" }
   },
@@ -2200,7 +2170,7 @@
     },
     "dropzoneOverlay": "Drop a PDF to create an audit with a report",
     "actions": { "addAudit": "Add audit", "delete": "Delete" },
-    "columns": { "name": "Name", "framework": "Framework", "state": "State", "auditPeriod": "Audit period", "validityPeriod": "Validity period", "report": "Report" },
+    "columns": { "name": "Name", "framework": "Frameworks", "state": "State", "auditPeriod": "Audit period", "validityPeriod": "Validity period", "report": "Report" },
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
     "row": {
       "untitled": "Untitled",
@@ -2216,14 +2186,14 @@
   },
   "createAuditDialog": {
     "breadcrumb": { "audits": "Audits", "newAudit": "New Audit" },
-    "validation": { "frameworkRequired": "Framework is required" },
+    "validation": { "frameworkRequired": "At least one framework is required" },
     "messages": { "success": "Success", "error": "Error", "created": "Audit created successfully", "createdWithReport": "Audit created and report uploaded successfully" },
     "errors": { "create": "Failed to create audit" },
     "fileSize": "{{value}} MB",
     "loading": "Loading...",
-    "fields": { "framework": "Framework", "frameworkPlaceholder": "Select a framework", "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
+    "fields": { "framework": "Frameworks", "frameworkPlaceholder": "Select frameworks", "name": "Name", "namePlaceholder": "Audit name", "firm": "Audit firm", "firmPlaceholder": "Audit firm", "state": "State", "validFrom": "Valid From", "validUntil": "Valid Until", "auditStartDate": "Audit Start Date", "auditEndDate": "Audit End Date" },
     "states": { "to_book": "To book", "audit_booked": "Audit booked", "not_started": "Not Started", "in_progress": "In Progress", "completed": "Completed", "rejected": "Rejected", "outdated": "Outdated" },
-    "actions": { "create": "Create" }
+    "actions": { "create": "Create", "remove": "Remove {{name}}", "retry": "Retry" }
   },
   "context": {
     "title": "Context",
@@ -2247,7 +2217,7 @@
     "fields": { "bestPractice": "Best Practice", "maturityLevel": "Maturity level", "notImplementedJustification": "Justification for non-implementation" },
     "answers": { "yes": "Yes", "no": "No" },
     "maturityLevels": { "none": "0 - None", "initial": "1 - Initial", "managed": "2 - Managed", "defined": "3 - Defined", "quantitatively_managed": "4 - Quantitatively Managed", "optimizing": "5 - Optimizing" },
-    "errors": { "linkMeasure": "Failed to link measure", "unlinkMeasure": "Failed to unlink measure", "linkDocument": "Failed to link document", "unlinkDocument": "Failed to unlink document", "linkAudit": "Failed to link audit", "unlinkAudit": "Failed to unlink audit", "linkObligation": "Failed to link obligation", "unlinkObligation": "Failed to unlink obligation" }
+    "errors": { "linkInternalControl": "Failed to link internal control", "unlinkInternalControl": "Failed to unlink internal control", "linkDocument": "Failed to link document", "unlinkDocument": "Failed to unlink document", "linkAudit": "Failed to link audit", "unlinkAudit": "Failed to unlink audit", "linkObligation": "Failed to link obligation", "unlinkObligation": "Failed to unlink obligation" }
   },
   "frameworkDetailPage": {
     "errors": { "export": "Failed to export framework" },
@@ -2276,24 +2246,26 @@
     "fields": { "title": "Framework title", "description": "Add description" },
     "actions": { "create": "Create framework", "update": "Update framework" }
   },
-  "measureDetailPage": {
-    "deleteConfirmation": "This will permanently delete the measure \"{{name}}\". This action cannot be undone.",
-    "fields": { "selectState": "Select state" },
+  "internalControlDetailPage": {
+    "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
+    "fields": { "selectState": "Select status", "code": "Code", "owner": "Owner", "reviewer": "Reviewer", "operatingFrequency": "Operating frequency", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "nextEvidenceDue": "Evidence due", "nextTestDue": "Test due" },
+    "operatingModes": { "continuous": "Continuous", "event": "On event" },
     "actions": { "edit": "Edit", "delete": "Delete" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
+    "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
     "tabs": { "evidences": "Evidences", "tasks": "Tasks", "controls": "Controls", "risks": "Risks", "documents": "Documents", "thirdParties": "Third parties" }
   },
-  "measuresPage": {
-    "title": "Measures",
-    "description": "Measures are actions taken to reduce the risk. Add them to track their implementation status.",
-    "messages": { "imported": "Measures imported successfully.", "error": "Error", "success": "Success", "deleted": "Measure deleted successfully" },
-    "errors": { "import": "Failed to import measures", "delete": "Failed to delete measure" },
-    "deleteConfirmation": "This will permanently delete the measure \"{{name}}\". This action cannot be undone.",
-    "actions": { "import": "Import", "newMeasure": "New measure", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
-    "filters": { "searchPlaceholder": "Search measures...", "allStates": "All states", "allCategories": "All categories" },
+  "internalControlsPage": {
+    "title": "Internal controls",
+    "description": "Internal controls are owned safeguards that run on a cadence, produce evidence, and cover many framework requirements at once.",
+    "messages": { "imported": "Internal controls imported successfully.", "error": "Error", "success": "Success", "deleted": "Internal control deleted successfully" },
+    "errors": { "import": "Failed to import internal controls", "delete": "Failed to delete internal control" },
+    "deleteConfirmation": "This will permanently delete the internal control \"{{name}}\". This action cannot be undone.",
+    "actions": { "import": "Import", "newInternalControl": "New internal control", "loading": "Loading...", "loadMore": "Load more", "edit": "Edit", "delete": "Delete" },
+    "filters": { "searchPlaceholder": "Search internal controls...", "allStates": "All states", "allCategories": "All categories" },
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started" },
-    "columns": { "measure": "Measure", "category": "Category", "state": "State" },
-    "empty": { "title": "No measures yet", "description": "Create your first measure to get started." }
+    "columns": { "internalControl": "Internal control", "code": "Code", "category": "Category", "state": "State", "status": "Status" },
+    "empty": { "title": "No internal controls yet", "description": "Create your first internal control to get started." }
   },
   "linkedThirdPartiesCard": {
     "columns": { "name": "Name", "category": "Category" },
@@ -2306,7 +2278,7 @@
     "actions": { "link": "Link", "unlink": "Unlink" }
   },
   "createEvidenceDialog": {
-    "breadcrumb": { "measureDetail": "Measures detail", "createEvidence": "Create Evidence" },
+    "breadcrumb": { "internalControlDetail": "Internal control details", "createEvidence": "Create Evidence" },
     "tabs": { "upload": "Upload", "link": "Link" },
     "messages": { "uploaded": "Evidence uploaded successfully", "created": "Evidence created successfully" },
     "errors": { "create": "Failed to create evidence" },
@@ -2338,17 +2310,21 @@
     "previewUnavailable": "Preview not available for this file type: {{mimeType}}",
     "actions": { "download": "Download File" }
   },
-  "measureFormDialog": {
-    "breadcrumb": { "measures": "Measures", "editMeasure": "Edit Measure", "newMeasure": "New Measure" },
-    "messages": { "created": "Measure created successfully." },
-    "errors": { "create": "Failed to create measure" },
-    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required" },
-    "fields": { "name": "Measure name", "namePlaceholder": "Measure title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state" },
+  "internalControlFormDialog": {
+    "breadcrumb": { "internalControls": "Internal controls", "editInternalControl": "Edit internal control", "newInternalControl": "New internal control" },
+    "messages": { "created": "Internal control created successfully." },
+    "errors": { "create": "Failed to create internal control" },
+    "validation": { "nameRequired": "Name is required", "categoryRequired": "Category is required", "reviewerDistinct": "Reviewer must be a different person from the owner", "operatingIntervalRequired": "Enter how often the control runs" },
+    "fields": { "name": "Name", "namePlaceholder": "Control title", "description": "Description", "descriptionPlaceholder": "Add description", "category": "Category", "categoryPlaceholder": "Select category", "state": "State", "statePlaceholder": "Select state", "code": "Code", "codePlaceholder": "IC-ACCESS-01", "notSet": "Not set", "controlType": "Type", "nature": "Nature", "operatingFrequency": "Operating frequency", "operatingEvent": "Event", "operatingEventPlaceholder": "when someone leaves", "evidenceCadence": "Evidence cadence", "testingCadence": "Testing cadence", "implementationStatus": "Implementation status", "owner": "Owner", "reviewer": "Reviewer" },
     "properties": "Properties",
     "states": { "implemented": "Implemented", "in_progress": "In Progress", "not_applicable": "Not Applicable", "not_started": "Not Started", "unknown": "Unknown", "not_implemented": "Not Implemented" },
-    "actions": { "create": "Create measure", "update": "Update measure" }
+    "controlTypes": { "preventive": "Preventive", "detective": "Detective", "corrective": "Corrective" },
+    "natures": { "manual": "Manual" },
+    "operatingModes": { "continuous": "Continuous", "event": "When an event occurs", "periodic": "Every" },
+    "implementationStatuses": { "not_implemented": "Not implemented", "in_progress": "In progress", "implemented": "Implemented", "operating": "Operating" },
+    "actions": { "create": "Create internal control", "update": "Update internal control", "addDuration": "Add duration", "clearDuration": "Clear duration" }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Evidences",
     "columns": { "name": "Name", "description": "Description", "fileType": "File type", "fileSize": "File size", "createdAt": "Created at" },
     "messages": { "deleted": "Evidence \"{{name}}\" has been deleted successfully" },
@@ -2357,8 +2333,11 @@
     "linkEvidence": "Link evidence",
     "actions": { "add": "Add evidence", "download": "Download", "delete": "Delete" }
   },
-  "measureTasksTab": {
-    "actions": { "newTask": "New task" }
+  "internalControlTasksTab": {
+    "empty": "No tasks",
+    "columns": { "name": "Name", "state": "State" },
+    "actions": { "newTask": "New task", "link": "Link task", "unlink": "Unlink", "retry": "Retry", "showMore": "Show {{count}} more" },
+    "dialog": { "title": "Link tasks", "searchPlaceholder": "Search tasks", "empty": "No tasks", "actions": { "close": "Close", "link": "Link", "unlink": "Unlink" } }
   },
   "obligationDetailsPage": {
     "title": "Obligation",
@@ -2515,7 +2494,7 @@
     "deleteConfirmationWithHistory_one": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analysis. Deleting it will remove that history.",
     "deleteConfirmationWithHistory_other": "This will permanently delete the risk {{referenceId}} \"{{name}}\". This risk is still in the history of {{count}} analyses. Deleting it will remove that history.",
     "actions": { "edit": "Edit", "delete": "Delete" },
-    "tabs": { "overview": "Overview", "measures": "Measures", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
+    "tabs": { "overview": "Overview", "internalControls": "Internal controls", "documents": "Documents", "controls": "Controls", "obligations": "Obligations", "scenarios": "Scenarios", "treatmentPlans": "Treatment Plans" }
   },
   "risksPage": {
     "description": "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures.",
@@ -2752,13 +2731,13 @@
     "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "No measures",
+    "progressEmpty": "No internal controls",
     "actions": {
       "tasks": "Tasks",
       "edit": "Edit",
       "delete": "Delete",
-      "expand": "Show measures",
-      "collapse": "Hide measures"
+      "expand": "Show internal controls",
+      "collapse": "Hide internal controls"
     }
   },
   "riskTreatmentPlansPage": {
@@ -2768,18 +2747,18 @@
   "riskTreatmentPlanListItem": {
     "deleteConfirmation": "This will permanently delete the treatment plan for \"{{name}}\". This action cannot be undone.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
-    "actions": { "measures": "Measures", "edit": "Edit", "delete": "Delete" }
+    "actions": { "internalControls": "Internal controls", "edit": "Edit", "delete": "Delete" }
   },
-  "treatmentPlanMeasureList": {
-    "title": "Measures",
-    "empty": "No measures linked yet.",
-    "deleted": "Deleted measure",
-    "acceptedEmpty": "Accepted risks cannot have linked measures.",
-    "actions": { "create": "New measure", "link": "Link measure", "unlink": "Unlink", "showMore": "Show more" }
+  "treatmentPlanInternalControlList": {
+    "title": "Internal controls",
+    "empty": "No internal controls linked yet.",
+    "deleted": "Deleted internal control",
+    "acceptedEmpty": "Accepted risks cannot have linked internal controls.",
+    "actions": { "create": "New internal control", "link": "Link internal control", "unlink": "Unlink", "showMore": "Show more" }
   },
-  "treatmentPlanMeasuresDialog": {
-    "title": "Treatment plan measures",
-    "loading": "Loading measures…",
+  "treatmentPlanInternalControlsDialog": {
+    "title": "Treatment plan internal controls",
+    "loading": "Loading internal controls…",
     "netScore": "Net {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
@@ -3291,40 +3270,6 @@
     "magicLinkAlreadyUsed": { "title": "Link Already Used", "description": "This magic link has already been used. Please request a new one." },
     "invalidLink": { "title": "Invalid link", "description": "This magic link is invalid. Please request a new one." },
     "default": { "title": "Authentication failed", "description": "We could not complete your sign-in. Please try again." }
-  },
-  "accessReviewSource": {
-    "documentation": "Documentation",
-    "regions": { "label": "Region", "placeholder": "Select a region", "unitedStates": "United States", "europe": "Europe" }
-  },
-  "devices": {
-    "title": "Devices",
-    "description": "Manage computers enrolled with the Probo posture agent.",
-    "empty": "No devices enrolled yet",
-    "actions": { "add": "Add device", "new": "New device", "reassign": "Re-assign", "revoke": "Revoke", "delete": "Delete" },
-    "fields": { "organization": "Organization", "hostname": "Hostname", "owner": "Owner", "state": "State", "platform": "Platform", "osVersion": "OS version", "hardwareUuid": "Hardware UUID", "serialNumber": "Serial number", "agentVersion": "Agent version", "enrolledAt": "Enrolled at", "lastSeen": "Last seen" },
-    "values": { "pending": "(pending)", "never": "Never", "unassigned": "Unassigned" },
-    "messages": { "ownerUpdated": "Device owner updated", "revoked": "Device revoked", "deleted": "Device deleted" },
-    "errors": { "create": "Failed to create device", "reassign": "Failed to re-assign device", "revoke": "Failed to revoke device", "delete": "Failed to delete device" },
-    "confirmations": { "revoke": "Revoke device \"{{hostname}}\"? The agent on the device will stop reporting and must be re-enrolled.", "delete": "Delete device \"{{hostname}}\"? This removes it from the inventory." },
-    "postures": {
-      "currentTitle": "Current postures",
-      "empty": "No posture checks recorded",
-      "values": { "on": "On", "off": "Off", "immediate": "Immediate", "seconds": "{{seconds}}s", "minPasswordLength": "Min length {{length}}", "configured": "Configured", "none": "None", "unknown": "Unknown" },
-      "checks": { "diskEncryption": "Disk encryption", "screenLock": "Screen lock", "firewallEnabled": "Firewall enabled", "timeSync": "Time sync", "osVersion": "OS version", "autoUpdate": "Auto update", "passwordPolicy": "Password policy", "remoteLogin": "Remote login", "malwareProtection": "Malware protection" }
-    },
-    "history": {
-      "title": "Report history",
-      "empty": "No posture reports yet",
-      "checkCount_one": "{{count}} check reported",
-      "checkCount_other": "{{count}} checks reported",
-      "columns": { "time": "Time", "checks": "Checks", "correlationId": "Correlation ID" },
-      "actions": { "copyCorrelationId": "Copy correlation ID", "correlationIdCopied": "Correlation ID copied" }
-    }
-  },
-  "deviceEnrollment": {
-    "token": { "title": "Enrollment token generated", "description": "Share this enrollment token only with the device owner through a secure channel. It can be used once and expires after seven days.", "manualInstall": "Manual install (CLI / MDM)", "releaseListHint": "Browse <link>probo-agent releases on GitHub</link> (tags probo-agent/v*), then pick the archive for your OS and architecture (for example probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz, or probo-agent_Windows_x86_64.zip). Replace vX.Y.Z, OS, and ARCH in the download command with the values from the asset you chose.", "installUnix": "Install on macOS or Linux (run from a shell with sudo access)", "installWindows": "Install on Windows (run from an elevated PowerShell session)", "downloadStep": "Download and place the binary", "enrollStep": "Configure the device and start the agent", "securityNotice": "The token is passed as a CLI flag (not via curl-piped-to-shell or sudo env vars). Once installed, the agent self-updates from GitHub Releases with cosign signature verification." },
-    "messages": { "created": "Device created. Copy the enrollment token now — it will not be shown again." },
-    "errors": { "copyToClipboard": "Failed to copy to clipboard" }
   },
   "thirdPartyRiskAssessmentRow": {
     "expired": "Expired",

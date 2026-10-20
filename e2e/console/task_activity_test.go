@@ -116,7 +116,7 @@ func updateTask(t *testing.T, client *testutil.Client, input map[string]any) {
 func TestTaskActivity_CreateWritesCreated(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).WithName("Created task").Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).WithName("Created task").Create()
 
 	result := listTaskActivities(t, owner, taskID)
 	require.Equal(t, 1, result.Node.Activities.TotalCount)
@@ -134,7 +134,7 @@ func TestTaskActivity_CreateWritesCreated(t *testing.T) {
 func TestTaskActivity_UpdateStateWritesDiff(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	updateTask(t, owner, map[string]any{
 		"taskId": taskID,
@@ -165,7 +165,7 @@ func TestTaskActivity_UpdateStateWritesDiff(t *testing.T) {
 func TestTaskActivity_UpdateAssigneeWritesDiff(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 	profileID := factory.CreateUser(owner)
 
 	updateTask(t, owner, map[string]any{
@@ -193,7 +193,7 @@ func TestTaskActivity_UpdateAssigneeWritesDiff(t *testing.T) {
 func TestTaskActivity_UpdateDescriptionWritesValues(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).
+	taskID := factory.NewTaskWithoutInternalControl(owner).
 		WithContent("Original description").
 		Create()
 
@@ -223,7 +223,7 @@ func TestTaskActivity_UpdateDescriptionWritesValues(t *testing.T) {
 func TestTaskActivity_RankOnlyUpdateWritesNothing(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	before := listTaskActivities(t, owner, taskID)
 	require.Equal(t, 1, before.Node.Activities.TotalCount)
@@ -241,7 +241,7 @@ func TestTaskActivity_RankOnlyUpdateWritesNothing(t *testing.T) {
 func TestTaskActivity_ListNewestFirst(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	updateTask(t, owner, map[string]any{
 		"taskId": taskID,
@@ -269,10 +269,10 @@ func TestTaskActivity_ListNewestFirst(t *testing.T) {
 func TestTaskActivity_ImportReuseWritesFieldDiffs(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
-	measureRef := fmt.Sprintf("measure-%s", owner.GetOrganizationID())
+	internalControlRef := fmt.Sprintf("measure-%s", owner.GetOrganizationID())
 	taskRef := fmt.Sprintf("task-%s", owner.GetOrganizationID())
 
-	first := importMeasureTasks(t, owner, measureRef, taskRef, "Imported task", "First description")
+	first := importInternalControlTasks(t, owner, internalControlRef, taskRef, "Imported task", "First description")
 	require.Len(t, first, 1)
 
 	created := listTaskActivities(t, owner, first[0].ID)
@@ -281,7 +281,7 @@ func TestTaskActivity_ImportReuseWritesFieldDiffs(t *testing.T) {
 	require.NotNil(t, created.Node.Activities.Edges[0].Node.Actor)
 	assert.Equal(t, owner.GetProfileID().String(), created.Node.Activities.Edges[0].Node.Actor.ID)
 
-	second := importMeasureTasks(t, owner, measureRef, taskRef, "Renamed import task", "Second description")
+	second := importInternalControlTasks(t, owner, internalControlRef, taskRef, "Renamed import task", "Second description")
 	require.Len(t, second, 1)
 	assert.Equal(t, first[0].ID, second[0].ID)
 	assert.Equal(t, "Renamed import task", second[0].Name)
@@ -321,10 +321,10 @@ func TestTaskActivity_ImportReuseWritesFieldDiffs(t *testing.T) {
 	factory.AssertProseMirrorPlainText(t, "Second description", *descriptionActivity.NewValue)
 }
 
-func importMeasureTasks(
+func importInternalControlTasks(
 	t *testing.T,
 	client *testutil.Client,
-	measureRef string,
+	internalControlRef string,
 	taskRef string,
 	taskName string,
 	taskDescription string,
@@ -336,7 +336,7 @@ func importMeasureTasks(
 
 	payload := fmt.Sprintf(
 		`[{
-			"name": "Imported measure",
+			"name": "Imported internalControl",
 			"category": "Security",
 			"reference-id": %q,
 			"tasks": [{
@@ -345,16 +345,16 @@ func importMeasureTasks(
 				"reference-id": %q
 			}]
 		}]`,
-		measureRef,
+		internalControlRef,
 		taskName,
 		taskDescription,
 		taskRef,
 	)
 
 	query := `
-		mutation ImportMeasure($input: ImportMeasureInput!) {
-			importMeasure(input: $input) {
-				measureEdges {
+		mutation ImportInternalControl($input: ImportInternalControlInput!) {
+			importInternalControl(input: $input) {
+				internalControlEdges {
 					node {
 						id
 						tasks(first: 10) {
@@ -372,8 +372,8 @@ func importMeasureTasks(
 	`
 
 	var result struct {
-		ImportMeasure struct {
-			MeasureEdges []struct {
+		ImportInternalControl struct {
+			InternalControlEdges []struct {
 				Node struct {
 					ID    string `json:"id"`
 					Tasks struct {
@@ -385,8 +385,8 @@ func importMeasureTasks(
 						} `json:"edges"`
 					} `json:"tasks"`
 				} `json:"node"`
-			} `json:"measureEdges"`
-		} `json:"importMeasure"`
+			} `json:"internalControlEdges"`
+		} `json:"importInternalControl"`
 	}
 
 	err := client.ExecuteWithFile(
@@ -399,16 +399,16 @@ func importMeasureTasks(
 		},
 		"input.file",
 		testutil.UploadFile{
-			Filename:    "measures.json",
+			Filename:    "internalControls.json",
 			ContentType: "application/json",
 			Content:     []byte(payload),
 		},
 		&result,
 	)
 	require.NoError(t, err)
-	require.Len(t, result.ImportMeasure.MeasureEdges, 1)
+	require.Len(t, result.ImportInternalControl.InternalControlEdges, 1)
 
-	tasks := result.ImportMeasure.MeasureEdges[0].Node.Tasks.Edges
+	tasks := result.ImportInternalControl.InternalControlEdges[0].Node.Tasks.Edges
 	imported := make([]struct {
 		ID   string
 		Name string
@@ -428,7 +428,7 @@ func TestTaskActivity_ViewerCanList(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	result := listTaskActivities(t, viewer, taskID)
 	require.Equal(t, 1, result.Node.Activities.TotalCount)
@@ -439,7 +439,7 @@ func TestTaskActivity_AuditorCannotAccess(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	auditor := testutil.NewClientInOrg(t, testutil.RoleAuditor, owner)
-	taskID := factory.NewTaskWithoutMeasure(owner).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).Create()
 
 	activities := listTaskActivities(t, owner, taskID)
 	require.Len(t, activities.Node.Activities.Edges, 1)

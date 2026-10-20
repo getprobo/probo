@@ -26,12 +26,16 @@ import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPa
 import { cookieBannerListSkeleton, cookieBannerPage } from "../../variants";
 
 export function CookieBannerTrackersPageSkeleton() {
-  const { root, tools, search, filters, filter } = cookieBannerListSkeleton();
+  const { root, views, view, tools, search, filters, filter } = cookieBannerListSkeleton();
 
   return (
     <div className={cookieBannerPage()}>
       <CookieBannerPageHeaderSkeleton titleClassName="w-24" />
       <div className={root()}>
+        <div className={views()}>
+          <span className={view()} aria-hidden />
+          <span className={view()} aria-hidden />
+        </div>
         <div className={tools()}>
           <div className={search()}>
             <TextFieldSkeleton />
@@ -46,12 +50,9 @@ export function CookieBannerTrackersPageSkeleton() {
             <div className={filter()}>
               <SelectSkeleton />
             </div>
-            <div className={filter()}>
-              <SelectSkeleton />
-            </div>
           </div>
         </div>
-        <TableSkeleton variant="surface" columns={7} count={8} />
+        <TableSkeleton variant="surface" layout="fixed" columns={7} count={8} />
       </div>
     </div>
   );

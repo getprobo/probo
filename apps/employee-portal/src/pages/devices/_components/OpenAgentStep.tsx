@@ -31,10 +31,10 @@ import { RegisterDeviceCard } from "./RegisterDeviceCard";
 
 export interface OpenAgentStepProps {
   enrollment: ReturnType<typeof useEnrollDevice>;
-  organizationId: string;
+  homeTo: string;
 }
 
-export function OpenAgentStep({ enrollment, organizationId }: OpenAgentStepProps) {
+export function OpenAgentStep({ enrollment, homeTo }: OpenAgentStepProps) {
   const { t } = useTranslation("devices");
   const {
     openAgent,
@@ -55,7 +55,7 @@ export function OpenAgentStep({ enrollment, organizationId }: OpenAgentStepProps
           : t("enroll.enrolledWithHostname", { hostname })}
         action={(
           <ButtonLink
-            to={`/${organizationId}`}
+            to={homeTo}
             size={3}
             variant="solid"
             color="neutral"

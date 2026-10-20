@@ -22,20 +22,33 @@ package console_v1
 
 import (
 	"context"
+	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 )
 
 func (r *accessReviewSourceResolver) sourceConnectorID(
 	ctx context.Context,
-	scope coredata.Scoper,
 	obj *types.AccessReviewSource,
 ) (*gid.GID, error) {
 	if obj.ConnectorAccountID == nil {
 		return nil, nil
 	}
 
-	return r.accessReview.ConnectorIDForAccount(ctx, scope, *obj.ConnectorAccountID)
+	account, err := dataloader.FromContext(ctx).ConnectorAccount.Load(ctx, *obj.ConnectorAccountID)
+	if err != nil {
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return nil, coredata.ErrResourceNotFound
+		}
+
+		return nil, err
+	}
+
+	connectorID := account.ConnectorID
+
+	return &connectorID, nil
 }

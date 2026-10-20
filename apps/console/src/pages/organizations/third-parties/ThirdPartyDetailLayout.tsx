@@ -28,8 +28,8 @@ import {
   IconPageTextLine,
   IconTrashCan,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -93,7 +93,7 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
   const navigate = useNavigate();
   const { t } = useTranslation();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   if (!thirdPartyId) {
     throw new Error("Cannot load third party detail layout without thirdPartyId parameter");
@@ -162,13 +162,13 @@ export default function ThirdPartyDetailLayout(props: ThirdPartyDetailLayoutProp
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("thirdPartyDetailLayout.messages.error"),
                 description: formatError(
                   t("thirdPartyDetailLayout.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },

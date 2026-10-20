@@ -54,6 +54,9 @@
       "trustedBy": "Vertraut von",
       "recentUpdates": "Neueste Aktualisierungen"
     },
+    "compliance": {
+      "viewDocuments": "Dokumente anzeigen"
+    },
     "recentUpdates": {
       "viewAll": "Alle anzeigen"
     }

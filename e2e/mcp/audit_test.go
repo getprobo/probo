@@ -45,7 +45,7 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 	}
 	mc.CallToolInto("addAudit", map[string]any{
 		"organization_id": orgID,
-		"framework_id":    frameworkID,
+		"framework_ids":   []string{frameworkID},
 		"name":            factory.SafeName("Audit"),
 	}, &addResult)
 	require.NotEmpty(t, addResult.Audit.ID)
@@ -53,13 +53,61 @@ func TestMCP_Audit_CRUD(t *testing.T) {
 	// Get
 	var getResult struct {
 		Audit struct {
-			ID string `json:"id"`
+			ID           string   `json:"id"`
+			FrameworkIDs []string `json:"framework_ids"`
 		} `json:"audit"`
 	}
 	mc.CallToolInto("getAudit", map[string]any{
 		"id": addResult.Audit.ID,
 	}, &getResult)
 	assert.Equal(t, addResult.Audit.ID, getResult.Audit.ID)
+	assert.Equal(t, []string{frameworkID}, getResult.Audit.FrameworkIDs)
+
+	frameworkID2 := factory.CreateFramework(owner)
+
+	var linkResult struct {
+		Audit struct {
+			FrameworkIDs []string `json:"framework_ids"`
+		} `json:"audit"`
+		Framework struct {
+			ID string `json:"id"`
+		} `json:"framework"`
+	}
+	mc.CallToolInto("linkAuditFramework", map[string]any{
+		"audit_id":     addResult.Audit.ID,
+		"framework_id": frameworkID2,
+	}, &linkResult)
+	assert.Equal(t, frameworkID2, linkResult.Framework.ID)
+	assert.ElementsMatch(t, []string{frameworkID, frameworkID2}, linkResult.Audit.FrameworkIDs)
+
+	var unlinkResult struct {
+		DeletedAuditID     string `json:"deleted_audit_id"`
+		DeletedFrameworkID string `json:"deleted_framework_id"`
+	}
+	mc.CallToolInto("unlinkAuditFramework", map[string]any{
+		"audit_id":     addResult.Audit.ID,
+		"framework_id": frameworkID2,
+	}, &unlinkResult)
+	assert.Equal(t, addResult.Audit.ID, unlinkResult.DeletedAuditID)
+	assert.Equal(t, frameworkID2, unlinkResult.DeletedFrameworkID)
+
+	mc.CallToolInto("getAudit", map[string]any{
+		"id": addResult.Audit.ID,
+	}, &getResult)
+	assert.ElementsMatch(t, []string{frameworkID}, getResult.Audit.FrameworkIDs)
+
+	mc.CallToolInto("unlinkAuditFramework", map[string]any{
+		"audit_id":     addResult.Audit.ID,
+		"framework_id": frameworkID,
+	}, &unlinkResult)
+	assert.Equal(t, addResult.Audit.ID, unlinkResult.DeletedAuditID)
+	assert.Equal(t, frameworkID, unlinkResult.DeletedFrameworkID)
+
+	mc.CallToolInto("getAudit", map[string]any{
+		"id": addResult.Audit.ID,
+	}, &getResult)
+	assert.Equal(t, addResult.Audit.ID, getResult.Audit.ID)
+	assert.Empty(t, getResult.Audit.FrameworkIDs)
 
 	// Update
 	var updateResult struct {

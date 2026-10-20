@@ -29,8 +29,8 @@ import {
   Td,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
@@ -86,7 +86,7 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
     deleteThirdPartyMutation,
   );
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const latestAssessment = thirdParty.riskAssessments?.edges[0]?.node;
   const thirdPartyUrl = thirdPartyHref(organizationId, thirdParty.id);
@@ -104,13 +104,13 @@ export function ThirdPartyRow(props: ThirdPartyRowProps) {
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("thirdPartyRow.messages.error"),
                 description: formatError(
                   t("thirdPartyRow.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },

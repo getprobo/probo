@@ -25,6 +25,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securecookie"
@@ -40,6 +41,7 @@ func NewGraphQLHandler(
 	svc *iam.Service,
 	logger *log.Logger,
 	fileManagerSvc *filemanager.Service,
+	employeePortalSvc *employeeportalmgmt.Service,
 	baseURL *baseurl.BaseURL,
 	cookieConfig securecookie.Config,
 	limits gqlutils.Limits,
@@ -53,6 +55,7 @@ func NewGraphQLHandler(
 			iam:               svc,
 			scopeRegistry:     svc.OAuth2ScopeRegistry,
 			fileManager:       fileManagerSvc,
+			employeePortal:    employeePortalSvc,
 			baseURL:           baseURL,
 			sessionCookie:     authn.NewCookie(&cookieConfig),
 			slackbotAvailable: slackbotAvailable,

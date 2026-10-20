@@ -962,14 +962,17 @@
       "add": "E-mailadres toevoegen"
     }
   },
-  "measureSelectField": {
-    "placeholder": "Selecteer een maatregel",
+  "internalControlSelectField": {
+    "placeholder": "Selecteer een interne controle",
     "none": "Geen"
   },
   "peopleMultiSelectField": {
     "addPlaceholder": "Personen toevoegen...",
     "empty": "Geen personen beschikbaar",
     "remove": "{{name}} verwijderen"
+  },
+  "userSelect": {
+    "loadMore": "Meer laden"
   },
   "peopleSelectField": {
     "placeholder": "Selecteer een eigenaar",
@@ -1025,22 +1028,22 @@
     "empty": "Geen derde partijen beschikbaar",
     "remove": "{{name}} verwijderen"
   },
-  "linkedMeasuresCard": {
-    "title": "Maatregelen",
+  "linkedInternalControlsCard": {
+    "title": "Interne controles",
     "columns": {
       "name": "Naam",
       "state": "Status"
     },
-    "empty": "Geen maatregelen gekoppeld",
+    "empty": "Geen interne controles gekoppeld",
     "actions": {
-      "link": "Maatregel koppelen",
+      "link": "Interne controle koppelen",
       "unlink": "Ontkoppelen",
       "showMore": "{{count}} meer tonen"
     }
   },
-  "linkedMeasuresDialog": {
-    "title": "Maatregelen koppelen",
-    "searchPlaceholder": "Maatregelen zoeken...",
+  "linkedInternalControlsDialog": {
+    "title": "Interne controles koppelen",
+    "searchPlaceholder": "Interne controles zoeken...",
     "allCategories": "Alle categorieën",
     "actions": {
       "close": "Sluiten",
@@ -1122,7 +1125,6 @@
   },
   "tasksCard": {
     "states": {
-      "all": "Alle",
       "todo": "Te doen",
       "inProgress": "In uitvoering",
       "done": "Voltooid",
@@ -1130,37 +1132,18 @@
       "canceled": "Geannuleerd",
       "duplicate": "Duplicaat"
     },
-    "empty": "Geen taken",
-    "noResults": "Geen taken komen overeen met uw filters",
-    "searchPlaceholder": "Taken zoeken",
     "filters": {
-      "status": "Status",
-      "allStatuses": "Alle statussen",
       "user": "Gebruiker",
-      "allUsers": "Alle gebruikers"
+      "allUsers": "Alle gebruikers",
+      "notAssigned": "Niet toegewezen",
+      "internalControl": "Interne controle",
+      "allInternalControls": "Alle interne controles",
+      "searchInternalControls": "Interne controles zoeken",
+      "noInternalControls": "Geen interne controles"
     },
     "error": {
       "title": "Fout",
       "reorder": "Herordenen van taak mislukt."
-    },
-    "dragInstructions": {
-      "all": "Sleep om taken opnieuw te ordenen of te verplaatsen tussen statussen",
-      "state": "Sleep om taken opnieuw te ordenen"
-    },
-    "deleteConfirmation": "Weet u zeker dat u deze taak wilt verwijderen?",
-    "actions": {
-      "moveToTodo": "Verplaatsen naar Te doen",
-      "moveToInProgress": "Verplaatsen naar In uitvoering",
-      "moveToDone": "Verplaatsen naar Voltooid",
-      "edit": "Bewerken",
-      "delete": "Verwijderen"
-    },
-    "metadata": {
-      "timeEstimate": "Tijdsinschatting",
-      "deadline": "Deadline"
-    },
-    "recurringBadge": {
-      "tooltip": "Herhaalt elke {{interval}}"
     }
   },
   "deleteTrustCenterReferenceDialog": {
@@ -1226,7 +1209,7 @@
     "errors": {
       "delete": "Verwijderen van audit mislukt",
       "createOrganizationRequired": "Aanmaken van audit mislukt: organisatie is verplicht",
-      "createFrameworkRequired": "Aanmaken van audit mislukt: framework is verplicht",
+      "createFrameworkRequired": "Aanmaken van audit mislukt: minimaal één framework is verplicht",
       "updateIdRequired": "Bijwerken van audit mislukt: audit-ID is verplicht",
       "uploadReport": "Uploaden van auditrapport mislukt",
       "uploadReportIdRequired": "Uploaden van rapport mislukt: audit-ID is verplicht",
@@ -1264,14 +1247,14 @@
       "delete": "Verwijderen van framework mislukt"
     }
   },
-  "measureGraph": {
+  "internalControlGraph": {
     "messages": {
-      "deleted": "Maatregel succesvol verwijderd.",
-      "updated": "Maatregel succesvol bijgewerkt."
+      "deleted": "Interne controle succesvol verwijderd.",
+      "updated": "Interne controle succesvol bijgewerkt."
     },
     "errors": {
-      "delete": "Verwijderen van maatregel mislukt",
-      "update": "Bijwerken van maatregel mislukt"
+      "delete": "Verwijderen van interne controle mislukt",
+      "update": "Bijwerken van interne controle mislukt"
     }
   },
   "obligationGraph": {
@@ -1399,6 +1382,13 @@
       "secret": "Geheim"
     },
     "measureState": {
+      "implemented": "Geïmplementeerd",
+      "inProgress": "In uitvoering",
+      "notApplicable": "Niet van toepassing",
+      "notStarted": "Niet gestart",
+      "notImplemented": "Niet geïmplementeerd"
+    },
+    "internalControlState": {
       "implemented": "Geïmplementeerd",
       "inProgress": "In uitvoering",
       "notApplicable": "Niet van toepassing",
@@ -1541,6 +1531,16 @@
         "generic": "Er is iets misgegaan"
       }
     },
+    "richEditor": {
+      "file": "Bestand",
+      "imageUnavailable": "Afbeelding niet beschikbaar",
+      "resizeImage": "Afbeelding vergroten of verkleinen",
+      "uploading": "{{fileName}} uploaden…",
+      "uploadFailed": "Uploaden mislukt",
+      "couldNotUpload": "Kan {{fileName}} niet uploaden",
+      "tooLarge": "{{fileName}} is te groot",
+      "unsupported": "{{fileName}} is geen ondersteund bestand"
+    },
     "documentClassification": {
       "public": "Openbaar",
       "internal": "Intern",
@@ -1572,6 +1572,14 @@
       "unknown": "Onbekend",
       "not_implemented": "Niet geïmplementeerd"
     },
+    "internalControlState": {
+      "implemented": "Geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "not_applicable": "Niet van toepassing",
+      "not_started": "Niet gestart",
+      "unknown": "Onbekend",
+      "not_implemented": "Niet geïmplementeerd"
+    },
     "confirmDialog": {
       "defaultTitle": "Weet u het zeker?"
     },
@@ -1590,6 +1598,10 @@
     },
     "measureImplementation": {
       "title": "Implementatie van maatregel",
+      "complete": "Voltooien"
+    },
+    "internalControlImplementation": {
+      "title": "Implementatie van interne controle",
       "complete": "Voltooien"
     },
     "impactOptions": {
@@ -2015,6 +2027,12 @@
       "signOut": "Uitloggen"
     }
   },
+  "redirectToEmployeePortal": {
+    "missing": {
+      "title": "Medewerkersportaal niet beschikbaar",
+      "description": "Deze organisatie heeft nog geen medewerkersportaal. Vraag een beheerder om er een aan te maken."
+    }
+  },
   "invitingOrganizationCard": {
     "checkEmail": "Controleer uw e-mail"
   },
@@ -2189,11 +2207,13 @@
     "groups": {
       "governance": "Governance",
       "privacy": "Privacy",
+      "cmp": "CMP",
       "tprm": "TPRM",
       "itam": "IT-assetbeheer",
       "riskManagement": "Risicobeheer",
       "registries": "Registers",
       "compliancePortal": "Compliancepagina",
+      "employeePortal": "Medewerkersportaal",
       "accessReview": "Toegangsbeoordeling",
       "settings": "Instellingen"
     },
@@ -2203,7 +2223,7 @@
     "slackBot": "SlackBot",
     "integrations": "INTEGRATIES",
     "tasks": "Taken",
-    "measures": "Maatregelen",
+    "internalControls": "Interne controles",
     "risks": "Risico's",
     "allRisks": "Alle risico's",
     "riskAnalyses": "Risicobeoordelingen",
@@ -2225,7 +2245,7 @@
     "thirdPartyServices": "Diensten",
     "thirdPartySupplyChain": "Toeleveringsketen",
     "thirdPartyRisks": "Risicobeoordelingen",
-    "thirdPartyMeasures": "Maatregelen",
+    "thirdPartyInternalControls": "Interne controles",
     "documents": "Documenten",
     "assets": "Assets",
     "devices": "Apparaten",
@@ -2241,7 +2261,9 @@
     "statementsOfApplicability": "SoA",
     "rightsRequests": "Rechtenverzoeken",
     "campaigns": "Campagnes",
-    "connections": "Verbindingen",
+    "connections": "Connectoren",
+    "sources": "Bronnen",
+    "employeePortalSettings": "Instellingen",
     "compliancePortals": "Compliancepagina's",
     "compliancePortalsSettings": "Instellingen",
     "compliancePortalsHosting": "Hosting",
@@ -2254,7 +2276,9 @@
     "compliancePortalsUpdates": "Updates",
     "compliancePortalsRightRequests": "Rechtenverzoeken",
     "cookieBanners": "Cookiebanners",
-    "cookieBannersConfigure": "Configureren",
+    "cookieBannersSettings": "Instellingen",
+    "cookieBannersInstall": "Installeren",
+    "cookieBannersTranslations": "Vertalingen",
     "cookieBannersTrackers": "Trackers",
     "cookieBannersResources": "Resources",
     "cookieBannersTrail": "Logboek",
@@ -2791,7 +2815,6 @@
     }
   },
   "accessReviewSourceRow": {
-    "sources": { "csv": "CSV" },
     "errors": {
       "delete": "Verwijderen van toegangsbron mislukt",
       "configure": "Configureren van bron mislukt"
@@ -2799,12 +2822,14 @@
     "messages": {
       "error": "Fout",
       "success": "Succes",
+      "deleted": "Toegangsbron succesvol verwijderd.",
       "organizationUpdated": "Organisatie bijgewerkt."
     },
     "deleteConfirmation": "Hiermee wordt \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "reconnect": "Opnieuw verbinden",
-      "delete": "Verwijderen"
+      "delete": "Verwijderen",
+      "cancel": "Annuleren"
     },
     "loading": "Laden...",
     "selectOrganization": "Selecteer organisatie",
@@ -3017,13 +3042,6 @@
   },
   "addAccessReviewSourceDialog": {
     "actions": {
-      "connectWithOAuth": "OAuth",
-      "connectWithGitHubApp": "GitHub-app",
-      "connectWithApiKey": "API-sleutel",
-      "connectWithClientCredentials": "Clientreferenties",
-      "connectWithWorkloadIdentity": "Workload-identiteit",
-      "connectWithAppInstall": "App-installatie",
-      "chooseAnotherMethod": "Kies een andere verbindingsmethode",
       "open": "Open"
     },
     "csv": {
@@ -3073,7 +3091,7 @@
     "actions": {
       "create": "Aanmaken"
     },
-    "emptySources": "Geen verbindingen beschikbaar. Voeg eerst verbindingen toe op de pagina Verbindingen."
+    "emptySources": "Geen bronnen beschikbaar. Voeg eerst bronnen toe op de pagina Bronnen."
   },
   "postHogDeploymentField": {
     "deployment": {
@@ -3085,133 +3103,25 @@
     },
     "instanceUrl": "Instantie-URL"
   },
-  "apiKeyConnectorDialog": {
-    "title": "Provider verbinden",
-    "titleWithProvider": "{{provider}} verbinden",
-    "managedDescription": "Verbind {{provider}} als toegangsbron. Vul hieronder de gegevens in om af te ronden.",
-    "apiKeyDescription": "Voer de API-sleutel voor {{provider}} in om deze te verbinden als toegangsbron.",
-    "apiKey": "API-sleutel",
-    "messages": {
-      "connectionFailed": "Verbinding mislukt"
-    },
-    "errors": {
-      "managedConnect": "Verbinden met provider mislukt. Controleer uw instellingen en probeer het opnieuw.",
-      "apiKeyConnect": "Verbinden met provider mislukt. Controleer uw API-sleutel en probeer het opnieuw.",
-      "apiKeyFormat": "Dit lijkt niet op de verwachte sleutel. Verwachte vorm: {{example}}",
-      "rejected": {
-        "better_stack_team_not_found": "Better Stack heeft geen team met deze naam voor dit API-token. Teamnamen zijn hoofdlettergevoelig: kopieer de exacte naam uit Settings > Teams in Better Stack, of gebruik een teamgebonden API-token.",
-        "supabase_organization_not_found": "Supabase heeft geen organisatie met deze slug. Kopieer deze uit de URL van de organisatie in het Supabase-dashboard (supabase.com/dashboard/org/<slug>).",
-        "supabase_organization_not_accessible": "Dit toegangstoken kan de leden van deze organisatie niet lezen. Maak een token aan met Organization-resourcetoegang die deze organisatie omvat, en Organization Members ingesteld op Read."
-      }
-    },
-    "actions": {
-      "connect": "Verbinden",
-      "connecting": "Verbinden..."
-    }
-  },
-  "clientCredentialsConnectorDialog": {
-    "title": "Provider verbinden",
-    "titleWithProvider": "{{provider}} verbinden",
-    "description": "Voer de clientreferenties voor {{provider}} in om deze te verbinden als toegangsbron.",
-    "messages": {
-      "connectionFailed": "Verbinding mislukt"
-    },
-    "errors": {
-      "connect": "Verbinden met provider mislukt. Controleer uw gegevens en probeer het opnieuw."
-    },
-    "fields": {
-      "clientId": "Client-ID",
-      "clientSecret": "Client Secret",
-      "tokenUrl": "Token-URL",
-      "scope": "Scope"
-    },
-    "region": {
-      "placeholder": "Selecteer een regio",
-      "us": "Verenigde Staten (US)",
-      "ca": "Canada (CA)",
-      "eu": "Europa (EU)"
-    },
-    "actions": {
-      "connect": "Verbinden",
-      "connecting": "Verbinden..."
-    }
-  },
-  "createAwsAccessReviewSourcePage": {
-    "pageTitle": "AWS verbinden",
-    "title": "AWS verbinden",
-    "description": "Implementeer de auditrol. Voer daarna de ARN in.",
+  "newAccessReviewSourcePage": {
+    "title": "Bronnen toevoegen",
+    "description": "Voeg een bron toe vanuit een account dat al in Instellingen is verbonden.",
     "permissionDenied": "U heeft geen rechten om toegangsbronnen aan te maken.",
-    "fields": {
-      "roleArn": "Rol-ARN",
-      "issuer": "Uitgever",
-      "audience": "Audience",
-      "subject": "Subject",
-      "roleArnHelp": "bijv. arn:aws:iam::123456789012:role/ProboAudit"
-    },
-    "messages": {
-      "copyFailed": "Kopiëren mislukt",
-      "copied": "Gekopieerd naar klembord",
-      "copiedIssuer": "Uitgever gekopieerd.",
-      "copiedAudience": "Audience gekopieerd.",
-      "copiedSubject": "Subject gekopieerd.",
-      "copiedTerraform": "Terraform-fragment gekopieerd.",
-      "error": "Fout",
-      "success": "Succes",
-      "created": "Toegangsbron succesvol aangemaakt."
-    },
-    "errors": {
-      "roleArn": "Voer een geldige IAM-rol-ARN in.",
-      "create": "Aanmaken van de connector mislukt. Controleer de rol-ARN en probeer het opnieuw.",
-      "disconnected": "Probo kon de auditrol niet aannemen. Controleer of de stack in dit account is uitgerold en of de issuer en het subject overeenkomen met de waarden die tijdens de installatie zijn getoond.",
-      "delete": "Kan de connector niet verwijderen. Probeer het opnieuw.",
-      "source": "Aanmaken van toegangsbron mislukt",
-      "copy": "Kopieer de waarde handmatig."
-    },
-    "actions": {
-      "copy": "Kopiëren",
-      "connect": "Verbinden",
-      "back": "Terug",
-      "installViaCloudFormation": "Installeren via CloudFormation",
-      "installViaTerraform": "Installeren via Terraform",
-      "chooseAnotherInstallMethod": "Kies een andere installatiemethode"
-    }
+    "searchPlaceholder": "Connectoren zoeken",
+    "actions": { "new": "Nieuw", "add": "Toevoegen", "addCount": "Toevoegen ({{count}})", "select": "Selecteer {{name}}" }
   },
-  "oauthExtraDialog": {
-    "actions": {
-      "continue": "Doorgaan"
-    },
-    "datadog": {
-      "title": "Datadog verbinden",
-      "description": "Selecteer uw Datadog-site en ga vervolgens verder om toegang te autoriseren.",
-      "siteLabel": "Datadog-site",
-      "sitePlaceholder": "Selecteer een site"
-    },
-    "zendesk": {
-      "title": "Zendesk verbinden",
-      "description": "Voer uw Zendesk-subdomein in en ga verder om toegang te autoriseren.",
-      "subdomainLabel": "Zendesk-subdomein",
-      "subdomainPlaceholder": "acme",
-      "subdomainHelp": "Het <subdomain>-gedeelte van <subdomain>.zendesk.com"
-    }
-  },
-  "useCreateAccessReviewSource": {
-    "errors": {
-      "create": "Aanmaken van toegangsbron mislukt"
-    },
-    "messages": {
-      "error": "Fout",
-      "success": "Succes",
-      "created": "Toegangsbron succesvol aangemaakt."
-    }
-  },
-  "accessReviewConnectionsPage": {
-    "title": "Verbindingen",
-    "description": "Verbind de systemen waarvan u de toegang wilt beoordelen.",
+  "accessReviewSourcesPage": {
+    "title": "Bronnen",
+    "description": "Bronnen die worden gebruikt in toegangsbeoordelingen.",
     "errors": { "create": "Aanmaken van toegangsbron mislukt" },
     "messages": { "error": "Fout", "success": "Succes", "created": "Toegangsbron succesvol aangemaakt." },
-    "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen" },
-    "sections": { "connected": "Verbonden", "available": "Beschikbaar" },
-    "searchPlaceholder": "Bronnen en providers zoeken...",
+    "actions": { "loading": "Laden...", "loadMore": "Meer laden", "retry": "Opnieuw proberen", "more": "Meer acties", "addAll": "Alles toevoegen", "edit": "Bewerken", "addSources": "Bronnen toevoegen" },
+    "accountCount_one": "{{count}} account",
+    "accountCount_other": "{{count}} accounts",
+    "sections": { "connected": "Bronnen" },
+    "needsOrganization": "Kies eerst een organisatie in Instellingen.",
+    "emptyAccounts": "Geen account is klaar. Verbind eerst een leverancier in Instellingen.",
+    "searchPlaceholder": "Bronnen zoeken",
     "emptyConnected": "Er zijn nog geen toegangsbronnen verbonden.",
     "emptyConnectedSearch": "Geen verbonden bronnen komen overeen met uw zoekopdracht.",
     "searchLoadFailed": "Sommige bronnen konden niet worden geladen, dus de zoekopdracht is onvolledig. Probeer opnieuw om alle bronnen te doorzoeken.",
@@ -3497,6 +3407,17 @@
       "auditStartDate": "Startdatum audit",
       "auditEndDate": "Einddatum audit"
     },
+    "frameworks": {
+      "title": "Frameworks",
+      "empty": "Geen frameworks gekoppeld.",
+      "addPlaceholder": "Framework koppelen",
+      "unlink": "Ontkoppelen",
+      "linked": "Framework gekoppeld",
+      "unlinked": "Framework ontkoppeld",
+      "linkError": "Koppelen van framework mislukt",
+      "unlinkError": "Ontkoppelen van framework mislukt",
+      "retry": "Opnieuw proberen"
+    },
     "actions": {
       "delete": "Verwijderen",
       "update": "Bijwerken",
@@ -3526,7 +3447,7 @@
     },
     "columns": {
       "name": "Naam",
-      "framework": "Framework",
+      "framework": "Frameworks",
       "state": "Status",
       "auditPeriod": "Auditperiode",
       "validityPeriod": "Geldigheidsperiode",
@@ -3559,7 +3480,7 @@
       "newAudit": "Nieuwe audit"
     },
     "validation": {
-      "frameworkRequired": "Framework is verplicht"
+      "frameworkRequired": "Minimaal één framework is verplicht"
     },
     "messages": {
       "success": "Succes",
@@ -3573,8 +3494,8 @@
     "fileSize": "{{value}} MB",
     "loading": "Laden...",
     "fields": {
-      "framework": "Framework",
-      "frameworkPlaceholder": "Selecteer een framework",
+      "framework": "Frameworks",
+      "frameworkPlaceholder": "Selecteer frameworks",
       "name": "Naam",
       "namePlaceholder": "Auditnaam",
       "firm": "Auditkantoor",
@@ -3595,7 +3516,9 @@
       "outdated": "Verouderd"
     },
     "actions": {
-      "create": "Aanmaken"
+      "create": "Aanmaken",
+      "remove": "{{name}} verwijderen",
+      "retry": "Opnieuw proberen"
     }
   },
   "context": {
@@ -3668,8 +3591,8 @@
       "optimizing": "5 - Optimaliserend"
     },
     "errors": {
-      "linkMeasure": "Koppelen van maatregel mislukt",
-      "unlinkMeasure": "Ontkoppelen van maatregel mislukt",
+      "linkInternalControl": "Koppelen van interne controle mislukt",
+      "unlinkInternalControl": "Ontkoppelen van interne controle mislukt",
       "linkDocument": "Koppelen van document mislukt",
       "unlinkDocument": "Ontkoppelen van document mislukt",
       "linkAudit": "Koppelen van audit mislukt",
@@ -3757,10 +3680,28 @@
       "update": "Framework bijwerken"
     }
   },
-  "measureDetailPage": {
-    "deleteConfirmation": "Hiermee wordt de maatregel \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+  "internalControlDetailPage": {
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "fields": {
-      "selectState": "Selecteer status"
+      "selectState": "Selecteer status",
+      "code": "Code",
+      "owner": "Eigenaar",
+      "reviewer": "Beoordelaar",
+      "operatingFrequency": "Uitvoeringsfrequentie",
+      "evidenceCadence": "Bewijscadans",
+      "testingCadence": "Testcadans",
+      "nextEvidenceDue": "Bewijsdeadline",
+      "nextTestDue": "Testdeadline"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Bij een gebeurtenis"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
     },
     "actions": {
       "edit": "Bewerken",
@@ -3783,30 +3724,30 @@
       "thirdParties": "Derde partijen"
     }
   },
-  "measuresPage": {
-    "title": "Maatregelen",
-    "description": "Maatregelen zijn acties die worden genomen om het risico te verminderen. Voeg ze toe om de implementatiestatus bij te houden.",
+  "internalControlsPage": {
+    "title": "Interne controles",
+    "description": "Interne controles zijn benoemde, toegewezen waarborgen die op een cadans draaien, bewijs opleveren en meerdere raamwerkeisen tegelijk dekken.",
     "messages": {
-      "imported": "Maatregelen succesvol geïmporteerd.",
+      "imported": "Interne controles succesvol geïmporteerd.",
       "error": "Fout",
       "success": "Succes",
-      "deleted": "Maatregel succesvol verwijderd"
+      "deleted": "Interne controle succesvol verwijderd"
     },
     "errors": {
-      "import": "Importeren van maatregelen mislukt",
-      "delete": "Verwijderen van maatregel mislukt"
+      "import": "Importeren van interne controles mislukt",
+      "delete": "Verwijderen van interne controle mislukt"
     },
-    "deleteConfirmation": "Hiermee wordt de maatregel \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
+    "deleteConfirmation": "Hiermee wordt de interne controle \"{{name}}\" permanent verwijderd. Deze actie kan niet ongedaan worden gemaakt.",
     "actions": {
       "import": "Importeren",
-      "newMeasure": "Nieuwe maatregel",
+      "newInternalControl": "Nieuwe interne controle",
       "loading": "Laden...",
       "loadMore": "Meer laden",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     },
     "filters": {
-      "searchPlaceholder": "Maatregelen zoeken...",
+      "searchPlaceholder": "Interne controles zoeken...",
       "allStates": "Alle statussen",
       "allCategories": "Alle categorieën"
     },
@@ -3817,13 +3758,15 @@
       "not_started": "Niet gestart"
     },
     "columns": {
-      "measure": "Maatregel",
+      "internalControl": "Interne controle",
+      "code": "Code",
       "category": "Categorie",
-      "state": "Status"
+      "state": "Status",
+      "status": "Implementatie"
     },
     "empty": {
-      "title": "Nog geen maatregelen",
-      "description": "Maak uw eerste maatregel aan om te beginnen."
+      "title": "Nog geen interne controles",
+      "description": "Maak uw eerste interne controle aan om te beginnen."
     }
   },
   "linkedThirdPartiesCard": {
@@ -3847,7 +3790,7 @@
   },
   "createEvidenceDialog": {
     "breadcrumb": {
-      "measureDetail": "Maatregelen detail",
+      "internalControlDetail": "Details van de interne controle",
       "createEvidence": "Bewijs aanmaken"
     },
     "tabs": {
@@ -3908,31 +3851,46 @@
       "download": "Bestand downloaden"
     }
   },
-  "measureFormDialog": {
+  "internalControlFormDialog": {
     "breadcrumb": {
-      "measures": "Maatregelen",
-      "editMeasure": "Maatregel bewerken",
-      "newMeasure": "Nieuwe maatregel"
+      "internalControls": "Interne controles",
+      "editInternalControl": "Interne controle bewerken",
+      "newInternalControl": "Nieuwe interne controle"
     },
     "messages": {
-      "created": "Maatregel succesvol aangemaakt."
+      "created": "Interne controle succesvol aangemaakt."
     },
     "errors": {
-      "create": "Aanmaken van maatregel mislukt"
+      "create": "Aanmaken van interne controle mislukt"
     },
     "validation": {
       "nameRequired": "Naam is verplicht",
-      "categoryRequired": "Categorie is verplicht"
+      "categoryRequired": "Categorie is verplicht",
+      "reviewerDistinct": "De beoordelaar moet een andere persoon zijn dan de eigenaar",
+      "operatingIntervalRequired": "Geef aan hoe vaak de controle wordt uitgevoerd"
     },
     "fields": {
-      "name": "Naam van maatregel",
-      "namePlaceholder": "Titel van maatregel",
+      "name": "Naam",
+      "namePlaceholder": "Titel van de controle",
       "description": "Beschrijving",
       "descriptionPlaceholder": "Beschrijving toevoegen",
       "category": "Categorie",
       "categoryPlaceholder": "Selecteer categorie",
       "state": "Status",
-      "statePlaceholder": "Selecteer status"
+      "statePlaceholder": "Selecteer status",
+      "code": "Code",
+      "codePlaceholder": "IC-ACCESS-01",
+      "notSet": "Niet ingesteld",
+      "controlType": "Type",
+      "nature": "Aard",
+      "operatingFrequency": "Uitvoeringsfrequentie",
+      "operatingEvent": "Gebeurtenis",
+      "operatingEventPlaceholder": "wanneer iemand vertrekt",
+      "evidenceCadence": "Bewijscadans",
+      "testingCadence": "Testcadans",
+      "implementationStatus": "Implementatiestatus",
+      "owner": "Eigenaar",
+      "reviewer": "Beoordelaar"
     },
     "properties": "Eigenschappen",
     "states": {
@@ -3943,12 +3901,33 @@
       "unknown": "Onbekend",
       "not_implemented": "Niet geïmplementeerd"
     },
+    "controlTypes": {
+      "preventive": "Preventief",
+      "detective": "Detectief",
+      "corrective": "Correctief"
+    },
+    "natures": {
+      "manual": "Handmatig"
+    },
+    "operatingModes": {
+      "continuous": "Continu",
+      "event": "Bij een gebeurtenis",
+      "periodic": "Elke"
+    },
+    "implementationStatuses": {
+      "not_implemented": "Niet geïmplementeerd",
+      "in_progress": "In uitvoering",
+      "implemented": "Geïmplementeerd",
+      "operating": "Operationeel"
+    },
     "actions": {
-      "create": "Maatregel aanmaken",
-      "update": "Maatregel bijwerken"
+      "create": "Interne controle aanmaken",
+      "update": "Interne controle bijwerken",
+      "addDuration": "Duur toevoegen",
+      "clearDuration": "Duur wissen"
     }
   },
-  "measureEvidencesTab": {
+  "internalControlEvidencesTab": {
     "pageTitle": "{{name}} - Bewijsstukken",
     "columns": {
       "name": "Naam",
@@ -3971,9 +3950,28 @@
       "delete": "Verwijderen"
     }
   },
-  "measureTasksTab": {
+  "internalControlTasksTab": {
+    "empty": "Geen taken",
+    "columns": {
+      "name": "Naam",
+      "state": "Status"
+    },
     "actions": {
-      "newTask": "Nieuwe taak"
+      "newTask": "Nieuwe taak",
+      "link": "Taak koppelen",
+      "unlink": "Ontkoppelen",
+      "retry": "Opnieuw proberen",
+      "showMore": "{{count}} meer tonen"
+    },
+    "dialog": {
+      "title": "Taken koppelen",
+      "searchPlaceholder": "Taken zoeken",
+      "empty": "Geen taken",
+      "actions": {
+        "close": "Sluiten",
+        "link": "Koppelen",
+        "unlink": "Ontkoppelen"
+      }
     }
   },
   "obligationDetailsPage": {
@@ -4436,7 +4434,7 @@
     },
     "tabs": {
       "overview": "Overzicht",
-      "measures": "Maatregelen",
+      "internalControls": "Interne controles",
       "documents": "Documenten",
       "controls": "Controls",
       "obligations": "Verplichtingen",
@@ -4982,13 +4980,13 @@
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "progress": "{{done}}/{{total}}",
-    "progressEmpty": "Geen maatregelen",
+    "progressEmpty": "Geen interne controles",
     "actions": {
       "tasks": "Taken",
       "edit": "Bewerken",
       "delete": "Verwijderen",
-      "expand": "Maatregelen tonen",
-      "collapse": "Maatregelen verbergen"
+      "expand": "Interne controles tonen",
+      "collapse": "Interne controles verbergen"
     }
   },
   "riskTreatmentPlansPage": {
@@ -5004,26 +5002,26 @@
     "deleteConfirmation": "Dit verwijdert het behandelplan voor \"{{name}}\" permanent. Deze actie kan niet ongedaan worden gemaakt.",
     "scoreProgress": "{{inherent}} → {{net}} → {{residual}}",
     "actions": {
-      "measures": "Maatregelen",
+      "internalControls": "Interne controles",
       "edit": "Bewerken",
       "delete": "Verwijderen"
     }
   },
-  "treatmentPlanMeasureList": {
-    "title": "Maatregelen",
-    "empty": "Nog geen maatregelen gekoppeld.",
-    "deleted": "Verwijderde maatregel",
-    "acceptedEmpty": "Geaccepteerde risico's kunnen geen maatregelen hebben.",
+  "treatmentPlanInternalControlList": {
+    "title": "Interne controles",
+    "empty": "Nog geen interne controles gekoppeld.",
+    "deleted": "Verwijderde interne controle",
+    "acceptedEmpty": "Geaccepteerde risico's kunnen geen interne controles hebben.",
     "actions": {
-      "create": "Nieuwe maatregel",
-      "link": "Maatregel koppelen",
+      "create": "Nieuwe interne controle",
+      "link": "Interne controle koppelen",
       "unlink": "Ontkoppelen",
       "showMore": "Meer tonen"
     }
   },
-  "treatmentPlanMeasuresDialog": {
-    "title": "Maatregelen van het behandelplan",
-    "loading": "Maatregelen laden…",
+  "treatmentPlanInternalControlsDialog": {
+    "title": "Interne controles van het behandelplan",
+    "loading": "Interne controles laden…",
     "netScore": "Netto {{score}} ({{likelihood}} × {{impact}})"
   },
   "riskAnalysisNodeActions": {
@@ -6083,119 +6081,6 @@
     "default": {
       "title": "Authenticatie mislukt",
       "description": "We konden uw aanmelding niet voltooien. Probeer het opnieuw."
-    }
-  },
-  "accessReviewSource": {
-    "documentation": "Documentatie",
-    "regions": {
-      "label": "Regio",
-      "placeholder": "Selecteer een regio",
-      "unitedStates": "Verenigde Staten",
-      "europe": "Europa"
-    }
-  },
-  "devices": {
-    "title": "Apparaten",
-    "description": "Beheer computers die zijn geregistreerd met de Probo posture agent.",
-    "empty": "Nog geen apparaten geregistreerd",
-    "actions": {
-      "add": "Apparaat toevoegen",
-      "new": "Nieuw apparaat",
-      "reassign": "Opnieuw toewijzen",
-      "revoke": "Intrekken",
-      "delete": "Verwijderen"
-    },
-    "fields": {
-      "organization": "Organisatie",
-      "hostname": "Hostnaam",
-      "owner": "Eigenaar",
-      "state": "Status",
-      "platform": "Platform",
-      "osVersion": "OS-versie",
-      "hardwareUuid": "Hardware-UUID",
-      "serialNumber": "Serienummer",
-      "agentVersion": "Agentversie",
-      "enrolledAt": "Geregistreerd op",
-      "lastSeen": "Laatst gezien"
-    },
-    "values": {
-      "pending": "(in behandeling)",
-      "never": "Nooit",
-      "unassigned": "Niet toegewezen"
-    },
-    "messages": {
-      "ownerUpdated": "Apparaateigenaar bijgewerkt",
-      "revoked": "Apparaat ingetrokken",
-      "deleted": "Apparaat verwijderd"
-    },
-    "errors": {
-      "create": "Aanmaken van apparaat mislukt",
-      "reassign": "Opnieuw toewijzen van apparaat mislukt",
-      "revoke": "Intrekken van apparaat mislukt",
-      "delete": "Verwijderen van apparaat mislukt"
-    },
-    "confirmations": {
-      "revoke": "Apparaat \"{{hostname}}\" intrekken? De agent op het apparaat stopt met rapporteren en moet opnieuw worden geregistreerd.",
-      "delete": "Apparaat \"{{hostname}}\" verwijderen? Dit verwijdert het uit de inventaris."
-    },
-    "postures": {
-      "currentTitle": "Huidige posturen",
-      "empty": "Geen postuurcontroles geregistreerd",
-      "values": {
-        "on": "Aan",
-        "off": "Uit",
-        "immediate": "Onmiddellijk",
-        "seconds": "{{seconds}}s",
-        "minPasswordLength": "Min. lengte {{length}}",
-        "configured": "Geconfigureerd",
-        "none": "Geen",
-        "unknown": "Onbekend"
-      },
-      "checks": {
-        "diskEncryption": "Schijfversleuteling",
-        "screenLock": "Schermvergrendeling",
-        "firewallEnabled": "Firewall ingeschakeld",
-        "timeSync": "Tijdsynchronisatie",
-        "osVersion": "OS-versie",
-        "autoUpdate": "Automatische update",
-        "passwordPolicy": "Wachtwoordbeleid",
-        "remoteLogin": "Extern inloggen",
-        "malwareProtection": "Malwarebescherming"
-      }
-    },
-    "history": {
-      "title": "Rapportgeschiedenis",
-      "empty": "Nog geen postuurrapporten",
-      "checkCount_one": "{{count}} controle gerapporteerd",
-      "checkCount_other": "{{count}} controles gerapporteerd",
-      "columns": {
-        "time": "Tijd",
-        "checks": "Controles",
-        "correlationId": "Correlatie-ID"
-      },
-      "actions": {
-        "copyCorrelationId": "Correlatie-ID kopiëren",
-        "correlationIdCopied": "Correlatie-ID gekopieerd"
-      }
-    }
-  },
-  "deviceEnrollment": {
-    "token": {
-      "title": "Registratietoken gegenereerd",
-      "description": "Deel deze registratietoken alleen met de apparaateigenaar via een beveiligd kanaal. Deze kan één keer worden gebruikt en verloopt na zeven dagen.",
-      "manualInstall": "Handmatige installatie (CLI / MDM)",
-      "releaseListHint": "Blader door <link>probo-agent releases op GitHub</link> (tags probo-agent/v*) en kies het archief voor uw besturingssysteem en architectuur (bijvoorbeeld probo-agent_Darwin_arm64.tar.gz, probo-agent_Linux_x86_64.tar.gz of probo-agent_Windows_x86_64.zip). Vervang vX.Y.Z, OS en ARCH in het downloadcommando door de waarden van het door u gekozen bestand.",
-      "installUnix": "Installeren op macOS of Linux (uitvoeren vanuit een shell met sudo-toegang)",
-      "installWindows": "Installeren op Windows (uitvoeren vanuit een PowerShell-sessie met verhoogde rechten)",
-      "downloadStep": "Download het programma en plaats het",
-      "enrollStep": "Configureer het apparaat en start de agent",
-      "securityNotice": "De token wordt doorgegeven als CLI-vlag (niet via curl-piped-to-shell of sudo-omgevingsvariabelen). Eenmaal geïnstalleerd, werkt de agent zichzelf automatisch bij vanuit GitHub Releases met cosign-handtekeningverificatie."
-    },
-    "messages": {
-      "created": "Apparaat aangemaakt. Kopieer de registratietoken nu — deze wordt niet opnieuw getoond."
-    },
-    "errors": {
-      "copyToClipboard": "Kopiëren naar klembord mislukt"
     }
   },
   "thirdPartyRiskAssessmentRow": {

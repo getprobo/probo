@@ -37,7 +37,10 @@ func NewTrackerPatternWithAttribution(
 
 	var mapped *TrackerPatternAttribution
 
-	if attribution != nil {
+	if p.Source != nil && *p.Source == coredata.CookieSourceExtension {
+		value := TrackerPatternAttribution(coredata.CommonTrackerPatternAttributionNotAttributable)
+		mapped = &value
+	} else if attribution != nil {
 		value := TrackerPatternAttribution(*attribution)
 		mapped = &value
 	}
@@ -55,7 +58,6 @@ func NewTrackerPatternWithAttribution(
 		Description:            p.Description,
 		Source:                 source,
 		Excluded:               p.Excluded,
-		LastMatchedAt:          p.LastMatchedAt,
 		CommonTrackerPatternID: p.CommonTrackerPatternID,
 		Attribution:            mapped,
 		CreatedAt:              p.CreatedAt,

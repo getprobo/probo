@@ -24,7 +24,9 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cmd/audit/create"
 	"go.probo.inc/probo/pkg/cmd/audit/delete"
+	"go.probo.inc/probo/pkg/cmd/audit/linkframework"
 	"go.probo.inc/probo/pkg/cmd/audit/list"
+	"go.probo.inc/probo/pkg/cmd/audit/unlinkframework"
 	"go.probo.inc/probo/pkg/cmd/audit/update"
 	"go.probo.inc/probo/pkg/cmd/audit/view"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -41,6 +43,8 @@ func NewCmdAudit(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(view.NewCmdView(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
 	cmd.AddCommand(delete.NewCmdDelete(f))
+	cmd.AddCommand(linkframework.NewCmdLinkFramework(f))
+	cmd.AddCommand(unlinkframework.NewCmdUnlinkFramework(f))
 
 	return cmd
 }

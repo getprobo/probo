@@ -21,7 +21,6 @@
 import { Form } from "@base-ui/react/form";
 import { TrashIcon } from "@phosphor-icons/react";
 import { toFieldErrors } from "@probo/helpers";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Callout } from "@probo/ui/src/v2/Callout/Callout";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -34,6 +33,7 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useState } from "react";
@@ -59,6 +59,7 @@ const fragment = graphql`
   fragment WorkspaceIdentitySectionFragment on Organization {
     id
     name @required(action: THROW)
+    legalName
     logo {
       downloadUrl
     }
@@ -122,11 +123,12 @@ interface WorkspaceIdentitySectionProps {
 
 export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentitySectionProps) {
   const { t } = useTranslation(SETTINGS_NS);
-  const { toast } = useToast();
+  const toast = useToast();
   const { form, logos, logoCell, horizontalCell, actions, root, intro } = identitySection();
   const organization = useFragment(fragment, organizationKey);
 
   const [name, setName] = useState(organization.name);
+  const [legalName, setLegalName] = useState(organization.legalName ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<string | null>(null);
@@ -168,14 +170,16 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
     || isDeletingHorizontalLogo;
   const dropzoneDisabled = !canUpdate || busy;
   const nameDirty = name !== organization.name;
+  const legalNameDirty = legalName.trim() !== (organization.legalName ?? "");
+  const identityDirty = nameDirty || legalNameDirty;
   const logoSrc = logoPreview ?? organization.logo?.downloadUrl;
   const horizontalLogoSrc = horizontalLogoPreview ?? organization.horizontalLogo?.downloadUrl;
 
   function handleReject(error: FileDropzoneError) {
-    toast({
+    toast.add({
       title: t(`identity.errors.${error}.title`),
       description: t(`identity.errors.${error}.description`),
-      variant: "error",
+      type: "error",
     });
   }
 
@@ -248,6 +252,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
 
   function handleSubmit() {
     const nextName = name.trim();
+    const nextLegalName = legalName.trim();
     if (nextName.length === 0) {
       setErrors({ name: t("identity.errors.nameRequired") });
       return;
@@ -258,6 +263,9 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
         input: {
           organizationId: organization.id,
           name: nextName,
+          ...(legalNameDirty
+            ? { legalName: nextLegalName.length > 0 ? nextLegalName : null }
+            : {}),
         },
       },
       onCompleted(_response, payloadErrors) {
@@ -269,6 +277,7 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
     }).then(
       () => {
         setName(nextName);
+        setLegalName(nextLegalName);
         setErrors({});
       },
       () => {
@@ -325,20 +334,42 @@ export function WorkspaceIdentitySection({ organizationKey }: WorkspaceIdentityS
             <Callout color="sky">
               {t("identity.fields.acceptedFiles")}
             </Callout>
-            <Field label={t("identity.fields.name")} error={errors.name}>
-              <TextField
-                name="name"
-                required
-                maxLength={NAME_MAX_LENGTH}
-                value={name}
-                disabled={!canUpdate || busy}
-                onValueChange={(value) => {
-                  setName(value);
-                  setErrors({});
-                }}
-              />
-            </Field>
-            {nameDirty && canUpdate && (
+            <div className="flex flex-col gap-1">
+              <Field label={t("identity.fields.name")} error={errors.name}>
+                <TextField
+                  name="name"
+                  required
+                  maxLength={NAME_MAX_LENGTH}
+                  value={name}
+                  disabled={!canUpdate || busy}
+                  onValueChange={(value) => {
+                    setName(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
+              <Text size={1} color="neutral">
+                {t("identity.fields.nameDescription")}
+              </Text>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Field label={t("identity.fields.legalName")} error={errors.legalName}>
+                <TextField
+                  name="legalName"
+                  maxLength={NAME_MAX_LENGTH}
+                  value={legalName}
+                  disabled={!canUpdate || busy}
+                  onValueChange={(value) => {
+                    setLegalName(value);
+                    setErrors({});
+                  }}
+                />
+              </Field>
+              <Text size={1} color="neutral">
+                {t("identity.fields.legalNameDescription")}
+              </Text>
+            </div>
+            {identityDirty && canUpdate && (
               <div className={actions()}>
                 <Button
                   type="submit"

@@ -40,7 +40,7 @@ type organizationRelationGraph struct {
 	contextProduct         string
 	frameworkID            string
 	controlID              string
-	measureID              string
+	internalControlID      string
 	taskID                 string
 	taskCommentID          string
 	soaID                  string
@@ -105,11 +105,11 @@ func populateOrganizationRelationGraph(
 		WithBestPractice(true).
 		WithMaturityLevel("INITIAL").
 		Create()
-	g.measureID = factory.NewMeasure(owner).
-		WithName(marker + " measure").
+	g.internalControlID = factory.NewInternalControl(owner).
+		WithName(marker + " internal control").
 		WithCategory("POLICY").
 		Create()
-	g.taskID = factory.NewTask(owner, g.measureID).
+	g.taskID = factory.NewTask(owner, g.internalControlID).
 		WithName(marker + " task").
 		Create()
 	g.taskCommentID = factory.NewTaskComment(owner, g.taskID).
@@ -208,9 +208,9 @@ func populateOrganizationRelationGraph(
 		Create()
 
 	linkControlToDocument(t, owner, g.controlID, g.documentID)
-	linkMeasureToDocument(t, owner, g.measureID, g.documentID)
+	linkInternalControlToDocument(t, owner, g.internalControlID, g.documentID)
 	linkRiskToDocument(t, owner, g.riskID, g.documentID)
-	linkRiskToMeasure(t, owner, g.riskID, g.measureID)
+	linkRiskToInternalControl(t, owner, g.riskID, g.internalControlID)
 
 	return g
 }
@@ -603,8 +603,8 @@ func orgRelationsGovernanceCollections(
 ) {
 	var result struct {
 		Node struct {
-			MeasureCategories []string `json:"measureCategories"`
-			Frameworks        struct {
+			InternalControlCategories []string `json:"internalControlCategories"`
+			Frameworks                struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
@@ -620,14 +620,14 @@ func orgRelationsGovernanceCollections(
 					} `json:"node"`
 				} `json:"edges"`
 			} `json:"controls"`
-			Measures struct {
+			InternalControls struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
 					Node struct {
 						ID string `json:"id"`
 					} `json:"node"`
 				} `json:"edges"`
-			} `json:"measures"`
+			} `json:"internalControls"`
 			StatementsOfApplicability struct {
 				TotalCount int `json:"totalCount"`
 				Edges      []struct {
@@ -651,7 +651,7 @@ func orgRelationsGovernanceCollections(
 		query($id: ID!) {
 			node(id: $id) {
 				... on Organization {
-					measureCategories
+					internalControlCategories
 					frameworks(first: 50) {
 						totalCount
 						edges { node { id } }
@@ -660,7 +660,7 @@ func orgRelationsGovernanceCollections(
 						totalCount
 						edges { node { id } }
 					}
-					measures(first: 50) {
+					internalControls(first: 50) {
 						totalCount
 						edges { node { id } }
 					}
@@ -678,13 +678,13 @@ func orgRelationsGovernanceCollections(
 	`, map[string]any{"id": g.orgID}, &result)
 	require.NoError(t, err)
 
-	assert.Contains(t, result.Node.MeasureCategories, "POLICY")
+	assert.Contains(t, result.Node.InternalControlCategories, "POLICY")
 	assert.GreaterOrEqual(t, result.Node.Frameworks.TotalCount, 1)
 	assert.True(t, collectRelationNodeIDs(result.Node.Frameworks.Edges)[g.frameworkID])
 	assert.GreaterOrEqual(t, result.Node.Controls.TotalCount, 1)
 	assert.True(t, collectRelationNodeIDs(result.Node.Controls.Edges)[g.controlID])
-	assert.GreaterOrEqual(t, result.Node.Measures.TotalCount, 1)
-	assert.True(t, collectRelationNodeIDs(result.Node.Measures.Edges)[g.measureID])
+	assert.GreaterOrEqual(t, result.Node.InternalControls.TotalCount, 1)
+	assert.True(t, collectRelationNodeIDs(result.Node.InternalControls.Edges)[g.internalControlID])
 	assert.GreaterOrEqual(t, result.Node.StatementsOfApplicability.TotalCount, 1)
 	assert.True(
 		t,

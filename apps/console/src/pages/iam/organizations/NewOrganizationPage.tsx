@@ -26,8 +26,8 @@ import {
   Field,
   IconChevronLeft,
   PageHeader,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { FormEventHandler } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
@@ -50,7 +50,7 @@ const createOrganizationMutation = graphql`
 function NewOrganizationPageInner() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
   const { t } = useTranslation();
 
   const [createOrganization, isCreating]
@@ -61,9 +61,9 @@ function NewOrganizationPageInner() {
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") ? (formData.get("name") as string).toString() : "";
     if (!name) {
-      toast({
+      toast.add({
         title: t("common.error"), description: t("newOrganizationPage.errors.nameRequired"),
-        variant: "error",
+        type: "error",
       });
       return;
     }
@@ -76,34 +76,34 @@ function NewOrganizationPageInner() {
       },
       onCompleted: (r, e) => {
         if (e) {
-          toast({
+          toast.add({
             title: t("common.error"), description: formatError(t("newOrganizationPage.errors.create"), e),
-            variant: "error",
+            type: "error",
           });
           return;
         }
 
         const org = r.createOrganization!.organization;
         void navigate(`/organizations/${org!.id}`);
-        toast({
+        toast.add({
           title: t("common.success"), description: t("newOrganizationPage.messages.created"),
-          variant: "success",
+          type: "success",
         });
       },
       onError: (e) => {
         if (e instanceof MembershipRequiredError) {
-          toast({
+          toast.add({
             title: t("noOrganizationAccess.title"),
             description: t("noOrganizationAccess.description"),
-            variant: "error",
+            type: "error",
           });
           return;
         }
 
-        toast({
+        toast.add({
           title: t("common.error"),
           description: e.message,
-          variant: "error",
+          type: "error",
         });
       },
     });

@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { useToast } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -54,7 +54,7 @@ export function useMutationWithIncrement<T extends MutationParameters>(
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
   const relayEnv = useRelayEnvironment();
-  const { toast } = useToast();
+  const toast = useToast();
   const { t } = useTranslation();
   const options = { ...defaultOptions, ...baseOptions };
   const mutateAndIncrement = useCallback(
@@ -64,10 +64,10 @@ export function useMutationWithIncrement<T extends MutationParameters>(
         onCompleted: (response, error) => {
           if (error) {
             const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
-            toast({
-              title: t("common.error"),
-              description: formatError(errorTitle, error),
-              variant: "error",
+            toast.add({
+              title: errorTitle,
+              description: formatError(t("common.error"), error),
+              type: "error",
             });
           } else {
             updateStoreCounter(
@@ -82,10 +82,10 @@ export function useMutationWithIncrement<T extends MutationParameters>(
         },
         onError: (error) => {
           const errorTitle = options.errorMessage ?? t("mutation.errors.commit");
-          toast({
-            title: t("common.error"),
-            description: formatError(errorTitle, error),
-            variant: "error",
+          toast.add({
+            title: errorTitle,
+            description: formatError(t("common.error"), error),
+            type: "error",
           });
           queryOptions.onError?.(error);
         },

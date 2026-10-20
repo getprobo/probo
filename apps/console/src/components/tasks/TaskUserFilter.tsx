@@ -18,128 +18,111 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { CaretDownIcon, UserCircleDashedIcon } from "@phosphor-icons/react";
+import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
+import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
+import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
+import { selectTrigger } from "@probo/ui/src/v2/Select/variants";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
+import { graphql, useLazyLoadQuery } from "react-relay";
 
-import { usePeople } from "#/hooks/graph/PeopleGraph";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import type { TaskUserFilterProfileQuery } from "#/__generated__/core/TaskUserFilterProfileQuery.graphql";
+import { UserSelectOption } from "#/components/form/UserSelectOption";
+import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
+import { unassignedAssignee } from "#/pages/organizations/tasks/_lib/taskPath";
+import { IAMRelayProvider } from "#/providers/IAMRelayProvider";
 
-import { tasksCard } from "./variants";
+const taskUserFilterProfileQuery = graphql`
+  query TaskUserFilterProfileQuery($id: ID!) {
+    node(id: $id) {
+      __typename
+      ... on Profile {
+        id
+        fullName
+        emailAddress
+        avatar {
+          downloadUrl
+        }
+      }
+    }
+  }
+`;
 
 interface TaskUserFilterProps {
   value: string | null;
   onValueChange: (value: string | null) => void;
 }
 
-interface PersonOption {
-  id: string;
-  fullName: string;
-  emailAddress: string;
-  avatarUrl?: string;
-}
-
 export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
-  return (
-    <Suspense fallback={<TaskUserFilterSelect value={value} disabled people={[]} onValueChange={onValueChange} />}>
-      <TaskUserFilterLoaded value={value} onValueChange={onValueChange} />
-    </Suspense>
-  );
-}
-
-function TaskUserFilterLoaded({ value, onValueChange }: TaskUserFilterProps) {
-  const organizationId = useOrganizationId();
-  const people = usePeople(organizationId);
-
-  return (
-    <TaskUserFilterSelect
-      value={value}
-      onValueChange={onValueChange}
-      people={people.map(person => ({
-        id: person.id,
-        fullName: person.fullName,
-        emailAddress: person.emailAddress,
-        avatarUrl: person.avatar?.downloadUrl ?? undefined,
-      }))}
-    />
-  );
-}
-
-interface TaskUserFilterSelectProps extends TaskUserFilterProps {
-  disabled?: boolean;
-  people: PersonOption[];
-}
-
-function TaskUserFilterSelect({
-  value,
-  onValueChange,
-  disabled,
-  people,
-}: TaskUserFilterSelectProps) {
   const { t } = useTranslation();
-  const { userOption } = tasksCard();
-  const names = new Map(people.map(person => [person.id, person]));
-  const selected = value == null ? undefined : names.get(value);
+  const emptyLabel = t("tasksCard.filters.allUsers");
+  const unassignedLabel = t("tasksCard.filters.notAssigned");
+  const slots = selectTrigger({ size: 2 });
+  const unassignedIcon = <UserCircleDashedIcon />;
 
   return (
-    <Select
-      value={value}
-      disabled={disabled}
-      onValueChange={onValueChange}
-    >
-      <SelectTrigger
-        size={2}
-        placeholder={t("tasksCard.filters.allUsers")}
-        aria-label={t("tasksCard.filters.user")}
-      >
-        {(selectedId: string | null) => {
-          if (selectedId == null) {
-            return t("tasksCard.filters.allUsers");
-          }
-          const person = names.get(selectedId) ?? selected;
-          if (person == null) {
-            return selectedId;
-          }
-          return (
-            <span className={userOption()}>
-              <Avatar
-                size={1}
-                radius="full"
-                name={person.fullName}
-                email={person.emailAddress}
-                src={person.avatarUrl}
-              />
-              <span className="truncate">{person.fullName}</span>
-            </span>
-          );
-        }}
-      </SelectTrigger>
-      <SelectPopup align="start">
-        <SelectItem value={null}>
-          {t("tasksCard.filters.allUsers")}
-        </SelectItem>
-        {value != null && selected == null && (
-          <SelectItem value={value}>{value}</SelectItem>
-        )}
-        {people.map(person => (
-          <SelectItem key={person.id} value={person.id}>
-            <span className={userOption()}>
-              <Avatar
-                size={1}
-                radius="full"
-                name={person.fullName}
-                email={person.emailAddress}
-                src={person.avatarUrl}
-              />
-              <span className="truncate">{person.fullName}</span>
-            </span>
-          </SelectItem>
-        ))}
-      </SelectPopup>
-    </Select>
+    <Dropdown>
+      <DropdownTrigger className={slots.trigger()}>
+        <span className={slots.value()}>
+          {value == null
+            ? emptyLabel
+            : value === unassignedAssignee
+              ? (
+                  <UserSelectOption
+                    fullName={unassignedLabel}
+                    size={2}
+                    fallback={unassignedIcon}
+                  />
+                )
+              : (
+                  <Suspense fallback={<TextSkeleton size={2} className="w-24" />}>
+                    <IAMRelayProvider>
+                      <TaskUserFilterProfile id={value} />
+                    </IAMRelayProvider>
+                  </Suspense>
+                )}
+        </span>
+        <span className={slots.icon()}>
+          <CaretDownIcon />
+        </span>
+      </DropdownTrigger>
+      <DropdownPopup size={2} align="start">
+        <TaskAssigneeMenu
+          value={value}
+          emptyLabel={emptyLabel}
+          emptyValue={null}
+          hideEndedContracts={false}
+          unassigned={{
+            label: unassignedLabel,
+            value: unassignedAssignee,
+            icon: unassignedIcon,
+          }}
+          onValueChange={onValueChange}
+        />
+      </DropdownPopup>
+    </Dropdown>
+  );
+}
+
+function TaskUserFilterProfile({ id }: { id: string }) {
+  const data = useLazyLoadQuery<TaskUserFilterProfileQuery>(
+    taskUserFilterProfileQuery,
+    { id },
+    { fetchPolicy: "store-or-network" },
+  );
+  const profile = data.node?.__typename === "Profile" ? data.node : null;
+  if (profile == null) {
+    return id;
+  }
+
+  return (
+    <UserSelectOption
+      fullName={profile.fullName}
+      emailAddress={profile.emailAddress}
+      avatarUrl={profile.avatar?.downloadUrl}
+      size={2}
+    />
   );
 }

@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { createUseMutation, type MutationNotifier } from "@probo/relay";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -38,7 +38,7 @@ import { useLocale } from "#/lib/i18n/useLocale";
  * from react-relay.
  */
 function useMutationNotifier(): MutationNotifier {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const locale = useLocale();

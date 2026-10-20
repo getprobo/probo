@@ -38,6 +38,20 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['connector'],
+				operation: ['createOrg'],
+			},
+		},
+		default: '',
+		description: 'A name that distinguishes this credential from other credentials for the same provider. For example, production or main.',
+		required: true,
+	},
+	{
 		displayName: 'Provider',
 		name: 'provider',
 		type: 'options',
@@ -208,10 +222,12 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
+	const name = this.getNodeParameter('name', itemIndex) as string;
 	const provider = this.getNodeParameter('provider', itemIndex) as string;
 
 	const input: Record<string, string> = {
 		organizationId,
+		name,
 		provider,
 	};
 
@@ -264,6 +280,7 @@ export async function execute(
 			createOrganizationConnector(input: $input) {
 				connector {
 					id
+					name
 					provider
 					protocol
 					createdAt
@@ -271,6 +288,7 @@ export async function execute(
 				discoveredAccounts {
 					externalAccountId
 					name
+					enabled
 				}
 			}
 		}

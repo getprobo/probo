@@ -117,7 +117,7 @@ export function CompliancePortalCustomDomainForm() {
           <div className={fade()} />
           <div className={lead()}>
             <div className={iconSlot()}>
-              <LinkSimpleIcon size={24} weight="duotone" />
+              <LinkSimpleIcon weight="duotone" />
             </div>
             <Text size={2} weight="medium" color="neutral" className={subtitle()}>
               {t("customDomainForm.title")}

@@ -4,6 +4,179 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.253.0] - 2026-10-19
+
+### Changed
+
+- `risk create` and `risk update` no longer accept `--treatment`,
+  `--inherent-likelihood`, `--inherent-impact`, `--residual-likelihood`,
+  `--residual-impact`, or `--owner`; these now live on treatment plans.
+  `risk view` still shows existing values
+
+## [0.252.0] - 2026-10-19
+
+### Changed
+
+- `device list` accepts `--state`, `--platform`, and `--agent-version`
+  several times and keeps devices that match any value
+
+## [0.251.0] - 2026-10-16
+
+### Added
+
+- `audit link-framework` and `audit unlink-framework` add or remove a
+  framework on an audit
+
+### Changed
+
+- `audit create` accepts `--framework` several times, and the
+  interactive prompt selects one or more frameworks. `audit view` lists
+  every framework linked to the audit
+
+## [0.250.0] - 2026-10-16
+
+### Added
+
+- `task create` accepts `--linear-team` to publish the task to a Linear
+  team. Omit it to use the organization's default Linear team.
+  `--no-linear-team` creates the task with no Linear team
+- `task update-linear-settings` sets the organization's default Linear
+  team and whether new issues on that team are imported
+
+### Changed
+
+- `task create` prints the created task and reports a failed Linear
+  publish on stderr. The command still exits successfully because the
+  task exists
+
+## [0.249.0] - 2026-10-15
+
+### Added
+
+- `device download` saves the PDF snapshot of device postures
+- `device list` filters by owner, state, platform, and agent version
+- Revoke and delete several devices in a single all-or-nothing call
+
+## [0.248.0] - 2026-10-15
+
+### Changed
+
+- `access-review source list` and `access-review source view` show the
+  account name of each source
+
+## [0.247.0] - 2026-10-14
+
+### Added
+
+- `file upload` uploads a private file to embed in rich text
+
+### Changed
+
+- `--content` on document, task, task comment, and risk analysis
+  commands accepts markdown or ProseMirror JSON. Images and links to
+  `/api/files/v1/{id}` are kept
+
+## [0.246.1] - 2026-10-14
+
+### Fixed
+
+- `evidence upload` sends the file's content type instead of
+  `application/octet-stream`, which the server rejected
+- File uploads reject filenames containing control characters instead of
+  writing them into the multipart headers
+
+## [0.246.0] - 2026-10-14
+
+### Changed
+
+- `tracker-pattern` and `tracker-resource` list and view no longer show
+  last-seen timestamps
+
+## [0.245.0] - 2026-10-13
+
+### Added
+
+- `connector create` creates an API-key or client-credentials connector
+  for a provider that needs no extra setting. A blank client id or secret
+  is rejected. AWS, GCP, and Azure workload identity stay on
+  `connector connect`
+
+### Changed
+
+- **Breaking**: `access-review source create` no longer collects cloud
+  credentials. Connect the provider first, then pass `--connector-id`.
+  A CSV source is `--csv-file` and has no provider
+
+### Fixed
+
+- `employee-portal list` reports that the list is unavailable when the
+  server omits it
+
+## [0.244.0] - 2026-10-09
+
+### Added
+
+- `cookie-banner view` and `tracker-pattern view` show discovery page loads
+  and hits by browser family
+
+
+## [0.243.0] - 2026-10-09
+
+### Added
+
+- `connector update <connector-id> --name` renames a connector
+
+### Changed
+
+- `connector connect` and `access-review source create` take a required
+  `--name` that identifies the connector, so several connections to one
+  provider stay distinct. `connector list` and `connector view` show it
+- `task create` and `task update` accept a repeatable `--internal-control`
+  to link a task to several internal controls. Passing an empty value on
+  `task update` clears them all
+- `access-review source create` sends the source in a single list, which
+  matches the new server API
+
+## [0.242.0] - 2026-10-08
+
+### Added
+
+- `employee-portal list`, `employee-portal view`, and
+  `employee-portal update` manage an organization's employee portal
+
+## [0.241.0] - 2026-10-06
+
+### Changed
+
+- The `measure` command is renamed to `internal-control`. `--measure`
+  and `--measure-id` are now `--internal-control` and
+  `--internal-control-id` on evidence, task, and the link commands
+- The next occurrence of a recurring task is created when its deadline
+  passes, not when the task is marked done. `task update` no longer
+  prints "Created next task <id> (<name>)". The interval stays on the
+  task until the deadline passes
+
+## [0.240.0] - 2026-10-05
+
+### Added
+
+- `org list` shows the organization legal name
+- `cookie-banner view` shows whether the banner is CORSless
+- `consent-record list` and `consent-record view` show the origin the
+  consent was recorded from
+
+## [0.239.0] - 2026-10-05
+
+### Added
+
+- `measure create` and `measure update` accept the internal control
+  fields: `--code`, `--control-type`, `--nature`, `--operating-mode`,
+  `--operating-frequency`, `--operating-event`, `--evidence-cadence`,
+  `--testing-cadence`, `--implementation-status`, `--owner-id` and
+  `--reviewer-id`. Cadences are ISO-8601 durations, and flags that do not
+  belong to the selected operating mode are rejected. `measure view` and
+  `measure list` show the owner and reviewer
+
 ## [0.238.0] - 2026-09-30
 
 ### Added

@@ -343,6 +343,31 @@ src/components/ThirdPartyContactListItem.tsx     # only used by the third-partie
 pages/organizations/third-parties/_components/ThirdPartyContactListItem.tsx
 ```
 
+### Complex component folder
+
+A simple component is one file in `_components/`. A complex one gets a folder named after the component, the same way the v2 kit does (`Dialog/Dialog.tsx`, `Dialog/DialogPopup.tsx` — see [`contrib/claude/ui.md`](ui.md#folder-layout)). The folder holds that component's private parts and private helpers. See [`contrib/claude/react-components.md`](react-components.md#component-folder).
+
+- Open the folder when the component has a private part or a private helper. Leave a single-file component as a file.
+- The primary file matches the folder name. Parts are prefixed with that name. Helpers in the folder are camelCase and stay private to the folder.
+- No nested `_components` or `_lib`, and no `index.ts`. Import the file (`.../_components/CreateTaskDialog/CreateTaskDialog`).
+- A highly composed component regroups the descendants it renders: the list item, the empty state, the create form, and pieces those descendants render that nobody else uses. One flat folder, named after the composer. Do not nest a folder per descendant.
+- A descendant rendered by a second composer leaves the folder: helpers to `_lib`, parts to `_components`. A fragment spread from a hook is not a second composer.
+- A thin parent that only mounts the composer stays outside. `TaskCommentsSection` keeps its skeleton; it does not swallow the list.
+- Do not add a folder for a page. The resource folder is already that namespace. `_components` is not a route segment.
+- A Suspense or error-boundary shell stays in the primary file.
+
+```text
+// Good — the list owns its item and its empty state
+pages/organizations/tasks/_components/TaskCommentsList/
+  TaskCommentsList.tsx
+  TaskCommentListItem.tsx
+  TaskCommentsEmpty.tsx
+
+// Bad — a page folder inside the resource, or a folder for a component that is still one file
+pages/organizations/tasks/TaskDetailsPage/TaskDetailsPage.tsx
+pages/organizations/tasks/_components/TaskDeleteDialog/TaskDeleteDialog.tsx
+```
+
 ## `_lib` folder
 
 Non-component code scoped to a subtree — hooks, utilities, constants, types — lives in a `_lib/` folder next to the pages that use it. The same hoisting rule as `_components/` applies: shared helpers move to the nearest common ancestor's `_lib/`; truly global helpers live in `src/lib/`. Files in `_lib/` use camelCase (`useThirdPartyFilters.ts`, `formatCurrency.ts`, `constants.ts`). See [`contrib/claude/hooks.md`](hooks.md) for custom-hook conventions.

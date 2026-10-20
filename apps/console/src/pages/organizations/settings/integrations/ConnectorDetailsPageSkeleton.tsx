@@ -18,26 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
+import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
 import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
-import { connectorDetailsPageSkeleton } from "./variants";
+import { connectorDetailsPage, connectorDetailsPageSkeleton } from "./variants";
 
 export function ConnectorDetailsPageSkeleton() {
-  const { root, header, titleRow, title, body }
-    = connectorDetailsPageSkeleton();
+  const { root, header, intro, title } = connectorDetailsPageSkeleton();
+  const { grid } = connectorDetailsPage();
 
   return (
     <div className={root()}>
+      <TextSkeleton size={2} className="w-24" />
       <div className={header()}>
-        <div className={titleRow()}>
+        <div className={intro()}>
           <div className={title()}>
             <HeadingSkeleton size={6} className="w-40" />
           </div>
+          <TextSkeleton size={1} className="w-28" />
         </div>
+        <ButtonSkeleton size={2} className="w-32" />
       </div>
-      <div className={body()}>
-        <ListSkeleton count={1} />
+      <div className={grid()}>
+        <CardSkeleton size={4} />
+        <CardSkeleton size={4} />
       </div>
     </div>
   );

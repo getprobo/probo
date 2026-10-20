@@ -217,11 +217,11 @@ WHERE %s
 	return nil
 }
 
-func (c *Controls) CountByMeasureID(
+func (c *Controls) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	filter *ControlFilter,
 ) (int, error) {
 	q := `
@@ -232,9 +232,9 @@ WITH ctrl AS (
 	FROM
 		controls c
 	INNER JOIN
-		controls_measures cm ON c.id = cm.control_id
+		controls_internal_controls cm ON c.id = cm.control_id
 	WHERE
-		cm.measure_id = @measure_id
+		cm.internal_control_id = @internal_control_id
 )
 SELECT
 	COUNT(id)
@@ -245,7 +245,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
-	args := pgx.NamedArgs{"measure_id": measureID}
+	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 
@@ -259,11 +259,11 @@ WHERE %s
 	return count, nil
 }
 
-func (c *Controls) LoadByMeasureID(
+func (c *Controls) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
 	filter *ControlFilter,
 ) error {
@@ -286,9 +286,9 @@ WITH ctrl AS (
 	FROM
 		controls c
 	INNER JOIN
-		controls_measures cm ON c.id = cm.control_id
+		controls_internal_controls cm ON c.id = cm.control_id
 	WHERE
-		cm.measure_id = @measure_id
+		cm.internal_control_id = @internal_control_id
 )
 SELECT
 	id,
@@ -310,7 +310,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"measure_id": measureID}
+	args := pgx.NamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
@@ -349,9 +349,9 @@ WITH ctrl AS (
 	LEFT JOIN
 		risks_documents rp ON cp.document_id = rp.document_id
 	LEFT JOIN
-		controls_measures cm ON c.id = cm.control_id
+		controls_internal_controls cm ON c.id = cm.control_id
 	LEFT JOIN
-		risks_measures rm ON (rm.measure_id = cm.measure_id)
+		risks_internal_controls rm ON (rm.internal_control_id = cm.internal_control_id)
 	WHERE
 		rp.risk_id = @risk_id OR rm.risk_id = @risk_id
 )
@@ -409,9 +409,9 @@ WITH ctrl AS (
 	LEFT JOIN
 		risks_documents rp ON cp.document_id = rp.document_id
 	LEFT JOIN
-		controls_measures cm ON c.id = cm.control_id
+		controls_internal_controls cm ON c.id = cm.control_id
 	LEFT JOIN
-		risks_measures rm ON (rm.measure_id = cm.measure_id)
+		risks_internal_controls rm ON (rm.internal_control_id = cm.internal_control_id)
 	WHERE
 		rp.risk_id = @risk_id OR rm.risk_id = @risk_id
 )

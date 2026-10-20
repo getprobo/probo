@@ -35,7 +35,7 @@ type (
 	// type via @goModel. The first block contains the fields gqlgen
 	// fulfills directly from the model; resolver-only fields
 	// (cookieCategory, detectedTrackers, commonThirdParty, attribution,
-	// detectedCount, permission) are populated by the resolver.
+	// detectedCount, discoveryHits, permission) are populated by the resolver.
 	//
 	// CommonTrackerPatternID is exposed directly as the
 	// commonTrackerPatternId field: a non-null value indicates the
@@ -51,7 +51,6 @@ type (
 		Description   string                           `json:"description"`
 		Source        *coredata.CookieSource           `json:"source,omitempty"`
 		Excluded      bool                             `json:"excluded"`
-		LastMatchedAt *time.Time                       `json:"lastMatchedAt,omitempty"`
 		CreatedAt     time.Time                        `json:"createdAt"`
 		UpdatedAt     time.Time                        `json:"updatedAt"`
 
@@ -79,11 +78,26 @@ type (
 		TrackerType      *coredata.TrackerType
 		CookieCategoryID *gid.GID
 		ThirdPartyID     *gid.GID
+		Excluded         *bool
+		Categorized      *bool
 	}
 )
 
 func (TrackerPattern) IsNode()          {}
 func (t TrackerPattern) GetID() gid.GID { return t.ID }
+
+func NewCoredataTrackerPatternFilter(filter *TrackerPatternFilter) *coredata.TrackerPatternFilter {
+	if filter == nil {
+		return coredata.NewTrackerPatternFilter(nil, nil, nil)
+	}
+
+	return coredata.NewTrackerPatternFilter(nil, filter.CookieCategoryID, nil).
+		WithExcluded(filter.Excluded).
+		WithCategorized(filter.Categorized).
+		WithQuery(filter.Query).
+		WithSource(filter.Source).
+		WithTrackerType(filter.TrackerType)
+}
 
 func NewTrackerPatternConnection(
 	p *page.Page[*coredata.TrackerPattern, coredata.TrackerPatternOrderField],
@@ -141,7 +155,6 @@ func NewTrackerPatternNode(tp *coredata.TrackerPattern) *TrackerPattern {
 		Description:            tp.Description,
 		Source:                 tp.Source,
 		Excluded:               tp.Excluded,
-		LastMatchedAt:          tp.LastMatchedAt,
 		CreatedAt:              tp.CreatedAt,
 		UpdatedAt:              tp.UpdatedAt,
 		CommonTrackerPatternID: tp.CommonTrackerPatternID,

@@ -63,7 +63,7 @@ export const table = tv({
       // Same chrome as List / Card `soft`. No thead wash: sand-a2 on sand-1
       // reconstitutes the page canvas (sand-2) and the header disappears.
       surface: {
-        root: "overflow-hidden border border-sand-a3 bg-sand-1",
+        root: "border border-sand-a3 bg-sand-1",
       },
       ghost: {
         root: "",
@@ -73,8 +73,22 @@ export const table = tv({
       auto: {
         table: "table-auto",
       },
+      // Clip and wrap at lg+. Below that, min-w-max lets the table exceed
+      // the container so the root scroller can reach later columns.
       fixed: {
-        table: "table-fixed",
+        root: "overflow-x-auto lg:overflow-x-hidden",
+        table: "table-fixed min-w-max lg:min-w-0",
+      },
+    },
+    // Fluid column under `layout="fixed"`: max-w-0 lets the cell shrink
+    // below its content so the table stays at container width. At xl+,
+    // break wraps; below that, inner content can truncate.
+    overflow: {
+      truncate: {
+        cell: "min-w-0 max-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+      },
+      break: {
+        cell: "min-w-0 max-w-0 xl:whitespace-normal xl:break-all",
       },
     },
     align: {

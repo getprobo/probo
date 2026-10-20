@@ -30,11 +30,11 @@ type (
 )
 
 const (
-	TreatmentPlanEventTypeCreated         TreatmentPlanEventType = "CREATED"
-	TreatmentPlanEventTypeUpdated         TreatmentPlanEventType = "UPDATED"
-	TreatmentPlanEventTypeDeleted         TreatmentPlanEventType = "DELETED"
-	TreatmentPlanEventTypeMeasureLinked   TreatmentPlanEventType = "MEASURE_LINKED"
-	TreatmentPlanEventTypeMeasureUnlinked TreatmentPlanEventType = "MEASURE_UNLINKED"
+	TreatmentPlanEventTypeCreated                 TreatmentPlanEventType = "CREATED"
+	TreatmentPlanEventTypeUpdated                 TreatmentPlanEventType = "UPDATED"
+	TreatmentPlanEventTypeDeleted                 TreatmentPlanEventType = "DELETED"
+	TreatmentPlanEventTypeInternalControlLinked   TreatmentPlanEventType = "INTERNAL_CONTROL_LINKED"
+	TreatmentPlanEventTypeInternalControlUnlinked TreatmentPlanEventType = "INTERNAL_CONTROL_UNLINKED"
 )
 
 var (
@@ -49,8 +49,8 @@ func (v TreatmentPlanEventType) IsValid() bool {
 		TreatmentPlanEventTypeCreated,
 		TreatmentPlanEventTypeUpdated,
 		TreatmentPlanEventTypeDeleted,
-		TreatmentPlanEventTypeMeasureLinked,
-		TreatmentPlanEventTypeMeasureUnlinked:
+		TreatmentPlanEventTypeInternalControlLinked,
+		TreatmentPlanEventTypeInternalControlUnlinked:
 		return true
 	}
 

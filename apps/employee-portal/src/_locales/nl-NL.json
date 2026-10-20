@@ -51,6 +51,22 @@
     "dashboard": {
       "view": "Bekijken",
       "allDone": "U bent klaar",
+      "documents": {
+        "title": "Documenten",
+        "description": "Onderteken en keur toegewezen documenten goed.",
+        "empty": "Nog niets om te beoordelen",
+        "pendingCount_one": "{{count}} beoordeling open",
+        "pendingCount_other": "{{count}} beoordelingen open",
+        "action": "Documenten beoordelen"
+      },
+      "tasks": {
+        "title": "Taken",
+        "description": "Bekijk en voltooi toegewezen taken.",
+        "empty": "Nog niets te doen",
+        "pendingCount_one": "{{count}} taak te doen",
+        "pendingCount_other": "{{count}} taken te doen",
+        "action": "Naar taken"
+      },
       "signatures": {
         "title": "Handtekeningen",
         "description": "Onderteken toegewezen documenten.",

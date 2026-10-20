@@ -30,10 +30,9 @@ import (
 type TrackerResourceOrderField string
 
 const (
-	TrackerResourceOrderFieldCreatedAt      TrackerResourceOrderField = "CREATED_AT"
-	TrackerResourceOrderFieldLastDetectedAt TrackerResourceOrderField = "LAST_DETECTED_AT"
-	TrackerResourceOrderFieldOrigin         TrackerResourceOrderField = "ORIGIN"
-	TrackerResourceOrderFieldUpdatedAt      TrackerResourceOrderField = "UPDATED_AT"
+	TrackerResourceOrderFieldCreatedAt TrackerResourceOrderField = "CREATED_AT"
+	TrackerResourceOrderFieldOrigin    TrackerResourceOrderField = "ORIGIN"
+	TrackerResourceOrderFieldUpdatedAt TrackerResourceOrderField = "UPDATED_AT"
 )
 
 var (
@@ -46,7 +45,6 @@ var (
 func TrackerResourceOrderFields() []TrackerResourceOrderField {
 	return []TrackerResourceOrderField{
 		TrackerResourceOrderFieldCreatedAt,
-		TrackerResourceOrderFieldLastDetectedAt,
 		TrackerResourceOrderFieldOrigin,
 		TrackerResourceOrderFieldUpdatedAt,
 	}
@@ -72,8 +70,6 @@ func (p TrackerResourceOrderField) Column() string {
 	switch p {
 	case TrackerResourceOrderFieldCreatedAt:
 		return "created_at"
-	case TrackerResourceOrderFieldLastDetectedAt:
-		return "COALESCE(last_detected_at, '0001-01-01T00:00:00Z'::timestamptz)"
 	case TrackerResourceOrderFieldOrigin:
 		return "origin"
 	case TrackerResourceOrderFieldUpdatedAt:

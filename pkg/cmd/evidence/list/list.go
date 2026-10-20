@@ -33,7 +33,7 @@ const listQuery = `
 query($id: ID!, $first: Int, $after: CursorKey, $orderBy: EvidenceOrder) {
   node(id: $id) {
     __typename
-    ... on Measure {
+    ... on InternalControl {
       evidences(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
@@ -67,22 +67,22 @@ type evidence struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagMeasure  string
-		flagLimit    int
-		flagOrderBy  string
-		flagOrderDir string
-		flagOutput   *string
+		flagInternalControl string
+		flagLimit           int
+		flagOrderBy         string
+		flagOrderDir        string
+		flagOutput          *string
 	)
 
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List evidences for a measure",
+		Short:   "List evidences for an internal control",
 		Aliases: []string{"ls"},
-		Example: `  # List evidences for a measure
-  prb evidence list --measure <measure-id>
+		Example: `  # List evidences for an internal control
+  prb evidence list --internal-control <internal-control-id>
 
   # Output as JSON
-  prb evidence ls --measure <measure-id> --output json`,
+  prb evidence ls --internal-control <internal-control-id> --output json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -108,7 +108,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 			)
 
 			variables := map[string]any{
-				"id": flagMeasure,
+				"id": flagInternalControl,
 			}
 
 			if flagOrderBy != "" {
@@ -139,11 +139,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("measure %s not found", flagMeasure)
+						return nil, fmt.Errorf("internal control %s not found", flagInternalControl)
 					}
 
-					if resp.Node.Typename != "Measure" {
-						return nil, fmt.Errorf("expected Measure node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != "InternalControl" {
+						return nil, fmt.Errorf("expected InternalControl node, got %s", resp.Node.Typename)
 					}
 
 					return &resp.Node.Evidences, nil
@@ -201,13 +201,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID (required)")
+	cmd.Flags().StringVar(&flagInternalControl, "internal-control", "", "Internal control ID (required)")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of evidences to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
-	_ = cmd.MarkFlagRequired("measure")
+	_ = cmd.MarkFlagRequired("internal-control")
 
 	return cmd
 }

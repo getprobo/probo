@@ -29,17 +29,15 @@ import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
-import { useNavigate } from "react-router";
 
 import type { ConnectorDeleteDialog_connector$key } from "#/__generated__/core/ConnectorDeleteDialog_connector.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { integrationListPath } from "../_lib/integrationPath";
 import { useDeleteConnector } from "../_lib/useDeleteConnector";
 
 const connectorDeleteDialogFragment = graphql`
   fragment ConnectorDeleteDialog_connector on Connector {
     id
+    provider
     displayName
     canDelete: permission(action: "core:connector:delete")
   }
@@ -49,16 +47,16 @@ interface ConnectorDeleteDialogProps {
   connectorKey: ConnectorDeleteDialog_connector$key;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
 }
 
 export function ConnectorDeleteDialog({
   connectorKey,
   open,
   onOpenChange,
+  onDeleted,
 }: ConnectorDeleteDialogProps) {
   const { t } = useTranslation("organizations/settings/integrations");
-  const navigate = useNavigate();
-  const organizationId = useOrganizationId();
   const connector = useFragment(connectorDeleteDialogFragment, connectorKey);
   const [deleteConnector, isDeleting] = useDeleteConnector();
 
@@ -67,10 +65,10 @@ export function ConnectorDeleteDialog({
   }
 
   function handleDelete() {
-    void deleteConnector(connector.id).then(
+    void deleteConnector(connector.id, connector.provider).then(
       () => {
         onOpenChange(false);
-        void navigate(integrationListPath(organizationId));
+        onDeleted?.();
       },
       () => {
         // useMutation has already shown the refusal, which names the feature

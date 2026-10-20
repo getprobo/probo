@@ -1,0 +1,153 @@
+{
+  "states": {
+    "backlog": "Backlog",
+    "todo": "Te doen",
+    "inProgress": "Bezig",
+    "done": "Klaar",
+    "canceled": "Geannuleerd",
+    "duplicate": "Duplicaat"
+  },
+  "priorities": {
+    "urgent": "Urgent",
+    "high": "Hoog",
+    "medium": "Gemiddeld",
+    "low": "Laag"
+  },
+  "empty": "Geen taken",
+  "emptyValue": "—",
+  "doesNotRepeat": "Herhaalt niet",
+  "noResults": "Geen taken komen overeen met uw filters",
+  "searchPlaceholder": "Taken zoeken",
+  "filters": {
+    "status": "Status",
+    "allStatuses": "Alle statussen",
+    "dueDate": "Deadline",
+    "anyDueDate": "Elke deadline",
+    "due": {
+      "overdue": "Te laat",
+      "1d": "Over 1 dag",
+      "3d": "Over 3 dagen",
+      "1w": "Over 1 week",
+      "1m": "Over 1 maand",
+      "3m": "Over 3 maanden",
+      "none": "Geen deadline"
+    }
+  },
+  "unassigned": "Niet toegewezen",
+  "deadlinePicker": {
+    "today": "Vandaag",
+    "tomorrow": "Morgen",
+    "endOfWeek": "Einde van de week",
+    "nextWeek": "Volgende week",
+    "custom": "Aangepast",
+    "none": "Geen"
+  },
+  "durationPicker": {
+    "none": "Geen"
+  },
+  "fields": {
+    "name": "Naam",
+    "description": "Beschrijving",
+    "state": "Status",
+    "priority": "Prioriteit",
+    "timeEstimate": "Tijdschatting",
+    "timeEstimateUnit": "Eenheid tijdschatting",
+    "deadline": "Deadline",
+    "recurrence": "Herhaalt",
+    "recurrenceUnit": "Eenheid herhaling",
+    "createdAt": "Aangemaakt",
+    "updatedAt": "Bijgewerkt",
+    "assignee": "Toegewezen"
+  },
+  "units": {
+    "S": "Seconden",
+    "M": "Minuten",
+    "H": "Uren",
+    "D": "Dagen",
+    "W": "Weken",
+    "MO": "Maanden",
+    "Y": "Jaren"
+  },
+  "actions": {
+    "addEstimate": "Schatting toevoegen",
+    "clearEstimate": "Schatting wissen",
+    "addRecurrence": "Interval toevoegen",
+    "clearRecurrence": "Interval wissen",
+    "more": "Meer acties",
+    "delete": "Verwijderen"
+  },
+  "hints": {
+    "recurrenceNeedsDeadline": "Stel een deadline in voordat u een herhalingsinterval toevoegt"
+  },
+  "comments": {
+    "title": "Opmerkingen",
+    "empty": "Nog geen opmerkingen",
+    "placeholder": "Laat een opmerking achter",
+    "submit": "Opmerking toevoegen",
+    "showMore": "Meer weergeven",
+    "authorFallback": "Iemand"
+  },
+  "activity": {
+    "title": "Activiteit",
+    "empty": "Nog geen activiteit",
+    "showMore": "Meer weergeven",
+    "actorFallback": "Iemand",
+    "sentences": {
+      "created": "{{actor}} heeft deze taak aangemaakt",
+      "updated": "{{actor}} heeft deze taak bijgewerkt",
+      "renamed": "{{actor}} heeft hernoemd van {{oldValue}} naar {{newValue}}",
+      "descriptionUpdated": "{{actor}} heeft de beschrijving bijgewerkt",
+      "stateChanged": "{{actor}} heeft de status gewijzigd van {{oldValue}} naar {{newValue}}",
+      "priorityChanged": "{{actor}} heeft de prioriteit gewijzigd van {{oldValue}} naar {{newValue}}",
+      "assigned": "{{actor}} heeft de taak toegewezen aan {{newValue}}",
+      "reassigned": "{{actor}} heeft de taak opnieuw toegewezen van {{oldValue}} aan {{newValue}}",
+      "unassigned": "{{actor}} heeft de taaktoewijzing aan {{oldValue}} verwijderd",
+      "internalControlLinked": "{{actor}} heeft {{newValue}} gekoppeld",
+      "internalControlChanged": "{{actor}} heeft verplaatst van {{oldValue}} naar {{newValue}}",
+      "internalControlUnlinked": "{{actor}} heeft {{oldValue}} ontkoppeld",
+      "deadlineSet": "{{actor}} heeft de deadline ingesteld op {{newValue}}",
+      "deadlineChanged": "{{actor}} heeft de deadline gewijzigd van {{oldValue}} naar {{newValue}}",
+      "deadlineRemoved": "{{actor}} heeft de deadline verwijderd",
+      "timeEstimateSet": "{{actor}} heeft de tijdschatting ingesteld op {{newValue}}",
+      "timeEstimateChanged": "{{actor}} heeft de tijdschatting gewijzigd van {{oldValue}} naar {{newValue}}",
+      "timeEstimateRemoved": "{{actor}} heeft de tijdschatting verwijderd"
+    }
+  },
+  "metadata": {
+    "timeEstimate": "Tijdschatting",
+    "deadline": "Deadline",
+    "overdue": "Te laat"
+  },
+  "recurringBadge": {
+    "tooltip": "Herhaalt elke {{interval}}"
+  },
+  "duration": {
+    "seconds_one": "seconde",
+    "seconds_other": "seconden",
+    "minutes_one": "minuut",
+    "minutes_other": "minuten",
+    "hours_one": "uur",
+    "hours_other": "uur",
+    "days_one": "dag",
+    "days_other": "dagen",
+    "weeks_one": "week",
+    "weeks_other": "weken",
+    "months_one": "maand",
+    "months_other": "maanden",
+    "years_one": "jaar",
+    "years_other": "jaren",
+    "sec_one": "{{count}} Seconde",
+    "sec_other": "{{count}} Seconden",
+    "min_one": "{{count}} Minuut",
+    "min_other": "{{count}} Minuten",
+    "hour_one": "{{count}} Uur",
+    "hour_other": "{{count}} Uur",
+    "yearShort": "{{count}} jr",
+    "monthShort": "{{count}} mnd",
+    "weekShort": "{{count}} wkn",
+    "dayShort": "{{count}} d",
+    "hourShort": "{{count}} u",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} s"
+  }
+}

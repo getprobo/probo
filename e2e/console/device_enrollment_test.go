@@ -27,10 +27,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -57,17 +60,17 @@ const (
 			}
 		}`
 
-	revokeDeviceMutation = `
-		mutation RevokeDevice($input: RevokeDeviceInput!) {
-			revokeDevice(input: $input) {
-				device { id state }
+	revokeDevicesMutation = `
+		mutation RevokeDevices($input: RevokeDevicesInput!) {
+			revokeDevices(input: $input) {
+				devices { id state }
 			}
 		}`
 
-	deleteDeviceMutation = `
-		mutation DeleteDevice($input: DeleteDeviceInput!) {
-			deleteDevice(input: $input) {
-				deletedDeviceId
+	deleteDevicesMutation = `
+		mutation DeleteDevices($input: DeleteDevicesInput!) {
+			deleteDevices(input: $input) {
+				deletedDeviceIds
 			}
 		}`
 
@@ -613,9 +616,9 @@ func TestDeviceEnrollment(t *testing.T) {
 
 		enrolled := enrollDevice(t, employee, orgID)
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		}, &struct {
 			RevokeDevice struct {
@@ -643,9 +646,9 @@ func TestDeviceEnrollment(t *testing.T) {
 		deviceID := enrolled.EnrollDevice.Device.ID
 		require.Equal(t, http.StatusOK, sendHeartbeat(t, payload.APIKey, deviceID+"-hw"))
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": deviceID,
+				"deviceIds": []string{deviceID},
 			},
 		}, &struct {
 			RevokeDevice struct {
@@ -671,9 +674,9 @@ func TestDeviceEnrollment(t *testing.T) {
 		enrolled := enrollAndActivateDevice(t, employee, orgID)
 		hardwareUUID := enrolled.EnrollDevice.Device.ID + "-hw"
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		}, &struct {
 			RevokeDevice struct {
@@ -927,9 +930,9 @@ func TestDeviceEnrollment(t *testing.T) {
 
 		enrolled := enrollDevice(t, employee, orgID)
 
-		_, err := employee.Do(revokeDeviceMutation, map[string]any{
+		_, err := employee.Do(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		})
 		testutil.RequireForbiddenError(t, err, "employee should not revoke devices")
@@ -1060,18 +1063,19 @@ func TestDeviceEnrollment(t *testing.T) {
 		require.GreaterOrEqual(t, listResult.Node.Devices.TotalCount, 1)
 
 		var revokeResult struct {
-			RevokeDevice struct {
-				Device struct {
+			RevokeDevices struct {
+				Devices []struct {
 					State string `json:"state"`
-				} `json:"device"`
-			} `json:"revokeDevice"`
+				} `json:"devices"`
+			} `json:"revokeDevices"`
 		}
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": created.CreateDevice.Device.ID,
+				"deviceIds": []string{created.CreateDevice.Device.ID},
 			},
 		}, &revokeResult)
-		require.Equal(t, "REVOKED", revokeResult.RevokeDevice.Device.State)
+		require.Len(t, revokeResult.RevokeDevices.Devices, 1)
+		require.Equal(t, "REVOKED", revokeResult.RevokeDevices.Devices[0].State)
 	})
 }
 
@@ -1086,9 +1090,9 @@ func TestDeviceDelete(t *testing.T) {
 		owner := sharedOwner.ForTest(t)
 		created := createDevice(t, owner, orgID, nil)
 
-		_, err := owner.Do(deleteDeviceMutation, map[string]any{
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": created.CreateDevice.Device.ID,
+				"deviceIds": []string{created.CreateDevice.Device.ID},
 			},
 		})
 		testutil.RequireErrorCode(t, err, "CONFLICT", "pending device must be revoked before delete")
@@ -1101,8 +1105,8 @@ func TestDeviceDelete(t *testing.T) {
 		created := createDevice(t, owner, orgID, nil)
 		deviceID := created.CreateDevice.Device.ID
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		}, &struct {
 			RevokeDevice struct {
 				Device struct {
@@ -1112,14 +1116,14 @@ func TestDeviceDelete(t *testing.T) {
 		}{})
 
 		var deleteResult struct {
-			DeleteDevice struct {
-				DeletedDeviceID string `json:"deletedDeviceId"`
-			} `json:"deleteDevice"`
+			DeleteDevices struct {
+				DeletedDeviceIds []string `json:"deletedDeviceIds"`
+			} `json:"deleteDevices"`
 		}
-		owner.MustExecute(deleteDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		owner.MustExecute(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		}, &deleteResult)
-		require.Equal(t, deviceID, deleteResult.DeleteDevice.DeletedDeviceID)
+		require.Equal(t, []string{deviceID}, deleteResult.DeleteDevices.DeletedDeviceIds)
 
 		_, err := owner.Do(getDeviceQuery, map[string]any{"id": deviceID})
 		testutil.RequireErrorCode(t, err, "NOT_FOUND", "soft-deleted device must not be readable")
@@ -1132,9 +1136,9 @@ func TestDeviceDelete(t *testing.T) {
 		employee := sharedEmployee.ForTest(t)
 		enrolled, _ := enrollActivateAndAuthenticateDevice(t, employee, orgID)
 
-		_, err := owner.Do(deleteDeviceMutation, map[string]any{
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
 			"input": map[string]any{
-				"deviceId": enrolled.EnrollDevice.Device.ID,
+				"deviceIds": []string{enrolled.EnrollDevice.Device.ID},
 			},
 		})
 		testutil.RequireErrorCode(t, err, "CONFLICT", "active device must not be deletable")
@@ -1148,8 +1152,8 @@ func TestDeviceDelete(t *testing.T) {
 		created := createDevice(t, owner, orgID, nil)
 		deviceID := created.CreateDevice.Device.ID
 
-		owner.MustExecute(revokeDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		}, &struct {
 			RevokeDevice struct {
 				Device struct {
@@ -1158,10 +1162,85 @@ func TestDeviceDelete(t *testing.T) {
 			} `json:"revokeDevice"`
 		}{})
 
-		_, err := employee.Do(deleteDeviceMutation, map[string]any{
-			"input": map[string]any{"deviceId": deviceID},
+		_, err := employee.Do(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{deviceID}},
 		})
 		testutil.RequireForbiddenError(t, err, "employee should not delete devices")
+	})
+
+	t.Run("owner can revoke and delete two devices", func(t *testing.T) {
+		t.Parallel()
+
+		owner := sharedOwner.ForTest(t)
+		first := createDevice(t, owner, orgID, nil)
+		second := createDevice(t, owner, orgID, nil)
+		deviceIDs := []string{
+			first.CreateDevice.Device.ID,
+			second.CreateDevice.Device.ID,
+		}
+
+		var revokeResult struct {
+			RevokeDevices struct {
+				Devices []struct {
+					ID    string `json:"id"`
+					State string `json:"state"`
+				} `json:"devices"`
+			} `json:"revokeDevices"`
+		}
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": deviceIDs},
+		}, &revokeResult)
+		require.Len(t, revokeResult.RevokeDevices.Devices, 2)
+		require.Equal(t, "REVOKED", revokeResult.RevokeDevices.Devices[0].State)
+		require.Equal(t, "REVOKED", revokeResult.RevokeDevices.Devices[1].State)
+
+		var deleteResult struct {
+			DeleteDevices struct {
+				DeletedDeviceIds []string `json:"deletedDeviceIds"`
+			} `json:"deleteDevices"`
+		}
+		owner.MustExecute(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": deviceIDs},
+		}, &deleteResult)
+		require.Equal(t, deviceIDs, deleteResult.DeleteDevices.DeletedDeviceIds)
+	})
+
+	t.Run("delete rolls back when one device is not revoked", func(t *testing.T) {
+		t.Parallel()
+
+		owner := sharedOwner.ForTest(t)
+		revoked := createDevice(t, owner, orgID, nil)
+		pending := createDevice(t, owner, orgID, nil)
+		revokedID := revoked.CreateDevice.Device.ID
+		pendingID := pending.CreateDevice.Device.ID
+
+		owner.MustExecute(revokeDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{revokedID}},
+		}, &struct{}{})
+
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{revokedID, pendingID}},
+		})
+		testutil.RequireErrorCode(t, err, "CONFLICT", "one pending device must roll back the batch")
+
+		var stillThere struct {
+			Node struct {
+				ID string `json:"id"`
+			} `json:"node"`
+		}
+		owner.MustExecute(getDeviceQuery, map[string]any{"id": revokedID}, &stillThere)
+		require.Equal(t, revokedID, stillThere.Node.ID)
+	})
+
+	t.Run("rejects an empty device id list", func(t *testing.T) {
+		t.Parallel()
+
+		owner := sharedOwner.ForTest(t)
+
+		_, err := owner.Do(deleteDevicesMutation, map[string]any{
+			"input": map[string]any{"deviceIds": []string{}},
+		})
+		testutil.RequireErrorCode(t, err, "INVALID", "an empty device id list must be rejected")
 	})
 }
 
@@ -1447,4 +1526,365 @@ func TestDevicePostureReports(t *testing.T) {
 		)
 		require.Error(t, err, "another organization must not read device postures")
 	})
+}
+
+const listDevicesByOwnerQuery = `
+	query ListDevicesByOwner($orgId: ID!, $query: String) {
+		node(id: $orgId) {
+			... on Organization {
+				devices(first: 20, filter: { query: $query }) {
+					totalCount
+					edges {
+						node { id }
+					}
+				}
+			}
+		}
+	}`
+
+func TestDeviceListOwnerSearch(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	aliceProfileID := factory.CreateUser(owner, factory.Attrs{
+		"fullName": factory.SafeName("Test"),
+	})
+	bobProfileID := factory.CreateUser(owner, factory.Attrs{
+		"fullName": factory.SafeName("Test"),
+	})
+
+	aliceDevice := createDevice(t, owner, orgID, &aliceProfileID)
+	bobDevice := createDevice(t, owner, orgID, &bobProfileID)
+	createDevice(t, owner, orgID, nil)
+
+	aliceToken := ownerNameToken(t, deviceOwnerName(t, owner, aliceDevice.CreateDevice.Device.ID))
+	bobToken := ownerNameToken(t, deviceOwnerName(t, owner, bobDevice.CreateDevice.Device.ID))
+	require.NotEqual(t, aliceToken, bobToken)
+
+	matched := listDevicesByOwner(t, owner, orgID, aliceToken)
+	require.Equal(t, 1, matched.TotalCount)
+	require.Equal(t, []string{aliceDevice.CreateDevice.Device.ID}, deviceIDs(matched))
+
+	prefixed := listDevicesByOwner(t, owner, orgID, distinctPrefix(aliceToken, bobToken))
+	require.Equal(t, 1, prefixed.TotalCount)
+	require.Equal(t, aliceDevice.CreateDevice.Device.ID, prefixed.Edges[0].Node.ID)
+
+	other := listDevicesByOwner(t, owner, orgID, bobToken)
+	require.Equal(t, 1, other.TotalCount)
+	require.Equal(t, bobDevice.CreateDevice.Device.ID, other.Edges[0].Node.ID)
+
+	bothWords := listDevicesByOwner(t, owner, orgID, "Test "+aliceToken)
+	require.Equal(t, 1, bothWords.TotalCount)
+	require.Equal(t, aliceDevice.CreateDevice.Device.ID, bothWords.Edges[0].Node.ID)
+}
+
+type ownerDeviceList struct {
+	TotalCount int `json:"totalCount"`
+	Edges      []struct {
+		Node struct {
+			ID string `json:"id"`
+		} `json:"node"`
+	} `json:"edges"`
+}
+
+func listDevicesByOwner(
+	t *testing.T,
+	client *testutil.Client,
+	organizationID string,
+	query string,
+) ownerDeviceList {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Devices ownerDeviceList `json:"devices"`
+		} `json:"node"`
+	}
+	client.MustExecute(
+		listDevicesByOwnerQuery,
+		map[string]any{"orgId": organizationID, "query": query},
+		&result,
+	)
+
+	return result.Node.Devices
+}
+
+func deviceOwnerName(t *testing.T, client *testutil.Client, deviceID string) string {
+	t.Helper()
+
+	var result struct {
+		Node struct {
+			Owner *struct {
+				FullName string `json:"fullName"`
+			} `json:"owner"`
+		} `json:"node"`
+	}
+	client.MustExecute(getDeviceQuery, map[string]any{"id": deviceID}, &result)
+	require.NotNil(t, result.Node.Owner)
+	require.NotEmpty(t, result.Node.Owner.FullName)
+
+	return result.Node.Owner.FullName
+}
+
+func ownerNameToken(t *testing.T, fullName string) string {
+	t.Helper()
+
+	parts := strings.Fields(fullName)
+	require.NotEmpty(t, parts)
+
+	return parts[len(parts)-1]
+}
+
+func distinctPrefix(token, other string) string {
+	length := min(4, len(token))
+	for length < len(token) && strings.HasPrefix(other, token[:length]) {
+		length++
+	}
+
+	return token[:length]
+}
+
+func TestDeviceListFilters(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	pending := createDevice(t, owner, orgID, nil)
+	darwin := createDevice(t, owner, orgID, nil)
+	linux := createDevice(t, owner, orgID, nil)
+
+	activateDevice(
+		t,
+		darwin.CreateDevice.EnrollmentToken,
+		darwin.CreateDevice.Device.ID+"-hw",
+		"DARWIN",
+		"1.0.0",
+	)
+	activateDevice(
+		t,
+		linux.CreateDevice.EnrollmentToken,
+		linux.CreateDevice.Device.ID+"-hw",
+		"LINUX",
+		"2.0.0",
+	)
+
+	pendingID := pending.CreateDevice.Device.ID
+	darwinID := darwin.CreateDevice.Device.ID
+	linuxID := linux.CreateDevice.Device.ID
+
+	t.Run("matches one state", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"states": []string{"ACTIVE"},
+		})
+
+		assert.Equal(t, 2, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches any listed state", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"states": []string{"ACTIVE", "PENDING"},
+		})
+
+		assert.Equal(t, 3, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{pendingID, darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches one platform", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"platforms": []string{"DARWIN"},
+		})
+
+		assert.Equal(t, 1, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches any listed platform", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"platforms": []string{"DARWIN", "LINUX"},
+		})
+
+		assert.Equal(t, 2, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("intersects state and platform", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"states":    []string{"ACTIVE", "PENDING"},
+			"platforms": []string{"DARWIN"},
+		})
+
+		assert.Equal(t, 1, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches one agent version", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"agentVersions": []string{"2.0.0"},
+		})
+
+		assert.Equal(t, 1, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("matches any listed agent version", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{
+			"agentVersions": []string{"1.0.0", "2.0.0"},
+		})
+
+		assert.Equal(t, 2, listed.Devices.TotalCount)
+		assert.ElementsMatch(t, []string{darwinID, linuxID}, deviceIDs(listed.Devices))
+	})
+
+	t.Run("reports enrolled agent versions", func(t *testing.T) {
+		t.Parallel()
+
+		listed := listDevicesFiltered(t, owner.ForTest(t), orgID, map[string]any{})
+
+		assert.ElementsMatch(t, []string{"1.0.0", "2.0.0"}, listed.AgentVersions)
+	})
+}
+
+func TestDeviceList_PostureWarningFilter(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	now := time.Now().UTC()
+
+	failing, failingKey := enrollActivateAndAuthenticateDevice(t, owner, orgID)
+	passing, passingKey := enrollActivateAndAuthenticateDevice(t, owner, orgID)
+	absent, absentKey := enrollActivateAndAuthenticateDevice(t, owner, orgID)
+
+	failingID := failing.EnrollDevice.Device.ID
+	passingID := passing.EnrollDevice.Device.ID
+	absentID := absent.EnrollDevice.Device.ID
+
+	require.Equal(t, http.StatusNoContent, reportPostures(t, failingKey, []map[string]any{
+		ufwInactivePosture(now, newPostureCorrelationID(t, failingID)),
+	}))
+	require.Equal(t, http.StatusNoContent, reportPostures(t, passingKey, []map[string]any{
+		osVersionPosture(now, "14.0", newPostureCorrelationID(t, passingID)),
+	}))
+	require.Equal(t, http.StatusNoContent, reportPostures(t, absentKey, []map[string]any{
+		{
+			"check_key":      "AUTO_UPDATE",
+			"status":         "NOT_APPLICABLE",
+			"observed_at":    now.Format(time.RFC3339Nano),
+			"correlation_id": newPostureCorrelationID(t, absentID),
+			"evidence": map[string]any{
+				"note": "no known auto-update mechanism",
+			},
+		},
+	}))
+
+	warned := listDevicesFiltered(t, owner, orgID, map[string]any{"hasPostureWarning": true})
+	require.ElementsMatch(t, []string{failingID}, deviceIDs(warned.Devices))
+	require.NotContains(t, deviceIDs(warned.Devices), passingID)
+	require.NotContains(t, deviceIDs(warned.Devices), absentID)
+}
+
+const listDevicesFilteredQuery = `
+	query ListDevicesFiltered($orgId: ID!, $filter: DeviceFilter) {
+		node(id: $orgId) {
+			... on Organization {
+				deviceAgentVersions
+				devices(first: 20, filter: $filter) {
+					totalCount
+					edges {
+						node { id }
+					}
+				}
+			}
+		}
+	}`
+
+type filteredDeviceList struct {
+	AgentVersions []string        `json:"deviceAgentVersions"`
+	Devices       ownerDeviceList `json:"devices"`
+}
+
+func listDevicesFiltered(
+	t *testing.T,
+	client *testutil.Client,
+	organizationID string,
+	filter map[string]any,
+) filteredDeviceList {
+	t.Helper()
+
+	var result struct {
+		Node filteredDeviceList `json:"node"`
+	}
+	client.MustExecute(
+		listDevicesFilteredQuery,
+		map[string]any{"orgId": organizationID, "filter": filter},
+		&result,
+	)
+
+	return result.Node
+}
+
+func activateDevice(
+	t *testing.T,
+	enrollmentToken string,
+	hardwareUUID string,
+	platform string,
+	agentVersion string,
+) {
+	t.Helper()
+
+	status, payload := exchangeEnrollmentToken(t, enrollmentToken)
+	require.Equal(t, http.StatusOK, status)
+	require.NotEmpty(t, payload.APIKey)
+
+	body, err := json.Marshal(map[string]any{
+		"hardware_uuid": hardwareUUID,
+		"hostname":      "e2e-host",
+		"platform":      platform,
+		"os_version":    "14.0",
+		"agent_version": agentVersion,
+	})
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		testutil.GetBaseURL()+"/api/agent/v1/heartbeat",
+		bytes.NewReader(body),
+	)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", payload.APIKey))
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	defer func() { _ = resp.Body.Close() }()
+
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func deviceIDs(list ownerDeviceList) []string {
+	ids := make([]string, len(list.Edges))
+	for i := range list.Edges {
+		ids[i] = list.Edges[i].Node.ID
+	}
+
+	return ids
 }

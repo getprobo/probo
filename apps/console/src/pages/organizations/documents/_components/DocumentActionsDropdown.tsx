@@ -19,7 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { ActionDropdown, DropdownItem, IconArchive, IconArrowDown, IconTrashCan, useConfirm, useToast } from "@probo/ui";
+import { ActionDropdown, DropdownItem, IconArchive, IconArrowDown, IconTrashCan, useConfirm } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { use, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -131,7 +132,7 @@ export function DocumentActionsDropdown(props: {
   const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
   const deleteDocumentDialogRef = useRef<DeleteDocumentDialogRef>(null);
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const document = useFragment<DocumentActionsDropdown_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentActionsDropdown_versionFragment$key>(versionFragment, versionFragmentRef);
@@ -153,14 +154,14 @@ export function DocumentActionsDropdown(props: {
             variables: { input: { documentId: document.id } },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.archive"), errors), variant: "error" });
+                toast.add({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.archive"), errors), type: "error" });
               } else {
-                toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.archived"), variant: "success" });
+                toast.add({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.archived"), type: "success" });
               }
               resolve();
             },
             onError(error) {
-              toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
+              toast.add({ title: t("documentActions.errors.title"), description: error.message, type: "error" });
               resolve();
             },
           });
@@ -178,13 +179,13 @@ export function DocumentActionsDropdown(props: {
       variables: { input: { documentId: document.id } },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.unarchive"), errors), variant: "error" });
+          toast.add({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.unarchive"), errors), type: "error" });
         } else {
-          toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.unarchived"), variant: "success" });
+          toast.add({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.unarchived"), type: "success" });
         }
       },
       onError(error) {
-        toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
+        toast.add({ title: t("documentActions.errors.title"), description: error.message, type: "error" });
       },
     });
   };
@@ -197,16 +198,16 @@ export function DocumentActionsDropdown(props: {
             variables: { input: { documentId: document.id } },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.deleteDraft"), errors), variant: "error" });
+                toast.add({ title: t("documentActions.errors.title"), description: formatError(t("documentActions.errors.deleteDraft"), errors), type: "error" });
               } else {
-                toast({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.draftDeleted"), variant: "success" });
+                toast.add({ title: t("documentActions.messages.successTitle"), description: t("documentActions.messages.draftDeleted"), type: "success" });
                 onVersionChanged();
                 void navigate(`/organizations/${organizationId}/governance/documents/${document.id}/description`);
               }
               resolve();
             },
             onError(error) {
-              toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
+              toast.add({ title: t("documentActions.errors.title"), description: error.message, type: "error" });
               resolve();
             },
           });
@@ -242,10 +243,10 @@ export function DocumentActionsDropdown(props: {
       variables: { input },
       onCompleted: (data, errors) => {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("documentActions.errors.title"),
             description: errors[0]?.message || t("documentActions.errors.generatePdf"),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -260,7 +261,7 @@ export function DocumentActionsDropdown(props: {
         }
       },
       onError(error) {
-        toast({ title: t("documentActions.errors.title"), description: error.message, variant: "error" });
+        toast.add({ title: t("documentActions.errors.title"), description: error.message, type: "error" });
       },
     });
   };

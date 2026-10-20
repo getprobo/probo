@@ -49,6 +49,9 @@ export interface DetectedCookieEntry {
   max_age_seconds: number | null;
   source: CookieSource;
   initiator_url?: string;
+  cookie_domain?: string;
+  host_only?: boolean;
+  discovery_hit?: boolean;
 }
 
 export interface DetectedStorageEntry {
@@ -57,6 +60,7 @@ export interface DetectedStorageEntry {
   value_size: number | null;
   source: StorageSource;
   initiator_url?: string;
+  discovery_hit?: boolean;
 }
 
 export interface DetectedResourceEntry {

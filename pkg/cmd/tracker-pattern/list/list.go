@@ -45,7 +45,6 @@ query($id: ID!, $first: Int, $after: CursorKey) {
             displayName
             source
             excluded
-            lastMatchedAt
             commonTrackerPatternId
             attribution
           }
@@ -68,7 +67,6 @@ type trackerPattern struct {
 	DisplayName            string  `json:"displayName"`
 	Source                 *string `json:"source"`
 	Excluded               bool    `json:"excluded"`
-	LastMatchedAt          *string `json:"lastMatchedAt"`
 	CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
 	Attribution            *string `json:"attribution"`
 }
@@ -162,11 +160,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					source = *p.Source
 				}
 
-				lastMatched := ""
-				if p.LastMatchedAt != nil {
-					lastMatched = cmdutil.FormatTime(*p.LastMatchedAt)
-				}
-
 				commonPatternID := ""
 				if p.CommonTrackerPatternID != nil {
 					commonPatternID = *p.CommonTrackerPatternID
@@ -177,10 +170,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					attribution = *p.Attribution
 				}
 
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, lastMatched, commonPatternID, attribution})
+				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, commonPatternID, attribution})
 			}
 
-			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "LAST MATCHED", "COMMON PATTERN ID", "ATTRIBUTION").Rows(rows...)
+			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(patterns) {

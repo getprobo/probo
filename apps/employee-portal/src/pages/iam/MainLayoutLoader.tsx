@@ -25,28 +25,27 @@ import { useParams } from "react-router";
 import type { MainLayoutQuery } from "#/__generated__/iam/MainLayoutQuery.graphql";
 import { NotFoundError } from "#/lib/relay/errors";
 import { IAMRelayProvider } from "#/lib/relay/IAMRelayProvider";
-import { DocumentQueueProvider } from "#/pages/_lib/DocumentQueueContext";
 
 import { MainLayout, mainLayoutQuery } from "./MainLayout";
 import { MainLayoutSkeleton } from "./MainLayoutSkeleton";
 
 function MainLayoutQueryLoader() {
-  const { organizationId } = useParams();
+  const { employeePortalId } = useParams();
   const [queryRef, loadQuery] = useQueryLoader<MainLayoutQuery>(mainLayoutQuery);
 
   useEffect(() => {
-    if (organizationId == null) {
+    if (employeePortalId == null) {
       return;
     }
-    loadQuery({ organizationId });
-  }, [organizationId, loadQuery]);
+    loadQuery({ employeePortalId });
+  }, [employeePortalId, loadQuery]);
 
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
+  if (employeePortalId == null) {
+    throw new NotFoundError("employeePortalId is required");
   }
 
   const currentQueryRef = queryRef != null
-    && queryRef.variables.organizationId === organizationId
+    && queryRef.variables.employeePortalId === employeePortalId
     ? queryRef
     : null;
 
@@ -55,7 +54,7 @@ function MainLayoutQueryLoader() {
   }
 
   return (
-    <Suspense key={organizationId} fallback={<MainLayoutSkeleton />}>
+    <Suspense key={employeePortalId} fallback={<MainLayoutSkeleton />}>
       <MainLayout queryRef={currentQueryRef} />
     </Suspense>
   );
@@ -64,9 +63,7 @@ function MainLayoutQueryLoader() {
 export default function MainLayoutLoader() {
   return (
     <IAMRelayProvider>
-      <DocumentQueueProvider>
-        <MainLayoutQueryLoader />
-      </DocumentQueueProvider>
+      <MainLayoutQueryLoader />
     </IAMRelayProvider>
   );
 }

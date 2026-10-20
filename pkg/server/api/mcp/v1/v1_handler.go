@@ -38,7 +38,9 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/identityfederation"
 	"go.probo.inc/probo/pkg/itam"
@@ -47,7 +49,7 @@ import (
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/api/mcp/mcputils"
+	"go.probo.inc/probo/pkg/server/api/mcp/mcpx"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/server"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -63,6 +65,7 @@ func NewMux(
 	iamSvc *iam.Service,
 	accessReviewSvc *accessreview.Service,
 	cookieBannerSvc *cookiebanner.Service,
+	employeePortalSvc *employeeportalmgmt.Service,
 	riskManagementSvc *riskmanagement.Service,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
@@ -88,6 +91,7 @@ func NewMux(
 		iamSvc:                iamSvc,
 		accessReview:          accessReviewSvc,
 		cookieBanner:          cookieBannerSvc,
+		employeePortal:        employeePortalSvc,
 		riskManagement:        riskManagementSvc,
 		itamSvc:               itamSvc,
 		task:                  taskSvc,
@@ -101,10 +105,10 @@ func NewMux(
 		azureConnectorInstall: azureConnectorInstall,
 	}
 
-	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcputils.NewRecoverFunc(logger)))
+	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcpx.NewRecoverFunc(logger)))
 
-	mcpServer.AddReceivingMiddleware(mcputils.LoggingMiddleware(logger))
-	mcpServer.AddReceivingMiddleware(mcputils.ListToolsCacheMiddleware(5 * time.Minute))
+	mcpServer.AddReceivingMiddleware(mcpx.LoggingMiddleware(logger))
+	mcpServer.AddReceivingMiddleware(mcpx.ListToolsCacheMiddleware(5 * time.Minute))
 
 	getServer := func(r *http.Request) *mcp.Server { return mcpServer }
 	eventStore := mcp.NewMemoryEventStore(nil)
@@ -115,7 +119,7 @@ func NewMux(
 			Stateless: true,
 			// SessionTimeout: 30 * time.Minute,
 			EventStore: eventStore,
-			Logger:     nil, // TODO put logger here
+			Logger:     mcpx.NewSlogLogger(logger.Named("transport")),
 		},
 	)
 
@@ -138,6 +142,22 @@ func UnwrapOmittable[T any](field mcpgenmcp.Omittable[T]) *T {
 	value, _ := field.Value()
 
 	return &value
+}
+
+// replaceInternalControlIDs turns an omittable nullable internal control list
+// into the task service's replace-or-omit pointer. An unset field leaves links
+// unchanged. A null or empty list clears them.
+func replaceInternalControlIDs(ids **[]gid.GID) *[]gid.GID {
+	if ids == nil {
+		return nil
+	}
+
+	if *ids == nil {
+		empty := []gid.GID{}
+		return &empty
+	}
+
+	return *ids
 }
 
 func optionalIntSlice(values *[]any) (*[]int, error) {

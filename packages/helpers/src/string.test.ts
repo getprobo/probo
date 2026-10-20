@@ -19,12 +19,27 @@
 // SOFTWARE.
 
 import { describe, it, expect } from "vitest";
-import { sprintf } from "./string";
+import { clampUtf8, emptyToNull, sprintf } from "./string";
 
 describe("strings", () => {
     it("should format a string", () => {
         expect(sprintf("Hello %s", "world")).toBe("Hello world");
         expect(sprintf("Hello %s %s", "John", "Doe")).toBe("Hello John Doe");
         expect(sprintf("%2s %1s", "world", "Hello")).toBe("Hello world");
+    });
+
+    it("should stop before a character that would pass the byte limit", () => {
+        expect(clampUtf8("ab", 1)).toBe("a");
+        expect(clampUtf8("éé", 2)).toBe("é");
+        expect(clampUtf8("éé", 3)).toBe("é");
+        expect(clampUtf8("ok", 8)).toBe("ok");
+    });
+
+    it("should treat empty and blank strings as null", () => {
+        expect(emptyToNull(null)).toBeNull();
+        expect(emptyToNull(undefined)).toBeNull();
+        expect(emptyToNull("")).toBeNull();
+        expect(emptyToNull("   ")).toBeNull();
+        expect(emptyToNull("chrome")).toBe("chrome");
     });
 });

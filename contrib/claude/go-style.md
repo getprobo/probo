@@ -250,7 +250,13 @@ func NewBridge(provider provider.Provider, client *scimclient.Client, opts ...Op
 
 ## Interfaces
 
-Define interfaces in the consumer package. Keep them small. Verify satisfaction at compile time:
+Define an interface when the package has more than one implementation, or when several unrelated types already share a small behavior the consumer needs.
+
+Do not define an interface only to inject a dependency. Pass the concrete type (`*html2pdf.Converter`, `*filemanager.Service`).
+
+Do not define an interface so a test can substitute a fake. Test the decision and formatting logic directly. Leave I/O to the package that owns it.
+
+When an interface is warranted, define it in the consumer package. Keep it small. Verify satisfaction at compile time:
 
 ```go
 var (

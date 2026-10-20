@@ -61,13 +61,15 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/crypto/keys"
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/esign"
 	"go.probo.inc/probo/pkg/evidencedescriber"
 	"go.probo.inc/probo/pkg/filemanager"
@@ -206,6 +208,9 @@ func New() *Implm {
 					DebounceDelay:    900,   // 15 minutes
 					ReminderInterval: 86400, // 1 day base cadence (1x, 2x, 3x; weekend reminders → Monday)
 				},
+			},
+			TaskRecurrence: TaskRecurrenceConfig{
+				Interval: 300, // 5 minutes
 			},
 			CustomDomains: CustomDomainsConfig{
 				RenewalInterval:   3600,
@@ -374,7 +379,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create hashing profile: %w", err)
 	}
 
-	redirectURI := baseURL.WithPath(connector.CallbackPath).MustString()
+	redirectURI := baseURL.WithPath(connectorprotocol.CallbackPath).MustString()
 
 	endpointOverrides := make(provider.EndpointOverrides, len(impl.cfg.ConnectorEndpoints))
 	for p, e := range impl.cfg.ConnectorEndpoints {
@@ -433,7 +438,7 @@ func (impl *Implm) Run(
 
 	linearAPIBaseURL := linearRegistration.Endpoints.APIBase
 
-	defaultConnectorRegistry := connector.NewConnectorRegistry()
+	defaultConnectorRegistry := connectorprotocol.NewConnectorRegistry()
 
 	for _, connectorCfg := range impl.cfg.Connectors {
 		// ManagedAPIKey (Model B) connectors carry a Probo-held API key
@@ -442,7 +447,7 @@ func (impl *Implm) Run(
 		// provider that is not a managed-api-key connector (e.g. a typo)
 		// rather than silently swallowing the key, mirroring how the OAuth2
 		// path surfaces misconfiguration at startup.
-		if connectorCfg.Protocol == connector.ProtocolAPIKey {
+		if connectorCfg.Protocol == connectorprotocol.ProtocolAPIKey {
 			p := coredata.ConnectorProvider(connectorCfg.Provider)
 
 			reg, ok := providerRegistry.Get(p)
@@ -456,7 +461,7 @@ func (impl *Implm) Run(
 			continue
 		}
 
-		if gitHubApp, ok := connectorCfg.Config.(*connector.GitHubAppConnector); ok {
+		if gitHubApp, ok := connectorCfg.Config.(*connectorprotocol.GitHubAppConnector); ok {
 			if gitHubApp.AppID == "" ||
 				gitHubApp.ClientID == "" ||
 				gitHubApp.ClientSecret == "" ||
@@ -486,11 +491,11 @@ func (impl *Implm) Run(
 			}).String()
 			gitHubApp.TokenURL = reg.Endpoints.Token
 			gitHubApp.APIBase = reg.Endpoints.APIBase
-			gitHubApp.RedirectURI = baseURL.WithPath(connector.GitHubAppCallbackPath).MustString()
+			gitHubApp.RedirectURI = baseURL.WithPath(connectorprotocol.GitHubAppCallbackPath).MustString()
 
 			if err := defaultConnectorRegistry.RegisterProtocol(
 				connectorCfg.Provider,
-				connector.ProtocolGitHubApp,
+				connectorprotocol.ProtocolGitHubApp,
 				gitHubApp,
 			); err != nil {
 				return fmt.Errorf("cannot register github app connector: %w", err)
@@ -499,7 +504,7 @@ func (impl *Implm) Run(
 			continue
 		}
 
-		if oauth2c, ok := connectorCfg.Config.(*connector.OAuth2Connector); ok {
+		if oauth2c, ok := connectorCfg.Config.(*connectorprotocol.OAuth2Connector); ok {
 			if err := providerRegistry.ApplyOAuth2Defaults(connectorCfg.Provider, redirectURI, oauth2c); err != nil {
 				return fmt.Errorf("cannot apply oauth2 defaults: %w", err)
 			}
@@ -595,16 +600,16 @@ func (impl *Implm) Run(
 	// active OAuth2 server signing key. Providers an operator configured
 	// explicitly (already registered from impl.cfg.Connectors above) are
 	// left untouched.
-	connectorStateKey := connector.DeriveConnectorStateKey(activeSigningKeyPEM)
-	installStateKey := connector.DeriveInstallStateKey(activeSigningKeyPEM)
-	cimdClientID := baseURL.WithPath(connector.CIMDMetadataPath).MustString()
+	connectorStateKey := connectorprotocol.DeriveConnectorStateKey(activeSigningKeyPEM)
+	installStateKey := connectorprotocol.DeriveInstallStateKey(activeSigningKeyPEM)
+	cimdClientID := baseURL.WithPath(connectorprotocol.CIMDMetadataPath).MustString()
 
 	for _, reg := range providerRegistry.PublicClients() {
 		if _, err := defaultConnectorRegistry.Get(string(reg.Provider)); err == nil {
 			continue
 		}
 
-		oauth2c := &connector.OAuth2Connector{
+		oauth2c := &connectorprotocol.OAuth2Connector{
 			ClientID:        cimdClientID,
 			StateSigningKey: connectorStateKey,
 		}
@@ -622,6 +627,7 @@ func (impl *Implm) Run(
 		Register(iam.IAMOAuth2ScopeMappings).
 		Register(probo.OAuth2ScopeMappings).
 		Register(management.OAuth2ScopeMappings).
+		Register(employeeportalmgmt.OAuth2ScopeMappings).
 		Register(agentexecution.OAuth2ScopeMappings).
 		Register(accessreview.OAuth2ScopeMappings).
 		Register(resourcealias.OAuth2ScopeMappings).
@@ -788,6 +794,22 @@ func (impl *Implm) Run(
 		impl.cfg.CookieBanner.TCFCMPID,
 	)
 
+	employeePortalService := employeeportalmgmt.NewService(
+		pgClient,
+		s3Client,
+		impl.cfg.AWS.Bucket,
+	)
+
+	connectorsService := connector.NewService(
+		pgClient,
+		encryptionKey,
+		defaultConnectorRegistry,
+		providerRegistry,
+		l.Named("connectors"),
+		connector.WithIdentityFederation(identityFederationIssuer),
+		connector.WithRegisterer(r),
+	)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -807,8 +829,8 @@ func (impl *Implm) Run(
 		l.Named("probo"),
 		iamService,
 		esignService,
+		connectorsService,
 		defaultConnectorRegistry,
-		providerRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {
@@ -858,6 +880,7 @@ func (impl *Implm) Run(
 	iamService.Authorizer.RegisterPolicySet(accessreview.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(resourcealias.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(management.PolicySet())
+	iamService.Authorizer.RegisterPolicySet(employeeportalmgmt.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(riskmanagement.PolicySet())
 	iamService.Authorizer.RegisterPolicySet(task.PolicySet())
 
@@ -871,6 +894,7 @@ func (impl *Implm) Run(
 		baseURL.String(),
 		linearAPIBaseURL,
 		l.Named("task"),
+		fileManagerService,
 	)
 
 	itamService := itam.NewService(
@@ -878,6 +902,10 @@ func (impl *Implm) Run(
 		iamService,
 		itam.ServiceConfig{
 			EnrollmentTokenValidity: time.Duration(impl.cfg.ITAM.DeviceEnrollmentTokenValidity) * time.Second,
+			PDF:                     html2pdfConverter,
+			FileManager:             fileManagerService,
+			Bucket:                  impl.cfg.AWS.Bucket,
+			BaseURL:                 baseURL,
 		},
 		l.Named("itam"),
 	)
@@ -990,6 +1018,7 @@ func (impl *Implm) Run(
 			AgentExecution:          agentExecutionService,
 			Mailman:                 mailmanService,
 			CookieBanner:            cookieBannerService,
+			EmployeePortal:          employeePortalService,
 			Geoloc:                  geolocService,
 			ThirdParty:              thirdPartyService,
 			RiskManagement:          riskManagementService,
@@ -1310,6 +1339,30 @@ func (impl *Implm) Run(
 		},
 	)
 
+	taskRecurrenceInterval := time.Duration(impl.cfg.TaskRecurrence.Interval) * time.Second
+	if taskRecurrenceInterval <= 0 {
+		taskRecurrenceInterval = 5 * time.Minute
+	}
+
+	taskRecurrenceWorker := task.NewRecurrenceWorker(
+		pgClient,
+		l.Named("task-recurrence"),
+		worker.WithInterval(taskRecurrenceInterval),
+		worker.WithRegisterer(r),
+		worker.WithTracerProvider(tp),
+	)
+	taskRecurrenceWorkerCtx, stopTaskRecurrenceWorker := context.WithCancel(
+		context.WithoutCancel(ctx),
+	)
+
+	wg.Go(
+		func() {
+			if err := taskRecurrenceWorker.Run(taskRecurrenceWorkerCtx); err != nil {
+				cancel(fmt.Errorf("task recurrence worker crashed: %w", err))
+			}
+		},
+	)
+
 	taskSyncOutboundWorker := tasksync.NewOutboundWorker(
 		taskService.Sync,
 		l.Named("task-sync-outbound"),
@@ -1438,6 +1491,16 @@ func (impl *Implm) Run(
 		},
 	)
 
+	connectorsServiceCtx, stopConnectorsService := context.WithCancel(context.Background())
+
+	wg.Go(
+		func() {
+			if err := connectorsService.Run(connectorsServiceCtx); err != nil {
+				cancel(fmt.Errorf("connector account name worker crashed: %w", err))
+			}
+		},
+	)
+
 	accessReviewWorkerCtx, stopAccessReviewWorker := context.WithCancel(context.Background())
 
 	wg.Go(
@@ -1504,6 +1567,17 @@ func (impl *Implm) Run(
 			}
 		},
 	)
+
+	discoveryCountFlusherCtx, stopDiscoveryCountFlusher := context.WithCancel(context.Background())
+	discoveryCountFlusherDone := make(chan struct{})
+
+	go func() {
+		defer close(discoveryCountFlusherDone)
+
+		if err := cookieBannerService.RunDiscoveryCountFlusher(discoveryCountFlusherCtx, l); err != nil {
+			cancel(fmt.Errorf("discovery count flusher crashed: %w", err))
+		}
+	}()
 
 	trackerPolicyWorker := probo.NewTrackerPolicyWorker(proboService.GeneratedDocuments, pgClient, l)
 	trackerPolicyWorkerCtx, stopTrackerPolicyWorker := context.WithCancel(context.Background())
@@ -1687,6 +1761,7 @@ func (impl *Implm) Run(
 	stopMailingListWorker()
 	stopVettingWorker()
 	stopEvidenceDescriptionWorker()
+	stopTaskRecurrenceWorker()
 	stopTaskSyncOutboundWorker()
 	stopLinearWebhookWorker()
 	stopLinearWebhookRetentionWorker()
@@ -1695,6 +1770,7 @@ func (impl *Implm) Run(
 	stopDocumentNotification()
 	stopExportJobExporter()
 	stopAccessReviewWorker()
+	stopConnectorsService()
 	stopIAMService()
 	stopITAMGC()
 	stopMailer()
@@ -1708,6 +1784,9 @@ func (impl *Implm) Run(
 	stopProbotRetentionWorker()
 
 	wg.Wait()
+
+	stopDiscoveryCountFlusher()
+	<-discoveryCountFlusherDone
 
 	pgClient.Close()
 
@@ -2194,9 +2273,7 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 // defaultSigningKeyID names a configured key that carries no explicit kid.
 const defaultSigningKeyID = "default"
 
-// newSigningKey turns one configured key into a key ring entry. The OAuth2
-// server and the identity federation issuer keep separate config sections but
-// accept the same material, so both read their keys through here.
+// newSigningKey turns one configured OAuth2 key into a key ring entry.
 //
 // The key material is already decoded by the configuration; a key left empty
 // there arrives nil and is rejected by jose.NewKeyRing.
@@ -2219,53 +2296,13 @@ func (impl *Implm) buildIdentityFederationIssuer(
 	baseURL *baseurl.BaseURL,
 	l *log.Logger,
 ) (*identityfederation.Issuer, error) {
-	if !impl.cfg.IdentityFederation.Enabled {
-		return nil, nil
-	}
-
-	if len(impl.cfg.IdentityFederation.SigningKeys) == 0 {
-		return nil, fmt.Errorf("cannot configure identity federation issuer: at least one signing key is required")
-	}
-
-	issuerBaseURL, err := identityfederation.ResolveIssuerBaseURL(impl.cfg.IdentityFederation.IssuerBaseURL, baseURL)
-	if err != nil {
-		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
-	}
-
-	signingKeys := make([]jose.SigningKey, 0, len(impl.cfg.IdentityFederation.SigningKeys))
-
-	for _, keyCfg := range impl.cfg.IdentityFederation.SigningKeys {
-		signingKeys = append(
-			signingKeys,
-			newSigningKey(keyCfg.PrivateKey, keyCfg.KID, keyCfg.Active),
-		)
-	}
-
-	keyRing, err := jose.NewKeyRing(signingKeys)
-	if err != nil {
-		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
-	}
-
-	issuer, err := identityfederation.NewIssuer(issuerBaseURL, keyRing, identityfederation.DefaultTokenTTL)
-	if err != nil {
-		return nil, err
-	}
-
-	// probod cannot verify that the configured apex actually reaches it, so the
-	// effective value is logged for the startup record and covered by a canary.
-	l.Info(
-		"identity federation issuer configured",
-		log.String("issuer_base_url", issuer.BaseURL()),
+	issuer, err := identityfederation.NewIssuer(
+		l.Named("identityfederation"),
+		impl.cfg.IdentityFederation,
+		baseURL,
 	)
-
-	// A derived issuer is not held to the provider rules, so localhost and CI
-	// still start. Warn instead of failing, rather than staying silent.
-	if err := identityfederation.ValidateConfig(issuerBaseURL); err != nil {
-		l.Warn(
-			"identity federation issuer cannot be registered with one or more cloud providers; customers cannot install the connector until it is publicly reachable over https without a port",
-			log.String("issuer_base_url", issuer.BaseURL()),
-			log.Error(err),
-		)
+	if err != nil {
+		return nil, fmt.Errorf("cannot configure identity federation issuer: %w", err)
 	}
 
 	return issuer, nil

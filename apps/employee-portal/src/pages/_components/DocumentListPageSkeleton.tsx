@@ -26,7 +26,7 @@ export function DocumentListPageSkeleton() {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-8 pt-8 pb-32">
       <div className="flex flex-col gap-4">
-        <TextSkeleton size={2} className="w-32" />
+        <TextSkeleton size={2} className="w-56" />
         <HeadingSkeleton size={7} className="w-48" />
       </div>
       <div className="flex flex-col gap-9">

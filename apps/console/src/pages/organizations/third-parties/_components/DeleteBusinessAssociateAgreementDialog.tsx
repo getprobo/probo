@@ -26,8 +26,8 @@ import {
   DialogFooter,
   Spinner,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useMutation } from "react-relay";
 
@@ -59,7 +59,7 @@ export function DeleteBusinessAssociateAgreementDialog({
   const { t } = useTranslation();
   const ref = useDialogRef();
 
-  const { toast } = useToast();
+  const toast = useToast();
   const [deleteAgreement, isDeleting]
     = useMutation<DeleteBusinessAssociateAgreementDialogMutation>(
       deleteBusinessAssociateAgreementMutation,
@@ -74,32 +74,32 @@ export function DeleteBusinessAssociateAgreementDialog({
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("deleteBusinessAssociateAgreementDialog.messages.error"),
             description: formatError(
               t("deleteBusinessAssociateAgreementDialog.errors.delete"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("deleteBusinessAssociateAgreementDialog.messages.success"),
           description: t("deleteBusinessAssociateAgreementDialog.messages.deleted"),
-          variant: "success",
+          type: "success",
         });
         onSuccess?.();
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("deleteBusinessAssociateAgreementDialog.messages.error"),
           description: formatError(
             t("deleteBusinessAssociateAgreementDialog.errors.delete"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

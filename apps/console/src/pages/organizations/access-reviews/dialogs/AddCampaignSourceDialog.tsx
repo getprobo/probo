@@ -28,14 +28,15 @@ import {
   Option,
   Select,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { type ReactNode, Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
 import type { AddCampaignSourceDialogMutation } from "#/__generated__/core/AddCampaignSourceDialogMutation.graphql";
 import type { AddCampaignSourceDialogSourcesQuery } from "#/__generated__/core/AddCampaignSourceDialogSourcesQuery.graphql";
+import { AccessReviewSourceOptionLabel } from "#/pages/organizations/access-reviews/_components/AccessReviewSourceOptionLabel";
 
 const addScopeMutation = graphql`
   mutation AddCampaignSourceDialogMutation(
@@ -89,6 +90,12 @@ const sourcesQuery = graphql`
             node {
               id
               name
+              connector {
+                displayName
+              }
+              connectorAccount {
+                name
+              }
             }
           }
         }
@@ -111,7 +118,7 @@ export function AddCampaignSourceDialog({
   existingCampaignSourceIds,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const ref = useDialogRef();
   const [selectedSourceId, setSelectedSourceId] = useState<string>("");
 
@@ -130,32 +137,32 @@ export function AddCampaignSourceDialog({
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("addCampaignSourceDialog.messages.error"),
             description: formatError(
               t("addCampaignSourceDialog.errors.add"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("addCampaignSourceDialog.messages.success"),
           description: t("addCampaignSourceDialog.messages.added"),
-          variant: "success",
+          type: "success",
         });
         setSelectedSourceId("");
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("addCampaignSourceDialog.messages.error"),
           description: formatError(
             t("addCampaignSourceDialog.errors.add"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });
@@ -245,7 +252,14 @@ function SourceSelect({
     >
       {sources.map(source => (
         <Option key={source.id} value={source.id}>
-          {source.name}
+          <AccessReviewSourceOptionLabel
+            name={source.name}
+            accountName={source.connectorAccount?.name}
+            providerName={source.connector?.displayName
+              ?? (source.connectorAccount == null
+                ? t("addAccessReviewSourceDialog.csv.title")
+                : null)}
+          />
         </Option>
       ))}
     </Select>

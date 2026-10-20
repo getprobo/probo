@@ -20,30 +20,22 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
 import type { BindingsPageQuery } from "#/__generated__/core/BindingsPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { BindingsPage, bindingsPageQuery } from "./BindingsPage";
 import { BindingsPageSkeleton } from "./BindingsPageSkeleton";
 
 export default function BindingsPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<BindingsPageQuery>(
     bindingsPageQuery,
   );
 
   useEffect(() => {
-    if (organizationId === undefined) {
-      return;
-    }
     loadQuery({}, { fetchPolicy: "network-only" });
   }, [organizationId, loadQuery]);
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   if (queryRef === undefined || queryRef === null) {
     return <BindingsPageSkeleton />;

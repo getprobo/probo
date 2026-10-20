@@ -3,8 +3,15 @@
     "notFound": "Task not found",
     "empty": "—",
     "none": "None",
+    "searchInternalControls": "Search internal controls",
+    "noInternalControls": "No internal controls",
     "noDescription": "No description",
-    "unassigned": "Unassigned",
+    "unassigned": "Not assigned",
+    "assigneeMenu": {
+      "searchPlaceholder": "Search by name or email",
+      "empty": "No users"
+    },
+    "overdue": "Overdue",
     "fields": {
       "name": "Name",
       "description": "Description",
@@ -12,7 +19,7 @@
       "priority": "Priority",
       "assignedTo": "Assigned to",
       "linear": "Linear",
-      "measure": "Measure",
+      "internalControls": "Internal controls",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
       "deadline": "Deadline",
@@ -55,11 +62,14 @@
       "clearRecurrence": "Clear interval",
       "delete": "Delete",
       "cancel": "Cancel",
-      "more": "More actions"
+      "more": "More actions",
+      "loadMoreInternalControls": "Load more",
+      "retry": "Retry"
     },
     "delete": {
       "title": "Delete task",
       "description": "Are you sure you want to delete this task?",
+      "loadError": "The remaining internal controls could not be loaded.",
       "confirm": "Delete"
     },
     "messages": {
@@ -67,20 +77,25 @@
       "deleted": "Task deleted successfully."
     },
     "linear": {
-      "connect": "Connect Linear Sync",
-      "reconnect": "Reconnect Linear Sync",
-      "publish": "Publish",
+      "connect": "Connect Linear",
+      "publish": "Create",
       "link": "Link",
+      "linkTo": "Link to",
       "unlink": "Unlink",
       "team": "Linear team",
-      "chooseTeam": "Choose team",
-      "chooseIssue": "Choose issue",
+      "issue": "Linear issue",
+      "chooseTeam": "Select team",
+      "noTeam": "No team",
+      "chooseIssue": "Select issue",
       "newIssue": "New issue",
-      "searchTeam": "Search teams",
-      "searchIssue": "Search issues",
+      "searchTeam": "Search by name or ID",
+      "searchIssue": "Search by name or ID",
+      "linkHint": "Link to Linear issue",
       "noResults": "No results",
       "loadMore": "Load more",
-      "published": "Task published to Linear.",
+      "retry": "Try again",
+      "createWithoutTeam": "Create without a Linear team",
+      "published": "Task created in Linear.",
       "linked": "Task linked to Linear.",
       "confirmLink": {
         "title": "Link Linear issue",
@@ -88,7 +103,7 @@
       },
       "unlinked": "Linear issue unlinked.",
       "errors": {
-        "publish": "Failed to publish task to Linear",
+        "publish": "Failed to create task in Linear",
         "link": "Failed to link task to Linear",
         "unlink": "Failed to unlink Linear issue",
         "load": "Could not display Linear"
@@ -148,9 +163,9 @@
         "assigned": "{{actor}} assigned {{newValue}}",
         "reassigned": "{{actor}} reassigned from {{oldValue}} to {{newValue}}",
         "unassigned": "{{actor}} unassigned {{oldValue}}",
-        "measureLinked": "{{actor}} linked {{newValue}}",
-        "measureChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
-        "measureUnlinked": "{{actor}} unlinked {{oldValue}}",
+        "internalControlLinked": "{{actor}} linked {{newValue}}",
+        "internalControlChanged": "{{actor}} moved from {{oldValue}} to {{newValue}}",
+        "internalControlUnlinked": "{{actor}} unlinked {{oldValue}}",
         "deadlineSet": "{{actor}} set the deadline to {{newValue}}",
         "deadlineChanged": "{{actor}} changed the deadline from {{oldValue}} to {{newValue}}",
         "deadlineRemoved": "{{actor}} removed the deadline",
@@ -168,8 +183,36 @@
       "description": "Connect tools to publish tasks and keep them in sync."
     },
     "linear": {
-      "name": "Linear Sync",
-      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, and assignee when emails match."
+      "name": "Linear",
+      "description": "Publish a task to Linear and sync name, content, state, priority, deadline, assignee, and comments when emails match.",
+      "defaultTeam": "Default team",
+      "defaultTeamDescription": "New tasks use this Linear team unless another team is chosen.",
+      "defaultTeamReadOnly": "You don't have permission to change the default team.",
+      "noDefaultTeam": "No default team",
+      "issueImport": "Import new issues",
+      "issueImportDescription": "Active creates a Probo task for each new issue on the default team and keeps it in sync.",
+      "issueImportReadOnly": "You don't have permission to change issue import.",
+      "issueImportNeedsTeam": "Choose a default team before activating issue import.",
+      "issueImportStatus": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "disconnect": {
+        "title": "Disconnect Linear?",
+        "description": "Tasks will no longer sync with Linear. You can connect again later.",
+        "confirm": "Disconnect"
+      },
+      "messages": {
+        "disconnected": "Linear disconnected.",
+        "defaultTeamSaved": "Default team saved.",
+        "issueImportSaved": "Issue import saved."
+      },
+      "errors": {
+        "connect": "Failed to connect Linear",
+        "disconnect": "Failed to disconnect Linear",
+        "defaultTeam": "Failed to save the default team",
+        "issueImport": "Failed to save issue import"
+      }
     },
     "status": {
       "connected": "Connected",
@@ -177,7 +220,7 @@
     },
     "actions": {
       "connect": "Connect",
-      "reconnect": "Reconnect",
+      "disconnect": "Disconnect",
       "close": "Close"
     }
   },

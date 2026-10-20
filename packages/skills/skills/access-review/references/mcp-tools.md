@@ -22,6 +22,10 @@ required input, so it serves two distinct purposes:
 Either way the organization must be resolved before `listAccessReviewCampaigns`,
 which requires `organization_id`.
 
+Each organization includes `name` (operating name) and `legal_name` (registered
+legal name, null when unset). Match the organization the user named against
+`name`. Use `legal_name` when a note or report must name the legal entity.
+
 ## Read
 
 ### `listAccessReviewCampaigns`

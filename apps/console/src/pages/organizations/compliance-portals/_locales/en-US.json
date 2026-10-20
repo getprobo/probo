@@ -239,7 +239,10 @@
     },
     "noExpiry": "No expiry",
     "untitled": "Untitled",
+    "noFrameworks": "No frameworks",
     "states": {
+      "to_book": "To book",
+      "audit_booked": "Audit booked",
       "not_started": "Not Started",
       "in_progress": "In Progress",
       "completed": "Completed",

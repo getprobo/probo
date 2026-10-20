@@ -33,11 +33,11 @@ import (
 
 const (
 	listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: DeviceFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
-      devices(first: $first, after: $after, orderBy: $orderBy) {
+      devices(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -66,11 +66,11 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder) {
 `
 
 	listWithPosturesQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DeviceOrder, $filter: DeviceFilter) {
   node(id: $id) {
     __typename
     ... on Organization {
-      devices(first: $first, after: $after, orderBy: $orderBy) {
+      devices(first: $first, after: $after, orderBy: $orderBy, filter: $filter) {
         totalCount
         edges {
           node {
@@ -130,12 +130,17 @@ type device struct {
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	var (
-		flagOrg      string
-		flagLimit    int
-		flagOrderBy  string
-		flagOrderDir string
-		flagPostures bool
-		flagOutput   *string
+		flagOrg             string
+		flagLimit           int
+		flagOrderBy         string
+		flagOrderDir        string
+		flagQuery           string
+		flagState           []string
+		flagPlatform        []string
+		flagAgentVersion    []string
+		flagPostureWarnings bool
+		flagPostures        bool
+		flagOutput          *string
 	)
 
 	cmd := &cobra.Command{
@@ -149,7 +154,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
   prb device ls --postures
 
   # List devices sorted by last seen time
-  prb device ls --order-by LAST_SEEN_AT --json`,
+  prb device ls --order-by LAST_SEEN_AT --json
+
+  # Search devices by owner name
+  prb device ls --query "Ada"
+
+  # List active macOS devices
+  prb device ls --state ACTIVE --platform DARWIN
+
+  # List active and pending devices
+  prb device ls --state ACTIVE --state PENDING`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -188,6 +202,52 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 			variables := map[string]any{
 				"id": flagOrg,
+			}
+
+			filter := map[string]any{}
+
+			if flagQuery != "" {
+				filter["query"] = flagQuery
+			}
+
+			if len(flagState) > 0 {
+				for _, state := range flagState {
+					if err := cmdutil.ValidateEnum(
+						"state",
+						state,
+						[]string{"PENDING", "ACTIVE", "REVOKED"},
+					); err != nil {
+						return err
+					}
+				}
+
+				filter["states"] = flagState
+			}
+
+			if len(flagPlatform) > 0 {
+				for _, platform := range flagPlatform {
+					if err := cmdutil.ValidateEnum(
+						"platform",
+						platform,
+						[]string{"DARWIN", "LINUX", "FREEBSD", "WINDOWS"},
+					); err != nil {
+						return err
+					}
+				}
+
+				filter["platforms"] = flagPlatform
+			}
+
+			if len(flagAgentVersion) > 0 {
+				filter["agentVersions"] = flagAgentVersion
+			}
+
+			if flagPostureWarnings {
+				filter["hasPostureWarning"] = true
+			}
+
+			if len(filter) > 0 {
+				variables["filter"] = filter
 			}
 
 			if flagOrderBy != "" {
@@ -297,6 +357,16 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of devices to list")
+	cmd.Flags().StringVar(&flagQuery, "query", "", "Search devices by owner name")
+	cmd.Flags().StringSliceVar(&flagState, "state", nil, "Filter by state; repeat or comma-separate for multiple (PENDING, ACTIVE, REVOKED)")
+	cmd.Flags().StringSliceVar(&flagPlatform, "platform", nil, "Filter by platform; repeat or comma-separate for multiple (DARWIN, LINUX, FREEBSD, WINDOWS)")
+	cmd.Flags().StringSliceVar(&flagAgentVersion, "agent-version", nil, "Filter by agent version; repeat or comma-separate for multiple")
+	cmd.Flags().BoolVar(
+		&flagPostureWarnings,
+		"posture-warnings",
+		false,
+		"Only devices whose latest posture for some check is FAIL or UNKNOWN",
+	)
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT, UPDATED_AT, HOSTNAME, LAST_SEEN_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
 	cmd.Flags().BoolVar(&flagPostures, "postures", false, "Include latest posture check results")

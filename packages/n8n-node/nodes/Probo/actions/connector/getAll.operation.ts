@@ -50,6 +50,7 @@ export async function execute(
 				... on Organization {
 					connectors {
 						id
+						name
 						provider
 						protocol
 						createdAt

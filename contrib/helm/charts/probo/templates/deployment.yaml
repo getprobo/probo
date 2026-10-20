@@ -295,6 +295,9 @@ spec:
             - name: PROBOD_SMTP_HELLO_NAME
               value: {{ .Values.probo.mailer.smtp.helloName | quote }}
             {{- end }}
+            # Recurring tasks
+            - name: PROBOD_TASK_RECURRENCE_INTERVAL
+              value: {{ .Values.probo.taskRecurrence.interval | quote }}
             # Outbound Webhooks
             - name: PROBOD_WEBHOOK_SENDER_INTERVAL
               value: {{ .Values.probo.webhook.senderInterval | quote }}

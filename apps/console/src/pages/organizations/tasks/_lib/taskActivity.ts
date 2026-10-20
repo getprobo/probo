@@ -30,7 +30,7 @@ export type TaskActivityField
     | "STATE"
     | "PRIORITY"
     | "ASSIGNED_TO"
-    | "MEASURE"
+    | "INTERNAL_CONTROL"
     | "DEADLINE"
     | "TIME_ESTIMATE";
 
@@ -114,14 +114,14 @@ export function taskActivitySentenceKey(
         return "detailsPage.activity.sentences.assigned";
       }
       return "detailsPage.activity.sentences.unassigned";
-    case "MEASURE":
+    case "INTERNAL_CONTROL":
       if (oldValue && newValue) {
-        return "detailsPage.activity.sentences.measureChanged";
+        return "detailsPage.activity.sentences.internalControlChanged";
       }
       if (newValue) {
-        return "detailsPage.activity.sentences.measureLinked";
+        return "detailsPage.activity.sentences.internalControlLinked";
       }
-      return "detailsPage.activity.sentences.measureUnlinked";
+      return "detailsPage.activity.sentences.internalControlUnlinked";
     case "DEADLINE":
       if (oldValue && newValue) {
         return "detailsPage.activity.sentences.deadlineChanged";

@@ -28,6 +28,7 @@ import {
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
+import useToast from "./useToast";
 import { toaster } from "./variants";
 
 type ToastType = "neutral" | "success" | "error" | "warning" | "info";
@@ -48,10 +49,10 @@ const typeIcons: Record<ToastType, ReactNode> = {
 };
 
 // Styled Base UI toast viewport. Mount once at the app root inside a
-// `Toast.Provider`; queue toasts through `Toast.useToastManager()`. See
+// `Toast.Provider`; queue toasts through `useToast()`. See
 // contrib/claude/ui.md.
 export function Toaster() {
-  const { toasts } = Toast.useToastManager();
+  const { toasts } = useToast();
   const slots = toaster();
 
   return (

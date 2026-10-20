@@ -107,14 +107,14 @@ type Control implements Node {
 
     framework: Framework! @goField(forceResolver: true)
 
-    measures(
+    internalControls(
         first: Int
         after: CursorKey
         last: Int
         before: CursorKey
-        orderBy: MeasureOrder
-        filter: MeasureFilter
-    ): MeasureConnection! @goField(forceResolver: true)
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     documents(
         first: Int
@@ -224,15 +224,15 @@ extend type Mutation {
     createControl(input: CreateControlInput!): CreateControlPayload!
     updateControl(input: UpdateControlInput!): UpdateControlPayload!
     deleteControl(input: DeleteControlInput!): DeleteControlPayload!
-    createControlMeasureMapping(
-        input: CreateControlMeasureMappingInput!
-    ): CreateControlMeasureMappingPayload!
+    createControlInternalControlMapping(
+        input: CreateControlInternalControlMappingInput!
+    ): CreateControlInternalControlMappingPayload!
     createControlDocumentMapping(
         input: CreateControlDocumentMappingInput!
     ): CreateControlDocumentMappingPayload!
-    deleteControlMeasureMapping(
-        input: DeleteControlMeasureMappingInput!
-    ): DeleteControlMeasureMappingPayload!
+    deleteControlInternalControlMapping(
+        input: DeleteControlInternalControlMappingInput!
+    ): DeleteControlInternalControlMappingPayload!
     deleteControlDocumentMapping(
         input: DeleteControlDocumentMappingInput!
     ): DeleteControlDocumentMappingPayload!
@@ -295,9 +295,9 @@ input DeleteControlInput {
     controlId: ID!
 }
 
-input CreateControlMeasureMappingInput {
+input CreateControlInternalControlMappingInput {
     controlId: ID!
-    measureId: ID!
+    internalControlId: ID!
 }
 
 input CreateControlDocumentMappingInput {
@@ -305,9 +305,9 @@ input CreateControlDocumentMappingInput {
     documentId: ID!
 }
 
-input DeleteControlMeasureMappingInput {
+input DeleteControlInternalControlMappingInput {
     controlId: ID!
-    measureId: ID!
+    internalControlId: ID!
 }
 
 input DeleteControlDocumentMappingInput {
@@ -390,9 +390,9 @@ type DeleteControlPayload {
     deletedControlId: ID!
 }
 
-type CreateControlMeasureMappingPayload {
+type CreateControlInternalControlMappingPayload {
     controlEdge: ControlEdge!
-    measureEdge: MeasureEdge!
+    internalControlEdge: InternalControlEdge!
 }
 
 type CreateControlDocumentMappingPayload {
@@ -400,9 +400,9 @@ type CreateControlDocumentMappingPayload {
     documentEdge: DocumentEdge!
 }
 
-type DeleteControlMeasureMappingPayload {
+type DeleteControlInternalControlMappingPayload {
     deletedControlId: ID!
-    deletedMeasureId: ID!
+    deletedInternalControlId: ID!
 }
 
 type DeleteControlDocumentMappingPayload {

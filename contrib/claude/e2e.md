@@ -1,5 +1,7 @@
 # End-to-End Testing
 
+Prefer an end-to-end test over a unit test. Behavior that creates objects in the database, or depends on them, belongs here rather than in a unit test that inserts rows directly. See [`go-testing.md`](go-testing.md).
+
 E2E tests live in `e2e/console/` (package `console_test`) and run against a live `bin/probod` instance. The test infrastructure handles server lifecycle, authentication, and test data creation.
 
 See [`e2e-refactor.md`](e2e-refactor.md) for the suite migration plan,

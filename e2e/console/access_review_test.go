@@ -41,14 +41,16 @@ func TestAccessReviewSource_Create(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation($input: CreateAccessReviewSourceInput!) {
-				createAccessReviewSource(input: $input) {
-					accessReviewSourceEdge {
-						node {
-							id
-							name
-							createdAt
-							updatedAt
+			mutation($input: CreateAccessReviewSourcesInput!) {
+				createAccessReviewSources(input: $input) {
+					results {
+						accessReviewSourceEdge {
+							node {
+								id
+								name
+								createdAt
+								updatedAt
+							}
 						}
 					}
 				}
@@ -56,27 +58,32 @@ func TestAccessReviewSource_Create(t *testing.T) {
 		`
 
 		var result struct {
-			CreateAccessReviewSource struct {
-				AccessReviewSourceEdge struct {
-					Node struct {
-						ID        string `json:"id"`
-						Name      string `json:"name"`
-						CreatedAt string `json:"createdAt"`
-						UpdatedAt string `json:"updatedAt"`
-					} `json:"node"`
-				} `json:"accessReviewSourceEdge"`
-			} `json:"createAccessReviewSource"`
+			CreateAccessReviewSources struct {
+				Results []struct {
+					AccessReviewSourceEdge struct {
+						Node struct {
+							ID        string `json:"id"`
+							Name      string `json:"name"`
+							CreatedAt string `json:"createdAt"`
+							UpdatedAt string `json:"updatedAt"`
+						} `json:"node"`
+					} `json:"accessReviewSourceEdge"`
+				} `json:"results"`
+			} `json:"createAccessReviewSources"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
-				"name":           "Slack",
+				"sources": []any{
+					map[string]any{"name": "Slack"},
+				},
 			},
 		}, &result)
 		require.NoError(t, err)
+		require.Len(t, result.CreateAccessReviewSources.Results, 1)
 
-		node := result.CreateAccessReviewSource.AccessReviewSourceEdge.Node
+		node := result.CreateAccessReviewSources.Results[0].AccessReviewSourceEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "Slack", node.Name)
 		assert.NotEmpty(t, node.CreatedAt)
@@ -86,13 +93,15 @@ func TestAccessReviewSource_Create(t *testing.T) {
 		t.Parallel()
 
 		const query = `
-			mutation($input: CreateAccessReviewSourceInput!) {
-				createAccessReviewSource(input: $input) {
-					accessReviewSourceEdge {
-						node {
-							id
-							name
-							csvData
+			mutation($input: CreateAccessReviewSourcesInput!) {
+				createAccessReviewSources(input: $input) {
+					results {
+						accessReviewSourceEdge {
+							node {
+								id
+								name
+								csvData
+							}
 						}
 					}
 				}
@@ -100,32 +109,142 @@ func TestAccessReviewSource_Create(t *testing.T) {
 		`
 
 		var result struct {
-			CreateAccessReviewSource struct {
-				AccessReviewSourceEdge struct {
-					Node struct {
-						ID      string  `json:"id"`
-						Name    string  `json:"name"`
-						CsvData *string `json:"csvData"`
-					} `json:"node"`
-				} `json:"accessReviewSourceEdge"`
-			} `json:"createAccessReviewSource"`
+			CreateAccessReviewSources struct {
+				Results []struct {
+					AccessReviewSourceEdge struct {
+						Node struct {
+							ID      string  `json:"id"`
+							Name    string  `json:"name"`
+							CsvData *string `json:"csvData"`
+						} `json:"node"`
+					} `json:"accessReviewSourceEdge"`
+				} `json:"results"`
+			} `json:"createAccessReviewSources"`
 		}
 
 		err := owner.Execute(query, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
-				"name":           "CSV Import",
-				"csvData":        testCsvData,
+				"sources": []any{
+					map[string]any{
+						"name":    "CSV Import",
+						"csvData": testCsvData,
+					},
+				},
 			},
 		}, &result)
 		require.NoError(t, err)
+		require.Len(t, result.CreateAccessReviewSources.Results, 1)
 
-		node := result.CreateAccessReviewSource.AccessReviewSourceEdge.Node
+		node := result.CreateAccessReviewSources.Results[0].AccessReviewSourceEdge.Node
 		assert.NotEmpty(t, node.ID)
 		assert.Equal(t, "CSV Import", node.Name)
 		require.NotNil(t, node.CsvData)
 		assert.Contains(t, *node.CsvData, "jane@example.com")
 	})
+}
+
+func TestAccessReviewSource_CreateAllowsSharedExternalAccount(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+	firstConnectorID := factory.NewConnector(owner).
+		WithAWSRoleARN("arn:aws:iam::123456789012:role/ProboAuditOne").
+		Create()
+	secondConnectorID := factory.NewConnector(owner).
+		WithAWSRoleARN("arn:aws:iam::210987654321:role/ProboAuditTwo").
+		Create()
+	otherConnectorID := factory.NewConnector(owner).
+		WithProvider("GCP").
+		Create()
+	firstAccountID := factory.NewConnectorAccount(owner, firstConnectorID).
+		WithExternalAccountID("111122223333").
+		WithName("shared").
+		Create()
+	secondAccountID := factory.NewConnectorAccount(owner, secondConnectorID).
+		WithExternalAccountID("111122223333").
+		WithName("shared again").
+		Create()
+	otherAccountID := factory.NewConnectorAccount(owner, otherConnectorID).
+		WithExternalAccountID("111122223333").
+		WithName("other provider").
+		Create()
+
+	const query = `
+		mutation($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					created
+					accessReviewSourceEdge {
+						node { id }
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		CreateAccessReviewSources struct {
+			Results []struct {
+				Created                bool `json:"created"`
+				AccessReviewSourceEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"results"`
+		} `json:"createAccessReviewSources"`
+	}
+
+	err := owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"sources": []any{
+				map[string]any{"connectorAccountId": firstAccountID, "name": "first"},
+				map[string]any{"connectorAccountId": secondAccountID, "name": "second"},
+				map[string]any{"connectorAccountId": otherAccountID, "name": "other provider"},
+			},
+		},
+	}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.CreateAccessReviewSources.Results, 3)
+
+	first := result.CreateAccessReviewSources.Results[0]
+	second := result.CreateAccessReviewSources.Results[1]
+	other := result.CreateAccessReviewSources.Results[2]
+
+	require.True(t, first.Created)
+	require.True(t, second.Created)
+	assert.NotEqual(t, first.AccessReviewSourceEdge.Node.ID, second.AccessReviewSourceEdge.Node.ID)
+	require.True(t, other.Created)
+	assert.NotEqual(t, first.AccessReviewSourceEdge.Node.ID, other.AccessReviewSourceEdge.Node.ID)
+
+	var again struct {
+		CreateAccessReviewSources struct {
+			Results []struct {
+				Created                bool `json:"created"`
+				AccessReviewSourceEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"results"`
+		} `json:"createAccessReviewSources"`
+	}
+
+	err = owner.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"sources": []any{
+				map[string]any{"connectorAccountId": firstAccountID, "name": "again"},
+			},
+		},
+	}, &again)
+	require.NoError(t, err)
+	require.Len(t, again.CreateAccessReviewSources.Results, 1)
+	assert.False(t, again.CreateAccessReviewSources.Results[0].Created)
+	assert.Equal(t, first.AccessReviewSourceEdge.Node.ID, again.CreateAccessReviewSources.Results[0].AccessReviewSourceEdge.Node.ID)
 }
 
 func TestAccessReviewSource_Update(t *testing.T) {
@@ -1550,8 +1669,8 @@ func TestAccessReviewCampaign_StartWithoutSourcesFails(t *testing.T) {
 
 // TestAccessReviewSource_MultipleConnectionsPerProvider pins the
 // multi-connection flow end to end: two connectors of one provider back
-// two distinct sources, and deleting one source garbage-collects only
-// its own connector.
+// two distinct sources. Deleting or relinking a source leaves every
+// connector in place; disconnect is a separate action.
 func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -1579,6 +1698,7 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		err := owner.Execute(createConnectorQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
+				"name":           "Test",
 				"provider":       "BREX",
 				"apiKey":         apiKey,
 			},
@@ -1589,14 +1709,16 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	}
 
 	const createSourceQuery = `
-		mutation($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				created
-				accessReviewSourceEdge {
-					node {
-						id
-						name
-						connectorId
+		mutation($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					created
+					accessReviewSourceEdge {
+						node {
+							id
+							name
+							connectorId
+						}
 					}
 				}
 			}
@@ -1605,32 +1727,40 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 
 	createSource := func(name, connectorID string) (string, bool) {
 		var result struct {
-			CreateAccessReviewSource struct {
-				Created                bool `json:"created"`
-				AccessReviewSourceEdge struct {
-					Node struct {
-						ID          string  `json:"id"`
-						Name        string  `json:"name"`
-						ConnectorID *string `json:"connectorId"`
-					} `json:"node"`
-				} `json:"accessReviewSourceEdge"`
-			} `json:"createAccessReviewSource"`
+			CreateAccessReviewSources struct {
+				Results []struct {
+					Created                bool `json:"created"`
+					AccessReviewSourceEdge struct {
+						Node struct {
+							ID          string  `json:"id"`
+							Name        string  `json:"name"`
+							ConnectorID *string `json:"connectorId"`
+						} `json:"node"`
+					} `json:"accessReviewSourceEdge"`
+				} `json:"results"`
+			} `json:"createAccessReviewSources"`
 		}
 
 		err := owner.Execute(createSourceQuery, map[string]any{
 			"input": map[string]any{
 				"organizationId": orgID,
-				"name":           name,
-				"connectorId":    connectorID,
+				"sources": []any{
+					map[string]any{
+						"name":        name,
+						"connectorId": connectorID,
+					},
+				},
 			},
 		}, &result)
 		require.NoError(t, err)
+		require.Len(t, result.CreateAccessReviewSources.Results, 1)
 
-		node := result.CreateAccessReviewSource.AccessReviewSourceEdge.Node
+		created := result.CreateAccessReviewSources.Results[0]
+		node := created.AccessReviewSourceEdge.Node
 		require.NotNil(t, node.ConnectorID)
 		require.Equal(t, connectorID, *node.ConnectorID)
 
-		return node.ID, result.CreateAccessReviewSource.Created
+		return node.ID, created.Created
 	}
 
 	listBrexConnectorIDs := func() []string {
@@ -1686,12 +1816,13 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	require.ElementsMatch(t, []string{firstConnector, secondConnector}, listBrexConnectorIDs())
 
 	// Relinking a source to a connector already referenced by another
-	// source is refused: sources stay one-to-one with connectors.
+	// source is refused: sources stay one-to-one with connector.
 	const updateQuery = `
 		mutation($input: UpdateAccessReviewSourceInput!) {
 			updateAccessReviewSource(input: $input) {
 				accessReviewSource {
 					id
+					connectorId
 				}
 			}
 		}
@@ -1700,7 +1831,8 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 	var updateResult struct {
 		UpdateAccessReviewSource struct {
 			AccessReviewSource struct {
-				ID string `json:"id"`
+				ID          string  `json:"id"`
+				ConnectorID *string `json:"connectorId"`
 			} `json:"accessReviewSource"`
 		} `json:"updateAccessReviewSource"`
 	}
@@ -1733,13 +1865,14 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		},
 	}, &deleteResult)
 	require.NoError(t, err)
+	assert.Equal(t, firstSource, deleteResult.DeleteAccessReviewSource.DeletedAccessReviewSourceID)
 
-	// The deleted source's connector dies with it; the other source's
-	// connector is the survivor.
-	assert.Equal(t, []string{secondConnector}, listBrexConnectorIDs())
+	// Deleting a source leaves its credential. The other source's
+	// connector is untouched too.
+	assert.ElementsMatch(t, []string{firstConnector, secondConnector}, listBrexConnectorIDs())
 
-	// Relinking a source to a fresh connector deletes the abandoned one:
-	// the relink removed its only owner.
+	// Relinking a source to a fresh connector leaves the abandoned one.
+	// Disconnect is how a credential goes away.
 	thirdConnector := createConnector("bxt_test-key-brex-c")
 
 	err = owner.Execute(updateQuery, map[string]any{
@@ -1749,6 +1882,12 @@ func TestAccessReviewSource_MultipleConnectionsPerProvider(t *testing.T) {
 		},
 	}, &updateResult)
 	require.NoError(t, err)
+	require.NotNil(t, updateResult.UpdateAccessReviewSource.AccessReviewSource.ConnectorID)
+	assert.Equal(t, thirdConnector, *updateResult.UpdateAccessReviewSource.AccessReviewSource.ConnectorID)
 
-	assert.Equal(t, []string{thirdConnector}, listBrexConnectorIDs())
+	assert.ElementsMatch(
+		t,
+		[]string{firstConnector, secondConnector, thirdConnector},
+		listBrexConnectorIDs(),
+	)
 }

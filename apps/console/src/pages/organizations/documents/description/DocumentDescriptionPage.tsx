@@ -19,8 +19,8 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { RichEditor, useToast } from "@probo/ui";
-import { useCallback, useState } from "react";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
 import { useOutletContext } from "react-router";
@@ -29,6 +29,7 @@ import { useDebounceCallback } from "usehooks-ts";
 
 import type { DocumentDescriptionPage_updateContentMutation } from "#/__generated__/core/DocumentDescriptionPage_updateContentMutation.graphql";
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
 const autoSaveIntervalMs = 1000;
 
@@ -87,7 +88,7 @@ export function DocumentDescriptionPage(props: {
   const { queryRef, versionChangedAt } = props;
 
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const { onDocumentUpdated, isEditable } = useOutletContext<{
     onDocumentUpdated: () => void;
     isEditable: boolean;
@@ -123,10 +124,10 @@ export function DocumentDescriptionPage(props: {
         },
         onCompleted: (data, errors) => {
           if (errors?.length) {
-            toast({
+            toast.add({
               title: t("documentDescriptionPage.errors.title"),
               description: formatError(t("documentDescriptionPage.errors.save"), errors),
-              variant: "error",
+              type: "error",
             });
             return;
           }
@@ -136,23 +137,32 @@ export function DocumentDescriptionPage(props: {
             onDocumentUpdated();
           }
 
-          toast({
+          toast.add({
             title: t("documentDescriptionPage.messages.successTitle"),
             description: t("documentDescriptionPage.messages.saved"),
-            variant: "success",
+            type: "success",
           });
         },
         onError: (error) => {
-          toast({
+          toast.add({
             title: t("documentDescriptionPage.errors.title"),
             description: error.message ?? t("documentDescriptionPage.errors.save"),
-            variant: "error",
+            type: "error",
           });
         },
       });
     }, [documentId, wasDraft, updateContent, toast, t, onDocumentUpdated]),
     autoSaveIntervalMs,
   );
+  const uploadingRef = useRef(false);
+  const handleContentChange = useCallback((content: string) => {
+    if (uploadingRef.current) {
+      handleUpdate.cancel();
+      return;
+    }
+
+    handleUpdate(content);
+  }, [handleUpdate]);
 
   const canEdit = isEditable
     && document.canUpdate
@@ -200,7 +210,13 @@ export function DocumentDescriptionPage(props: {
       content={currentVersion.content}
       data-theme="document"
       disabled={!canEdit}
-      onChangeContent={handleUpdate}
+      onChangeContent={handleContentChange}
+      onUploadingChange={(uploading) => {
+        uploadingRef.current = uploading;
+        if (uploading) {
+          handleUpdate.cancel();
+        }
+      }}
     />
   );
 }

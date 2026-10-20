@@ -20,34 +20,26 @@
 
 import { Suspense, useEffect } from "react";
 import { useQueryLoader } from "react-relay";
-import { useParams } from "react-router";
 
 import type { SignaturesPageQuery } from "#/__generated__/core/SignaturesPageQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { SignaturesPage, signaturesPageQuery } from "./SignaturesPage";
 import { SignaturesPageSkeleton } from "./SignaturesPageSkeleton";
 
 export default function SignaturesPageLoader() {
-  const { organizationId } = useParams();
+  const { organizationId } = useEmployeePortalRoute();
   const [queryRef, loadQuery] = useQueryLoader<SignaturesPageQuery>(
     signaturesPageQuery,
   );
 
   useEffect(() => {
-    if (organizationId == null) {
-      return;
-    }
     loadQuery(
       { organizationId, first: DOCUMENT_LIST_PAGE_SIZE },
       { fetchPolicy: "network-only" },
     );
   }, [organizationId, loadQuery]);
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const currentQueryRef = queryRef != null
     && queryRef.variables.organizationId === organizationId

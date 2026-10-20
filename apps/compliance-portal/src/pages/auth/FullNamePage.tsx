@@ -20,10 +20,10 @@
 
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
-import { Toast } from "@base-ui/react/toast";
 import type { GraphQLError } from "@probo/helpers";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
@@ -45,7 +45,7 @@ const updateFullNameMutation = graphql`
 // FULL_NAME_REQUIRED, then forwarding to the validated continue URL.
 export default function FullNamePage() {
   const { t } = useTranslation();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const safeContinueUrl = useSafeContinueUrl();
 
   const [updateFullName, isUpdating] = useMutation<FullNamePageMutation>(

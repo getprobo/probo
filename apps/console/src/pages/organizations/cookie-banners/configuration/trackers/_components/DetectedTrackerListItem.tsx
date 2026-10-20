@@ -35,10 +35,12 @@ import { cookieSourceBadges } from "../_lib/trackerBadges";
 const detectedTrackerFragment = graphql`
   fragment DetectedTrackerListItem_detectedTracker on DetectedTracker {
     identifier
+    cookieDomain
+    hostOnly
     initiatorUrl
     maxAgeSeconds
     source
-    lastDetectedAt
+    createdAt
   }
 `;
 
@@ -54,12 +56,23 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
 
   return (
     <TableRow align="center">
-      <TableRowHeaderCell>
+      <TableRowHeaderCell overflow="truncate">
         <Text size={2} className={identifier()}>
           {tracker.identifier}
         </Text>
       </TableRowHeaderCell>
-      <TableCell>
+      <TableCell overflow="truncate">
+        {tracker.hostOnly === true
+          ? <Text size={2}>{t("detectedTrackerRow.hostOnly")}</Text>
+          : tracker.cookieDomain == null
+            ? <Text size={2} color="faint">-</Text>
+            : (
+                <Text size={2} className={url()}>
+                  {tracker.cookieDomain}
+                </Text>
+              )}
+      </TableCell>
+      <TableCell overflow="truncate">
         {tracker.initiatorUrl == null
           ? <Text size={2} color="faint">-</Text>
           : (
@@ -87,9 +100,9 @@ export function DetectedTrackerListItem({ detectedTrackerKey }: DetectedTrackerL
             )}
       </TableCell>
       <TableCell>
-        <time dateTime={tracker.lastDetectedAt} className={date()}>
+        <time dateTime={tracker.createdAt} className={date()}>
           <Text size={2}>
-            {dateTimeFormat(i18n.language, tracker.lastDetectedAt)}
+            {dateTimeFormat(i18n.language, tracker.createdAt)}
           </Text>
         </time>
       </TableCell>

@@ -58,7 +58,7 @@ export interface NavRailProps {
 
 function isGovernanceVisible(permissions: NavPermissions): boolean {
   return permissions.canListTasks
-    || permissions.canListMeasures
+    || permissions.canListInternalControls
     || permissions.canListFrameworks
     || permissions.canListAudits
     || permissions.canListFindings
@@ -78,8 +78,11 @@ function isPrivacyVisible(permissions: NavPermissions): boolean {
   return permissions.canListRightsRequests
     || permissions.canListProcessingActivities
     || permissions.canListDataProtectionImpactAssessments
-    || permissions.canListTransferImpactAssessments
-    || permissions.canListCookieBanners;
+    || permissions.canListTransferImpactAssessments;
+}
+
+function isCmpVisible(permissions: NavPermissions): boolean {
+  return permissions.canListCookieBanners;
 }
 
 function isItamVisible(permissions: NavPermissions): boolean {
@@ -96,6 +99,10 @@ function isRegistriesVisible(permissions: NavPermissions): boolean {
 
 function isCompliancePortalVisible(permissions: NavPermissions): boolean {
   return permissions.canGetCompliancePortal;
+}
+
+function isEmployeePortalVisible(permissions: NavPermissions): boolean {
+  return permissions.canGetEmployeePortal;
 }
 
 function isAccessReviewVisible(permissions: NavPermissions): boolean {
@@ -129,12 +136,16 @@ function navGroupIsVisible(
       return isTprmVisible(permissions);
     case "privacy":
       return isPrivacyVisible(permissions);
+    case "cmp":
+      return isCmpVisible(permissions);
     case "itam":
       return isItamVisible(permissions);
     case "registries":
       return isRegistriesVisible(permissions);
     case "compliancePortal":
       return isCompliancePortalVisible(permissions);
+    case "employeePortal":
+      return isEmployeePortalVisible(permissions);
     case "accessReview":
       return isAccessReviewVisible(permissions);
     case "settings":
@@ -163,8 +174,8 @@ function governanceHref(organizationId: string, permissions: NavPermissions): st
   if (permissions.canListTasks) {
     return groupHref(organizationId, "governance", "tasks");
   }
-  if (permissions.canListMeasures) {
-    return groupHref(organizationId, "governance", "measures");
+  if (permissions.canListInternalControls) {
+    return groupHref(organizationId, "governance", "internal-controls");
   }
   if (permissions.canListFrameworks) {
     return groupHref(organizationId, "governance", "frameworks");
@@ -198,10 +209,7 @@ function privacyHref(organizationId: string, permissions: NavPermissions): strin
   if (permissions.canListDataProtectionImpactAssessments) {
     return groupHref(organizationId, "privacy", "dpias");
   }
-  if (permissions.canListTransferImpactAssessments) {
-    return groupHref(organizationId, "privacy", "tias");
-  }
-  return groupHref(organizationId, "privacy", "cookie-banners/new");
+  return groupHref(organizationId, "privacy", "tias");
 }
 
 function registriesHref(organizationId: string, permissions: NavPermissions): string {
@@ -224,7 +232,7 @@ function accessReviewHref(organizationId: string, permissions: NavPermissions): 
   if (permissions.canListAccessReviewCampaigns) {
     return groupHref(organizationId, "accessReview", "campaigns");
   }
-  return groupHref(organizationId, "accessReview", "connections");
+  return groupHref(organizationId, "accessReview", "sources");
 }
 
 function settingsHref(
@@ -313,6 +321,14 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
               active={activeKey === "privacy"}
             />
           )}
+          {isCmpVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("cmp").icon}
+              label={t("nav.groups.cmp")}
+              to={groupHref(organizationId, "cmp", "cookie-banners")}
+              active={activeKey === "cmp"}
+            />
+          )}
           {isItamVisible(permissions) && (
             <NavRailItem
               icon={navGroupByKey("itam").icon}
@@ -335,6 +351,14 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
               label={t("nav.groups.compliancePortal")}
               to={groupHref(organizationId, "compliancePortal", "compliance-portals")}
               active={activeKey === "compliancePortal"}
+            />
+          )}
+          {isEmployeePortalVisible(permissions) && (
+            <NavRailItem
+              icon={navGroupByKey("employeePortal").icon}
+              label={t("nav.groups.employeePortal")}
+              to={groupHref(organizationId, "employeePortal", "")}
+              active={activeKey === "employeePortal"}
             />
           )}
           {isAccessReviewVisible(permissions) && (

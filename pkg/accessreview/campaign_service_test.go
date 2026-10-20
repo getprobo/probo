@@ -31,8 +31,8 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -75,7 +75,7 @@ func TestCreateCampaign_SnapshotsConnectorAccount(t *testing.T) {
 				OrganizationID: organizationID,
 				Provider:       coredata.ConnectorProviderGitHub,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},
@@ -147,6 +147,7 @@ func TestCreateCampaign_SnapshotsConnectorAccount(t *testing.T) {
 	require.NoError(t, err)
 
 	created := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, connectorSource.ID)
+	assert.Equal(t, account.Name, created.Name)
 	require.NotNil(t, created.ConnectorID)
 	assert.Equal(t, connectorID, *created.ConnectorID)
 	require.NotNil(t, created.ConnectorAccountID)
@@ -163,6 +164,7 @@ func TestCreateCampaign_SnapshotsConnectorAccount(t *testing.T) {
 	require.NoError(t, err)
 
 	addedCSV := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, csvSource.ID)
+	assert.Equal(t, csvSource.Name, addedCSV.Name)
 	assert.Nil(t, addedCSV.ConnectorID)
 	assert.Nil(t, addedCSV.ConnectorAccountID)
 
@@ -180,6 +182,33 @@ func TestCreateCampaign_SnapshotsConnectorAccount(t *testing.T) {
 	require.NotNil(t, addedAgain.ConnectorAccountID)
 	assert.Equal(t, account.ID, *addedAgain.ConnectorAccountID)
 	assert.Equal(t, created.ID, addedAgain.ID)
+
+	sourceIDs := []gid.GID{connectorSource.ID, csvSource.ID}
+	_, err = svc.UpdateCampaign(
+		ctx,
+		scope,
+		accessreview.UpdateAccessReviewCampaignRequest{
+			CampaignID:            campaign.ID,
+			AccessReviewSourceIDs: &sourceIDs,
+		},
+	)
+	require.NoError(t, err)
+
+	merged := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, connectorSource.ID)
+	assert.Equal(t, account.Name, merged.Name)
+
+	mergedCSV := loadCampaignSourceByLiveSource(t, ctx, client, scope, campaign.ID, csvSource.ID)
+	assert.Equal(t, csvSource.Name, mergedCSV.Name)
+
+	reloaded := &coredata.AccessReviewSource{}
+
+	require.NoError(t, client.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return reloaded.LoadByID(ctx, conn, scope, connectorSource.ID)
+		},
+	))
+	assert.Equal(t, connectorSource.Name, reloaded.Name)
 }
 
 func loadCampaignSourceByLiveSource(

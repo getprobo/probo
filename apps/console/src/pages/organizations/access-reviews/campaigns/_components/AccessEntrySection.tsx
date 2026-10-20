@@ -25,14 +25,20 @@ import { graphql, useFragment } from "react-relay";
 
 import type { AccessEntrySection_source$key } from "#/__generated__/core/AccessEntrySection_source.graphql";
 
+import { campaignSourceLabel } from "../../_lib/sourceLabel";
+
 import { accessEntrySection } from "./variants";
 
 const accessEntrySectionFragment = graphql`
   fragment AccessEntrySection_source on AccessReviewCampaignSource {
     name
     source {
+      name
       connector {
         provider
+      }
+      connectorAccount {
+        name
       }
     }
     fetchAttempts(first: 1) {
@@ -78,7 +84,17 @@ export function AccessEntrySection({
         {provider
           ? <ThirdPartyLogo thirdParty={provider} className="size-5 shrink-0" />
           : null}
-        <h2 className={titleClass()}>{source.name}</h2>
+        <h2 className={titleClass()}>
+          {campaignSourceLabel({
+            name: source.name,
+            source: source.source == null
+              ? null
+              : {
+                  name: source.source.name,
+                  accountName: source.source.connectorAccount?.name,
+                },
+          })}
+        </h2>
         <span className={countClass()}>{`(${count})`}</span>
       </div>
       {error

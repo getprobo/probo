@@ -18,26 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export const taskStates = [
-  "BACKLOG",
-  "TODO",
-  "IN_PROGRESS",
-  "DONE",
-  "CANCELED",
-  "DUPLICATE",
-] as const;
-
-export type TaskState = (typeof taskStates)[number];
-
-export const taskStateKeys = {
-  BACKLOG: "backlog",
-  TODO: "todo",
-  IN_PROGRESS: "inProgress",
-  DONE: "done",
-  CANCELED: "canceled",
-  DUPLICATE: "duplicate",
-} as const;
-
-export const taskPriorities = ["URGENT", "HIGH", "MEDIUM", "LOW"] as const;
-
-export type TaskPriority = (typeof taskPriorities)[number];
+export {
+  taskPriorities,
+  type TaskPriority,
+  type TaskState,
+  taskStateKeys,
+  taskStates,
+} from "@probo/tasks";

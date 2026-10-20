@@ -26,9 +26,10 @@ import type {
 	JsonObject,
 	IHttpRequestOptions,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 import { version } from '../../package.json';
+import { readGraphQLBody } from './graphqlResponse';
 
 type ApiRequestFn = (
 	this: IExecuteFunctions | IHookFunctions,
@@ -38,11 +39,40 @@ type ApiRequestFn = (
 
 type ApiRequestContext = IExecuteFunctions | IHookFunctions | ILoadOptionsFunctions;
 
-async function proboGraphqlRequest(
+function graphqlBodyOrThrow(
+	this: ApiRequestContext,
+	response: unknown,
+	options?: { keepPartialResult?: boolean },
+): IDataObject {
+	const parsed = readGraphQLBody(response);
+	if (!parsed.ok) {
+		if (options?.keepPartialResult && parsed.body?.data != null) {
+			return parsed.body as IDataObject;
+		}
+
+		throw new NodeApiError(this.getNode(), (parsed.body ?? { message: parsed.message }) as JsonObject, {
+			message: parsed.message,
+			level: 'error',
+		});
+	}
+
+	return parsed.body as IDataObject;
+}
+
+function rethrowRequestError(this: ApiRequestContext, error: unknown): never {
+	if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+		throw error;
+	}
+
+	throw new NodeApiError(this.getNode(), error as JsonObject);
+}
+
+async function proboGraphQLRequest(
 	this: ApiRequestContext,
 	apiPath: string,
 	query: string,
 	variables: IDataObject = {},
+	resultOptions?: { keepPartialResult?: boolean },
 ): Promise<IDataObject> {
 	const credentials = await this.getCredentials('proboApi');
 
@@ -61,35 +91,27 @@ async function proboGraphqlRequest(
 		json: true,
 	};
 
+	let response: unknown;
 	try {
-		const response = await this.helpers.httpRequestWithAuthentication.call(
+		response = await this.helpers.httpRequestWithAuthentication.call(
 			this,
 			'proboApi',
 			options,
 		);
-
-		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) =>
-				err.message || JSON.stringify(err)
-			).join('; ');
-			throw new NodeApiError(this.getNode(), {
-				message: `GraphQL errors: ${errorMessages}`,
-				httpCode: '200',
-			} as JsonObject);
-		}
-
-		return response;
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as JsonObject);
+		rethrowRequestError.call(this, error);
 	}
+
+	return graphqlBodyOrThrow.call(this, response, resultOptions);
 }
 
 export async function proboApiRequest(
 	this: ApiRequestContext,
 	query: string,
 	variables: IDataObject = {},
+	options?: { keepPartialResult?: boolean },
 ): Promise<IDataObject> {
-	return proboGraphqlRequest.call(this, '/api/console/v1/graphql', query, variables);
+	return proboGraphQLRequest.call(this, '/api/console/v1/graphql', query, variables, options);
 }
 
 export async function proboConnectApiRequest(
@@ -97,7 +119,7 @@ export async function proboConnectApiRequest(
 	query: string,
 	variables: IDataObject = {},
 ): Promise<IDataObject> {
-	return proboGraphqlRequest.call(this, '/api/connect/v1/graphql', query, variables);
+	return proboGraphQLRequest.call(this, '/api/connect/v1/graphql', query, variables);
 }
 
 async function proboGraphqlRequestAllItems(
@@ -242,116 +264,18 @@ export async function proboApiMultipartRequest(
 		body,
 	};
 
+	let response: unknown;
 	try {
-		const response = await this.helpers.httpRequestWithAuthentication.call(
+		response = await this.helpers.httpRequestWithAuthentication.call(
 			this,
 			'proboApi',
 			options,
 		);
-
-		if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
-			const errorMessages = response.errors.map((err: IDataObject) =>
-				err.message || JSON.stringify(err)
-			).join('; ');
-			throw new NodeApiError(this.getNode(), {
-				message: `GraphQL errors: ${errorMessages}`,
-				httpCode: '200',
-			} as JsonObject);
-		}
-
-		return response;
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error as JsonObject);
-	}
-}
-
-export function plainTextToProseMirrorJSON(text: string): string {
-	return JSON.stringify({
-		type: 'doc',
-		content: text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map((line) => ({
-			type: 'paragraph',
-			...(line ? { content: [{ type: 'text', text: line }] } : {}),
-		})),
-	});
-}
-
-type ProseMirrorNode = {
-	type?: string;
-	text?: string;
-	content?: ProseMirrorNode[];
-};
-
-function isProseMirrorNode(value: unknown): value is ProseMirrorNode {
-	return typeof value === 'object' && value !== null;
-}
-
-function collectPlainText(node: ProseMirrorNode): string {
-	if (node.type === 'text') {
-		return node.text ?? '';
+		rethrowRequestError.call(this, error);
 	}
 
-	if (node.type === 'hardBreak' || node.type === 'horizontalRule') {
-		return '\n';
-	}
-
-	const inner = (node.content ?? []).map(collectPlainText).join('');
-
-	switch (node.type) {
-		case 'paragraph':
-		case 'heading':
-		case 'codeBlock':
-			return `${inner}\n`;
-		default:
-			return inner;
-	}
-}
-
-// GraphQL stores task/comment bodies as ProseMirror JSON. n8n create/update
-// accept plaintext, so reads convert that JSON back to text (one paragraph
-// per line), matching MCP's human-readable content field.
-export function proseMirrorJSONToPlainText(json: unknown): string {
-	if (typeof json !== 'string') {
-		return '';
-	}
-
-	if (json.trim() === '') {
-		return '';
-	}
-
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(json);
-	} catch {
-		return json;
-	}
-
-	if (!isProseMirrorNode(parsed) || parsed.type !== 'doc') {
-		return json;
-	}
-
-	return collectPlainText(parsed).replace(/\n+$/, '');
-}
-
-export function withPlainTextContent(value: IDataObject): IDataObject {
-	if (typeof value.content !== 'string') {
-		return value;
-	}
-
-	return {
-		...value,
-		content: proseMirrorJSONToPlainText(value.content),
-	};
-}
-
-export function withPlainTextDescription(value: IDataObject): IDataObject {
-	if (typeof value.description !== 'string') {
-		return value;
-	}
-
-	return {
-		...value,
-		description: proseMirrorJSONToPlainText(value.description),
-	};
+	return graphqlBodyOrThrow.call(this, response);
 }
 
 export function toPeriod(

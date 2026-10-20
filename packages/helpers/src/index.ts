@@ -20,7 +20,7 @@
 
 export { objectKeys, objectEntries, cleanFormData } from "./object";
 export { avatarColor, avatarInitial } from "./avatar";
-export { sprintf, faviconUrl, slugify } from "./string";
+export { sprintf, faviconUrl, slugify, emptyToNull, clampUtf8 } from "./string";
 export {
   getCertificateProvisioningErrorMessage,
   getCustomDomainStatusBadgeLabel,
@@ -43,7 +43,14 @@ export {
 } from "./dom";
 export { times, groupBy, isEmpty } from "./array";
 export { randomInt } from "./number";
-export { getMeasureStateLabel, measureStates } from "./measure";
+export {
+  getInternalControlStateLabel,
+  internalControlImplementationStatuses,
+  internalControlNatures,
+  internalControlOperatingModes,
+  internalControlTypes,
+  internalControlStates,
+} from "./internalControl";
 export { getRole, getRoles, peopleRoles } from "./people";
 export { certificationCategoryLabel, certifications } from "./certifications";
 export {
@@ -113,6 +120,7 @@ export {
   toDateInput,
   todayAsDateInput,
   parseDate,
+  isPastDueDate,
   type Period,
 } from "./date";
 export {
@@ -127,9 +135,14 @@ export {
 export { getTrackerTypeBadge, getTrackerSourceBadge } from "./tracker";
 export { detectSocialName } from "./socialUrl";
 export {
+  catchResultValue,
+  type CatchResult,
   type FieldRejection,
   formatError,
   graphqlErrorField,
+  graphqlErrorMessage,
+  graphqlErrorsMessage,
+  isForbiddenGraphqlError,
   toFieldErrors,
   toFieldRejections,
   type GraphQLError,

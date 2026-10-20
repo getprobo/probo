@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 
 // Copies a document URL to the clipboard and toasts on success. Shared by list
 // rows and the viewer toolbar so feedback stays in sync.
 export function useCopyDocumentLink() {
   const { t } = useTranslation("documents");
-  const toast = Toast.useToastManager();
+  const toast = useToast();
 
   return (url: string) => {
     void navigator.clipboard.writeText(url).then(

@@ -30,6 +30,7 @@ type (
 	CookieBannerCapabilities struct {
 		ResourceReporting bool `json:"resource_reporting"`
 		TCF               bool `json:"tcf"`
+		Corsless          bool `json:"corsless"`
 	}
 
 	CookieBannerCapabilitiesPatch struct {

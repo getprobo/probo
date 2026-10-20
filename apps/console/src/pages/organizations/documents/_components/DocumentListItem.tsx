@@ -30,8 +30,8 @@ import {
   Td,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -142,7 +142,7 @@ export function DocumentListItem(props: {
 
   const organizationId = useOrganizationId();
   const { t, i18n } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const [archiveDocument, isArchiving] = useMutation<DocumentListItem_archiveMutation>(archiveDocumentMutation);
   const [unarchiveDocument, isUnarchiving] = useMutation<DocumentListItem_unarchiveMutation>(unarchiveDocumentMutation);
   const confirm = useConfirm();
@@ -182,22 +182,22 @@ export function DocumentListItem(props: {
             },
             onCompleted(_, errors) {
               if (errors?.length) {
-                toast({
+                toast.add({
                   title: t("documentListItem.errors.title"),
                   description: formatError(t("documentListItem.errors.archive"), errors),
-                  variant: "error",
+                  type: "error",
                 });
               } else {
-                toast({
+                toast.add({
                   title: t("documentListItem.messages.successTitle"),
                   description: t("documentListItem.messages.archived"),
-                  variant: "success",
+                  type: "success",
                 });
               }
               resolve();
             },
             onError(error) {
-              toast({ title: t("documentListItem.errors.title"), description: error.message, variant: "error" });
+              toast.add({ title: t("documentListItem.errors.title"), description: error.message, type: "error" });
               resolve();
             },
           });
@@ -227,21 +227,21 @@ export function DocumentListItem(props: {
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("documentListItem.errors.title"),
             description: formatError(t("documentListItem.errors.unarchive"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("documentListItem.messages.successTitle"),
           description: t("documentListItem.messages.unarchived"),
-          variant: "success",
+          type: "success",
         });
       },
       onError(error) {
-        toast({ title: t("documentListItem.errors.title"), description: error.message, variant: "error" });
+        toast.add({ title: t("documentListItem.errors.title"), description: error.message, type: "error" });
       },
     });
   };

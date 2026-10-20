@@ -23,6 +23,7 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
+import { isOverdueTask, TaskDetails } from "@probo/tasks";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
@@ -36,6 +37,7 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
+import { useNavigate } from "react-router";
 
 import type { TaskDetailsPage_task$key } from "#/__generated__/core/TaskDetailsPage_task.graphql";
 import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQuery.graphql";
@@ -47,11 +49,13 @@ import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskEngagementSection } from "./_components/TaskEngagementSection";
 import { TaskNameField } from "./_components/TaskNameField";
 import { TaskPropertiesSection } from "./_components/TaskPropertiesSection";
-import { taskDetailsPage } from "./variants";
+import { taskListPath } from "./_lib/taskPath";
 
 export const taskDetailsPageFragment = graphql`
   fragment TaskDetailsPage_task on Task {
     name
+    state
+    deadline
     canDelete: permission(action: "core:task:delete")
     organization {
       id
@@ -85,6 +89,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     queryRef,
   );
   const { t } = useTranslation("organizations/tasks");
+  const navigate = useNavigate();
   const organizationId = useOrganizationId();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const taskKey = data.node?.__typename === "Task" ? data.node : null;
@@ -98,17 +103,13 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     throw new NotFoundError(t("detailsPage.notFound"));
   }
 
-  const { root, header, titleRow, title, actions, body, main } = taskDetailsPage();
-
   return (
-    <div className={root()}>
-      <div className={header()}>
-        <div className={titleRow()}>
-          <div className={title()}>
-            <TaskNameField taskKey={task} />
-          </div>
-          {task.canDelete && (
-            <div className={actions()}>
+    <>
+      <TaskDetails
+        name={<TaskNameField taskKey={task} />}
+        overdue={isOverdueTask(task.deadline, task.state)}
+        actions={task.canDelete
+          ? (
               <Dropdown>
                 <DropdownTrigger
                   render={(
@@ -131,24 +132,22 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
                   </DropdownItem>
                 </DropdownPopup>
               </Dropdown>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className={body()}>
-        <div className={main()}>
-          <TaskDescriptionSection taskKey={task} />
-          <TaskEngagementSection taskKey={task} />
-        </div>
-        <TaskPropertiesSection taskKey={task} />
-      </div>
+            )
+          : undefined}
+        description={<TaskDescriptionSection taskKey={task} />}
+        engagement={<TaskEngagementSection taskKey={task} />}
+        properties={<TaskPropertiesSection taskKey={task} />}
+      />
       {task.canDelete && (
         <TaskDeleteDialog
           taskKey={task}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
+          onDeleted={() => {
+            void navigate(taskListPath(organizationId));
+          }}
         />
       )}
-    </div>
+    </>
   );
 }

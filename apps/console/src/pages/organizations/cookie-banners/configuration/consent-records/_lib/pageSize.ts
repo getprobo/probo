@@ -18,4 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-export const CONSENT_RECORDS_PAGE_SIZE = 50;
+export const CONSENT_RECORDS_PAGE_SIZE = 15;
+
+export const CONSENT_RECORDS_DEFAULT_ORDER: {
+  field: "CREATED_AT";
+  direction: "ASC" | "DESC";
+} = {
+  field: "CREATED_AT",
+  direction: "DESC",
+};

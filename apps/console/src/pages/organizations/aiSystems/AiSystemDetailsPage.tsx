@@ -32,8 +32,8 @@ import {
   Select,
   Textarea,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -159,7 +159,7 @@ export function AiSystemDetailsPage({ queryRef }: AiSystemDetailsPageProps) {
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const updateAiSystemSchema = z.object({
     name: z.string().trim().min(1, t(`${prefix}.validation.nameRequired`)),
@@ -211,10 +211,10 @@ export function AiSystemDetailsPage({ queryRef }: AiSystemDetailsPageProps) {
             connections,
           },
         });
-        toast({
+        toast.add({
           title: t(`${prefix}.messages.success`),
           description: t(`${prefix}.messages.deleted`),
-          variant: "success",
+          type: "success",
         });
         void navigate(`/organizations/${organizationId}/registries/ai-systems`);
       },
@@ -295,10 +295,10 @@ export function AiSystemDetailsPage({ queryRef }: AiSystemDetailsPageProps) {
       },
     });
     reset(formData);
-    toast({
+    toast.add({
       title: t(`${prefix}.messages.success`),
       description: t(`${prefix}.messages.updated`),
-      variant: "success",
+      type: "success",
     });
   });
 

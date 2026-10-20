@@ -39,7 +39,7 @@ type (
 	Evidence struct {
 		ID                             gid.GID                   `db:"id"`
 		OrganizationID                 gid.GID                   `db:"organization_id"`
-		MeasureID                      gid.GID                   `db:"measure_id"`
+		InternalControlID              gid.GID                   `db:"internal_control_id"`
 		TaskID                         *gid.GID                  `db:"task_id"`
 		State                          EvidenceState             `db:"state"`
 		ReferenceID                    string                    `db:"reference_id"`
@@ -115,7 +115,7 @@ INSERT INTO
     evidences (
         tenant_id,
         id,
-        measure_id,
+        internal_control_id,
         task_id,
         reference_id,
         state,
@@ -131,7 +131,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @evidence_id,
-    @measure_id,
+    @internal_control_id,
     @task_id,
     @reference_id,
     @state,
@@ -154,7 +154,7 @@ WHERE evidences.state = 'REQUESTED';
 	args := pgx.StrictNamedArgs{
 		"tenant_id":                         scope.GetTenantID(),
 		"evidence_id":                       e.ID,
-		"measure_id":                        e.MeasureID,
+		"internal_control_id":               e.InternalControlID,
 		"task_id":                           e.TaskID,
 		"reference_id":                      e.ReferenceID,
 		"evidence_file_id":                  e.EvidenceFileId,
@@ -183,7 +183,7 @@ INSERT INTO
         tenant_id,
         id,
         organization_id,
-        measure_id,
+        internal_control_id,
         task_id,
         reference_id,
         state,
@@ -200,7 +200,7 @@ VALUES (
     @tenant_id,
     @evidence_id,
     @organization_id,
-    @measure_id,
+    @internal_control_id,
     @task_id,
     @reference_id,
     @state,
@@ -219,7 +219,7 @@ VALUES (
 		"tenant_id":                         scope.GetTenantID(),
 		"evidence_id":                       e.ID,
 		"organization_id":                   e.OrganizationID,
-		"measure_id":                        e.MeasureID,
+		"internal_control_id":               e.InternalControlID,
 		"task_id":                           e.TaskID,
 		"reference_id":                      e.ReferenceID,
 		"evidence_file_id":                  e.EvidenceFileId,
@@ -258,7 +258,7 @@ SELECT
     id,
     organization_id,
     task_id,
-    measure_id,
+    internal_control_id,
     reference_id,
     state,
     type,
@@ -297,11 +297,11 @@ LIMIT 1;
 	return nil
 }
 
-func (e *Evidences) CountByMeasureID(
+func (e *Evidences) CountByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 ) (int, error) {
 	q := `
 SELECT
@@ -310,12 +310,12 @@ FROM
 	evidences
 WHERE
 	%s
-	AND measure_id = @measure_id
+	AND internal_control_id = @internal_control_id
 	`
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	args := pgx.StrictNamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
@@ -330,18 +330,18 @@ WHERE
 	return count, nil
 }
 
-func (e *Evidences) LoadByMeasureID(
+func (e *Evidences) LoadByInternalControlID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	measureID gid.GID,
+	internalControlID gid.GID,
 	cursor *page.Cursor[EvidenceOrderField],
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
-	measure_id,
+	internal_control_id,
 	task_id,
 	reference_id,
 	state,
@@ -357,13 +357,13 @@ FROM
 	evidences
 WHERE
 	%s
-	AND measure_id = @measure_id
+	AND internal_control_id = @internal_control_id
 	AND %s
 	`
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"measure_id": measureID}
+	args := pgx.StrictNamedArgs{"internal_control_id": internalControlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -426,7 +426,7 @@ func (e *Evidences) LoadByTaskID(
 SELECT
     id,
     organization_id,
-    measure_id,
+    internal_control_id,
     task_id,
     reference_id,
     state,
@@ -544,7 +544,7 @@ SELECT
     id,
     organization_id,
     task_id,
-    measure_id,
+    internal_control_id,
     reference_id,
     state,
     type,

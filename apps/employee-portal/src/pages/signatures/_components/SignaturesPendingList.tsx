@@ -22,11 +22,9 @@ import { SignatureIcon } from "@phosphor-icons/react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { SignaturesPendingList_viewer$key } from "#/__generated__/core/SignaturesPendingList_viewer.graphql";
 import type { SignaturesPendingListRefetchQuery } from "#/__generated__/core/SignaturesPendingListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentEmpty } from "#/pages/_components/DocumentEmpty";
@@ -35,6 +33,7 @@ import { DocumentQueueSummary } from "#/pages/_components/DocumentQueueSummary";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
 import { useDocumentQueue } from "#/pages/_lib/DocumentQueueContext";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const signaturesPendingListFragment = graphql`
   fragment SignaturesPendingList_viewer on Viewer
@@ -86,7 +85,7 @@ export interface SignaturesPendingListProps {
 export function SignaturesPendingList({ viewerKey }: SignaturesPendingListProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const { advancing, startQueue } = useDocumentQueue();
   const [data, refetch] = useRefetchableFragment<
     SignaturesPendingListRefetchQuery,
@@ -103,10 +102,6 @@ export function SignaturesPendingList({ viewerKey }: SignaturesPendingListProps)
     pendingDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = pendingDocuments.totalCount;
   const emptyKey = historyCount.totalCount === 0 ? "none" : "allDone";
@@ -147,7 +142,7 @@ export function SignaturesPendingList({ viewerKey }: SignaturesPendingListProps)
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/signatures/${node.id}`}
+          to={`/${employeePortalId}/signatures/${node.id}`}
           trailing="action"
           actionLabel={t("pending.itemAction")}
         />

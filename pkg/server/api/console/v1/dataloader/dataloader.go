@@ -102,13 +102,14 @@ type (
 		Organization                               *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework                                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
 		Control                                    *dataloadgen.Loader[gid.GID, *coredata.Control]
+		ConnectorAccount                           *dataloadgen.Loader[gid.GID, *coredata.ConnectorAccount]
 		ThirdParty                                 *dataloadgen.Loader[gid.GID, *coredata.ThirdParty]
 		Document                                   *dataloadgen.Loader[gid.GID, *coredata.Document]
 		Profile                                    *dataloadgen.Loader[gid.GID, *coredata.MembershipProfile]
 		Identity                                   *dataloadgen.Loader[gid.GID, *coredata.Identity]
 		Risk                                       *dataloadgen.Loader[gid.GID, *coredata.Risk]
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
-		Measure                                    *dataloadgen.Loader[gid.GID, *coredata.Measure]
+		InternalControl                            *dataloadgen.Loader[gid.GID, *coredata.InternalControl]
 		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
 		TaskExternalLink                           *dataloadgen.Loader[gid.GID, *coredata.TaskExternalLink]
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
@@ -181,13 +182,14 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		Organization:                             dataloadgen.NewMappedLoader(f.fetchOrganizations),
 		Framework:                                dataloadgen.NewMappedLoader(f.fetchFrameworks),
 		Control:                                  dataloadgen.NewMappedLoader(f.fetchControls),
+		ConnectorAccount:                         dataloadgen.NewMappedLoader(f.fetchConnectorAccounts),
 		ThirdParty:                               dataloadgen.NewMappedLoader(f.fetchThirdParties),
 		Document:                                 dataloadgen.NewMappedLoader(f.fetchDocuments),
 		Profile:                                  dataloadgen.NewMappedLoader(f.fetchProfiles),
 		Identity:                                 dataloadgen.NewMappedLoader(f.fetchIdentities),
 		Risk:                                     dataloadgen.NewMappedLoader(f.fetchRisks),
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
-		Measure:                                  dataloadgen.NewMappedLoader(f.fetchMeasures),
+		InternalControl:                          dataloadgen.NewMappedLoader(f.fetchInternalControls),
 		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
 		TaskExternalLink:                         dataloadgen.NewMappedLoader(f.fetchTaskExternalLinks),
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
@@ -644,6 +646,22 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByFile(
 	return result, nil
 }
 
+func (f *batchFetcher) fetchConnectorAccounts(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ConnectorAccount, error) {
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	accounts, err := f.probo.Connectors.GetAccountsByIDs(ctx, scope, keys...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load connector accounts: %w", err)
+	}
+
+	result := make(map[gid.GID]*coredata.ConnectorAccount, len(accounts))
+	for _, account := range accounts {
+		result[account.ID] = account
+	}
+
+	return result, nil
+}
+
 func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Organization, error) {
 	scope := coredata.NewScopeFromObjectID(keys[0])
 
@@ -787,16 +805,16 @@ func (f *batchFetcher) fetchTreatmentProgress(
 	return progress, nil
 }
 
-func (f *batchFetcher) fetchMeasures(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Measure, error) {
+func (f *batchFetcher) fetchInternalControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.InternalControl, error) {
 	scope := coredata.NewScopeFromObjectID(keys[0])
 
-	measures, err := f.probo.Measures.GetByIDs(ctx, scope, keys...)
+	internalControls, err := f.probo.InternalControls.GetByIDs(ctx, scope, keys...)
 	if err != nil {
-		return nil, fmt.Errorf("cannot batch load measures: %w", err)
+		return nil, fmt.Errorf("cannot batch load internalControls: %w", err)
 	}
 
-	result := make(map[gid.GID]*coredata.Measure, len(measures))
-	for _, v := range measures {
+	result := make(map[gid.GID]*coredata.InternalControl, len(internalControls))
+	for _, v := range internalControls {
 		result[v.ID] = v
 	}
 

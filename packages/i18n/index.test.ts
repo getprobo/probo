@@ -20,7 +20,13 @@
 
 import { describe, expect, it } from "vitest";
 
-import { fileSize, formatDuration, humanizeSeconds } from "./index";
+import {
+  compactDateFormat,
+  deadlineDateFormat,
+  fileSize,
+  formatDuration,
+  humanizeSeconds,
+} from "./index";
 
 describe("fileSize", () => {
   it("formats byte counts with translated units", () => {
@@ -94,5 +100,71 @@ describe("formatDuration", () => {
     expect(formatDuration("PT1H30M5S", t)).toBe("1 Hour, 30 Minutes, 5 Seconds");
     expect(formatDuration("P1Y6M", t)).toBe("1 year, 6 months");
     expect(formatDuration("P1YT2H", t)).toBe("1 year, 2 Hours");
+  });
+
+  it("formats a short duration without a locale", () => {
+    const shortKeys: Record<string, string> = {
+      "duration.yearShort": "{{count}} yr",
+      "duration.monthShort": "{{count}} mo",
+      "duration.weekShort": "{{count}} wk",
+      "duration.dayShort": "{{count}} d",
+      "duration.hourShort": "{{count}} hr",
+      "duration.minShort": "{{count}} min",
+      "duration.secShort": "{{count}} sec",
+    };
+
+    function shortT(key: string, options?: { count?: number }) {
+      const template = shortKeys[key];
+      if (template == null || options?.count == null) {
+        return key;
+      }
+      return template.replaceAll("{{count}}", String(options.count));
+    }
+
+    expect(formatDuration("PT30M", shortT, { style: "short" })).toBe("30 min");
+    expect(formatDuration("PT2H", shortT, { style: "short" })).toBe("2 hr");
+    expect(formatDuration("P7D", shortT, { style: "short" })).toBe("1 wk");
+    expect(formatDuration("PT1H30M", shortT, { style: "short" })).toBe("1 hr, 30 min");
+  });
+});
+
+describe("compactDateFormat", () => {
+  const now = new Date(2026, 9, 14);
+
+  it("omits the year when it matches now", () => {
+    expect(compactDateFormat("en-US", new Date(2026, 7, 25), now)).toBe("Aug 25");
+  });
+
+  it("includes the year when it differs from now", () => {
+    expect(compactDateFormat("en-US", new Date(2025, 7, 25), now)).toBe("Aug 25, 2025");
+  });
+});
+
+describe("deadlineDateFormat", () => {
+  const now = new Date(2026, 9, 14, 15, 30);
+
+  it("uses a relative day for yesterday, today, and tomorrow", () => {
+    const relative = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
+    expect(deadlineDateFormat("en-US", new Date(2026, 9, 13, 9), now)).toBe(
+      relative.format(-1, "day"),
+    );
+    expect(deadlineDateFormat("en-US", new Date(2026, 9, 14, 23), now)).toBe(
+      relative.format(0, "day"),
+    );
+    expect(deadlineDateFormat("en-US", new Date(2026, 9, 15, 1), now)).toBe(
+      relative.format(1, "day"),
+    );
+  });
+
+  it("falls back to a compact date beyond a day", () => {
+    expect(deadlineDateFormat("en-US", new Date(2026, 7, 25), now)).toBe("Aug 25");
+    expect(deadlineDateFormat("en-US", new Date(2025, 7, 25), now)).toBe("Aug 25, 2025");
+  });
+
+  it("keeps a UTC-midnight deadline on its calendar day", () => {
+    const relative = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
+    expect(deadlineDateFormat("en-US", "2026-10-15T00:00:00Z", now)).toBe(
+      relative.format(1, "day"),
+    );
   });
 });

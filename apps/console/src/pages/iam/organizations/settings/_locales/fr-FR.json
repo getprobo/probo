@@ -11,7 +11,10 @@
       "horizontalLogo": "Logo horizontal",
       "horizontalLogoPlaceholder": "Déposer ou cliquer",
       "acceptedFiles": "JPEG, PNG, SVG ou WebP. 5 Mo maximum.",
-      "name": "Nom"
+      "name": "Nom",
+      "nameDescription": "Nom commercial affiché dans la console.",
+      "legalName": "Nom légal",
+      "legalNameDescription": "Nom légal enregistré. Les skills l'utilisent dans les documents juridiques lorsqu'il est renseigné."
     },
     "actions": {
       "save": "Enregistrer",

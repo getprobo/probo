@@ -206,7 +206,7 @@ export function CompliancePortalSlackSection({
             <div className={fade()} />
             <div className={lead()}>
               <div className={iconSlot()}>
-                <SlackLogo className="size-6" aria-hidden />
+                <SlackLogo aria-hidden />
               </div>
               <div className={copy()}>
                 <Text size={3} weight="medium" highContrast>

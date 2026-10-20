@@ -3,8 +3,15 @@
     "notFound": "Taak niet gevonden",
     "empty": "—",
     "none": "Geen",
+    "searchInternalControls": "Interne controles zoeken",
+    "noInternalControls": "Geen interne controles",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
+    "assigneeMenu": {
+      "searchPlaceholder": "Zoeken op naam of e-mail",
+      "empty": "Geen gebruikers"
+    },
+    "overdue": "Te laat",
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
@@ -12,7 +19,7 @@
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
       "linear": "Linear",
-      "measure": "Maatregel",
+      "internalControls": "Interne controles",
       "timeEstimate": "Tijdsinschatting",
       "timeEstimateUnit": "Eenheid van inschatting",
       "deadline": "Deadline",
@@ -55,11 +62,14 @@
       "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
       "cancel": "Annuleren",
-      "more": "Meer acties"
+      "more": "Meer acties",
+      "loadMoreInternalControls": "Meer laden",
+      "retry": "Opnieuw proberen"
     },
     "delete": {
       "title": "Taak verwijderen",
       "description": "Weet u zeker dat u deze taak wilt verwijderen?",
+      "loadError": "De resterende interne controles konden niet worden geladen.",
       "confirm": "Verwijderen"
     },
     "messages": {
@@ -67,20 +77,25 @@
       "deleted": "Taak succesvol verwijderd."
     },
     "linear": {
-      "connect": "Linear Sync verbinden",
-      "reconnect": "Linear Sync opnieuw verbinden",
-      "publish": "Publiceren",
+      "connect": "Linear verbinden",
+      "publish": "Aanmaken",
       "link": "Koppelen",
+      "linkTo": "Koppelen aan",
       "unlink": "Ontkoppelen",
       "team": "Linear-team",
-      "chooseTeam": "Kies een team",
-      "chooseIssue": "Kies een issue",
+      "issue": "Linear-issue",
+      "chooseTeam": "Selecteer een team",
+      "noTeam": "Geen team",
+      "chooseIssue": "Selecteer een issue",
       "newIssue": "Nieuwe issue",
-      "searchTeam": "Zoek een team",
-      "searchIssue": "Zoek een issue",
+      "searchTeam": "Zoek op naam of ID",
+      "searchIssue": "Zoek op naam of ID",
+      "linkHint": "Koppelen aan een Linear-issue",
       "noResults": "Geen resultaten",
       "loadMore": "Meer laden",
-      "published": "Taak gepubliceerd naar Linear.",
+      "retry": "Opnieuw proberen",
+      "createWithoutTeam": "Aanmaken zonder Linear-team",
+      "published": "Taak aangemaakt in Linear.",
       "linked": "Taak gekoppeld aan Linear.",
       "confirmLink": {
         "title": "Linear-issue koppelen",
@@ -88,7 +103,7 @@
       },
       "unlinked": "Linear-issue ontkoppeld.",
       "errors": {
-        "publish": "Publiceren naar Linear mislukt",
+        "publish": "Taak aanmaken in Linear mislukt",
         "link": "Koppelen aan Linear mislukt",
         "unlink": "Ontkoppelen van Linear-issue mislukt",
         "load": "Linear kon niet worden weergegeven"
@@ -148,9 +163,9 @@
         "assigned": "{{actor}} heeft {{newValue}} toegewezen",
         "reassigned": "{{actor}} heeft opnieuw toegewezen van {{oldValue}} naar {{newValue}}",
         "unassigned": "{{actor}} heeft de toewijzing van {{oldValue}} verwijderd",
-        "measureLinked": "{{actor}} heeft {{newValue}} gekoppeld",
-        "measureChanged": "{{actor}} heeft verplaatst van {{oldValue}} naar {{newValue}}",
-        "measureUnlinked": "{{actor}} heeft {{oldValue}} ontkoppeld",
+        "internalControlLinked": "{{actor}} heeft {{newValue}} gekoppeld",
+        "internalControlChanged": "{{actor}} heeft verplaatst van {{oldValue}} naar {{newValue}}",
+        "internalControlUnlinked": "{{actor}} heeft {{oldValue}} ontkoppeld",
         "deadlineSet": "{{actor}} heeft de deadline ingesteld op {{newValue}}",
         "deadlineChanged": "{{actor}} heeft de deadline gewijzigd van {{oldValue}} naar {{newValue}}",
         "deadlineRemoved": "{{actor}} heeft de deadline verwijderd",
@@ -168,8 +183,36 @@
       "description": "Koppel tools om taken te publiceren en te synchroniseren."
     },
     "linear": {
-      "name": "Linear Sync",
-      "description": "Publiceer een taak naar Linear en synchroniseer naam, inhoud, status, prioriteit, deadline en toegewezene wanneer e-mails overeenkomen."
+      "name": "Linear",
+      "description": "Publiceer een taak naar Linear en synchroniseer naam, inhoud, status, prioriteit, deadline, toegewezene en opmerkingen wanneer e-mails overeenkomen.",
+      "defaultTeam": "Standaardteam",
+      "defaultTeamDescription": "Nieuwe taken gebruiken dit Linear-team, tenzij een ander team wordt gekozen.",
+      "defaultTeamReadOnly": "Je hebt geen toestemming om het standaardteam te wijzigen.",
+      "noDefaultTeam": "Geen standaardteam",
+      "issueImport": "Nieuwe issues importeren",
+      "issueImportDescription": "Actief maakt een Probo-taak voor elke nieuwe issue in het standaardteam en houdt die gesynchroniseerd.",
+      "issueImportReadOnly": "Je hebt geen toestemming om de issue-import te wijzigen.",
+      "issueImportNeedsTeam": "Kies een standaardteam voordat je de issue-import activeert.",
+      "issueImportStatus": {
+        "active": "Actief",
+        "inactive": "Inactief"
+      },
+      "disconnect": {
+        "title": "Linear ontkoppelen?",
+        "description": "Taken worden niet meer gesynchroniseerd met Linear. Je kunt later opnieuw verbinden.",
+        "confirm": "Ontkoppelen"
+      },
+      "messages": {
+        "disconnected": "Linear ontkoppeld.",
+        "defaultTeamSaved": "Standaardteam opgeslagen.",
+        "issueImportSaved": "Issue-import opgeslagen."
+      },
+      "errors": {
+        "connect": "Verbinden van Linear mislukt",
+        "disconnect": "Ontkoppelen van Linear mislukt",
+        "defaultTeam": "Opslaan van het standaardteam mislukt",
+        "issueImport": "Opslaan van de issue-import mislukt"
+      }
     },
     "status": {
       "connected": "Verbonden",
@@ -177,7 +220,7 @@
     },
     "actions": {
       "connect": "Verbinden",
-      "reconnect": "Opnieuw verbinden",
+      "disconnect": "Ontkoppelen",
       "close": "Sluiten"
     }
   },

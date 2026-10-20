@@ -34,7 +34,7 @@ func TestAddWatermarkWithTimestamp_WatermarkTextTooLong(t *testing.T) {
 
 	watermarkText := strings.Repeat("a", MaxWatermarkTextLength+1)
 
-	pdf, err := AddWatermarkWithTimestamp(nil, "PUBLIC", watermarkText)
+	pdf, err := AddWatermarkWithTimestamp(t.Context(), nil, "PUBLIC", watermarkText)
 
 	require.Error(t, err)
 	assert.Nil(t, pdf)
@@ -56,7 +56,7 @@ func TestAddWatermarkWithTimestamp_WatermarkTextEmpty(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				pdf, err := AddWatermarkWithTimestamp(nil, "PUBLIC", watermarkText)
+				pdf, err := AddWatermarkWithTimestamp(t.Context(), nil, "PUBLIC", watermarkText)
 
 				require.Error(t, err)
 				assert.Nil(t, pdf)

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime, toDateInput } from "@probo/helpers";
+import { emptyToNull, formatDatetime, toDateInput } from "@probo/helpers";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
@@ -53,13 +53,6 @@ export interface UserUpdateSnapshot {
     start: string | null | undefined;
     end: string | null | undefined;
   } | null | undefined;
-}
-
-export function emptyToNull(value: string | null | undefined) {
-  if (value == null || value.trim() === "") {
-    return null;
-  }
-  return value;
 }
 
 export function useUpdateUser() {

@@ -35,8 +35,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 )
@@ -86,7 +86,7 @@ func newCheckService(t *testing.T, checkSettings bool, logs io.Writer, probe pro
 	return accessreview.NewService(
 		nil,
 		cipher.EncryptionKey{},
-		connector.NewConnectorRegistry(),
+		connectorprotocol.NewConnectorRegistry(),
 		registry,
 		log.NewLogger(log.WithOutput(logs)),
 	)
@@ -98,7 +98,7 @@ func checkBetterStack(t *testing.T, svc *accessreview.Service) *drivers.SettingR
 	return svc.CheckNewAPIKeyConnector(
 		context.Background(),
 		coredata.ConnectorProviderBetterStack,
-		&connector.APIKeyConnection{APIKey: "key"},
+		&connectorprotocol.APIKeyConnection{APIKey: "key"},
 		json.RawMessage(`{"team_name":"Acme"}`),
 	)
 }

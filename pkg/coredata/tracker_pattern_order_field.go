@@ -30,11 +30,10 @@ import (
 type TrackerPatternOrderField string
 
 const (
-	TrackerPatternOrderFieldCreatedAt     TrackerPatternOrderField = "CREATED_AT"
-	TrackerPatternOrderFieldName          TrackerPatternOrderField = "NAME"
-	TrackerPatternOrderFieldLastMatchedAt TrackerPatternOrderField = "LAST_MATCHED_AT"
-	TrackerPatternOrderFieldUpdatedAt     TrackerPatternOrderField = "UPDATED_AT"
-	TrackerPatternOrderFieldSource        TrackerPatternOrderField = "SOURCE"
+	TrackerPatternOrderFieldCreatedAt TrackerPatternOrderField = "CREATED_AT"
+	TrackerPatternOrderFieldName      TrackerPatternOrderField = "NAME"
+	TrackerPatternOrderFieldUpdatedAt TrackerPatternOrderField = "UPDATED_AT"
+	TrackerPatternOrderFieldSource    TrackerPatternOrderField = "SOURCE"
 )
 
 var (
@@ -48,7 +47,6 @@ func TrackerPatternOrderFields() []TrackerPatternOrderField {
 	return []TrackerPatternOrderField{
 		TrackerPatternOrderFieldCreatedAt,
 		TrackerPatternOrderFieldName,
-		TrackerPatternOrderFieldLastMatchedAt,
 		TrackerPatternOrderFieldUpdatedAt,
 		TrackerPatternOrderFieldSource,
 	}
@@ -76,8 +74,6 @@ func (p TrackerPatternOrderField) Column() string {
 		return "created_at"
 	case TrackerPatternOrderFieldName:
 		return "display_name"
-	case TrackerPatternOrderFieldLastMatchedAt:
-		return "COALESCE(last_matched_at, '0001-01-01T00:00:00Z'::timestamptz)"
 	case TrackerPatternOrderFieldUpdatedAt:
 		return "updated_at"
 	case TrackerPatternOrderFieldSource:

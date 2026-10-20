@@ -32,11 +32,13 @@ var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	ScopeV1ITAMRead: {
 		ActionDeviceList,
 		ActionDeviceGet,
+		ActionDeviceDownload,
 		ActionDevicePostureList,
 	},
 	ScopeV1ITAM: {
 		ActionDeviceList,
 		ActionDeviceGet,
+		ActionDeviceDownload,
 		ActionDevicePostureList,
 		ActionDeviceCreate,
 		ActionDeviceEnroll,

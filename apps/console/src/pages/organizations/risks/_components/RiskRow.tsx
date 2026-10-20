@@ -24,13 +24,12 @@ import {
   DropdownItem,
   IconPencil,
   IconTrashCan,
-  SeverityBadge,
   Td,
   Tr,
   useConfirm,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
 
@@ -46,13 +45,6 @@ const riskRowFragment = graphql`
     referenceId
     name
     category
-    treatment
-    owner {
-      id
-      fullName
-    }
-    inherentRiskScore
-    residualRiskScore
     riskAnalysisHistoryCount
     canUpdate: permission(action: "risk-management:risk:update")
     canDelete: permission(action: "risk-management:risk:delete")
@@ -83,7 +75,7 @@ export function RiskRow(props: RiskRowProps) {
   const risk = useFragment(riskRowFragment, props.riskKey);
   const [deleteRisk] = useMutation<RiskRowDeleteMutation>(deleteRiskMutation);
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
   const formDialogRef = useDialogRef();
 
   const onDelete = () => {
@@ -99,13 +91,13 @@ export function RiskRow(props: RiskRowProps) {
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("riskRow.messages.error"),
                 description: formatError(
                   t("riskRow.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },
@@ -126,7 +118,7 @@ export function RiskRow(props: RiskRowProps) {
     );
   };
 
-  const riskUrl = `/organizations/${organizationId}/risk-management/risks/${risk.id}/overview`;
+  const riskUrl = `/organizations/${organizationId}/risk-management/risks/${risk.id}/treatment-plans`;
 
   return (
     <>
@@ -141,22 +133,6 @@ export function RiskRow(props: RiskRowProps) {
         </Td>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
-        <Td>
-          {risk.treatment
-            ? t(`riskRow.treatments.${risk.treatment.toLowerCase()}`)
-            : "—"}
-        </Td>
-        <Td>
-          {risk.inherentRiskScore != null
-            ? <SeverityBadge score={risk.inherentRiskScore} />
-            : "—"}
-        </Td>
-        <Td>
-          {risk.residualRiskScore != null
-            ? <SeverityBadge score={risk.residualRiskScore} />
-            : "—"}
-        </Td>
-        <Td>{risk.owner?.fullName || t("riskRow.unassigned")}</Td>
         {props.hasAnyAction && (
           <Td noLink className="text-end">
             <ActionDropdown>

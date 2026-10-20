@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { catchResultValue } from "@probo/helpers";
 import { Badge, Button, IconCrossLargeX, useConfirm } from "@probo/ui";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -31,6 +32,20 @@ import { DocumentApprovalListItem } from "./DocumentApprovalListItem";
 const versionFragment = graphql`
   fragment DocumentApprovalList_versionFragment on DocumentVersion {
     id
+    document {
+      organization {
+        employeePortals(
+          first: 1
+          orderBy: { field: CREATED_AT, direction: ASC }
+        ) @catch(to: RESULT) {
+          edges {
+            node {
+              id
+            }
+          }
+        }
+      }
+    }
     approvalQuorums(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
       edges {
         node {
@@ -77,6 +92,10 @@ export function DocumentApprovalList(props: {
   const { t } = useTranslation();
 
   const version = useFragment(versionFragment, versionFragmentRef);
+  const employeePortalId = catchResultValue(
+    version.document.organization.employeePortals,
+    "cannot list employee portals",
+  )?.edges[0]?.node.id ?? null;
 
   const lastQuorum = version.approvalQuorums?.edges?.[0]?.node ?? null;
   const isPending = lastQuorum?.status === "PENDING";
@@ -158,6 +177,7 @@ export function DocumentApprovalList(props: {
                 <DocumentApprovalListItem
                   key={node.id}
                   fragmentRef={node}
+                  employeePortalId={employeePortalId}
                 />
               ))}
             </div>

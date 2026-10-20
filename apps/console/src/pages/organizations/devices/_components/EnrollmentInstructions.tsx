@@ -18,142 +18,84 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Button, Card, useToast } from "@probo/ui";
-import { Trans, useTranslation } from "react-i18next";
+import { CopyIcon } from "@phosphor-icons/react";
+import { Card } from "@probo/ui/src/v2/Card/Card";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Code } from "@probo/ui/src/v2/typography/Code";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useTranslation } from "react-i18next";
 
-const AGENT_RELEASES_URL
-  = "https://github.com/getprobo/probo/releases?q=probo-agent";
-
-const UNIX_DOWNLOAD_COMMAND = `curl -fsSL "https://github.com/getprobo/probo/releases/download/probo-agent/vX.Y.Z/probo-agent_OS_ARCH.tar.gz" -o /tmp/probo-agent.tar.gz
-tar -xzf /tmp/probo-agent.tar.gz -C /tmp
-sudo install -m 0755 /tmp/probo-agent_OS_ARCH/probo-agent /usr/local/bin/probo-agent
-rm -rf /tmp/probo-agent.tar.gz /tmp/probo-agent_OS_ARCH`;
-
-const WINDOWS_DOWNLOAD_COMMAND = `$zip = "$env:TEMP\\probo-agent.zip"
-$dst = "$env:ProgramFiles\\Probo"
-Invoke-WebRequest -Uri "https://github.com/getprobo/probo/releases/download/probo-agent/vX.Y.Z/probo-agent_Windows_ARCH.zip" -OutFile $zip
-Expand-Archive -Path $zip -DestinationPath $env:TEMP -Force
-New-Item -ItemType Directory -Force -Path $dst | Out-Null
-Move-Item -Force "$env:TEMP\\probo-agent_Windows_ARCH\\probo-agent.exe" "$dst\\probo-agent.exe"
-Remove-Item -Recurse -Force $zip, "$env:TEMP\\probo-agent_Windows_ARCH"`;
+import { enrollment } from "./variants";
 
 interface EnrollmentInstructionsProps {
   enrollmentToken: string;
-  serverUrl: string;
 }
 
 export function EnrollmentInstructions(
-  { enrollmentToken, serverUrl }: EnrollmentInstructionsProps,
+  { enrollmentToken }: EnrollmentInstructionsProps,
 ) {
-  const { t } = useTranslation();
-
-  const downloadComment = `# ${t("deviceEnrollment.token.downloadStep")}`;
-  const enrollComment = `# ${t("deviceEnrollment.token.enrollStep")}`;
-
-  const unixDownloadCommand = `${downloadComment}
-${UNIX_DOWNLOAD_COMMAND}`;
-
-  const unixInstallCommand = `${enrollComment}
-sudo /usr/local/bin/probo-agent install \\
-  --server ${serverUrl} \\
-  --enrollment-token '${enrollmentToken}'`;
-
-  const windowsDownloadCommand = `${downloadComment}
-${WINDOWS_DOWNLOAD_COMMAND}`;
-
-  const windowsInstallCommand = `${enrollComment}
-& "$env:ProgramFiles\\Probo\\probo-agent.exe" install \`
-  --server ${serverUrl} \`
-  --enrollment-token '${enrollmentToken}'`;
+  const { t } = useTranslation("organizations/devices");
+  const { root } = enrollment();
 
   return (
-    <div className="space-y-4">
-      <h2 className="font-medium">{t("deviceEnrollment.token.title")}</h2>
-      <p className="text-sm text-txt-secondary">
-        {t("deviceEnrollment.token.description")}
-      </p>
-      <CopyableCodeBlock code={enrollmentToken} />
-
-      <details>
-        <summary className="cursor-pointer text-sm font-medium">
-          {t("deviceEnrollment.token.manualInstall")}
-        </summary>
-
-        <div className="mt-4 space-y-4">
-          <p className="text-sm text-txt-secondary">
-            <Trans
-              i18nKey="deviceEnrollment.token.releaseListHint"
-              components={{
-                link: (
-                  <a
-                    href={AGENT_RELEASES_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-txt-primary underline hover:no-underline"
-                  />
-                ),
-              }}
-            />
-          </p>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">
-              {t("deviceEnrollment.token.installUnix")}
-            </h3>
-            <CopyableCodeBlock code={unixDownloadCommand} />
-            <CopyableCodeBlock code={unixInstallCommand} />
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">
-              {t("deviceEnrollment.token.installWindows")}
-            </h3>
-            <CopyableCodeBlock code={windowsDownloadCommand} />
-            <CopyableCodeBlock code={windowsInstallCommand} />
-          </div>
-
-          <p className="text-xs text-txt-secondary">
-            {t("deviceEnrollment.token.securityNotice")}
-          </p>
-        </div>
-      </details>
+    <div className={root()}>
+      <Heading level={2} size={3} weight="medium">
+        {t("deviceEnrollment.token.title")}
+      </Heading>
+      <Text size={2} color="faint">{t("deviceEnrollment.token.description")}</Text>
+      <EnrollmentToken token={enrollmentToken} />
     </div>
   );
 }
 
-function CopyableCodeBlock({ code }: { code: string }) {
-  const { t } = useTranslation();
-  const { toast } = useToast();
+function EnrollmentToken({ token }: { token: string }) {
+  const { t } = useTranslation("organizations/devices");
+  const toast = useToast();
+  const { copyField, copyValue, copyCode } = enrollment();
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code).then(
+  function handleCopy() {
+    const onCopyFailure = () => {
+      toast.add({
+        title: t("common.error"),
+        description: t("deviceEnrollment.errors.copyToClipboard"),
+        type: "error",
+      });
+    };
+    if (!navigator.clipboard?.writeText) {
+      onCopyFailure();
+      return;
+    }
+    navigator.clipboard.writeText(token).then(
       () => {
-        toast({
+        toast.add({
           title: t("common.messages.copied"),
-          description: t("common.messages.copiedToClipboard"),
-          variant: "success",
+          type: "success",
         });
       },
-      () => {
-        toast({
-          title: t("common.error"),
-          description: t("deviceEnrollment.errors.copyToClipboard"),
-          variant: "error",
-        });
-      },
+      onCopyFailure,
     );
-  };
+  }
 
   return (
-    <Card className="rounded-lg border">
-      <div className="flex items-center justify-end border-b border-border-low px-1 py-1">
-        <Button type="button" variant="secondary" onClick={handleCopy}>
-          {t("common.actions.copy")}
-        </Button>
+    <Card size={2} variant="soft">
+      <div className={copyField()}>
+        <Text size={1} color="faint">{t("deviceEnrollment.token.label")}</Text>
+        <div className={copyValue()}>
+          <Code size={2} className={copyCode()}>{token}</Code>
+          <IconButton
+            type="button"
+            size={1}
+            variant="soft"
+            color="neutral"
+            aria-label={t("common.actions.copy")}
+            onClick={handleCopy}
+          >
+            <CopyIcon />
+          </IconButton>
+        </div>
       </div>
-      <pre className="overflow-x-auto whitespace-pre p-4 text-sm font-mono rounded-b-lg text-invert bg-accent">
-        <code>{code}</code>
-      </pre>
     </Card>
   );
 }

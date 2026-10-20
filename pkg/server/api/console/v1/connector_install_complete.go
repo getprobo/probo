@@ -32,7 +32,8 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -174,7 +175,7 @@ func handleConnectorInstallComplete(
 			return
 		}
 
-		payload, err := connector.ValidateInstallState(installStateKey, state)
+		payload, err := connectorprotocol.ValidateInstallState(installStateKey, state)
 		if err != nil {
 			// Warn, not Error: an expired state is an ordinary customer outcome.
 			// The query carries the state and the vendor's proof, so only the
@@ -268,7 +269,7 @@ func handleConnectorInstallComplete(
 		// prefetch cannot run a second verification in parallel with this one.
 		processingToken, err := proboSvc.Connectors.ClaimInstallState(ctx, scope, organizationID, state)
 		if err != nil {
-			if errors.Is(err, probo.ErrInstallStateAlreadyUsed) {
+			if errors.Is(err, connector.ErrInstallStateAlreadyUsed) {
 				redirectInstallOutcome(w, r, logger, baseURL, safeRedirect, organizationID, installMessageAlreadyUsed)
 				return
 			}
@@ -385,12 +386,13 @@ func handleConnectorInstallComplete(
 		cnnctr, err := proboSvc.Connectors.CompleteInstall(
 			claimedCtx,
 			scope,
-			probo.CompleteConnectorInstallRequest{
+			connector.CompleteConnectorInstallRequest{
 				OrganizationID:  organizationID,
 				Provider:        p,
 				SettingsKey:     reg.Install.SettingsResourceKey,
 				ResourceID:      resourceID,
 				Connection:      providerRegistry.NewAPIKeyConnection(p, ""),
+				Name:            payload.Data.Name,
 				State:           state,
 				ProcessingToken: processingToken,
 			},
@@ -409,7 +411,7 @@ func handleConnectorInstallComplete(
 		// from a callback parameter: this flow has one entry point, so there is
 		// no continue URL to honour and none to validate.
 		redirectURL, err := baseURL.
-			WithPath("/organizations/"+organizationID.String()+"/access-reviews/connections").
+			WithPath("/organizations/"+organizationID.String()+"/settings/integrations").
 			WithQuery("connector_id", cnnctr.ID.String()).
 			WithQuery("provider", string(p)).
 			String()
@@ -424,8 +426,8 @@ func handleConnectorInstallComplete(
 	}
 }
 
-// redirectInstallOutcome sends an authorized customer back to their connections
-// page carrying a human-readable failure, rather than answering a top-level
+// redirectInstallOutcome sends an authorized customer back to Settings
+// carrying a human-readable failure, rather than answering a top-level
 // browser navigation with a JSON error body. It is only reachable once the
 // identity and the organization are established; the pre-authorization branches
 // render instead, because a redirect there would tell an anonymous prober which
@@ -440,7 +442,7 @@ func redirectInstallOutcome(
 	message string,
 ) {
 	redirectURL, err := baseURL.
-		WithPath("/organizations/"+organizationID.String()+"/access-reviews/connections").
+		WithPath("/organizations/"+organizationID.String()+"/settings/integrations").
 		WithQuery("error", message).
 		String()
 	if err != nil {

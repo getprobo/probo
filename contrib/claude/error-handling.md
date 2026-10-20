@@ -124,7 +124,7 @@ Boundaries will not catch a rejected promise in a submit handler. Wrap the risky
 // Good — async event handler guards itself; the boundary above can't help here
 function PublishButton() {
   const { t } = useTranslation();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const [isPublishing, setIsPublishing] = useState(false);
 
   async function onPublish() {
@@ -166,15 +166,17 @@ error (with a `path`). To contain such a failure to the component that reads the
 bad field — instead of collapsing the whole page — two pieces cooperate:
 
 1. **The fetch layer only throws request-level errors.** A request-level error
-   has **no `path`** (auth, malformed request, transport) and applies to the
-   whole operation, so it throws and propagates to the nearest boundary.
-   Field-level errors (those with a `path`) are **left in the response** so Relay
-   can attribute them to the reading field.
+   has **no `path`** (any operation), or a path of **length 1 on a mutation**
+   (the mutation root — the whole operation is that one field). Those throw
+   and propagate to the nearest boundary. Query and subscription field errors
+   (including a root `@catch` field such as `ssoLoginURL` or `node`) are
+   **left in the response** so Relay can attribute them to the reading field.
 
-   The compliance-portal wires this in its own
-   [`apps/compliance-portal/src/lib/relay/fetch.ts`](../../apps/compliance-portal/src/lib/relay/fetch.ts)
-   (it does **not** use `@probo/relay`'s `makeFetchQuery`, which throws for the
-   whole operation on any known code).
+   [`packages/relay/src/fetch.ts`](../../packages/relay/src/fetch.ts)
+   (`makeFetchQuery`) throws only request-level errors. Session gates
+   (`UNAUTHENTICATED`, `FULL_NAME_REQUIRED`, `ASSUMPTION_REQUIRED`,
+   `NDA_SIGNATURE_REQUIRED`, `MEMBERSHIP_REQUIRED`) still throw even when they
+   have a path, because the backend attaches a resolver path to those.
 
 2. **`@throwOnFieldError` on the query/fragment that reads the field.** With the
    directive set, a field error throws **at the read site** (`usePreloadedQuery`

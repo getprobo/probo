@@ -12,7 +12,8 @@
 // OTHER TORTIOUS ACTION, ARISING FROM, OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-import { Card, Field, useToast } from "@probo/ui";
+import { Card, Field } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { FocusEvent } from "react";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -67,7 +68,7 @@ export function CompliancePortalProfileSection({
   compliancePortalRef: CompliancePortalProfileSection_compliancePortalFragment$key;
 }) {
   const { t } = useTranslation("organizations/compliance-portals");
-  const { toast } = useToast();
+  const toast = useToast();
 
   const compliancePortal = useFragment(
     compliancePortalFragment,
@@ -146,10 +147,10 @@ export function CompliancePortalProfileSection({
     const validation = fieldSchemas[field];
     if (validation != null && next != null && !validation.schema.safeParse(next).success) {
       event.currentTarget.value = current ?? "";
-      toast({
+      toast.add({
         title: validation.message,
         description: "",
-        variant: "error",
+        type: "error",
       });
       return;
     }

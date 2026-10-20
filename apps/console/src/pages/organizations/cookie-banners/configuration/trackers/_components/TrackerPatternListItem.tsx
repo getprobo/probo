@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, InfoIcon, TrashIcon } from "@phosphor-icons/react";
-import { dateTimeFormat, humanizeSeconds } from "@probo/i18n";
+import { humanizeSeconds } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -55,6 +55,7 @@ import { cookieSourceBadges, trackerTypeBadges } from "../_lib/trackerBadges";
 
 import { DeleteTrackerPatternDialog } from "./DeleteTrackerPatternDialog";
 import { TrackerAttributionLabel } from "./TrackerAttributionLabel";
+import { TrackerTypeBadge } from "./TrackerTypeBadge";
 
 const trackerPatternFragment = graphql`
   fragment TrackerPatternListItem_trackerPattern on TrackerPattern {
@@ -65,7 +66,6 @@ const trackerPatternFragment = graphql`
     description
     maxAgeSeconds
     excluded
-    lastMatchedAt
     cookieCategory {
       id
       name
@@ -140,15 +140,16 @@ export function TrackerPatternListItem({
   onMoved,
   onRemoved,
 }: TrackerPatternListItemProps) {
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
   const organizationId = useOrganizationId();
   const location = useLocation();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const pattern = useFragment(trackerPatternFragment, patternKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { name, heading, title, info, detail, date, actions } = trackerPatternListItem({
-    excluded: pattern.excluded,
-  });
+  const { name, heading, link, title, type, info, detail, date, actions, optional }
+    = trackerPatternListItem({
+      excluded: pattern.excluded,
+    });
   const description = pattern.description.trim();
 
   const [movePattern] = useMutation<TrackerPatternListItemMoveMutation>(
@@ -196,7 +197,12 @@ export function TrackerPatternListItem({
           excluded: !pattern.excluded,
         },
       },
-    }).catch(() => undefined);
+    }).then(
+      () => {
+        onMoved();
+      },
+      () => undefined,
+    );
   }
 
   const typeBadge = trackerTypeBadges[pattern.trackerType];
@@ -215,18 +221,18 @@ export function TrackerPatternListItem({
   return (
     <>
       <TableRow align="center" interactive>
-        <TableRowHeaderCell>
+        <TableRowHeaderCell overflow="break">
           <div className={name()}>
             <div className={heading()}>
               {typeBadge != null && (
-                <Badge
-                  variant={typeBadge.variant}
-                  color={typeBadge.color}
-                >
-                  {t(`trackerPatternRow.types.${typeBadge.labelKey}`)}
-                </Badge>
+                <span className={type()}>
+                  <TrackerTypeBadge trackerType={pattern.trackerType} />
+                </span>
               )}
-              <TableLink to={{ pathname: detailPath, search: location.search }}>
+              <TableLink
+                to={{ pathname: detailPath, search: location.search }}
+                className={link()}
+              >
                 <Text size={2} weight="medium" highContrast className={title()}>
                   {pattern.displayName}
                 </Text>
@@ -265,15 +271,17 @@ export function TrackerPatternListItem({
           </div>
         </TableRowHeaderCell>
         <TableCell>
-          {pattern.commonThirdParty
-            ? (
-                <Text size={2} highContrast>
-                  {pattern.commonThirdParty.name}
-                </Text>
-              )
-            : <TrackerAttributionLabel attribution={pattern.attribution} />}
+          {pattern.source === "EXTENSION"
+            ? <TrackerAttributionLabel attribution="NOT_ATTRIBUTABLE" />
+            : pattern.commonThirdParty
+              ? (
+                  <Text size={2} highContrast>
+                    {pattern.commonThirdParty.name}
+                  </Text>
+                )
+              : <TrackerAttributionLabel attribution={pattern.attribution} />}
         </TableCell>
-        <TableCell>
+        <TableCell className={optional()}>
           {sourceBadge == null
             ? <Text size={2} color="faint">-</Text>
             : (
@@ -303,19 +311,8 @@ export function TrackerPatternListItem({
                 </Text>
               </TableCell>
             )}
-        <TableCell>
+        <TableCell className={optional()}>
           <Text size={2} className={date()}>{duration}</Text>
-        </TableCell>
-        <TableCell>
-          {pattern.lastMatchedAt == null
-            ? <Text size={2} color="faint">-</Text>
-            : (
-                <time dateTime={pattern.lastMatchedAt} className={date()}>
-                  <Text size={2}>
-                    {dateTimeFormat(i18n.language, pattern.lastMatchedAt)}
-                  </Text>
-                </time>
-              )}
         </TableCell>
         <TableCell interactive={pattern.canUpdate || pattern.canDelete ? true : undefined} justify="end">
           {(pattern.canUpdate || pattern.canDelete) && (

@@ -23,7 +23,16 @@ import { useTranslation } from "react-i18next";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NavPanelItem } from "#/pages/iam/organizations/_components/shell/NavPanelItem";
 
-import { cookieBannerPath, cookieBannerTCFPath } from "../_lib/cookieBannerPaths";
+import {
+  cookieBannerInstallPath,
+  cookieBannerPath,
+  cookieBannerResourcesPath,
+  cookieBannerSettingsPath,
+  cookieBannerTCFPath,
+  cookieBannerTrackersPath,
+  cookieBannerTrailPath,
+  cookieBannerTranslationsPath,
+} from "../_lib/cookieBannerPaths";
 
 export interface CookieBannerNavItemsProps {
   cookieBannerId: string;
@@ -33,17 +42,34 @@ export interface CookieBannerNavItemsProps {
 export function CookieBannerNavItems({ cookieBannerId, tcf }: CookieBannerNavItemsProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
-  const prefix = cookieBannerPath(organizationId, cookieBannerId);
+  const consentRecordsPrefix = `${cookieBannerPath(organizationId, cookieBannerId)}/consent-records`;
 
   return (
     <>
-      <NavPanelItem label={t("nav.cookieBannersConfigure")} to={`${prefix}/configure`} />
-      <NavPanelItem label={t("nav.cookieBannersTrackers")} to={`${prefix}/trackers`} />
-      <NavPanelItem label={t("nav.cookieBannersResources")} to={`${prefix}/resources`} />
+      <NavPanelItem
+        label={t("nav.cookieBannersSettings")}
+        to={cookieBannerSettingsPath(organizationId, cookieBannerId)}
+      />
+      <NavPanelItem
+        label={t("nav.cookieBannersInstall")}
+        to={cookieBannerInstallPath(organizationId, cookieBannerId)}
+      />
+      <NavPanelItem
+        label={t("nav.cookieBannersTranslations")}
+        to={cookieBannerTranslationsPath(organizationId, cookieBannerId)}
+      />
+      <NavPanelItem
+        label={t("nav.cookieBannersTrackers")}
+        to={cookieBannerTrackersPath(organizationId, cookieBannerId)}
+      />
+      <NavPanelItem
+        label={t("nav.cookieBannersResources")}
+        to={cookieBannerResourcesPath(organizationId, cookieBannerId)}
+      />
       <NavPanelItem
         label={t("nav.cookieBannersTrail")}
-        to={`${prefix}/trail`}
-        alsoActiveFor={[`${prefix}/consent-records`]}
+        to={cookieBannerTrailPath(organizationId, cookieBannerId)}
+        alsoActiveFor={[consentRecordsPrefix]}
       />
       {tcf && (
         <NavPanelItem

@@ -421,7 +421,7 @@ func CreateControl(c *testutil.Client, frameworkID string, attrs ...Attrs) strin
 	return result.CreateControl.ControlEdge.Node.ID
 }
 
-func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
+func CreateInternalControl(c *testutil.Client, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -430,9 +430,9 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	}
 
 	const query = `
-		mutation($input: CreateMeasureInput!) {
-			createMeasure(input: $input) {
-				measureEdge {
+		mutation($input: CreateInternalControlInput!) {
+			createInternalControl(input: $input) {
+				internalControlEdge {
 					node { id }
 				}
 			}
@@ -441,7 +441,7 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"name":           a.getString("name", SafeName("Measure")),
+		"name":           a.getString("name", SafeName("Internal control")),
 		"category":       a.getString("category", "POLICY"),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
@@ -449,22 +449,22 @@ func CreateMeasure(c *testutil.Client, attrs ...Attrs) string {
 	}
 
 	var result struct {
-		CreateMeasure struct {
-			MeasureEdge struct {
+		CreateInternalControl struct {
+			InternalControlEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"measureEdge"`
-		} `json:"createMeasure"`
+			} `json:"internalControlEdge"`
+		} `json:"createInternalControl"`
 	}
 
 	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createMeasure mutation failed")
+	require.NoError(c.T, err, "createInternalControl mutation failed")
 
-	return result.CreateMeasure.MeasureEdge.Node.ID
+	return result.CreateInternalControl.InternalControlEdge.Node.ID
 }
 
-func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
+func CreateTask(c *testutil.Client, internalControlID *string, attrs ...Attrs) string {
 	c.T.Helper()
 
 	var a Attrs
@@ -487,8 +487,8 @@ func CreateTask(c *testutil.Client, measureID *string, attrs ...Attrs) string {
 		"name":           a.getString("name", SafeName("Task")),
 		"priority":       a.getString("priority", "MEDIUM"),
 	}
-	if measureID != nil {
-		input["measureId"] = *measureID
+	if internalControlID != nil {
+		input["internalControlIds"] = []string{*internalControlID}
 	}
 
 	if content := a.getStringPtr("content"); content != nil {
@@ -530,12 +530,9 @@ func CreateRisk(c *testutil.Client, attrs ...Attrs) string {
 	`
 
 	input := map[string]any{
-		"organizationId":     c.GetOrganizationID().String(),
-		"name":               a.getString("name", SafeName("Risk")),
-		"category":           a.getString("category", "SECURITY"),
-		"treatment":          a.getString("treatment", "MITIGATED"),
-		"inherentLikelihood": a.getInt("inherentLikelihood", 2),
-		"inherentImpact":     a.getInt("inherentImpact", 2),
+		"organizationId": c.GetOrganizationID().String(),
+		"name":           a.getString("name", SafeName("Risk")),
+		"category":       a.getString("category", "SECURITY"),
 	}
 	if desc := a.getStringPtr("description"); desc != nil {
 		input["description"] = *desc
@@ -662,46 +659,46 @@ func (b *ControlBuilder) Create() string {
 	return CreateControl(b.client, b.frameworkID, b.attrs)
 }
 
-type MeasureBuilder struct {
+type InternalControlBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
 }
 
-func NewMeasure(c *testutil.Client) *MeasureBuilder {
-	return &MeasureBuilder{client: c, attrs: Attrs{}}
+func NewInternalControl(c *testutil.Client) *InternalControlBuilder {
+	return &InternalControlBuilder{client: c, attrs: Attrs{}}
 }
 
-func (b *MeasureBuilder) WithName(name string) *MeasureBuilder {
+func (b *InternalControlBuilder) WithName(name string) *InternalControlBuilder {
 	b.attrs["name"] = name
 	return b
 }
 
-func (b *MeasureBuilder) WithDescription(desc string) *MeasureBuilder {
+func (b *InternalControlBuilder) WithDescription(desc string) *InternalControlBuilder {
 	b.attrs["description"] = desc
 	return b
 }
 
-func (b *MeasureBuilder) WithCategory(category string) *MeasureBuilder {
+func (b *InternalControlBuilder) WithCategory(category string) *InternalControlBuilder {
 	b.attrs["category"] = category
 	return b
 }
 
-func (b *MeasureBuilder) Create() string {
-	return CreateMeasure(b.client, b.attrs)
+func (b *InternalControlBuilder) Create() string {
+	return CreateInternalControl(b.client, b.attrs)
 }
 
 type TaskBuilder struct {
-	client    *testutil.Client
-	measureID *string
-	attrs     Attrs
+	client            *testutil.Client
+	internalControlID *string
+	attrs             Attrs
 }
 
-func NewTask(c *testutil.Client, measureID string) *TaskBuilder {
-	return &TaskBuilder{client: c, measureID: &measureID, attrs: Attrs{}}
+func NewTask(c *testutil.Client, internalControlID string) *TaskBuilder {
+	return &TaskBuilder{client: c, internalControlID: &internalControlID, attrs: Attrs{}}
 }
 
-func NewTaskWithoutMeasure(c *testutil.Client) *TaskBuilder {
-	return &TaskBuilder{client: c, measureID: nil, attrs: Attrs{}}
+func NewTaskWithoutInternalControl(c *testutil.Client) *TaskBuilder {
+	return &TaskBuilder{client: c, internalControlID: nil, attrs: Attrs{}}
 }
 
 func (b *TaskBuilder) WithName(name string) *TaskBuilder {
@@ -715,7 +712,7 @@ func (b *TaskBuilder) WithContent(content string) *TaskBuilder {
 }
 
 func (b *TaskBuilder) Create() string {
-	return CreateTask(b.client, b.measureID, b.attrs)
+	return CreateTask(b.client, b.internalControlID, b.attrs)
 }
 
 func CreateTaskComment(c *testutil.Client, taskID string, attrs ...Attrs) string {
@@ -809,21 +806,6 @@ func (b *RiskBuilder) WithCategory(category string) *RiskBuilder {
 	return b
 }
 
-func (b *RiskBuilder) WithTreatment(treatment string) *RiskBuilder {
-	b.attrs["treatment"] = treatment
-	return b
-}
-
-func (b *RiskBuilder) WithLikelihood(likelihood int) *RiskBuilder {
-	b.attrs["inherentLikelihood"] = likelihood
-	return b
-}
-
-func (b *RiskBuilder) WithImpact(impact int) *RiskBuilder {
-	b.attrs["inherentImpact"] = impact
-	return b
-}
-
 func (b *RiskBuilder) Create() string {
 	return CreateRisk(b.client, b.attrs)
 }
@@ -848,7 +830,7 @@ func CreateAudit(c *testutil.Client, frameworkID string, attrs ...Attrs) string 
 
 	input := map[string]any{
 		"organizationId": c.GetOrganizationID().String(),
-		"frameworkId":    frameworkID,
+		"frameworkIds":   []string{frameworkID},
 		"name":           a.getString("name", SafeName("Audit")),
 	}
 	if state := a.getStringPtr("state"); state != nil {
@@ -1154,45 +1136,54 @@ func CreateAccessReviewSource(c *testutil.Client, organizationID string, attrs .
 	}
 
 	const query = `
-		mutation($input: CreateAccessReviewSourceInput!) {
-			createAccessReviewSource(input: $input) {
-				accessReviewSourceEdge {
-					node { id }
+		mutation($input: CreateAccessReviewSourcesInput!) {
+			createAccessReviewSources(input: $input) {
+				results {
+					accessReviewSourceEdge {
+						node { id }
+					}
 				}
 			}
 		}
 	`
 
-	input := map[string]any{
-		"organizationId": organizationID,
-		"name":           a.getString("name", SafeName("AccessReviewSource")),
+	source := map[string]any{
+		"name": a.getString("name", SafeName("AccessReviewSource")),
 	}
 	if csvData := a.getStringPtr("csvData"); csvData != nil {
-		input["csvData"] = *csvData
+		source["csvData"] = *csvData
 	}
 
 	if connectorID := a.getStringPtr("connectorId"); connectorID != nil {
-		input["connectorId"] = *connectorID
+		source["connectorId"] = *connectorID
 	}
 
 	if connectorAccountID := a.getStringPtr("connectorAccountId"); connectorAccountID != nil {
-		input["connectorAccountId"] = *connectorAccountID
+		source["connectorAccountId"] = *connectorAccountID
 	}
 
 	var result struct {
-		CreateAccessReviewSource struct {
-			AccessReviewSourceEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"accessReviewSourceEdge"`
-		} `json:"createAccessReviewSource"`
+		CreateAccessReviewSources struct {
+			Results []struct {
+				AccessReviewSourceEdge struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"accessReviewSourceEdge"`
+			} `json:"results"`
+		} `json:"createAccessReviewSources"`
 	}
 
-	err := c.Execute(query, map[string]any{"input": input}, &result)
-	require.NoError(c.T, err, "createAccessReviewSource mutation failed")
+	err := c.Execute(query, map[string]any{
+		"input": map[string]any{
+			"organizationId": organizationID,
+			"sources":        []any{source},
+		},
+	}, &result)
+	require.NoError(c.T, err, "createAccessReviewSources mutation failed")
+	require.Len(c.T, result.CreateAccessReviewSources.Results, 1)
 
-	return result.CreateAccessReviewSource.AccessReviewSourceEdge.Node.ID
+	return result.CreateAccessReviewSources.Results[0].AccessReviewSourceEdge.Node.ID
 }
 
 type AccessReviewSourceBuilder struct {
@@ -1560,6 +1551,47 @@ func CreateCompliancePortal(c *testutil.Client, attrs ...Attrs) string {
 	return result.CreateCompliancePortal.CompliancePortalEdge.Node.ID
 }
 
+func DefaultEmployeePortalID(c *testutil.Client) string {
+	c.T.Helper()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Organization {
+					employeePortals(
+						first: 1
+						orderBy: { field: CREATED_AT, direction: ASC }
+					) {
+						edges {
+							node { id }
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			EmployeePortals struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"employeePortals"`
+		} `json:"node"`
+	}
+
+	err := c.Execute(query, map[string]any{
+		"id": c.GetOrganizationID().String(),
+	}, &result)
+	require.NoError(c.T, err, "list default employee portal failed")
+	require.NotEmpty(c.T, result.Node.EmployeePortals.Edges, "organization has no employee portal")
+
+	return result.Node.EmployeePortals.Edges[0].Node.ID
+}
+
 type CookieBannerBuilder struct {
 	client *testutil.Client
 	attrs  Attrs
@@ -1845,60 +1877,60 @@ func CreateTreatmentPlan(c *testutil.Client, riskID, riskAnalysisID string, attr
 	return result.CreateTreatmentPlan.TreatmentPlanEdge.Node.ID
 }
 
-func LinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID string) {
+func LinkTreatmentPlanInternalControl(c *testutil.Client, treatmentPlanID, internalControlID string) {
 	c.T.Helper()
 
 	const query = `
-		mutation($input: CreateTreatmentPlanMeasureMappingInput!) {
-			createTreatmentPlanMeasureMapping(input: $input) {
-				measureEdge { node { id } }
+		mutation($input: CreateTreatmentPlanInternalControlMappingInput!) {
+			createTreatmentPlanInternalControlMapping(input: $input) {
+				internalControlEdge { node { id } }
 			}
 		}
 	`
 
 	var result struct {
-		CreateTreatmentPlanMeasureMapping struct {
-			MeasureEdge struct {
+		CreateTreatmentPlanInternalControlMapping struct {
+			InternalControlEdge struct {
 				Node struct {
 					ID string `json:"id"`
 				} `json:"node"`
-			} `json:"measureEdge"`
-		} `json:"createTreatmentPlanMeasureMapping"`
+			} `json:"internalControlEdge"`
+		} `json:"createTreatmentPlanInternalControlMapping"`
 	}
 
 	err := c.Execute(query, map[string]any{
 		"input": map[string]any{
-			"treatmentPlanId": treatmentPlanID,
-			"measureId":       measureID,
+			"treatmentPlanId":   treatmentPlanID,
+			"internalControlId": internalControlID,
 		},
 	}, &result)
-	require.NoError(c.T, err, "createTreatmentPlanMeasureMapping mutation failed")
+	require.NoError(c.T, err, "createTreatmentPlanInternalControlMapping mutation failed")
 }
 
-func UnlinkTreatmentPlanMeasure(c *testutil.Client, treatmentPlanID, measureID string) {
+func UnlinkTreatmentPlanInternalControl(c *testutil.Client, treatmentPlanID, internalControlID string) {
 	c.T.Helper()
 
 	const query = `
-		mutation($input: DeleteTreatmentPlanMeasureMappingInput!) {
-			deleteTreatmentPlanMeasureMapping(input: $input) {
-				deletedMeasureId
+		mutation($input: DeleteTreatmentPlanInternalControlMappingInput!) {
+			deleteTreatmentPlanInternalControlMapping(input: $input) {
+				deletedInternalControlId
 			}
 		}
 	`
 
 	var result struct {
-		DeleteTreatmentPlanMeasureMapping struct {
-			DeletedMeasureID string `json:"deletedMeasureId"`
-		} `json:"deleteTreatmentPlanMeasureMapping"`
+		DeleteTreatmentPlanInternalControlMapping struct {
+			DeletedInternalControlID string `json:"deletedInternalControlId"`
+		} `json:"deleteTreatmentPlanInternalControlMapping"`
 	}
 
 	err := c.Execute(query, map[string]any{
 		"input": map[string]any{
-			"treatmentPlanId": treatmentPlanID,
-			"measureId":       measureID,
+			"treatmentPlanId":   treatmentPlanID,
+			"internalControlId": internalControlID,
 		},
 	}, &result)
-	require.NoError(c.T, err, "deleteTreatmentPlanMeasureMapping mutation failed")
+	require.NoError(c.T, err, "deleteTreatmentPlanInternalControlMapping mutation failed")
 }
 
 func CreateRiskAnalysisDiagram(c *testutil.Client, riskAnalysisID string, attrs ...Attrs) string {
@@ -2204,6 +2236,7 @@ func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
 
 	input := map[string]any{
 		"organizationId": a.getString("organizationId", c.GetOrganizationID().String()),
+		"name":           "Test",
 		"provider":       a.getString("provider", "AWS"),
 		"awsRoleArn":     a.getString("awsRoleArn", "arn:aws:iam::123456789012:role/ProboAudit"),
 	}
@@ -2211,6 +2244,7 @@ func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
 	if provider := a.getString("provider", "AWS"); provider == "GCP" {
 		input = map[string]any{
 			"organizationId":              a.getString("organizationId", c.GetOrganizationID().String()),
+			"name":                        "Test",
 			"provider":                    "GCP",
 			"gcpWorkloadIdentityProvider": a.getString("gcpWorkloadIdentityProvider", "projects/123456789012/locations/global/workloadIdentityPools/probo-pool/providers/probo"),
 			"gcpServiceAccountEmail":      a.getString("gcpServiceAccountEmail", "probo-audit@example-project.iam.gserviceaccount.com"),
@@ -2220,6 +2254,7 @@ func CreateConnector(c *testutil.Client, attrs ...Attrs) string {
 	if provider := a.getString("provider", "AWS"); provider == "AZURE" {
 		input = map[string]any{
 			"organizationId":      a.getString("organizationId", c.GetOrganizationID().String()),
+			"name":                "Test",
 			"provider":            "AZURE",
 			"azureTenantId":       a.getString("azureTenantId", "a1111111-1111-4111-8111-111111111111"),
 			"azureClientId":       a.getString("azureClientId", "b2222222-2222-4222-8222-222222222222"),

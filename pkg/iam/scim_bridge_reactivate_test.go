@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -167,7 +167,7 @@ func insertResetBridge(
 				OrganizationID: organizationID,
 				Provider:       coredata.ConnectorProviderGoogleWorkspace,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},

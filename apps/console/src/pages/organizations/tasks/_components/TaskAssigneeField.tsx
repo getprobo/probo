@@ -18,16 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskAssigneeField_task$key } from "#/__generated__/core/TaskAssigneeField_task.graphql";
-import { usePeople } from "#/hooks/graph/PeopleGraph";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { UserSelect } from "#/components/form/UserSelect";
 
 const noneValue = "__NONE__";
 
@@ -36,6 +31,10 @@ const taskAssigneeFieldFragment = graphql`
     assignedTo {
       id
       fullName
+      emailAddress
+      avatar {
+        downloadUrl
+      }
     }
   }
 `;
@@ -53,51 +52,28 @@ export function TaskAssigneeField({
 }: TaskAssigneeFieldProps) {
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskAssigneeFieldFragment, taskKey);
-  const organizationId = useOrganizationId();
-  const people = usePeople(organizationId, { contractEnded: false });
-  const value = task.assignedTo?.id ?? null;
-  const names = new Map(people.map(person => [person.id, person.fullName]));
   const assignedTo = task.assignedTo;
-  if (assignedTo) {
-    names.set(assignedTo.id, assignedTo.fullName);
-  }
-  const assignedToMissing = assignedTo != null
-    && !people.some(person => person.id === assignedTo.id);
+  const emptyLabel = t("detailsPage.unassigned");
 
   return (
-    <Select
-      value={value ?? noneValue}
+    <UserSelect
+      value={assignedTo?.id ?? null}
       disabled={disabled}
-      onValueChange={(next: string | null) => {
-        if (next == null || next === value || (next === noneValue && value == null)) {
-          return;
-        }
-        onValueChange(next === noneValue ? null : next);
-      }}
-    >
-      <SelectTrigger
-        size={1}
-        aria-label={t("detailsPage.fields.assignedTo")}
-        placeholder={t("detailsPage.unassigned")}
-      >
-        {(selected: string | null) => {
-          if (selected == null || selected === noneValue) {
-            return t("detailsPage.unassigned");
-          }
-          return names.get(selected) ?? selected;
-        }}
-      </SelectTrigger>
-      <SelectPopup>
-        <SelectItem value={noneValue}>{t("detailsPage.unassigned")}</SelectItem>
-        {assignedToMissing && assignedTo && (
-          <SelectItem value={assignedTo.id}>{assignedTo.fullName}</SelectItem>
-        )}
-        {people.map(person => (
-          <SelectItem key={person.id} value={person.id}>
-            {person.fullName}
-          </SelectItem>
-        ))}
-      </SelectPopup>
-    </Select>
+      onValueChange={onValueChange}
+      emptyLabel={emptyLabel}
+      emptyValue={noneValue}
+      ariaLabel={t("detailsPage.fields.assignedTo")}
+      placeholder={emptyLabel}
+      size={1}
+      contractEnded={false}
+      pinned={assignedTo == null
+        ? null
+        : {
+            id: assignedTo.id,
+            fullName: assignedTo.fullName,
+            emailAddress: assignedTo.emailAddress,
+            avatarUrl: assignedTo.avatar?.downloadUrl,
+          }}
+    />
   );
 }

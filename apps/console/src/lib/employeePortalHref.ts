@@ -19,14 +19,14 @@
 // SOFTWARE.
 
 export function employeePortalHref(
-  organizationId: string,
+  employeePortalId: string,
   ...segments: string[]
 ): string {
   const url = new URL(window.location.origin);
   url.pathname = [
     "",
     "employee-portal",
-    encodeURIComponent(organizationId),
+    encodeURIComponent(employeePortalId),
     ...segments.map(segment => encodeURIComponent(segment)),
   ].join("/");
   return url.pathname;

@@ -37,7 +37,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 	"go.opentelemetry.io/otel/trace"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/hash"
@@ -62,7 +62,7 @@ type (
 		TracerProvider    trace.TracerProvider
 		Registerer        prometheus.Registerer
 		EncryptionKey     cipher.EncryptionKey
-		ConnectorRegistry *connector.Registry
+		ConnectorRegistry *connectorprotocol.Registry
 		BridgeRunner      BridgeRunnerConfig
 	}
 )
@@ -305,20 +305,20 @@ func (s *Service) CreateUser(
 			}
 		}
 
+		invitations := &coredata.Invitations{}
+
+		onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+		if err := invitations.ExpireByUserID(
+			ctx,
+			tx,
+			coredata.NewScopeFromObjectID(profile.OrganizationID),
+			profile.ID,
+			onlyPending,
+		); err != nil {
+			return fmt.Errorf("cannot expire pending invitations: %w", err)
+		}
+
 		if !attrs.Active {
-			invitations := &coredata.Invitations{}
-
-			onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-			if err := invitations.ExpireByUserID(
-				ctx,
-				tx,
-				coredata.NewScopeFromObjectID(profile.OrganizationID),
-				profile.ID,
-				onlyPending,
-			); err != nil {
-				return fmt.Errorf("cannot expire pending invitations: %w", err)
-			}
-
 			signatures := &coredata.DocumentVersionSignatures{}
 			if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
 				return fmt.Errorf("cannot delete requested signatures: %w", err)
@@ -780,7 +780,7 @@ func (s *Service) updateUser(
 				return fmt.Errorf("cannot update membership profile: %w", err)
 			}
 
-			if shouldDeactivate {
+			if profile.State == coredata.ProfileStateActive || shouldDeactivate {
 				invitations := &coredata.Invitations{}
 
 				onlyPending := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
@@ -793,7 +793,9 @@ func (s *Service) updateUser(
 				); err != nil {
 					return fmt.Errorf("cannot expire pending invitations: %w", err)
 				}
+			}
 
+			if shouldDeactivate {
 				signatures := &coredata.DocumentVersionSignatures{}
 				if err := signatures.DeleteRequestedBySignatory(ctx, tx, scope, profile.ID); err != nil {
 					return fmt.Errorf("cannot delete requested signatures: %w", err)

@@ -26,11 +26,12 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { deleteOrganizationTaskListEdges } from "./deleteOrganizationTaskListEdges";
 import {
-  measureTasksConnectionKey,
-  organizationTasksConnectionKey,
+  internalControlTasksConnectionKey,
   taskConnectionId,
 } from "./taskPath";
+import { useTasksCardFilters } from "./useTasksCardFilters";
 
 const deleteTaskMutation = graphql`
   mutation useDeleteTaskMutation(
@@ -47,6 +48,7 @@ export function useDeleteTask() {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const relayEnv = useRelayEnvironment();
+  const { graphqlFilter } = useTasksCardFilters();
   const [commit, isDeleting] = useMutation<useDeleteTaskMutation>(
     deleteTaskMutation,
     {
@@ -55,23 +57,35 @@ export function useDeleteTask() {
     },
   );
 
-  async function deleteTask(taskId: string, measureId?: string) {
-    const connections = [
-      taskConnectionId(organizationId, organizationTasksConnectionKey),
-      ...(measureId
-        ? [taskConnectionId(measureId, measureTasksConnectionKey)]
-        : []),
-    ];
+  async function deleteTask(taskId: string, internalControlIds: readonly string[] = []) {
+    const connections = internalControlIds.map(internalControlId =>
+      taskConnectionId(internalControlId, internalControlTasksConnectionKey),
+    );
 
     await commit({
       variables: {
         input: { taskId },
         connections,
       },
+      updater(store) {
+        deleteOrganizationTaskListEdges(store, {
+          taskId,
+          organizationId,
+          filter: {
+            query: graphqlFilter.query,
+            assignedToId: graphqlFilter.assignedToId,
+            internalControlId: graphqlFilter.internalControlId,
+            deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+            deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
+            hasDeadline: graphqlFilter.hasDeadline,
+            hasAssignee: graphqlFilter.hasAssignee,
+          },
+        });
+      },
     });
 
-    if (measureId) {
-      updateStoreCounter(relayEnv, measureId, "tasks(first:0)", -1);
+    for (const internalControlId of internalControlIds) {
+      updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", -1);
     }
   }
 

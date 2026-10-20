@@ -34,6 +34,16 @@ type Viewer {
         orderBy: DeviceOrder
     ): EmployeeDeviceConnection! @goField(forceResolver: true)
 
+    assignedTasks(
+        organizationId: ID!
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TaskOrder
+        filter: TaskFilter
+    ): TaskConnection! @goField(forceResolver: true)
+
     # Own-device read for self-enrollment status polling before org assumption.
     enrolledDevice(id: ID!): Device @goField(forceResolver: true)
 

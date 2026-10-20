@@ -22,6 +22,7 @@ package pdfutils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"image/color"
@@ -56,21 +57,26 @@ var (
 	fontColor     = color.RGBA{0, 0, 0, 255}
 )
 
-func MergePDFs(pdfs ...[]byte) ([]byte, error) {
+func MergePDFs(ctx context.Context, pdfs ...[]byte) ([]byte, error) {
 	readers := make([]io.ReadSeeker, len(pdfs))
 	for i, pdf := range pdfs {
 		readers[i] = bytes.NewReader(pdf)
 	}
 
 	var buf bytes.Buffer
-	if err := api.MergeRaw(readers, &buf, false, nil); err != nil {
+	if err := api.MergeRaw(ctx, readers, &buf, false, nil); err != nil {
 		return nil, fmt.Errorf("cannot merge PDFs: %w", err)
 	}
 
 	return buf.Bytes(), nil
 }
 
-func AddWatermarkWithTimestamp(pdfData []byte, classification string, watermarkText string) ([]byte, error) {
+func AddWatermarkWithTimestamp(
+	ctx context.Context,
+	pdfData []byte,
+	classification string,
+	watermarkText string,
+) ([]byte, error) {
 	if err := ValidateWatermarkText(watermarkText); err != nil {
 		return nil, fmt.Errorf("cannot validate watermark text: %w", err)
 	}
@@ -96,14 +102,14 @@ func AddWatermarkWithTimestamp(pdfData []byte, classification string, watermarkT
 		watermarkScaleFactor,
 	)
 
-	watermarkConf, err := api.ImageWatermarkForReader(imageReader, desc, true, false, types.POINTS)
+	watermarkConf, err := api.ImageWatermarkForReader(ctx, imageReader, desc, true, false, types.POINTS)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create watermark from reader: %w", err)
 	}
 
 	var buf bytes.Buffer
 
-	err = api.AddWatermarks(reader, &buf, nil, watermarkConf, nil)
+	err = api.AddWatermarks(ctx, reader, &buf, nil, watermarkConf, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add watermark: %w", err)
 	}

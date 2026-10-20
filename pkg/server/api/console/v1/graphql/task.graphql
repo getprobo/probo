@@ -45,6 +45,11 @@ input TaskFilter {
     query: String
     state: TaskState
     assignedToId: ID
+    internalControlId: ID
+    deadlineOnOrBefore: Datetime
+    deadlineOnOrAfter: Datetime
+    hasDeadline: Boolean
+    hasAssignee: Boolean
 }
 
 type Task implements Node {
@@ -60,7 +65,14 @@ type Task implements Node {
     assignedTo: Profile @goField(forceResolver: true)
 
     organization: Organization! @goField(forceResolver: true)
-    measure: Measure @goField(forceResolver: true)
+    internalControls(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: InternalControlOrder
+        filter: InternalControlFilter
+    ): InternalControlConnection! @goField(forceResolver: true)
 
     evidences(
         first: Int
@@ -92,6 +104,16 @@ type Task implements Node {
     updatedAt: Datetime!
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+enum LinearIssueImport {
+    ACTIVE
+    INACTIVE
+}
+
+type LinearSettings {
+    defaultTeam: LinearTeam
+    issueImport: LinearIssueImport!
 }
 
 enum TaskExternalLinkOrigin
@@ -174,11 +196,14 @@ extend type Mutation {
     publishTaskToLinear(input: PublishTaskToLinearInput!): PublishTaskToLinearPayload!
     linkTaskToLinear(input: LinkTaskToLinearInput!): LinkTaskToLinearPayload!
     unlinkTaskExternal(input: UnlinkTaskExternalInput!): UnlinkTaskExternalPayload!
+    updateLinearSettings(
+        input: UpdateLinearSettingsInput!
+    ): UpdateLinearSettingsPayload!
 }
 
 input CreateTaskInput {
     organizationId: ID!
-    measureId: ID
+    internalControlIds: [ID!]
     name: String!
     content: String
     state: TaskState
@@ -187,6 +212,17 @@ input CreateTaskInput {
     assignedToId: ID
     deadline: Datetime
     recurrenceInterval: TimeSpan
+    linearTeamId: String @goField(omittable: true)
+}
+
+input UpdateLinearSettingsInput {
+    organizationId: ID!
+    defaultTeamId: String @goField(omittable: true)
+    issueImport: LinearIssueImport @goField(omittable: true)
+}
+
+type UpdateLinearSettingsPayload {
+    organization: Organization!
 }
 
 input UpdateTaskInput {
@@ -199,7 +235,7 @@ input UpdateTaskInput {
     timeEstimate: TimeSpan @goField(omittable: true)
     deadline: Datetime @goField(omittable: true)
     assignedToId: ID @goField(omittable: true)
-    measureId: ID @goField(omittable: true)
+    internalControlIds: [ID!] @goField(omittable: true)
     recurrenceInterval: TimeSpan @goField(omittable: true)
 }
 
@@ -213,7 +249,6 @@ type CreateTaskPayload {
 
 type UpdateTaskPayload {
     task: Task!
-    nextTaskEdge: TaskEdge
 }
 
 type DeleteTaskPayload {

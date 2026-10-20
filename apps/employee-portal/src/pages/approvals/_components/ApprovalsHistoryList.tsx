@@ -23,16 +23,15 @@ import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { ApprovalsHistoryList_viewer$key } from "#/__generated__/core/ApprovalsHistoryList_viewer.graphql";
 import type { ApprovalsHistoryListRefetchQuery } from "#/__generated__/core/ApprovalsHistoryListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const approvalsHistoryListFragment = graphql`
   fragment ApprovalsHistoryList_viewer on Viewer
@@ -79,7 +78,7 @@ export interface ApprovalsHistoryListProps {
 export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
   const { t } = useTranslation("approvals");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const [data, refetch] = useRefetchableFragment<
     ApprovalsHistoryListRefetchQuery,
     ApprovalsHistoryList_viewer$key
@@ -95,10 +94,6 @@ export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
     historyDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = historyDocuments.totalCount;
 
@@ -123,7 +118,7 @@ export function ApprovalsHistoryList({ viewerKey }: ApprovalsHistoryListProps) {
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/approvals/${node.id}`}
+          to={`/${employeePortalId}/approvals/${node.id}`}
           trailing="chevron"
           badge={node.approvalState === "REJECTED"
             ? (

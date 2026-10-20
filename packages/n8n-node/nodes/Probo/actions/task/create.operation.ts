@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { INodeProperties, IExecuteFunctions, INodeExecutionData, IDataObject } from 'n8n-workflow';
-import { plainTextToProseMirrorJSON, proboApiRequest, withPlainTextContent } from '../../GenericFunctions';
+import type { INodeProperties, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { proboApiRequest } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
@@ -37,8 +37,8 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -47,7 +47,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure this task belongs to',
+		description: 'The ID of the internal control this task belongs to',
 	},
 	{
 		displayName: 'Name',
@@ -67,6 +67,9 @@ export const description: INodeProperties[] = [
 		displayName: 'Content',
 		name: 'content',
 		type: 'string',
+		typeOptions: {
+			rows: 6,
+		},
 		displayOptions: {
 			show: {
 				resource: ['task'],
@@ -74,7 +77,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The content of the task',
+		description: 'The content of the task as a ProseMirror document JSON string. An image node sets fileId from an attachment upload. A file node sets fileId, fileName, mimeType, and size',
 	},
 	{
 		displayName: 'State',
@@ -196,7 +199,20 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline to be set.',
+		description: 'ISO-8601 duration for how often the task repeats, e.g. P7D, P1M or P1Y. Requires a deadline. The next task is created when that deadline passes.',
+	},
+	{
+		displayName: 'Linear Team ID',
+		name: 'linearTeamId',
+		type: 'string',
+		displayOptions: {
+			show: {
+				resource: ['task'],
+				operation: ['create'],
+			},
+		},
+		default: '',
+		description: 'Linear team to publish the task to. Leave empty to use the organization\'s default Linear team. Enter "none" to create the task with no Linear team. If the Linear publish attempt fails after the task is created, the task is still returned and the GraphQL error explains why.',
 	},
 ];
 
@@ -205,7 +221,7 @@ export async function execute(
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
 	const organizationId = this.getNodeParameter('organizationId', itemIndex) as string;
-	const measureId = this.getNodeParameter('measureId', itemIndex, '') as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex, '') as string;
 	const name = this.getNodeParameter('name', itemIndex) as string;
 	const content = this.getNodeParameter('content', itemIndex, '') as string;
 	const state = this.getNodeParameter('state', itemIndex, '') as string;
@@ -214,6 +230,7 @@ export async function execute(
 	const assignedToId = this.getNodeParameter('assignedToId', itemIndex, '') as string;
 	const deadline = this.getNodeParameter('deadline', itemIndex, '') as string;
 	const recurrenceInterval = this.getNodeParameter('recurrenceInterval', itemIndex, '') as string;
+	const linearTeamId = this.getNodeParameter('linearTeamId', itemIndex, '') as string;
 
 	const query = `
 		mutation CreateTask($input: CreateTaskInput!) {
@@ -240,25 +257,25 @@ export async function execute(
 		input: {
 			organizationId,
 			name,
-			...(measureId && { measureId }),
-			...(content && { content: plainTextToProseMirrorJSON(content) }),
+			...(internalControlId && { internalControlId }),
+			...(content && { content }),
 			...(state && { state }),
 			...(priority && { priority }),
 			...(timeEstimate && { timeEstimate }),
 			...(assignedToId && { assignedToId }),
 			...(deadline && { deadline }),
 			...(recurrenceInterval && { recurrenceInterval }),
+			...(linearTeamId === 'none'
+				? { linearTeamId: null }
+				: linearTeamId
+					? { linearTeamId }
+					: {}),
 		},
 	};
 
-	const responseData = await proboApiRequest.call(this, query, variables);
-	const data = responseData.data as IDataObject | undefined;
-	const payload = data?.createTask as IDataObject | undefined;
-	const edge = payload?.taskEdge as IDataObject | undefined;
-	const node = edge?.node as IDataObject | undefined;
-	if (edge && node) {
-		edge.node = withPlainTextContent(node);
-	}
+	const responseData = await proboApiRequest.call(this, query, variables, {
+		keepPartialResult: true,
+	});
 
 	return {
 		json: responseData,

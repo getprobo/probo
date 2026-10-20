@@ -27,8 +27,8 @@ import {
   DialogFooter,
   Field,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useMutation } from "react-relay";
@@ -69,7 +69,7 @@ const phoneRegex = /^\+[0-9]{8,15}$/;
 
 export function EditContactDialog({ contactKey, onClose, onSaved }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const contact = useFragment(editContactDialogFragment, contactKey);
 
   const schema = z.object({
@@ -114,26 +114,26 @@ export function EditContactDialog({ contactKey, onClose, onSaved }: Props) {
       },
       onCompleted(_response, errors) {
         if (errors) {
-          toast({
+          toast.add({
             title: t("editThirdPartyContactDialog.messages.error"),
             description: formatError(t("editThirdPartyContactDialog.errors.update"), errors),
-            variant: "error",
+            type: "error",
           });
           return;
         }
-        toast({
+        toast.add({
           title: t("editThirdPartyContactDialog.messages.success"),
           description: t("editThirdPartyContactDialog.messages.updated"),
-          variant: "success",
+          type: "success",
         });
         onSaved?.();
         onClose();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("editThirdPartyContactDialog.messages.error"),
           description: formatError(t("editThirdPartyContactDialog.errors.update"), error),
-          variant: "error",
+          type: "error",
         });
       },
     });

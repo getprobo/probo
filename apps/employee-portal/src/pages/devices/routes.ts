@@ -27,18 +27,25 @@ import { RegisterDevicePageSkeleton } from "./RegisterDevicePageSkeleton";
 
 export const devicesRoutes = [
   {
-    path: "devices/add-manually",
-    Fallback: AddManuallyPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
-  },
-  {
-    path: "devices/register",
-    Fallback: RegisterDevicePageSkeleton,
-    Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
-  },
-  {
     path: "devices",
     Fallback: DevicesPageSkeleton,
-    Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
+    Component: lazy(() => import("#/pages/devices/DeviceAgentLayout")),
+    children: [
+      {
+        index: true,
+        Fallback: DevicesPageSkeleton,
+        Component: lazy(() => import("#/pages/devices/DevicesPageLoader")),
+      },
+      {
+        path: "register",
+        Fallback: RegisterDevicePageSkeleton,
+        Component: lazy(() => import("#/pages/devices/RegisterDevicePageLoader")),
+      },
+      {
+        path: "add-manually",
+        Fallback: AddManuallyPageSkeleton,
+        Component: lazy(() => import("#/pages/devices/AddManuallyPageLoader")),
+      },
+    ],
   },
 ] satisfies AppRoute[];

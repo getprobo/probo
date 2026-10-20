@@ -23,17 +23,21 @@ package tasksync
 import (
 	"errors"
 	"fmt"
+
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 var (
-	ErrLinearNotConnected      = errors.New("linear connector is not connected")
-	ErrLinearReconnectRequired = errors.New("linear connector must be reconnected with write scopes")
-	ErrTaskAlreadyLinked       = errors.New("task is already linked to an external issue")
-	ErrTaskNotLinked           = errors.New("task is not linked to an external issue")
-	ErrLinearTeamNotFound      = errors.New("linear team was not found")
-	ErrLinearTeamIDRequired    = errors.New("linear team id is required")
-	ErrLinearIssueIDRequired   = errors.New("linear issue id is required")
-	ErrLinearIssueNotFound     = errors.New("linear issue was not found")
+	ErrLinearNotConnected        = errors.New("linear connector is not connected")
+	ErrLinearReconnectRequired   = errors.New("linear connector must be reconnected with write scopes")
+	ErrTaskAlreadyLinked         = errors.New("task is already linked to an external issue")
+	ErrTaskNotLinked             = errors.New("task is not linked to an external issue")
+	ErrLinearTeamNotFound        = errors.New("linear team was not found")
+	ErrLinearTeamIDRequired      = errors.New("linear team id is required")
+	ErrLinearIssueIDRequired     = errors.New("linear issue id is required")
+	ErrLinearIssueNotFound       = errors.New("linear issue was not found")
+	ErrLinearDefaultTeamRequired = errors.New("a default Linear team is required")
+	ErrLinearSettingsRequired    = errors.New("a Linear team or an issue import status is required")
 )
 
 type LinearReconnectRequiredError struct {
@@ -79,4 +83,28 @@ func missingTaskSyncScopes(granted []string) []string {
 
 func formatMissingScopes(scopes []string) string {
 	return fmt.Sprintf("missing Linear OAuth scopes: %v", scopes)
+}
+
+func LinearPublishClientMessage(err error) (string, bool) {
+	switch {
+	case errors.Is(err, coredata.ErrResourceNotFound):
+		return "task not found", true
+	case errors.Is(err, ErrLinearNotConnected):
+		return ErrLinearNotConnected.Error(), true
+	case errors.Is(err, ErrLinearReconnectRequired):
+		if reconnect, ok := errors.AsType[*LinearReconnectRequiredError](err); ok {
+			return reconnect.Error(), true
+		}
+
+		return ErrLinearReconnectRequired.Error(), true
+	case errors.Is(err, ErrTaskAlreadyLinked),
+		errors.Is(err, coredata.ErrResourceAlreadyExists):
+		return ErrTaskAlreadyLinked.Error(), true
+	case errors.Is(err, ErrLinearTeamIDRequired):
+		return ErrLinearTeamIDRequired.Error(), true
+	case errors.Is(err, ErrLinearTeamNotFound):
+		return ErrLinearTeamNotFound.Error(), true
+	default:
+		return "could not publish the task to Linear", false
+	}
 }

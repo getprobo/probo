@@ -28,25 +28,23 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/identityfederation"
-	"golang.org/x/sync/errgroup"
 )
 
 type (
 	Service struct {
 		pg                *pg.Client
 		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.Registry
+		connectorRegistry *connectorprotocol.Registry
 		providerRegistry  *provider.Registry
 		federation        *identityfederation.Issuer
 		logger            *log.Logger
 
-		fetchWorker      *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
-		sourceNameWorker *worker.Worker[coredata.AccessReviewSource]
+		fetchWorker *worker.Worker[coredata.AccessReviewCampaignSourceFetchAttempt]
 	}
 
 	Option func(*options)
@@ -90,7 +88,7 @@ func WithIdentityFederation(issuer *identityfederation.Issuer) Option {
 func NewService(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	providerRegistry *provider.Registry,
 	logger *log.Logger,
 	opts ...Option,
@@ -118,11 +116,8 @@ func NewService(
 
 	fetchWorkerOpts = append(fetchWorkerOpts, worker.WithMaxConcurrency(20))
 
-	var sourceNameWorkerOpts []worker.Option
-
 	if o.registerer != nil {
 		fetchWorkerOpts = append(fetchWorkerOpts, worker.WithRegisterer(o.registerer))
-		sourceNameWorkerOpts = append(sourceNameWorkerOpts, worker.WithRegisterer(o.registerer))
 	}
 
 	s.fetchWorker = NewSourceFetchWorker(
@@ -131,24 +126,10 @@ func NewService(
 		logger,
 		fetchWorkerOpts...,
 	)
-	s.sourceNameWorker = NewSourceNameWorker(
-		pgClient,
-		encryptionKey,
-		connectorRegistry,
-		providerRegistry,
-		s.federation,
-		logger.Named("source-name"),
-		sourceNameWorkerOpts...,
-	)
 
 	return s
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	g, gCtx := errgroup.WithContext(ctx)
-
-	g.Go(func() error { return s.fetchWorker.Run(gCtx) })
-	g.Go(func() error { return s.sourceNameWorker.Run(gCtx) })
-
-	return g.Wait()
+	return s.fetchWorker.Run(ctx)
 }

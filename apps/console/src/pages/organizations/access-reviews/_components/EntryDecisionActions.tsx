@@ -28,8 +28,8 @@ import {
   Option,
   Select,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
@@ -65,7 +65,7 @@ type Props = {
 
 export function EntryDecisionActions({ entryKey }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const ref = useDialogRef();
   const entry = useFragment(entryDecisionActionsFragment, entryKey);
   const [pendingDecision, setPendingDecision] = useState<AccessReviewEntryDecision | null>(null);
@@ -84,13 +84,13 @@ export function EntryDecisionActions({ entryKey }: Props) {
       },
       onCompleted(_, errors) {
         if (errors?.length) {
-          toast({
+          toast.add({
             title: t("entryDecisionActions.messages.error"),
             description: formatError(
               t("entryDecisionActions.errors.record"),
               errors,
             ),
-            variant: "error",
+            type: "error",
           });
           return;
         }
@@ -99,13 +99,13 @@ export function EntryDecisionActions({ entryKey }: Props) {
         ref.current?.close();
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("entryDecisionActions.messages.error"),
           description: formatError(
             t("entryDecisionActions.errors.record"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

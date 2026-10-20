@@ -336,6 +336,32 @@ func TestRenderHTML_Image(t *testing.T) {
 	assert.Equal(t, `<img src="https://example.com/img.png" alt="A photo" title="My image">`, got)
 }
 
+func TestRenderHTML_File(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"file","attrs":{"fileId":"file-1","fileName":"policy.pdf","mimeType":"application/pdf","size":12}}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderHTML(n)
+	require.NoError(t, err)
+	assert.Equal(t, `<a href="/api/files/v1/file-1" class="document-file">policy.pdf</a>`, got)
+}
+
+func TestRenderHTML_ImageWidth(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"image","attrs":{"src":"https://example.com/img.png","alt":"A photo","width":50}}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderHTML(n)
+	require.NoError(t, err)
+	assert.Equal(t, `<img src="https://example.com/img.png" alt="A photo" width="50%">`, got)
+}
+
 func TestRenderHTML_ImageSanitizesDangerousSrc(t *testing.T) {
 	t.Parallel()
 

@@ -34,7 +34,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/crypto/jose"
@@ -104,7 +104,7 @@ type (
 		Logger                         *log.Logger
 		TracerProvider                 trace.TracerProvider
 		Registerer                     prometheus.Registerer
-		ConnectorRegistry              *connector.Registry
+		ConnectorRegistry              *connectorprotocol.Registry
 		DomainVerificationInterval     time.Duration
 		DomainVerificationResolverAddr string
 		SCIMBridgeSyncInterval         time.Duration

@@ -39,7 +39,7 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { TreatmentPlanMeasuresDialog } from "../../risk-analyses/treatment-plans/_components/TreatmentPlanMeasuresDialog";
+import { TreatmentPlanInternalControlsDialog } from "../../risk-analyses/treatment-plans/_components/TreatmentPlanInternalControlsDialog";
 import { TreatmentPlanScoreTags } from "../../risk-analyses/treatment-plans/_components/TreatmentPlanScoreTags";
 import { UpdateTreatmentPlanDialog } from "../../risk-analyses/treatment-plans/_components/UpdateTreatmentPlanDialog";
 
@@ -93,7 +93,7 @@ export function RiskTreatmentPlanListItem({
   const { riskId } = useParams<{ riskId: string }>();
   const confirm = useConfirm();
   const formDialogRef = useDialogRef();
-  const measuresDialogRef = useDialogRef();
+  const internalControlsDialogRef = useDialogRef();
   const treatmentPlan = useFragment(riskTreatmentPlanListItemFragment, treatmentPlanKey);
   const relayEnv = useRelayEnvironment();
   const [deleteTreatmentPlan]
@@ -134,8 +134,8 @@ export function RiskTreatmentPlanListItem({
           matrixSize={matrixSize}
         />
       )}
-      <TreatmentPlanMeasuresDialog
-        dialogRef={measuresDialogRef}
+      <TreatmentPlanInternalControlsDialog
+        dialogRef={internalControlsDialogRef}
         treatmentPlanId={treatmentPlan.id}
       />
       <Tr to={`/organizations/${organizationId}/risk-management/risk-analyses/${treatmentPlan.riskAnalysis.id}/treatment-plans`}>
@@ -161,9 +161,9 @@ export function RiskTreatmentPlanListItem({
               {treatmentPlan.treatment !== "ACCEPTED" && (
                 <DropdownItem
                   icon={IconCircleCheck}
-                  onClick={() => measuresDialogRef.current?.open()}
+                  onClick={() => internalControlsDialogRef.current?.open()}
                 >
-                  {t("riskTreatmentPlanListItem.actions.measures")}
+                  {t("riskTreatmentPlanListItem.actions.internalControls")}
                 </DropdownItem>
               )}
               {treatmentPlan.canUpdate && matrixSize && (

@@ -875,3 +875,63 @@ func TestCookieBanner_UpsertTranslation(t *testing.T) {
 		assert.NotEmpty(t, result.Node.Translations)
 	})
 }
+
+func TestCookieBanner_DiscoveryPageLoads(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	bannerID := factory.CreateCookieBanner(owner)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on CookieBanner {
+					discoveryPageLoads {
+						family
+						count
+					}
+					discoveryFrozenAt
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			DiscoveryPageLoads []struct {
+				Family string `json:"family"`
+				Count  int    `json:"count"`
+			} `json:"discoveryPageLoads"`
+			DiscoveryFrozenAt *string `json:"discoveryFrozenAt"`
+		} `json:"node"`
+	}
+
+	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+	assert.Empty(t, result.Node.DiscoveryPageLoads)
+	assert.Nil(t, result.Node.DiscoveryFrozenAt)
+
+	const publishQuery = `
+		mutation PublishCookieBannerVersion($input: PublishCookieBannerVersionInput!) {
+			publishCookieBannerVersion(input: $input) {
+				cookieBanner {
+					id
+				}
+			}
+		}
+	`
+
+	var publishResult struct {
+		PublishCookieBannerVersion struct {
+			CookieBanner struct {
+				ID string `json:"id"`
+			} `json:"cookieBanner"`
+		} `json:"publishCookieBannerVersion"`
+	}
+
+	require.NoError(t, owner.Execute(publishQuery, map[string]any{
+		"input": map[string]any{"cookieBannerId": bannerID},
+	}, &publishResult))
+
+	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+	assert.NotNil(t, result.Node.DiscoveryFrozenAt)
+}

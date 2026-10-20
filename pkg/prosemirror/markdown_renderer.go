@@ -153,6 +153,25 @@ func (r *mdRenderer) renderNode(n Node) error {
 		}
 
 		r.ensurePrefix()
+
+		if attrs.Width != nil {
+			r.buf.WriteString("<img")
+			writeAttr(r.buf, "src", imageSrc(attrs))
+
+			if attrs.Alt != nil {
+				writeAttr(r.buf, "alt", *attrs.Alt)
+			}
+
+			if attrs.Title != nil {
+				writeAttr(r.buf, "title", *attrs.Title)
+			}
+
+			writeAttr(r.buf, "width", fmt.Sprintf("%d%%", *attrs.Width))
+			r.buf.WriteByte('>')
+
+			return nil
+		}
+
 		r.buf.WriteString("![")
 
 		if attrs.Alt != nil {
@@ -160,7 +179,7 @@ func (r *mdRenderer) renderNode(n Node) error {
 		}
 
 		r.buf.WriteString("](")
-		r.buf.WriteString(safeImageSrc(attrs.Src))
+		r.buf.WriteString(imageSrc(attrs))
 
 		if attrs.Title != nil {
 			r.buf.WriteString(` "`)
@@ -168,6 +187,18 @@ func (r *mdRenderer) renderNode(n Node) error {
 			r.buf.WriteByte('"')
 		}
 
+		r.buf.WriteByte(')')
+	case NodeFile:
+		attrs, err := n.FileAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render file node: %w", err)
+		}
+
+		r.ensurePrefix()
+		r.buf.WriteByte('[')
+		r.buf.WriteString(strings.ReplaceAll(escapeMarkdown(attrs.FileName), "&", `\&`))
+		r.buf.WriteString("](")
+		r.buf.WriteString(AttachmentPath(attrs.FileID))
 		r.buf.WriteByte(')')
 	case NodeBulletList:
 		return r.renderBulletList(n)

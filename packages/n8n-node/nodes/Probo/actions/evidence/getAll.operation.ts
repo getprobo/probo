@@ -23,8 +23,8 @@ import { proboApiRequestAllItems } from '../../GenericFunctions';
 
 export const description: INodeProperties[] = [
 	{
-		displayName: 'Measure ID',
-		name: 'measureId',
+		displayName: 'Internal Control ID',
+		name: 'internalControlId',
 		type: 'string',
 		displayOptions: {
 			show: {
@@ -33,7 +33,7 @@ export const description: INodeProperties[] = [
 			},
 		},
 		default: '',
-		description: 'The ID of the measure to list evidences for',
+		description: 'The ID of the internal control to list evidences for',
 		required: true,
 	},
 	{
@@ -72,14 +72,14 @@ export async function execute(
 	this: IExecuteFunctions,
 	itemIndex: number,
 ): Promise<INodeExecutionData> {
-	const measureId = this.getNodeParameter('measureId', itemIndex) as string;
+	const internalControlId = this.getNodeParameter('internalControlId', itemIndex) as string;
 	const returnAll = this.getNodeParameter('returnAll', itemIndex) as boolean;
 	const limit = this.getNodeParameter('limit', itemIndex, 50) as number;
 
 	const query = `
-		query GetEvidences($measureId: ID!, $first: Int, $after: CursorKey) {
-			node(id: $measureId) {
-				... on Measure {
+		query GetEvidences($internalControlId: ID!, $first: Int, $after: CursorKey) {
+			node(id: $internalControlId) {
+				... on InternalControl {
 					evidences(first: $first, after: $after) {
 						edges {
 							node {
@@ -104,7 +104,7 @@ export async function execute(
 	const evidences = await proboApiRequestAllItems.call(
 		this,
 		query,
-		{ measureId },
+		{ internalControlId },
 		(response) => {
 			const data = response?.data as IDataObject | undefined;
 			const node = data?.node as IDataObject | undefined;

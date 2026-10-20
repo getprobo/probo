@@ -24,7 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 )
 
@@ -42,7 +42,7 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		dbConnector := coredata.Connector{
 			Protocol:   coredata.ConnectorProtocolAPIKey,
-			Connection: &connector.APIKeyConnection{APIKey: "k"},
+			Connection: &connectorprotocol.APIKeyConnection{APIKey: "k"},
 		}
 
 		assert.Empty(t, missingOAuthScopesForConnector(dbConnector, required))
@@ -53,7 +53,7 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		dbConnector := coredata.Connector{
 			Protocol: coredata.ConnectorProtocolOAuth2,
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				Scope: "openid",
 			},
 		}
@@ -85,7 +85,7 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		dbConnector := coredata.Connector{
 			Protocol: coredata.ConnectorProtocolOAuth2,
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				Scope: "openid User.Read.All",
 			},
 		}
@@ -102,7 +102,7 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		dbConnector := coredata.Connector{
 			Protocol: coredata.ConnectorProtocolOAuth2,
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				Scope: "openid AuditLog.Read.All User.Read.All",
 			},
 		}
@@ -124,7 +124,7 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		dbConnector := coredata.Connector{
 			Protocol: coredata.ConnectorProtocolOAuth2,
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				RefreshToken: "rt",
 				Scope:        "openid User.Read.All",
 			},
@@ -144,7 +144,7 @@ func TestMissingOAuthScopesForConnector(t *testing.T) {
 
 		dbConnector := coredata.Connector{
 			Protocol: coredata.ConnectorProtocolOAuth2,
-			Connection: &connector.OAuth2Connection{
+			Connection: &connectorprotocol.OAuth2Connection{
 				Scope: "openid User.Read.All",
 			},
 		}

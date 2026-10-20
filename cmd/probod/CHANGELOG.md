@@ -4,6 +4,426 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.318.0] - 2026-10-19
+
+### Changed
+
+- Risk treatment, scores, and owner are read-only on catalog risks; they
+  now live on treatment plans. Existing values stay visible on the risk
+  detail page and in read responses. GraphQL `createRisk`/`updateRisk`
+  and MCP risk create/update no longer accept `treatment`, likelihood,
+  impact, or owner, and the console risk list drops those columns and
+  both risk matrices
+
+### Fixed
+
+- The task assignee picker and filter show assignee names again
+
+## [0.317.0] - 2026-10-19
+
+### Added
+
+- The console device list filters by posture warnings, keeping devices
+  whose latest posture is failing or unknown. The warning badge opens
+  its list of failing checks in a popover that stays open until closed
+
+### Changed
+
+- Device list filters accept several values and keep devices that match
+  any of them. GraphQL `state`, `platform`, and `agentVersion` become
+  `states`, `platforms`, and `agentVersions`. MCP `state`, `platform`,
+  and `agent_version` become `states`, `platforms`, and
+  `agent_versions`
+- The device evidence PDF uses the same masthead, kickers, and table
+  style as the compliance documents
+- The Linear connector card is named Linear Task Sync and shows the
+  Linear logo
+
+### Fixed
+
+- Device posture badges match the stored agent verdicts. A screen-lock
+  delay and a recorded password length no longer show as failures, and
+  a check that does not apply is no longer shown as a warning
+- The device details back link only covers its label and icon
+- The compliance portal audit list shows the translated "To book" state
+  instead of a raw key
+- Accepting an invitation on a SAML or SCIM profile no longer fails as
+  an internal error. The page follows the continue URL, and SCIM
+  expires pending invitations when it leaves the profile active
+
+## [0.316.0] - 2026-10-16
+
+### Added
+
+- Employees can view and update their assigned tasks from the employee
+  portal
+- The employee portal home groups signatures and approvals under a
+  single Documents hub
+- Audits can cover several frameworks. GraphQL adds
+  `createAuditFrameworkMapping` / `deleteAuditFrameworkMapping`, and MCP
+  adds `linkAuditFramework` / `unlinkAuditFramework`
+- The console task list groups tasks into collapsible status cards.
+  Rows change state, priority, due date, estimate, and assignee in place,
+  link, unlink, or open a Linear issue, and reorder by drag within a
+  group. Canceled and duplicate groups start collapsed
+- Tasks can be filtered by due date (overdue, due within a horizon, or
+  no deadline) and by "Not assigned". Searching opens every group with
+  a match
+
+### Changed
+
+- `Audit.framework` is replaced by the `Audit.frameworks` connection,
+  and `createAudit` takes `frameworkIds`. MCP audits use
+  `framework_ids`. Creating an audit still requires at least one
+  framework
+- The console tasks toolbar no longer filters by internal control
+
+## [0.315.0] - 2026-10-16
+
+### Added
+
+- Task settings can disconnect Linear Sync and update Linear settings.
+  Settings hold the default team and whether new issues on that team
+  are imported. New tasks start on the default team, and the choice can
+  still be changed before the task is created. MCP
+  `updateLinearSettings` changes both fields together
+- Active Linear issue import creates a Probo task for each new issue
+  on the default Linear team and keeps that task in sync
+
+### Changed
+
+- Creating a task in GraphQL and MCP uses the organization's default
+  Linear team when `linearTeamId` / `linear_team_id` is omitted. Null
+  creates the task with no Linear team
+- `createTask` returns the created task and a GraphQL error when the
+  Linear publish attempt fails after the task is created
+
+### Fixed
+
+- A rich-text image that only declares a viewBox no longer collapses to
+  zero width
+
+## [0.314.0] - 2026-10-15
+
+### Added
+
+- Device postures can be downloaded as a PDF snapshot, one page per
+  device, from the console and MCP. Employees cannot download it
+- Device list filters (owner search, state, platform, agent version)
+  apply to the whole list, including the total and later pages
+- Several devices can be revoked or deleted in a single all-or-nothing
+  call (`revokeDevices`, `deleteDevices`)
+
+### Changed
+
+- Device pages use the v2 kit. Rows show the owner and a posture
+  summary, and the list loads 25 devices at a time with the total
+- MCP `Device` has a required `postures_included` field, so an empty
+  `latest_postures` is no longer read as "no checks"
+
+## [0.313.0] - 2026-10-15
+
+### Added
+
+- Access review sources show the connected account name and a provider
+  tag in the console, including when picking sources for a campaign
+- MCP transport requests are logged with structured fields
+
+### Changed
+
+- SCIM provider requests that fail with a 5xx response are retried with
+  bounded memory and wait time
+
+### Fixed
+
+- Audits accept the same start and end date
+- SVG attachments display in rich text
+
+## [0.312.0] - 2026-10-14
+
+### Added
+
+- Documents, tasks, comments, and risk descriptions can include images
+  and files. The file is private, and readers load it from
+  `/api/files/v1/{id}`
+- GraphQL and MCP `uploadFile` uploads a file for someone who can create
+  or edit a task, a document, or a risk
+- Task sync copies those files to Linear and maps the asset URL back to
+  the file id
+- Generated documents include those images
+
+## [0.311.1] - 2026-10-14
+
+### Fixed
+
+- Evidence uploads sent as `application/octet-stream` use the content type
+  implied by the filename instead of being rejected
+- Rejected evidence files return a validation error instead of an internal
+  server error: `OUT_OF_RANGE` when the file is too large, `INVALID_FORMAT`
+  when its type or extension is not allowed
+
+## [0.311.0] - 2026-10-14
+
+### Added
+
+- Every minted federation assertion logs its header and claims, and
+  whether this process's key set verifies the signature. The signature
+  is never logged
+
+### Changed
+
+- Cookie banner discovery hit counts are buffered in memory and flushed
+  in batches, and a hit no longer needs an existing stats row. Detected
+  trackers and patterns no longer show a last-seen timestamp
+
+### Fixed
+
+- GitHub access review marks an SSO credential authorization inactive
+  once its token has expired, instead of reporting every authorization
+  as active. Expired tokens stay in the list so a reviewer can still
+  see and revoke them
+
+## [0.310.0] - 2026-10-13
+
+### Added
+
+- Connector accounts store the instance name. Source cards and the accounts
+  drawer show it, a campaign snapshots it, and names already resolved on
+  access sources are copied over. A CSV source keeps its own name
+
+### Changed
+
+- MCP can create an API-key or client-credentials connector for a provider
+  that needs no extra setting. An access source takes a connector that
+  already exists, or CSV data, and no longer collects credentials
+- The console loads the employee portal list and leaves a forbidden result
+  on that field. The shell hides the employee-portal item in that case, and
+  any other list error still fails the shell. Switching organization no
+  longer reuses the previous portal query
+
+### Fixed
+
+- Reconnect is shown only when reconnecting fixes the connection
+- Connect stays on the right of a vendor form when the provider has no
+  documentation link
+- MCP evidence lists return the file download URL for file evidences
+- An access-source MCP error for a missing account, more than one account,
+  or a SCIM binding is returned to the client instead of as an internal
+  error
+- A blank OAuth client id or secret is rejected instead of being stored as
+  a disconnected connector
+- Viewers can list their own devices in the employee portal
+- Banners published before discovery stats were frozen get a frozen
+  timestamp, so the console no longer treats them as still discovering
+
+## [0.309.1] - 2026-10-09
+
+### Fixed
+
+- The console skips the employee portal list unless the viewer can list
+  portals, so auditor and compliance-portal roles keep the organization
+
+## [0.309.0] - 2026-10-09
+
+### Added
+
+- Employee portal settings page in the console, with branding (logo) and
+  capabilities sections and a dedicated navigation entry
+
+### Changed
+
+- The employee portal agent is hidden from the console navigation
+
+### Fixed
+
+- Bump `golang.org/x/net` to v0.60.0 to pick up the HTTP/2 HPACK encoder
+  race fix (CVE-2026-97032)
+
+## [0.308.0] - 2026-10-09
+
+### Added
+
+- Cookie banner discovery counts page loads and tracker hits by browser
+  family (Chrome, Edge, Firefox, Safari, Other) over one shared window that
+  is frozen on first publish. The console shows them as stat tiles with
+  browser logos and a callout until the banner is frozen, and they are
+  exposed on the GraphQL, MCP, CLI, and n8n APIs
+- Cookie detections record the cookie `Domain` and promote the tracker
+  source, so extension cookies are no longer reported as site trackers
+
+### Changed
+
+- The cookie banner **Configure** navigation entry is now **Settings** and
+  is the banner landing page. Delete moved to the page header
+- Tracker and pattern lists keep their page in the URL, so opening a pattern
+  and going back returns to the same page
+- Console success and error feedback uses the v2 toaster
+
+### Fixed
+
+- Host-only and Domain-scoped cookies with the same name are kept as
+  separate detections
+- A tracker report with an oversized cookie `Max-Age` no longer aborts the
+  whole batch
+- Android Edge is no longer counted as Chrome, and the SDK stops retrying
+  page views after a 404
+- Tracker pagination no longer reuses another banner's cursor
+
+
+## [0.307.0] - 2026-10-09
+
+### Added
+
+- Connectors have a required name that tells several connections to one
+  provider apart, such as Production or Access review only. Existing
+  connectors are numbered per organization and provider (AWS #1, AWS #2).
+  The name is collected on every connect form and can be changed from the
+  provider page
+- A task can be linked to several internal controls, and the task list
+  filters by internal control. Deleting an internal control unlinks its
+  tasks instead of deleting them
+- Vendors are connected from Marketplace pages, with a second step to pick
+  the credential type when a vendor offers more than one. A new Linear Sync
+  connector is stored as "tasks"
+- Adding access review sources has its own page. Connected accounts are
+  grouped by vendor and every selected account is added in one step. CSV
+  sources show a file icon
+
+### Changed
+
+- Access review sources, source cards, and the integrations screens use the
+  v2 kit. Deleting a source confirms in a dialog and success messages use
+  the v2 toast
+- The connector accounts drawer lists only the accounts already stored on the
+  connector
+- The old access review connection URLs no longer redirect to the sources
+  pages
+
+### Fixed
+
+- The initial account of a connector can no longer be disabled, since
+  connection checks and cloud sessions always use it
+- Built with Go 1.27.2 (up from 1.27.1) to pick up the standard-library
+  security fixes in `net/http`, `crypto/tls`, `html/template`,
+  `net/textproto`, and `os` (including CVE-2026-97032, CVE-2026-78659,
+  and CVE-2026-97031)
+
+## [0.306.0] - 2026-10-08
+
+### Added
+
+- Organizations own an employee portal with a display name, branding,
+  and a setting for whether the device agent is offered. It is managed
+  through GraphQL and MCP. Every organization has exactly one portal,
+  and existing organizations are backfilled with a default one
+- Cookie banner detections record the cookie Domain and keep a source
+  that is not demoted by later, weaker observations. Detections split
+  by Domain scope, so a host-only cookie and a Domain-scoped cookie
+  that share a name are tracked separately
+- Open tasks past their deadline show an Overdue badge
+
+### Changed
+
+- The employee app URL uses the employee portal id. Old
+  organization-id URLs redirect to the organization's portal
+- Linked safeguards are called internal controls instead of measures
+- Comments created in Linear are attributed to the Probo author
+  instead of only the Probo application
+
+### Fixed
+
+- A cookie report with an oversized Max-Age no longer aborts the whole
+  report batch. The value is omitted and the rest is saved
+- A Mac without a managed profile on macOS 27 is no longer reported as
+  unknown for the automatic software update check
+
+## [0.305.0] - 2026-10-07
+
+### Added
+
+- Consent records open as detail cards for the action, request, TCF
+  string, categories, and location, with a link back to the trail. The
+  location card draws the record on a map cropped to the country, with
+  state or province shapes for US and Canadian records
+- Cookie banners expose a GraphQL connection of their versions
+
+### Changed
+
+- Cookie banners move out of Privacy onto their own CMP navigation
+  group. Opening CMP lands on the latest banner, or on the create page
+  when none exist
+- The cookie banner consent trail is rebuilt in UI kit v2 with
+  previous/next pagination and a select of recent banner versions in
+  place of the free-text version filter
+- The new cookie banner page is rebuilt in UI kit v2, matching the
+  configure settings form
+
+## [0.304.0] - 2026-10-06
+
+### Added
+
+- Cookie banner trackers have On banner and All detected views. The
+  choice is stored in the URL and defaults to On banner
+- The trust center home page links to the documents catalog, including
+  when the portal has no framework badges
+
+### Changed
+
+- Measures are renamed to internal controls on GraphQL, MCP, the CLI,
+  the console, and in the database. The migration renames the measure
+  tables, columns, constraints, indexes, and enum values. Security and
+  supplementary measures are unchanged
+- Recurring tasks repeat when their deadline passes. The next deadline
+  is the previous deadline plus the interval, and the series stays on
+  the current task until that deadline. A worker creates the next
+  occurrence. `PROBOD_TASK_RECURRENCE_INTERVAL` sets how often it scans
+  and defaults to 5 minutes
+- Cookie banner configuration is split into Install, Configure, and
+  Translations pages. Display is rebuilt in UI kit v2: category edit
+  opens in a drawer, cookie rows stay on the Trackers page, and theme
+  controls only build a CSS snippet. Each configuration page shows
+  draft, deactivated, and live state on a status card
+
+## [0.303.0] - 2026-10-05
+
+### Added
+
+- Organizations have an optional registered legal name, separate from the
+  operating name. It is editable from the workspace general settings and
+  exposed on the GraphQL, MCP, CLI and n8n surfaces. Blank values are
+  rejected; only an explicit null clears it
+- Cookie banners can be made CORSless (ops-only) so one banner can be
+  shared by deployments whose origins are not known ahead of time. The
+  tracker policy names the banner instead of an origin
+- Every consent record stores and shows the request origin
+
+### Changed
+
+- The publisher country setting is hidden on cookie banners without TCF
+
+### Fixed
+
+- Listing risks ordered by `UPDATED_AT` no longer panics when building the
+  next-page cursor
+
+## [0.302.0] - 2026-10-05
+
+### Added
+
+- Measures are presented as internal controls. A control has a stable
+  code, a type, an implementation status, an owner and a reviewer. It
+  runs continuously, when an event happens, or on a positive interval,
+  and has its own evidence and testing cadences (ISO-8601 durations)
+  that set the next due dates. Only the manual nature is accepted for
+  now. The GraphQL and MCP APIs keep the Measure names
+- A shared, paginated user selector loads organization profiles 200 at a
+  time. The task list filter and the task assignee field use it
+
+### Changed
+
+- A control-scoped token can read the owner and reviewer profiles of a
+  control
+
 ## [0.301.0] - 2026-10-02
 
 ### Added

@@ -21,18 +21,22 @@
 package probo
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
-func TestUploadMeasureEvidenceRequest_ValidateRejectsEmptyFile(t *testing.T) {
+func TestUploadInternalControlEvidenceRequest_ValidateRejectsEmptyFile(t *testing.T) {
 	t.Parallel()
 
-	req := UploadMeasureEvidenceRequest{
-		MeasureID: gid.New(gid.NewTenantID(), coredata.MeasureEntityType),
+	req := UploadInternalControlEvidenceRequest{
+		InternalControlID: gid.New(gid.NewTenantID(), coredata.InternalControlEntityType),
 		File: FileUpload{
 			Filename:    "empty.pdf",
 			ContentType: "application/pdf",
@@ -40,4 +44,33 @@ func TestUploadMeasureEvidenceRequest_ValidateRejectsEmptyFile(t *testing.T) {
 	}
 
 	require.Error(t, req.Validate())
+}
+
+func TestFileUploadValidationErrors_PreservesCause(t *testing.T) {
+	t.Parallel()
+
+	oversize := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryDocument),
+		filevalidation.WithMaxFileSize(8),
+	).Validate("report.pdf", "application/pdf", 9)
+	oversize = fmt.Errorf("cannot validate file: %w", oversize)
+
+	errs, ok := fileUploadValidationErrors(oversize)
+	require.True(t, ok)
+	require.Len(t, errs, 1)
+	assert.Equal(t, "file", errs[0].Field)
+	assert.Equal(t, validator.ErrorCodeOutOfRange, errs[0].Code)
+
+	rejectedType := filevalidation.NewValidator(
+		filevalidation.WithCategories(filevalidation.CategoryDocument),
+	).Validate("payload.exe", "application/octet-stream", 8)
+	rejectedType = fmt.Errorf("cannot validate file: %w", rejectedType)
+
+	errs, ok = fileUploadValidationErrors(rejectedType)
+	require.True(t, ok)
+	require.Len(t, errs, 1)
+	assert.Equal(t, validator.ErrorCodeInvalidFormat, errs[0].Code)
+
+	_, ok = fileUploadValidationErrors(fmt.Errorf("cannot upload file to S3"))
+	assert.False(t, ok)
 }

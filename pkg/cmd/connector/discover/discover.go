@@ -38,6 +38,7 @@ query($id: ID!) {
       discoveredAccounts {
         externalAccountId
         name
+        enabled
       }
     }
   }
@@ -47,6 +48,7 @@ query($id: ID!) {
 type discoveredAccount struct {
 	ExternalAccountID string `json:"externalAccountId"`
 	Name              string `json:"name"`
+	Enabled           bool   `json:"enabled"`
 }
 
 func NewCmdDiscover(f *cmdutil.Factory) *cobra.Command {
@@ -116,10 +118,10 @@ func NewCmdDiscover(f *cmdutil.Factory) *cobra.Command {
 
 			rows := make([][]string, 0, len(accounts))
 			for _, a := range accounts {
-				rows = append(rows, []string{a.ExternalAccountID, a.Name})
+				rows = append(rows, []string{a.ExternalAccountID, a.Name, fmt.Sprintf("%t", a.Enabled)})
 			}
 
-			t := cmdutil.NewTable("EXTERNAL ID", "NAME").Rows(rows...)
+			t := cmdutil.NewTable("EXTERNAL ID", "NAME", "ENABLED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			return nil

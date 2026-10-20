@@ -18,14 +18,112 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskDeadlineBounds, type TaskState } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 
-export const organizationTasksConnectionKey = "TasksCardOrganization_tasks";
-export const measureTasksConnectionKey = "Measure__tasks";
+export const unassignedAssignee = "none";
+
+export const taskListConnectionKeys = {
+  IN_PROGRESS: "useOrganizationTaskListGroups_inProgress__inProgressTasks",
+  TODO: "useOrganizationTaskListGroups_todo__todoTasks",
+  BACKLOG: "useOrganizationTaskListGroups_backlog__backlogTasks",
+  DONE: "useOrganizationTaskListGroups_done__doneTasks",
+  CANCELED: "useOrganizationTaskListGroups_canceled__canceledTasks",
+  DUPLICATE: "useOrganizationTaskListGroups_duplicate__duplicateTasks",
+} as const satisfies Record<TaskState, string>;
+
+export interface OrganizationTaskListFilter extends TaskDeadlineBounds {
+  query: string | null;
+  assignedToId: string | null;
+  internalControlId: string | null;
+  hasAssignee: boolean | null;
+}
+
+export function organizationTaskListFilterVariants(
+  filter: OrganizationTaskListFilter,
+): OrganizationTaskListFilter[] {
+  const empty = {
+    query: null,
+    assignedToId: null,
+    internalControlId: null,
+    deadlineOnOrBefore: null,
+    deadlineOnOrAfter: null,
+    hasDeadline: null,
+    hasAssignee: null,
+  };
+  if (
+    filter.query == null
+    && filter.assignedToId == null
+    && filter.internalControlId == null
+    && filter.deadlineOnOrBefore == null
+    && filter.deadlineOnOrAfter == null
+    && filter.hasDeadline == null
+    && filter.hasAssignee == null
+  ) {
+    return [empty];
+  }
+
+  return [
+    {
+      query: filter.query,
+      assignedToId: filter.assignedToId,
+      internalControlId: filter.internalControlId,
+      deadlineOnOrBefore: filter.deadlineOnOrBefore,
+      deadlineOnOrAfter: filter.deadlineOnOrAfter,
+      hasDeadline: filter.hasDeadline,
+      hasAssignee: filter.hasAssignee,
+    },
+    empty,
+  ];
+}
+
+export function organizationTaskListConnectionFilters(
+  filter: OrganizationTaskListFilter,
+  state: TaskState,
+) {
+  return {
+    filter: {
+      query: filter.query,
+      state,
+      assignedToId: filter.assignedToId,
+      internalControlId: filter.internalControlId,
+      deadlineOnOrBefore: filter.deadlineOnOrBefore,
+      deadlineOnOrAfter: filter.deadlineOnOrAfter,
+      hasDeadline: filter.hasDeadline,
+      hasAssignee: filter.hasAssignee,
+    },
+  };
+}
+
+export function organizationTaskListConnectionId(
+  organizationId: string,
+  filter: OrganizationTaskListFilter,
+  state: TaskState,
+) {
+  return ConnectionHandler.getConnectionID(
+    organizationId,
+    taskListConnectionKeys[state],
+    organizationTaskListConnectionFilters(filter, state),
+  );
+}
+
+export const internalControlTasksConnectionKey = "InternalControl__tasks";
+export const taskInternalControlIdsConnectionKey = "useTaskInternalControlIds_internalControls";
+
+export const emptyTaskListFilter = {
+  query: null,
+  state: null,
+  assignedToId: null,
+  internalControlId: null,
+  deadlineOnOrBefore: null,
+  deadlineOnOrAfter: null,
+  hasDeadline: null,
+  hasAssignee: null,
+};
 
 const taskListConnectionFilters = {
   orderBy: { field: "PRIORITY_RANK" as const, direction: "ASC" as const },
-  filter: { query: null, state: null, assignedToId: null },
+  filter: emptyTaskListFilter,
 };
 
 export function taskListPath(organizationId: string) {
@@ -49,6 +147,31 @@ export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
 const taskCommentsConnectionFilters = {
   orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
 };
+
+const rememberedOrganizationTaskListFiltersByKey = new Map<string, OrganizationTaskListFilter>();
+
+function organizationTaskListFilterKey(filter: OrganizationTaskListFilter) {
+  return [
+    filter.query,
+    filter.assignedToId,
+    filter.internalControlId,
+    filter.deadlineOnOrBefore,
+    filter.deadlineOnOrAfter,
+    filter.hasDeadline,
+    filter.hasAssignee,
+  ].join("\0");
+}
+
+export function rememberOrganizationTaskListFilter(filter: OrganizationTaskListFilter) {
+  rememberedOrganizationTaskListFiltersByKey.set(
+    organizationTaskListFilterKey(filter),
+    filter,
+  );
+}
+
+export function rememberedOrganizationTaskListFilters(): OrganizationTaskListFilter[] {
+  return [...rememberedOrganizationTaskListFiltersByKey.values()];
+}
 
 export function taskCommentsConnectionId(taskId: string) {
   return ConnectionHandler.getConnectionID(

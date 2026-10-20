@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/cmd/aisystem"
 	cmdapi "go.probo.inc/probo/pkg/cmd/api"
 	"go.probo.inc/probo/pkg/cmd/asset"
+	"go.probo.inc/probo/pkg/cmd/attachment"
 	"go.probo.inc/probo/pkg/cmd/audit"
 	"go.probo.inc/probo/pkg/cmd/auditlog"
 	"go.probo.inc/probo/pkg/cmd/auth"
@@ -45,10 +46,11 @@ import (
 	"go.probo.inc/probo/pkg/cmd/device"
 	"go.probo.inc/probo/pkg/cmd/document"
 	"go.probo.inc/probo/pkg/cmd/dpia"
+	employeeportal "go.probo.inc/probo/pkg/cmd/employee-portal"
 	"go.probo.inc/probo/pkg/cmd/evidence"
 	"go.probo.inc/probo/pkg/cmd/finding"
 	"go.probo.inc/probo/pkg/cmd/framework"
-	"go.probo.inc/probo/pkg/cmd/measure"
+	internalcontrol "go.probo.inc/probo/pkg/cmd/internal-control"
 	"go.probo.inc/probo/pkg/cmd/obligation"
 	"go.probo.inc/probo/pkg/cmd/org"
 	processingactivity "go.probo.inc/probo/pkg/cmd/processing-activity"
@@ -105,6 +107,7 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(aisystem.NewCmdAiSystem(f))
 	cmd.AddCommand(cmdapi.NewCmdAPI(f))
 	cmd.AddCommand(asset.NewCmdAsset(f))
+	cmd.AddCommand(attachment.NewCmdAttachment(f))
 	cmd.AddCommand(audit.NewCmdAudit(f))
 	cmd.AddCommand(auditlog.NewCmdAuditLog(f))
 	cmd.AddCommand(auth.NewCmdAuth(f))
@@ -124,10 +127,11 @@ func NewCmdRoot(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(device.NewCmdDevice(f))
 	cmd.AddCommand(document.NewCmdDocument(f))
 	cmd.AddCommand(dpia.NewCmdDPIA(f))
+	cmd.AddCommand(employeeportal.NewCmdEmployeePortal(f))
 	cmd.AddCommand(evidence.NewCmdEvidence(f))
 	cmd.AddCommand(finding.NewCmdFinding(f))
 	cmd.AddCommand(framework.NewCmdFramework(f))
-	cmd.AddCommand(measure.NewCmdMeasure(f))
+	cmd.AddCommand(internalcontrol.NewCmdInternalControl(f))
 	cmd.AddCommand(obligation.NewCmdObligation(f))
 	cmd.AddCommand(org.NewCmdOrg(f))
 	cmd.AddCommand(processingactivity.NewCmdProcessingActivity(f))

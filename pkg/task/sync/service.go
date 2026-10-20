@@ -32,7 +32,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -54,10 +54,21 @@ type (
 		now time.Time,
 	) error
 
+	// RecordImportedTaskFunc writes the created activity and webhook for a
+	// task imported from a new Linear issue.
+	RecordImportedTaskFunc func(
+		ctx context.Context,
+		tx pg.Tx,
+		scope coredata.Scoper,
+		task *coredata.Task,
+		actorID *gid.GID,
+		now time.Time,
+	) error
+
 	Service struct {
 		pg                *pg.Client
 		encryptionKey     cipher.EncryptionKey
-		connectorRegistry *connector.Registry
+		connectorRegistry *connectorprotocol.Registry
 		baseURL           string
 		// linearAPIBaseURL is the LINEAR_SYNC provider registration's
 		// Endpoints.APIBase, threaded in by probod so a deployment that
@@ -66,6 +77,9 @@ type (
 		linearAPIBaseURL       string
 		logger                 *log.Logger
 		recordUpdateActivities RecordUpdateActivitiesFunc
+		recordImportedTask     RecordImportedTaskFunc
+		attachments            AttachmentReader
+		linearAssets           linearAssetCache
 	}
 
 	LinearTeam struct {
@@ -80,11 +94,13 @@ const linearPublishPendingExternalIDPrefix = "pending:"
 func NewService(
 	pgClient *pg.Client,
 	encryptionKey cipher.EncryptionKey,
-	connectorRegistry *connector.Registry,
+	connectorRegistry *connectorprotocol.Registry,
 	baseURL string,
 	linearAPIBaseURL string,
 	logger *log.Logger,
 	recordUpdateActivities RecordUpdateActivitiesFunc,
+	recordImportedTask RecordImportedTaskFunc,
+	attachments AttachmentReader,
 ) *Service {
 	return &Service{
 		pg:                     pgClient,
@@ -94,6 +110,9 @@ func NewService(
 		linearAPIBaseURL:       linearAPIBaseURL,
 		logger:                 logger,
 		recordUpdateActivities: recordUpdateActivities,
+		recordImportedTask:     recordImportedTask,
+		attachments:            attachments,
+		linearAssets:           linearAssetCache{urls: map[string]string{}},
 	}
 }
 
@@ -272,17 +291,40 @@ func (s *Service) PublishToLinear(
 
 	s.archiveAbandonedLinearIssue(ctx, accounts, task.ID, archiveConnectorID, archiveIssueID)
 
-	var issue *linear.Issue
+	var (
+		issue *linear.Issue
+		files map[string]string
+	)
 
 	if reused != nil {
 		issue = issueFromExternalLink(reused)
+		files = attachmentsFromMetadata(reused.Metadata)
 	} else {
+		description, uploaded, _, err := s.embedLinearDescription(
+			ctx,
+			client,
+			scope,
+			dbConnector.ID,
+			linearPublishPendingExternalID(task.ID),
+			task.OrganizationID,
+			task.ID,
+			markdown,
+			task.Content,
+		)
+		if err != nil {
+			s.compensateFailedPublish(ctx, client, scope, taskID, "")
+
+			return nil, fmt.Errorf("cannot embed Linear files: %w", err)
+		}
+
+		files = uploaded
+
 		issue, err = client.CreateIssue(
 			ctx,
 			linear.IssueInput{
 				TeamID:      teamID,
 				Title:       task.Name,
-				Description: markdown,
+				Description: description,
 				StateID:     stateID,
 				Priority:    TaskPriorityToLinear(task.Priority),
 				DueDate:     DeadlineToLinearDate(task.Deadline),
@@ -305,6 +347,7 @@ func (s *Service) PublishToLinear(
 		viewerID,
 		issue,
 		markdown,
+		files,
 	)
 	if err != nil {
 		s.compensateFailedPublish(ctx, client, scope, taskID, issue.ID)
@@ -793,7 +836,12 @@ func (s *Service) finishLinearLink(
 				}
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current); err != nil {
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, current.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -907,7 +955,12 @@ func (s *Service) restoreLinkedTask(
 				}
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current); err != nil {
+			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, current.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load task internal controls: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -1042,6 +1095,7 @@ func (s *Service) finishLinearPublish(
 	viewerID string,
 	issue *linear.Issue,
 	markdown string,
+	files map[string]string,
 ) (*coredata.TaskExternalLink, error) {
 	if err := s.persistPublishedIssueIdentity(ctx, scope, task.ID, issue, destination); err != nil {
 		return nil, fmt.Errorf("cannot persist Linear issue identity: %w", err)
@@ -1060,6 +1114,13 @@ func (s *Service) finishLinearPublish(
 	metadata, err := linearLinkMetadata(attachmentID, viewerID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(files) > 0 {
+		metadata, err = mergeAttachments(metadata, files)
+		if err != nil {
+			return nil, fmt.Errorf("cannot merge Linear attachments: %w", err)
+		}
 	}
 
 	hash := ContentHash(
@@ -1377,7 +1438,7 @@ func (s *Service) linearClientForConnector(
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
 ) (*linear.Client, *coredata.Connector, error) {
-	oauthConn, ok := dbConnector.Connection.(*connector.OAuth2Connection)
+	oauthConn, ok := dbConnector.Connection.(*connectorprotocol.OAuth2Connection)
 	if !ok {
 		return nil, nil, fmt.Errorf("cannot use Linear connector: unsupported credential")
 	}
@@ -1415,12 +1476,15 @@ func (s *Service) linearClientForConnector(
 		}
 	}
 
-	return linear.NewClient(httpClient, s.linearAPIBaseURL), dbConnector, nil
+	client := linear.NewClient(httpClient, s.linearAPIBaseURL)
+	client.SetConnectionGeneration(linearAssetGeneration(oauthConn.AccessToken))
+
+	return client, dbConnector, nil
 }
 
 func (s *Service) oauthHTTPClient(
 	ctx context.Context,
-	conn *connector.OAuth2Connection,
+	conn *connectorprotocol.OAuth2Connection,
 	provider coredata.ConnectorProvider,
 ) (*http.Client, error) {
 	refreshCfg := s.connectorRegistry.GetOAuth2RefreshConfig(string(provider))

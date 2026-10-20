@@ -169,7 +169,7 @@ type AuditReport implements Node {
 type Audit implements Node {
   id: ID!
   name: String
-  framework: Framework! @goField(forceResolver: true)
+  frameworks: [Framework!]! @goField(forceResolver: true)
   reportFile: AuditReport @goField(forceResolver: true)
 }
 

@@ -408,6 +408,10 @@ func generateConfig(opts configOptions) (string, error) {
 		// queue behind the rest of the parallel E2E suite.
 		"PROBOD_WEBHOOK_SENDER_INTERVAL": "1",
 
+		// Clone due recurring tasks promptly so e2e does not wait on the
+		// 5 minute default.
+		"PROBOD_TASK_RECURRENCE_INTERVAL": "1",
+
 		// LLM.
 		"PROBOD_OPENAI_API_KEY": "thisisnotasecret",
 

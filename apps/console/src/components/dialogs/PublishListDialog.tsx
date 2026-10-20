@@ -27,8 +27,8 @@ import {
   IconSend,
   IconUpload,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import type { ReactNode } from "react";
 import { useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -67,7 +67,7 @@ export function PublishListDialog({
   onPublished,
 }: Props) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const dialogRef = useDialogRef();
 
   const schema = useMemo(() => z.object({
@@ -104,24 +104,24 @@ export function PublishListDialog({
         return;
       }
 
-      toast({
+      toast.add({
         title: t("publishListDialog.messages.success"),
         description: requestedApproval
           ? t("publishListDialog.messages.approvalRequested")
           : publishedMessage,
-        variant: "success",
+        type: "success",
       });
       dialogRef.current?.close();
       reset();
       onPublished?.(documentId);
     } catch (error) {
-      toast({
+      toast.add({
         title: t("publishListDialog.messages.error"),
         description: formatError(
           publishError,
           error as Parameters<typeof formatError>[1],
         ),
-        variant: "error",
+        type: "error",
       });
     }
   };

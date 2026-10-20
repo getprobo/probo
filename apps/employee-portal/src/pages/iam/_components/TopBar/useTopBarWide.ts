@@ -21,7 +21,7 @@
 import { useMatch } from "react-router";
 
 export function useTopBarWide(): boolean {
-  const signatureDocument = useMatch("/:organizationId/signatures/:documentId");
-  const approvalDocument = useMatch("/:organizationId/approvals/:documentId");
+  const signatureDocument = useMatch("/:employeePortalId/signatures/:documentId");
+  const approvalDocument = useMatch("/:employeePortalId/approvals/:documentId");
   return signatureDocument != null || approvalDocument != null;
 }

@@ -37,7 +37,7 @@ func TestTreatmentPlanEvent_TreatmentPlan(t *testing.T) {
 	planID := gid.New(tenantID, coredata.TreatmentPlanEntityType)
 	riskID := gid.New(tenantID, coredata.RiskEntityType)
 	ownerID := gid.New(tenantID, coredata.MembershipProfileEntityType)
-	measureID := gid.New(tenantID, coredata.MeasureEntityType)
+	internalControlID := gid.New(tenantID, coredata.InternalControlEntityType)
 	analysisID := gid.New(tenantID, coredata.RiskAnalysisEntityType)
 	orgID := gid.New(tenantID, coredata.OrganizationEntityType)
 	createdAt := time.Unix(1_700_000_000, 0).UTC()
@@ -62,15 +62,15 @@ func TestTreatmentPlanEvent_TreatmentPlan(t *testing.T) {
 	event := coredata.NewTreatmentPlanEvent(
 		tp,
 		coredata.TreatmentPlanEventTypeUpdated,
-		[]gid.GID{measureID},
+		[]gid.GID{internalControlID},
 		updatedAt,
 	)
 
-	assert.Equal(t, []string{measureID.String()}, event.MeasureIDs)
+	assert.Equal(t, []string{internalControlID.String()}, event.InternalControlIDs)
 	assert.Equal(t, "Security", event.Category)
-	linked, err := event.LinkedMeasureIDs()
+	linked, err := event.LinkedInternalControlIDs()
 	require.NoError(t, err)
-	assert.Equal(t, []gid.GID{measureID}, linked)
+	assert.Equal(t, []gid.GID{internalControlID}, linked)
 
 	reconstructed := event.TreatmentPlan()
 	assert.Equal(t, planID, reconstructed.ID)
@@ -87,8 +87,8 @@ func TestTreatmentPlanEvent_TreatmentPlan(t *testing.T) {
 		reconstructed,
 		progressFromStates(
 			linked,
-			map[gid.GID]coredata.MeasureState{
-				measureID: coredata.MeasureStateImplemented,
+			map[gid.GID]coredata.InternalControlState{
+				internalControlID: coredata.InternalControlStateImplemented,
 			},
 		),
 	)
@@ -96,7 +96,7 @@ func TestTreatmentPlanEvent_TreatmentPlan(t *testing.T) {
 	assert.Equal(t, 2, entry.NetImpact)
 }
 
-func TestTreatmentPlanEvent_TreatmentPlan_MeasureLinkedKeepsUpdatedAt(t *testing.T) {
+func TestTreatmentPlanEvent_TreatmentPlan_InternalControlLinkedKeepsUpdatedAt(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
@@ -120,7 +120,7 @@ func TestTreatmentPlanEvent_TreatmentPlan_MeasureLinkedKeepsUpdatedAt(t *testing
 
 	event := coredata.NewTreatmentPlanEvent(
 		tp,
-		coredata.TreatmentPlanEventTypeMeasureLinked,
+		coredata.TreatmentPlanEventTypeInternalControlLinked,
 		nil,
 		linkedAt,
 	)
@@ -130,65 +130,76 @@ func TestTreatmentPlanEvent_TreatmentPlan_MeasureLinkedKeepsUpdatedAt(t *testing
 	assert.Equal(t, updatedAt, reconstructed.UpdatedAt)
 }
 
-func TestTreatmentPlanEvent_LinkedMeasureIDs_Invalid(t *testing.T) {
+func TestTreatmentPlanEvent_LinkedInternalControlIDs_Invalid(t *testing.T) {
 	t.Parallel()
 
-	event := &coredata.TreatmentPlanEvent{MeasureIDs: []string{"not-a-gid"}}
-	_, err := event.LinkedMeasureIDs()
+	event := &coredata.TreatmentPlanEvent{InternalControlIDs: []string{"not-a-gid"}}
+	_, err := event.LinkedInternalControlIDs()
 	require.Error(t, err)
 }
 
-func TestMeasureEvent_Measure(t *testing.T) {
+func TestInternalControlEvent_InternalControl(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
 	createdAt := time.Unix(1_700_000_000, 0).UTC()
 	updatedAt := createdAt.Add(time.Hour)
-	measure := &coredata.Measure{
-		ID:             gid.New(tenantID, coredata.MeasureEntityType),
+	internalControl := &coredata.InternalControl{
+		ID:             gid.New(tenantID, coredata.InternalControlEntityType),
 		OrganizationID: gid.New(tenantID, coredata.OrganizationEntityType),
 		Name:           "Access control",
 		Category:       "Access",
-		State:          coredata.MeasureStateImplemented,
+		State:          coredata.InternalControlStateImplemented,
 		CreatedAt:      createdAt,
 		UpdatedAt:      createdAt,
 	}
 
-	event := coredata.NewMeasureEvent(measure, coredata.MeasureEventTypeUpdated, updatedAt)
-	assert.Equal(t, measure.Name, event.Name)
-	assert.Equal(t, measure.Category, event.Category)
-	assert.Equal(t, measure.State, event.State)
-	assert.Equal(t, createdAt, event.MeasureCreatedAt)
+	event := coredata.NewInternalControlEvent(internalControl, coredata.InternalControlEventTypeUpdated, updatedAt)
+	assert.Equal(t, internalControl.Name, event.Name)
+	assert.Equal(t, internalControl.Category, event.Category)
+	assert.Equal(t, internalControl.State, event.State)
+	assert.Equal(t, createdAt, event.InternalControlCreatedAt)
 	assert.Equal(t, updatedAt, event.CreatedAt)
 
-	reconstructed := event.Measure()
-	assert.Equal(t, measure.ID, reconstructed.ID)
-	assert.Equal(t, measure.Name, reconstructed.Name)
-	assert.Equal(t, measure.Category, reconstructed.Category)
-	assert.Equal(t, measure.State, reconstructed.State)
+	reconstructed := event.InternalControl()
+	assert.Equal(t, internalControl.ID, reconstructed.ID)
+	assert.Equal(t, internalControl.Name, reconstructed.Name)
+	assert.Equal(t, internalControl.Category, reconstructed.Category)
+	assert.Equal(t, internalControl.State, reconstructed.State)
+	assert.Equal(t, coredata.InternalControlImplementationStatusImplemented, reconstructed.ImplementationStatus)
 	assert.Equal(t, createdAt, reconstructed.CreatedAt)
 	assert.Equal(t, updatedAt, reconstructed.UpdatedAt)
+
+	operating := *internalControl
+	operating.ImplementationStatus = coredata.InternalControlImplementationStatusOperating
+	operatingEvent := coredata.NewInternalControlEvent(&operating, coredata.InternalControlEventTypeUpdated, updatedAt)
+	require.NotNil(t, operatingEvent.ImplementationStatus)
+	assert.Equal(t, coredata.InternalControlImplementationStatusOperating, *operatingEvent.ImplementationStatus)
+
+	restored := operatingEvent.InternalControl()
+	assert.Equal(t, coredata.InternalControlStateImplemented, restored.State)
+	assert.Equal(t, coredata.InternalControlImplementationStatusOperating, restored.ImplementationStatus)
 }
 
-func TestMeasureIDStrings_Empty(t *testing.T) {
+func TestInternalControlIDStrings_Empty(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, []string{}, coredata.MeasureIDStrings(nil))
-	assert.Equal(t, []string{}, coredata.MeasureIDStrings([]gid.GID{}))
+	assert.Equal(t, []string{}, coredata.InternalControlIDStrings(nil))
+	assert.Equal(t, []string{}, coredata.InternalControlIDStrings([]gid.GID{}))
 }
 
 func TestProgressFromStates(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	doneID := gid.New(tenantID, coredata.MeasureEntityType)
-	openID := gid.New(tenantID, coredata.MeasureEntityType)
+	doneID := gid.New(tenantID, coredata.InternalControlEntityType)
+	openID := gid.New(tenantID, coredata.InternalControlEntityType)
 
 	progress := progressFromStates(
 		[]gid.GID{doneID, openID},
-		map[gid.GID]coredata.MeasureState{
-			doneID: coredata.MeasureStateImplemented,
-			openID: coredata.MeasureStateNotStarted,
+		map[gid.GID]coredata.InternalControlState{
+			doneID: coredata.InternalControlStateImplemented,
+			openID: coredata.InternalControlStateNotStarted,
 		},
 	)
 
@@ -200,13 +211,13 @@ func TestProgressFromStates_MissingState(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
-	doneID := gid.New(tenantID, coredata.MeasureEntityType)
-	missingID := gid.New(tenantID, coredata.MeasureEntityType)
+	doneID := gid.New(tenantID, coredata.InternalControlEntityType)
+	missingID := gid.New(tenantID, coredata.InternalControlEntityType)
 
 	progress := progressFromStates(
 		[]gid.GID{doneID, missingID},
-		map[gid.GID]coredata.MeasureState{
-			doneID: coredata.MeasureStateImplemented,
+		map[gid.GID]coredata.InternalControlState{
+			doneID: coredata.InternalControlStateImplemented,
 		},
 	)
 

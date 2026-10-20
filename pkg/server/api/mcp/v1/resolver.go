@@ -39,6 +39,7 @@ import (
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
+	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/filemanager"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -69,6 +70,7 @@ type Resolver struct {
 	iamSvc                *iam.Service
 	accessReview          *accessreview.Service
 	cookieBanner          *cookiebanner.Service
+	employeePortal        *employeeportalmgmt.Service
 	riskManagement        *riskmanagement.Service
 	itamSvc               *itam.Service
 	task                  *task.Service

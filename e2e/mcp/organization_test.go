@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -41,4 +42,57 @@ func TestMCP_ListOrganizations(t *testing.T) {
 	mc.CallToolInto("listOrganizations", map[string]any{}, &result)
 
 	assert.NotEmpty(t, result.Organizations)
+}
+
+func TestMCP_ListOrganizations_LegalName(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+
+	legalName := "Listed Org Legal Name Inc."
+	err := owner.ExecuteConnect(`
+		mutation UpdateOrganization($input: UpdateOrganizationInput!) {
+			updateOrganization(input: $input) {
+				organization { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": owner.GetOrganizationID().String(),
+			"legalName":      legalName,
+		},
+	}, nil)
+	require.NoError(t, err)
+
+	var result struct {
+		Organizations []struct {
+			ID        string  `json:"id"`
+			Name      string  `json:"name"`
+			LegalName *string `json:"legal_name"`
+		} `json:"organizations"`
+	}
+	mc.CallToolInto("listOrganizations", map[string]any{}, &result)
+
+	var (
+		found        bool
+		gotName      string
+		gotLegalName *string
+	)
+
+	for _, organization := range result.Organizations {
+		if organization.ID != owner.GetOrganizationID().String() {
+			continue
+		}
+
+		found = true
+		gotName = organization.Name
+		gotLegalName = organization.LegalName
+
+		break
+	}
+
+	require.True(t, found)
+	assert.NotEmpty(t, gotName)
+	require.NotNil(t, gotLegalName)
+	assert.Equal(t, legalName, *gotLegalName)
 }

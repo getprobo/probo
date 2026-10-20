@@ -38,9 +38,10 @@ const assumeOrganizationSessionQuery = graphql`
 
 const assumeMutation = graphql`
   mutation AssumeOrganizationSessionMutation(
-    $input: AssumeOrganizationSessionInput!
+    $input: AssumeEmployeePortalSessionInput!
   ) {
-    assumeOrganizationSession(input: $input) {
+    assumeEmployeePortalSession(input: $input) {
+      organizationId
       result {
         __typename
         ... on PasswordRequired {
@@ -55,7 +56,7 @@ const assumeMutation = graphql`
 `;
 
 export function AssumeOrganizationSession() {
-  const { organizationId } = useParams();
+  const { employeePortalId } = useParams();
   const { viewer } = useLazyLoadQuery<AssumeOrganizationSessionQuery>(
     assumeOrganizationSessionQuery,
     {},
@@ -64,7 +65,7 @@ export function AssumeOrganizationSession() {
   const [assume] = useMutation<AssumeOrganizationSessionMutation>(assumeMutation);
 
   useEffect(() => {
-    if (organizationId == null) {
+    if (employeePortalId == null) {
       redirectToLogin();
       return;
     }
@@ -72,12 +73,14 @@ export function AssumeOrganizationSession() {
     void assume({
       variables: {
         input: {
-          organizationId,
+          employeePortalId,
           continue: window.location.href,
         },
       },
     }).then((response) => {
-      const result = response.assumeOrganizationSession?.result;
+      const payload = response.assumeEmployeePortalSession;
+      const organizationId = payload?.organizationId;
+      const result = payload?.result;
       if (result == null) {
         redirectToLogin({ organizationId });
         return;
@@ -105,7 +108,7 @@ export function AssumeOrganizationSession() {
     }).catch(() => {
       // UnAuthenticatedError is consumed by useMutation (full redirect).
     });
-  }, [organizationId, assume, viewer.ssoLoginURL]);
+  }, [employeePortalId, assume, viewer.ssoLoginURL]);
 
   return <MainLayoutSkeleton />;
 }

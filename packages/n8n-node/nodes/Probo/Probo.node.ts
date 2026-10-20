@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import {
+	NodeApiError,
 	NodeConnectionTypes,
 	NodeOperationError,
 	type IExecuteFunctions,
@@ -32,6 +33,27 @@ import {
 	getExecuteFunction,
 } from './actions';
 import { getAccessReviewSources } from './actions/accessReview/loadAccessReviewSourceOptions';
+import {
+	getAPIKeyConnectorProviders,
+	getClientCredentialsConnectorProviders,
+} from './actions/connector/loadConnectorProviderOptions';
+
+function nodeErrorForItem(
+	this: IExecuteFunctions,
+	error: unknown,
+	itemIndex: number,
+): NodeApiError | NodeOperationError {
+	if (error instanceof NodeApiError || error instanceof NodeOperationError) {
+		error.context.itemIndex = itemIndex;
+		return error;
+	}
+
+	const cause = error instanceof Error ? error : new Error(String(error));
+	return new NodeOperationError(this.getNode(), cause, {
+		itemIndex,
+		level: 'error',
+	});
+}
 
 export class Probo implements INodeType {
 	description: INodeTypeDescription = {
@@ -99,6 +121,11 @@ export class Probo implements INodeType {
 						description: 'Manage assets',
 					},
 					{
+						name: 'Attachment',
+						value: 'attachment',
+						description: 'Upload a file for rich text',
+					},
+					{
 						name: 'Audit',
 						value: 'audit',
 						description: 'Manage audits',
@@ -164,6 +191,11 @@ export class Probo implements INodeType {
 						description: 'Manage data protection impact assessments',
 					},
 					{
+						name: 'Employee Portal',
+						value: 'employeePortal',
+						description: 'Manage employee portals',
+					},
+					{
 						name: 'Evidence',
 						value: 'evidence',
 						description: 'Manage evidences',
@@ -184,9 +216,9 @@ export class Probo implements INodeType {
 						description: 'Manage frameworks',
 					},
 					{
-						name: 'Measure',
-						value: 'measure',
-						description: 'Manage measures',
+						name: 'Internal Control',
+						value: 'internalControl',
+						description: 'Manage internal controls',
 					},
 					{
 						name: 'Obligation',
@@ -299,14 +331,16 @@ export class Probo implements INodeType {
 				const result = await executeFunction.call(this, i);
 				returnData.push(result);
 			} catch (error) {
+				const nodeError = nodeErrorForItem.call(this, error, i);
 				if (this.continueOnFail()) {
 					returnData.push({
-						json: { error: error instanceof Error ? error.message : String(error) },
+						json: { error: nodeError.message },
+						error: nodeError,
 						pairedItem: { item: i },
 					});
 					continue;
 				}
-				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
+				throw nodeError;
 			}
 		}
 
@@ -316,6 +350,8 @@ export class Probo implements INodeType {
 	methods = {
 		loadOptions: {
 			getAccessReviewSources,
+			getAPIKeyConnectorProviders,
+			getClientCredentialsConnectorProviders,
 		},
 		listSearch: {},
 	};

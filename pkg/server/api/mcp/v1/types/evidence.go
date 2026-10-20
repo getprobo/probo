@@ -22,29 +22,44 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 )
 
-func NewEvidence(e *coredata.Evidence) *Evidence {
+func NewEvidence(e *coredata.Evidence, file *File) *Evidence {
+	url := e.URL
+	if url == "" && file != nil {
+		url = file.DownloadURL
+	}
+
 	return &Evidence{
-		ID:             e.ID,
-		OrganizationID: e.OrganizationID,
-		MeasureID:      e.MeasureID,
-		TaskID:         e.TaskID,
-		State:          EvidenceState(e.State.String()),
-		ReferenceID:    e.ReferenceID,
-		Type:           EvidenceType(e.Type.String()),
-		URL:            e.URL,
-		Description:    e.Description,
-		CreatedAt:      e.CreatedAt,
-		UpdatedAt:      e.UpdatedAt,
+		ID:                e.ID,
+		OrganizationID:    e.OrganizationID,
+		InternalControlID: e.InternalControlID,
+		TaskID:            e.TaskID,
+		State:             EvidenceState(e.State.String()),
+		ReferenceID:       e.ReferenceID,
+		Type:              EvidenceType(e.Type.String()),
+		File:              file,
+		URL:               url,
+		Description:       e.Description,
+		CreatedAt:         e.CreatedAt,
+		UpdatedAt:         e.UpdatedAt,
 	}
 }
 
-func NewListMeasureEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField]) ListMeasureEvidencesOutput {
+func NewListInternalControlEvidencesOutput(
+	evidencePage *page.Page[*coredata.Evidence, coredata.EvidenceOrderField],
+	filesByID map[gid.GID]*File,
+) ListInternalControlEvidencesOutput {
 	evidences := make([]*Evidence, 0, len(evidencePage.Data))
 	for _, v := range evidencePage.Data {
-		evidences = append(evidences, NewEvidence(v))
+		var file *File
+		if v.EvidenceFileId != nil {
+			file = filesByID[*v.EvidenceFileId]
+		}
+
+		evidences = append(evidences, NewEvidence(v, file))
 	}
 
 	var nextCursor *page.CursorKey
@@ -54,7 +69,7 @@ func NewListMeasureEvidencesOutput(evidencePage *page.Page[*coredata.Evidence, c
 		nextCursor = &cursorKey
 	}
 
-	return ListMeasureEvidencesOutput{
+	return ListInternalControlEvidencesOutput{
 		NextCursor: nextCursor,
 		Evidences:  evidences,
 	}

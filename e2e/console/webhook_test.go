@@ -216,7 +216,7 @@ func TestWebhook_TaskLifecycleEvents(t *testing.T) {
 		[]string{"TASK_CREATED", "TASK_UPDATED", "TASK_DELETED"},
 	)
 
-	taskID := factory.NewTaskWithoutMeasure(owner).WithName(taskName).Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).WithName(taskName).Create()
 
 	updateQuery := `
 		mutation UpdateTask($input: UpdateTaskInput!) {
@@ -272,7 +272,7 @@ func TestWebhook_TaskCommentLifecycleEvents(t *testing.T) {
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	endpoint := unroutableWebhookEndpoint(t)
-	taskID := factory.NewTaskWithoutMeasure(owner).WithName("Task for webhook comment").Create()
+	taskID := factory.NewTaskWithoutInternalControl(owner).WithName("Task for webhook comment").Create()
 
 	subscription := createWebhookSubscription(
 		t,

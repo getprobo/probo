@@ -27,8 +27,8 @@ func ResourceTypeName(entityType uint16) string {
 		return "Organization"
 	case FrameworkEntityType:
 		return "Framework"
-	case MeasureEntityType:
-		return "Measure"
+	case InternalControlEntityType:
+		return "InternalControl"
 	case TaskEntityType:
 		return "Task"
 	case EvidenceEntityType:

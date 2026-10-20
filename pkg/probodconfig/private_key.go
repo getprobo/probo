@@ -123,6 +123,16 @@ func (k PrivateKey) MarshalJSON() ([]byte, error) {
 	return json.Marshal(k.pem)
 }
 
+// RSAPrivateKeyFromKey wraps an already-decoded RSA key. The PEM form is empty
+// because the key was not read from configuration.
+func RSAPrivateKeyFromKey(key *rsa.PrivateKey) RSAPrivateKey {
+	if key == nil {
+		return RSAPrivateKey{}
+	}
+
+	return RSAPrivateKey{key: key}
+}
+
 // ParseRSAPrivateKey decodes a PEM-encoded RSA private key. An empty input
 // returns the zero value, so a caller that requires a key checks IsZero.
 func ParseRSAPrivateKey(pemData string) (RSAPrivateKey, error) {

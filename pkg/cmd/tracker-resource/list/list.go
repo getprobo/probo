@@ -44,7 +44,6 @@ query($id: ID!, $first: Int, $after: CursorKey) {
             path
             displayName
             excluded
-            lastDetectedAt
           }
         }
         pageInfo {
@@ -58,13 +57,12 @@ query($id: ID!, $first: Int, $after: CursorKey) {
 `
 
 type trackerResource struct {
-	ID             string  `json:"id"`
-	Type           string  `json:"type"`
-	Origin         string  `json:"origin"`
-	Path           string  `json:"path"`
-	DisplayName    string  `json:"displayName"`
-	Excluded       bool    `json:"excluded"`
-	LastDetectedAt *string `json:"lastDetectedAt"`
+	ID          string `json:"id"`
+	Type        string `json:"type"`
+	Origin      string `json:"origin"`
+	Path        string `json:"path"`
+	DisplayName string `json:"displayName"`
+	Excluded    bool   `json:"excluded"`
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
@@ -151,15 +149,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					excluded = "yes"
 				}
 
-				lastDetected := ""
-				if r.LastDetectedAt != nil {
-					lastDetected = cmdutil.FormatTime(*r.LastDetectedAt)
-				}
-
-				rows = append(rows, []string{r.ID, r.Type, r.Origin, r.Path, r.DisplayName, excluded, lastDetected})
+				rows = append(rows, []string{r.ID, r.Type, r.Origin, r.Path, r.DisplayName, excluded})
 			}
 
-			t := cmdutil.NewTable("ID", "TYPE", "ORIGIN", "PATH", "DISPLAY NAME", "EXCLUDED", "LAST DETECTED").Rows(rows...)
+			t := cmdutil.NewTable("ID", "TYPE", "ORIGIN", "PATH", "DISPLAY NAME", "EXCLUDED").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(resources) {

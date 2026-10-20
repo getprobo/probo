@@ -34,3 +34,20 @@ export const ComboboxInputNodeProvider = ComboboxInputNodeContext.Provider;
 export function useComboboxInputNode() {
   return useContext(ComboboxInputNodeContext);
 }
+
+// The joined frame around a field, so the popup can match its width before open.
+export type ComboboxJoinedContextValue = {
+  anchor: HTMLDivElement | null;
+  width: number;
+};
+
+const ComboboxJoinedContext = createContext<ComboboxJoinedContextValue>({
+  anchor: null,
+  width: 0,
+});
+
+export const ComboboxJoinedProvider = ComboboxJoinedContext.Provider;
+
+export function useComboboxJoined() {
+  return useContext(ComboboxJoinedContext);
+}

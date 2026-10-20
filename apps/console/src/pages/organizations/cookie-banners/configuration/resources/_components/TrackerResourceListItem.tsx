@@ -19,7 +19,6 @@
 // SOFTWARE.
 
 import { DotsThreeVerticalIcon, EyeIcon, EyeSlashIcon, TrashIcon } from "@phosphor-icons/react";
-import { dateTimeFormat } from "@probo/i18n";
 import { Badge } from "@probo/ui/src/v2/Badge/Badge";
 import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
 import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
@@ -55,7 +54,6 @@ const trackerResourceFragment = graphql`
     displayName
     description
     excluded
-    lastDetectedAt
     cookieCategory {
       id
       name
@@ -121,10 +119,10 @@ export function TrackerResourceListItem({
   cookieBannerKey,
   onRemoved,
 }: TrackerResourceListItemProps) {
-  const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const { t } = useTranslation("organizations/cookie-banners");
   const resource = useFragment(trackerResourceFragment, resourceKey);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { origin, title, description, path, date, actions } = trackerResourceListItem({
+  const { origin, title, description, path, actions } = trackerResourceListItem({
     excluded: resource.excluded,
   });
 
@@ -186,7 +184,7 @@ export function TrackerResourceListItem({
                 </Badge>
               )}
         </TableCell>
-        <TableCell>
+        <TableCell overflow="truncate">
           <div className={origin()}>
             <Text size={2} weight="medium" highContrast className={title()}>
               {resource.origin}
@@ -200,7 +198,7 @@ export function TrackerResourceListItem({
               : null}
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell overflow="truncate">
           <Text size={1} className={path()}>
             {resource.path}
           </Text>
@@ -223,17 +221,6 @@ export function TrackerResourceListItem({
                 </Text>
               </TableCell>
             )}
-        <TableCell>
-          {resource.lastDetectedAt == null
-            ? <Text size={2} color="faint">-</Text>
-            : (
-                <time dateTime={resource.lastDetectedAt} className={date()}>
-                  <Text size={2}>
-                    {dateTimeFormat(i18n.language, resource.lastDetectedAt)}
-                  </Text>
-                </time>
-              )}
-        </TableCell>
         <TableCell interactive={resource.canUpdate || resource.canDelete ? true : undefined} justify="end">
           {(resource.canUpdate || resource.canDelete) && (
             <div className={actions()}>

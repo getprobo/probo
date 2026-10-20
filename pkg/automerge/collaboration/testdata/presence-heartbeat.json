@@ -1,0 +1,10 @@
+{
+  "description": "Presence heartbeat envelope CBOR-encoded as an ephemeral payload",
+  "marker": "__presence",
+  "envelope": {
+    "__presence": {
+      "type": "heartbeat"
+    }
+  },
+  "cborBase64": "uQABal9fcHJlc2VuY2W5AAFkdHlwZWloZWFydGJlYXQ="
+}

@@ -23,26 +23,30 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerSettingsPageQuery } from "#/__generated__/core/CookieBannerSettingsPageQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import CookieBannerSettingsPage, { cookieBannerSettingsPageQuery } from "./CookieBannerSettingsPage";
+import { CookieBannerSettingsPage, cookieBannerSettingsPageQuery } from "./CookieBannerSettingsPage";
+import { CookieBannerSettingsPageSkeleton } from "./CookieBannerSettingsPageSkeleton";
 
 export default function CookieBannerSettingsPageLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerSettingsPageQuery>(cookieBannerSettingsPageQuery);
+  if (typeof cookieBannerId !== "string") {
+    throw new Error("Missing cookieBannerId parameter");
+  }
+
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerSettingsPageQuery>(
+    cookieBannerSettingsPageQuery,
+  );
 
   useEffect(() => {
-    if (cookieBannerId) {
-      loadQuery({ cookieBannerId });
-    }
+    loadQuery({ cookieBannerId });
   }, [loadQuery, cookieBannerId]);
 
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <CookieBannerSettingsPageSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<CookieBannerSettingsPageSkeleton />}>
       <CookieBannerSettingsPage queryRef={queryRef} />
     </Suspense>
   );

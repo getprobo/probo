@@ -50,6 +50,7 @@ export async function execute(
 				... on Organization {
 					id
 					name
+					legalName
 					logo {
 						id
 						fileName

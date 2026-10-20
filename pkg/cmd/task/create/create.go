@@ -23,12 +23,12 @@ package create
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const createMutation = `
@@ -46,17 +46,35 @@ mutation($input: CreateTaskInput!) {
 }
 `
 
-type createResponse struct {
-	CreateTask struct {
-		TaskEdge struct {
-			Node struct {
-				ID       string `json:"id"`
-				Name     string `json:"name"`
-				State    string `json:"state"`
-				Priority string `json:"priority"`
-			} `json:"node"`
-		} `json:"taskEdge"`
-	} `json:"createTask"`
+type createEnvelope struct {
+	Data struct {
+		CreateTask struct {
+			TaskEdge struct {
+				Node struct {
+					ID       string `json:"id"`
+					Name     string `json:"name"`
+					State    string `json:"state"`
+					Priority string `json:"priority"`
+				} `json:"node"`
+			} `json:"taskEdge"`
+		} `json:"createTask"`
+	} `json:"data"`
+	Errors []graphQLError `json:"errors"`
+}
+
+type graphQLError struct {
+	Message string `json:"message"`
+}
+
+func graphQLErrorMessage(errs []graphQLError) string {
+	messages := make([]string, 0, len(errs))
+	for _, err := range errs {
+		if err.Message != "" {
+			messages = append(messages, err.Message)
+		}
+	}
+
+	return strings.Join(messages, "; ")
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -66,11 +84,13 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagContent            string
 		flagState              string
 		flagPriority           string
-		flagMeasure            string
+		flagInternalControls   []string
 		flagTimeEstimate       string
 		flagAssignedTo         string
 		flagDeadline           string
 		flagRecurrenceInterval string
+		flagLinearTeam         string
+		flagNoLinearTeam       bool
 	)
 
 	cmd := &cobra.Command{
@@ -146,7 +166,12 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagContent != "" {
-				input["content"] = prosemirror.FromPlainText(flagContent)
+				content, err := cmdutil.CLIContent(flagContent)
+				if err != nil {
+					return fmt.Errorf("cannot read content: %w", err)
+				}
+
+				input["content"] = content
 			}
 
 			if flagState != "" {
@@ -161,8 +186,17 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["priority"] = flagPriority
 			}
 
-			if flagMeasure != "" {
-				input["measureId"] = flagMeasure
+			if len(flagInternalControls) > 0 {
+				internalControlIDs := make([]string, 0, len(flagInternalControls))
+				for _, internalControlID := range flagInternalControls {
+					if internalControlID != "" {
+						internalControlIDs = append(internalControlIDs, internalControlID)
+					}
+				}
+
+				if len(internalControlIDs) > 0 {
+					input["internalControlIds"] = internalControlIDs
+				}
 			}
 
 			if flagTimeEstimate != "" {
@@ -185,7 +219,17 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				input["recurrenceInterval"] = flagRecurrenceInterval
 			}
 
-			data, err := client.Do(
+			if flagNoLinearTeam && flagLinearTeam != "" {
+				return fmt.Errorf("--no-linear-team and --linear-team cannot be used together")
+			}
+
+			if flagNoLinearTeam {
+				input["linearTeamId"] = nil
+			} else if flagLinearTeam != "" {
+				input["linearTeamId"] = flagLinearTeam
+			}
+
+			raw, err := client.DoRaw(
 				createMutation,
 				map[string]any{"input": input},
 			)
@@ -193,18 +237,34 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			var resp createResponse
-			if err := json.Unmarshal(data, &resp); err != nil {
+			var resp createEnvelope
+			if err := json.Unmarshal(raw, &resp); err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			t := resp.CreateTask.TaskEdge.Node
+			task := resp.Data.CreateTask.TaskEdge.Node
+			if task.ID == "" {
+				if len(resp.Errors) > 0 {
+					return fmt.Errorf("GraphQL error: %s", graphQLErrorMessage(resp.Errors))
+				}
+
+				return fmt.Errorf("cannot parse response: task was not returned")
+			}
+
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created task %s (%s)\n",
-				t.ID,
-				t.Name,
+				task.ID,
+				task.Name,
 			)
+
+			if len(resp.Errors) > 0 {
+				_, _ = fmt.Fprintf(
+					f.IOStreams.ErrOut,
+					"Linear publish failed: %s\n",
+					graphQLErrorMessage(resp.Errors),
+				)
+			}
 
 			return nil
 		},
@@ -212,14 +272,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name (required)")
-	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Task content as markdown or ProseMirror JSON. Images and links to /api/files/v1/{id} are kept")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
+	cmd.Flags().StringArrayVar(&flagInternalControls, "internal-control", nil, "Internal control ID (repeatable)")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
-	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline)")
+	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (requires --deadline). The next task is created when the deadline passes")
+	cmd.Flags().StringVar(&flagLinearTeam, "linear-team", "", "Linear team ID. Omit to use the organization's default Linear team. If the Linear publish attempt fails after the task is created, the task still exists")
+	cmd.Flags().BoolVar(&flagNoLinearTeam, "no-linear-team", false, "Create the task with no Linear team")
 
 	return cmd
 }

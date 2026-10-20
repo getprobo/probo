@@ -321,6 +321,11 @@ type ConnectorAPIKeyFormat {
 
 input ConnectorFilter {
     providers: [ConnectorProvider!]
+    """
+    query matches the connector name, or the provider display name
+    ("Amazon" matches AWS).
+    """
+    query: String
 }
 
 """
@@ -347,6 +352,11 @@ enum ConnectorConnectionStatus {
 
 type Connector implements Node {
     id: ID!
+    """
+    A name that distinguishes this credential from other credentials for the
+    same provider. For example, production or main.
+    """
+    name: String!
     provider: ConnectorProvider!
     protocol: ConnectorProtocol!
     canReconnect: Boolean! @goField(forceResolver: true)
@@ -368,6 +378,11 @@ type Connector implements Node {
     """
     documentationUrl: String @goField(forceResolver: true)
     """
+    initialAccountExternalId is the account this credential is. Null when an
+    organization install has no account yet. That account cannot be disabled.
+    """
+    initialAccountExternalId: String @goField(forceResolver: true)
+    """
     accounts are the enabled tenant rows this connector owns.
     """
     accounts(
@@ -378,13 +393,36 @@ type Connector implements Node {
         orderBy: ConnectorAccountOrder
     ): ConnectorAccountConnection! @goField(forceResolver: true)
     """
+    distinctAccountCount is how many external account ids are enabled on
+    any connector of this provider in the organization. The same external
+    id on two credentials counts once. It does not follow accounts
+    pagination.
+    """
+    distinctAccountCount: Int! @goField(forceResolver: true)
+    """
     discoveredAccounts probes the provider live on every read, so selecting it
     across a list of connectors costs one outbound call per connector. Select
-    it on a single connector, or on the one a mutation just returned.
+    it on a single connector, or on the one a mutation just returned. A caller
+    without permission to discover gets an empty list and no probe. A failed
+    listing is also an empty list. accountDiscovery separates that failure
+    from a real empty result. Do not select both fields: each one probes.
     """
     discoveredAccounts: [DiscoveredConnectorAccount!]!
         @goField(forceResolver: true)
+    """
+    accountDiscovery is the live account listing and why the list is empty.
+    It probes the provider on every read. Select it on one connector at a
+    time, and not together with discoveredAccounts.
+    """
+    accountDiscovery: AccountDiscovery! @goField(forceResolver: true)
     createdAt: Datetime!
+    """
+    providerOrganizations lists the orgs a picker connector can be scoped to.
+    NOT_APPLICABLE when this provider has no picker. Listing probes the
+    provider, so select it on one connector at a time.
+    """
+    providerOrganizations: ProviderOrganizations! @goField(forceResolver: true)
+    selectedOrganization: String @goField(forceResolver: true)
 
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
@@ -407,6 +445,46 @@ type ConnectorAccount implements Node {
 type DiscoveredConnectorAccount {
     externalAccountId: String!
     name: String!
+    """
+    enabled is true when this external account is already stored on the
+    connector.
+    """
+    enabled: Boolean!
+}
+
+enum AccountDiscoveryStatus {
+    """
+    The provider returned at least one account.
+    """
+    AVAILABLE
+
+    """
+    The call succeeded and returned no account. This includes a provider
+    with no organization-account listing.
+    """
+    EMPTY
+
+    """
+    The call failed. nodes is empty. connectionStatus can still be
+    CONNECTED. The underlying error stays server-side.
+    """
+    UNAVAILABLE
+
+    """
+    The caller cannot discover accounts. No probe was made.
+    """
+    NOT_PERMITTED
+}
+
+"""
+Live accounts this connector can enable, and why the list looks empty.
+
+EMPTY and UNAVAILABLE both leave nodes empty. EMPTY means the provider
+answered. UNAVAILABLE means the listing failed.
+"""
+type AccountDiscovery {
+    status: AccountDiscoveryStatus!
+    nodes: [DiscoveredConnectorAccount!]!
 }
 
 enum ConnectorAccountOrderField
@@ -485,6 +563,10 @@ extend type Mutation {
         input: DisableConnectorAccountInput!
     ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
+    updateConnector(input: UpdateConnectorInput!): UpdateConnectorPayload!
+    configureConnectorOrganization(
+        input: ConfigureConnectorOrganizationInput!
+    ): ConfigureConnectorOrganizationPayload!
     deleteSlackConnection(
         input: DeleteSlackConnectionInput!
     ): DeleteSlackConnectionPayload!
@@ -492,6 +574,11 @@ extend type Mutation {
 
 input CreateAPIKeyConnectorInput {
     organizationId: ID!
+    """
+    A name that distinguishes this credential from other credentials for the
+    same provider. For example, production or main.
+    """
+    name: String!
     provider: ConnectorProvider!
     """
     apiKey is the customer-supplied credential. It is null for
@@ -529,6 +616,11 @@ type CreateAPIKeyConnectorPayload {
 
 input CreateClientCredentialsConnectorInput {
     organizationId: ID!
+    """
+    A name that distinguishes this credential from other credentials for the
+    same provider. For example, production or main.
+    """
+    name: String!
     provider: ConnectorProvider!
     clientId: String!
     clientSecret: String!
@@ -550,6 +642,11 @@ type CreateClientCredentialsConnectorPayload {
 
 input CreateWorkloadIdentityConnectorInput {
     organizationId: ID!
+    """
+    A name that distinguishes this credential from other credentials for the
+    same provider. For example, production or main.
+    """
+    name: String!
     provider: ConnectorProvider!
     awsRoleArn: String
     gcpWorkloadIdentityProvider: String
@@ -566,6 +663,11 @@ type CreateWorkloadIdentityConnectorPayload {
 
 input CreateOrganizationConnectorInput {
     organizationId: ID!
+    """
+    A name that distinguishes this credential from other credentials for the
+    same provider. For example, production or main.
+    """
+    name: String!
     provider: ConnectorProvider!
     awsRoleArn: String
     awsMemberRoleName: String
@@ -604,8 +706,30 @@ type DisableConnectorAccountPayload {
     disabledConnectorAccountId: ID!
 }
 
+input ConfigureConnectorOrganizationInput {
+    connectorId: ID!
+    organizationSlug: String!
+}
+
+type ConfigureConnectorOrganizationPayload {
+    connector: Connector!
+}
+
 input DeleteConnectorInput {
     connectorId: ID!
+}
+
+input UpdateConnectorInput {
+    connectorId: ID!
+    """
+    A name that distinguishes this credential from other credentials for the
+    same provider. For example, production or main.
+    """
+    name: String!
+}
+
+type UpdateConnectorPayload {
+    connector: Connector!
 }
 
 type DeleteConnectorPayload {

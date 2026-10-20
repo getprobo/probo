@@ -25,16 +25,44 @@ export function displayValue(
   return value && value.length > 0 ? value : pendingLabel;
 }
 
-export function stateVariant(
-  state: string,
-): "success" | "danger" | "warning" | "info" {
+export function ownerLabel(
+  fullName: string | null | undefined,
+  unassignedLabel: string,
+) {
+  const name = fullName?.trim();
+  return name && name.length > 0 ? name : unassignedLabel;
+}
+
+export const devicePlatforms = ["DARWIN", "LINUX", "FREEBSD", "WINDOWS"] as const;
+
+export type DevicePlatformName = (typeof devicePlatforms)[number];
+
+export function platformLabel(
+  t: Translator,
+  platform: string | null | undefined,
+): string | null {
+  switch (platform) {
+    case "DARWIN":
+      return t("devices.platforms.darwin");
+    case "LINUX":
+      return t("devices.platforms.linux");
+    case "FREEBSD":
+      return t("devices.platforms.freebsd");
+    case "WINDOWS":
+      return t("devices.platforms.windows");
+    default:
+      return null;
+  }
+}
+
+export function stateColor(state: string): "green" | "red" | "amber" {
   switch (state) {
     case "ACTIVE":
-      return "success";
+      return "green";
     case "REVOKED":
-      return "danger";
+      return "red";
     default:
-      return "warning";
+      return "amber";
   }
 }
 
@@ -109,5 +137,26 @@ export function postureValueVariant(
       return "danger";
     default:
       return undefined;
+  }
+}
+
+export type PostureOutcome = "pass" | "warning" | "unknown";
+
+// Stored status is the verdict. NOT_APPLICABLE is not a warning.
+// A status this client does not know stays visible as unknown.
+export function postureStatusOutcome(
+  status: string,
+): PostureOutcome | "notApplicable" {
+  switch (status) {
+    case "PASS":
+      return "pass";
+    case "FAIL":
+      return "warning";
+    case "UNKNOWN":
+      return "unknown";
+    case "NOT_APPLICABLE":
+      return "notApplicable";
+    default:
+      return "unknown";
   }
 }

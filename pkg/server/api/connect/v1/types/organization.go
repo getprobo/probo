@@ -32,6 +32,7 @@ func NewOrganization(organization *coredata.Organization) *Organization {
 	org := &Organization{
 		ID:        organization.ID,
 		Name:      organization.Name,
+		LegalName: organization.LegalName,
 		CreatedAt: organization.CreatedAt,
 		UpdatedAt: organization.UpdatedAt,
 	}

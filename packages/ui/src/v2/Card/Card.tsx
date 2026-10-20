@@ -26,9 +26,9 @@ import { card } from "./variants";
 
 export type CardProps = ComponentProps<"div"> & VariantProps<typeof card>;
 
-// Container that groups related content (Radix "Card"). Renders a <div>; for a
-// clickable card set `interactive` and wrap the content in an anchor/link. Use
-// CardInset for content that should bleed to the card's edges.
+// Container that groups related content (Radix "Card"). Renders a <div>. For a
+// clickable card set `interactive` and put a CardLink or CardButton inside.
+// Use CardInset for content that should bleed to the card's edges.
 export function Card(props: CardProps) {
   const { size = 1, padding = size, variant, interactive, className, children, ...rest } = props;
 

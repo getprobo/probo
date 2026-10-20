@@ -27,9 +27,9 @@ import {
   DialogFooter,
   Field,
   Input,
-  RichEditor,
   useDialogRef,
 } from "@probo/ui";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -37,6 +37,7 @@ import { graphql, useFragment } from "react-relay";
 import type { ForkRiskAnalysisDialog_riskAnalysis$key } from "#/__generated__/core/ForkRiskAnalysisDialog_riskAnalysis.graphql";
 import type { ForkRiskAnalysisDialogMutation } from "#/__generated__/core/ForkRiskAnalysisDialogMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
+import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 import { isRichEditorContentEmpty } from "#/pages/organizations/_lib/richEditorContent";
 
 import { riskAnalysisDescriptionField } from "../variants";
@@ -94,6 +95,7 @@ export function ForkRiskAnalysisDialog({
   const dialogRef = dialogRefFromParent ?? localDialogRef;
   const riskAnalysis = useFragment(forkRiskAnalysisDialogFragment, riskAnalysisKey);
   const [forkRiskAnalysis, isForking] = useMutation<ForkRiskAnalysisDialogMutation>(forkMutation);
+  const [uploading, setUploading] = useState(false);
   const { register, handleSubmit, control, formState } = useForm<FormData>({
     values: {
       name: riskAnalysis.name,
@@ -104,6 +106,10 @@ export function ForkRiskAnalysisDialog({
   });
 
   const onSubmit = async (data: FormData) => {
+    if (uploading) {
+      return;
+    }
+
     const periodStart = formatDatetime(data.periodStart);
     const periodEnd = formatDatetime(data.periodEnd);
     const period = periodStart || periodEnd
@@ -165,6 +171,7 @@ export function ForkRiskAnalysisDialog({
                   placeholder={t("forkRiskAnalysisDialog.placeholders.description")}
                   aria-label={t("forkRiskAnalysisDialog.fields.description")}
                   onChangeContent={field.onChange}
+                  onUploadingChange={setUploading}
                 />
               )}
             />
@@ -201,7 +208,7 @@ export function ForkRiskAnalysisDialog({
           </Field>
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isForking}>
+          <Button type="submit" disabled={isForking || uploading}>
             {t("forkRiskAnalysisDialog.actions.fork")}
           </Button>
         </DialogFooter>

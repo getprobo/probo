@@ -32,8 +32,8 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/accessreview"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -108,8 +108,58 @@ func TestUpdateSource_RelinkWhenOtherAccountHasSource(t *testing.T) {
 			ConnectorID:          new(&connectorID),
 		},
 	)
-	require.Error(t, err)
+	require.ErrorIs(t, err, coredata.ErrResourceInUse)
 	assert.ErrorContains(t, err, "connector account already referenced by another source")
+}
+
+func TestUpdateSource_AllowsSameExternalAccountOnAnotherConnector(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	firstConnectorID := env.insertConnector(
+		t,
+		coredata.ConnectorProviderGitHub,
+		&coredata.GitHubConnectorSettings{Organization: "acme"},
+	)
+	secondConnectorID := env.insertConnector(
+		t,
+		coredata.ConnectorProviderGitHub,
+		&coredata.GitHubConnectorSettings{Organization: "acme"},
+	)
+	firstAccountID := env.insertAccount(t, firstConnectorID, "acme")
+	secondAccountID := env.insertAccount(t, secondConnectorID, "acme")
+
+	owned := env.insertLinkedSource(t, firstAccountID, "owned")
+	other := insertAccessSource(t, env.ctx, env.client, env.scope, &coredata.AccessReviewSource{
+		ID:             gid.New(env.scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+		OrganizationID: env.organizationID,
+		Name:           "other",
+		CreatedAt:      env.now,
+		UpdatedAt:      env.now,
+	})
+
+	updated, err := env.svc.UpdateSource(
+		env.ctx,
+		env.scope,
+		accessreview.UpdateAccessReviewSourceRequest{
+			AccessReviewSourceID: other.ID,
+			ConnectorID:          new(&secondConnectorID),
+		},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, updated.ConnectorAccountID)
+	assert.Equal(t, secondAccountID, *updated.ConnectorAccountID)
+
+	stillOwned := &coredata.AccessReviewSource{}
+
+	require.NoError(t, env.client.WithConn(
+		env.ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return stillOwned.LoadByID(ctx, conn, env.scope, owned.ID)
+		},
+	))
+	require.NotNil(t, stillOwned.ConnectorAccountID)
+	assert.Equal(t, firstAccountID, *stillOwned.ConnectorAccountID)
 }
 
 func TestEnsureSource_StoresResolvedAccount(t *testing.T) {
@@ -119,9 +169,9 @@ func TestEnsureSource_StoresResolvedAccount(t *testing.T) {
 	connectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
 	accountID := env.insertAccount(t, connectorID, "chosen")
 
-	source, created, err := env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	source, created, err := ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID:     env.organizationID,
 			ConnectorAccountID: &accountID,
@@ -133,9 +183,9 @@ func TestEnsureSource_StoresResolvedAccount(t *testing.T) {
 	require.NotNil(t, source.ConnectorAccountID)
 	assert.Equal(t, accountID, *source.ConnectorAccountID)
 
-	again, created, err := env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	again, created, err := ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID:     env.organizationID,
 			ConnectorAccountID: &accountID,
@@ -149,9 +199,9 @@ func TestEnsureSource_StoresResolvedAccount(t *testing.T) {
 	resolvedConnectorID := env.insertConnector(t, coredata.ConnectorProviderSlack)
 	resolvedAccountID := env.insertAccount(t, resolvedConnectorID, "only")
 
-	byConnector, created, err := env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	byConnector, created, err := ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID: env.organizationID,
 			ConnectorID:    &resolvedConnectorID,
@@ -165,9 +215,9 @@ func TestEnsureSource_StoresResolvedAccount(t *testing.T) {
 
 	env.insertAccount(t, resolvedConnectorID, "second")
 
-	_, _, err = env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	_, _, err = ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID: env.organizationID,
 			ConnectorID:    &resolvedConnectorID,
@@ -180,9 +230,9 @@ func TestEnsureSource_StoresResolvedAccount(t *testing.T) {
 	freshAccountID := env.insertAccount(t, freshConnectorID, "fresh")
 	unrelatedConnectorID := env.insertConnector(t, coredata.ConnectorProviderNotion)
 
-	stored, created, err := env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	stored, created, err := ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID:     env.organizationID,
 			ConnectorID:        &unrelatedConnectorID,
@@ -229,7 +279,7 @@ func TestEnsureSource_RejectsForeignOrganization(t *testing.T) {
 				OrganizationID: foreignOrganizationID,
 				Provider:       coredata.ConnectorProviderGitHub,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},
@@ -260,9 +310,9 @@ func TestEnsureSource_RejectsForeignOrganization(t *testing.T) {
 		},
 	))
 
-	_, _, err := env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	_, _, err := ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID:     env.organizationID,
 			ConnectorAccountID: &foreignAccount.ID,
@@ -271,9 +321,9 @@ func TestEnsureSource_RejectsForeignOrganization(t *testing.T) {
 	)
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 
-	_, _, err = env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	_, _, err = ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID: env.organizationID,
 			ConnectorID:    &foreignConnectorID,
@@ -333,9 +383,9 @@ func TestSource_RefusesConnectorWithNoAccount(t *testing.T) {
 	env := newAccessSourceEnv(t)
 	connectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
 
-	_, _, err := env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	_, _, err := ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID: env.organizationID,
 			ConnectorID:    &connectorID,
@@ -390,7 +440,7 @@ func TestSource_RefusesConnectorWithNoAccount(t *testing.T) {
 				OrganizationID: env.organizationID,
 				Provider:       coredata.ConnectorProviderGitHub,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},
@@ -406,9 +456,9 @@ func TestSource_RefusesConnectorWithNoAccount(t *testing.T) {
 		},
 	))
 
-	_, _, err = env.svc.EnsureSource(
-		env.ctx,
-		env.scope,
+	_, _, err = ensureOne(
+		t,
+		env,
 		accessreview.CreateAccessReviewSourceRequest{
 			OrganizationID: env.organizationID,
 			ConnectorID:    &namedID,
@@ -447,20 +497,25 @@ func TestDeleteSource_KeepsConnectorWhenOtherAccountHasSource(t *testing.T) {
 	requireMissingSource(t, env, dropped.ID)
 	requirePresentSource(t, env, kept.ID)
 	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, keptAccountID)
+	requireAccountPresent(t, env, droppedAccountID)
 }
 
-func TestDeleteSource_DeletesConnectorWhenLastSource(t *testing.T) {
+func TestDeleteSource_KeepsConnectorWhenLastSource(t *testing.T) {
 	t.Parallel()
 
 	env := newAccessSourceEnv(t)
 	connectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
 	accountID := env.insertAccount(t, connectorID, "only")
+	unusedAccountID := env.insertAccount(t, connectorID, "unused")
 	source := env.insertLinkedSource(t, accountID, "only source")
 
 	require.NoError(t, env.svc.DeleteSource(env.ctx, env.scope, source.ID))
 
 	requireMissingSource(t, env, source.ID)
-	requireConnectorMissing(t, env, connectorID)
+	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, accountID)
+	requireAccountPresent(t, env, unusedAccountID)
 }
 
 func TestUpdateSource_RelinkKeepsConnectorWhenOtherAccountHasSource(t *testing.T) {
@@ -488,9 +543,11 @@ func TestUpdateSource_RelinkKeepsConnectorWhenOtherAccountHasSource(t *testing.T
 
 	requirePresentSource(t, env, kept.ID)
 	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, keptAccountID)
+	requireAccountPresent(t, env, movedAccountID)
 }
 
-func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T) {
+func TestUpdateSource_RelinkKeepsAbandonedConnectorWhenLastSource(t *testing.T) {
 	t.Parallel()
 
 	env := newAccessSourceEnv(t)
@@ -511,7 +568,110 @@ func TestUpdateSource_RelinkDeletesAbandonedConnectorWhenLastSource(t *testing.T
 	require.NoError(t, err)
 	assert.Nil(t, updated.ConnectorAccountID)
 
-	requireConnectorMissing(t, env, connectorID)
+	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, accountID)
+}
+
+func TestEnsureSource_RefusesBridgedConnector(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := env.insertConnector(t, coredata.ConnectorProviderGoogleWorkspace)
+	accountID := env.insertAccount(t, connectorID, "workspace")
+	env.insertBridge(t, connectorID)
+
+	_, _, err := ensureOne(
+		t,
+		env,
+		accessreview.CreateAccessReviewSourceRequest{
+			OrganizationID:     env.organizationID,
+			ConnectorAccountID: &accountID,
+			Name:               "shared",
+		},
+	)
+	require.ErrorIs(t, err, coredata.ErrResourceInUse)
+	require.ErrorContains(t, err, "SCIM configuration")
+	requireConnectorPresent(t, env, connectorID)
+}
+
+func TestEnsureSources_AllowsImplicitPickerAccount(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
+	accountID := env.insertAccount(t, connectorID, connectorID.String())
+
+	source, created, err := ensureOne(
+		t,
+		env,
+		accessreview.CreateAccessReviewSourceRequest{
+			OrganizationID:     env.organizationID,
+			ConnectorAccountID: &accountID,
+			Name:               "github",
+		},
+	)
+	require.NoError(t, err)
+	require.True(t, created)
+	require.NotNil(t, source.ConnectorAccountID)
+	assert.Equal(t, accountID, *source.ConnectorAccountID)
+}
+
+func TestEnsureSources_CreatesDistinctAccountsWithSameExternalID(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	firstConnectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
+	secondConnectorID := env.insertConnector(t, coredata.ConnectorProviderGitHub)
+	otherConnectorID := env.insertConnector(t, coredata.ConnectorProviderSlack)
+	firstAccountID := env.insertAccount(t, firstConnectorID, "acme")
+	secondAccountID := env.insertAccount(t, secondConnectorID, "acme")
+	otherAccountID := env.insertAccount(t, otherConnectorID, "acme")
+	csvData := "email,name\njane@example.com,Jane"
+
+	results, err := env.svc.EnsureSources(
+		env.ctx,
+		env.scope,
+		env.organizationID,
+		[]accessreview.CreateAccessReviewSourceRequest{
+			{ConnectorAccountID: &firstAccountID, Name: "first"},
+			{ConnectorAccountID: &secondAccountID, Name: "second"},
+			{ConnectorAccountID: &otherAccountID, Name: "other provider"},
+			{Name: "csv", CsvData: &csvData},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, results, 4)
+
+	require.True(t, results[0].Created)
+	require.NotNil(t, results[0].Source.ConnectorAccountID)
+	assert.Equal(t, firstAccountID, *results[0].Source.ConnectorAccountID)
+
+	require.True(t, results[1].Created)
+	assert.NotEqual(t, results[0].Source.ID, results[1].Source.ID)
+	require.NotNil(t, results[1].Source.ConnectorAccountID)
+	assert.Equal(t, secondAccountID, *results[1].Source.ConnectorAccountID)
+
+	require.True(t, results[2].Created)
+	assert.NotEqual(t, results[0].Source.ID, results[2].Source.ID)
+	require.NotNil(t, results[2].Source.ConnectorAccountID)
+	assert.Equal(t, otherAccountID, *results[2].Source.ConnectorAccountID)
+
+	require.True(t, results[3].Created)
+	assert.Nil(t, results[3].Source.ConnectorAccountID)
+	require.NotNil(t, results[3].Source.CsvData)
+
+	again, err := env.svc.EnsureSources(
+		env.ctx,
+		env.scope,
+		env.organizationID,
+		[]accessreview.CreateAccessReviewSourceRequest{
+			{ConnectorAccountID: &secondAccountID, Name: "again"},
+		},
+	)
+	require.NoError(t, err)
+	require.Len(t, again, 1)
+	assert.False(t, again[0].Created)
+	assert.Equal(t, results[1].Source.ID, again[0].Source.ID)
 }
 
 func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
@@ -527,6 +687,7 @@ func TestDeleteSource_KeepsConnectorWhenBridgeReferencesIt(t *testing.T) {
 
 	requireMissingSource(t, env, source.ID)
 	requireConnectorPresent(t, env, connectorID)
+	requireAccountPresent(t, env, accountID)
 }
 
 func insertAccessSource(
@@ -581,7 +742,7 @@ func TestSourceNeedsReconnect_Slack(t *testing.T) {
 		require.NoError(t, env.client.WithTx(
 			env.ctx,
 			func(ctx context.Context, tx pg.Tx) error {
-				conn := &connector.SlackConnection{
+				conn := &connectorprotocol.SlackConnection{
 					AccessToken: "xox-test",
 					TokenType:   tokenType,
 					Scope:       scope,
@@ -626,6 +787,52 @@ func TestSourceNeedsReconnect_Slack(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestSetConnectorOrganization_GitHubApp(t *testing.T) {
+	t.Parallel()
+
+	env := newAccessSourceEnv(t)
+	connectorID := gid.New(env.scope.GetTenantID(), coredata.ConnectorEntityType)
+
+	var key cipher.EncryptionKey
+
+	require.NoError(t, env.client.WithTx(
+		env.ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			cnnctr := &coredata.Connector{
+				ID:             connectorID,
+				OrganizationID: env.organizationID,
+				Provider:       coredata.ConnectorProviderGitHub,
+				Protocol:       coredata.ConnectorProtocolGitHubApp,
+				Connection:     &connectorprotocol.GitHubAppConnection{InstallationID: 42},
+				CreatedAt:      env.now,
+				UpdatedAt:      env.now,
+			}
+
+			if err := cnnctr.SetSettings(&coredata.GitHubConnectorSettings{Organization: "acme"}); err != nil {
+				return err
+			}
+
+			return cnnctr.Insert(ctx, tx, env.scope, key)
+		},
+	))
+
+	err := env.svc.SetConnectorOrganization(env.ctx, env.scope, connectorID, "other")
+	require.ErrorIs(t, err, accessreview.ErrOrganizationPickerUnsupported)
+
+	stored := &coredata.Connector{}
+
+	require.NoError(t, env.client.WithConn(
+		env.ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return stored.LoadMetadataByID(ctx, conn, env.scope, connectorID)
+		},
+	))
+
+	settings, err := coredata.ConnectorSettings[coredata.GitHubConnectorSettings](stored)
+	require.NoError(t, err)
+	assert.Equal(t, "acme", settings.Organization)
 }
 
 func newAccessSourceEnv(t *testing.T) *accessSourceEnv {
@@ -692,7 +899,7 @@ func (e *accessSourceEnv) insertConnector(
 				OrganizationID: e.organizationID,
 				Provider:       connectorProvider,
 				Protocol:       coredata.ConnectorProtocolOAuth2,
-				Connection: &connector.OAuth2Connection{
+				Connection: &connectorprotocol.OAuth2Connection{
 					AccessToken: "test-token",
 					TokenType:   "Bearer",
 				},
@@ -807,6 +1014,28 @@ func requirePresentSource(t *testing.T, env *accessSourceEnv, sourceID gid.GID) 
 	))
 }
 
+func ensureOne(
+	t *testing.T,
+	env *accessSourceEnv,
+	req accessreview.CreateAccessReviewSourceRequest,
+) (*coredata.AccessReviewSource, bool, error) {
+	t.Helper()
+
+	results, err := env.svc.EnsureSources(
+		env.ctx,
+		env.scope,
+		env.organizationID,
+		[]accessreview.CreateAccessReviewSourceRequest{req},
+	)
+	if err != nil {
+		return nil, false, err
+	}
+
+	require.Len(t, results, 1)
+
+	return results[0].Source, results[0].Created, nil
+}
+
 func requireMissingSource(t *testing.T, env *accessSourceEnv, sourceID gid.GID) {
 	t.Helper()
 
@@ -821,6 +1050,19 @@ func requireMissingSource(t *testing.T, env *accessSourceEnv, sourceID gid.GID) 
 	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }
 
+func requireAccountPresent(t *testing.T, env *accessSourceEnv, accountID gid.GID) {
+	t.Helper()
+
+	loaded := &coredata.ConnectorAccount{}
+
+	require.NoError(t, env.client.WithConn(
+		env.ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return loaded.LoadByID(ctx, conn, env.scope, accountID)
+		},
+	))
+}
+
 func requireConnectorPresent(t *testing.T, env *accessSourceEnv, connectorID gid.GID) {
 	t.Helper()
 
@@ -832,18 +1074,4 @@ func requireConnectorPresent(t *testing.T, env *accessSourceEnv, connectorID gid
 			return loaded.LoadMetadataByID(ctx, conn, env.scope, connectorID)
 		},
 	))
-}
-
-func requireConnectorMissing(t *testing.T, env *accessSourceEnv, connectorID gid.GID) {
-	t.Helper()
-
-	loaded := &coredata.Connector{}
-
-	err := env.client.WithConn(
-		env.ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			return loaded.LoadMetadataByID(ctx, conn, env.scope, connectorID)
-		},
-	)
-	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
 }

@@ -93,6 +93,7 @@ func (s *Service) ExportDocumentPDF(
 	watermarkText := pdfutils.TruncateWatermarkText(email.String())
 
 	watermarkedPDF, err := pdfutils.AddWatermarkWithTimestamp(
+		ctx,
 		pdfData,
 		classification.String(),
 		watermarkText,
@@ -248,7 +249,10 @@ func (s *Service) generateDocumentPDFOnTheFly(
 ) ([]byte, error) {
 	organization := &coredata.Organization{}
 
-	var approverNames []string
+	var (
+		approverNames []string
+		imageFiles    []*coredata.File
+	)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -304,6 +308,8 @@ func (s *Service) generateDocumentPDFOnTheFly(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			imageFiles = docgen.ContentImageFiles(ctx, conn, scope, version.Content, s.logger)
+
 			return nil
 		},
 	)
@@ -342,13 +348,14 @@ func (s *Service) generateDocumentPDFOnTheFly(
 
 	docData := docgen.DocumentData{
 		Title:                       version.Title,
-		Content:                     json.RawMessage([]byte(version.Content)),
+		Content:                     json.RawMessage([]byte(docgen.EmbedContentImages(ctx, s.logger, version.Content, imageFiles, s.fileManager))),
 		Major:                       version.Major,
 		Minor:                       version.Minor,
 		Classification:              classification,
 		Approvers:                   approverNames,
 		PublishedAt:                 version.PublishedAt,
 		CompanyHorizontalLogoBase64: horizontalLogoBase64,
+		BaseURL:                     s.baseURL,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)

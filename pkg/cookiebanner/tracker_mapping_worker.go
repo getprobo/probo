@@ -161,6 +161,13 @@ func interpretCatalogRow(cp coredata.CommonTrackerPattern) (adopt *gid.GID, untr
 func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.TrackerPattern) error {
 	scope := coredata.NewScopeFromObjectID(tp.ID)
 
+	// EXTENSION is visitor-installed software. Do not create a catalog
+	// row and do not run the agent; an existing catalog link is left
+	// in place so a later SCRIPT promotion can still show a vendor.
+	if isExtensionSource(tp) {
+		return nil
+	}
+
 	// Phase 1: deterministic catalog signals. No LLM while the row is locked.
 	var det deterministicResult
 
@@ -232,10 +239,13 @@ func (h *trackerMappingHandler) Process(ctx context.Context, tp coredata.Tracker
 	}
 
 	// Phase 2: mapping agent, outside any transaction. Skipped for
-	// PRE_EXISTING (low signal) and EXTENSION (visitor-installed). Gated
-	// on the local firstParty so a rejected-row verdict is not overwritten.
+	// PRE_EXISTING (low signal), EXTENSION (visitor-installed), and
+	// HTTP (a cookieStore change is also how an isolated-world
+	// extension shows up). Name, sibling, and domain catalog matches
+	// still run for HTTP. Gated on the local firstParty so a
+	// rejected-row verdict is not overwritten.
 	if commonThirdPartyID == nil && h.mappingEnabled && !firstParty &&
-		!isPreExistingSource(tp) && !isExtensionSource(tp) {
+		!isPreExistingSource(tp) && !isExtensionSource(tp) && !isHTTPSource(tp) {
 		ident, err := h.identifyWithAgent(ctx, tp, det.origin)
 		if err != nil {
 			return fmt.Errorf("cannot identify with agent: %w", err)
@@ -503,6 +513,13 @@ func isPreExistingSource(tp coredata.TrackerPattern) bool {
 // frame. That settles attribution: visitor-installed software, no vendor.
 func isExtensionSource(tp coredata.TrackerPattern) bool {
 	return tp.Source != nil && *tp.Source == coredata.CookieSourceExtension
+}
+
+// isHTTPSource reports a cookieStore or Set-Cookie observation. The
+// mapping agent is skipped because an isolated-world extension write
+// also arrives as HTTP; deterministic catalog matches still run.
+func isHTTPSource(tp coredata.TrackerPattern) bool {
+	return tp.Source != nil && *tp.Source == coredata.CookieSourceHTTP
 }
 
 // rejectedVerdictFor returns the terminal verdict a rejected catalog

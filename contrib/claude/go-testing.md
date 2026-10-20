@@ -2,6 +2,12 @@
 
 Test library: `github.com/stretchr/testify` (`require` for fatal, `assert` for non-fatal).
 
+## Prefer end-to-end tests
+
+Prefer an end-to-end test over a unit test. End-to-end tests run against a live server and a real database, so they cover the path the product actually takes.
+
+A unit test that creates objects in the database should usually be an end-to-end test instead. Persistence, authorization, and API behavior belong in the end-to-end suite. Keep unit tests for pure logic that takes plain values and returns a result, such as formatting and decisions. If the test needs rows in the database to set up its subject, write an end-to-end test. See [`e2e.md`](e2e.md).
+
 ## Package naming
 
 Black-box test packages (`package foo_test`). White-box (`package foo`) only when testing unexported functions.
@@ -50,3 +56,5 @@ func TestRun_Handoff(t *testing.T) {
 ## Helpers and mocks
 
 Define mock types and helper functions (e.g. `stopResponse`, `userMessage`) at the top of the test file, not inline in each test.
+
+Do not add a production interface so a test can mock it. If the behavior under test is formatting or a decision, call that function with plain values. Do not stand up fakes for PDF rendering or object storage from the caller.

@@ -79,3 +79,22 @@ export const comboboxItem = tv({
 export const comboboxEmpty = tv({
   base: "px-3 py-2 text-2 text-sand-11",
 });
+
+// Linear pickers only. The field stays the same size. An absolute frame draws
+// the card around it, and the list continues that card underneath with one
+// shared shadow and no seam.
+export const comboboxJoined = tv({
+  slots: {
+    frame: [
+      "pointer-events-none absolute -inset-2 z-0 rounded-t-3 border border-b-0 border-sand-6 bg-sand-1 shadow-3",
+      "[clip-path:inset(-1.5rem_-1.5rem_0_-1.5rem)]",
+    ],
+    field: "relative",
+    input: "relative z-1",
+    popup: [
+      "max-h-[min(16rem,var(--available-height))] overflow-y-auto rounded-b-3 rounded-t-none border border-t-0 border-sand-6 bg-sand-1 p-1 shadow-3 outline-none",
+      "[clip-path:inset(0_-1.5rem_-1.5rem_-1.5rem)]",
+    ],
+    list: "max-h-64 overflow-y-auto",
+  },
+});

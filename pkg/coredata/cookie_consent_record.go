@@ -53,6 +53,7 @@ type (
 		SubdivisionCode       *SubdivisionCode    `db:"subdivision_code"`
 		ConsentMode           *CookieConsentMode  `db:"consent_mode"`
 		TC                    *string             `db:"tc"`
+		Origin                *string             `db:"origin"`
 		CreatedAt             time.Time           `db:"created_at"`
 	}
 
@@ -133,6 +134,7 @@ SELECT
 	subdivision_code,
 	consent_mode,
 	tc,
+	origin,
 	created_at
 FROM
 	cookie_consent_records
@@ -223,6 +225,7 @@ INSERT INTO cookie_consent_records (
 	subdivision_code,
 	consent_mode,
 	tc,
+	origin,
 	created_at
 ) VALUES (
 	@id,
@@ -242,6 +245,7 @@ INSERT INTO cookie_consent_records (
 	@subdivision_code,
 	@consent_mode,
 	@tc,
+	@origin,
 	@created_at
 )
 `
@@ -264,6 +268,7 @@ INSERT INTO cookie_consent_records (
 		"subdivision_code":         r.SubdivisionCode,
 		"consent_mode":             r.ConsentMode,
 		"tc":                       r.TC,
+		"origin":                   r.Origin,
 		"created_at":               r.CreatedAt,
 	}
 
@@ -299,6 +304,7 @@ SELECT
 	subdivision_code,
 	consent_mode,
 	tc,
+	origin,
 	created_at
 FROM
 	cookie_consent_records
@@ -356,6 +362,7 @@ SELECT
 	subdivision_code,
 	consent_mode,
 	tc,
+	origin,
 	created_at
 FROM
 	cookie_consent_records

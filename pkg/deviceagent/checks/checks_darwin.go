@@ -78,11 +78,11 @@ func darwinScreenLock(ctx context.Context) Result {
 				ev["seconds"] = seconds
 			}
 
-			if mode == "immediate" {
-				return pass(ev)
+			if darwinScreenLockModeStatus(mode) == StatusFail {
+				return fail(ev)
 			}
 
-			return fail(ev)
+			return pass(ev)
 		}
 
 		if status.Err != nil {
@@ -306,7 +306,8 @@ func darwinDefaultsMissing(out CmdResult) bool {
 
 	return strings.Contains(lower, "does not exist") ||
 		strings.Contains(lower, "could not find") ||
-		strings.Contains(lower, "does not exist in domain")
+		strings.Contains(lower, "does not exist in domain") ||
+		(strings.Contains(lower, "domain") && strings.Contains(lower, "not found"))
 }
 
 func darwinConsoleUser(ctx context.Context) string {

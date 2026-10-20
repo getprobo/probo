@@ -26,10 +26,12 @@ import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
+import { adjustTotalCount } from "./moveOrganizationTaskListEdge";
 import { insertTaskEdgeSorted } from "./taskConnectionOrder";
 import {
-  measureTasksConnectionKey,
-  organizationTasksConnectionKey,
+  internalControlTasksConnectionKey,
+  organizationTaskListConnectionId,
+  organizationTaskListFilterVariants,
   taskConnectionId,
 } from "./taskPath";
 import type { TaskPriority, TaskState } from "./taskState";
@@ -41,7 +43,7 @@ const createTaskMutation = graphql`
       taskEdge {
         node {
           id
-          ...TasksCard_task
+          ...TasksPageList_task
           ...TaskListItem_task
         }
       }
@@ -68,19 +70,35 @@ export function useCreateTask() {
       content?: string | null;
       state?: TaskState;
       priority: TaskPriority;
-      measureId?: string | null;
+      internalControlIds?: readonly string[] | null;
+      linearTeamId?: string | null;
     },
-    connectionId: string,
+    connectionId?: string,
   ) {
-    const measureId = input.measureId ?? undefined;
+    const internalControlIds = [...new Set(input.internalControlIds ?? [])];
     const state = input.state ?? "TODO";
-    const connections = new Set([
-      taskConnectionId(organizationId, organizationTasksConnectionKey),
-    ]);
-    if (measureId) {
-      connections.add(taskConnectionId(measureId, measureTasksConnectionKey));
+    const listFilter = {
+      query: graphqlFilter.query,
+      assignedToId: graphqlFilter.assignedToId,
+      internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
+      hasDeadline: graphqlFilter.hasDeadline,
+      hasAssignee: graphqlFilter.hasAssignee,
+    };
+    const connections = new Set<string>();
+    for (const variant of organizationTaskListFilterVariants(listFilter)) {
+      if (taskMatchesFilter(
+        { name: input.name, state, internalControlIds },
+        { ...variant, state },
+      )) {
+        connections.add(organizationTaskListConnectionId(organizationId, variant, state));
+      }
     }
-    if (taskMatchesFilter({ name: input.name, state }, graphqlFilter)) {
+    for (const internalControlId of internalControlIds) {
+      connections.add(taskConnectionId(internalControlId, internalControlTasksConnectionKey));
+    }
+    if (connectionId != null) {
       connections.add(connectionId);
     }
 
@@ -92,14 +110,36 @@ export function useCreateTask() {
           content: input.content || null,
           state: input.state,
           priority: input.priority,
-          measureId,
+          internalControlIds: internalControlIds.length > 0 ? [...internalControlIds] : undefined,
+          ...(input.linearTeamId !== undefined
+            ? { linearTeamId: input.linearTeamId }
+            : {}),
         },
       },
-      updater: store => insertTaskEdgeSorted(store, [...connections]),
+      updater(store) {
+        const ids = [...connections];
+        insertTaskEdgeSorted(store, ids);
+        const createdId = store.getRootField("createTask")
+          ?.getLinkedRecord("taskEdge")
+          ?.getLinkedRecord("node")
+          ?.getDataID();
+        if (createdId == null) {
+          return;
+        }
+        for (const id of ids) {
+          const connection = store.get(id);
+          const present = connection?.getLinkedRecords("edges")?.some(
+            edge => edge?.getLinkedRecord("node")?.getDataID() === createdId,
+          );
+          if (connection != null && present) {
+            adjustTotalCount(connection, 1);
+          }
+        }
+      },
     });
 
-    if (measureId) {
-      updateStoreCounter(relayEnv, measureId, "tasks(first:0)", 1);
+    for (const internalControlId of internalControlIds) {
+      updateStoreCounter(relayEnv, internalControlId, "tasks(first:0)", 1);
     }
 
     return payload.createTask.taskEdge.node.id;

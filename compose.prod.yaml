@@ -56,7 +56,8 @@ services:
 
 
   postgres:
-    image: "postgres@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72"
+    # postgres:18.3
+    image: "postgres@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0"
     shm_size: "1g"
     command: >
       postgres -c "shared_buffers=4GB"
@@ -66,7 +67,10 @@ services:
       - "5432:5432"
     volumes:
       - "./compose/postgres:/docker-entrypoint-initdb.d:ro"
-      - "postgres-data:/var/lib/postgresql/data:rw"
+      # A Postgres 17 volume has its cluster at this root. Postgres 18
+      # stores data in 18/docker and refuses to start until pg_upgrade.
+      # Procedure: compose/postgres-17-to-18.md
+      - "postgres-data:/var/lib/postgresql:rw"
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"

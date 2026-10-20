@@ -124,11 +124,11 @@ export const frameworkControlNodeQuery = graphql`
         maturityLevel
         canUpdate: permission(action: "core:control:update")
         canDelete: permission(action: "core:control:delete")
-        canCreateMeasureMapping: permission(
-          action: "core:control:create-measure-mapping"
+        canCreateInternalControlMapping: permission(
+          action: "core:control:create-internal-control-mapping"
         )
-        canDeleteMeasureMapping: permission(
-          action: "core:control:delete-measure-mapping"
+        canDeleteInternalControlMapping: permission(
+          action: "core:control:delete-internal-control-mapping"
         )
         canCreateDocumentMapping: permission(
           action: "core:control:create-document-mapping"
@@ -149,13 +149,13 @@ export const frameworkControlNodeQuery = graphql`
           action: "core:control:delete-obligation-mapping"
         )
         ...FrameworkControlDialogFragment
-        measures(first: 100)
-          @connection(key: "FrameworkGraphControl_measures") {
+        internalControls(first: 100)
+          @connection(key: "FrameworkGraphControl_internalControls") {
           __id
           edges {
             node {
               id
-              ...LinkedMeasuresCardFragment
+              ...LinkedInternalControlsCardFragment
             }
           }
         }

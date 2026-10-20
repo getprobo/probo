@@ -27,7 +27,8 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -122,11 +123,18 @@ func handleConnectorInstallInitiate(
 
 		// The identity in the state is load-bearing, not audit metadata: the
 		// callback rejects a browser whose session belongs to anyone else.
-		state, err := connector.NewInstallState(
+		name, err := connector.NormalizeConnectorName(r.URL.Query().Get("name"))
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid name parameter"))
+			return
+		}
+
+		state, err := connectorprotocol.NewInstallState(
 			installStateKey,
 			string(p),
 			organizationID,
 			identity.ID,
+			name,
 		)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot mint connector install state", log.Error(err))

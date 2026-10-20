@@ -31,8 +31,8 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -84,7 +84,7 @@ func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorP
 // their connection through it, so a key accepted at validation time
 // authenticates exactly as the persisted connector will: a new auth flag cannot
 // be added to one path and silently missed on the other.
-func (r *Resolver) newAPIKeyConnection(provider coredata.ConnectorProvider, key string) *connector.APIKeyConnection {
+func (r *Resolver) newAPIKeyConnection(provider coredata.ConnectorProvider, key string) *connectorprotocol.APIKeyConnection {
 	return r.providerRegistry.NewAPIKeyConnection(provider, key)
 }
 
@@ -350,7 +350,7 @@ func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMe
 		// stored value is the bare org domain (e.g. "acme.okta.com"). Use a
 		// static error message — this string is surfaced verbatim to the
 		// client and must never echo the operator-supplied input.
-		domain, err := connector.NormalizeOktaDomain(*input.OktaDomain)
+		domain, err := connectorprotocol.NormalizeOktaDomain(*input.OktaDomain)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create okta connector: oktaDomain must be a valid Okta domain (e.g. acme.okta.com)")
 		}
@@ -461,7 +461,7 @@ func clientCredentialsScope(
 	supplied *string,
 ) string {
 	if reg, ok := registry.Get(p); ok && reg.OAuth2 != nil {
-		if scope := connector.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
+		if scope := connectorprotocol.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
 			return scope
 		}
 	}

@@ -216,13 +216,22 @@ func seedCatalogUnlinkFixture(t *testing.T, ctx context.Context, client *pg.Clie
 		audit := coredata.Audit{
 			ID:             gid.New(tenantID, coredata.AuditEntityType),
 			OrganizationID: organizationID,
-			FrameworkID:    framework.ID,
 			ReportFileID:   &blob.ID,
 			State:          coredata.AuditStateCompleted,
 			CreatedAt:      now,
 			UpdatedAt:      now,
 		}
 		if err := audit.Insert(ctx, tx, scope); err != nil {
+			return err
+		}
+
+		auditFramework := coredata.AuditFramework{
+			AuditID:        audit.ID,
+			FrameworkID:    framework.ID,
+			OrganizationID: organizationID,
+			CreatedAt:      now,
+		}
+		if err := auditFramework.Insert(ctx, tx, scope); err != nil {
 			return err
 		}
 

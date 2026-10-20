@@ -29,17 +29,18 @@ export type DropdownSubmenuTriggerProps
   = & Omit<ComponentProps<typeof Menu.SubmenuTrigger>, "className">
     & {
       className?: string;
+      color?: "accent" | "error" | "success" | "linear";
       iconStart?: ReactNode;
     };
 
 // The item that opens a submenu; renders a trailing caret.
 export function DropdownSubmenuTrigger(props: DropdownSubmenuTriggerProps) {
-  const { className, iconStart, children, ...rest } = props;
+  const { className, color = "accent", iconStart, children, ...rest } = props;
   const { size, variant, highContrast } = useDropdownContext();
 
   return (
     <Menu.SubmenuTrigger
-      className={dropdownItem({ size, variant, color: "accent", highContrast, className })}
+      className={dropdownItem({ size, variant, color, highContrast, className })}
       {...rest}
     >
       {iconStart}

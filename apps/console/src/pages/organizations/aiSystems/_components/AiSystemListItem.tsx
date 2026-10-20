@@ -27,8 +27,8 @@ import {
   Td,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, useFragment } from "react-relay";
 
@@ -86,7 +86,7 @@ export function AiSystemListItem({
   const organizationId = useOrganizationId();
   const { t, i18n } = useTranslation();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
   const [deleteAiSystem] = useMutation<AiSystemListItemDeleteMutation>(
     deleteAiSystemMutation,
     {
@@ -113,10 +113,10 @@ export function AiSystemListItem({
             connections: deleteConnections,
           },
         });
-        toast({
+        toast.add({
           title: t("aiSystemListItem.messages.success"),
           description: t("aiSystemListItem.messages.deleted"),
-          variant: "success",
+          type: "success",
         });
       },
       {

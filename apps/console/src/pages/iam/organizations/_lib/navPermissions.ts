@@ -26,7 +26,7 @@ export const navPermissionsFragment = graphql`
   fragment navPermissions_organization on Organization {
     canGetContext: permission(action: "core:organization-context:get")
     canListTasks: permission(action: "core:task:list")
-    canListMeasures: permission(action: "core:measure:list")
+    canListInternalControls: permission(action: "core:internal-control:list")
     canListRisks: permission(action: "risk-management:risk:list")
     canListRiskAnalyses: permission(action: "risk-management:risk-analysis:list")
     canListFrameworks: permission(action: "core:framework:list")
@@ -49,6 +49,7 @@ export const navPermissionsFragment = graphql`
     canListAccessReviewCampaigns: permission(action: "access-review:campaign:list")
     canListAccessReviewSources: permission(action: "access-review:source:list")
     canGetCompliancePortal: permission(action: "compliance-portal:portal:get")
+    canGetEmployeePortal: permission(action: "employee-portal:portal:get")
     canListCookieBanners: permission(action: "core:cookie-banner:list")
     canListAuditLogEntries: permission(action: "iam:audit-log-entry:list")
     canListWebhookSubscriptions: permission(action: "core:webhook-subscription:list")

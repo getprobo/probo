@@ -39,38 +39,24 @@ export const accessReviewRoutes = [
     ),
   },
   {
-    path: "connections",
+    path: "sources",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("./connections/AccessReviewConnectionsPageLoader"),
+      () => import("./sources/AccessReviewSourcesPageLoader"),
     ),
   },
   {
-    path: "connections/new/csv",
+    path: "sources/new",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("./connections/CreateCsvAccessReviewSourcePageLoader"),
+      () => import("./sources/NewAccessReviewSourcePageLoader"),
     ),
   },
   {
-    path: "connections/new/aws-workload-identity",
+    path: "sources/new/csv",
     Fallback: PageSkeleton,
     Component: lazy(
-      () => import("./connections/CreateAwsAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/gcp-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateGcpAccessReviewSourcePageLoader"),
-    ),
-  },
-  {
-    path: "connections/new/azure-workload-identity",
-    Fallback: PageSkeleton,
-    Component: lazy(
-      () => import("./connections/CreateAzureAccessReviewSourcePageLoader"),
+      () => import("./sources/CreateCsvAccessReviewSourcePageLoader"),
     ),
   },
 ] satisfies AppRoute[];

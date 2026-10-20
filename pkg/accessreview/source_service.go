@@ -27,12 +27,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	connectorprovider "go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -69,6 +71,11 @@ type (
 		// silently overwritten by the first listed org.
 		OnlyIfUnset bool
 	}
+
+	EnsuredAccessReviewSource struct {
+		Source  *coredata.AccessReviewSource
+		Created bool
+	}
 )
 
 func (r *CreateAccessReviewSourceRequest) Validate() error {
@@ -98,85 +105,91 @@ func (r *UpdateAccessReviewSourceRequest) Validate() error {
 	return v.Error()
 }
 
-// EnsureSource returns the access source for the resolved connector
-// account, creating it when absent. An existing source is returned
-// untouched with created=false. The partial unique index on
-// connector_account_id arbitrates concurrent callers, so exactly one
-// inserts and the others load the winner. CSV sources (no account)
-// are always created.
-func (s *Service) EnsureSource(
+// EnsureSources creates one access source per request in a single
+// transaction. A connector account that already has a source, in this
+// list or already stored, returns that source with Created false. CSV
+// requests always insert. The partial unique index on
+// connector_account_id skips a second insert for the same account row.
+func (s *Service) EnsureSources(
 	ctx context.Context,
 	scope coredata.Scoper,
-	req CreateAccessReviewSourceRequest,
-) (*coredata.AccessReviewSource, bool, error) {
-	if err := req.Validate(); err != nil {
-		return nil, false, err
+	organizationID gid.GID,
+	reqs []CreateAccessReviewSourceRequest,
+) ([]EnsuredAccessReviewSource, error) {
+	v := validator.New()
+	v.Check(organizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(len(reqs), "sources", validator.Min(1))
+
+	if err := v.Error(); err != nil {
+		return nil, err
 	}
 
-	now := time.Now()
-	source := &coredata.AccessReviewSource{
-		ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
-		OrganizationID: req.OrganizationID,
-		Name:           req.Name,
-		CsvData:        req.CsvData,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+	for i := range reqs {
+		reqs[i].OrganizationID = organizationID
+
+		if err := reqs[i].Validate(); err != nil {
+			return nil, err
+		}
 	}
 
-	created := false
+	results := make([]EnsuredAccessReviewSource, len(reqs))
 
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			account, err := s.resolveCreateAccount(ctx, conn, scope, req)
-			if err != nil {
-				return err
-			}
-
-			if account != nil {
-				source.ConnectorAccountID = &account.ID
-
-				// Unlocked read: a concurrent bridge bind could in theory
-				// race this check. Organic flows only ever bind their own
-				// freshly created connector, so the race is accepted
-				// rather than serialized.
-				bridges := &coredata.SCIMBridges{}
-
-				bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, account.ConnectorID)
+			for i, req := range reqs {
+				account, err := s.resolveCreateAccount(ctx, conn, scope, req)
 				if err != nil {
-					return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+					return err
 				}
 
-				if bridgeCount > 0 {
-					return fmt.Errorf("cannot create access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
+				if account != nil {
+					if err := refuseSCIMConnector(ctx, conn, scope, account.ConnectorID); err != nil {
+						return err
+					}
 				}
-			}
 
-			inserted, err := source.Insert(ctx, conn, scope)
-			if err != nil {
-				return fmt.Errorf("cannot insert access source: %w", err)
-			}
+				now := time.Now()
+				source := &coredata.AccessReviewSource{
+					ID:             gid.New(scope.GetTenantID(), coredata.AccessReviewSourceEntityType),
+					OrganizationID: organizationID,
+					Name:           req.Name,
+					CsvData:        req.CsvData,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
 
-			if inserted {
-				created = true
-				return nil
-			}
+				if account != nil {
+					source.ConnectorAccountID = &account.ID
+				}
 
-			existing := &coredata.AccessReviewSource{}
-			if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
-				return fmt.Errorf("cannot load access source by connector account: %w", err)
-			}
+				inserted, err := source.Insert(ctx, conn, scope)
+				if err != nil {
+					return fmt.Errorf("cannot insert access source: %w", err)
+				}
 
-			*source = *existing
+				if !inserted {
+					existing := &coredata.AccessReviewSource{}
+					if err := existing.LoadByConnectorAccountID(ctx, conn, scope, *source.ConnectorAccountID); err != nil {
+						return fmt.Errorf("cannot load access source by connector account: %w", err)
+					}
+
+					results[i] = EnsuredAccessReviewSource{Source: existing, Created: false}
+
+					continue
+				}
+
+				results[i] = EnsuredAccessReviewSource{Source: source, Created: true}
+			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, false, fmt.Errorf("cannot create access source: %w", err)
+		return nil, fmt.Errorf("cannot create access source: %w", err)
 	}
 
-	return source, created, nil
+	return results, nil
 }
 
 func (s *Service) resolveCreateAccount(
@@ -212,6 +225,26 @@ func (s *Service) resolveCreateAccount(
 	}
 
 	return resolveSourceAccount(ctx, s, conn, scope, cnnctr)
+}
+
+func refuseSCIMConnector(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) error {
+	bridges := &coredata.SCIMBridges{}
+
+	count, err := bridges.CountByConnectorID(ctx, conn, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot count scim bridges for connector: %w", err)
+	}
+
+	if count > 0 {
+		return fmt.Errorf("cannot use connector: it is used by a SCIM configuration: %w", coredata.ErrResourceInUse)
+	}
+
+	return nil
 }
 
 func accountConnectorID(
@@ -358,15 +391,8 @@ func (s *Service) UpdateSource(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			// The row lock keeps the connector handoff below stable
-			// against a concurrent relink or delete.
 			if err := source.LoadByIDForUpdate(ctx, conn, scope, req.AccessReviewSourceID); err != nil {
 				return fmt.Errorf("cannot load access source: %w", err)
-			}
-
-			previousConnectorID, err := accountConnectorID(ctx, conn, scope, source.ConnectorAccountID)
-			if err != nil {
-				return err
 			}
 
 			if req.Name != nil {
@@ -397,15 +423,8 @@ func (s *Service) UpdateSource(
 
 					source.ConnectorAccountID = &account.ID
 
-					bridges := &coredata.SCIMBridges{}
-
-					bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, account.ConnectorID)
-					if err != nil {
-						return fmt.Errorf("cannot count scim bridges for connector: %w", err)
-					}
-
-					if bridgeCount > 0 {
-						return fmt.Errorf("cannot update access source: connector is used by a SCIM bridge: %w", coredata.ErrResourceInUse)
+					if err := refuseSCIMConnector(ctx, conn, scope, account.ConnectorID); err != nil {
+						return err
 					}
 
 					// Unique on connector_account_id. This pre-check only
@@ -414,7 +433,7 @@ func (s *Service) UpdateSource(
 
 					err = other.LoadByConnectorAccountID(ctx, conn, scope, account.ID)
 					if err == nil && other.ID != source.ID {
-						return fmt.Errorf("cannot update access source: connector account already referenced by another source")
+						return fmt.Errorf("cannot update access source: connector account already referenced by another source: %w", coredata.ErrResourceInUse)
 					}
 
 					if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
@@ -424,10 +443,15 @@ func (s *Service) UpdateSource(
 					source.ConnectorAccountID = nil
 				}
 
-				// A (re)linked connector may resolve to a different instance
-				// name; clear the synced flag so the source-name worker picks
-				// the row up and re-resolves it, with a fresh retry budget.
-				source.ResetNameSync()
+				// A (re)linked account may resolve to a different instance
+				// name; clear its synced flag so the name worker re-resolves
+				// it, with a fresh retry budget.
+				if source.ConnectorAccountID != nil {
+					account := &coredata.ConnectorAccount{ID: *source.ConnectorAccountID}
+					if err := account.ResetNameSyncByID(ctx, conn, scope); err != nil {
+						return fmt.Errorf("cannot reset connector account name sync: %w", err)
+					}
+				}
 			}
 
 			if req.CsvData != nil {
@@ -438,18 +462,6 @@ func (s *Service) UpdateSource(
 
 			if err := source.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update access source: %w", err)
-			}
-
-			nextConnectorID, err := accountConnectorID(ctx, conn, scope, source.ConnectorAccountID)
-			if err != nil {
-				return err
-			}
-
-			if req.ConnectorID != nil && previousConnectorID != nil &&
-				(nextConnectorID == nil || *nextConnectorID != *previousConnectorID) {
-				if err := deleteConnectorIfUnreferenced(ctx, conn, scope, *previousConnectorID); err != nil {
-					return err
-				}
 			}
 
 			return nil
@@ -472,64 +484,13 @@ func (s *Service) DeleteSource(
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			// RETURNING reads the connector under the DELETE's own row
-			// lock, so a concurrent relink cannot swap it unobserved.
-			connectorID, err := source.DeleteReturningConnectorID(ctx, conn, scope)
-			if err != nil {
+			if err := source.Delete(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot delete access source: %w", err)
 			}
 
-			if connectorID == nil {
-				return nil
-			}
-
-			return deleteConnectorIfUnreferenced(ctx, conn, scope, *connectorID)
+			return nil
 		},
 	)
-}
-
-// deleteConnectorIfUnreferenced deletes the connector when no access
-// source and no SCIM bridge still reference it. The caller must already
-// have moved or removed its own source row.
-func deleteConnectorIfUnreferenced(
-	ctx context.Context,
-	conn pg.Tx,
-	scope coredata.Scoper,
-	connectorID gid.GID,
-) error {
-	sources := &coredata.AccessReviewSources{}
-
-	sourceCount, err := sources.CountByConnectorID(ctx, conn, scope, connectorID)
-	if err != nil {
-		return fmt.Errorf("cannot count access sources for connector: %w", err)
-	}
-
-	if sourceCount > 0 {
-		return nil
-	}
-
-	bridges := &coredata.SCIMBridges{}
-
-	bridgeCount, err := bridges.CountByConnectorID(ctx, conn, scope, connectorID)
-	if err != nil {
-		return fmt.Errorf("cannot count scim bridges for connector: %w", err)
-	}
-
-	if bridgeCount > 0 {
-		return nil
-	}
-
-	cnnctr := &coredata.Connector{ID: connectorID}
-	if err := cnnctr.Delete(ctx, conn, scope); err != nil {
-		// A reference that lands after the counts must not roll the caller back.
-		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil
-		}
-
-		return fmt.Errorf("cannot delete connector: %w", err)
-	}
-
-	return nil
 }
 
 func (s *Service) ListSourcesForOrganizationID(
@@ -617,7 +578,7 @@ func (s *Service) BuildHTTPClient(
 		return nil, nil, err
 	}
 
-	conn, ok := dbConnector.Connection.(connector.HTTPConnection)
+	conn, ok := dbConnector.Connection.(connectorprotocol.HTTPConnection)
 	if !ok {
 		return nil, nil, fmt.Errorf(
 			"cannot create HTTP client for %s connector: credential does not ride on HTTP",
@@ -640,16 +601,16 @@ func (s *Service) httpClientFor(
 	ctx context.Context,
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
-	conn connector.HTTPConnection,
+	conn connectorprotocol.HTTPConnection,
 ) (*http.Client, error) {
-	var tokenBefore string
+	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn)
 
-	oauth2Conn, isOAuth2 := conn.(*connector.OAuth2Connection)
-	if isOAuth2 {
+	var tokenBefore string
+	if oauth2Conn != nil {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
-	httpClient, err := buildHTTPClient(
+	httpClient, err := connectorprovider.HTTPClient(
 		ctx,
 		s.connectorRegistry,
 		s.providerRegistry,
@@ -660,7 +621,7 @@ func (s *Service) httpClientFor(
 		return nil, fmt.Errorf("cannot create HTTP client: %w", err)
 	}
 
-	if isOAuth2 && oauth2Conn.AccessToken != tokenBefore {
+	if oauth2Conn != nil && oauth2Conn.AccessToken != tokenBefore {
 		dbConnector.UpdatedAt = time.Now()
 
 		if err := s.pg.WithTx(
@@ -703,7 +664,11 @@ func (s *Service) ConfigureAccessReviewSource(
 				return err
 			}
 
-			dbConnector := &coredata.Connector{}
+			dbConnector := &coredata.Connector{ID: *connectorID}
+			if err := dbConnector.LockByID(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot lock connector: %w", err)
+			}
+
 			if err := dbConnector.LoadByID(ctx, conn, scope, *connectorID, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load connector: %w", err)
 			}
@@ -715,6 +680,10 @@ func (s *Service) ConfigureAccessReviewSource(
 				if cfg, ok := providerOrgConfigs[dbConnector.Provider]; ok && cfg.SelectedSlug(dbConnector) != "" {
 					return nil
 				}
+			}
+
+			if !ProviderSupportsOrganizationPicker(dbConnector.Provider, dbConnector.Protocol) {
+				return ErrOrganizationPickerUnsupported
 			}
 
 			reg, ok := s.providerRegistry.Get(dbConnector.Provider)
@@ -742,13 +711,11 @@ func (s *Service) ConfigureAccessReviewSource(
 			}
 
 			// The selected org changed, so the resolvable instance name may
-			// have too; clear the synced flag so the source-name worker
+			// have too; clear the synced flag so the name worker
 			// re-resolves the display name, with a fresh retry budget.
-			source.ResetNameSync()
-			source.UpdatedAt = time.Now()
-
-			if err := source.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot reset access source name sync: %w", err)
+			accounts := &coredata.ConnectorAccounts{}
+			if err := accounts.ResetNameSyncByConnectorID(ctx, conn, scope, dbConnector.ID); err != nil {
+				return fmt.Errorf("cannot reset connector account name sync: %w", err)
 			}
 
 			return nil
@@ -803,7 +770,7 @@ func (s *Service) ProbeConnector(
 	// Only a ProbeError means the credential or the provider is at fault;
 	// everything else returned here is Probo's own.
 	switch conn := dbConnector.Connection.(type) {
-	case *connector.WorkloadIdentityConnection:
+	case *connectorprotocol.WorkloadIdentityConnection:
 		session, err := s.OpenSession(ctx, dbConnector, "")
 		if err != nil {
 			return err
@@ -819,7 +786,7 @@ func (s *Service) ProbeConnector(
 
 		return nil
 
-	case connector.HTTPConnection:
+	case connectorprotocol.HTTPConnection:
 		// The eager token refresh runs here, so a revoked grant fails the
 		// probe before any request is made.
 		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
@@ -851,7 +818,7 @@ const newConnectorCheckTimeout = 15 * time.Second
 func (s *Service) CheckNewAPIKeyConnector(
 	ctx context.Context,
 	prvdr coredata.ConnectorProvider,
-	conn *connector.APIKeyConnection,
+	conn *connectorprotocol.APIKeyConnection,
 	rawSettings json.RawMessage,
 ) *drivers.SettingRejectedError {
 	reg, ok := s.providerRegistry.Get(prvdr)
@@ -898,10 +865,10 @@ func (s *Service) CheckNewAPIKeyConnector(
 func (s *Service) probeNewAPIKeyConnector(
 	ctx context.Context,
 	prvdr coredata.ConnectorProvider,
-	conn *connector.APIKeyConnection,
+	conn *connectorprotocol.APIKeyConnection,
 	rawSettings json.RawMessage,
 ) error {
-	httpClient, err := buildHTTPClient(ctx, s.connectorRegistry, s.providerRegistry, prvdr, conn)
+	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, prvdr, conn)
 	if err != nil {
 		return fmt.Errorf("cannot create HTTP client: %w", err)
 	}
@@ -941,6 +908,36 @@ func withoutRequestURL(err error) error {
 	}
 
 	return fmt.Errorf("cannot send probe request: %w", urlErr.Err)
+}
+
+func (s *Service) requireListedOrganizationSlug(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	slug string,
+) error {
+	orgs, err := s.ProviderOrganizations(ctx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot list provider organizations: %w", err)
+	}
+
+	if slices.ContainsFunc(
+		orgs,
+		func(org drivers.Organization) bool {
+			return org.Slug == slug
+		},
+	) {
+		return nil
+	}
+
+	return validator.ValidationErrors{
+		{
+			Field:   "organization_slug",
+			Code:    validator.ErrorCodeInvalidEnum,
+			Message: "must be an organization the provider lists for this connector",
+			Value:   slug,
+		},
+	}
 }
 
 // ProviderOrganizations lists the orgs/workspaces the connector backing the
@@ -1101,19 +1098,19 @@ func (s *Service) SourceNeedsReconnect(
 func (s *Service) ValidateConnectorInstall(
 	ctx context.Context,
 	provider coredata.ConnectorProvider,
-	conn connector.Connection,
+	conn connectorprotocol.Connection,
 ) error {
 	reg, ok := s.providerRegistry.Get(provider)
 	if !ok || reg.ValidateInstall == nil {
 		return nil
 	}
 
-	httpConn, ok := conn.(connector.HTTPConnection)
+	httpConn, ok := conn.(connectorprotocol.HTTPConnection)
 	if !ok {
 		return nil
 	}
 
-	httpClient, err := buildHTTPClient(ctx, s.connectorRegistry, s.providerRegistry, provider, httpConn)
+	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, provider, httpConn)
 	if err != nil {
 		return fmt.Errorf("cannot create HTTP client for %s connector: %w", provider, err)
 	}
@@ -1154,9 +1151,9 @@ func missingOAuthScopesForConnector(
 	dbConnector coredata.Connector,
 	required []string,
 ) []string {
-	if !connector.SupportsScopeGrantCheckFor(
+	if !connectorprotocol.SupportsScopeGrantCheckFor(
 		dbConnector.Connection,
-		connector.ProtocolType(dbConnector.Protocol),
+		connectorprotocol.ProtocolType(dbConnector.Protocol),
 	) {
 		return []string{}
 	}
@@ -1176,21 +1173,182 @@ func missingOAuthScopesForConnector(
 	// never synthesize it into Connection.Scopes(), which reconnect uses
 	// to build the next authorize request (Google rejects offline_access).
 	if connectionHasRefreshToken(dbConnector.Connection) {
-		granted = connector.UnionScopes(granted, []string{"offline_access"})
+		granted = connectorprotocol.UnionScopes(granted, []string{"offline_access"})
 	}
 
-	return connector.MissingScopes(required, granted)
+	return connectorprotocol.MissingScopes(required, granted)
 }
 
-func connectionHasRefreshToken(c connector.Connection) bool {
+func connectionHasRefreshToken(c connectorprotocol.Connection) bool {
 	switch conn := c.(type) {
-	case *connector.OAuth2Connection:
+	case *connectorprotocol.OAuth2Connection:
 		return conn.RefreshToken != ""
-	case *connector.SlackConnection:
+	case *connectorprotocol.SlackConnection:
 		return conn.RefreshToken != ""
 	default:
 		return false
 	}
+}
+
+// SelectSoleOrganization writes the only listed org onto a picker connector
+// that has none yet, and syncs that slug onto its account row. Several orgs,
+// or a failure to list, leave the implicit account so the user picks. It never
+// fails the create that called it.
+func (s *Service) SelectSoleOrganization(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+) {
+	dbMeta, err := s.loadConnectorMetadata(ctx, scope, connectorID)
+	if err != nil {
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			s.logger.WarnCtx(ctx, "cannot load connector metadata for sole organization", log.Error(err))
+		}
+
+		return
+	}
+
+	cfg, ok := providerOrgConfigs[dbMeta.Provider]
+	if !ok || !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
+		return
+	}
+
+	if cfg.SelectedSlug(dbMeta) != "" {
+		return
+	}
+
+	httpClient, dbConnector, err := s.BuildHTTPClient(ctx, scope, connectorID)
+	if err != nil {
+		if !errors.Is(err, coredata.ErrResourceNotFound) {
+			s.logger.WarnCtx(ctx, "cannot load connector for sole organization", log.Error(err))
+		}
+
+		return
+	}
+
+	listCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	orgs, err := cfg.ListOrgs(listCtx, httpClient, s.providerListBaseURL(dbMeta.Provider))
+	if err != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot list provider organizations for sole selection",
+			log.String("provider", dbConnector.Provider.String()),
+			log.Error(err),
+		)
+
+		return
+	}
+
+	if len(orgs) != 1 {
+		return
+	}
+
+	if err := s.applyOrganizationSlug(ctx, scope, connectorID, orgs[0].Slug, true); err != nil {
+		s.logger.WarnCtx(
+			ctx,
+			"cannot apply sole provider organization",
+			log.String("provider", dbConnector.Provider.String()),
+			log.Error(err),
+		)
+	}
+}
+
+// SetConnectorOrganization writes slug onto a picker connector and syncs its
+// single account row, including when a slug is already set. slug must be one
+// the provider currently lists for the connector.
+func (s *Service) SetConnectorOrganization(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	slug string,
+) error {
+	dbMeta, err := s.loadConnectorMetadata(ctx, scope, connectorID)
+	if err != nil {
+		return fmt.Errorf("cannot load connector: %w", err)
+	}
+
+	if !ProviderSupportsOrganizationPicker(dbMeta.Provider, dbMeta.Protocol) {
+		return ErrOrganizationPickerUnsupported
+	}
+
+	if err := s.requireListedOrganizationSlug(ctx, scope, connectorID, slug); err != nil {
+		return err
+	}
+
+	if err := s.applyOrganizationSlug(ctx, scope, connectorID, slug, false); err != nil {
+		return err
+	}
+
+	if err := s.pg.WithTx(ctx, func(ctx context.Context, conn pg.Tx) error {
+		accounts := &coredata.ConnectorAccounts{}
+
+		return accounts.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
+	}); err != nil {
+		return fmt.Errorf("cannot reset connector account name sync: %w", err)
+	}
+
+	return nil
+}
+
+// applyOrganizationSlug stores slug on the connector and rewrites its single
+// account row. A slug that arrived while the list was in flight is left as-is.
+func (s *Service) applyOrganizationSlug(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connectorID gid.GID,
+	slug string,
+	onlyIfUnset bool,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, conn pg.Tx) error {
+			dbConnector := &coredata.Connector{ID: connectorID}
+			if err := dbConnector.LockByID(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot lock connector: %w", err)
+			}
+
+			if err := dbConnector.LoadByID(ctx, conn, scope, connectorID, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			cfg, ok := providerOrgConfigs[dbConnector.Provider]
+			if onlyIfUnset && ok && cfg.SelectedSlug(dbConnector) != "" {
+				return nil
+			}
+
+			if ok && cfg.SelectedSlug(dbConnector) == slug {
+				return nil
+			}
+
+			reg, ok := s.providerRegistry.Get(dbConnector.Provider)
+			if !ok || reg.SetOrganizationSettings == nil {
+				return fmt.Errorf("cannot set organization: provider %s does not support it", dbConnector.Provider)
+			}
+
+			if err := reg.SetOrganizationSettings(dbConnector, slug); err != nil {
+				return fmt.Errorf("cannot set %s settings: %w", dbConnector.Provider, err)
+			}
+
+			dbConnector.UpdatedAt = time.Now()
+
+			if err := dbConnector.Update(ctx, conn, scope, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot update connector: %w", err)
+			}
+
+			externalID, name, err := s.initialAccount(dbConnector)
+			if err != nil {
+				return err
+			}
+
+			if _, err := coredata.SyncStandaloneAccount(ctx, conn, scope, dbConnector, externalID, name); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
 }
 
 // AutoSelectDefaultOrganization picks the first workspace/org a freshly linked
@@ -1289,23 +1447,4 @@ func (s *Service) AutoSelectDefaultOrganization(
 			log.Error(err),
 		)
 	}
-}
-
-// ResetSourceNameSyncForConnector clears the synced-name flag on every access
-// source backed by connectorID so the source-name worker re-resolves the
-// display name. Called after a connector is reconnected — the new grant may
-// scope a different org/workspace, changing the resolvable name.
-func (s *Service) ResetSourceNameSyncForConnector(
-	ctx context.Context,
-	scope coredata.Scoper,
-	connectorID gid.GID,
-) error {
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, conn pg.Tx) error {
-			sources := &coredata.AccessReviewSources{}
-
-			return sources.ResetNameSyncByConnectorID(ctx, conn, scope, connectorID)
-		},
-	)
 }

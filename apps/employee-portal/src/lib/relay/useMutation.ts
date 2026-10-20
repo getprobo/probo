@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { formatError, type GraphQLError } from "@probo/helpers";
 import { createUseMutation, type MutationNotifier, UnAuthenticatedError } from "@probo/relay";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
 
 import { redirectToLogin } from "#/lib/auth/redirectToLogin";
+import { useOptionalEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 /**
  * Binds the shared awaitable useMutation (`@probo/relay`) to this app's
@@ -37,9 +37,9 @@ import { redirectToLogin } from "#/lib/auth/redirectToLogin";
  * from react-relay.
  */
 function useMutationNotifier(): MutationNotifier {
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const organizationId = useOptionalEmployeePortalRoute()?.organizationId;
 
   return useMemo<MutationNotifier>(
     () => ({

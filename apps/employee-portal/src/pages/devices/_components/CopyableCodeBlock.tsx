@@ -18,10 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { CopySimpleIcon } from "@phosphor-icons/react";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 
 import { copyableCodeBlock } from "./variants";
@@ -33,7 +33,7 @@ export interface CopyableCodeBlockProps {
 export function CopyableCodeBlock({ code }: CopyableCodeBlockProps) {
   const { t } = useTranslation("devices");
   const { t: tApp } = useTranslation();
-  const toast = Toast.useToastManager();
+  const toast = useToast();
   const slots = copyableCodeBlock();
 
   function handleCopy() {

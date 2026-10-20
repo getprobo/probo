@@ -27,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
-	"go.probo.inc/probo/pkg/prosemirror"
 )
 
 const updateMutation = `
@@ -38,13 +37,6 @@ mutation($input: UpdateTaskInput!) {
       name
       state
       priority
-    }
-    nextTaskEdge {
-      node {
-        id
-        name
-        state
-      }
     }
   }
 }
@@ -58,13 +50,6 @@ type updateResponse struct {
 			State    string `json:"state"`
 			Priority string `json:"priority"`
 		} `json:"task"`
-		NextTaskEdge *struct {
-			Node struct {
-				ID    string `json:"id"`
-				Name  string `json:"name"`
-				State string `json:"state"`
-			} `json:"node"`
-		} `json:"nextTaskEdge"`
 	} `json:"updateTask"`
 }
 
@@ -77,7 +62,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		flagTimeEstimate       string
 		flagDeadline           string
 		flagAssignedTo         string
-		flagMeasure            string
+		flagInternalControls   []string
 		flagRecurrenceInterval string
 	)
 
@@ -116,7 +101,12 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				if flagContent == "" {
 					input["content"] = nil
 				} else {
-					input["content"] = prosemirror.FromPlainText(flagContent)
+					content, err := cmdutil.CLIContent(flagContent)
+					if err != nil {
+						return fmt.Errorf("cannot read content: %w", err)
+					}
+
+					input["content"] = content
 				}
 			}
 
@@ -148,12 +138,15 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
-			if cmd.Flags().Changed("measure") {
-				if flagMeasure == "" {
-					input["measureId"] = nil
-				} else {
-					input["measureId"] = flagMeasure
+			if cmd.Flags().Changed("internal-control") {
+				internalControlIDs := make([]string, 0, len(flagInternalControls))
+				for _, internalControlID := range flagInternalControls {
+					if internalControlID != "" {
+						internalControlIDs = append(internalControlIDs, internalControlID)
+					}
 				}
+
+				input["internalControlIds"] = internalControlIDs
 			}
 
 			if cmd.Flags().Changed("recurrence-interval") {
@@ -189,28 +182,20 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 				t.ID,
 				t.Name,
 			)
-			if next := resp.UpdateTask.NextTaskEdge; next != nil {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.Out,
-					"Created next task %s (%s)\n",
-					next.Node.ID,
-					next.Node.Name,
-				)
-			}
 
 			return nil
 		},
 	}
 
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name")
-	cmd.Flags().StringVar(&flagContent, "content", "", "Task content")
+	cmd.Flags().StringVar(&flagContent, "content", "", "Task content as markdown or ProseMirror JSON. Images and links to /api/files/v1/{id} are kept")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
 	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagDeadline, "deadline", "", "Deadline")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")
-	cmd.Flags().StringVar(&flagMeasure, "measure", "", "Measure ID")
-	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (empty clears recurrence)")
+	cmd.Flags().StringArrayVar(&flagInternalControls, "internal-control", nil, "Internal control ID (repeatable, empty value clears all)")
+	cmd.Flags().StringVar(&flagRecurrenceInterval, "recurrence-interval", "", "Recurrence interval as an ISO-8601 duration, e.g. P7D, P1M or P1Y (empty clears recurrence). The next task is created when the deadline passes")
 
 	return cmd
 }

@@ -38,7 +38,7 @@ func TestDocument_Relations(t *testing.T) {
 		name string
 		run  func(*testing.T, *testutil.Client)
 	}{
-		{name: "MappedControlsMeasuresRisks", run: documentRelationsMappedControlsMeasuresRisks},
+		{name: "MappedControlsInternalControlsRisks", run: documentRelationsMappedControlsInternalControlsRisks},
 		{name: "OrganizationDefaultApproversPermission", run: documentRelationsOrganizationDefaultApproversPermission},
 		{name: "VersionSignatureAndApprovalCounts", run: documentRelationsVersionSignatureAndApprovalCounts},
 	}
@@ -77,45 +77,45 @@ func linkControlToDocument(
 	require.NoError(t, err)
 }
 
-func linkMeasureToDocument(
+func linkInternalControlToDocument(
 	t *testing.T,
 	owner *testutil.Client,
-	measureID, documentID string,
+	internalControlID, documentID string,
 ) {
 	t.Helper()
 
 	_, err := owner.Do(`
-		mutation($input: CreateMeasureDocumentMappingInput!) {
-			createMeasureDocumentMapping(input: $input) {
-				measureEdge { node { id } }
+		mutation($input: CreateInternalControlDocumentMappingInput!) {
+			createInternalControlDocumentMapping(input: $input) {
+				internalControlEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"measureId":  measureID,
-			"documentId": documentID,
+			"internalControlId": internalControlID,
+			"documentId":        documentID,
 		},
 	})
 	require.NoError(t, err)
 }
 
-func linkRiskToMeasure(
+func linkRiskToInternalControl(
 	t *testing.T,
 	owner *testutil.Client,
-	riskID, measureID string,
+	riskID, internalControlID string,
 ) {
 	t.Helper()
 
 	_, err := owner.Do(`
-		mutation($input: CreateRiskMeasureMappingInput!) {
-			createRiskMeasureMapping(input: $input) {
+		mutation($input: CreateRiskInternalControlMappingInput!) {
+			createRiskInternalControlMapping(input: $input) {
 				riskEdge { node { id } }
 			}
 		}
 	`, map[string]any{
 		"input": map[string]any{
-			"riskId":    riskID,
-			"measureId": measureID,
+			"riskId":            riskID,
+			"internalControlId": internalControlID,
 		},
 	})
 	require.NoError(t, err)
@@ -143,7 +143,7 @@ func linkRiskToDocument(
 	require.NoError(t, err)
 }
 
-func documentRelationsMappedControlsMeasuresRisks(t *testing.T, owner *testutil.Client) {
+func documentRelationsMappedControlsInternalControlsRisks(t *testing.T, owner *testutil.Client) {
 	frameworkID := factory.NewFramework(owner).
 		WithName(factory.SafeName("Relations framework")).
 		Create()
@@ -154,8 +154,8 @@ func documentRelationsMappedControlsMeasuresRisks(t *testing.T, owner *testutil.
 		WithBestPractice(true).
 		WithMaturityLevel("INITIAL").
 		Create()
-	measureID := factory.NewMeasure(owner).
-		WithName(factory.SafeName("Relations measure")).
+	internalControlID := factory.NewInternalControl(owner).
+		WithName(factory.SafeName("Relations internal control")).
 		WithCategory("POLICY").
 		Create()
 	riskID := factory.NewRisk(owner).
@@ -168,7 +168,7 @@ func documentRelationsMappedControlsMeasuresRisks(t *testing.T, owner *testutil.
 		Create()
 
 	linkControlToDocument(t, owner, controlID, documentID)
-	linkMeasureToDocument(t, owner, measureID, documentID)
+	linkInternalControlToDocument(t, owner, internalControlID, documentID)
 	linkRiskToDocument(t, owner, riskID, documentID)
 
 	var documentResult struct {
@@ -201,7 +201,7 @@ func documentRelationsMappedControlsMeasuresRisks(t *testing.T, owner *testutil.
 	require.Len(t, documentResult.Node.Controls.Edges, 1)
 	assert.Equal(t, controlID, documentResult.Node.Controls.Edges[0].Node.ID)
 
-	var measureResult struct {
+	var internalControlResult struct {
 		Node struct {
 			Documents struct {
 				TotalCount int `json:"totalCount"`
@@ -217,7 +217,7 @@ func documentRelationsMappedControlsMeasuresRisks(t *testing.T, owner *testutil.
 	err = owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
-				... on Measure {
+				... on InternalControl {
 					documents(first: 10) {
 						totalCount
 						edges { node { id } }
@@ -225,11 +225,11 @@ func documentRelationsMappedControlsMeasuresRisks(t *testing.T, owner *testutil.
 				}
 			}
 		}
-	`, map[string]any{"id": measureID}, &measureResult)
+	`, map[string]any{"id": internalControlID}, &internalControlResult)
 	require.NoError(t, err)
-	assert.Equal(t, 1, measureResult.Node.Documents.TotalCount)
-	require.Len(t, measureResult.Node.Documents.Edges, 1)
-	assert.Equal(t, documentID, measureResult.Node.Documents.Edges[0].Node.ID)
+	assert.Equal(t, 1, internalControlResult.Node.Documents.TotalCount)
+	require.Len(t, internalControlResult.Node.Documents.Edges, 1)
+	assert.Equal(t, documentID, internalControlResult.Node.Documents.Edges[0].Node.ID)
 
 	var riskResult struct {
 		Node struct {

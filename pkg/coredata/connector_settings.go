@@ -24,7 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 )
 
 const (
@@ -37,6 +37,15 @@ type (
 	SlackConnectorSettings struct {
 		Channel   string `json:"channel,omitempty"`
 		ChannelID string `json:"channel_id,omitempty"`
+	}
+
+	LinearSyncConnectorSettings struct {
+		DefaultTeamID        string `json:"default_team_id,omitempty"`
+		DefaultTeamName      string `json:"default_team_name,omitempty"`
+		DefaultTeamKey       string `json:"default_team_key,omitempty"`
+		LinearOrganizationID string `json:"linear_organization_id,omitempty"`
+		LinearAppActorID     string `json:"linear_app_actor_id,omitempty"`
+		ImportNewIssues      bool   `json:"import_new_issues,omitempty"`
 	}
 
 	TallyConnectorSettings struct {
@@ -143,7 +152,7 @@ type (
 	// the per-org API host (https://<domain>/api/v1/...). Okta has no
 	// central API gateway — every org authenticates against its own
 	// domain — so the host is operator-supplied and validated (see
-	// connector.NormalizeOktaDomain) before it reaches URL construction.
+	// connectorprotocol.NormalizeOktaDomain) before it reaches URL construction.
 	OktaConnectorSettings struct {
 		Domain string `json:"domain"`
 	}
@@ -307,7 +316,7 @@ type (
 // connector. Driver factories that dispatch on grant type (1Password)
 // read this instead of inspecting the typed Connection directly.
 func (c *Connector) GrantType() string {
-	if oauth2Conn, ok := c.Connection.(*connector.OAuth2Connection); ok {
+	if oauth2Conn, ok := c.Connection.(*connectorprotocol.OAuth2Connection); ok {
 		return string(oauth2Conn.GrantType)
 	}
 

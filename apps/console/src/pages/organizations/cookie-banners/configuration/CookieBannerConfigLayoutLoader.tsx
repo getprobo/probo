@@ -23,26 +23,46 @@ import { useQueryLoader } from "react-relay";
 import { useParams } from "react-router";
 
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
-import { PageSkeleton } from "#/components/skeletons/PageSkeleton";
 
-import CookieBannerConfigLayout, { cookieBannerConfigLayoutQuery } from "./CookieBannerConfigLayout";
+import { CookieBannerConfigLayout, cookieBannerConfigLayoutQuery } from "./CookieBannerConfigLayout";
+import { CookieBannerConfigLayoutSkeleton } from "./CookieBannerConfigLayoutSkeleton";
 
 export default function CookieBannerConfigLayoutLoader() {
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
-  const [queryRef, loadQuery] = useQueryLoader<CookieBannerConfigLayoutQuery>(cookieBannerConfigLayoutQuery);
+  const [queryRef, loadQuery] = useQueryLoader<CookieBannerConfigLayoutQuery>(
+    cookieBannerConfigLayoutQuery,
+  );
 
   useEffect(() => {
-    if (cookieBannerId) {
-      loadQuery({ cookieBannerId });
+    function load() {
+      if (cookieBannerId == null) {
+        return;
+      }
+      loadQuery({ cookieBannerId }, { fetchPolicy: "store-and-network" });
     }
+
+    load();
+
+    function onVisible() {
+      if (document.visibilityState === "visible") {
+        load();
+      }
+    }
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [loadQuery, cookieBannerId]);
 
+  if (cookieBannerId == null) {
+    throw new Error("Missing cookieBannerId parameter");
+  }
+
   if (!queryRef) {
-    return <PageSkeleton />;
+    return <CookieBannerConfigLayoutSkeleton />;
   }
 
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<CookieBannerConfigLayoutSkeleton />}>
       <CookieBannerConfigLayout queryRef={queryRef} />
     </Suspense>
   );

@@ -31,7 +31,7 @@ import (
 func TestNetScores(t *testing.T) {
 	t.Parallel()
 
-	t.Run("no measures stays at inherent", func(t *testing.T) {
+	t.Run("no internal controls stays at inherent", func(t *testing.T) {
 		t.Parallel()
 
 		for _, action := range []coredata.RiskTreatment{
@@ -50,7 +50,7 @@ func TestNetScores(t *testing.T) {
 		}
 	})
 
-	t.Run("all measures implemented is residual", func(t *testing.T) {
+	t.Run("all internal controls implemented is residual", func(t *testing.T) {
 		t.Parallel()
 
 		for _, action := range []coredata.RiskTreatment{

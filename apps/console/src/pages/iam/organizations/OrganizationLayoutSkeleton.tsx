@@ -29,7 +29,7 @@ const PANEL_ITEMS = [
   { key: "frameworks", width: "w-24" },
   { key: "audits", width: "w-14" },
   { key: "findings", width: "w-16" },
-  { key: "measures", width: "w-20" },
+  { key: "internalControls", width: "w-20" },
   { key: "documents", width: "w-22" },
   { key: "tasks", width: "w-12" },
   { key: "statementsOfApplicability", width: "w-44" },

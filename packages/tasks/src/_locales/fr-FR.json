@@ -1,0 +1,155 @@
+{
+  "states": {
+    "backlog": "Backlog",
+    "todo": "À faire",
+    "inProgress": "En cours",
+    "done": "Terminé",
+    "canceled": "Annulé",
+    "duplicate": "Doublon"
+  },
+  "priorities": {
+    "urgent": "Urgent",
+    "high": "Élevée",
+    "medium": "Moyenne",
+    "low": "Faible"
+  },
+  "empty": "Aucune tâche",
+  "emptyValue": "—",
+  "doesNotRepeat": "Ne se répète pas",
+  "noResults": "Aucune tâche ne correspond à vos filtres",
+  "searchPlaceholder": "Rechercher des tâches",
+  "filters": {
+    "status": "Statut",
+    "allStatuses": "Tous les statuts",
+    "dueDate": "Échéance",
+    "anyDueDate": "Toute échéance",
+    "due": {
+      "overdue": "En retard",
+      "1d": "D'ici demain",
+      "3d": "D'ici 3 jours",
+      "1w": "D'ici 1 semaine",
+      "1m": "D'ici 1 mois",
+      "3m": "D'ici 3 mois",
+      "none": "Sans échéance"
+    }
+  },
+  "unassigned": "Pas assigné",
+  "deadlinePicker": {
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "endOfWeek": "Fin de semaine",
+    "nextWeek": "La semaine prochaine",
+    "custom": "Personnalisée",
+    "none": "Aucune"
+  },
+  "durationPicker": {
+    "none": "Aucune"
+  },
+  "fields": {
+    "name": "Nom",
+    "description": "Description",
+    "state": "État",
+    "priority": "Priorité",
+    "timeEstimate": "Estimation",
+    "timeEstimateUnit": "Unité d'estimation",
+    "deadline": "Échéance",
+    "recurrence": "Récurrence",
+    "recurrenceUnit": "Unité de récurrence",
+    "createdAt": "Créée",
+    "updatedAt": "Mise à jour",
+    "assignee": "Assigné"
+  },
+  "units": {
+    "S": "Secondes",
+    "M": "Minutes",
+    "H": "Heures",
+    "D": "Jours",
+    "W": "Semaines",
+    "MO": "Mois",
+    "Y": "Années"
+  },
+  "actions": {
+    "addEstimate": "Ajouter une estimation",
+    "clearEstimate": "Effacer l'estimation",
+    "addRecurrence": "Ajouter un intervalle",
+    "clearRecurrence": "Effacer l'intervalle",
+    "more": "Plus d'actions",
+    "delete": "Supprimer"
+  },
+  "hints": {
+    "recurrenceNeedsDeadline": "Définissez une échéance avant d'ajouter un intervalle de récurrence"
+  },
+  "comments": {
+    "title": "Commentaires",
+    "empty": "Aucun commentaire",
+    "placeholder": "Laisser un commentaire",
+    "submit": "Ajouter un commentaire",
+    "showMore": "Afficher plus",
+    "authorFallback": "Quelqu'un"
+  },
+  "activity": {
+    "title": "Activité",
+    "empty": "Aucune activité",
+    "showMore": "Afficher plus",
+    "actorFallback": "Quelqu'un",
+    "sentences": {
+      "created": "{{actor}} a créé cette tâche",
+      "updated": "{{actor}} a mis à jour cette tâche",
+      "renamed": "{{actor}} a renommé de {{oldValue}} en {{newValue}}",
+      "descriptionUpdated": "{{actor}} a mis à jour la description",
+      "stateChanged": "{{actor}} a changé le statut de {{oldValue}} à {{newValue}}",
+      "priorityChanged": "{{actor}} a changé la priorité de {{oldValue}} à {{newValue}}",
+      "assigned": "{{actor}} a assigné {{newValue}}",
+      "reassigned": "{{actor}} a réassigné de {{oldValue}} à {{newValue}}",
+      "unassigned": "{{actor}} a retiré l'assignation de {{oldValue}}",
+      "internalControlLinked": "{{actor}} a lié {{newValue}}",
+      "internalControlChanged": "{{actor}} a déplacé de {{oldValue}} à {{newValue}}",
+      "internalControlUnlinked": "{{actor}} a délié {{oldValue}}",
+      "deadlineSet": "{{actor}} a défini l'échéance au {{newValue}}",
+      "deadlineChanged": "{{actor}} a changé l'échéance de {{oldValue}} à {{newValue}}",
+      "deadlineRemoved": "{{actor}} a retiré l'échéance",
+      "timeEstimateSet": "{{actor}} a défini l'estimation à {{newValue}}",
+      "timeEstimateChanged": "{{actor}} a changé l'estimation de {{oldValue}} à {{newValue}}",
+      "timeEstimateRemoved": "{{actor}} a retiré l'estimation"
+    }
+  },
+  "metadata": {
+    "timeEstimate": "Estimation",
+    "deadline": "Échéance",
+    "overdue": "En retard"
+  },
+  "recurringBadge": {
+    "tooltip": "Se répète toutes les {{interval}}"
+  },
+  "duration": {
+    "seconds_one": "seconde",
+    "seconds_other": "secondes",
+    "minutes_one": "minute",
+    "minutes_other": "minutes",
+    "hours_one": "heure",
+    "hours_other": "heures",
+    "days_one": "jour",
+    "days_other": "jours",
+    "weeks_one": "semaine",
+    "weeks_other": "semaines",
+    "months_one": "mois",
+    "months_other": "mois",
+    "years_one": "an",
+    "years_other": "ans",
+    "sec_one": "{{count}} seconde",
+    "sec_other": "{{count}} secondes",
+    "min_one": "{{count}} minute",
+    "min_other": "{{count}} minutes",
+    "hour_one": "{{count}} heure",
+    "hour_other": "{{count}} heures",
+    "yearShort": "{{count}} an",
+    "yearShort_one": "{{count}} an",
+    "yearShort_other": "{{count}} ans",
+    "monthShort": "{{count}} mois",
+    "weekShort": "{{count}} sem.",
+    "dayShort": "{{count}} j",
+    "hourShort": "{{count}} h",
+    "minShort": "{{count}} min",
+    "secShort": "{{count}} s"
+  }
+}

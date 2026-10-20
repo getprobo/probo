@@ -20,8 +20,12 @@
 
 import type { Meta, StoryObj } from "@storybook/react";
 
+import { Button } from "../Button/Button";
+
 import { Card } from "./Card";
+import { CardButton } from "./CardButton";
 import { CardInset } from "./CardInset";
+import { CardLink } from "./CardLink";
 import { CardSkeleton } from "./CardSkeleton";
 
 const sizes = [1, 2, 3, 4, 5] as const;
@@ -80,6 +84,22 @@ export const Interactive: Story = {
     <div className="flex w-72 flex-col gap-4">
       <Card interactive><Sample /></Card>
       <Card variant="ghost" interactive><Sample /></Card>
+    </div>
+  ),
+};
+
+export const Clickable: Story = {
+  render: () => (
+    <div className="flex w-72 flex-col gap-4">
+      <Card variant="soft" interactive>
+        <CardLink to="/marketplace">Open marketplace</CardLink>
+        <div className="relative z-1 mt-3 flex justify-end">
+          <Button type="button" size={1} variant="soft">Edit</Button>
+        </div>
+      </Card>
+      <Card variant="soft" interactive>
+        <CardButton type="button" aria-label="Open accounts">Accounts</CardButton>
+      </Card>
     </div>
   ),
 };

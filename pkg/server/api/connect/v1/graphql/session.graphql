@@ -27,6 +27,9 @@ extend type Mutation {
   assumeOrganizationSession(
     input: AssumeOrganizationSessionInput!
   ): AssumeOrganizationSessionPayload @authentication(required: PRESENT) @sessionOnly
+  assumeEmployeePortalSession(
+    input: AssumeEmployeePortalSessionInput!
+  ): AssumeEmployeePortalSessionPayload @authentication(required: PRESENT) @sessionOnly
 
   revokeSession(input: RevokeSessionInput!): RevokeSessionPayload!
     @authentication(required: PRESENT) @sessionOnly
@@ -124,6 +127,11 @@ input AssumeOrganizationSessionInput {
   continue: String!
 }
 
+input AssumeEmployeePortalSessionInput {
+  employeePortalId: ID!
+  continue: String!
+}
+
 input RevokeSessionInput {
   sessionId: ID!
 }
@@ -190,6 +198,11 @@ type SAMLAuthenticationRequired {
 }
 
 type AssumeOrganizationSessionPayload {
+  result: AssumeOrganizationSessionResult!
+}
+
+type AssumeEmployeePortalSessionPayload {
+  organizationId: ID!
   result: AssumeOrganizationSessionResult!
 }
 

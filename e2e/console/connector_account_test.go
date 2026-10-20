@@ -115,6 +115,63 @@ func TestConnectorAccounts_StandaloneAWSHasInitialAccount(t *testing.T) {
 	assert.Equal(t, connectorAccountAWSAccount, result.Node.Accounts.Edges[0].Node.ExternalAccountID)
 }
 
+func TestConnector_DistinctAccountCountIgnoresPagination(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	firstID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+	secondID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	factory.NewConnectorAccount(owner, firstID).
+		WithExternalAccountID("111111111111").
+		WithName("Shared").
+		Create()
+	factory.NewConnectorAccount(owner, secondID).
+		WithExternalAccountID("111111111111").
+		WithName("Shared").
+		Create()
+	factory.NewConnectorAccount(owner, firstID).
+		WithExternalAccountID("222222222222").
+		WithName("Only first").
+		Create()
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector {
+					distinctAccountCount
+					accounts(first: 1) {
+						edges { node { id } }
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		Node struct {
+			DistinctAccountCount int `json:"distinctAccountCount"`
+			Accounts             struct {
+				Edges []struct {
+					Node struct {
+						ID string `json:"id"`
+					} `json:"node"`
+				} `json:"edges"`
+			} `json:"accounts"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{"id": firstID}, &result)
+	require.NoError(t, err)
+	require.Len(t, result.Node.Accounts.Edges, 1)
+	// Shared AWS account and 111111111111, plus 222222222222 on the first credential.
+	assert.Equal(t, 3, result.Node.DistinctAccountCount)
+}
+
 func TestEnableConnectorAccounts_AddsRowWithoutTouchingSource(t *testing.T) {
 	t.Parallel()
 
@@ -219,6 +276,39 @@ func TestDisableConnectorAccount_RefusedWhenSourceReferences(t *testing.T) {
 	assert.Equal(t, memberID, disabled.DisableConnectorAccount.DisabledConnectorAccountID)
 }
 
+func TestDisableConnectorAccount_RefusedWhenInitial(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	connectorID := factory.NewConnector(owner).
+		WithAWSRoleARN(connectorAccountAWSRoleARN).
+		Create()
+
+	var accounts connectorAccountsResult
+
+	err := owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &accounts)
+	require.NoError(t, err)
+	require.Len(t, accounts.Node.Accounts.Edges, 1)
+
+	initialID := accounts.Node.Accounts.Edges[0].Node.ID
+
+	err = owner.Execute(
+		disableConnectorAccountMutation,
+		map[string]any{"input": map[string]any{"connectorAccountId": initialID}},
+		&struct {
+			DisableConnectorAccount struct {
+				DisabledConnectorAccountID string `json:"disabledConnectorAccountId"`
+			} `json:"disableConnectorAccount"`
+		}{},
+	)
+	testutil.RequireErrorCode(t, err, "CONFLICT")
+
+	err = owner.Execute(connectorAccountsQuery, map[string]any{"id": connectorID}, &accounts)
+	require.NoError(t, err)
+	require.Len(t, accounts.Node.Accounts.Edges, 1)
+	assert.Equal(t, initialID, accounts.Node.Accounts.Edges[0].Node.ID)
+}
+
 func TestCreateAccessReviewSource_ConnectorIdOnlyResolvesAccount(t *testing.T) {
 	t.Parallel()
 
@@ -243,14 +333,14 @@ func TestCreateAccessReviewSource_ConnectorIdOnlyResolvesAccount(t *testing.T) {
 	assert.NotEmpty(t, *result.Node.ConnectorAccountID)
 }
 
-func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
+func TestConnectorProviders_OrganizationInstallSupported(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	const query = `
 		query {
-			accessReviewDrivers {
+			connectorProviders {
 				provider
 				organizationInstallSupported
 			}
@@ -258,18 +348,18 @@ func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
 	`
 
 	var result struct {
-		AccessReviewDrivers []struct {
+		ConnectorProviders []struct {
 			Provider                     string `json:"provider"`
 			OrganizationInstallSupported bool   `json:"organizationInstallSupported"`
-		} `json:"accessReviewDrivers"`
+		} `json:"connectorProviders"`
 	}
 
 	err := owner.Execute(query, nil, &result)
 	require.NoError(t, err)
-	require.NotEmpty(t, result.AccessReviewDrivers)
+	require.NotEmpty(t, result.ConnectorProviders)
 
 	supported := map[string]bool{}
-	for _, driver := range result.AccessReviewDrivers {
+	for _, driver := range result.ConnectorProviders {
 		supported[driver.Provider] = driver.OrganizationInstallSupported
 	}
 
@@ -278,7 +368,7 @@ func TestAccessReviewDrivers_OrganizationInstallSupported(t *testing.T) {
 	assert.True(t, supported["AZURE"])
 }
 
-func TestDiscoveredAccounts_ViewerForbidden(t *testing.T) {
+func TestDiscoveredAccounts_ViewerGetsNone(t *testing.T) {
 	t.Parallel()
 
 	owner := testutil.NewClient(t, testutil.RoleOwner)
@@ -287,16 +377,42 @@ func TestDiscoveredAccounts_ViewerForbidden(t *testing.T) {
 		WithAWSRoleARN(connectorAccountAWSRoleARN).
 		Create()
 
-	_, err := viewer.Do(`
+	var result struct {
+		Node *struct {
+			DiscoveredAccounts []struct {
+				ExternalAccountID string `json:"externalAccountId"`
+				Enabled           bool   `json:"enabled"`
+			} `json:"discoveredAccounts"`
+			AccountDiscovery struct {
+				Status string `json:"status"`
+				Nodes  []struct {
+					ExternalAccountID string `json:"externalAccountId"`
+				} `json:"nodes"`
+			} `json:"accountDiscovery"`
+		} `json:"node"`
+	}
+
+	err := viewer.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
 				... on Connector {
 					discoveredAccounts {
 						externalAccountId
+						enabled
+					}
+					accountDiscovery {
+						status
+						nodes {
+							externalAccountId
+						}
 					}
 				}
 			}
 		}
-	`, map[string]any{"id": connectorID})
-	testutil.RequireForbiddenError(t, err, "viewer should not discover connector accounts")
+	`, map[string]any{"id": connectorID}, &result)
+	require.NoError(t, err)
+	require.NotNil(t, result.Node)
+	assert.Empty(t, result.Node.DiscoveredAccounts)
+	assert.Equal(t, "NOT_PERMITTED", result.Node.AccountDiscovery.Status)
+	assert.Empty(t, result.Node.AccountDiscovery.Nodes)
 }

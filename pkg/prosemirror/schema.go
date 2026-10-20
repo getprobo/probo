@@ -22,7 +22,13 @@ package prosemirror
 
 import (
 	"fmt"
+	"strings"
+
+	"go.probo.inc/probo/pkg/gid"
 )
+
+// MaxFileNameBytes is the longest file name a file node accepts.
+const MaxFileNameBytes = 1024
 
 func validateDocument(n Node) error {
 	if n.Type != NodeDoc {
@@ -65,8 +71,12 @@ func validateNode(n Node) error {
 		return validateChildren(n, "block", isBlock, 1)
 	case NodeCodeBlock:
 		return validateCodeBlock(n)
-	case NodeHorizontalRule, NodeImage, NodeHardBreak:
+	case NodeHorizontalRule, NodeHardBreak:
 		return validateLeaf(n)
+	case NodeImage:
+		return validateImage(n)
+	case NodeFile:
+		return validateFile(n)
 	case NodeText:
 		return validateText(n)
 	case NodeBulletList, NodeOrderedList:
@@ -162,6 +172,67 @@ func validateCodeBlock(n Node) error {
 	return nil
 }
 
+func validateImage(n Node) error {
+	if err := validateLeaf(n); err != nil {
+		return fmt.Errorf("cannot validate image node: %w", err)
+	}
+
+	attrs, err := n.ImageAttrs()
+	if err != nil {
+		return fmt.Errorf("cannot validate image node: %w", err)
+	}
+
+	// A blank file id is absent. sanitizeImageNode drops it and trims a padded
+	// id; rejecting either here would run first and make that branch unreachable.
+	if attrs.FileID != nil {
+		id := strings.TrimSpace(*attrs.FileID)
+		if id != "" && !validFileID(id) {
+			return fmt.Errorf("cannot validate image node: invalid file id")
+		}
+	}
+
+	if attrs.Width != nil && (*attrs.Width < 1 || *attrs.Width > 100) {
+		return fmt.Errorf("cannot validate image node: invalid width")
+	}
+
+	return nil
+}
+
+func validateFile(n Node) error {
+	if err := validateLeaf(n); err != nil {
+		return fmt.Errorf("cannot validate file node: %w", err)
+	}
+
+	attrs, err := n.FileAttrs()
+	if err != nil {
+		return fmt.Errorf("cannot validate file node: %w", err)
+	}
+
+	if !validFileID(attrs.FileID) {
+		return fmt.Errorf("cannot validate file node: invalid file id")
+	}
+
+	if strings.TrimSpace(attrs.FileName) == "" || len(attrs.FileName) > MaxFileNameBytes {
+		return fmt.Errorf("cannot validate file node: invalid file name")
+	}
+
+	if strings.TrimSpace(attrs.MimeType) == "" || len(attrs.MimeType) > 255 {
+		return fmt.Errorf("cannot validate file node: invalid mime type")
+	}
+
+	if attrs.Size < 0 {
+		return fmt.Errorf("cannot validate file node: invalid size")
+	}
+
+	return nil
+}
+
+func validFileID(id string) bool {
+	_, err := gid.ParseGID(id)
+
+	return err == nil
+}
+
 func validateLeaf(n Node) error {
 	if len(n.Content) > 0 {
 		return fmt.Errorf("%s cannot have children", n.Type)
@@ -205,7 +276,7 @@ func rejectNonTextPayload(n Node) error {
 func isBlock(t NodeType) bool {
 	switch t {
 	case NodeParagraph, NodeHeading, NodeBlockquote, NodeCodeBlock,
-		NodeHorizontalRule, NodeBulletList, NodeOrderedList, NodeTable, NodeImage:
+		NodeHorizontalRule, NodeBulletList, NodeOrderedList, NodeTable, NodeImage, NodeFile:
 		return true
 	default:
 		return false

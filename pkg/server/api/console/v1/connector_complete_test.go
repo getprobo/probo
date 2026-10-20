@@ -35,8 +35,8 @@ import (
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
 	"go.probo.inc/probo/pkg/baseurl"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
@@ -72,7 +72,7 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 			}))
 
 			logger := log.NewLogger(log.WithName("test"))
-			accessReviewSvc := accessreview.NewService(nil, cipher.EncryptionKey{}, connector.NewConnectorRegistry(), providerRegistry, logger)
+			accessReviewSvc := accessreview.NewService(nil, cipher.EncryptionKey{}, connectorprotocol.NewConnectorRegistry(), providerRegistry, logger)
 
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -89,11 +89,11 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 				nil,
 				accessReviewSvc,
 				safeRedirect,
-				&connector.CompletionState{
+				&connectorprotocol.CompletionState{
 					Provider:       string(coredata.ConnectorProviderSlack),
 					OrganizationID: gid.New(gid.NewTenantID(), coredata.OrganizationEntityType).String(),
-					ContinueURL:    "https://console.example/organizations/acme/access-reviews/connections",
-					Connection: &connector.SlackConnection{
+					ContinueURL:    "https://console.example/organizations/acme/access-reviews/sources",
+					Connection: &connectorprotocol.SlackConnection{
 						AccessToken: "xoxp-test",
 						TokenType:   "user",
 					},
@@ -106,7 +106,7 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 
 			location, err := url.Parse(recorder.Header().Get("Location"))
 			require.NoError(t, err)
-			assert.Equal(t, "/organizations/acme/access-reviews/connections", location.Path)
+			assert.Equal(t, "/organizations/acme/access-reviews/sources", location.Path)
 			assert.Equal(t, tc.want, location.Query().Get("error"))
 			assert.False(t, location.Query().Has("connector_id"))
 		})
@@ -116,18 +116,18 @@ func TestFinishConnectorCompletion_FailedInstallCheck(t *testing.T) {
 func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.T) {
 	t.Parallel()
 
-	c := &connector.GitHubAppConnector{
+	c := &connectorprotocol.GitHubAppConnector{
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 		InstallBase:  "https://github.example/apps",
 		RedirectURI:  "https://probo.test/api/console/v1/connectors/github-app/complete",
 	}
-	registry := connector.NewConnectorRegistry()
+	registry := connectorprotocol.NewConnectorRegistry()
 	require.NoError(
 		t,
 		registry.RegisterProtocol(
-			connector.GitHubProvider,
-			connector.ProtocolGitHubApp,
+			connectorprotocol.GitHubProvider,
+			connectorprotocol.ProtocolGitHubApp,
 			c,
 		),
 	)
@@ -139,9 +139,9 @@ func TestHandleConnectorCallbackError_GitHubAppPreservesContinuation(t *testing.
 	)
 	authorizeURL, err := c.Initiate(
 		context.Background(),
-		connector.GitHubProvider,
+		connectorprotocol.GitHubProvider,
 		gid.New(gid.NewTenantID(), 0),
-		connector.InitiateOptions{},
+		connectorprotocol.InitiateOptions{},
 		initReq,
 	)
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestOAuthConnectorRawSettings_PagerDutyReconnectMetadata(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	completion := &connector.CompletionState{
+	completion := &connectorprotocol.CompletionState{
 		Provider: coredata.ConnectorProviderPagerDuty.String(),
 		ProviderMetadata: map[string]string{
 			"subdomain": "new-account",

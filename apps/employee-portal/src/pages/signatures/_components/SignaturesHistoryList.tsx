@@ -21,16 +21,15 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useRefetchableFragment } from "react-relay";
-import { useParams } from "react-router";
 
 import type { SignaturesHistoryList_viewer$key } from "#/__generated__/core/SignaturesHistoryList_viewer.graphql";
 import type { SignaturesHistoryListRefetchQuery } from "#/__generated__/core/SignaturesHistoryListRefetchQuery.graphql";
-import { NotFoundError } from "#/lib/relay/errors";
 import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
 import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 import { DocumentListSection } from "#/pages/_components/DocumentListSection";
 import { EmployeeDocumentListItem } from "#/pages/_components/EmployeeDocumentListItem";
 import { DOCUMENT_LIST_PAGE_SIZE } from "#/pages/_lib/documentList";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 const signaturesHistoryListFragment = graphql`
   fragment SignaturesHistoryList_viewer on Viewer
@@ -76,7 +75,7 @@ export interface SignaturesHistoryListProps {
 export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps) {
   const { t } = useTranslation("signatures");
   const { t: tApp } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const [data, refetch] = useRefetchableFragment<
     SignaturesHistoryListRefetchQuery,
     SignaturesHistoryList_viewer$key
@@ -92,10 +91,6 @@ export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps)
     historyDocuments.pageInfo,
     DOCUMENT_LIST_PAGE_SIZE,
   );
-
-  if (organizationId == null) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   const count = historyDocuments.totalCount;
 
@@ -119,7 +114,7 @@ export function SignaturesHistoryList({ viewerKey }: SignaturesHistoryListProps)
         <EmployeeDocumentListItem
           key={node.id}
           documentKey={node}
-          to={`/${organizationId}/signatures/${node.id}`}
+          to={`/${employeePortalId}/signatures/${node.id}`}
           trailing="chevron"
         />
       ))}

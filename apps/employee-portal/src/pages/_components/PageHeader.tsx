@@ -24,9 +24,8 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams } from "react-router";
 
-import { NotFoundError } from "#/lib/relay/errors";
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { pageHeader } from "./variants";
 
@@ -37,7 +36,7 @@ export interface PageHeaderProps {
     to: string;
   };
   currentLabel: string;
-  title: string;
+  title?: string;
   actions?: ReactNode;
 }
 
@@ -49,18 +48,14 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   const { t } = useTranslation();
-  const { organizationId } = useParams();
+  const { employeePortalId } = useEmployeePortalRoute();
   const slots = pageHeader();
-
-  if (organizationId === undefined) {
-    throw new NotFoundError("organizationId is required");
-  }
 
   return (
     <div className={slots.root()}>
       <nav className={slots.crumbs()} aria-label={t("breadcrumb.nav")}>
         <Link
-          to={`/${organizationId}`}
+          to={`/${employeePortalId}`}
           size={2}
           color="neutral"
           underline={false}
@@ -89,16 +84,24 @@ export function PageHeader({
           {currentLabel}
         </Text>
       </nav>
-      <div className={slots.titleRow()}>
-        <Heading level={1} size={7} weight="medium" highContrast className="min-w-0">
-          {title}
-        </Heading>
-        {actions != null && (
-          <div className={slots.actions()}>
-            {actions}
-          </div>
-        )}
-      </div>
+      {title == null && actions == null
+        ? null
+        : (
+            <div className={slots.titleRow()}>
+              {title == null
+                ? null
+                : (
+                    <Heading level={1} size={7} weight="medium" highContrast className="min-w-0">
+                      {title}
+                    </Heading>
+                  )}
+              {actions != null && (
+                <div className={slots.actions()}>
+                  {actions}
+                </div>
+              )}
+            </div>
+          )}
     </div>
   );
 }

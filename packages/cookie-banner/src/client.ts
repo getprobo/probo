@@ -92,6 +92,7 @@ export class CookieBannerClient {
   private observer: MutationObserver | null = null;
   private detectors: Detector[] = [];
   private reportQueue: ReportQueue | null = null;
+  private knownCookieNames: Set<string> | null = null;
   private _gpcApplied = false;
 
   constructor(config: CookieBannerClientOptions) {
@@ -115,6 +116,8 @@ export class CookieBannerClient {
       integration.bootstrap();
     }
 
+    this.startCookieAndStorageDetectors();
+
     const configUrl = new URL(`${this.bannerId}/config`, this.baseUrl);
     if (this.lang) {
       configUrl.searchParams.set("lang", this.lang);
@@ -123,14 +126,18 @@ export class CookieBannerClient {
     let config: BannerConfig;
     try {
       config = resolveConfig(await fetchJSON<BannerConfig>(configUrl));
-    } catch {
+    } catch (err) {
       // Discovery mode: no published banner config, but detectors still run
       // so admins can inventory trackers. Grant GCM so GTM-managed tags can
       // fire; otherwise bootstrap's deny-all would hide them from discovery.
       for (const integration of this.integrations) {
         integration.grantAll();
       }
-      this.startDetector();
+      this.startResourceDetector();
+      this.scanExistingCookies();
+      if (err instanceof NotFoundError) {
+        this.reportQueue?.reportPageView();
+      }
       if (this.observer) {
         this.observer.disconnect();
       }
@@ -143,7 +150,9 @@ export class CookieBannerClient {
     for (const integration of this.integrations) {
       integration.setDefaults(config.categories);
     }
-    this.startDetector(config);
+    this.ignorePublishedCookieNames(config);
+    this.scanExistingCookies();
+    this.startResourceDetector(config);
 
     if (this.visitorId) {
       const cookie = getConsentCookie();
@@ -419,35 +428,55 @@ export class CookieBannerClient {
     this.observer = observeAndActivate(consentData, categoryLabels, texts);
   }
 
-  private startDetector(config?: BannerConfig): void {
-    this.stopDetectors();
+  private startCookieAndStorageDetectors(): void {
+    if (this.reportQueue) return;
 
-    const knownNames = new Set<string>();
-    knownNames.add(COOKIE_NAME);
-    if (config) {
-      for (const cat of config.categories) {
-        for (const cookie of cat.cookies) {
-          knownNames.add(cookie.name);
-        }
-      }
-    }
-
+    this.knownCookieNames = new Set<string>([COOKIE_NAME]);
     const reportUrl = new URL(`${this.bannerId}/report`, this.baseUrl);
     this.reportQueue = new ReportQueue(reportUrl);
 
     const apiOrigin = this.baseUrl.origin;
     this.detectors = [
-      new CookieDetector(this.reportQueue, apiOrigin, knownNames),
+      new CookieDetector(this.reportQueue, apiOrigin, this.knownCookieNames),
       new StorageDetector(this.reportQueue, apiOrigin),
     ];
-
-    if (shouldStartResourceDetector(config)) {
-      this.detectors.push(new ResourceDetector(this.reportQueue, apiOrigin));
-    }
 
     for (const d of this.detectors) {
       d.start();
     }
+  }
+
+  // Published snapshot cookies are already inventoried. After the
+  // first publish, discovery is frozen, so keep reporting them would
+  // only add traffic. The same Set is shared with CookieDetector;
+  // mutating it here takes effect on later writes and on the deferred
+  // pre-existing scan.
+  private ignorePublishedCookieNames(config: BannerConfig): void {
+    if (!this.knownCookieNames) return;
+
+    for (const cat of config.categories) {
+      for (const cookie of cat.cookies) {
+        this.knownCookieNames.add(cookie.name);
+      }
+    }
+  }
+
+  private scanExistingCookies(): void {
+    for (const d of this.detectors) {
+      if (d instanceof CookieDetector) {
+        d.scanExisting();
+      }
+    }
+  }
+
+  private startResourceDetector(config?: BannerConfig): void {
+    if (!this.reportQueue) return;
+    if (!shouldStartResourceDetector(config)) return;
+    if (this.detectors.some((d) => d instanceof ResourceDetector)) return;
+
+    const detector = new ResourceDetector(this.reportQueue, this.baseUrl.origin);
+    this.detectors.push(detector);
+    detector.start();
   }
 
   private stopDetectors(): void {
@@ -455,6 +484,7 @@ export class CookieBannerClient {
       d.stop();
     }
     this.detectors = [];
+    this.knownCookieNames = null;
     if (this.reportQueue) {
       this.reportQueue.stop();
       this.reportQueue = null;

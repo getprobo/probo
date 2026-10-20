@@ -51,13 +51,13 @@ export const description: INodeProperties[] = [
 			{
 				name: 'Get Many',
 				value: 'getAll',
-				description: 'Get many evidences for a measure',
+				description: 'Get many evidences for an internal control',
 				action: 'Get many evidences',
 			},
 			{
 				name: 'Upload',
 				value: 'upload',
-				description: 'Upload evidence for a measure',
+				description: 'Upload evidence for an internal control',
 				action: 'Upload evidence',
 			},
 		],

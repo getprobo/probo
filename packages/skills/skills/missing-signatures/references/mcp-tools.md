@@ -8,7 +8,9 @@ server configured in the agent). Read each tool schema before calling.
 ### `listOrganizations`
 
 List organizations the caller can access. Use to resolve `$ARGUMENTS` when the
-user provides a name instead of a GID.
+user provides a name instead of a GID. Match on `name` (operating name).
+`legal_name` is the registered legal name when set; use it in the report title
+when the document should name the legal entity, and `name` otherwise.
 
 ### `listUsers`
 

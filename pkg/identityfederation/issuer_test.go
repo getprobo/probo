@@ -26,6 +26,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -34,11 +35,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/jose"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/probodconfig"
 )
 
 const (
@@ -71,33 +74,36 @@ var rsaTestKeys = sync.OnceValue(
 	},
 )
 
-func testKeyRing(t testing.TB, active ...bool) *jose.KeyRing {
-	t.Helper()
-
-	keys := rsaTestKeys()
-	require.LessOrEqual(t, len(active), len(keys))
-
-	signingKeys := make([]jose.SigningKey, 0, len(active))
-
-	for i, isActive := range active {
-		signingKeys = append(
-			signingKeys,
-			jose.SigningKey{
-				PrivateKey: keys[i],
-				KID:        kidForIndex(i),
-				Active:     isActive,
-			},
-		)
-	}
-
-	keyRing, err := jose.NewKeyRing(signingKeys)
-	require.NoError(t, err)
-
-	return keyRing
-}
-
 func kidForIndex(i int) string {
 	return string(rune('a' + i))
+}
+
+func testFederationConfig(base string, active ...bool) probodconfig.IdentityFederationConfig {
+	keys := rsaTestKeys()
+
+	signingKeys := make([]probodconfig.IdentityFederationSigningKeyConfig, 0, len(active))
+
+	for i, isActive := range active {
+		signingKeys = append(signingKeys, probodconfig.IdentityFederationSigningKeyConfig{
+			PrivateKey: probodconfig.RSAPrivateKeyFromKey(keys[i]),
+			KID:        kidForIndex(i),
+			Active:     isActive,
+		})
+	}
+
+	return probodconfig.IdentityFederationConfig{
+		Enabled:       true,
+		IssuerBaseURL: base,
+		SigningKeys:   signingKeys,
+	}
+}
+
+func testAppBase(issuerBase string) *baseurl.BaseURL {
+	if strings.Contains(issuerBase, "localhost") {
+		return baseurl.MustParse(selfHostedAppBase)
+	}
+
+	return baseurl.MustParse("https://app.probo.com")
 }
 
 func testIssuer(t testing.TB, base string, active ...bool) *identityfederation.Issuer {
@@ -108,9 +114,9 @@ func testIssuer(t testing.TB, base string, active ...bool) *identityfederation.I
 	}
 
 	issuer, err := identityfederation.NewIssuer(
-		baseurl.MustParse(base),
-		testKeyRing(t, active...),
-		identityfederation.DefaultTokenTTL,
+		log.NewLogger(log.WithOutput(io.Discard)),
+		testFederationConfig(base, active...),
+		testAppBase(base),
 	)
 	require.NoError(t, err)
 
@@ -160,46 +166,37 @@ func TestNewIssuer_Errors(t *testing.T) {
 	t.Parallel()
 
 	t.Run(
-		"nil base URL",
-		func(t *testing.T) {
-			t.Parallel()
-
-			_, err := identityfederation.NewIssuer(nil, testKeyRing(t, true), identityfederation.DefaultTokenTTL)
-
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), "base URL is required")
-		},
-	)
-
-	t.Run(
-		"nil key ring",
+		"nil application base URL",
 		func(t *testing.T) {
 			t.Parallel()
 
 			_, err := identityfederation.NewIssuer(
-				baseurl.MustParse(saasIssuerBase),
+				log.NewLogger(log.WithOutput(io.Discard)),
+				testFederationConfig(saasIssuerBase, true),
 				nil,
-				identityfederation.DefaultTokenTTL,
 			)
 
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), "key ring is required")
+			assert.Contains(t, err.Error(), "application base URL is required")
 		},
 	)
 
 	t.Run(
-		"non-positive token TTL",
+		"no signing key",
 		func(t *testing.T) {
 			t.Parallel()
 
 			_, err := identityfederation.NewIssuer(
-				baseurl.MustParse(saasIssuerBase),
-				testKeyRing(t, true),
-				0,
+				log.NewLogger(log.WithOutput(io.Discard)),
+				probodconfig.IdentityFederationConfig{
+					Enabled:       true,
+					IssuerBaseURL: saasIssuerBase,
+				},
+				baseurl.MustParse("https://app.probo.com"),
 			)
 
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), "token TTL must be positive")
+			assert.Contains(t, err.Error(), "at least one signing key is required")
 		},
 	)
 }
@@ -407,15 +404,18 @@ func TestIssuer_JWKS_KeyRotation(t *testing.T) {
 	assert.NoError(t, err, "a retired but published key must still verify")
 
 	// Once the key is dropped from configuration it stops verifying.
-	remainingKeyRing, err := jose.NewKeyRing(
-		[]jose.SigningKey{{PrivateKey: keys[1], KID: "b", Active: true}},
-	)
-	require.NoError(t, err)
-
 	withoutRetiredKey, err := identityfederation.NewIssuer(
-		baseurl.MustParse(saasIssuerBase),
-		remainingKeyRing,
-		identityfederation.DefaultTokenTTL,
+		log.NewLogger(log.WithOutput(io.Discard)),
+		probodconfig.IdentityFederationConfig{
+			Enabled:       true,
+			IssuerBaseURL: saasIssuerBase,
+			SigningKeys: []probodconfig.IdentityFederationSigningKeyConfig{{
+				PrivateKey: probodconfig.RSAPrivateKeyFromKey(keys[1]),
+				KID:        "b",
+				Active:     true,
+			}},
+		},
+		baseurl.MustParse("https://app.probo.com"),
 	)
 	require.NoError(t, err)
 

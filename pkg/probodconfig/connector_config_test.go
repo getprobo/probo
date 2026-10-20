@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/probodconfig"
 )
 
@@ -40,7 +40,7 @@ func TestConnectorConfig_APIKeyRoundTrip(t *testing.T) {
 
 	original := probodconfig.ConnectorConfig{
 		Provider: "CRISP",
-		Protocol: connector.ProtocolType("api_key"),
+		Protocol: connectorprotocol.ProtocolType("api_key"),
 		RawConfig: probodconfig.ConnectorConfigAPIKey{
 			APIKey:     "identifier:secret",
 			ResourceID: "plugin-id",
@@ -54,7 +54,7 @@ func TestConnectorConfig_APIKeyRoundTrip(t *testing.T) {
 	require.NoError(t, json.Unmarshal(data, &got))
 
 	assert.Equal(t, "CRISP", got.Provider)
-	assert.Equal(t, connector.ProtocolAPIKey, got.Protocol)
+	assert.Equal(t, connectorprotocol.ProtocolAPIKey, got.Protocol)
 	assert.Equal(t, "identifier:secret", got.APIKey)
 	assert.Equal(t, "plugin-id", got.ResourceID)
 	assert.Nil(t, got.Config, "api_key connectors carry no OAuth2 Connector")
@@ -67,7 +67,7 @@ func TestConnectorConfig_OAuth2RoundTrip(t *testing.T) {
 
 	original := probodconfig.ConnectorConfig{
 		Provider:  "SLACK",
-		Protocol:  connector.ProtocolType("oauth2"),
+		Protocol:  connectorprotocol.ProtocolType("oauth2"),
 		RawConfig: probodconfig.ConnectorConfigOAuth2{ClientID: "cid", ClientSecret: "secret"},
 	}
 
@@ -78,9 +78,9 @@ func TestConnectorConfig_OAuth2RoundTrip(t *testing.T) {
 	require.NoError(t, json.Unmarshal(data, &got))
 
 	assert.Equal(t, "SLACK", got.Provider)
-	assert.Equal(t, connector.ProtocolOAuth2, got.Protocol)
+	assert.Equal(t, connectorprotocol.ProtocolOAuth2, got.Protocol)
 
-	oauth2c, ok := got.Config.(*connector.OAuth2Connector)
+	oauth2c, ok := got.Config.(*connectorprotocol.OAuth2Connector)
 	require.True(t, ok)
 	assert.Equal(t, "cid", oauth2c.ClientID)
 	assert.Equal(t, "secret", oauth2c.ClientSecret)
@@ -91,7 +91,7 @@ func TestConnectorConfig_GitHubAppRoundTrip(t *testing.T) {
 
 	original := probodconfig.ConnectorConfig{
 		Provider: "GITHUB",
-		Protocol: connector.ProtocolGitHubApp,
+		Protocol: connectorprotocol.ProtocolGitHubApp,
 		RawConfig: probodconfig.ConnectorConfigGitHubApp{
 			AppID:        "123456",
 			ClientID:     "Iv1.example",
@@ -108,9 +108,9 @@ func TestConnectorConfig_GitHubAppRoundTrip(t *testing.T) {
 	require.NoError(t, json.Unmarshal(data, &got))
 
 	assert.Equal(t, "GITHUB", got.Provider)
-	assert.Equal(t, connector.ProtocolGitHubApp, got.Protocol)
+	assert.Equal(t, connectorprotocol.ProtocolGitHubApp, got.Protocol)
 
-	gitHubApp, ok := got.Config.(*connector.GitHubAppConnector)
+	gitHubApp, ok := got.Config.(*connectorprotocol.GitHubAppConnector)
 	require.True(t, ok)
 	assert.Equal(t, "123456", gitHubApp.AppID)
 	assert.Equal(t, "Iv1.example", gitHubApp.ClientID)

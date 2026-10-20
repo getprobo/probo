@@ -80,3 +80,62 @@ export function dateTimeFormat(
 ): string {
   return dateFormat(language, date, options);
 }
+
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function calendarDayDiff(date: Date, now = new Date()): number {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round(
+    (startOfLocalDay(date).getTime() - startOfLocalDay(now).getTime()) / msPerDay,
+  );
+}
+
+export function compactDateFormat(
+  language: string,
+  date: Date | string | null | undefined,
+  now = new Date(),
+): string {
+  if (!date) return "";
+
+  const dateValue = typeof date === "string" ? parseDate(date) : date;
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+  };
+  if (dateValue.getFullYear() !== now.getFullYear()) {
+    options.year = "numeric";
+  }
+
+  return dateFormat(language, dateValue, options);
+}
+
+function asCalendarDate(date: Date | string): Date {
+  if (typeof date !== "string") {
+    return date;
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (match == null) {
+    return parseDate(date);
+  }
+
+  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+export function deadlineDateFormat(
+  language: string,
+  date: Date | string | null | undefined,
+  now = new Date(),
+): string {
+  if (!date) return "";
+
+  const dateValue = asCalendarDate(date);
+  const diff = calendarDayDiff(dateValue, now);
+  if (diff >= -1 && diff <= 1) {
+    return new Intl.RelativeTimeFormat(language, { numeric: "auto" }).format(diff, "day");
+  }
+
+  return compactDateFormat(language, dateValue, now);
+}

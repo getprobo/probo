@@ -40,7 +40,6 @@ type (
 		Name           *string    `db:"name"`
 		Firm           *string    `db:"firm"`
 		OrganizationID gid.GID    `db:"organization_id"`
-		FrameworkID    gid.GID    `db:"framework_id"`
 		ReportFileID   *gid.GID   `db:"report_file_id"`
 		ValidFrom      *time.Time `db:"valid_from"`
 		ValidUntil     *time.Time `db:"valid_until"`
@@ -125,7 +124,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -277,7 +275,6 @@ SELECT
 	audits.name,
 	audits.firm,
 	audits.organization_id,
-	audits.framework_id,
 	audits.report_file_id,
 	audits.valid_from,
 	audits.valid_until,
@@ -333,7 +330,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -385,7 +381,6 @@ INSERT INTO audits (
 	firm,
 	tenant_id,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -400,7 +395,6 @@ INSERT INTO audits (
 	@firm,
 	@tenant_id,
 	@organization_id,
-	@framework_id,
 	@report_file_id,
 	@valid_from,
 	@valid_until,
@@ -418,7 +412,6 @@ INSERT INTO audits (
 		"firm":             a.Firm,
 		"tenant_id":        scope.GetTenantID(),
 		"organization_id":  a.OrganizationID,
-		"framework_id":     a.FrameworkID,
 		"report_file_id":   a.ReportFileID,
 		"valid_from":       a.ValidFrom,
 		"valid_until":      a.ValidUntil,
@@ -523,7 +516,6 @@ WITH audits_by_control AS (
 		a.name,
 		a.firm,
 		a.organization_id,
-		a.framework_id,
 		a.report_file_id,
 		a.valid_from,
 		a.valid_until,
@@ -544,7 +536,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -594,7 +585,6 @@ WITH audits_by_finding AS (
 		a.name,
 		a.firm,
 		a.organization_id,
-		a.framework_id,
 		a.report_file_id,
 		a.valid_from,
 		a.valid_until,
@@ -615,7 +605,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -748,7 +737,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -787,10 +775,9 @@ LIMIT 1;
 	return nil
 }
 
-// LoadByCompliancePortalIDAndFrameworkID loads any audit for the given
-// framework that the portal publishes with a visibility other than NONE. The
-// portal association only narrows the WHERE clause, so it stays a subquery
-// rather than a join.
+// LoadByCompliancePortalIDAndFrameworkID loads any audit linked to the given
+// framework that the portal publishes with a visibility other than NONE. Both
+// associations only narrow the WHERE clause, so they stay subqueries.
 func (a *Audit) LoadByCompliancePortalIDAndFrameworkID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -804,7 +791,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -816,7 +802,14 @@ SELECT
 FROM
 	audits
 WHERE %s
-	AND framework_id = @framework_id
+	AND id IN (
+		SELECT
+			audit_id
+		FROM
+			audits_frameworks
+		WHERE %s
+			AND framework_id = @framework_id
+	)
 	AND id IN (
 		SELECT
 			audit_id
@@ -827,7 +820,7 @@ WHERE %s
 	)
 LIMIT 1;
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), scope.SQLFragment(), scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"framework_id":         frameworkID,
@@ -866,7 +859,6 @@ SELECT
 	name,
 	firm,
 	organization_id,
-	framework_id,
 	report_file_id,
 	valid_from,
 	valid_until,
@@ -900,4 +892,116 @@ WHERE
 	*as = audits
 
 	return nil
+}
+
+func (a *Audits) LoadByFrameworkID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	frameworkID gid.GID,
+	cursor *page.Cursor[AuditOrderField],
+) error {
+	q := `
+WITH audits_by_framework AS (
+	SELECT
+		a.id,
+		a.tenant_id,
+		a.name,
+		a.firm,
+		a.organization_id,
+		a.report_file_id,
+		a.valid_from,
+		a.valid_until,
+		a.audit_start_date,
+		a.audit_end_date,
+		a.state,
+		a.created_at,
+		a.updated_at
+	FROM
+		audits a
+	INNER JOIN
+		audits_frameworks af ON a.id = af.audit_id
+	WHERE
+		af.framework_id = @framework_id
+)
+SELECT
+	id,
+	name,
+	firm,
+	organization_id,
+	report_file_id,
+	valid_from,
+	valid_until,
+	audit_start_date,
+	audit_end_date,
+	state,
+	created_at,
+	updated_at
+FROM
+	audits_by_framework
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits: %w", err)
+	}
+
+	*a = audits
+
+	return nil
+}
+
+func (a *Audits) CountByFrameworkID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	frameworkID gid.GID,
+) (int, error) {
+	q := `
+WITH audits_by_framework AS (
+	SELECT
+		a.id,
+		a.tenant_id
+	FROM
+		audits a
+	INNER JOIN
+		audits_frameworks af ON a.id = af.audit_id
+	WHERE
+		af.framework_id = @framework_id
+)
+SELECT
+	COUNT(id)
+FROM
+	audits_by_framework
+WHERE
+	%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"framework_id": frameworkID}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count audits: %w", err)
+	}
+
+	return count, nil
 }

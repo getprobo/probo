@@ -28,8 +28,8 @@ import {
   Td,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { ConnectionHandler, graphql, useFragment } from "react-relay";
 
@@ -107,7 +107,7 @@ export function BusinessFunctionListItem({
   const organizationId = useOrganizationId();
   const { t } = useTranslation();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
   const [deleteBusinessFunction] = useMutation<BusinessFunctionListItemDeleteMutation>(
     deleteBusinessFunctionMutation,
     {
@@ -134,10 +134,10 @@ export function BusinessFunctionListItem({
             connections: deleteConnections,
           },
         });
-        toast({
+        toast.add({
           title: t("businessFunctionListItem.messages.success"),
           description: t("businessFunctionListItem.messages.deleted"),
-          variant: "success",
+          type: "success",
         });
       },
       {

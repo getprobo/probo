@@ -11,7 +11,10 @@
       "horizontalLogo": "Horizontaal logo",
       "horizontalLogoPlaceholder": "Sleep of klik",
       "acceptedFiles": "JPEG, PNG, SVG of WebP. Maximaal 5 MB.",
-      "name": "Naam"
+      "name": "Naam",
+      "nameDescription": "Handelsnaam die in de console wordt getoond.",
+      "legalName": "Wettelijke naam",
+      "legalNameDescription": "Geregistreerde wettelijke naam. Skills gebruiken deze in juridische documenten wanneer die is ingevuld."
     },
     "actions": {
       "save": "Opslaan",

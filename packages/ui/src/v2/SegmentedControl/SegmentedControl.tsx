@@ -20,7 +20,9 @@
 
 import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import { type ReactNode, useState } from "react";
+import type { VariantProps } from "tailwind-variants/lite";
 
+import { SegmentedControlProvider } from "./context";
 import { segmentedControl } from "./variants";
 
 export type SegmentedControlProps = {
@@ -38,7 +40,7 @@ export type SegmentedControlProps = {
   "aria-label"?: string;
   "aria-labelledby"?: string;
   "children"?: ReactNode;
-};
+} & Pick<VariantProps<typeof segmentedControl>, "size">;
 
 // Single-select pill group. Wraps Base UI's array-based ToggleGroup with a
 // friendlier single-value API. Selection is tracked internally (seeded from
@@ -52,36 +54,39 @@ export function SegmentedControl(props: SegmentedControlProps) {
     disabled,
     className,
     children,
+    size = 2,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
   } = props;
-  const { root } = segmentedControl();
+  const { root } = segmentedControl({ size });
 
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = useState(defaultValue);
   const currentValue = isControlled ? value : internalValue;
 
   return (
-    <BaseToggleGroup
-      className={root({ className })}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      aria-labelledby={ariaLabelledby}
-      value={currentValue != null ? [currentValue] : []}
-      onValueChange={(groupValue) => {
-        const next = groupValue[0];
-        // Ignore the empty value emitted when the active item is toggled off,
-        // preserving the single-selection contract.
-        if (next == null) {
-          return;
-        }
-        if (!isControlled) {
-          setInternalValue(next);
-        }
-        onValueChange?.(next);
-      }}
-    >
-      {children}
-    </BaseToggleGroup>
+    <SegmentedControlProvider value={size}>
+      <BaseToggleGroup
+        className={root({ className })}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledby}
+        value={currentValue != null ? [currentValue] : []}
+        onValueChange={(groupValue) => {
+          const next = groupValue[0];
+          // Ignore the empty value emitted when the active item is toggled off,
+          // preserving the single-selection contract.
+          if (next == null) {
+            return;
+          }
+          if (!isControlled) {
+            setInternalValue(next);
+          }
+          onValueChange?.(next);
+        }}
+      >
+        {children}
+      </BaseToggleGroup>
+    </SegmentedControlProvider>
   );
 }

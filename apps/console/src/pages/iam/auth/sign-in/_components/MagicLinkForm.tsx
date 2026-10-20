@@ -20,9 +20,9 @@
 
 import { Field } from "@base-ui/react/field";
 import { Form } from "@base-ui/react/form";
-import { useToast } from "@probo/ui";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { TextField } from "@probo/ui/src/v2/form/TextField";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -41,7 +41,7 @@ const timerDurationSeconds = 60;
 
 export function MagicLinkForm() {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const environment = useRelayEnvironment();
   const postAuthRedirectUrl = usePostAuthRedirectUrl();
 
@@ -102,27 +102,27 @@ export function MagicLinkForm() {
           body,
         });
       } catch {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: t("magicLinkForm.errors.send"),
-          variant: "error",
+          type: "error",
         });
         return;
       }
 
       if (!response.ok) {
-        toast({
+        toast.add({
           title: t("common.error"),
           description: t("magicLinkForm.errors.send"),
-          variant: "error",
+          type: "error",
         });
         return;
       }
 
-      toast({
+      toast.add({
         title: t("common.success"),
         description: t("magicLinkForm.messages.sent"),
-        variant: "success",
+        type: "success",
       });
       setTimer(timerDurationSeconds);
       setMagicLinkSent(true);

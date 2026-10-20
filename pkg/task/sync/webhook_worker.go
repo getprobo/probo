@@ -293,7 +293,14 @@ func (s *Service) EnqueueWebhook(ctx context.Context, deliveryID string, envelop
 			}
 
 			if _, ok := PickLinkForLinearOrganization(links, organizationID); !ok {
-				return nil
+				importCreate, err := linearIssueCreateForImport(ctx, conn, envelope)
+				if err != nil {
+					return err
+				}
+
+				if !importCreate {
+					return nil
+				}
 			}
 
 			var insertErr error
@@ -311,6 +318,38 @@ func (s *Service) EnqueueWebhook(ctx context.Context, deliveryID string, envelop
 	}
 
 	return inserted, nil
+}
+
+func linearIssueCreateForImport(ctx context.Context, conn pg.Querier, body []byte) (bool, error) {
+	parsed, err := linear.ParseEnvelope(body)
+	if err != nil {
+		return false, fmt.Errorf("cannot parse Linear webhook: %w", err)
+	}
+
+	if parsed.Type != "Issue" || parsed.Action != "create" || parsed.OrganizationID == "" {
+		return false, nil
+	}
+
+	data, err := parsed.IssueData()
+	if err != nil || data.ID == "" || data.Team.ID == "" {
+		return false, nil
+	}
+
+	connectors := coredata.Connectors{}
+	if err := connectors.LoadByProviderAndSettings(
+		ctx,
+		conn,
+		coredata.ConnectorProviderLinearSync,
+		map[string]any{
+			"import_new_issues":      true,
+			"default_team_id":        data.Team.ID,
+			"linear_organization_id": parsed.OrganizationID,
+		},
+	); err != nil {
+		return false, fmt.Errorf("cannot load Linear issue import connectors: %w", err)
+	}
+
+	return len(connectors) > 0, nil
 }
 
 func webhookIssueIdentity(body []byte) (issueID, organizationID string, keep bool, err error) {

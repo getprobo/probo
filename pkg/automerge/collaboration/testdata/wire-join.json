@@ -1,0 +1,14 @@
+{
+  "description": "Client join handshake frame",
+  "message": {
+    "type": "join",
+    "senderId": "peer-a",
+    "peerMetadata": {
+      "isEphemeral": false
+    },
+    "supportedProtocolVersions": [
+      "1"
+    ]
+  },
+  "frameCborBase64": "uQAEZHR5cGVkam9pbmhzZW5kZXJJZGZwZWVyLWFscGVlck1ldGFkYXRhuQABa2lzRXBoZW1lcmFs9HgZc3VwcG9ydGVkUHJvdG9jb2xWZXJzaW9uc4FhMQ=="
+}

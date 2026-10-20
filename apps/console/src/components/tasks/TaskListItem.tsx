@@ -18,43 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  ArrowsClockwiseIcon,
-  CalendarBlankIcon,
-  ClockIcon,
-} from "@phosphor-icons/react";
-import { dateFormat, formatDuration } from "@probo/i18n";
-import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
-import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
-import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
-import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
-import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
-import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { UserCircleDashedIcon } from "@phosphor-icons/react";
+import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
+import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
-import { Link } from "react-router";
+import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
 import type { TaskListItemUpdateStateMutation } from "#/__generated__/core/TaskListItemUpdateStateMutation.graphql";
-import { updateStoreCounter } from "#/hooks/useMutationWithIncrement";
+import { TaskAssigneeMenu } from "#/components/tasks/TaskAssigneeMenu";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
-import { TaskPriorityIcon } from "#/pages/organizations/tasks/_components/TaskPriorityIcon";
-import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
-import { insertNextTaskEdge } from "#/pages/organizations/tasks/_lib/taskConnectionOrder";
-import { taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
+import { TaskDeleteDialog } from "#/pages/organizations/tasks/_components/TaskDeleteDialog";
+import { TaskListLinearDialog } from "#/pages/organizations/tasks/_components/TaskListLinearDialog";
+import { TaskListLinearMenu } from "#/pages/organizations/tasks/_components/TaskListLinearMenu";
 import {
-  type TaskState,
-  taskStateKeys,
-  taskStates,
-} from "#/pages/organizations/tasks/_lib/taskState";
+  reconcileOrganizationTaskListMembership,
+  resortOrganizationTaskListEdge,
+  taskListStateMoveUpdaters,
+} from "#/pages/organizations/tasks/_lib/moveOrganizationTaskListEdge";
+import {
+  organizationTaskListFilterVariants,
+  taskDetailsPath,
+} from "#/pages/organizations/tasks/_lib/taskPath";
+import { useTasksCardFilters } from "#/pages/organizations/tasks/_lib/useTasksCardFilters";
 
-import { taskListItem } from "./variants";
+const noneValue = "__NONE__";
 
 const taskListItemFragment = graphql`
   fragment TaskListItem_task on Task {
@@ -62,10 +52,12 @@ const taskListItemFragment = graphql`
     name
     state
     priority
+    createdAt
     timeEstimate
     deadline
     recurrenceInterval
     canUpdate: permission(action: "core:task:update")
+    canDelete: permission(action: "core:task:delete")
     externalLink {
       identifier
       url
@@ -78,6 +70,9 @@ const taskListItemFragment = graphql`
         downloadUrl
       }
     }
+    ...TaskDeleteDialog_task
+    ...TaskListLinearDialog_task
+    ...TaskListLinearMenu_task
   }
 `;
 
@@ -85,48 +80,22 @@ const updateStateMutation = graphql`
   mutation TaskListItemUpdateStateMutation($input: UpdateTaskInput!) {
     updateTask(input: $input) {
       task {
-        ...TasksCard_task
+        ...TasksPageList_task
         ...TaskListItem_task
         ...TaskDetailsPage_task
-      }
-      nextTaskEdge {
-        node {
-          ...TasksCard_task
-          ...TaskListItem_task
-          measure {
-            id
-          }
-        }
       }
     }
   }
 `;
 
-function rowInteraction(
-  props: TaskListItemProps,
-  isMouseDown: boolean,
-): "idle" | "grab" | "grabbing" | "dragging" | "ghost" {
-  if (props.isGhost) {
-    return "ghost";
-  }
-  if (!props.canDrag) {
-    return "idle";
-  }
-  if (props.isDragging) {
-    return "dragging";
-  }
-
-  return isMouseDown ? "grabbing" : "grab";
-}
-
 interface TaskListItemProps {
   taskKey: TaskListItem_task$key;
-  connectionId: string;
   sectionState?: TaskState;
   canDrag?: boolean;
   isDragging?: boolean;
   isGhost?: boolean;
   ignoreClick: boolean;
+  linearConnected?: boolean;
   onDragStart?: () => void;
   onDragOver?: (event: React.DragEvent) => void;
   onDrop?: () => void;
@@ -134,179 +103,270 @@ interface TaskListItemProps {
   onStateChange?: () => void;
 }
 
-export function TaskListItem(props: TaskListItemProps) {
+function taskListItemPropsAreEqual(
+  previous: TaskListItemProps,
+  next: TaskListItemProps,
+): boolean {
+  return previous.taskKey === next.taskKey
+    && previous.sectionState === next.sectionState
+    && previous.canDrag === next.canDrag
+    && previous.isDragging === next.isDragging
+    && previous.isGhost === next.isGhost
+    && previous.ignoreClick === next.ignoreClick
+    && previous.linearConnected === next.linearConnected;
+}
+
+export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps) {
+  const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
-  const { t, i18n } = useTranslation();
-  const relayEnv = useRelayEnvironment();
-  const { canUpdate, ...task } = useFragment(taskListItemFragment, props.taskKey);
+  const environment = useRelayEnvironment();
+  const { graphqlFilter } = useTasksCardFilters();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [linearOpen, setLinearOpen] = useState(false);
+  const task = useFragment(taskListItemFragment, props.taskKey);
+  const { canUpdate, canDelete } = task;
   const [updateState, isUpdating] = useMutation<TaskListItemUpdateStateMutation>(
     updateStateMutation,
   );
-  const [isMouseDown, setIsMouseDown] = useState(false);
-  const displayState = props.sectionState ?? task.state;
+  const assignedTo = task.assignedTo;
 
-  function onStateChange(state: TaskState) {
+  function updateTask(input: {
+    state?: TaskState;
+    assignedToId?: string | null;
+    priority?: TaskPriority;
+    deadline?: string | null;
+    timeEstimate?: string | null;
+    recurrenceInterval?: string | null;
+  }) {
+    const listFilter = {
+      query: graphqlFilter.query,
+      assignedToId: graphqlFilter.assignedToId,
+      internalControlId: graphqlFilter.internalControlId,
+      deadlineOnOrBefore: graphqlFilter.deadlineOnOrBefore,
+      deadlineOnOrAfter: graphqlFilter.deadlineOnOrAfter,
+      hasDeadline: graphqlFilter.hasDeadline,
+      hasAssignee: graphqlFilter.hasAssignee,
+    };
+    const filters = organizationTaskListFilterVariants(listFilter);
+    const previousAssignedToId = task.assignedTo?.id ?? null;
+    const assigneeChanged = "assignedToId" in input;
+    const move = input.state == null
+      ? null
+      : taskListStateMoveUpdaters(environment, {
+          taskId: task.id,
+          nextState: input.state,
+          organizationId,
+          filter: listFilter,
+        });
+
+    function linkAssignee(store: RecordSourceSelectorProxy) {
+      if (!assigneeChanged) {
+        return;
+      }
+      const node = store.get(task.id);
+      if (node == null) {
+        return;
+      }
+      const assignedToId = input.assignedToId ?? null;
+      if (assignedToId == null) {
+        node.setValue(null, "assignedTo");
+        return;
+      }
+      const profile = store.get(assignedToId);
+      if (profile != null) {
+        node.setLinkedRecord(profile, "assignedTo");
+      }
+    }
+
+    function reconcileAssignee(store: RecordSourceSelectorProxy) {
+      if (!assigneeChanged) {
+        return;
+      }
+      const node = store.get(task.id);
+      if (node == null) {
+        return;
+      }
+      reconcileOrganizationTaskListMembership(store, node, {
+        organizationId,
+        state: input.state ?? task.state,
+        filters,
+        previousAssignedToId,
+        previousInternalControlIds: null,
+      });
+    }
+
     void updateState({
       variables: {
         input: {
           taskId: task.id,
-          state,
+          ...input,
         },
       },
-      updater: (store) => {
-        const spawnedMeasureId = insertNextTaskEdge(
-          store,
-          organizationId,
-          [props.connectionId],
-        );
-        if (spawnedMeasureId) {
-          updateStoreCounter(relayEnv, spawnedMeasureId, "tasks(first:0)", 1);
+      optimisticUpdater(store) {
+        move?.optimisticUpdater(store);
+        linkAssignee(store);
+        reconcileAssignee(store);
+        if (input.state == null && input.priority != null) {
+          const node = store.get(task.id);
+          if (node != null) {
+            node.setValue(input.priority, "priority");
+            resortOrganizationTaskListEdge(
+              store,
+              node,
+              organizationId,
+              task.state,
+              filters,
+            );
+          }
+        }
+      },
+      updater(store) {
+        move?.updater(store);
+        reconcileAssignee(store);
+        if (input.state == null && input.priority != null) {
+          const node = store.get(task.id);
+          if (node != null) {
+            resortOrganizationTaskListEdge(
+              store,
+              node,
+              organizationId,
+              task.state,
+              filters,
+            );
+          }
         }
       },
       onCompleted: () => {
-        props.onStateChange?.();
+        if (input.state != null) {
+          props.onStateChange?.();
+        }
       },
     }).catch(() => {
       // Error feedback is handled by useMutation.
     });
   }
 
-  const { canDrag } = props;
-  const slots = taskListItem({ interaction: rowInteraction(props, isMouseDown) });
-  const detailsUrl = taskDetailsPath(organizationId, task.id);
+  const assigneeSelectProps = {
+    value: assignedTo?.id ?? null,
+    disabled: isUpdating || props.ignoreClick,
+    onValueChange: (assignedToId: string | null) => {
+      updateTask({ assignedToId });
+    },
+    emptyLabel: t("detailsPage.unassigned"),
+    emptyValue: noneValue,
+    ariaLabel: t("detailsPage.fields.assignedTo"),
+    size: 1 as const,
+    contractEnded: false,
+    pinned: assignedTo == null
+      ? null
+      : {
+          id: assignedTo.id,
+          fullName: assignedTo.fullName,
+          emailAddress: assignedTo.emailAddress,
+          avatarUrl: assignedTo.avatar?.downloadUrl,
+        },
+  };
 
   return (
-    <div
-      className={slots.root()}
-      draggable={canDrag}
-      onDragStart={canDrag ? props.onDragStart : undefined}
-      onDragOver={canDrag ? props.onDragOver : undefined}
-      onDrop={canDrag ? props.onDrop : undefined}
-      onDragEnd={canDrag ? props.onDragEnd : undefined}
-      onMouseDown={canDrag ? () => setIsMouseDown(true) : undefined}
-      onMouseUp={canDrag ? () => setIsMouseDown(false) : undefined}
-      onMouseLeave={canDrag ? () => setIsMouseDown(false) : undefined}
-    >
-      <div className={slots.main()}>
-        <TaskPriorityIcon priority={task.priority} />
-        <Text size={2} weight="medium" className={slots.title()}>
-          <Link
-            to={detailsUrl}
-            className={slots.titleLink()}
-            draggable={false}
-            onClick={(event) => {
-              if (props.ignoreClick) {
-                event.preventDefault();
-              }
-            }}
-          >
-            {task.name}
-          </Link>
-        </Text>
-        {task.externalLink && (
-          <Anchor
-            className={slots.externalLink()}
-            size={1}
-            color="neutral"
-            href={task.externalLink.url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {task.externalLink.identifier}
-          </Anchor>
-        )}
-        {task.timeEstimate && (
-          <span
-            className={slots.meta()}
-            title={t("tasksCard.metadata.timeEstimate")}
-          >
-            <ClockIcon />
-            <Text size={1} color="current">
-              {formatDuration(task.timeEstimate, t)}
-            </Text>
-          </span>
-        )}
-        {task.deadline && (
-          <span
-            className={slots.meta()}
-            title={t("tasksCard.metadata.deadline")}
-          >
-            <CalendarBlankIcon />
-            <Text size={1} color="current">
-              <time dateTime={task.deadline}>
-                {dateFormat(i18n.language, task.deadline)}
-              </time>
-            </Text>
-          </span>
-        )}
-        {task.recurrenceInterval && (
-          <span
-            className={slots.meta()}
-            title={t("tasksCard.recurringBadge.tooltip", {
-              interval: formatDuration(task.recurrenceInterval, t),
-            })}
-          >
-            <ArrowsClockwiseIcon />
-            <Text size={1} color="current">
-              {formatDuration(task.recurrenceInterval, t)}
-            </Text>
-          </span>
-        )}
-        {task.assignedTo?.fullName && (
-          <Tooltip>
-            <TooltipTrigger
-              render={(
-                <Link
-                  className={slots.assignee()}
-                  to={`/organizations/${organizationId}/settings/users/${task.assignedTo.id}`}
-                  aria-label={task.assignedTo.fullName}
-                >
-                  <Avatar
-                    size={1}
-                    radius="full"
-                    name={task.assignedTo.fullName}
-                    email={task.assignedTo.emailAddress}
-                    src={task.assignedTo.avatar?.downloadUrl}
-                  />
-                </Link>
-              )}
-            />
-            <TooltipPopup>{task.assignedTo.fullName}</TooltipPopup>
-          </Tooltip>
-        )}
-      </div>
-      <div className={slots.state()}>
-        <Select
-          value={displayState}
-          disabled={!canUpdate || isUpdating}
-          onValueChange={(state: TaskState | null) => {
-            if (state != null && state !== task.state) {
-              onStateChange(state);
+    <>
+      <SharedTaskListItem
+        task={{
+          id: task.id,
+          name: task.name,
+          state: task.state,
+          priority: task.priority,
+          createdAt: task.createdAt,
+          timeEstimate: task.timeEstimate,
+          deadline: task.deadline,
+          recurrenceInterval: task.recurrenceInterval,
+          externalLink: task.externalLink == null
+            ? null
+            : {
+                identifier: task.externalLink.identifier,
+                url: task.externalLink.url,
+              },
+          assignedTo: assignedTo == null
+            ? null
+            : {
+                id: assignedTo.id,
+                fullName: assignedTo.fullName,
+                emailAddress: assignedTo.emailAddress,
+                avatarUrl: assignedTo.avatar?.downloadUrl,
+              },
+        }}
+        canUpdate={canUpdate}
+        canUpdateAssignee={canUpdate}
+        isUpdating={isUpdating}
+        detailsTo={taskDetailsPath(organizationId, task.id)}
+        renderAssigneeMenu={canUpdate
+          ? () => (
+              <TaskAssigneeMenu
+                value={assigneeSelectProps.value}
+                emptyLabel={assigneeSelectProps.emptyLabel}
+                emptyValue={assigneeSelectProps.emptyValue}
+                emptyIcon={<UserCircleDashedIcon />}
+                disabled={assigneeSelectProps.disabled}
+                onValueChange={assigneeSelectProps.onValueChange}
+              />
+            )
+          : undefined}
+        onDelete={canDelete
+          ? () => {
+              setDeleteOpen(true);
             }
-          }}
-        >
-          <SelectTrigger size={1} variant="ghost">
-            {(state: TaskState | null) => state
-              ? (
-                  <span className={slots.stateOption()}>
-                    <TaskStateIcon state={state} />
-                    {t(`tasksCard.states.${taskStateKeys[state]}`)}
-                  </span>
-                )
-              : null}
-          </SelectTrigger>
-          <SelectPopup align="end">
-            {taskStates.map(state => (
-              <SelectItem key={state} value={state}>
-                <span className={slots.stateOption()}>
-                  <TaskStateIcon state={state} />
-                  {t(`tasksCard.states.${taskStateKeys[state]}`)}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectPopup>
-        </Select>
-      </div>
-    </div>
+          : undefined}
+        extraMenu={props.linearConnected && canUpdate
+          ? (
+              <TaskListLinearMenu
+                taskKey={task}
+                linked={task.externalLink != null}
+                onLink={() => {
+                  setLinearOpen(true);
+                }}
+              />
+            )
+          : undefined}
+        sectionState={props.sectionState}
+        canDrag={props.canDrag}
+        isDragging={props.isDragging}
+        isGhost={props.isGhost}
+        ignoreClick={props.ignoreClick}
+        onStateChange={(state) => {
+          updateTask({ state });
+        }}
+        onPriorityChange={(priority) => {
+          updateTask({ priority });
+        }}
+        onDeadlineChange={(deadline) => {
+          updateTask({
+            deadline,
+            ...(deadline == null && task.recurrenceInterval != null
+              ? { recurrenceInterval: null }
+              : {}),
+          });
+        }}
+        onTimeEstimateChange={(timeEstimate) => {
+          updateTask({ timeEstimate });
+        }}
+        onDragStart={props.onDragStart}
+        onDragOver={props.onDragOver}
+        onDrop={props.onDrop}
+        onDragEnd={props.onDragEnd}
+      />
+      {props.linearConnected && canUpdate && task.externalLink == null && (
+        <TaskListLinearDialog
+          taskKey={task}
+          open={linearOpen}
+          onOpenChange={setLinearOpen}
+        />
+      )}
+      {canDelete && (
+        <TaskDeleteDialog
+          taskKey={task}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
+    </>
   );
-}
+}, taskListItemPropsAreEqual);

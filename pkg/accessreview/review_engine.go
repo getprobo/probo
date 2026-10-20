@@ -23,14 +23,13 @@ package accessreview
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/accessreview/drivers"
-	"go.probo.inc/probo/pkg/connector"
-	"go.probo.inc/probo/pkg/connector/provider"
+	"go.probo.inc/probo/pkg/connectorprotocol"
+	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -156,59 +155,6 @@ func normalizeAccountKey(email, externalID string) string {
 	return emailKey
 }
 
-// oauthClient returns an HTTP client for an OAuth2 connection, using
-// RefreshableClient when a refresh config is available for the provider.
-func oauthClient(
-	ctx context.Context,
-	connectorRegistry *connector.Registry,
-	conn *connector.OAuth2Connection,
-	provider coredata.ConnectorProvider,
-) (*http.Client, error) {
-	refreshCfg := connectorRegistry.GetOAuth2RefreshConfig(string(provider))
-	if refreshCfg != nil {
-		return conn.RefreshableClient(ctx, *refreshCfg)
-	}
-
-	return conn.Client(ctx)
-}
-
-// buildHTTPClient returns an HTTP client for the given connection.
-// For OAuth2 connections it delegates to oauthClient so that token refresh
-// is handled transparently. For API-key connections it overlays a
-// Probo-held key onto a copy when the provider is managed, so the loaded
-// row is never mutated. Other connection types use the standard Client
-// method.
-func buildHTTPClient(
-	ctx context.Context,
-	connectorRegistry *connector.Registry,
-	providerRegistry *provider.Registry,
-	provider coredata.ConnectorProvider,
-	conn connector.HTTPConnection,
-) (*http.Client, error) {
-	if err := connectorRegistry.ConfigureConnection(string(provider), conn); err != nil {
-		return nil, err
-	}
-
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
-		return oauthClient(ctx, connectorRegistry, oauth2Conn, provider)
-	}
-
-	apiKeyConn, ok := conn.(*connector.APIKeyConnection)
-	if !ok {
-		return conn.Client(ctx)
-	}
-
-	key, err := providerRegistry.APIKeyFor(provider, apiKeyConn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot resolve API key for %s connector: %w", provider, err)
-	}
-
-	prepared := *apiKeyConn
-	prepared.APIKey = key
-
-	return prepared.Client(ctx)
-}
-
 // resolveDriver creates a Driver for the given AccessReviewSource based on
 // connector_account_id (null = CSV or built-in, set = connector-backed).
 func (s *Service) resolveDriver(
@@ -246,10 +192,10 @@ func (s *Service) resolveDriver(
 	// it decides which factory runs. A protocol added later without a factory
 	// lands in the default arm and fails loudly rather than fetching nothing.
 	switch conn := dbConnector.Connection.(type) {
-	case *connector.WorkloadIdentityConnection:
+	case *connectorprotocol.WorkloadIdentityConnection:
 		return s.newCloudDriver(ctx, tx, scope, reg, dbConnector, source)
 
-	case connector.HTTPConnection:
+	case connectorprotocol.HTTPConnection:
 		return s.newHTTPDriver(ctx, tx, scope, reg, dbConnector, conn)
 
 	default:
@@ -295,18 +241,20 @@ func (s *Service) newHTTPDriver(
 	scope coredata.Scoper,
 	reg *provider.Registration,
 	dbConnector *coredata.Connector,
-	conn connector.HTTPConnection,
+	conn connectorprotocol.HTTPConnection,
 ) (drivers.Driver, error) {
 	if reg.NewDriver == nil {
 		return nil, fmt.Errorf("cannot resolve driver: provider %q registers no driver", dbConnector.Provider)
 	}
 
+	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn)
+
 	var tokenBefore string
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
+	if oauth2Conn != nil {
 		tokenBefore = oauth2Conn.AccessToken
 	}
 
-	httpClient, err := buildHTTPClient(
+	httpClient, err := provider.HTTPClient(
 		ctx,
 		s.connectorRegistry,
 		s.providerRegistry,
@@ -319,14 +267,12 @@ func (s *Service) newHTTPDriver(
 
 	// Persist the refreshed token back to the database so subsequent
 	// calls (and other workers) use the updated credentials. Providers
-	// that rotate refresh tokens (HubSpot, DocuSign) will fail on the
+	// that rotate refresh tokens (HubSpot, DocuSign, Slack) will fail on the
 	// next poll if the old refresh token is reused.
-	if oauth2Conn, ok := conn.(*connector.OAuth2Connection); ok {
-		if oauth2Conn.AccessToken != tokenBefore {
-			dbConnector.UpdatedAt = time.Now()
-			if err := dbConnector.Update(ctx, tx, scope, s.encryptionKey); err != nil {
-				return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
-			}
+	if oauth2Conn != nil && oauth2Conn.AccessToken != tokenBefore {
+		dbConnector.UpdatedAt = time.Now()
+		if err := dbConnector.Update(ctx, tx, scope, s.encryptionKey); err != nil {
+			return nil, fmt.Errorf("cannot persist refreshed token for connector %s: %w", dbConnector.ID, err)
 		}
 	}
 

@@ -18,30 +18,29 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatError } from "@probo/helpers";
+import { CheckCircleIcon, CopyIcon, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import {
-  ActionDropdown,
-  Badge,
-  Button,
-  DropdownItem,
-  IconSquareBehindSquare2,
-  IconTrashCan,
-  PageHeader,
-  useConfirm,
-  useToast,
-} from "@probo/ui";
+import { Button } from "@probo/ui/src/v2/Button/Button";
+import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Text } from "@probo/ui/src/v2/typography/Text";
+import { Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
-import { Link, Outlet, useNavigate } from "react-router";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { Outlet } from "react-router";
+import { graphql } from "relay-runtime";
 
-import type { CookieBannerConfigLayoutActivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutActivateMutation.graphql";
-import type { CookieBannerConfigLayoutDeactivateMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeactivateMutation.graphql";
-import type { CookieBannerConfigLayoutDeleteMutation } from "#/__generated__/core/CookieBannerConfigLayoutDeleteMutation.graphql";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { TonedCard } from "#/components/TonedCard/TonedCard";
+import type { TonedCardTone } from "#/components/TonedCard/variants";
+import { useMutation } from "#/lib/relay/useMutation";
+
+import { cookieBannerConfigLayout } from "../variants";
+
+import { FamilyLogo } from "./_components/FamilyLogo";
+import { familyLabel } from "./_lib/familyLabel";
 
 export const cookieBannerConfigLayoutQuery = graphql`
   query CookieBannerConfigLayoutQuery($cookieBannerId: ID!) {
@@ -50,51 +49,18 @@ export const cookieBannerConfigLayoutQuery = graphql`
       ... on CookieBanner {
         id
         name
-        origin
         state
-        canDelete: permission(action: "core:cookie-banner:delete")
         latestVersion {
           id
           version
           state
         }
-        policyDocument {
-          id
+        discoveryFrozenAt
+        discoveryPageLoads {
+          family
+          count
         }
       }
-    }
-  }
-`;
-
-const activateMutation = graphql`
-  mutation CookieBannerConfigLayoutActivateMutation($input: ActivateCookieBannerInput!) {
-    activateCookieBanner(input: $input) {
-      cookieBanner {
-        id
-        state
-      }
-    }
-  }
-`;
-
-const deactivateMutation = graphql`
-  mutation CookieBannerConfigLayoutDeactivateMutation($input: DeactivateCookieBannerInput!) {
-    deactivateCookieBanner(input: $input) {
-      cookieBanner {
-        id
-        state
-      }
-    }
-  }
-`;
-
-const deleteMutation = graphql`
-  mutation CookieBannerConfigLayoutDeleteMutation(
-    $input: DeleteCookieBannerInput!
-    $connections: [ID!]!
-  ) {
-    deleteCookieBanner(input: $input) {
-      deletedCookieBannerId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -114,6 +80,12 @@ const publishMutation = graphql`
           version
           state
         }
+        discoveryFrozenAt
+        publishedVersion {
+          id
+          gvlVendorCount
+          gvlVendorIds
+        }
       }
     }
   }
@@ -123,14 +95,29 @@ interface CookieBannerConfigLayoutProps {
   queryRef: PreloadedQuery<CookieBannerConfigLayoutQuery>;
 }
 
-export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfigLayoutProps) {
+export function CookieBannerConfigLayout({
+  queryRef,
+}: CookieBannerConfigLayoutProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { toast } = useToast();
-  const confirm = useConfirm();
-  const navigate = useNavigate();
-  const organizationId = useOrganizationId();
+  const toast = useToast();
+  const {
+    root,
+    lead,
+    title,
+    meta,
+    id,
+    version: versionClass,
+    discovery,
+    discoveryRow,
+    discoveryItem,
+    discoveryLogo,
+    discoverySeparator,
+  } = cookieBannerConfigLayout();
 
-  const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(cookieBannerConfigLayoutQuery, queryRef);
+  const data = usePreloadedQuery<CookieBannerConfigLayoutQuery>(
+    cookieBannerConfigLayoutQuery,
+    queryRef,
+  );
   if (data.node.__typename !== "CookieBanner") {
     throw new Error("invalid type for node");
   }
@@ -138,198 +125,175 @@ export default function CookieBannerConfigLayout({ queryRef }: CookieBannerConfi
   const banner = data.node;
   usePageTitle(banner.name);
 
-  const [activate, isActivating] = useMutation<CookieBannerConfigLayoutActivateMutation>(activateMutation);
-  const [deactivate, isDeactivating] = useMutation<CookieBannerConfigLayoutDeactivateMutation>(
-    deactivateMutation,
+  const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(
+    publishMutation,
+    {
+      successMessage: t("configLayout.messages.published"),
+      errorToast: t("configLayout.errors.publish"),
+    },
   );
-  const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(publishMutation);
-  const [deleteCookieBanner] = useMutation<CookieBannerConfigLayoutDeleteMutation>(deleteMutation);
-
-  const connectionId = ConnectionHandler.getConnectionID(
-    organizationId,
-    "CookieBannerSwitcherMenu_cookieBanners",
-  );
-
-  const handleToggleState = () => {
-    if (banner.state === "ACTIVE") {
-      deactivate({
-        variables: { input: { cookieBannerId: banner.id } },
-        onCompleted() {
-          toast({ title: t("configLayout.messages.successTitle"), description: t("configLayout.messages.deactivated"), variant: "success" });
-        },
-        onError(error) {
-          toast({ title: t("configLayout.errors.title"), description: formatError(t("configLayout.errors.deactivate"), error), variant: "error" });
-        },
-      });
-    } else {
-      activate({
-        variables: { input: { cookieBannerId: banner.id } },
-        onCompleted() {
-          toast({ title: t("configLayout.messages.successTitle"), description: t("configLayout.messages.activated"), variant: "success" });
-        },
-        onError(error) {
-          toast({ title: t("configLayout.errors.title"), description: formatError(t("configLayout.errors.activate"), error), variant: "error" });
-        },
-      });
-    }
-  };
-
-  const handlePublish = () => {
-    publish({
-      variables: { input: { cookieBannerId: banner.id } },
-      onCompleted() {
-        toast({ title: t("configLayout.messages.successTitle"), description: t("configLayout.messages.published"), variant: "success" });
-      },
-      onError(error) {
-        toast({ title: t("configLayout.errors.title"), description: formatError(t("configLayout.errors.publish"), error), variant: "error" });
-      },
-    });
-  };
-
-  const handleDelete = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve) => {
-          let nextPath = `/organizations/${organizationId}/privacy/cookie-banners/new`;
-          deleteCookieBanner({
-            variables: {
-              input: { cookieBannerId: banner.id },
-              connections: [connectionId],
-            },
-            updater(store) {
-              const connection = store.get(connectionId);
-              if (connection == null) {
-                return;
-              }
-              const edges = connection.getLinkedRecords("edges") ?? [];
-              for (const edge of edges) {
-                const id = edge?.getLinkedRecord("node")?.getDataID();
-                if (typeof id === "string" && id !== banner.id) {
-                  nextPath = `/organizations/${organizationId}/privacy/cookie-banners/${id}/configure`;
-                  return;
-                }
-              }
-            },
-            onCompleted(_, errors) {
-              if (errors?.length) {
-                toast({
-                  title: t("configLayout.errors.title"),
-                  description: errors[0].message,
-                  variant: "error",
-                });
-              } else {
-                toast({
-                  title: t("configLayout.messages.successTitle"),
-                  description: t("configLayout.messages.deleted"),
-                  variant: "success",
-                });
-                void navigate(nextPath);
-              }
-              resolve();
-            },
-            onError(error) {
-              toast({
-                title: t("configLayout.errors.title"),
-                description: formatError(t("configLayout.errors.delete"), error),
-                variant: "error",
-              });
-              resolve();
-            },
-          });
-        }),
-      {
-        message: t("configLayout.deleteConfirmation", { name: banner.name }),
-        variant: "danger",
-        label: t("configLayout.actions.delete"),
-      },
-    );
-  };
 
   const hasDraft = banner.latestVersion?.state === "DRAFT";
+  const isDeactivated = banner.state !== "ACTIVE";
+  const inDiscovery = banner.discoveryFrozenAt == null;
+  const version = banner.latestVersion?.version;
+  const pageLoads = banner.discoveryPageLoads;
+
+  let message: string;
+  if (isDeactivated && hasDraft && version != null) {
+    message = t("configLayout.callout.deactivatedDraft", { version });
+  } else if (isDeactivated) {
+    message = t("configLayout.callout.deactivated");
+  } else if (inDiscovery) {
+    message = t("configLayout.callout.discovery");
+  } else if (hasDraft && version != null) {
+    message = t("configLayout.callout.draft", { version });
+  } else if (version != null) {
+    message = t("configLayout.callout.published", { version });
+  } else {
+    message = t("configLayout.callout.publishedUnknown");
+  }
+
+  let tone: TonedCardTone;
+  let icon: ReactNode;
+  if (isDeactivated) {
+    tone = "amber";
+    icon = <WarningIcon size={24} weight="duotone" />;
+  } else if (inDiscovery) {
+    tone = "sky";
+    icon = <InfoIcon size={24} weight="duotone" />;
+  } else if (hasDraft) {
+    tone = "amber";
+    icon = <WarningIcon size={24} weight="duotone" />;
+  } else {
+    tone = "green";
+    icon = <CheckCircleIcon size={24} weight="duotone" />;
+  }
+
+  function handleCopyId() {
+    void navigator.clipboard.writeText(banner.id).then(
+      () => {
+        toast.add({
+          title: t("configLayout.messages.copiedTitle"),
+          description: t("configLayout.messages.idCopied"),
+          type: "success",
+        });
+      },
+      () => {
+        toast.add({
+          title: t("configLayout.errors.title"),
+          description: t("configLayout.errors.copy"),
+          type: "error",
+        });
+      },
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={(
-          <div className="align-baseline">
-            {banner.name}
-            {banner.latestVersion?.version != null && (
-              <span className="font-mono text-base text-txt-secondary ml-2">
-                {t("configLayout.version", { version: banner.latestVersion.version })}
-                {banner.latestVersion.state === "DRAFT" && (
-                  <span className="text-xs font-sans">
-                    {t("configLayout.draft")}
-                  </span>
-                )}
-              </span>
-            )}
+    <div className={root()}>
+      <TonedCard
+        tone={tone}
+        icon={icon}
+        lead={(
+          <div className={lead()}>
+            <Heading
+              level={2}
+              size={4}
+              weight="medium"
+              highContrast
+              className={title()}
+            >
+              {banner.name}
+            </Heading>
+            <div className={meta()}>
+              <Text size={2} color="neutral" className={id()}>
+                {banner.id}
+              </Text>
+              <IconButton
+                size={1}
+                variant="ghost"
+                color="neutral"
+                aria-label={t("configLayout.actions.copyId")}
+                onClick={handleCopyId}
+              >
+                <CopyIcon />
+              </IconButton>
+              {version != null && (
+                <Text size={2} color="neutral" className={versionClass()}>
+                  {t("configLayout.callout.version", { version })}
+                </Text>
+              )}
+            </div>
           </div>
         )}
-        description={(
-          <span className="flex items-center gap-3 text-sm text-txt-secondary">
-            <span>
-              <span className="font-medium text-txt-primary">{t("configLayout.metadata.origin")}</span>
-              {" "}
-              {banner.origin}
-            </span>
-            <span className="text-border-primary">·</span>
-            <span className="flex items-center gap-1">
-              <span className="font-medium text-txt-primary">{t("configLayout.metadata.id")}</span>
-              {" "}
-              {banner.id}
-              <button
-                type="button"
-                className="p-1 rounded hover:bg-bg-hover transition-colors cursor-pointer"
+        control={hasDraft
+          ? (
+              <Button
+                size={2}
+                variant="solid"
+                color="neutral"
+                highContrast
+                loading={isPublishing}
                 onClick={() => {
-                  void navigator.clipboard.writeText(banner.id);
-                  toast({ title: t("configLayout.messages.copiedTitle"), description: t("configLayout.messages.idCopied"), variant: "success" });
+                  void publish({
+                    variables: { input: { cookieBannerId: banner.id } },
+                  }).catch(() => {
+                    // Error toast is already shown by useMutation.
+                  });
                 }}
               >
-                <IconSquareBehindSquare2 size={16} />
-              </button>
-            </span>
-            {banner.policyDocument && (
-              <>
-                <span className="text-border-primary">·</span>
-                <Link
-                  to={`/organizations/${organizationId}/governance/documents/${banner.policyDocument.id}`}
-                  className="font-medium text-txt-primary underline"
-                >
-                  {t("configLayout.metadata.cookiePolicy")}
-                </Link>
-              </>
-            )}
-          </span>
-        )}
+                {t("configLayout.actions.publish")}
+              </Button>
+            )
+          : undefined}
       >
-        <Badge variant={banner.state === "ACTIVE" ? "success" : "danger"}>
-          {banner.state === "ACTIVE" ? t("configLayout.status.active") : t("configLayout.status.inactive")}
-        </Badge>
-        {hasDraft && (
-          <Button onClick={handlePublish} disabled={isPublishing}>
-            {isPublishing ? t("configLayout.actions.publishing") : t("configLayout.actions.publish")}
-          </Button>
-        )}
-        <Button
-          variant="secondary"
-          onClick={handleToggleState}
-          disabled={isActivating || isDeactivating}
-        >
-          {banner.state === "ACTIVE" ? t("configLayout.actions.deactivate") : t("configLayout.actions.activate")}
-        </Button>
-        {banner.canDelete && banner.state !== "ACTIVE" && (
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={handleDelete}
-            >
-              {t("configLayout.actions.delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        )}
-      </PageHeader>
-
+        <div className={discovery()}>
+          <Text size={2} color="neutral">{message}</Text>
+          {inDiscovery
+            ? (
+                <div className={discoveryRow()}>
+                  <Text size={2} color="faint">
+                    {t("configLayout.discovery.pageLoads")}
+                  </Text>
+                  {pageLoads.length > 0
+                    ? pageLoads.map((entry, index) => (
+                        <Fragment key={entry.family}>
+                          {index > 0
+                            ? (
+                                <Text
+                                  size={2}
+                                  color="faint"
+                                  className={discoverySeparator()}
+                                >
+                                  ·
+                                </Text>
+                              )
+                            : null}
+                          <div className={discoveryItem()}>
+                            <FamilyLogo
+                              family={entry.family}
+                              size={16}
+                              className={discoveryLogo()}
+                            />
+                            <Text size={2} color="faint">
+                              {familyLabel(entry.family, t)}
+                            </Text>
+                            <Text size={2} weight="medium" highContrast>
+                              {entry.count}
+                            </Text>
+                          </div>
+                        </Fragment>
+                      ))
+                    : (
+                        <Text size={2} color="faint">
+                          {t("configLayout.discovery.empty")}
+                        </Text>
+                      )}
+                </div>
+              )
+            : null}
+        </div>
+      </TonedCard>
       <Outlet />
     </div>
   );

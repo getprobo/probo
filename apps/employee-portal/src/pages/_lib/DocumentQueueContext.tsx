@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Toast } from "@base-ui/react/toast";
 import { formatError, type GraphQLError } from "@probo/helpers";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import {
   createContext,
   type ReactNode,
@@ -33,6 +33,8 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
+
+import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import {
   appendQueuePage,
@@ -79,8 +81,9 @@ const queueNavigateOpts = {
 // Holds the frozen pending-document snapshot for the signing / approval flow.
 export function DocumentQueueProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
-  const { organizationId, documentId } = useParams();
-  const toast = Toast.useToastManager();
+  const { organizationId, employeePortalId } = useEmployeePortalRoute();
+  const { documentId } = useParams();
+  const toast = useToast();
   const { t } = useTranslation();
   const [snapshot, setSnapshot] = useState<DocumentQueueSnapshot | null>(null);
   const [advancing, setAdvancing] = useState(false);
@@ -101,9 +104,6 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
     page: DocumentQueuePage,
     openedDocumentId: string,
   ) => {
-    if (organizationId == null) {
-      return;
-    }
     fetchGenerationRef.current += 1;
     setAdvancing(false);
     const next = enterQueueSnapshot(
@@ -136,23 +136,21 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
 
   const goTo = useCallback((targetId: string, direction: DocumentQueueDirection) => {
     if (
-      organizationId == null
-      || snapshot == null
+      snapshot == null
       || snapshot.organizationId !== organizationId
     ) {
       return;
     }
     setQueueDirection(direction);
     void navigate(
-      `/${organizationId}/${snapshot.kind}/${targetId}`,
+      `/${employeePortalId}/${snapshot.kind}/${targetId}`,
       queueNavigateOpts,
     );
-  }, [navigate, organizationId, snapshot]);
+  }, [employeePortalId, navigate, organizationId, snapshot]);
 
   const goForward = useCallback(() => {
     if (
-      organizationId == null
-      || snapshot == null
+      snapshot == null
       || snapshot.organizationId !== organizationId
       || documentId == null
       || advancing
@@ -186,7 +184,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       if (firstNew != null) {
         setQueueDirection("forward");
         void navigate(
-          `/${organizationId}/${snapshot.kind}/${firstNew}`,
+          `/${employeePortalId}/${snapshot.kind}/${firstNew}`,
           queueNavigateOpts,
         );
       }
@@ -205,10 +203,10 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       }
       setAdvancing(false);
     });
-  }, [advancing, documentId, goTo, navigate, organizationId, snapshot, t, toast]);
+  }, [advancing, documentId, employeePortalId, goTo, navigate, organizationId, snapshot, t, toast]);
 
   const startQueue = useCallback((kind: DocumentQueueKind) => {
-    if (organizationId == null || advancing) {
+    if (advancing) {
       return;
     }
 
@@ -230,7 +228,7 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
         return;
       }
       enter(kind, page, firstId);
-      void navigate(`/${organizationId}/${kind}/${firstId}`);
+      void navigate(`/${employeePortalId}/${kind}/${firstId}`);
     }).catch((error: unknown) => {
       if (generation !== fetchGenerationRef.current) {
         return;
@@ -246,19 +244,18 @@ export function DocumentQueueProvider({ children }: { children: ReactNode }) {
       }
       setAdvancing(false);
     });
-  }, [advancing, enter, navigate, organizationId, t, toast]);
+  }, [advancing, employeePortalId, enter, navigate, organizationId, t, toast]);
 
   const close = useCallback((kind?: DocumentQueueKind) => {
     const dest = snapshot?.kind ?? kind;
     leave();
-    if (organizationId == null || dest == null) {
+    if (dest == null) {
       return;
     }
-    void navigate(`/${organizationId}/${dest}`);
-  }, [leave, navigate, organizationId, snapshot?.kind]);
+    void navigate(`/${employeePortalId}/${dest}`);
+  }, [employeePortalId, leave, navigate, snapshot?.kind]);
 
   const scopedSnapshot = snapshot != null
-    && organizationId != null
     && snapshot.organizationId === organizationId
     ? snapshot
     : null;

@@ -37,8 +37,8 @@ import {
   Select,
   Textarea,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useEffect } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -174,7 +174,7 @@ export default function FindingDetailsPage(props: Props) {
     props.queryRef,
   );
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const toast = useToast();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
 
@@ -219,31 +219,31 @@ export default function FindingDetailsPage(props: Props) {
             },
             onCompleted(_, error) {
               if (error) {
-                toast({
+                toast.add({
                   title: t("findingDetails.errors.title"),
                   description: formatError(
                     t("findingDetails.errors.delete"),
                     error,
                   ),
-                  variant: "error",
+                  type: "error",
                 });
               } else {
-                toast({
+                toast.add({
                   title: t("findingDetails.messages.successTitle"),
                   description: t("findingDetails.messages.deleted"),
-                  variant: "success",
+                  type: "success",
                 });
               }
               resolve();
             },
             onError(error) {
-              toast({
+              toast.add({
                 title: t("findingDetails.errors.title"),
                 description: formatError(
                   t("findingDetails.errors.delete"),
                   error,
                 ),
-                variant: "error",
+                type: "error",
               });
               resolve();
             },
@@ -306,20 +306,20 @@ export default function FindingDetailsPage(props: Props) {
       },
       onCompleted() {
         reset(formData);
-        toast({
+        toast.add({
           title: t("findingDetails.messages.successTitle"),
           description: t("findingDetails.messages.updated"),
-          variant: "success",
+          type: "success",
         });
       },
       onError(error) {
-        toast({
+        toast.add({
           title: t("findingDetails.errors.title"),
           description: formatError(
             t("findingDetails.errors.update"),
             error,
           ),
-          variant: "error",
+          type: "error",
         });
       },
     });

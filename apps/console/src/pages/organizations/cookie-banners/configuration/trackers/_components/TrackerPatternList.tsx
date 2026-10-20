@@ -26,18 +26,15 @@ import { TableColumnHeaderCell } from "@probo/ui/src/v2/Table/TableColumnHeaderC
 import { TableHeader } from "@probo/ui/src/v2/Table/TableHeader";
 import { TableRow } from "@probo/ui/src/v2/Table/TableRow";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useCallback, useEffect, useRef, useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useRefetchableFragment } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { TrackerPatternList_cookieBanner$key } from "#/__generated__/core/TrackerPatternList_cookieBanner.graphql";
 import type { TrackerPatternListRefetchQuery } from "#/__generated__/core/TrackerPatternListRefetchQuery.graphql";
-import type { CursorPaginationVariables } from "#/lib/relay/useCursorPagination";
-import { useCursorPagination } from "#/lib/relay/useCursorPagination";
 
-import { cookieBannerList } from "../../../variants";
-import { TRACKERS_PAGE_SIZE } from "../_lib/pageSize";
+import { cookieBannerList, trackerPatternListItem } from "../../../variants";
 import {
   trackersListHeaderSort,
   useTrackersListFilters,
@@ -90,69 +87,60 @@ interface TrackerPatternListProps {
 
 export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps) {
   const { t } = useTranslation("organizations/cookie-banners");
-  const { graphqlFilter, graphqlOrder, hasActiveFilters, setOrder } = useTrackersListFilters();
+  const {
+    view,
+    graphqlFilter,
+    graphqlOrder,
+    graphqlPagination,
+    hasActiveFilters,
+    setOrder,
+    setAfter,
+    setBefore,
+  } = useTrackersListFilters();
   const [isRefetchPending, startRefetchTransition] = useTransition();
   const skipFirstRefetch = useRef(true);
+  const prevFilterOrderRef = useRef({ graphqlFilter, graphqlOrder });
   const [cookieBanner, refetch] = useRefetchableFragment<
     TrackerPatternListRefetchQuery,
     TrackerPatternList_cookieBanner$key
   >(trackerPatternListFragment, cookieBannerKey);
 
-  const pageVariablesRef = useRef<CursorPaginationVariables>({
-    first: TRACKERS_PAGE_SIZE,
-    after: null,
-    last: null,
-    before: null,
-  });
-
-  const refetchPage = useCallback((variables: CursorPaginationVariables) => {
-    pageVariablesRef.current = variables;
-    refetch({ ...variables, filter: graphqlFilter, order: graphqlOrder }, { fetchPolicy: "store-or-network" });
-  }, [graphqlFilter, graphqlOrder, refetch]);
-
-  const { isPending: isPagePending, goPrevious, goNext } = useCursorPagination(
-    refetchPage,
-    cookieBanner.trackerPatterns.pageInfo,
-    TRACKERS_PAGE_SIZE,
-  );
-
   useEffect(() => {
     if (skipFirstRefetch.current) {
       skipFirstRefetch.current = false;
+      prevFilterOrderRef.current = { graphqlFilter, graphqlOrder };
       return;
     }
 
-    pageVariablesRef.current = {
-      first: TRACKERS_PAGE_SIZE,
-      after: null,
-      last: null,
-      before: null,
-    };
+    const filterOrderChanged = prevFilterOrderRef.current.graphqlFilter !== graphqlFilter
+      || prevFilterOrderRef.current.graphqlOrder !== graphqlOrder;
+    prevFilterOrderRef.current = { graphqlFilter, graphqlOrder };
+
     startRefetchTransition(() => {
       refetch(
-        { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
-        { fetchPolicy: "store-or-network" },
+        { ...graphqlPagination, filter: graphqlFilter, order: graphqlOrder },
+        { fetchPolicy: filterOrderChanged ? "network-only" : "store-or-network" },
       );
     });
-  }, [graphqlFilter, graphqlOrder, refetch]);
+  }, [graphqlFilter, graphqlOrder, graphqlPagination, refetch]);
 
   const edges = cookieBanner.trackerPatterns.edges;
   const pageInfo = cookieBanner.trackerPatterns.pageInfo;
-  const isPending = isRefetchPending || isPagePending;
-  const { root, results, pager, empty } = cookieBannerList({ pending: isPending });
+  const { root, results, pager, empty } = cookieBannerList({ pending: isRefetchPending });
+  const { optional } = trackerPatternListItem();
 
   function refetchCurrentPage() {
     startRefetchTransition(() => {
       refetch(
-        { ...pageVariablesRef.current, filter: graphqlFilter, order: graphqlOrder },
+        { ...graphqlPagination, filter: graphqlFilter, order: graphqlOrder },
         { fetchPolicy: "network-only" },
       );
     });
   }
 
   function handleRemoved() {
-    if (edges.length === 1 && pageInfo.hasPreviousPage) {
-      goPrevious();
+    if (edges.length === 1 && pageInfo.hasPreviousPage && pageInfo.startCursor != null) {
+      setBefore(pageInfo.startCursor);
       return;
     }
     refetchCurrentPage();
@@ -171,56 +159,58 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                         {t("trackersPage.emptyFiltered")}
                       </Text>
                     )
-                  : (
-                      <>
-                        <Text size={3} weight="medium" highContrast>
-                          {t("trackersPage.empty.title")}
-                        </Text>
+                  : view === "on-banner"
+                    ? (
                         <Text size={2} color="faint">
-                          {t("trackersPage.empty.description")}
+                          {t("trackersPage.empty.onBanner")}
                         </Text>
-                      </>
-                    )}
+                      )
+                    : (
+                        <>
+                          <Text size={3} weight="medium" highContrast>
+                            {t("trackersPage.empty.title")}
+                          </Text>
+                          <Text size={2} color="faint">
+                            {t("trackersPage.empty.description")}
+                          </Text>
+                        </>
+                      )}
               </div>
             </Card>
           )
         : (
             <>
-              <div aria-busy={isPending} className={results()}>
-                <Table variant="surface">
+              <div aria-busy={isRefetchPending} className={results()}>
+                <Table variant="surface" layout="fixed">
                   <TableHeader>
                     <TableRow>
                       <TableColumnHeaderCell
+                        overflow="break"
                         sort={trackersListHeaderSort("NAME", graphqlOrder)}
                         onSort={() => setOrder("NAME")}
                         aria-label={t("trackersPage.sort.name")}
                       >
                         {t("trackersPage.columns.name")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.attribution")}
                       </TableColumnHeaderCell>
                       <TableColumnHeaderCell
+                        width="7rem"
+                        className={optional()}
                         sort={trackersListHeaderSort("SOURCE", graphqlOrder)}
                         onSort={() => setOrder("SOURCE")}
                         aria-label={t("trackersPage.sort.source")}
                       >
                         {t("trackersPage.columns.source")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="10rem">
                         {t("trackersPage.columns.category")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell>
+                      <TableColumnHeaderCell width="7rem" className={optional()}>
                         {t("trackersPage.columns.maxAge")}
                       </TableColumnHeaderCell>
-                      <TableColumnHeaderCell
-                        sort={trackersListHeaderSort("LAST_MATCHED_AT", graphqlOrder)}
-                        onSort={() => setOrder("LAST_MATCHED_AT")}
-                        aria-label={t("trackersPage.sort.lastMatched")}
-                      >
-                        {t("trackersPage.columns.lastMatched")}
-                      </TableColumnHeaderCell>
-                      <TableColumnHeaderCell />
+                      <TableColumnHeaderCell width="3rem" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -243,9 +233,17 @@ export function TrackerPatternList({ cookieBannerKey }: TrackerPatternListProps)
                   previousLabel={t("trackersPage.actions.previous")}
                   nextLabel={t("trackersPage.actions.next")}
                   showLabels
-                  disabled={isPending}
-                  onPrevious={goPrevious}
-                  onNext={goNext}
+                  disabled={isRefetchPending}
+                  onPrevious={() => {
+                    if (pageInfo.startCursor != null) {
+                      setBefore(pageInfo.startCursor);
+                    }
+                  }}
+                  onNext={() => {
+                    if (pageInfo.endCursor != null) {
+                      setAfter(pageInfo.endCursor);
+                    }
+                  }}
                 />
               </div>
             </>

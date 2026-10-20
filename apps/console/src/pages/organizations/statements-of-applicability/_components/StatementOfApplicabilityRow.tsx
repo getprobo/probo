@@ -27,8 +27,8 @@ import {
   Td,
   Tr,
   useConfirm,
-  useToast,
 } from "@probo/ui";
+import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useTranslation } from "react-i18next";
 import { useFragment, useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
@@ -69,7 +69,7 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
   const { t, i18n } = useTranslation();
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const statementOfApplicability = useFragment(fragment, fKey);
   const canDelete = statementOfApplicability.canDelete;
@@ -90,13 +90,13 @@ export function StatementOfApplicabilityRow({ fKey, connectionId }: Props) {
             connections: [connectionId],
           },
         }).catch((error) => {
-          toast({
+          toast.add({
             title: t("statementOfApplicabilityDetailPage.messages.error"),
             description: formatError(
               t("statementOfApplicabilityDetailPage.errors.delete"),
               error as GraphQLError,
             ),
-            variant: "error",
+            type: "error",
           });
         }),
       {
