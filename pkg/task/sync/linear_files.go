@@ -59,6 +59,24 @@ type (
 		) (Attachment, error)
 	}
 
+	// StoredAttachment is a file saved from a Linear upload.
+	StoredAttachment struct {
+		ID       gid.GID
+		Name     string
+		MimeType string
+		Size     int64
+	}
+
+	// AttachmentWriter stores a Linear upload as a private organization file.
+	AttachmentWriter interface {
+		StoreAttachment(
+			ctx context.Context,
+			scope coredata.Scoper,
+			organizationID gid.GID,
+			file Attachment,
+		) (StoredAttachment, error)
+	}
+
 	// linearAssetCache keeps a Linear asset URL until the task link stores it.
 	// A failed save leaves the URL here so a retry does not upload the file
 	// again. A successful save removes it. Each key includes the connector's

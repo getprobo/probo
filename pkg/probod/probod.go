@@ -895,6 +895,7 @@ func (impl *Implm) Run(
 		linearAPIBaseURL,
 		l.Named("task"),
 		fileManagerService,
+		impl.cfg.AWS.Bucket,
 	)
 
 	itamService := itam.NewService(

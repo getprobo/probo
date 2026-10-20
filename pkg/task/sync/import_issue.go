@@ -41,17 +41,43 @@ func isLinearApplicationActor(actor linear.WebhookActor) bool {
 	return strings.EqualFold(actor.Type, "application")
 }
 
+type preparedImportedIssue struct {
+	connector *coredata.Connector
+	content   string
+	markdown  string
+	files     map[string]string
+	created   []createdInboundFile
+}
+
 func (s *Service) importCreatedLinearIssue(
 	ctx context.Context,
 	tx pg.Tx,
 	envelope *linear.WebhookEnvelope,
 	data *linear.IssueWebhookData,
+	prepared []preparedImportedIssue,
 ) error {
 	if isLinearApplicationActor(envelope.Actor) {
 		return nil
 	}
 
 	if data.Team.ID == "" || envelope.OrganizationID == "" {
+		return nil
+	}
+
+	if prepared != nil {
+		for i := range prepared {
+			if err := s.importLinearIssueForConnector(
+				ctx,
+				tx,
+				envelope,
+				data,
+				prepared[i].connector,
+				&prepared[i],
+			); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}
 
@@ -70,7 +96,7 @@ func (s *Service) importCreatedLinearIssue(
 	}
 
 	for _, connector := range connectors {
-		if err := s.importLinearIssueForConnector(ctx, tx, envelope, data, connector); err != nil {
+		if err := s.importLinearIssueForConnector(ctx, tx, envelope, data, connector, nil); err != nil {
 			return err
 		}
 	}
@@ -84,6 +110,7 @@ func (s *Service) importLinearIssueForConnector(
 	envelope *linear.WebhookEnvelope,
 	data *linear.IssueWebhookData,
 	connector *coredata.Connector,
+	ready *preparedImportedIssue,
 ) error {
 	settings, err := coredata.ConnectorSettings[coredata.LinearSyncConnectorSettings](connector)
 	if err != nil {
@@ -97,9 +124,23 @@ func (s *Service) importLinearIssueForConnector(
 
 	scope := coredata.NewScope(connector.OrganizationID.TenantID())
 
-	content, markdown, err := importedTaskContent(data)
-	if err != nil {
-		return err
+	var (
+		content  string
+		markdown string
+		files    map[string]string
+	)
+
+	if ready != nil {
+		content = ready.content
+		markdown = ready.markdown
+		files = ready.files
+	} else {
+		var importErr error
+
+		content, markdown, files, _, importErr = s.importedTaskContent(ctx, scope, connector, data)
+		if importErr != nil {
+			return importErr
+		}
 	}
 
 	now := time.Now()
@@ -169,6 +210,13 @@ func (s *Service) importLinearIssueForConnector(
 		metadata = encoded
 	}
 
+	if len(files) > 0 {
+		metadata, err = mergeAttachments(metadata, files)
+		if err != nil {
+			return fmt.Errorf("cannot merge Linear attachments: %w", err)
+		}
+	}
+
 	hash := ContentHash(
 		task.Name,
 		markdown,
@@ -215,6 +263,66 @@ func (s *Service) importLinearIssueForConnector(
 	return nil
 }
 
+func (s *Service) prepareImportedIssues(
+	ctx context.Context,
+	envelope *linear.WebhookEnvelope,
+	data *linear.IssueWebhookData,
+) ([]preparedImportedIssue, error) {
+	if isLinearApplicationActor(envelope.Actor) || data.Team.ID == "" || envelope.OrganizationID == "" {
+		return []preparedImportedIssue{}, nil
+	}
+
+	if s.pg == nil {
+		return nil, fmt.Errorf("cannot load Linear issue import connectors: database is not configured")
+	}
+
+	connectors := coredata.Connectors{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := connectors.LoadByProviderAndSettings(
+				ctx,
+				conn,
+				coredata.ConnectorProviderLinearSync,
+				map[string]any{
+					"import_new_issues":      true,
+					"default_team_id":        data.Team.ID,
+					"linear_organization_id": envelope.OrganizationID,
+				},
+			); err != nil {
+				return fmt.Errorf("cannot load Linear issue import connectors: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	prepared := make([]preparedImportedIssue, 0, len(connectors))
+
+	for _, connector := range connectors {
+		scope := coredata.NewScope(connector.OrganizationID.TenantID())
+
+		content, markdown, files, created, err := s.importedTaskContent(ctx, scope, connector, data)
+		if err != nil {
+			return nil, err
+		}
+
+		prepared = append(prepared, preparedImportedIssue{
+			connector: connector,
+			content:   content,
+			markdown:  markdown,
+			files:     files,
+			created:   created,
+		})
+	}
+
+	return prepared, nil
+}
+
 func importedTaskName(data *linear.IssueWebhookData) string {
 	name := strings.Join(strings.Fields(data.Title), " ")
 	if name == "" {
@@ -230,21 +338,50 @@ func importedTaskName(data *linear.IssueWebhookData) string {
 	return string(runes[:importedTaskNameMaxLen])
 }
 
-func importedTaskContent(data *linear.IssueWebhookData) (string, string, error) {
+func (s *Service) importedTaskContent(
+	ctx context.Context,
+	scope coredata.Scoper,
+	connector *coredata.Connector,
+	data *linear.IssueWebhookData,
+) (string, string, map[string]string, []createdInboundFile, error) {
 	description := ""
+
+	var (
+		files   map[string]string
+		metas   map[string]importedFileMeta
+		created []createdInboundFile
+	)
+
 	if data.Has("description") {
-		description = data.Description
+		rewritten, imported, stored, storedFiles, err := s.importLinearFiles(
+			ctx,
+			nil,
+			scope,
+			connector.ID,
+			connector.OrganizationID,
+			data.Description,
+			nil,
+			true,
+		)
+		if err != nil {
+			return "", "", nil, nil, fmt.Errorf("cannot import Linear description files: %w", err)
+		}
+
+		description = rewritten
+		files = imported
+		metas = stored
+		created = storedFiles
 	}
 
 	content, err := MarkdownToContent(description)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, nil, err
 	}
 
-	markdown, err := ContentToMarkdown(content)
+	content, markdown, err := applyImportedFiles(content, metas)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, nil, err
 	}
 
-	return content, markdown, nil
+	return content, markdown, files, created, nil
 }

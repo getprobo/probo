@@ -61,7 +61,17 @@ func (s *Service) ApplyInboundIssue(
 		return nil
 	}
 
-	return s.pg.WithTx(
+	update, creates, err := s.previewInboundIssue(ctx, envelope, data)
+	if err != nil {
+		return err
+	}
+
+	var (
+		unusedUpdate  *linearImport
+		unusedCreates []preparedImportedIssue
+	)
+
+	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			links := coredata.TaskExternalLinks{}
@@ -78,19 +88,27 @@ func (s *Service) ApplyInboundIssue(
 			link, ok := PickLinkForLinearOrganization(links, envelope.OrganizationID)
 			if !ok {
 				if envelope.Action != "create" {
+					unusedUpdate = update
+
 					return nil
 				}
 
-				return s.importCreatedLinearIssue(ctx, tx, envelope, data)
+				return s.importCreatedLinearIssue(ctx, tx, envelope, data, creates)
 			}
 
+			unusedCreates = creates
+
 			if isAppActor(link.Metadata, envelope.Actor.ID) {
+				unusedUpdate = update
+
 				return nil
 			}
 
 			scope := coredata.NewScope(link.OrganizationID.TenantID())
 			if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, link.TaskID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
+					unusedUpdate = update
+
 					return nil
 				}
 
@@ -98,15 +116,21 @@ func (s *Service) ApplyInboundIssue(
 			}
 
 			if link.ExternalID != data.ID {
+				unusedUpdate = update
+
 				return nil
 			}
 
 			if isAppActor(link.Metadata, envelope.Actor.ID) {
+				unusedUpdate = update
+
 				return nil
 			}
 
 			remoteUpdatedAt := linearDateTime(data.UpdatedAt)
 			if inboundEventIsStale(remoteUpdatedAt, link.RemoteUpdatedAt) {
+				unusedUpdate = update
+
 				return nil
 			}
 
@@ -115,9 +139,35 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot load task %q: %w", link.TaskID, err)
 			}
 
+			var metas map[string]importedFileMeta
+
+			if data.Has("description") && update != nil {
+				data.Description = update.markdown
+				metas = update.metas
+
+				if next, changed, err := mergedLinearAttachments(
+					link.Metadata,
+					mergeAttachmentMaps(attachmentsFromMetadata(link.Metadata), update.files),
+				); err != nil {
+					return err
+				} else if changed {
+					link.Metadata = next
+				}
+			}
+
 			mapped, err := mapInboundIssue(task, data, attachmentsFromMetadata(link.Metadata))
 			if err != nil {
 				return err
+			}
+
+			if len(metas) > 0 {
+				content, markdown, err := applyImportedFiles(mapped.Content, metas)
+				if err != nil {
+					return fmt.Errorf("cannot apply imported Linear files: %w", err)
+				}
+
+				mapped.Content = content
+				mapped.Markdown = markdown
 			}
 
 			oldTask := *task
@@ -191,6 +241,15 @@ func (s *Service) ApplyInboundIssue(
 			return touchInboundLink(ctx, tx, scope, link, data, remoteUpdatedAt, hash, mapped.Priority)
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	if err := s.discardInboundImport(ctx, unusedUpdate); err != nil {
+		return err
+	}
+
+	return s.discardPreparedIssues(ctx, unusedCreates)
 }
 
 func (s *Service) unlinkRemovedIssue(
@@ -289,6 +348,88 @@ func mapInboundIssue(
 	}
 
 	return mapped, nil
+}
+
+func (s *Service) previewInboundIssue(
+	ctx context.Context,
+	envelope *linear.WebhookEnvelope,
+	data *linear.IssueWebhookData,
+) (*linearImport, []preparedImportedIssue, error) {
+	link, _, ok, err := s.loadLinearLink(ctx, data.ID, envelope.OrganizationID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if ok {
+		if isAppActor(link.Metadata, envelope.Actor.ID) || !data.Has("description") {
+			return nil, nil, nil
+		}
+
+		imported, err := s.prepareLinearImport(
+			ctx,
+			coredata.NewScope(link.OrganizationID.TenantID()),
+			link.ConnectorID,
+			link.OrganizationID,
+			data.Description,
+			attachmentsFromMetadata(link.Metadata),
+			false,
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("cannot import Linear description files: %w", err)
+		}
+
+		return imported, nil, nil
+	}
+
+	if envelope.Action != "create" {
+		return nil, nil, nil
+	}
+
+	creates, err := s.prepareImportedIssues(ctx, envelope, data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return nil, creates, nil
+}
+
+func (s *Service) loadLinearLink(
+	ctx context.Context,
+	issueID string,
+	linearOrganizationID string,
+) (*coredata.TaskExternalLink, coredata.Scoper, bool, error) {
+	if s.pg == nil {
+		return nil, nil, false, fmt.Errorf("cannot load task external link: database is not configured")
+	}
+
+	links := coredata.TaskExternalLinks{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := links.LoadByExternalID(
+				ctx,
+				conn,
+				coredata.NewNoScope(),
+				coredata.ConnectorProviderLinearSync,
+				issueID,
+			); err != nil {
+				return fmt.Errorf("cannot load task external links: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	link, ok := PickLinkForLinearOrganization(links, linearOrganizationID)
+	if !ok {
+		return nil, nil, false, nil
+	}
+
+	return link, coredata.NewScope(link.OrganizationID.TenantID()), true, nil
 }
 
 func lockedLinearLink(

@@ -63,6 +63,7 @@ func NewService(
 	linearAPIBaseURL string,
 	logger *log.Logger,
 	files *filemanager.Service,
+	bucket string,
 ) *Service {
 	return &Service{
 		pg:     pgClient,
@@ -76,7 +77,7 @@ func NewService(
 			logger,
 			InsertUpdateActivities,
 			recordImportedTask,
-			&attachmentReader{pg: pgClient, files: files},
+			&attachmentReader{pg: pgClient, files: files, bucket: bucket},
 		),
 	}
 }

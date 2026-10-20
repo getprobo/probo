@@ -722,7 +722,7 @@ func TestApplyInboundComment_CreateRestoresKnownFile(t *testing.T) {
 	}
 
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
-		return (&Service{}).applyInboundCommentTx(ctx, tx, scope, link, &linear.WebhookEnvelope{}, data)
+		return (&Service{}).applyInboundCommentTx(ctx, tx, scope, link, &linear.WebhookEnvelope{}, data, nil)
 	}))
 
 	var content string

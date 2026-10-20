@@ -79,7 +79,9 @@ type (
 		recordUpdateActivities RecordUpdateActivitiesFunc
 		recordImportedTask     RecordImportedTaskFunc
 		attachments            AttachmentReader
+		stores                 AttachmentWriter
 		linearAssets           linearAssetCache
+		inboundFiles           inboundFileCache
 	}
 
 	LinearTeam struct {
@@ -102,7 +104,7 @@ func NewService(
 	recordImportedTask RecordImportedTaskFunc,
 	attachments AttachmentReader,
 ) *Service {
-	return &Service{
+	service := &Service{
 		pg:                     pgClient,
 		encryptionKey:          encryptionKey,
 		connectorRegistry:      connectorRegistry,
@@ -114,6 +116,11 @@ func NewService(
 		attachments:            attachments,
 		linearAssets:           linearAssetCache{urls: map[string]string{}},
 	}
+	if writer, ok := attachments.(AttachmentWriter); ok {
+		service.stores = writer
+	}
+
+	return service
 }
 
 func (s *Service) GetLinkByTaskID(
@@ -456,7 +463,14 @@ func (s *Service) LinkToLinear(
 
 	s.archiveAbandonedLinearIssue(ctx, accounts, task.ID, archiveConnectorID, archiveIssueID)
 
-	content, markdown, err := linearIssueContent(issue)
+	content, markdown, files, err := s.linearIssueContent(
+		ctx,
+		account.client,
+		scope,
+		task.OrganizationID,
+		account.connector.ID,
+		issue.Description,
+	)
 	if err != nil {
 		s.deletePendingLinearLink(ctx, scope, taskID, issue.ID)
 
@@ -487,6 +501,7 @@ func (s *Service) LinkToLinear(
 		issue,
 		content,
 		markdown,
+		files,
 		attachmentID,
 		identityID,
 	)
@@ -735,18 +750,38 @@ func (s *Service) claimLinearLink(
 	return reused, archiveIssueID, archiveConnectorID, nil
 }
 
-func linearIssueContent(issue *linear.Issue) (string, string, error) {
-	content, err := MarkdownToContent(issue.Description)
+func (s *Service) linearIssueContent(
+	ctx context.Context,
+	client *linear.Client,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	connectorID gid.GID,
+	description string,
+) (string, string, map[string]string, error) {
+	markdown, files, metas, err := s.importLinearMarkdown(
+		ctx,
+		client,
+		scope,
+		connectorID,
+		organizationID,
+		description,
+		nil,
+	)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, fmt.Errorf("cannot import Linear description files: %w", err)
 	}
 
-	markdown, err := ContentToMarkdown(content)
+	content, err := MarkdownToContent(markdown)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, err
 	}
 
-	return content, markdown, nil
+	content, canonical, err := applyImportedFiles(content, metas)
+	if err != nil {
+		return "", "", nil, err
+	}
+
+	return content, canonical, files, nil
 }
 
 func (s *Service) finishLinearLink(
@@ -759,12 +794,20 @@ func (s *Service) finishLinearLink(
 	issue *linear.Issue,
 	content string,
 	markdown string,
+	files map[string]string,
 	attachmentID string,
 	identityID *gid.GID,
 ) (*coredata.TaskExternalLink, *coredata.Task, *coredata.Task, error) {
 	metadata, err := linearLinkMetadata(attachmentID, viewerID)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+
+	if len(files) > 0 {
+		metadata, err = mergeAttachments(metadata, files)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("cannot merge Linear attachments: %w", err)
+		}
 	}
 
 	now := time.Now()

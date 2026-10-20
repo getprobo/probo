@@ -40,6 +40,9 @@ type (
 		endpoint             string
 		uploadHTTP           *http.Client
 		connectionGeneration string
+		// allowedAssetHost overrides the Linear upload host. Tests set it so
+		// httptest can stand in for uploads.linear.app.
+		allowedAssetHost string
 	}
 
 	Team struct {

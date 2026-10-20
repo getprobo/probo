@@ -146,7 +146,7 @@ func (s *Service) syncLinkedComments(
 			continue
 		}
 
-		importedID, err := s.importLinearComment(ctx, scope, link, &comment)
+		importedID, err := s.importLinearComment(ctx, scope, client, link, &comment)
 		if err != nil {
 			s.rollbackLinkedComments(ctx, scope, client, importedIDs, nil)
 
@@ -171,20 +171,50 @@ func (s *Service) syncLinkedComments(
 func (s *Service) importLinearComment(
 	ctx context.Context,
 	scope coredata.Scoper,
+	client *linear.Client,
 	link *coredata.TaskExternalLink,
 	remote *linear.Comment,
 ) (gid.GID, error) {
-	markdown := strings.TrimSpace(remote.Body)
-	if markdown == "" {
+	if strings.TrimSpace(remote.Body) == "" {
 		return gid.Nil, nil
 	}
 
-	content, err := MarkdownToContent(remote.Body)
+	markdown, files, metas, err := s.importLinearMarkdown(
+		ctx,
+		client,
+		scope,
+		link.ConnectorID,
+		link.OrganizationID,
+		remote.Body,
+		attachmentsFromMetadata(link.Metadata),
+	)
+	if err != nil {
+		return gid.Nil, fmt.Errorf("cannot import Linear comment %q files: %w", remote.ID, err)
+	}
+
+	if next, changed, err := mergedLinearAttachments(link.Metadata, files); err != nil {
+		return gid.Nil, err
+	} else if changed {
+		if err := s.saveLinearAttachments(
+			ctx,
+			scope,
+			link.TaskID,
+			link.ConnectorID,
+			link.ExternalID,
+			files,
+		); err != nil {
+			return gid.Nil, err
+		}
+
+		link.Metadata = next
+	}
+
+	content, err := MarkdownToContent(markdown)
 	if err != nil {
 		return gid.Nil, fmt.Errorf("cannot convert Linear comment %q: %w", remote.ID, err)
 	}
 
-	canonical, err := ContentToMarkdown(content)
+	content, canonical, err := applyImportedFiles(content, metas)
 	if err != nil {
 		return gid.Nil, fmt.Errorf("cannot render Linear comment %q: %w", remote.ID, err)
 	}
@@ -318,26 +348,39 @@ func (s *Service) ApplyInboundComment(
 		return nil
 	}
 
+	prepared, err := s.prepareInboundComment(ctx, envelope, data)
+	if err != nil {
+		return err
+	}
+
+	var unused *linearImport
+
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			link, scope, ok, err := lockedLinearLink(ctx, tx, data.IssueID, envelope.OrganizationID)
-			if err != nil || !ok {
+			if err != nil {
 				return err
 			}
 
-			if isAppActor(link.Metadata, envelope.Actor.ID) {
+			if !ok || isAppActor(link.Metadata, envelope.Actor.ID) {
+				unused = prepared
+
 				return nil
 			}
 
-			return s.applyInboundCommentTx(ctx, tx, scope, link, envelope, data)
+			return s.applyInboundCommentTx(ctx, tx, scope, link, envelope, data, prepared)
 		},
 	)
 	if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 		return nil
 	}
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	return s.discardInboundImport(ctx, unused)
 }
 
 func (s *Service) unlinkRemovedComment(
@@ -424,6 +467,35 @@ func deleteSyncedComment(
 	return nil
 }
 
+func (s *Service) prepareInboundComment(
+	ctx context.Context,
+	envelope *linear.WebhookEnvelope,
+	data *linear.CommentWebhookData,
+) (*linearImport, error) {
+	if data == nil || !data.Has("body") || strings.TrimSpace(data.Body) == "" {
+		return nil, nil
+	}
+
+	link, scope, ok, err := s.loadLinearLink(ctx, data.IssueID, envelope.OrganizationID)
+	if err != nil || !ok {
+		return nil, err
+	}
+
+	if isAppActor(link.Metadata, envelope.Actor.ID) {
+		return nil, nil
+	}
+
+	return s.prepareLinearImport(
+		ctx,
+		scope,
+		link.ConnectorID,
+		link.OrganizationID,
+		data.Body,
+		attachmentsFromMetadata(link.Metadata),
+		false,
+	)
+}
+
 func (s *Service) applyInboundCommentTx(
 	ctx context.Context,
 	tx pg.Tx,
@@ -431,6 +503,7 @@ func (s *Service) applyInboundCommentTx(
 	link *coredata.TaskExternalLink,
 	envelope *linear.WebhookEnvelope,
 	data *linear.CommentWebhookData,
+	prepared *linearImport,
 ) error {
 	mappings := coredata.TaskCommentExternalLinks{}
 	if err := mappings.LoadByExternalID(
@@ -456,9 +529,39 @@ func (s *Service) applyInboundCommentTx(
 		return nil
 	}
 
-	body := restoreLinearFiles(data.Body, attachmentsFromMetadata(link.Metadata))
+	files := attachmentsFromMetadata(link.Metadata)
 
-	content, canonical, err := inboundCommentContent(body)
+	var (
+		body  string
+		metas map[string]importedFileMeta
+		err   error
+	)
+
+	if prepared != nil {
+		body = prepared.markdown
+		files = mergeAttachmentMaps(files, prepared.files)
+		metas = prepared.metas
+	} else {
+		body, files, metas, err = s.importLinearMarkdown(
+			ctx,
+			nil,
+			scope,
+			link.ConnectorID,
+			link.OrganizationID,
+			data.Body,
+			files,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot import Linear comment files: %w", err)
+		}
+	}
+
+	content, err := MarkdownToContent(body)
+	if err != nil {
+		return fmt.Errorf("cannot read Linear comment: %w", err)
+	}
+
+	content, canonical, err := applyImportedFiles(content, metas)
 	if err != nil {
 		return fmt.Errorf("cannot read Linear comment: %w", err)
 	}
@@ -470,11 +573,26 @@ func (s *Service) applyInboundCommentTx(
 	hash := CommentContentHash(canonical)
 	remoteUpdatedAt := linearDateTime(data.UpdatedAt)
 
-	if existing != nil {
-		if inboundEventIsStale(remoteUpdatedAt, existing.RemoteUpdatedAt) {
-			return nil
+	if existing != nil && inboundEventIsStale(remoteUpdatedAt, existing.RemoteUpdatedAt) {
+		if err := s.discardInboundImport(ctx, prepared); err != nil {
+			return err
 		}
 
+		return nil
+	}
+
+	if next, changed, mergeErr := mergedLinearAttachments(link.Metadata, files); mergeErr != nil {
+		return mergeErr
+	} else if changed {
+		link.Metadata = next
+		link.UpdatedAt = time.Now()
+
+		if err := link.Update(ctx, tx, scope); err != nil {
+			return fmt.Errorf("cannot store Linear attachments: %w", err)
+		}
+	}
+
+	if existing != nil {
 		if existing.ContentHash != nil && *existing.ContentHash == hash {
 			existing.RemoteUpdatedAt = remoteUpdatedAt
 			existing.UpdatedAt = time.Now()
@@ -1486,20 +1604,6 @@ func resolveCommentOwnerTx(
 	}
 
 	return nil, nil
-}
-
-func inboundCommentContent(body string) (string, string, error) {
-	content, err := MarkdownToContent(body)
-	if err != nil {
-		return "", "", fmt.Errorf("cannot convert Linear comment: %w", err)
-	}
-
-	canonical, err := ContentToMarkdown(content)
-	if err != nil {
-		return "", "", fmt.Errorf("cannot render Linear comment: %w", err)
-	}
-
-	return content, canonical, nil
 }
 
 func deleteCommentLinks(
