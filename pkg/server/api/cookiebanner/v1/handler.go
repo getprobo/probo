@@ -490,14 +490,29 @@ type detectedResourceEntry struct {
 }
 
 type reportDetectedTrackersBody struct {
-	Cookies       []detectedCookieEntry         `json:"cookies"`
-	Storage       []detectedStorageEntry        `json:"storage"`
-	Resources     []detectedResourceEntry       `json:"resources"`
-	PageView      bool                          `json:"page_view,omitempty"`
-	ConsentAction *coredata.CookieConsentAction `json:"consent_action,omitempty"`
+	Cookies       []detectedCookieEntry   `json:"cookies"`
+	Storage       []detectedStorageEntry  `json:"storage"`
+	Resources     []detectedResourceEntry `json:"resources"`
+	PageView      bool                    `json:"page_view,omitempty"`
+	ConsentAction *string                 `json:"consent_action,omitempty"`
 }
 
 const maxDetectedTrackersPerRequest = 100
+
+// reportConsentAction accepts any string so an unknown consent_action
+// does not fail JSON decode of the whole report. Invalid values are dropped.
+func reportConsentAction(raw *string) *coredata.CookieConsentAction {
+	if raw == nil {
+		return nil
+	}
+
+	action := coredata.CookieConsentAction(*raw)
+	if !action.IsValid() {
+		return nil
+	}
+
+	return &action
+}
 
 func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Request) {
 	bannerID, err := gid.ParseGID(chi.URLParam(r, "bannerID"))
@@ -528,11 +543,8 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 
 	req := cookiebanner.ReportDetectedTrackersRequest{
 		PageView:      body.PageView,
-		ConsentAction: body.ConsentAction,
+		ConsentAction: reportConsentAction(body.ConsentAction),
 		Family:        cookiebanner.BrowserFamily(r.UserAgent()),
-	}
-	if req.ConsentAction != nil && !req.ConsentAction.IsValid() {
-		req.ConsentAction = nil
 	}
 
 	for _, c := range body.Cookies {

@@ -245,7 +245,7 @@ FROM cookie_banner_samples
 WHERE
 	%s
 	AND cookie_banner_id = @cookie_banner_id
-ORDER BY created_at DESC
+ORDER BY created_at DESC, id DESC
 LIMIT 1;
 `
 
@@ -425,6 +425,82 @@ INSERT INTO cookie_banner_samples (
 	}
 
 	return nil
+}
+
+// InsertOpen inserts an unfrozen sample. A concurrent open sample for the
+// same banner is left in place and inserted is false, so the caller can
+// reload it without aborting the transaction.
+func (s *CookieBannerSample) InsertOpen(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+) (bool, error) {
+	q := `
+INSERT INTO cookie_banner_samples (
+	id,
+	tenant_id,
+	organization_id,
+	cookie_banner_id,
+	chrome_page_loads,
+	edge_page_loads,
+	firefox_page_loads,
+	safari_page_loads,
+	other_page_loads,
+	chrome_consenting_page_loads,
+	edge_consenting_page_loads,
+	firefox_consenting_page_loads,
+	safari_consenting_page_loads,
+	other_consenting_page_loads,
+	frozen_at,
+	created_at,
+	updated_at
+) VALUES (
+	@id,
+	@tenant_id,
+	@organization_id,
+	@cookie_banner_id,
+	@chrome_page_loads,
+	@edge_page_loads,
+	@firefox_page_loads,
+	@safari_page_loads,
+	@other_page_loads,
+	@chrome_consenting_page_loads,
+	@edge_consenting_page_loads,
+	@firefox_consenting_page_loads,
+	@safari_consenting_page_loads,
+	@other_consenting_page_loads,
+	NULL,
+	@created_at,
+	@updated_at
+)
+ON CONFLICT (cookie_banner_id) WHERE frozen_at IS NULL DO NOTHING
+`
+
+	args := pgx.StrictNamedArgs{
+		"id":                            s.ID,
+		"tenant_id":                     scope.GetTenantID(),
+		"organization_id":               s.OrganizationID,
+		"cookie_banner_id":              s.CookieBannerID,
+		"chrome_page_loads":             s.ChromePageLoads,
+		"edge_page_loads":               s.EdgePageLoads,
+		"firefox_page_loads":            s.FirefoxPageLoads,
+		"safari_page_loads":             s.SafariPageLoads,
+		"other_page_loads":              s.OtherPageLoads,
+		"chrome_consenting_page_loads":  s.ChromeConsentingPageLoads,
+		"edge_consenting_page_loads":    s.EdgeConsentingPageLoads,
+		"firefox_consenting_page_loads": s.FirefoxConsentingPageLoads,
+		"safari_consenting_page_loads":  s.SafariConsentingPageLoads,
+		"other_consenting_page_loads":   s.OtherConsentingPageLoads,
+		"created_at":                    s.CreatedAt,
+		"updated_at":                    s.UpdatedAt,
+	}
+
+	tag, err := tx.Exec(ctx, q, args)
+	if err != nil {
+		return false, fmt.Errorf("cannot insert open cookie banner sample: %w", err)
+	}
+
+	return tag.RowsAffected() == 1, nil
 }
 
 func FreezeOpenCookieBannerSample(

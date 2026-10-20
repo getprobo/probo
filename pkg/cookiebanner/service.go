@@ -1119,16 +1119,20 @@ func (s *Service) StopCookieBannerSample(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, cookieBannerID); err != nil {
-				return err
-			}
-
-			if err := sample.LoadLatestByCookieBannerID(ctx, tx, scope, cookieBannerID); err != nil {
+			if err := sample.LoadOpenByCookieBannerID(ctx, tx, scope, cookieBannerID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrSampleNotFound
 				}
 
-				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
+				return fmt.Errorf("cannot load open cookie banner sample: %w", err)
+			}
+
+			if err := coredata.FreezeOpenCookieBannerSample(ctx, tx, scope, cookieBannerID); err != nil {
+				return err
+			}
+
+			if err := sample.LoadByID(ctx, tx, scope, sample.ID); err != nil {
+				return fmt.Errorf("cannot load stopped cookie banner sample: %w", err)
 			}
 
 			return nil

@@ -466,6 +466,31 @@ func TestStopCookieBannerSample_FreezesOpenWindow(t *testing.T) {
 	assert.Equal(t, 0, sample.SafariPageLoads)
 }
 
+func TestStopCookieBannerSample_RequiresOpenSample(t *testing.T) {
+	t.Parallel()
+
+	client := test.PGClient(t)
+	ctx := context.Background()
+	fx := seedWorkerFixture(t, ctx, client)
+	svc := NewService(client, false, 0)
+
+	_, err := svc.StopCookieBannerSample(ctx, fx.scope, fx.banner.ID)
+	require.ErrorIs(t, err, ErrSampleNotFound)
+
+	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+		PageView: true,
+		Family:   coredata.BrowserFamilyChrome,
+	}))
+	requireFlushSampleCounts(t, ctx, svc)
+
+	stopped, err := svc.StopCookieBannerSample(ctx, fx.scope, fx.banner.ID)
+	require.NoError(t, err)
+	require.NotNil(t, stopped.FrozenAt)
+
+	_, err = svc.StopCookieBannerSample(ctx, fx.scope, fx.banner.ID)
+	require.ErrorIs(t, err, ErrSampleNotFound)
+}
+
 func TestReportDetectedTrackers_ConsentingPageLoads(t *testing.T) {
 	t.Parallel()
 

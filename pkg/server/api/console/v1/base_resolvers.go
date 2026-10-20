@@ -18,6 +18,7 @@ import (
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/complianceportal/management"
+	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	employeeportalmgmt "go.probo.inc/probo/pkg/employeeportal/management"
 	"go.probo.inc/probo/pkg/gid"
@@ -629,6 +630,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, cookiebanner.ErrBannerNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 
@@ -639,6 +644,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			category, err := r.cookieBanner.GetCookieCategory(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 
@@ -649,6 +658,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			record, err := r.cookieBanner.GetCookieConsentRecord(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, cookiebanner.ErrConsentNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 
@@ -659,6 +672,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, cookiebanner.ErrTrackerPatternNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 
@@ -669,6 +686,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, cookiebanner.ErrVersionNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 
@@ -697,6 +718,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			sample, err := r.cookieBanner.GetCookieBannerSample(ctx, scope, id)
 			if err != nil {
+				if errors.Is(err, cookiebanner.ErrSampleNotFound) {
+					return nil, coredata.ErrResourceNotFound
+				}
+
 				return nil, err
 			}
 

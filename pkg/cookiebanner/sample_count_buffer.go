@@ -314,16 +314,17 @@ func resolveWritableSample(
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
-	if err := sample.Insert(ctx, tx, scope); err != nil {
-		if coredata.IsOpenSampleConflict(err) {
-			if err := open.LoadOpenByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
-				return gid.GID{}, false, fmt.Errorf("cannot reload open cookie banner sample: %w", err)
-			}
+	inserted, err := sample.InsertOpen(ctx, tx, scope)
+	if err != nil {
+		return gid.GID{}, false, err
+	}
 
-			return open.ID, true, nil
+	if !inserted {
+		if err := open.LoadOpenByCookieBannerID(ctx, tx, scope, bannerID); err != nil {
+			return gid.GID{}, false, fmt.Errorf("cannot reload open cookie banner sample: %w", err)
 		}
 
-		return gid.GID{}, false, err
+		return open.ID, true, nil
 	}
 
 	return sample.ID, true, nil

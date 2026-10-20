@@ -62,8 +62,9 @@ CREATE TABLE tracker_pattern_sample_hits (
 
 -- One sample per legacy discovery window. Consenting page-load counters
 -- did not exist on cookie_banner_discovery_stats, so they stay 0.
--- generate_gid entity type 138 = CookieBannerSampleEntityType.
-WITH inserted AS (
+-- Hits can exist without a stats row, so those banners get their own
+-- open sample. generate_gid entity type 138 = CookieBannerSampleEntityType.
+WITH stats_inserted AS (
     INSERT INTO cookie_banner_samples (
         id,
         tenant_id,
@@ -109,6 +110,71 @@ WITH inserted AS (
         WHERE cbs.cookie_banner_id = s.cookie_banner_id
     )
     RETURNING id, tenant_id, cookie_banner_id
+),
+hit_only_inserted AS (
+    INSERT INTO cookie_banner_samples (
+        id,
+        tenant_id,
+        organization_id,
+        cookie_banner_id,
+        chrome_page_loads,
+        edge_page_loads,
+        firefox_page_loads,
+        safari_page_loads,
+        other_page_loads,
+        chrome_consenting_page_loads,
+        edge_consenting_page_loads,
+        firefox_consenting_page_loads,
+        safari_consenting_page_loads,
+        other_consenting_page_loads,
+        frozen_at,
+        created_at,
+        updated_at
+    )
+    SELECT
+        generate_gid(decode_base64_unpadded(g.tenant_id), 138),
+        g.tenant_id,
+        b.organization_id,
+        g.cookie_banner_id,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        NULL,
+        g.created_at,
+        g.updated_at
+    FROM (
+        SELECT
+            h.cookie_banner_id,
+            MIN(h.tenant_id) AS tenant_id,
+            MIN(h.created_at) AS created_at,
+            MAX(h.updated_at) AS updated_at
+        FROM tracker_pattern_discovery_hits h
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM cookie_banner_discovery_stats s
+            WHERE s.cookie_banner_id = h.cookie_banner_id
+        )
+        AND NOT EXISTS (
+            SELECT 1
+            FROM cookie_banner_samples cbs
+            WHERE cbs.cookie_banner_id = h.cookie_banner_id
+        )
+        GROUP BY h.cookie_banner_id
+    ) g
+    JOIN cookie_banners b ON b.id = g.cookie_banner_id
+    RETURNING id, tenant_id, cookie_banner_id
+),
+inserted AS (
+    SELECT id, tenant_id, cookie_banner_id FROM stats_inserted
+    UNION ALL
+    SELECT id, tenant_id, cookie_banner_id FROM hit_only_inserted
 )
 INSERT INTO tracker_pattern_sample_hits (
     sample_id,

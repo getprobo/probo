@@ -21,10 +21,12 @@
 package cookiebanner_v1
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func TestSanitizeCookieDomain(t *testing.T) {
@@ -114,4 +116,19 @@ func TestSanitizeInt4(t *testing.T) {
 	got := sanitizeInt4(new(3600))
 	require.NotNil(t, got)
 	assert.Equal(t, 3600, *got)
+}
+
+func TestReportConsentAction(t *testing.T) {
+	t.Parallel()
+
+	var body reportDetectedTrackersBody
+	err := json.Unmarshal([]byte(`{"page_view":true,"consent_action":"NOT_A_REAL_ACTION"}`), &body)
+	require.NoError(t, err)
+	assert.Nil(t, reportConsentAction(body.ConsentAction))
+
+	accept := "ACCEPT_ALL"
+	got := reportConsentAction(&accept)
+	require.NotNil(t, got)
+	assert.Equal(t, coredata.CookieConsentActionAcceptAll, *got)
+	assert.Nil(t, reportConsentAction(nil))
 }

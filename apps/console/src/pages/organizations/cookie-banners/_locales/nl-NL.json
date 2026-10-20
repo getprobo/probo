@@ -283,7 +283,7 @@
     "dialogs": { "deleteTitle": "Cookiebanner verwijderen" },
     "status": { "active": "Actief", "inactive": "Inactief" },
     "actions": { "publish": "Wijzigingen publiceren", "startSample": "Meting starten", "stopSample": "Meting stoppen", "activate": "Activeren", "deactivate": "Deactiveren", "delete": "Verwijderen", "cancel": "Annuleren", "copyId": "Banner-ID kopiëren" },
-    "sample": { "pageLoads": "Paginaladingen", "empty": "Nog geen" } }
+    "sample": { "pageLoads": "Paginaladingen", "empty": "Nog geen" }
   },
   "trackerSample": {
     "empty": "Nog geen hits.",
