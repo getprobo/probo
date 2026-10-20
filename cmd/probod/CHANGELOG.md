@@ -4,6 +4,26 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.319.0] - 2026-10-20
+
+### Added
+
+- The integrations marketplace highlights third parties that have a
+  matching connector but are not connected yet, and can filter the
+  catalog to them
+
+### Changed
+
+- Signed-in users accept an invitation from the memberships page without
+  being logged out
+- Activating an invitation no longer lets the invitee set a password;
+  they are sent to sign in with a magic link or a password-reset email
+
+### Fixed
+
+- OAuth callback errors on the integrations and access review sources
+  pages no longer loop toasts until the page goes blank
+
 ## [0.318.1] - 2026-10-20
 
 ### Fixed
