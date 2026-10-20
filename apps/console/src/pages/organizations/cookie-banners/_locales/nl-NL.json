@@ -109,7 +109,7 @@
     "sources": { "all": "Alle bronnen", "script": "Script", "preExisting": "Vooraf bestaand", "http": "HTTP", "extension": "Extensie" },
     "columns": { "name": "Naam", "attribution": "Attributie", "source": "Bron", "category": "Categorie", "maxAge": "Maximale leeftijd" },
     "sort": { "name": "Sorteren op naam", "source": "Sorteren op bron" },
-    "actions": { "previous": "Vorige", "next": "Volgende" },
+    "actions": { "previous": "Vorige", "next": "Volgende", "new": "Nieuwe tracker" },
     "views": { "onBanner": "Op banner", "allDetected": "Alle gedetecteerde", "ariaLabel": "Trackerlijstweergave" },
     "empty": { "title": "Geen trackers", "description": "Er zijn nog geen trackers gedetecteerd. Ze verschijnen hier zodra ze worden gedetecteerd.", "onBanner": "Er worden geen gecategoriseerde trackers op de banner getoond." },
     "emptyFiltered": "Geen overeenkomende trackers"
@@ -319,6 +319,31 @@
       "consentExpiryDays": "Vervaltermijn toestemming (dagen)"
     },
     "actions": { "creating": "Bezig met aanmaken...", "create": "Banner aanmaken" }
+  },
+  "newTrackerPatternPage": {
+    "pageTitle": "Nieuwe tracker",
+    "title": "Tracker aanmaken",
+    "description": "Voeg een trackerpatroon toe en wijs het toe aan een categorie van deze banner.",
+    "messages": { "created": "Tracker aangemaakt" },
+    "errors": {
+      "title": "Fout",
+      "create": "Tracker aanmaken mislukt",
+      "patternStars": "Een patroon mag hoogstens één * bevatten.",
+      "category": "Selecteer een categorie"
+    },
+    "fields": {
+      "displayName": "Weergavenaam",
+      "displayNamePlaceholder": "Google Analytics",
+      "pattern": "Patroon",
+      "patternPlaceholder": "_ga*",
+      "patternHelp": "Eén * komt overeen met willekeurige tekst op die positie.",
+      "trackerType": "Type",
+      "category": "Categorie",
+      "categoryPlaceholder": "Selecteer een categorie",
+      "description": "Beschrijving",
+      "descriptionPlaceholder": "Beschrijving"
+    },
+    "actions": { "create": "Tracker aanmaken", "cancel": "Annuleren" }
   },
   "tcfPage": {
     "title": "TCF-leveranciers",

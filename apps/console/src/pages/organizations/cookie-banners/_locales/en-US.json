@@ -109,7 +109,7 @@
     "sources": { "all": "All sources", "script": "Script", "preExisting": "Pre-existing", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Name", "attribution": "Attribution", "source": "Source", "category": "Category", "maxAge": "Max age" },
     "sort": { "name": "Sort by name", "source": "Sort by source" },
-    "actions": { "previous": "Previous", "next": "Next" },
+    "actions": { "previous": "Previous", "next": "Next", "new": "New tracker" },
     "views": { "onBanner": "On banner", "allDetected": "All detected", "ariaLabel": "Tracker list view" },
     "empty": { "title": "No trackers", "description": "No trackers have been detected yet. They will appear here when detected.", "onBanner": "No categorized trackers are shown on the banner." },
     "emptyFiltered": "No matching trackers"
@@ -319,6 +319,31 @@
       "consentExpiryDays": "Consent expiry (days)"
     },
     "actions": { "creating": "Creating...", "create": "Create banner" }
+  },
+  "newTrackerPatternPage": {
+    "pageTitle": "New tracker",
+    "title": "Create tracker",
+    "description": "Add a tracker pattern and assign it to a category on this banner.",
+    "messages": { "created": "Tracker created" },
+    "errors": {
+      "title": "Error",
+      "create": "Failed to create tracker",
+      "patternStars": "A pattern can contain at most one *.",
+      "category": "Select a category"
+    },
+    "fields": {
+      "displayName": "Display name",
+      "displayNamePlaceholder": "Google Analytics",
+      "pattern": "Pattern",
+      "patternPlaceholder": "_ga*",
+      "patternHelp": "One * matches any text in that position.",
+      "trackerType": "Type",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "description": "Description",
+      "descriptionPlaceholder": "Description"
+    },
+    "actions": { "create": "Create tracker", "cancel": "Cancel" }
   },
   "tcfPage": {
     "title": "TCF vendors",

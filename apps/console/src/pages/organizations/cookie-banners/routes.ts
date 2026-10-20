@@ -30,6 +30,7 @@ import { CookieBannerResourcesPageSkeleton } from "./configuration/resources/Coo
 import { CookieBannerSettingsPageSkeleton } from "./configuration/settings/CookieBannerSettingsPageSkeleton";
 import { CookieBannerTCFPageSkeleton } from "./configuration/tcf/CookieBannerTCFPageSkeleton";
 import { CookieBannerTrackersPageSkeleton } from "./configuration/trackers/CookieBannerTrackersPageSkeleton";
+import { NewTrackerPatternPageSkeleton } from "./configuration/trackers/NewTrackerPatternPageSkeleton";
 import { CookieBannerTranslationsPageSkeleton } from "./configuration/translations/CookieBannerTranslationsPageSkeleton";
 
 export const cookieBannerRoutes = [
@@ -65,8 +66,18 @@ export const cookieBannerRoutes = [
       },
       {
         path: "trackers",
-        Fallback: CookieBannerTrackersPageSkeleton,
-        Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/CookieBannerTrackersPageLoader")),
+        children: [
+          {
+            index: true,
+            Fallback: CookieBannerTrackersPageSkeleton,
+            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/CookieBannerTrackersPageLoader")),
+          },
+          {
+            path: "new",
+            Fallback: NewTrackerPatternPageSkeleton,
+            Component: lazy(() => import("#/pages/organizations/cookie-banners/configuration/trackers/NewTrackerPatternPageLoader")),
+          },
+        ],
       },
       {
         path: "resources",

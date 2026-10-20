@@ -50,6 +50,10 @@ export function cookieBannerTrackersPath(organizationId: string, cookieBannerId:
   return `${cookieBannerPath(organizationId, cookieBannerId)}/trackers`;
 }
 
+export function cookieBannerNewTrackerPath(organizationId: string, cookieBannerId: string): string {
+  return `${cookieBannerTrackersPath(organizationId, cookieBannerId)}/new`;
+}
+
 export function cookieBannerResourcesPath(organizationId: string, cookieBannerId: string): string {
   return `${cookieBannerPath(organizationId, cookieBannerId)}/resources`;
 }

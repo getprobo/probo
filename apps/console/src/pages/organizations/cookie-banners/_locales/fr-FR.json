@@ -109,7 +109,7 @@
     "sources": { "all": "Toutes les sources", "script": "Script", "preExisting": "Préexistant", "http": "HTTP", "extension": "Extension" },
     "columns": { "name": "Nom", "attribution": "Attribution", "source": "Source", "category": "Catégorie", "maxAge": "Âge maximal" },
     "sort": { "name": "Trier par nom", "source": "Trier par source" },
-    "actions": { "previous": "Précédent", "next": "Suivant" },
+    "actions": { "previous": "Précédent", "next": "Suivant", "new": "Nouveau traceur" },
     "views": { "onBanner": "Sur la bannière", "allDetected": "Tous les détectés", "ariaLabel": "Vue de la liste des traceurs" },
     "empty": { "title": "Aucun traceur", "description": "Aucun traceur n’a encore été détecté. Ils apparaîtront ici lorsqu’ils seront détectés.", "onBanner": "Aucun traceur catégorisé n’est affiché sur la bannière." },
     "emptyFiltered": "Aucun traceur correspondant"
@@ -319,6 +319,31 @@
       "consentExpiryDays": "Expiration du consentement (jours)"
     },
     "actions": { "creating": "Création...", "create": "Créer la bannière" }
+  },
+  "newTrackerPatternPage": {
+    "pageTitle": "Nouveau traceur",
+    "title": "Créer un traceur",
+    "description": "Ajoutez un motif de traceur et assignez-le à une catégorie de cette bannière.",
+    "messages": { "created": "Traceur créé" },
+    "errors": {
+      "title": "Erreur",
+      "create": "Échec de la création du traceur",
+      "patternStars": "Un motif ne peut contenir qu’un seul *.",
+      "category": "Sélectionnez une catégorie"
+    },
+    "fields": {
+      "displayName": "Nom affiché",
+      "displayNamePlaceholder": "Google Analytics",
+      "pattern": "Motif",
+      "patternPlaceholder": "_ga*",
+      "patternHelp": "Un * correspond à n’importe quel texte à cet endroit.",
+      "trackerType": "Type",
+      "category": "Catégorie",
+      "categoryPlaceholder": "Sélectionner une catégorie",
+      "description": "Description",
+      "descriptionPlaceholder": "Description"
+    },
+    "actions": { "create": "Créer le traceur", "cancel": "Annuler" }
   },
   "tcfPage": {
     "title": "Fournisseurs TCF",

@@ -18,14 +18,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
+import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { useLocation, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 
 import type { CookieBannerTrackersPageQuery } from "#/__generated__/core/CookieBannerTrackersPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader";
+import { cookieBannerNewTrackerPath } from "../../_lib/cookieBannerPaths";
 import { cookieBannerPage } from "../../variants";
 
 import { TrackerPatternList } from "./_components/TrackerPatternList";
@@ -43,6 +48,7 @@ export const cookieBannerTrackersPageQuery = graphql`
     node(id: $cookieBannerId) @required(action: THROW) {
       __typename
       ... on CookieBanner {
+        canCreate: permission(action: "core:tracker-pattern:create")
         ...TrackerPatternList_cookieBanner
           @arguments(first: $first, after: $after, last: $last, before: $before, filter: $filter, order: $order)
       }
@@ -58,6 +64,9 @@ export function CookieBannerTrackersPage({
   queryRef,
 }: CookieBannerTrackersPageProps) {
   const { t } = useTranslation("organizations/cookie-banners");
+  const location = useLocation();
+  const organizationId = useOrganizationId();
+  const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const title = t("trackersPage.title");
   usePageTitle(title);
   const data = usePreloadedQuery<CookieBannerTrackersPageQuery>(
@@ -74,6 +83,23 @@ export function CookieBannerTrackersPage({
       <CookieBannerPageHeader
         title={title}
         description={t("trackersPage.description")}
+        actions={data.node.canCreate && cookieBannerId != null
+          ? (
+              <ButtonLink
+                to={{
+                  pathname: cookieBannerNewTrackerPath(organizationId, cookieBannerId),
+                  search: location.search,
+                }}
+                size={2}
+                variant="solid"
+                color="neutral"
+                highContrast
+                iconStart={<PlusIcon />}
+              >
+                {t("trackersPage.actions.new")}
+              </ButtonLink>
+            )
+          : undefined}
       />
       <TrackerPatternList cookieBannerKey={data.node} />
     </div>
