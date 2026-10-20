@@ -23,7 +23,6 @@ package create
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -176,7 +175,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					return fmt.Errorf("%s needs an extra setting; connect it in the console", provider.DisplayName)
 				}
 
-				if err := fillSecret(f.IOStreams.IsInteractive(), &flagAPIKey, envConnectorAPIKey, "API key"); err != nil {
+				if err := cmdutil.FillSecret(f.IOStreams.IsInteractive(), &flagAPIKey, envConnectorAPIKey, "API key"); err != nil {
 					return err
 				}
 
@@ -218,7 +217,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					return fmt.Errorf("client id is required; pass --client-id or run interactively")
 				}
 
-				if err := fillSecret(f.IOStreams.IsInteractive(), &flagClientSecret, envConnectorClientSecret, "Client secret"); err != nil {
+				if err := cmdutil.FillSecret(f.IOStreams.IsInteractive(), &flagClientSecret, envConnectorClientSecret, "Client secret"); err != nil {
 					return err
 				}
 
@@ -296,28 +295,4 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
-}
-
-func fillSecret(interactive bool, value *string, envName, title string) error {
-	// createClientCredentialsConnector stores the secret verbatim, so a
-	// trailing newline authenticates as a different secret.
-	*value = strings.TrimSpace(*value)
-	if *value == "" {
-		*value = strings.TrimSpace(os.Getenv(envName))
-	}
-
-	if *value == "" && interactive {
-		err := huh.NewInput().
-			Title(title).
-			EchoMode(huh.EchoModePassword).
-			Value(value).
-			Run()
-		if err != nil {
-			return err
-		}
-
-		*value = strings.TrimSpace(*value)
-	}
-
-	return nil
 }

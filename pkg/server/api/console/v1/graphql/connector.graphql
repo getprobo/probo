@@ -309,7 +309,7 @@ type ConnectorAPIKeyFormat {
     separator, and deliberately nothing about the random part. It is written to
     the subset RE2 and JavaScript read alike; a client that cannot compile it
     should skip its own check rather than reject the key, since the server
-    applies the same rule on create.
+    applies the same rule on create and on API-key update.
     """
     pattern: String!
     """
@@ -360,6 +360,8 @@ type Connector implements Node {
     provider: ConnectorProvider!
     protocol: ConnectorProtocol!
     canReconnect: Boolean! @goField(forceResolver: true)
+    canReplaceAPIKey: Boolean! @goField(forceResolver: true)
+    apiKeyFormat: ConnectorAPIKeyFormat @goField(forceResolver: true)
     oauth2Scopes: [String!]! @goField(forceResolver: true)
     """
     connectionStatus probes the provider live on every read, so selecting it
@@ -564,6 +566,9 @@ extend type Mutation {
     ): DisableConnectorAccountPayload!
     deleteConnector(input: DeleteConnectorInput!): DeleteConnectorPayload!
     updateConnector(input: UpdateConnectorInput!): UpdateConnectorPayload!
+    updateAPIKeyConnector(
+        input: UpdateAPIKeyConnectorInput!
+    ): UpdateAPIKeyConnectorPayload!
     configureConnectorOrganization(
         input: ConfigureConnectorOrganizationInput!
     ): ConfigureConnectorOrganizationPayload!
@@ -729,6 +734,15 @@ input UpdateConnectorInput {
 }
 
 type UpdateConnectorPayload {
+    connector: Connector!
+}
+
+input UpdateAPIKeyConnectorInput {
+    connectorId: ID!
+    apiKey: String!
+}
+
+type UpdateAPIKeyConnectorPayload {
     connector: Connector!
 }
 

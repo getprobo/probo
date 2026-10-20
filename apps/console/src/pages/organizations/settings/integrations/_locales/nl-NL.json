@@ -199,6 +199,15 @@
       "copy": "Fout kopiëren",
       "copied": "Fout gekopieerd."
     },
+    "apiKey": {
+      "update": "API-sleutel bijwerken",
+      "title": "API-sleutel bijwerken",
+      "description": "Vervangt de API-sleutel die voor deze connector is opgeslagen. De naam en de ingeschakelde accounts blijven. Voor Tally wordt de organisatie opnieuw uit de nieuwe sleutel afgeleid.",
+      "save": "API-sleutel opslaan",
+      "saved": "API-sleutel bijgewerkt.",
+      "saveFailed": "De API-sleutel kon niet worden opgeslagen.",
+      "invalid": "Voer een sleutel in de vorm {{example}} in."
+    },
     "delete": {
       "title": "Verbinding met integratie verbreken",
       "description": "Het verbreken verwijdert de credential die Probo voor {{name}} bewaart. Alles wat deze nog gebruikt moet eerst worden verwijderd.",

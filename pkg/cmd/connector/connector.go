@@ -47,6 +47,7 @@ func NewCmdConnector(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(enableaccounts.NewCmdEnableAccounts(f))
 	cmd.AddCommand(connect.NewCmdConnect(f))
 	cmd.AddCommand(update.NewCmdUpdate(f))
+	cmd.AddCommand(update.NewCmdUpdateAPIKey(f))
 
 	return cmd
 }

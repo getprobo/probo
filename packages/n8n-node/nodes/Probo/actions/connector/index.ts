@@ -30,6 +30,7 @@ import * as enableOp from './enable.operation';
 import * as getOp from './get.operation';
 import * as getAllOp from './getAll.operation';
 import * as updateOp from './update.operation';
+import * as updateApiKeyOp from './updateApiKey.operation';
 
 export const description: INodeProperties[] = [
 	{
@@ -109,6 +110,12 @@ export const description: INodeProperties[] = [
 				description: 'Rename a connector',
 				action: 'Rename a connector',
 			},
+			{
+				name: 'Update API Key',
+				value: 'updateApiKey',
+				description: 'Replace the API key stored on a connector',
+				action: 'Replace a connector API key',
+			},
 		],
 		default: 'getAll',
 	},
@@ -123,6 +130,7 @@ export const description: INodeProperties[] = [
 	...getOp.description,
 	...getAllOp.description,
 	...updateOp.description,
+	...updateApiKeyOp.description,
 ];
 
 export {
@@ -137,4 +145,5 @@ export {
 	getOp as get,
 	getAllOp as getAll,
 	updateOp as update,
+	updateApiKeyOp as updateApiKey,
 };

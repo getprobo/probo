@@ -199,6 +199,15 @@
       "copy": "Copier l'erreur",
       "copied": "Erreur copiée."
     },
+    "apiKey": {
+      "update": "Mettre à jour la clé API",
+      "title": "Mettre à jour la clé API",
+      "description": "Remplace la clé API enregistrée pour ce connecteur. Le nom et les comptes activés restent. Pour Tally, l'organisation est de nouveau déduite de la nouvelle clé.",
+      "save": "Enregistrer la clé API",
+      "saved": "Clé API mise à jour.",
+      "saveFailed": "La clé API n'a pas pu être enregistrée.",
+      "invalid": "Saisissez une clé de la forme {{example}}."
+    },
     "delete": {
       "title": "Déconnecter l'intégration",
       "description": "La déconnexion supprime l'identifiant que Probo détient pour {{name}}. Tout ce qui l'utilise encore doit d'abord être supprimé.",

@@ -1,0 +1,128 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package update
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/spf13/cobra"
+	"go.probo.inc/probo/pkg/cli/api"
+	"go.probo.inc/probo/pkg/cmd/cmdutil"
+)
+
+const (
+	envConnectorAPIKey = "PROBO_CONNECTOR_API_KEY"
+
+	updateAPIKeyMutation = `
+mutation($input: UpdateAPIKeyConnectorInput!) {
+  updateAPIKeyConnector(input: $input) {
+    connector {
+      id
+      name
+      provider
+      protocol
+    }
+  }
+}
+`
+)
+
+func NewCmdUpdateAPIKey(f *cmdutil.Factory) *cobra.Command {
+	var (
+		flagAPIKey string
+		flagOutput *string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "update-api-key <connector-id>",
+		Short: "Replace a connector API key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
+				return err
+			}
+
+			if err := cmdutil.FillSecret(f.IOStreams.IsInteractive(), &flagAPIKey, envConnectorAPIKey, "API key"); err != nil {
+				return err
+			}
+
+			if flagAPIKey == "" {
+				return fmt.Errorf("api key is required; pass --api-key, set %s, or run interactively", envConnectorAPIKey)
+			}
+
+			cfg, err := f.Config()
+			if err != nil {
+				return err
+			}
+
+			host, hc, err := cfg.DefaultHost()
+			if err != nil {
+				return err
+			}
+
+			client := api.NewClient(
+				host,
+				hc.Token,
+				"/api/console/v1/graphql",
+				cfg.HTTPTimeoutDuration(),
+				cmdutil.TokenRefreshOption(cfg, host, hc),
+			)
+
+			data, err := client.Do(updateAPIKeyMutation, map[string]any{
+				"input": map[string]any{
+					"connectorId": args[0],
+					"apiKey":      flagAPIKey,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			var resp struct {
+				UpdateAPIKeyConnector struct {
+					Connector updatedConnector `json:"connector"`
+				} `json:"updateAPIKeyConnector"`
+			}
+			if err := json.Unmarshal(data, &resp); err != nil {
+				return fmt.Errorf("cannot parse response: %w", err)
+			}
+
+			connector := resp.UpdateAPIKeyConnector.Connector
+			if connector.ID == "" {
+				return fmt.Errorf("cannot parse response: connector was not updated")
+			}
+
+			if *flagOutput == cmdutil.OutputJSON {
+				return cmdutil.PrintJSON(f.IOStreams.Out, connector)
+			}
+
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Updated API key for connector %s\n", connector.ID)
+
+			return nil
+		},
+	}
+
+	cmd.Flags().StringVar(&flagAPIKey, "api-key", "", fmt.Sprintf("Customer API key (or %s)", envConnectorAPIKey))
+	flagOutput = cmdutil.AddOutputFlag(cmd)
+
+	return cmd
+}

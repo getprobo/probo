@@ -49,6 +49,7 @@ import { connectorDetailsPath } from "../_lib/integrationPath";
 import { connectorCard } from "../variants";
 
 import { ConnectionIssueMark } from "./ConnectionIssueMark";
+import { ConnectorAPIKeyDialog } from "./ConnectorAPIKeyDialog";
 import { ConnectorConnectionBadge } from "./ConnectorConnectionBadge";
 import { ConnectorConnectMore } from "./ConnectorConnectMore";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
@@ -86,7 +87,10 @@ const connectorGroupListItemFragment = graphql`
     }
     createdAt
     canGet: permission(action: "core:connector:get")
+    canUpdate: permission(action: "core:connector:update")
+    canReplaceAPIKey
     canDelete: permission(action: "core:connector:delete")
+    ...ConnectorAPIKeyDialog_connector
     ...ConnectorDeleteDialog_connector
   }
 `;
@@ -136,7 +140,8 @@ export function ConnectorGroupListItem({
     0,
   );
   const showDelete = single != null && single.canDelete;
-  const menu = (showDelete || provider != null)
+  const showAPIKey = single != null && single.canUpdate && single.canReplaceAPIKey;
+  const menu = (showDelete || showAPIKey || provider != null)
     ? (
         <div className={controls({ className: "pointer-events-auto" })}>
           {provider != null && (
@@ -144,6 +149,9 @@ export function ConnectorGroupListItem({
               organizationKey={organization}
               providerKey={provider}
             />
+          )}
+          {showAPIKey && single != null && (
+            <ConnectorAPIKeyDialog connectorKey={single} />
           )}
           {showDelete && (
             <IconButton

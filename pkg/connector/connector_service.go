@@ -208,6 +208,11 @@ func (s *Service) implicitAccountName(c *coredata.Connector) string {
 	return string(c.Provider)
 }
 
+// ErrAPIKeyNotReplaceable is returned when a connector does not store a
+// customer-supplied API key. OAuth, client credentials, workload identity,
+// app installs, and Probo-managed keys are in that set.
+var ErrAPIKeyNotReplaceable = errors.New("connector does not take a customer API key")
+
 // ErrInstallStateAlreadyUsed is returned when an install callback replays a
 // state another request already claimed or completed. The vendor's proof stays
 // valid (unlike an OAuth code, which the vendor itself burns) and the
@@ -259,6 +264,16 @@ type (
 		Name        string
 	}
 
+	// UpdateAPIKeyConnectorRequest replaces the customer-supplied API key.
+	// RawSettings, when non-empty, replaces provider settings in the same
+	// write. Tally derives those settings from the key. Empty leaves the
+	// settings already stored.
+	UpdateAPIKeyConnectorRequest struct {
+		ConnectorID gid.GID
+		Connection  *connectorprotocol.APIKeyConnection
+		RawSettings json.RawMessage
+	}
+
 	// CompleteConnectorInstallRequest carries the verified outcome of an
 	// app-install ceremony: the vendor tenant id the callback proved control
 	// of, and the single-use state claim that proof was spent against.
@@ -305,6 +320,24 @@ func (r *UpdateConnectorRequest) Validate() error {
 	v := validator.New()
 	v.Check(r.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
 	v.Check(r.Name, "name", validator.Required(), validator.NotEmpty(), validator.SafeTextNoNewLine(NameMaxLength))
+
+	return v.Error()
+}
+
+func (r *UpdateAPIKeyConnectorRequest) Validate() error {
+	if r.Connection != nil {
+		r.Connection.APIKey = strings.TrimSpace(r.Connection.APIKey)
+	}
+
+	v := validator.New()
+	v.Check(r.ConnectorID, "connector_id", validator.Required(), validator.GID(coredata.ConnectorEntityType))
+	v.Check(r.Connection, "connection", validator.Required())
+
+	if r.Connection != nil {
+		v.Check(r.Connection.APIKey, "api_key", validator.Required(), validator.NotEmpty())
+	}
+
+	v.Check(r.RawSettings, "raw_settings", validJSONRawMessage)
 
 	return v.Error()
 }
@@ -573,6 +606,63 @@ func (s *Service) Update(
 
 			if err := cnnctr.UpdateName(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update connector name: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return cnnctr, nil
+}
+
+// UpdateAPIKey replaces the customer-supplied API key on an existing API-key
+// connector. The name already stored is left as it is. Settings are replaced
+// only when the request carries a new payload.
+func (s *Service) UpdateAPIKey(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req UpdateAPIKeyConnectorRequest,
+) (*coredata.Connector, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	cnnctr := &coredata.Connector{}
+
+	err := s.pg.WithTx(
+		ctx,
+		func(ctx context.Context, tx pg.Tx) error {
+			cnnctr.ID = req.ConnectorID
+			if err := cnnctr.LockByID(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot lock connector: %w", err)
+			}
+
+			if err := cnnctr.LoadByID(ctx, tx, scope, req.ConnectorID, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot load connector: %w", err)
+			}
+
+			if cnnctr.Protocol != coredata.ConnectorProtocolAPIKey {
+				return ErrAPIKeyNotReplaceable
+			}
+
+			if s.providerRegistry != nil {
+				if reg, ok := s.providerRegistry.Get(cnnctr.Provider); ok && reg.IsManagedAPIKey() {
+					return ErrAPIKeyNotReplaceable
+				}
+			}
+
+			cnnctr.Connection = req.Connection
+			if len(req.RawSettings) > 0 {
+				cnnctr.RawSettings = []byte(req.RawSettings)
+			}
+
+			cnnctr.UpdatedAt = time.Now()
+
+			if err := cnnctr.Update(ctx, tx, scope, s.encryptionKey); err != nil {
+				return fmt.Errorf("cannot update connector api key: %w", err)
 			}
 
 			return nil

@@ -28,6 +28,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestConnectorProviders(t *testing.T) {
@@ -935,4 +937,224 @@ func TestConnectorName_RequiredOnCreateAndUpdate(t *testing.T) {
 		},
 	}, &updated))
 	assert.Equal(t, "Production", updated.UpdateConnector.Connector.Name)
+}
+
+func TestUpdateAPIKeyConnector(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const createQuery = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id name }
+			}
+		}
+	`
+
+	var created struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	require.NoError(t, owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"name":           "Production",
+			"provider":       "BREX",
+			"apiKey":         "bxt_test-key-123",
+		},
+	}, &created))
+
+	connectorID := created.CreateAPIKeyConnector.Connector.ID
+
+	const nodeQuery = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Connector {
+					id
+					name
+					protocol
+					canReplaceAPIKey
+					apiKeyFormat { pattern example }
+				}
+			}
+		}
+	`
+
+	var before struct {
+		Node struct {
+			ID               string `json:"id"`
+			Name             string `json:"name"`
+			Protocol         string `json:"protocol"`
+			CanReplaceAPIKey bool   `json:"canReplaceAPIKey"`
+			APIKeyFormat     *struct {
+				Pattern string `json:"pattern"`
+				Example string `json:"example"`
+			} `json:"apiKeyFormat"`
+		} `json:"node"`
+	}
+	require.NoError(t, owner.Execute(nodeQuery, map[string]any{"id": connectorID}, &before))
+	assert.Equal(t, "API_KEY", before.Node.Protocol)
+	assert.True(t, before.Node.CanReplaceAPIKey)
+	require.NotNil(t, before.Node.APIKeyFormat)
+	assert.Equal(t, `^bxt_[\s\S]`, before.Node.APIKeyFormat.Pattern)
+	assert.Equal(t, "bxt_…", before.Node.APIKeyFormat.Example)
+
+	const updateQuery = `
+		mutation($input: UpdateAPIKeyConnectorInput!) {
+			updateAPIKeyConnector(input: $input) {
+				connector { id name protocol canReplaceAPIKey }
+			}
+		}
+	`
+
+	_, err := owner.Do(updateQuery, map[string]any{
+		"input": map[string]any{
+			"connectorId": connectorID,
+			"apiKey":      "   ",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a blank API key must be rejected")
+
+	var updated struct {
+		UpdateAPIKeyConnector struct {
+			Connector struct {
+				ID               string `json:"id"`
+				Name             string `json:"name"`
+				Protocol         string `json:"protocol"`
+				CanReplaceAPIKey bool   `json:"canReplaceAPIKey"`
+			} `json:"connector"`
+		} `json:"updateAPIKeyConnector"`
+	}
+	require.NoError(t, owner.Execute(updateQuery, map[string]any{
+		"input": map[string]any{
+			"connectorId": connectorID,
+			"apiKey":      "  bxt_rotated-key  ",
+		},
+	}, &updated))
+	assert.Equal(t, connectorID, updated.UpdateAPIKeyConnector.Connector.ID)
+	assert.Equal(t, "Production", updated.UpdateAPIKeyConnector.Connector.Name)
+	assert.Equal(t, "API_KEY", updated.UpdateAPIKeyConnector.Connector.Protocol)
+	assert.True(t, updated.UpdateAPIKeyConnector.Connector.CanReplaceAPIKey)
+
+	_, err = owner.Do(updateQuery, map[string]any{
+		"input": map[string]any{
+			"connectorId": gid.New(owner.GetOrganizationID().TenantID(), coredata.ConnectorEntityType).String(),
+			"apiKey":      "bxt_missing",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "NOT_FOUND", "an unknown connector must look like not found")
+}
+
+func TestUpdateAPIKeyConnector_RefusesNonAPIKey(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const createQuery = `
+		mutation($input: CreateClientCredentialsConnectorInput!) {
+			createClientCredentialsConnector(input: $input) {
+				connector { id protocol canReplaceAPIKey }
+			}
+		}
+	`
+
+	var created struct {
+		CreateClientCredentialsConnector struct {
+			Connector struct {
+				ID               string `json:"id"`
+				Protocol         string `json:"protocol"`
+				CanReplaceAPIKey bool   `json:"canReplaceAPIKey"`
+			} `json:"connector"`
+		} `json:"createClientCredentialsConnector"`
+	}
+
+	require.NoError(t, owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId":       orgID,
+			"name":                 "Test",
+			"provider":             "ONE_PASSWORD",
+			"clientId":             "test-client",
+			"clientSecret":         "test-secret",
+			"tokenUrl":             "https://api.1password.com/v1beta1/users/oauth2/token",
+			"onePasswordAccountId": "ACC123",
+			"onePasswordRegion":    "US",
+		},
+	}, &created))
+	assert.False(t, created.CreateClientCredentialsConnector.Connector.CanReplaceAPIKey)
+
+	_, err := owner.Do(`
+		mutation($input: UpdateAPIKeyConnectorInput!) {
+			updateAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"connectorId": created.CreateClientCredentialsConnector.Connector.ID,
+			"apiKey":      "should-not-replace-the-secret",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a client-credentials connector must not take an API key")
+}
+
+func TestUpdateAPIKeyConnector_MalformedKey(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	orgID := owner.GetOrganizationID().String()
+
+	const createQuery = `
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector {
+					id
+					apiKeyFormat { pattern example }
+				}
+			}
+		}
+	`
+
+	var created struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID           string `json:"id"`
+				APIKeyFormat *struct {
+					Pattern string `json:"pattern"`
+					Example string `json:"example"`
+				} `json:"apiKeyFormat"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	require.NoError(t, owner.Execute(createQuery, map[string]any{
+		"input": map[string]any{
+			"organizationId":  orgID,
+			"name":            "Test",
+			"provider":        "LANGFUSE",
+			"apiKey":          "pk-lf-11111111-2222-3333-4444-555555555555:sk-lf-66666666-7777-8888-9999-000000000000",
+			"langfuseBaseUrl": "https://cloud.langfuse.com",
+		},
+	}, &created))
+	require.NotNil(t, created.CreateAPIKeyConnector.Connector.APIKeyFormat)
+	assert.Equal(t, `^pk-lf-[^:]+:sk-lf-[^:]+$`, created.CreateAPIKeyConnector.Connector.APIKeyFormat.Pattern)
+	assert.Equal(t, "pk-lf-…:sk-lf-…", created.CreateAPIKeyConnector.Connector.APIKeyFormat.Example)
+
+	_, err := owner.Do(`
+		mutation($input: UpdateAPIKeyConnectorInput!) {
+			updateAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"connectorId": created.CreateAPIKeyConnector.Connector.ID,
+			"apiKey":      "pk-lf-11111111-2222-3333-4444-555555555555",
+		},
+	})
+	testutil.RequireErrorCode(t, err, "INVALID", "a half-pasted replacement key must return INVALID")
 }

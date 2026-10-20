@@ -7,6 +7,7 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -38,6 +39,34 @@ func (r *connectorResolver) CanReconnect(ctx context.Context, obj *types.Connect
 		cnnctr.Connection,
 		connectorprotocol.ProtocolType(obj.Protocol),
 	), nil
+}
+
+// CanReplaceAPIKey is the resolver for the canReplaceAPIKey field.
+func (r *connectorResolver) CanReplaceAPIKey(_ context.Context, obj *types.Connector) (bool, error) {
+	if obj.Protocol != coredata.ConnectorProtocolAPIKey {
+		return false, nil
+	}
+
+	if reg, ok := r.providerRegistry.Get(obj.Provider); ok && reg.IsManagedAPIKey() {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// APIKeyFormat is the resolver for the apiKeyFormat field.
+func (r *connectorResolver) APIKeyFormat(ctx context.Context, obj *types.Connector) (*types.ConnectorAPIKeyFormat, error) {
+	replaceable, err := r.CanReplaceAPIKey(ctx, obj)
+	if err != nil || !replaceable {
+		return nil, err
+	}
+
+	reg, ok := r.providerRegistry.Get(obj.Provider)
+	if !ok {
+		return nil, nil
+	}
+
+	return connectorAPIKeyFormat(reg), nil
 }
 
 // Oauth2Scopes is the resolver for the oauth2Scopes field.
@@ -720,6 +749,70 @@ func (r *mutationResolver) UpdateConnector(ctx context.Context, input types.Upda
 
 	return &types.UpdateConnectorPayload{
 		Connector: types.NewConnector(cnnctr),
+	}, nil
+}
+
+// UpdateAPIKeyConnector is the resolver for the updateAPIKeyConnector field.
+func (r *mutationResolver) UpdateAPIKeyConnector(ctx context.Context, input types.UpdateAPIKeyConnectorInput) (*types.UpdateAPIKeyConnectorPayload, error) {
+	scope, err := r.authorize(ctx, input.ConnectorID, probo.ActionConnectorUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	cnnctr, err := r.probo.Connectors.Get(ctx, scope, input.ConnectorID)
+	if err != nil {
+		return nil, gqlutils.MapError(ctx, r.logger, "cannot load connector", err)
+	}
+
+	if cnnctr.Protocol != coredata.ConnectorProtocolAPIKey {
+		return nil, gqlutils.Invalidf(ctx, "this connector does not take a customer API key")
+	}
+
+	if reg, ok := r.providerRegistry.Get(cnnctr.Provider); ok && reg.IsManagedAPIKey() {
+		return nil, gqlutils.Invalidf(ctx, "this connector does not take a customer API key")
+	}
+
+	apiKey, err := r.resolveAPIKeyConnectorCredential(cnnctr.Provider, &input.APIKey)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	conn := r.newAPIKeyConnection(cnnctr.Provider, apiKey)
+	raw := json.RawMessage(cnnctr.RawSettings)
+
+	// Tally's organization is the one the key belongs to, so a replacement
+	// key has to be checked against that organization rather than the one
+	// stored for the previous key.
+	if cnnctr.Provider == coredata.ConnectorProviderTally {
+		raw, err = r.resolveTallySettings(ctx, apiKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if rejected := r.accessReview.CheckNewAPIKeyConnector(ctx, cnnctr.Provider, conn, raw); rejected != nil {
+		return nil, settingRejectedError(ctx, rejected)
+	}
+
+	req := connector.UpdateAPIKeyConnectorRequest{
+		ConnectorID: input.ConnectorID,
+		Connection:  conn,
+	}
+	if cnnctr.Provider == coredata.ConnectorProviderTally {
+		req.RawSettings = raw
+	}
+
+	updated, err := r.probo.Connectors.UpdateAPIKey(ctx, scope, req)
+	if err != nil {
+		if errors.Is(err, connector.ErrAPIKeyNotReplaceable) {
+			return nil, gqlutils.Invalidf(ctx, "this connector does not take a customer API key")
+		}
+
+		return nil, gqlutils.MapError(ctx, r.logger, "cannot update connector API key", err)
+	}
+
+	return &types.UpdateAPIKeyConnectorPayload{
+		Connector: types.NewConnector(updated),
 	}, nil
 }
 

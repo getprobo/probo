@@ -23,6 +23,7 @@ package console_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/testutil"
 )
 
@@ -50,4 +51,48 @@ func TestCreateAPIKeyConnector_RBAC(t *testing.T) {
 		})
 		testutil.RequireForbiddenError(t, err, "viewer should not be able to create connector")
 	})
+}
+
+func TestUpdateAPIKeyConnector_RBAC(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	orgID := owner.GetOrganizationID().String()
+
+	var created struct {
+		CreateAPIKeyConnector struct {
+			Connector struct {
+				ID string `json:"id"`
+			} `json:"connector"`
+		} `json:"createAPIKeyConnector"`
+	}
+
+	require.NoError(t, owner.Execute(`
+		mutation($input: CreateAPIKeyConnectorInput!) {
+			createAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"organizationId": orgID,
+			"name":           "Test",
+			"provider":       "BREX",
+			"apiKey":         "bxt_test-key",
+		},
+	}, &created))
+
+	_, err := viewer.Do(`
+		mutation($input: UpdateAPIKeyConnectorInput!) {
+			updateAPIKeyConnector(input: $input) {
+				connector { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{
+			"connectorId": created.CreateAPIKeyConnector.Connector.ID,
+			"apiKey":      "bxt_viewer-key",
+		},
+	})
+	testutil.RequireForbiddenError(t, err, "viewer should not be able to replace a connector API key")
 }

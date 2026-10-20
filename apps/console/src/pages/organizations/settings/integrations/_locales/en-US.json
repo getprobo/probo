@@ -199,6 +199,15 @@
       "copy": "Copy error",
       "copied": "Error copied."
     },
+    "apiKey": {
+      "update": "Update API key",
+      "title": "Update API key",
+      "description": "Replaces the API key stored for this connector. The name and enabled accounts stay. For Tally, the organization is re-derived from the new key.",
+      "save": "Save API key",
+      "saved": "API key updated.",
+      "saveFailed": "The API key could not be saved.",
+      "invalid": "Enter a key in the form {{example}}."
+    },
     "delete": {
       "title": "Disconnect integration",
       "description": "Disconnecting removes the credential Probo holds for {{name}}. Anything still using it has to be removed first.",

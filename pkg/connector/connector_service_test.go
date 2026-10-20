@@ -22,6 +22,7 @@ package connector
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -395,4 +396,113 @@ func TestCreateAndUpdate_StoreTrimmedConnectorName(t *testing.T) {
 	validationErrors, ok := errors.AsType[validator.ValidationErrors](err)
 	require.True(t, ok)
 	assert.Contains(t, validationErrors.Fields(), "name")
+}
+
+func TestUpdateAPIKey_ReplacesCustomerKey(t *testing.T) {
+	t.Parallel()
+
+	svc, scope, organizationID := newConnectorCreateEnv(t)
+
+	created, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "Production",
+		Provider:       coredata.ConnectorProviderSentry,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection: &connectorprotocol.APIKeyConnection{
+			APIKey: "old-key",
+			Header: "x-stale",
+		},
+		RawSettings: json.RawMessage(`{"organization_slug":"acme"}`),
+	})
+	require.NoError(t, err)
+
+	updated, err := svc.UpdateAPIKey(t.Context(), scope, UpdateAPIKeyConnectorRequest{
+		ConnectorID: created.ID,
+		Connection: &connectorprotocol.APIKeyConnection{
+			APIKey: "  next-key  ",
+			Header: "x-api-key",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Production", updated.Name)
+
+	loaded, err := svc.GetWithConnection(t.Context(), scope, created.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "Production", loaded.Name)
+	assert.JSONEq(t, `{"organization_slug":"acme"}`, string(loaded.RawSettings))
+
+	conn, ok := loaded.Connection.(*connectorprotocol.APIKeyConnection)
+	require.True(t, ok)
+	assert.Equal(t, "next-key", conn.APIKey)
+	assert.Equal(t, "x-api-key", conn.Header)
+
+	replaced, err := svc.UpdateAPIKey(t.Context(), scope, UpdateAPIKeyConnectorRequest{
+		ConnectorID: created.ID,
+		Connection:  &connectorprotocol.APIKeyConnection{APIKey: "rotated-key"},
+		RawSettings: json.RawMessage(`{"organization_slug":"other"}`),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Production", replaced.Name)
+
+	loaded, err = svc.GetWithConnection(t.Context(), scope, created.ID)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"organization_slug":"other"}`, string(loaded.RawSettings))
+	conn, ok = loaded.Connection.(*connectorprotocol.APIKeyConnection)
+	require.True(t, ok)
+	assert.Equal(t, "rotated-key", conn.APIKey)
+	assert.Empty(t, conn.Header)
+}
+
+func TestUpdateAPIKey_RefusesOtherProtocolsAndManagedKeys(t *testing.T) {
+	t.Parallel()
+
+	svc, scope, organizationID := newConnectorCreateEnv(t)
+
+	oauth, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "OAuth",
+		Provider:       coredata.ConnectorProviderBrex,
+		Protocol:       coredata.ConnectorProtocolOAuth2,
+		Connection: &connectorprotocol.OAuth2Connection{
+			AccessToken: "keep-me",
+			TokenType:   "Bearer",
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = svc.UpdateAPIKey(t.Context(), scope, UpdateAPIKeyConnectorRequest{
+		ConnectorID: oauth.ID,
+		Connection:  &connectorprotocol.APIKeyConnection{APIKey: "should-not-stick"},
+	})
+	require.ErrorIs(t, err, ErrAPIKeyNotReplaceable)
+
+	loaded, err := svc.GetWithConnection(t.Context(), scope, oauth.ID)
+	require.NoError(t, err)
+
+	oauthConn, ok := loaded.Connection.(*connectorprotocol.OAuth2Connection)
+	require.True(t, ok)
+	assert.Equal(t, "keep-me", oauthConn.AccessToken)
+
+	managed, err := svc.Create(t.Context(), scope, CreateConnectorRequest{
+		OrganizationID: organizationID,
+		Name:           "Crisp",
+		Provider:       coredata.ConnectorProviderCrisp,
+		Protocol:       coredata.ConnectorProtocolAPIKey,
+		Connection:     &connectorprotocol.APIKeyConnection{APIKey: "plugin-token"},
+		RawSettings:    json.RawMessage(`{"website_id":"site-1"}`),
+	})
+	require.NoError(t, err)
+
+	_, err = svc.UpdateAPIKey(t.Context(), scope, UpdateAPIKeyConnectorRequest{
+		ConnectorID: managed.ID,
+		Connection:  &connectorprotocol.APIKeyConnection{APIKey: "customer-paste"},
+	})
+	require.ErrorIs(t, err, ErrAPIKeyNotReplaceable)
+
+	loaded, err = svc.GetWithConnection(t.Context(), scope, managed.ID)
+	require.NoError(t, err)
+
+	managedConn, ok := loaded.Connection.(*connectorprotocol.APIKeyConnection)
+	require.True(t, ok)
+	assert.Equal(t, "plugin-token", managedConn.APIKey)
 }

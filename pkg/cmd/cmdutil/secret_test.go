@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package create
+package cmdutil
 
 import (
 	"testing"
@@ -34,7 +34,7 @@ func TestFillSecret_TrimsProvidedValue(t *testing.T) {
 		t.Parallel()
 
 		value := "  secret\n"
-		err := fillSecret(false, &value, envConnectorClientSecret, "Client secret")
+		err := FillSecret(false, &value, "PROBO_CONNECTOR_CLIENT_SECRET", "Client secret")
 
 		require.NoError(t, err)
 		assert.Equal(t, "secret", value)
@@ -44,7 +44,7 @@ func TestFillSecret_TrimsProvidedValue(t *testing.T) {
 		t.Parallel()
 
 		value := " \n\t"
-		err := fillSecret(false, &value, "PROBO_CONNECTOR_SECRET_UNSET", "Client secret")
+		err := FillSecret(false, &value, "PROBO_CONNECTOR_SECRET_UNSET", "Client secret")
 
 		require.NoError(t, err)
 		assert.Empty(t, value)
@@ -52,11 +52,11 @@ func TestFillSecret_TrimsProvidedValue(t *testing.T) {
 }
 
 func TestFillSecret_TrimsEnvValue(t *testing.T) {
-	t.Setenv(envConnectorClientSecret, " secret\n")
+	t.Setenv("PROBO_CONNECTOR_CLIENT_SECRET", " secret\n")
 
 	t.Run("empty flag", func(t *testing.T) {
 		value := ""
-		err := fillSecret(false, &value, envConnectorClientSecret, "Client secret")
+		err := FillSecret(false, &value, "PROBO_CONNECTOR_CLIENT_SECRET", "Client secret")
 
 		require.NoError(t, err)
 		assert.Equal(t, "secret", value)
@@ -64,7 +64,7 @@ func TestFillSecret_TrimsEnvValue(t *testing.T) {
 
 	t.Run("whitespace flag", func(t *testing.T) {
 		value := " \n"
-		err := fillSecret(false, &value, envConnectorClientSecret, "Client secret")
+		err := FillSecret(false, &value, "PROBO_CONNECTOR_CLIENT_SECRET", "Client secret")
 
 		require.NoError(t, err)
 		assert.Equal(t, "secret", value)
@@ -72,10 +72,10 @@ func TestFillSecret_TrimsEnvValue(t *testing.T) {
 }
 
 func TestFillSecret_WhitespaceEnvIsEmpty(t *testing.T) {
-	t.Setenv(envConnectorAPIKey, " \n\t")
+	t.Setenv("PROBO_CONNECTOR_API_KEY", " \n\t")
 
 	value := ""
-	err := fillSecret(false, &value, envConnectorAPIKey, "API key")
+	err := FillSecret(false, &value, "PROBO_CONNECTOR_API_KEY", "API key")
 
 	require.NoError(t, err)
 	assert.Empty(t, value)

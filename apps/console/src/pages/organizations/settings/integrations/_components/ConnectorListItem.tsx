@@ -42,6 +42,7 @@ import {
 import { buildConnectorInitiateURL } from "../_lib/connectorInitiate";
 import { connectorCard } from "../variants";
 
+import { ConnectorAPIKeyDialog } from "./ConnectorAPIKeyDialog";
 import { ConnectorConnectionBadge } from "./ConnectorConnectionBadge";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
 import { ConnectorNameHeading } from "./ConnectorNameHeading";
@@ -66,12 +67,15 @@ const connectorListItemFragment = graphql`
     }
     createdAt
     canGet: permission(action: "core:connector:get")
+    canUpdate: permission(action: "core:connector:update")
+    canReplaceAPIKey
     canDelete: permission(action: "core:connector:delete")
     ...ConnectorNameHeading_connector
     ...ConnectorTypeMark_connector
     ...ConnectorProbeError_connector
     ...ConnectorOrganizationSelect_connector
     ...ConnectorDeleteDialog_connector
+    ...ConnectorAPIKeyDialog_connector
   }
 `;
 
@@ -101,18 +105,24 @@ export function ConnectorListItem({
   const solo = signal == null ? null : presentConnection(signal);
   const connectionIssues = connectionIssueKeys(solo == null ? [] : [solo]);
   const tone = solo == null ? "sand" : connectionTone(solo.status);
-  const menu = connector.canDelete
+  const showAPIKey = connector.canUpdate && connector.canReplaceAPIKey;
+  const menu = (showAPIKey || connector.canDelete)
     ? (
         <div className={controls({ className: "pointer-events-auto" })}>
-          <IconButton
-            variant="ghost"
-            color="red"
-            size={1}
-            aria-label={t("detailsPage.actions.delete")}
-            onClick={() => setDeleteOpen(true)}
-          >
-            <TrashIcon />
-          </IconButton>
+          {showAPIKey && (
+            <ConnectorAPIKeyDialog connectorKey={connector} />
+          )}
+          {connector.canDelete && (
+            <IconButton
+              variant="ghost"
+              color="red"
+              size={1}
+              aria-label={t("detailsPage.actions.delete")}
+              onClick={() => setDeleteOpen(true)}
+            >
+              <TrashIcon />
+            </IconButton>
+          )}
         </div>
       )
     : undefined;
