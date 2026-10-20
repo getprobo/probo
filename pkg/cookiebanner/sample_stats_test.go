@@ -491,48 +491,130 @@ func TestStopCookieBannerSample_RequiresOpenSample(t *testing.T) {
 	require.ErrorIs(t, err, ErrSampleNotFound)
 }
 
-func TestReportDetectedTrackers_ConsentingPageLoads(t *testing.T) {
+func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 	t.Parallel()
-
-	client := test.PGClient(t)
-	ctx := context.Background()
-	fx := seedWorkerFixture(t, ctx, client)
-	svc := NewService(client, false, 0)
 
 	acceptAll := coredata.CookieConsentActionAcceptAll
 	rejectAll := coredata.CookieConsentActionRejectAll
 	acknowledge := coredata.CookieConsentActionAcknowledge
+	gpc := coredata.CookieConsentActionGPC
 
-	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
-		PageView:      true,
-		ConsentAction: &acceptAll,
-		Family:        coredata.BrowserFamilyChrome,
-	}))
-	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
-		PageView:      true,
-		ConsentAction: &acknowledge,
-		Family:        coredata.BrowserFamilyFirefox,
-	}))
-	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
-		PageView:      true,
-		ConsentAction: &rejectAll,
-		Family:        coredata.BrowserFamilySafari,
-	}))
-	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
-		PageView: true,
-		Family:   coredata.BrowserFamilyEdge,
-	}))
-	requireFlushSampleCounts(t, ctx, svc)
+	t.Run("opt-in counts only accept all", func(t *testing.T) {
+		t.Parallel()
 
-	sample := loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 1, sample.ChromePageLoads)
-	assert.Equal(t, 1, sample.FirefoxPageLoads)
-	assert.Equal(t, 1, sample.SafariPageLoads)
-	assert.Equal(t, 1, sample.EdgePageLoads)
-	assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
-	assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
-	assert.Equal(t, 0, sample.SafariConsentingPageLoads)
-	assert.Equal(t, 0, sample.EdgeConsentingPageLoads)
+		client := test.PGClient(t)
+		ctx := context.Background()
+		fx := seedWorkerFixture(t, ctx, client)
+		svc := NewService(client, false, 0)
+
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &acceptAll,
+			Family:        coredata.BrowserFamilyChrome,
+			Presentation:  PresentationOptIn,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:     true,
+			Family:       coredata.BrowserFamilyFirefox,
+			Presentation: PresentationOptIn,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &rejectAll,
+			Family:        coredata.BrowserFamilySafari,
+			Presentation:  PresentationOptIn,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &acknowledge,
+			Family:        coredata.BrowserFamilyEdge,
+			Presentation:  PresentationOptIn,
+		}))
+		requireFlushSampleCounts(t, ctx, svc)
+
+		sample := loadLatestSample(t, ctx, client, fx)
+		assert.Equal(t, 1, sample.ChromePageLoads)
+		assert.Equal(t, 1, sample.FirefoxPageLoads)
+		assert.Equal(t, 1, sample.SafariPageLoads)
+		assert.Equal(t, 1, sample.EdgePageLoads)
+		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
+		assert.Equal(t, 0, sample.FirefoxConsentingPageLoads)
+		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
+		assert.Equal(t, 0, sample.EdgeConsentingPageLoads)
+	})
+
+	t.Run("opt-out counts every view except reject and gpc", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		ctx := context.Background()
+		fx := seedWorkerFixture(t, ctx, client)
+		svc := NewService(client, false, 0)
+
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:     true,
+			Family:       coredata.BrowserFamilyChrome,
+			Presentation: PresentationOptOut,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &acceptAll,
+			Family:        coredata.BrowserFamilyFirefox,
+			Presentation:  PresentationOptOut,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &rejectAll,
+			Family:        coredata.BrowserFamilySafari,
+			Presentation:  PresentationOptOut,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &gpc,
+			Family:        coredata.BrowserFamilyEdge,
+			Presentation:  PresentationOptOut,
+		}))
+		requireFlushSampleCounts(t, ctx, svc)
+
+		sample := loadLatestSample(t, ctx, client, fx)
+		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
+		assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
+		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
+		assert.Equal(t, 0, sample.EdgeConsentingPageLoads)
+	})
+
+	t.Run("notice counts acknowledge and a missing action", func(t *testing.T) {
+		t.Parallel()
+
+		client := test.PGClient(t)
+		ctx := context.Background()
+		fx := seedWorkerFixture(t, ctx, client)
+		svc := NewService(client, false, 0)
+
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:     true,
+			Family:       coredata.BrowserFamilyChrome,
+			Presentation: PresentationNotice,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &acknowledge,
+			Family:        coredata.BrowserFamilyFirefox,
+			Presentation:  PresentationNotice,
+		}))
+		require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
+			PageView:      true,
+			ConsentAction: &rejectAll,
+			Family:        coredata.BrowserFamilySafari,
+			Presentation:  PresentationNotice,
+		}))
+		requireFlushSampleCounts(t, ctx, svc)
+
+		sample := loadLatestSample(t, ctx, client, fx)
+		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
+		assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
+		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
+	})
 }
 
 func insertDraftVersion(

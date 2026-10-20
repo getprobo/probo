@@ -76,9 +76,9 @@ func NewCookieBannerSample(s *coredata.CookieBannerSample) *CookieBannerSample {
 		CookieBanner: &CookieBanner{
 			ID: s.CookieBannerID,
 		},
-		PageLoads:           cookiebanner.NewSampleFamilyCountPtrs(cookiebanner.SamplePageLoads(*s)),
-		ConsentingPageLoads: cookiebanner.NewSampleFamilyCountPtrs(cookiebanner.SampleConsentingPageLoads(*s)),
-		FrozenAt:            s.FrozenAt,
-		CreatedAt:           s.CreatedAt,
+		PageLoads:         cookiebanner.NewSampleFamilyCountPtrs(cookiebanner.SamplePageLoads(*s)),
+		ExpectedPageLoads: cookiebanner.NewSampleFamilyCountPtrs(cookiebanner.SampleExpectedPageLoads(*s)),
+		FrozenAt:          s.FrozenAt,
+		CreatedAt:         s.CreatedAt,
 	}
 }

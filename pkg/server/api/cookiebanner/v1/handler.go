@@ -541,10 +541,14 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	location := h.resolveLocation(r)
+	regulation, _ := cookiebanner.ResolveRegulation(location)
+
 	req := cookiebanner.ReportDetectedTrackersRequest{
 		PageView:      body.PageView,
 		ConsentAction: reportConsentAction(body.ConsentAction),
 		Family:        cookiebanner.BrowserFamily(r.UserAgent()),
+		Presentation:  cookiebanner.PresentationForRegulation(regulation),
 	}
 
 	for _, c := range body.Cookies {

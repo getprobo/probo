@@ -56,12 +56,12 @@ func NewCookieBanner(b *coredata.CookieBanner, tcfCmpID int) *CookieBanner {
 
 func NewCookieBannerSample(s *coredata.CookieBannerSample) *CookieBannerSample {
 	return &CookieBannerSample{
-		ID:                  s.ID,
-		CookieBannerID:      s.CookieBannerID,
-		PageLoads:           NewSampleFamilyCounts(cookiebanner.SamplePageLoads(*s)),
-		ConsentingPageLoads: NewSampleFamilyCounts(cookiebanner.SampleConsentingPageLoads(*s)),
-		FrozenAt:            s.FrozenAt,
-		CreatedAt:           s.CreatedAt,
+		ID:                s.ID,
+		CookieBannerID:    s.CookieBannerID,
+		PageLoads:         NewSampleFamilyCounts(cookiebanner.SamplePageLoads(*s)),
+		ExpectedPageLoads: NewSampleFamilyCounts(cookiebanner.SampleExpectedPageLoads(*s)),
+		FrozenAt:          s.FrozenAt,
+		CreatedAt:         s.CreatedAt,
 	}
 }
 

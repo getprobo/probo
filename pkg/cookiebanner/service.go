@@ -186,6 +186,7 @@ type (
 		PageView      bool
 		ConsentAction *coredata.CookieConsentAction
 		Family        coredata.BrowserFamily
+		Presentation  Presentation
 	}
 
 	CreateTrackerPatternRequest struct {
@@ -1158,7 +1159,7 @@ func (s *Service) GetSamplePageLoads(
 	return samplePageLoads(*sample), nil
 }
 
-func (s *Service) GetSampleConsentingPageLoads(
+func (s *Service) GetSampleExpectedPageLoads(
 	ctx context.Context,
 	scope coredata.Scoper,
 	sampleID gid.GID,
@@ -1168,7 +1169,7 @@ func (s *Service) GetSampleConsentingPageLoads(
 		return nil, err
 	}
 
-	return sampleConsentingPageLoads(*sample), nil
+	return sampleExpectedPageLoads(*sample), nil
 }
 
 func (s *Service) GetSampleHits(
@@ -3166,7 +3167,7 @@ func (s *Service) ReportDetectedTrackers(
 		bannerID,
 		req.Family,
 		req.PageView,
-		isConsentingSampleAction(req.ConsentAction),
+		isExpectedSampleLoad(req.Presentation, req.ConsentAction),
 		countedHits,
 	)
 

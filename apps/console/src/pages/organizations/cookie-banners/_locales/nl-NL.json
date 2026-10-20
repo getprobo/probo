@@ -271,8 +271,8 @@
       "version": "v{{version}}",
       "deactivated": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers.",
       "deactivatedDraft": "Deze banner is gedeactiveerd en wordt niet getoond aan bezoekers. Deze versie heeft ongepubliceerde wijzigingen.",
-      "samplingUnpublished": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven met toestemming. Publiceren stopt dit. Deze wijzigingen zijn nog niet live.",
-      "sampling": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven met toestemming.",
+      "samplingUnpublished": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven waar een tracker zou moeten afgaan. Publiceren stopt dit. Deze wijzigingen zijn nog niet live.",
+      "sampling": "Verkeer en tracker-hitrates meten op alle weergaven en op weergaven waar een tracker zou moeten afgaan.",
       "draft": "Deze versie heeft ongepubliceerde wijzigingen.",
       "published": "Deze versie is gepubliceerd en live. Start een meting om te zien hoe vaak trackers voorkomen.",
       "unpublished": "Deze banner is nog niet gepubliceerd."
@@ -290,7 +290,7 @@
     "hits": "hits",
     "loads": "paginaladingen",
     "hitRate": "hitrate",
-    "consentingHitRate": "onder toestemmende weergaven"
+    "expectedHitRate": "wanneer toegestaan"
   },
   "trackerDiscovery": {
     "families": {

@@ -271,8 +271,8 @@
       "version": "v{{version}}",
       "deactivated": "This banner is deactivated and is not shown to visitors.",
       "deactivatedDraft": "This banner is deactivated and is not shown to visitors. This version has unpublished changes.",
-      "samplingUnpublished": "Measuring traffic and tracker hit rates on all views and on consented views. Publishing will stop it. These changes are not live yet.",
-      "sampling": "Measuring traffic and tracker hit rates on all views and on consented views.",
+      "samplingUnpublished": "Measuring traffic and tracker hit rates on all views and on views where a tracker should fire. Publishing will stop it. These changes are not live yet.",
+      "sampling": "Measuring traffic and tracker hit rates on all views and on views where a tracker should fire.",
       "draft": "This version has unpublished changes.",
       "published": "This version is published and live. Start measuring to see how often trackers appear.",
       "unpublished": "This banner has not been published yet."
@@ -290,7 +290,7 @@
     "hits": "hits",
     "loads": "loads",
     "hitRate": "hit rate",
-    "consentingHitRate": "among consenting views"
+    "expectedHitRate": "when allowed"
   },
   "trackerDiscovery": {
     "families": {

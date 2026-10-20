@@ -13749,7 +13749,7 @@ components:
         - id
         - cookie_banner_id
         - page_loads
-        - consenting_page_loads
+        - expected_page_loads
         - created_at
       properties:
         id:
@@ -13763,11 +13763,11 @@ components:
           items:
             $ref: "#/components/schemas/SampleFamilyCount"
           description: Page loads by browser family. Families with zero page loads are omitted.
-        consenting_page_loads:
+        expected_page_loads:
           type: array
           items:
             $ref: "#/components/schemas/SampleFamilyCount"
-          description: ACCEPT_ALL and ACKNOWLEDGE page loads by browser family. Families with zero consenting loads are omitted.
+          description: Page loads where a tracker is allowed to fire, by browser family. Families with zero expected loads are omitted.
         frozen_at:
           type:
             - string

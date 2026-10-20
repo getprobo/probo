@@ -35,7 +35,7 @@ const cookieBannerFragment = graphql`
         family
         count
       }
-      consentingPageLoads {
+      expectedPageLoads {
         family
         count
       }
@@ -83,7 +83,7 @@ export function TrackerPatternSampleHitsSection({
         family: load.family,
         count: load.count,
       }))}
-      consentingDenominators={(banner.latestSample?.consentingPageLoads ?? []).map(load => ({
+      expectedDenominators={(banner.latestSample?.expectedPageLoads ?? []).map(load => ({
         family: load.family,
         count: load.count,
       }))}

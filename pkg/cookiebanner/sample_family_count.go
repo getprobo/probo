@@ -31,8 +31,8 @@ func SamplePageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
 	return samplePageLoads(sample)
 }
 
-func SampleConsentingPageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
-	return sampleConsentingPageLoads(sample)
+func SampleExpectedPageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
+	return sampleExpectedPageLoads(sample)
 }
 
 func NewSampleFamilyCountPtrs(counts []SampleFamilyCount) []*SampleFamilyCount {
@@ -59,7 +59,7 @@ func samplePageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
 	)
 }
 
-func sampleConsentingPageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
+func sampleExpectedPageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
 	return sampleFamilyCounts(
 		sample.ChromeConsentingPageLoads,
 		sample.EdgeConsentingPageLoads,

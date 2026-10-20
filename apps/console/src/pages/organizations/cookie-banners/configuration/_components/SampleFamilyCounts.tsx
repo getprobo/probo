@@ -35,13 +35,13 @@ export interface SampleFamilyCountItem {
 export interface SampleFamilyCountsProps {
   items: readonly SampleFamilyCountItem[];
   denominators?: readonly SampleFamilyCountItem[];
-  consentingDenominators?: readonly SampleFamilyCountItem[];
+  expectedDenominators?: readonly SampleFamilyCountItem[];
 }
 
 export function SampleFamilyCounts({
   items,
   denominators,
-  consentingDenominators,
+  expectedDenominators,
 }: SampleFamilyCountsProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
   const { root, card, family, logo, stats, stat, value }
@@ -49,20 +49,20 @@ export function SampleFamilyCounts({
   const loadsByFamily = new Map(
     (denominators ?? []).map(entry => [entry.family, entry.count]),
   );
-  const consentingByFamily = new Map(
-    (consentingDenominators ?? []).map(entry => [entry.family, entry.count]),
+  const expectedByFamily = new Map(
+    (expectedDenominators ?? []).map(entry => [entry.family, entry.count]),
   );
 
   return (
     <div className={root()}>
       {items.map((entry) => {
         const loads = loadsByFamily.get(entry.family);
-        const consentingLoads = consentingByFamily.get(entry.family);
+        const expectedLoads = expectedByFamily.get(entry.family);
         const rate = loads != null && loads > 0
           ? formatHitRate(entry.count, loads, i18n.language)
           : null;
-        const consentingRate = consentingLoads != null && consentingLoads > 0
-          ? formatHitRate(entry.count, consentingLoads, i18n.language)
+        const expectedRate = expectedLoads != null && expectedLoads > 0
+          ? formatHitRate(entry.count, expectedLoads, i18n.language)
           : null;
 
         return (
@@ -91,13 +91,13 @@ export function SampleFamilyCounts({
                   </div>
                 )
               : null}
-            {consentingRate != null
+            {expectedRate != null
               ? (
                   <div className={stat()}>
                     <Text size={4} weight="bold" highContrast className={value()}>
-                      {consentingRate}
+                      {expectedRate}
                     </Text>
-                    <Text size={2}>{t("trackerSample.consentingHitRate")}</Text>
+                    <Text size={2}>{t("trackerSample.expectedHitRate")}</Text>
                   </div>
                 )
               : null}

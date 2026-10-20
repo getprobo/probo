@@ -45,8 +45,8 @@ type (
 	}
 
 	samplePageLoadAtomics struct {
-		all        sampleFamilyAtomics
-		consenting sampleFamilyAtomics
+		all      sampleFamilyAtomics
+		expected sampleFamilyAtomics
 	}
 
 	sampleCounts struct {
@@ -92,13 +92,13 @@ func (c *sampleFamilyAtomics) swap(n int64) sampleCounts {
 	}
 }
 
-func (s *Service) addPageLoad(bannerID gid.GID, family coredata.BrowserFamily, consenting bool) {
+func (s *Service) addPageLoad(bannerID gid.GID, family coredata.BrowserFamily, expected bool) {
 	actual, _ := s.pageLoadCounts.LoadOrStore(bannerID, &samplePageLoadAtomics{})
 	loads := actual.(*samplePageLoadAtomics)
 	loads.all.addFamily(family)
 
-	if consenting {
-		loads.consenting.addFamily(family)
+	if expected {
+		loads.expected.addFamily(family)
 	}
 }
 
@@ -112,16 +112,24 @@ func (s *Service) addPatternHit(
 	actual.(*sampleFamilyAtomics).addFamily(family)
 }
 
-func isConsentingSampleAction(action *coredata.CookieConsentAction) bool {
-	if action == nil {
-		return false
-	}
+// isExpectedSampleLoad reports whether a tracker is allowed to fire on this
+// view. OPT_IN counts only an explicit accept. OPT_OUT and NOTICE count every
+// view except reject-all and Global Privacy Control, including a missing action.
+func isExpectedSampleLoad(presentation Presentation, action *coredata.CookieConsentAction) bool {
+	switch presentation {
+	case PresentationOptOut, PresentationNotice:
+		if action == nil {
+			return true
+		}
 
-	switch *action {
-	case coredata.CookieConsentActionAcceptAll, coredata.CookieConsentActionAcknowledge:
-		return true
+		switch *action {
+		case coredata.CookieConsentActionRejectAll, coredata.CookieConsentActionGPC:
+			return false
+		default:
+			return true
+		}
 	default:
-		return false
+		return action != nil && *action == coredata.CookieConsentActionAcceptAll
 	}
 }
 
@@ -129,7 +137,7 @@ func (s *Service) recordSampleIncrements(
 	bannerID gid.GID,
 	family coredata.BrowserFamily,
 	pageView bool,
-	consenting bool,
+	expected bool,
 	patternIDs map[gid.GID]struct{},
 ) {
 	if !family.IsValid() {
@@ -137,7 +145,7 @@ func (s *Service) recordSampleIncrements(
 	}
 
 	if pageView {
-		s.addPageLoad(bannerID, family, consenting)
+		s.addPageLoad(bannerID, family, expected)
 	}
 
 	for patternID := range patternIDs {
@@ -154,12 +162,12 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 			loads := value.(*samplePageLoadAtomics)
 			all := loads.all.swap(0)
 
-			consenting := loads.consenting.swap(0)
-			if all.empty() && consenting.empty() {
+			expected := loads.expected.swap(0)
+			if all.empty() && expected.empty() {
 				return true
 			}
 
-			if err := s.writePageLoads(ctx, bannerID, all, consenting); err != nil && firstErr == nil {
+			if err := s.writePageLoads(ctx, bannerID, all, expected); err != nil && firstErr == nil {
 				firstErr = err
 			}
 
@@ -191,7 +199,7 @@ func (s *Service) writePageLoads(
 	ctx context.Context,
 	bannerID gid.GID,
 	all sampleCounts,
-	consenting sampleCounts,
+	expected sampleCounts,
 ) error {
 	return s.pg.WithTx(
 		ctx,
@@ -217,11 +225,11 @@ func (s *Service) writePageLoads(
 				all.firefox,
 				all.safari,
 				all.other,
-				consenting.chrome,
-				consenting.edge,
-				consenting.firefox,
-				consenting.safari,
-				consenting.other,
+				expected.chrome,
+				expected.edge,
+				expected.firefox,
+				expected.safari,
+				expected.other,
 			); err != nil {
 				return fmt.Errorf("cannot record sample page load: %w", err)
 			}

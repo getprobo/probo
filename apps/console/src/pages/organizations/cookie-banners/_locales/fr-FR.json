@@ -271,8 +271,8 @@
       "version": "v{{version}}",
       "deactivated": "Cette bannière est désactivée et n’est pas affichée aux visiteurs.",
       "deactivatedDraft": "Cette bannière est désactivée et n’est pas affichée aux visiteurs. Cette version contient des modifications non publiées.",
-      "samplingUnpublished": "Mesure du trafic et des taux de détection des trackers sur toutes les vues et sur les vues consenties. Publier l’arrêtera. Ces modifications ne sont pas encore en ligne.",
-      "sampling": "Mesure du trafic et des taux de détection des trackers sur toutes les vues et sur les vues consenties.",
+      "samplingUnpublished": "Mesure du trafic et des taux de détection des trackers sur toutes les vues et sur les vues où un tracker devrait se déclencher. Publier l’arrêtera. Ces modifications ne sont pas encore en ligne.",
+      "sampling": "Mesure du trafic et des taux de détection des trackers sur toutes les vues et sur les vues où un tracker devrait se déclencher.",
       "draft": "Cette version contient des modifications non publiées.",
       "published": "Cette version est publiée et en ligne. Commencez une mesure pour voir à quelle fréquence les trackers apparaissent.",
       "unpublished": "Cette bannière n’a pas encore été publiée."
@@ -290,7 +290,7 @@
     "hits": "signalements",
     "loads": "chargements",
     "hitRate": "taux de signalement",
-    "consentingHitRate": "parmi les vues consentantes"
+    "expectedHitRate": "lorsque autorisé"
   },
   "trackerDiscovery": {
     "families": {

@@ -45,7 +45,7 @@ func TestSamplePageLoads_OmitsZeroFamilies(t *testing.T) {
 	)
 }
 
-func TestSampleConsentingPageLoads_OmitsZeroFamilies(t *testing.T) {
+func TestSampleExpectedPageLoads_OmitsZeroFamilies(t *testing.T) {
 	t.Parallel()
 
 	sample := coredata.CookieBannerSample{
@@ -60,7 +60,7 @@ func TestSampleConsentingPageLoads_OmitsZeroFamilies(t *testing.T) {
 			{Family: coredata.BrowserFamilyChrome, Count: 4},
 			{Family: coredata.BrowserFamilySafari, Count: 2},
 		},
-		sampleConsentingPageLoads(sample),
+		sampleExpectedPageLoads(sample),
 	)
 }
 

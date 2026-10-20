@@ -192,7 +192,7 @@ type CookieBannerSample implements Node {
     id: ID!
     cookieBanner: CookieBanner! @goField(forceResolver: true)
     pageLoads: [SampleFamilyCount!]!
-    consentingPageLoads: [SampleFamilyCount!]!
+    expectedPageLoads: [SampleFamilyCount!]!
     frozenAt: Datetime
     createdAt: Datetime!
 }

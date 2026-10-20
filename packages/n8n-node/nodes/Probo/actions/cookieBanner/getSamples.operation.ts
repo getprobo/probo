@@ -87,7 +87,7 @@ export async function execute(
 								createdAt
 								frozenAt
 								pageLoads { family count }
-								consentingPageLoads { family count }
+								expectedPageLoads { family count }
 							}
 						}
 						pageInfo {
