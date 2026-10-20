@@ -329,7 +329,8 @@
       "title": "Erreur",
       "create": "Échec de la création du traceur",
       "patternStars": "Un motif ne peut contenir qu’un seul *.",
-      "category": "Sélectionnez une catégorie"
+      "category": "Sélectionnez une catégorie",
+      "maxAge": "Saisissez une durée valide supérieure à zéro."
     },
     "fields": {
       "pattern": "Motif",

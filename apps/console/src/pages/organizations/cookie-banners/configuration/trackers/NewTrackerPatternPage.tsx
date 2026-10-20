@@ -190,6 +190,13 @@ export function NewTrackerPatternPage({ queryRef }: NewTrackerPatternPageProps) 
     }
 
     const maxAgeSeconds = toMaxAgeSeconds(duration.value, duration.unit);
+    if (duration.value.trim() !== "" && maxAgeSeconds == null) {
+      setErrors(current => ({
+        ...current,
+        maxAge: t("newTrackerPatternPage.errors.maxAge"),
+      }));
+      return;
+    }
     const trimmedDescription = description.trim();
 
     void createTrackerPattern({
@@ -356,16 +363,21 @@ export function NewTrackerPatternPage({ queryRef }: NewTrackerPatternPageProps) 
               }}
             />
           </Field>
-          <Field label={t("trackerProperties.properties.maxAge")}>
+          <Field
+            label={t("trackerProperties.properties.maxAge")}
+            error={errors.maxAge}
+          >
             <TrackerMaxAgeField
               value={duration.value}
               unit={duration.unit}
               disabled={isCreating}
               onValueChange={(value) => {
                 setDuration(current => ({ ...current, value }));
+                clearFieldError("maxAge");
               }}
               onUnitChange={(unit) => {
                 setDuration(current => ({ ...current, unit }));
+                clearFieldError("maxAge");
               }}
             />
           </Field>

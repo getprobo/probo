@@ -64,12 +64,15 @@ export default function CookieBannerTrackersPageLoader() {
       ? trackersListGraphqlPagination(null, null)
       : paginationRef.current;
 
-    loadQuery({
-      cookieBannerId,
-      ...pagination,
-      filter: filterRef.current,
-      order: orderRef.current,
-    });
+    loadQuery(
+      {
+        cookieBannerId,
+        ...pagination,
+        filter: filterRef.current,
+        order: orderRef.current,
+      },
+      { fetchPolicy: "store-and-network" },
+    );
 
     if (switched) {
       resetPagination();

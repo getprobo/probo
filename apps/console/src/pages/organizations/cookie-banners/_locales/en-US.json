@@ -329,7 +329,8 @@
       "title": "Error",
       "create": "Failed to create tracker",
       "patternStars": "A pattern can contain at most one *.",
-      "category": "Select a category"
+      "category": "Select a category",
+      "maxAge": "Enter a valid duration greater than zero."
     },
     "fields": {
       "pattern": "Pattern",

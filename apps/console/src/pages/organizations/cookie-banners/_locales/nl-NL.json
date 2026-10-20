@@ -329,7 +329,8 @@
       "title": "Fout",
       "create": "Tracker aanmaken mislukt",
       "patternStars": "Een patroon mag hoogstens één * bevatten.",
-      "category": "Selecteer een categorie"
+      "category": "Selecteer een categorie",
+      "maxAge": "Voer een geldige duur in die groter is dan nul."
     },
     "fields": {
       "pattern": "Patroon",
