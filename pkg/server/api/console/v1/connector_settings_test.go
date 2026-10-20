@@ -161,7 +161,6 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 			registry,
 			coredata.ConnectorProviderMongoDBAtlas,
 			supplied("https://attacker.example/token"),
-			nil,
 		)
 		require.NoError(t, err)
 		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
@@ -170,7 +169,7 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 	t.Run("a pinning provider needs nothing from the client", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := clientCredentialsTokenURL(registry, coredata.ConnectorProviderMongoDBAtlas, nil, nil)
+		got, err := clientCredentialsTokenURL(registry, coredata.ConnectorProviderMongoDBAtlas, nil)
 		require.NoError(t, err)
 		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
 	})
@@ -184,7 +183,6 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 			registry,
 			coredata.ConnectorProviderOnePassword,
 			supplied("https://api.1password.eu/v1beta1/users/oauth2/token"),
-			nil,
 		)
 		require.NoError(t, err)
 		assert.Equal(t, "https://api.1password.eu/v1beta1/users/oauth2/token", got)
@@ -210,7 +208,6 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 					registry,
 					tc.provider,
 					supplied("https://attacker.example/token"),
-					nil,
 				)
 				require.NoError(t, err)
 				assert.Equal(t, tc.want, got)
@@ -227,7 +224,6 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 			provider.NewRegistry(),
 			coredata.ConnectorProviderMongoDBAtlas,
 			supplied("https://cloud.mongodb.com/api/oauth/token"),
-			nil,
 		)
 		assert.Error(t, err)
 	})
@@ -257,7 +253,6 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 					registry,
 					coredata.ConnectorProviderOnePassword,
 					tc.supplied,
-					nil,
 				)
 				assert.Error(t, err)
 			})
@@ -289,7 +284,7 @@ func TestPinnedClientCredentialsTokenURL(t *testing.T) {
 }
 
 // TestClientCredentialsTokenURLRequired covers whether the connect form asks
-// for a Token URL: only when the server can neither pin nor derive one.
+// for a Token URL: only when the server cannot pin one.
 func TestClientCredentialsTokenURLRequired(t *testing.T) {
 	t.Parallel()
 

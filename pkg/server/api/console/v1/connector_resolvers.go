@@ -502,7 +502,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
-	tokenURL, err := clientCredentialsTokenURL(r.providerRegistry, input.Provider, input.TokenURL, raw)
+	tokenURL, err := clientCredentialsTokenURL(r.providerRegistry, input.Provider, input.TokenURL)
 	if err != nil {
 		return nil, gqlutils.Invalid(ctx, err)
 	}

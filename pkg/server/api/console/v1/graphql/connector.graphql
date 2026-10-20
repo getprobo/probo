@@ -249,9 +249,8 @@ type ConnectorProviderInfo {
     """
     clientCredentialsTokenUrlRequired is true when the client-credentials
     connect form must ask for the token endpoint. False when the provider pins
-    one (clientCredentialsTokenUrl) or derives it from a validated setting
-    (OVHcloud, whose host follows its region), and false for a provider with
-    no client-credentials path.
+    one (clientCredentialsTokenUrl), and false for a provider with no
+    client-credentials path.
     """
     clientCredentialsTokenUrlRequired: Boolean!
     """
@@ -669,10 +668,9 @@ input CreateClientCredentialsConnectorInput {
     clientSecret: String!
     """
     Token endpoint for the client-credentials exchange. Optional: a provider
-    that declares a constant token endpoint, or derives it from a validated
-    setting, sets it server-side and ignores any value sent here. Required only
-    when clientCredentialsTokenUrlRequired is true, and then it must be an
-    absolute https URL.
+    that declares a constant token endpoint sets it server-side and ignores
+    any value sent here. Required only when clientCredentialsTokenUrlRequired
+    is true, and then it must be an absolute https URL.
     """
     tokenUrl: String
     scope: String

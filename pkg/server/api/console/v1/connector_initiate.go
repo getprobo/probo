@@ -29,7 +29,6 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connectorprotocol"
-	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -44,7 +43,6 @@ func handleConnectorInitiate(
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
 	connectorRegistry *connectorprotocol.Registry,
-	providerRegistry *provider.Registry,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
@@ -138,18 +136,6 @@ func handleConnectorInitiate(
 			opts.GrantedScopes = existing.Connection.Scopes()
 			opts.IncludeGrantedScopes = true
 			opts.ConnectorID = existing.ID.String()
-
-			if opts.Site == "" {
-				site, err := reconnectSite(providerRegistry, existing)
-				if err != nil {
-					logger.ErrorCtx(r.Context(), "cannot resolve reconnect site", log.Error(err))
-					httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
-
-					return
-				}
-
-				opts.Site = site
-			}
 		}
 
 		redirectURL, err := connectorRegistry.Initiate(
@@ -168,18 +154,6 @@ func handleConnectorInitiate(
 
 		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 	}
-}
-
-// reconnectSite returns the site stored on the connector being reconnected,
-// so the flow returns to the region it was created in. Empty when the
-// provider does not derive a site from its settings.
-func reconnectSite(providerRegistry *provider.Registry, existing *coredata.Connector) (string, error) {
-	reg, ok := providerRegistry.Get(existing.Provider)
-	if !ok || reg.OAuth2 == nil || reg.OAuth2.SiteFromSettings == nil {
-		return "", nil
-	}
-
-	return reg.OAuth2.SiteFromSettings(existing)
 }
 
 // loadExistingConnector returns the connector the initiate handler

@@ -203,7 +203,7 @@ func NewMux(
 
 		r.Get(
 			"/connectors/initiate",
-			handleConnectorInitiate(logger, proboSvc, iamSvc, connectorRegistry, providerRegistry),
+			handleConnectorInitiate(logger, proboSvc, iamSvc, connectorRegistry),
 		)
 
 		r.Get(

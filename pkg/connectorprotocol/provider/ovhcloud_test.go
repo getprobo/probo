@@ -101,7 +101,6 @@ func TestOVHcloudRegions(t *testing.T) {
 			assert.Nil(t, reg.OAuth2.BuildAuthURLForSite)
 			assert.Nil(t, reg.OAuth2.BuildTokenURLForSite)
 			assert.True(t, reg.SupportsClientCredentials())
-			assert.Nil(t, reg.ClientCredentials.BuildTokenURL)
 		})
 	}
 }

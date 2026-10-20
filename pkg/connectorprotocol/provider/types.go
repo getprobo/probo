@@ -373,12 +373,6 @@ type ClientCredentialsConfig struct {
 	// and AccountID + Region on client credentials (Users API driver). A setting
 	// genuinely needed on both paths is declared in both lists.
 	ExtraSettings []ExtraSetting
-
-	// BuildTokenURL derives the token endpoint from the connector's settings,
-	// for a provider whose token host follows a setting Probo validates. The
-	// customer is then never asked for a URL. Nil for a provider that pins
-	// Endpoints.Token or takes the URL as input.
-	BuildTokenURL func(*coredata.Connector) (string, error)
 }
 
 // ErrInstallVerificationTransient marks an install verification that failed for
@@ -520,11 +514,6 @@ type OAuth2Config struct {
 	// A provider sets at most one of BuildTokenURLForDomain /
 	// BuildTokenURLForSite. Nil otherwise.
 	BuildTokenURLForSite func(site string) (string, error)
-
-	// SiteFromSettings returns the site a reconnect reuses when the request
-	// names none, so reconnecting stays on the region the connector was
-	// created in. Nil for a provider whose reconnect sends the site itself.
-	SiteFromSettings func(*coredata.Connector) (string, error)
 }
 
 // WorkloadIdentityConfig is the connect path of a provider Probo reaches by
