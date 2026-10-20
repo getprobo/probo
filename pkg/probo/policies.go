@@ -243,7 +243,16 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 		ActionSlackConnectionList, ActionConnectorList, ActionConnectorGet,
 		ActionConnectorInitiate, ActionConnectorDelete,
 	).WithSID("compliance-portal-related-access").When(organizationCondition),
-).WithDescription("Access required to manage the compliance portal and related entity visibility")
+
+	policy.Allow(
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
+
+	policy.Allow(
+		ActionDocumentVersionSign,
+	).WithSID("document-version-signing").When(organizationCondition),
+).WithDescription("Access required to manage the compliance portal, sign employee policies, and toggle related entity visibility")
 
 // CompliancePortalAccessManagerPolicy defines permissions needed to review and
 // approve compliance portal visitor access requests.
@@ -270,7 +279,16 @@ var CompliancePortalAccessManagerPolicy = policy.NewPolicy(
 		ActionFileGet,
 		ActionElectronicSignatureGet,
 	).WithSID("compliance-portal-access-related").When(organizationCondition),
-).WithDescription("Organization-scoped read of entities that portal access requests may reference")
+
+	policy.Allow(
+		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
+		ActionEmployeeDocumentVersionExportPDF,
+	).WithSID("employee-document-access").When(organizationCondition),
+
+	policy.Allow(
+		ActionDocumentVersionSign,
+	).WithSID("document-version-signing").When(organizationCondition),
+).WithDescription("Organization-scoped read of entities that portal access requests may reference, plus employee policy signing")
 
 // ProboPolicySet returns the PolicySet for the probo service.
 func ProboPolicySet() *iam.PolicySet {

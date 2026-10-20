@@ -106,3 +106,54 @@ func TestAuditorPolicy_OrganizationContextReadAccess(t *testing.T) {
 
 	assert.True(t, result.IsAllowed())
 }
+
+func TestCompliancePortalPolicies_EmployeePolicySigning(t *testing.T) {
+	t.Parallel()
+
+	organizationID := gid.New(gid.NewTenantID(), 1)
+	evaluator := policy.NewEvaluator()
+	conditionContext := policy.ConditionContext{
+		Principal: map[string]string{
+			"organization_id": organizationID.String(),
+		},
+		Resource: map[string]string{
+			"organization_id": organizationID.String(),
+		},
+	}
+
+	actions := []string{
+		probo.ActionEmployeeDocumentList,
+		probo.ActionEmployeeDocumentGet,
+		probo.ActionEmployeeDocumentVersionExportPDF,
+		probo.ActionDocumentVersionSign,
+	}
+
+	policies := []*policy.Policy{
+		probo.CompliancePortalManagerPolicy,
+		probo.CompliancePortalAccessManagerPolicy,
+	}
+
+	for _, pol := range policies {
+		t.Run(pol.Name, func(t *testing.T) {
+			t.Parallel()
+
+			for _, action := range actions {
+				t.Run(action, func(t *testing.T) {
+					t.Parallel()
+
+					result := evaluator.Evaluate(
+						policy.AuthorizationRequest{
+							Principal:        organizationID,
+							Resource:         organizationID,
+							Action:           action,
+							ConditionContext: conditionContext,
+						},
+						[]*policy.Policy{pol},
+					)
+
+					assert.True(t, result.IsAllowed())
+				})
+			}
+		})
+	}
+}

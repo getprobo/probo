@@ -49,5 +49,7 @@ func PolicySet() *iam.PolicySet {
 		AddRolePolicy("OWNER", FullAccessPolicy).
 		AddRolePolicy("ADMIN", FullAccessPolicy).
 		AddRolePolicy("VIEWER", ViewerPolicy).
-		AddRolePolicy("EMPLOYEE", ViewerPolicy)
+		AddRolePolicy("EMPLOYEE", ViewerPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_MANAGER", ViewerPolicy).
+		AddRolePolicy("COMPLIANCE_PORTAL_ACCESS_MANAGER", ViewerPolicy)
 }
