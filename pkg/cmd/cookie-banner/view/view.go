@@ -186,6 +186,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), "none")
 			} else {
 				sample := v.LatestSample
+
 				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Latest Sample:"), sample.ID)
 				if sample.FrozenAt != nil {
 					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Sample Frozen:"), cmdutil.FormatTime(*sample.FrozenAt))

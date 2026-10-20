@@ -443,6 +443,7 @@ func (r *cookieBannerResolver) LatestSample(ctx context.Context, obj *types.Cook
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get latest cookie banner sample", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -908,6 +909,7 @@ func (r *mutationResolver) StartCookieBannerSample(ctx context.Context, input ty
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot start cookie banner sample", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -937,6 +939,7 @@ func (r *mutationResolver) StopCookieBannerSample(ctx context.Context, input typ
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot stop cookie banner sample", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1838,6 +1841,7 @@ func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.Trac
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 

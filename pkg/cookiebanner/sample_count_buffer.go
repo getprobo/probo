@@ -96,6 +96,7 @@ func (s *Service) addPageLoad(bannerID gid.GID, family coredata.BrowserFamily, c
 	actual, _ := s.pageLoadCounts.LoadOrStore(bannerID, &samplePageLoadAtomics{})
 	loads := actual.(*samplePageLoadAtomics)
 	loads.all.addFamily(family)
+
 	if consenting {
 		loads.consenting.addFamily(family)
 	}
@@ -152,6 +153,7 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 			bannerID := key.(gid.GID)
 			loads := value.(*samplePageLoadAtomics)
 			all := loads.all.swap(0)
+
 			consenting := loads.consenting.swap(0)
 			if all.empty() && consenting.empty() {
 				return true
@@ -277,6 +279,7 @@ func resolveWritableSample(
 	bannerID gid.GID,
 ) (gid.GID, bool, error) {
 	var open coredata.CookieBannerSample
+
 	err := open.LoadOpenByCookieBannerID(ctx, tx, scope, bannerID)
 	if err == nil {
 		return open.ID, true, nil
@@ -287,6 +290,7 @@ func resolveWritableSample(
 	}
 
 	var samples coredata.CookieBannerSamples
+
 	count, err := samples.CountByCookieBannerID(ctx, tx, scope, bannerID)
 	if err != nil {
 		return gid.GID{}, false, err
@@ -302,6 +306,7 @@ func resolveWritableSample(
 	}
 
 	now := time.Now()
+
 	sample := coredata.CookieBannerSample{
 		ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
 		OrganizationID: banner.OrganizationID,

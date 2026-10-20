@@ -25,8 +25,8 @@ import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/Tracker
 
 import { TrackerPatternDetailHeader } from "./_components/TrackerPatternDetailHeader";
 import { TrackerPatternDetectedTrackersSection } from "./_components/TrackerPatternDetectedTrackersSection";
-import { TrackerPatternSampleHitsSection } from "./_components/TrackerPatternSampleHitsSection";
 import { TrackerPatternPropertiesSection } from "./_components/TrackerPatternPropertiesSection";
+import { TrackerPatternSampleHitsSection } from "./_components/TrackerPatternSampleHitsSection";
 
 export const trackerPatternDetailPageQuery = graphql`
   query TrackerPatternDetailPageQuery(

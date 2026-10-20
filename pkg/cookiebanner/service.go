@@ -1041,6 +1041,7 @@ func (s *Service) CountCookieBannerSamples(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			var samples coredata.CookieBannerSamples
+
 			n, err := samples.CountByCookieBannerID(ctx, conn, scope, cookieBannerID)
 			if err != nil {
 				return err
@@ -1084,6 +1085,7 @@ func (s *Service) StartCookieBannerSample(
 			}
 
 			now := time.Now()
+
 			sample = coredata.CookieBannerSample{
 				ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
 				OrganizationID: banner.OrganizationID,
@@ -1740,6 +1742,7 @@ func (s *Service) PublishCookieBannerVersion(
 			}
 
 			var samples coredata.CookieBannerSamples
+
 			count, err := samples.CountByCookieBannerID(ctx, tx, scope, bannerID)
 			if err != nil {
 				return err
@@ -1753,6 +1756,7 @@ func (s *Service) PublishCookieBannerVersion(
 
 				now := time.Now()
 				frozenAt := now
+
 				empty := coredata.CookieBannerSample{
 					ID:             gid.New(scope.GetTenantID(), coredata.CookieBannerSampleEntityType),
 					OrganizationID: banner.OrganizationID,
