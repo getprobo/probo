@@ -4,6 +4,18 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.318.1] - 2026-10-20
+
+### Fixed
+
+- The task assignee picker and filter load assignee names within the
+  organization the console is viewing, and no longer reuse a cached
+  profile from another organization
+- Employee document approvals and signatures no longer send a completion
+  email to the signer; compliance-portal NDAs still do
+- The OAuth tokens list and new-token form are centered at the page max
+  width like other account screens
+
 ## [0.318.0] - 2026-10-19
 
 ### Changed
