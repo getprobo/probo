@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.256.0] - 2026-10-20
+
+### Added
+
+- Connector `Update API Key` replaces a connector's customer API key
+  without deleting the connector or losing its enabled accounts
+
 ## [0.255.0] - 2026-10-19
 
 ### Changed
