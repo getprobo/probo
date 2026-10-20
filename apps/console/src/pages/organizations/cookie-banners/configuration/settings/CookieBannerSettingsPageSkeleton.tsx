@@ -29,13 +29,11 @@ import {
   cookieBannerCategoriesSection,
   cookieBannerPage,
   cookieBannerSettingsSection,
-  cookieBannerThemeSection,
 } from "../../variants";
 
 export function CookieBannerSettingsPageSkeleton() {
   const settings = cookieBannerSettingsSection();
   const categories = cookieBannerCategoriesSection();
-  const theme = cookieBannerThemeSection();
 
   return (
     <div className={cookieBannerPage()}>
@@ -55,21 +53,6 @@ export function CookieBannerSettingsPageSkeleton() {
           <ButtonSkeleton size={2} className="w-32" />
         </div>
         <ListSkeleton count={4} />
-      </section>
-      <section className={theme.root()}>
-        <div className={theme.intro()}>
-          <div className={theme.heading()}>
-            <HeadingSkeleton size={4} className="w-20" />
-            <TextSkeleton size={2} className="w-full max-w-xl" />
-          </div>
-          <ButtonSkeleton size={2} className="w-36" />
-        </div>
-        <CardSkeleton size={2} className="h-56" />
-        <CardSkeleton size={2} className="h-70" />
-        <div className={theme.snippetBar()}>
-          <ButtonSkeleton size={2} className="w-28" />
-        </div>
-        <CardSkeleton size={2} className="h-40" />
       </section>
     </div>
   );

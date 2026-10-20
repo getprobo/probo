@@ -18,16 +18,36 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { ButtonSkeleton } from "@probo/ui/src/v2/Button/ButtonSkeleton";
 import { CardSkeleton } from "@probo/ui/src/v2/Card/CardSkeleton";
+import { HeadingSkeleton } from "@probo/ui/src/v2/typography/HeadingSkeleton";
+import { TextSkeleton } from "@probo/ui/src/v2/typography/TextSkeleton";
 
 import { CookieBannerPageHeaderSkeleton } from "../../_components/CookieBannerPageHeaderSkeleton";
-import { cookieBannerPage } from "../../variants";
+import { cookieBannerPage, cookieBannerThemeSection } from "../../variants";
 
 export function CookieBannerInstallPageSkeleton() {
+  const theme = cookieBannerThemeSection();
+
   return (
     <div className={cookieBannerPage()}>
       <CookieBannerPageHeaderSkeleton titleClassName="w-24" />
       <CardSkeleton size={2} className="h-80" />
+      <section className={theme.root()}>
+        <div className={theme.intro()}>
+          <div className={theme.heading()}>
+            <HeadingSkeleton size={4} className="w-20" />
+            <TextSkeleton size={2} className="w-full max-w-xl" />
+          </div>
+          <ButtonSkeleton size={2} className="w-36" />
+        </div>
+        <CardSkeleton size={2} className="h-56" />
+        <CardSkeleton size={2} className="h-70" />
+        <div className={theme.snippetBar()}>
+          <ButtonSkeleton size={2} className="w-28" />
+        </div>
+        <CardSkeleton size={2} className="h-40" />
+      </section>
     </div>
   );
 }

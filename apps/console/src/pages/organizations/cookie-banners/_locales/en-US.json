@@ -120,7 +120,7 @@
   },
   "settingsPage": {
     "title": "Settings",
-    "description": "Settings, categories, and theme for this cookie banner."
+    "description": "Settings and categories for this cookie banner."
   },
   "bannerLifecycleSection": {
     "title": "Banner Status",

@@ -120,7 +120,7 @@
   },
   "settingsPage": {
     "title": "Paramètres",
-    "description": "Paramètres, catégories et thème de cette bannière de cookies."
+    "description": "Paramètres et catégories de cette bannière de cookies."
   },
   "bannerLifecycleSection": {
     "title": "État de la bannière",

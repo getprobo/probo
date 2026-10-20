@@ -34,7 +34,6 @@ import { DeleteCookieBannerDialog } from "../_components/DeleteCookieBannerDialo
 
 import { BannerSettingsForm } from "./_components/BannerSettingsForm";
 import { CategoryList } from "./_components/CategoryList";
-import { ThemeSection } from "./_components/ThemeSection";
 
 export const cookieBannerSettingsPageQuery = graphql`
   query CookieBannerSettingsPageQuery($cookieBannerId: ID!) {
@@ -46,7 +45,6 @@ export const cookieBannerSettingsPageQuery = graphql`
         canDelete: permission(action: "core:cookie-banner:delete")
         ...BannerSettingsForm_cookieBanner
         ...CategoryList_cookieBanner
-        ...ThemeSection_cookieBanner
       }
     }
   }
@@ -95,7 +93,6 @@ export function CookieBannerSettingsPage({
       />
       <BannerSettingsForm cookieBannerKey={banner} />
       <CategoryList cookieBannerKey={banner} />
-      <ThemeSection cookieBannerKey={banner} />
       {banner.canDelete && (
         <DeleteCookieBannerDialog
           cookieBannerId={banner.id}

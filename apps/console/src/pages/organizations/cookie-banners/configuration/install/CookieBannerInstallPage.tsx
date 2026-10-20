@@ -29,6 +29,7 @@ import { CookieBannerPageHeader } from "../../_components/CookieBannerPageHeader
 import { cookieBannerPage } from "../../variants";
 
 import { InstallSnippetSection } from "./_components/InstallSnippetSection";
+import { ThemeSection } from "./_components/ThemeSection";
 
 export const cookieBannerInstallPageQuery = graphql`
   query CookieBannerInstallPageQuery($cookieBannerId: ID!) {
@@ -36,6 +37,7 @@ export const cookieBannerInstallPageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...InstallSnippetSection_cookieBanner
+        ...ThemeSection_cookieBanner
       }
     }
   }
@@ -67,6 +69,7 @@ export function CookieBannerInstallPage({
         description={t("installPage.description")}
       />
       <InstallSnippetSection cookieBannerKey={data.node} />
+      <ThemeSection cookieBannerKey={data.node} />
     </div>
   );
 }
