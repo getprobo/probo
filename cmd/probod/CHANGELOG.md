@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.320.0] - 2026-10-20
+
 ### Added
 
 - OVHcloud US and OVHcloud Canada are separate connectors, next to
@@ -12,6 +14,17 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   beside the existing EU pair. The console labels each one OVHcloud
   and shows the region as a flag. Connectors created before regions
   existed stay on OVHcloud EU.
+- Connector API keys can be replaced without deleting the connector,
+  preserving its name and enabled accounts
+
+### Fixed
+
+- Images and files imported from Linear are stored as private Probo
+  files so they render in task descriptions and comments
+- Removed SCIM users whose profiles must be retained no longer reappear
+  in the user list or get deleted repeatedly during synchronization
+- Compliance portal managers and access managers can open the employee
+  portal and sign policies without authorization errors
 
 ## [0.319.0] - 2026-10-20
 
