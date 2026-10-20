@@ -4,8 +4,11 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.27.0] - 2026-10-20
+
 ### Changed
 
+- Default `appVersion` is now `0.318.1`
 - `s3.accessKeyId` and `s3.secretAccessKey` are no longer unconditionally
   required when `seaweedfs.enabled=false` and `s3.endpoint` is empty. Leave
   both blank to authenticate via the AWS SDK default credential chain (EKS
