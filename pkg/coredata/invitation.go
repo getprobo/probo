@@ -204,12 +204,14 @@ WHERE
 	}
 
 	profileIDsByTenant := make(map[gid.TenantID][]gid.GID)
+
 	for _, row := range found {
 		tenantID := row.userID.TenantID()
 		profileIDsByTenant[tenantID] = append(profileIDsByTenant[tenantID], row.userID)
 	}
 
 	emailByProfileID := make(map[gid.GID]string, len(found))
+
 	for tenantID, profileIDs := range profileIDsByTenant {
 		var profiles MembershipProfiles
 		if err := profiles.LoadExistingByIDs(ctx, conn, NewScope(tenantID), profileIDs); err != nil {
