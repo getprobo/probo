@@ -50,7 +50,6 @@ import { cookieBannerPage, cookieBannerSettingsSection } from "../../variants";
 import { TrackerMaxAgeField } from "./_components/TrackerMaxAgeField";
 import { trackerTypeBadges } from "./_lib/trackerBadges";
 
-const DISPLAY_NAME_MAX_LENGTH = 255;
 const PATTERN_MAX_LENGTH = 255;
 const DESCRIPTION_MAX_LENGTH = 1000;
 
@@ -61,7 +60,7 @@ const serverFields: Record<string, string> = {
   tracker_type: "trackerType",
   pattern: "pattern",
   match_type: "pattern",
-  display_name: "displayName",
+  display_name: "pattern",
   description: "description",
 };
 
@@ -129,7 +128,6 @@ export function NewTrackerPatternPage({ queryRef }: NewTrackerPatternPageProps) 
   const organizationId = useOrganizationId();
   const { cookieBannerId } = useParams<{ cookieBannerId: string }>();
   const { card, fields, field, pair, actions } = cookieBannerSettingsSection();
-  const [displayName, setDisplayName] = useState("");
   const [pattern, setPattern] = useState("");
   const [trackerType, setTrackerType] = useState<keyof typeof trackerTypeBadges>("COOKIE");
   const [cookieCategoryId, setCookieCategoryId] = useState<string | null>(null);
@@ -201,7 +199,7 @@ export function NewTrackerPatternPage({ queryRef }: NewTrackerPatternPageProps) 
           trackerType,
           pattern: trimmedPattern,
           matchType: starCount(trimmedPattern) === 1 ? "GLOB" : "EXACT",
-          displayName: displayName.trim(),
+          displayName: trimmedPattern,
           description: trimmedDescription === "" ? undefined : trimmedDescription,
           ...(maxAgeSeconds == null ? {} : { maxAgeSeconds }),
         },
@@ -244,24 +242,6 @@ export function NewTrackerPatternPage({ queryRef }: NewTrackerPatternPageProps) 
       />
       <Card size={2} variant="soft" className={card()}>
         <Form className={fields()} errors={errors} onFormSubmit={handleSubmit}>
-          <Field
-            required
-            label={t("newTrackerPatternPage.fields.displayName")}
-            error={errors.displayName}
-          >
-            <TextField
-              name="displayName"
-              required
-              maxLength={DISPLAY_NAME_MAX_LENGTH}
-              value={displayName}
-              disabled={isCreating}
-              placeholder={t("newTrackerPatternPage.fields.displayNamePlaceholder")}
-              onValueChange={(value) => {
-                setDisplayName(value);
-                clearFieldError("displayName");
-              }}
-            />
-          </Field>
           <div className={field()}>
             <Field
               required

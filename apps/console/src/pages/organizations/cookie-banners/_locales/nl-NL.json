@@ -332,8 +332,6 @@
       "category": "Selecteer een categorie"
     },
     "fields": {
-      "displayName": "Weergavenaam",
-      "displayNamePlaceholder": "Google Analytics",
       "pattern": "Patroon",
       "patternPlaceholder": "_ga*",
       "patternHelp": "Eén * komt overeen met willekeurige tekst op die positie.",

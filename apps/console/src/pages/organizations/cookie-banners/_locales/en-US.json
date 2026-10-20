@@ -332,8 +332,6 @@
       "category": "Select a category"
     },
     "fields": {
-      "displayName": "Display name",
-      "displayNamePlaceholder": "Google Analytics",
       "pattern": "Pattern",
       "patternPlaceholder": "_ga*",
       "patternHelp": "One * matches any text in that position.",

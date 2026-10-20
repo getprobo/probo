@@ -40,7 +40,6 @@ export function NewTrackerPatternPageSkeleton() {
       <CookieBannerPageHeaderSkeleton titleClassName="w-40" />
       <Card size={2} variant="soft" className={card()}>
         <div className={fields()}>
-          <TextFieldSkeleton size={2} />
           <div className={field()}>
             <TextFieldSkeleton size={2} />
             <TextSkeleton size={1} className="w-72" />
