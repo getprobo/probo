@@ -4,6 +4,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- `evidence view` requests `fileName` and `mimeType` on File so the
+  console API accepts the query
+
 ## [0.254.0] - 2026-10-20
 
 ### Added
