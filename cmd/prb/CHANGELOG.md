@@ -4,6 +4,18 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.254.0] - 2026-10-20
+
+### Added
+
+- `connector update-api-key` replaces a connector's customer API key
+  without deleting the connector or losing its enabled accounts
+
+### Fixed
+
+- The `connector create` help examples no longer suggest OVHcloud
+  without its required region
+
 ## [0.253.0] - 2026-10-19
 
 ### Changed
