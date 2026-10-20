@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconFlagCA, IconFlagEU, IconFlagUS } from "@probo/ui";
+import { IconFlagEU, IconFlagUS } from "@probo/ui";
 import type { ComponentType } from "react";
 
 import { connectorProviderVisibleName, ovhcloudRegionLabel } from "../_lib/connectorProviderLabel";
@@ -26,7 +26,6 @@ import { connectorProviderVisibleName, ovhcloudRegionLabel } from "../_lib/conne
 const ovhcloudFlags: Record<string, ComponentType<{ size?: number }>> = {
   OVHCLOUD: IconFlagEU,
   OVHCLOUD_US: IconFlagUS,
-  OVHCLOUD_CA: IconFlagCA,
 };
 
 interface ConnectorProviderNameProps {

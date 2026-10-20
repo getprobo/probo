@@ -29,7 +29,6 @@ import (
 const (
 	OVHcloudRegionEU = "EU"
 	OVHcloudRegionUS = "US"
-	OVHcloudRegionCA = "CA"
 )
 
 // ovhcloudRegion is one OVHcloud API region. Each runs its own identity
@@ -43,14 +42,13 @@ type ovhcloudRegion struct {
 var ovhcloudRegions = map[string]ovhcloudRegion{
 	OVHcloudRegionEU: {authHost: "www.ovh.com", apiHost: "eu.api.ovh.com"},
 	OVHcloudRegionUS: {authHost: "us.ovhcloud.com", apiHost: "api.us.ovhcloud.com"},
-	OVHcloudRegionCA: {authHost: "ca.ovh.com", apiHost: "ca.api.ovh.com"},
 }
 
 // NormalizeOVHcloudRegion returns the canonical region code for raw.
 func NormalizeOVHcloudRegion(raw string) (string, error) {
 	region := strings.ToUpper(strings.TrimSpace(raw))
 	if _, ok := ovhcloudRegions[region]; !ok {
-		return "", fmt.Errorf("cannot resolve ovhcloud region: must be EU, US or CA")
+		return "", fmt.Errorf("cannot resolve ovhcloud region: must be EU or US")
 	}
 
 	return region, nil

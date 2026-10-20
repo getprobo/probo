@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Changed
+
+- OVHcloud Canada is removed. An account cannot be created in that
+  region yet, and the connector can be added again when one can
+
 ## [0.321.1] - 2026-10-21
 
 ### Fixed

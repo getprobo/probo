@@ -23,7 +23,6 @@
 const ovhcloudRegionLabels: Record<string, string> = {
   OVHCLOUD: "EU",
   OVHCLOUD_US: "US",
-  OVHCLOUD_CA: "Canada",
 };
 
 export function ovhcloudRegionLabel(provider: string): string | null {
@@ -31,13 +30,13 @@ export function ovhcloudRegionLabel(provider: string): string | null {
 }
 
 // The card shows a flag for the region, so the visible name stays "OVHcloud"
-// even when the provider label still carries EU, US, or Canada.
+// even when the provider label still carries EU or US.
 export function connectorProviderVisibleName(provider: string, name: string): string {
   if (ovhcloudRegionLabel(provider) == null) {
     return name;
   }
 
-  return name.replace(/ (EU|US|Canada)$/, "");
+  return name.replace(/ (EU|US)$/, "");
 }
 
 export function connectorProviderAccessibleName(provider: string, name: string): string {

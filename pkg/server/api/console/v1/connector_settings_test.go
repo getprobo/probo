@@ -199,7 +199,6 @@ func TestClientCredentialsTokenURL(t *testing.T) {
 		}{
 			{provider: coredata.ConnectorProviderOVHcloud, want: "https://www.ovh.com/auth/oauth2/token"},
 			{provider: coredata.ConnectorProviderOVHcloudUS, want: "https://us.ovhcloud.com/auth/oauth2/token"},
-			{provider: coredata.ConnectorProviderOVHcloudCA, want: "https://ca.ovh.com/auth/oauth2/token"},
 		} {
 			t.Run(string(tc.provider), func(t *testing.T) {
 				t.Parallel()

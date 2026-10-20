@@ -34,8 +34,8 @@ import (
 // ovhcloudRegistration is OVHcloud in the EU region.
 //
 // Two connect paths, both single-tenant: an OVHcloud credential is bound to
-// exactly one account, so there is no organisation to pick. US and Canada are
-// separate connectors; each region runs its own identity service.
+// exactly one account, so there is no organisation to pick. US is a
+// separate connector; each region runs its own identity service.
 func ovhcloudRegistration() *Registration {
 	return ovhcloudRegistrationFor(
 		coredata.ConnectorProviderOVHcloud,

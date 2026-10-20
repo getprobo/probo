@@ -814,7 +814,7 @@ func TestBuilder_Build_AccessReviewConnectors(t *testing.T) {
 		"ASANA", "NETLIFY", "CLICKUP", "MONDAY", "DATADOG",
 		"ZENDESK", "LINEAR", "GOOGLE_ANALYTICS", "SQUARE",
 		"CAL_COM", "CALENDLY", "ATTIO",
-		"OVHCLOUD", "OVHCLOUD_US", "OVHCLOUD_CA",
+		"OVHCLOUD", "OVHCLOUD_US",
 	}
 
 	env := requiredEnv()
@@ -855,8 +855,6 @@ func TestBuilder_Build_OVHcloudConnector(t *testing.T) {
 		env["PROBOD_CONNECTOR_OVHCLOUD_CLIENT_SECRET"] = "eu-secret"
 		env["PROBOD_CONNECTOR_OVHCLOUD_US_CLIENT_ID"] = "us-id"
 		env["PROBOD_CONNECTOR_OVHCLOUD_US_CLIENT_SECRET"] = "us-secret"
-		env["PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_ID"] = "ca-id"
-		env["PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_SECRET"] = "ca-secret"
 
 		b := NewBuilder(NewResolver(mockEnv(env)))
 		b.samlCertificate = "test-cert"
@@ -865,7 +863,7 @@ func TestBuilder_Build_OVHcloudConnector(t *testing.T) {
 		cfg, err := b.Build()
 		require.NoError(t, err)
 
-		require.Len(t, cfg.Probod.Connectors, 3)
+		require.Len(t, cfg.Probod.Connectors, 2)
 
 		byProvider := map[string]probodconfig.ConnectorConfig{}
 		for _, c := range cfg.Probod.Connectors {
@@ -879,7 +877,6 @@ func TestBuilder_Build_OVHcloudConnector(t *testing.T) {
 		}{
 			{"OVHCLOUD", "eu-id", "eu-secret"},
 			{"OVHCLOUD_US", "us-id", "us-secret"},
-			{"OVHCLOUD_CA", "ca-id", "ca-secret"},
 		} {
 			c := byProvider[tc.provider]
 			assert.Equal(t, "oauth2", string(c.Protocol))
@@ -891,7 +888,7 @@ func TestBuilder_Build_OVHcloudConnector(t *testing.T) {
 
 	t.Run("a region without its secret fails validation", func(t *testing.T) {
 		env := requiredEnv()
-		env["PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_ID"] = "ca-id"
+		env["PROBOD_CONNECTOR_OVHCLOUD_US_CLIENT_ID"] = "us-id"
 
 		b := NewBuilder(NewResolver(mockEnv(env)))
 		b.samlCertificate = "test-cert"
@@ -899,7 +896,7 @@ func TestBuilder_Build_OVHcloudConnector(t *testing.T) {
 
 		_, err := b.Build()
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "PROBOD_CONNECTOR_OVHCLOUD_CA_CLIENT_SECRET")
+		assert.Contains(t, err.Error(), "PROBOD_CONNECTOR_OVHCLOUD_US_CLIENT_SECRET")
 	})
 }
 

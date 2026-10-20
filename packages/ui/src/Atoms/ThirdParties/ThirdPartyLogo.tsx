@@ -153,7 +153,6 @@ const thirdParties: Record<string, FC<ComponentProps<"svg">>> = {
   OPENAI: OpenAI,
   OPENROUTER: OpenRouter,
   OVHCLOUD: OVHcloud,
-  OVHCLOUD_CA: OVHcloud,
   OVHCLOUD_US: OVHcloud,
   PAGERDUTY: PagerDuty,
   POSTHOG: PostHog,

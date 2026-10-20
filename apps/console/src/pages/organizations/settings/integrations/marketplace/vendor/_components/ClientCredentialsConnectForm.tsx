@@ -91,8 +91,7 @@ export function ClientCredentialsConnectForm({
   // typed scope cannot take effect. Each region is its own provider.
   const scopeField
     = provider.provider !== "OVHCLOUD"
-      && provider.provider !== "OVHCLOUD_US"
-      && provider.provider !== "OVHCLOUD_CA";
+      && provider.provider !== "OVHCLOUD_US";
 
   return (
     <ConnectForm

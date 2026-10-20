@@ -39,7 +39,6 @@ func TestOVHcloudRegionURLs(t *testing.T) {
 	}{
 		{"eu", "https://www.ovh.com/auth/oauth2/authorize", "https://www.ovh.com/auth/oauth2/token", "https://eu.api.ovh.com/1.0"},
 		{"US", "https://us.ovhcloud.com/auth/oauth2/authorize", "https://us.ovhcloud.com/auth/oauth2/token", "https://api.us.ovhcloud.com/1.0"},
-		{" CA ", "https://ca.ovh.com/auth/oauth2/authorize", "https://ca.ovh.com/auth/oauth2/token", "https://ca.api.ovh.com/1.0"},
 	} {
 		t.Run(tc.region, func(t *testing.T) {
 			t.Parallel()

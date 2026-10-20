@@ -139,10 +139,6 @@ enum ConnectorProvider
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOVHcloudUS"
         )
-    OVHCLOUD_CA
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.ConnectorProviderOVHcloudCA"
-        )
 }
 
 enum AzureEnvironment

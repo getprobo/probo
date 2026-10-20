@@ -79,13 +79,6 @@ func TestOVHcloudRegions(t *testing.T) {
 			wantProbe: "https://api.us.ovhcloud.com/1.0/me/identity/user",
 			wantAPI:   "https://api.us.ovhcloud.com/1.0",
 		},
-		{
-			provider:  coredata.ConnectorProviderOVHcloudCA,
-			wantAuth:  "https://ca.ovh.com/auth/oauth2/authorize",
-			wantToken: "https://ca.ovh.com/auth/oauth2/token",
-			wantProbe: "https://ca.api.ovh.com/1.0/me/identity/user",
-			wantAPI:   "https://ca.api.ovh.com/1.0",
-		},
 	} {
 		t.Run(string(tc.provider), func(t *testing.T) {
 			t.Parallel()
