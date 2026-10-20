@@ -1022,8 +1022,18 @@ func TestCookieBanner_Samples(t *testing.T) {
 		} `json:"stopCookieBannerSample"`
 	}
 
-	require.NoError(t, owner.Execute(stopQuery, map[string]any{
+	err := owner.Execute(stopQuery, map[string]any{
 		"input": map[string]any{"cookieBannerId": bannerID},
-	}, &stopResult))
-	assert.NotNil(t, stopResult.StopCookieBannerSample.CookieBannerSample.FrozenAt)
+	}, &stopResult)
+	require.Error(t, err)
+
+	var stopErrors testutil.GraphQLErrors
+	require.ErrorAs(t, err, &stopErrors)
+	require.Len(t, stopErrors, 1)
+	assert.Equal(t, "NOT_FOUND", stopErrors[0].Code())
+
+	require.NoError(t, owner.Execute(query, map[string]any{"id": bannerID}, &result))
+	require.NotNil(t, result.Node.LatestSample)
+	assert.Equal(t, startResult.StartCookieBannerSample.CookieBannerSample.ID, result.Node.LatestSample.ID)
+	assert.NotNil(t, result.Node.LatestSample.FrozenAt)
 }
