@@ -90,6 +90,13 @@ type (
 		Colwidth []int `json:"colwidth"`
 	}
 
+	// MentionAttrs contains attributes for mention nodes. ID is the
+	// mentioned membership profile GID; Label is its display name.
+	MentionAttrs struct {
+		ID    string `json:"id"`
+		Label string `json:"label"`
+	}
+
 	// LinkAttrs contains attributes for link marks.
 	LinkAttrs struct {
 		Href   string  `json:"href"`
@@ -121,6 +128,7 @@ const (
 	NodeTableRow       NodeType = "tableRow"
 	NodeTableCell      NodeType = "tableCell"
 	NodeTableHeader    NodeType = "tableHeader"
+	NodeMention        NodeType = "mention"
 
 	MarkStrong    MarkType = "bold"
 	MarkEm        MarkType = "italic"
@@ -208,6 +216,20 @@ func (n Node) FileAttrs() (FileAttrs, error) {
 
 	if err := json.Unmarshal(n.Attrs, &a); err != nil {
 		return a, fmt.Errorf("cannot parse file attrs: %w", err)
+	}
+
+	return a, nil
+}
+
+// MentionAttrs parses and returns the mention attributes.
+func (n Node) MentionAttrs() (MentionAttrs, error) {
+	var a MentionAttrs
+	if len(n.Attrs) == 0 {
+		return a, nil
+	}
+
+	if err := json.Unmarshal(n.Attrs, &a); err != nil {
+		return a, fmt.Errorf("cannot parse mention attrs: %w", err)
 	}
 
 	return a, nil

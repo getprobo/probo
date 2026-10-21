@@ -33,6 +33,7 @@ const (
 	NotificationTypeDocumentSignatureRequested NotificationType = "DOCUMENT_SIGNATURE_REQUESTED"
 	NotificationTypeDocumentApprovalRequested  NotificationType = "DOCUMENT_APPROVAL_REQUESTED"
 	NotificationTypeTaskAssigned               NotificationType = "TASK_ASSIGNED"
+	NotificationTypeTaskMentioned              NotificationType = "TASK_MENTIONED"
 )
 
 var (
@@ -46,6 +47,7 @@ func NotificationTypes() []NotificationType {
 		NotificationTypeDocumentSignatureRequested,
 		NotificationTypeDocumentApprovalRequested,
 		NotificationTypeTaskAssigned,
+		NotificationTypeTaskMentioned,
 	}
 }
 
@@ -53,7 +55,8 @@ func (v NotificationType) IsValid() bool {
 	switch v {
 	case NotificationTypeDocumentSignatureRequested,
 		NotificationTypeDocumentApprovalRequested,
-		NotificationTypeTaskAssigned:
+		NotificationTypeTaskAssigned,
+		NotificationTypeTaskMentioned:
 		return true
 	}
 

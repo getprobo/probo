@@ -22,7 +22,11 @@ type MenuButtonProps = {
   onClick: () => void;
 };
 
-export function MenuButton({ children, active, onClick }: PropsWithChildren<MenuButtonProps>) {
+export function MenuButton({
+  children,
+  active,
+  onClick,
+}: PropsWithChildren<MenuButtonProps>) {
   return (
     <button
       type="button"

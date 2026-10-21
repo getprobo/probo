@@ -41,6 +41,12 @@ type (
 	}
 )
 
+type (
+	notificationAttributes struct {
+		Title string `json:"title"`
+	}
+)
+
 func Insert(
 	ctx context.Context,
 	tx pg.Tx,
@@ -51,7 +57,7 @@ func Insert(
 		return fmt.Errorf("cannot insert notification: invalid type %q", req.Type)
 	}
 
-	attributes, err := json.Marshal(coredataNotificationAttributes(req.Title))
+	attributes, err := json.Marshal(notificationAttributes{Title: req.Title})
 	if err != nil {
 		return fmt.Errorf("cannot encode notification attributes: %w", err)
 	}
@@ -107,12 +113,56 @@ func InsertTaskAssignment(
 	return nil
 }
 
-type (
-	titleAttributes struct {
-		Title string `json:"title"`
-	}
-)
+// InsertTaskMentions notifies each mentioned profile that belongs to the
+// organization and is not deactivated. The actor is never notified.
+func InsertTaskMentions(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	taskID gid.GID,
+	taskName string,
+	mentionedIDs []gid.GID,
+	actorProfileID *gid.GID,
+) error {
+	recipientIDs := make([]gid.GID, 0, len(mentionedIDs))
+	for _, id := range mentionedIDs {
+		if actorProfileID != nil && *actorProfileID == id {
+			continue
+		}
 
-func coredataNotificationAttributes(title string) titleAttributes {
-	return titleAttributes{Title: title}
+		recipientIDs = append(recipientIDs, id)
+	}
+
+	if len(recipientIDs) == 0 {
+		return nil
+	}
+
+	var profiles coredata.MembershipProfiles
+	if err := profiles.LoadExistingByIDs(ctx, tx, scope, recipientIDs); err != nil {
+		return fmt.Errorf("cannot load mentioned profiles: %w", err)
+	}
+
+	for _, profile := range profiles {
+		if profile.OrganizationID != organizationID || profile.State == coredata.ProfileStateDeactivated {
+			continue
+		}
+
+		if err := Insert(
+			ctx,
+			tx,
+			scope,
+			InsertRequest{
+				OrganizationID:     organizationID,
+				RecipientProfileID: profile.ID,
+				Type:               coredata.NotificationTypeTaskMentioned,
+				SubjectID:          taskID,
+				Title:              taskName,
+			},
+		); err != nil {
+			return fmt.Errorf("cannot insert task mention notification: %w", err)
+		}
+	}
+
+	return nil
 }

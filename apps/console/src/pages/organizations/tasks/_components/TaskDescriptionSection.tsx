@@ -26,6 +26,7 @@ import { graphql, useFragment } from "react-relay";
 
 import type { TaskDescriptionSection_task$key } from "#/__generated__/core/TaskDescriptionSection_task.graphql";
 import { RichDescriptionEditor } from "#/pages/organizations/_components/RichDescriptionEditor";
+import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers";
 
 import { useUpdateTask } from "../_lib/useUpdateTask";
 
@@ -51,6 +52,7 @@ function TaskDescriptionSectionContent({
   const { t } = useTranslation("organizations/tasks");
   const task = useFragment(taskDescriptionSectionFragment, taskKey);
   const [updateTask] = useUpdateTask();
+  const mentionSource = useMentionMembers();
   const save = useCallback(
     async (content: string | null) => {
       await updateTask({
@@ -72,6 +74,7 @@ function TaskDescriptionSectionContent({
       ariaLabel={t("detailsPage.fields.description")}
       emptyLabel={t("detailsPage.noDescription")}
       placeholder={t("detailsPage.fields.descriptionPlaceholder")}
+      mentionSource={mentionSource}
       save={save}
     />
   );

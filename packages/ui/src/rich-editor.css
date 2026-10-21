@@ -81,6 +81,14 @@
         @apply text-txt-tertiary;
     }
 
+    .mention {
+        @apply inline-flex items-center rounded-1 bg-indigo-3 px-1.5 py-0.5 align-middle text-1 font-medium whitespace-nowrap text-indigo-11;
+    }
+
+    .mention-suggestion {
+        @apply rounded-1 bg-sand-3 px-0.5;
+    }
+
     table {
         @apply border border-border-mid border-collapse w-max max-w-full;
         tbody {

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { MentionSource } from "@probo/ui";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants/lite";
@@ -47,6 +48,7 @@ export interface RichDescriptionEditorProps {
   emptyLabel: string;
   placeholder?: string;
   saveDelayMs?: number;
+  mentionSource?: MentionSource;
   save: (content: string | null) => Promise<void>;
 }
 
@@ -57,6 +59,7 @@ export function RichDescriptionEditor({
   emptyLabel,
   placeholder,
   saveDelayMs = defaultSaveDelayMs,
+  mentionSource,
   save,
 }: RichDescriptionEditorProps) {
   const saveRef = useRef(save);
@@ -64,6 +67,7 @@ export function RichDescriptionEditor({
   const [draft, setDraft] = useState(saved);
   const [savedContent, setSavedContent] = useState(saved);
   const [dirty, setDirty] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [editorGeneration, setEditorGeneration] = useState(0);
 
   useEffect(() => {
@@ -76,7 +80,7 @@ export function RichDescriptionEditor({
 
   if (saved !== savedContent) {
     setSavedContent(saved);
-    if (!dirty) {
+    if (!dirty && !focused) {
       setDraft(saved);
       setEditorGeneration(generation => generation + 1);
     }
@@ -123,11 +127,21 @@ export function RichDescriptionEditor({
               content={draft}
               placeholder={placeholder}
               aria-label={ariaLabel}
+              mentionSource={mentionSource}
               onUploadingChange={(uploading) => {
                 uploadingRef.current = uploading;
                 if (uploading) {
                   persistDebounced.hold();
                 }
+              }}
+              onFocus={() => setFocused(true)}
+              onBlur={() => {
+                setFocused(false);
+                if (uploadingRef.current) {
+                  return;
+                }
+
+                persistDebounced.flush();
               }}
               onChangeContent={(next) => {
                 setDirty(true);
@@ -138,13 +152,6 @@ export function RichDescriptionEditor({
                 }
 
                 persistDebounced.schedule(next);
-              }}
-              onBlur={() => {
-                if (uploadingRef.current) {
-                  return;
-                }
-
-                persistDebounced.flush();
               }}
             />
           )

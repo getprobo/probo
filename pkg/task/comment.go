@@ -253,6 +253,10 @@ func (s *Service) CreateComment(
 				return err
 			}
 
+			if err := notifyNewMentions(ctx, conn, scope, task, "", taskComment.Content, taskComment.OwnerID); err != nil {
+				return err
+			}
+
 			if err := emitTaskCommentCreated(ctx, conn, scope, taskComment); err != nil {
 				return fmt.Errorf("cannot emit task comment created webhook: %w", err)
 			}
@@ -319,6 +323,25 @@ func (s *Service) UpdateComment(
 
 			if err := taskComment.Update(ctx, conn, scope); err != nil {
 				return fmt.Errorf("cannot update task comment: %w", err)
+			}
+
+			if req.Content != nil {
+				task := &coredata.Task{}
+				if err := task.LoadByID(ctx, conn, scope, taskComment.TaskID); err != nil {
+					return fmt.Errorf("cannot load task: %w", err)
+				}
+
+				if err := notifyNewMentions(
+					ctx,
+					conn,
+					scope,
+					task,
+					previousComment.Content,
+					taskComment.Content,
+					previousComment.OwnerID,
+				); err != nil {
+					return err
+				}
 			}
 
 			if err := emitTaskCommentUpdated(ctx, conn, scope, &previousComment, taskComment); err != nil {

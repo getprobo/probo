@@ -6,7 +6,8 @@
     "empty": "Aucune notification",
     "documentSignatureRequested": "{{title}} est prêt pour votre signature",
     "documentApprovalRequested": "{{title}} attend votre approbation",
-    "taskAssigned": "Vous avez été assigné(e) à {{title}}"
+    "taskAssigned": "Vous avez été assigné(e) à {{title}}",
+    "taskMentioned": "Vous avez été mentionné(e) dans {{title}}"
   },
   "size": {
     "B": "o",
@@ -1571,7 +1572,10 @@
       "uploadFailed": "Échec de l’envoi",
       "couldNotUpload": "Impossible d’envoyer {{fileName}}",
       "tooLarge": "{{fileName}} est trop volumineux",
-      "unsupported": "{{fileName}} n’est pas un fichier pris en charge"
+      "unsupported": "{{fileName}} n’est pas un fichier pris en charge",
+      "mentionMembers": "Mentionner un membre",
+      "mentionLoading": "Recherche…",
+      "mentionNoResults": "Aucun membre trouvé"
     },
     "documentClassification": {
       "public": "Public",

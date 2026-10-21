@@ -56,6 +56,8 @@ import {
 import { ImageExtension } from "./ImageExtension";
 import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
+import { getMentionStorage, MentionExtension, type MentionSource } from "./MentionExtension";
+import { MentionMenu } from "./MentionMenu/MentionMenu";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
 import { SlashCommandExtension } from "./SlashCommandExtension";
@@ -86,6 +88,7 @@ const coreExtensions = [
   CodeBlockExtension,
   LinkExtension,
   SlashCommandExtension,
+  MentionExtension,
   Blockquote,
   BulletList,
   OrderedList,
@@ -190,6 +193,7 @@ type RichEditorProps = ComponentProps<"div"> & {
   initialContent?: Content;
   onPresence?: (anchor: number, head: number) => void;
   suspendContentChanges?: boolean;
+  mentionSource?: MentionSource;
 };
 
 function parseContent(content: string): Content {
@@ -220,6 +224,7 @@ export function RichEditor(props: RichEditorProps) {
     initialContent: initialContentOverride,
     onPresence,
     suspendContentChanges = false,
+    mentionSource,
     ...divProps
   } = props;
   const { t } = useTranslation();
@@ -407,6 +412,17 @@ export function RichEditor(props: RichEditorProps) {
     setPlaceholder(editor, placeholder);
   }, [editor, placeholder]);
 
+  useLayoutEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    const storage = getMentionStorage(editor);
+    if (storage) {
+      storage.source = mentionSource ?? null;
+    }
+  }, [editor, mentionSource]);
+
   useEffect(() => {
     if (!editor) {
       return;
@@ -434,6 +450,7 @@ export function RichEditor(props: RichEditorProps) {
             <TableCellMenu editor={editor} />
             <TableColumnMenu editor={editor} />
             <TableRowMenu editor={editor} />
+            <MentionMenu editor={editor} />
           </>
         )}
 

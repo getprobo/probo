@@ -144,6 +144,14 @@ func (r *mdRenderer) renderNode(n Node) error {
 	case NodeHardBreak:
 		r.buf.WriteByte('\\')
 		r.newLine()
+	case NodeMention:
+		attrs, err := n.MentionAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render mention node: %w", err)
+		}
+
+		r.ensurePrefix()
+		r.buf.WriteString(escapeMarkdown("@" + attrs.Label))
 	case NodeText:
 		return r.renderText(n)
 	case NodeImage:

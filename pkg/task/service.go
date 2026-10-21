@@ -285,6 +285,10 @@ func (s *Service) Create(
 				return err
 			}
 
+			if err := notifyNewMentions(ctx, conn, scope, task, "", task.Content, actorID); err != nil {
+				return err
+			}
+
 			if err := emitTaskCreated(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot emit task created webhook: %w", err)
 			}
@@ -679,6 +683,12 @@ func (s *Service) Update(
 				}
 			}
 
+			if req.Content != nil {
+				if err := notifyNewMentions(ctx, conn, scope, task, oldTask.Content, task.Content, actorID); err != nil {
+					return err
+				}
+			}
+
 			if internalControlsReplaced {
 				if err := InsertInternalControlActivities(
 					ctx,
@@ -926,6 +936,40 @@ func notifyTaskAssignment(
 		actorID,
 	); err != nil {
 		return fmt.Errorf("cannot insert task assignment notification: %w", err)
+	}
+
+	return nil
+}
+
+func notifyNewMentions(
+	ctx context.Context,
+	conn pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	oldContent string,
+	newContent string,
+	actorID *gid.GID,
+) error {
+	mentionedIDs, err := prosemirror.NewlyMentionedProfileIDs(oldContent, newContent)
+	if err != nil {
+		return fmt.Errorf("cannot collect new mentions: %w", err)
+	}
+
+	if len(mentionedIDs) == 0 {
+		return nil
+	}
+
+	if err := notification.InsertTaskMentions(
+		ctx,
+		conn,
+		scope,
+		task.OrganizationID,
+		task.ID,
+		task.Name,
+		mentionedIDs,
+		actorID,
+	); err != nil {
+		return fmt.Errorf("cannot insert task mention notifications: %w", err)
 	}
 
 	return nil

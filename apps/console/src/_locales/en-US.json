@@ -5,7 +5,8 @@
     "empty": "No notifications",
     "documentSignatureRequested": "{{title}} is ready for your signature",
     "documentApprovalRequested": "{{title}} is waiting for your approval",
-    "taskAssigned": "You were assigned {{title}}"
+    "taskAssigned": "You were assigned {{title}}",
+    "taskMentioned": "You were mentioned in {{title}}"
   },
   "size": {
     "B": "B",
@@ -1059,7 +1060,10 @@
       "uploadFailed": "Upload failed",
       "couldNotUpload": "Could not upload {{fileName}}",
       "tooLarge": "{{fileName}} is too large",
-      "unsupported": "{{fileName}} is not a supported file"
+      "unsupported": "{{fileName}} is not a supported file",
+      "mentionMembers": "Mention a member",
+      "mentionLoading": "Searching…",
+      "mentionNoResults": "No members found"
     },
     "documentClassification": {
       "public": "Public",

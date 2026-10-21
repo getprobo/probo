@@ -5,7 +5,8 @@
     "empty": "No hay notificaciones",
     "documentSignatureRequested": "{{title}} está listo para su firma",
     "documentApprovalRequested": "{{title}} espera su aprobación",
-    "taskAssigned": "Se le asignó {{title}}"
+    "taskAssigned": "Se le asignó {{title}}",
+    "taskMentioned": "Se le ha mencionado en {{title}}"
   },
   "topBar": {
     "tagline": "Portal del empleado"

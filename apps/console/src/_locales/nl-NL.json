@@ -5,7 +5,8 @@
     "empty": "Geen meldingen",
     "documentSignatureRequested": "{{title}} is klaar voor uw handtekening",
     "documentApprovalRequested": "{{title}} wacht op uw goedkeuring",
-    "taskAssigned": "{{title}} is aan u toegewezen"
+    "taskAssigned": "{{title}} is aan u toegewezen",
+    "taskMentioned": "U bent vermeld in {{title}}"
   },
   "size": {
     "B": "B",
@@ -1570,7 +1571,10 @@
       "uploadFailed": "Uploaden mislukt",
       "couldNotUpload": "Kan {{fileName}} niet uploaden",
       "tooLarge": "{{fileName}} is te groot",
-      "unsupported": "{{fileName}} is geen ondersteund bestand"
+      "unsupported": "{{fileName}} is geen ondersteund bestand",
+      "mentionMembers": "Een lid vermelden",
+      "mentionLoading": "Zoeken…",
+      "mentionNoResults": "Geen leden gevonden"
     },
     "documentClassification": {
       "public": "Openbaar",
