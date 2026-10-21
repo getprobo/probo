@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Built with Go 1.27.3 (up from 1.27.2) to pick up the standard-library
+  security fix in `crypto/x509` (CVE-2026-111943)
+
 ## [0.321.0] - 2026-10-21
 
 ### Added
