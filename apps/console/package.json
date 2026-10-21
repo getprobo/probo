@@ -16,6 +16,7 @@
     "@probo/coredata": "^1.0.0",
     "@probo/helpers": "^1.0.0",
     "@probo/hooks": "1.0.0",
+    "@probo/hotkeys": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@probo/react-lazy": "1.0.0",
     "@probo/relay": "^1.0.0",

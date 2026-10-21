@@ -8,6 +8,7 @@ const appDirs = ["apps/console/**", "apps/compliance-portal/**", "apps/employee-
 const reactDirs = [
   ...appDirs,
   "packages/ui/**",
+  "packages/hotkeys/**",
   "packages/relay/**",
   "packages/routes/**",
   "packages/tasks/**",

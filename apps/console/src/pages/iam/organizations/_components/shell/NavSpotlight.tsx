@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { CompassIcon } from "@phosphor-icons/react";
+import { useHotkeys } from "@probo/hotkeys";
 import { Combobox } from "@probo/ui/src/v2/Combobox/Combobox";
 import { ComboboxEmpty } from "@probo/ui/src/v2/Combobox/ComboboxEmpty";
 import { ComboboxInput } from "@probo/ui/src/v2/Combobox/ComboboxInput";
@@ -29,7 +30,7 @@ import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 import { useNavigate } from "react-router";
@@ -67,16 +68,6 @@ export interface NavSpotlightProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function isSpotlightShortcut(event: KeyboardEvent): boolean {
-  if (event.repeat || event.altKey || event.shiftKey) {
-    return false;
-  }
-  if (event.key.toLowerCase() !== "k") {
-    return false;
-  }
-  return event.metaKey || event.ctrlKey;
-}
-
 export function NavSpotlight({
   organizationKey,
   slackbotAvailable,
@@ -108,19 +99,10 @@ export function NavSpotlight({
     );
   }, [organizationId, permissions, slackbotAvailable, t]);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (!isSpotlightShortcut(event)) {
-        return;
-      }
-      event.preventDefault();
-      setQueryEmpty(true);
-      onOpenChange(!open);
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onOpenChange, open]);
+  useHotkeys("mod+k", () => {
+    setQueryEmpty(true);
+    onOpenChange(!open);
+  }, { preventDefault: true });
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);

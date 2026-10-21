@@ -1,0 +1,19 @@
+{
+  "name": "@probo/hotkeys",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Small hotkey bindings for Probo frontends",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "6.0.2"
+  }
+}

@@ -24,7 +24,7 @@ import { useCallback, useState } from "react";
 
 import { SearchShortcutHint, shortcutAria } from "#/components/SearchShortcutHint/SearchShortcutHint";
 
-import { useSearchFieldShortcut } from "./useSearchFieldShortcut";
+import { useFocusTarget } from "./useFocusTarget";
 
 export type SearchFieldProps = Omit<TextFieldProps, "icon" | "ref" | "suffix">;
 
@@ -38,7 +38,7 @@ function fieldText(value: TextFieldProps["value"]) {
 export function SearchField(props: SearchFieldProps) {
   const { defaultValue, onValueChange, value, ...rest } = props;
   const [input, setInput] = useState<HTMLInputElement | null>(null);
-  const isTarget = useSearchFieldShortcut(input);
+  const isTarget = useFocusTarget(input, "f");
   const [uncontrolledValue, setUncontrolledValue] = useState(() => fieldText(defaultValue));
   // `value === undefined` matches Base UI: null is still a controlled value.
   const text = value === undefined ? uncontrolledValue : fieldText(value);
