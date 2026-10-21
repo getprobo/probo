@@ -18,6 +18,47 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
+-- Collaboration state is one CRDT per document, created lazily the first time
+-- the document is opened for editing. Keying on document_id keeps document
+-- creation untouched and lets deletion cascade.
+CREATE TABLE collaboration_documents (
+    tenant_id TEXT NOT NULL,
+    document_id TEXT PRIMARY KEY REFERENCES documents(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
+    snapshot BYTEA NOT NULL,
+    heads BYTEA NOT NULL,
+    revision BIGINT NOT NULL,
+    snapshot_revision BIGINT NOT NULL,
+    change_revision BIGINT NOT NULL,
+    seeded BOOLEAN NOT NULL,
+    seed_claimed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE collaboration_changes (
+    tenant_id TEXT NOT NULL,
+    document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
+    revision BIGINT NOT NULL,
+    change_hash BYTEA NOT NULL CHECK (octet_length(change_hash) = 32),
+    change_bytes BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (document_id, change_hash),
+    UNIQUE (document_id, revision)
+);
+
+CREATE TABLE collaboration_actors (
+    tenant_id TEXT NOT NULL,
+    document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id),
+    actor_id BYTEA NOT NULL,
+    identity_id TEXT NOT NULL REFERENCES identities(id),
+    profile_id TEXT REFERENCES iam_membership_profiles(id) ON UPDATE CASCADE ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (document_id, actor_id)
+);
+
 -- The document row is the live document. Versions are frozen snapshots.
 ALTER TABLE documents
     ADD COLUMN title TEXT,
@@ -73,22 +114,36 @@ ALTER TABLE documents
 
 CREATE INDEX documents_search_idx ON documents USING gin(search_vector);
 
+DELETE FROM document_versions WHERE status = 'DRAFT';
+
+-- Postgres cannot drop an enum label. The partial index compares status, so
+-- it has to go before the type is replaced.
+DROP INDEX document_one_active_version_idx;
+
 -- The same number can exist on a refused snapshot and the row that replaces it.
 -- Only one published row may hold that number.
 ALTER TABLE document_versions
     DROP CONSTRAINT document_versions_document_id_major_minor_key;
 
+ALTER TYPE document_version_status RENAME TO document_version_status_old;
+
+CREATE TYPE document_version_status AS ENUM (
+    'PENDING_APPROVAL',
+    'PUBLISHED',
+    'REJECTED',
+    'VOIDED'
+);
+
+ALTER TABLE document_versions
+    ALTER COLUMN status TYPE document_version_status
+    USING status::text::document_version_status;
+
+DROP TYPE document_version_status_old;
+
 CREATE UNIQUE INDEX document_versions_one_published_number_idx
     ON document_versions (document_id, major, minor)
     WHERE status = 'PUBLISHED';
 
-DROP INDEX document_one_active_version_idx;
-
 CREATE UNIQUE INDEX document_one_pending_approval_idx
     ON document_versions (document_id)
     WHERE status = 'PENDING_APPROVAL';
-
-DELETE FROM document_versions WHERE status = 'DRAFT';
-
-ALTER TYPE document_version_status ADD VALUE 'REJECTED';
-ALTER TYPE document_version_status ADD VALUE 'VOIDED';
