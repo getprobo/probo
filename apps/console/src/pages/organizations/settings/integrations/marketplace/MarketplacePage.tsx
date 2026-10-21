@@ -18,10 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretLeftIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -34,6 +33,7 @@ import { useTranslation } from "react-i18next";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { MarketplacePageQuery } from "#/__generated__/core/MarketplacePageQuery.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 
@@ -186,8 +186,7 @@ export function MarketplacePage({ queryRef }: MarketplacePageProps) {
         {canCreateConnector && (
           <div className={tools()}>
             <div className={search()}>
-              <TextField
-                icon={<MagnifyingGlassIcon />}
+              <SearchField
                 value={searchQuery}
                 onValueChange={setSearchQuery}
                 placeholder={t("listPage.searchPlaceholder")}

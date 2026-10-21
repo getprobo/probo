@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretDownIcon, MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, PlusIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
@@ -36,6 +35,7 @@ import { useLocation, useSearchParams } from "react-router";
 import type { AccessReviewSourcesPageFragment$key } from "#/__generated__/core/AccessReviewSourcesPageFragment.graphql";
 import type { AccessReviewSourcesPagePaginationQuery } from "#/__generated__/core/AccessReviewSourcesPagePaginationQuery.graphql";
 import type { AccessReviewSourcesPageQuery } from "#/__generated__/core/AccessReviewSourcesPageQuery.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { NotFoundError } from "#/lib/relay/errors";
 
 import { AccessReviewSourceListItem } from "../_components/AccessReviewSourceListItem";
@@ -240,8 +240,7 @@ export function AccessReviewSourcesPage({ queryRef }: AccessReviewSourcesPagePro
       <div className={list()}>
         <div className={tools()}>
           <div className={search()}>
-            <TextField
-              icon={<MagnifyingGlassIcon />}
+            <SearchField
               value={searchQuery}
               onValueChange={setSearchQuery}
               placeholder={t("accessReviewSourcesPage.searchPlaceholder")}

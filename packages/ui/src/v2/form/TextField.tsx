@@ -33,19 +33,27 @@ export type TextFieldProps
       variant?: "classic" | "surface" | "soft";
       // Leading icon slot (e.g. a MagnifyingGlassIcon for search).
       icon?: ReactNode;
+      // Trailing slot (e.g. a keyboard shortcut hint).
+      suffix?: ReactNode;
     };
 
 // Single-line text input on a bordered surface. The container is the top-level
 // node; all native input props spread onto the inner control. Controlled with
 // Base UI's `value` / `onValueChange` (or native `value` / `onChange`).
 export function TextField(props: TextFieldProps) {
-  const { className, size, variant, icon, ...inputProps } = props;
-  const { root, icon: iconSlot, input } = textField({ size, variant });
+  const { className, size, variant, icon, suffix, ...inputProps } = props;
+  const {
+    root,
+    icon: iconSlot,
+    input,
+    suffix: suffixSlot,
+  } = textField({ size, variant });
 
   return (
     <div className={root({ className })}>
       {icon != null && <span className={iconSlot()}>{icon}</span>}
       <Input className={input()} {...inputProps} />
+      {suffix != null && <span className={suffixSlot()}>{suffix}</span>}
     </div>
   );
 }

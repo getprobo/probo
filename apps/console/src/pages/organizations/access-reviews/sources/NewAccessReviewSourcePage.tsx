@@ -18,12 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { CaretLeftIcon, MagnifyingGlassIcon, PlugIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, PlugIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { ButtonLink } from "@probo/ui/src/v2/Button/ButtonLink";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
@@ -36,6 +35,7 @@ import { ConnectionHandler } from "relay-runtime";
 
 import type { accessReviewSourceMutationsCreateMutation } from "#/__generated__/core/accessReviewSourceMutationsCreateMutation.graphql";
 import type { NewAccessReviewSourcePageQuery } from "#/__generated__/core/NewAccessReviewSourcePageQuery.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
@@ -263,8 +263,7 @@ export function NewAccessReviewSourcePage({ queryRef }: NewAccessReviewSourcePag
                     </div>
                     <div className={list()}>
                       <div className={search()}>
-                        <TextField
-                          icon={<MagnifyingGlassIcon />}
+                        <SearchField
                           value={searchQuery}
                           onValueChange={setSearchQuery}
                           placeholder={t("newAccessReviewSourcePage.searchPlaceholder")}

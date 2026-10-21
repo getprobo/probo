@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { CompassIcon } from "@phosphor-icons/react";
 import { Combobox } from "@probo/ui/src/v2/Combobox/Combobox";
 import { ComboboxEmpty } from "@probo/ui/src/v2/Combobox/ComboboxEmpty";
 import { ComboboxInput } from "@probo/ui/src/v2/Combobox/ComboboxInput";
@@ -35,6 +36,7 @@ import { useNavigate } from "react-router";
 
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavSpotlight_organization$key } from "#/__generated__/iam/NavSpotlight_organization.graphql";
+import { SearchShortcutHint, shortcutAria } from "#/components/SearchShortcutHint/SearchShortcutHint";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { visibleNavDestinations } from "#/pages/iam/organizations/_lib/navDestinations";
 import {
@@ -83,6 +85,7 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
     organization,
   );
   const [open, setOpen] = useState(false);
+  const [queryEmpty, setQueryEmpty] = useState(true);
   const slots = navSpotlight();
 
   const destinations = useMemo(() => {
@@ -105,6 +108,7 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
         return;
       }
       event.preventDefault();
+      setQueryEmpty(true);
       setOpen(current => !current);
     }
 
@@ -112,16 +116,23 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setQueryEmpty(true);
+    }
+  }
+
   function onValueChange(destination: SpotlightDestination | null) {
     if (destination == null) {
       return;
     }
     void navigate(destination.to);
-    setOpen(false);
+    onOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
         <DialogBody>
@@ -132,11 +143,21 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
             itemToStringLabel={destination => `${destination.label} ${destination.groupLabel}`}
             inline
             open={open}
-            onOpenChange={setOpen}
+            onOpenChange={onOpenChange}
             autoHighlight
           >
             <ComboboxInputGroup>
-              <ComboboxInput placeholder={t("nav.spotlight.placeholder")} />
+              <span className={slots.icon()}>
+                <CompassIcon />
+              </span>
+              <ComboboxInput
+                placeholder={t("nav.spotlight.placeholder")}
+                aria-keyshortcuts={shortcutAria("K")}
+                onInput={(event) => {
+                  setQueryEmpty(event.currentTarget.value.length === 0);
+                }}
+              />
+              {queryEmpty && <SearchShortcutHint shortcut="K" />}
             </ComboboxInputGroup>
             <ComboboxEmpty>{t("nav.spotlight.empty")}</ComboboxEmpty>
             <ComboboxList<SpotlightDestination> className={slots.list()}>

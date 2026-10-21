@@ -28,6 +28,11 @@ import { TaskListDueDateFilter } from "./TaskListDueDateFilter";
 import { TaskListSearchField } from "./TaskListSearchField";
 import { TaskListStatusFilter } from "./TaskListStatusFilter";
 
+export interface TaskListToolbarSearchProps {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
 export interface TaskListToolbarProps {
   query: string;
   onQueryChange: (value: string) => void;
@@ -35,6 +40,8 @@ export interface TaskListToolbarProps {
   onStateChange: (value: TaskState | null) => void;
   due: TaskDueFilter | null;
   onDueChange: (value: TaskDueFilter | null) => void;
+  // Replaces the default search field. The toolbar keeps the search slot width.
+  renderSearch?: (props: TaskListToolbarSearchProps) => ReactNode;
   children?: ReactNode;
 }
 
@@ -45,13 +52,21 @@ export function TaskListToolbar({
   onStateChange,
   due,
   onDueChange,
+  renderSearch,
   children,
 }: TaskListToolbarProps) {
-  const { tools, filters } = taskListToolbar();
+  const { tools, filters, search } = taskListToolbar();
+  const searchField = renderSearch == null
+    ? <TaskListSearchField value={query} onValueChange={onQueryChange} />
+    : (
+        <div className={search()}>
+          {renderSearch({ value: query, onValueChange: onQueryChange })}
+        </div>
+      );
 
   return (
     <div className={tools()}>
-      <TaskListSearchField value={query} onValueChange={onQueryChange} />
+      {searchField}
       <div className={filters()}>
         <TaskListStatusFilter value={state} onValueChange={onStateChange} />
         <TaskListDueDateFilter value={due} onValueChange={onDueChange} />

@@ -29,11 +29,9 @@ import {
   DropdownItem,
   FileButton,
   IconFolderUpload,
-  IconMagnifyingGlass,
   IconPencil,
   IconPlusLarge,
   IconTrashCan,
-  Input,
   Option,
   PageHeader,
   Select,
@@ -70,6 +68,7 @@ import type {
   InternalControlState,
 } from "#/__generated__/core/InternalControlsPageRefetchQuery.graphql";
 import type { InternalControlsPageRowFragment$key } from "#/__generated__/core/InternalControlsPageRowFragment.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -341,8 +340,8 @@ export default function InternalControlsPage({ queryRef }: InternalControlsPageP
       </PageHeader>
 
       <div className="flex items-center gap-4">
-        <Input
-          icon={IconMagnifyingGlass}
+        <SearchField
+          className="w-full"
           placeholder={t("internalControlsPage.filters.searchPlaceholder")}
           value={queryFilter ?? ""}
           onValueChange={handleQueryFilterChange}

@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
@@ -34,6 +32,7 @@ import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import type { IntegrationsConnectors_organization$key } from "#/__generated__/core/IntegrationsConnectors_organization.graphql";
 import type { IntegrationsConnectors_query$key } from "#/__generated__/core/IntegrationsConnectors_query.graphql";
 import type { IntegrationsConnectorsRefetchQuery } from "#/__generated__/core/IntegrationsConnectorsRefetchQuery.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import {
   type ConnectorConnectionStatus,
   groupByProvider,
@@ -147,8 +146,7 @@ export function IntegrationsConnectors({
       <div className={list()}>
         <div className={tools()}>
           <div className={search()}>
-            <TextField
-              icon={<MagnifyingGlassIcon />}
+            <SearchField
               value={searchInput}
               onValueChange={setSearchInput}
               placeholder={t("listPage.searchConnectorsPlaceholder")}

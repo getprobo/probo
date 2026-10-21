@@ -22,6 +22,7 @@ import { formatError } from "@probo/helpers";
 import {
   TaskListToolbar,
   TaskListView,
+  TASKS_NAMESPACE,
   type TaskState,
 } from "@probo/tasks";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
@@ -34,6 +35,7 @@ import type { TasksPageList_organization$key } from "#/__generated__/core/TasksP
 import type { TasksPageList_task$key } from "#/__generated__/core/TasksPageList_task.graphql";
 import type { TasksPageListRefetchQuery } from "#/__generated__/core/TasksPageListRefetchQuery.graphql";
 import type { TasksPageListUpdateRankMutation } from "#/__generated__/core/TasksPageListUpdateRankMutation.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { TaskListItem } from "#/components/tasks/TaskListItem";
 import { TaskUserFilter } from "#/components/tasks/TaskUserFilter";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
@@ -179,6 +181,7 @@ export interface TasksPageListProps {
 
 export function TasksPageList({ organizationKey }: TasksPageListProps) {
   const { t } = useTranslation();
+  const { t: tTasks } = useTranslation(TASKS_NAMESPACE);
   const organizationId = useOrganizationId();
   const {
     query,
@@ -486,6 +489,14 @@ export function TasksPageList({ organizationKey }: TasksPageListProps) {
         onStateChange={setState}
         due={due}
         onDueChange={setDue}
+        renderSearch={({ value, onValueChange }) => (
+          <SearchField
+            value={value}
+            onValueChange={onValueChange}
+            placeholder={tTasks("searchPlaceholder")}
+            aria-label={tTasks("searchPlaceholder")}
+          />
+        )}
       >
         <div className={userFilter()}>
           <TaskUserFilter value={assignee} onValueChange={setAssignedToId} />

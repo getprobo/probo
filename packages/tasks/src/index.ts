@@ -57,6 +57,7 @@ export {
 export {
   TaskListToolbar,
   type TaskListToolbarProps,
+  type TaskListToolbarSearchProps,
 } from "./TaskListToolbar/TaskListToolbar";
 export {
   TaskListView,

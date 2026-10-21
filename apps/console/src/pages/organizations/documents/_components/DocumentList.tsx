@@ -20,7 +20,7 @@
 
 import { documentClassifications, documentTypes, documentWriteModes } from "@probo/helpers";
 import { useList } from "@probo/hooks";
-import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconMagnifyingGlass, IconSignature, IconTrashCan, IconUpload, Input, Option, Select, Tbody, Th, Thead, Tr } from "@probo/ui";
+import { Button, Card, Checkbox, IconArchive, IconArrowDown, IconCrossLargeX, IconSignature, IconTrashCan, IconUpload, Option, Select, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { type ComponentProps, use, useEffect, useRef, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { usePaginationFragment } from "react-relay";
@@ -31,6 +31,7 @@ import type { DocumentListBulkUnarchiveMutation } from "#/__generated__/core/Doc
 import type { DocumentListFragment$key } from "#/__generated__/core/DocumentListFragment.graphql";
 import type { DocumentClassification, DocumentOrderField, DocumentsListQuery, DocumentType, DocumentWriteMode } from "#/__generated__/core/DocumentsListQuery.graphql";
 import { BulkExportDialog, type BulkExportDialogRef } from "#/components/documents/BulkExportDialog";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { type Order, SortableTable, SortableTh } from "#/components/SortableTable";
 import { useBulkExportDocumentsMutation } from "#/hooks/graph/DocumentGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
@@ -336,8 +337,8 @@ export function DocumentList(props: {
         onSuccess={clear}
       />
       <div className="flex items-center gap-4">
-        <Input
-          icon={IconMagnifyingGlass}
+        <SearchField
+          className="w-full"
           placeholder={t("documentList.filters.searchPlaceholder")}
           value={queryInput}
           onValueChange={setQueryInput}

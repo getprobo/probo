@@ -18,8 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconMagnifyingGlass, Input } from "@probo/ui";
 import { useTranslation } from "react-i18next";
+
+import { SearchField } from "#/components/SearchField/SearchField";
 
 import { FilterMultiSelect, type FilterMultiSelectOption } from "./FilterMultiSelect";
 
@@ -124,8 +125,8 @@ export function AccessEntriesToolbar({
         />
       </div>
       <div className="min-w-60 flex-1 max-sm:w-full max-sm:min-w-0">
-        <Input
-          icon={IconMagnifyingGlass}
+        <SearchField
+          className="w-full"
           value={emailFilter}
           onValueChange={onEmailFilterChange}
           placeholder={t("campaignDetailPage.filters.searchEmail")}

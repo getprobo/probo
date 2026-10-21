@@ -45,6 +45,14 @@ export function WithIcon() {
   );
 }
 
+export function WithSuffix() {
+  return (
+    <div className="w-60">
+      <TextField icon={<MagnifyingGlassIcon />} suffix="⌘F" placeholder="Search..." />
+    </div>
+  );
+}
+
 export function Variants() {
   return (
     <div className="flex w-60 flex-col gap-3">

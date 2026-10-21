@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
 import { useTranslation } from "react-i18next";
+
+import { SearchField } from "#/components/SearchField/SearchField";
 
 import { useUsersListSearch } from "../_lib/useUsersListSearch";
 import { usersList } from "../variants";
@@ -32,8 +32,7 @@ export function UsersListSearch() {
 
   return (
     <div className={search()}>
-      <TextField
-        icon={<MagnifyingGlassIcon />}
+      <SearchField
         value={queryInput}
         onValueChange={setQueryInput}
         placeholder={t("usersList.searchPlaceholder")}

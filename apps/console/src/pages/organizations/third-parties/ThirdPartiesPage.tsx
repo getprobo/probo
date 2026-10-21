@@ -21,11 +21,9 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   Button,
-  IconMagnifyingGlass,
   IconPageTextLine,
   IconPlusLarge,
   IconUpload,
-  Input,
   PageHeader,
   Tbody,
   Th,
@@ -46,6 +44,7 @@ import { useDebounceCallback } from "usehooks-ts";
 import type { ThirdPartiesPageFragment$key } from "#/__generated__/core/ThirdPartiesPageFragment.graphql";
 import type { ThirdPartiesPageQuery } from "#/__generated__/core/ThirdPartiesPageQuery.graphql";
 import type { ThirdPartiesPageRefetchQuery } from "#/__generated__/core/ThirdPartiesPageRefetchQuery.graphql";
+import { SearchField } from "#/components/SearchField/SearchField";
 import { SortableTable, SortableTh } from "#/components/SortableTable";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
@@ -214,8 +213,7 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
           )}
         </div>
       </PageHeader>
-      <Input
-        icon={IconMagnifyingGlass}
+      <SearchField
         placeholder={t("thirdPartiesPage.searchPlaceholder")}
         value={search}
         onValueChange={handleSearchChange}

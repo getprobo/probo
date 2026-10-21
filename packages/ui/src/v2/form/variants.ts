@@ -21,7 +21,7 @@
 import { tv } from "tailwind-variants/lite";
 
 // Text input (Radix "Text Field" over Base UI's Input). A bordered surface on
-// the neutral background with an optional leading icon slot.
+// the neutral background with an optional leading icon and trailing suffix.
 export const textField = tv({
   slots: {
     root: [
@@ -31,6 +31,7 @@ export const textField = tv({
     ],
     icon: "flex shrink-0 items-center justify-center text-sand-a9",
     input: "min-w-0 flex-1 bg-transparent text-sand-12 outline-none placeholder:text-sand-a9",
+    suffix: "pointer-events-none shrink-0 whitespace-nowrap text-sand-a11 select-none",
   },
   variants: {
     size: {
