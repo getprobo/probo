@@ -10965,39 +10965,3 @@ func (r *Resolver) UnlinkAuditFrameworkTool(ctx context.Context, req *mcp.CallTo
 		DeletedFrameworkID: input.FrameworkID,
 	}, nil
 }
-
-func auditIDs(audits []*coredata.Audit) []gid.GID {
-	ids := make([]gid.GID, 0, len(audits))
-	for _, audit := range audits {
-		ids = append(ids, audit.ID)
-	}
-
-	return ids
-}
-
-func (r *Resolver) auditFrameworkIDs(
-	ctx context.Context,
-	scope coredata.Scoper,
-	ids []gid.GID,
-) (map[gid.GID][]gid.GID, error) {
-	frameworkIDs, err := r.proboSvc.Audits.ListFrameworkIDsByAuditIDs(ctx, scope, ids)
-	if err != nil {
-		return nil, fmt.Errorf("cannot list audit frameworks: %w", err)
-	}
-
-	return frameworkIDs, nil
-}
-
-func (r *Resolver) newAudit(
-	ctx context.Context,
-	scope coredata.Scoper,
-	audit *coredata.Audit,
-	file *coredata.File,
-) (*types.Audit, error) {
-	frameworkIDs, err := r.auditFrameworkIDs(ctx, scope, []gid.GID{audit.ID})
-	if err != nil {
-		return nil, err
-	}
-
-	return types.NewAudit(audit, file, types.FrameworkIDsFor(frameworkIDs, audit.ID)), nil
-}
