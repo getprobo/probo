@@ -42,18 +42,17 @@ var IAMSelfManageIdentityPolicy = policy.NewPolicy(
 		WithSID("manage-own-identity").
 		When(policy.Equals("principal.id", "resource.identity_id")),
 
-	// Users can list their own memberships, invitations, sessions, and API keys
+	// Users can list their own memberships, invitations, sessions, and OAuth2 access tokens
 	policy.Allow(
 		ActionMembershipList,
 		ActionInvitationList,
 		ActionSessionList,
-		ActionPersonalAPIKeyList,
 		ActionOAuth2AccessTokenList,
 	).
 		WithSID("list-own-associations").
 		When(policy.Equals("principal.id", "resource.identity_id")),
 ).
-	WithDescription("Allows users to manage their own identity, sessions, API keys, and view their memberships")
+	WithDescription("Allows users to manage their own identity and sessions and view their memberships")
 
 // IAMSelfManageSessionPolicy allows users to manage their own sessions.
 var IAMSelfManageSessionPolicy = policy.NewPolicy(
@@ -112,23 +111,6 @@ var IAMSelfManageMembershipPolicy = policy.NewPolicy(
 		When(policy.Equals("principal.id", "resource.identity_id")),
 ).
 	WithDescription("Allows users to view their organization memberships")
-
-// IAMSelfManagePersonalAPIKeyPolicy allows users to manage their own API keys.
-var IAMSelfManagePersonalAPIKeyPolicy = policy.NewPolicy(
-	"iam:self-manage-personal-api-key",
-	"Self-Manage Personal API Keys",
-
-	// Users can create, view, update, and delete their own API keys
-	policy.Allow(
-		ActionPersonalAPIKeyCreate,
-		ActionPersonalAPIKeyGet,
-		ActionPersonalAPIKeyUpdate,
-		ActionPersonalAPIKeyDelete,
-	).
-		WithSID("manage-own-api-keys").
-		When(policy.Equals("principal.id", "resource.identity_id")),
-).
-	WithDescription("Allows users to manage their own personal API keys")
 
 // IAMSelfManageOAuth2AccessTokenPolicy allows users to manage their own OAuth2 access tokens.
 var IAMSelfManageOAuth2AccessTokenPolicy = policy.NewPolicy(

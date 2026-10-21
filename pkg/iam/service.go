@@ -77,7 +77,6 @@ type (
 		SAMLService         *saml.Service
 		OIDCService         *oidc.Service
 		SCIMService         *scim.Service
-		APIKeyService       *APIKeyService
 		OAuth2ServerService *oauth2.Service
 		Authorizer          *Authorizer
 		OAuth2ScopeRegistry *oauth2scope.Registry
@@ -182,7 +181,6 @@ func NewService(
 	svc.OrganizationService = NewOrganizationService(svc)
 	svc.SessionService = NewSessionService(svc)
 	svc.AuthService = NewAuthService(svc)
-	svc.APIKeyService = NewAPIKeyService(svc)
 
 	svc.OAuth2ScopeRegistry = cfg.OAuth2ScopeRegistry
 
@@ -473,31 +471,6 @@ func (s *Service) GetSAMLconfiguration(ctx context.Context, samlConfigurationID 
 	}
 
 	return samlConfiguration, nil
-}
-
-func (s *Service) GetPersonalAPIKey(ctx context.Context, personalAPIKeyID gid.GID) (*coredata.PersonalAPIKey, error) {
-	personalAPIKey := &coredata.PersonalAPIKey{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			err := personalAPIKey.LoadByID(ctx, conn, personalAPIKeyID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
-				}
-
-				return fmt.Errorf("cannot load personal API key: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return personalAPIKey, nil
 }
 
 func (s *Service) GetSCIMConfiguration(ctx context.Context, scimConfigurationID gid.GID) (*coredata.SCIMConfiguration, error) {

@@ -72,7 +72,7 @@ const (
 	SlackMessageEntityType                           uint16 = 40
 	CompliancePortalFileEntityType                   uint16 = 41
 	SAMLConfigurationEntityType                      uint16 = 42
-	PersonalAPIKeyEntityType                         uint16 = 43
+	_                                                uint16 = 43 // PersonalAPIKeyEntityType - removed
 	_                                                uint16 = 44 // PersonalAPIKeyMembershipEntityType - removed
 	_                                                uint16 = 45 // MeetingEntityType - removed
 	DataProtectionImpactAssessmentEntityType         uint16 = 46
@@ -253,8 +253,6 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &CompliancePortalFile{ID: id}, true
 	case SAMLConfigurationEntityType:
 		return &SAMLConfiguration{ID: id}, true
-	case PersonalAPIKeyEntityType:
-		return &PersonalAPIKey{ID: id}, true
 	case DataProtectionImpactAssessmentEntityType:
 		return &DataProtectionImpactAssessment{ID: id}, true
 	case TransferImpactAssessmentEntityType:

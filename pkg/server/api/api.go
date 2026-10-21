@@ -314,7 +314,6 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.CookieBanner,
 			cfg.EmployeePortal,
 			cfg.Cookie,
-			cfg.TokenSecret,
 			cfg.InstallStateKey,
 			cfg.ConnectorRegistry,
 			cfg.ProviderRegistry,
@@ -348,7 +347,6 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Probo,
 			cfg.IAM,
 			cfg.Cookie,
-			cfg.TokenSecret,
 			cfg.BaseURL,
 		),
 		mcpHandler: mcp_v1.NewMux(
@@ -366,7 +364,6 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.ITAM,
 			cfg.Task,
 			cfg.Mailman,
-			cfg.TokenSecret,
 			cfg.File,
 			cfg.BaseURL,
 			cfg.IdentityFederationIssuer,
@@ -394,7 +391,6 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.IAM,
 			cfg.Visitor,
 			cfg.Cookie,
-			cfg.TokenSecret,
 			cfg.File,
 			cfg.EmployeePortal,
 			cfg.BaseURL,
@@ -414,7 +410,6 @@ func NewServer(cfg Config) (*Server, error) {
 			collabHandler,
 			cfg.IAM,
 			cfg.Cookie,
-			cfg.TokenSecret,
 		),
 	}, nil
 }

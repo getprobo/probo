@@ -34,11 +34,9 @@ func TestCurrentViewerUsesIdentityID(t *testing.T) {
 
 	identityID := gid.New(gid.NewTenantID(), coredata.IdentityEntityType)
 	sessionID := gid.New(gid.NewTenantID(), coredata.SessionEntityType)
-	apiKeyID := gid.New(gid.NewTenantID(), coredata.PersonalAPIKeyEntityType)
 
 	ctx := authn.ContextWithIdentity(t.Context(), &coredata.Identity{ID: identityID})
 	ctx = authn.ContextWithSession(ctx, &coredata.Session{ID: sessionID})
-	ctx = authn.ContextWithAPIKey(ctx, &coredata.PersonalAPIKey{ID: apiKeyID})
 
 	viewer := currentViewer(ctx)
 	assert.Equal(t, identityID, viewer.ID)

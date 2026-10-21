@@ -58,7 +58,6 @@ func NewMux(
 	proboSvc *probo.Service,
 	iamSvc *iam.Service,
 	cookieConfig securecookie.Config,
-	tokenSecret string,
 	baseURL *baseurl.BaseURL,
 ) *chi.Mux {
 	h := &Handler{
@@ -77,7 +76,6 @@ func NewMux(
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Get("/{fileID}", h.handleGetFile)

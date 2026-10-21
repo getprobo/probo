@@ -113,16 +113,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewSAMLConfiguration(samlConfiguration), nil
 		}
-	case coredata.PersonalAPIKeyEntityType:
-		action = iam.ActionPersonalAPIKeyGet
-		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {
-			personalAPIKey, err := r.iam.GetPersonalAPIKey(ctx, id)
-			if err != nil {
-				return nil, err
-			}
-
-			return types.NewPersonalAPIKey(personalAPIKey), nil
-		}
 	case coredata.OAuth2AccessTokenEntityType:
 		action = iam.ActionOAuth2AccessTokenGet
 		loadNode = func(ctx context.Context, id gid.GID) (types.Node, error) {

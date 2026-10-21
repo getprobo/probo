@@ -84,7 +84,6 @@ func NewMux(
 	svc *iam.Service,
 	visitorSvc *visitor.Service,
 	cookieConfig securecookie.Config,
-	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
 	baseURL *baseurl.BaseURL,
@@ -95,7 +94,6 @@ func NewMux(
 	r := chi.NewMux()
 
 	sessionMiddleware := authn.NewSessionMiddleware(svc, cookieConfig)
-	apiKeyMiddleware := authn.NewAPIKeyMiddleware(svc, tokenSecret)
 	oauth2Middleware := authn.NewOAuth2AccessTokenMiddleware(svc)
 	identityPresenceMiddleware := authn.NewIdentityPresenceMiddleware(baseURL)
 	graphqlHandler := NewGraphQLHandler(
@@ -113,7 +111,6 @@ func NewMux(
 
 	router := r.With(
 		sessionMiddleware,
-		apiKeyMiddleware,
 		oauth2Middleware,
 	)
 

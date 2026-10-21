@@ -44,7 +44,7 @@ export class ProboApi implements ICredentialType {
 			description: 'The server to connect to.',
 		},
 		{
-			displayName: 'API Key',
+			displayName: 'Access Token',
 			name: 'apiKey',
 			type: 'string',
 			typeOptions: { password: true },

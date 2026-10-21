@@ -12,7 +12,7 @@ This package provides two nodes:
 ## Requirements
 
 - A self-hosted n8n instance with [community nodes enabled](https://docs.n8n.io/hosting/configuration/configuration-examples/community-nodes/)
-- A Probo account with an API key
+- A Probo account with an OAuth token
 - n8n 1.0+ (uses the community node package format)
 
 ## Installation
@@ -50,7 +50,7 @@ Restart n8n after installation. See the [manual installation guide](https://docs
 
 ## Credentials
 
-All Probo nodes use the **Probo API** credential type. The node sends your API key as a `Bearer` token on every request.
+All Probo nodes use the **Probo API** credential type. The node sends your OAuth token as a `Bearer` token on every request.
 
 ### Configure credentials in n8n
 
@@ -61,17 +61,17 @@ All Probo nodes use the **Probo API** credential type. The node sends your API k
    | Field | Default | Description |
    |-------|---------|-------------|
    | **Probo Server** | `https://us.probo.com` | Base URL of your Probo instance. Use `https://eu.probo.com` for the EU region, or your own URL when self-hosting. |
-   | **API Key** | — | A Probo API key with access to the organizations you automate against. |
+   | **Access Token** | — | A Probo OAuth token with access to the organizations you automate against. |
 
-4. Click **Test** to verify connectivity. n8n calls the Probo GraphQL API and checks that the key is valid.
+4. Click **Test** to verify connectivity. n8n calls the Probo GraphQL API and checks that the token is valid.
 5. Click **Save**. The credential is shared across all Probo nodes in your instance.
 
-### Get an API key
+### Get an OAuth token
 
 1. Sign in to the Probo console.
-2. Go to **Settings → API Keys**.
-3. Click **Create API Key**.
-4. Copy the key immediately — it is shown only once.
+2. Open the user menu and select **OAuth tokens**.
+3. Click **Create token**, choose the scopes required by the workflow, and create it.
+4. Copy the token immediately — it is shown only once.
 
 For self-hosted Probo, set **Probo Server** to your instance URL (for example `https://probo.example.com`). The node talks to `/api/console/v1/graphql` on that host.
 

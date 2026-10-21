@@ -129,35 +129,6 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 	return types.NewSessionConnection(page, r, obj.ID), nil
 }
 
-// PersonalAPIKeys is the resolver for the personalAPIKeys field.
-func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.PersonalAPIKeyConnection, error) {
-	if _, err := r.authorize(ctx, obj.ID, iam.ActionPersonalAPIKeyList); err != nil {
-		return nil, err
-	}
-
-	if gqlx.OnlyTotalCountSelected(ctx) {
-		return &types.PersonalAPIKeyConnection{
-			Resolver: r,
-			ParentID: obj.ID,
-		}, nil
-	}
-
-	pageOrderBy := page.OrderBy[coredata.PersonalAPIKeyOrderField]{
-		Field:     coredata.PersonalAPIKeyOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	cursor := cursor.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := r.iam.AccountService.ListPersonalAPIKeys(ctx, obj.ID, cursor)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list personal api keys", log.Error(err))
-		return nil, gqlx.Internal(ctx)
-	}
-
-	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
-}
-
 // Oauth2AccessTokens is the resolver for the oauth2AccessTokens field.
 func (r *identityResolver) Oauth2AccessTokens(ctx context.Context, obj *types.Identity, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.OAuth2AccessTokenConnection, error) {
 	if _, err := r.authorize(ctx, obj.ID, iam.ActionOAuth2AccessTokenList); err != nil {

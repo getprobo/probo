@@ -31,12 +31,10 @@ func NewMux(
 	handler *Handler,
 	iamSvc *iam.Service,
 	cookieConfig securecookie.Config,
-	tokenSecret string,
 ) *chi.Mux {
 	r := chi.NewMux()
 
 	r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(handler.BaseURL))
 
