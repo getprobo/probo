@@ -30,9 +30,10 @@ type (
 )
 
 const (
-	DocumentVersionStatusDraft           DocumentVersionStatus = "DRAFT"
 	DocumentVersionStatusPendingApproval DocumentVersionStatus = "PENDING_APPROVAL"
 	DocumentVersionStatusPublished       DocumentVersionStatus = "PUBLISHED"
+	DocumentVersionStatusRejected        DocumentVersionStatus = "REJECTED"
+	DocumentVersionStatusVoided          DocumentVersionStatus = "VOIDED"
 )
 
 var (
@@ -43,18 +44,20 @@ var (
 
 func DocumentVersionStatuses() []DocumentVersionStatus {
 	return []DocumentVersionStatus{
-		DocumentVersionStatusDraft,
 		DocumentVersionStatusPendingApproval,
 		DocumentVersionStatusPublished,
+		DocumentVersionStatusRejected,
+		DocumentVersionStatusVoided,
 	}
 }
 
 func (v DocumentVersionStatus) IsValid() bool {
 	switch v {
 	case
-		DocumentVersionStatusDraft,
 		DocumentVersionStatusPendingApproval,
-		DocumentVersionStatusPublished:
+		DocumentVersionStatusPublished,
+		DocumentVersionStatusRejected,
+		DocumentVersionStatusVoided:
 		return true
 	}
 

@@ -30,10 +30,11 @@ import (
 )
 
 type (
-	DocumentCollaborationHistorySessionOrderBy = OrderBy[probo.DocumentCollaborationHistorySessionOrderField]
+	DocumentRevisionOrderBy = OrderBy[probo.DocumentRevisionOrderField]
 
-	DocumentCollaborationHistorySession struct {
+	DocumentRevision struct {
 		ID            gid.GID   `json:"id"`
+		DocumentID    gid.GID   `json:"-"`
 		Heads         []string  `json:"heads"`
 		PreviousHeads []string  `json:"previousHeads"`
 		ActorID       string    `json:"actorID"`
@@ -44,38 +45,39 @@ type (
 		ChangeCount   int       `json:"changeCount"`
 	}
 
-	DocumentCollaborationHistorySessionConnection struct {
+	DocumentRevisionConnection struct {
 		TotalCount int
-		Edges      []*DocumentCollaborationHistorySessionEdge
+		Edges      []*DocumentRevisionEdge
 		PageInfo   PageInfo
 
 		Resolver any
 		ParentID gid.GID
 	}
 
-	DocumentCollaborationHistoryHighlight struct {
-		Kind probo.DocumentCollaborationHistoryHighlightKind `json:"kind"`
-		From int                                             `json:"from"`
-		To   int                                             `json:"to"`
-		Text string                                          `json:"text"`
+	DocumentHistoryHighlight struct {
+		Kind probo.DocumentHistoryHighlightKind `json:"kind"`
+		From int                                `json:"from"`
+		To   int                                `json:"to"`
+		Text string                             `json:"text"`
 	}
 
-	DocumentCollaborationHistorySnapshot struct {
-		Content    *DocumentContent                         `json:"content"`
-		Highlights []*DocumentCollaborationHistoryHighlight `json:"highlights"`
+	DocumentHistorySnapshot struct {
+		Content    *DocumentContent            `json:"content"`
+		Highlights []*DocumentHistoryHighlight `json:"highlights"`
 	}
 )
 
-func NewDocumentCollaborationHistorySession(
-	session *probo.DocumentCollaborationHistorySession,
-) *DocumentCollaborationHistorySession {
+func NewDocumentRevision(
+	session *probo.DocumentRevision,
+) *DocumentRevision {
 	var authorName *string
 	if session.AuthorName != "" {
 		authorName = new(session.AuthorName)
 	}
 
-	return &DocumentCollaborationHistorySession{
+	return &DocumentRevision{
 		ID:            session.ID,
+		DocumentID:    session.DocumentID,
 		Heads:         probo.EncodeAutomergeHashes(session.Heads),
 		PreviousHeads: probo.EncodeAutomergeHashes(session.PreviousHeads),
 		ActorID:       hex.EncodeToString(session.ActorID),
@@ -87,21 +89,21 @@ func NewDocumentCollaborationHistorySession(
 	}
 }
 
-func NewDocumentCollaborationHistorySessionConnection(
-	p *page.Page[*probo.DocumentCollaborationHistorySession, probo.DocumentCollaborationHistorySessionOrderField],
+func NewDocumentRevisionConnection(
+	p *page.Page[*probo.DocumentRevision, probo.DocumentRevisionOrderField],
 	parentType any,
 	parentID gid.GID,
 	totalCount int,
-) *DocumentCollaborationHistorySessionConnection {
-	edges := make([]*DocumentCollaborationHistorySessionEdge, len(p.Data))
+) *DocumentRevisionConnection {
+	edges := make([]*DocumentRevisionEdge, len(p.Data))
 	for i, session := range p.Data {
-		edges[i] = &DocumentCollaborationHistorySessionEdge{
+		edges[i] = &DocumentRevisionEdge{
 			Cursor: session.CursorKey(p.Cursor.OrderBy.Field),
-			Node:   NewDocumentCollaborationHistorySession(session),
+			Node:   NewDocumentRevision(session),
 		}
 	}
 
-	return &DocumentCollaborationHistorySessionConnection{
+	return &DocumentRevisionConnection{
 		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo:   *NewPageInfo(p),
@@ -110,12 +112,12 @@ func NewDocumentCollaborationHistorySessionConnection(
 	}
 }
 
-func NewDocumentCollaborationHistorySnapshot(
-	snapshot *probo.DocumentCollaborationHistorySnapshot,
-) *DocumentCollaborationHistorySnapshot {
-	highlights := make([]*DocumentCollaborationHistoryHighlight, len(snapshot.Highlights))
+func NewDocumentHistorySnapshot(
+	snapshot *probo.DocumentHistorySnapshot,
+) *DocumentHistorySnapshot {
+	highlights := make([]*DocumentHistoryHighlight, len(snapshot.Highlights))
 	for i := range snapshot.Highlights {
-		highlights[i] = &DocumentCollaborationHistoryHighlight{
+		highlights[i] = &DocumentHistoryHighlight{
 			Kind: snapshot.Highlights[i].Kind,
 			From: snapshot.Highlights[i].From,
 			To:   snapshot.Highlights[i].To,
@@ -123,7 +125,7 @@ func NewDocumentCollaborationHistorySnapshot(
 		}
 	}
 
-	return &DocumentCollaborationHistorySnapshot{
+	return &DocumentHistorySnapshot{
 		Content:    NewDocumentContent(snapshot.Content),
 		Highlights: highlights,
 	}

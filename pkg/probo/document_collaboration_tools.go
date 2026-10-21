@@ -54,7 +54,7 @@ type (
 
 func (s *DocumentService) CollaborationTools(
 	scope coredata.Scoper,
-	documentVersionID gid.GID,
+	documentID gid.GID,
 ) []agent.Tool {
 	return []agent.Tool{
 		agent.FunctionTool(
@@ -64,7 +64,7 @@ func (s *DocumentService) CollaborationTools(
 				text, revision, err := s.ReadCollaborationText(
 					ctx,
 					scope,
-					documentVersionID,
+					documentID,
 				)
 				if err != nil {
 					return agent.ToolResult{}, fmt.Errorf("cannot read live document: %w", err)
@@ -96,7 +96,7 @@ func (s *DocumentService) CollaborationTools(
 				revision, err := s.ApplyCollaborationTextEdit(
 					ctx,
 					scope,
-					documentVersionID,
+					documentID,
 					DocumentCollaborationTextEdit{
 						ExpectedRevision: params.ExpectedRevision,
 						Index:            params.Index,

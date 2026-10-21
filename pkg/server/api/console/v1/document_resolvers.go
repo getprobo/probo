@@ -32,6 +32,27 @@ import (
 	"go.probo.inc/probo/pkg/validator"
 )
 
+// Content is the resolver for the content field.
+func (r *documentResolver) Content(ctx context.Context, obj *types.Document) (*types.DocumentContent, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := r.probo.Documents.LiveContent(ctx, scope, obj.ID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load document content", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocumentContent(content), nil
+}
+
 // Alias is the resolver for the alias field.
 func (r *documentResolver) Alias(ctx context.Context, obj *types.Document) (*string, error) {
 	scope, err := r.authorize(ctx, obj.ID, resourcealias.ActionAliasGet)
@@ -211,33 +232,68 @@ func (r *documentResolver) DefaultApprovers(ctx context.Context, obj *types.Docu
 	return result, nil
 }
 
-// Permission is the resolver for the permission field.
-func (r *documentResolver) Permission(ctx context.Context, obj *types.Document, action string) (bool, error) {
-	return r.Resolver.Permission(ctx, obj, action)
-}
-
-// AuthorProfile is the resolver for the authorProfile field.
-func (r *documentCollaborationHistorySessionResolver) AuthorProfile(ctx context.Context, obj *types.DocumentCollaborationHistorySession) (*types.Profile, error) {
-	if obj.ProfileID == nil {
-		return nil, nil
+// History is the resolver for the history field.
+func (r *documentResolver) History(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentRevisionOrder) (*types.DocumentRevisionConnection, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentRevisionList)
+	if err != nil {
+		return nil, err
 	}
 
-	profile, err := r.iam.OrganizationService.GetProfile(ctx, *obj.ProfileID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, nil
+	pageOrderBy := page.OrderBy[probo.DocumentRevisionOrderField]{
+		Field:     probo.DocumentRevisionOrderFieldEndedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[probo.DocumentRevisionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
 		}
+	}
 
-		r.logger.ErrorCtx(ctx, "cannot load collaboration history author profile", log.Error(err))
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	sessions, totalCount, err := r.probo.Collaboration.ListRevisions(
+		ctx,
+		scope,
+		obj.ID,
+		cursor,
+	)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list revisions", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return types.NewProfile(profile), nil
+	return types.NewDocumentRevisionConnection(
+		sessions,
+		r,
+		obj.ID,
+		totalCount,
+	), nil
 }
 
-// TotalCount is the resolver for the totalCount field.
-func (r *documentCollaborationHistorySessionConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentCollaborationHistorySessionConnection) (int, error) {
-	return obj.TotalCount, nil
+// Revision is the resolver for the revision field.
+func (r *documentResolver) Revision(ctx context.Context, obj *types.Document, id gid.GID) (*types.DocumentRevision, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentRevisionGet)
+	if err != nil {
+		return nil, err
+	}
+
+	session, err := r.probo.Collaboration.GetRevision(ctx, scope, obj.ID, id)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load revision", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocumentRevision(session), nil
+}
+
+// Permission is the resolver for the permission field.
+func (r *documentResolver) Permission(ctx context.Context, obj *types.Document, action string) (bool, error) {
+	return r.Resolver.Permission(ctx, obj, action)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -311,6 +367,70 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 	}
 
 	return md, nil
+}
+
+// Author is the resolver for the author field.
+func (r *documentRevisionResolver) Author(ctx context.Context, obj *types.DocumentRevision) (*types.Profile, error) {
+	if obj.ProfileID == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, *obj.ProfileID, iam.ActionMembershipProfileGet); err != nil {
+		return nil, err
+	}
+
+	profile, err := r.iam.OrganizationService.GetProfile(ctx, *obj.ProfileID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load history author", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProfile(profile), nil
+}
+
+// Snapshot is the resolver for the snapshot field.
+func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.DocumentRevision) (*types.DocumentHistorySnapshot, error) {
+	scope, err := r.authorize(ctx, obj.DocumentID, probo.ActionDocumentRevisionGet)
+	if err != nil {
+		return nil, err
+	}
+
+	heads, err := probo.ParseAutomergeHashes(obj.Heads)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	previousHeads, err := probo.ParseAutomergeHashes(obj.PreviousHeads)
+	if err != nil {
+		return nil, gqlutils.Invalid(ctx, err)
+	}
+
+	snapshot, err := r.probo.Collaboration.GetHistorySnapshot(
+		ctx,
+		scope,
+		obj.DocumentID,
+		heads,
+		previousHeads,
+	)
+	if err != nil {
+		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load history snapshot", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewDocumentHistorySnapshot(snapshot), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *documentRevisionConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentRevisionConnection) (int, error) {
+	return obj.TotalCount, nil
 }
 
 // Document is the resolver for the document field.
@@ -468,85 +588,6 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 	}
 
 	return signed, nil
-}
-
-// CollaborationHistory is the resolver for the collaborationHistory field.
-func (r *documentVersionResolver) CollaborationHistory(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentCollaborationHistorySessionOrder) (*types.DocumentCollaborationHistorySessionConnection, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionGet)
-	if err != nil {
-		return nil, err
-	}
-
-	pageOrderBy := page.OrderBy[probo.DocumentCollaborationHistorySessionOrderField]{
-		Field:     probo.DocumentCollaborationHistorySessionOrderFieldEndedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[probo.DocumentCollaborationHistorySessionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	sessions, totalCount, err := r.probo.Documents.ListCollaborationHistorySessions(
-		ctx,
-		scope,
-		obj.ID,
-		cursor,
-	)
-	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot list collaboration history sessions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewDocumentCollaborationHistorySessionConnection(
-		sessions,
-		r,
-		obj.ID,
-		totalCount,
-	), nil
-}
-
-// CollaborationHistorySnapshot is the resolver for the collaborationHistorySnapshot field.
-func (r *documentVersionResolver) CollaborationHistorySnapshot(ctx context.Context, obj *types.DocumentVersion, heads []string, previousHeads []string) (*types.DocumentCollaborationHistorySnapshot, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentVersionGet)
-	if err != nil {
-		return nil, err
-	}
-
-	parsedHeads, err := probo.ParseAutomergeHashes(heads)
-	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
-	}
-
-	if previousHeads == nil {
-		previousHeads = []string{}
-	}
-
-	parsedPrevious, err := probo.ParseAutomergeHashes(previousHeads)
-	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
-	}
-
-	snapshot, err := r.probo.Documents.GetCollaborationHistorySnapshot(
-		ctx,
-		scope,
-		obj.ID,
-		parsedHeads,
-		parsedPrevious,
-	)
-	if err != nil {
-		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) {
-			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load collaboration history snapshot", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return types.NewDocumentCollaborationHistorySnapshot(snapshot), nil
 }
 
 // Permission is the resolver for the permission field.
@@ -1082,7 +1123,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		content = *input.Content
 	}
 
-	document, documentVersion, err := r.probo.Documents.Create(
+	document, err := r.probo.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
 			OrganizationID:     input.OrganizationID,
@@ -1108,8 +1149,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	}
 
 	return &types.CreateDocumentPayload{
-		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
-		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
+		DocumentEdge: types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
 	}, nil
 }
 
@@ -1149,7 +1189,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		}
 	}
 
-	document, documentVersion, draftCreated, err := r.probo.Documents.Update(
+	document, err := r.probo.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
 			DocumentID:         input.ID,
@@ -1184,22 +1224,9 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	payload := &types.UpdateDocumentPayload{
+	return &types.UpdateDocumentPayload{
 		Document: types.NewDocument(document),
-	}
-
-	if documentVersion != nil {
-		payload.DocumentVersion = types.NewDocumentVersion(documentVersion)
-	}
-
-	if draftCreated {
-		payload.DocumentVersionEdge = types.NewDocumentVersionEdge(
-			documentVersion,
-			coredata.DocumentVersionOrderFieldCreatedAt,
-		)
-	}
-
-	return payload, nil
+	}, nil
 }
 
 // DeleteDocumentDraft is the resolver for the deleteDocumentDraft field.
@@ -1317,10 +1344,6 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
-		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNotDraft)
-		}
-
 		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
 			return nil, gqlutils.Conflict(ctx, errPending)
 		}
@@ -1387,10 +1410,6 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
-		}
-
-		if errNotDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNotDraft)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot bulk publish documents", log.Error(err))
@@ -1940,24 +1959,9 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	}, nil
 }
 
-// RestoreDocumentCollaboration is the resolver for the restoreDocumentCollaboration field.
-func (r *mutationResolver) RestoreDocumentCollaboration(ctx context.Context, input types.RestoreDocumentCollaborationInput) (*types.RestoreDocumentCollaborationPayload, error) {
-	scope, err := r.authorize(ctx, input.DocumentVersionID, probo.ActionDocumentVersionGet)
-	if err != nil {
-		return nil, err
-	}
-
-	version, err := r.probo.Documents.GetVersion(ctx, scope, input.DocumentVersionID)
-	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot load document version for history restore", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	scope, err = r.authorize(ctx, version.DocumentID, probo.ActionDocumentUpdate)
+// RestoreDocumentHistory is the resolver for the restoreDocumentHistory field.
+func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input types.RestoreDocumentHistoryInput) (*types.RestoreDocumentHistoryPayload, error) {
+	scope, err := r.authorize(ctx, input.DocumentID, probo.ActionDocumentUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -1967,21 +1971,20 @@ func (r *mutationResolver) RestoreDocumentCollaboration(ctx context.Context, inp
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
-	if _, err := r.probo.Documents.RestoreCollaborationHistory(
+	identity := authn.IdentityFromContext(ctx)
+
+	if _, err := r.probo.Collaboration.RestoreHistory(
 		ctx,
 		scope,
-		input.DocumentVersionID,
+		input.DocumentID,
 		heads,
+		identity.ID,
 	); err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
 		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded):
 			return nil, gqlutils.Conflict(ctx, err)
-		}
-
-		if errDraft, ok := errors.AsType[*probo.ErrDocumentVersionNotDraft](err); ok {
-			return nil, gqlutils.Conflict(ctx, errDraft)
 		}
 
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
@@ -1992,33 +1995,23 @@ func (r *mutationResolver) RestoreDocumentCollaboration(ctx context.Context, inp
 			return nil, gqlutils.Conflict(ctx, errGenerated)
 		}
 
-		r.logger.ErrorCtx(ctx, "cannot restore document collaboration history", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot restore document history", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	version, err = r.probo.Documents.GetVersion(ctx, scope, input.DocumentVersionID)
+	document, err := r.probo.Documents.Get(ctx, scope, input.DocumentID)
 	if err != nil {
-		r.logger.ErrorCtx(ctx, "cannot load restored document version", log.Error(err))
+		r.logger.ErrorCtx(ctx, "cannot load restored document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	return &types.RestoreDocumentCollaborationPayload{
-		DocumentVersion: types.NewDocumentVersion(version),
+	return &types.RestoreDocumentHistoryPayload{
+		Document: types.NewDocument(document),
 	}, nil
 }
 
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
-
-// DocumentCollaborationHistorySession returns schema.DocumentCollaborationHistorySessionResolver implementation.
-func (r *Resolver) DocumentCollaborationHistorySession() schema.DocumentCollaborationHistorySessionResolver {
-	return &documentCollaborationHistorySessionResolver{r}
-}
-
-// DocumentCollaborationHistorySessionConnection returns schema.DocumentCollaborationHistorySessionConnectionResolver implementation.
-func (r *Resolver) DocumentCollaborationHistorySessionConnection() schema.DocumentCollaborationHistorySessionConnectionResolver {
-	return &documentCollaborationHistorySessionConnectionResolver{r}
-}
 
 // DocumentConnection returns schema.DocumentConnectionResolver implementation.
 func (r *Resolver) DocumentConnection() schema.DocumentConnectionResolver {
@@ -2028,6 +2021,16 @@ func (r *Resolver) DocumentConnection() schema.DocumentConnectionResolver {
 // DocumentContent returns schema.DocumentContentResolver implementation.
 func (r *Resolver) DocumentContent() schema.DocumentContentResolver {
 	return &documentContentResolver{r}
+}
+
+// DocumentRevision returns schema.DocumentRevisionResolver implementation.
+func (r *Resolver) DocumentRevision() schema.DocumentRevisionResolver {
+	return &documentRevisionResolver{r}
+}
+
+// DocumentRevisionConnection returns schema.DocumentRevisionConnectionResolver implementation.
+func (r *Resolver) DocumentRevisionConnection() schema.DocumentRevisionConnectionResolver {
+	return &documentRevisionConnectionResolver{r}
 }
 
 // DocumentVersion returns schema.DocumentVersionResolver implementation.
@@ -2091,21 +2094,21 @@ func (r *Resolver) EmployeeDocumentVersionConnection() schema.EmployeeDocumentVe
 }
 
 type (
-	documentResolver                                      struct{ *Resolver }
-	documentCollaborationHistorySessionResolver           struct{ *Resolver }
-	documentCollaborationHistorySessionConnectionResolver struct{ *Resolver }
-	documentConnectionResolver                            struct{ *Resolver }
-	documentContentResolver                               struct{ *Resolver }
-	documentVersionResolver                               struct{ *Resolver }
-	documentVersionApprovalDecisionResolver               struct{ *Resolver }
-	documentVersionApprovalDecisionConnectionResolver     struct{ *Resolver }
-	documentVersionApprovalQuorumResolver                 struct{ *Resolver }
-	documentVersionApprovalQuorumConnectionResolver       struct{ *Resolver }
-	documentVersionConnectionResolver                     struct{ *Resolver }
-	documentVersionSignatureResolver                      struct{ *Resolver }
-	documentVersionSignatureConnectionResolver            struct{ *Resolver }
-	employeeDocumentResolver                              struct{ *Resolver }
-	employeeDocumentConnectionResolver                    struct{ *Resolver }
-	employeeDocumentVersionResolver                       struct{ *Resolver }
-	employeeDocumentVersionConnectionResolver             struct{ *Resolver }
+	documentResolver                                  struct{ *Resolver }
+	documentConnectionResolver                        struct{ *Resolver }
+	documentContentResolver                           struct{ *Resolver }
+	documentRevisionResolver                          struct{ *Resolver }
+	documentRevisionConnectionResolver                struct{ *Resolver }
+	documentVersionResolver                           struct{ *Resolver }
+	documentVersionApprovalDecisionResolver           struct{ *Resolver }
+	documentVersionApprovalDecisionConnectionResolver struct{ *Resolver }
+	documentVersionApprovalQuorumResolver             struct{ *Resolver }
+	documentVersionApprovalQuorumConnectionResolver   struct{ *Resolver }
+	documentVersionConnectionResolver                 struct{ *Resolver }
+	documentVersionSignatureResolver                  struct{ *Resolver }
+	documentVersionSignatureConnectionResolver        struct{ *Resolver }
+	employeeDocumentResolver                          struct{ *Resolver }
+	employeeDocumentConnectionResolver                struct{ *Resolver }
+	employeeDocumentVersionResolver                   struct{ *Resolver }
+	employeeDocumentVersionConnectionResolver         struct{ *Resolver }
 )

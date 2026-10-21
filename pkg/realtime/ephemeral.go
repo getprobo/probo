@@ -34,16 +34,16 @@ import (
 const MaxCollaborationEphemeralBytes = 7000
 
 // ephemeralKind marks a collaboration-changed NOTIFY payload as an ephemeral
-// envelope rather than the bare document-version id that signals a persisted
-// change. A bare id is not valid JSON, so the two never collide.
+// envelope rather than the bare document id that signals a persisted change.
+// A bare id is not valid JSON, so the two never collide.
 const ephemeralKind = "ephemeral"
 
 // CollaborationEphemeral is an opaque automerge-repo gossip frame carried across
 // server instances over the collaboration NOTIFY channel, so presence and
 // cursors reach peers connected to other instances.
 type CollaborationEphemeral struct {
-	// VersionID is the document-version GID string the frame belongs to.
-	VersionID string
+	// DocumentID is the document GID string the frame belongs to.
+	DocumentID string
 	// InstanceID identifies the server instance that published the frame, so the
 	// publisher can ignore its own echo (it already delivered the frame to its
 	// local peers directly).
@@ -54,7 +54,7 @@ type CollaborationEphemeral struct {
 
 type ephemeralEnvelope struct {
 	Kind       string `json:"k"`
-	VersionID  string `json:"v"`
+	DocumentID string `json:"d"`
 	InstanceID string `json:"i"`
 	Frame      []byte `json:"e"`
 }
@@ -65,7 +65,7 @@ type ephemeralEnvelope struct {
 func EncodeCollaborationEphemeral(event CollaborationEphemeral) (string, error) {
 	payload, err := json.Marshal(ephemeralEnvelope{
 		Kind:       ephemeralKind,
-		VersionID:  event.VersionID,
+		DocumentID: event.DocumentID,
 		InstanceID: event.InstanceID,
 		Frame:      event.Frame,
 	})
@@ -84,11 +84,11 @@ func EncodeCollaborationEphemeral(event CollaborationEphemeral) (string, error) 
 }
 
 // DecodeCollaborationEphemeral decodes a NOTIFY payload as an ephemeral event. It
-// reports ok=false for a bare document-version id (the persisted-change signal)
+// reports ok=false for a bare document id (the persisted-change signal)
 // or any payload that is not a well-formed ephemeral envelope, so callers can
 // treat the two payload kinds apart.
 func DecodeCollaborationEphemeral(payload string) (CollaborationEphemeral, bool) {
-	// A bare document-version id is base64url and never starts with '{', so this
+	// A bare document id is base64url and never starts with '{', so this
 	// keeps the change-signal path free of a JSON decode.
 	if len(payload) == 0 || payload[0] != '{' {
 		return CollaborationEphemeral{}, false
@@ -99,12 +99,12 @@ func DecodeCollaborationEphemeral(payload string) (CollaborationEphemeral, bool)
 		return CollaborationEphemeral{}, false
 	}
 
-	if envelope.Kind != ephemeralKind || envelope.VersionID == "" {
+	if envelope.Kind != ephemeralKind || envelope.DocumentID == "" {
 		return CollaborationEphemeral{}, false
 	}
 
 	return CollaborationEphemeral{
-		VersionID:  envelope.VersionID,
+		DocumentID: envelope.DocumentID,
 		InstanceID: envelope.InstanceID,
 		Frame:      envelope.Frame,
 	}, true

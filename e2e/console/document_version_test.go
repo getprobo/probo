@@ -457,21 +457,19 @@ func documentVersionPublishInitialMinorVersion(t *testing.T, actors documentVers
 
 	var updateResult struct {
 		UpdateDocument struct {
-			DocumentVersion *struct {
-				Status string `json:"status"`
-				Major  int    `json:"major"`
-				Minor  int    `json:"minor"`
-			} `json:"documentVersion"`
+			Document struct {
+				Content struct {
+					Prosemirror string `json:"prosemirror"`
+				} `json:"content"`
+			} `json:"document"`
 		} `json:"updateDocument"`
 	}
 
 	err = owner.Execute(`
 		mutation($input: UpdateDocumentInput!) {
 			updateDocument(input: $input) {
-				documentVersion {
-					status
-					major
-					minor
+				document {
+					content { prosemirror }
 				}
 			}
 		}
@@ -482,10 +480,7 @@ func documentVersionPublishInitialMinorVersion(t *testing.T, actors documentVers
 		},
 	}, &updateResult)
 	require.NoError(t, err)
-	require.NotNil(t, updateResult.UpdateDocument.DocumentVersion)
-	assert.Equal(t, "DRAFT", updateResult.UpdateDocument.DocumentVersion.Status)
-	assert.Equal(t, 0, updateResult.UpdateDocument.DocumentVersion.Major)
-	assert.Equal(t, 2, updateResult.UpdateDocument.DocumentVersion.Minor)
+	assert.Contains(t, updateResult.UpdateDocument.Document.Content.Prosemirror, "Updated content for 0.2")
 
 	err = owner.Execute(publishMutation, map[string]any{
 		"input": map[string]any{
@@ -512,20 +507,19 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
 
-	// Updating content should auto-create a draft
+	// Updating content writes the live document and leaves published snapshots unchanged.
 	query := `
 		mutation UpdateDocument($input: UpdateDocumentInput!) {
 			updateDocument(input: $input) {
 				document {
 					id
-				}
-				documentVersion {
-					id
-					status
 					content {
 						prosemirror
 						markdown
 					}
+				}
+				documentVersion {
+					id
 				}
 			}
 		}
@@ -534,15 +528,14 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 	var result struct {
 		UpdateDocument struct {
 			Document struct {
-				ID string `json:"id"`
-			} `json:"document"`
-			DocumentVersion *struct {
 				ID      string `json:"id"`
-				Status  string `json:"status"`
 				Content struct {
 					Prosemirror string `json:"prosemirror"`
 					Markdown    string `json:"markdown"`
 				} `json:"content"`
+			} `json:"document"`
+			DocumentVersion *struct {
+				ID string `json:"id"`
 			} `json:"documentVersion"`
 		} `json:"updateDocument"`
 	}
@@ -555,76 +548,48 @@ func documentVersionAutoCreateDraft(t *testing.T, actors documentVersionActors) 
 	}, &result)
 	require.NoError(t, err)
 
-	require.NotNil(t, result.UpdateDocument.DocumentVersion)
-	assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
-	assert.Contains(t, result.UpdateDocument.DocumentVersion.Content.Prosemirror, "Updated content")
-	assert.Contains(t, result.UpdateDocument.DocumentVersion.Content.Markdown, "Updated content")
+	assert.Nil(t, result.UpdateDocument.DocumentVersion)
+	assert.Contains(t, result.UpdateDocument.Document.Content.Prosemirror, "Updated content")
+	assert.Contains(t, result.UpdateDocument.Document.Content.Markdown, "Updated content")
 }
 
 func documentVersionAutoDeleteDraft(t *testing.T, actors documentVersionActors) {
 	owner := actors.owner.ForTest(t)
 
-	// Create and approve a document (auto-publishes on approval)
 	docID, _ := createTestDocument(t, owner)
 	approveTestDocument(t, owner, docID)
+	updateDocumentContent(t, owner, docID, "Updated content")
 
-	// First update to create a draft
-	query := `
-		mutation UpdateDocument($input: UpdateDocumentInput!) {
-			updateDocument(input: $input) {
-				document {
-					id
-				}
-				documentVersion {
-					id
-					status
+	_, err := owner.Do(`
+		mutation DeleteDocumentDraft($input: DeleteDocumentDraftInput!) {
+			deleteDocumentDraft(input: $input) {
+				document { id }
+			}
+		}
+	`, map[string]any{
+		"input": map[string]any{"documentId": docID},
+	})
+	require.NoError(t, err)
+
+	var restored struct {
+		Node struct {
+			Content struct {
+				Prosemirror string `json:"prosemirror"`
+			} `json:"content"`
+		} `json:"node"`
+	}
+	err = owner.Execute(`
+		query($id: ID!) {
+			node(id: $id) {
+				... on Document {
+					content { prosemirror }
 				}
 			}
 		}
-	`
-
-	var createResult struct {
-		UpdateDocument struct {
-			Document struct {
-				ID string `json:"id"`
-			} `json:"document"`
-			DocumentVersion *struct {
-				ID     string `json:"id"`
-				Status string `json:"status"`
-			} `json:"documentVersion"`
-		} `json:"updateDocument"`
-	}
-
-	err := owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"id":      docID,
-			"content": testutil.ProseMirrorTextDoc("Updated content"),
-		},
-	}, &createResult)
+	`, map[string]any{"id": docID}, &restored)
 	require.NoError(t, err)
-	require.NotNil(t, createResult.UpdateDocument.DocumentVersion)
-
-	// Now revert content to match the published version — draft should be auto-deleted
-	var revertResult struct {
-		UpdateDocument struct {
-			Document struct {
-				ID string `json:"id"`
-			} `json:"document"`
-			DocumentVersion *struct {
-				ID string `json:"id"`
-			} `json:"documentVersion"`
-		} `json:"updateDocument"`
-	}
-
-	err = owner.Execute(query, map[string]any{
-		"input": map[string]any{
-			"id":      docID,
-			"content": testutil.ProseMirrorTextDoc("Initial content"),
-		},
-	}, &revertResult)
-	require.NoError(t, err)
-
-	assert.Nil(t, revertResult.UpdateDocument.DocumentVersion)
+	assert.Contains(t, restored.Node.Content.Prosemirror, "Initial content")
+	assert.NotContains(t, restored.Node.Content.Prosemirror, "Updated content")
 }
 
 func documentVersionRequestSignature(t *testing.T, actors documentVersionActors) {
@@ -1021,16 +986,12 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		docID, _ := createTestDocument(t, owner)
 		approveTestDocument(t, owner, docID)
 
-		// Updating documentType should auto-create a draft
 		query := `
 			mutation UpdateDocument($input: UpdateDocumentInput!) {
 				updateDocument(input: $input) {
 					document {
 						id
-					}
-					documentVersion {
-						id
-						status
+						documentType
 					}
 				}
 			}
@@ -1039,12 +1000,9 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		var result struct {
 			UpdateDocument struct {
 				Document struct {
-					ID string `json:"id"`
+					ID           string `json:"id"`
+					DocumentType string `json:"documentType"`
 				} `json:"document"`
-				DocumentVersion *struct {
-					ID     string `json:"id"`
-					Status string `json:"status"`
-				} `json:"documentVersion"`
 			} `json:"updateDocument"`
 		}
 
@@ -1056,8 +1014,7 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		}, &result)
 		require.NoError(t, err)
 
-		require.NotNil(t, result.UpdateDocument.DocumentVersion)
-		assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+		assert.Equal(t, "PROCEDURE", result.UpdateDocument.Document.DocumentType)
 	})
 
 	t.Run("classification update creates draft", func(t *testing.T) {
@@ -1069,16 +1026,12 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		docID, _ := createTestDocument(t, owner)
 		approveTestDocument(t, owner, docID)
 
-		// Updating classification should auto-create a draft
 		query := `
 			mutation UpdateDocument($input: UpdateDocumentInput!) {
 				updateDocument(input: $input) {
 					document {
 						id
-					}
-					documentVersion {
-						id
-						status
+						classification
 					}
 				}
 			}
@@ -1087,12 +1040,9 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		var result struct {
 			UpdateDocument struct {
 				Document struct {
-					ID string `json:"id"`
+					ID             string `json:"id"`
+					Classification string `json:"classification"`
 				} `json:"document"`
-				DocumentVersion *struct {
-					ID     string `json:"id"`
-					Status string `json:"status"`
-				} `json:"documentVersion"`
 			} `json:"updateDocument"`
 		}
 
@@ -1104,8 +1054,7 @@ func documentVersionAutoCreateDraftOnClassificationOrTypeUpdate(t *testing.T, ac
 		}, &result)
 		require.NoError(t, err)
 
-		require.NotNil(t, result.UpdateDocument.DocumentVersion)
-		assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
+		assert.Equal(t, "CONFIDENTIAL", result.UpdateDocument.Document.Classification)
 	})
 }
 
@@ -1224,7 +1173,7 @@ func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
 
 	versionID := versionResult.Node.Versions.Edges[0].Node.ID
 
-	// Void approval — version should revert to 0.1
+	// Void keeps the snapshot number and marks the row voided.
 	var voidResult struct {
 		VoidDocumentVersionApproval struct {
 			ApprovalQuorum struct {
@@ -1255,9 +1204,9 @@ func documentVersionVoidApproval(t *testing.T, actors documentVersionActors) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "VOIDED", voidResult.VoidDocumentVersionApproval.ApprovalQuorum.Status)
-	assert.Equal(t, "DRAFT", voidResult.VoidDocumentVersionApproval.DocumentVersion.Status)
-	assert.Equal(t, 0, voidResult.VoidDocumentVersionApproval.DocumentVersion.Major)
-	assert.Equal(t, 1, voidResult.VoidDocumentVersionApproval.DocumentVersion.Minor)
+	assert.Equal(t, "VOIDED", voidResult.VoidDocumentVersionApproval.DocumentVersion.Status)
+	assert.Equal(t, 1, voidResult.VoidDocumentVersionApproval.DocumentVersion.Major)
+	assert.Equal(t, 0, voidResult.VoidDocumentVersionApproval.DocumentVersion.Minor)
 
 	// Verify decisions are VOIDED after voiding
 	var quorumResult struct {
@@ -1391,7 +1340,7 @@ func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
 	})
 	require.NoError(t, err)
 
-	// Verify version reverted to 0.1 DRAFT
+	// The refused snapshot keeps its number so the next publish can reuse it.
 	err = owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {
@@ -1405,9 +1354,9 @@ func documentVersionRejectApproval(t *testing.T, actors documentVersionActors) {
 	`, map[string]any{"id": docID}, &versionResult)
 	require.NoError(t, err)
 	require.NotEmpty(t, versionResult.Node.Versions.Edges)
-	assert.Equal(t, "DRAFT", versionResult.Node.Versions.Edges[0].Node.Status)
-	assert.Equal(t, 0, versionResult.Node.Versions.Edges[0].Node.Major)
-	assert.Equal(t, 1, versionResult.Node.Versions.Edges[0].Node.Minor)
+	assert.Equal(t, "REJECTED", versionResult.Node.Versions.Edges[0].Node.Status)
+	assert.Equal(t, 1, versionResult.Node.Versions.Edges[0].Node.Major)
+	assert.Equal(t, 0, versionResult.Node.Versions.Edges[0].Node.Minor)
 
 	// Verify decisions are VOIDED after reject
 	var quorumResult struct {
@@ -1853,10 +1802,8 @@ func documentVersionDeleteDraft(t *testing.T, actors documentVersionActors) {
 				},
 			}, &updateResult)
 			require.NoError(t, err)
-			require.NotNil(t, updateResult.UpdateDocument.DocumentVersion)
-			assert.Equal(t, "DRAFT", updateResult.UpdateDocument.DocumentVersion.Status)
 
-			// Now delete the draft
+			// Discard the live edits and restore the published snapshot.
 			var result struct {
 				DeleteDocumentDraft struct {
 					Document struct {
@@ -1892,7 +1839,7 @@ func documentVersionDeleteDraft(t *testing.T, actors documentVersionActors) {
 	)
 
 	t.Run(
-		"cannot delete when latest is published",
+		"discard succeeds when the live document matches the publication",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -1906,7 +1853,7 @@ func documentVersionDeleteDraft(t *testing.T, actors documentVersionActors) {
 			err := owner.Execute(query, map[string]any{
 				"input": map[string]any{"documentId": docID},
 			}, &result)
-			require.Error(t, err)
+			require.NoError(t, err)
 		},
 	)
 
@@ -1962,13 +1909,14 @@ func documentVersionDeleteDraft(t *testing.T, actors documentVersionActors) {
 
 func documentVersionExportPDFSignatures(t *testing.T, actors documentVersionActors) {
 	t.Run(
-		"can export draft with signatures",
+		"can export a published snapshot with signatures",
 		func(t *testing.T) {
 			t.Parallel()
 
 			owner := actors.owner.ForTest(t)
 
-			_, docVersionID := createTestDocument(t, owner)
+			docID, _ := createTestDocument(t, owner)
+			docVersionID := publishMajorDocumentVersion(t, owner, docID)
 
 			var result struct {
 				ExportDocumentVersionPDF struct {
@@ -2464,9 +2412,9 @@ func documentVersionArchiveVoidsPendingQuorum(t *testing.T, actors documentVersi
 
 	version := result.Node.Versions.Edges[0].Node
 	assert.Equal(t, "ARCHIVED", result.Node.Status)
-	assert.Equal(t, "DRAFT", version.Status)
-	assert.Equal(t, 0, version.Major)
-	assert.Equal(t, 1, version.Minor)
+	assert.Equal(t, "VOIDED", version.Status)
+	assert.Equal(t, 1, version.Major)
+	assert.Equal(t, 0, version.Minor)
 	require.NotEmpty(t, version.ApprovalQuorums.Edges)
 	assert.Equal(t, "VOIDED", version.ApprovalQuorums.Edges[0].Node.Status)
 
@@ -2551,7 +2499,7 @@ func documentVersionUnarchiveRestoresEditableDraft(t *testing.T, actors document
 	require.NotEmpty(t, result.Node.Versions.Edges)
 
 	assert.Equal(t, "ACTIVE", result.Node.Status)
-	assert.Equal(t, "DRAFT", result.Node.Versions.Edges[0].Node.Status)
+	assert.Equal(t, "VOIDED", result.Node.Versions.Edges[0].Node.Status)
 
 	updateDocumentContent(t, owner, docID, "Updated after unarchive")
 }

@@ -354,7 +354,7 @@ VALUES (
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			if pgErr.Code == "23505" {
-				if pgErr.ConstraintName == "document_versions_document_id_major_minor_key" || pgErr.ConstraintName == "document_one_active_version_idx" {
+				if pgErr.ConstraintName == "document_versions_one_published_number_idx" || pgErr.ConstraintName == "document_one_pending_approval_idx" {
 					return ErrResourceAlreadyExists
 				}
 			}
@@ -400,6 +400,7 @@ WHERE
 	AND document_id = @document_id
 	AND major = @major
 	AND minor = @minor
+	AND status = @status
 LIMIT 1;
 `
 
@@ -409,6 +410,7 @@ LIMIT 1;
 		"document_id": documentID,
 		"major":       major,
 		"minor":       minor,
+		"status":      DocumentVersionStatusPublished,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -529,6 +531,66 @@ LIMIT 1;
 	args := pgx.StrictNamedArgs{
 		"document_id": documentID,
 		"status":      DocumentVersionStatusPublished,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document versions: %w", err)
+	}
+
+	documentVersion, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[DocumentVersion])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect document version: %w", err)
+	}
+
+	*dv = documentVersion
+
+	return nil
+}
+
+func (dv *DocumentVersion) LoadPendingApprovalByDocumentID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	document_id,
+	title,
+	major,
+	minor,
+	classification,
+	document_type,
+	content,
+	changelog,
+	status,
+	orientation,
+	file_id,
+	pdf_attempt_count,
+	published_at,
+	created_at,
+	updated_at
+FROM
+	document_versions
+WHERE
+	%s
+	AND document_id = @document_id
+	AND status = @status
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"status":      DocumentVersionStatusPendingApproval,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

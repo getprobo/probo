@@ -28,15 +28,15 @@ import (
 	"go.probo.inc/probo/pkg/server/gqlutils/types/pageinfo"
 )
 
-func NewDocumentCollaborationHistorySession(
-	session *probo.DocumentCollaborationHistorySession,
-) *DocumentCollaborationHistorySession {
+func NewDocumentRevision(
+	session *probo.DocumentRevision,
+) *DocumentRevision {
 	var authorName *string
 	if session.AuthorName != "" {
 		authorName = new(session.AuthorName)
 	}
 
-	return &DocumentCollaborationHistorySession{
+	return &DocumentRevision{
 		ID:            session.ID,
 		Heads:         probo.EncodeAutomergeHashes(session.Heads),
 		PreviousHeads: probo.EncodeAutomergeHashes(session.PreviousHeads),
@@ -61,13 +61,13 @@ func newPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *Pa
 	}
 }
 
-func NewListDocumentCollaborationHistorySessionsOutput(
-	sessionPage *page.Page[*probo.DocumentCollaborationHistorySession, probo.DocumentCollaborationHistorySessionOrderField],
+func NewListDocumentRevisionsOutput(
+	sessionPage *page.Page[*probo.DocumentRevision, probo.DocumentRevisionOrderField],
 	totalCount int,
-) ListDocumentCollaborationHistorySessionsOutput {
-	sessions := make([]*DocumentCollaborationHistorySession, 0, len(sessionPage.Data))
+) ListDocumentRevisionsOutput {
+	sessions := make([]*DocumentRevision, 0, len(sessionPage.Data))
 	for _, session := range sessionPage.Data {
-		sessions = append(sessions, NewDocumentCollaborationHistorySession(session))
+		sessions = append(sessions, NewDocumentRevision(session))
 	}
 
 	var nextCursor *page.CursorKey
@@ -79,20 +79,20 @@ func NewListDocumentCollaborationHistorySessionsOutput(
 		nextCursor = &cursorKey
 	}
 
-	return ListDocumentCollaborationHistorySessionsOutput{
-		CollaborationHistorySessions: sessions,
-		TotalCount:                   totalCount,
-		PageInfo:                     newPageInfo(sessionPage),
-		NextCursor:                   nextCursor,
+	return ListDocumentRevisionsOutput{
+		Revisions:  sessions,
+		TotalCount: totalCount,
+		PageInfo:   newPageInfo(sessionPage),
+		NextCursor: nextCursor,
 	}
 }
 
-func NewGetDocumentCollaborationHistorySnapshotOutput(
-	snapshot *probo.DocumentCollaborationHistorySnapshot,
-) GetDocumentCollaborationHistorySnapshotOutput {
-	highlights := make([]*DocumentCollaborationHistoryHighlight, len(snapshot.Highlights))
+func NewGetDocumentHistorySnapshotOutput(
+	snapshot *probo.DocumentHistorySnapshot,
+) GetDocumentHistorySnapshotOutput {
+	highlights := make([]*DocumentHistoryHighlight, len(snapshot.Highlights))
 	for i := range snapshot.Highlights {
-		highlights[i] = &DocumentCollaborationHistoryHighlight{
+		highlights[i] = &DocumentHistoryHighlight{
 			Kind: snapshot.Highlights[i].Kind,
 			From: snapshot.Highlights[i].From,
 			To:   snapshot.Highlights[i].To,
@@ -100,7 +100,7 @@ func NewGetDocumentCollaborationHistorySnapshotOutput(
 		}
 	}
 
-	return GetDocumentCollaborationHistorySnapshotOutput{
+	return GetDocumentHistorySnapshotOutput{
 		Content:    snapshot.Content,
 		Highlights: highlights,
 	}

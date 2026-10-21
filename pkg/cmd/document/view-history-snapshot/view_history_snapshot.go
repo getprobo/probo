@@ -23,7 +23,6 @@ package viewhistorysnapshot
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
@@ -31,19 +30,21 @@ import (
 )
 
 const viewQuery = `
-query($id: ID!, $heads: [String!]!, $previousHeads: [String!]) {
+query($id: ID!, $revisionId: ID!) {
   node(id: $id) {
     __typename
-    ... on DocumentVersion {
-      collaborationHistorySnapshot(heads: $heads, previousHeads: $previousHeads) {
-        content {
-          prosemirror
-        }
-        highlights {
-          kind
-          from
-          to
-          text
+    ... on Document {
+      revision(id: $revisionId) {
+        snapshot {
+          content {
+            prosemirror
+          }
+          highlights {
+            kind
+            from
+            to
+            text
+          }
         }
       }
     }
@@ -53,76 +54,35 @@ query($id: ID!, $heads: [String!]!, $previousHeads: [String!]) {
 
 type snapshotResponse struct {
 	Node *struct {
-		Typename                     string `json:"__typename"`
-		CollaborationHistorySnapshot *struct {
-			Content struct {
-				Prosemirror string `json:"prosemirror"`
-			} `json:"content"`
-			Highlights []struct {
-				Kind string `json:"kind"`
-				From int    `json:"from"`
-				To   int    `json:"to"`
-				Text string `json:"text"`
-			} `json:"highlights"`
-		} `json:"collaborationHistorySnapshot"`
+		Typename string `json:"__typename"`
+		Revision *struct {
+			Snapshot struct {
+				Content struct {
+					Prosemirror string `json:"prosemirror"`
+				} `json:"content"`
+				Highlights []struct {
+					Kind string `json:"kind"`
+					From int    `json:"from"`
+					To   int    `json:"to"`
+					Text string `json:"text"`
+				} `json:"highlights"`
+			} `json:"snapshot"`
+		} `json:"revision"`
 	} `json:"node"`
 }
 
-func parseHeadsFlag(value string) ([]string, error) {
-	if strings.TrimSpace(value) == "" {
-		return nil, fmt.Errorf("heads must not be empty")
-	}
-
-	parts := strings.Split(value, ",")
-	heads := make([]string, 0, len(parts))
-	for _, part := range parts {
-		head := strings.TrimSpace(part)
-		if head == "" {
-			continue
-		}
-
-		heads = append(heads, head)
-	}
-
-	if len(heads) == 0 {
-		return nil, fmt.Errorf("heads must not be empty")
-	}
-
-	return heads, nil
-}
-
 func NewCmdViewHistorySnapshot(f *cmdutil.Factory) *cobra.Command {
-	var (
-		flagHeads         string
-		flagPreviousHeads string
-		flagOutput        *string
-	)
+	var flagOutput *string
 
 	cmd := &cobra.Command{
-		Use:   "view-history-snapshot <document-version-id>",
-		Short: "View document content and edit highlights at collaboration history heads",
-		Example: `  # View snapshot at a session's heads
-  prb document view-history-snapshot <document-version-id> --heads <hex>[,<hex>...]
-
-  # Diff against previous heads
-  prb document view-history-snapshot <document-version-id> --heads <hex> --previous-heads <hex>`,
-		Args: cobra.ExactArgs(1),
+		Use:   "view-history-snapshot <document-id> <revision-id>",
+		Short: "View the content and edit highlights of a revision",
+		Example: `  # View the snapshot of one revision
+  prb document view-history-snapshot <document-id> <revision-id>`,
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
 				return err
-			}
-
-			heads, err := parseHeadsFlag(flagHeads)
-			if err != nil {
-				return err
-			}
-
-			var previousHeads []string
-			if flagPreviousHeads != "" {
-				previousHeads, err = parseHeadsFlag(flagPreviousHeads)
-				if err != nil {
-					return fmt.Errorf("cannot parse previous-heads: %w", err)
-				}
 			}
 
 			cfg, err := f.Config()
@@ -142,15 +102,10 @@ func NewCmdViewHistorySnapshot(f *cmdutil.Factory) *cobra.Command {
 				cfg.HTTPTimeoutDuration(),
 			)
 
-			variables := map[string]any{
-				"id":    args[0],
-				"heads": heads,
-			}
-			if previousHeads != nil {
-				variables["previousHeads"] = previousHeads
-			}
-
-			data, err := client.Do(viewQuery, variables)
+			data, err := client.Do(viewQuery, map[string]any{
+				"id":         args[0],
+				"revisionId": args[1],
+			})
 			if err != nil {
 				return err
 			}
@@ -161,17 +116,18 @@ func NewCmdViewHistorySnapshot(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if resp.Node == nil {
-				return fmt.Errorf("document version %s not found", args[0])
+				return fmt.Errorf("document %s not found", args[0])
 			}
 
-			if resp.Node.Typename != "DocumentVersion" {
-				return fmt.Errorf("expected DocumentVersion node, got %s", resp.Node.Typename)
+			if resp.Node.Typename != "Document" {
+				return fmt.Errorf("expected Document node, got %s", resp.Node.Typename)
 			}
 
-			snapshot := resp.Node.CollaborationHistorySnapshot
-			if snapshot == nil {
-				return fmt.Errorf("collaboration history snapshot not available")
+			if resp.Node.Revision == nil {
+				return fmt.Errorf("revision %s not found", args[1])
 			}
+
+			snapshot := resp.Node.Revision.Snapshot
 
 			if *flagOutput == cmdutil.OutputJSON {
 				return cmdutil.PrintJSON(f.IOStreams.Out, snapshot)
@@ -197,9 +153,6 @@ func NewCmdViewHistorySnapshot(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagHeads, "heads", "", "Automerge heads (comma-separated lowercase hex)")
-	cmd.Flags().StringVar(&flagPreviousHeads, "previous-heads", "", "Previous Automerge heads for the diff (comma-separated)")
-	_ = cmd.MarkFlagRequired("heads")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

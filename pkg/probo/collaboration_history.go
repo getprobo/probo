@@ -23,7 +23,6 @@ package probo
 import (
 	"context"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"slices"
 	"time"
@@ -37,13 +36,14 @@ import (
 	"go.probo.inc/probo/pkg/page"
 )
 
-const documentCollaborationHistorySessionGap = 10 * time.Minute
+const revisionGap = 10 * time.Minute
 
 type (
-	DocumentCollaborationHistoryHighlightKind string
+	DocumentHistoryHighlightKind string
 
-	DocumentCollaborationHistorySession struct {
+	DocumentRevision struct {
 		ID            gid.GID
+		DocumentID    gid.GID
 		Heads         []automerge.Hash
 		PreviousHeads []automerge.Hash
 		ActorID       []byte
@@ -55,21 +55,21 @@ type (
 		ChangeCount   int
 	}
 
-	DocumentCollaborationHistoryHighlight struct {
-		Kind DocumentCollaborationHistoryHighlightKind
+	DocumentHistoryHighlight struct {
+		Kind DocumentHistoryHighlightKind
 		From int
 		To   int
 		Text string
 	}
 
-	DocumentCollaborationHistorySnapshot struct {
+	DocumentHistorySnapshot struct {
 		Content    string
-		Highlights []DocumentCollaborationHistoryHighlight
+		Highlights []DocumentHistoryHighlight
 	}
 
-	DocumentCollaborationHistorySessionOrderField string
+	DocumentRevisionOrderField string
 
-	collaborationActorAttribution struct {
+	actorAttribution struct {
 		IdentityID *gid.GID
 		ProfileID  *gid.GID
 		AuthorName string
@@ -77,99 +77,126 @@ type (
 )
 
 const (
-	DocumentCollaborationHistoryHighlightKindInsert DocumentCollaborationHistoryHighlightKind = "INSERT"
-	DocumentCollaborationHistoryHighlightKindDelete DocumentCollaborationHistoryHighlightKind = "DELETE"
+	DocumentHistoryHighlightKindInsert DocumentHistoryHighlightKind = "INSERT"
+	DocumentHistoryHighlightKindDelete DocumentHistoryHighlightKind = "DELETE"
 
-	DocumentCollaborationHistorySessionOrderFieldEndedAt DocumentCollaborationHistorySessionOrderField = "ENDED_AT"
+	DocumentRevisionOrderFieldEndedAt DocumentRevisionOrderField = "ENDED_AT"
 )
 
-func (DocumentCollaborationHistorySessionOrderField) Column() string {
+func (DocumentRevisionOrderField) Column() string {
 	return "ended_at"
 }
 
-func (f DocumentCollaborationHistorySessionOrderField) String() string {
+func (f DocumentRevisionOrderField) String() string {
 	return string(f)
 }
 
-func (f DocumentCollaborationHistorySessionOrderField) IsValid() bool {
-	return f == DocumentCollaborationHistorySessionOrderFieldEndedAt
+func (f DocumentRevisionOrderField) IsValid() bool {
+	return f == DocumentRevisionOrderFieldEndedAt
 }
 
-func (s *DocumentCollaborationHistorySession) CursorKey(
-	orderBy DocumentCollaborationHistorySessionOrderField,
-) page.CursorKey {
+func (s *DocumentRevision) CursorKey(orderBy DocumentRevisionOrderField) page.CursorKey {
 	switch orderBy {
-	case DocumentCollaborationHistorySessionOrderFieldEndedAt:
+	case DocumentRevisionOrderFieldEndedAt:
 		return page.NewCursorKey(s.ID, s.EndedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order field: %q", orderBy))
 }
 
-// ListCollaborationHistorySessions groups Automerge changes into author sessions
-// (same actor, gaps under 10 minutes) and returns them newest-first.
-func (s *DocumentService) ListCollaborationHistorySessions(
+func (s *CollaborationService) ListRevisions(
 	ctx context.Context,
 	scope coredata.Scoper,
-	documentVersionID gid.GID,
-	cursor *page.Cursor[DocumentCollaborationHistorySessionOrderField],
-) (*page.Page[*DocumentCollaborationHistorySession, DocumentCollaborationHistorySessionOrderField], int, error) {
-	collaboration, err := s.OpenCollaboration(ctx, scope, documentVersionID)
-	if err != nil {
-		return nil, 0, fmt.Errorf("cannot open collaboration for history: %w", err)
-	}
-
-	defer func() { _ = collaboration.Document.Close() }()
-
-	if collaboration.NeedsSeed {
-		return page.NewPage([]*DocumentCollaborationHistorySession{}, cursor), 0, nil
-	}
-
-	changes, err := collaboration.Document.ChangeHistory()
-	if err != nil {
-		return nil, 0, fmt.Errorf("cannot read collaboration change history: %w", err)
-	}
-
-	actors, err := s.loadCollaborationActorAttributions(ctx, scope, documentVersionID)
+	documentID gid.GID,
+	cursor *page.Cursor[DocumentRevisionOrderField],
+) (*page.Page[*DocumentRevision, DocumentRevisionOrderField], int, error) {
+	sessions, err := s.loadRevisions(ctx, scope, documentID)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	sessions := groupCollaborationHistorySessions(
-		scope.GetTenantID(),
-		changes,
-		actors,
-	)
-	paged := paginateCollaborationHistorySessions(sessions, cursor)
+	paged := paginateRevisions(sessions, cursor)
 
 	return page.NewPage(paged, cursor), len(sessions), nil
 }
 
-// GetCollaborationHistorySnapshot materializes the document at the given heads
-// and returns highlight ranges for the edits since previousHeads.
-func (s *DocumentService) GetCollaborationHistorySnapshot(
+func (s *CollaborationService) GetRevision(
 	ctx context.Context,
 	scope coredata.Scoper,
-	documentVersionID gid.GID,
+	documentID gid.GID,
+	sessionID gid.GID,
+) (*DocumentRevision, error) {
+	sessions, err := s.loadRevisions(ctx, scope, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, session := range sessions {
+		if session.ID == sessionID {
+			return session, nil
+		}
+	}
+
+	return nil, coredata.ErrResourceNotFound
+}
+
+func (s *CollaborationService) loadRevisions(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) ([]*DocumentRevision, error) {
+	opened, err := s.Open(ctx, scope, documentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open collaboration for history: %w", err)
+	}
+
+	defer func() { _ = opened.Document.Close() }()
+
+	if opened.NeedsSeed {
+		return nil, nil
+	}
+
+	changes, err := opened.Document.ChangeHistory()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read collaboration change history: %w", err)
+	}
+
+	actors, err := s.loadActorAttributions(ctx, scope, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	sessions := groupRevisions(scope.GetTenantID(), changes, actors)
+	for _, session := range sessions {
+		session.DocumentID = documentID
+	}
+
+	return sessions, nil
+}
+
+func (s *CollaborationService) GetHistorySnapshot(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
 	heads []automerge.Hash,
 	previousHeads []automerge.Hash,
-) (*DocumentCollaborationHistorySnapshot, error) {
+) (*DocumentHistorySnapshot, error) {
 	if len(heads) == 0 {
 		return nil, fmt.Errorf("collaboration history snapshot requires heads")
 	}
 
-	collaboration, err := s.OpenCollaboration(ctx, scope, documentVersionID)
+	opened, err := s.Open(ctx, scope, documentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open collaboration for history snapshot: %w", err)
 	}
 
-	defer func() { _ = collaboration.Document.Close() }()
+	defer func() { _ = opened.Document.Close() }()
 
-	if collaboration.NeedsSeed {
+	if opened.NeedsSeed {
 		return nil, ErrDocumentCollaborationNotSeeded
 	}
 
-	hasHeads, err := collaboration.Document.HasHeads(heads)
+	hasHeads, err := opened.Document.HasHeads(heads)
 	if err != nil {
 		return nil, fmt.Errorf("cannot verify collaboration history heads: %w", err)
 	}
@@ -178,50 +205,105 @@ func (s *DocumentService) GetCollaborationHistorySnapshot(
 		return nil, fmt.Errorf("collaboration history heads are unknown")
 	}
 
-	content, err := materializeCollaborationAtHeads(collaboration.Document, heads)
+	content, err := materializeAtHeads(opened.Document, heads)
 	if err != nil {
 		return nil, err
 	}
 
-	highlights, err := collaborationHistoryHighlights(
-		collaboration.Document,
-		previousHeads,
-		heads,
-	)
+	highlights, err := historyHighlights(opened.Document, previousHeads, heads)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DocumentCollaborationHistorySnapshot{
+	return &DocumentHistorySnapshot{
 		Content:    content,
 		Highlights: highlights,
 	}, nil
 }
 
-// RestoreCollaborationHistory replaces the live body with the document state at
-// heads by appending one new Automerge change.
-func (s *DocumentService) RestoreCollaborationHistory(
+func (s *CollaborationService) RestoreHistory(
 	ctx context.Context,
 	scope coredata.Scoper,
-	documentVersionID gid.GID,
+	documentID gid.GID,
 	heads []automerge.Hash,
+	identityID gid.GID,
 ) (int64, error) {
 	if len(heads) == 0 {
 		return 0, fmt.Errorf("collaboration history restore requires heads")
 	}
 
-	collaboration, err := s.OpenCollaboration(ctx, scope, documentVersionID)
+	var (
+		organizationID gid.GID
+		profileID      gid.GID
+	)
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			orgID, err := assertDraftEditable(
+				ctx,
+				scope,
+				conn,
+				documentID,
+			)
+			if err != nil {
+				return err
+			}
+
+			organizationID = orgID
+
+			profile := &coredata.MembershipProfile{}
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				identityID,
+				organizationID,
+			); err != nil {
+				return fmt.Errorf("cannot load profile for history restore: %w", err)
+			}
+
+			profileID = profile.ID
+
+			return nil
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	// A fresh actor keeps the restore off the editor actor's clock and session.
+	actorID, err := automerge.NewActorID()
+	if err != nil {
+		return 0, fmt.Errorf("cannot create collaboration restore actor: %w", err)
+	}
+
+	if err := s.RecordActors(
+		ctx,
+		scope,
+		documentID,
+		organizationID,
+		identityID,
+		&profileID,
+		[][]byte{actorID[:]},
+	); err != nil {
+		return 0, fmt.Errorf("cannot record collaboration restore actor: %w", err)
+	}
+
+	opened, err := s.openWithActor(ctx, scope, documentID, actorID)
 	if err != nil {
 		return 0, fmt.Errorf("cannot open collaboration for history restore: %w", err)
 	}
 
-	defer func() { _ = collaboration.Document.Close() }()
+	defer func() { _ = opened.Document.Close() }()
 
-	if collaboration.NeedsSeed {
+	if opened.NeedsSeed {
+		_ = s.ReleaseSeed(ctx, scope, documentID)
+
 		return 0, ErrDocumentCollaborationNotSeeded
 	}
 
-	hasHeads, err := collaboration.Document.HasHeads(heads)
+	hasHeads, err := opened.Document.HasHeads(heads)
 	if err != nil {
 		return 0, fmt.Errorf("cannot verify collaboration history restore heads: %w", err)
 	}
@@ -230,7 +312,7 @@ func (s *DocumentService) RestoreCollaborationHistory(
 		return 0, fmt.Errorf("collaboration history restore heads are unknown")
 	}
 
-	content, err := materializeCollaborationAtHeads(collaboration.Document, heads)
+	content, err := materializeAtHeads(opened.Document, heads)
 	if err != nil {
 		return 0, err
 	}
@@ -240,7 +322,7 @@ func (s *DocumentService) RestoreCollaborationHistory(
 		return 0, fmt.Errorf("cannot convert restored content to spans: %w", err)
 	}
 
-	text, err := collaboration.Document.Text("body")
+	text, err := opened.Document.Text("body")
 	if err != nil {
 		return 0, fmt.Errorf("cannot get collaboration body for restore: %w", err)
 	}
@@ -249,16 +331,11 @@ func (s *DocumentService) RestoreCollaborationHistory(
 		return 0, fmt.Errorf("cannot write restored collaboration spans: %w", err)
 	}
 
-	if _, err := collaboration.Document.Commit("Restore document history", time.Now()); err != nil {
+	if _, err := opened.Document.Commit("Restore document history", time.Now()); err != nil {
 		return 0, fmt.Errorf("cannot commit collaboration history restore: %w", err)
 	}
 
-	revision, err := s.PersistCollaboration(
-		ctx,
-		scope,
-		documentVersionID,
-		collaboration.Document,
-	)
+	revision, err := s.Persist(ctx, scope, documentID, opened.Document)
 	if err != nil {
 		return 0, fmt.Errorf("cannot persist collaboration history restore: %w", err)
 	}
@@ -266,21 +343,21 @@ func (s *DocumentService) RestoreCollaborationHistory(
 	return revision, nil
 }
 
-func (s *DocumentService) loadCollaborationActorAttributions(
+func (s *CollaborationService) loadActorAttributions(
 	ctx context.Context,
 	scope coredata.Scoper,
-	documentVersionID gid.GID,
-) (map[string]collaborationActorAttribution, error) {
-	var actors coredata.DocumentVersionAutomergeActors
+	documentID gid.GID,
+) (map[string]actorAttribution, error) {
+	var actors coredata.CollaborationActors
 
-	err := s.svc.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return actors.LoadByDocumentVersionID(
+			return actors.LoadByDocumentID(
 				ctx,
 				conn,
 				scope,
-				documentVersionID,
+				documentID,
 				0,
 			)
 		},
@@ -289,16 +366,16 @@ func (s *DocumentService) loadCollaborationActorAttributions(
 		return nil, fmt.Errorf("cannot load collaboration actors: %w", err)
 	}
 
-	result := make(map[string]collaborationActorAttribution, len(actors))
+	result := make(map[string]actorAttribution, len(actors))
 	for _, actor := range actors {
-		attr := collaborationActorAttribution{
+		attr := actorAttribution{
 			IdentityID: new(actor.IdentityID),
 			ProfileID:  actor.ProfileID,
 		}
 
 		if actor.ProfileID != nil {
 			profile := &coredata.MembershipProfile{}
-			err := s.svc.pg.WithConn(
+			err := s.pg.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
 					return profile.LoadByID(ctx, conn, scope, *actor.ProfileID)
@@ -313,7 +390,7 @@ func (s *DocumentService) loadCollaborationActorAttributions(
 		}
 
 		identity := &coredata.Identity{}
-		err := s.svc.pg.WithConn(
+		err := s.pg.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
 				return identity.LoadByID(ctx, conn, actor.IdentityID)
@@ -332,17 +409,17 @@ func (s *DocumentService) loadCollaborationActorAttributions(
 	return result, nil
 }
 
-func groupCollaborationHistorySessions(
+func groupRevisions(
 	tenantID gid.TenantID,
 	changes []automerge.ChangeInfo,
-	actors map[string]collaborationActorAttribution,
-) []*DocumentCollaborationHistorySession {
+	actors map[string]actorAttribution,
+) []*DocumentRevision {
 	if len(changes) == 0 {
 		return nil
 	}
 
-	sessions := make([]*DocumentCollaborationHistorySession, 0)
-	var current *DocumentCollaborationHistorySession
+	sessions := make([]*DocumentRevision, 0)
+	var current *DocumentRevision
 
 	for _, change := range changes {
 		actorKey := string(change.Actor)
@@ -355,7 +432,7 @@ func groupCollaborationHistorySessions(
 			string(current.ActorID) != actorKey ||
 			(!changeTime.Equal(time.Unix(0, 0).UTC()) &&
 				!current.EndedAt.Equal(time.Unix(0, 0).UTC()) &&
-				changeTime.Sub(current.EndedAt) > documentCollaborationHistorySessionGap)
+				changeTime.Sub(current.EndedAt) > revisionGap)
 
 		if startsNew {
 			if current != nil {
@@ -363,8 +440,8 @@ func groupCollaborationHistorySessions(
 			}
 
 			attr := actors[actorKey]
-			current = &DocumentCollaborationHistorySession{
-				ID:          collaborationHistorySessionID(tenantID, change.Hash),
+			current = &DocumentRevision{
+				ID:          revisionID(tenantID, change.Hash),
 				Heads:       []automerge.Hash{change.Hash},
 				ActorID:     append([]byte(nil), change.Actor...),
 				IdentityID:  attr.IdentityID,
@@ -378,7 +455,7 @@ func groupCollaborationHistorySessions(
 			continue
 		}
 
-		current.ID = collaborationHistorySessionID(tenantID, change.Hash)
+		current.ID = revisionID(tenantID, change.Hash)
 		current.Heads = []automerge.Hash{change.Hash}
 		current.EndedAt = changeTime
 		current.ChangeCount++
@@ -399,10 +476,7 @@ func groupCollaborationHistorySessions(
 	return sessions
 }
 
-func collaborationHistorySessionID(
-	tenantID gid.TenantID,
-	changeHash automerge.Hash,
-) gid.GID {
+func revisionID(tenantID gid.TenantID, changeHash automerge.Hash) gid.GID {
 	var id gid.GID
 	copy(id[0:8], tenantID[:])
 	binary.BigEndian.PutUint16(id[8:10], coredata.DocumentCollaborationSessionEntityType)
@@ -411,10 +485,10 @@ func collaborationHistorySessionID(
 	return id
 }
 
-func paginateCollaborationHistorySessions(
-	sessions []*DocumentCollaborationHistorySession,
-	cursor *page.Cursor[DocumentCollaborationHistorySessionOrderField],
-) []*DocumentCollaborationHistorySession {
+func paginateRevisions(
+	sessions []*DocumentRevision,
+	cursor *page.Cursor[DocumentRevisionOrderField],
+) []*DocumentRevision {
 	if cursor == nil {
 		return sessions
 	}
@@ -448,36 +522,14 @@ func paginateCollaborationHistorySessions(
 	return ordered[start:end]
 }
 
-func materializeCollaborationAtHeads(
-	document *automerge.Document,
-	heads []automerge.Hash,
-) (string, error) {
-	text, err := document.Text("body")
-	if err != nil {
-		return "", fmt.Errorf("cannot get collaboration body at heads: %w", err)
-	}
-
-	spans, err := text.SpansAt(heads)
-	if err != nil {
-		return "", fmt.Errorf("cannot read collaboration spans at heads: %w", err)
-	}
-
-	content, err := automergeprosemirror.Render(spans)
-	if err != nil {
-		return "", fmt.Errorf("cannot render collaboration spans at heads: %w", err)
-	}
-
-	return content, nil
-}
-
-func collaborationHistoryHighlights(
+func historyHighlights(
 	document *automerge.Document,
 	before []automerge.Hash,
 	after []automerge.Hash,
-) ([]DocumentCollaborationHistoryHighlight, error) {
+) ([]DocumentHistoryHighlight, error) {
 	patches, err := document.Diff(before, after)
 	if err != nil {
-		return nil, fmt.Errorf("cannot diff collaboration history session: %w", err)
+		return nil, fmt.Errorf("cannot diff revision: %w", err)
 	}
 
 	text, err := document.Text("body")
@@ -498,7 +550,7 @@ func collaborationHistoryHighlights(
 		}
 	}
 
-	highlights := make([]DocumentCollaborationHistoryHighlight, 0)
+	highlights := make([]DocumentHistoryHighlight, 0)
 	for _, patch := range patches {
 		switch patch.Action {
 		case automerge.PatchSpliceText:
@@ -514,8 +566,8 @@ func collaborationHistoryHighlights(
 			length := utf16CodeUnitCount(patch.Text)
 			highlights = append(
 				highlights,
-				DocumentCollaborationHistoryHighlight{
-					Kind: DocumentCollaborationHistoryHighlightKindInsert,
+				DocumentHistoryHighlight{
+					Kind: DocumentHistoryHighlightKindInsert,
 					From: from,
 					To:   from + length,
 					Text: patch.Text,
@@ -535,8 +587,8 @@ func collaborationHistoryHighlights(
 			deleted := plainTextSlice(beforeSpans, patch.Index, patch.Length)
 			highlights = append(
 				highlights,
-				DocumentCollaborationHistoryHighlight{
-					Kind: DocumentCollaborationHistoryHighlightKindDelete,
+				DocumentHistoryHighlight{
+					Kind: DocumentHistoryHighlightKindDelete,
 					From: from,
 					To:   from,
 					Text: deleted,
@@ -618,38 +670,4 @@ func plainTextSlice(spans []automerge.Span, index uint64, length uint64) string 
 
 func utf16CodeUnitCount(value string) int {
 	return len(utf16.Encode([]rune(value)))
-}
-
-// ParseAutomergeHashes decodes lowercase hex change hashes.
-func ParseAutomergeHashes(values []string) ([]automerge.Hash, error) {
-	hashes := make([]automerge.Hash, len(values))
-	for i, value := range values {
-		raw, err := hex.DecodeString(value)
-		if err != nil {
-			return nil, fmt.Errorf("cannot decode Automerge hash %q: %w", value, err)
-		}
-
-		if len(raw) != len(automerge.Hash{}) {
-			return nil, fmt.Errorf(
-				"cannot decode Automerge hash %q: expected %d bytes, got %d",
-				value,
-				len(automerge.Hash{}),
-				len(raw),
-			)
-		}
-
-		copy(hashes[i][:], raw)
-	}
-
-	return hashes, nil
-}
-
-// EncodeAutomergeHashes encodes change hashes as lowercase hex strings.
-func EncodeAutomergeHashes(hashes []automerge.Hash) []string {
-	values := make([]string, len(hashes))
-	for i, hash := range hashes {
-		values[i] = hash.String()
-	}
-
-	return values
 }

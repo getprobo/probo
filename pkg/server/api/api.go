@@ -62,6 +62,7 @@ import (
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	agent_v1 "go.probo.inc/probo/pkg/server/api/agent/v1"
+	collaboration_v1 "go.probo.inc/probo/pkg/server/api/collaboration/v1"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	cookiebanner_v1 "go.probo.inc/probo/pkg/server/api/cookiebanner/v1"
@@ -137,16 +138,17 @@ type (
 	}
 
 	Server struct {
-		cfg                 Config
-		csrf                *http.CrossOriginProtection
-		consoleHandler      http.Handler
-		cookieBannerHandler http.Handler
-		filesHandler        http.Handler
-		mcpHandler          http.Handler
-		slackHandler        http.Handler
-		linearHandler       http.Handler
-		connectHandler      http.Handler
-		agentHandler        http.Handler
+		cfg                  Config
+		csrf                 *http.CrossOriginProtection
+		consoleHandler       http.Handler
+		collaborationHandler http.Handler
+		cookieBannerHandler  http.Handler
+		filesHandler         http.Handler
+		mcpHandler           http.Handler
+		slackHandler         http.Handler
+		linearHandler        http.Handler
+		connectHandler       http.Handler
+		agentHandler         http.Handler
 	}
 )
 
@@ -274,14 +276,33 @@ func NewServer(cfg Config) (*Server, error) {
 		)
 	}))
 
+	shutdownCtx := cfg.ShutdownContext
+	if shutdownCtx == nil {
+		shutdownCtx = context.Background()
+	}
+
+	collabHub := collaboration_v1.NewHub(
+		cfg.Probo.Collaboration,
+		cfg.CollaborationEvents,
+	)
+
+	collabHandler := &collaboration_v1.Handler{
+		Logger:         cfg.Logger.Named("collaboration.v1"),
+		Probo:          cfg.Probo,
+		IAM:            cfg.IAM,
+		BaseURL:        cfg.BaseURL,
+		AllowedOrigins: cfg.AllowedOrigins,
+		Hub:            collabHub,
+		Shutdown:       shutdownCtx,
+	}
+
 	return &Server{
 		cfg:  cfg,
 		csrf: csrf,
 		consoleHandler: console_v1.NewMux(
 			cfg.Logger.Named("console.v1"),
 			cfg.Probo,
-			cfg.CollaborationEvents,
-			cfg.ShutdownContext,
+			collabHandler,
 			cfg.ResourceAlias,
 			cfg.IAM,
 			cfg.ESign,
@@ -389,6 +410,12 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("agent.v1"),
 			cfg.ITAM,
 		),
+		collaborationHandler: collaboration_v1.NewMux(
+			collabHandler,
+			cfg.IAM,
+			cfg.Cookie,
+			cfg.TokenSecret,
+		),
 	}, nil
 }
 
@@ -428,6 +455,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.Group(func(r chi.Router) {
 		r.Use(cors.Handler(corsOpts))
 		r.Mount("/console/v1", http.StripPrefix("/console/v1", s.consoleHandler))
+		r.Mount("/collaboration/v1", http.StripPrefix("/collaboration/v1", s.collaborationHandler))
 		r.Mount("/connect/v1", http.StripPrefix("/connect/v1", s.connectHandler))
 		r.Mount("/files/v1", http.StripPrefix("/files/v1", s.filesHandler))
 		r.Mount("/mcp/v1", http.StripPrefix("/mcp/v1", s.mcpHandler))

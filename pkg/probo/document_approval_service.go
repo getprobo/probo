@@ -90,22 +90,12 @@ func (s *DocumentApprovalService) RequestApproval(
 ) (*coredata.DocumentVersionApprovalQuorum, error) {
 	now := time.Now()
 
-	documentVersion.Status = coredata.DocumentVersionStatusPendingApproval
-	if changelog != nil {
+	if changelog != nil && documentVersion.Changelog != *changelog {
 		documentVersion.Changelog = *changelog
-	}
-
-	if document.CurrentPublishedMajor != nil {
-		documentVersion.Major = *document.CurrentPublishedMajor + 1
-	} else {
-		documentVersion.Major = 1
-	}
-
-	documentVersion.Minor = 0
-
-	documentVersion.UpdatedAt = now
-	if err := documentVersion.Update(ctx, tx, scope); err != nil {
-		return nil, fmt.Errorf("cannot update document version: %w", err)
+		documentVersion.UpdatedAt = now
+		if err := documentVersion.Update(ctx, tx, scope); err != nil {
+			return nil, fmt.Errorf("cannot update document version: %w", err)
+		}
 	}
 
 	quorum := &coredata.DocumentVersionApprovalQuorum{
@@ -152,13 +142,14 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
-				dv := &coredata.DocumentVersion{}
-				if err := dv.LoadLatestVersion(ctx, tx, scope, documentID); err != nil {
-					return fmt.Errorf("cannot load latest version for %q: %w", documentID, err)
+				pending := &coredata.DocumentVersion{}
+				err := pending.LoadPendingApprovalByDocumentID(ctx, tx, scope, documentID)
+				if err == nil {
+					continue
 				}
 
-				if dv.Status == coredata.DocumentVersionStatusPendingApproval {
-					continue
+				if !errors.Is(err, coredata.ErrResourceNotFound) {
+					return fmt.Errorf("cannot load pending approval for %q: %w", documentID, err)
 				}
 
 				document := &coredata.Document{}
@@ -170,100 +161,37 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					return &ErrDocumentArchived{}
 				}
 
-				// Treat minor on an already-published version as a no-op so the
-				// operation is idempotent: the doc is included in the result
-				// without modification.
-				if req.Minor && dv.Status == coredata.DocumentVersionStatusPublished {
-					publishedVersions = append(publishedVersions, dv)
-					updatedDocuments = append(updatedDocuments, document)
-
-					continue
-				}
-
-				if dv.Status != coredata.DocumentVersionStatusDraft {
-					continue
-				}
-
-				var requestedQuorum *coredata.DocumentVersionApprovalQuorum
-
-				if req.Minor {
-					var err error
-
-					document, dv, err = s.svc.Documents.publishMinor(
-						ctx,
-						scope,
-						tx,
-						documentID,
-						&req.Changelog,
-						true,
-					)
-					if err != nil {
-						return fmt.Errorf("cannot publish document %q: %w", documentID, err)
-					}
-				} else {
+				var approverIDs []gid.GID
+				if !req.Minor {
 					defaultApprovers := &coredata.DocumentDefaultApprovers{}
 					if err := defaultApprovers.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
 						return fmt.Errorf("cannot load default approvers for %q: %w", documentID, err)
 					}
 
-					if len(*defaultApprovers) > 0 {
-						approverIDs := make([]gid.GID, len(*defaultApprovers))
-						for i, a := range *defaultApprovers {
-							approverIDs[i] = a.ApproverProfileID
-						}
-
-						quorum, err := s.RequestApproval(
-							ctx,
-							scope,
-							tx,
-							document,
-							dv,
-							approverIDs,
-							&req.Changelog,
-						)
-						if err != nil {
-							return fmt.Errorf("cannot request approval for %q: %w", documentID, err)
-						}
-
-						requestedQuorum = quorum
-					} else {
-						var err error
-
-						document, dv, err = s.svc.Documents.publishMajor(
-							ctx,
-							scope,
-							tx,
-							documentID,
-							&req.Changelog,
-							true,
-						)
-						if err != nil {
-							return fmt.Errorf("cannot publish document %q: %w", documentID, err)
-						}
+					approverIDs = make([]gid.GID, len(*defaultApprovers))
+					for i, approver := range *defaultApprovers {
+						approverIDs[i] = approver.ApproverProfileID
 					}
 				}
 
-				publishedVersions = append(publishedVersions, dv)
-				updatedDocuments = append(updatedDocuments, document)
-
-				// A direct publish emits the version-published webhook inside
-				// publishMinor/publishMajor; only the approval-quorum case needs
-				// its event emitted here.
-				if requestedQuorum != nil {
-					if err := s.svc.Documents.emitDocumentEvent(
-						ctx,
-						scope,
-						tx,
-						dv.DocumentID,
-						coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
-						dv,
-						nil,
-						&requestedQuorum.ID,
-						nil,
-					); err != nil {
-						return fmt.Errorf("cannot emit approval quorum requested webhook: %w", err)
-					}
+				result, err := s.svc.Documents.publish(
+					ctx,
+					scope,
+					tx,
+					PublishDocumentRequest{
+						DocumentID:      documentID,
+						Minor:           req.Minor,
+						ApproverIDs:     approverIDs,
+						Changelog:       req.Changelog,
+						IgnoreUnchanged: true,
+					},
+				)
+				if err != nil {
+					return fmt.Errorf("cannot publish document %q: %w", documentID, err)
 				}
+
+				publishedVersions = append(publishedVersions, result.Version)
+				updatedDocuments = append(updatedDocuments, result.Document)
 			}
 
 			return nil
@@ -553,15 +481,7 @@ func (s *DocumentApprovalService) Reject(
 				return fmt.Errorf("cannot void pending decisions: %w", err)
 			}
 
-			documentVersion.Status = coredata.DocumentVersionStatusDraft
-			if document.CurrentPublishedMajor != nil {
-				documentVersion.Major = *document.CurrentPublishedMajor
-				documentVersion.Minor = *document.CurrentPublishedMinor + 1
-			} else {
-				documentVersion.Major = 0
-				documentVersion.Minor = 1
-			}
-
+			documentVersion.Status = coredata.DocumentVersionStatusRejected
 			documentVersion.UpdatedAt = now
 
 			if err := documentVersion.Update(ctx, tx, scope); err != nil {
@@ -676,15 +596,7 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 		return fmt.Errorf("cannot void pending decisions: %w", err)
 	}
 
-	documentVersion.Status = coredata.DocumentVersionStatusDraft
-	if document.CurrentPublishedMajor != nil {
-		documentVersion.Major = *document.CurrentPublishedMajor
-		documentVersion.Minor = *document.CurrentPublishedMinor + 1
-	} else {
-		documentVersion.Major = 0
-		documentVersion.Minor = 1
-	}
-
+	documentVersion.Status = coredata.DocumentVersionStatusVoided
 	documentVersion.UpdatedAt = now
 
 	if err := documentVersion.Update(ctx, tx, scope); err != nil {
@@ -708,12 +620,20 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 	return nil
 }
 
-func (s *DocumentApprovalService) voidPendingApprovalForLatestVersionInTx(
+func (s *DocumentApprovalService) voidPendingApprovalForDocumentInTx(
 	ctx context.Context, scope coredata.Scoper,
 	tx pg.Tx,
 	document *coredata.Document,
-	documentVersion *coredata.DocumentVersion,
 ) error {
+	documentVersion := &coredata.DocumentVersion{}
+	if err := documentVersion.LoadPendingApprovalByDocumentID(ctx, tx, scope, document.ID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil
+		}
+
+		return fmt.Errorf("cannot load pending approval: %w", err)
+	}
+
 	if documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {
 		return nil
 	}

@@ -31,33 +31,34 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const documentVersionAutomergeActorMaxLoad = 500
+const collaborationActorMaxLoad = 500
 
 type (
-	DocumentVersionAutomergeActor struct {
-		DocumentVersionID gid.GID   `db:"document_version_id"`
-		OrganizationID    gid.GID   `db:"organization_id"`
-		ActorID           []byte    `db:"actor_id"`
-		IdentityID        gid.GID   `db:"identity_id"`
-		ProfileID         *gid.GID  `db:"profile_id"`
-		CreatedAt         time.Time `db:"created_at"`
+	CollaborationActor struct {
+		DocumentID     gid.GID   `db:"document_id"`
+		OrganizationID gid.GID   `db:"organization_id"`
+		ActorID        []byte    `db:"actor_id"`
+		IdentityID     gid.GID   `db:"identity_id"`
+		ProfileID      *gid.GID  `db:"profile_id"`
+		CreatedAt      time.Time `db:"created_at"`
 	}
 
-	DocumentVersionAutomergeActors []*DocumentVersionAutomergeActor
+	CollaborationActors []*CollaborationActor
 )
 
 // InsertIfAbsent records the first authenticated identity that introduced an
-// Automerge actor on this document version. Later inserts for the same actor
-// are ignored so a peer replaying someone else's changes cannot steal authorship.
-func (a DocumentVersionAutomergeActor) InsertIfAbsent(
+// Automerge actor on this collaboration document. Later inserts for the same
+// actor are ignored so a peer replaying someone else's changes cannot steal
+// authorship.
+func (a CollaborationActor) InsertIfAbsent(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 ) error {
 	q := `
-INSERT INTO document_version_automerge_actors (
+INSERT INTO collaboration_actors (
 	tenant_id,
-	document_version_id,
+	document_id,
 	organization_id,
 	actor_id,
 	identity_id,
@@ -66,80 +67,81 @@ INSERT INTO document_version_automerge_actors (
 )
 VALUES (
 	@tenant_id,
-	@document_version_id,
+	@document_id,
 	@organization_id,
 	@actor_id,
 	@identity_id,
 	@profile_id,
 	@created_at
 )
-ON CONFLICT (document_version_id, actor_id) DO NOTHING
+ON CONFLICT (document_id, actor_id) DO NOTHING
 `
 	args := pgx.StrictNamedArgs{
-		"tenant_id":           scope.GetTenantID(),
-		"document_version_id": a.DocumentVersionID,
-		"organization_id":     a.OrganizationID,
-		"actor_id":            a.ActorID,
-		"identity_id":         a.IdentityID,
-		"profile_id":          a.ProfileID,
-		"created_at":          a.CreatedAt,
+		"tenant_id":       scope.GetTenantID(),
+		"document_id":     a.DocumentID,
+		"organization_id": a.OrganizationID,
+		"actor_id":        a.ActorID,
+		"identity_id":     a.IdentityID,
+		"profile_id":      a.ProfileID,
+		"created_at":      a.CreatedAt,
 	}
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot insert document version Automerge actor: %w", err)
+		return fmt.Errorf("cannot insert collaboration actor: %w", err)
 	}
 
 	return nil
 }
 
-// LoadByDocumentVersionID loads Automerge actor bindings for a document version.
-// The result is hard-capped; a document with more concurrent writers than the
-// cap still returns a usable prefix for history attribution.
-func (as *DocumentVersionAutomergeActors) LoadByDocumentVersionID(
+// LoadByDocumentID loads Automerge actor bindings for a
+// collaboration document. The result is hard-capped; a document with more
+// concurrent writers than the cap still returns a usable prefix for history
+// attribution.
+func (as *CollaborationActors) LoadByDocumentID(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
-	documentVersionID gid.GID,
+	documentID gid.GID,
 	limit int,
 ) error {
-	if limit <= 0 || limit > documentVersionAutomergeActorMaxLoad {
-		limit = documentVersionAutomergeActorMaxLoad
+	if limit <= 0 || limit > collaborationActorMaxLoad {
+		limit = collaborationActorMaxLoad
 	}
 
 	q := `
 SELECT
-	document_version_id,
+	document_id,
 	organization_id,
 	actor_id,
 	identity_id,
 	profile_id,
 	created_at
 FROM
-	document_version_automerge_actors
+	collaboration_actors
 WHERE
 	%s
-	AND document_version_id = @document_version_id
+	AND document_id = @document_id
 ORDER BY created_at ASC, actor_id ASC
 LIMIT @limit
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
-		"document_version_id": documentVersionID,
-		"limit":               limit,
+		"document_id": documentID,
+		"limit":       limit,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query document version Automerge actors: %w", err)
+		return fmt.Errorf("cannot query collaboration actors: %w", err)
 	}
 
 	actors, err := pgx.CollectRows(
 		rows,
-		pgx.RowToAddrOfStructByName[DocumentVersionAutomergeActor],
+		pgx.RowToAddrOfStructByName[CollaborationActor],
 	)
 	if err != nil {
-		return fmt.Errorf("cannot collect document version Automerge actors: %w", err)
+		return fmt.Errorf("cannot collect collaboration actors: %w", err)
 	}
 
 	*as = actors

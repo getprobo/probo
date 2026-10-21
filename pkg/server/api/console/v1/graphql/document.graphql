@@ -1,9 +1,5 @@
-enum DocumentVersionStatus
+ enum DocumentVersionStatus
     @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatus") {
-    DRAFT
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusDraft"
-        )
     PENDING_APPROVAL
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPendingApproval"
@@ -11,6 +7,14 @@ enum DocumentVersionStatus
     PUBLISHED
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusPublished"
+        )
+    REJECTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusRejected"
+        )
+    VOIDED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.DocumentVersionStatusVoided"
         )
 }
 
@@ -275,6 +279,11 @@ input DocumentVersionApprovalDecisionOrder {
 
 type Document implements Node {
     id: ID!
+    title: String!
+    classification: DocumentClassification!
+    documentType: DocumentType!
+    orientation: DocumentVersionOrientation!
+    content: DocumentContent! @goField(forceResolver: true)
     currentPublishedMajor: Int
     currentPublishedMinor: Int
     alias: String @goField(forceResolver: true)
@@ -305,6 +314,16 @@ type Document implements Node {
     ): ControlConnection! @goField(forceResolver: true)
 
     defaultApprovers: [Profile!]! @goField(forceResolver: true)
+
+    history(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: DocumentRevisionOrder
+    ): DocumentRevisionConnection! @goField(forceResolver: true)
+
+    revision(id: ID!): DocumentRevision! @goField(forceResolver: true)
 
     writeMode: DocumentWriteMode!
     status: DocumentStatus!
@@ -369,19 +388,6 @@ type DocumentVersion implements Node {
 
     signed: Boolean! @goField(forceResolver: true)
 
-    collaborationHistory(
-        first: Int
-        after: CursorKey
-        last: Int
-        before: CursorKey
-        orderBy: DocumentCollaborationHistorySessionOrder
-    ): DocumentCollaborationHistorySessionConnection! @goField(forceResolver: true)
-
-    collaborationHistorySnapshot(
-        heads: [String!]!
-        previousHeads: [String!]
-    ): DocumentCollaborationHistorySnapshot! @goField(forceResolver: true)
-
     publishedAt: Datetime
     createdAt: Datetime!
     updatedAt: Datetime!
@@ -389,80 +395,81 @@ type DocumentVersion implements Node {
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }
 
-enum DocumentCollaborationHistorySessionOrderField
+enum DocumentRevisionOrderField
     @goModel(
-        model: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistorySessionOrderField"
+        model: "go.probo.inc/probo/pkg/probo.DocumentRevisionOrderField"
     ) {
     ENDED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistorySessionOrderFieldEndedAt"
+            value: "go.probo.inc/probo/pkg/probo.DocumentRevisionOrderFieldEndedAt"
         )
 }
 
-input DocumentCollaborationHistorySessionOrder {
-    field: DocumentCollaborationHistorySessionOrderField!
+input DocumentRevisionOrder {
+    field: DocumentRevisionOrderField!
     direction: OrderDirection!
 }
 
-type DocumentCollaborationHistorySession
+type DocumentRevision
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySession"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentRevision"
     ) {
     id: ID!
     heads: [String!]!
     previousHeads: [String!]!
     actorID: String!
     authorName: String
-    authorProfile: Profile @goField(forceResolver: true)
+    author: Profile @goField(forceResolver: true)
     startedAt: Datetime!
     endedAt: Datetime!
     changeCount: Int!
+    snapshot: DocumentHistorySnapshot! @goField(forceResolver: true)
 }
 
-type DocumentCollaborationHistorySessionConnection
+type DocumentRevisionConnection
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySessionConnection"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentRevisionConnection"
     ) {
     totalCount: Int! @goField(forceResolver: true)
-    edges: [DocumentCollaborationHistorySessionEdge!]!
+    edges: [DocumentRevisionEdge!]!
     pageInfo: PageInfo!
 }
 
-type DocumentCollaborationHistorySessionEdge {
+type DocumentRevisionEdge {
     cursor: CursorKey!
-    node: DocumentCollaborationHistorySession!
+    node: DocumentRevision!
 }
 
-enum DocumentCollaborationHistoryHighlightKind
+enum DocumentHistoryHighlightKind
     @goModel(
-        model: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKind"
+        model: "go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKind"
     ) {
     INSERT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKindInsert"
+            value: "go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKindInsert"
         )
     DELETE
         @goEnum(
-            value: "go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKindDelete"
+            value: "go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKindDelete"
         )
 }
 
-type DocumentCollaborationHistoryHighlight
+type DocumentHistoryHighlight
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistoryHighlight"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentHistoryHighlight"
     ) {
-    kind: DocumentCollaborationHistoryHighlightKind!
+    kind: DocumentHistoryHighlightKind!
     from: Int!
     to: Int!
     text: String!
 }
 
-type DocumentCollaborationHistorySnapshot
+type DocumentHistorySnapshot
     @goModel(
-        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentCollaborationHistorySnapshot"
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentHistorySnapshot"
     ) {
     content: DocumentContent!
-    highlights: [DocumentCollaborationHistoryHighlight!]!
+    highlights: [DocumentHistoryHighlight!]!
 }
 
 type DocumentVersionSignature implements Node {
@@ -700,18 +707,18 @@ extend type Mutation {
     exportEmployeeDocumentVersionPDF(
         input: ExportEmployeeDocumentVersionPDFInput!
     ): ExportEmployeeDocumentVersionPDFPayload!
-    restoreDocumentCollaboration(
-        input: RestoreDocumentCollaborationInput!
-    ): RestoreDocumentCollaborationPayload!
+    restoreDocumentHistory(
+        input: RestoreDocumentHistoryInput!
+    ): RestoreDocumentHistoryPayload!
 }
 
-input RestoreDocumentCollaborationInput {
-    documentVersionId: ID!
+input RestoreDocumentHistoryInput {
+    documentId: ID!
     heads: [String!]!
 }
 
-type RestoreDocumentCollaborationPayload {
-    documentVersion: DocumentVersion!
+type RestoreDocumentHistoryPayload {
+    document: Document!
 }
 
 input CreateDocumentInput {
@@ -827,7 +834,7 @@ input RejectDocumentVersionInput {
 
 type CreateDocumentPayload {
     documentEdge: DocumentEdge!
-    documentVersionEdge: DocumentVersionEdge!
+    documentVersionEdge: DocumentVersionEdge
 }
 
 type UpdateDocumentPayload {

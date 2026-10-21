@@ -70,6 +70,11 @@ func NewDocument(d *coredata.Document) *Document {
 	return &Document{
 		ID:                    d.ID,
 		OrganizationID:        d.OrganizationID,
+		Title:                 d.Title,
+		Classification:        d.Classification,
+		DocumentType:          d.DocumentType,
+		Orientation:           d.Orientation,
+		Content:               d.Content,
 		CurrentPublishedMajor: d.CurrentPublishedMajor,
 		CurrentPublishedMinor: d.CurrentPublishedMinor,
 		WriteMode:             d.WriteMode,
@@ -78,6 +83,13 @@ func NewDocument(d *coredata.Document) *Document {
 		CreatedAt:             d.CreatedAt,
 		UpdatedAt:             d.UpdatedAt,
 	}
+}
+
+func NewDocumentWithHeads(d *coredata.Document, heads []string) *Document {
+	document := NewDocument(d)
+	document.CollaborationHeads = heads
+
+	return document
 }
 
 func NewListControlDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata.DocumentOrderField]) ListControlDocumentsOutput {
@@ -137,37 +149,28 @@ func NewListDocumentsOutput(documentPage *page.Page[*coredata.Document, coredata
 	}
 }
 
-func NewAddDocumentOutput(doc *coredata.Document, docVersion *coredata.DocumentVersion) AddDocumentOutput {
+func NewAddDocumentOutput(doc *coredata.Document) AddDocumentOutput {
 	return AddDocumentOutput{
-		Document:        NewDocument(doc),
-		DocumentVersion: NewDocumentVersion(docVersion),
+		Document: NewDocument(doc),
 	}
 }
 
 func NewDocumentVersion(dv *coredata.DocumentVersion) *DocumentVersion {
-	return NewDocumentVersionWithHeads(dv, nil)
-}
-
-func NewDocumentVersionWithHeads(
-	dv *coredata.DocumentVersion,
-	heads []string,
-) *DocumentVersion {
 	return &DocumentVersion{
-		ID:                 dv.ID,
-		OrganizationID:     dv.OrganizationID,
-		DocumentID:         dv.DocumentID,
-		Title:              dv.Title,
-		Major:              dv.Major,
-		Minor:              dv.Minor,
-		Classification:     dv.Classification,
-		DocumentType:       dv.DocumentType,
-		Content:            dv.Content,
-		CollaborationHeads: heads,
-		Changelog:          dv.Changelog,
-		Status:             dv.Status,
-		PublishedAt:        dv.PublishedAt,
-		CreatedAt:          dv.CreatedAt,
-		UpdatedAt:          dv.UpdatedAt,
+		ID:             dv.ID,
+		OrganizationID: dv.OrganizationID,
+		DocumentID:     dv.DocumentID,
+		Title:          dv.Title,
+		Major:          dv.Major,
+		Minor:          dv.Minor,
+		Classification: dv.Classification,
+		DocumentType:   dv.DocumentType,
+		Content:        dv.Content,
+		Changelog:      dv.Changelog,
+		Status:         dv.Status,
+		PublishedAt:    dv.PublishedAt,
+		CreatedAt:      dv.CreatedAt,
+		UpdatedAt:      dv.UpdatedAt,
 	}
 }
 

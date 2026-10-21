@@ -504,13 +504,12 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 	const updateQuery = `
 		mutation($input: UpdateDocumentInput!) {
 			updateDocument(input: $input) {
-				document { id writeMode }
-				documentVersion {
+				document {
 					id
+					writeMode
 					title
 					documentType
 					classification
-					status
 				}
 			}
 		}
@@ -519,21 +518,17 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 	type updateResult struct {
 		UpdateDocument struct {
 			Document struct {
-				ID        string `json:"id"`
-				WriteMode string `json:"writeMode"`
-			} `json:"document"`
-			DocumentVersion *struct {
 				ID             string `json:"id"`
+				WriteMode      string `json:"writeMode"`
 				Title          string `json:"title"`
 				DocumentType   string `json:"documentType"`
 				Classification string `json:"classification"`
-				Status         string `json:"status"`
-			} `json:"documentVersion"`
+			} `json:"document"`
 		} `json:"updateDocument"`
 	}
 
 	t.Run(
-		"editing title, type, and classification on generated document creates a draft",
+		"editing title, type, and classification updates the live document",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -556,13 +551,10 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, "GENERATED", result.UpdateDocument.Document.WriteMode)
-			require.NotNil(t, result.UpdateDocument.DocumentVersion)
-			assert.NotEqual(t, publishedVersionID, result.UpdateDocument.DocumentVersion.ID,
-				"should create a new draft, not update the published version")
-			assert.Equal(t, "DRAFT", result.UpdateDocument.DocumentVersion.Status)
-			assert.Equal(t, "Renamed SOA", result.UpdateDocument.DocumentVersion.Title)
-			assert.Equal(t, "POLICY", result.UpdateDocument.DocumentVersion.DocumentType)
-			assert.Equal(t, "INTERNAL", result.UpdateDocument.DocumentVersion.Classification)
+			assert.Equal(t, "Renamed SOA", result.UpdateDocument.Document.Title)
+			assert.Equal(t, "POLICY", result.UpdateDocument.Document.DocumentType)
+			assert.Equal(t, "INTERNAL", result.UpdateDocument.Document.Classification)
+			assert.NotEmpty(t, publishedVersionID)
 		},
 	)
 
@@ -660,8 +652,9 @@ func TestStatementOfApplicability_UpdateDocumentMetadata(t *testing.T) {
 				&editResult,
 			)
 			require.NoError(t, err)
-			require.NotNil(t, editResult.UpdateDocument.DocumentVersion)
-			require.Equal(t, "DRAFT", editResult.UpdateDocument.DocumentVersion.Status)
+			require.Equal(t, "Custom SOA Name", editResult.UpdateDocument.Document.Title)
+			require.Equal(t, "POLICY", editResult.UpdateDocument.Document.DocumentType)
+			require.Equal(t, "INTERNAL", editResult.UpdateDocument.Document.Classification)
 
 			const publishDraftQuery = `
 				mutation($input: PublishDocumentInput!) {

@@ -87,6 +87,7 @@ type (
 		esign                                 *esign.Service
 		connectorRegistry                     *connectorprotocol.Registry
 		invitationTokenValidity               time.Duration
+		Collaboration                         *CollaborationService
 		Frameworks                            *FrameworkService
 		InternalControls                      *InternalControlService
 		Evidences                             *EvidenceService
@@ -136,6 +137,7 @@ func NewService(
 	logger *log.Logger,
 	iamService *iam.Service,
 	esignService *esign.Service,
+	collaborationService *CollaborationService,
 	connectorsService *connector.Service,
 	connectorRegistry *connectorprotocol.Registry,
 	invitationTokenValidity time.Duration,
@@ -161,6 +163,7 @@ func NewService(
 		esign:                   esignService,
 		connectorRegistry:       connectorRegistry,
 		invitationTokenValidity: invitationTokenValidity,
+		Collaboration:           collaborationService,
 	}
 
 	svc.Frameworks = &FrameworkService{
@@ -185,6 +188,7 @@ func NewService(
 	svc.ThirdParties = &ThirdPartyService{svc: svc}
 	svc.Documents = &DocumentService{
 		svc:                     svc,
+		collaboration:           collaborationService,
 		html2pdfConverter:       html2pdfConverter,
 		invitationTokenValidity: invitationTokenValidity,
 		tokenSecret:             tokenSecret,

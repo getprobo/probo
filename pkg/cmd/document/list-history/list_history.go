@@ -31,11 +31,11 @@ import (
 )
 
 const listQuery = `
-query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentCollaborationHistorySessionOrder) {
+query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentRevisionOrder) {
   node(id: $id) {
     __typename
-    ... on DocumentVersion {
-      collaborationHistory(first: $first, after: $after, orderBy: $orderBy) {
+    ... on Document {
+      history(first: $first, after: $after, orderBy: $orderBy) {
         totalCount
         edges {
           node {
@@ -57,7 +57,7 @@ query($id: ID!, $first: Int, $after: CursorKey, $orderBy: DocumentCollaborationH
 }
 `
 
-type historySession struct {
+type revision struct {
 	ID          string   `json:"id"`
 	AuthorName  *string  `json:"authorName"`
 	StartedAt   string   `json:"startedAt"`
@@ -75,10 +75,10 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "list-history <document-version-id>",
-		Short: "List collaboration history sessions for a document version",
-		Example: `  # List collaboration edit sessions
-  prb document list-history <document-version-id>`,
+		Use:   "list-history <document-id>",
+		Short: "List revisions for a document",
+		Example: `  # List revisions
+  prb document list-history <document-id>`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -134,11 +134,11 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[historySession], error) {
+				func(data json.RawMessage) (*api.Connection[revision], error) {
 					var resp struct {
 						Node *struct {
-							Typename             string                         `json:"__typename"`
-							CollaborationHistory api.Connection[historySession] `json:"collaborationHistory"`
+							Typename string                   `json:"__typename"`
+							History  api.Connection[revision] `json:"history"`
 						} `json:"node"`
 					}
 					if err := json.Unmarshal(data, &resp); err != nil {
@@ -146,14 +146,14 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 					}
 
 					if resp.Node == nil {
-						return nil, fmt.Errorf("document version %s not found", args[0])
+						return nil, fmt.Errorf("document %s not found", args[0])
 					}
 
-					if resp.Node.Typename != "DocumentVersion" {
-						return nil, fmt.Errorf("expected DocumentVersion node, got %s", resp.Node.Typename)
+					if resp.Node.Typename != "Document" {
+						return nil, fmt.Errorf("expected Document node, got %s", resp.Node.Typename)
 					}
 
-					return &resp.Node.CollaborationHistory, nil
+					return &resp.Node.History, nil
 				},
 			)
 			if err != nil {
@@ -165,7 +165,7 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(sessions) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No collaboration history sessions found.")
+				_, _ = fmt.Fprintln(f.IOStreams.Out, "No revisions found.")
 				return nil
 			}
 

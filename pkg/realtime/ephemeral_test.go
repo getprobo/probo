@@ -33,7 +33,7 @@ func TestCollaborationEphemeral_RoundTrip(t *testing.T) {
 	t.Parallel()
 
 	event := realtime.CollaborationEphemeral{
-		VersionID:  "2AbcDocumentVersionGid",
+		DocumentID: "2AbcDocumentGid",
 		InstanceID: "instance-7",
 		Frame:      []byte{0x00, 0x01, 0x02, 0xff, 0xfe},
 	}
@@ -66,7 +66,7 @@ func TestCollaborationEphemeral_RejectsOversizedFrame(t *testing.T) {
 	t.Parallel()
 
 	event := realtime.CollaborationEphemeral{
-		VersionID:  "version",
+		DocumentID: "version",
 		InstanceID: "instance",
 		Frame:      []byte(strings.Repeat("A", realtime.MaxCollaborationEphemeralBytes)),
 	}

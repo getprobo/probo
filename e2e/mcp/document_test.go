@@ -64,12 +64,9 @@ func TestMCP_Document_CRUD(t *testing.T) {
 
 	var addResult struct {
 		Document struct {
-			ID string `json:"id"`
-		} `json:"document"`
-		DocumentVersion struct {
 			ID      string `json:"id"`
 			Content string `json:"content"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
 	mc.CallToolInto("addDocument", map[string]any{
 		"organization_id": orgID,
@@ -79,8 +76,8 @@ func TestMCP_Document_CRUD(t *testing.T) {
 		"document_type":   "POLICY",
 	}, &addResult)
 	require.NotEmpty(t, addResult.Document.ID)
-	assert.Contains(t, addResult.DocumentVersion.Content, `"type":"doc"`)
-	assert.Contains(t, addResult.DocumentVersion.Content, "Document body")
+	assert.Contains(t, addResult.Document.Content, `"type":"doc"`)
+	assert.Contains(t, addResult.Document.Content, "Document body")
 
 	var getResult struct {
 		Document struct {
@@ -94,20 +91,16 @@ func TestMCP_Document_CRUD(t *testing.T) {
 
 	var updateResult struct {
 		Document struct {
-			ID string `json:"id"`
+			ID    string `json:"id"`
+			Title string `json:"title"`
 		} `json:"document"`
-		DocumentVersion struct {
-			Title              string   `json:"title"`
-			Content            string   `json:"content"`
-			CollaborationHeads []string `json:"collaboration_heads"`
-		} `json:"document_version"`
 	}
 	mc.CallToolInto("updateDocument", map[string]any{
 		"id":    addResult.Document.ID,
 		"title": "Updated Document",
 	}, &updateResult)
 	assert.Equal(t, addResult.Document.ID, updateResult.Document.ID)
-	assert.Equal(t, "Updated Document", updateResult.DocumentVersion.Title)
+	assert.Equal(t, "Updated Document", updateResult.Document.Title)
 
 	var listResult struct {
 		Documents []struct {
@@ -140,9 +133,6 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 		Document struct {
 			ID string `json:"id"`
 		} `json:"document"`
-		DocumentVersion struct {
-			ID string `json:"id"`
-		} `json:"document_version"`
 	}
 	mc.CallToolInto("addDocument", map[string]any{
 		"organization_id": orgID,
@@ -151,40 +141,40 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 		"classification":  "INTERNAL",
 		"document_type":   "POLICY",
 	}, &addResult)
-	require.NotEmpty(t, addResult.DocumentVersion.ID)
+	require.NotEmpty(t, addResult.Document.ID)
 
 	seeded := documentWithTable("Old body", "Keep me")
 	var seedResult struct {
-		DocumentVersion struct {
+		Document struct {
 			Content            string   `json:"content"`
 			CollaborationHeads []string `json:"collaboration_heads"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
 	mc.CallToolInto("updateDocument", map[string]any{
 		"id":      addResult.Document.ID,
 		"content": seeded,
 	}, &seedResult)
-	require.NotEmpty(t, seedResult.DocumentVersion.CollaborationHeads)
-	assert.Contains(t, seedResult.DocumentVersion.Content, `"type":"doc"`)
-	assert.Contains(t, seedResult.DocumentVersion.Content, `"type":"table"`)
-	assert.NotContains(t, seedResult.DocumentVersion.Content, "# ")
+	require.NotEmpty(t, seedResult.Document.CollaborationHeads)
+	assert.Contains(t, seedResult.Document.Content, `"type":"doc"`)
+	assert.Contains(t, seedResult.Document.Content, `"type":"table"`)
+	assert.NotContains(t, seedResult.Document.Content, "# ")
 
 	var getVersion struct {
-		DocumentVersion struct {
+		Document struct {
 			ID                 string   `json:"id"`
 			Content            string   `json:"content"`
 			CollaborationHeads []string `json:"collaboration_heads"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
-	mc.CallToolInto("getDocumentVersion", map[string]any{
-		"id": addResult.DocumentVersion.ID,
+	mc.CallToolInto("getDocument", map[string]any{
+		"id": addResult.Document.ID,
 	}, &getVersion)
 	require.Equal(
 		t,
-		seedResult.DocumentVersion.CollaborationHeads,
-		getVersion.DocumentVersion.CollaborationHeads,
+		seedResult.Document.CollaborationHeads,
+		getVersion.Document.CollaborationHeads,
 	)
-	assert.Contains(t, getVersion.DocumentVersion.Content, "Old body")
+	assert.Contains(t, getVersion.Document.Content, "Old body")
 
 	seededContentErr := mc.CallToolExpectToolError("updateDocument", map[string]any{
 		"id":      addResult.Document.ID,
@@ -212,7 +202,7 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 		"base_heads": []string{strings.Repeat("ab", 32)},
 		"edits": []map[string]any{
 			{
-				"target":      paragraphNodeJSON(t, getVersion.DocumentVersion.Content, "Old body"),
+				"target":      paragraphNodeJSON(t, getVersion.Document.Content, "Old body"),
 				"replacement": `[{"type":"paragraph","content":[{"type":"text","text":"Should not land"}]}]`,
 			},
 		},
@@ -220,26 +210,26 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	assert.Contains(t, unknownHeadsErr, "base heads")
 
 	var unchanged struct {
-		DocumentVersion struct {
+		Document struct {
 			Content string `json:"content"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
-	mc.CallToolInto("getDocumentVersion", map[string]any{
-		"id": addResult.DocumentVersion.ID,
+	mc.CallToolInto("getDocument", map[string]any{
+		"id": addResult.Document.ID,
 	}, &unchanged)
-	assert.Contains(t, unchanged.DocumentVersion.Content, "Old body")
-	assert.NotContains(t, unchanged.DocumentVersion.Content, "Should not land")
+	assert.Contains(t, unchanged.Document.Content, "Old body")
+	assert.NotContains(t, unchanged.Document.Content, "Should not land")
 
-	oldTarget := paragraphNodeJSON(t, getVersion.DocumentVersion.Content, "Old body")
+	oldTarget := paragraphNodeJSON(t, getVersion.Document.Content, "Old body")
 	var editResult struct {
-		DocumentVersion struct {
+		Document struct {
 			Content            string   `json:"content"`
 			CollaborationHeads []string `json:"collaboration_heads"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
 	mc.CallToolInto("updateDocument", map[string]any{
 		"id":         addResult.Document.ID,
-		"base_heads": getVersion.DocumentVersion.CollaborationHeads,
+		"base_heads": getVersion.Document.CollaborationHeads,
 		"edits": []map[string]any{
 			{
 				"target":      oldTarget,
@@ -247,16 +237,16 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 			},
 		},
 	}, &editResult)
-	assert.Contains(t, editResult.DocumentVersion.Content, "New body")
-	assert.Contains(t, editResult.DocumentVersion.Content, "Keep me")
-	assert.Contains(t, editResult.DocumentVersion.Content, `"type":"table"`)
-	assert.Contains(t, editResult.DocumentVersion.Content, "Cell")
-	assert.NotContains(t, editResult.DocumentVersion.Content, "Old body")
-	require.NotEmpty(t, editResult.DocumentVersion.CollaborationHeads)
+	assert.Contains(t, editResult.Document.Content, "New body")
+	assert.Contains(t, editResult.Document.Content, "Keep me")
+	assert.Contains(t, editResult.Document.Content, `"type":"table"`)
+	assert.Contains(t, editResult.Document.Content, "Cell")
+	assert.NotContains(t, editResult.Document.Content, "Old body")
+	require.NotEmpty(t, editResult.Document.CollaborationHeads)
 
 	staleErr := mc.CallToolExpectToolError("updateDocument", map[string]any{
 		"id":         addResult.Document.ID,
-		"base_heads": editResult.DocumentVersion.CollaborationHeads,
+		"base_heads": editResult.Document.CollaborationHeads,
 		"edits": []map[string]any{
 			{
 				"target":      oldTarget,
@@ -272,26 +262,26 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	)
 
 	var afterConflict struct {
-		DocumentVersion struct {
+		Document struct {
 			Content string `json:"content"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
-	mc.CallToolInto("getDocumentVersion", map[string]any{
-		"id": addResult.DocumentVersion.ID,
+	mc.CallToolInto("getDocument", map[string]any{
+		"id": addResult.Document.ID,
 	}, &afterConflict)
-	assert.Contains(t, afterConflict.DocumentVersion.Content, "New body")
-	assert.NotContains(t, afterConflict.DocumentVersion.Content, "Lost race")
+	assert.Contains(t, afterConflict.Document.Content, "New body")
+	assert.NotContains(t, afterConflict.Document.Content, "Lost race")
 
-	newTarget := paragraphNodeJSON(t, editResult.DocumentVersion.Content, "New body")
+	newTarget := paragraphNodeJSON(t, editResult.Document.Content, "New body")
 	var secondEdit struct {
-		DocumentVersion struct {
+		Document struct {
 			Content            string   `json:"content"`
 			CollaborationHeads []string `json:"collaboration_heads"`
-		} `json:"document_version"`
+		} `json:"document"`
 	}
 	mc.CallToolInto("updateDocument", map[string]any{
 		"id":         addResult.Document.ID,
-		"base_heads": editResult.DocumentVersion.CollaborationHeads,
+		"base_heads": editResult.Document.CollaborationHeads,
 		"edits": []map[string]any{
 			{
 				"target":      newTarget,
@@ -299,35 +289,70 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 			},
 		},
 	}, &secondEdit)
-	assert.Contains(t, secondEdit.DocumentVersion.Content, "Newer body")
-	assert.Contains(t, secondEdit.DocumentVersion.Content, `"type":"table"`)
+	assert.Contains(t, secondEdit.Document.Content, "Newer body")
+	assert.Contains(t, secondEdit.Document.Content, `"type":"table"`)
 
 	var history struct {
-		CollaborationHistorySessions []struct {
+		Revisions []struct {
 			ActorID     string   `json:"actor_id"`
 			Heads       []string `json:"heads"`
 			ChangeCount int      `json:"change_count"`
-		} `json:"collaboration_history_sessions"`
+		} `json:"revisions"`
 		TotalCount int `json:"total_count"`
 	}
-	mc.CallToolInto("listDocumentCollaborationHistorySessions", map[string]any{
-		"document_version_id": addResult.DocumentVersion.ID,
+	mc.CallToolInto("listDocumentRevisions", map[string]any{
+		"document_id": addResult.Document.ID,
 	}, &history)
 	require.Equal(t, 1, history.TotalCount)
-	require.Len(t, history.CollaborationHistorySessions, 1)
-	assert.GreaterOrEqual(t, history.CollaborationHistorySessions[0].ChangeCount, 3)
-	require.NotEmpty(t, history.CollaborationHistorySessions[0].Heads)
+	require.Len(t, history.Revisions, 1)
+	assert.GreaterOrEqual(t, history.Revisions[0].ChangeCount, 3)
+	require.NotEmpty(t, history.Revisions[0].Heads)
 
 	var snapshot struct {
 		Content string `json:"content"`
 	}
-	mc.CallToolInto("getDocumentCollaborationHistorySnapshot", map[string]any{
-		"document_version_id": addResult.DocumentVersion.ID,
-		"heads":               history.CollaborationHistorySessions[0].Heads,
+	mc.CallToolInto("getDocumentHistorySnapshot", map[string]any{
+		"document_id": addResult.Document.ID,
+		"heads":       history.Revisions[0].Heads,
 	}, &snapshot)
 	assert.Contains(t, snapshot.Content, `"type":"doc"`)
 	assert.Contains(t, snapshot.Content, "Newer body")
 	assert.NotContains(t, snapshot.Content, "# ")
+
+	var restoreResult struct {
+		Document struct {
+			ID string `json:"id"`
+		} `json:"document"`
+	}
+	mc.CallToolInto("restoreDocumentHistory", map[string]any{
+		"document_id": addResult.Document.ID,
+		"heads":       seedResult.Document.CollaborationHeads,
+	}, &restoreResult)
+	assert.Equal(t, addResult.Document.ID, restoreResult.Document.ID)
+
+	var restoredHistory struct {
+		Revisions []struct {
+			AuthorName string `json:"author_name"`
+		} `json:"revisions"`
+		TotalCount int `json:"total_count"`
+	}
+	mc.CallToolInto("listDocumentRevisions", map[string]any{
+		"document_id": addResult.Document.ID,
+	}, &restoredHistory)
+	require.GreaterOrEqual(t, restoredHistory.TotalCount, 2)
+	require.NotEmpty(t, restoredHistory.Revisions)
+	assert.NotEmpty(t, restoredHistory.Revisions[0].AuthorName)
+
+	var restoredVersion struct {
+		Document struct {
+			Content string `json:"content"`
+		} `json:"document"`
+	}
+	mc.CallToolInto("getDocument", map[string]any{
+		"id": addResult.Document.ID,
+	}, &restoredVersion)
+	assert.Contains(t, restoredVersion.Document.Content, "Old body")
+	assert.NotContains(t, restoredVersion.Document.Content, "Newer body")
 }
 
 func documentWithTable(paragraphs ...string) string {

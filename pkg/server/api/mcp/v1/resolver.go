@@ -314,25 +314,25 @@ func (r *Resolver) collaborationProfileID(
 	return &profile.ID
 }
 
-func (r *Resolver) documentVersionWithHeads(
+func (r *Resolver) documentWithHeads(
 	ctx context.Context,
 	scope *coredata.Scope,
-	version *coredata.DocumentVersion,
-) *types.DocumentVersion {
-	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, version.ID)
+	document *coredata.Document,
+) *types.Document {
+	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, document.ID)
 	if err != nil {
 		r.logger.ErrorCtx(
 			ctx,
 			"cannot load document collaboration heads",
 			log.Error(err),
-			log.String("document_version_id", version.ID.String()),
+			log.String("document_id", document.ID.String()),
 		)
 
-		return types.NewDocumentVersion(version)
+		return types.NewDocument(document)
 	}
 
-	return types.NewDocumentVersionWithHeads(
-		version,
+	return types.NewDocumentWithHeads(
+		document,
 		probo.EncodeAutomergeHashes(heads),
 	)
 }

@@ -142,7 +142,7 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 				if err := cmdutil.ValidateEnum(
 					"status",
 					flagStatus,
-					[]string{"DRAFT", "PENDING_APPROVAL", "PUBLISHED"},
+					[]string{"PENDING_APPROVAL", "PUBLISHED", "REJECTED", "VOIDED"},
 				); err != nil {
 					return err
 				}
@@ -224,7 +224,7 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of versions to list")
 	cmd.Flags().StringVar(&flagOrderBy, "order-by", "", "Order by field (CREATED_AT)")
 	cmd.Flags().StringVar(&flagOrderDir, "order-direction", "DESC", "Sort direction (ASC, DESC)")
-	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (DRAFT, PENDING_APPROVAL, PUBLISHED)")
+	cmd.Flags().StringVar(&flagStatus, "status", "", "Filter by status (PENDING_APPROVAL, PUBLISHED, REJECTED, VOIDED)")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

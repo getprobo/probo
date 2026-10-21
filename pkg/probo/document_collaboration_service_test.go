@@ -28,26 +28,17 @@ import (
 	"go.probo.inc/probo/pkg/automerge"
 )
 
-func TestEncodeAutomergeHeads_EmptyIsNotNull(t *testing.T) {
-	t.Parallel()
-
-	encoded := encodeAutomergeHeads(nil)
-
-	require.NotNil(t, encoded)
-	assert.Empty(t, encoded)
-}
-
-func TestEncodeAutomergeHeads_ConcatenatesHashes(t *testing.T) {
+func TestParseAutomergeHashes_RoundTrip(t *testing.T) {
 	t.Parallel()
 
 	var first, second automerge.Hash
-
 	first[0] = 1
 	second[31] = 2
 
-	encoded := encodeAutomergeHeads([]automerge.Hash{first, second})
+	encoded := EncodeAutomergeHashes([]automerge.Hash{first, second})
+	require.Len(t, encoded, 2)
 
-	require.Len(t, encoded, 64)
-	assert.Equal(t, byte(1), encoded[0])
-	assert.Equal(t, byte(2), encoded[63])
+	decoded, err := ParseAutomergeHashes(encoded)
+	require.NoError(t, err)
+	assert.Equal(t, []automerge.Hash{first, second}, decoded)
 }

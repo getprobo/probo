@@ -319,7 +319,7 @@ func (impl *Implm) Run(
 
 	collaborationListener := notify.NewListener(
 		notificationConfig,
-		realtime.DocumentCollaborationChannel,
+		realtime.CollaborationChannel,
 		l.Named("document-collaboration-listener"),
 		collaborationEvents.Publish,
 	)
@@ -827,6 +827,11 @@ func (impl *Implm) Run(
 		connector.WithRegisterer(r),
 	)
 
+	collaborationService := probo.NewCollaborationService(
+		pgClient,
+		l.Named("collaboration"),
+	)
+
 	proboService, err := probo.NewService(
 		ctx,
 		encryptionKey,
@@ -846,6 +851,7 @@ func (impl *Implm) Run(
 		l.Named("probo"),
 		iamService,
 		esignService,
+		collaborationService,
 		connectorsService,
 		defaultConnectorRegistry,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,

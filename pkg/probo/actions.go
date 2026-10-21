@@ -146,6 +146,10 @@ const (
 	ActionDocumentVersionPublish         = "core:document-version:publish"
 	ActionDocumentVersionExport          = "core:document-version:export"
 
+	// DocumentRevision actions
+	ActionDocumentRevisionGet  = "core:document-revision:get"
+	ActionDocumentRevisionList = "core:document-revision:list"
+
 	// EmployeeDocument actions
 	ActionEmployeeDocumentGet              = "core:employee-document:get"
 	ActionEmployeeDocumentList             = "core:employee-document:list"

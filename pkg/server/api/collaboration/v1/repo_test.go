@@ -18,13 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package console_v1
+package collaboration_v1
 
 import (
 	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,48 +33,74 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
-	"go.probo.inc/probo/pkg/automerge/collaboration"
+	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 )
 
-// newRepoTestServer stands up an httptest WebSocket server that runs the repo
-// collaboration loop against a shared in-memory document, with no database. Each
-// connection acquires a lease from the hub, so sync and ephemeral fan-out go
-// through the real room machinery.
+type fakeDocumentCollaborationDocuments struct {
+	opened      *probo.DocumentCollaboration
+	persisted   atomic.Int64
+	persistedCh chan struct{}
+}
+
+func (f *fakeDocumentCollaborationDocuments) Open(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+) (*probo.DocumentCollaboration, error) {
+	return f.opened, nil
+}
+
+func (f *fakeDocumentCollaborationDocuments) Persist(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	*automerge.Document,
+) (int64, error) {
+	revision := f.persisted.Add(1) + 1
+
+	select {
+	case f.persistedCh <- struct{}{}:
+	default:
+	}
+
+	return revision, nil
+}
+
 func newRepoTestServer(
 	t *testing.T,
-	hub *documentCollaborationHub,
+	hub *Hub,
 	scope coredata.Scoper,
-	versionID gid.GID,
+	documentID gid.GID,
 	publishEphemeral func(ctx context.Context, frame []byte) error,
 ) *httptest.Server {
 	t.Helper()
 
-	return newRepoTestServerWithConfig(t, hub, scope, versionID, repoCollaborationConfig{
-		shutdown:         context.Background(),
-		publishEphemeral: publishEphemeral,
+	return newRepoTestServerWithConfig(t, hub, scope, documentID, RepoConfig{
+		Shutdown:         context.Background(),
+		PublishEphemeral: publishEphemeral,
 	})
 }
 
 func newRepoTestServerWithConfig(
 	t *testing.T,
-	hub *documentCollaborationHub,
+	hub *Hub,
 	scope coredata.Scoper,
-	versionID gid.GID,
-	config repoCollaborationConfig,
+	documentID gid.GID,
+	config RepoConfig,
 ) *httptest.Server {
 	t.Helper()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		connectionID, err := newDocumentCollaborationConnectionID()
+		connectionID, err := NewConnectionID()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		lease, err := hub.acquire(r.Context(), scope, versionID, connectionID)
+		lease, err := hub.Acquire(r.Context(), scope, documentID, connectionID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -82,14 +109,14 @@ func newRepoTestServerWithConfig(
 		defer lease.Close()
 
 		if lease.SeedOwner() {
-			if err := seedRepoCollaboration(r.Context(), lease); err != nil {
+			if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
 
 		connection, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			InsecureSkipVerify: true, // test-only: no Origin from the Go client
+			InsecureSkipVerify: true,
 		})
 		if err != nil {
 			return
@@ -107,13 +134,13 @@ func newRepoTestServerWithConfig(
 		defer func() { _ = syncState.Close() }()
 
 		loopConfig := config
-		loopConfig.serverPeerID = "probo-gateway-" + connectionID
-		loopConfig.documentVersionID = versionID
-		if loopConfig.shutdown == nil {
-			loopConfig.shutdown = context.Background()
+		loopConfig.ServerPeerID = "probo-gateway-" + connectionID
+		loopConfig.DocumentID = documentID
+		if loopConfig.Shutdown == nil {
+			loopConfig.Shutdown = context.Background()
 		}
 
-		_ = serveRepoCollaboration(r.Context(), connection, lease, syncState, loopConfig)
+		_ = ServeRepoCollaboration(r.Context(), connection, lease, syncState, loopConfig)
 	}))
 
 	t.Cleanup(server.Close)
@@ -121,10 +148,6 @@ func newRepoTestServerWithConfig(
 	return server
 }
 
-// repoTestClient drives a real ClientConn over a WebSocket. A single reader
-// goroutine owns the connection: it reads server frames, feeds them to the
-// driver, and writes the driver's replies plus any ephemerals the test asks to
-// send, so there is never a concurrent writer.
 type repoTestClient struct {
 	document  *automerge.Document
 	conn      *websocket.Conn
@@ -138,7 +161,7 @@ func dialRepoClient(
 	ctx context.Context,
 	url string,
 	peerID string,
-	documentID string,
+	repoDocumentID string,
 ) *repoTestClient {
 	t.Helper()
 
@@ -148,9 +171,9 @@ func dialRepoClient(
 	syncState, err := document.NewSyncState()
 	require.NoError(t, err)
 
-	driver, err := collaboration.NewClientConn(collaboration.ClientConfig{
+	driver, err := collabpkg.NewClientConn(collabpkg.ClientConfig{
 		ClientPeerID: peerID,
-		DocumentID:   documentID,
+		DocumentID:   repoDocumentID,
 		StartsEmpty:  true,
 	}, syncState)
 	require.NoError(t, err)
@@ -291,10 +314,6 @@ func (c *repoTestClient) waitForBody(t *testing.T, ctx context.Context, want str
 	}
 }
 
-// TestServeRepoCollaboration_ConvergesRealDocument connects a real repo client to
-// the gateway loop and confirms it materializes the server's seeded document.
-// This exercises the whole server-side stack end to end without a database:
-// handshake, document-id adoption, and the sync loop over the hub lease.
 func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 	t.Parallel()
 
@@ -302,7 +321,7 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 	defer cancel()
 
 	tenantID := gid.NewTenantID()
-	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 
 	serverDocument, err := automerge.New(automerge.ActorID{200})
 	require.NoError(t, err)
@@ -315,22 +334,18 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
-	hub := newDocumentCollaborationHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, nil)
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	documentID := collaboration.DeriveDocumentID(versionID.String())
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
 
-	client := dialRepoClient(t, ctx, wsURL, "client-a", documentID)
+	client := dialRepoClient(t, ctx, wsURL, "client-a", repoDocumentID)
 	client.waitForBody(t, ctx, "hello repo")
 }
 
-// TestServeRepoCollaboration_SeedsUnseededDocument confirms the server seeds an
-// unseeded version from its stored ProseMirror content: the connection that
-// claims the seed converts the content to spans, and a repo client then
-// materializes it. This is the whole server-authoritative seeding path.
 func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 	t.Parallel()
 
@@ -338,10 +353,8 @@ func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 	defer cancel()
 
 	tenantID := gid.NewTenantID()
-	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 
-	// A fresh, empty document with no body: exactly what OpenCollaboration
-	// returns for a version that has never been seeded.
 	serverDocument, err := automerge.New(automerge.ActorID{202})
 	require.NoError(t, err)
 	defer func() { _ = serverDocument.Close() }()
@@ -351,28 +364,23 @@ func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 		`{"type":"paragraph","content":[{"type":"text","text":"body text"}]}]}`
 
 	documents := &fakeDocumentCollaborationDocuments{
-		collaboration: &probo.DocumentCollaboration{
+		opened: &probo.DocumentCollaboration{
 			Document:    serverDocument,
 			Revision:    1,
 			NeedsSeed:   true,
 			SeedContent: seedContent,
 		},
 	}
-	hub := newDocumentCollaborationHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, nil)
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	documentID := collaboration.DeriveDocumentID(versionID.String())
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
 
-	client := dialRepoClient(t, ctx, wsURL, "client-a", documentID)
-	// The flat text of the seeded document is its blocks, each preceded by a
-	// U+FFFC block marker.
+	client := dialRepoClient(t, ctx, wsURL, "client-a", repoDocumentID)
 	client.waitForBody(t, ctx, "\uFFFCSeeded\uFFFCbody text")
 }
 
-// TestServeRepoCollaboration_FansOutEphemeral connects two repo clients and
-// confirms an ephemeral one sends is gossiped to the other through the hub, which
-// is how repo presence and cursors travel.
 func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 	t.Parallel()
 
@@ -380,7 +388,7 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 	defer cancel()
 
 	tenantID := gid.NewTenantID()
-	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 
 	serverDocument, err := automerge.New(automerge.ActorID{201})
 	require.NoError(t, err)
@@ -393,19 +401,18 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
-	hub := newDocumentCollaborationHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, nil)
+	hub := NewHub(documents, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	documentID := collaboration.DeriveDocumentID(versionID.String())
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
 
-	// Both clients converge first, which guarantees both handshakes completed.
-	first := dialRepoClient(t, ctx, wsURL, "client-first", documentID)
+	first := dialRepoClient(t, ctx, wsURL, "client-first", repoDocumentID)
 	first.waitForBody(t, ctx, "shared")
 
-	second := dialRepoClient(t, ctx, wsURL, "client-second", documentID)
+	second := dialRepoClient(t, ctx, wsURL, "client-second", repoDocumentID)
 	second.waitForBody(t, ctx, "shared")
 
 	payload := []byte("cursor-at-3")
@@ -421,9 +428,6 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 	}
 }
 
-// TestServeRepoCollaboration_StampsSelectionDisplayName confirms selection
-// ephemerals leave the room carrying the authenticated display name, replacing
-// anything the client put on the payload.
 func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 	t.Parallel()
 
@@ -431,7 +435,7 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 	defer cancel()
 
 	tenantID := gid.NewTenantID()
-	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 
 	serverDocument, err := automerge.New(automerge.ActorID{205})
 	require.NoError(t, err)
@@ -444,31 +448,31 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
-	hub := newDocumentCollaborationHub(documents, nil)
+	hub := NewHub(documents, nil)
 	server := newRepoTestServerWithConfig(
 		t,
 		hub,
 		coredata.NewScope(tenantID),
-		versionID,
-		repoCollaborationConfig{
-			shutdown:    context.Background(),
-			displayName: "Ada Lovelace",
-			identityID:  "idnt_ada",
+		documentID,
+		RepoConfig{
+			Shutdown:    context.Background(),
+			DisplayName: "Ada Lovelace",
+			IdentityID:  "idnt_ada",
 		},
 	)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	documentID := collaboration.DeriveDocumentID(versionID.String())
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
 
-	first := dialRepoClient(t, ctx, wsURL, "client-first", documentID)
+	first := dialRepoClient(t, ctx, wsURL, "client-first", repoDocumentID)
 	first.waitForBody(t, ctx, "shared")
 
-	second := dialRepoClient(t, ctx, wsURL, "client-second", documentID)
+	second := dialRepoClient(t, ctx, wsURL, "client-second", repoDocumentID)
 	second.waitForBody(t, ctx, "shared")
 
-	payload, err := collaboration.MarshalPresenceValue(
+	payload, err := collabpkg.MarshalPresenceValue(
 		map[string]any{
 			"kind":        "selection",
 			"displayName": "spoofed",
@@ -485,12 +489,12 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 
 	select {
 	case got := <-second.ephemeral:
-		name, ok := collaboration.SelectionDisplayName(got)
+		name, ok := collabpkg.SelectionDisplayName(got)
 		require.True(t, ok)
 		assert.Equal(t, "Ada Lovelace", name)
 
-		wrapper := collaboration.PresenceMessage{
-			Type:  collaboration.PresenceUpdate,
+		wrapper := collabpkg.PresenceMessage{
+			Type:  collabpkg.PresenceUpdate,
 			Value: got,
 		}
 		var decoded struct {
@@ -507,9 +511,6 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 	}
 }
 
-// TestServeRepoCollaboration_PublishesEphemeralCrossInstance confirms the loop
-// hands each gossiped frame to the cross-instance publisher, which is how
-// presence and cursors reach peers on other server instances.
 func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 	t.Parallel()
 
@@ -517,7 +518,7 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 	defer cancel()
 
 	tenantID := gid.NewTenantID()
-	versionID := gid.New(tenantID, coredata.DocumentVersionEntityType)
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 
 	serverDocument, err := automerge.New(automerge.ActorID{203})
 	require.NoError(t, err)
@@ -530,9 +531,9 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		collaboration: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
-	hub := newDocumentCollaborationHub(documents, nil)
+	hub := NewHub(documents, nil)
 
 	published := make(chan []byte, 4)
 	publisher := func(_ context.Context, frame []byte) error {
@@ -544,12 +545,12 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 		return nil
 	}
 
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), versionID, publisher)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, publisher)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-	documentID := collaboration.DeriveDocumentID(versionID.String())
+	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
 
-	client := dialRepoClient(t, ctx, wsURL, "client-a", documentID)
+	client := dialRepoClient(t, ctx, wsURL, "client-a", repoDocumentID)
 	client.waitForBody(t, ctx, "shared")
 
 	payload := []byte("cursor-payload")
@@ -557,9 +558,9 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 
 	select {
 	case frame := <-published:
-		message, err := collaboration.DecodeMessage(frame)
+		message, err := collabpkg.DecodeMessage(frame)
 		require.NoError(t, err)
-		assert.Equal(t, collaboration.MessageEphemeral, message.Type)
+		assert.Equal(t, collabpkg.MessageEphemeral, message.Type)
 		assert.Equal(t, payload, message.Data)
 	case <-time.After(10 * time.Second):
 		require.Fail(t, "the loop did not publish the ephemeral across instances")

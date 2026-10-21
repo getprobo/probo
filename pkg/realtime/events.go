@@ -22,7 +22,7 @@ package realtime
 
 import "sync"
 
-const DocumentCollaborationChannel = "document_collaboration_changed"
+const CollaborationChannel = "collaboration_document_changed"
 
 type (
 	Handler func(payload string)

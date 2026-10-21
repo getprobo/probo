@@ -1004,9 +1004,6 @@ func (b *DocumentBuilder) Create() string {
 				documentEdge {
 					node { id }
 				}
-				documentVersionEdge {
-					node { id }
-				}
 			}
 		}
 	`
@@ -1025,18 +1022,11 @@ func (b *DocumentBuilder) Create() string {
 					ID string `json:"id"`
 				} `json:"node"`
 			} `json:"documentEdge"`
-			DocumentVersionEdge struct {
-				Node struct {
-					ID string `json:"id"`
-				} `json:"node"`
-			} `json:"documentVersionEdge"`
 		} `json:"createDocument"`
 	}
 
 	err := b.client.Execute(query, map[string]any{"input": input}, &result)
 	require.NoError(b.client.T, err, "createDocument mutation failed")
-
-	b.versionID = result.CreateDocument.DocumentVersionEdge.Node.ID
 
 	return result.CreateDocument.DocumentEdge.Node.ID
 }

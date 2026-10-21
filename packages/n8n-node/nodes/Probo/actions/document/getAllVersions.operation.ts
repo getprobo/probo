@@ -86,9 +86,10 @@ export const description: INodeProperties[] = [
 				default: [],
 				description: 'Filter by version status',
 				options: [
-					{ name: 'Draft', value: 'DRAFT' },
 					{ name: 'Pending Approval', value: 'PENDING_APPROVAL' },
 					{ name: 'Published', value: 'PUBLISHED' },
+					{ name: 'Rejected', value: 'REJECTED' },
+					{ name: 'Voided', value: 'VOIDED' },
 				],
 			},
 		],

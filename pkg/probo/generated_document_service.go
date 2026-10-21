@@ -4764,50 +4764,8 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	minor bool,
 	now time.Time,
 ) error {
-	previousVersion := &coredata.DocumentVersion{}
-
-	isFirstVersion := false
-
-	err := previousVersion.LoadLatestVersion(ctx, tx, scope, document.ID)
-	switch {
-	case err == nil:
-		version.Title = previousVersion.Title
-		version.Classification = previousVersion.Classification
-		version.DocumentType = previousVersion.DocumentType
-	case errors.Is(err, coredata.ErrResourceNotFound):
-		// First publish: keep the caller-provided defaults.
-		isFirstVersion = true
-	default:
-		return fmt.Errorf("cannot load previous document version: %w", err)
-	}
-
-	if minor {
-		if document.CurrentPublishedMajor != nil && document.CurrentPublishedMinor != nil {
-			version.Major = *document.CurrentPublishedMajor
-			version.Minor = *document.CurrentPublishedMinor + 1
-		} else {
-			version.Major = 0
-			version.Minor = 1
-		}
-
-		version.Status = coredata.DocumentVersionStatusPublished
-		version.PublishedAt = &now
-		approverIDs = nil
-	} else {
-		if document.CurrentPublishedMajor != nil {
-			version.Major = *document.CurrentPublishedMajor + 1
-		} else {
-			version.Major = 1
-		}
-
-		version.Minor = 0
-		if len(approverIDs) > 0 {
-			version.Status = coredata.DocumentVersionStatusDraft
-			version.PublishedAt = nil
-		} else {
-			version.Status = coredata.DocumentVersionStatusPublished
-			version.PublishedAt = &now
-		}
+	if err := s.svc.Documents.ensureNoPendingApproval(ctx, scope, tx, document.ID); err != nil {
+		return err
 	}
 
 	content, err := prosemirror.SanitizeDocumentJSON(version.Content)
@@ -4815,22 +4773,45 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		return fmt.Errorf("cannot sanitize generated document content: %w", err)
 	}
 
-	version.Content = content
+	isFirstVersion := document.Title == ""
+	if isFirstVersion {
+		document.Title = version.Title
+		document.Classification = version.Classification
+		document.DocumentType = version.DocumentType
+		if version.Orientation != "" {
+			document.Orientation = version.Orientation
+		}
+	}
 
-	if err := version.Insert(ctx, tx, scope); err != nil {
+	document.Content = content
+	document.UpdatedAt = now
+	if err := document.Update(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update live document: %w", err)
+	}
+
+	if err := s.svc.Documents.collaboration.PutContent(ctx, tx, scope, document.ID, content); err != nil {
+		return fmt.Errorf("cannot store generated document content: %w", err)
+	}
+
+	if minor {
+		approverIDs = nil
+	}
+
+	status := coredata.DocumentVersionStatusPublished
+	if len(approverIDs) > 0 {
+		status = coredata.DocumentVersionStatusPendingApproval
+	}
+
+	snapshot, err := s.svc.Documents.insertSnapshot(ctx, scope, tx, document, minor, status, nil)
+	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			switch previousVersion.Status {
-			case coredata.DocumentVersionStatusDraft:
-				return fmt.Errorf("a draft version exists, publish or delete it before publishing a new one: %w", err)
-			case coredata.DocumentVersionStatusPendingApproval:
-				return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
-			default:
-				return fmt.Errorf("a version already exists at this number: %w", err)
-			}
+			return fmt.Errorf("a version is pending approval, approve or reject it before publishing a new one: %w", err)
 		}
 
-		return fmt.Errorf("cannot insert document version: %w", err)
+		return err
 	}
+
+	*version = *snapshot
 
 	if len(approverIDs) > 0 {
 		profiles := &coredata.MembershipProfiles{}
@@ -4869,14 +4850,6 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		}
 
 		return nil
-	}
-
-	document.CurrentPublishedMajor = &version.Major
-	document.CurrentPublishedMinor = &version.Minor
-	document.UpdatedAt = now
-
-	if err := document.Update(ctx, tx, scope); err != nil {
-		return fmt.Errorf("cannot update document: %w", err)
 	}
 
 	if !minor {

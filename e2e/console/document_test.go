@@ -108,11 +108,6 @@ func TestDocument_Create(t *testing.T) {
 						documentEdge {
 							node {
 								id
-							}
-						}
-						documentVersionEdge {
-							node {
-								id
 								title
 								documentType
 							}
@@ -130,16 +125,11 @@ func TestDocument_Create(t *testing.T) {
 				CreateDocument struct {
 					DocumentEdge struct {
 						Node struct {
-							ID string `json:"id"`
-						} `json:"node"`
-					} `json:"documentEdge"`
-					DocumentVersionEdge struct {
-						Node struct {
 							ID           string `json:"id"`
 							Title        string `json:"title"`
 							DocumentType string `json:"documentType"`
 						} `json:"node"`
-					} `json:"documentVersionEdge"`
+					} `json:"documentEdge"`
 				} `json:"createDocument"`
 			}
 
@@ -149,13 +139,11 @@ func TestDocument_Create(t *testing.T) {
 			node := result.CreateDocument.DocumentEdge.Node
 			assert.NotEmpty(t, node.ID)
 
-			versionNode := result.CreateDocument.DocumentVersionEdge.Node
-
 			switch tt.assertField {
 			case "versionTitle":
-				assert.Equal(t, tt.assertValue, versionNode.Title)
+				assert.Equal(t, tt.assertValue, node.Title)
 			case "documentType":
-				assert.Equal(t, tt.assertValue, versionNode.DocumentType)
+				assert.Equal(t, tt.assertValue, node.DocumentType)
 			}
 		})
 	}
@@ -308,7 +296,7 @@ func TestDocument_Update(t *testing.T) {
 			query := `
 				mutation UpdateDocument($input: UpdateDocumentInput!) {
 					updateDocument(input: $input) {
-						documentVersion {
+						document {
 							id
 							title
 						}
@@ -318,10 +306,10 @@ func TestDocument_Update(t *testing.T) {
 
 			var result struct {
 				UpdateDocument struct {
-					DocumentVersion struct {
+					Document struct {
 						ID    string `json:"id"`
 						Title string `json:"title"`
-					} `json:"documentVersion"`
+					} `json:"document"`
 				} `json:"updateDocument"`
 			}
 
@@ -332,7 +320,7 @@ func TestDocument_Update(t *testing.T) {
 				},
 			}, &result)
 			require.NoError(t, err)
-			assert.Equal(t, "Updated Document Title", result.UpdateDocument.DocumentVersion.Title)
+			assert.Equal(t, "Updated Document Title", result.UpdateDocument.Document.Title)
 		},
 	)
 }

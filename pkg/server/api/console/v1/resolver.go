@@ -52,13 +52,13 @@ import (
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/probot/identitybinding"
-	"go.probo.inc/probo/pkg/realtime"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
+	collaboration_v1 "go.probo.inc/probo/pkg/server/api/collaboration/v1"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -117,8 +117,7 @@ type (
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
-	collaborationEvents *realtime.Events,
-	shutdownContext context.Context,
+	collaborationHandler *collaboration_v1.Handler,
 	resourceAliasSvc *resourcealias.Service,
 	iamSvc *iam.Service,
 	esignSvc *esign.Service,
@@ -191,23 +190,6 @@ func NewMux(
 		azureConnectorInstall,
 	)
 
-	if shutdownContext == nil {
-		shutdownContext = context.Background()
-	}
-
-	collaborationHandler := &documentCollaborationHandler{
-		logger:         logger,
-		probo:          proboSvc,
-		iam:            iamSvc,
-		baseURL:        baseURL,
-		allowedOrigins: allowedOrigins,
-		hub: newDocumentCollaborationHub(
-			proboSvc.Documents,
-			collaborationEvents,
-		),
-		shutdown: shutdownContext,
-	}
-
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
 		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
@@ -226,8 +208,8 @@ func NewMux(
 
 		r.Handle("/graphql", graphqlHandler)
 		r.Get(
-			"/document-versions/{documentVersionID}/repo",
-			collaborationHandler.handleRepo,
+			"/documents/{documentID}/collaboration",
+			collaborationHandler.HandleRepo,
 		)
 
 		r.Get(

@@ -31,13 +31,10 @@ import (
 )
 
 const restoreMutation = `
-mutation($input: RestoreDocumentCollaborationInput!) {
-  restoreDocumentCollaboration(input: $input) {
-    documentVersion {
+mutation($input: RestoreDocumentHistoryInput!) {
+  restoreDocumentHistory(input: $input) {
+    document {
       id
-      title
-      major
-      minor
       status
       updatedAt
     }
@@ -46,16 +43,13 @@ mutation($input: RestoreDocumentCollaborationInput!) {
 `
 
 type restoreResponse struct {
-	RestoreDocumentCollaboration *struct {
-		DocumentVersion struct {
+	RestoreDocumentHistory *struct {
+		Document struct {
 			ID        string `json:"id"`
-			Title     string `json:"title"`
-			Major     int    `json:"major"`
-			Minor     int    `json:"minor"`
 			Status    string `json:"status"`
 			UpdatedAt string `json:"updatedAt"`
-		} `json:"documentVersion"`
-	} `json:"restoreDocumentCollaboration"`
+		} `json:"document"`
+	} `json:"restoreDocumentHistory"`
 }
 
 func parseHeadsFlag(value string) ([]string, error) {
@@ -88,10 +82,10 @@ func NewCmdRestoreHistory(f *cmdutil.Factory) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "restore-history <document-version-id>",
-		Short: "Restore a draft document version to a collaboration history point",
+		Use:   "restore-history <document-id>",
+		Short: "Restore a draft document to a collaboration history point",
 		Example: `  # Restore to a session's heads
-  prb document restore-history <document-version-id> --heads <hex>[,<hex>...]`,
+  prb document restore-history <document-id> --heads <hex>[,<hex>...]`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdutil.ValidateOutputFlag(flagOutput); err != nil {
@@ -124,8 +118,8 @@ func NewCmdRestoreHistory(f *cmdutil.Factory) *cobra.Command {
 				restoreMutation,
 				map[string]any{
 					"input": map[string]any{
-						"documentVersionId": args[0],
-						"heads":             heads,
+						"documentId": args[0],
+						"heads":      heads,
 					},
 				},
 			)
@@ -138,24 +132,21 @@ func NewCmdRestoreHistory(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			if resp.RestoreDocumentCollaboration == nil {
+			if resp.RestoreDocumentHistory == nil {
 				return fmt.Errorf("restore document collaboration returned no payload")
 			}
 
-			version := resp.RestoreDocumentCollaboration.DocumentVersion
+			document := resp.RestoreDocumentHistory.Document
 
 			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, version)
+				return cmdutil.PrintJSON(f.IOStreams.Out, document)
 			}
 
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
-				"Restored document version %s (%s v%d.%d, %s)\n",
-				version.ID,
-				version.Title,
-				version.Major,
-				version.Minor,
-				version.Status,
+				"Restored document %s (%s)\n",
+				document.ID,
+				document.Status,
 			)
 
 			return nil

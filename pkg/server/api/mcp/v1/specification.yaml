@@ -8205,12 +8205,20 @@ components:
         - SECRET
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentClassification
 
+    DocumentVersionOrientation:
+      type: string
+      enum:
+        - PORTRAIT
+        - LANDSCAPE
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionOrientation
+
     DocumentVersionStatus:
       type: string
       enum:
-        - DRAFT
         - PENDING_APPROVAL
         - PUBLISHED
+        - REJECTED
+        - VOIDED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.DocumentVersionStatus
 
     DocumentVersionApprovalQuorumStatus:
@@ -8330,6 +8338,11 @@ components:
       required:
         - id
         - organization_id
+        - title
+        - classification
+        - document_type
+        - orientation
+        - content
         - write_mode
         - status
         - created_at
@@ -8341,6 +8354,31 @@ components:
         organization_id:
           $ref: "#/components/schemas/GID"
           description: Organization ID
+        title:
+          type: string
+          description: Live document title
+        classification:
+          $ref: "#/components/schemas/DocumentClassification"
+          description: Live document classification
+        document_type:
+          $ref: "#/components/schemas/DocumentType"
+          description: Live document type
+        orientation:
+          $ref: "#/components/schemas/DocumentVersionOrientation"
+          description: Live document orientation
+        content:
+          type: string
+          description: >
+            Live ProseMirror document JSON. Root is {"type":"doc","content":[...]}.
+            This is the editable document, not a published snapshot.
+        collaboration_heads:
+          type: array
+          items:
+            type: string
+          description: >
+            Automerge heads for the live document (lowercase hex). Empty when
+            collaboration is not seeded. Pass as base_heads with edits on
+            updateDocument.
         current_published_major:
           type:
             - integer
@@ -8421,14 +8459,6 @@ components:
             horizontalRule, bulletList, orderedList, listItem, table, tableRow,
             tableCell, tableHeader, image, file. Inline: text, hardBreak. Marks:
             bold, italic, underline, strike, code, link.
-        collaboration_heads:
-          type: array
-          items:
-            type: string
-          description: >
-            Automerge heads for a seeded draft (lowercase hex). Empty when
-            collaboration is not seeded. Pass as base_heads with edits on
-            updateDocument.
         changelog:
           type: string
           description: Changelog
@@ -8687,15 +8717,12 @@ components:
 
     AddDocumentOutput:
       type: object
-      description: Created document and version; document_version.content is ProseMirror JSON
+      description: Created live document. document.content is ProseMirror JSON.
       required:
         - document
-        - document_version
       properties:
         document:
           $ref: "#/components/schemas/Document"
-        document_version:
-          $ref: "#/components/schemas/DocumentVersion"
 
     DocumentCollaborationEdit:
       type: object
@@ -8707,7 +8734,7 @@ components:
           type: string
           description: >
             ProseMirror node JSON, or a JSON array of sibling nodes, copied exactly
-            from getDocumentVersion. Must match exactly one contiguous sibling
+            from getDocument. Must match exactly one contiguous sibling
             sequence in the latest document.
         replacement:
           type: string
@@ -8729,22 +8756,22 @@ components:
         content:
           type: string
           description: >
-            Full ProseMirror document JSON. Allowed only while the draft is not
-            seeded. Once collaboration_heads is set on getDocumentVersion, use
+            Full ProseMirror document JSON. Allowed only while collaboration is
+            not seeded. Once collaboration_heads is set on getDocument, use
             base_heads and edits instead.
         base_heads:
           type: array
           items:
             type: string
           description: >
-            Automerge heads from getDocumentVersion.collaboration_heads. Required
-            with edits on a seeded draft.
+            Automerge heads from getDocument.collaboration_heads. Required
+            with edits on a seeded document.
         edits:
           type: array
           items:
             $ref: "#/components/schemas/DocumentCollaborationEdit"
           description: >
-            Fragment replacements for a seeded draft. Each target must match
+            Fragment replacements for a seeded document. Each target must match
             exactly once in the latest document. Rejected while collaboration is
             not seeded; use content then.
         classification:
@@ -8897,26 +8924,26 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Cursor of the last item in this page
 
-    DocumentCollaborationHistorySessionOrderField:
+    DocumentRevisionOrderField:
       type: string
       enum:
         - ENDED_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentCollaborationHistorySessionOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentRevisionOrderField
 
-    DocumentCollaborationHistorySessionOrderBy:
+    DocumentRevisionOrderBy:
       type: object
       required:
         - field
         - direction
       properties:
         field:
-          $ref: "#/components/schemas/DocumentCollaborationHistorySessionOrderField"
-          description: Collaboration history session order field
+          $ref: "#/components/schemas/DocumentRevisionOrderField"
+          description: Revision order field
         direction:
           $ref: "#/components/schemas/OrderDirection"
           description: Sort direction
 
-    DocumentCollaborationHistorySession:
+    DocumentRevision:
       type: object
       required:
         - id
@@ -8929,7 +8956,7 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/GID"
-          description: Collaboration history session ID
+          description: Revision ID
         heads:
           type: array
           items:
@@ -8964,14 +8991,14 @@ components:
           type: integer
           description: Number of Automerge changes in this session
 
-    DocumentCollaborationHistoryHighlightKind:
+    DocumentHistoryHighlightKind:
       type: string
       enum:
         - INSERT
         - DELETE
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentCollaborationHistoryHighlightKind
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKind
 
-    DocumentCollaborationHistoryHighlight:
+    DocumentHistoryHighlight:
       type: object
       required:
         - kind
@@ -8980,7 +9007,7 @@ components:
         - text
       properties:
         kind:
-          $ref: "#/components/schemas/DocumentCollaborationHistoryHighlightKind"
+          $ref: "#/components/schemas/DocumentHistoryHighlightKind"
           description: Highlight kind
         from:
           type: integer
@@ -8992,16 +9019,16 @@ components:
           type: string
           description: Inserted or deleted plain text
 
-    ListDocumentCollaborationHistorySessionsInput:
+    ListDocumentRevisionsInput:
       type: object
       required:
-        - document_version_id
+        - document_id
       properties:
-        document_version_id:
+        document_id:
           $ref: "#/components/schemas/GID"
-          description: Document version ID
+          description: Document ID
         order_by:
-          $ref: "#/components/schemas/DocumentCollaborationHistorySessionOrderBy"
+          $ref: "#/components/schemas/DocumentRevisionOrderBy"
           description: Session order by (defaults to ENDED_AT descending)
         size:
           type: integer
@@ -9010,20 +9037,20 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Page cursor
 
-    ListDocumentCollaborationHistorySessionsOutput:
+    ListDocumentRevisionsOutput:
       type: object
       required:
-        - collaboration_history_sessions
+        - revisions
         - total_count
         - page_info
       properties:
-        collaboration_history_sessions:
+        revisions:
           type: array
           items:
-            $ref: "#/components/schemas/DocumentCollaborationHistorySession"
+            $ref: "#/components/schemas/DocumentRevision"
         total_count:
           type: integer
-          description: Total number of collaboration history sessions
+          description: Total number of revisions
         page_info:
           $ref: "#/components/schemas/PageInfo"
           description: Pagination metadata for this page
@@ -9031,15 +9058,15 @@ components:
           $ref: "#/components/schemas/CursorKey"
           description: Cursor for the next page; pass as cursor on the next call
 
-    GetDocumentCollaborationHistorySnapshotInput:
+    GetDocumentHistorySnapshotInput:
       type: object
       required:
-        - document_version_id
+        - document_id
         - heads
       properties:
-        document_version_id:
+        document_id:
           $ref: "#/components/schemas/GID"
-          description: Document version ID
+          description: Document ID
         heads:
           type: array
           items:
@@ -9051,7 +9078,7 @@ components:
             type: string
           description: Automerge heads before the edit window; omit or empty to diff from document start
 
-    GetDocumentCollaborationHistorySnapshotOutput:
+    GetDocumentHistorySnapshotOutput:
       type: object
       required:
         - content
@@ -9065,31 +9092,30 @@ components:
         highlights:
           type: array
           items:
-            $ref: "#/components/schemas/DocumentCollaborationHistoryHighlight"
+            $ref: "#/components/schemas/DocumentHistoryHighlight"
 
-    RestoreDocumentCollaborationHistoryInput:
+    RestoreDocumentHistoryInput:
       type: object
       required:
-        - document_version_id
+        - document_id
         - heads
       properties:
-        document_version_id:
+        document_id:
           $ref: "#/components/schemas/GID"
-          description: Document version ID
+          description: Document ID
         heads:
           type: array
           items:
             type: string
           description: Automerge heads to restore (lowercase hex)
 
-    RestoreDocumentCollaborationHistoryOutput:
+    RestoreDocumentHistoryOutput:
       type: object
-      description: document_version.content is ProseMirror JSON
       required:
-        - document_version
+        - document
       properties:
-        document_version:
-          $ref: "#/components/schemas/DocumentVersion"
+        document:
+          $ref: "#/components/schemas/Document"
 
     PublishDocumentInput:
       type: object
@@ -19511,20 +19537,20 @@ tools:
       $ref: "#/components/schemas/GetDocumentVersionInput"
     outputSchema:
       $ref: "#/components/schemas/GetDocumentVersionOutput"
-  - name: listDocumentCollaborationHistorySessions
-    title: List Document Collaboration History Sessions
-    description: List collaboration edit sessions for a document version
+  - name: listDocumentRevisions
+    title: List Document Revisions
+    description: List revisions for a document
     hints:
       readonly: true
       destructive: false
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/ListDocumentCollaborationHistorySessionsInput"
+      $ref: "#/components/schemas/ListDocumentRevisionsInput"
     outputSchema:
-      $ref: "#/components/schemas/ListDocumentCollaborationHistorySessionsOutput"
-  - name: getDocumentCollaborationHistorySnapshot
-    title: Get Document Collaboration History Snapshot
+      $ref: "#/components/schemas/ListDocumentRevisionsOutput"
+  - name: getDocumentHistorySnapshot
+    title: Get Document History Snapshot
     description: Materialize document content at given Automerge heads with edit highlights
     hints:
       readonly: true
@@ -19532,21 +19558,21 @@ tools:
       idempotent: true
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/GetDocumentCollaborationHistorySnapshotInput"
+      $ref: "#/components/schemas/GetDocumentHistorySnapshotInput"
     outputSchema:
-      $ref: "#/components/schemas/GetDocumentCollaborationHistorySnapshotOutput"
-  - name: restoreDocumentCollaborationHistory
-    title: Restore Document Collaboration History
-    description: Restore a draft document version to a prior collaboration history point
+      $ref: "#/components/schemas/GetDocumentHistorySnapshotOutput"
+  - name: restoreDocumentHistory
+    title: Restore Document History
+    description: Restore a draft document to a prior history point
     hints:
       readonly: false
       destructive: false
       idempotent: false
       openWorld: false
     inputSchema:
-      $ref: "#/components/schemas/RestoreDocumentCollaborationHistoryInput"
+      $ref: "#/components/schemas/RestoreDocumentHistoryInput"
     outputSchema:
-      $ref: "#/components/schemas/RestoreDocumentCollaborationHistoryOutput"
+      $ref: "#/components/schemas/RestoreDocumentHistoryOutput"
   - name: publishDocument
     title: Publish Document
     description: Publish the latest draft of a document. Set minor=true to publish a minor version (no approval flow). When minor=false, providing approver_ids triggers an approval request as a new major version; otherwise the draft is published immediately as a new major version.

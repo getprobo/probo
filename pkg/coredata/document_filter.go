@@ -198,13 +198,7 @@ func (f *DocumentFilter) SQLFragment() string {
 (
 	CASE
 		WHEN @query::text IS NOT NULL AND @query::text != '' THEN
-			(
-				SELECT dv.search_vector
-				FROM document_versions dv
-				WHERE dv.document_id = documents.id
-				ORDER BY dv.major DESC, dv.minor DESC
-				LIMIT 1
-			) @@ (
+			documents.search_vector @@ (
 				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
 				FROM unnest(regexp_split_to_array(trim(@query::text), '\s+')) AS lexeme
 			)
@@ -304,25 +298,13 @@ func (f *DocumentFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @document_types::document_type[] IS NOT NULL THEN
-			(
-				SELECT dv.document_type
-				FROM document_versions dv
-				WHERE dv.document_id = documents.id
-				ORDER BY dv.major DESC, dv.minor DESC
-				LIMIT 1
-			) = ANY(@document_types::document_type[])
+			documents.document_type = ANY(@document_types::document_type[])
 		ELSE TRUE
 	END
 	AND
 	CASE
 		WHEN @classifications::document_classification[] IS NOT NULL THEN
-			(
-				SELECT dv.classification
-				FROM document_versions dv
-				WHERE dv.document_id = documents.id
-				ORDER BY dv.major DESC, dv.minor DESC
-				LIMIT 1
-			) = ANY(@classifications::document_classification[])
+			documents.classification = ANY(@classifications::document_classification[])
 		ELSE TRUE
 	END
 	AND
