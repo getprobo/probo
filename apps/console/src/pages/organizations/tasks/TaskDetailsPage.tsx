@@ -101,6 +101,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
         actions={task.canDelete
           ? (
               <Button
+                color="red"
                 iconStart={<TrashIcon />}
                 onClick={() => setDeleteOpen(true)}
               >
