@@ -67,7 +67,7 @@
     "react-docgen": "^8.0.3",
     "react-dom": "^19.2.8",
     "react-router": "^8.3.1",
-    "storybook": "^10.2.10",
+    "storybook": "^10.6.3",
     "typescript": "6.0.2",
     "vite": "^8.3.5",
     "vitest": "^4.1.11"
