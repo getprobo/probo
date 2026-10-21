@@ -6,7 +6,7 @@ Community node package `@probo/n8n-nodes-probo` exposing the Probo API as n8n op
 
 ```
 packages/n8n-node/
-  credentials/ProboApi.credentials.ts   # API key credential (Bearer token)
+  credentials/ProboApi.credentials.ts   # OAuth access token credential
   nodes/Probo/
     Probo.node.ts                       # Node class — resource picker, dispatch
     Probo.node.json                     # n8n codex metadata

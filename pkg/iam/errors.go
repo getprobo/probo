@@ -379,16 +379,6 @@ func (e ErrSAMLConfigurationNotFound) Error() string {
 	return fmt.Sprintf("SAML configuration %q not found", e.ConfigID)
 }
 
-type ErrPersonalAPIKeyNotFound struct{ PersonalAPIKeyID gid.GID }
-
-func NewPersonalAPIKeyNotFoundError(personalAPIKeyID gid.GID) error {
-	return &ErrPersonalAPIKeyNotFound{PersonalAPIKeyID: personalAPIKeyID}
-}
-
-func (e ErrPersonalAPIKeyNotFound) Error() string {
-	return fmt.Sprintf("personal API key %q not found", e.PersonalAPIKeyID)
-}
-
 type ErrProfileNotFound struct{ ProfileID gid.GID }
 
 func NewProfileNotFoundError(profileID gid.GID) error {
@@ -397,16 +387,6 @@ func NewProfileNotFoundError(profileID gid.GID) error {
 
 func (e ErrProfileNotFound) Error() string {
 	return fmt.Sprintf("profile %q not found", e.ProfileID)
-}
-
-type ErrPersonalAPIKeyExpired struct{ PersonalAPIKeyID gid.GID }
-
-func NewPersonalAPIKeyExpiredError(personalAPIKeyID gid.GID) error {
-	return &ErrPersonalAPIKeyExpired{PersonalAPIKeyID: personalAPIKeyID}
-}
-
-func (e ErrPersonalAPIKeyExpired) Error() string {
-	return fmt.Sprintf("personal API key %q expired", e.PersonalAPIKeyID)
 }
 
 type ErrUnsupportedPrincipalType struct{ EntityType uint16 }

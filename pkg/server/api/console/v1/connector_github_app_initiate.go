@@ -48,11 +48,6 @@ func handleConnectorGitHubAppInitiate(
 			return
 		}
 
-		if authn.APIKeyFromContext(r.Context()) != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
-			return
-		}
-
 		identity := authn.IdentityFromContext(r.Context())
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))

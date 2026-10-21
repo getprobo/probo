@@ -24,16 +24,6 @@ type Identity implements Node {
     orderBy: SessionOrder
   ): SessionConnection @goField(forceResolver: true)
 
-  personalAPIKeys(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-  ): PersonalAPIKeyConnection
-    @goField(forceResolver: true)
-    @authentication(required: PRESENT)
-    @sessionOnly
-
   oauth2AccessTokens(
     first: Int
     after: CursorKey

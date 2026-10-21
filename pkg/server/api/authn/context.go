@@ -33,7 +33,6 @@ type (
 var (
 	identityContextKey  = &ctxKey{name: "identity"}
 	sessionContextKey   = &ctxKey{name: "session"}
-	apiKeyContextKey    = &ctxKey{name: "api_key"}
 	compliancePortalKey = &ctxKey{name: "compliance_portal"}
 )
 
@@ -53,13 +52,4 @@ func IdentityFromContext(ctx context.Context) *coredata.Identity {
 
 func ContextWithIdentity(ctx context.Context, identity *coredata.Identity) context.Context {
 	return context.WithValue(ctx, identityContextKey, identity)
-}
-
-func APIKeyFromContext(ctx context.Context) *coredata.PersonalAPIKey {
-	apiKey, _ := ctx.Value(apiKeyContextKey).(*coredata.PersonalAPIKey)
-	return apiKey
-}
-
-func ContextWithAPIKey(ctx context.Context, apiKey *coredata.PersonalAPIKey) context.Context {
-	return context.WithValue(ctx, apiKeyContextKey, apiKey)
 }

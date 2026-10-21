@@ -70,7 +70,6 @@ func NewMux(
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
 	mailmanSvc *mailman.Service,
-	tokenSecret string,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
 	identityFederation *identityfederation.Issuer,
@@ -124,7 +123,6 @@ func NewMux(
 	)
 
 	r := chi.NewMux()
-	r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 	r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 	r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 	r.Handle("/", handler)

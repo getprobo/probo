@@ -31,12 +31,12 @@ import (
 // Directive enforces that the request carries a real session. It is meant to
 // be combined with @authentication(required: PRESENT): @authentication handles
 // the "must be authenticated" check, while @sessionOnly additionally rejects
-// API key authentication, which also carries an identity but no session.
+// bearer-token authentication, which also carries an identity but no session.
 func Directive(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
 	if authn.SessionFromContext(ctx) == nil {
 		return nil, gqlutils.Forbiddenf(
 			ctx,
-			"this resource can only be accessed with session authentication, not API key authentication",
+			"this resource can only be accessed with session authentication",
 		)
 	}
 

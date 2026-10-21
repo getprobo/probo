@@ -88,7 +88,7 @@ export class Probo implements INodeType {
 				type: 'options',
 				options: [
 					{
-						name: 'API Key',
+						name: 'Access Token',
 						value: 'apiKey',
 					},
 				],

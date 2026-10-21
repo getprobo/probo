@@ -4,9 +4,9 @@
 #
 # It is meant to be combined with @authentication(required: PRESENT):
 # @authentication enforces that the caller is authenticated, while @sessionOnly
-# additionally rejects API key authentication (which carries an identity but no
-# session). Use it for sensitive identity self-management (e.g. managing
-# personal API keys).
+# additionally rejects bearer-token authentication, which carries an identity
+# but no session. Use it for sensitive identity self-management such as
+# managing OAuth tokens.
 #
 # Usage in your schema.graphql:
 #   type Mutation {

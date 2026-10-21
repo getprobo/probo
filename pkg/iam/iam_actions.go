@@ -63,13 +63,6 @@ const (
 	ActionMembershipProfileActivate   = "iam:membership-profile:activate"
 	ActionMembershipProfileDeactivate = "iam:membership-profile:deactivate"
 
-	// Personal API Key actions
-	ActionPersonalAPIKeyCreate = "iam:personal-api-key:create"
-	ActionPersonalAPIKeyGet    = "iam:personal-api-key:get"
-	ActionPersonalAPIKeyList   = "iam:personal-api-key:list"
-	ActionPersonalAPIKeyUpdate = "iam:personal-api-key:update"
-	ActionPersonalAPIKeyDelete = "iam:personal-api-key:delete"
-
 	// SAML Configuration actions
 	ActionSAMLConfigurationCreate = "iam:saml-configuration:create"
 	ActionSAMLConfigurationGet    = "iam:saml-configuration:get"
