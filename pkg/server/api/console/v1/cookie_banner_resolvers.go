@@ -562,6 +562,11 @@ func (r *cookieBannerSampleResolver) CookieBanner(ctx context.Context, obj *type
 	return types.NewCookieBanner(banner), nil
 }
 
+// PageLoads is the resolver for the pageLoads field.
+func (r *cookieBannerSampleResolver) PageLoads(ctx context.Context, obj *types.CookieBannerSample) ([]*cookiebanner.SampleFamilyCount, error) {
+	return r.loadPageLoads(ctx, obj)
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *cookieBannerSampleConnectionResolver) TotalCount(ctx context.Context, obj *types.CookieBannerSampleConnection) (int, error) {
 	scope, err := r.authorize(ctx, obj.ParentID, probo.ActionCookieBannerGet)
@@ -1841,6 +1846,48 @@ func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.Trac
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return cookiebanner.NewSampleFamilyCountPtrs(counts), nil
+}
+
+// AllowedSampleHits is the resolver for the allowedSampleHits field.
+func (r *trackerPatternResolver) AllowedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	if err != nil {
+		return nil, err
+	}
+
+	counts, err := r.cookieBanner.GetAllowedSampleHits(ctx, scope, obj.ID, sampleID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get allowed tracker pattern sample hits", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return cookiebanner.NewSampleFamilyCountPtrs(counts), nil
+}
+
+// DeniedSampleHits is the resolver for the deniedSampleHits field.
+func (r *trackerPatternResolver) DeniedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	if err != nil {
+		return nil, err
+	}
+
+	counts, err := r.cookieBanner.GetDeniedSampleHits(ctx, scope, obj.ID, sampleID)
+	if err != nil {
+		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get denied tracker pattern sample hits", log.Error(err))
 
 		return nil, gqlutils.Internal(ctx)
 	}

@@ -146,6 +146,7 @@ export class CookieBannerClient {
       return;
     }
     this.bannerConfig = config;
+    this.syncReportGrant();
 
     for (const integration of this.integrations) {
       integration.setDefaults(config.categories);
@@ -172,6 +173,7 @@ export class CookieBannerClient {
         };
         this._gpcApplied = cookie.action === "GPC";
         this.reportQueue?.setConsentAction(cookie.action);
+        this.syncReportGrant();
         const cookieData = this.projectedConsent(cookie.data, cookie.tc);
         this.activate(cookieData);
         getConsent()._setReady(cookieData, true);
@@ -197,6 +199,7 @@ export class CookieBannerClient {
         this.consent = apiConsent;
         this._gpcApplied = apiConsent.action === "GPC";
         this.reportQueue?.setConsentAction(apiConsent.action);
+        this.syncReportGrant();
         const restored: ConsentCookie = {
           bid: this.bannerId,
           v: apiConsent.version,
@@ -334,6 +337,28 @@ export class CookieBannerClient {
     return this.visitorId;
   }
 
+  private syncReportGrant(): void {
+    const cfg = this.bannerConfig;
+    if (!cfg) return;
+
+    const consentData = this.consent?.consent_data ?? this.buildDefaultConsentData();
+
+    this.reportQueue?.setCategoryGrant((kind, name) => {
+      for (const cat of cfg.categories) {
+        const matches = cat.cookies.some((cookie) => {
+          if (cookie.name !== name) return false;
+          if (kind === "cookie") return cookie.tracker_type === "COOKIE";
+          return cookie.tracker_type !== "COOKIE";
+        });
+        if (!matches) continue;
+        if (cat.kind === "NECESSARY") return true;
+        return !!consentData[cat.slug];
+      }
+
+      return cfg.layout.default_non_necessary_granted;
+    });
+  }
+
   private recordConsent(
     action: ConsentAction,
     consentData: Record<string, boolean>,
@@ -353,6 +378,7 @@ export class CookieBannerClient {
       created_at: "",
     };
     this.reportQueue?.setConsentAction(action);
+    this.syncReportGrant();
     if (tc) {
       this.consent.tc = tc;
     }
@@ -442,6 +468,7 @@ export class CookieBannerClient {
     this.knownCookieNames = new Set<string>([COOKIE_NAME]);
     const reportUrl = new URL(`${this.bannerId}/report`, this.baseUrl);
     this.reportQueue = new ReportQueue(reportUrl);
+    this.syncReportGrant();
 
     const apiOrigin = this.baseUrl.origin;
     this.detectors = [

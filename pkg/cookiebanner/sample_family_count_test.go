@@ -27,72 +27,49 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func TestSamplePageLoads_OmitsZeroFamilies(t *testing.T) {
+func TestPageLoadsByFamily_SumsBuckets(t *testing.T) {
 	t.Parallel()
 
-	sample := coredata.CookieBannerSample{
-		ChromePageLoads:  10,
-		FirefoxPageLoads: 3,
-	}
-
-	assert.Equal(
-		t,
-		[]SampleFamilyCount{
-			{Family: coredata.BrowserFamilyChrome, Count: 10},
-			{Family: coredata.BrowserFamilyFirefox, Count: 3},
+	loads := PageLoadsByFamily([]coredata.SamplePageLoad{
+		{BrowserFamily: coredata.BrowserFamilyChrome, Presentation: "", Count: 4},
+		{
+			BrowserFamily: coredata.BrowserFamilyChrome,
+			Presentation:  string(PresentationOptIn),
+			ConsentAction: string(coredata.CookieConsentActionRejectAll),
+			Count:         1,
 		},
-		samplePageLoads(sample),
-	)
+		{
+			BrowserFamily: coredata.BrowserFamilyFirefox,
+			Presentation:  string(PresentationOptIn),
+			ConsentAction: string(coredata.CookieConsentActionAcceptAll),
+			Count:         2,
+		},
+	})
+
+	assert.Equal(t, []SampleFamilyCount{
+		{Family: coredata.BrowserFamilyChrome, Count: 5},
+		{Family: coredata.BrowserFamilyFirefox, Count: 2},
+	}, loads)
 }
 
-func TestSampleExpectedPageLoads_OmitsZeroFamilies(t *testing.T) {
+func TestSplitPatternHits_SplitsGranted(t *testing.T) {
 	t.Parallel()
 
-	sample := coredata.CookieBannerSample{
-		ChromeConsentingPageLoads: 4,
-		SafariConsentingPageLoads: 2,
-		FirefoxPageLoads:          9,
-	}
+	total, allowed, denied := SplitPatternHits([]coredata.SamplePatternHit{
+		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: true, Count: 3},
+		{BrowserFamily: coredata.BrowserFamilyChrome, CategoryGranted: false, Count: 1},
+		{BrowserFamily: coredata.BrowserFamilySafari, CategoryGranted: false, Count: 2},
+	})
 
-	assert.Equal(
-		t,
-		[]SampleFamilyCount{
-			{Family: coredata.BrowserFamilyChrome, Count: 4},
-			{Family: coredata.BrowserFamilySafari, Count: 2},
-		},
-		sampleExpectedPageLoads(sample),
-	)
-}
-
-func TestSampleHits_UsesPageLoadFamilies(t *testing.T) {
-	t.Parallel()
-
-	sample := coredata.CookieBannerSample{
-		ChromePageLoads:  10,
-		FirefoxPageLoads: 3,
-	}
-
-	assert.Equal(
-		t,
-		[]SampleFamilyCount{
-			{Family: coredata.BrowserFamilyChrome, Count: 0},
-			{Family: coredata.BrowserFamilyFirefox, Count: 0},
-		},
-		sampleHits(sample, nil),
-	)
-
-	hits := &coredata.TrackerPatternSampleHits{
-		ChromeHits:  4,
-		SafariHits:  9,
-		FirefoxHits: 1,
-	}
-
-	assert.Equal(
-		t,
-		[]SampleFamilyCount{
-			{Family: coredata.BrowserFamilyChrome, Count: 4},
-			{Family: coredata.BrowserFamilyFirefox, Count: 1},
-		},
-		sampleHits(sample, hits),
-	)
+	assert.Equal(t, []SampleFamilyCount{
+		{Family: coredata.BrowserFamilyChrome, Count: 4},
+		{Family: coredata.BrowserFamilySafari, Count: 2},
+	}, total)
+	assert.Equal(t, []SampleFamilyCount{
+		{Family: coredata.BrowserFamilyChrome, Count: 3},
+	}, allowed)
+	assert.Equal(t, []SampleFamilyCount{
+		{Family: coredata.BrowserFamilyChrome, Count: 1},
+		{Family: coredata.BrowserFamilySafari, Count: 2},
+	}, denied)
 }

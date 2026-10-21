@@ -56,7 +56,7 @@ func TestReportDetectedTrackers_CountsSharedSampleWindow(t *testing.T) {
 	requireFlushSampleCounts(t, ctx, svc)
 
 	sample := loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 1, sample.ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 	assert.Nil(t, sample.FrozenAt)
 
 	hits := loadSampleHits(t, ctx, client, fx, sample.ID, "_ga")
@@ -73,8 +73,8 @@ func TestReportDetectedTrackers_CountsSharedSampleWindow(t *testing.T) {
 	requireFlushSampleCounts(t, ctx, svc)
 
 	sample = loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 1, sample.ChromePageLoads)
-	assert.Equal(t, 1, sample.FirefoxPageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
 	assert.Equal(t, 1, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").ChromeHits)
 	assert.Equal(t, 0, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").FirefoxHits)
 
@@ -96,9 +96,9 @@ func TestReportDetectedTrackers_CountsSharedSampleWindow(t *testing.T) {
 
 	sample = loadLatestSample(t, ctx, client, fx)
 	require.NotNil(t, sample.FrozenAt)
-	assert.Equal(t, 1, sample.ChromePageLoads)
-	assert.Equal(t, 1, sample.FirefoxPageLoads)
-	assert.Equal(t, 0, sample.SafariPageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
 	assert.Equal(t, 1, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").ChromeHits)
 	assert.Equal(t, 0, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").SafariHits)
 }
@@ -155,7 +155,7 @@ func TestPublishCookieBannerVersion_FreezesEmptySample(t *testing.T) {
 
 	sample := loadLatestSample(t, ctx, client, fx)
 	require.NotNil(t, sample.FrozenAt)
-	assert.Equal(t, 0, sample.ChromePageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 
 	require.NoError(t, svc.ReportDetectedTrackers(ctx, fx.banner.ID, ReportDetectedTrackersRequest{
 		PageView: true,
@@ -169,7 +169,7 @@ func TestPublishCookieBannerVersion_FreezesEmptySample(t *testing.T) {
 	requireFlushSampleCounts(t, ctx, svc)
 
 	sample = loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 0, sample.ChromePageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 
 	var pattern coredata.TrackerPattern
 
@@ -177,12 +177,8 @@ func TestPublishCookieBannerVersion_FreezesEmptySample(t *testing.T) {
 		return pattern.LoadByBannerIDTypeAndPattern(ctx, conn, fx.scope, fx.banner.ID, coredata.TrackerTypeCookie, "_ga", nil)
 	}))
 
-	var hits coredata.TrackerPatternSampleHits
-
-	err = client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return hits.LoadBySampleAndPattern(ctx, conn, fx.scope, sample.ID, pattern.ID)
-	})
-	require.ErrorIs(t, err, coredata.ErrResourceNotFound)
+	hits := loadSampleHits(t, ctx, client, fx, sample.ID, "_ga")
+	assert.Equal(t, 0, hits.ChromeHits)
 }
 
 func TestReportDetectedTrackers_HitWithoutPageLoadStillCounts(t *testing.T) {
@@ -204,7 +200,7 @@ func TestReportDetectedTrackers_HitWithoutPageLoadStillCounts(t *testing.T) {
 	requireFlushSampleCounts(t, ctx, svc)
 
 	sample := loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 0, sample.ChromePageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 	assert.Equal(t, 1, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").ChromeHits)
 }
 
@@ -267,7 +263,7 @@ func TestPublishCookieBannerVersion_FlushesPendingCounts(t *testing.T) {
 
 	sample := loadLatestSample(t, ctx, client, fx)
 	require.NotNil(t, sample.FrozenAt)
-	assert.Equal(t, 1, sample.ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 	assert.Equal(t, 1, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").ChromeHits)
 }
 
@@ -308,7 +304,7 @@ func TestReportDetectedTrackers_SkipsNoopRepeatUpsert(t *testing.T) {
 	assert.Equal(t, detectionsBefore[0].ID, detectionsAfter[0].ID)
 
 	sample := loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 2, sample.ChromePageLoads)
+	assert.Equal(t, 2, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 	assert.Equal(t, 2, loadSampleHits(t, ctx, client, fx, sample.ID, "_ga").ChromeHits)
 }
 
@@ -336,7 +332,7 @@ func TestRunSampleCountFlusher_FlushesOnShutdown(t *testing.T) {
 	require.NoError(t, <-done)
 
 	sample := loadLatestSample(t, ctx, client, fx)
-	assert.Equal(t, 1, sample.ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
 }
 
 func TestStartCookieBannerSample_OpensAfterPublish(t *testing.T) {
@@ -382,8 +378,8 @@ func TestStartCookieBannerSample_OpensAfterPublish(t *testing.T) {
 
 	second := loadLatestSample(t, ctx, client, fx)
 	assert.Equal(t, started.ID, second.ID)
-	assert.Equal(t, 1, second.SafariPageLoads)
-	assert.Equal(t, 0, second.ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, second.ID).SafariPageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, second.ID).ChromePageLoads)
 	assert.Equal(t, 1, loadSampleHits(t, ctx, client, fx, second.ID, "_ga").SafariHits)
 	assert.Equal(t, 1, loadSampleHits(t, ctx, client, fx, first.ID, "_ga").ChromeHits)
 	assert.Equal(t, 0, loadSampleHits(t, ctx, client, fx, first.ID, "_ga").SafariHits)
@@ -426,14 +422,14 @@ func TestStartCookieBannerSample_FreezesPreviousWindow(t *testing.T) {
 
 	reloadedFirst := loadSample(t, ctx, client, fx, first.ID)
 	require.NotNil(t, reloadedFirst.FrozenAt)
-	assert.Equal(t, 1, reloadedFirst.ChromePageLoads)
-	assert.Equal(t, 0, reloadedFirst.FirefoxPageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, reloadedFirst.ID).ChromePageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, reloadedFirst.ID).FirefoxPageLoads)
 
 	second := loadLatestSample(t, ctx, client, fx)
 	assert.Equal(t, started.ID, second.ID)
 	assert.Nil(t, second.FrozenAt)
-	assert.Equal(t, 1, second.FirefoxPageLoads)
-	assert.Equal(t, 0, second.ChromePageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, second.ID).FirefoxPageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, second.ID).ChromePageLoads)
 }
 
 func TestStopCookieBannerSample_FreezesOpenWindow(t *testing.T) {
@@ -462,8 +458,8 @@ func TestStopCookieBannerSample_FreezesOpenWindow(t *testing.T) {
 
 	sample := loadLatestSample(t, ctx, client, fx)
 	assert.Equal(t, stopped.ID, sample.ID)
-	assert.Equal(t, 1, sample.ChromePageLoads)
-	assert.Equal(t, 0, sample.SafariPageLoads)
+	assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+	assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
 }
 
 func TestStopCookieBannerSample_RequiresOpenSample(t *testing.T) {
@@ -560,14 +556,14 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		requireFlushSampleCounts(t, ctx, svc)
 
 		sample := loadLatestSample(t, ctx, client, fx)
-		assert.Equal(t, 1, sample.ChromePageLoads)
-		assert.Equal(t, 1, sample.FirefoxPageLoads)
-		assert.Equal(t, 1, sample.SafariPageLoads)
-		assert.Equal(t, 1, sample.EdgePageLoads)
-		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
-		assert.Equal(t, 0, sample.FirefoxConsentingPageLoads)
-		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
-		assert.Equal(t, 0, sample.EdgeConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).EdgePageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeConsentingPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).FirefoxConsentingPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariConsentingPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgeConsentingPageLoads)
 	})
 
 	t.Run("opt-out counts every view except reject and gpc", func(t *testing.T) {
@@ -604,14 +600,14 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		requireFlushSampleCounts(t, ctx, svc)
 
 		sample := loadLatestSample(t, ctx, client, fx)
-		assert.Equal(t, 1, sample.ChromePageLoads)
-		assert.Equal(t, 1, sample.FirefoxPageLoads)
-		assert.Equal(t, 1, sample.SafariPageLoads)
-		assert.Equal(t, 1, sample.EdgePageLoads)
-		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
-		assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
-		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
-		assert.Equal(t, 0, sample.EdgeConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).EdgePageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxConsentingPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariConsentingPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgeConsentingPageLoads)
 	})
 
 	t.Run("notice counts acknowledge and a missing action", func(t *testing.T) {
@@ -642,13 +638,13 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		requireFlushSampleCounts(t, ctx, svc)
 
 		sample := loadLatestSample(t, ctx, client, fx)
-		assert.Equal(t, 1, sample.ChromePageLoads)
-		assert.Equal(t, 1, sample.FirefoxPageLoads)
-		assert.Equal(t, 1, sample.SafariPageLoads)
-		assert.Equal(t, 0, sample.EdgePageLoads)
-		assert.Equal(t, 1, sample.ChromeConsentingPageLoads)
-		assert.Equal(t, 1, sample.FirefoxConsentingPageLoads)
-		assert.Equal(t, 0, sample.SafariConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromePageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgePageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxConsentingPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariConsentingPageLoads)
 	})
 }
 
@@ -713,6 +709,85 @@ func loadSample(
 	return sample
 }
 
+type loadCounts struct {
+	ChromePageLoads            int
+	EdgePageLoads              int
+	FirefoxPageLoads           int
+	SafariPageLoads            int
+	OtherPageLoads             int
+	ChromeConsentingPageLoads  int
+	EdgeConsentingPageLoads    int
+	FirefoxConsentingPageLoads int
+	SafariConsentingPageLoads  int
+	OtherConsentingPageLoads   int
+}
+
+func loadsOf(
+	t *testing.T,
+	ctx context.Context,
+	client *pg.Client,
+	fx workerFixture,
+	sampleID gid.GID,
+) loadCounts {
+	t.Helper()
+
+	var rows []coredata.SamplePageLoad
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		loaded, err := coredata.LoadSamplePageLoads(ctx, conn, fx.scope, sampleID)
+		if err != nil {
+			return err
+		}
+
+		rows = loaded
+
+		return nil
+	}))
+
+	var counts loadCounts
+
+	for _, row := range rows {
+		allowed := pageLoadGranted(Presentation(row.Presentation), consentActionPtr(row.ConsentAction))
+		switch row.BrowserFamily {
+		case coredata.BrowserFamilyChrome:
+			counts.ChromePageLoads += row.Count
+			if allowed {
+				counts.ChromeConsentingPageLoads += row.Count
+			}
+		case coredata.BrowserFamilyEdge:
+			counts.EdgePageLoads += row.Count
+			if allowed {
+				counts.EdgeConsentingPageLoads += row.Count
+			}
+		case coredata.BrowserFamilyFirefox:
+			counts.FirefoxPageLoads += row.Count
+			if allowed {
+				counts.FirefoxConsentingPageLoads += row.Count
+			}
+		case coredata.BrowserFamilySafari:
+			counts.SafariPageLoads += row.Count
+			if allowed {
+				counts.SafariConsentingPageLoads += row.Count
+			}
+		default:
+			counts.OtherPageLoads += row.Count
+			if allowed {
+				counts.OtherConsentingPageLoads += row.Count
+			}
+		}
+	}
+
+	return counts
+}
+
+type hitCounts struct {
+	ChromeHits  int
+	EdgeHits    int
+	FirefoxHits int
+	SafariHits  int
+	OtherHits   int
+}
+
 func loadSampleHits(
 	t *testing.T,
 	ctx context.Context,
@@ -720,18 +795,42 @@ func loadSampleHits(
 	fx workerFixture,
 	sampleID gid.GID,
 	pattern string,
-) coredata.TrackerPatternSampleHits {
+) hitCounts {
 	t.Helper()
 
 	tp := loadPattern(t, ctx, client, fx, pattern)
 
-	var hits coredata.TrackerPatternSampleHits
+	var rows []coredata.SamplePatternHit
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
-		return hits.LoadBySampleAndPattern(ctx, conn, fx.scope, sampleID, tp.ID)
+		loaded, err := coredata.LoadSamplePatternHits(ctx, conn, fx.scope, sampleID, tp.ID)
+		if err != nil {
+			return err
+		}
+
+		rows = loaded
+
+		return nil
 	}))
 
-	return hits
+	var counts hitCounts
+
+	for _, row := range rows {
+		switch row.BrowserFamily {
+		case coredata.BrowserFamilyChrome:
+			counts.ChromeHits += row.Count
+		case coredata.BrowserFamilyEdge:
+			counts.EdgeHits += row.Count
+		case coredata.BrowserFamilyFirefox:
+			counts.FirefoxHits += row.Count
+		case coredata.BrowserFamilySafari:
+			counts.SafariHits += row.Count
+		default:
+			counts.OtherHits += row.Count
+		}
+	}
+
+	return counts
 }
 
 func requireFlushSampleCounts(t *testing.T, ctx context.Context, svc *Service) {

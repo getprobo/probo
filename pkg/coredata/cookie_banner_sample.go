@@ -36,22 +36,12 @@ import (
 
 type (
 	CookieBannerSample struct {
-		ID                         gid.GID    `db:"id"`
-		OrganizationID             gid.GID    `db:"organization_id"`
-		CookieBannerID             gid.GID    `db:"cookie_banner_id"`
-		ChromePageLoads            int        `db:"chrome_page_loads"`
-		EdgePageLoads              int        `db:"edge_page_loads"`
-		FirefoxPageLoads           int        `db:"firefox_page_loads"`
-		SafariPageLoads            int        `db:"safari_page_loads"`
-		OtherPageLoads             int        `db:"other_page_loads"`
-		ChromeConsentingPageLoads  int        `db:"chrome_consenting_page_loads"`
-		EdgeConsentingPageLoads    int        `db:"edge_consenting_page_loads"`
-		FirefoxConsentingPageLoads int        `db:"firefox_consenting_page_loads"`
-		SafariConsentingPageLoads  int        `db:"safari_consenting_page_loads"`
-		OtherConsentingPageLoads   int        `db:"other_consenting_page_loads"`
-		FrozenAt                   *time.Time `db:"frozen_at"`
-		CreatedAt                  time.Time  `db:"created_at"`
-		UpdatedAt                  time.Time  `db:"updated_at"`
+		ID             gid.GID    `db:"id"`
+		OrganizationID gid.GID    `db:"organization_id"`
+		CookieBannerID gid.GID    `db:"cookie_banner_id"`
+		FrozenAt       *time.Time `db:"frozen_at"`
+		CreatedAt      time.Time  `db:"created_at"`
+		UpdatedAt      time.Time  `db:"updated_at"`
 	}
 
 	CookieBannerSamples []*CookieBannerSample
@@ -116,16 +106,6 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	chrome_page_loads,
-	edge_page_loads,
-	firefox_page_loads,
-	safari_page_loads,
-	other_page_loads,
-	chrome_consenting_page_loads,
-	edge_consenting_page_loads,
-	firefox_consenting_page_loads,
-	safari_consenting_page_loads,
-	other_consenting_page_loads,
 	frozen_at,
 	created_at,
 	updated_at
@@ -171,16 +151,6 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	chrome_page_loads,
-	edge_page_loads,
-	firefox_page_loads,
-	safari_page_loads,
-	other_page_loads,
-	chrome_consenting_page_loads,
-	edge_consenting_page_loads,
-	firefox_consenting_page_loads,
-	safari_consenting_page_loads,
-	other_consenting_page_loads,
 	frozen_at,
 	created_at,
 	updated_at
@@ -227,16 +197,6 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	chrome_page_loads,
-	edge_page_loads,
-	firefox_page_loads,
-	safari_page_loads,
-	other_page_loads,
-	chrome_consenting_page_loads,
-	edge_consenting_page_loads,
-	firefox_consenting_page_loads,
-	safari_consenting_page_loads,
-	other_consenting_page_loads,
 	frozen_at,
 	created_at,
 	updated_at
@@ -284,16 +244,6 @@ SELECT
 	id,
 	organization_id,
 	cookie_banner_id,
-	chrome_page_loads,
-	edge_page_loads,
-	firefox_page_loads,
-	safari_page_loads,
-	other_page_loads,
-	chrome_consenting_page_loads,
-	edge_consenting_page_loads,
-	firefox_consenting_page_loads,
-	safari_consenting_page_loads,
-	other_consenting_page_loads,
 	frozen_at,
 	created_at,
 	updated_at
@@ -365,16 +315,6 @@ INSERT INTO cookie_banner_samples (
 	tenant_id,
 	organization_id,
 	cookie_banner_id,
-	chrome_page_loads,
-	edge_page_loads,
-	firefox_page_loads,
-	safari_page_loads,
-	other_page_loads,
-	chrome_consenting_page_loads,
-	edge_consenting_page_loads,
-	firefox_consenting_page_loads,
-	safari_consenting_page_loads,
-	other_consenting_page_loads,
 	frozen_at,
 	created_at,
 	updated_at
@@ -383,16 +323,6 @@ INSERT INTO cookie_banner_samples (
 	@tenant_id,
 	@organization_id,
 	@cookie_banner_id,
-	@chrome_page_loads,
-	@edge_page_loads,
-	@firefox_page_loads,
-	@safari_page_loads,
-	@other_page_loads,
-	@chrome_consenting_page_loads,
-	@edge_consenting_page_loads,
-	@firefox_consenting_page_loads,
-	@safari_consenting_page_loads,
-	@other_consenting_page_loads,
 	@frozen_at,
 	@created_at,
 	@updated_at
@@ -400,23 +330,13 @@ INSERT INTO cookie_banner_samples (
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                            s.ID,
-		"tenant_id":                     scope.GetTenantID(),
-		"organization_id":               s.OrganizationID,
-		"cookie_banner_id":              s.CookieBannerID,
-		"chrome_page_loads":             s.ChromePageLoads,
-		"edge_page_loads":               s.EdgePageLoads,
-		"firefox_page_loads":            s.FirefoxPageLoads,
-		"safari_page_loads":             s.SafariPageLoads,
-		"other_page_loads":              s.OtherPageLoads,
-		"chrome_consenting_page_loads":  s.ChromeConsentingPageLoads,
-		"edge_consenting_page_loads":    s.EdgeConsentingPageLoads,
-		"firefox_consenting_page_loads": s.FirefoxConsentingPageLoads,
-		"safari_consenting_page_loads":  s.SafariConsentingPageLoads,
-		"other_consenting_page_loads":   s.OtherConsentingPageLoads,
-		"frozen_at":                     s.FrozenAt,
-		"created_at":                    s.CreatedAt,
-		"updated_at":                    s.UpdatedAt,
+		"id":               s.ID,
+		"tenant_id":        scope.GetTenantID(),
+		"organization_id":  s.OrganizationID,
+		"cookie_banner_id": s.CookieBannerID,
+		"frozen_at":        s.FrozenAt,
+		"created_at":       s.CreatedAt,
+		"updated_at":       s.UpdatedAt,
 	}
 
 	if _, err := tx.Exec(ctx, q, args); err != nil {
@@ -440,16 +360,6 @@ INSERT INTO cookie_banner_samples (
 	tenant_id,
 	organization_id,
 	cookie_banner_id,
-	chrome_page_loads,
-	edge_page_loads,
-	firefox_page_loads,
-	safari_page_loads,
-	other_page_loads,
-	chrome_consenting_page_loads,
-	edge_consenting_page_loads,
-	firefox_consenting_page_loads,
-	safari_consenting_page_loads,
-	other_consenting_page_loads,
 	frozen_at,
 	created_at,
 	updated_at
@@ -458,16 +368,6 @@ INSERT INTO cookie_banner_samples (
 	@tenant_id,
 	@organization_id,
 	@cookie_banner_id,
-	@chrome_page_loads,
-	@edge_page_loads,
-	@firefox_page_loads,
-	@safari_page_loads,
-	@other_page_loads,
-	@chrome_consenting_page_loads,
-	@edge_consenting_page_loads,
-	@firefox_consenting_page_loads,
-	@safari_consenting_page_loads,
-	@other_consenting_page_loads,
 	NULL,
 	@created_at,
 	@updated_at
@@ -476,22 +376,12 @@ ON CONFLICT (cookie_banner_id) WHERE frozen_at IS NULL DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                            s.ID,
-		"tenant_id":                     scope.GetTenantID(),
-		"organization_id":               s.OrganizationID,
-		"cookie_banner_id":              s.CookieBannerID,
-		"chrome_page_loads":             s.ChromePageLoads,
-		"edge_page_loads":               s.EdgePageLoads,
-		"firefox_page_loads":            s.FirefoxPageLoads,
-		"safari_page_loads":             s.SafariPageLoads,
-		"other_page_loads":              s.OtherPageLoads,
-		"chrome_consenting_page_loads":  s.ChromeConsentingPageLoads,
-		"edge_consenting_page_loads":    s.EdgeConsentingPageLoads,
-		"firefox_consenting_page_loads": s.FirefoxConsentingPageLoads,
-		"safari_consenting_page_loads":  s.SafariConsentingPageLoads,
-		"other_consenting_page_loads":   s.OtherConsentingPageLoads,
-		"created_at":                    s.CreatedAt,
-		"updated_at":                    s.UpdatedAt,
+		"id":               s.ID,
+		"tenant_id":        scope.GetTenantID(),
+		"organization_id":  s.OrganizationID,
+		"cookie_banner_id": s.CookieBannerID,
+		"created_at":       s.CreatedAt,
+		"updated_at":       s.UpdatedAt,
 	}
 
 	tag, err := tx.Exec(ctx, q, args)
@@ -568,75 +458,6 @@ WHERE
 
 	if _, err := tx.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot freeze cookie banner sample: %w", err)
-	}
-
-	return nil
-}
-
-func RecordSamplePageLoads(
-	ctx context.Context,
-	tx pg.Tx,
-	scope Scoper,
-	sampleID gid.GID,
-	chrome int64,
-	edge int64,
-	firefox int64,
-	safari int64,
-	other int64,
-	chromeConsenting int64,
-	edgeConsenting int64,
-	firefoxConsenting int64,
-	safariConsenting int64,
-	otherConsenting int64,
-) error {
-	if chrome == 0 && edge == 0 && firefox == 0 && safari == 0 && other == 0 &&
-		chromeConsenting == 0 && edgeConsenting == 0 && firefoxConsenting == 0 &&
-		safariConsenting == 0 && otherConsenting == 0 {
-		return nil
-	}
-
-	now := time.Now()
-
-	q := `
-UPDATE cookie_banner_samples
-SET
-	chrome_page_loads = chrome_page_loads + @chrome,
-	edge_page_loads = edge_page_loads + @edge,
-	firefox_page_loads = firefox_page_loads + @firefox,
-	safari_page_loads = safari_page_loads + @safari,
-	other_page_loads = other_page_loads + @other,
-	chrome_consenting_page_loads = chrome_consenting_page_loads + @chrome_consenting,
-	edge_consenting_page_loads = edge_consenting_page_loads + @edge_consenting,
-	firefox_consenting_page_loads = firefox_consenting_page_loads + @firefox_consenting,
-	safari_consenting_page_loads = safari_consenting_page_loads + @safari_consenting,
-	other_consenting_page_loads = other_consenting_page_loads + @other_consenting,
-	updated_at = @now
-WHERE
-	%s
-	AND id = @sample_id
-	AND frozen_at IS NULL
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{
-		"sample_id":          sampleID,
-		"chrome":             chrome,
-		"edge":               edge,
-		"firefox":            firefox,
-		"safari":             safari,
-		"other":              other,
-		"chrome_consenting":  chromeConsenting,
-		"edge_consenting":    edgeConsenting,
-		"firefox_consenting": firefoxConsenting,
-		"safari_consenting":  safariConsenting,
-		"other_consenting":   otherConsenting,
-		"now":                now,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	if _, err := tx.Exec(ctx, q, args); err != nil {
-		return fmt.Errorf("cannot record sample page loads: %w", err)
 	}
 
 	return nil

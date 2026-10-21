@@ -194,6 +194,7 @@ describe("ReportQueue", () => {
             max_age_seconds: 3600,
             source: "script",
             discovery_hit: true,
+            category_granted: false,
           },
         ],
       }),

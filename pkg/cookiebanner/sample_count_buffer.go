@@ -36,120 +36,112 @@ import (
 const sampleCountFlushInterval = 10 * time.Second
 
 type (
-	sampleFamilyAtomics struct {
-		chrome  atomic.Int64
-		edge    atomic.Int64
-		firefox atomic.Int64
-		safari  atomic.Int64
-		other   atomic.Int64
-	}
-
-	samplePageLoadAtomics struct {
-		all      sampleFamilyAtomics
-		expected sampleFamilyAtomics
-	}
-
-	sampleCounts struct {
-		chrome  int64
-		edge    int64
-		firefox int64
-		safari  int64
-		other   int64
+	sampleLoadKey struct {
+		bannerID      gid.GID
+		family        coredata.BrowserFamily
+		presentation  string
+		consentAction string
 	}
 
 	sampleHitKey struct {
-		bannerID  gid.GID
-		patternID gid.GID
+		bannerID        gid.GID
+		patternID       gid.GID
+		family          coredata.BrowserFamily
+		presentation    string
+		consentAction   string
+		categoryGranted bool
 	}
 )
 
-func (c sampleCounts) empty() bool {
-	return c.chrome == 0 && c.edge == 0 && c.firefox == 0 && c.safari == 0 && c.other == 0
+func (s *Service) addPageLoad(key sampleLoadKey) {
+	actual, _ := s.pageLoadCounts.LoadOrStore(key, &atomic.Int64{})
+	actual.(*atomic.Int64).Add(1)
 }
 
-func (c *sampleFamilyAtomics) addFamily(family coredata.BrowserFamily) {
-	switch family {
-	case coredata.BrowserFamilyChrome:
-		c.chrome.Add(1)
-	case coredata.BrowserFamilyEdge:
-		c.edge.Add(1)
-	case coredata.BrowserFamilyFirefox:
-		c.firefox.Add(1)
-	case coredata.BrowserFamilySafari:
-		c.safari.Add(1)
-	default:
-		c.other.Add(1)
+func (s *Service) addPatternHit(key sampleHitKey) {
+	actual, _ := s.patternHitCounts.LoadOrStore(key, &atomic.Int64{})
+	actual.(*atomic.Int64).Add(1)
+}
+
+// pageLoadGranted reports whether non-necessary trackers may fire on a view
+// with this presentation and consent action. An empty presentation is a
+// legacy discovery bucket and counts as granted.
+func pageLoadGranted(presentation Presentation, action *coredata.CookieConsentAction) bool {
+	if presentation == "" {
+		return true
 	}
-}
 
-func (c *sampleFamilyAtomics) swap(n int64) sampleCounts {
-	return sampleCounts{
-		chrome:  c.chrome.Swap(n),
-		edge:    c.edge.Swap(n),
-		firefox: c.firefox.Swap(n),
-		safari:  c.safari.Swap(n),
-		other:   c.other.Swap(n),
+	actionValue := ""
+	if action != nil {
+		actionValue = action.String()
 	}
-}
 
-func (s *Service) addPageLoad(bannerID gid.GID, family coredata.BrowserFamily, expected bool) {
-	actual, _ := s.pageLoadCounts.LoadOrStore(bannerID, &samplePageLoadAtomics{})
-	loads := actual.(*samplePageLoadAtomics)
-	loads.all.addFamily(family)
-
-	if expected {
-		loads.expected.addFamily(family)
-	}
-}
-
-func (s *Service) addPatternHit(
-	bannerID gid.GID,
-	patternID gid.GID,
-	family coredata.BrowserFamily,
-) {
-	key := sampleHitKey{bannerID: bannerID, patternID: patternID}
-	actual, _ := s.patternHitCounts.LoadOrStore(key, &sampleFamilyAtomics{})
-	actual.(*sampleFamilyAtomics).addFamily(family)
-}
-
-// isExpectedSampleLoad reports whether a tracker is allowed to fire on this
-// view. OPT_IN counts only an explicit accept. OPT_OUT and NOTICE count every
-// view except reject-all and Global Privacy Control, including a missing action.
-func isExpectedSampleLoad(presentation Presentation, action *coredata.CookieConsentAction) bool {
 	switch presentation {
+	case PresentationOptIn:
+		return actionValue == coredata.CookieConsentActionAcceptAll.String()
 	case PresentationOptOut, PresentationNotice:
-		if action == nil {
-			return true
-		}
-
-		switch *action {
-		case coredata.CookieConsentActionRejectAll, coredata.CookieConsentActionGPC:
-			return false
-		default:
-			return true
-		}
+		return actionValue != coredata.CookieConsentActionRejectAll.String() &&
+			actionValue != coredata.CookieConsentActionGPC.String()
 	default:
-		return action != nil && *action == coredata.CookieConsentActionAcceptAll
+		return false
 	}
+}
+
+// categoryGrantedForHit reports whether this hit's category was allowed to
+// fire. CUSTOMIZE uses the SDK flag. A missing flag on a customize view is
+// not granted. Every other action is derived from the presentation.
+func categoryGrantedForHit(
+	presentation Presentation,
+	action *coredata.CookieConsentAction,
+	reported *bool,
+) bool {
+	if action != nil && *action == coredata.CookieConsentActionCustomize {
+		return reported != nil && *reported
+	}
+
+	return pageLoadGranted(presentation, action)
+}
+
+func consentActionValue(action *coredata.CookieConsentAction) string {
+	if action == nil {
+		return ""
+	}
+
+	return action.String()
 }
 
 func (s *Service) recordSampleIncrements(
 	bannerID gid.GID,
 	family coredata.BrowserFamily,
+	presentation Presentation,
+	action *coredata.CookieConsentAction,
 	pageView bool,
-	expected bool,
-	patternIDs map[gid.GID]struct{},
+	patternGrants map[gid.GID]bool,
 ) {
 	if !family.IsValid() {
 		family = coredata.BrowserFamilyOther
 	}
 
+	consentAction := consentActionValue(action)
+
 	if pageView {
-		s.addPageLoad(bannerID, family, expected)
+		s.addPageLoad(sampleLoadKey{
+			bannerID:      bannerID,
+			family:        family,
+			presentation:  string(presentation),
+			consentAction: consentAction,
+		})
 	}
 
-	for patternID := range patternIDs {
-		s.addPatternHit(bannerID, patternID, family)
+	for patternID, granted := range patternGrants {
+		s.addPatternHit(sampleHitKey{
+			bannerID:        bannerID,
+			patternID:       patternID,
+			family:          family,
+			presentation:    string(presentation),
+			consentAction:   consentAction,
+			categoryGranted: granted,
+		})
 	}
 }
 
@@ -158,16 +150,13 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 
 	s.pageLoadCounts.Range(
 		func(key, value any) bool {
-			bannerID := key.(gid.GID)
-			loads := value.(*samplePageLoadAtomics)
-			all := loads.all.swap(0)
-
-			expected := loads.expected.swap(0)
-			if all.empty() && expected.empty() {
+			loadKey := key.(sampleLoadKey)
+			count := value.(*atomic.Int64).Swap(0)
+			if count == 0 {
 				return true
 			}
 
-			if err := s.writePageLoads(ctx, bannerID, all, expected); err != nil && firstErr == nil {
+			if err := s.writePageLoad(ctx, loadKey, count); err != nil && firstErr == nil {
 				firstErr = err
 			}
 
@@ -178,13 +167,12 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 	s.patternHitCounts.Range(
 		func(key, value any) bool {
 			hitKey := key.(sampleHitKey)
-
-			counts := value.(*sampleFamilyAtomics).swap(0)
-			if counts.empty() {
+			count := value.(*atomic.Int64).Swap(0)
+			if count == 0 {
 				return true
 			}
 
-			if err := s.writePatternHits(ctx, hitKey.bannerID, hitKey.patternID, counts); err != nil && firstErr == nil {
+			if err := s.writePatternHit(ctx, hitKey, count); err != nil && firstErr == nil {
 				firstErr = err
 			}
 
@@ -195,18 +183,17 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 	return firstErr
 }
 
-func (s *Service) writePageLoads(
+func (s *Service) writePageLoad(
 	ctx context.Context,
-	bannerID gid.GID,
-	all sampleCounts,
-	expected sampleCounts,
+	key sampleLoadKey,
+	count int64,
 ) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(bannerID)
+			scope := coredata.NewScopeFromObjectID(key.bannerID)
 
-			sampleID, ok, err := resolveWritableSample(ctx, tx, scope, bannerID)
+			sampleID, ok, err := resolveWritableSample(ctx, tx, scope, key.bannerID)
 			if err != nil {
 				return err
 			}
@@ -215,21 +202,15 @@ func (s *Service) writePageLoads(
 				return nil
 			}
 
-			if err := coredata.RecordSamplePageLoads(
+			if err := coredata.RecordSamplePageLoad(
 				ctx,
 				tx,
 				scope,
 				sampleID,
-				all.chrome,
-				all.edge,
-				all.firefox,
-				all.safari,
-				all.other,
-				expected.chrome,
-				expected.edge,
-				expected.firefox,
-				expected.safari,
-				expected.other,
+				key.family,
+				key.presentation,
+				key.consentAction,
+				count,
 			); err != nil {
 				return fmt.Errorf("cannot record sample page load: %w", err)
 			}
@@ -239,18 +220,17 @@ func (s *Service) writePageLoads(
 	)
 }
 
-func (s *Service) writePatternHits(
+func (s *Service) writePatternHit(
 	ctx context.Context,
-	bannerID gid.GID,
-	patternID gid.GID,
-	counts sampleCounts,
+	key sampleHitKey,
+	count int64,
 ) error {
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScopeFromObjectID(bannerID)
+			scope := coredata.NewScopeFromObjectID(key.bannerID)
 
-			sampleID, ok, err := resolveWritableSample(ctx, tx, scope, bannerID)
+			sampleID, ok, err := resolveWritableSample(ctx, tx, scope, key.bannerID)
 			if err != nil {
 				return err
 			}
@@ -264,13 +244,13 @@ func (s *Service) writePatternHits(
 				tx,
 				scope,
 				sampleID,
-				bannerID,
-				patternID,
-				counts.chrome,
-				counts.edge,
-				counts.firefox,
-				counts.safari,
-				counts.other,
+				key.bannerID,
+				key.patternID,
+				key.family,
+				key.presentation,
+				key.consentAction,
+				key.categoryGranted,
+				count,
 			); err != nil {
 				return fmt.Errorf("cannot record sample pattern hit: %w", err)
 			}

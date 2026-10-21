@@ -35,10 +35,6 @@ const cookieBannerFragment = graphql`
         family
         count
       }
-      expectedPageLoads {
-        family
-        count
-      }
     }
   }
 `;
@@ -46,6 +42,14 @@ const cookieBannerFragment = graphql`
 const trackerPatternFragment = graphql`
   fragment TrackerPatternSampleHitsSection_trackerPattern on TrackerPattern {
     sampleHits {
+      family
+      count
+    }
+    allowedSampleHits {
+      family
+      count
+    }
+    deniedSampleHits {
       family
       count
     }
@@ -83,9 +87,13 @@ export function TrackerPatternSampleHitsSection({
         family: load.family,
         count: load.count,
       }))}
-      expectedDenominators={(banner.latestSample?.expectedPageLoads ?? []).map(load => ({
-        family: load.family,
-        count: load.count,
+      allowedHits={pattern.allowedSampleHits.map(hit => ({
+        family: hit.family,
+        count: hit.count,
+      }))}
+      deniedHits={pattern.deniedSampleHits.map(hit => ({
+        family: hit.family,
+        count: hit.count,
       }))}
     />
   );

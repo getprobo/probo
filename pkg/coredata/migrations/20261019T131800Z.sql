@@ -23,16 +23,6 @@ CREATE TABLE cookie_banner_samples (
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     cookie_banner_id TEXT NOT NULL REFERENCES cookie_banners(id) ON DELETE CASCADE,
-    chrome_page_loads INTEGER NOT NULL DEFAULT 0,
-    edge_page_loads INTEGER NOT NULL DEFAULT 0,
-    firefox_page_loads INTEGER NOT NULL DEFAULT 0,
-    safari_page_loads INTEGER NOT NULL DEFAULT 0,
-    other_page_loads INTEGER NOT NULL DEFAULT 0,
-    chrome_consenting_page_loads INTEGER NOT NULL DEFAULT 0,
-    edge_consenting_page_loads INTEGER NOT NULL DEFAULT 0,
-    firefox_consenting_page_loads INTEGER NOT NULL DEFAULT 0,
-    safari_consenting_page_loads INTEGER NOT NULL DEFAULT 0,
-    other_consenting_page_loads INTEGER NOT NULL DEFAULT 0,
     frozen_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
@@ -45,41 +35,52 @@ CREATE UNIQUE INDEX cookie_banner_samples_open_uidx
 CREATE INDEX cookie_banner_samples_banner_created_idx
     ON cookie_banner_samples (cookie_banner_id, created_at DESC);
 
+-- presentation is OPT_IN, OPT_OUT, NOTICE, or '' for legacy discovery.
+-- consent_action is a CookieConsentAction, or '' when the report omitted it.
+CREATE TABLE cookie_banner_sample_page_loads (
+    sample_id TEXT NOT NULL REFERENCES cookie_banner_samples(id) ON DELETE CASCADE,
+    browser_family TEXT NOT NULL,
+    presentation TEXT NOT NULL,
+    consent_action TEXT NOT NULL,
+    tenant_id TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    PRIMARY KEY (sample_id, browser_family, presentation, consent_action)
+);
+
 CREATE TABLE tracker_pattern_sample_hits (
     sample_id TEXT NOT NULL REFERENCES cookie_banner_samples(id) ON DELETE CASCADE,
     tracker_pattern_id TEXT NOT NULL REFERENCES tracker_patterns(id) ON DELETE CASCADE,
+    browser_family TEXT NOT NULL,
+    presentation TEXT NOT NULL,
+    consent_action TEXT NOT NULL,
+    category_granted BOOLEAN NOT NULL,
     tenant_id TEXT NOT NULL,
     cookie_banner_id TEXT NOT NULL REFERENCES cookie_banners(id) ON DELETE CASCADE,
-    chrome_hits INTEGER NOT NULL DEFAULT 0,
-    edge_hits INTEGER NOT NULL DEFAULT 0,
-    firefox_hits INTEGER NOT NULL DEFAULT 0,
-    safari_hits INTEGER NOT NULL DEFAULT 0,
-    other_hits INTEGER NOT NULL DEFAULT 0,
+    count INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    PRIMARY KEY (sample_id, tracker_pattern_id)
+    PRIMARY KEY (
+        sample_id,
+        tracker_pattern_id,
+        browser_family,
+        presentation,
+        consent_action,
+        category_granted
+    )
 );
 
--- One sample per legacy discovery window. Consenting page-load counters
--- did not exist on cookie_banner_discovery_stats, so they stay 0.
--- Hits can exist without a stats row, so those banners get their own
--- open sample. generate_gid entity type 138 = CookieBannerSampleEntityType.
+-- One sample per legacy discovery window. Those windows predate consent
+-- buckets, so their counts are stored with an empty presentation and
+-- consent action and category_granted = true.
+-- generate_gid entity type 138 = CookieBannerSampleEntityType.
 WITH stats_inserted AS (
     INSERT INTO cookie_banner_samples (
         id,
         tenant_id,
         organization_id,
         cookie_banner_id,
-        chrome_page_loads,
-        edge_page_loads,
-        firefox_page_loads,
-        safari_page_loads,
-        other_page_loads,
-        chrome_consenting_page_loads,
-        edge_consenting_page_loads,
-        firefox_consenting_page_loads,
-        safari_consenting_page_loads,
-        other_consenting_page_loads,
         frozen_at,
         created_at,
         updated_at
@@ -89,16 +90,6 @@ WITH stats_inserted AS (
         s.tenant_id,
         b.organization_id,
         s.cookie_banner_id,
-        s.chrome_page_loads,
-        s.edge_page_loads,
-        s.firefox_page_loads,
-        s.safari_page_loads,
-        s.other_page_loads,
-        0,
-        0,
-        0,
-        0,
-        0,
         s.frozen_at,
         s.created_at,
         s.updated_at
@@ -109,7 +100,7 @@ WITH stats_inserted AS (
         FROM cookie_banner_samples cbs
         WHERE cbs.cookie_banner_id = s.cookie_banner_id
     )
-    RETURNING id, tenant_id, cookie_banner_id
+    RETURNING id, tenant_id, cookie_banner_id, created_at, updated_at
 ),
 hit_only_inserted AS (
     INSERT INTO cookie_banner_samples (
@@ -117,16 +108,6 @@ hit_only_inserted AS (
         tenant_id,
         organization_id,
         cookie_banner_id,
-        chrome_page_loads,
-        edge_page_loads,
-        firefox_page_loads,
-        safari_page_loads,
-        other_page_loads,
-        chrome_consenting_page_loads,
-        edge_consenting_page_loads,
-        firefox_consenting_page_loads,
-        safari_consenting_page_loads,
-        other_consenting_page_loads,
         frozen_at,
         created_at,
         updated_at
@@ -136,16 +117,6 @@ hit_only_inserted AS (
         g.tenant_id,
         b.organization_id,
         g.cookie_banner_id,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
         NULL,
         g.created_at,
         g.updated_at
@@ -169,39 +140,83 @@ hit_only_inserted AS (
         GROUP BY h.cookie_banner_id
     ) g
     JOIN cookie_banners b ON b.id = g.cookie_banner_id
-    RETURNING id, tenant_id, cookie_banner_id
+    RETURNING id, tenant_id, cookie_banner_id, created_at, updated_at
 ),
 inserted AS (
-    SELECT id, tenant_id, cookie_banner_id FROM stats_inserted
+    SELECT id, tenant_id, cookie_banner_id, created_at, updated_at FROM stats_inserted
     UNION ALL
-    SELECT id, tenant_id, cookie_banner_id FROM hit_only_inserted
+    SELECT id, tenant_id, cookie_banner_id, created_at, updated_at FROM hit_only_inserted
+),
+page_loads AS (
+    INSERT INTO cookie_banner_sample_page_loads (
+        sample_id,
+        browser_family,
+        presentation,
+        consent_action,
+        tenant_id,
+        count,
+        created_at,
+        updated_at
+    )
+    SELECT
+        i.id,
+        v.browser_family,
+        '',
+        '',
+        i.tenant_id,
+        v.count,
+        i.created_at,
+        i.updated_at
+    FROM cookie_banner_discovery_stats s
+    JOIN inserted i
+        ON i.cookie_banner_id = s.cookie_banner_id
+        AND i.tenant_id = s.tenant_id
+    CROSS JOIN LATERAL (
+        VALUES
+            ('CHROME', s.chrome_page_loads),
+            ('EDGE', s.edge_page_loads),
+            ('FIREFOX', s.firefox_page_loads),
+            ('SAFARI', s.safari_page_loads),
+            ('OTHER', s.other_page_loads)
+    ) AS v(browser_family, count)
+    WHERE v.count > 0
+    RETURNING sample_id
 )
 INSERT INTO tracker_pattern_sample_hits (
     sample_id,
     tracker_pattern_id,
+    browser_family,
+    presentation,
+    consent_action,
+    category_granted,
     tenant_id,
     cookie_banner_id,
-    chrome_hits,
-    edge_hits,
-    firefox_hits,
-    safari_hits,
-    other_hits,
+    count,
     created_at,
     updated_at
 )
 SELECT
     i.id,
     h.tracker_pattern_id,
+    v.browser_family,
+    '',
+    '',
+    TRUE,
     h.tenant_id,
     h.cookie_banner_id,
-    h.chrome_hits,
-    h.edge_hits,
-    h.firefox_hits,
-    h.safari_hits,
-    h.other_hits,
+    v.count,
     h.created_at,
     h.updated_at
 FROM tracker_pattern_discovery_hits h
 JOIN inserted i
     ON i.cookie_banner_id = h.cookie_banner_id
-    AND i.tenant_id = h.tenant_id;
+    AND i.tenant_id = h.tenant_id
+CROSS JOIN LATERAL (
+    VALUES
+        ('CHROME', h.chrome_hits),
+        ('EDGE', h.edge_hits),
+        ('FIREFOX', h.firefox_hits),
+        ('SAFARI', h.safari_hits),
+        ('OTHER', h.other_hits)
+) AS v(browser_family, count)
+WHERE v.count > 0;

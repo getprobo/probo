@@ -27,14 +27,6 @@ type SampleFamilyCount struct {
 	Count  int
 }
 
-func SamplePageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
-	return samplePageLoads(sample)
-}
-
-func SampleExpectedPageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
-	return sampleExpectedPageLoads(sample)
-}
-
 func NewSampleFamilyCountPtrs(counts []SampleFamilyCount) []*SampleFamilyCount {
 	out := make([]*SampleFamilyCount, len(counts))
 	for i := range counts {
@@ -44,86 +36,52 @@ func NewSampleFamilyCountPtrs(counts []SampleFamilyCount) []*SampleFamilyCount {
 	return out
 }
 
-func samplePageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
-	return sampleFamilyCounts(
-		sample.ChromePageLoads,
-		sample.EdgePageLoads,
-		sample.FirefoxPageLoads,
-		sample.SafariPageLoads,
-		sample.OtherPageLoads,
-		sample.ChromePageLoads,
-		sample.EdgePageLoads,
-		sample.FirefoxPageLoads,
-		sample.SafariPageLoads,
-		sample.OtherPageLoads,
-	)
-}
+func PageLoadsByFamily(rows []coredata.SamplePageLoad) []SampleFamilyCount {
+	totals := map[coredata.BrowserFamily]int{}
 
-func sampleExpectedPageLoads(sample coredata.CookieBannerSample) []SampleFamilyCount {
-	return sampleFamilyCounts(
-		sample.ChromeConsentingPageLoads,
-		sample.EdgeConsentingPageLoads,
-		sample.FirefoxConsentingPageLoads,
-		sample.SafariConsentingPageLoads,
-		sample.OtherConsentingPageLoads,
-		sample.ChromeConsentingPageLoads,
-		sample.EdgeConsentingPageLoads,
-		sample.FirefoxConsentingPageLoads,
-		sample.SafariConsentingPageLoads,
-		sample.OtherConsentingPageLoads,
-	)
-}
-
-func sampleHits(
-	sample coredata.CookieBannerSample,
-	hits *coredata.TrackerPatternSampleHits,
-) []SampleFamilyCount {
-	if hits == nil {
-		return sampleFamilyCounts(0, 0, 0, 0, 0,
-			sample.ChromePageLoads,
-			sample.EdgePageLoads,
-			sample.FirefoxPageLoads,
-			sample.SafariPageLoads,
-			sample.OtherPageLoads,
-		)
+	for _, row := range rows {
+		totals[row.BrowserFamily] += row.Count
 	}
 
-	return sampleFamilyCounts(
-		hits.ChromeHits,
-		hits.EdgeHits,
-		hits.FirefoxHits,
-		hits.SafariHits,
-		hits.OtherHits,
-		sample.ChromePageLoads,
-		sample.EdgePageLoads,
-		sample.FirefoxPageLoads,
-		sample.SafariPageLoads,
-		sample.OtherPageLoads,
-	)
+	return countsByFamily(totals)
 }
 
-func sampleFamilyCounts(
-	chrome int,
-	edge int,
-	firefox int,
-	safari int,
-	other int,
-	chromeDenom int,
-	edgeDenom int,
-	firefoxDenom int,
-	safariDenom int,
-	otherDenom int,
-) []SampleFamilyCount {
-	counts := [5]int{chrome, edge, firefox, safari, other}
-	denoms := [5]int{chromeDenom, edgeDenom, firefoxDenom, safariDenom, otherDenom}
+func SplitPatternHits(rows []coredata.SamplePatternHit) (total, allowed, denied []SampleFamilyCount) {
+	totals := map[coredata.BrowserFamily]int{}
+	alloweds := map[coredata.BrowserFamily]int{}
+	denieds := map[coredata.BrowserFamily]int{}
 
-	out := make([]SampleFamilyCount, 0, len(coredata.BrowserFamilies()))
-	for i, family := range coredata.BrowserFamilies() {
-		if denoms[i] == 0 {
+	for _, row := range rows {
+		totals[row.BrowserFamily] += row.Count
+		if row.CategoryGranted {
+			alloweds[row.BrowserFamily] += row.Count
+		} else {
+			denieds[row.BrowserFamily] += row.Count
+		}
+	}
+
+	return countsByFamily(totals), countsByFamily(alloweds), countsByFamily(denieds)
+}
+
+func consentActionPtr(action string) *coredata.CookieConsentAction {
+	if action == "" {
+		return nil
+	}
+
+	value := coredata.CookieConsentAction(action)
+
+	return &value
+}
+
+func countsByFamily(sums map[coredata.BrowserFamily]int) []SampleFamilyCount {
+	out := make([]SampleFamilyCount, 0, len(sums))
+	for _, family := range coredata.BrowserFamilies() {
+		count := sums[family]
+		if count == 0 {
 			continue
 		}
 
-		out = append(out, SampleFamilyCount{Family: family, Count: counts[i]})
+		out = append(out, SampleFamilyCount{Family: family, Count: count})
 	}
 
 	return out

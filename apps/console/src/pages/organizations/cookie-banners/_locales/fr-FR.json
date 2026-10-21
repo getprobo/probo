@@ -289,8 +289,9 @@
     "empty": "Aucun signalement pour le moment.",
     "hits": "signalements",
     "loads": "chargements",
-    "hitRate": "taux de signalement",
-    "expectedHitRate": "lorsque le tracker est autorisé"
+    "hitRate": "Taux de détection global",
+    "expectedHitRate": "Taux de détection valide",
+    "driftRate": "Taux de dérive"
   },
   "trackerDiscovery": {
     "families": {

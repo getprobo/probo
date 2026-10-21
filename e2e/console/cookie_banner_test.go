@@ -893,10 +893,6 @@ func TestCookieBanner_Samples(t *testing.T) {
 							family
 							count
 						}
-						expectedPageLoads {
-							family
-							count
-						}
 					}
 					samples {
 						totalCount
@@ -920,10 +916,6 @@ func TestCookieBanner_Samples(t *testing.T) {
 					Family string `json:"family"`
 					Count  int    `json:"count"`
 				} `json:"pageLoads"`
-				ExpectedPageLoads []struct {
-					Family string `json:"family"`
-					Count  int    `json:"count"`
-				} `json:"expectedPageLoads"`
 			} `json:"latestSample"`
 			Samples struct {
 				TotalCount int `json:"totalCount"`

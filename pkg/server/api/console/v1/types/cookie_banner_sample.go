@@ -21,7 +21,6 @@
 package types
 
 import (
-	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -76,9 +75,7 @@ func NewCookieBannerSample(s *coredata.CookieBannerSample) *CookieBannerSample {
 		CookieBanner: &CookieBanner{
 			ID: s.CookieBannerID,
 		},
-		PageLoads:         cookiebanner.NewSampleFamilyCountPtrs(cookiebanner.SamplePageLoads(*s)),
-		ExpectedPageLoads: cookiebanner.NewSampleFamilyCountPtrs(cookiebanner.SampleExpectedPageLoads(*s)),
-		FrozenAt:          s.FrozenAt,
-		CreatedAt:         s.CreatedAt,
+		FrozenAt:  s.FrozenAt,
+		CreatedAt: s.CreatedAt,
 	}
 }

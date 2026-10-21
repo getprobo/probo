@@ -59,10 +59,6 @@ query($id: ID!) {
           family
           count
         }
-        expectedPageLoads {
-          family
-          count
-        }
       }
       createdAt
       updatedAt
@@ -98,10 +94,6 @@ type viewResponse struct {
 				Family string `json:"family"`
 				Count  int    `json:"count"`
 			} `json:"pageLoads"`
-			ExpectedPageLoads []struct {
-				Family string `json:"family"`
-				Count  int    `json:"count"`
-			} `json:"expectedPageLoads"`
 		} `json:"latestSample"`
 		CreatedAt string `json:"createdAt"`
 		UpdatedAt string `json:"updatedAt"`
@@ -199,15 +191,6 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 				} else {
 					_, _ = fmt.Fprintf(out, "%s\n", label.Render("Sample Loads:"))
 					for _, load := range sample.PageLoads {
-						_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
-					}
-				}
-
-				if len(sample.ExpectedPageLoads) == 0 {
-					_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Expected Loads:"), "none")
-				} else {
-					_, _ = fmt.Fprintf(out, "%s\n", label.Render("Expected Loads:"))
-					for _, load := range sample.ExpectedPageLoads {
 						_, _ = fmt.Fprintf(out, "%s%s %d\n", label.Render(""), load.Family, load.Count)
 					}
 				}

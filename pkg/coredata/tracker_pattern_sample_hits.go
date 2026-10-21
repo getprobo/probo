@@ -22,7 +22,6 @@ package coredata
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -32,20 +31,13 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-type (
-	TrackerPatternSampleHits struct {
-		SampleID         gid.GID   `db:"sample_id"`
-		TrackerPatternID gid.GID   `db:"tracker_pattern_id"`
-		CookieBannerID   gid.GID   `db:"cookie_banner_id"`
-		ChromeHits       int       `db:"chrome_hits"`
-		EdgeHits         int       `db:"edge_hits"`
-		FirefoxHits      int       `db:"firefox_hits"`
-		SafariHits       int       `db:"safari_hits"`
-		OtherHits        int       `db:"other_hits"`
-		CreatedAt        time.Time `db:"created_at"`
-		UpdatedAt        time.Time `db:"updated_at"`
-	}
-)
+type SamplePatternHit struct {
+	BrowserFamily   BrowserFamily `db:"browser_family"`
+	Presentation    string        `db:"presentation"`
+	ConsentAction   string        `db:"consent_action"`
+	CategoryGranted bool          `db:"category_granted"`
+	Count           int           `db:"count"`
+}
 
 func RecordSamplePatternHit(
 	ctx context.Context,
@@ -54,13 +46,13 @@ func RecordSamplePatternHit(
 	sampleID gid.GID,
 	cookieBannerID gid.GID,
 	trackerPatternID gid.GID,
-	chrome int64,
-	edge int64,
-	firefox int64,
-	safari int64,
-	other int64,
+	family BrowserFamily,
+	presentation string,
+	consentAction string,
+	categoryGranted bool,
+	count int64,
 ) error {
-	if chrome == 0 && edge == 0 && firefox == 0 && safari == 0 && other == 0 {
+	if count == 0 {
 		return nil
 	}
 
@@ -70,26 +62,26 @@ func RecordSamplePatternHit(
 INSERT INTO tracker_pattern_sample_hits (
 	sample_id,
 	tracker_pattern_id,
+	browser_family,
+	presentation,
+	consent_action,
+	category_granted,
 	tenant_id,
 	cookie_banner_id,
-	chrome_hits,
-	edge_hits,
-	firefox_hits,
-	safari_hits,
-	other_hits,
+	count,
 	created_at,
 	updated_at
 )
 SELECT
 	@sample_id,
 	@tracker_pattern_id,
+	@browser_family,
+	@presentation,
+	@consent_action,
+	@category_granted,
 	@tenant_id,
 	@cookie_banner_id,
-	@chrome,
-	@edge,
-	@firefox,
-	@safari,
-	@other,
+	@count,
 	@now,
 	@now
 WHERE EXISTS (
@@ -103,13 +95,16 @@ WHERE EXISTS (
 	WHERE id = @sample_id
 	  AND frozen_at IS NULL
 )
-ON CONFLICT (sample_id, tracker_pattern_id) DO UPDATE
+ON CONFLICT (
+	sample_id,
+	tracker_pattern_id,
+	browser_family,
+	presentation,
+	consent_action,
+	category_granted
+) DO UPDATE
 SET
-	chrome_hits = tracker_pattern_sample_hits.chrome_hits + EXCLUDED.chrome_hits,
-	edge_hits = tracker_pattern_sample_hits.edge_hits + EXCLUDED.edge_hits,
-	firefox_hits = tracker_pattern_sample_hits.firefox_hits + EXCLUDED.firefox_hits,
-	safari_hits = tracker_pattern_sample_hits.safari_hits + EXCLUDED.safari_hits,
-	other_hits = tracker_pattern_sample_hits.other_hits + EXCLUDED.other_hits,
+	count = tracker_pattern_sample_hits.count + EXCLUDED.count,
 	updated_at = EXCLUDED.updated_at
 `
 
@@ -118,11 +113,11 @@ SET
 		"tracker_pattern_id": trackerPatternID,
 		"cookie_banner_id":   cookieBannerID,
 		"tenant_id":          scope.GetTenantID(),
-		"chrome":             chrome,
-		"edge":               edge,
-		"firefox":            firefox,
-		"safari":             safari,
-		"other":              other,
+		"browser_family":     family,
+		"presentation":       presentation,
+		"consent_action":     consentAction,
+		"category_granted":   categoryGranted,
+		"count":              count,
 		"now":                now,
 	}
 
@@ -146,41 +141,41 @@ func AddSampleHits(
 INSERT INTO tracker_pattern_sample_hits (
 	sample_id,
 	tracker_pattern_id,
+	browser_family,
+	presentation,
+	consent_action,
+	category_granted,
 	tenant_id,
 	cookie_banner_id,
-	chrome_hits,
-	edge_hits,
-	firefox_hits,
-	safari_hits,
-	other_hits,
+	count,
 	created_at,
 	updated_at
 )
 SELECT
 	exact.sample_id,
 	@glob_id,
+	exact.browser_family,
+	exact.presentation,
+	exact.consent_action,
+	exact.category_granted,
 	exact.tenant_id,
 	exact.cookie_banner_id,
-	exact.chrome_hits + COALESCE(glob.chrome_hits, 0),
-	exact.edge_hits + COALESCE(glob.edge_hits, 0),
-	exact.firefox_hits + COALESCE(glob.firefox_hits, 0),
-	exact.safari_hits + COALESCE(glob.safari_hits, 0),
-	exact.other_hits + COALESCE(glob.other_hits, 0),
+	exact.count,
 	@now,
 	@now
 FROM tracker_pattern_sample_hits exact
-LEFT JOIN tracker_pattern_sample_hits glob
-	ON glob.sample_id = exact.sample_id
-	AND glob.tracker_pattern_id = @glob_id
 WHERE exact.tracker_pattern_id = @exact_id
   AND exact.tenant_id = @tenant_id
-ON CONFLICT (sample_id, tracker_pattern_id) DO UPDATE
+ON CONFLICT (
+	sample_id,
+	tracker_pattern_id,
+	browser_family,
+	presentation,
+	consent_action,
+	category_granted
+) DO UPDATE
 SET
-	chrome_hits = EXCLUDED.chrome_hits,
-	edge_hits = EXCLUDED.edge_hits,
-	firefox_hits = EXCLUDED.firefox_hits,
-	safari_hits = EXCLUDED.safari_hits,
-	other_hits = EXCLUDED.other_hits,
+	count = tracker_pattern_sample_hits.count + EXCLUDED.count,
 	updated_at = EXCLUDED.updated_at
 `
 
@@ -198,25 +193,20 @@ SET
 	return nil
 }
 
-func (h *TrackerPatternSampleHits) LoadBySampleAndPattern(
+func LoadSamplePatternHits(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
 	sampleID gid.GID,
 	trackerPatternID gid.GID,
-) error {
+) ([]SamplePatternHit, error) {
 	q := `
 SELECT
-	sample_id,
-	tracker_pattern_id,
-	cookie_banner_id,
-	chrome_hits,
-	edge_hits,
-	firefox_hits,
-	safari_hits,
-	other_hits,
-	created_at,
-	updated_at
+	browser_family,
+	presentation,
+	consent_action,
+	category_granted,
+	count
 FROM tracker_pattern_sample_hits
 WHERE
 	%s
@@ -234,19 +224,13 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query tracker pattern sample hits: %w", err)
+		return nil, fmt.Errorf("cannot query tracker pattern sample hits: %w", err)
 	}
 
-	hits, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrackerPatternSampleHits])
+	hits, err := pgx.CollectRows(rows, pgx.RowToStructByName[SamplePatternHit])
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrResourceNotFound
-		}
-
-		return fmt.Errorf("cannot collect tracker pattern sample hits: %w", err)
+		return nil, fmt.Errorf("cannot collect tracker pattern sample hits: %w", err)
 	}
 
-	*h = hits
-
-	return nil
+	return hits, nil
 }

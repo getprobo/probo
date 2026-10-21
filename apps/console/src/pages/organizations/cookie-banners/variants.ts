@@ -212,12 +212,14 @@ export const trackerMaxAgeField = tv({
 export const sampleFamilyCounts = tv({
   slots: {
     root: "flex flex-wrap gap-3",
-    card: "flex w-fit flex-col items-start gap-2",
+    card: "flex min-w-72 flex-col items-stretch gap-3",
     family: "flex items-center gap-3",
     logo: "shrink-0 text-sand-11",
-    stats: "flex items-baseline gap-2",
-    stat: "flex items-baseline gap-1.5",
+    rates: "flex flex-col gap-2",
+    rate: "flex items-baseline justify-between gap-4",
+    rateLead: "flex items-baseline gap-1.5",
     value: "font-mono",
+    fraction: "shrink-0",
   },
 });
 

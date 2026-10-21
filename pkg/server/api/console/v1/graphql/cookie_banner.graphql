@@ -191,8 +191,7 @@ type SampleFamilyCount
 type CookieBannerSample implements Node {
     id: ID!
     cookieBanner: CookieBanner! @goField(forceResolver: true)
-    pageLoads: [SampleFamilyCount!]!
-    expectedPageLoads: [SampleFamilyCount!]!
+    pageLoads: [SampleFamilyCount!]! @goField(forceResolver: true)
     frozenAt: Datetime
     createdAt: Datetime!
 }
@@ -449,6 +448,10 @@ type TrackerPattern implements Node
     excluded: Boolean!
     detectedCount: Int! @goField(forceResolver: true)
     sampleHits(sampleId: ID): [SampleFamilyCount!]!
+        @goField(forceResolver: true)
+    allowedSampleHits(sampleId: ID): [SampleFamilyCount!]!
+        @goField(forceResolver: true)
+    deniedSampleHits(sampleId: ID): [SampleFamilyCount!]!
         @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!

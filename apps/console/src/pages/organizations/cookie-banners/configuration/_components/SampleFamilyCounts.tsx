@@ -35,35 +35,35 @@ export interface SampleFamilyCountItem {
 export interface SampleFamilyCountsProps {
   items: readonly SampleFamilyCountItem[];
   denominators?: readonly SampleFamilyCountItem[];
-  expectedDenominators?: readonly SampleFamilyCountItem[];
+  allowedHits?: readonly SampleFamilyCountItem[];
+  deniedHits?: readonly SampleFamilyCountItem[];
 }
 
 export function SampleFamilyCounts({
   items,
   denominators,
-  expectedDenominators,
+  allowedHits,
+  deniedHits,
 }: SampleFamilyCountsProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
-  const { root, card, family, logo, stats, stat, value }
+  const { root, card, family, logo, rates, rate, rateLead, value, fraction }
     = sampleFamilyCounts();
   const loadsByFamily = new Map(
     (denominators ?? []).map(entry => [entry.family, entry.count]),
   );
-  const expectedByFamily = new Map(
-    (expectedDenominators ?? []).map(entry => [entry.family, entry.count]),
+  const allowedHitsByFamily = new Map(
+    (allowedHits ?? []).map(entry => [entry.family, entry.count]),
+  );
+  const deniedHitsByFamily = new Map(
+    (deniedHits ?? []).map(entry => [entry.family, entry.count]),
   );
 
   return (
     <div className={root()}>
       {items.map((entry) => {
-        const loads = loadsByFamily.get(entry.family);
-        const expectedLoads = expectedByFamily.get(entry.family);
-        const rate = loads != null && loads > 0
-          ? formatHitRate(entry.count, loads, i18n.language)
-          : null;
-        const expectedRate = expectedLoads != null && expectedLoads > 0
-          ? formatHitRate(entry.count, expectedLoads, i18n.language)
-          : null;
+        const loads = loadsByFamily.get(entry.family) ?? 0;
+        const allowedHitCount = allowedHitsByFamily.get(entry.family) ?? 0;
+        const deniedHitCount = deniedHitsByFamily.get(entry.family) ?? 0;
 
         return (
           <Card
@@ -81,50 +81,81 @@ export function SampleFamilyCounts({
               />
               <Text size={4} weight="medium">{familyLabel(entry.family, t)}</Text>
             </div>
-            {rate != null
-              ? (
-                  <div className={stat()}>
-                    <Text size={4} weight="bold" highContrast className={value()}>
-                      {rate}
-                    </Text>
-                    <Text size={2}>{t("trackerSample.hitRate")}</Text>
-                  </div>
-                )
-              : null}
-            {expectedRate != null
-              ? (
-                  <div className={stat()}>
-                    <Text size={4} weight="bold" highContrast className={value()}>
-                      {expectedRate}
-                    </Text>
-                    <Text size={2}>{t("trackerSample.expectedHitRate")}</Text>
-                  </div>
-                )
-              : null}
-            <div className={stats()}>
-              <div className={stat()}>
-                <Text size={4} weight="bold" highContrast className={value()}>
-                  {entry.count}
-                </Text>
-                <Text size={2}>{t("trackerSample.hits")}</Text>
-              </div>
-              {loads != null
-                ? (
-                    <>
-                      <Text size={4} color="faint">/</Text>
-                      <div className={stat()}>
-                        <Text size={4} weight="bold" highContrast className={value()}>
-                          {loads}
-                        </Text>
-                        <Text size={2}>{t("trackerSample.loads")}</Text>
-                      </div>
-                    </>
-                  )
-                : null}
+            <div className={rates()}>
+              <RateRow
+                label={t("trackerSample.hitRate")}
+                hits={entry.count}
+                loads={loads}
+                locale={i18n.language}
+                rateClass={rate()}
+                rateLeadClass={rateLead()}
+                valueClass={value()}
+                fractionClass={fraction()}
+              />
+              <RateRow
+                label={t("trackerSample.expectedHitRate")}
+                hits={allowedHitCount}
+                loads={loads}
+                locale={i18n.language}
+                rateClass={rate()}
+                rateLeadClass={rateLead()}
+                valueClass={value()}
+                fractionClass={fraction()}
+              />
+              <RateRow
+                label={t("trackerSample.driftRate")}
+                hits={deniedHitCount}
+                loads={loads}
+                locale={i18n.language}
+                rateClass={rate()}
+                rateLeadClass={rateLead()}
+                valueClass={value()}
+                fractionClass={fraction()}
+              />
             </div>
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+interface RateRowProps {
+  label: string;
+  hits: number;
+  loads: number;
+  locale: string;
+  rateClass: string;
+  rateLeadClass: string;
+  valueClass: string;
+  fractionClass: string;
+}
+
+function RateRow({
+  label,
+  hits,
+  loads,
+  locale,
+  rateClass,
+  rateLeadClass,
+  valueClass,
+  fractionClass,
+}: RateRowProps) {
+  const rate = loads > 0 ? formatHitRate(hits, loads, locale) : "—";
+
+  return (
+    <div className={rateClass}>
+      <div className={rateLeadClass}>
+        <Text size={4} weight="bold" highContrast className={valueClass}>
+          {rate}
+        </Text>
+        <Text size={2}>{label}</Text>
+      </div>
+      <Text size={2} color="faint" className={fractionClass}>
+        {hits}
+        {" / "}
+        {loads}
+      </Text>
     </div>
   );
 }

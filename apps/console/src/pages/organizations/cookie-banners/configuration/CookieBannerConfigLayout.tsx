@@ -378,50 +378,84 @@ export function CookieBannerConfigLayout({
           <Text size={2} color="neutral">{message}</Text>
           {latestSample != null
             ? (
-                <div className={sampleRow()}>
-                  <Text size={2} color="faint">
-                    {t("configLayout.sample.pageLoads")}
-                  </Text>
-                  {pageLoads.length > 0
-                    ? pageLoads.map((entry, index) => (
-                        <Fragment key={entry.family}>
-                          {index > 0
-                            ? (
-                                <Text
-                                  size={2}
-                                  color="faint"
-                                  className={sampleSeparator()}
-                                >
-                                  ·
-                                </Text>
-                              )
-                            : null}
-                          <div className={sampleItem()}>
-                            <FamilyLogo
-                              family={entry.family}
-                              size={16}
-                              className={sampleLogo()}
-                            />
-                            <Text size={2} color="faint">
-                              {familyLabel(entry.family, t)}
-                            </Text>
-                            <Text size={2} weight="medium" highContrast>
-                              {entry.count}
-                            </Text>
-                          </div>
-                        </Fragment>
-                      ))
-                    : (
-                        <Text size={2} color="faint">
-                          {t("configLayout.sample.empty")}
-                        </Text>
-                      )}
-                </div>
+                <SampleLoadRow
+                  label={t("configLayout.sample.pageLoads")}
+                  loads={pageLoads}
+                  empty={t("configLayout.sample.empty")}
+                  sampleRow={sampleRow()}
+                  sampleItem={sampleItem()}
+                  sampleLogo={sampleLogo()}
+                  sampleSeparator={sampleSeparator()}
+                />
               )
             : null}
         </div>
       </TonedCard>
       <Outlet />
+    </div>
+  );
+}
+
+interface SampleLoadRowProps {
+  label: string;
+  loads: readonly { family: string; count: number }[];
+  empty: string;
+  sampleRow: string;
+  sampleItem: string;
+  sampleLogo: string;
+  sampleSeparator: string;
+}
+
+function SampleLoadRow({
+  label,
+  loads,
+  empty,
+  sampleRow,
+  sampleItem,
+  sampleLogo,
+  sampleSeparator,
+}: SampleLoadRowProps) {
+  const { t } = useTranslation("organizations/cookie-banners");
+
+  return (
+    <div className={sampleRow}>
+      <Text size={2} color="faint">
+        {label}
+      </Text>
+      {loads.length > 0
+        ? loads.map((entry, index) => (
+            <Fragment key={entry.family}>
+              {index > 0
+                ? (
+                    <Text
+                      size={2}
+                      color="faint"
+                      className={sampleSeparator}
+                    >
+                      ·
+                    </Text>
+                  )
+                : null}
+              <div className={sampleItem}>
+                <FamilyLogo
+                  family={entry.family}
+                  size={16}
+                  className={sampleLogo}
+                />
+                <Text size={2} color="faint">
+                  {familyLabel(entry.family, t)}
+                </Text>
+                <Text size={2} weight="medium" highContrast>
+                  {entry.count}
+                </Text>
+              </div>
+            </Fragment>
+          ))
+        : (
+            <Text size={2} color="faint">
+              {empty}
+            </Text>
+          )}
     </div>
   );
 }

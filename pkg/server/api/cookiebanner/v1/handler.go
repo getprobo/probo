@@ -261,14 +261,15 @@ func (h *Handler) handlePostConsent(w http.ResponseWriter, r *http.Request) {
 }
 
 type detectedCookieEntry struct {
-	Name          string  `json:"name"`
-	MaxAgeSeconds *int    `json:"max_age_seconds"`
-	Source        string  `json:"source"`
-	InitiatorURL  *string `json:"initiator_url,omitempty"`
-	CookieDomain  *string `json:"cookie_domain,omitempty"`
-	HostOnly      *bool   `json:"host_only,omitempty"`
-	DiscoveryHit  bool    `json:"discovery_hit,omitempty"`
-	SampleHit     bool    `json:"sample_hit,omitempty"`
+	Name            string  `json:"name"`
+	MaxAgeSeconds   *int    `json:"max_age_seconds"`
+	Source          string  `json:"source"`
+	InitiatorURL    *string `json:"initiator_url,omitempty"`
+	CookieDomain    *string `json:"cookie_domain,omitempty"`
+	HostOnly        *bool   `json:"host_only,omitempty"`
+	DiscoveryHit    bool    `json:"discovery_hit,omitempty"`
+	SampleHit       bool    `json:"sample_hit,omitempty"`
+	CategoryGranted *bool   `json:"category_granted,omitempty"`
 }
 
 type reportDetectedCookiesBody struct {
@@ -475,13 +476,14 @@ func (h *Handler) handleReportDetectedCookies(w http.ResponseWriter, r *http.Req
 }
 
 type detectedStorageEntry struct {
-	Key          string  `json:"key"`
-	StorageType  string  `json:"storage_type"`
-	ValueSize    *int    `json:"value_size"`
-	Source       string  `json:"source"`
-	InitiatorURL *string `json:"initiator_url,omitempty"`
-	DiscoveryHit bool    `json:"discovery_hit,omitempty"`
-	SampleHit    bool    `json:"sample_hit,omitempty"`
+	Key             string  `json:"key"`
+	StorageType     string  `json:"storage_type"`
+	ValueSize       *int    `json:"value_size"`
+	Source          string  `json:"source"`
+	InitiatorURL    *string `json:"initiator_url,omitempty"`
+	DiscoveryHit    bool    `json:"discovery_hit,omitempty"`
+	SampleHit       bool    `json:"sample_hit,omitempty"`
+	CategoryGranted *bool   `json:"category_granted,omitempty"`
 }
 
 type detectedResourceEntry struct {
@@ -588,13 +590,14 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		req.Cookies = append(
 			req.Cookies,
 			cookiebanner.DetectedCookie{
-				Name:          name,
-				MaxAgeSeconds: sanitizeInt4(c.MaxAgeSeconds),
-				Source:        source,
-				InitiatorURL:  sanitizeInitiatorURL(c.InitiatorURL),
-				CookieDomain:  cookieDomain,
-				HostOnly:      hostOnly,
-				SampleHit:     c.DiscoveryHit || c.SampleHit,
+				Name:            name,
+				MaxAgeSeconds:   sanitizeInt4(c.MaxAgeSeconds),
+				Source:          source,
+				InitiatorURL:    sanitizeInitiatorURL(c.InitiatorURL),
+				CookieDomain:    cookieDomain,
+				HostOnly:        hostOnly,
+				SampleHit:       c.DiscoveryHit || c.SampleHit,
+				CategoryGranted: c.CategoryGranted,
 			},
 		)
 	}
@@ -647,12 +650,13 @@ func (h *Handler) handleReportDetectedTrackers(w http.ResponseWriter, r *http.Re
 		req.Storage = append(
 			req.Storage,
 			cookiebanner.DetectedStorageItem{
-				Key:          key,
-				StorageType:  storageType,
-				ValueSize:    sanitizeInt4(s.ValueSize),
-				Source:       &source,
-				InitiatorURL: sanitizeInitiatorURL(s.InitiatorURL),
-				SampleHit:    s.DiscoveryHit || s.SampleHit,
+				Key:             key,
+				StorageType:     storageType,
+				ValueSize:       sanitizeInt4(s.ValueSize),
+				Source:          &source,
+				InitiatorURL:    sanitizeInitiatorURL(s.InitiatorURL),
+				SampleHit:       s.DiscoveryHit || s.SampleHit,
+				CategoryGranted: s.CategoryGranted,
 			},
 		)
 	}

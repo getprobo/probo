@@ -145,6 +145,7 @@ export class ReportQueue {
   private pageViewPending = false;
   private pageViewSent = false;
   private consentAction: string | null = null;
+  private categoryGrant: (kind: "cookie" | "storage", name: string) => boolean = () => false;
 
   constructor(reportUrl: URL) {
     this.reportUrl = reportUrl;
@@ -172,6 +173,10 @@ export class ReportQueue {
 
   setConsentAction(action: string | null): void {
     this.consentAction = action;
+  }
+
+  setCategoryGrant(grant: (kind: "cookie" | "storage", name: string) => boolean): void {
+    this.categoryGrant = grant;
   }
 
   onNotFound(cb: () => void): void {
@@ -304,10 +309,22 @@ export class ReportQueue {
 
       switch (item.kind) {
         case "cookie":
-          cookies.push(hit ? { ...item.entry, discovery_hit: true } : item.entry);
+          cookies.push(hit
+            ? {
+                ...item.entry,
+                discovery_hit: true,
+                category_granted: this.categoryGrant("cookie", item.entry.name),
+              }
+            : item.entry);
           break;
         case "storage":
-          storage.push(hit ? { ...item.entry, discovery_hit: true } : item.entry);
+          storage.push(hit
+            ? {
+                ...item.entry,
+                discovery_hit: true,
+                category_granted: this.categoryGrant("storage", item.entry.key),
+              }
+            : item.entry);
           break;
         case "resource":
           resources.push(item.entry);

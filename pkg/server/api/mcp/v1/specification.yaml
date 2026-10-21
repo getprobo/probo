@@ -13749,7 +13749,6 @@ components:
         - id
         - cookie_banner_id
         - page_loads
-        - expected_page_loads
         - created_at
       properties:
         id:
@@ -13763,11 +13762,6 @@ components:
           items:
             $ref: "#/components/schemas/SampleFamilyCount"
           description: Page loads by browser family. Families with zero page loads are omitted.
-        expected_page_loads:
-          type: array
-          items:
-            $ref: "#/components/schemas/SampleFamilyCount"
-          description: Page loads where a tracker is allowed to fire, by browser family. Families with zero expected loads are omitted.
         frozen_at:
           type:
             - string
@@ -14090,7 +14084,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SampleFamilyCount"
-          description: Sample first-sighting hits by browser family for the selected or latest sample. Only families with page loads are included.
+          description: Sample first-sighting hits by browser family for the selected or latest sample. Families with zero hits are omitted.
+        allowed_sample_hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SampleFamilyCount"
+          description: Sample hits whose category was allowed to fire, by browser family.
+        denied_sample_hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SampleFamilyCount"
+          description: Sample hits whose category was not allowed to fire, by browser family.
         common_tracker_pattern_id:
           anyOf:
             - $ref: "#/components/schemas/GID"

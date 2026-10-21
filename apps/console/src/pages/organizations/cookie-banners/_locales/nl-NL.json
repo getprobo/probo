@@ -289,8 +289,9 @@
     "empty": "Nog geen hits.",
     "hits": "hits",
     "loads": "paginaladingen",
-    "hitRate": "hitrate",
-    "expectedHitRate": "wanneer toegestaan"
+    "hitRate": "Globale hitrate",
+    "expectedHitRate": "Geldige hitrate",
+    "driftRate": "Afwijkingspercentage"
   },
   "trackerDiscovery": {
     "families": {

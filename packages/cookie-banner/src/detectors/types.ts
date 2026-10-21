@@ -52,6 +52,7 @@ export interface DetectedCookieEntry {
   cookie_domain?: string;
   host_only?: boolean;
   discovery_hit?: boolean;
+  category_granted?: boolean;
 }
 
 export interface DetectedStorageEntry {
@@ -61,6 +62,7 @@ export interface DetectedStorageEntry {
   source: StorageSource;
   initiator_url?: string;
   discovery_hit?: boolean;
+  category_granted?: boolean;
 }
 
 export interface DetectedResourceEntry {

@@ -152,13 +152,14 @@ type (
 	}
 
 	DetectedCookie struct {
-		Name          string
-		MaxAgeSeconds *int
-		Source        coredata.CookieSource
-		InitiatorURL  *string
-		CookieDomain  *string
-		HostOnly      *bool
-		SampleHit     bool
+		Name            string
+		MaxAgeSeconds   *int
+		Source          coredata.CookieSource
+		InitiatorURL    *string
+		CookieDomain    *string
+		HostOnly        *bool
+		SampleHit       bool
+		CategoryGranted *bool
 	}
 
 	ReportDetectedCookiesRequest struct {
@@ -166,12 +167,13 @@ type (
 	}
 
 	DetectedStorageItem struct {
-		Key          string
-		StorageType  coredata.TrackerType
-		ValueSize    *int
-		Source       *coredata.CookieSource
-		InitiatorURL *string
-		SampleHit    bool
+		Key             string
+		StorageType     coredata.TrackerType
+		ValueSize       *int
+		Source          *coredata.CookieSource
+		InitiatorURL    *string
+		SampleHit       bool
+		CategoryGranted *bool
 	}
 
 	DetectedResourceItem struct {
@@ -1151,25 +1153,35 @@ func (s *Service) GetSamplePageLoads(
 	scope coredata.Scoper,
 	sampleID gid.GID,
 ) ([]SampleFamilyCount, error) {
-	sample, err := s.GetCookieBannerSample(ctx, scope, sampleID)
+	var rows []coredata.SamplePageLoad
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var sample coredata.CookieBannerSample
+			if err := sample.LoadByID(ctx, conn, scope, sampleID); err != nil {
+				if errors.Is(err, coredata.ErrResourceNotFound) {
+					return ErrSampleNotFound
+				}
+
+				return fmt.Errorf("cannot load cookie banner sample: %w", err)
+			}
+
+			loaded, err := coredata.LoadSamplePageLoads(ctx, conn, scope, sampleID)
+			if err != nil {
+				return err
+			}
+
+			rows = loaded
+
+			return nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return samplePageLoads(*sample), nil
-}
-
-func (s *Service) GetSampleExpectedPageLoads(
-	ctx context.Context,
-	scope coredata.Scoper,
-	sampleID gid.GID,
-) ([]SampleFamilyCount, error) {
-	sample, err := s.GetCookieBannerSample(ctx, scope, sampleID)
-	if err != nil {
-		return nil, err
-	}
-
-	return sampleExpectedPageLoads(*sample), nil
+	return PageLoadsByFamily(rows), nil
 }
 
 func (s *Service) GetSampleHits(
@@ -1178,15 +1190,64 @@ func (s *Service) GetSampleHits(
 	trackerPatternID gid.GID,
 	sampleID *gid.GID,
 ) ([]SampleFamilyCount, error) {
-	var (
-		sample coredata.CookieBannerSample
-		hits   *coredata.TrackerPatternSampleHits
-	)
+	splits, err := s.loadSampleHitSplits(ctx, scope, trackerPatternID, sampleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return splits.total, nil
+}
+
+func (s *Service) GetAllowedSampleHits(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+	sampleID *gid.GID,
+) ([]SampleFamilyCount, error) {
+	splits, err := s.loadSampleHitSplits(ctx, scope, trackerPatternID, sampleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return splits.allowed, nil
+}
+
+func (s *Service) GetDeniedSampleHits(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+	sampleID *gid.GID,
+) ([]SampleFamilyCount, error) {
+	splits, err := s.loadSampleHitSplits(ctx, scope, trackerPatternID, sampleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return splits.denied, nil
+}
+
+type sampleHitSplits struct {
+	total   []SampleFamilyCount
+	allowed []SampleFamilyCount
+	denied  []SampleFamilyCount
+}
+
+func (s *Service) loadSampleHitSplits(
+	ctx context.Context,
+	scope coredata.Scoper,
+	trackerPatternID gid.GID,
+	sampleID *gid.GID,
+) (sampleHitSplits, error) {
+	var rows []coredata.SamplePatternHit
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var pattern coredata.TrackerPattern
+			var (
+				pattern coredata.TrackerPattern
+				sample  coredata.CookieBannerSample
+			)
+
 			if err := pattern.LoadByID(ctx, conn, scope, trackerPatternID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					return ErrTrackerPatternNotFound
@@ -1215,29 +1276,27 @@ func (s *Service) GetSampleHits(
 				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
 			}
 
-			var loaded coredata.TrackerPatternSampleHits
-			if err := loaded.LoadBySampleAndPattern(ctx, conn, scope, sample.ID, trackerPatternID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil
-				}
+			if sample.ID == (gid.GID{}) {
+				return nil
+			}
 
+			loaded, err := coredata.LoadSamplePatternHits(ctx, conn, scope, sample.ID, trackerPatternID)
+			if err != nil {
 				return fmt.Errorf("cannot load tracker pattern sample hits: %w", err)
 			}
 
-			hits = &loaded
+			rows = loaded
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, err
+		return sampleHitSplits{}, err
 	}
 
-	if sample.ID == (gid.GID{}) {
-		return nil, nil
-	}
+	total, allowed, denied := SplitPatternHits(rows)
 
-	return sampleHits(sample, hits), nil
+	return sampleHitSplits{total: total, allowed: allowed, denied: denied}, nil
 }
 
 func (s *Service) ListCommonGVLVendors(
@@ -3055,7 +3114,7 @@ func (s *Service) ReportDetectedTrackers(
 	bannerID gid.GID,
 	req ReportDetectedTrackersRequest,
 ) error {
-	countedHits := make(map[gid.GID]struct{})
+	countedHits := make(map[gid.GID]bool)
 
 	err := s.pg.WithTx(
 		ctx,
@@ -3100,6 +3159,7 @@ func (s *Service) ReportDetectedTrackers(
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
 						SampleHit:     dc.SampleHit,
+						Granted:       categoryGrantedForHit(req.Presentation, req.ConsentAction, dc.CategoryGranted),
 					},
 					&inserted,
 					countedHits,
@@ -3123,6 +3183,7 @@ func (s *Service) ReportDetectedTrackers(
 						Source:       ds.Source,
 						InitiatorURL: ds.InitiatorURL,
 						SampleHit:    ds.SampleHit,
+						Granted:      categoryGrantedForHit(req.Presentation, req.ConsentAction, ds.CategoryGranted),
 					},
 					&inserted,
 					countedHits,
@@ -3166,8 +3227,9 @@ func (s *Service) ReportDetectedTrackers(
 	s.recordSampleIncrements(
 		bannerID,
 		req.Family,
+		req.Presentation,
+		req.ConsentAction,
 		req.PageView,
-		isExpectedSampleLoad(req.Presentation, req.ConsentAction),
 		countedHits,
 	)
 
@@ -3184,6 +3246,7 @@ type detectedTrackerInfo struct {
 	CookieDomain  *string
 	HostOnly      *bool
 	SampleHit     bool
+	Granted       bool
 }
 
 func (s *Service) reportDetectedTracker(
@@ -3195,7 +3258,7 @@ func (s *Service) reportDetectedTracker(
 	now time.Time,
 	info detectedTrackerInfo,
 	inserted *int,
-	countedHits map[gid.GID]struct{},
+	countedHits map[gid.GID]bool,
 ) error {
 	if len(info.Identifier) > MaxTrackerIdentifierLength {
 		return nil
@@ -3330,7 +3393,9 @@ func (s *Service) reportDetectedTracker(
 	}
 
 	if info.SampleHit && patternID != nil {
-		countedHits[*patternID] = struct{}{}
+		if _, seen := countedHits[*patternID]; !seen {
+			countedHits[*patternID] = info.Granted
+		}
 	}
 
 	return nil

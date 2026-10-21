@@ -289,8 +289,9 @@
     "empty": "No hits yet.",
     "hits": "hits",
     "loads": "loads",
-    "hitRate": "hit rate",
-    "expectedHitRate": "when allowed"
+    "hitRate": "Global hit rate",
+    "expectedHitRate": "Valid hit rate",
+    "driftRate": "Drift hit rate"
   },
   "trackerDiscovery": {
     "families": {

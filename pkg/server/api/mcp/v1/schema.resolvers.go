@@ -5898,7 +5898,12 @@ func (r *Resolver) GetCookieBannerTool(ctx context.Context, req *mcp.CallToolReq
 	}
 
 	if sample != nil {
-		out.LatestSample = types.NewCookieBannerSample(sample)
+		latest, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
+		if err != nil {
+			return nil, types.GetCookieBannerOutput{}, err
+		}
+
+		out.LatestSample = latest
 	}
 
 	if _, err := r.Authorize(ctx, input.ID, probo.ActionCookieBannerVersionList); err == nil {
@@ -6203,6 +6208,19 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 
 	mapped.SampleHits = types.NewSampleFamilyCounts(hits)
 
+	allowedHits, err := r.cookieBanner.GetAllowedSampleHits(ctx, scope, input.ID, input.SampleID)
+	if err != nil {
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get allowed sample hits: %w", err)
+	}
+
+	deniedHits, err := r.cookieBanner.GetDeniedSampleHits(ctx, scope, input.ID, input.SampleID)
+	if err != nil {
+		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get denied sample hits: %w", err)
+	}
+
+	mapped.AllowedSampleHits = types.NewSampleFamilyCounts(allowedHits)
+	mapped.DeniedSampleHits = types.NewSampleFamilyCounts(deniedHits)
+
 	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
 
@@ -6222,7 +6240,17 @@ func (r *Resolver) ListCookieBannerSamplesTool(ctx context.Context, req *mcp.Cal
 		return nil, types.ListCookieBannerSamplesOutput{}, fmt.Errorf("cannot list cookie banner samples: %w", err)
 	}
 
-	return nil, types.NewListCookieBannerSamplesOutput(page.NewPage(samples, cursor)), nil
+	output := types.NewListCookieBannerSamplesOutput(page.NewPage(samples, cursor))
+	for i, sample := range samples {
+		withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
+		if err != nil {
+			return nil, types.ListCookieBannerSamplesOutput{}, err
+		}
+
+		output.CookieBannerSamples[i] = withLoads
+	}
+
+	return nil, output, nil
 }
 
 func (r *Resolver) GetCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.GetCookieBannerSampleInput) (*mcp.CallToolResult, types.GetCookieBannerSampleOutput, error) {
@@ -6236,7 +6264,12 @@ func (r *Resolver) GetCookieBannerSampleTool(ctx context.Context, req *mcp.CallT
 		return nil, types.GetCookieBannerSampleOutput{}, fmt.Errorf("cannot get cookie banner sample: %w", err)
 	}
 
-	return nil, types.GetCookieBannerSampleOutput{CookieBannerSample: types.NewCookieBannerSample(sample)}, nil
+	withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
+	if err != nil {
+		return nil, types.GetCookieBannerSampleOutput{}, err
+	}
+
+	return nil, types.GetCookieBannerSampleOutput{CookieBannerSample: withLoads}, nil
 }
 
 func (r *Resolver) StartCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StartCookieBannerSampleInput) (*mcp.CallToolResult, types.StartCookieBannerSampleOutput, error) {
@@ -6250,7 +6283,12 @@ func (r *Resolver) StartCookieBannerSampleTool(ctx context.Context, req *mcp.Cal
 		return nil, types.StartCookieBannerSampleOutput{}, fmt.Errorf("cannot start cookie banner sample: %w", err)
 	}
 
-	return nil, types.StartCookieBannerSampleOutput{CookieBannerSample: types.NewCookieBannerSample(sample)}, nil
+	withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
+	if err != nil {
+		return nil, types.StartCookieBannerSampleOutput{}, err
+	}
+
+	return nil, types.StartCookieBannerSampleOutput{CookieBannerSample: withLoads}, nil
 }
 
 func (r *Resolver) StopCookieBannerSampleTool(ctx context.Context, req *mcp.CallToolRequest, input *types.StopCookieBannerSampleInput) (*mcp.CallToolResult, types.StopCookieBannerSampleOutput, error) {
@@ -6264,7 +6302,12 @@ func (r *Resolver) StopCookieBannerSampleTool(ctx context.Context, req *mcp.Call
 		return nil, types.StopCookieBannerSampleOutput{}, fmt.Errorf("cannot stop cookie banner sample: %w", err)
 	}
 
-	return nil, types.StopCookieBannerSampleOutput{CookieBannerSample: types.NewCookieBannerSample(sample)}, nil
+	withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
+	if err != nil {
+		return nil, types.StopCookieBannerSampleOutput{}, err
+	}
+
+	return nil, types.StopCookieBannerSampleOutput{CookieBannerSample: withLoads}, nil
 }
 
 func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolRequest, input *types.AddTrackerPatternInput) (*mcp.CallToolResult, types.AddTrackerPatternOutput, error) {
