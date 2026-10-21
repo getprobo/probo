@@ -4,6 +4,13 @@ All notable changes to `probod-bootstrap` will be documented in this file.
 
 ## Unreleased
 
+## [0.4.3] - 2026-10-21
+
+### Fixed
+
+- Built with Go 1.27.3 (up from 1.27.2) to pick up the standard-library
+  security fix in `crypto/x509` (CVE-2026-111943)
+
 ## [0.4.2] - 2026-09-03
 
 ### Fixed
