@@ -62,13 +62,14 @@ func recordImportedTask(
 	scope coredata.Scoper,
 	task *coredata.Task,
 	actorID *gid.GID,
+	actorIdentityID gid.GID,
 	now time.Time,
 ) error {
 	if err := InsertCreatedActivity(ctx, tx, scope, task, actorID, now); err != nil {
 		return fmt.Errorf("cannot record task created event: %w", err)
 	}
 
-	if err := emitTaskCreated(ctx, tx, scope, task); err != nil {
+	if err := emitTaskCreated(ctx, tx, scope, actorIdentityID, task); err != nil {
 		return fmt.Errorf("cannot emit task created webhook: %w", err)
 	}
 

@@ -162,6 +162,14 @@ func TestInboundEventIsStale(t *testing.T) {
 	assert.True(t, inboundEventIsStale(&newer, &newer))
 }
 
+func TestLinearActorIdentityID_EmptyEmail(t *testing.T) {
+	t.Parallel()
+
+	got, err := linearActorIdentityID(t.Context(), nil, nil, gid.Nil, "  ")
+	require.NoError(t, err)
+	assert.Equal(t, gid.Nil, got)
+}
+
 func TestInboundActivityActorID_EmptyOrInvalidEmail(t *testing.T) {
 	t.Parallel()
 

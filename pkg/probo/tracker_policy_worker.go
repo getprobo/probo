@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type trackerPolicyHandler struct {
@@ -88,7 +89,7 @@ func (h *trackerPolicyHandler) Claim(ctx context.Context) (coredata.CookieBanner
 func (h *trackerPolicyHandler) Process(ctx context.Context, banner coredata.CookieBanner) error {
 	scope := coredata.NewScopeFromObjectID(banner.ID)
 
-	if err := h.generatedDocuments.PublishTrackerPolicy(ctx, scope, banner.ID); err != nil {
+	if err := h.generatedDocuments.PublishTrackerPolicy(ctx, scope, gid.Nil, banner.ID); err != nil {
 		// A banner can lose its published version between the publish that
 		// armed the flag and this run (e.g. it was deleted). There is nothing
 		// to generate in that case, so skip rather than fail the task.

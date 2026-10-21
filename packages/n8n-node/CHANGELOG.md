@@ -4,6 +4,12 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+### Added
+
+- Probo Trigger payloads include `actor`: profile id, full name,
+  email address, and role. `actor` is null when no member can be
+  identified
+
 ## [0.257.0] - 2026-10-21
 
 ### Removed

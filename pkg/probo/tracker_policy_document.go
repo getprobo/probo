@@ -78,6 +78,7 @@ func BuildTrackerPolicyDocument(data docgen.TrackerPolicyData) (string, error) {
 func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	ctx context.Context,
 	scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	cookieBannerID gid.GID,
 ) error {
 	// Phase 1: collect data and render the prosemirror document outside any
@@ -197,7 +198,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, nil, false, now)
+			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, nil, false, now)
 		},
 	)
 }

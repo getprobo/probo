@@ -40,6 +40,7 @@ type (
 		EventType      WebhookEventType `db:"event_type"`
 		Data           json.RawMessage  `db:"data"`
 		UpdatedFrom    json.RawMessage  `db:"updated_from"`
+		Actor          json.RawMessage  `db:"actor"`
 		CreatedAt      time.Time        `db:"created_at"`
 		ProcessedAt    *time.Time       `db:"processed_at"`
 	}
@@ -60,6 +61,7 @@ INSERT INTO webhook_data (
     event_type,
     data,
     updated_from,
+    actor,
     created_at,
     processed_at
 )
@@ -70,6 +72,7 @@ VALUES (
     @event_type,
     @data,
     @updated_from,
+    @actor,
     @created_at,
     @processed_at
 )
@@ -82,6 +85,7 @@ VALUES (
 		"event_type":      w.EventType,
 		"data":            w.Data,
 		"updated_from":    w.UpdatedFrom,
+		"actor":           w.Actor,
 		"created_at":      w.CreatedAt,
 		"processed_at":    w.ProcessedAt,
 	}
@@ -107,6 +111,7 @@ SELECT
     event_type,
     data,
     updated_from,
+    actor,
     created_at,
     processed_at
 FROM webhook_data
@@ -156,6 +161,7 @@ SELECT
     event_type,
     data,
     updated_from,
+    actor,
     created_at,
     processed_at
 FROM webhook_data
@@ -193,6 +199,7 @@ SELECT
     event_type,
     data,
     updated_from,
+    actor,
     created_at,
     processed_at
 FROM webhook_data

@@ -253,10 +253,16 @@ func (s *Service) importLinearComment(
 				return fmt.Errorf("cannot insert task comment external link: %w", err)
 			}
 
+			actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, link.OrganizationID, remote.UserEmail)
+			if err != nil {
+				return fmt.Errorf("cannot match Linear actor: %w", err)
+			}
+
 			if err := webhook.InsertData(
 				ctx,
 				tx,
 				scope,
+				actorIdentityID,
 				taskComment.OrganizationID,
 				coredata.WebhookEventTypeTaskCommentCreated,
 				webhooktypes.NewTaskComment(taskComment),
@@ -415,12 +421,17 @@ func (s *Service) unlinkRemovedComment(
 				return fmt.Errorf("cannot load task comment external link: %w", err)
 			}
 
+			actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, link.OrganizationID, envelope.Actor.Email)
+			if err != nil {
+				return fmt.Errorf("cannot match Linear actor: %w", err)
+			}
+
 			for _, mapping := range mappings {
 				if mapping.TaskID != link.TaskID {
 					continue
 				}
 
-				if err := deleteSyncedComment(ctx, tx, scope, mapping); err != nil {
+				if err := deleteSyncedComment(ctx, tx, scope, actorIdentityID, mapping); err != nil {
 					return err
 				}
 			}
@@ -434,6 +445,7 @@ func deleteSyncedComment(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	mapping *coredata.TaskCommentExternalLink,
 ) error {
 	taskComment := &coredata.TaskComment{}
@@ -453,6 +465,7 @@ func deleteSyncedComment(
 		ctx,
 		tx,
 		scope,
+		actorIdentityID,
 		taskComment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentDeleted,
 		webhooktypes.NewTaskComment(taskComment),
@@ -570,6 +583,16 @@ func (s *Service) applyInboundCommentTx(
 		return nil
 	}
 
+	authorEmail := envelope.Actor.Email
+	if data.User != nil && strings.TrimSpace(data.User.Email) != "" {
+		authorEmail = data.User.Email
+	}
+
+	actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, link.OrganizationID, authorEmail)
+	if err != nil {
+		return fmt.Errorf("cannot match Linear actor: %w", err)
+	}
+
 	hash := CommentContentHash(canonical)
 	remoteUpdatedAt := linearDateTime(data.UpdatedAt)
 
@@ -604,15 +627,10 @@ func (s *Service) applyInboundCommentTx(
 			return nil
 		}
 
-		return s.updateImportedComment(ctx, tx, scope, existing, content, hash, remoteUpdatedAt)
+		return s.updateImportedComment(ctx, tx, scope, actorIdentityID, existing, content, hash, remoteUpdatedAt)
 	}
 
-	email := envelope.Actor.Email
-	if data.User != nil && data.User.Email != "" {
-		email = data.User.Email
-	}
-
-	ownerID, err := resolveCommentOwnerTx(ctx, tx, scope, link, email)
+	ownerID, err := resolveCommentOwnerTx(ctx, tx, scope, link, authorEmail)
 	if err != nil {
 		return err
 	}
@@ -653,6 +671,7 @@ func (s *Service) applyInboundCommentTx(
 		ctx,
 		tx,
 		scope,
+		actorIdentityID,
 		taskComment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentCreated,
 		webhooktypes.NewTaskComment(taskComment),
@@ -667,6 +686,7 @@ func (s *Service) updateImportedComment(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	mapping *coredata.TaskCommentExternalLink,
 	content string,
 	hash string,
@@ -702,6 +722,7 @@ func (s *Service) updateImportedComment(
 		ctx,
 		tx,
 		scope,
+		actorIdentityID,
 		taskComment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentUpdated,
 		webhooktypes.NewTaskComment(taskComment),

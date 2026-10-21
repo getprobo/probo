@@ -172,7 +172,7 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 		return nil, err
 	}
 
-	if err := r.task.Delete(ctx, scope, input.TaskID); err != nil {
+	if err := r.task.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.TaskID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete task", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

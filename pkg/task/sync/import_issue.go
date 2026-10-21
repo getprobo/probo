@@ -256,7 +256,12 @@ func (s *Service) importLinearIssueForConnector(
 		return fmt.Errorf("cannot resolve Linear activity actor: %w", err)
 	}
 
-	if err := s.recordImportedTask(ctx, tx, scope, task, actorID, now); err != nil {
+	actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, connector.OrganizationID, envelope.Actor.Email)
+	if err != nil {
+		return fmt.Errorf("cannot match Linear actor: %w", err)
+	}
+
+	if err := s.recordImportedTask(ctx, tx, scope, task, actorID, actorIdentityID, now); err != nil {
 		return fmt.Errorf("cannot record imported task: %w", err)
 	}
 

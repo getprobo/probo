@@ -200,6 +200,7 @@ func TestWebhook_ThirdPartyCreatedEvent(t *testing.T) {
 	assert.Equal(t, "third-party:created", payload["eventType"])
 	require.Contains(t, payload, "data")
 	assert.IsType(t, map[string]any{}, payload["data"])
+	assertWebhookActor(t, owner, payload)
 }
 
 func TestWebhook_TaskLifecycleEvents(t *testing.T) {
@@ -259,6 +260,7 @@ func TestWebhook_TaskLifecycleEvents(t *testing.T) {
 		data, ok := payload["data"].(map[string]any)
 		require.True(t, ok)
 		assert.Equal(t, taskID, data["id"])
+		assertWebhookActor(t, owner, payload)
 	}
 
 	updated := webhookPayloadByEventType(t, payloads, "task:updated")
@@ -331,6 +333,7 @@ func TestWebhook_TaskCommentLifecycleEvents(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, commentID, data["id"])
 		assert.Equal(t, taskID, data["taskId"])
+		assertWebhookActor(t, owner, payload)
 	}
 
 	updated := webhookPayloadByEventType(t, payloads, "task-comment:updated")

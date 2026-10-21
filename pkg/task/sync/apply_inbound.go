@@ -256,7 +256,12 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot load task internal controls: %w", err)
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, task, internalControlIDs, internalControlIDs); err != nil {
+			actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, link.OrganizationID, envelope.Actor.Email)
+			if err != nil {
+				return fmt.Errorf("cannot match Linear actor: %w", err)
+			}
+
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, actorIdentityID, &oldTask, task, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -622,7 +627,39 @@ func inboundActivityActorID(
 	organizationID gid.GID,
 	actor linear.WebhookActor,
 ) (*gid.GID, error) {
-	email := strings.TrimSpace(actor.Email)
+	profile, err := activeProfileByEmail(ctx, tx, scope, organizationID, actor.Email)
+	if err != nil || profile == nil {
+		return nil, err
+	}
+
+	return &profile.ID, nil
+}
+
+// linearActorIdentityID is the identity of the Linear user when their email
+// matches one active member.
+func linearActorIdentityID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	email string,
+) (gid.GID, error) {
+	profile, err := activeProfileByEmail(ctx, conn, scope, organizationID, email)
+	if err != nil || profile == nil || profile.IdentityID == gid.Nil {
+		return gid.Nil, err
+	}
+
+	return profile.IdentityID, nil
+}
+
+func activeProfileByEmail(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	email string,
+) (*coredata.MembershipProfile, error) {
+	email = strings.TrimSpace(email)
 	if email == "" {
 		return nil, nil
 	}
@@ -635,7 +672,7 @@ func inboundActivityActorID(
 	profile := &coredata.MembershipProfile{}
 	if err := profile.LoadByOrganizationIDAndEmail(
 		ctx,
-		tx,
+		conn,
 		scope,
 		organizationID,
 		addr,
@@ -647,7 +684,15 @@ func inboundActivityActorID(
 		return nil, err
 	}
 
-	return &profile.ID, nil
+	return profile, nil
+}
+
+func gidValue(id *gid.GID) gid.GID {
+	if id == nil {
+		return gid.Nil
+	}
+
+	return *id
 }
 
 func linearDateTime(value string) *time.Time {

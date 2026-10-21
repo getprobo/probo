@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -42,7 +43,7 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 		Type:                   input.Type,
 	}
 
-	obligation, err := r.probo.Obligations.Create(ctx, scope, &req)
+	obligation, err := r.probo.Obligations.Create(ctx, scope, authn.IdentityIDFromContext(ctx), &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -79,7 +80,7 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 		Type:                   input.Type,
 	}
 
-	obligation, err := r.probo.Obligations.Update(ctx, scope, &req)
+	obligation, err := r.probo.Obligations.Update(ctx, scope, authn.IdentityIDFromContext(ctx), &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -102,7 +103,7 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 		return nil, err
 	}
 
-	if err := r.probo.Obligations.Delete(ctx, scope, input.ObligationID); err != nil {
+	if err := r.probo.Obligations.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.ObligationID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -119,7 +120,7 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishObligationList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)

@@ -360,7 +360,7 @@ func (s *Service) CreateUser(
 			previousUser = webhooktypes.NewUser(previousProfile, membership)
 		}
 
-		if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
+		if err := webhook.InsertUpdateData(ctx, tx, scope, gid.Nil, config.OrganizationID, eventType, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 			return fmt.Errorf("cannot insert webhook event: %w", err)
 		}
 
@@ -827,7 +827,7 @@ func (s *Service) updateUser(
 				}
 			}
 
-			if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
+			if err := webhook.InsertUpdateData(ctx, tx, scope, gid.Nil, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -966,7 +966,7 @@ func (s *Service) DeleteUser(
 				return fmt.Errorf("cannot expire pending invitations: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertData(ctx, tx, scope, gid.Nil, config.OrganizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(profile, membership)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -1033,7 +1033,7 @@ func (s *Service) deactivateProfileInTx(
 		}
 	}
 
-	if err := webhook.InsertUpdateData(ctx, tx, scope, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
+	if err := webhook.InsertUpdateData(ctx, tx, scope, gid.Nil, config.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, membership), previousUser); err != nil {
 		return fmt.Errorf("cannot insert webhook event: %w", err)
 	}
 

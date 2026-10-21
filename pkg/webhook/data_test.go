@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/webhook"
 )
 
@@ -50,6 +51,7 @@ func TestInsertUpdateData_PersistsUpdatedFromSnapshot(t *testing.T) {
 			ctx,
 			tx,
 			scope,
+			gid.Nil,
 			orgID,
 			coredata.WebhookEventTypeUserUpdated,
 			current,
@@ -58,11 +60,12 @@ func TestInsertUpdateData_PersistsUpdatedFromSnapshot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	data, updatedFromData := loadWebhookData(t, client, orgID)
+	data, updatedFromData, actor := loadWebhookData(t, client, orgID)
 
 	assert.JSONEq(t, `{"role":"OWNER"}`, string(data))
 	require.NotNil(t, updatedFromData, "updated_from must be persisted for update events")
 	assert.JSONEq(t, `{"role":"ADMIN"}`, string(updatedFromData))
+	assert.Nil(t, actor)
 }
 
 func TestInsertData_StoresNullUpdatedFrom(t *testing.T) {
@@ -77,6 +80,7 @@ func TestInsertData_StoresNullUpdatedFrom(t *testing.T) {
 			ctx,
 			tx,
 			scope,
+			gid.Nil,
 			orgID,
 			coredata.WebhookEventTypeObligationUpdated,
 			map[string]any{"status": "OPEN"},
@@ -84,10 +88,11 @@ func TestInsertData_StoresNullUpdatedFrom(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	data, updatedFromData := loadWebhookData(t, client, orgID)
+	data, updatedFromData, actor := loadWebhookData(t, client, orgID)
 
 	assert.JSONEq(t, `{"status":"OPEN"}`, string(data))
 	assert.Nil(t, updatedFromData, "updated_from must be SQL NULL when no previous snapshot is provided")
+	assert.Nil(t, actor)
 }
 
 func TestInsertUpdateData_NoSubscriptionIsNoop(t *testing.T) {
@@ -103,6 +108,7 @@ func TestInsertUpdateData_NoSubscriptionIsNoop(t *testing.T) {
 			ctx,
 			tx,
 			scope,
+			gid.Nil,
 			orgID,
 			coredata.WebhookEventTypeUserUpdated,
 			map[string]any{"role": "OWNER"},
@@ -129,6 +135,30 @@ func TestPayload_UpdatedFromOmittedWhenAbsent(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.NotContains(t, string(withoutUpdatedFrom), "updatedFrom")
+	assert.Contains(t, string(withoutUpdatedFrom), `"actor":null`)
+}
+
+func TestActor_JSONShape(t *testing.T) {
+	t.Parallel()
+
+	profileID := gid.New(gid.NewTenantID(), coredata.MembershipProfileEntityType)
+	email, err := mail.ParseAddr("ada@example.test")
+	require.NoError(t, err)
+
+	body, err := json.Marshal(
+		webhook.Actor{
+			ID:           profileID,
+			FullName:     "Ada Lovelace",
+			EmailAddress: email,
+			Role:         coredata.MembershipRoleOwner,
+		},
+	)
+	require.NoError(t, err)
+	assert.JSONEq(
+		t,
+		`{"id":"`+profileID.String()+`","fullName":"Ada Lovelace","emailAddress":"ada@example.test","role":"OWNER"}`,
+		string(body),
+	)
 }
 
 func insertTestOrganization(t *testing.T, client *pg.Client) gid.GID {
@@ -197,12 +227,13 @@ func insertTestSubscription(
 	require.NoError(t, err)
 }
 
-func loadWebhookData(t *testing.T, client *pg.Client, orgID gid.GID) (json.RawMessage, json.RawMessage) {
+func loadWebhookData(t *testing.T, client *pg.Client, orgID gid.GID) (json.RawMessage, json.RawMessage, json.RawMessage) {
 	t.Helper()
 
 	var (
 		data        []byte
 		updatedFrom []byte
+		actor       []byte
 	)
 
 	err := client.WithConn(
@@ -210,14 +241,14 @@ func loadWebhookData(t *testing.T, client *pg.Client, orgID gid.GID) (json.RawMe
 		func(ctx context.Context, conn pg.Querier) error {
 			return conn.QueryRow(
 				ctx,
-				"SELECT data, updated_from FROM webhook_data WHERE organization_id = $1",
+				"SELECT data, updated_from, actor FROM webhook_data WHERE organization_id = $1",
 				orgID.String(),
-			).Scan(&data, &updatedFrom)
+			).Scan(&data, &updatedFrom, &actor)
 		},
 	)
 	require.NoError(t, err)
 
-	return data, updatedFrom
+	return data, updatedFrom, actor
 }
 
 func countWebhookData(t *testing.T, client *pg.Client, orgID gid.GID) int {

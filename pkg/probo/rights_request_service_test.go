@@ -52,6 +52,7 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 	rightsRequest, err := service.Create(
 		t.Context(),
 		scope,
+		gid.Nil,
 		&CreateRightsRequestRequest{
 			OrganizationID: organizationID,
 			RequestType:    &requestType,
@@ -77,6 +78,7 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 	rightsRequest, err = service.Update(
 		t.Context(),
 		scope,
+		gid.Nil,
 		&UpdateRightsRequestRequest{
 			ID:           rightsRequest.ID,
 			RequestState: &updatedState,
@@ -97,7 +99,7 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 	assert.Equal(t, requestState, updatedFrom.RequestState)
 	assert.Equal(t, dataSubject, *updatedFrom.DataSubject)
 
-	err = service.Delete(t.Context(), scope, rightsRequest.ID)
+	err = service.Delete(t.Context(), scope, gid.Nil, rightsRequest.ID)
 	require.NoError(t, err)
 
 	deleted, deletedFrom := loadRightsRequestWebhookData(

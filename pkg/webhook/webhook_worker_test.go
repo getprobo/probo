@@ -25,6 +25,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -83,6 +84,7 @@ func TestDoHTTPCall_SendsStableDeliveryIdentityAndSignature(t *testing.T) {
 		OrganizationID: organizationID,
 		EventType:      coredata.WebhookEventTypeUserCreated,
 		Data:           []byte(`{"role":"ADMIN"}`),
+		Actor:          []byte(`{"id":"profile-1","fullName":"Ada Lovelace","emailAddress":"ada@example.test","role":"OWNER"}`),
 		CreatedAt:      now,
 	}
 
@@ -108,6 +110,20 @@ func TestDoHTTPCall_SendsStableDeliveryIdentityAndSignature(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, receivedBody)
 	assert.Equal(t, hex.EncodeToString(mac.Sum(nil)), receivedSignature)
+
+	var posted map[string]any
+	require.NoError(t, json.Unmarshal(receivedBody, &posted))
+
+	actor, ok := posted["actor"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "profile-1", actor["id"])
+	assert.Equal(t, "Ada Lovelace", actor["fullName"])
+	assert.Equal(t, "ada@example.test", actor["emailAddress"])
+	assert.Equal(t, "OWNER", actor["role"])
+
+	data, ok := posted["data"].(map[string]any)
+	require.True(t, ok)
+	assert.NotContains(t, data, "actor")
 }
 
 func TestIsRetryableStatus_ClassifiesEndpointResponses(t *testing.T) {

@@ -19,6 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
@@ -42,6 +43,7 @@ func (r *mutationResolver) CreateThirdParty(ctx context.Context, input types.Cre
 
 	thirdParty, err := r.probo.ThirdParties.Create(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.CreateThirdPartyRequest{
 			OrganizationID:                input.OrganizationID,
 			Name:                          input.Name,
@@ -93,6 +95,7 @@ func (r *mutationResolver) ImportThirdPartyFromCommon(ctx context.Context, input
 
 	thirdParty, created, err := r.probo.ThirdParties.ImportFromCommon(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.ImportThirdPartyFromCommonRequest{
 			OrganizationID:     input.OrganizationID,
 			CommonThirdPartyID: input.CommonThirdPartyID,
@@ -128,6 +131,7 @@ func (r *mutationResolver) UpdateThirdParty(ctx context.Context, input types.Upd
 
 	thirdParty, err := r.probo.ThirdParties.Update(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.UpdateThirdPartyRequest{
 			ID:                            input.ID,
 			Name:                          input.Name,
@@ -172,7 +176,7 @@ func (r *mutationResolver) DeleteThirdParty(ctx context.Context, input types.Del
 		return nil, err
 	}
 
-	if err := r.probo.ThirdParties.Delete(ctx, scope, input.ThirdPartyID); err != nil {
+	if err := r.probo.ThirdParties.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.ThirdPartyID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete thirdParty", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -632,7 +636,7 @@ func (r *mutationResolver) PublishThirdPartyList(ctx context.Context, input type
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishThirdPartyList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishThirdPartyList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)

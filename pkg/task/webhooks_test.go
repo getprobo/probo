@@ -48,7 +48,7 @@ func TestEmitTaskCreated_InsertsCreatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCreated(ctx, tx, scope, task)
+			return emitTaskCreated(ctx, tx, scope, gid.Nil, task)
 		},
 	)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestEmitTaskUpdated_InsertsUpdatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskUpdated(ctx, tx, scope, previous, &current, nil)
+			return emitTaskUpdated(ctx, tx, scope, gid.Nil, previous, &current, nil)
 		},
 	)
 	require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestEmitTaskDeleted_InsertsDeletedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskDeleted(ctx, tx, scope, task)
+			return emitTaskDeleted(ctx, tx, scope, gid.Nil, task)
 		},
 	)
 	require.NoError(t, err)
@@ -138,7 +138,7 @@ func TestEmitTaskCommentCreated_InsertsCommentWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCommentCreated(ctx, tx, scope, comment)
+			return emitTaskCommentCreated(ctx, tx, scope, gid.Nil, comment)
 		},
 	)
 	require.NoError(t, err)
@@ -171,7 +171,7 @@ func TestEmitTaskCommentUpdated_InsertsUpdatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCommentUpdated(ctx, tx, scope, previous, &comment)
+			return emitTaskCommentUpdated(ctx, tx, scope, gid.Nil, previous, &comment)
 		},
 	)
 	require.NoError(t, err)
@@ -197,7 +197,7 @@ func TestEmitTaskCommentDeleted_InsertsDeletedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCommentDeleted(ctx, tx, scope, comment)
+			return emitTaskCommentDeleted(ctx, tx, scope, gid.Nil, comment)
 		},
 	)
 	require.NoError(t, err)

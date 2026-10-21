@@ -27,6 +27,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -404,4 +405,45 @@ func organizationContainsWebhookSubscription(
 	}
 
 	return false
+}
+
+func assertWebhookActor(t *testing.T, client *testutil.Client, payload map[string]any) {
+	t.Helper()
+
+	actor, ok := payload["actor"].(map[string]any)
+	require.True(t, ok, "webhook payload must include an actor object")
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on Profile {
+					id
+					fullName
+					emailAddress
+				}
+			}
+		}
+	`
+
+	var profile struct {
+		Node struct {
+			ID           string `json:"id"`
+			FullName     string `json:"fullName"`
+			EmailAddress string `json:"emailAddress"`
+		} `json:"node"`
+	}
+
+	err := client.Execute(
+		query,
+		map[string]any{"id": client.GetProfileID().String()},
+		&profile,
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, profile.Node.ID, actor["id"])
+	assert.Equal(t, profile.Node.FullName, actor["fullName"])
+	email, ok := actor["emailAddress"].(string)
+	require.True(t, ok)
+	testutil.AssertEqualEmail(t, email, profile.Node.EmailAddress)
+	assert.Equal(t, string(client.GetRole()), actor["role"])
 }

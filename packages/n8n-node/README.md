@@ -112,6 +112,21 @@ For `*:updated` events, the payload includes an `updatedFrom` object next to `da
 
 `updatedFrom` is present only on update events; it is absent for created, deleted, and other lifecycle events.
 
+### Every event names who did it
+
+Every payload includes an `actor` object at the root, next to `data`:
+
+- `actor.id` — profile id of the member who performed the action
+- `actor.fullName`
+- `actor.emailAddress`
+- `actor.role` — membership role, for example `OWNER` or `ADMIN`
+
+`actor` is `null` when the action was not performed by a member. An inbound Linear change still names that Linear user when their email matches an active member.
+
+A Slack message can name that member:
+
+- **Text:** `{{ $json.actor?.fullName }} ({{ $json.actor?.role }}) updated a task`
+
 ### Alternative: list open tasks on a schedule
 
 Use the **Probo** action node without a trigger:

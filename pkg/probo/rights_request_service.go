@@ -115,6 +115,7 @@ func (s RightsRequestService) Get(
 
 func (s *RightsRequestService) Create(
 	ctx context.Context, scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	req *CreateRightsRequestRequest,
 ) (*coredata.RightsRequest, error) {
 	if err := req.Validate(); err != nil {
@@ -153,6 +154,7 @@ func (s *RightsRequestService) Create(
 				ctx,
 				conn,
 				scope,
+				actorIdentityID,
 				request.OrganizationID,
 				coredata.WebhookEventTypeRightRequestCreated,
 				webhooktypes.NewRightsRequest(request),
@@ -172,6 +174,7 @@ func (s *RightsRequestService) Create(
 
 func (s *RightsRequestService) Update(
 	ctx context.Context, scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	req *UpdateRightsRequestRequest,
 ) (*coredata.RightsRequest, error) {
 	if err := req.Validate(); err != nil {
@@ -227,6 +230,7 @@ func (s *RightsRequestService) Update(
 				ctx,
 				conn,
 				scope,
+				actorIdentityID,
 				request.OrganizationID,
 				coredata.WebhookEventTypeRightRequestUpdated,
 				webhooktypes.NewRightsRequest(request),
@@ -247,6 +251,7 @@ func (s *RightsRequestService) Update(
 
 func (s *RightsRequestService) Delete(
 	ctx context.Context, scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	rightsRequestID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
@@ -261,6 +266,7 @@ func (s *RightsRequestService) Delete(
 				ctx,
 				conn,
 				scope,
+				actorIdentityID,
 				request.OrganizationID,
 				coredata.WebhookEventTypeRightRequestDeleted,
 				webhooktypes.NewRightsRequest(request),

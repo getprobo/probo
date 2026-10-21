@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- Webhook deliveries include an `actor` object identifying the member
+  who performed the action: profile id, full name, email address, and
+  role. `actor` is null when no member can be identified
+
 ### Changed
 
 - OVHcloud Canada is removed. An account cannot be created in that

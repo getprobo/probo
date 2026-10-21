@@ -62,6 +62,7 @@ type (
 		scope coredata.Scoper,
 		task *coredata.Task,
 		actorID *gid.GID,
+		actorIdentityID gid.GID,
 		now time.Time,
 	) error
 
@@ -884,7 +885,7 @@ func (s *Service) finishLinearLink(
 				return fmt.Errorf("cannot load task internal controls: %w", err)
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, gidValue(identityID), &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -1003,7 +1004,7 @@ func (s *Service) restoreLinkedTask(
 				return fmt.Errorf("cannot load task internal controls: %w", err)
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
+			if err := webhook.InsertTaskUpdated(ctx, tx, scope, gidValue(identityID), &oldTask, current, internalControlIDs, internalControlIDs); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 

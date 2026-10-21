@@ -953,6 +953,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 
 	document, documentVersion, err := r.probo.Documents.Create(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.CreateDocumentRequest{
 			OrganizationID:     input.OrganizationID,
 			Title:              input.Title,
@@ -996,6 +997,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 	document, documentVersion, draftCreated, err := r.probo.Documents.Update(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.UpdateDocumentRequest{
 			DocumentID:         input.ID,
 			Title:              input.Title,
@@ -1052,7 +1054,7 @@ func (r *mutationResolver) DeleteDocumentDraft(ctx context.Context, input types.
 		return nil, err
 	}
 
-	document, err := r.probo.Documents.DeleteDraft(ctx, scope, input.DocumentID)
+	document, err := r.probo.Documents.DeleteDraft(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1083,7 +1085,7 @@ func (r *mutationResolver) ArchiveDocument(ctx context.Context, input types.Arch
 		return nil, err
 	}
 
-	document, err := r.probo.Documents.Archive(ctx, scope, input.DocumentID)
+	document, err := r.probo.Documents.Archive(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentID)
 	if err != nil {
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
@@ -1106,7 +1108,7 @@ func (r *mutationResolver) UnarchiveDocument(ctx context.Context, input types.Un
 		return nil, err
 	}
 
-	document, err := r.probo.Documents.Unarchive(ctx, scope, input.DocumentID)
+	document, err := r.probo.Documents.Unarchive(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentID)
 	if err != nil {
 		if errNotArchived, ok := errors.AsType[*probo.ErrDocumentNotArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errNotArchived)
@@ -1129,7 +1131,7 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 		return nil, err
 	}
 
-	if err := r.probo.Documents.SoftDelete(ctx, scope, input.DocumentID); err != nil {
+	if err := r.probo.Documents.SoftDelete(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot soft delete document", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1146,12 +1148,16 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 		return nil, err
 	}
 
-	result, err := r.probo.Documents.PublishVersion(ctx, scope, probo.PublishDocumentRequest{
-		DocumentID:  input.DocumentID,
-		Minor:       input.Minor,
-		ApproverIDs: input.ApproverIds,
-		Changelog:   input.Changelog,
-	})
+	result, err := r.probo.Documents.PublishVersion(
+		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
+		probo.PublishDocumentRequest{
+			DocumentID:  input.DocumentID,
+			Minor:       input.Minor,
+			ApproverIDs: input.ApproverIds,
+			Changelog:   input.Changelog,
+		},
+	)
 	if err != nil {
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
@@ -1207,11 +1213,15 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
 
-	versions, documents, err := r.probo.DocumentApprovals.BulkPublishVersions(ctx, scope, probo.BulkPublishVersionsRequest{
-		DocumentIDs: input.DocumentIds,
-		Minor:       input.Minor,
-		Changelog:   input.Changelog,
-	})
+	versions, documents, err := r.probo.DocumentApprovals.BulkPublishVersions(
+		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
+		probo.BulkPublishVersionsRequest{
+			DocumentIDs: input.DocumentIds,
+			Minor:       input.Minor,
+			Changelog:   input.Changelog,
+		},
+	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1253,7 +1263,7 @@ func (r *mutationResolver) VoidDocumentVersionApproval(ctx context.Context, inpu
 		return nil, err
 	}
 
-	quorum, documentVersion, err := r.probo.DocumentApprovals.VoidApproval(ctx, scope, input.DocumentVersionID)
+	quorum, documentVersion, err := r.probo.DocumentApprovals.VoidApproval(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentVersionID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
@@ -1293,7 +1303,7 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 	}
 
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
-	if err := r.probo.Documents.BulkSoftDelete(ctx, scope, input.DocumentIds); err != nil {
+	if err := r.probo.Documents.BulkSoftDelete(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentIds); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot bulk delete documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1318,7 +1328,7 @@ func (r *mutationResolver) BulkArchiveDocuments(ctx context.Context, input types
 	}
 
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
-	if err := r.probo.Documents.BulkArchive(ctx, scope, input.DocumentIds); err != nil {
+	if err := r.probo.Documents.BulkArchive(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentIds); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot bulk archive documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1343,7 +1353,7 @@ func (r *mutationResolver) BulkUnarchiveDocuments(ctx context.Context, input typ
 	}
 
 	scope := coredata.NewScopeFromObjectID(input.DocumentIds[0])
-	if err := r.probo.Documents.BulkUnarchive(ctx, scope, input.DocumentIds); err != nil {
+	if err := r.probo.Documents.BulkUnarchive(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentIds); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot bulk unarchive documents", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}
@@ -1411,6 +1421,7 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 
 	documentVersionSignature, err := r.probo.Documents.RequestSignature(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.RequestSignatureRequest{
 			DocumentVersionID: input.DocumentVersionID,
 			Signatory:         input.SignatoryID,
@@ -1465,6 +1476,7 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 
 	documentVersionSignatures, err := r.probo.Documents.BulkRequestSignatures(
 		ctx, scope,
+		authn.IdentityIDFromContext(ctx),
 		probo.BulkRequestSignaturesRequest{
 			DocumentIDs:  input.DocumentIds,
 			SignatoryIDs: input.SignatoryIds,
@@ -1500,7 +1512,7 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 		return nil, err
 	}
 
-	if err := r.probo.Documents.CancelSignatureRequest(ctx, scope, input.DocumentVersionSignatureID); err != nil {
+	if err := r.probo.Documents.CancelSignatureRequest(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentVersionSignatureID); err != nil {
 		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}

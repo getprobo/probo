@@ -59,7 +59,7 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 		return nil, err
 	}
 
-	membership, err := r.iam.OrganizationService.UpdateMembership(ctx, input.OrganizationID, input.MembershipID, input.Role)
+	membership, err := r.iam.OrganizationService.UpdateMembership(ctx, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.MembershipID, input.Role)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "cannot demote last active owner")

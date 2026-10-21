@@ -125,6 +125,7 @@ func (s ObligationService) Get(
 
 func (s *ObligationService) Create(
 	ctx context.Context, scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	req *CreateObligationRequest,
 ) (*coredata.Obligation, error) {
 	if err := req.Validate(); err != nil {
@@ -167,7 +168,7 @@ func (s *ObligationService) Create(
 				return fmt.Errorf("cannot insert obligation: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, req.OrganizationID, coredata.WebhookEventTypeObligationCreated, webhooktypes.NewObligation(obligation)); err != nil {
+			if err := webhook.InsertData(ctx, conn, scope, actorIdentityID, req.OrganizationID, coredata.WebhookEventTypeObligationCreated, webhooktypes.NewObligation(obligation)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -183,6 +184,7 @@ func (s *ObligationService) Create(
 
 func (s *ObligationService) Update(
 	ctx context.Context, scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	req *UpdateObligationRequest,
 ) (*coredata.Obligation, error) {
 	if err := req.Validate(); err != nil {
@@ -251,7 +253,7 @@ func (s *ObligationService) Update(
 				return fmt.Errorf("cannot update obligation: %w", err)
 			}
 
-			if err := webhook.InsertUpdateData(ctx, conn, scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationUpdated, webhooktypes.NewObligation(obligation), previousObligation); err != nil {
+			if err := webhook.InsertUpdateData(ctx, conn, scope, actorIdentityID, obligation.OrganizationID, coredata.WebhookEventTypeObligationUpdated, webhooktypes.NewObligation(obligation), previousObligation); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -267,6 +269,7 @@ func (s *ObligationService) Update(
 
 func (s *ObligationService) Delete(
 	ctx context.Context, scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	obligationID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
@@ -277,7 +280,7 @@ func (s *ObligationService) Delete(
 				return fmt.Errorf("cannot load obligation: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, obligation.OrganizationID, coredata.WebhookEventTypeObligationDeleted, webhooktypes.NewObligation(obligation)); err != nil {
+			if err := webhook.InsertData(ctx, conn, scope, actorIdentityID, obligation.OrganizationID, coredata.WebhookEventTypeObligationDeleted, webhooktypes.NewObligation(obligation)); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 

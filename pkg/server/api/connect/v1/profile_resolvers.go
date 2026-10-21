@@ -14,6 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
@@ -39,6 +40,7 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 	profile, err := r.iam.OrganizationService.CreateUser(
 		ctx,
 		scope,
+		authn.IdentityIDFromContext(ctx),
 		&iam.CreateUserRequest{
 			OrganizationID:           input.OrganizationID,
 			EmailAddress:             input.EmailAddress,
@@ -73,7 +75,7 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 		return nil, err
 	}
 
-	err = r.iam.OrganizationService.DeactivateUser(ctx, scope, input.OrganizationID, input.ProfileID)
+	err = r.iam.OrganizationService.DeactivateUser(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be deactivated")
@@ -103,6 +105,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 
 	profile, err := r.iam.OrganizationService.UpdateUser(
 		ctx,
+		authn.IdentityIDFromContext(ctx),
 		&iam.UpdateUserRequest{
 			ID:                       input.ID,
 			FullName:                 input.FullName,
@@ -130,7 +133,7 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 		return nil, err
 	}
 
-	err = r.iam.OrganizationService.RemoveUser(ctx, scope, input.OrganizationID, input.ProfileID)
+	err = r.iam.OrganizationService.RemoveUser(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be removed")

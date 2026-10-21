@@ -37,6 +37,7 @@ type Payload struct {
 	OrganizationID string          `json:"organizationId"`
 	EventType      string          `json:"eventType"`
 	CreatedAt      time.Time       `json:"createdAt"`
+	Actor          json.RawMessage `json:"actor"`
 	Data           json.RawMessage `json:"data"`
 	UpdatedFrom    json.RawMessage `json:"updatedFrom,omitempty"`
 }
@@ -52,6 +53,7 @@ func NewPayload(event *coredata.WebhookEvent, data *coredata.WebhookData) *Paylo
 		OrganizationID: data.OrganizationID.String(),
 		EventType:      data.EventType.String(),
 		CreatedAt:      data.CreatedAt,
+		Actor:          data.Actor,
 		Data:           data.Data,
 		UpdatedFrom:    data.UpdatedFrom,
 	}
@@ -77,11 +79,12 @@ func InsertData(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	eventType coredata.WebhookEventType,
 	data any,
 ) error {
-	if err := InsertUpdateData(ctx, tx, scope, organizationID, eventType, data, nil); err != nil {
+	if err := InsertUpdateData(ctx, tx, scope, actorIdentityID, organizationID, eventType, data, nil); err != nil {
 		return fmt.Errorf("cannot insert webhook data: %w", err)
 	}
 
@@ -92,6 +95,7 @@ func InsertUpdateData(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
+	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	eventType coredata.WebhookEventType,
 	data any,
@@ -111,6 +115,11 @@ func InsertUpdateData(
 
 	if len(configs) == 0 {
 		return nil
+	}
+
+	actor, err := snapshotActor(ctx, tx, scope, organizationID, actorIdentityID)
+	if err != nil {
+		return fmt.Errorf("cannot snapshot webhook actor: %w", err)
 	}
 
 	raw, err := json.Marshal(data)
@@ -133,6 +142,7 @@ func InsertUpdateData(
 		EventType:      eventType,
 		Data:           raw,
 		UpdatedFrom:    updatedFromRaw,
+		Actor:          actor,
 		CreatedAt:      now,
 		ProcessedAt:    &now,
 	}
