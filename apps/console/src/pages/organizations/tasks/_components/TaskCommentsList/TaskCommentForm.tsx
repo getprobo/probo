@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
+import { taskCommentForm } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
@@ -33,7 +34,6 @@ import {
 
 import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
 import { useCreateTaskComment } from "../../_lib/useCreateTaskComment";
-import { taskCommentForm } from "../../variants";
 
 export function TaskCommentForm() {
   const { t } = useTranslation("organizations/tasks");

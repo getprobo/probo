@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskPriority, type TaskState } from "@probo/tasks";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -25,7 +26,6 @@ import { graphql, useFragment } from "react-relay";
 import type { TaskLinearDraftField_organization$key } from "#/__generated__/core/TaskLinearDraftField_organization.graphql";
 
 import { linearTeamLabel } from "../_lib/linearTeamLabel";
-import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { taskLinearPublishField } from "../variants";
 
 import { LinearIssueCombobox, newLinearIssueId } from "./LinearIssueCombobox";

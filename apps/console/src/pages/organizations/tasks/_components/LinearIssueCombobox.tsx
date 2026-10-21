@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { HashIcon, PlusIcon } from "@phosphor-icons/react";
+import { type TaskPriority, type TaskState } from "@probo/tasks";
 import { ComboboxPaged } from "@probo/ui/src/v2/Combobox/ComboboxPaged";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
@@ -27,7 +28,6 @@ import type { LinearIssueComboboxQuery } from "#/__generated__/core/LinearIssueC
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { linearIssueOption } from "../_lib/linearIssueOption";
-import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { useComboboxPage } from "../_lib/useComboboxPage";
 
 const pageSize = 20;

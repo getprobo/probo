@@ -18,12 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { type TaskDueFilter, taskDueFilterBounds, taskDueFilterFromParam, taskMatchesDeadline } from "@probo/tasks";
+import {
+  type TaskDueFilter,
+  taskDueFilterBounds,
+  taskDueFilterFromParam,
+  taskMatchesDeadline,
+  type TaskState,
+  taskStates,
+} from "@probo/tasks";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 import { unassignedAssignee } from "./taskPath";
-import { type TaskState, taskStates } from "./taskState";
 
 export interface TasksCardFilterInput {
   query: string | null;

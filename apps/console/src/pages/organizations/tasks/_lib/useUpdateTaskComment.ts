@@ -28,7 +28,8 @@ const updateTaskCommentMutation = graphql`
   mutation useUpdateTaskCommentMutation($input: UpdateTaskCommentInput!) {
     updateTaskComment(input: $input) {
       taskComment {
-        ...TaskCommentListItem_taskComment
+        id
+        content
       }
     }
   }

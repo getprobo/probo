@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskPriority, type TaskState } from "@probo/tasks";
 import { useTranslation } from "react-i18next";
 import { graphql, useRelayEnvironment } from "react-relay";
 
@@ -34,7 +35,6 @@ import {
   organizationTaskListFilterVariants,
   taskConnectionId,
 } from "./taskPath";
-import type { TaskPriority, TaskState } from "./taskState";
 import { taskMatchesFilter, useTasksCardFilters } from "./useTasksCardFilters";
 
 const createTaskMutation = graphql`

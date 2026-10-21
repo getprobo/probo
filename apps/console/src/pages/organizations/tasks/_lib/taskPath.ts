@@ -142,12 +142,7 @@ export function taskConnectionId(parentId: string, connectionKey: string) {
   );
 }
 
-export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
 export const taskActivitiesConnectionKey = "TaskActivitySection_activities";
-
-const taskCommentsConnectionFilters = {
-  orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
-};
 
 const taskActivitiesConnectionFilters = {
   orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
@@ -176,14 +171,6 @@ export function rememberOrganizationTaskListFilter(filter: OrganizationTaskListF
 
 export function rememberedOrganizationTaskListFilters(): OrganizationTaskListFilter[] {
   return [...rememberedOrganizationTaskListFiltersByKey.values()];
-}
-
-export function taskCommentsConnectionId(taskId: string) {
-  return ConnectionHandler.getConnectionID(
-    taskId,
-    taskCommentsConnectionKey,
-    taskCommentsConnectionFilters,
-  );
 }
 
 export function taskActivitiesConnectionId(taskId: string) {

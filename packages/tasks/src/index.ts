@@ -125,9 +125,9 @@ export {
   type TaskActivityType,
 } from "./taskActivity";
 export {
+  taskActivityComment,
   taskCommentEditor,
   taskCommentForm,
-  taskCommentListItem,
   taskCommentsSection,
   taskDescription,
   taskDetails,

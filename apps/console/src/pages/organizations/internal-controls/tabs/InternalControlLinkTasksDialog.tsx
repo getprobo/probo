@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type TaskState, TaskStateIcon, taskStateKeys } from "@probo/tasks";
 import {
   Button,
   Dialog,
@@ -38,8 +39,6 @@ import { useDebounceCallback } from "usehooks-ts";
 import type { InternalControlLinkTasksDialog_organization$key } from "#/__generated__/core/InternalControlLinkTasksDialog_organization.graphql";
 import type { InternalControlLinkTasksDialogPaginationQuery } from "#/__generated__/core/InternalControlLinkTasksDialogPaginationQuery.graphql";
 import type { InternalControlLinkTasksDialogQuery } from "#/__generated__/core/InternalControlLinkTasksDialogQuery.graphql";
-import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
-import { type TaskState, taskStateKeys } from "#/pages/organizations/tasks/_lib/taskState";
 import { useTaskInternalControlIds } from "#/pages/organizations/tasks/_lib/useTaskInternalControlIds";
 import { useUpdateTask } from "#/pages/organizations/tasks/_lib/useUpdateTask";
 

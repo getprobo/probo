@@ -20,6 +20,13 @@
 
 import { PencilSimpleIcon, TrashIcon, UserIcon } from "@phosphor-icons/react";
 import { relativeDateFormat } from "@probo/i18n";
+import {
+  formatTaskActivityValue,
+  taskActivityComment,
+  taskActivitySentenceKey,
+  taskCommentEditor,
+  TASKS_NAMESPACE,
+} from "@probo/tasks";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -44,13 +51,8 @@ import {
   richEditorContentTextLength,
 } from "#/pages/organizations/_lib/richEditorContent";
 
-import {
-  formatTaskActivityValue,
-  taskActivitySentenceKey,
-} from "../../_lib/taskActivity";
 import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
 import { useUpdateTaskComment } from "../../_lib/useUpdateTaskComment";
-import { taskActivityComment, taskCommentEditor } from "../../variants";
 import { TaskCommentDeleteDialog } from "../TaskCommentsList/TaskCommentDeleteDialog";
 
 const taskActivityListItemFragment = graphql`
@@ -148,21 +150,22 @@ function ActivityStep({
   occurredAt: string;
 }) {
   const { i18n, t } = useTranslation("organizations/tasks");
+  const { t: tTasks } = useTranslation(TASKS_NAMESPACE);
   const actorName = activity.actor?.fullName
     ?? t("detailsPage.activity.actorFallback");
   const oldValue = formatTaskActivityValue(
     activity.field,
     activity.oldValue,
     i18n.language,
-    t,
+    tTasks,
   );
   const newValue = formatTaskActivityValue(
     activity.field,
     activity.newValue,
     i18n.language,
-    t,
+    tTasks,
   );
-  const sentence = t(
+  const sentence = tTasks(
     taskActivitySentenceKey(
       activity.activityType,
       activity.field,

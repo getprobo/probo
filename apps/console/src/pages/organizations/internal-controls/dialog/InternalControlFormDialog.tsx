@@ -25,6 +25,7 @@ import {
   internalControlStates,
   internalControlTypes,
 } from "@probo/helpers";
+import { TaskDurationField } from "@probo/tasks";
 import {
   Button,
   Dialog,
@@ -55,7 +56,6 @@ import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
-import { TaskDurationField } from "#/pages/organizations/tasks/_components/TaskDurationField";
 
 const controlDurationUnits = ["D", "W", "MO", "Y"] as const;
 

@@ -18,11 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { taskPriorities, type TaskPriority } from "@probo/tasks";
 import { ConnectionHandler } from "react-relay";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import { taskInternalControlIdsConnectionKey } from "./taskPath";
-import { taskPriorities, type TaskPriority } from "./taskState";
 
 type TaskRecord = NonNullable<ReturnType<RecordSourceSelectorProxy["get"]>>;
 

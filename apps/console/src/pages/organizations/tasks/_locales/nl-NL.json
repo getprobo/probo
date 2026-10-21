@@ -158,26 +158,6 @@
       "commented": "<name>{{name}}</name> <time>{{time}}</time>",
       "actions": {
         "showMore": "Meer tonen"
-      },
-      "sentences": {
-        "created": "{{actor}} heeft deze taak aangemaakt",
-        "updated": "{{actor}} heeft deze taak bijgewerkt",
-        "renamed": "{{actor}} heeft de taak hernoemd van {{oldValue}} naar {{newValue}}",
-        "descriptionUpdated": "{{actor}} heeft de beschrijving bijgewerkt",
-        "stateChanged": "{{actor}} heeft de status gewijzigd van {{oldValue}} naar {{newValue}}",
-        "priorityChanged": "{{actor}} heeft de prioriteit gewijzigd van {{oldValue}} naar {{newValue}}",
-        "assigned": "{{actor}} heeft {{newValue}} toegewezen",
-        "reassigned": "{{actor}} heeft opnieuw toegewezen van {{oldValue}} naar {{newValue}}",
-        "unassigned": "{{actor}} heeft de toewijzing van {{oldValue}} verwijderd",
-        "internalControlLinked": "{{actor}} heeft {{newValue}} gekoppeld",
-        "internalControlChanged": "{{actor}} heeft verplaatst van {{oldValue}} naar {{newValue}}",
-        "internalControlUnlinked": "{{actor}} heeft {{oldValue}} ontkoppeld",
-        "deadlineSet": "{{actor}} heeft de deadline ingesteld op {{newValue}}",
-        "deadlineChanged": "{{actor}} heeft de deadline gewijzigd van {{oldValue}} naar {{newValue}}",
-        "deadlineRemoved": "{{actor}} heeft de deadline verwijderd",
-        "timeEstimateSet": "{{actor}} heeft de tijdsinschatting ingesteld op {{newValue}}",
-        "timeEstimateChanged": "{{actor}} heeft de tijdsinschatting gewijzigd van {{oldValue}} naar {{newValue}}",
-        "timeEstimateRemoved": "{{actor}} heeft de tijdsinschatting verwijderd"
       }
     }
   },

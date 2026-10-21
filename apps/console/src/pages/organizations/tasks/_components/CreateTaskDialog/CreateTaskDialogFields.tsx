@@ -19,7 +19,16 @@
 // SOFTWARE.
 
 import { Form } from "@base-ui/react/form";
-import { taskNameMaxLength } from "@probo/tasks";
+import {
+  taskNameMaxLength,
+  taskPriorities,
+  type TaskPriority,
+  TaskPriorityIcon,
+  type TaskState,
+  TaskStateIcon,
+  taskStateKeys,
+  taskStates,
+} from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
@@ -38,16 +47,7 @@ import { useTranslation } from "react-i18next";
 
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
-import {
-  taskPriorities,
-  type TaskPriority,
-  type TaskState,
-  taskStateKeys,
-  taskStates,
-} from "../../_lib/taskState";
 import { createTaskDialog } from "../../variants";
-import { TaskPriorityIcon } from "../TaskPriorityIcon";
-import { TaskStateIcon } from "../TaskStateIcon";
 
 import type { CreateTaskDialogFormState } from "./useCreateTaskDialogForm";
 

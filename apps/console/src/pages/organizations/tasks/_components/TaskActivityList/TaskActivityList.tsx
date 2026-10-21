@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { taskCommentsSection } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Timeline } from "@probo/ui/src/v2/Timeline/Timeline";
 import { useTranslation } from "react-i18next";
@@ -27,8 +28,6 @@ import { useParams } from "react-router";
 import type { TaskActivityList_activities$key } from "#/__generated__/core/TaskActivityList_activities.graphql";
 import type { TaskActivityListQuery } from "#/__generated__/core/TaskActivityListQuery.graphql";
 import type { TaskActivityListRefetchQuery } from "#/__generated__/core/TaskActivityListRefetchQuery.graphql";
-
-import { taskCommentsSection } from "../../variants";
 
 import { TaskActivityEmpty } from "./TaskActivityEmpty";
 import { TaskActivityListItem } from "./TaskActivityListItem";

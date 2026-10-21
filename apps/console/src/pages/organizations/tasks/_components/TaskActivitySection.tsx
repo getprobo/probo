@@ -18,13 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { taskCommentsSection } from "@probo/tasks";
 import { ListSkeleton } from "@probo/ui/src/v2/List/ListSkeleton";
 import { Suspense } from "react";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskActivitySection_task$key } from "#/__generated__/core/TaskActivitySection_task.graphql";
-
-import { taskCommentsSection } from "../variants";
 
 import { TaskActivityList } from "./TaskActivityList/TaskActivityList";
 

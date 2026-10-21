@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { TaskPriority, TaskState } from "./taskState";
+import type { TaskPriority, TaskState } from "@probo/tasks";
 
 export function linearIssueOption(node: {
   id: string;

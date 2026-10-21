@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { TaskStateIcon, taskStateKeys } from "@probo/tasks";
 import {
   Button,
   IconChevronDown,
@@ -41,9 +42,7 @@ import type { InternalControlTasksTabQuery } from "#/__generated__/core/Internal
 import type { InternalControlTasksTabRefetchQuery } from "#/__generated__/core/InternalControlTasksTabRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CreateTaskDialog } from "#/pages/organizations/tasks/_components/CreateTaskDialog/CreateTaskDialog";
-import { TaskStateIcon } from "#/pages/organizations/tasks/_components/TaskStateIcon";
 import { emptyTaskListFilter, taskDetailsPath } from "#/pages/organizations/tasks/_lib/taskPath";
-import { taskStateKeys } from "#/pages/organizations/tasks/_lib/taskState";
 import { useTaskInternalControlIds } from "#/pages/organizations/tasks/_lib/useTaskInternalControlIds";
 import { useUpdateTask } from "#/pages/organizations/tasks/_lib/useUpdateTask";
 
