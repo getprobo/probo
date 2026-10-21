@@ -51,7 +51,7 @@ export const taskDetailsPageSkeleton = tv({
     title: "flex min-w-0 items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
     main: "flex min-w-0 flex-col gap-6",
-    descriptionCard: "border-0 bg-sand-1 !py-2 !pl-0 shadow-1",
+    descriptionCard: "border-0 bg-sand-1 !py-2 !pl-0 shadow-3",
     description: "flex flex-col gap-2",
     engagement: "flex flex-col gap-4",
   },
