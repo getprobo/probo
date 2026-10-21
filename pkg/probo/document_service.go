@@ -2143,10 +2143,10 @@ func (s *DocumentService) Update(
 	}
 
 	if req.Content != nil && req.IdentityID != nil {
-		if _, err := s.ApplyCollaborationContent(
+		if _, err := s.collaboration.ApplyContent(
 			ctx,
 			scope,
-			ApplyCollaborationContentRequest{
+			CollaborationApplyContentRequest{
 				DocumentID: req.DocumentID,
 				Content:    document.Content,
 				IdentityID: *req.IdentityID,

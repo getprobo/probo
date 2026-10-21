@@ -2562,10 +2562,10 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 
 		profileID := r.collaborationProfileID(ctx, identity.ID, document.OrganizationID)
 
-		result, err := svc.Documents.ApplyCollaborationEdits(
+		result, err := svc.Collaboration.ApplyEdits(
 			ctx,
 			scope,
-			probo.ApplyCollaborationEditsRequest{
+			probo.CollaborationApplyEditsRequest{
 				DocumentID: document.ID,
 				BaseHeads:  baseHeads,
 				Edits:      edits,
