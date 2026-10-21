@@ -41,6 +41,7 @@ import { TaskDeleteDialog } from "./_components/TaskDeleteDialog";
 import { TaskDescriptionSection } from "./_components/TaskDescriptionSection";
 import { TaskEngagementSection } from "./_components/TaskEngagementSection";
 import { TaskNameField } from "./_components/TaskNameField";
+import { TaskLinearField } from "./_components/TaskLinearField";
 import { TaskPropertiesSection } from "./_components/TaskPropertiesSection";
 import { taskListPath } from "./_lib/taskPath";
 
@@ -55,6 +56,7 @@ export const taskDetailsPageFragment = graphql`
     ...TaskDescriptionSection_task
     ...TaskEngagementSection_task
     ...TaskPropertiesSection_task
+    ...TaskLinearField_task
     ...TaskDeleteDialog_task
   }
 `;
@@ -111,7 +113,12 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
           : undefined}
         description={<TaskDescriptionSection taskKey={task} />}
         engagement={<TaskEngagementSection taskKey={task} />}
-        properties={<TaskPropertiesSection taskKey={task} />}
+        properties={(
+          <div className="flex flex-col gap-4">
+            <TaskPropertiesSection taskKey={task} />
+            <TaskLinearField taskKey={task} />
+          </div>
+        )}
       />
       {task.canDelete && (
         <TaskDeleteDialog

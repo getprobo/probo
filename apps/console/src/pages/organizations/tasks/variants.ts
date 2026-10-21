@@ -179,7 +179,11 @@ export const createTaskDialog = tv({
 
 export const taskLinearField = tv({
   slots: {
-    link: "flex items-center justify-between gap-2",
+    root: "flex w-full flex-col items-stretch gap-3",
+    title: "flex items-center gap-2",
+    titleIcon: "size-4 shrink-0",
+    link: "flex w-full flex-col items-stretch gap-2",
+    issue: "hover:underline",
   },
 });
 

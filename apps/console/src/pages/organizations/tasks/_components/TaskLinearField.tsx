@@ -18,13 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Linear } from "@probo/ui/src/Atoms/ThirdParties/Linear";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
-import { Anchor } from "@probo/ui/src/v2/Link/Anchor";
 import { SelectSkeleton } from "@probo/ui/src/v2/Select/SelectSkeleton";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ErrorInfo, type ReactNode, Suspense } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment, useLazyLoadQuery } from "react-relay";
 
 import type { TaskLinearField_task$key } from "#/__generated__/core/TaskLinearField_task.graphql";
@@ -33,7 +35,7 @@ import type { TaskLinearFieldUnlinkMutation } from "#/__generated__/core/TaskLin
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { taskLinearField, taskPropertiesSection } from "../variants";
+import { taskLinearField } from "../variants";
 
 import { TaskLinearPublishField } from "./TaskLinearPublishField";
 
@@ -97,28 +99,42 @@ function TaskLinearFieldContent({ taskKey }: { taskKey: TaskLinearField_task$key
 
   const organization = data.node?.__typename === "Organization" ? data.node : null;
   const connected = (organization?.connectors.length ?? 0) > 0;
-  const { row } = taskPropertiesSection();
-  const { link } = taskLinearField();
+  const { root, title, titleIcon, link, issue } = taskLinearField();
 
   if (!connected) {
     return null;
   }
 
   let value = (
-    <Text size={2} color="faint">{t("detailsPage.empty")}</Text>
+    <Text size={1} color="faint">{t("detailsPage.empty")}</Text>
   );
 
   if (task.externalLink) {
+    const externalLink = task.externalLink;
     value = (
       <div className={link()}>
-        <Anchor size={2} href={task.externalLink.url} target="_blank" rel="noreferrer">
-          {task.externalLink.identifier}
-        </Anchor>
+        <Text size={2}>
+          <Trans
+            ns="organizations/tasks"
+            i18nKey="detailsPage.linear.linkedIssue"
+            values={{ issue: externalLink.identifier }}
+            components={{
+              issue: (
+                <a
+                  className={issue()}
+                  href={externalLink.url}
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              ),
+            }}
+          />
+        </Text>
         {task.canUpdate
           ? (
               <Button
-                size={1}
-                variant="ghost"
+                className="w-full"
+                color="linear"
                 disabled={isUnlinking}
                 onClick={() => {
                   void unlink({
@@ -141,10 +157,19 @@ function TaskLinearFieldContent({ taskKey }: { taskKey: TaskLinearField_task$key
   }
 
   return (
-    <div className={row()}>
-      <Text size={2} color="faint">{t("detailsPage.fields.linear")}</Text>
-      {value}
-    </div>
+    <Card variant="soft" size={2}>
+      <div className={root()}>
+        <div className={title()}>
+          <Linear className={titleIcon()} aria-hidden />
+          <Heading level={2} size={2} weight="medium">
+            {task.externalLink
+              ? t("detailsPage.fields.linear")
+              : t("detailsPage.linear.linkHint")}
+          </Heading>
+        </div>
+        {value}
+      </div>
+    </Card>
   );
 }
 
@@ -154,15 +179,22 @@ export function TaskLinearField({
   onError,
 }: TaskLinearFieldProps) {
   const { t } = useTranslation("organizations/tasks");
-  const { row } = taskPropertiesSection();
+  const { root, title, titleIcon } = taskLinearField();
 
   return (
     <ErrorBoundary
       fallback={fallback ?? (
-        <div className={row()}>
-          <Text size={2} color="faint">{t("detailsPage.fields.linear")}</Text>
-          <Text size={2} color="faint">{t("detailsPage.linear.errors.load")}</Text>
-        </div>
+        <Card variant="soft" size={2}>
+          <div className={root()}>
+            <div className={title()}>
+              <Linear className={titleIcon()} aria-hidden />
+              <Heading level={2} size={2} weight="medium">
+                {t("detailsPage.fields.linear")}
+              </Heading>
+            </div>
+            <Text size={1} color="faint">{t("detailsPage.linear.errors.load")}</Text>
+          </div>
+        </Card>
       )}
       onError={onError}
     >

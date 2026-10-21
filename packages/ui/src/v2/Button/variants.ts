@@ -55,6 +55,7 @@ export const button = tv({
       amber: "",
       sky: "",
       indigo: "",
+      linear: "",
     },
     highContrast: {
       true: "",
@@ -79,6 +80,7 @@ export const button = tv({
     { variant: ["solid", "classic"], color: "amber", highContrast: false, class: "bg-amber-9 text-amber-12 hover:bg-amber-10" },
     { variant: ["solid", "classic"], color: "sky", highContrast: false, class: "bg-sky-9 text-sky-12 hover:bg-sky-10" },
     { variant: ["solid", "classic"], color: "indigo", highContrast: false, class: "bg-indigo-9 text-white hover:bg-indigo-10" },
+    { variant: ["solid", "classic"], color: "linear", highContrast: false, class: "bg-linear text-white hover:bg-linear/90" },
     { variant: ["solid", "classic", "soft", "ghost"], class: "border-transparent" },
     // classic adds elevation over solid
     { variant: "classic", class: "shadow-2" },
@@ -90,6 +92,7 @@ export const button = tv({
     { variant: ["solid", "classic"], color: "amber", highContrast: true, class: "bg-amber-12 text-amber-1 hover:bg-amber-12" },
     { variant: ["solid", "classic"], color: "sky", highContrast: true, class: "bg-sky-12 text-sky-1 hover:bg-sky-12" },
     { variant: ["solid", "classic"], color: "indigo", highContrast: true, class: "bg-indigo-12 text-indigo-1 hover:bg-indigo-12" },
+    { variant: ["solid", "classic"], color: "linear", highContrast: true, class: "bg-linear text-white hover:bg-linear/90" },
 
     // ── soft: tinted step-3 background, step-11 text ──
     { variant: "soft", color: "neutral", class: "bg-sand-3 text-sand-11 hover:bg-sand-4" },
@@ -99,6 +102,7 @@ export const button = tv({
     { variant: "soft", color: "amber", class: "bg-amber-3 text-amber-11 hover:bg-amber-4" },
     { variant: "soft", color: "sky", class: "bg-sky-3 text-sky-11 hover:bg-sky-4" },
     { variant: "soft", color: "indigo", class: "bg-indigo-3 text-indigo-11 hover:bg-indigo-4" },
+    { variant: "soft", color: "linear", class: "bg-linear/16 text-linear hover:bg-linear/24" },
 
     // ── surface: subtle background + border ──
     { variant: "surface", color: "neutral", class: "bg-sand-2 text-sand-11 border-sand-6 hover:bg-sand-3" },
@@ -126,6 +130,7 @@ export const button = tv({
     { variant: "ghost", color: "amber", class: "text-amber-11 hover:bg-amber-3" },
     { variant: "ghost", color: "sky", class: "text-sky-11 hover:bg-sky-3" },
     { variant: "ghost", color: "indigo", class: "text-indigo-11 hover:bg-indigo-3" },
+    { variant: "ghost", color: "linear", class: "text-linear hover:bg-linear/16" },
 
     // ── active: persistent selected background + high-contrast text ──
     // ghost goes from transparent to the step-3 tint; soft bumps to step-4.

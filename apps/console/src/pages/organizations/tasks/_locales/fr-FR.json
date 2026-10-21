@@ -85,16 +85,13 @@
       "searchTeam": "Rechercher par nom ou identifiant",
       "searchIssue": "Rechercher par nom ou identifiant",
       "linkHint": "Lier à une issue Linear",
+      "linkedIssue": "Liée à l'issue <issue>{{issue}}</issue>",
       "noResults": "Aucun résultat",
       "loadMore": "Charger plus",
       "retry": "Réessayer",
       "createWithoutTeam": "Créer sans équipe Linear",
       "published": "Tâche créée dans Linear.",
       "linked": "Tâche liée à Linear.",
-      "confirmLink": {
-        "title": "Lier l'issue Linear",
-        "description": "Cela mettra à jour la tâche Probo avec l'issue Linear."
-      },
       "unlinked": "Issue Linear dissociée.",
       "errors": {
         "publish": "Échec de la création dans Linear",

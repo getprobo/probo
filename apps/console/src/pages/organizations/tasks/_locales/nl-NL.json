@@ -85,16 +85,13 @@
       "searchTeam": "Zoek op naam of ID",
       "searchIssue": "Zoek op naam of ID",
       "linkHint": "Koppelen aan een Linear-issue",
+      "linkedIssue": "Gekoppeld aan issue <issue>{{issue}}</issue>",
       "noResults": "Geen resultaten",
       "loadMore": "Meer laden",
       "retry": "Opnieuw proberen",
       "createWithoutTeam": "Aanmaken zonder Linear-team",
       "published": "Taak aangemaakt in Linear.",
       "linked": "Taak gekoppeld aan Linear.",
-      "confirmLink": {
-        "title": "Linear-issue koppelen",
-        "description": "Dit werkt de Probo-taak bij met de Linear-issue."
-      },
       "unlinked": "Linear-issue ontkoppeld.",
       "errors": {
         "publish": "Taak aanmaken in Linear mislukt",

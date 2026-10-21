@@ -19,13 +19,6 @@
 // SOFTWARE.
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
-import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
-import { DialogDescription } from "@probo/ui/src/v2/Dialog/DialogDescription";
-import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
-import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
-import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
-import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -87,7 +80,6 @@ export function TaskLinearPublishField({
   const [teamLabel, setTeamLabel] = useState<string | null>(null);
   const [issueId, setIssueId] = useState(newLinearIssueId);
   const [issueLabel, setIssueLabel] = useState<string | null>(null);
-  const [confirmLink, setConfirmLink] = useState(false);
   const [publish, isPublishing] = useMutation<TaskLinearPublishFieldMutation>(
     publishMutation,
     {
@@ -143,26 +135,34 @@ export function TaskLinearPublishField({
         }}
       />
       <Button
-        size={1}
+        className="w-full"
+        color="linear"
         disabled={teamId == null || isSaving || (linking && issueId === newLinearIssueId)}
         onClick={() => {
           if (teamId == null) {
             return;
           }
 
-          if (linking) {
-            setConfirmLink(true);
-            return;
-          }
+          const request = linking
+            ? link({
+                variables: {
+                  input: {
+                    taskId: task.id,
+                    teamId,
+                    issueId,
+                  },
+                },
+              })
+            : publish({
+                variables: {
+                  input: {
+                    taskId: task.id,
+                    teamId,
+                  },
+                },
+              });
 
-          void publish({
-            variables: {
-              input: {
-                taskId: task.id,
-                teamId,
-              },
-            },
-          }).then(
+          void request.then(
             () => {
               onCompleted?.();
             },
@@ -172,60 +172,8 @@ export function TaskLinearPublishField({
           );
         }}
       >
-        {linking ? t("detailsPage.linear.link") : t("detailsPage.linear.publish")}
+        {t("detailsPage.linear.link")}
       </Button>
-      <Dialog open={confirmLink} onOpenChange={setConfirmLink}>
-        <DialogPopup>
-          <DialogHeader>
-            <DialogTitle>{t("detailsPage.linear.confirmLink.title")}</DialogTitle>
-            <DialogDescription>
-              {t("detailsPage.linear.confirmLink.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <DialogClose
-              render={(
-                <Button variant="soft" color="neutral" disabled={isSaving}>
-                  {t("detailsPage.actions.cancel")}
-                </Button>
-              )}
-            />
-            <Button
-              type="button"
-              variant="solid"
-              color="neutral"
-              highContrast
-              loading={isLinking}
-              disabled={teamId == null}
-              onClick={() => {
-                if (teamId == null) {
-                  return;
-                }
-
-                void link({
-                  variables: {
-                    input: {
-                      taskId: task.id,
-                      teamId,
-                      issueId,
-                    },
-                  },
-                }).then(
-                  () => {
-                    setConfirmLink(false);
-                    onCompleted?.();
-                  },
-                  () => {
-                    // The Linear toast already explains the failure.
-                  },
-                );
-              }}
-            >
-              {t("detailsPage.linear.link")}
-            </Button>
-          </DialogFooter>
-        </DialogPopup>
-      </Dialog>
     </div>
   );
 }
