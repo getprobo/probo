@@ -24,6 +24,7 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,41 +36,66 @@ import { taskListItem } from "../variants";
 
 import { TaskPriorityMenu } from "./TaskPriorityMenu";
 
+function priorityValue(
+  icon: ReactNode,
+  label: string,
+  showLabel: boolean,
+  slots: ReturnType<typeof taskListItem>,
+): ReactNode {
+  if (!showLabel) {
+    return icon;
+  }
+
+  return (
+    <span className={slots.stateOption()}>
+      {icon}
+      <Text size={2}>{label}</Text>
+    </span>
+  );
+}
+
 export function TaskListItemPriority({
   priority,
   canUpdate,
   isUpdating,
+  showLabel = false,
+  placeholder,
   slots,
   onPriorityChange,
 }: {
   priority: TaskPriority;
   canUpdate: boolean;
   isUpdating?: boolean;
+  showLabel?: boolean;
+  placeholder?: string;
   slots: ReturnType<typeof taskListItem>;
   onPriorityChange: (priority: TaskPriority) => void;
 }): ReactNode {
   const { t } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
   const label = t(`priorities.${taskPriorityKeys[priority]}`);
+  const tooltip = placeholder ?? label;
   const icon = <TaskPriorityIcon priority={priority} />;
+  const value = priorityValue(icon, label, showLabel, slots);
+  const frame = showLabel ? slots.stateOption() : slots.state();
 
   if (!canUpdate) {
     return (
       <Tooltip>
         <TooltipTrigger
           render={(
-            <span className={slots.state()} aria-label={label}>
-              {icon}
+            <span className={frame} aria-label={label}>
+              {value}
             </span>
           )}
         />
-        <TooltipPopup>{label}</TooltipPopup>
+        <TooltipPopup>{tooltip}</TooltipPopup>
       </Tooltip>
     );
   }
 
   return (
-    <div className={slots.state()}>
+    <div className={frame}>
       <Dropdown open={open} onOpenChange={setOpen}>
         <Tooltip>
           <TooltipTrigger
@@ -82,13 +108,13 @@ export function TaskListItemPriority({
                     className={slots.chipTrigger()}
                     aria-label={label}
                   >
-                    {icon}
+                    {value}
                   </button>
                 )}
               />
             )}
           />
-          <TooltipPopup>{label}</TooltipPopup>
+          <TooltipPopup>{tooltip}</TooltipPopup>
         </Tooltip>
         <DropdownPopup size={1} align="start">
           <TaskPriorityMenu

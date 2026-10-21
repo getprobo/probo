@@ -18,31 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { formatDatetime, toDateInput } from "@probo/helpers";
-import { dateFormat, dateTimeFormat, formatDuration } from "@probo/i18n";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react";
+import { formatDuration } from "@probo/i18n";
 import { Card } from "@probo/ui/src/v2/Card/Card";
-import { TextField } from "@probo/ui/src/v2/form/TextField";
-import { Select } from "@probo/ui/src/v2/Select/Select";
-import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
-import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
-import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
+import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
+import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
-import { PropertyRow } from "./PropertyRow";
-import { TaskPriorityIcon } from "./TaskPriorityIcon";
-import {
-  taskPriorities,
-  type TaskPriority,
-  taskPriorityKeys,
-  type TaskState,
-  taskStateKeys,
-  taskStates,
-} from "./taskState";
-import { TaskStateIcon } from "./TaskStateIcon";
-import { taskProperties } from "./variants";
+import { isOverdueTask } from "./isOverdueTask";
+import { taskRecurrenceDurationUnits } from "./taskDuration";
+import { type TaskPriority, type TaskState } from "./taskState";
+import { TaskDurationField } from "./TaskDurationField";
+import { TaskListItemDeadline } from "./TaskListItem/TaskListItemDeadline";
+import { TaskListItemEstimate } from "./TaskListItem/TaskListItemEstimate";
+import { TaskListItemPriority } from "./TaskListItem/TaskListItemPriority";
+import { TaskListItemState } from "./TaskListItem/TaskListItemState";
+import { taskListItem, taskProperties } from "./variants";
 
 export interface TaskPropertiesTask {
   state: TaskState;
@@ -50,8 +46,6 @@ export interface TaskPropertiesTask {
   timeEstimate?: string | null;
   deadline?: string | null;
   recurrenceInterval?: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface TaskPropertiesChange {
@@ -66,199 +60,141 @@ export interface TaskPropertiesProps {
   task: TaskPropertiesTask;
   canUpdate: boolean;
   isUpdating?: boolean;
-  extraProperties?: ReactNode;
-  timeEstimateField?: ReactNode;
-  recurrenceField?: ReactNode;
-  onChange: (change: TaskPropertiesChange) => void;
+  assignee?: ReactNode;
+  onChange: (change: TaskPropertiesChange) => void | Promise<unknown>;
 }
 
 export function TaskProperties({
   task,
   canUpdate,
   isUpdating = false,
-  extraProperties,
-  timeEstimateField,
-  recurrenceField,
+  assignee,
   onChange,
 }: TaskPropertiesProps) {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
-  const { root, value } = taskProperties();
-  const empty = t("emptyValue");
+  const slots = taskListItem({ field: true });
+  const { root, recurrence, recurrenceIcon, recurrenceField } = taskProperties();
+  const timeEstimate = formatDuration(task.timeEstimate, t, {
+    style: "short",
+    locale: i18n.language,
+  });
+  const recurrenceLabel = formatDuration(task.recurrenceInterval, t, {
+    style: "short",
+    locale: i18n.language,
+  });
 
   return (
-    <Card size={2}>
+    <Card variant="soft" size={2}>
       <div className={root()}>
-        <PropertyRow label={t("fields.state")}>
-          {canUpdate
-            ? (
-                <Select
-                  value={task.state}
-                  disabled={isUpdating}
-                  onValueChange={(state: TaskState | null) => {
-                    if (state == null || state === task.state) {
-                      return;
-                    }
-                    onChange({ state });
-                  }}
-                >
-                  <SelectTrigger size={1} aria-label={t("fields.state")}>
-                    {(state: TaskState | null) =>
-                      state
-                        ? (
-                            <span className={value()}>
-                              <TaskStateIcon state={state} />
-                              {t(`states.${taskStateKeys[state]}`)}
-                            </span>
-                          )
-                        : null}
-                  </SelectTrigger>
-                  <SelectPopup>
-                    {taskStates.map(state => (
-                      <SelectItem key={state} value={state}>
-                        <span className={value()}>
-                          <TaskStateIcon state={state} />
-                          {t(`states.${taskStateKeys[state]}`)}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectPopup>
-                </Select>
-              )
-            : (
-                <span className={value()}>
-                  <TaskStateIcon state={task.state} />
-                  <Text size={2}>{t(`states.${taskStateKeys[task.state]}`)}</Text>
-                </span>
-              )}
-        </PropertyRow>
-        <PropertyRow label={t("fields.priority")}>
-          {canUpdate
-            ? (
-                <Select
-                  value={task.priority}
-                  disabled={isUpdating}
-                  onValueChange={(priority: TaskPriority | null) => {
-                    if (priority == null || priority === task.priority) {
-                      return;
-                    }
-                    onChange({ priority });
-                  }}
-                >
-                  <SelectTrigger size={1} aria-label={t("fields.priority")}>
-                    {(priority: TaskPriority | null) =>
-                      priority
-                        ? (
-                            <span className={value()}>
-                              <TaskPriorityIcon priority={priority} />
-                              {t(`priorities.${taskPriorityKeys[priority]}`)}
-                            </span>
-                          )
-                        : null}
-                  </SelectTrigger>
-                  <SelectPopup>
-                    {taskPriorities.map(priority => (
-                      <SelectItem key={priority} value={priority}>
-                        <span className={value()}>
-                          <TaskPriorityIcon priority={priority} />
-                          {t(`priorities.${taskPriorityKeys[priority]}`)}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectPopup>
-                </Select>
-              )
-            : (
-                <span className={value()}>
-                  <TaskPriorityIcon priority={task.priority} />
-                  <Text size={2}>
-                    {t(`priorities.${taskPriorityKeys[task.priority]}`)}
-                  </Text>
-                </span>
-              )}
-        </PropertyRow>
-        {extraProperties}
-        <PropertyRow label={t("fields.timeEstimate")}>
-          {timeEstimateField != null
-            ? withDisabled(timeEstimateField, isUpdating)
-            : (
-                <Text size={2}>{formatDuration(task.timeEstimate, t) ?? empty}</Text>
-              )}
-        </PropertyRow>
-        <PropertyRow label={t("fields.deadline")}>
-          {canUpdate
-            ? (
-                <TextField
-                  size={1}
-                  type="date"
-                  value={toDateInput(task.deadline)}
-                  disabled={isUpdating}
-                  aria-label={t("fields.deadline")}
-                  onChange={(event) => {
-                    const next = event.currentTarget.value;
-                    const deadline = next ? formatDatetime(next) ?? null : null;
-                    const current = task.deadline ? toDateInput(task.deadline) : "";
-                    if (next === current) {
-                      return;
-                    }
-                    if (!deadline && task.recurrenceInterval) {
-                      onChange({ deadline, recurrenceInterval: null });
-                      return;
-                    }
-                    onChange({ deadline });
-                  }}
+        <Heading level={2} size={2} weight="medium">
+          {t("properties.title")}
+        </Heading>
+        <TaskListItemState
+          displayState={task.state}
+          taskState={task.state}
+          canUpdate={canUpdate}
+          isUpdating={isUpdating}
+          showLabel
+          placeholder={t("placeholders.state")}
+          slots={slots}
+          onStateChange={(state) => {
+            onChange({ state });
+          }}
+        />
+        <TaskListItemPriority
+          priority={task.priority}
+          canUpdate={canUpdate}
+          isUpdating={isUpdating}
+          showLabel
+          placeholder={t("placeholders.priority")}
+          slots={slots}
+          onPriorityChange={(priority) => {
+            onChange({ priority });
+          }}
+        />
+        {assignee}
+        <TaskListItemEstimate
+          timeEstimate={task.timeEstimate}
+          label={timeEstimate}
+          canUpdate={canUpdate}
+          isUpdating={isUpdating}
+          size={2}
+          placeholder={t("placeholders.timeEstimate")}
+          slots={slots}
+          onTimeEstimateChange={(next) => {
+            onChange({ timeEstimate: next });
+          }}
+        />
+        <TaskListItemDeadline
+          deadline={task.deadline}
+          isOverdue={isOverdueTask(task.deadline, task.state)}
+          canUpdate={canUpdate}
+          isUpdating={isUpdating}
+          size={2}
+          placeholder={t("placeholders.deadline")}
+          slots={slots}
+          onDeadlineChange={(deadline) => {
+            onChange({
+              deadline,
+              ...(deadline == null && task.recurrenceInterval != null
+                ? { recurrenceInterval: null }
+                : {}),
+            });
+          }}
+        />
+        {canUpdate && recurrenceLabel == null
+          ? (
+              <Tooltip>
+                <TooltipTrigger
+                  render={(
+                    <button
+                      type="button"
+                      className={slots.chipTrigger()}
+                      disabled={isUpdating || !task.deadline}
+                      onClick={() => {
+                        onChange({ recurrenceInterval: "P7D" });
+                      }}
+                    >
+                      <span className={slots.stateOption()}>
+                        <ArrowsClockwiseIcon className={recurrenceIcon()} weight="bold" />
+                        <Text size={2} color="faint">{t("placeholders.recurrence")}</Text>
+                      </span>
+                    </button>
+                  )}
                 />
-              )
-            : task.deadline
-              ? (
-                  <Text size={2}>
-                    <time dateTime={toDateInput(task.deadline)}>
-                      {dateFormat(i18n.language, toDateInput(task.deadline))}
-                    </time>
-                  </Text>
-                )
-              : (
-                  <Text size={2} color="faint">{empty}</Text>
-                )}
-        </PropertyRow>
-        <PropertyRow label={t("fields.recurrence")}>
-          {recurrenceField != null
-            ? withDisabled(recurrenceField, isUpdating)
-            : (
-                task.recurrenceInterval
+                <TooltipPopup>
+                  {task.deadline
+                    ? t("placeholders.recurrence")
+                    : t("hints.recurrenceNeedsDeadline")}
+                </TooltipPopup>
+              </Tooltip>
+            )
+          : (
+              <div className={canUpdate ? `${recurrence()} ${slots.chipTrigger()}` : recurrence()}>
+                <ArrowsClockwiseIcon className={recurrenceIcon()} weight="bold" />
+                {canUpdate
                   ? (
-                      <Text size={2}>{formatDuration(task.recurrenceInterval, t)}</Text>
+                      <div className={recurrenceField()}>
+                        <TaskDurationField
+                          value={task.recurrenceInterval ?? null}
+                          disabled={isUpdating}
+                          defaultValue="P7D"
+                          units={taskRecurrenceDurationUnits}
+                          clearLabel={t("actions.clearRecurrence")}
+                          amountAriaLabel={t("fields.recurrence")}
+                          unitAriaLabel={t("fields.recurrenceUnit")}
+                          onValueChange={recurrenceInterval => onChange({ recurrenceInterval })}
+                        />
+                      </div>
                     )
                   : (
-                      <Text size={2} color="faint">{t("doesNotRepeat")}</Text>
-                    )
-              )}
-        </PropertyRow>
-        <PropertyRow label={t("fields.createdAt")}>
-          <Text size={2}>
-            <time dateTime={task.createdAt}>
-              {dateTimeFormat(i18n.language, task.createdAt)}
-            </time>
-          </Text>
-        </PropertyRow>
-        <PropertyRow label={t("fields.updatedAt")}>
-          <Text size={2}>
-            <time dateTime={task.updatedAt}>
-              {dateTimeFormat(i18n.language, task.updatedAt)}
-            </time>
-          </Text>
-        </PropertyRow>
+                      <Text size={2} color={recurrenceLabel == null ? "faint" : undefined}>
+                        {recurrenceLabel ?? t("placeholders.recurrence")}
+                      </Text>
+                    )}
+              </div>
+            )}
       </div>
     </Card>
   );
-}
-
-function withDisabled(field: ReactNode, disabled: boolean): ReactNode {
-  if (!disabled || !isValidElement<{ disabled?: boolean }>(field)) {
-    return field;
-  }
-
-  const element = field as ReactElement<{ disabled?: boolean }>;
-  return cloneElement(element, {
-    disabled: element.props.disabled || disabled,
-  });
 }

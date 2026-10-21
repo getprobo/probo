@@ -30,7 +30,7 @@ import { RichEditor } from "./RichEditor";
 const richDescriptionEditor = tv({
   slots: {
     root: "min-w-0",
-    editor: "min-h-40",
+    editor: "min-h-40 bg-transparent! py-0! pr-0! shadow-none!",
   },
 });
 
@@ -117,6 +117,7 @@ export function RichDescriptionEditor({
             <RichEditor
               key={editorGeneration}
               className={editor()}
+              compact
               content={draft}
               aria-label={ariaLabel}
               onUploadingChange={(uploading) => {

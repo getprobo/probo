@@ -2,16 +2,12 @@
   "detailsPage": {
     "notFound": "Taak niet gevonden",
     "empty": "—",
-    "none": "Geen",
-    "searchInternalControls": "Interne controles zoeken",
-    "noInternalControls": "Geen interne controles",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
     "assigneeMenu": {
       "searchPlaceholder": "Zoeken op naam of e-mail",
       "empty": "Geen gebruikers"
     },
-    "overdue": "Te laat",
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
@@ -19,7 +15,6 @@
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
       "linear": "Linear",
-      "internalControls": "Interne controles",
       "timeEstimate": "Tijdsinschatting",
       "timeEstimateUnit": "Eenheid van inschatting",
       "deadline": "Deadline",
@@ -62,8 +57,6 @@
       "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
       "cancel": "Annuleren",
-      "more": "Meer acties",
-      "loadMoreInternalControls": "Meer laden",
       "retry": "Opnieuw proberen"
     },
     "delete": {

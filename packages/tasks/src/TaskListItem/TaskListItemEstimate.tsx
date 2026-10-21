@@ -41,6 +41,8 @@ export function TaskListItemEstimate({
   label,
   canUpdate,
   isUpdating,
+  size = 1,
+  placeholder,
   slots,
   onTimeEstimateChange,
 }: {
@@ -48,17 +50,21 @@ export function TaskListItemEstimate({
   label: string | null;
   canUpdate: boolean;
   isUpdating?: boolean;
+  size?: 1 | 2;
+  placeholder?: string;
   slots: ReturnType<typeof taskListItem>;
   onTimeEstimateChange: (timeEstimate: string | null) => void;
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
+  const tooltip = placeholder ?? t("metadata.timeEstimate");
+  const shown = label ?? placeholder ?? null;
   const chip = (
     <span className={slots.meta()}>
       <ClockIcon className={slots.metaIcon()} weight="bold" />
-      {label && (
-        <Text size={1} color="current">
-          {label}
+      {shown != null && (
+        <Text size={size} color={label == null ? "faint" : "current"}>
+          {shown}
         </Text>
       )}
     </span>
@@ -66,11 +72,11 @@ export function TaskListItemEstimate({
 
   if (!canUpdate) {
     return (
-      <span className={slots.meta()} title={t("metadata.timeEstimate")}>
+      <span className={slots.meta()} title={tooltip}>
         <ClockIcon className={slots.metaIcon()} weight="bold" />
-        {label && (
-          <Text size={1} color="current">
-            {label}
+        {shown != null && (
+          <Text size={size} color={label == null ? "faint" : "current"}>
+            {shown}
           </Text>
         )}
       </span>
@@ -91,9 +97,7 @@ export function TaskListItemEstimate({
                   <button
                     type="button"
                     className={`${slots.meta()} ${slots.chipTrigger()}`}
-                    aria-label={label == null
-                      ? t("metadata.timeEstimate")
-                      : `${t("metadata.timeEstimate")}, ${label}`}
+                    aria-label={label == null ? tooltip : `${tooltip}, ${label}`}
                   >
                     {chip}
                   </button>
@@ -101,7 +105,7 @@ export function TaskListItemEstimate({
               />
             )}
           />
-          <TooltipPopup>{t("metadata.timeEstimate")}</TooltipPopup>
+          <TooltipPopup>{tooltip}</TooltipPopup>
         </Tooltip>
         <DropdownPopup size={1} align="end">
           <TaskEstimateMenu

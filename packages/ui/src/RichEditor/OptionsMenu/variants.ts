@@ -12,4 +12,13 @@ export const optionsMenuVariants = tv({
     ],
     menu: ["rounded-lg border border-border-mid bg-level-0 p-1 shadow-mid z-30"],
   },
+  variants: {
+    compact: {
+      true: { trigger: "!size-4" },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    compact: false,
+  },
 });

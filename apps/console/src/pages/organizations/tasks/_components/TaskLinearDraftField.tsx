@@ -18,34 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { HashIcon, PlusIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskLinearDraftField_organization$key } from "#/__generated__/core/TaskLinearDraftField_organization.graphql";
-import type { TaskLinearDraftFieldIssueQuery } from "#/__generated__/core/TaskLinearDraftFieldIssueQuery.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 
-import { linearIssueOption } from "../_lib/linearIssueOption";
 import { linearTeamLabel } from "../_lib/linearTeamLabel";
 import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { taskLinearPublishField } from "../variants";
 
+import { LinearIssueCombobox, newLinearIssueId } from "./LinearIssueCombobox";
 import { LinearTeamCombobox } from "./LinearTeamCombobox";
-import { RemoteCombobox } from "./RemoteCombobox";
-
-const PAGE_SIZE = 20;
-const NEW_ISSUE_ID = "__new__";
-
-interface LinearIssueOption {
-  id: string;
-  identifier: string;
-  title: string;
-  content: string | null;
-  state: TaskState | null;
-  priority: TaskPriority | null;
-}
 
 export interface LinearIssueDraft {
   title: string;
@@ -66,38 +50,6 @@ const taskLinearDraftFieldFragment = graphql`
         id
         name
         key
-      }
-    }
-  }
-`;
-
-const issuePageQuery = graphql`
-  query TaskLinearDraftFieldIssueQuery(
-    $organizationId: ID!
-    $teamId: String!
-    $first: Int!
-    $after: String
-    $query: String
-  ) {
-    node(id: $organizationId) {
-      __typename
-      ... on Organization {
-        linearIssues(teamId: $teamId, first: $first, after: $after, query: $query) {
-          edges {
-            node {
-              id
-              identifier
-              title
-              content
-              state
-              priority
-            }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
       }
     }
   }
@@ -126,7 +78,6 @@ export function TaskLinearDraftField({
   const organization = useFragment(taskLinearDraftFieldFragment, organizationKey);
   const defaultTeam = organization.linearSettings.defaultTeam;
   const { t } = useTranslation("organizations/tasks");
-  const organizationId = useOrganizationId();
   const [override, setOverride] = useState<LinearDraftOverride | null>(null);
   const { root } = taskLinearPublishField();
   const newIssueLabel = t("detailsPage.linear.newIssue");
@@ -136,13 +87,13 @@ export function TaskLinearDraftField({
         ? null
         : linearTeamLabel({ name: defaultTeam.name, key: defaultTeam.key }))
     : override.teamLabel;
-  const issueId = override?.issueId ?? NEW_ISSUE_ID;
+  const issueId = override?.issueId ?? newLinearIssueId;
   const issueLabel = override?.issueLabel ?? null;
 
   function emit(nextTeamId: string | null, nextIssueId: string) {
     onChange({
       teamId: nextTeamId,
-      issueId: nextIssueId === NEW_ISSUE_ID ? null : nextIssueId,
+      issueId: nextIssueId === newLinearIssueId ? null : nextIssueId,
     });
   }
 
@@ -159,64 +110,32 @@ export function TaskLinearDraftField({
           setOverride({
             teamId: null,
             teamLabel: null,
-            issueId: NEW_ISSUE_ID,
+            issueId: newLinearIssueId,
             issueLabel: null,
           });
-          emit(null, NEW_ISSUE_ID);
+          emit(null, newLinearIssueId);
         }}
         onSelect={(team) => {
           setOverride({
             teamId: team.id,
             teamLabel: linearTeamLabel({ name: team.name, key: team.key }),
-            issueId: NEW_ISSUE_ID,
+            issueId: newLinearIssueId,
             issueLabel: null,
           });
-          emit(team.id, NEW_ISSUE_ID);
+          emit(team.id, newLinearIssueId);
         }}
       />
-      <RemoteCombobox<TaskLinearDraftFieldIssueQuery, LinearIssueOption>
-        query={issuePageQuery}
-        variables={(after, query) => ({
-          organizationId,
-          teamId: teamId ?? "",
-          first: PAGE_SIZE,
-          after,
-          query: query || null,
-        })}
-        readPage={(data) => {
-          const organization = data.node?.__typename === "Organization" ? data.node : null;
-          const page = organization?.linearIssues;
-          return {
-            items: page?.edges.map(edge => linearIssueOption({
-              id: edge.node.id,
-              identifier: edge.node.identifier,
-              title: edge.node.title,
-              content: edge.node.content,
-              state: edge.node.state,
-              priority: edge.node.priority,
-            })) ?? [],
-            hasNextPage: page?.pageInfo.hasNextPage ?? false,
-            endCursor: page?.pageInfo.endCursor ?? null,
-          };
-        }}
-        reloadKey={`${organizationId}:${teamId ?? ""}`}
-        enabled={teamId != null}
-        selectedId={teamId == null ? null : issueId}
+      <LinearIssueCombobox
+        teamId={teamId}
+        selectedId={issueId}
         selectedLabel={
           teamId == null
             ? t("detailsPage.linear.chooseIssue")
-            : issueId === NEW_ISSUE_ID
+            : issueId === newLinearIssueId
               ? newIssueLabel
               : (issueLabel ?? newIssueLabel)
         }
-        ariaLabel={t("detailsPage.linear.issue")}
-        placeholder={t("detailsPage.linear.searchIssue")}
-        emptyLabel={t("detailsPage.linear.noResults")}
-        disabled={disabled || teamId == null}
-        pinned={{
-          id: NEW_ISSUE_ID,
-          label: newIssueLabel,
-        }}
+        disabled={disabled}
         onSelect={(issue) => {
           setOverride({
             teamId,
@@ -232,19 +151,15 @@ export function TaskLinearDraftField({
             priority: issue.priority,
           });
         }}
-        onPinnedSelect={() => {
+        onNewIssue={() => {
           setOverride({
             teamId,
             teamLabel,
-            issueId: NEW_ISSUE_ID,
+            issueId: newLinearIssueId,
             issueLabel: null,
           });
-          emit(teamId, NEW_ISSUE_ID);
+          emit(teamId, newLinearIssueId);
         }}
-        itemId={issue => issue.id}
-        itemLabel={issue => `${issue.identifier} ${issue.title}`}
-        itemLeading={() => <HashIcon />}
-        pinnedLeading={<PlusIcon />}
       />
     </div>
   );

@@ -104,7 +104,14 @@ const richEditorVariants = tv({
       true: "pl-8",
       false: "pl-14",
     },
+    compact: {
+      true: "",
+      false: "",
+    },
   },
+  compoundVariants: [
+    { compact: true, disabled: false, class: "pl-12" },
+  ],
 });
 
 function stripNonTextMarks(node: JSONContent) {
@@ -143,6 +150,8 @@ function withoutContentUploads(node: JSONContent): JSONContent {
 type RichEditorProps = ComponentProps<"div"> & {
   content: string;
   disabled?: boolean;
+  // Pulls the block handles closer to the text and uses a shorter left gutter.
+  compact?: boolean;
   placeholder?: string;
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
@@ -166,6 +175,7 @@ export function RichEditor(props: RichEditorProps) {
     className,
     content,
     disabled = false,
+    compact = false,
     placeholder,
     onChangeContent,
     onUploadingChange,
@@ -338,16 +348,17 @@ export function RichEditor(props: RichEditorProps) {
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled })} {...divProps}>
+    <div className={richEditorVariants({ className, disabled, compact })} {...divProps}>
       {!disabled
         && (
           <>
             <BubbleMenu editor={editor} />
             <BlockMenu
               editor={editor}
+              compact={compact}
               onPickFiles={canUpload ? openFilePicker : undefined}
             />
-            <OptionsMenu editor={editor} />
+            <OptionsMenu editor={editor} compact={compact} />
             <TableSelectionOverlay editor={editor} />
             <TableCellMenu editor={editor} />
             <TableColumnMenu editor={editor} />

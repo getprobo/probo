@@ -34,6 +34,17 @@
     }
   },
   "unassigned": "Niet toegewezen",
+  "placeholders": {
+    "state": "Status instellen",
+    "priority": "Prioriteit instellen",
+    "assignee": "Toegewezene instellen",
+    "timeEstimate": "Schatting instellen",
+    "deadline": "Deadline instellen",
+    "recurrence": "Herhaling instellen"
+  },
+  "properties": {
+    "title": "Eigenschappen"
+  },
   "deadlinePicker": {
     "today": "Vandaag",
     "tomorrow": "Morgen",
@@ -115,8 +126,7 @@
   },
   "metadata": {
     "timeEstimate": "Tijdschatting",
-    "deadline": "Deadline",
-    "overdue": "Te laat"
+    "deadline": "Deadline"
   },
   "recurringBadge": {
     "tooltip": "Herhaalt elke {{interval}}"

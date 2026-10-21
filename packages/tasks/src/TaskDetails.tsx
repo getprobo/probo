@@ -18,16 +18,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Badge } from "@probo/ui/src/v2/Badge/Badge";
+import { Card } from "@probo/ui/src/v2/Card/Card";
 import type { ReactNode } from "react";
-import { useTranslation } from "react-i18next";
 
-import { TASKS_NAMESPACE } from "./i18n";
 import { taskDetails } from "./variants";
 
 export interface TaskDetailsProps {
   name: ReactNode;
-  overdue?: boolean;
   actions?: ReactNode;
   description: ReactNode;
   engagement?: ReactNode;
@@ -36,13 +33,11 @@ export interface TaskDetailsProps {
 
 export function TaskDetails({
   name,
-  overdue = false,
   actions,
   description,
   engagement,
   properties,
 }: TaskDetailsProps) {
-  const { t } = useTranslation(TASKS_NAMESPACE);
   const slots = taskDetails();
 
   return (
@@ -51,11 +46,6 @@ export function TaskDetails({
         <div className={slots.titleRow()}>
           <div className={slots.title()}>
             {name}
-            {overdue && (
-              <Badge variant="soft" color="red" size={1}>
-                {t("metadata.overdue")}
-              </Badge>
-            )}
           </div>
           {actions != null && (
             <div className={slots.actions()}>
@@ -66,7 +56,9 @@ export function TaskDetails({
       </div>
       <div className={slots.body()}>
         <div className={slots.main()}>
-          {description}
+          <Card variant="ghost" size={2} className={slots.editorCard()}>
+            {description}
+          </Card>
           {engagement}
         </div>
         {properties}

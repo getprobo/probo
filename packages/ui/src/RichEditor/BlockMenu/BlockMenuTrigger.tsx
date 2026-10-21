@@ -16,10 +16,11 @@ const { trigger } = blockMenuVariants();
 type BlockMenuTriggerProps = {
   editor: Editor;
   hoveredBlock: HTMLElement;
+  compact?: boolean;
 };
 
-export function BlockMenuTrigger({ editor, hoveredBlock }: BlockMenuTriggerProps) {
-  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 32);
+export function BlockMenuTrigger({ editor, hoveredBlock, compact = false }: BlockMenuTriggerProps) {
+  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, compact ? 24 : 32);
 
   const handleTriggerClick = () => {
     try {
@@ -80,7 +81,7 @@ export function BlockMenuTrigger({ editor, hoveredBlock }: BlockMenuTriggerProps
         ...triggerStyles,
         visibility: isPositioned ? "visible" : "hidden",
       }}
-      className={trigger()}
+      className={trigger({ compact })}
     >
       <PlusIcon size={14} weight="bold" />
     </button>

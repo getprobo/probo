@@ -12,10 +12,11 @@ import { BlockMenuTrigger } from "./BlockMenuTrigger";
 
 type BlockMenuProps = {
   editor: Editor;
+  compact?: boolean;
   onPickFiles?: (kind: "image" | "file") => void;
 };
 
-export function BlockMenu({ editor, onPickFiles }: BlockMenuProps) {
+export function BlockMenu({ editor, compact = false, onPickFiles }: BlockMenuProps) {
   const slashState = useEditorState({
     editor,
     selector: ({ editor: e }) => {
@@ -36,6 +37,7 @@ export function BlockMenu({ editor, onPickFiles }: BlockMenuProps) {
         <BlockMenuTrigger
           editor={editor}
           hoveredBlock={hoveredBlock}
+          compact={compact}
         />
       )}
       {slashState.active && (

@@ -34,6 +34,17 @@
     }
   },
   "unassigned": "Pas assigné",
+  "placeholders": {
+    "state": "Définir l'état",
+    "priority": "Définir la priorité",
+    "assignee": "Définir l'assigné",
+    "timeEstimate": "Définir l'estimation",
+    "deadline": "Définir l'échéance",
+    "recurrence": "Définir la récurrence"
+  },
+  "properties": {
+    "title": "Propriétés"
+  },
   "deadlinePicker": {
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
@@ -115,8 +126,7 @@
   },
   "metadata": {
     "timeEstimate": "Estimation",
-    "deadline": "Échéance",
-    "overdue": "En retard"
+    "deadline": "Échéance"
   },
   "recurringBadge": {
     "tooltip": "Se répète toutes les {{interval}}"

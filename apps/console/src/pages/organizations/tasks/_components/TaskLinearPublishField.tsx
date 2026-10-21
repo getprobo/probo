@@ -18,7 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { HashIcon, PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogClose } from "@probo/ui/src/v2/Dialog/DialogClose";
@@ -32,67 +31,19 @@ import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { TaskLinearPublishField_task$key } from "#/__generated__/core/TaskLinearPublishField_task.graphql";
-import type { TaskLinearPublishFieldIssueQuery } from "#/__generated__/core/TaskLinearPublishFieldIssueQuery.graphql";
 import type { TaskLinearPublishFieldLinkMutation } from "#/__generated__/core/TaskLinearPublishFieldLinkMutation.graphql";
 import type { TaskLinearPublishFieldMutation } from "#/__generated__/core/TaskLinearPublishFieldMutation.graphql";
-import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { linearIssueOption } from "../_lib/linearIssueOption";
 import { linearTeamLabel } from "../_lib/linearTeamLabel";
-import type { TaskPriority, TaskState } from "../_lib/taskState";
 import { taskLinearPublishField } from "../variants";
 
+import { LinearIssueCombobox, newLinearIssueId } from "./LinearIssueCombobox";
 import { LinearTeamCombobox } from "./LinearTeamCombobox";
-import { RemoteCombobox } from "./RemoteCombobox";
-
-const PAGE_SIZE = 20;
-const NEW_ISSUE_ID = "__new__";
-
-interface LinearIssueOption {
-  id: string;
-  identifier: string;
-  title: string;
-  content: string | null;
-  state: TaskState | null;
-  priority: TaskPriority | null;
-}
 
 const taskLinearPublishFieldFragment = graphql`
   fragment TaskLinearPublishField_task on Task {
     id
-  }
-`;
-
-const issuePageQuery = graphql`
-  query TaskLinearPublishFieldIssueQuery(
-    $organizationId: ID!
-    $teamId: String!
-    $first: Int!
-    $after: String
-    $query: String
-  ) {
-    node(id: $organizationId) {
-      __typename
-      ... on Organization {
-        linearIssues(teamId: $teamId, first: $first, after: $after, query: $query) {
-          edges {
-            node {
-              id
-              identifier
-              title
-              content
-              state
-              priority
-            }
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
-      }
-    }
   }
 `;
 
@@ -131,11 +82,10 @@ export function TaskLinearPublishField({
   spacing = "compact",
 }: TaskLinearPublishFieldProps) {
   const { t } = useTranslation("organizations/tasks");
-  const organizationId = useOrganizationId();
   const task = useFragment(taskLinearPublishFieldFragment, taskKey);
   const [teamId, setTeamId] = useState<string | null>(null);
   const [teamLabel, setTeamLabel] = useState<string | null>(null);
-  const [issueId, setIssueId] = useState(NEW_ISSUE_ID);
+  const [issueId, setIssueId] = useState(newLinearIssueId);
   const [issueLabel, setIssueLabel] = useState<string | null>(null);
   const [confirmLink, setConfirmLink] = useState(false);
   const [publish, isPublishing] = useMutation<TaskLinearPublishFieldMutation>(
@@ -154,7 +104,7 @@ export function TaskLinearPublishField({
   );
   const { root } = taskLinearPublishField({ spacing });
   const isSaving = isPublishing || isLinking;
-  const linking = issueId !== NEW_ISSUE_ID;
+  const linking = issueId !== newLinearIssueId;
   const newIssueLabel = t("detailsPage.linear.newIssue");
 
   return (
@@ -168,69 +118,33 @@ export function TaskLinearPublishField({
         onSelect={(team) => {
           setTeamId(team.id);
           setTeamLabel(linearTeamLabel(team));
-          setIssueId(NEW_ISSUE_ID);
+          setIssueId(newLinearIssueId);
           setIssueLabel(null);
         }}
       />
-      <RemoteCombobox<TaskLinearPublishFieldIssueQuery, LinearIssueOption>
-        query={issuePageQuery}
-        variables={(after, query) => ({
-          organizationId,
-          teamId: teamId ?? "",
-          first: PAGE_SIZE,
-          after,
-          query: query || null,
-        })}
-        readPage={(data) => {
-          const organization = data.node?.__typename === "Organization" ? data.node : null;
-          const page = organization?.linearIssues;
-          return {
-            items: page?.edges.map(edge => linearIssueOption({
-              id: edge.node.id,
-              identifier: edge.node.identifier,
-              title: edge.node.title,
-              content: edge.node.content,
-              state: edge.node.state,
-              priority: edge.node.priority,
-            })) ?? [],
-            hasNextPage: page?.pageInfo.hasNextPage ?? false,
-            endCursor: page?.pageInfo.endCursor ?? null,
-          };
-        }}
-        reloadKey={`${organizationId}:${teamId ?? ""}`}
-        enabled={teamId != null}
-        selectedId={teamId == null ? null : issueId}
+      <LinearIssueCombobox
+        teamId={teamId}
+        selectedId={issueId}
         selectedLabel={
           teamId == null
             ? t("detailsPage.linear.chooseIssue")
-            : issueId === NEW_ISSUE_ID
+            : issueId === newLinearIssueId
               ? newIssueLabel
               : (issueLabel ?? newIssueLabel)
         }
-        ariaLabel={t("detailsPage.linear.issue")}
-        placeholder={t("detailsPage.linear.searchIssue")}
-        emptyLabel={t("detailsPage.linear.noResults")}
-        disabled={isSaving || teamId == null}
-        pinned={{
-          id: NEW_ISSUE_ID,
-          label: newIssueLabel,
-        }}
+        disabled={isSaving}
         onSelect={(issue) => {
           setIssueId(issue.id);
           setIssueLabel(`${issue.identifier} ${issue.title}`);
         }}
-        onPinnedSelect={() => {
-          setIssueId(NEW_ISSUE_ID);
+        onNewIssue={() => {
+          setIssueId(newLinearIssueId);
           setIssueLabel(null);
         }}
-        itemId={issue => issue.id}
-        itemLabel={issue => `${issue.identifier} ${issue.title}`}
-        itemLeading={() => <HashIcon />}
-        pinnedLeading={<PlusIcon />}
       />
       <Button
         size={1}
-        disabled={teamId == null || isSaving || (linking && issueId === NEW_ISSUE_ID)}
+        disabled={teamId == null || isSaving || (linking && issueId === newLinearIssueId)}
         onClick={() => {
           if (teamId == null) {
             return;

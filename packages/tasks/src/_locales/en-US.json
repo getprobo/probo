@@ -34,6 +34,17 @@
     }
   },
   "unassigned": "Not assigned",
+  "placeholders": {
+    "state": "Set state",
+    "priority": "Set priority",
+    "assignee": "Set assignee",
+    "timeEstimate": "Set estimate",
+    "deadline": "Set deadline",
+    "recurrence": "Set recurrence"
+  },
+  "properties": {
+    "title": "Properties"
+  },
   "deadlinePicker": {
     "today": "Today",
     "tomorrow": "Tomorrow",
@@ -115,8 +126,7 @@
   },
   "metadata": {
     "timeEstimate": "Time estimate",
-    "deadline": "Deadline",
-    "overdue": "Overdue"
+    "deadline": "Deadline"
   },
   "recurringBadge": {
     "tooltip": "Repeats every {{interval}}"

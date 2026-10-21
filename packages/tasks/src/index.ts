@@ -97,7 +97,6 @@ export {
 } from "./taskListSize";
 export { TaskNameField, type TaskNameFieldProps } from "./TaskNameField";
 export { taskNameMaxLength } from "./taskNameMaxLength";
-export { PropertyRow } from "./PropertyRow";
 export {
   TaskProperties,
   type TaskPropertiesChange,
@@ -144,10 +143,10 @@ export {
 } from "./variants";
 export {
   TaskListItem,
-  type TaskListItemAssignee,
   type TaskListItemProps,
   type TaskListItemTask,
 } from "./TaskListItem/TaskListItem";
+export { TaskListItemAssignee } from "./TaskListItem/TaskListItemAssignee";
 export { TaskPriorityIcon } from "./TaskPriorityIcon";
 export { TaskStateIcon } from "./TaskStateIcon";
 export {

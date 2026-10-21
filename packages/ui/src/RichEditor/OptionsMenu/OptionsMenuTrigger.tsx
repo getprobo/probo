@@ -22,6 +22,7 @@ function startDrag(view: EditorView, slice: ReturnType<NodeSelection["content"]>
 
 type OptionsMenuTriggerProps = {
   editor: Editor;
+  compact?: boolean;
   hoveredBlock: HTMLElement | null;
   setHoveredBlock: (block: HTMLElement | null) => void;
   setTriggerEl: OptionsMenuFloating["setTriggerEl"];
@@ -31,13 +32,14 @@ type OptionsMenuTriggerProps = {
 
 export function OptionsMenuTrigger({
   editor,
+  compact = false,
   hoveredBlock,
   setHoveredBlock,
   setTriggerEl,
   menuRefs,
   getReferenceProps,
 }: OptionsMenuTriggerProps) {
-  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, 12);
+  const { triggerRefs, triggerStyles, isPositioned } = useBlockTrigger(hoveredBlock, compact ? 6 : 12);
 
   const onDragStart = (e: DragEvent<HTMLButtonElement>) => {
     if (!hoveredBlock) return;
@@ -95,7 +97,7 @@ export function OptionsMenuTrigger({
         ...triggerStyles,
         visibility: isPositioned ? "visible" : "hidden",
       }}
-      className={trigger()}
+      className={trigger({ compact })}
     >
       <DotsSixVerticalIcon size={16} weight="bold" />
     </button>

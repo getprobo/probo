@@ -2,16 +2,12 @@
   "detailsPage": {
     "notFound": "Tâche introuvable",
     "empty": "—",
-    "none": "Aucun",
-    "searchInternalControls": "Rechercher des contrôles internes",
-    "noInternalControls": "Aucun contrôle interne",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
     "assigneeMenu": {
       "searchPlaceholder": "Rechercher par nom ou e-mail",
       "empty": "Aucun utilisateur"
     },
-    "overdue": "En retard",
     "fields": {
       "name": "Nom",
       "description": "Description",
@@ -19,7 +15,6 @@
       "priority": "Priorité",
       "assignedTo": "Assigné à",
       "linear": "Linear",
-      "internalControls": "Contrôles internes",
       "timeEstimate": "Estimation de temps",
       "timeEstimateUnit": "Unité d'estimation",
       "deadline": "Échéance",
@@ -62,8 +57,6 @@
       "clearRecurrence": "Effacer l'intervalle",
       "delete": "Supprimer",
       "cancel": "Annuler",
-      "more": "Plus d'actions",
-      "loadMoreInternalControls": "Charger plus",
       "retry": "Réessayer"
     },
     "delete": {

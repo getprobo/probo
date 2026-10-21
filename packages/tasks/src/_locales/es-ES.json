@@ -34,6 +34,17 @@
     }
   },
   "unassigned": "No asignado",
+  "placeholders": {
+    "state": "Definir el estado",
+    "priority": "Definir la prioridad",
+    "assignee": "Definir el responsable",
+    "timeEstimate": "Definir la estimación",
+    "deadline": "Definir la fecha límite",
+    "recurrence": "Definir la recurrencia"
+  },
+  "properties": {
+    "title": "Propiedades"
+  },
   "deadlinePicker": {
     "today": "Hoy",
     "tomorrow": "Mañana",
@@ -115,8 +126,7 @@
   },
   "metadata": {
     "timeEstimate": "Estimación",
-    "deadline": "Fecha límite",
-    "overdue": "Atrasada"
+    "deadline": "Fecha límite"
   },
   "recurringBadge": {
     "tooltip": "Se repite cada {{interval}}"

@@ -43,6 +43,8 @@ export function TaskListItemDeadline({
   isOverdue,
   canUpdate,
   isUpdating,
+  size = 1,
+  placeholder,
   slots,
   onDeadlineChange,
 }: {
@@ -50,12 +52,16 @@ export function TaskListItemDeadline({
   isOverdue: boolean;
   canUpdate: boolean;
   isUpdating?: boolean;
+  size?: 1 | 2;
+  placeholder?: string;
   slots: ReturnType<typeof taskListItem>;
   onDeadlineChange: (deadline: string | null) => void;
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
+  const tooltip = placeholder ?? t("metadata.deadline");
   const label = deadline == null ? null : deadlineDateFormat(i18n.language, deadline);
+  const shown = label ?? placeholder ?? null;
   const icon = isOverdue
     ? <CalendarXIcon className={slots.deadlineIcon()} weight="bold" />
     : <CalendarBlankIcon className={slots.deadlineIcon()} weight="bold" />;
@@ -71,13 +77,17 @@ export function TaskListItemDeadline({
 
   if (!canUpdate) {
     return (
-      <span className={slots.deadline()} title={t("metadata.deadline")}>
+      <span className={slots.deadline()} title={tooltip}>
         {icon}
-        {label && (
-          <Text size={1} color="current">
-            <time dateTime={deadline ?? undefined}>
-              {label}
-            </time>
+        {shown != null && (
+          <Text size={size} color={label == null ? "faint" : "current"}>
+            {label == null
+              ? shown
+              : (
+                  <time dateTime={deadline ?? undefined}>
+                    {shown}
+                  </time>
+                )}
           </Text>
         )}
       </span>
@@ -103,16 +113,18 @@ export function TaskListItemDeadline({
                 <button
                   type="button"
                   className={`${slots.deadline()} ${slots.chipTrigger()}`}
-                  aria-label={label == null
-                    ? t("metadata.deadline")
-                    : `${t("metadata.deadline")}, ${label}`}
+                  aria-label={label == null ? tooltip : `${tooltip}, ${label}`}
                 >
                   {icon}
-                  {label && (
-                    <Text size={1} color="current">
-                      <time dateTime={deadline ?? undefined}>
-                        {label}
-                      </time>
+                  {shown != null && (
+                    <Text size={size} color={label == null ? "faint" : "current"}>
+                      {label == null
+                        ? shown
+                        : (
+                            <time dateTime={deadline ?? undefined}>
+                              {shown}
+                            </time>
+                          )}
                     </Text>
                   )}
                 </button>
@@ -120,7 +132,7 @@ export function TaskListItemDeadline({
             />
           )}
         />
-        <TooltipPopup>{t("metadata.deadline")}</TooltipPopup>
+        <TooltipPopup>{tooltip}</TooltipPopup>
       </Tooltip>
       <DropdownPopup size={1} align="end">
         <TaskDeadlineMenu

@@ -2,16 +2,12 @@
   "detailsPage": {
     "notFound": "Task not found",
     "empty": "—",
-    "none": "None",
-    "searchInternalControls": "Search internal controls",
-    "noInternalControls": "No internal controls",
     "noDescription": "No description",
     "unassigned": "Not assigned",
     "assigneeMenu": {
       "searchPlaceholder": "Search by name or email",
       "empty": "No users"
     },
-    "overdue": "Overdue",
     "fields": {
       "name": "Name",
       "description": "Description",
@@ -19,7 +15,6 @@
       "priority": "Priority",
       "assignedTo": "Assigned to",
       "linear": "Linear",
-      "internalControls": "Internal controls",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
       "deadline": "Deadline",
@@ -62,8 +57,6 @@
       "clearRecurrence": "Clear interval",
       "delete": "Delete",
       "cancel": "Cancel",
-      "more": "More actions",
-      "loadMoreInternalControls": "Load more",
       "retry": "Retry"
     },
     "delete": {

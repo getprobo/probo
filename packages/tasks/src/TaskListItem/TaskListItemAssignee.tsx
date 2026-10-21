@@ -26,11 +26,13 @@ import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
 import { TooltipPopup } from "@probo/ui/src/v2/Tooltip/TooltipPopup";
 import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
+import { Text } from "@probo/ui/src/v2/typography/Text";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "../i18n";
+import { taskListItem } from "../variants";
 
 import { isNestedMenuDismiss } from "./isNestedMenuDismiss";
 import type { TaskListItemAssignee as Assignee } from "./TaskListItem";
@@ -39,22 +41,29 @@ export function TaskListItemAssignee({
   assignee,
   canUpdate,
   isUpdating,
+  showLabel = false,
+  placeholder,
   className,
   renderAssigneeMenu,
 }: {
   assignee?: Assignee | null;
   canUpdate: boolean;
   isUpdating?: boolean;
+  showLabel?: boolean;
+  placeholder?: string;
   className: string;
   renderAssigneeMenu?: () => ReactNode;
 }): ReactNode {
   const { t } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
-  const label = assignee?.fullName ?? t("unassigned");
+  const slots = taskListItem({ field: showLabel });
+  const name = assignee?.fullName ?? null;
+  const label = name ?? (showLabel ? placeholder : null) ?? t("unassigned");
+  const tooltip = showLabel && placeholder != null ? placeholder : label;
   const avatar = assignee == null
     ? (
         <UserCircleDashedIcon
-          className="size-6 shrink-0 text-sand-8"
+          className={showLabel ? slots.assigneeIcon() : "size-6 shrink-0 text-sand-8"}
           aria-hidden
         />
       )
@@ -62,11 +71,20 @@ export function TaskListItemAssignee({
         <Avatar
           size={1}
           radius="full"
+          className={showLabel ? slots.assigneeAvatar() : undefined}
           name={assignee.fullName}
           email={assignee.emailAddress}
           src={assignee.avatarUrl}
         />
       );
+  const value = showLabel
+    ? (
+        <span className={slots.stateOption()}>
+          {avatar}
+          <Text size={2} color={name == null ? "faint" : undefined} className={slots.assigneeLabel()}>{label}</Text>
+        </span>
+      )
+    : avatar;
 
   if (canUpdate && renderAssigneeMenu != null) {
     return (
@@ -88,16 +106,18 @@ export function TaskListItemAssignee({
                   render={(
                     <button
                       type="button"
-                      className="appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit"
+                      className={showLabel
+                        ? slots.chipTrigger()
+                        : "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit"}
                       aria-label={label}
                     >
-                      {avatar}
+                      {value}
                     </button>
                   )}
                 />
               )}
             />
-            <TooltipPopup>{label}</TooltipPopup>
+            <TooltipPopup>{tooltip}</TooltipPopup>
           </Tooltip>
           <DropdownPopup size={1} align="end">
             {renderAssigneeMenu()}
@@ -112,11 +132,11 @@ export function TaskListItemAssignee({
       <TooltipTrigger
         render={(
           <span className={className} aria-label={label}>
-            {avatar}
+            {value}
           </span>
         )}
       />
-      <TooltipPopup>{label}</TooltipPopup>
+      <TooltipPopup>{tooltip}</TooltipPopup>
     </Tooltip>
   );
 }

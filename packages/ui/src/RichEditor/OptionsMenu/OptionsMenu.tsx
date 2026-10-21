@@ -32,9 +32,10 @@ export type OptionsMenuFloating = {
 
 type OptionsMenuProps = {
   editor: Editor;
+  compact?: boolean;
 };
 
-export function OptionsMenu({ editor }: OptionsMenuProps) {
+export function OptionsMenu({ editor, compact = false }: OptionsMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [triggerEl, setTriggerEl] = useState<Element | null>(null);
   const [dropdownEl, setDropdownEl] = useState<HTMLElement | null>(null);
@@ -67,6 +68,7 @@ export function OptionsMenu({ editor }: OptionsMenuProps) {
     <>
       <OptionsMenuTrigger
         editor={editor}
+        compact={compact}
         hoveredBlock={hoveredBlock}
         setHoveredBlock={setHoveredBlock}
         setTriggerEl={setTriggerEl}

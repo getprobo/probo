@@ -18,9 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ComboboxPaged } from "@probo/ui/src/v2/Combobox/ComboboxPaged";
-import { type ReactNode, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useRef, useState } from "react";
 import { fetchQuery, useRelayEnvironment } from "react-relay";
 import type { GraphQLTaggedNode } from "relay-runtime";
 
@@ -34,53 +32,22 @@ interface PageResult<TItem> {
   endCursor: string | null;
 }
 
-export interface RemoteComboboxProps<TQuery extends { response: unknown; variables: object }, TItem> {
-  query: GraphQLTaggedNode;
-  variables: (after: string | null, query: string) => TQuery["variables"];
-  readPage: (data: TQuery["response"]) => PageResult<TItem>;
-  reloadKey: string;
-  selectedId: string | null;
-  selectedLabel: string;
-  ariaLabel: string;
-  placeholder: string;
-  emptyLabel: string;
-  enabled?: boolean;
-  disabled?: boolean;
-  pinned?: {
-    id: string;
-    label: string;
-  };
-  onSelect: (item: TItem) => void;
-  onPinnedSelect?: () => void;
-  onFirstItem?: (item: TItem) => void;
-  itemId: (item: TItem) => string;
-  itemLabel: (item: TItem) => string;
-  itemLeading?: (item: TItem) => ReactNode;
-  pinnedLeading?: ReactNode;
-}
-
-export function RemoteCombobox<TQuery extends { response: unknown; variables: object }, TItem>({
+export function useComboboxPage<
+  TQuery extends { response: unknown; variables: object },
+  TItem,
+>({
   query,
   variables,
   readPage,
   reloadKey,
-  selectedId,
-  selectedLabel,
-  ariaLabel,
-  placeholder,
-  emptyLabel,
   enabled = true,
-  disabled,
-  pinned,
-  onSelect,
-  onPinnedSelect,
-  onFirstItem,
-  itemId,
-  itemLabel,
-  itemLeading,
-  pinnedLeading,
-}: RemoteComboboxProps<TQuery, TItem>) {
-  const { t } = useTranslation("organizations/tasks");
+}: {
+  query: GraphQLTaggedNode;
+  variables: (after: string | null, query: string) => TQuery["variables"];
+  readPage: (data: TQuery["response"]) => PageResult<TItem>;
+  reloadKey: string;
+  enabled?: boolean;
+}) {
   const environment = useRelayEnvironment();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useDebounced(search, searchDebounceMs);
@@ -92,7 +59,6 @@ export function RemoteCombobox<TQuery extends { response: unknown; variables: ob
   const [failedId, setFailedId] = useState<number | null>(null);
   const variablesRef = useRef(variables);
   const readPageRef = useRef(readPage);
-  const onFirstItemRef = useRef(onFirstItem);
   const [scope, setScope] = useState(reloadKey);
   const [searchScope, setSearchScope] = useState(debouncedSearch);
   const loading = enabled && settledId !== request.id;
@@ -118,7 +84,6 @@ export function RemoteCombobox<TQuery extends { response: unknown; variables: ob
   useEffect(() => {
     variablesRef.current = variables;
     readPageRef.current = readPage;
-    onFirstItemRef.current = onFirstItem;
   });
 
   useEffect(() => {
@@ -145,9 +110,6 @@ export function RemoteCombobox<TQuery extends { response: unknown; variables: ob
         setEndCursor(page.endCursor);
         setFailedId(null);
         setSettledId(id);
-        if (!append && debouncedSearch === "" && page.items[0] != null) {
-          onFirstItemRef.current?.(page.items[0]);
-        }
       },
       error: () => {
         if (!active) {
@@ -165,41 +127,25 @@ export function RemoteCombobox<TQuery extends { response: unknown; variables: ob
     };
   }, [debouncedSearch, enabled, environment, query, reloadKey, request]);
 
-  return (
-    <ComboboxPaged
-      items={items}
-      loading={loading}
-      failed={failed}
-      query={search}
-      onQueryChange={setSearch}
-      hasNext={hasNext}
-      onLoadMore={() => {
-        if (endCursor == null || loading) {
-          return;
-        }
+  function onLoadMore() {
+    if (endCursor == null || loading) {
+      return;
+    }
 
-        setRequest(current => ({
-          after: endCursor,
-          append: true,
-          id: current.id + 1,
-        }));
-      }}
-      selectedId={selectedId}
-      selectedLabel={selectedLabel}
-      ariaLabel={ariaLabel}
-      placeholder={placeholder}
-      emptyLabel={emptyLabel}
-      errorLabel={t("detailsPage.linear.errors.load")}
-      loadMoreLabel={t("detailsPage.linear.loadMore")}
-      disabled={disabled}
-      pinned={pinned == null
-        ? undefined
-        : { id: pinned.id, label: pinned.label, leading: pinnedLeading }}
-      onPinnedSelect={onPinnedSelect}
-      onSelect={onSelect}
-      itemId={itemId}
-      itemLabel={itemLabel}
-      itemLeading={itemLeading}
-    />
-  );
+    setRequest(current => ({
+      after: endCursor,
+      append: true,
+      id: current.id + 1,
+    }));
+  }
+
+  return {
+    items,
+    loading,
+    failed,
+    query: search,
+    onQueryChange: setSearch,
+    hasNext,
+    onLoadMore,
+  };
 }

@@ -80,6 +80,9 @@ export const taskListItem = tv({
     more: "relative z-1 flex h-6 shrink-0 items-center",
     trailing: "relative z-1 flex h-6 shrink-0 items-center gap-2",
     assignee: "relative z-1 flex h-6 shrink-0 items-center",
+    assigneeLabel: "min-w-0 truncate",
+    assigneeIcon: "size-4 shrink-0 text-sand-8",
+    assigneeAvatar: "!size-4",
     state: "relative z-1 flex h-6 shrink-0 items-center",
     stateOption: "flex items-center gap-2",
   },
@@ -95,10 +98,19 @@ export const taskListItem = tv({
       dragging: { root: "cursor-grabbing opacity-40 select-none" },
       ghost: { root: "bg-sand-3 opacity-50 select-none" },
     },
+    field: {
+      true: {
+        chipTrigger: "rounded-2 !px-1.5 !py-0.5 hover:bg-sand-3",
+        meta: "!h-auto !gap-2 [&_svg]:!size-4",
+        deadline: "!h-auto !gap-2 !text-sand-11 [&_svg]:!size-4",
+      },
+      false: {},
+    },
   },
   defaultVariants: {
     linked: true,
     interaction: "idle",
+    field: false,
   },
 });
 
@@ -109,8 +121,9 @@ export const taskDetails = tv({
     titleRow: "flex flex-wrap items-start justify-between gap-3",
     title: "flex min-w-0 flex-1 items-center gap-2",
     actions: "flex shrink-0 flex-wrap items-center gap-2",
-    body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]",
+    body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
     main: "flex min-w-0 flex-col gap-6",
+    editorCard: "border-0 bg-sand-1 !py-2 !pl-0 shadow-1",
   },
 });
 
@@ -126,19 +139,10 @@ export const taskNameField = tv({
 
 export const taskProperties = tv({
   slots: {
-    root: "flex flex-col",
-    row: "grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 border-b border-sand-6 py-2.5 last:border-b-0",
-    label: "",
-    value: "flex min-w-0 items-center gap-2",
-  },
-  variants: {
-    align: {
-      center: { row: "items-center" },
-      start: { row: "items-start", label: "pt-1" },
-    },
-  },
-  defaultVariants: {
-    align: "center",
+    root: "flex flex-col items-start gap-3",
+    recurrence: "inline-flex min-w-0 items-center gap-2",
+    recurrenceIcon: "size-4 shrink-0 text-indigo-11",
+    recurrenceField: "min-w-0 flex-1",
   },
 });
 

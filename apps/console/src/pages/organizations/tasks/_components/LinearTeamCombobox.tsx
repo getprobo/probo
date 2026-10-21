@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 import { UsersIcon } from "@phosphor-icons/react";
+import { ComboboxPaged } from "@probo/ui/src/v2/Combobox/ComboboxPaged";
 import { useTranslation } from "react-i18next";
 import { graphql } from "react-relay";
 
@@ -26,8 +27,7 @@ import type { LinearTeamComboboxQuery } from "#/__generated__/core/LinearTeamCom
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { linearTeamLabel } from "../_lib/linearTeamLabel";
-
-import { RemoteCombobox } from "./RemoteCombobox";
+import { useComboboxPage } from "../_lib/useComboboxPage";
 
 const PAGE_SIZE = 20;
 const NO_TEAM_ID = "__none__";
@@ -94,31 +94,42 @@ export function LinearTeamCombobox({
   const displayLabel = selectedId == null && showNone && noneLabel != null
     ? noneLabel
     : selectedLabel;
+  const page = useComboboxPage<LinearTeamComboboxQuery, LinearTeamOption>({
+    query: teamPageQuery,
+    variables: (after, query) => ({
+      organizationId,
+      first: PAGE_SIZE,
+      after,
+      query: query || null,
+    }),
+    readPage: (data) => {
+      const organization = data.node?.__typename === "Organization" ? data.node : null;
+      const teams = organization?.linearTeams;
+      return {
+        items: teams?.edges.map(edge => edge.node) ?? [],
+        hasNextPage: teams?.pageInfo.hasNextPage ?? false,
+        endCursor: teams?.pageInfo.endCursor ?? null,
+      };
+    },
+    reloadKey: organizationId,
+  });
 
   return (
-    <RemoteCombobox<LinearTeamComboboxQuery, LinearTeamOption>
-      query={teamPageQuery}
-      variables={(after, query) => ({
-        organizationId,
-        first: PAGE_SIZE,
-        after,
-        query: query || null,
-      })}
-      readPage={(data) => {
-        const organization = data.node?.__typename === "Organization" ? data.node : null;
-        const page = organization?.linearTeams;
-        return {
-          items: page?.edges.map(edge => edge.node) ?? [],
-          hasNextPage: page?.pageInfo.hasNextPage ?? false,
-          endCursor: page?.pageInfo.endCursor ?? null,
-        };
-      }}
-      reloadKey={organizationId}
+    <ComboboxPaged
+      items={page.items}
+      loading={page.loading}
+      failed={page.failed}
+      query={page.query}
+      onQueryChange={page.onQueryChange}
+      hasNext={page.hasNext}
+      onLoadMore={page.onLoadMore}
       selectedId={displayId}
       selectedLabel={displayLabel}
       ariaLabel={ariaLabel}
       placeholder={placeholder}
       emptyLabel={t("detailsPage.linear.noResults")}
+      errorLabel={t("detailsPage.linear.errors.load")}
+      loadMoreLabel={t("detailsPage.linear.loadMore")}
       disabled={disabled}
       pinned={noneLabel != null && onClear != null
         ? { id: NO_TEAM_ID, label: noneLabel }

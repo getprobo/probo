@@ -18,17 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {
-  DotsThreeVerticalIcon,
-  TrashIcon,
-} from "@phosphor-icons/react";
+import { TrashIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
-import { isOverdueTask, TaskDetails } from "@probo/tasks";
-import { Dropdown } from "@probo/ui/src/v2/Dropdown/Dropdown";
-import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
-import { DropdownPopup } from "@probo/ui/src/v2/Dropdown/DropdownPopup";
-import { DropdownTrigger } from "@probo/ui/src/v2/Dropdown/DropdownTrigger";
-import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
+import { TaskDetails } from "@probo/tasks";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -54,8 +47,6 @@ import { taskListPath } from "./_lib/taskPath";
 export const taskDetailsPageFragment = graphql`
   fragment TaskDetailsPage_task on Task {
     name
-    state
-    deadline
     canDelete: permission(action: "core:task:delete")
     organization {
       id
@@ -107,31 +98,14 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
     <>
       <TaskDetails
         name={<TaskNameField taskKey={task} />}
-        overdue={isOverdueTask(task.deadline, task.state)}
         actions={task.canDelete
           ? (
-              <Dropdown>
-                <DropdownTrigger
-                  render={(
-                    <IconButton
-                      variant="soft"
-                      color="neutral"
-                      aria-label={t("detailsPage.actions.more")}
-                    >
-                      <DotsThreeVerticalIcon />
-                    </IconButton>
-                  )}
-                />
-                <DropdownPopup align="end">
-                  <DropdownItem
-                    color="error"
-                    iconStart={<TrashIcon />}
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    {t("detailsPage.actions.delete")}
-                  </DropdownItem>
-                </DropdownPopup>
-              </Dropdown>
+              <Button
+                iconStart={<TrashIcon />}
+                onClick={() => setDeleteOpen(true)}
+              >
+                {t("detailsPage.actions.delete")}
+              </Button>
             )
           : undefined}
         description={<TaskDescriptionSection taskKey={task} />}
