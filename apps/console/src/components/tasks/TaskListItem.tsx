@@ -71,7 +71,6 @@ const taskListItemFragment = graphql`
         downloadUrl
       }
     }
-    ...TaskDeleteDialog_task
     ...TaskListLinearDialog_task
     ...TaskListLinearMenu_task
   }
@@ -367,7 +366,7 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
       )}
       {canDelete && (
         <TaskDeleteDialog
-          taskKey={task}
+          taskId={task.id}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
         />

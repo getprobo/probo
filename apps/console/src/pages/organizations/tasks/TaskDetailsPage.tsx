@@ -49,6 +49,7 @@ import { taskListPath } from "./_lib/taskPath";
 
 export const taskDetailsPageFragment = graphql`
   fragment TaskDetailsPage_task on Task {
+    id
     name
     canDelete: permission(action: "core:task:delete")
     organization {
@@ -60,7 +61,6 @@ export const taskDetailsPageFragment = graphql`
     ...TaskPropertiesSection_task
     ...TaskInternalControlsSection_task
     ...TaskLinearField_task
-    ...TaskDeleteDialog_task
   }
 `;
 
@@ -139,7 +139,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
       />
       {task.canDelete && (
         <TaskDeleteDialog
-          taskKey={task}
+          taskId={task.id}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           onDeleted={() => {

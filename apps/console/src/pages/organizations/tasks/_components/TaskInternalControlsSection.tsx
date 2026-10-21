@@ -25,11 +25,14 @@ import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, usePaginationFragment } from "react-relay";
+import { graphql, useFragment, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 
 import type { TaskInternalControlsSection_task$key } from "#/__generated__/core/TaskInternalControlsSection_task.graphql";
-import type { TaskInternalControlsSectionQuery } from "#/__generated__/core/TaskInternalControlsSectionQuery.graphql";
+import type { TaskInternalControlsSectionList_task$key } from "#/__generated__/core/TaskInternalControlsSectionList_task.graphql";
+import type { TaskInternalControlsSectionListQuery } from "#/__generated__/core/TaskInternalControlsSectionListQuery.graphql";
+import type { TaskInternalControlsSectionListRefetchQuery } from "#/__generated__/core/TaskInternalControlsSectionListRefetchQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { useUpdateTask } from "../_lib/useUpdateTask";
@@ -40,14 +43,33 @@ import { InternalControlCombobox } from "./InternalControlCombobox";
 const taskInternalControlsPageSize = 50;
 
 const taskInternalControlsSectionFragment = graphql`
-  fragment TaskInternalControlsSection_task on Task
-  @refetchable(queryName: "TaskInternalControlsSectionQuery")
+  fragment TaskInternalControlsSection_task on Task {
+    id
+    canListInternalControls: permission(action: "core:internal-control:list")
+  }
+`;
+
+const taskInternalControlsListQuery = graphql`
+  query TaskInternalControlsSectionListQuery($taskId: ID!) {
+    node(id: $taskId) {
+      __typename
+      ... on Task {
+        ...TaskInternalControlsSectionList_task
+      }
+    }
+  }
+`;
+
+const taskInternalControlsListFragment = graphql`
+  fragment TaskInternalControlsSectionList_task on Task
+  @refetchable(queryName: "TaskInternalControlsSectionListRefetchQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
     after: { type: "CursorKey" }
   ) {
     id
     canUpdate: permission(action: "core:task:update")
+    canAssign: permission(action: "core:task:assign")
     internalControls(first: $first, after: $after)
       @connection(key: "useTaskInternalControlIds_internalControls") {
       edges {
@@ -67,6 +89,36 @@ interface TaskInternalControlsSectionProps {
 export function TaskInternalControlsSection({
   taskKey,
 }: TaskInternalControlsSectionProps) {
+  const task = useFragment(taskInternalControlsSectionFragment, taskKey);
+  if (!task.canListInternalControls) {
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <TaskInternalControlsLoaded taskId={task.id} />
+    </Suspense>
+  );
+}
+
+function TaskInternalControlsLoaded({ taskId }: { taskId: string }) {
+  const data = useLazyLoadQuery<TaskInternalControlsSectionListQuery>(
+    taskInternalControlsListQuery,
+    { taskId },
+  );
+  const taskKey = data.node?.__typename === "Task" ? data.node : null;
+  if (taskKey == null) {
+    return null;
+  }
+
+  return <TaskInternalControlsList taskKey={taskKey} />;
+}
+
+function TaskInternalControlsList({
+  taskKey,
+}: {
+  taskKey: TaskInternalControlsSectionList_task$key;
+}) {
   const { t } = useTranslation("organizations/tasks");
   const organizationId = useOrganizationId();
   const {
@@ -75,10 +127,11 @@ export function TaskInternalControlsSection({
     hasNext,
     isLoadingNext,
   } = usePaginationFragment<
-    TaskInternalControlsSectionQuery,
-    TaskInternalControlsSection_task$key
-  >(taskInternalControlsSectionFragment, taskKey);
+    TaskInternalControlsSectionListRefetchQuery,
+    TaskInternalControlsSectionList_task$key
+  >(taskInternalControlsListFragment, taskKey);
   const [updateTask, isUpdating] = useUpdateTask();
+  const canLink = task.canUpdate && task.canAssign;
   const { root, names, name, control } = taskInternalControls();
   const internalControls = task.internalControls.edges.map(edge => edge.node);
   const linkedIds = new Set(internalControls.map(internalControl => internalControl.id));
@@ -116,7 +169,7 @@ export function TaskInternalControlsSection({
                   >
                     {internalControl.name}
                   </Link>
-                  {task.canUpdate && (
+                  {canLink && (
                     <IconButton
                       size={1}
                       variant="ghost"
@@ -150,7 +203,7 @@ export function TaskInternalControlsSection({
               {t("detailsPage.actions.loadMoreInternalControls")}
             </Button>
           )}
-          {task.canUpdate && (
+          {canLink && (
             <InternalControlCombobox
               excludeIds={linkedIds}
               disabled={isUpdating || linksIncomplete}

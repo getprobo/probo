@@ -27,36 +27,94 @@ import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
 import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useLazyLoadQuery } from "react-relay";
 
-import type { TaskDeleteDialog_task$key } from "#/__generated__/core/TaskDeleteDialog_task.graphql";
+import type { TaskDeleteDialogQuery } from "#/__generated__/core/TaskDeleteDialogQuery.graphql";
 
 import { useDeleteTask } from "../_lib/useDeleteTask";
 import { useTaskInternalControlIds } from "../_lib/useTaskInternalControlIds";
 
-const taskDeleteDialogFragment = graphql`
-  fragment TaskDeleteDialog_task on Task {
-    ...useTaskInternalControlIds_task
+const taskDeleteDialogQuery = graphql`
+  query TaskDeleteDialogQuery($taskId: ID!) {
+    node(id: $taskId) {
+      __typename
+      ... on Task {
+        ...useTaskInternalControlIds_task
+      }
+    }
   }
 `;
 
 interface TaskDeleteDialogProps {
-  taskKey: TaskDeleteDialog_task$key;
+  taskId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted?: () => void;
 }
 
 export function TaskDeleteDialog({
-  taskKey,
+  taskId,
   open,
   onOpenChange,
   onDeleted,
 }: TaskDeleteDialogProps) {
-  const { t } = useTranslation("organizations/tasks");
-  const task = useFragment(taskDeleteDialogFragment, taskKey);
-  const { taskId, ids, pending, failed, retry } = useTaskInternalControlIds(task);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && (
+        <Suspense fallback={<TaskDeleteDialogFallback />}>
+          <TaskDeleteDialogLoaded
+            taskId={taskId}
+            onOpenChange={onOpenChange}
+            onDeleted={onDeleted}
+          />
+        </Suspense>
+      )}
+    </Dialog>
+  );
+}
+
+function TaskDeleteDialogLoaded({
+  taskId,
+  onOpenChange,
+  onDeleted,
+}: Omit<TaskDeleteDialogProps, "open">) {
+  const data = useLazyLoadQuery<TaskDeleteDialogQuery>(
+    taskDeleteDialogQuery,
+    { taskId },
+  );
+  const task = data.node?.__typename === "Task" ? data.node : null;
+  if (task == null) {
+    return (
+      <TaskDeleteDialogBody
+        failed
+        pending={false}
+        deleting={false}
+        onDelete={() => {}}
+      />
+    );
+  }
+
+  return (
+    <TaskDeleteDialogReady
+      taskKey={task}
+      onOpenChange={onOpenChange}
+      onDeleted={onDeleted}
+    />
+  );
+}
+
+function TaskDeleteDialogReady({
+  taskKey,
+  onOpenChange,
+  onDeleted,
+}: {
+  taskKey: Parameters<typeof useTaskInternalControlIds>[0];
+  onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
+}) {
+  const { taskId, ids, pending, failed, retry } = useTaskInternalControlIds(taskKey);
   const [deleteTask, isDeleting] = useDeleteTask();
 
   function handleDelete() {
@@ -76,42 +134,77 @@ export function TaskDeleteDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup>
-        <DialogHeader>
-          <DialogTitle>{t("detailsPage.delete.title")}</DialogTitle>
-          <DialogDescription>
-            {failed
-              ? t("detailsPage.delete.loadError")
-              : t("detailsPage.delete.description")}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose
-            render={(
-              <Button variant="soft" color="neutral">
-                {t("detailsPage.actions.cancel")}
-              </Button>
-            )}
-          />
-          {failed && (
-            <Button type="button" variant="soft" color="neutral" onClick={retry}>
-              {t("detailsPage.actions.retry")}
+    <TaskDeleteDialogBody
+      failed={failed}
+      pending={pending}
+      deleting={isDeleting}
+      onRetry={retry}
+      onDelete={handleDelete}
+    />
+  );
+}
+
+function TaskDeleteDialogFallback() {
+  return (
+    <TaskDeleteDialogBody
+      failed={false}
+      pending
+      deleting={false}
+      onDelete={() => {}}
+    />
+  );
+}
+
+function TaskDeleteDialogBody({
+  failed,
+  pending,
+  deleting,
+  onRetry,
+  onDelete,
+}: {
+  failed: boolean;
+  pending: boolean;
+  deleting: boolean;
+  onRetry?: () => void;
+  onDelete: () => void;
+}) {
+  const { t } = useTranslation("organizations/tasks");
+
+  return (
+    <DialogPopup>
+      <DialogHeader>
+        <DialogTitle>{t("detailsPage.delete.title")}</DialogTitle>
+        <DialogDescription>
+          {failed
+            ? t("detailsPage.delete.loadError")
+            : t("detailsPage.delete.description")}
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <DialogClose
+          render={(
+            <Button variant="soft" color="neutral">
+              {t("detailsPage.actions.cancel")}
             </Button>
           )}
-          <Button
-            type="button"
-            variant="solid"
-            color="red"
-            iconStart={<TrashIcon />}
-            disabled={failed}
-            loading={isDeleting || pending}
-            onClick={handleDelete}
-          >
-            {t("detailsPage.delete.confirm")}
+        />
+        {failed && onRetry != null && (
+          <Button type="button" variant="soft" color="neutral" onClick={onRetry}>
+            {t("detailsPage.actions.retry")}
           </Button>
-        </DialogFooter>
-      </DialogPopup>
-    </Dialog>
+        )}
+        <Button
+          type="button"
+          variant="solid"
+          color="red"
+          iconStart={<TrashIcon />}
+          disabled={failed}
+          loading={deleting || pending}
+          onClick={onDelete}
+        >
+          {t("detailsPage.delete.confirm")}
+        </Button>
+      </DialogFooter>
+    </DialogPopup>
   );
 }
