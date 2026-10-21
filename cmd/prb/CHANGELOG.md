@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.255.0] - 2026-10-21
+
+### Removed
+
+- `tracker-pattern create` no longer takes `--display-name`, and
+  `tracker-pattern list` drops the `DISPLAY NAME` column; the pattern is
+  shown as the name
+
 ### Fixed
 
 - `evidence view` requests `fileName` and `mimeType` on File so the
