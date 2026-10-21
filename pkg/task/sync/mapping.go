@@ -402,6 +402,17 @@ func dropUnsupportedLinearContent(n prosemirror.Node) prosemirror.Node {
 }
 
 func pruneLinearNode(n prosemirror.Node) *prosemirror.Node {
+	if n.Type == prosemirror.NodeMention {
+		attrs, err := n.MentionAttrs()
+		if err != nil {
+			return nil
+		}
+
+		text := "@" + attrs.Label
+
+		return &prosemirror.Node{Type: prosemirror.NodeText, Text: &text}
+	}
+
 	next := n
 	next.Content = nil
 

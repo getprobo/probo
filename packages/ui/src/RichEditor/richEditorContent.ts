@@ -21,6 +21,7 @@
 type JSONContent = {
   type?: string;
   text?: string;
+  attrs?: { label?: unknown };
   content?: JSONContent[];
 };
 
@@ -41,6 +42,10 @@ function isDocContent(value: unknown): value is JSONContent {
 }
 
 function jsonContentHasText(node: JSONContent): boolean {
+  if (node.type === "mention") {
+    return true;
+  }
+
   if (typeof node.text === "string" && node.text.trim().length > 0) {
     return true;
   }
@@ -131,6 +136,10 @@ export function richEditorContentTextLength(content: string): number {
 function collectPlainText(node: JSONContent): string {
   if (node.type === "text") {
     return node.text ?? "";
+  }
+
+  if (node.type === "mention") {
+    return typeof node.attrs?.label === "string" ? `@${node.attrs.label}` : "";
   }
 
   if (node.type === "hardBreak" || node.type === "horizontalRule") {

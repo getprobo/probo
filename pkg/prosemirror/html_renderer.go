@@ -116,6 +116,18 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		buf.WriteString("<hr>")
 	case NodeHardBreak:
 		buf.WriteString("<br>")
+	case NodeMention:
+		attrs, err := n.MentionAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render mention node: %w", err)
+		}
+
+		buf.WriteString(`<span class="mention" data-type="mention"`)
+		writeAttr(buf, "data-id", attrs.ID)
+		writeAttr(buf, "data-label", attrs.Label)
+		buf.WriteByte('>')
+		buf.WriteString(html.EscapeString("@" + attrs.Label))
+		buf.WriteString("</span>")
 	case NodeText:
 		return renderText(buf, n)
 	case NodeImage:

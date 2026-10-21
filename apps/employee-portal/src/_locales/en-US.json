@@ -5,7 +5,8 @@
     "empty": "No notifications",
     "documentSignatureRequested": "{{title}} is ready for your signature",
     "documentApprovalRequested": "{{title}} is waiting for your approval",
-    "taskAssigned": "You were assigned {{title}}"
+    "taskAssigned": "You were assigned {{title}}",
+    "taskMentioned": "You were mentioned in {{title}}"
   },
   "topBar": {
     "tagline": "Employee Portal"

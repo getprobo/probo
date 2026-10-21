@@ -51,7 +51,7 @@ func Insert(
 		return fmt.Errorf("cannot insert notification: invalid type %q", req.Type)
 	}
 
-	attributes, err := json.Marshal(coredataNotificationAttributes(req.Title))
+	attributes, err := json.Marshal(notificationAttributes{Title: req.Title})
 	if err != nil {
 		return fmt.Errorf("cannot encode notification attributes: %w", err)
 	}
@@ -107,12 +107,108 @@ func InsertTaskAssignment(
 	return nil
 }
 
+// InsertTaskMentions notifies each mentioned profile that belongs to the
+// organization, is not deactivated, and can read the task. The actor is
+// never notified.
+//
+// EMPLOYEE members can only read tasks assigned to them (see
+// pkg/task/policies.go's EmployeePolicy); mentioning an EMPLOYEE who is not
+// the task's assignee would otherwise surface the task's name in their
+// inbox for a task they cannot open, so that case is skipped here.
+// Every other role (OWNER, ADMIN, VIEWER) can read any task in the
+// organization and is notified unconditionally.
+func InsertTaskMentions(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	taskID gid.GID,
+	taskName string,
+	assignedToID *gid.GID,
+	mentionedIDs []gid.GID,
+	actorProfileID *gid.GID,
+) error {
+	recipientIDs := make([]gid.GID, 0, len(mentionedIDs))
+	for _, id := range mentionedIDs {
+		if actorProfileID != nil && *actorProfileID == id {
+			continue
+		}
+
+		recipientIDs = append(recipientIDs, id)
+	}
+
+	if len(recipientIDs) == 0 {
+		return nil
+	}
+
+	var profiles coredata.MembershipProfiles
+	if err := profiles.LoadExistingByIDs(ctx, tx, scope, recipientIDs); err != nil {
+		return fmt.Errorf("cannot load mentioned profiles: %w", err)
+	}
+
+	for _, profile := range profiles {
+		if profile.OrganizationID != organizationID || profile.State == coredata.ProfileStateDeactivated {
+			continue
+		}
+
+		canRead, err := canReadTask(ctx, tx, scope, profile, assignedToID)
+		if err != nil {
+			return fmt.Errorf("cannot check task read access for mentioned profile: %w", err)
+		}
+
+		if !canRead {
+			continue
+		}
+
+		if err := Insert(
+			ctx,
+			tx,
+			scope,
+			InsertRequest{
+				OrganizationID:     organizationID,
+				RecipientProfileID: profile.ID,
+				Type:               coredata.NotificationTypeTaskMentioned,
+				SubjectID:          taskID,
+				Title:              taskName,
+			},
+		); err != nil {
+			return fmt.Errorf("cannot insert task mention notification: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// canReadTask reports whether the given profile's membership role can read
+// the task, mirroring pkg/task/policies.go: EMPLOYEE is limited to its
+// assigned task, every other role reads any task in its organization.
+func canReadTask(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	profile *coredata.MembershipProfile,
+	assignedToID *gid.GID,
+) (bool, error) {
+	membership := &coredata.Membership{}
+	if err := membership.LoadByIdentityIDAndOrganizationID(
+		ctx,
+		tx,
+		scope,
+		profile.IdentityID,
+		profile.OrganizationID,
+	); err != nil {
+		return false, fmt.Errorf("cannot load membership: %w", err)
+	}
+
+	if membership.Role != coredata.MembershipRoleEmployee {
+		return true, nil
+	}
+
+	return assignedToID != nil && *assignedToID == profile.ID, nil
+}
+
 type (
-	titleAttributes struct {
+	notificationAttributes struct {
 		Title string `json:"title"`
 	}
 )
-
-func coredataNotificationAttributes(title string) titleAttributes {
-	return titleAttributes{Title: title}
-}

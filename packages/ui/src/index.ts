@@ -124,6 +124,7 @@ export { EditableRow } from "./Molecules/Table/EditableRow";
 
 // Rich editor. Automerge modules stay off this barrel: Vite dev evaluates
 // every export, which instantiated that WebAssembly on every console page.
+export type { MentionItem, MentionSource } from "./RichEditor/MentionExtension";
 export { RichEditor } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
 export type { RichEditorHistoryHighlight } from "./RichEditor/historyDecorations";

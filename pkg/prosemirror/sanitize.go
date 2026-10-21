@@ -99,8 +99,11 @@ func SanitizeDocumentJSON(s string) (string, error) {
 }
 
 func sanitizeNode(n *Node) {
-	if n.Type == NodeImage {
+	switch n.Type {
+	case NodeImage:
 		sanitizeImageNode(n)
+	case NodeMention:
+		sanitizeMentionNode(n)
 	}
 
 	for i := range n.Marks {
@@ -140,6 +143,22 @@ func sanitizeImageNode(n *Node) {
 	raw, err := json.Marshal(attrs)
 	if err != nil {
 		n.Attrs = []byte(`{"src":""}`)
+		return
+	}
+
+	n.Attrs = raw
+}
+
+func sanitizeMentionNode(n *Node) {
+	attrs, err := n.MentionAttrs()
+	if err != nil {
+		return
+	}
+
+	attrs.Label = strings.TrimSpace(attrs.Label)
+
+	raw, err := json.Marshal(attrs)
+	if err != nil {
 		return
 	}
 

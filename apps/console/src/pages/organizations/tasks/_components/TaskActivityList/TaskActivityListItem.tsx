@@ -50,6 +50,7 @@ import {
   isRichEditorContentEmpty,
   richEditorContentTextLength,
 } from "#/pages/organizations/_lib/richEditorContent";
+import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers";
 
 import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
 import { useUpdateTaskComment } from "../../_lib/useUpdateTaskComment";
@@ -208,6 +209,7 @@ function CommentStep({
   const [error, setError] = useState<string>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [updateTaskComment, isSaving] = useUpdateTaskComment();
+  const mentionSource = useMentionMembers();
   const [uploading, setUploading] = useState(false);
   const { card, row, body, header, identity, actions, save } = taskActivityComment();
   const name = authorName ?? t("detailsPage.activity.actorFallback");
@@ -322,6 +324,7 @@ function CommentStep({
                 controls={false}
                 disabled={!editing}
                 aria-label={t("detailsPage.comments.fields.comment")}
+                mentionSource={mentionSource}
                 onChangeContent={editing
                   ? (next) => {
                       setDraft(next);

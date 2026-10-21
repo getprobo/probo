@@ -6,7 +6,8 @@
     "empty": "Aucune notification",
     "documentSignatureRequested": "{{title}} est prêt pour votre signature",
     "documentApprovalRequested": "{{title}} attend votre approbation",
-    "taskAssigned": "Vous avez été assigné(e) à {{title}}"
+    "taskAssigned": "Vous avez été assigné(e) à {{title}}",
+    "taskMentioned": "Vous avez été mentionné(e) dans {{title}}"
   },
   "topBar": {
     "tagline": "Portail employé"

@@ -47,6 +47,7 @@ const notificationTypes = [
   "DOCUMENT_SIGNATURE_REQUESTED",
   "DOCUMENT_APPROVAL_REQUESTED",
   "TASK_ASSIGNED",
+  "TASK_MENTIONED",
 ] as const;
 
 const PAGE_SIZE = 10;
@@ -470,7 +471,7 @@ function notificationHref(
   employeePortalId: string | null,
   notification: NotificationNode,
 ): { external: true; href: string } | { external: false; to: string } {
-  if (notification.type === "TASK_ASSIGNED") {
+  if (notification.type === "TASK_ASSIGNED" || notification.type === "TASK_MENTIONED") {
     return {
       external: false,
       to: `/organizations/${organizationId}/governance/tasks/${notification.subjectId}`,
@@ -505,5 +506,7 @@ function notificationMessage(
       return t("notifications.documentApprovalRequested", { title: notification.title });
     case "TASK_ASSIGNED":
       return t("notifications.taskAssigned", { title: notification.title });
+    case "TASK_MENTIONED":
+      return t("notifications.taskMentioned", { title: notification.title });
   }
 }

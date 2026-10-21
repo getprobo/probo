@@ -32,6 +32,10 @@ enum NotificationType
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.NotificationTypeTaskAssigned"
         )
+    TASK_MENTIONED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.NotificationTypeTaskMentioned"
+        )
 }
 
 type Notification implements Node {

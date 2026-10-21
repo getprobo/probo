@@ -743,3 +743,29 @@ func TestRenderMarkdown_TableBlockCellEscapesPipes(t *testing.T) {
 	assert.Contains(t, got, `a \| b`)
 	assert.NotContains(t, got, "<table>")
 }
+
+func TestRenderMarkdown_Mention(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hi "},{"type":"mention","attrs":{"id":"profile_01HQZX","label":"Jane Doe"}}]}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "Hi @Jane Doe\n", got)
+}
+
+func TestRenderMarkdown_MentionEscapesLabel(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"paragraph","content":[{"type":"mention","attrs":{"id":"profile_01HQZX","label":"*Jane* [Doe]"}}]}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, `@\*Jane\* \[Doe\]`+"\n", got)
+}
