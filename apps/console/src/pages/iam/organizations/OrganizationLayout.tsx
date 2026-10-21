@@ -73,6 +73,7 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
     queryRef,
   );
   const [hasDrawer, setDrawer] = useState(false);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
   const drawerContext = useMemo(() => ({ setDrawer }), []);
 
   if (queryRef.variables.organizationId !== routeOrganizationId) {
@@ -92,10 +93,13 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
           <NavSpotlight
             organizationKey={organization}
             slackbotAvailable={slackbotAvailable}
+            open={spotlightOpen}
+            onOpenChange={setSpotlightOpen}
           />
           <NavRail
             organizationKey={organization}
             slackbotAvailable={slackbotAvailable}
+            onOpenSpotlight={() => setSpotlightOpen(true)}
           />
           <NavPanel
             organizationKey={organization}

@@ -48,7 +48,7 @@ export const navRail = tv({
     // inside it, so expanding overlays the panel instead of shoving the page.
     root: "relative w-14 shrink-0",
     rail: [
-      "group absolute inset-y-0 left-0 z-2 flex w-14 flex-col gap-1 overflow-hidden",
+      "group @container absolute inset-y-0 left-0 z-2 flex w-14 flex-col gap-1 overflow-hidden",
       "border-r border-sand-a3 bg-sand-1 p-2",
       "transition-[width,box-shadow,border-color] duration-150 ease-out",
     ],
@@ -74,6 +74,20 @@ export const navRail = tv({
       "group-hover:opacity-100 group-has-focus-visible:opacity-100",
       "group-has-data-popup-open:opacity-100",
     ],
+    // Collapsed, the keycap appears only while Cmd or Ctrl is held.
+    // Deployed, the label fills the row and the keycap sits at its right.
+    spotlight: [
+      "flex w-full cursor-pointer items-center rounded-3 text-sand-11 outline-none transition-colors",
+      "hover:bg-sand-3 hover:text-sand-12",
+      "focus-visible:ring-2 focus-visible:ring-sand-8",
+      "@min-[8rem]:h-10 @min-[8rem]:flex-row @min-[8rem]:justify-start @min-[8rem]:gap-2 @min-[8rem]:py-0",
+    ],
+    spotlightIcon: [
+      "flex shrink-0 items-center justify-center [&_svg]:size-5",
+      "@min-[8rem]:size-10",
+    ],
+    spotlightLabel: "hidden min-w-0 flex-1 truncate text-left @min-[8rem]:block",
+    spotlightHint: "shrink-0 @min-[8rem]:mr-2",
   },
   variants: {
     active: {
@@ -91,9 +105,17 @@ export const navRail = tv({
         ],
       },
     },
+    modifierPressed: {
+      true: { spotlight: "flex-col justify-center gap-1 py-1" },
+      false: {
+        spotlight: "h-10 justify-center py-0",
+        spotlightHint: "hidden @min-[8rem]:block",
+      },
+    },
   },
   defaultVariants: {
     expandable: true,
+    modifierPressed: false,
   },
 });
 

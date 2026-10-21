@@ -42,6 +42,7 @@ import { useActiveNavGroup } from "#/pages/iam/organizations/_lib/useActiveNavGr
 import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { NavRailItem } from "./NavRailItem";
+import { NavSpotlightTrigger } from "./NavSpotlightTrigger";
 import { OrganizationSwitcher } from "./OrganizationSwitcher";
 import { navRail } from "./variants";
 import { ViewerMembershipMenu } from "./ViewerMembershipMenu";
@@ -58,6 +59,7 @@ const navRailFragment = graphql`
 export interface NavRailProps {
   organizationKey: NavRail_organization$key;
   slackbotAvailable: boolean;
+  onOpenSpotlight: () => void;
 }
 
 function isGovernanceVisible(permissions: NavPermissions): boolean {
@@ -268,7 +270,11 @@ function settingsHref(
   return groupHref(organizationId, "settings", "audit-log");
 }
 
-export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
+export function NavRail({
+  organizationKey,
+  slackbotAvailable,
+  onOpenSpotlight,
+}: NavRailProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const organization = useFragment(navRailFragment, organizationKey);
@@ -383,6 +389,7 @@ export function NavRail({ organizationKey, slackbotAvailable }: NavRailProps) {
           )}
         </div>
 
+        <NavSpotlightTrigger onClick={onOpenSpotlight} />
         <NavRailItem
           icon={displayMode === "dark" ? SunIcon : MoonIcon}
           label={

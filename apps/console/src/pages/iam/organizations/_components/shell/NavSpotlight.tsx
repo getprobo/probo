@@ -63,6 +63,8 @@ interface SpotlightDestination {
 export interface NavSpotlightProps {
   organizationKey: NavSpotlight_organization$key;
   slackbotAvailable: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 function isSpotlightShortcut(event: KeyboardEvent): boolean {
@@ -75,7 +77,12 @@ function isSpotlightShortcut(event: KeyboardEvent): boolean {
   return event.metaKey || event.ctrlKey;
 }
 
-export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotlightProps) {
+export function NavSpotlight({
+  organizationKey,
+  slackbotAvailable,
+  open,
+  onOpenChange,
+}: NavSpotlightProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const organizationId = useOrganizationId();
@@ -84,7 +91,6 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
     navPermissionsFragment,
     organization,
   );
-  const [open, setOpen] = useState(false);
   const [queryEmpty, setQueryEmpty] = useState(true);
   const slots = navSpotlight();
 
@@ -109,15 +115,15 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
       }
       event.preventDefault();
       setQueryEmpty(true);
-      setOpen(current => !current);
+      onOpenChange(!open);
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [onOpenChange, open]);
 
-  function onOpenChange(next: boolean) {
-    setOpen(next);
+  function handleOpenChange(next: boolean) {
+    onOpenChange(next);
     if (!next) {
       setQueryEmpty(true);
     }
@@ -128,11 +134,11 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
       return;
     }
     void navigate(destination.to);
-    onOpenChange(false);
+    handleOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogPopup placement="top" lockScroll>
         <DialogTitle className={slots.title()}>{t("nav.spotlight.title")}</DialogTitle>
         <DialogBody>
@@ -143,7 +149,7 @@ export function NavSpotlight({ organizationKey, slackbotAvailable }: NavSpotligh
             itemToStringLabel={destination => `${destination.label} ${destination.groupLabel}`}
             inline
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={handleOpenChange}
             autoHighlight
           >
             <ComboboxInputGroup>
