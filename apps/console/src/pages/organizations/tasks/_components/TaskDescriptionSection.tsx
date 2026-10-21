@@ -71,6 +71,7 @@ function TaskDescriptionSectionContent({
       canUpdate={task.canUpdate}
       ariaLabel={t("detailsPage.fields.description")}
       emptyLabel={t("detailsPage.noDescription")}
+      placeholder={t("detailsPage.fields.descriptionPlaceholder")}
       save={save}
     />
   );

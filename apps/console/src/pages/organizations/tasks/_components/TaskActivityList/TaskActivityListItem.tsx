@@ -18,18 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TrashIcon, UserIcon } from "@phosphor-icons/react";
-import { dateTimeFormat } from "@probo/i18n";
+import { PencilSimpleIcon, TrashIcon, UserIcon } from "@phosphor-icons/react";
+import { relativeDateFormat } from "@probo/i18n";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
+import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { Field } from "@probo/ui/src/v2/form/Field";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { TimelineContent } from "@probo/ui/src/v2/Timeline/TimelineContent";
 import { TimelineItem } from "@probo/ui/src/v2/Timeline/TimelineItem";
 import { TimelineMarker } from "@probo/ui/src/v2/Timeline/TimelineMarker";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type ReactNode, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type {
@@ -37,14 +39,19 @@ import type {
   TaskActivityListItem_activity$key,
 } from "#/__generated__/core/TaskActivityListItem_activity.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
+import {
+  isRichEditorContentEmpty,
+  richEditorContentTextLength,
+} from "#/pages/organizations/_lib/richEditorContent";
 
 import {
   formatTaskActivityValue,
   taskActivitySentenceKey,
 } from "../../_lib/taskActivity";
+import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
+import { useUpdateTaskComment } from "../../_lib/useUpdateTaskComment";
 import { taskActivityComment, taskCommentEditor } from "../../variants";
 import { TaskCommentDeleteDialog } from "../TaskCommentsList/TaskCommentDeleteDialog";
-import { TaskCommentEditor } from "../TaskCommentsList/TaskCommentEditor";
 
 const taskActivityListItemFragment = graphql`
   fragment TaskActivityListItem_activity on TaskActivity {
@@ -61,10 +68,10 @@ const taskActivityListItemFragment = graphql`
       }
     }
     comment {
+      id
       content
       canUpdate: permission(action: "core:task-comment:update")
       canDelete: permission(action: "core:task-comment:delete")
-      ...TaskCommentEditor_taskComment
       ...TaskCommentDeleteDialog_taskComment
     }
   }
@@ -75,9 +82,10 @@ interface TaskActivityListItemProps {
 }
 
 export function TaskActivityListItem({ taskActivityKey }: TaskActivityListItemProps) {
-  const { i18n } = useTranslation("organizations/tasks");
+  const { i18n, t } = useTranslation("organizations/tasks");
   const activity = useFragment(taskActivityListItemFragment, taskActivityKey);
-  const occurredAt = dateTimeFormat(i18n.language, activity.createdAt);
+  const occurredAt = relativeDateFormat(i18n.language, activity.createdAt)
+    || t("detailsPage.activity.justNow");
 
   const actor = (className?: string) => (
     <Avatar
@@ -96,14 +104,15 @@ export function TaskActivityListItem({ taskActivityKey }: TaskActivityListItemPr
   return (
     <TimelineItem
       data-activity={isComment ? "comment" : undefined}
-      className={isComment ? item() : undefined}
+      className={isComment ? item() : "items-center!"}
     >
       {isComment && activity.comment != null
         ? (
             <CommentStep
               actor={actor()}
+              authorName={activity.actor?.fullName}
+              createdAt={activity.createdAt}
               comment={activity.comment}
-              occurredAt={occurredAt}
             />
           )
         : (
@@ -168,7 +177,7 @@ function ActivityStep({
   );
 
   return (
-    <TimelineContent>
+    <TimelineContent className="pt-0!">
       <Text size={1} className="min-w-0 flex-1">
         {sentence}
       </Text>
@@ -181,16 +190,61 @@ function ActivityStep({
 
 function CommentStep({
   actor,
+  authorName,
+  createdAt,
   comment,
-  occurredAt,
 }: {
   actor: ReactNode;
+  authorName: string | null | undefined;
+  createdAt: string;
   comment: NonNullable<TaskActivityListItem_activity$data["comment"]>;
-  occurredAt: string;
 }) {
-  const { t } = useTranslation("organizations/tasks");
+  const { i18n, t } = useTranslation("organizations/tasks");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.content);
+  const [error, setError] = useState<string>();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { card, row, body, header } = taskActivityComment();
+  const [updateTaskComment, isSaving] = useUpdateTaskComment();
+  const { card, row, body, header, identity, actions, save } = taskActivityComment();
+  const name = authorName ?? t("detailsPage.activity.actorFallback");
+  const relativeTime = relativeDateFormat(i18n.language, createdAt)
+    || t("detailsPage.activity.justNow");
+  const showActions = comment.canUpdate || comment.canDelete;
+
+  function startEditing() {
+    setDraft(comment.content);
+    setError(undefined);
+    setEditing(true);
+  }
+
+  async function saveComment() {
+    if (isRichEditorContentEmpty(draft)) {
+      setError(t("detailsPage.comments.errors.contentRequired"));
+      return;
+    }
+
+    if (richEditorContentTextLength(draft) > taskCommentMaxLength) {
+      setError(t("detailsPage.comments.errors.contentTooLong", {
+        max: taskCommentMaxLength,
+      }));
+      return;
+    }
+
+    try {
+      await updateTaskComment({
+        variables: {
+          input: {
+            taskCommentId: comment.id,
+            content: draft,
+          },
+        },
+      });
+      setEditing(false);
+      setError(undefined);
+    } catch {
+      // The mutation already shows an error toast.
+    }
+  }
 
   return (
     <Card variant="soft" padding={1} className={card()}>
@@ -198,29 +252,53 @@ function CommentStep({
         {actor}
         <div className={body()}>
           <div className={header()}>
-            <Text size={1} color="faint">
-              {occurredAt}
-            </Text>
-            {comment.canDelete && (
-              <>
-                <IconButton
-                  variant="ghost"
-                  color="neutral"
-                  aria-label={t("detailsPage.comments.actions.delete")}
-                  onClick={() => {
-                    setDeleteOpen(true);
-                  }}
-                >
-                  <TrashIcon />
-                </IconButton>
-                <TaskCommentDeleteDialog
-                  taskCommentKey={comment}
-                  open={deleteOpen}
-                  onOpenChange={setDeleteOpen}
-                />
-              </>
+            <Trans
+              ns="organizations/tasks"
+              i18nKey="detailsPage.activity.commented"
+              parent="div"
+              className={identity()}
+              values={{ name, time: relativeTime }}
+              components={{
+                name: <Text size={1} weight="medium" className="truncate" />,
+                time: <Text size={1} color="faint" className="shrink-0 whitespace-nowrap" />,
+              }}
+            />
+            {showActions && (
+              <div className={actions()}>
+                {comment.canUpdate && !editing && (
+                  <IconButton
+                    size={1}
+                    variant="ghost"
+                    color="neutral"
+                    aria-label={t("detailsPage.comments.actions.edit")}
+                    onClick={startEditing}
+                  >
+                    <PencilSimpleIcon />
+                  </IconButton>
+                )}
+                {comment.canDelete && (
+                  <IconButton
+                    size={1}
+                    variant="ghost"
+                    color="red"
+                    aria-label={t("detailsPage.comments.actions.delete")}
+                    onClick={() => {
+                      setDeleteOpen(true);
+                    }}
+                  >
+                    <TrashIcon />
+                  </IconButton>
+                )}
+              </div>
             )}
           </div>
+          {comment.canDelete && (
+            <TaskCommentDeleteDialog
+              taskCommentKey={comment}
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+            />
+          )}
           <ErrorBoundary
             fallback={(
               <Text size={2} color="faint">
@@ -228,18 +306,51 @@ function CommentStep({
               </Text>
             )}
           >
-            {comment.canUpdate
-              ? <TaskCommentEditor taskCommentKey={comment} />
-              : (
-                  <RichEditor
-                    className={taskCommentEditor()}
-                    content={comment.content}
-                    controls={false}
-                    disabled
-                    aria-label={t("detailsPage.comments.fields.comment")}
-                  />
-                )}
+            <Field error={editing ? error : undefined}>
+              <RichEditor
+                key={editing ? "edit" : comment.content}
+                className={taskCommentEditor()}
+                content={editing ? draft : comment.content}
+                controls={false}
+                disabled={!editing}
+                aria-label={t("detailsPage.comments.fields.comment")}
+                onChangeContent={editing
+                  ? (next) => {
+                      setDraft(next);
+                      setError(undefined);
+                    }
+                  : undefined}
+              />
+            </Field>
           </ErrorBoundary>
+          {editing && (
+            <div className={save()}>
+              <Button
+                size={1}
+                variant="ghost"
+                color="neutral"
+                disabled={isSaving}
+                onClick={() => {
+                  setEditing(false);
+                  setError(undefined);
+                }}
+              >
+                {t("detailsPage.comments.actions.cancel")}
+              </Button>
+              <Button
+                size={1}
+                variant="solid"
+                color="neutral"
+                highContrast
+                loading={isSaving}
+                onClick={() => {
+                  void saveComment();
+                }}
+              >
+                {t("detailsPage.comments.actions.save")}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Card>

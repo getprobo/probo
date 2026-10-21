@@ -45,6 +45,7 @@ export interface RichDescriptionEditorProps {
   canUpdate: boolean;
   ariaLabel: string;
   emptyLabel: string;
+  placeholder?: string;
   saveDelayMs?: number;
   save: (content: string | null) => Promise<void>;
 }
@@ -54,6 +55,7 @@ export function RichDescriptionEditor({
   canUpdate,
   ariaLabel,
   emptyLabel,
+  placeholder,
   saveDelayMs = defaultSaveDelayMs,
   save,
 }: RichDescriptionEditorProps) {
@@ -119,6 +121,7 @@ export function RichDescriptionEditor({
               className={editor()}
               controls={false}
               content={draft}
+              placeholder={placeholder}
               aria-label={ariaLabel}
               onUploadingChange={(uploading) => {
                 uploadingRef.current = uploading;

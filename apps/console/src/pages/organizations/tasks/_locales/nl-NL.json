@@ -11,6 +11,7 @@
     "fields": {
       "name": "Naam",
       "description": "Beschrijving",
+      "descriptionPlaceholder": "Schrijf een beschrijving…",
       "state": "Status",
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
@@ -113,10 +114,14 @@
       "authorFallback": "Iemand",
       "fields": {
         "comment": "Opmerking",
-        "leaveAComment": "Laat een opmerking achter"
+        "leaveAComment": "Laat een opmerking achter…"
       },
       "actions": {
         "submit": "Opmerking toevoegen",
+        "send": "Versturen",
+        "edit": "Opmerking bewerken",
+        "save": "Opslaan",
+        "cancel": "Annuleren",
         "delete": "Opmerking verwijderen",
         "showMore": "Meer tonen"
       },
@@ -143,6 +148,8 @@
       "title": "Activiteit",
       "empty": "Nog geen activiteit",
       "actorFallback": "Iemand",
+      "justNow": "zojuist",
+      "commented": "<name>{{name}}</name> <time>{{time}}</time>",
       "actions": {
         "showMore": "Meer tonen"
       },

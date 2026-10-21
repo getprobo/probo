@@ -11,6 +11,7 @@
     "fields": {
       "name": "Nom",
       "description": "Description",
+      "descriptionPlaceholder": "Écrire une description…",
       "state": "État",
       "priority": "Priorité",
       "assignedTo": "Assigné à",
@@ -113,10 +114,14 @@
       "authorFallback": "Quelqu'un",
       "fields": {
         "comment": "Commentaire",
-        "leaveAComment": "Laisser un commentaire"
+        "leaveAComment": "Laisser un commentaire…"
       },
       "actions": {
         "submit": "Ajouter un commentaire",
+        "send": "Envoyer",
+        "edit": "Modifier le commentaire",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
         "delete": "Supprimer le commentaire",
         "showMore": "Afficher plus"
       },
@@ -143,6 +148,8 @@
       "title": "Activité",
       "empty": "Aucune activité pour le moment",
       "actorFallback": "Quelqu'un",
+      "justNow": "à l'instant",
+      "commented": "<name>{{name}}</name> <time>{{time}}</time>",
       "actions": {
         "showMore": "Afficher plus"
       },

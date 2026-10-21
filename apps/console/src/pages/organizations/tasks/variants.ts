@@ -137,10 +137,18 @@ export const taskCommentEditor = tv({
 export const taskActivityComment = tv({
   slots: {
     item: "before:!hidden",
-    card: "-ml-3 flex w-[calc(100%+0.75rem)] min-w-0 flex-1 flex-col",
+    card: "group -ml-3 flex w-[calc(100%+0.75rem)] min-w-0 flex-1 flex-col",
     row: "flex min-w-0 items-start gap-3",
     body: "flex min-w-0 flex-1 flex-col gap-2",
-    header: "flex items-center justify-end gap-2",
+    header: "flex min-w-0 items-center gap-2",
+    identity: "flex min-w-0 flex-1 items-baseline gap-2",
+    actions: [
+      "flex shrink-0 items-center overflow-hidden",
+      "w-0 opacity-0",
+      "group-hover:w-auto group-hover:opacity-100",
+      "group-focus-within:w-auto group-focus-within:opacity-100",
+    ],
+    save: "flex justify-end gap-2",
   },
 });
 

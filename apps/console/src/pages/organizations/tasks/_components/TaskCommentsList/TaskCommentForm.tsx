@@ -78,16 +78,14 @@ export function TaskCommentForm() {
   return (
     <Card variant="soft" size={2}>
       <Form className={root()} onFormSubmit={handleSubmit}>
-        <Field
-          label={t("detailsPage.comments.fields.leaveAComment")}
-          error={errors.content}
-        >
+        <Field error={errors.content}>
           <RichEditor
             key={editorKey}
             controls={false}
             className={editor()}
             content={content}
             disabled={isCreating}
+            placeholder={t("detailsPage.comments.fields.leaveAComment")}
             aria-label={t("detailsPage.comments.fields.leaveAComment")}
             onChangeContent={(next) => {
               setContent(next);
@@ -115,7 +113,7 @@ export function TaskCommentForm() {
             disabled={uploading}
             loading={isCreating}
           >
-            {t("detailsPage.comments.actions.submit")}
+            {t("detailsPage.comments.actions.send")}
           </Button>
         </div>
       </Form>
