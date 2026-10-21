@@ -62,7 +62,7 @@ function matchesKind(trackerType: string, kind: "cookie" | "storage"): boolean {
 }
 
 function fixedLength(pattern: string): number {
-  return pattern.replaceAll("*", "").length;
+  return pattern.split("*").join("").length;
 }
 
 // selectTrackerCategory picks the published pattern for a detected name.

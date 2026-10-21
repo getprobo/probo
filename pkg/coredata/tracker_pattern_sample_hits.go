@@ -242,3 +242,104 @@ WHERE
 
 	return hits, nil
 }
+
+type TrackerPatternBannerRef struct {
+	ID             gid.GID `db:"id"`
+	CookieBannerID gid.GID `db:"cookie_banner_id"`
+}
+
+func LoadTrackerPatternBannerRefs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	patternIDs []gid.GID,
+) ([]TrackerPatternBannerRef, error) {
+	if len(patternIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT
+	id,
+	cookie_banner_id
+FROM tracker_patterns
+WHERE
+	%s
+	AND id = ANY(@pattern_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"pattern_ids": patternIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query tracker patterns: %w", err)
+	}
+
+	refs, err := pgx.CollectRows(rows, pgx.RowToStructByName[TrackerPatternBannerRef])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect tracker patterns: %w", err)
+	}
+
+	return refs, nil
+}
+
+type SamplePatternHitForPattern struct {
+	SampleID         gid.GID       `db:"sample_id"`
+	TrackerPatternID gid.GID       `db:"tracker_pattern_id"`
+	BrowserFamily    BrowserFamily `db:"browser_family"`
+	Presentation     string        `db:"presentation"`
+	ConsentAction    string        `db:"consent_action"`
+	CategoryGranted  bool          `db:"category_granted"`
+	Count            int           `db:"count"`
+}
+
+func LoadSamplePatternHitsForPatterns(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sampleIDs []gid.GID,
+	patternIDs []gid.GID,
+) ([]SamplePatternHitForPattern, error) {
+	if len(sampleIDs) == 0 || len(patternIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT
+	sample_id,
+	tracker_pattern_id,
+	browser_family,
+	presentation,
+	consent_action,
+	category_granted,
+	count
+FROM tracker_pattern_sample_hits
+WHERE
+	%s
+	AND sample_id = ANY(@sample_ids)
+	AND tracker_pattern_id = ANY(@pattern_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"sample_ids":  sampleIDs,
+		"pattern_ids": patternIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query tracker pattern sample hits: %w", err)
+	}
+
+	hits, err := pgx.CollectRows(rows, pgx.RowToStructByName[SamplePatternHitForPattern])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect tracker pattern sample hits: %w", err)
+	}
+
+	return hits, nil
+}

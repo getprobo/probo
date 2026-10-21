@@ -7,7 +7,7 @@
     "emitDeclarationOnly": true,
     "rootDir": "src",
     "outDir": "dist",
-    "lib": ["ES2021", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]
   },
   "include": ["src"]
 }

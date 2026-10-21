@@ -918,18 +918,23 @@ func (f *batchFetcher) fetchSamplePageLoads(
 	ctx context.Context,
 	keys []gid.GID,
 ) (map[gid.GID][]cookiebanner.SampleFamilyCount, error) {
-	if len(keys) == 0 {
-		return map[gid.GID][]cookiebanner.SampleFamilyCount{}, nil
+	result := make(map[gid.GID][]cookiebanner.SampleFamilyCount, len(keys))
+	idsByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, sampleID := range keys {
+		idsByTenant[sampleID.TenantID()] = append(idsByTenant[sampleID.TenantID()], sampleID)
 	}
 
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	for tenantID, sampleIDs := range idsByTenant {
+		loads, err := f.cookieBanner.GetSamplePageLoadsByIDs(ctx, coredata.NewScope(tenantID), sampleIDs)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load sample page loads: %w", err)
+		}
 
-	loads, err := f.cookieBanner.GetSamplePageLoadsByIDs(ctx, scope, keys)
-	if err != nil {
-		return nil, fmt.Errorf("cannot batch load sample page loads: %w", err)
+		maps.Copy(result, loads)
 	}
 
-	return loads, nil
+	return result, nil
 }
 
 func (f *batchFetcher) fetchSampleHitSplits(
@@ -937,23 +942,36 @@ func (f *batchFetcher) fetchSampleHitSplits(
 	keys []SampleHitSplitKey,
 ) (map[SampleHitSplitKey]cookiebanner.SampleHitSplits, error) {
 	result := make(map[SampleHitSplitKey]cookiebanner.SampleHitSplits, len(keys))
+	queriesByTenant := make(map[gid.TenantID][]cookiebanner.SampleHitSplitQuery)
 
 	for _, key := range keys {
-		var sampleID *gid.GID
+		queriesByTenant[key.PatternID.TenantID()] = append(
+			queriesByTenant[key.PatternID.TenantID()],
+			cookiebanner.SampleHitSplitQuery{
+				PatternID: key.PatternID,
+				SampleID:  key.SampleID,
+				Latest:    key.Latest,
+			},
+		)
+	}
 
-		if !key.Latest {
-			id := key.SampleID
-			sampleID = &id
-		}
-
-		scope := coredata.NewScopeFromObjectID(key.PatternID)
-
-		splits, err := f.cookieBanner.GetSampleHitSplits(ctx, scope, key.PatternID, sampleID)
+	for tenantID, queries := range queriesByTenant {
+		splits, err := f.cookieBanner.GetSampleHitSplitsForPatterns(
+			ctx,
+			coredata.NewScope(tenantID),
+			queries,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load tracker pattern sample hits: %w", err)
 		}
 
-		result[key] = splits
+		for query, split := range splits {
+			result[SampleHitSplitKey{
+				PatternID: query.PatternID,
+				SampleID:  query.SampleID,
+				Latest:    query.Latest,
+			}] = split
+		}
 	}
 
 	return result, nil

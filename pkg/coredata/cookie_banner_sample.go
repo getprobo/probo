@@ -462,3 +462,85 @@ WHERE
 
 	return nil
 }
+
+type CookieBannerSampleRef struct {
+	ID             gid.GID `db:"id"`
+	CookieBannerID gid.GID `db:"cookie_banner_id"`
+}
+
+func LoadCookieBannerSampleRefsByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sampleIDs []gid.GID,
+) ([]CookieBannerSampleRef, error) {
+	if len(sampleIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT
+	id,
+	cookie_banner_id
+FROM cookie_banner_samples
+WHERE
+	%s
+	AND id = ANY(@sample_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"sample_ids": sampleIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query cookie banner samples: %w", err)
+	}
+
+	refs, err := pgx.CollectRows(rows, pgx.RowToStructByName[CookieBannerSampleRef])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect cookie banner samples: %w", err)
+	}
+
+	return refs, nil
+}
+
+func LoadLatestCookieBannerSampleRefsByBannerIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	bannerIDs []gid.GID,
+) ([]CookieBannerSampleRef, error) {
+	if len(bannerIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT DISTINCT ON (cookie_banner_id)
+	id,
+	cookie_banner_id
+FROM cookie_banner_samples
+WHERE
+	%s
+	AND cookie_banner_id = ANY(@banner_ids)
+ORDER BY cookie_banner_id, created_at DESC, id DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"banner_ids": bannerIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query latest cookie banner samples: %w", err)
+	}
+
+	refs, err := pgx.CollectRows(rows, pgx.RowToStructByName[CookieBannerSampleRef])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect latest cookie banner samples: %w", err)
+	}
+
+	return refs, nil
+}

@@ -21,9 +21,13 @@
 import { describe, expect, it } from "vitest";
 
 import { selectTrackerCategory } from "./tracker-pattern-match";
-import type { Category } from "./types";
+import type { Category, TrackerType } from "./types";
 
-function category(slug: string, names: string[]): Category {
+function category(
+  slug: string,
+  names: string[],
+  trackerType: TrackerType = "COOKIE",
+): Category {
   return {
     name: slug,
     slug,
@@ -31,7 +35,7 @@ function category(slug: string, names: string[]): Category {
     kind: "NORMAL",
     cookies: names.map(name => ({
       name,
-      tracker_type: "COOKIE",
+      tracker_type: trackerType,
       max_age_seconds: null,
       description: "",
     })),
@@ -82,5 +86,18 @@ describe("selectTrackerCategory", () => {
     );
 
     expect(selected?.slug).toBe("narrow");
+  });
+
+  it("matches a storage pattern and ignores a cookie with the same name", () => {
+    const selected = selectTrackerCategory(
+      [
+        category("cookie", ["_ga_*"], "COOKIE"),
+        category("storage", ["_ga_*"], "LOCAL_STORAGE"),
+      ],
+      "storage",
+      "_ga_123",
+    );
+
+    expect(selected?.slug).toBe("storage");
   });
 });

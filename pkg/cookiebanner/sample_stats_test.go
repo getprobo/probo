@@ -514,7 +514,7 @@ func TestFreezeCookieBannerSample_LeavesNewerOpenSample(t *testing.T) {
 	assert.Nil(t, open.FrozenAt)
 }
 
-func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
+func TestReportDetectedTrackers_PageLoadGrant(t *testing.T) {
 	t.Parallel()
 
 	acceptAll := coredata.CookieConsentActionAcceptAll
@@ -560,10 +560,10 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).EdgePageLoads)
-		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeConsentingPageLoads)
-		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).FirefoxConsentingPageLoads)
-		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariConsentingPageLoads)
-		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgeConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeGrantedPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).FirefoxGrantedPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariGrantedPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgeGrantedPageLoads)
 	})
 
 	t.Run("opt-out counts every view except reject and gpc", func(t *testing.T) {
@@ -604,10 +604,10 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).EdgePageLoads)
-		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeConsentingPageLoads)
-		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxConsentingPageLoads)
-		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariConsentingPageLoads)
-		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgeConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeGrantedPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxGrantedPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariGrantedPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgeGrantedPageLoads)
 	})
 
 	t.Run("notice counts acknowledge and a missing action", func(t *testing.T) {
@@ -642,9 +642,9 @@ func TestReportDetectedTrackers_ExpectedPageLoads(t *testing.T) {
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxPageLoads)
 		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).SafariPageLoads)
 		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).EdgePageLoads)
-		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeConsentingPageLoads)
-		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxConsentingPageLoads)
-		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariConsentingPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).ChromeGrantedPageLoads)
+		assert.Equal(t, 1, loadsOf(t, ctx, client, fx, sample.ID).FirefoxGrantedPageLoads)
+		assert.Equal(t, 0, loadsOf(t, ctx, client, fx, sample.ID).SafariGrantedPageLoads)
 	})
 }
 
@@ -710,16 +710,16 @@ func loadSample(
 }
 
 type loadCounts struct {
-	ChromePageLoads            int
-	EdgePageLoads              int
-	FirefoxPageLoads           int
-	SafariPageLoads            int
-	OtherPageLoads             int
-	ChromeConsentingPageLoads  int
-	EdgeConsentingPageLoads    int
-	FirefoxConsentingPageLoads int
-	SafariConsentingPageLoads  int
-	OtherConsentingPageLoads   int
+	ChromePageLoads         int
+	EdgePageLoads           int
+	FirefoxPageLoads        int
+	SafariPageLoads         int
+	OtherPageLoads          int
+	ChromeGrantedPageLoads  int
+	EdgeGrantedPageLoads    int
+	FirefoxGrantedPageLoads int
+	SafariGrantedPageLoads  int
+	OtherGrantedPageLoads   int
 }
 
 func loadsOf(
@@ -752,27 +752,27 @@ func loadsOf(
 		case coredata.BrowserFamilyChrome:
 			counts.ChromePageLoads += row.Count
 			if allowed {
-				counts.ChromeConsentingPageLoads += row.Count
+				counts.ChromeGrantedPageLoads += row.Count
 			}
 		case coredata.BrowserFamilyEdge:
 			counts.EdgePageLoads += row.Count
 			if allowed {
-				counts.EdgeConsentingPageLoads += row.Count
+				counts.EdgeGrantedPageLoads += row.Count
 			}
 		case coredata.BrowserFamilyFirefox:
 			counts.FirefoxPageLoads += row.Count
 			if allowed {
-				counts.FirefoxConsentingPageLoads += row.Count
+				counts.FirefoxGrantedPageLoads += row.Count
 			}
 		case coredata.BrowserFamilySafari:
 			counts.SafariPageLoads += row.Count
 			if allowed {
-				counts.SafariConsentingPageLoads += row.Count
+				counts.SafariGrantedPageLoads += row.Count
 			}
 		default:
 			counts.OtherPageLoads += row.Count
 			if allowed {
-				counts.OtherConsentingPageLoads += row.Count
+				counts.OtherGrantedPageLoads += row.Count
 			}
 		}
 	}

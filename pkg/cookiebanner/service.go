@@ -1204,71 +1204,200 @@ type SampleHitSplits struct {
 	Denied  []SampleFamilyCount
 }
 
+type SampleHitSplitQuery struct {
+	PatternID gid.GID
+	SampleID  gid.GID
+	Latest    bool
+}
+
 func (s *Service) GetSampleHitSplits(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trackerPatternID gid.GID,
 	sampleID *gid.GID,
 ) (SampleHitSplits, error) {
-	var rows []coredata.SamplePatternHit
+	query := SampleHitSplitQuery{
+		PatternID: trackerPatternID,
+		Latest:    sampleID == nil,
+	}
+	if sampleID != nil {
+		query.SampleID = *sampleID
+	}
+
+	splits, err := s.GetSampleHitSplitsForPatterns(ctx, scope, []SampleHitSplitQuery{query})
+	if err != nil {
+		return SampleHitSplits{}, err
+	}
+
+	return splits[query], nil
+}
+
+func (s *Service) GetSampleHitSplitsForPatterns(
+	ctx context.Context,
+	scope coredata.Scoper,
+	queries []SampleHitSplitQuery,
+) (map[SampleHitSplitQuery]SampleHitSplits, error) {
+	result := make(map[SampleHitSplitQuery]SampleHitSplits, len(queries))
+	if len(queries) == 0 {
+		return result, nil
+	}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var (
-				pattern coredata.TrackerPattern
-				sample  coredata.CookieBannerSample
-			)
-
-			if err := pattern.LoadByID(ctx, conn, scope, trackerPatternID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrTrackerPatternNotFound
+			patternIDs := make([]gid.GID, 0, len(queries))
+			seenPatterns := make(map[gid.GID]struct{}, len(queries))
+			for _, query := range queries {
+				if _, seen := seenPatterns[query.PatternID]; seen {
+					continue
 				}
 
-				return fmt.Errorf("cannot load tracker pattern: %w", err)
+				seenPatterns[query.PatternID] = struct{}{}
+				patternIDs = append(patternIDs, query.PatternID)
 			}
 
-			if sampleID != nil {
-				if err := sample.LoadByID(ctx, conn, scope, *sampleID); err != nil {
-					if errors.Is(err, coredata.ErrResourceNotFound) {
+			patterns, err := coredata.LoadTrackerPatternBannerRefs(ctx, conn, scope, patternIDs)
+			if err != nil {
+				return err
+			}
+
+			bannerByPattern := make(map[gid.GID]gid.GID, len(patterns))
+			for _, pattern := range patterns {
+				bannerByPattern[pattern.ID] = pattern.CookieBannerID
+			}
+
+			if len(bannerByPattern) != len(patternIDs) {
+				return ErrTrackerPatternNotFound
+			}
+
+			explicitSampleIDs := make([]gid.GID, 0)
+			seenSamples := make(map[gid.GID]struct{})
+			latestBannerIDs := make([]gid.GID, 0)
+			seenBanners := make(map[gid.GID]struct{})
+
+			for _, query := range queries {
+				if query.Latest {
+					bannerID := bannerByPattern[query.PatternID]
+					if _, seen := seenBanners[bannerID]; seen {
+						continue
+					}
+
+					seenBanners[bannerID] = struct{}{}
+					latestBannerIDs = append(latestBannerIDs, bannerID)
+
+					continue
+				}
+
+				if _, seen := seenSamples[query.SampleID]; seen {
+					continue
+				}
+
+				seenSamples[query.SampleID] = struct{}{}
+				explicitSampleIDs = append(explicitSampleIDs, query.SampleID)
+			}
+
+			sampleRefs, err := coredata.LoadCookieBannerSampleRefsByIDs(ctx, conn, scope, explicitSampleIDs)
+			if err != nil {
+				return err
+			}
+
+			bannerBySample := make(map[gid.GID]gid.GID, len(sampleRefs))
+			for _, sample := range sampleRefs {
+				bannerBySample[sample.ID] = sample.CookieBannerID
+			}
+
+			latestRefs, err := coredata.LoadLatestCookieBannerSampleRefsByBannerIDs(ctx, conn, scope, latestBannerIDs)
+			if err != nil {
+				return err
+			}
+
+			latestSampleByBanner := make(map[gid.GID]gid.GID, len(latestRefs))
+			for _, sample := range latestRefs {
+				latestSampleByBanner[sample.CookieBannerID] = sample.ID
+			}
+
+			type hitPair struct {
+				sampleID  gid.GID
+				patternID gid.GID
+			}
+
+			sampleForQuery := make(map[SampleHitSplitQuery]gid.GID, len(queries))
+			pairSeen := make(map[hitPair]struct{})
+			sampleIDs := make([]gid.GID, 0)
+			hitPatternIDs := make([]gid.GID, 0)
+
+			for _, query := range queries {
+				var sampleID gid.GID
+
+				if query.Latest {
+					sampleID = latestSampleByBanner[bannerByPattern[query.PatternID]]
+				} else {
+					bannerID, ok := bannerBySample[query.SampleID]
+					if !ok || bannerID != bannerByPattern[query.PatternID] {
 						return ErrSampleNotFound
 					}
 
-					return fmt.Errorf("cannot load cookie banner sample: %w", err)
+					sampleID = query.SampleID
 				}
 
-				if sample.CookieBannerID != pattern.CookieBannerID {
-					return ErrSampleNotFound
-				}
-			} else if err := sample.LoadLatestByCookieBannerID(ctx, conn, scope, pattern.CookieBannerID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil
+				if sampleID == (gid.GID{}) {
+					result[query] = SampleHitSplits{}
+
+					continue
 				}
 
-				return fmt.Errorf("cannot load latest cookie banner sample: %w", err)
+				sampleForQuery[query] = sampleID
+				pair := hitPair{sampleID: sampleID, patternID: query.PatternID}
+				if _, seen := pairSeen[pair]; seen {
+					continue
+				}
+
+				pairSeen[pair] = struct{}{}
+				sampleIDs = append(sampleIDs, sampleID)
+				hitPatternIDs = append(hitPatternIDs, query.PatternID)
 			}
 
-			if sample.ID == (gid.GID{}) {
-				return nil
-			}
-
-			loaded, err := coredata.LoadSamplePatternHits(ctx, conn, scope, sample.ID, trackerPatternID)
+			hits, err := coredata.LoadSamplePatternHitsForPatterns(ctx, conn, scope, sampleIDs, hitPatternIDs)
 			if err != nil {
-				return fmt.Errorf("cannot load tracker pattern sample hits: %w", err)
+				return err
 			}
 
-			rows = loaded
+			rowsByPair := make(map[hitPair][]coredata.SamplePatternHit)
+			for _, hit := range hits {
+				pair := hitPair{sampleID: hit.SampleID, patternID: hit.TrackerPatternID}
+				if _, wanted := pairSeen[pair]; !wanted {
+					continue
+				}
+
+				rowsByPair[pair] = append(rowsByPair[pair], coredata.SamplePatternHit{
+					BrowserFamily:   hit.BrowserFamily,
+					Presentation:    hit.Presentation,
+					ConsentAction:   hit.ConsentAction,
+					CategoryGranted: hit.CategoryGranted,
+					Count:           hit.Count,
+				})
+			}
+
+			for query, sampleID := range sampleForQuery {
+				total, allowed, denied := SplitPatternHits(rowsByPair[hitPair{
+					sampleID:  sampleID,
+					patternID: query.PatternID,
+				}])
+				result[query] = SampleHitSplits{
+					Total:   total,
+					Allowed: allowed,
+					Denied:  denied,
+				}
+			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return SampleHitSplits{}, err
+		return nil, err
 	}
 
-	total, allowed, denied := SplitPatternHits(rows)
-
-	return SampleHitSplits{Total: total, Allowed: allowed, Denied: denied}, nil
+	return result, nil
 }
 
 func (s *Service) ListCommonGVLVendors(
