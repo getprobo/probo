@@ -59,6 +59,13 @@ func RecordSamplePatternHit(
 	now := time.Now()
 
 	q := `
+WITH open_sample AS (
+	SELECT id
+	FROM cookie_banner_samples
+	WHERE id = @sample_id
+	  AND frozen_at IS NULL
+	FOR UPDATE
+)
 INSERT INTO tracker_pattern_sample_hits (
 	sample_id,
 	tracker_pattern_id,
@@ -84,16 +91,11 @@ SELECT
 	@count,
 	@now,
 	@now
+FROM open_sample
 WHERE EXISTS (
 	SELECT 1
 	FROM tracker_patterns
 	WHERE id = @tracker_pattern_id
-)
-  AND EXISTS (
-	SELECT 1
-	FROM cookie_banner_samples
-	WHERE id = @sample_id
-	  AND frozen_at IS NULL
 )
 ON CONFLICT (
 	sample_id,
@@ -106,6 +108,12 @@ ON CONFLICT (
 SET
 	count = tracker_pattern_sample_hits.count + EXCLUDED.count,
 	updated_at = EXCLUDED.updated_at
+WHERE EXISTS (
+	SELECT 1
+	FROM cookie_banner_samples
+	WHERE id = tracker_pattern_sample_hits.sample_id
+	  AND frozen_at IS NULL
+)
 `
 
 	args := pgx.StrictNamedArgs{

@@ -151,6 +151,7 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 	s.pageLoadCounts.Range(
 		func(key, value any) bool {
 			loadKey := key.(sampleLoadKey)
+
 			count := value.(*atomic.Int64).Swap(0)
 			if count == 0 {
 				return true
@@ -167,6 +168,7 @@ func (s *Service) FlushSampleCounts(ctx context.Context) error {
 	s.patternHitCounts.Range(
 		func(key, value any) bool {
 			hitKey := key.(sampleHitKey)
+
 			count := value.(*atomic.Int64).Swap(0)
 			if count == 0 {
 				return true

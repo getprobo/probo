@@ -1148,26 +1148,26 @@ func (s *Service) StopCookieBannerSample(
 	return &sample, nil
 }
 
-func (s *Service) GetSamplePageLoads(
+func (s *Service) GetSamplePageLoadsByIDs(
 	ctx context.Context,
 	scope coredata.Scoper,
-	sampleID gid.GID,
-) ([]SampleFamilyCount, error) {
-	var rows []coredata.SamplePageLoad
+	sampleIDs []gid.GID,
+) (map[gid.GID][]SampleFamilyCount, error) {
+	result := make(map[gid.GID][]SampleFamilyCount, len(sampleIDs))
+	for _, sampleID := range sampleIDs {
+		result[sampleID] = []SampleFamilyCount{}
+	}
+
+	if len(sampleIDs) == 0 {
+		return result, nil
+	}
+
+	var rows []coredata.SamplePageLoadBySample
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			var sample coredata.CookieBannerSample
-			if err := sample.LoadByID(ctx, conn, scope, sampleID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return ErrSampleNotFound
-				}
-
-				return fmt.Errorf("cannot load cookie banner sample: %w", err)
-			}
-
-			loaded, err := coredata.LoadSamplePageLoads(ctx, conn, scope, sampleID)
+			loaded, err := coredata.LoadSamplePageLoadsBySampleIDs(ctx, conn, scope, sampleIDs)
 			if err != nil {
 				return err
 			}
@@ -1181,63 +1181,35 @@ func (s *Service) GetSamplePageLoads(
 		return nil, err
 	}
 
-	return PageLoadsByFamily(rows), nil
-}
-
-func (s *Service) GetSampleHits(
-	ctx context.Context,
-	scope coredata.Scoper,
-	trackerPatternID gid.GID,
-	sampleID *gid.GID,
-) ([]SampleFamilyCount, error) {
-	splits, err := s.loadSampleHitSplits(ctx, scope, trackerPatternID, sampleID)
-	if err != nil {
-		return nil, err
+	grouped := make(map[gid.GID][]coredata.SamplePageLoad, len(sampleIDs))
+	for _, row := range rows {
+		grouped[row.SampleID] = append(grouped[row.SampleID], coredata.SamplePageLoad{
+			BrowserFamily: row.BrowserFamily,
+			Presentation:  row.Presentation,
+			ConsentAction: row.ConsentAction,
+			Count:         row.Count,
+		})
 	}
 
-	return splits.total, nil
-}
-
-func (s *Service) GetAllowedSampleHits(
-	ctx context.Context,
-	scope coredata.Scoper,
-	trackerPatternID gid.GID,
-	sampleID *gid.GID,
-) ([]SampleFamilyCount, error) {
-	splits, err := s.loadSampleHitSplits(ctx, scope, trackerPatternID, sampleID)
-	if err != nil {
-		return nil, err
+	for sampleID, familyRows := range grouped {
+		result[sampleID] = PageLoadsByFamily(familyRows)
 	}
 
-	return splits.allowed, nil
+	return result, nil
 }
 
-func (s *Service) GetDeniedSampleHits(
+type SampleHitSplits struct {
+	Total   []SampleFamilyCount
+	Allowed []SampleFamilyCount
+	Denied  []SampleFamilyCount
+}
+
+func (s *Service) GetSampleHitSplits(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trackerPatternID gid.GID,
 	sampleID *gid.GID,
-) ([]SampleFamilyCount, error) {
-	splits, err := s.loadSampleHitSplits(ctx, scope, trackerPatternID, sampleID)
-	if err != nil {
-		return nil, err
-	}
-
-	return splits.denied, nil
-}
-
-type sampleHitSplits struct {
-	total   []SampleFamilyCount
-	allowed []SampleFamilyCount
-	denied  []SampleFamilyCount
-}
-
-func (s *Service) loadSampleHitSplits(
-	ctx context.Context,
-	scope coredata.Scoper,
-	trackerPatternID gid.GID,
-	sampleID *gid.GID,
-) (sampleHitSplits, error) {
+) (SampleHitSplits, error) {
 	var rows []coredata.SamplePatternHit
 
 	err := s.pg.WithConn(
@@ -1291,12 +1263,12 @@ func (s *Service) loadSampleHitSplits(
 		},
 	)
 	if err != nil {
-		return sampleHitSplits{}, err
+		return SampleHitSplits{}, err
 	}
 
 	total, allowed, denied := SplitPatternHits(rows)
 
-	return sampleHitSplits{total: total, allowed: allowed, denied: denied}, nil
+	return SampleHitSplits{Total: total, Allowed: allowed, Denied: denied}, nil
 }
 
 func (s *Service) ListCommonGVLVendors(

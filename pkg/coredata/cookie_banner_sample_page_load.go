@@ -55,6 +55,13 @@ func RecordSamplePageLoad(
 	now := time.Now()
 
 	q := `
+WITH open_sample AS (
+	SELECT id
+	FROM cookie_banner_samples
+	WHERE id = @sample_id
+	  AND frozen_at IS NULL
+	FOR UPDATE
+)
 INSERT INTO cookie_banner_sample_page_loads (
 	sample_id,
 	browser_family,
@@ -74,16 +81,17 @@ SELECT
 	@count,
 	@now,
 	@now
-WHERE EXISTS (
-	SELECT 1
-	FROM cookie_banner_samples
-	WHERE id = @sample_id
-	  AND frozen_at IS NULL
-)
+FROM open_sample
 ON CONFLICT (sample_id, browser_family, presentation, consent_action) DO UPDATE
 SET
 	count = cookie_banner_sample_page_loads.count + EXCLUDED.count,
 	updated_at = EXCLUDED.updated_at
+WHERE EXISTS (
+	SELECT 1
+	FROM cookie_banner_samples
+	WHERE id = cookie_banner_sample_page_loads.sample_id
+	  AND frozen_at IS NULL
+)
 `
 
 	args := pgx.StrictNamedArgs{
@@ -132,6 +140,55 @@ WHERE
 	}
 
 	loads, err := pgx.CollectRows(rows, pgx.RowToStructByName[SamplePageLoad])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect sample page loads: %w", err)
+	}
+
+	return loads, nil
+}
+
+type SamplePageLoadBySample struct {
+	SampleID      gid.GID       `db:"sample_id"`
+	BrowserFamily BrowserFamily `db:"browser_family"`
+	Presentation  string        `db:"presentation"`
+	ConsentAction string        `db:"consent_action"`
+	Count         int           `db:"count"`
+}
+
+func LoadSamplePageLoadsBySampleIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	sampleIDs []gid.GID,
+) ([]SamplePageLoadBySample, error) {
+	if len(sampleIDs) == 0 {
+		return nil, nil
+	}
+
+	q := `
+SELECT
+	sample_id,
+	browser_family,
+	presentation,
+	consent_action,
+	count
+FROM cookie_banner_sample_page_loads
+WHERE
+	%s
+	AND sample_id = ANY(@sample_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"sample_ids": sampleIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query sample page loads: %w", err)
+	}
+
+	loads, err := pgx.CollectRows(rows, pgx.RowToStructByName[SamplePageLoadBySample])
 	if err != nil {
 		return nil, fmt.Errorf("cannot collect sample page loads: %w", err)
 	}

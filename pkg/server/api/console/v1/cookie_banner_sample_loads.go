@@ -24,9 +24,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 )
@@ -35,15 +37,14 @@ func (r *cookieBannerSampleResolver) loadPageLoads(
 	ctx context.Context,
 	obj *types.CookieBannerSample,
 ) ([]*cookiebanner.SampleFamilyCount, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, obj.ID, probo.ActionCookieBannerGet); err != nil {
 		return nil, err
 	}
 
-	pageLoads, err := r.cookieBanner.GetSamplePageLoads(ctx, scope, obj.ID)
+	pageLoads, err := dataloader.FromContext(ctx).SamplePageLoads.Load(ctx, obj.ID)
 	if err != nil {
-		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+		if errors.Is(err, dataloadgen.ErrNotFound) {
+			return []*cookiebanner.SampleFamilyCount{}, nil
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner sample page loads", log.Error(err))

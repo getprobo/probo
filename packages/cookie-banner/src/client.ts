@@ -43,6 +43,7 @@ import { resolveLayout } from "./layout";
 import { enqueue, flush } from "./queue";
 import { getTCFRuntime } from "./addons";
 import { projectConsentFromTCF } from "./project-consent";
+import { selectTrackerCategory } from "./tracker-pattern-match";
 import type {
   BannerConfig,
   ConsentAction,
@@ -344,18 +345,12 @@ export class CookieBannerClient {
     const consentData = this.consent?.consent_data ?? this.buildDefaultConsentData();
 
     this.reportQueue?.setCategoryGrant((kind, name) => {
-      for (const cat of cfg.categories) {
-        const matches = cat.cookies.some((cookie) => {
-          if (cookie.name !== name) return false;
-          if (kind === "cookie") return cookie.tracker_type === "COOKIE";
-          return cookie.tracker_type !== "COOKIE";
-        });
-        if (!matches) continue;
-        if (cat.kind === "NECESSARY") return true;
-        return !!consentData[cat.slug];
+      const category = selectTrackerCategory(cfg.categories, kind, name);
+      if (!category) {
+        return cfg.layout.default_non_necessary_granted;
       }
-
-      return cfg.layout.default_non_necessary_granted;
+      if (category.kind === "NECESSARY") return true;
+      return !!consentData[category.slug];
     });
   }
 

@@ -98,6 +98,12 @@ type (
 		CompliancePortalFileID   gid.GID
 	}
 
+	SampleHitSplitKey struct {
+		PatternID gid.GID
+		SampleID  gid.GID
+		Latest    bool
+	}
+
 	Loaders struct {
 		Organization                               *dataloadgen.Loader[gid.GID, *coredata.Organization]
 		Framework                                  *dataloadgen.Loader[gid.GID, *coredata.Framework]
@@ -115,6 +121,8 @@ type (
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
 		CookieCategory                             *dataloadgen.Loader[gid.GID, *coredata.CookieCategory]
+		SamplePageLoads                            *dataloadgen.Loader[gid.GID, []cookiebanner.SampleFamilyCount]
+		SampleHitSplits                            *dataloadgen.Loader[SampleHitSplitKey, cookiebanner.SampleHitSplits]
 		CommonTrackerPattern                       *dataloadgen.Loader[gid.GID, *coredata.CommonTrackerPattern]
 		CommonThirdParty                           *dataloadgen.Loader[gid.GID, *coredata.CommonThirdParty]
 		ThirdPartyAdministratorIDs                 *dataloadgen.Loader[gid.GID, []gid.GID]
@@ -195,6 +203,8 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
 		CookieCategory:                           dataloadgen.NewMappedLoader(f.fetchCookieCategories),
+		SamplePageLoads:                          dataloadgen.NewMappedLoader(f.fetchSamplePageLoads),
+		SampleHitSplits:                          dataloadgen.NewMappedLoader(f.fetchSampleHitSplits),
 		CommonTrackerPattern:                     dataloadgen.NewMappedLoader(f.fetchCommonTrackerPatterns),
 		CommonThirdParty:                         dataloadgen.NewMappedLoader(f.fetchCommonThirdParties),
 		ThirdPartyAdministratorIDs:               dataloadgen.NewMappedLoader(f.fetchThirdPartyAdministratorIDs),
@@ -899,6 +909,51 @@ func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (
 	result := make(map[gid.GID]*coredata.CookieBanner, len(banners))
 	for _, v := range banners {
 		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchSamplePageLoads(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID][]cookiebanner.SampleFamilyCount, error) {
+	if len(keys) == 0 {
+		return map[gid.GID][]cookiebanner.SampleFamilyCount{}, nil
+	}
+
+	scope := coredata.NewScopeFromObjectID(keys[0])
+
+	loads, err := f.cookieBanner.GetSamplePageLoadsByIDs(ctx, scope, keys)
+	if err != nil {
+		return nil, fmt.Errorf("cannot batch load sample page loads: %w", err)
+	}
+
+	return loads, nil
+}
+
+func (f *batchFetcher) fetchSampleHitSplits(
+	ctx context.Context,
+	keys []SampleHitSplitKey,
+) (map[SampleHitSplitKey]cookiebanner.SampleHitSplits, error) {
+	result := make(map[SampleHitSplitKey]cookiebanner.SampleHitSplits, len(keys))
+
+	for _, key := range keys {
+		var sampleID *gid.GID
+
+		if !key.Latest {
+			id := key.SampleID
+			sampleID = &id
+		}
+
+		scope := coredata.NewScopeFromObjectID(key.PatternID)
+
+		splits, err := f.cookieBanner.GetSampleHitSplits(ctx, scope, key.PatternID, sampleID)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load tracker pattern sample hits: %w", err)
+		}
+
+		result[key] = splits
 	}
 
 	return result, nil

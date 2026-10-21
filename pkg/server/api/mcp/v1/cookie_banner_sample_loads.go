@@ -25,6 +25,7 @@ import (
 	"fmt"
 
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/mcp/v1/types"
 )
 
@@ -33,13 +34,13 @@ func (r *Resolver) cookieBannerSampleWithLoads(
 	scope coredata.Scoper,
 	sample *coredata.CookieBannerSample,
 ) (*types.CookieBannerSample, error) {
-	loads, err := r.cookieBanner.GetSamplePageLoads(ctx, scope, sample.ID)
+	loadsBySample, err := r.cookieBanner.GetSamplePageLoadsByIDs(ctx, scope, []gid.GID{sample.ID})
 	if err != nil {
 		return nil, fmt.Errorf("cannot get cookie banner sample page loads: %w", err)
 	}
 
 	out := types.NewCookieBannerSample(sample)
-	out.SetPageLoads(loads)
+	out.SetPageLoads(loadsBySample[sample.ID])
 
 	return out, nil
 }

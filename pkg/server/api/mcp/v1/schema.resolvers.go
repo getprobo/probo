@@ -6201,25 +6201,14 @@ func (r *Resolver) GetTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot load tracker pattern attribution: %w", err)
 	}
 
-	hits, err := r.cookieBanner.GetSampleHits(ctx, scope, input.ID, input.SampleID)
+	splits, err := r.cookieBanner.GetSampleHitSplits(ctx, scope, input.ID, input.SampleID)
 	if err != nil {
 		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get sample hits: %w", err)
 	}
 
-	mapped.SampleHits = types.NewSampleFamilyCounts(hits)
-
-	allowedHits, err := r.cookieBanner.GetAllowedSampleHits(ctx, scope, input.ID, input.SampleID)
-	if err != nil {
-		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get allowed sample hits: %w", err)
-	}
-
-	deniedHits, err := r.cookieBanner.GetDeniedSampleHits(ctx, scope, input.ID, input.SampleID)
-	if err != nil {
-		return nil, types.GetTrackerPatternOutput{}, fmt.Errorf("cannot get denied sample hits: %w", err)
-	}
-
-	mapped.AllowedSampleHits = types.NewSampleFamilyCounts(allowedHits)
-	mapped.DeniedSampleHits = types.NewSampleFamilyCounts(deniedHits)
+	mapped.SampleHits = types.NewSampleFamilyCounts(splits.Total)
+	mapped.AllowedSampleHits = types.NewSampleFamilyCounts(splits.Allowed)
+	mapped.DeniedSampleHits = types.NewSampleFamilyCounts(splits.Denied)
 
 	return nil, types.GetTrackerPatternOutput{TrackerPattern: mapped}, nil
 }
@@ -6241,12 +6230,20 @@ func (r *Resolver) ListCookieBannerSamplesTool(ctx context.Context, req *mcp.Cal
 	}
 
 	output := types.NewListCookieBannerSamplesOutput(page.NewPage(samples, cursor))
-	for i, sample := range samples {
-		withLoads, err := r.cookieBannerSampleWithLoads(ctx, scope, sample)
-		if err != nil {
-			return nil, types.ListCookieBannerSamplesOutput{}, err
-		}
 
+	sampleIDs := make([]gid.GID, len(samples))
+	for i, sample := range samples {
+		sampleIDs[i] = sample.ID
+	}
+
+	loadsBySample, err := r.cookieBanner.GetSamplePageLoadsByIDs(ctx, scope, sampleIDs)
+	if err != nil {
+		return nil, types.ListCookieBannerSamplesOutput{}, fmt.Errorf("cannot get cookie banner sample page loads: %w", err)
+	}
+
+	for i, sample := range samples {
+		withLoads := types.NewCookieBannerSample(sample)
+		withLoads.SetPageLoads(loadsBySample[sample.ID])
 		output.CookieBannerSamples[i] = withLoads
 	}
 

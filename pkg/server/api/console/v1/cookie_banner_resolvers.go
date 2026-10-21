@@ -1834,65 +1834,32 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 
 // SampleHits is the resolver for the sampleHits field.
 func (r *trackerPatternResolver) SampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := r.cookieBanner.GetSampleHits(ctx, scope, obj.ID, sampleID)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return cookiebanner.NewSampleFamilyCountPtrs(counts), nil
+	return cookiebanner.NewSampleFamilyCountPtrs(splits.Total), nil
 }
 
 // AllowedSampleHits is the resolver for the allowedSampleHits field.
 func (r *trackerPatternResolver) AllowedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := r.cookieBanner.GetAllowedSampleHits(ctx, scope, obj.ID, sampleID)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get allowed tracker pattern sample hits", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return cookiebanner.NewSampleFamilyCountPtrs(counts), nil
+	return cookiebanner.NewSampleFamilyCountPtrs(splits.Allowed), nil
 }
 
 // DeniedSampleHits is the resolver for the deniedSampleHits field.
 func (r *trackerPatternResolver) DeniedSampleHits(ctx context.Context, obj *types.TrackerPattern, sampleID *gid.GID) ([]*cookiebanner.SampleFamilyCount, error) {
-	scope, err := r.authorize(ctx, obj.ID, probo.ActionTrackerPatternGet)
+	splits, err := r.loadSampleHitSplits(ctx, obj, sampleID)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := r.cookieBanner.GetDeniedSampleHits(ctx, scope, obj.ID, sampleID)
-	if err != nil {
-		if errors.Is(err, cookiebanner.ErrSampleNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
-		}
-
-		r.logger.ErrorCtx(ctx, "cannot get denied tracker pattern sample hits", log.Error(err))
-
-		return nil, gqlutils.Internal(ctx)
-	}
-
-	return cookiebanner.NewSampleFamilyCountPtrs(counts), nil
+	return cookiebanner.NewSampleFamilyCountPtrs(splits.Denied), nil
 }
 
 // CommonThirdParty is the resolver for the commonThirdParty field.
