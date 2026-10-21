@@ -4,6 +4,24 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.321.0] - 2026-10-21
+
+### Added
+
+- Cookie banner trackers can be created from a new page in the console;
+  exact or glob matching is derived from a `*` wildcard in the pattern
+
+### Changed
+
+- The cookie banner theme section moved from settings to the install
+  page, next to the embed code
+
+### Removed
+
+- Tracker patterns no longer have a display name; the pattern itself is
+  the name. `displayName` is removed from the console GraphQL API and
+  `display_name` from the MCP tracker pattern tools
+
 ## [0.320.0] - 2026-10-20
 
 ### Added
