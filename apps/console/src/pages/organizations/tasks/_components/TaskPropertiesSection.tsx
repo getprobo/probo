@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { UserCircleDashedIcon } from "@phosphor-icons/react";
-import { TASKS_NAMESPACE, taskListItem, TaskListItemAssignee, TaskProperties } from "@probo/tasks";
+import { taskListItem, TaskListItemAssignee, TaskProperties, TASKS_NAMESPACE } from "@probo/tasks";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -77,7 +77,7 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
           ...input,
         },
       },
-    });
+    }, { successMessage: "" });
     void result.catch(() => {
       // Error toast is already shown by useMutation.
     });

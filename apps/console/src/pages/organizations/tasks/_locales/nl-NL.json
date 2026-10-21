@@ -3,6 +3,11 @@
     "notFound": "Taak niet gevonden",
     "back": "Taken",
     "empty": "—",
+    "none": "Geen",
+    "linkInternalControls": "Koppelen aan interne controles",
+    "searchInternalControls": "Interne controles zoeken",
+    "noInternalControls": "Geen interne controles",
+    "internalControlsLoadError": "Interne controles konden niet worden geladen",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",
     "assigneeMenu": {
@@ -17,6 +22,7 @@
       "priority": "Prioriteit",
       "assignedTo": "Toegewezen aan",
       "linear": "Linear",
+      "internalControls": "Interne controles",
       "timeEstimate": "Tijdsinschatting",
       "timeEstimateUnit": "Eenheid van inschatting",
       "deadline": "Deadline",
@@ -58,6 +64,8 @@
       "addRecurrence": "Interval toevoegen",
       "clearRecurrence": "Interval wissen",
       "delete": "Verwijderen",
+      "loadMoreInternalControls": "Meer laden",
+      "removeInternalControl": "Verwijderen",
       "cancel": "Annuleren",
       "retry": "Opnieuw proberen"
     },

@@ -60,7 +60,7 @@ function TaskDescriptionSectionContent({
             content,
           },
         },
-      });
+      }, { successMessage: "" });
     },
     [task.id, updateTask],
   );

@@ -3,6 +3,11 @@
     "notFound": "Task not found",
     "back": "Tasks",
     "empty": "—",
+    "none": "None",
+    "linkInternalControls": "Link to internal controls",
+    "searchInternalControls": "Search internal controls",
+    "noInternalControls": "No internal controls",
+    "internalControlsLoadError": "Could not load internal controls",
     "noDescription": "No description",
     "unassigned": "Not assigned",
     "assigneeMenu": {
@@ -17,6 +22,7 @@
       "priority": "Priority",
       "assignedTo": "Assigned to",
       "linear": "Linear",
+      "internalControls": "Internal controls",
       "timeEstimate": "Time estimate",
       "timeEstimateUnit": "Time estimate unit",
       "deadline": "Deadline",
@@ -58,6 +64,8 @@
       "addRecurrence": "Add interval",
       "clearRecurrence": "Clear interval",
       "delete": "Delete",
+      "loadMoreInternalControls": "Load more",
+      "removeInternalControl": "Remove",
       "cancel": "Cancel",
       "retry": "Retry"
     },

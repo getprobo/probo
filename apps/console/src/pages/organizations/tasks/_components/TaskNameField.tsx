@@ -53,7 +53,7 @@ export function TaskNameField({ taskKey }: TaskNameFieldProps) {
               name,
             },
           },
-        });
+        }, { successMessage: "" });
       }}
     />
   );

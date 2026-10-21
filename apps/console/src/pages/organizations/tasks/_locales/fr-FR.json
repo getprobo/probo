@@ -3,6 +3,11 @@
     "notFound": "Tâche introuvable",
     "back": "Tâches",
     "empty": "—",
+    "none": "Aucun",
+    "linkInternalControls": "Lier à des contrôles internes",
+    "searchInternalControls": "Rechercher des contrôles internes",
+    "noInternalControls": "Aucun contrôle interne",
+    "internalControlsLoadError": "Impossible de charger les contrôles internes",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
     "assigneeMenu": {
@@ -17,6 +22,7 @@
       "priority": "Priorité",
       "assignedTo": "Assigné à",
       "linear": "Linear",
+      "internalControls": "Contrôles internes",
       "timeEstimate": "Estimation de temps",
       "timeEstimateUnit": "Unité d'estimation",
       "deadline": "Échéance",
@@ -58,6 +64,8 @@
       "addRecurrence": "Ajouter un intervalle",
       "clearRecurrence": "Effacer l'intervalle",
       "delete": "Supprimer",
+      "loadMoreInternalControls": "Charger plus",
+      "removeInternalControl": "Retirer",
       "cancel": "Annuler",
       "retry": "Réessayer"
     },

@@ -95,6 +95,5 @@ export const comboboxJoined = tv({
       "max-h-[min(16rem,var(--available-height))] overflow-y-auto rounded-b-3 rounded-t-none border border-t-0 border-sand-6 bg-sand-1 p-1 shadow-3 outline-none",
       "[clip-path:inset(0_-1.5rem_-1.5rem_-1.5rem)]",
     ],
-    list: "max-h-64 overflow-y-auto",
   },
 });

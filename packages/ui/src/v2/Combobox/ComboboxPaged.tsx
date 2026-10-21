@@ -34,7 +34,6 @@ import { ComboboxItem } from "./ComboboxItem";
 import { ComboboxJoined } from "./ComboboxJoined";
 import { ComboboxList } from "./ComboboxList";
 import { ComboboxPopup } from "./ComboboxPopup";
-import { comboboxJoined } from "./variants";
 
 export interface ComboboxPagedOption {
   id: string;
@@ -95,7 +94,6 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
     itemLeading,
   } = props;
   const [open, setOpen] = useState(false);
-  const { list } = comboboxJoined();
   const showEmpty = !loading && !failed && items.length === 0;
 
   return (
@@ -155,7 +153,7 @@ export function ComboboxPaged<TItem>(props: ComboboxPagedProps<TItem>) {
       >
         <ComboboxPopup joined>
           {(pinned != null || items.length > 0) && (
-            <ComboboxList className={list()}>
+            <ComboboxList>
               {pinned != null && (
                 <ComboboxItem
                   key={pinned.id}

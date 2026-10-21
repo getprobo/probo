@@ -177,6 +177,15 @@ export const createTaskDialog = tv({
   },
 });
 
+export const taskInternalControls = tv({
+  slots: {
+    root: "flex w-full flex-col items-stretch gap-3",
+    names: "flex w-full flex-col items-stretch gap-2",
+    name: "flex min-w-0 items-center justify-between gap-2",
+    control: "min-w-0 flex-1 truncate !block",
+  },
+});
+
 export const taskLinearField = tv({
   slots: {
     root: "flex w-full flex-col items-stretch gap-3",
