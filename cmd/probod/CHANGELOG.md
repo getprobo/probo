@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.321.1] - 2026-10-21
+
 ### Fixed
 
 - Built with Go 1.27.3 (up from 1.27.2) to pick up the standard-library
