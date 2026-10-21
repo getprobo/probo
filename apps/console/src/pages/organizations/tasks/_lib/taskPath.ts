@@ -150,7 +150,7 @@ const taskCommentsConnectionFilters = {
 };
 
 const taskActivitiesConnectionFilters = {
-  orderBy: { field: "CREATED_AT" as const, direction: "DESC" as const },
+  orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
 };
 
 const rememberedOrganizationTaskListFiltersByKey = new Map<string, OrganizationTaskListFilter>();

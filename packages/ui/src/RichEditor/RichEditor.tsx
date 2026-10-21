@@ -108,9 +108,14 @@ const richEditorVariants = tv({
       true: "",
       false: "",
     },
+    controls: {
+      true: "",
+      false: "",
+    },
   },
   compoundVariants: [
     { compact: true, disabled: false, class: "pl-12" },
+    { controls: false, class: "!pl-0" },
   ],
 });
 
@@ -152,6 +157,8 @@ type RichEditorProps = ComponentProps<"div"> & {
   disabled?: boolean;
   // Pulls the block handles closer to the text and uses a shorter left gutter.
   compact?: boolean;
+  // When false, the plus and drag handles are not mounted. Slash and selection menus stay.
+  controls?: boolean;
   placeholder?: string;
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
@@ -176,6 +183,7 @@ export function RichEditor(props: RichEditorProps) {
     content,
     disabled = false,
     compact = false,
+    controls = true,
     placeholder,
     onChangeContent,
     onUploadingChange,
@@ -348,7 +356,7 @@ export function RichEditor(props: RichEditorProps) {
   if (!editor) return null;
 
   return (
-    <div className={richEditorVariants({ className, disabled, compact })} {...divProps}>
+    <div className={richEditorVariants({ className, disabled, compact, controls })} {...divProps}>
       {!disabled
         && (
           <>
@@ -356,9 +364,10 @@ export function RichEditor(props: RichEditorProps) {
             <BlockMenu
               editor={editor}
               compact={compact}
+              handles={controls}
               onPickFiles={canUpload ? openFilePicker : undefined}
             />
-            <OptionsMenu editor={editor} compact={compact} />
+            {controls && <OptionsMenu editor={editor} compact={compact} />}
             <TableSelectionOverlay editor={editor} />
             <TableCellMenu editor={editor} />
             <TableColumnMenu editor={editor} />

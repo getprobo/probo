@@ -117,7 +117,7 @@ export function RichDescriptionEditor({
             <RichEditor
               key={editorGeneration}
               className={editor()}
-              compact
+              controls={false}
               content={draft}
               aria-label={ariaLabel}
               onUploadingChange={(uploading) => {
@@ -156,6 +156,7 @@ export function RichDescriptionEditor({
                 key={editorGeneration}
                 className={editor()}
                 content={saved}
+                controls={false}
                 disabled
                 aria-label={ariaLabel}
               />

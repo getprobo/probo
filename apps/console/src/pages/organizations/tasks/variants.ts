@@ -51,7 +51,7 @@ export const taskDetailsPageSkeleton = tv({
     title: "flex min-w-0 items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
     main: "flex min-w-0 flex-col gap-6",
-    descriptionCard: "border-0 bg-sand-1 !py-2 !pl-0 shadow-3",
+    descriptionCard: "border-0 bg-sand-1 !py-2 shadow-3",
     description: "flex flex-col gap-2",
     engagement: "flex flex-col gap-4",
   },
@@ -102,8 +102,9 @@ export const taskDurationField = tv({
 export const taskCommentsSection = tv({
   slots: {
     root: "flex min-w-0 flex-col gap-3",
-    actions: "flex justify-end",
     list: "flex flex-col gap-4",
+    inset: "pl-3",
+    actions: "flex justify-end",
     itemSkeleton: "h-24 animate-pulse rounded-2 bg-sand-3",
   },
 });
@@ -135,8 +136,10 @@ export const taskCommentEditor = tv({
 
 export const taskActivityComment = tv({
   slots: {
-    content: "min-w-0 flex-1 !items-stretch",
-    card: "flex min-w-0 flex-1 flex-col gap-2",
+    item: "before:!hidden",
+    card: "-ml-3 flex w-[calc(100%+0.75rem)] min-w-0 flex-1 flex-col",
+    row: "flex min-w-0 items-start gap-3",
+    body: "flex min-w-0 flex-1 flex-col gap-2",
     header: "flex items-center justify-end gap-2",
   },
 });

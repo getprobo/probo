@@ -123,7 +123,7 @@ export const taskDetails = tv({
     actions: "flex shrink-0 flex-wrap items-center gap-2",
     body: "grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_280px]",
     main: "flex min-w-0 flex-col gap-6",
-    editorCard: "border-0 bg-sand-1 !py-2 !pl-0 shadow-3",
+    editorCard: "border-0 bg-sand-1 !py-2 shadow-3",
   },
 });
 

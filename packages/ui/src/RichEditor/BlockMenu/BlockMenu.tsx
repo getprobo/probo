@@ -13,10 +13,17 @@ import { BlockMenuTrigger } from "./BlockMenuTrigger";
 type BlockMenuProps = {
   editor: Editor;
   compact?: boolean;
+  // When false, the plus handle is not mounted. The slash menu still opens.
+  handles?: boolean;
   onPickFiles?: (kind: "image" | "file") => void;
 };
 
-export function BlockMenu({ editor, compact = false, onPickFiles }: BlockMenuProps) {
+export function BlockMenu({
+  editor,
+  compact = false,
+  handles = true,
+  onPickFiles,
+}: BlockMenuProps) {
   const slashState = useEditorState({
     editor,
     selector: ({ editor: e }) => {
@@ -29,15 +36,13 @@ export function BlockMenu({ editor, compact = false, onPickFiles }: BlockMenuPro
     },
   });
 
-  const { hoveredBlock } = useHoveredBlock(editor, slashState.active);
-
   return (
     <>
-      {hoveredBlock != null && (
-        <BlockMenuTrigger
+      {handles && (
+        <BlockMenuHandle
           editor={editor}
-          hoveredBlock={hoveredBlock}
           compact={compact}
+          slashActive={slashState.active}
         />
       )}
       {slashState.active && (
@@ -48,5 +53,29 @@ export function BlockMenu({ editor, compact = false, onPickFiles }: BlockMenuPro
         />
       )}
     </>
+  );
+}
+
+function BlockMenuHandle({
+  editor,
+  compact,
+  slashActive,
+}: {
+  editor: Editor;
+  compact: boolean;
+  slashActive: boolean;
+}) {
+  const { hoveredBlock } = useHoveredBlock(editor, slashActive);
+
+  if (hoveredBlock == null) {
+    return null;
+  }
+
+  return (
+    <BlockMenuTrigger
+      editor={editor}
+      hoveredBlock={hoveredBlock}
+      compact={compact}
+    />
   );
 }

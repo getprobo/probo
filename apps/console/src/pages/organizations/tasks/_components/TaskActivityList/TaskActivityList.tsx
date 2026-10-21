@@ -54,7 +54,7 @@ const taskActivityListFragment = graphql`
     activities(
       first: $first
       after: $after
-      orderBy: { field: CREATED_AT, direction: DESC }
+      orderBy: { field: CREATED_AT, direction: ASC }
     ) @connection(key: "TaskActivitySection_activities") {
       edges {
         node {
@@ -81,15 +81,15 @@ function TaskActivityListContent({ taskKey }: TaskActivityListContentProps) {
     TaskActivityListRefetchQuery,
     TaskActivityList_activities$key
   >(taskActivityListFragment, taskKey);
-  const { root, actions } = taskCommentsSection();
+  const { inset, actions } = taskCommentsSection();
   const activities = task.activities.edges.map(edge => edge.node);
 
   return (
-    <div className={root()}>
+    <div className={inset()}>
       {activities.length === 0
         ? <TaskActivityEmpty />
         : (
-            <Timeline>
+            <Timeline className="[&>li:has(+li[data-activity=comment])]:before:hidden!">
               {activities.map(activity => (
                 <TaskActivityListItem
                   key={activity.id}

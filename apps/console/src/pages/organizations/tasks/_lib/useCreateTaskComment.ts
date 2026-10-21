@@ -33,7 +33,7 @@ const createTaskCommentMutation = graphql`
     $connections: [ID!]!
   ) {
     createTaskComment(input: $input) {
-      taskActivityEdge @prependEdge(connections: $connections) {
+      taskActivityEdge @appendEdge(connections: $connections) {
         node {
           id
           ...TaskActivityListItem_activity

@@ -28,7 +28,7 @@ import { TimelineContent } from "@probo/ui/src/v2/Timeline/TimelineContent";
 import { TimelineItem } from "@probo/ui/src/v2/Timeline/TimelineItem";
 import { TimelineMarker } from "@probo/ui/src/v2/Timeline/TimelineMarker";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
@@ -79,38 +79,53 @@ export function TaskActivityListItem({ taskActivityKey }: TaskActivityListItemPr
   const activity = useFragment(taskActivityListItemFragment, taskActivityKey);
   const occurredAt = dateTimeFormat(i18n.language, activity.createdAt);
 
+  const actor = (className?: string) => (
+    <Avatar
+      className={className}
+      name={activity.actor?.fullName}
+      email={activity.actor?.emailAddress}
+      src={activity.actor?.avatar?.downloadUrl}
+      size={1}
+      radius="full"
+      fallback={activity.actor == null ? <UserIcon /> : undefined}
+    />
+  );
+  const isComment = activity.activityType === "COMMENTED";
+  const { item } = taskActivityComment();
+
   return (
-    <TimelineItem>
-      <TimelineMarker className="!bg-transparent">
-        <Avatar
-          name={activity.actor?.fullName}
-          email={activity.actor?.emailAddress}
-          src={activity.actor?.avatar?.downloadUrl}
-          size={1}
-          radius="full"
-          fallback={activity.actor == null ? <UserIcon /> : undefined}
-        />
-      </TimelineMarker>
-      {activity.activityType === "COMMENTED"
-        ? activity.comment == null
-          ? (
-              <TimelineContent>
-                <Text size={1} color="faint" className="ml-auto">
-                  {occurredAt}
-                </Text>
-              </TimelineContent>
-            )
-          : (
-              <CommentStep
-                comment={activity.comment}
-                occurredAt={occurredAt}
-              />
-            )
-        : (
-            <ActivityStep
-              activity={activity}
+    <TimelineItem
+      data-activity={isComment ? "comment" : undefined}
+      className={isComment ? item() : undefined}
+    >
+      {isComment && activity.comment != null
+        ? (
+            <CommentStep
+              actor={actor()}
+              comment={activity.comment}
               occurredAt={occurredAt}
             />
+          )
+        : (
+            <>
+              <TimelineMarker className="bg-transparent!">
+                {actor("!size-4 [&_svg]:!size-3 [&>span]:!text-[0.625rem] [&>span]:!leading-none")}
+              </TimelineMarker>
+              {isComment
+                ? (
+                    <TimelineContent>
+                      <Text size={1} color="faint" className="ml-auto">
+                        {occurredAt}
+                      </Text>
+                    </TimelineContent>
+                  )
+                : (
+                    <ActivityStep
+                      activity={activity}
+                      occurredAt={occurredAt}
+                    />
+                  )}
+            </>
           )}
     </TimelineItem>
   );
@@ -154,8 +169,10 @@ function ActivityStep({
 
   return (
     <TimelineContent>
-      <Text size={2}>{sentence}</Text>
-      <Text size={1} color="faint">
+      <Text size={1} className="min-w-0 flex-1">
+        {sentence}
+      </Text>
+      <Text size={1} color="faint" className="shrink-0 whitespace-nowrap">
         {occurredAt}
       </Text>
     </TimelineContent>
@@ -163,62 +180,68 @@ function ActivityStep({
 }
 
 function CommentStep({
+  actor,
   comment,
   occurredAt,
 }: {
+  actor: ReactNode;
   comment: NonNullable<TaskActivityListItem_activity$data["comment"]>;
   occurredAt: string;
 }) {
   const { t } = useTranslation("organizations/tasks");
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const { content, card, header } = taskActivityComment();
+  const { card, row, body, header } = taskActivityComment();
 
   return (
-    <TimelineContent className={content()}>
-      <Card variant="soft" size={2} className={card()}>
-        <div className={header()}>
-          <Text size={1} color="faint">
-            {occurredAt}
-          </Text>
-          {comment.canDelete && (
-            <>
-              <IconButton
-                variant="ghost"
-                color="neutral"
-                aria-label={t("detailsPage.comments.actions.delete")}
-                onClick={() => {
-                  setDeleteOpen(true);
-                }}
-              >
-                <TrashIcon />
-              </IconButton>
-              <TaskCommentDeleteDialog
-                taskCommentKey={comment}
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-              />
-            </>
-          )}
-        </div>
-        <ErrorBoundary
-          fallback={(
-            <Text size={2} color="faint">
-              {t("detailsPage.comments.errors.content")}
+    <Card variant="soft" padding={1} className={card()}>
+      <div className={row()}>
+        {actor}
+        <div className={body()}>
+          <div className={header()}>
+            <Text size={1} color="faint">
+              {occurredAt}
             </Text>
-          )}
-        >
-          {comment.canUpdate
-            ? <TaskCommentEditor taskCommentKey={comment} />
-            : (
-                <RichEditor
-                  className={taskCommentEditor()}
-                  content={comment.content}
-                  disabled
-                  aria-label={t("detailsPage.comments.fields.comment")}
+            {comment.canDelete && (
+              <>
+                <IconButton
+                  variant="ghost"
+                  color="neutral"
+                  aria-label={t("detailsPage.comments.actions.delete")}
+                  onClick={() => {
+                    setDeleteOpen(true);
+                  }}
+                >
+                  <TrashIcon />
+                </IconButton>
+                <TaskCommentDeleteDialog
+                  taskCommentKey={comment}
+                  open={deleteOpen}
+                  onOpenChange={setDeleteOpen}
                 />
-              )}
-        </ErrorBoundary>
-      </Card>
-    </TimelineContent>
+              </>
+            )}
+          </div>
+          <ErrorBoundary
+            fallback={(
+              <Text size={2} color="faint">
+                {t("detailsPage.comments.errors.content")}
+              </Text>
+            )}
+          >
+            {comment.canUpdate
+              ? <TaskCommentEditor taskCommentKey={comment} />
+              : (
+                  <RichEditor
+                    className={taskCommentEditor()}
+                    content={comment.content}
+                    controls={false}
+                    disabled
+                    aria-label={t("detailsPage.comments.fields.comment")}
+                  />
+                )}
+          </ErrorBoundary>
+        </div>
+      </div>
+    </Card>
   );
 }

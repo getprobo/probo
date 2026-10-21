@@ -84,7 +84,7 @@ export function TaskCommentForm() {
         >
           <RichEditor
             key={editorKey}
-            compact
+            controls={false}
             className={editor()}
             content={content}
             disabled={isCreating}
@@ -108,6 +108,7 @@ export function TaskCommentForm() {
         <div className={actions()}>
           <Button
             type="submit"
+            size={1}
             variant="solid"
             color="neutral"
             highContrast

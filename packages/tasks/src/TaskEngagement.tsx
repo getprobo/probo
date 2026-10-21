@@ -18,8 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
+import { TASKS_NAMESPACE } from "./i18n";
 import { taskEngagement } from "./variants";
 
 export interface TaskEngagementProps {
@@ -35,6 +38,7 @@ export function TaskEngagement({
   composer,
   activity,
 }: TaskEngagementProps) {
+  const { t } = useTranslation(TASKS_NAMESPACE);
   const { root } = taskEngagement();
 
   if (!canCreateComment && !canListActivities) {
@@ -43,8 +47,11 @@ export function TaskEngagement({
 
   return (
     <div className={root()}>
-      {canCreateComment ? composer : null}
+      <Heading level={2} size={2} weight="medium">
+        {t("activity.title")}
+      </Heading>
       {canListActivities ? activity : null}
+      {canCreateComment ? composer : null}
     </div>
   );
 }
