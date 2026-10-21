@@ -113,7 +113,8 @@
       "published": "Published",
       "pendingApproval": "Pending approval",
       "draft": "Draft",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "voided": "Voided"
     },
     "tabs": {
       "description": "Description",
@@ -258,7 +259,7 @@
   },
   "documentVersionsDropdown": { "title": "Version history" },
   "documentVersionsDropdownItem": {
-    "status": { "draft": "Draft", "pendingApproval": "Pending approval" }
+    "status": { "pendingApproval": "Pending approval", "rejected": "Rejected", "voided": "Voided" }
   },
   "publishDialog": {
     "title": "Publish document",
@@ -285,6 +286,7 @@
     "actions": { "request": "Request signatures", "showMore": "Show {{count}} more" }
   },
   "documentApprovalsPage": {
+    "empty": "No approval request for this document.",
     "previousRequests": "Previous approval requests",
     "status": { "approved": "Approved", "rejected": "Rejected", "voided": "Voided", "pending": "Pending" }
   },
@@ -323,6 +325,7 @@
     }
   },
   "documentSignaturesPage": {
+    "empty": "This document has not been published.",
     "filter": { "label": "Filter by state:" },
     "states": { "requested": "Requested", "signed": "Signed" }
   },
@@ -1079,7 +1082,9 @@
     "documentVersionBadge": {
       "draft": "Draft",
       "pendingApproval": "Pending approval",
-      "published": "Published"
+      "published": "Published",
+      "rejected": "Rejected",
+      "voided": "Voided"
     },
     "measureState": {
       "implemented": "Implemented",

@@ -48,13 +48,13 @@ import { LinkedDocumentDialog } from "./LinkedDocumentsDialog";
 const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {
     id
-    versions(first: 1) {
+    title
+    documentType
+    currentPublishedMajor
+    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
       edges {
         node {
           id
-          title
-          documentType
-          status
         }
       }
     }
@@ -224,14 +224,22 @@ function DocumentRow(props: {
             height={36}
             className="border-4 border-highlight rounded box-content"
           />
-          {document.versions.edges[0].node.title}
+          {document.title}
         </div>
       </Td>
       <Td>
-        <DocumentTypeBadge type={document.versions.edges[0].node.documentType} />
+        <DocumentTypeBadge type={document.documentType} />
       </Td>
       <Td>
-        <DocumentVersionBadge state={document.versions.edges[0].node.status} />
+        <DocumentVersionBadge
+          state={
+            document.pendingApproval.edges[0]
+              ? "PENDING_APPROVAL"
+              : document.currentPublishedMajor != null
+                ? "PUBLISHED"
+                : "DRAFT"
+          }
+        />
       </Td>
       {!props.readOnly && (
         <Td noLink width={50} className="text-end">

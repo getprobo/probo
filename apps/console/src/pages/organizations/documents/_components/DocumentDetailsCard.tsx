@@ -43,7 +43,12 @@ import { z } from "#/lib/zod";
 const documentFragment = graphql`
   fragment DocumentDetailsCard_documentFragment on Document {
     id
+    documentType
+    classification
+    updatedAt
     archivedAt
+    currentPublishedMajor
+    currentPublishedMinor
     canUpdate: permission(action: "core:document:update")
     defaultApprovers {
       id
@@ -70,14 +75,8 @@ const updateDocumentTypeMutation = graphql`
     updateDocument(input: $input) {
       document {
         id
-        versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-          edges {
-            node {
-              id
-              documentType
-            }
-          }
-        }
+        documentType
+        updatedAt
       }
     }
   }
@@ -88,14 +87,8 @@ const updateClassificationMutation = graphql`
     updateDocument(input: $input) {
       document {
         id
-        versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-          edges {
-            node {
-              id
-              classification
-            }
-          }
-        }
+        classification
+        updatedAt
       }
     }
   }
@@ -130,7 +123,7 @@ const approversSchema = z.object({
 
 export function DocumentDetailsCard(props: {
   documentFragmentRef: DocumentDetailsCard_documentFragment$key;
-  versionFragmentRef: DocumentDetailsCard_versionFragment$key;
+  versionFragmentRef: DocumentDetailsCard_versionFragment$key | null;
   isEditable: boolean;
   isLatestVersion?: boolean;
   onDocumentUpdated: () => void;
@@ -154,6 +147,10 @@ export function DocumentDetailsCard(props: {
   const document = useFragment<DocumentDetailsCard_documentFragment$key>(documentFragment, documentFragmentRef);
   const version = useFragment<DocumentDetailsCard_versionFragment$key>(versionFragment, versionFragmentRef);
 
+  const source = version ?? document;
+  const publishedMajor = version?.major ?? document.currentPublishedMajor;
+  const publishedMinor = version?.minor ?? document.currentPublishedMinor;
+
   const canEdit = document.canUpdate && isEditable;
   const canEditVersionFields = canEdit;
   const canEditApprovers = document.canUpdate && isLatestVersion;
@@ -162,7 +159,7 @@ export function DocumentDetailsCard(props: {
     schema,
     {
       values: {
-        documentType: version.documentType,
+        documentType: source.documentType,
       },
     },
   );
@@ -175,7 +172,7 @@ export function DocumentDetailsCard(props: {
     classificationSchema,
     {
       values: {
-        classification: version.classification,
+        classification: source.classification,
       },
     },
   );
@@ -324,7 +321,7 @@ export function DocumentDetailsCard(props: {
             : (
                 <div className="flex items-center gap-2">
                   <div className="text-sm text-txt-primary">
-                    {t(`documentDetails.documentTypes.${version.documentType.toLowerCase()}`)}
+                    {t(`documentDetails.documentTypes.${source.documentType.toLowerCase()}`)}
                   </div>
                   {canEditVersionFields && (
                     <Button
@@ -371,7 +368,7 @@ export function DocumentDetailsCard(props: {
             : (
                 <div className="flex items-center gap-2">
                   <div className="text-sm text-txt-primary">
-                    {t(`documentDetails.classifications.${version.classification.toLowerCase()}`)}
+                    {t(`documentDetails.classifications.${source.classification.toLowerCase()}`)}
                   </div>
                   {canEditVersionFields && (
                     <Button
@@ -445,9 +442,9 @@ export function DocumentDetailsCard(props: {
             {t("documentDetails.fields.version")}
           </div>
           <div className="text-sm text-txt-primary">
-            {version.major}
+            {publishedMajor ?? "—"}
             .
-            {version.minor}
+            {publishedMinor ?? "—"}
           </div>
         </div>
         <div>
@@ -455,11 +452,11 @@ export function DocumentDetailsCard(props: {
             {t("documentDetails.fields.lastModified")}
           </div>
           <div className="text-sm text-txt-primary">
-            {dateFormat(i18n.language, version.updatedAt)}
+            {dateFormat(i18n.language, source.updatedAt)}
           </div>
         </div>
         <div>
-          {version.publishedAt && (
+          {version?.publishedAt && (
             <>
               <div className="text-xs text-txt-tertiary font-semibold mb-1">
                 {t("documentDetails.fields.publishedDate")}

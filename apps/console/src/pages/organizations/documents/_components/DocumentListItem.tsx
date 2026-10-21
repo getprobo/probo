@@ -47,8 +47,13 @@ import { DeleteDocumentDialog, type DeleteDocumentDialogRef } from "./DeleteDocu
 const fragment = graphql`
   fragment DocumentListItemFragment on Document {
     id
+    title
     status
+    documentType
+    classification
     updatedAt
+    currentPublishedMajor
+    currentPublishedMinor
     canArchive: permission(action: "core:document:archive")
     canDelete: permission(action: "core:document:delete")
     canUnarchive: permission(action: "core:document:unarchive")
@@ -56,16 +61,12 @@ const fragment = graphql`
       id
       fullName
     }
-    recentVersions: versions(first: 2 orderBy: { field: CREATED_AT direction: DESC }) {
+    pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
       edges {
         node {
           id
-          title
-          status
           major
           minor
-          documentType
-          classification
           approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
             edges {
               node {
@@ -79,6 +80,16 @@ const fragment = graphql`
               }
             }
           }
+        }
+      }
+    }
+    publishedVersion: versions(
+      first: 1
+      filter: { statuses: [PUBLISHED] }
+      orderBy: { field: CREATED_AT, direction: DESC }
+    ) {
+      edges {
+        node {
           signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
             totalCount
           }
@@ -152,9 +163,15 @@ export function DocumentListItem(props: {
     fragmentRef,
   );
 
-  const lastVersionEdge = document.recentVersions.edges[0];
-  if (!lastVersionEdge) return null;
-  const lastVersion = lastVersionEdge.node;
+  const pending = document.pendingApproval.edges[0]?.node;
+  const published = document.publishedVersion.edges[0]?.node;
+  const listStatus = pending
+    ? "PENDING_APPROVAL"
+    : document.currentPublishedMajor != null
+      ? "PUBLISHED"
+      : "DRAFT";
+  const versionMajor = pending?.major ?? document.currentPublishedMajor;
+  const versionMinor = pending?.minor ?? document.currentPublishedMinor;
 
   const statusVariant = {
     DRAFT: "neutral",
@@ -204,7 +221,7 @@ export function DocumentListItem(props: {
         }),
       {
         message: t("documentListItem.confirmations.archive", {
-          title: lastVersion.title,
+          title: document.title,
         }),
         variant: "danger",
         label: t("documentListItem.actions.archive"),
@@ -260,29 +277,28 @@ export function DocumentListItem(props: {
           <Checkbox checked={checked} onChange={onCheck} />
         </Td>
         <Td className="min-w-0">
-          <div className="flex gap-4 items-center">{lastVersion.title}</div>
+          <div className="flex gap-4 items-center">{document.title}</div>
         </Td>
         <Td className="w-24">
-          <Badge variant={statusVariant[lastVersion.status]}>
-            {statusLabel[lastVersion.status]}
+          <Badge variant={statusVariant[listStatus]}>
+            {statusLabel[listStatus]}
           </Badge>
         </Td>
         <Td className="w-20">
-          v
-          {lastVersion.major}
-          .
-          {lastVersion.minor}
+          {versionMajor == null || versionMinor == null
+            ? "—"
+            : `v${versionMajor}.${versionMinor}`}
         </Td>
         <Td className="w-28">
-          {t(`documentListItem.documentTypes.${lastVersion.documentType.toLowerCase()}`)}
+          {t(`documentListItem.documentTypes.${document.documentType.toLowerCase()}`)}
         </Td>
         <Td className="w-32">
-          {t(`documentListItem.classifications.${lastVersion.classification.toLowerCase()}`)}
+          {t(`documentListItem.classifications.${document.classification.toLowerCase()}`)}
         </Td>
         <Td className="w-60">
           {(() => {
-            if (lastVersion.status === "PENDING_APPROVAL") {
-              const quorum = lastVersion.approvalQuorums?.edges?.[0]?.node;
+            if (pending) {
+              const quorum = pending.approvalQuorums?.edges?.[0]?.node;
               if (quorum) {
                 if (quorum.status === "REJECTED") {
                   return t("documentListItem.status.rejected");
@@ -297,9 +313,9 @@ export function DocumentListItem(props: {
         </Td>
         <Td className="w-40">{dateFormat(i18n.language, document.updatedAt)}</Td>
         <Td className="w-20">
-          {lastVersion.signedSignatures.totalCount}
+          {published?.signedSignatures.totalCount ?? 0}
           /
-          {lastVersion.signatures.totalCount}
+          {published?.signatures.totalCount ?? 0}
         </Td>
         {hasAnyAction && (
           <Td noLink width={50} className="text-end w-18">
@@ -340,7 +356,7 @@ export function DocumentListItem(props: {
       <DeleteDocumentDialog
         ref={deleteDialogRef}
         documentId={document.id}
-        documentTitle={lastVersion.title}
+        documentTitle={document.title}
         connections={[connectionId]}
       />
     </>

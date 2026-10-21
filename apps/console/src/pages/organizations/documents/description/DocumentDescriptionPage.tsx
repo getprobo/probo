@@ -67,19 +67,11 @@ export const documentDescriptionPageQuery = graphql`
         id
         status
         writeMode
-        canUpdate: permission(action: "core:document:update")
-        # We use this on /documents/:documentId/description
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC }) @skip(if: $versionSpecified) {
-          edges {
-            node {
-              id
-              content {
-                prosemirror
-              }
-              status
-            }
-          }
+        content {
+          prosemirror
         }
+        canUpdate: permission(action: "core:document:update")
+        canViewHistory: permission(action: "core:document-revision:list")
       }
     }
   }
@@ -90,13 +82,6 @@ const updateContentMutation = graphql`
     updateDocument(input: $input) {
       document {
         id
-      }
-      documentVersion {
-        id
-        content {
-          prosemirror
-        }
-        status
       }
     }
   }
@@ -110,8 +95,7 @@ export function DocumentDescriptionPage(props: {
 
   const { t } = useTranslation();
   const toast = useToast();
-  const { onDocumentUpdated, isEditable } = useOutletContext<{
-    onDocumentUpdated: () => void;
+  const { isEditable } = useOutletContext<{
     isEditable: boolean;
   }>();
 
@@ -123,16 +107,13 @@ export function DocumentDescriptionPage(props: {
     throw new Error("invalid type for node");
   }
 
-  const lastVersion = document.lastVersion?.edges[0].node;
-  const currentVersion = lastVersion ?? version;
-  if (!currentVersion) {
-    throw new Error("Document version not found");
-  }
+  const snapshot = version ?? null;
+  const contentSource = snapshot?.content.prosemirror ?? document.content.prosemirror;
+  const editorIdentity = snapshot?.id ?? document.id;
 
   const [updateContent] = useMutation<DocumentDescriptionPage_updateContentMutation>(updateContentMutation);
 
   const documentId = document.id;
-  const wasDraft = currentVersion.status === "DRAFT";
 
   const handleUpdate = useDebounceCallback(
     useCallback((content: string) => {
@@ -143,7 +124,7 @@ export function DocumentDescriptionPage(props: {
             content,
           },
         },
-        onCompleted: (data, errors) => {
+        onCompleted: (_data, errors) => {
           if (errors?.length) {
             toast.add({
               title: t("documentDescriptionPage.errors.title"),
@@ -151,11 +132,6 @@ export function DocumentDescriptionPage(props: {
               type: "error",
             });
             return;
-          }
-
-          const draftReturned = !!data.updateDocument.documentVersion;
-          if (wasDraft !== draftReturned) {
-            onDocumentUpdated();
           }
 
           toast.add({
@@ -172,7 +148,7 @@ export function DocumentDescriptionPage(props: {
           });
         },
       });
-    }, [documentId, wasDraft, updateContent, toast, t, onDocumentUpdated]),
+    }, [documentId, updateContent, toast, t]),
     autoSaveIntervalMs,
   );
   const uploadingRef = useRef(false);
@@ -189,7 +165,7 @@ export function DocumentDescriptionPage(props: {
     && document.canUpdate
     && document.status !== "ARCHIVED"
     && document.writeMode !== "GENERATED";
-  const content = currentVersion.content.prosemirror;
+  const content = contentSource;
   const collaborationSupported = canEdit
     && supportsRichEditorCollaboration(content);
   const [collaboration, setCollaboration] = useState<CollaborationState>();
@@ -200,7 +176,7 @@ export function DocumentDescriptionPage(props: {
     let cancelled = false;
     let activeHandle: RepoCollaborationHandle | undefined;
 
-    connectRepoDocument(currentVersion.id)
+    connectRepoDocument(document.id)
       .then((handle) => {
         if (cancelled) {
           handle.close();
@@ -209,7 +185,7 @@ export function DocumentDescriptionPage(props: {
 
         activeHandle = handle;
         setCollaboration({
-          versionID: currentVersion.id,
+          versionID: document.id,
           handle,
         });
       })
@@ -217,7 +193,7 @@ export function DocumentDescriptionPage(props: {
         if (cancelled) return;
 
         setCollaboration({
-          versionID: currentVersion.id,
+          versionID: document.id,
           failed: true,
         });
         toast.add({
@@ -233,13 +209,13 @@ export function DocumentDescriptionPage(props: {
       cancelled = true;
       activeHandle?.close();
     };
-  }, [collaborationSupported, currentVersion.id, t, toast]);
+  }, [collaborationSupported, document.id, t, toast]);
 
   const collaborationConnecting = collaborationSupported
-    && (collaboration?.versionID !== currentVersion.id
+    && (collaboration?.versionID !== document.id
       || (!collaboration?.handle && !collaboration?.failed));
   const collaborationHandle = collaborationSupported
-    && collaboration?.versionID === currentVersion.id
+    && collaboration?.versionID === document.id
     && !collaboration.failed
     ? collaboration.handle
     : undefined;
@@ -251,24 +227,24 @@ export function DocumentDescriptionPage(props: {
   // (currentVersion.id change). This uses React's "adjust state during
   // render" pattern so we avoid refs-during-render and setState-in-effects.
   const [prevVCA, setPrevVCA] = useState(versionChangedAt);
-  const [prevVersionId, setPrevVersionId] = useState(currentVersion.id);
+  const [prevVersionId, setPrevVersionId] = useState(editorIdentity);
   const [dataGeneration, setDataGeneration] = useState(0);
   const [pendingExplicit, setPendingExplicit] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
 
   if (versionChangedAt !== prevVCA) {
     setPrevVCA(versionChangedAt);
-    if (currentVersion.id !== prevVersionId) {
+    if (editorIdentity !== prevVersionId) {
       // Both changed at once — data was already available.
-      setPrevVersionId(currentVersion.id);
+      setPrevVersionId(editorIdentity);
       setDataGeneration(g => g + 1);
       setPendingExplicit(false);
     } else {
       // Explicit action fired but data hasn't arrived yet.
       setPendingExplicit(true);
     }
-  } else if (currentVersion.id !== prevVersionId) {
-    setPrevVersionId(currentVersion.id);
+  } else if (editorIdentity !== prevVersionId) {
+    setPrevVersionId(editorIdentity);
     if (pendingExplicit) {
       // Fresh data arrived for a pending explicit action — remount.
       setDataGeneration(g => g + 1);
@@ -277,9 +253,10 @@ export function DocumentDescriptionPage(props: {
     // Otherwise auto-save changed the version — don't bump generation.
   }
 
-  const editorKey = `${version?.id ?? document.id}-${dataGeneration}`;
-  const historyAvailable = currentVersion.status === "DRAFT"
-    && supportsRichEditorCollaboration(content);
+  const editorKey = `${editorIdentity}-${dataGeneration}`;
+  const historyAvailable = canEdit
+    && supportsRichEditorCollaboration(content)
+    && document.canViewHistory;
 
   if (historyOpen) {
     return (
@@ -292,7 +269,7 @@ export function DocumentDescriptionPage(props: {
           )}
         >
           <DocumentHistoryView
-            versionId={currentVersion.id}
+            documentId={documentId}
             canRestore={canEdit}
             onClose={() => setHistoryOpen(false)}
             onRestored={() => setHistoryOpen(false)}

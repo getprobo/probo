@@ -79,14 +79,19 @@ export function DocumentVersionsDropdownItem(props: {
           </div>
           <div className="flex-1 space-y-[2px] overflow-hidden">
             <div className="flex items-center gap-2 overflow-hidden">
-              {version.status === "DRAFT" && (
-                <Badge variant="neutral" size="sm">
-                  {t("documentVersionsDropdownItem.status.draft")}
-                </Badge>
-              )}
               {version.status === "PENDING_APPROVAL" && (
                 <Badge variant="warning" size="sm">
                   {t("documentVersionsDropdownItem.status.pendingApproval")}
+                </Badge>
+              )}
+              {version.status === "REJECTED" && (
+                <Badge variant="danger" size="sm">
+                  {t("documentVersionsDropdownItem.status.rejected")}
+                </Badge>
+              )}
+              {version.status === "VOIDED" && (
+                <Badge variant="danger" size="sm">
+                  {t("documentVersionsDropdownItem.status.voided")}
                 </Badge>
               )}
             </div>

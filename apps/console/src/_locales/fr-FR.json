@@ -127,7 +127,8 @@
       "published": "Publié",
       "pendingApproval": "En attente d’approbation",
       "draft": "Brouillon",
-      "rejected": "Rejeté"
+      "rejected": "Rejeté",
+      "voided": "Annulé"
     },
     "tabs": {
       "description": "Description",
@@ -390,8 +391,9 @@
   },
   "documentVersionsDropdownItem": {
     "status": {
-      "draft": "Brouillon",
-      "pendingApproval": "En attente d’approbation"
+      "pendingApproval": "En attente d’approbation",
+      "rejected": "Rejeté",
+      "voided": "Annulé"
     }
   },
   "publishDialog": {
@@ -467,6 +469,7 @@
     }
   },
   "documentApprovalsPage": {
+    "empty": "Aucune demande d’approbation pour ce document.",
     "previousRequests": "Demandes d’approbation précédentes",
     "status": {
       "approved": "Approuvé",
@@ -537,6 +540,7 @@
     }
   },
   "documentSignaturesPage": {
+    "empty": "Ce document n’a pas été publié.",
     "filter": {
       "label": "Filtrer par état :"
     },
@@ -1590,7 +1594,9 @@
     "documentVersionBadge": {
       "draft": "Brouillon",
       "pendingApproval": "En attente d’approbation",
-      "published": "Publié"
+      "published": "Publié",
+      "rejected": "Rejeté",
+      "voided": "Annulé"
     },
     "measureState": {
       "implemented": "Mise en œuvre",

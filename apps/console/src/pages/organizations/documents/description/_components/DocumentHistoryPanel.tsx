@@ -25,7 +25,7 @@ import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, useMutation, usePaginationFragment } from "react-relay";
 
-import type { DocumentHistoryPanel_version$key } from "#/__generated__/core/DocumentHistoryPanel_version.graphql";
+import type { DocumentHistoryPanel_document$key } from "#/__generated__/core/DocumentHistoryPanel_document.graphql";
 import type { DocumentHistoryPanelPaginationQuery } from "#/__generated__/core/DocumentHistoryPanelPaginationQuery.graphql";
 import type { DocumentHistoryPanelQuery } from "#/__generated__/core/DocumentHistoryPanelQuery.graphql";
 import type { DocumentHistoryPanelRestoreMutation } from "#/__generated__/core/DocumentHistoryPanelRestoreMutation.graphql";
@@ -33,25 +33,25 @@ import type { DocumentHistoryPanelSnapshotQuery } from "#/__generated__/core/Doc
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
 const documentHistoryPanelQuery = graphql`
-  query DocumentHistoryPanelQuery($versionId: ID!) {
-    version: node(id: $versionId) {
+  query DocumentHistoryPanelQuery($documentId: ID!) {
+    document: node(id: $documentId) {
       __typename
-      ... on DocumentVersion {
-        ...DocumentHistoryPanel_version
+      ... on Document {
+        ...DocumentHistoryPanel_document
       }
     }
   }
 `;
 
 const documentHistoryPanelFragment = graphql`
-  fragment DocumentHistoryPanel_version on DocumentVersion
+  fragment DocumentHistoryPanel_document on Document
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 25 }
     after: { type: "CursorKey" }
   )
   @refetchable(queryName: "DocumentHistoryPanelPaginationQuery") {
-    collaborationHistory(first: $first, after: $after)
-      @connection(key: "DocumentHistoryPanel_collaborationHistory") {
+    history(first: $first, after: $after)
+      @connection(key: "DocumentHistoryPanel_history") {
       edges {
         node {
           id
@@ -67,23 +67,21 @@ const documentHistoryPanelFragment = graphql`
 `;
 
 const documentHistorySnapshotQuery = graphql`
-  query DocumentHistoryPanelSnapshotQuery(
-    $versionId: ID!
-    $heads: [String!]!
-    $previousHeads: [String!]
-  ) {
-    version: node(id: $versionId) {
+  query DocumentHistoryPanelSnapshotQuery($documentId: ID!, $revisionId: ID!) {
+    document: node(id: $documentId) {
       __typename
-      ... on DocumentVersion {
-        collaborationHistorySnapshot(heads: $heads, previousHeads: $previousHeads) {
-          content {
-            prosemirror
-          }
-          highlights {
-            kind
-            from
-            to
-            text
+      ... on Document {
+        revision(id: $revisionId) {
+          snapshot {
+            content {
+              prosemirror
+            }
+            highlights {
+              kind
+              from
+              to
+              text
+            }
           }
         }
       }
@@ -92,20 +90,17 @@ const documentHistorySnapshotQuery = graphql`
 `;
 
 const restoreMutation = graphql`
-  mutation DocumentHistoryPanelRestoreMutation($input: RestoreDocumentCollaborationInput!) {
-    restoreDocumentCollaboration(input: $input) {
-      documentVersion {
+  mutation DocumentHistoryPanelRestoreMutation($input: RestoreDocumentHistoryInput!) {
+    restoreDocumentHistory(input: $input) {
+      document {
         id
-        content {
-          prosemirror
-        }
         status
       }
     }
   }
 `;
 
-type HistorySession = {
+type Revision = {
   id: string;
   heads: readonly string[];
   previousHeads: readonly string[];
@@ -115,26 +110,26 @@ type HistorySession = {
 };
 
 export function DocumentHistoryView(props: {
-  versionId: string;
+  documentId: string;
   canRestore: boolean;
   onClose: () => void;
   onRestored: () => void;
 }) {
-  const { versionId, canRestore, onClose, onRestored } = props;
+  const { documentId, canRestore, onClose, onRestored } = props;
   const data = useLazyLoadQuery<DocumentHistoryPanelQuery>(
     documentHistoryPanelQuery,
-    { versionId },
+    { documentId },
     { fetchPolicy: "network-only" },
   );
 
-  if (data.version?.__typename !== "DocumentVersion") {
+  if (data.document?.__typename !== "Document") {
     throw new Error("invalid type for node");
   }
 
   return (
-    <DocumentHistorySessions
-      versionKey={data.version}
-      versionId={versionId}
+    <DocumentRevisions
+      documentKey={data.document}
+      documentId={documentId}
       canRestore={canRestore}
       onClose={onClose}
       onRestored={onRestored}
@@ -142,22 +137,22 @@ export function DocumentHistoryView(props: {
   );
 }
 
-function DocumentHistorySessions(props: {
-  versionKey: DocumentHistoryPanel_version$key;
-  versionId: string;
+function DocumentRevisions(props: {
+  documentKey: DocumentHistoryPanel_document$key;
+  documentId: string;
   canRestore: boolean;
   onClose: () => void;
   onRestored: () => void;
 }) {
-  const { versionKey, versionId, canRestore, onClose, onRestored } = props;
+  const { documentKey, documentId, canRestore, onClose, onRestored } = props;
   const { t, i18n } = useTranslation();
   const toast = useToast();
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
     DocumentHistoryPanelPaginationQuery,
-    DocumentHistoryPanel_version$key
-  >(documentHistoryPanelFragment, versionKey);
+    DocumentHistoryPanel_document$key
+  >(documentHistoryPanelFragment, documentKey);
 
-  const sessions = data.collaborationHistory.edges.map(edge => edge.node);
+  const sessions = data.history.edges.map(edge => edge.node);
   const [selectedId, setSelectedId] = useState<string | null>(sessions[0]?.id ?? null);
   const selected = sessions.find(session => session.id === selectedId) ?? sessions[0];
 
@@ -182,9 +177,8 @@ function DocumentHistorySessions(props: {
               >
                 <DocumentHistoryPreview
                   key={selected.id}
-                  versionId={versionId}
-                  heads={selected.heads}
-                  previousHeads={selected.previousHeads}
+                  documentId={documentId}
+                  revisionId={selected.id}
                 />
               </Suspense>
             )
@@ -230,7 +224,7 @@ function DocumentHistorySessions(props: {
                             restore({
                               variables: {
                                 input: {
-                                  documentVersionId: versionId,
+                                  documentId,
                                   heads: [...session.heads],
                                 },
                               },
@@ -283,25 +277,20 @@ function DocumentHistorySessions(props: {
 }
 
 function DocumentHistoryPreview(props: {
-  versionId: string;
-  heads: readonly string[];
-  previousHeads: readonly string[];
+  documentId: string;
+  revisionId: string;
 }) {
-  const { versionId, heads, previousHeads } = props;
+  const { documentId, revisionId } = props;
   const data = useLazyLoadQuery<DocumentHistoryPanelSnapshotQuery>(
     documentHistorySnapshotQuery,
-    {
-      versionId,
-      heads: [...heads],
-      previousHeads: [...previousHeads],
-    },
+    { documentId, revisionId },
   );
 
-  if (data.version?.__typename !== "DocumentVersion" || !data.version.collaborationHistorySnapshot) {
+  if (data.document?.__typename !== "Document" || !data.document.revision) {
     throw new Error("invalid type for node");
   }
 
-  const snapshot = data.version.collaborationHistorySnapshot;
+  const snapshot = data.document.revision.snapshot;
   const highlights: RichEditorHistoryHighlight[] = snapshot.highlights.map(highlight => ({
     kind: highlight.kind,
     from: highlight.from,
@@ -320,8 +309,8 @@ function DocumentHistoryPreview(props: {
   );
 }
 
-function groupSessionsByDay(sessions: readonly HistorySession[]) {
-  const groups: { key: string; sessions: HistorySession[] }[] = [];
+function groupSessionsByDay(sessions: readonly Revision[]) {
+  const groups: { key: string; sessions: Revision[] }[] = [];
   for (const session of sessions) {
     const key = new Date(session.endedAt).toDateString();
     const current = groups[groups.length - 1];

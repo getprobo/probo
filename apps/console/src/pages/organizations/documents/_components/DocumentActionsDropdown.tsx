@@ -43,7 +43,9 @@ import { DeleteDocumentDialog, type DeleteDocumentDialogRef } from "./DeleteDocu
 const documentFragment = graphql`
   fragment DocumentActionsDropdown_documentFragment on Document {
     id
+    title
     status
+    currentPublishedMajor
     canArchive: permission(action: "core:document:archive")
     canUnarchive: permission(action: "core:document:unarchive")
     canDelete: permission(action: "core:document:delete")
@@ -120,7 +122,7 @@ const exportDocumentVersionMutation = graphql`
 
 export function DocumentActionsDropdown(props: {
   documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
-  versionFragmentRef: DocumentActionsDropdown_versionFragment$key;
+  versionFragmentRef: DocumentActionsDropdown_versionFragment$key | null;
   onVersionChanged: () => void;
 }) {
   const { documentFragmentRef, versionFragmentRef, onVersionChanged } = props;
@@ -167,7 +169,7 @@ export function DocumentActionsDropdown(props: {
           });
         }),
       {
-        message: t("documentActions.confirmations.archive", { title: version.title }),
+        message: t("documentActions.confirmations.archive", { title: document.title }),
         variant: "danger",
         label: t("documentActions.actions.archive"),
       },
@@ -231,6 +233,9 @@ export function DocumentActionsDropdown(props: {
     withSignatures: boolean;
     watermarkText?: string;
   }) => {
+    if (!version) {
+      return;
+    }
     const input = {
       documentVersionId: version.id,
       withWatermark: options.withWatermark,
@@ -277,7 +282,7 @@ export function DocumentActionsDropdown(props: {
       <DeleteDocumentDialog
         ref={deleteDocumentDialogRef}
         documentId={document.id}
-        documentTitle={version.title}
+        documentTitle={document.title}
         connections={[documentsConnectionId]}
         onSuccess={() => void navigate(`/organizations/${organizationId}/governance/documents`)}
       />
@@ -285,11 +290,11 @@ export function DocumentActionsDropdown(props: {
         <DropdownItem
           onClick={() => pdfDownloadDialogRef.current?.open()}
           icon={IconArrowDown}
-          disabled={isExporting}
+          disabled={isExporting || !version}
         >
           {t("documentActions.actions.downloadPdf")}
         </DropdownItem>
-        {document.canDeleteDraft && version.status === "DRAFT" && !(version.major === 0 && version.minor === 1) && (
+        {document.canDeleteDraft && !version && document.currentPublishedMajor != null && (
           <DropdownItem
             icon={IconTrashCan}
             disabled={isDeletingDraft}

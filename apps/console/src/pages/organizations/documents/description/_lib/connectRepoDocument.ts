@@ -89,11 +89,11 @@ type DocumentProgressWithHandle<T> = DocumentProgress<T> & {
 };
 
 // connectRepoDocument connects to the automerge-repo collaboration endpoint for a
-// document version, finds the (server-seeded) document, and returns a handle the
+// document, finds the (server-seeded) document, and returns a handle the
 // editor can drive. Presence rides repo ephemeral messages carrying stable
 // cursors, so remote carets stay anchored while other people type.
 export async function connectRepoDocument(
-  documentVersionID: string,
+  documentId: string,
 ): Promise<RepoCollaborationHandle> {
   const endpoint = new URL(window.location.origin);
   endpoint.protocol = endpoint.protocol === "https:" ? "wss:" : "ws:";
@@ -101,17 +101,15 @@ export async function connectRepoDocument(
     "api",
     "console",
     "v1",
-    "document-versions",
-    encodeURIComponent(documentVersionID),
-    "repo",
+    "documents",
+    encodeURIComponent(documentId),
+    "collaboration",
   ].join("/");
 
   const network = new WebSocketClientAdapter(endpoint.toString());
   const repo = new Repo({ network: [network] });
 
-  const documentURL = (await deriveAutomergeUrl(
-    documentVersionID,
-  )) as AutomergeUrl;
+  const documentURL = (await deriveAutomergeUrl(documentId)) as AutomergeUrl;
 
   const progress = repo.findWithProgress<RichEditorAutomergeDocument>(
     documentURL,

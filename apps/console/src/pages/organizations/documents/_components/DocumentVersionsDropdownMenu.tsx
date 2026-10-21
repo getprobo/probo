@@ -38,16 +38,6 @@ export const documentVersionsDropdownMenuQuery = graphql`
             }
           }
         }
-        # We use this on /documents/:documentId
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC })
-        @skip(if: $versionSpecified)
-        @connection(key: "DocumentversionsDropdownMenu_lastVersion" filters: ["orderBy"]) {
-          edges {
-            node {
-              id
-            }
-          }
-        }
       }
     }
     # We use this on /documents/:documentId/versions/:versionId
@@ -74,8 +64,7 @@ export function DocumentVersionsDropdownMenu(props: {
     throw new Error("invalid type for node");
   }
 
-  const lastVersion = document.lastVersion?.edges[0].node;
-  const currentVersion = lastVersion ?? version;
+  const selectedId = version?.id;
 
   return (
     <>
@@ -83,7 +72,7 @@ export function DocumentVersionsDropdownMenu(props: {
         <DocumentVersionsDropdownItem
           key={version.id}
           fragmentRef={version}
-          active={version.id === currentVersion?.id}
+          active={version.id === selectedId}
           currentTab={currentTab}
         />
       ))}

@@ -44,7 +44,6 @@ export const documentLayoutQuery = graphql`
         id
         status
         title
-        ...DocumentTitleFormFragment
         ...DocumentActionsDropdown_versionFragment
         ...DocumentDetailsCard_versionFragment
         signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
@@ -73,8 +72,10 @@ export const documentLayoutQuery = graphql`
       __typename
       ... on Document {
         id
+        title
         status
         writeMode
+        canUpdate: permission(action: "core:document:update")
         canPublish: permission(action: "core:document-version:publish")
         ...PublishDialog_documentFragment
         controlInfo: controls(first: 0) {
@@ -82,22 +83,10 @@ export const documentLayoutQuery = graphql`
         }
         ...DocumentActionsDropdown_documentFragment
         ...DocumentDetailsCard_documentFragment
-        lastVersion: versions(first: 1 orderBy: { field: CREATED_AT, direction: DESC })
-        @connection(key: "DocumentLayout_lastVersion") {
+        pendingApproval: versions(first: 1, filter: { statuses: [PENDING_APPROVAL] }) {
           edges {
             node {
               id
-              status
-              title
-              ...DocumentTitleFormFragment
-              ...DocumentActionsDropdown_versionFragment
-              ...DocumentDetailsCard_versionFragment
-              signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
-                totalCount
-              }
-              signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, profileStates: [ACTIVE] }) {
-                totalCount
-              }
               approvalQuorums(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
                 edges {
                   node {
@@ -111,6 +100,24 @@ export const documentLayoutQuery = graphql`
                     }
                   }
                 }
+              }
+            }
+          }
+        }
+        publishedVersion: versions(
+          first: 1
+          filter: { statuses: [PUBLISHED] }
+          orderBy: { field: CREATED_AT, direction: DESC }
+        ) {
+          edges {
+            node {
+              id
+              ...DocumentActionsDropdown_versionFragment
+              signatures(first: 0 filter: { activeContract: true, profileStates: [ACTIVE] }) {
+                totalCount
+              }
+              signedSignatures: signatures(first: 0 filter: { states: [SIGNED], activeContract: true, profileStates: [ACTIVE] }) {
+                totalCount
               }
             }
           }
@@ -143,25 +150,21 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   if (document.__typename !== "Document" || (version && version.__typename !== "DocumentVersion")) {
     throw new Error("invalid node type");
   }
-  const lastVersion = document.lastVersion?.edges[0]?.node;
-
-  if (!version && !lastVersion) {
-    throw new Error("current version not specified");
-  }
-
-  const currentVersion = version ?? lastVersion;
-  const isLatestVersion = currentVersion.id === lastVersion?.id;
-  const isPendingApproval = currentVersion.status === "PENDING_APPROVAL";
-  const isDraft = currentVersion.status === "DRAFT";
-  const isPublished = currentVersion.status === "PUBLISHED";
+  const snapshot = version ?? null;
+  const pending = document.pendingApproval.edges[0]?.node ?? null;
+  const published = document.publishedVersion.edges[0]?.node ?? null;
+  const isLive = snapshot == null;
   const isGenerated = document.writeMode === "GENERATED";
-  const isEditable = isLatestVersion && !isPendingApproval;
-  const lastQuorum = currentVersion.approvalQuorums?.edges?.[0]?.node ?? null;
+  const isEditable = isLive && document.status !== "ARCHIVED" && !isGenerated;
+  const title = snapshot?.title ?? document.title;
+  const approvalSource = snapshot ?? pending;
+  const lastQuorum = approvalSource?.approvalQuorums?.edges?.[0]?.node ?? null;
   const hasApprovals = lastQuorum != null;
+  const signatureSource = snapshot?.status === "PUBLISHED" ? snapshot : isLive ? published : null;
 
   const currentTab = location.pathname.split("/").at(-1);
 
-  usePageTitle(currentVersion.title);
+  usePageTitle(title);
 
   // For changes on the current version (type, classification, title, content).
   // Refreshes layout data but does NOT remount the editor.
@@ -199,7 +202,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
       <div className="flex flex-col gap-6 h-full">
         <div className="flex justify-end items-center mb-4">
           <div className="flex gap-2">
-            {isDraft && document.canPublish && (
+            {isLive && document.canPublish && pending == null && (
               <Button
                 icon={IconUpload}
                 onClick={() => publishDialogRef.current?.open()}
@@ -210,7 +213,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <DocumentVersionsDropdown currentTab={currentTab} />
             <DocumentActionsDropdown
               documentFragmentRef={document}
-              versionFragmentRef={currentVersion}
+              versionFragmentRef={snapshot ?? published}
               onVersionChanged={handleVersionChanged}
             />
           </div>
@@ -219,7 +222,8 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
         <PageHeader
           title={(
             <DocumentTitleForm
-              fKey={currentVersion}
+              title={title}
+              canUpdate={document.canUpdate}
               documentId={document.id}
               documentStatus={document.status}
               isEditable={isEditable}
@@ -230,22 +234,16 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           {isGenerated && (
             <Badge variant="neutral">{t("documentLayout.status.generated")}</Badge>
           )}
-          <Badge
-            variant={currentVersion.status === "PUBLISHED" ? "success" : currentVersion.status === "PENDING_APPROVAL" ? "warning" : "highlight"}
-          >
-            {currentVersion.status === "PUBLISHED"
-              ? t("documentLayout.status.published")
-              : currentVersion.status === "PENDING_APPROVAL"
-                ? t("documentLayout.status.pendingApproval")
-                : t("documentLayout.status.draft")}
+          <Badge variant={snapshotStatusVariant(snapshot?.status)}>
+            {snapshotStatusLabel(t, snapshot?.status)}
           </Badge>
         </PageHeader>
 
         <DocumentDetailsCard
           documentFragmentRef={document}
-          versionFragmentRef={currentVersion}
+          versionFragmentRef={snapshot}
           isEditable={isEditable}
-          isLatestVersion={isLatestVersion}
+          isLatestVersion={isLive}
           onDocumentUpdated={handleDocumentUpdated}
         />
 
@@ -267,13 +265,13 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
               </TabBadge>
             </TabLink>
           )}
-          {isPublished && (
+          {signatureSource && (
             <TabLink to={`${urlPrefix}/signatures`}>
               {t("documentLayout.tabs.signatures")}
               <TabBadge>
-                {currentVersion.signedSignatures?.totalCount ?? 0}
+                {signatureSource.signedSignatures?.totalCount ?? 0}
                 /
-                {currentVersion.signatures?.totalCount ?? 0}
+                {signatureSource.signatures?.totalCount ?? 0}
               </TabBadge>
             </TabLink>
           )}
@@ -298,4 +296,36 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
       />
     </>
   );
+}
+
+function snapshotStatusVariant(status: string | undefined) {
+  switch (status) {
+    case "PUBLISHED":
+      return "success" as const;
+    case "PENDING_APPROVAL":
+      return "warning" as const;
+    case "REJECTED":
+    case "VOIDED":
+      return "danger" as const;
+    default:
+      return "highlight" as const;
+  }
+}
+
+function snapshotStatusLabel(
+  t: (key: string) => string,
+  status: string | undefined,
+) {
+  switch (status) {
+    case "PUBLISHED":
+      return t("documentLayout.status.published");
+    case "PENDING_APPROVAL":
+      return t("documentLayout.status.pendingApproval");
+    case "REJECTED":
+      return t("documentLayout.status.rejected");
+    case "VOIDED":
+      return t("documentLayout.status.voided");
+    default:
+      return t("documentLayout.status.draft");
+  }
 }

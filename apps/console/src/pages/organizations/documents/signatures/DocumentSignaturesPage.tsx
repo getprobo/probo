@@ -39,8 +39,9 @@ export const documentSignaturesPageQuery = graphql`
     document: node(id: $documentId) @skip(if: $versionSpecified) {
       __typename
       ... on Document {
-        lastVersion: versions(
+        publishedVersion: versions(
           first: 1
+          filter: { statuses: [PUBLISHED] }
           orderBy: { field: CREATED_AT, direction: DESC }
         ) {
           edges {
@@ -117,13 +118,21 @@ export function DocumentSignaturesPage(props: { queryRef: PreloadedQuery<Documen
         </div>
       </div>
       <Suspense fallback={<Spinner centered />}>
-        <DocumentSignatureList
-          peopleFragmentRef={organization}
-          versionFragmentRef={
-            (version ?? document?.lastVersion.edges[0].node) as DocumentSignatureList_versionFragment$key
-          }
-          selectedStates={selectedStates}
-        />
+        {version ?? document?.publishedVersion.edges[0]?.node
+          ? (
+              <DocumentSignatureList
+                peopleFragmentRef={organization}
+                versionFragmentRef={
+                  (version ?? document?.publishedVersion.edges[0].node) as DocumentSignatureList_versionFragment$key
+                }
+                selectedStates={selectedStates}
+              />
+            )
+          : (
+              <p className="text-sm text-txt-secondary">
+                {t("documentSignaturesPage.empty")}
+              </p>
+            )}
       </Suspense>
     </div>
   );

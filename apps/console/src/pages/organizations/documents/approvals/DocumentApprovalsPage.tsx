@@ -36,9 +36,9 @@ export const documentApprovalsPageQuery = graphql`
     document: node(id: $documentId) @skip(if: $versionSpecified) {
       __typename
       ... on Document {
-        lastVersion: versions(
+        pendingApproval: versions(
           first: 1
-          orderBy: { field: CREATED_AT, direction: DESC }
+          filter: { statuses: [PENDING_APPROVAL] }
         ) {
           edges {
             node {
@@ -90,6 +90,7 @@ export function DocumentApprovalsPage(props: {
   queryRef: PreloadedQuery<DocumentApprovalsPageQuery>;
 }) {
   const { queryRef } = props;
+  const { t } = useTranslation();
 
   const { document, version } = usePreloadedQuery<DocumentApprovalsPageQuery>(
     documentApprovalsPageQuery,
@@ -103,11 +104,15 @@ export function DocumentApprovalsPage(props: {
     throw new Error("no document or version specified");
   }
 
-  const lastVersionNode = document?.lastVersion.edges[0]?.node;
-  const approvalListRef = version ?? lastVersionNode;
-  const versionFragmentRef = (version ?? lastVersionNode) as DocumentApprovalsPage_versionFragment$key | null;
+  const pendingNode = document?.pendingApproval.edges[0]?.node;
+  const approvalListRef = version ?? pendingNode;
+  const versionFragmentRef = (version ?? pendingNode) as DocumentApprovalsPage_versionFragment$key | null;
   if (!approvalListRef || !versionFragmentRef) {
-    throw new Error("no version found");
+    return (
+      <p className="text-sm text-txt-secondary">
+        {t("documentApprovalsPage.empty")}
+      </p>
+    );
   }
 
   return (

@@ -126,7 +126,8 @@
       "published": "Gepubliceerd",
       "pendingApproval": "In afwachting van goedkeuring",
       "draft": "Concept",
-      "rejected": "Afgewezen"
+      "rejected": "Afgewezen",
+      "voided": "Nietig verklaard"
     },
     "tabs": {
       "description": "Beschrijving",
@@ -389,8 +390,9 @@
   },
   "documentVersionsDropdownItem": {
     "status": {
-      "draft": "Concept",
-      "pendingApproval": "In afwachting van goedkeuring"
+      "pendingApproval": "In afwachting van goedkeuring",
+      "rejected": "Afgewezen",
+      "voided": "Nietig verklaard"
     }
   },
   "publishDialog": {
@@ -466,6 +468,7 @@
     }
   },
   "documentApprovalsPage": {
+    "empty": "Geen goedkeuringsverzoek voor dit document.",
     "previousRequests": "Eerdere goedkeuringsverzoeken",
     "status": {
       "approved": "Goedgekeurd",
@@ -536,6 +539,7 @@
     }
   },
   "documentSignaturesPage": {
+    "empty": "Dit document is niet gepubliceerd.",
     "filter": {
       "label": "Filteren op status:"
     },
@@ -1589,7 +1593,9 @@
     "documentVersionBadge": {
       "draft": "Concept",
       "pendingApproval": "In afwachting van goedkeuring",
-      "published": "Gepubliceerd"
+      "published": "Gepubliceerd",
+      "rejected": "Afgewezen",
+      "voided": "Nietig verklaard"
     },
     "measureState": {
       "implemented": "Geïmplementeerd",

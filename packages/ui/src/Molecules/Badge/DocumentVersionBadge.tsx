@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
-  state: "DRAFT" | "PENDING_APPROVAL" | "PUBLISHED";
+  state: "DRAFT" | "PENDING_APPROVAL" | "PUBLISHED" | "REJECTED" | "VOIDED";
 };
 
 export function DocumentVersionBadge(props: Props) {
@@ -33,12 +33,16 @@ export function DocumentVersionBadge(props: Props) {
     DRAFT: "neutral",
     PENDING_APPROVAL: "warning",
     PUBLISHED: "success",
+    REJECTED: "danger",
+    VOIDED: "danger",
   } as const;
 
   const label = {
     DRAFT: t("ui.documentVersionBadge.draft"),
     PENDING_APPROVAL: t("ui.documentVersionBadge.pendingApproval"),
     PUBLISHED: t("ui.documentVersionBadge.published"),
+    REJECTED: t("ui.documentVersionBadge.rejected"),
+    VOIDED: t("ui.documentVersionBadge.voided"),
   } as const;
 
   return <Badge variant={variant[props.state]}>{label[props.state]}</Badge>;

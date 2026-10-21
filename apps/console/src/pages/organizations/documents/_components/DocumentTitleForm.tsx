@@ -23,10 +23,9 @@ import { Button, IconCheckmark1, IconCrossLargeX, IconPencil, Input } from "@pro
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFragment, useMutation } from "react-relay";
+import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
 
-import type { DocumentTitleFormFragment$key } from "#/__generated__/core/DocumentTitleFormFragment.graphql";
 import type { DocumentTitleFormMutation } from "#/__generated__/core/DocumentTitleFormMutation.graphql";
 import { useFormWithSchema } from "#/hooks/useFormWithSchema";
 import { z } from "#/lib/zod";
@@ -34,29 +33,23 @@ import { z } from "#/lib/zod";
 const updateDocumentTitleMutation = graphql`
   mutation DocumentTitleFormMutation($input: UpdateDocumentInput!) {
     updateDocument(input: $input) {
-      documentVersion {
-        ...DocumentTitleFormFragment
+      document {
+        id
+        title
       }
     }
   }
 `;
 
-const fragment = graphql`
-  fragment DocumentTitleFormFragment on DocumentVersion {
-    title
-    status
-    canUpdate: permission(action: "core:document:update")
-  }
-`;
-
 export function DocumentTitleForm(props: {
-  fKey: DocumentTitleFormFragment$key;
+  title: string;
+  canUpdate: boolean;
   documentId: string;
   documentStatus: string;
   isEditable: boolean;
   onDocumentUpdated: () => void;
 }) {
-  const { fKey, documentId, documentStatus, isEditable, onDocumentUpdated } = props;
+  const { title, canUpdate, documentId, documentStatus, isEditable, onDocumentUpdated } = props;
 
   const { t } = useTranslation();
   const toast = useToast();
@@ -64,7 +57,6 @@ export function DocumentTitleForm(props: {
     title: z.string().min(1, t("documentTitleForm.validation.titleRequired")).max(255),
   });
 
-  const version = useFragment<DocumentTitleFormFragment$key>(fragment, fKey);
   const [updateDocument, isUpdating]
     = useMutation<DocumentTitleFormMutation>(updateDocumentTitleMutation);
 
@@ -73,13 +65,12 @@ export function DocumentTitleForm(props: {
     schema,
     {
       values: {
-        title: version.title,
+        title,
       },
     },
   );
 
-  const isDraft = version.status === "DRAFT";
-  const canEdit = version.canUpdate && isEditable && documentStatus !== "ARCHIVED";
+  const canEdit = canUpdate && isEditable && documentStatus !== "ARCHIVED";
 
   const handleUpdateTitle = (data: { title: string }) => {
     updateDocument({
@@ -89,7 +80,7 @@ export function DocumentTitleForm(props: {
           title: data.title,
         },
       },
-      onCompleted(data, errors) {
+      onCompleted(_, errors) {
         if (errors?.length) {
           toast.add({
             title: t("documentTitleForm.errors.title"),
@@ -99,10 +90,7 @@ export function DocumentTitleForm(props: {
           return;
         }
         setIsEditingTitle(false);
-        const draftReturned = !!data.updateDocument.documentVersion;
-        if (isDraft !== draftReturned) {
-          onDocumentUpdated();
-        }
+        onDocumentUpdated();
       },
       onError(error) {
         toast.add({
@@ -125,7 +113,7 @@ export function DocumentTitleForm(props: {
             onKeyDown={(e) => {
               if (e.key === "Escape") {
                 setIsEditingTitle(false);
-                reset({ title: version.title });
+                reset({ title });
               }
               if (e.key === "Enter") {
                 void handleSubmit(handleUpdateTitle)();
@@ -143,14 +131,14 @@ export function DocumentTitleForm(props: {
             icon={IconCrossLargeX}
             onClick={() => {
               setIsEditingTitle(false);
-              reset({ title: version.title });
+              reset({ title });
             }}
           />
         </div>
       )
     : (
         <div className="flex items-center gap-2">
-          <span>{version.title}</span>
+          <span>{title}</span>
           {canEdit && (
             <Button
               variant="quaternary"
