@@ -18,9 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { XIcon } from "@phosphor-icons/react";
+import { useHotkeys } from "@probo/hotkeys";
 import type { ReactNode } from "react";
 
 import { Button, type ButtonProps } from "../Button/Button";
+import { shortcutAria } from "../shortcutAria";
+import { ShortcutIconSwap } from "../ShortcutIconSwap/ShortcutIconSwap";
+import { ShortcutLabelSwap } from "../ShortcutLabelSwap/ShortcutLabelSwap";
+import { useModifierPressed } from "../useModifierPressed";
 
 import { Dialog } from "./Dialog";
 import { DialogBody } from "./DialogBody";
@@ -30,6 +36,7 @@ import { DialogFooter } from "./DialogFooter";
 import { DialogHeader } from "./DialogHeader";
 import { DialogPopup } from "./DialogPopup";
 import { DialogTitle } from "./DialogTitle";
+import { ShortcutHint } from "./ShortcutHint";
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -63,6 +70,26 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
     confirmDisabled = false,
     onConfirm,
   } = props;
+  const modifierPressed = useModifierPressed();
+  const cancelAvailable = !loading;
+  const confirmAvailable = !loading && !confirmDisabled;
+  const showCancelHint = cancelAvailable && modifierPressed;
+  const showConfirmHint = confirmAvailable && modifierPressed;
+
+  useHotkeys("mod+.", () => {
+    onOpenChange(false);
+  }, {
+    preventDefault: true,
+    capture: true,
+    enabled: open && cancelAvailable,
+  });
+  useHotkeys("mod+enter", () => {
+    onConfirm();
+  }, {
+    preventDefault: true,
+    capture: true,
+    enabled: open && confirmAvailable,
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,7 +103,18 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
         <DialogFooter>
           <DialogClose
             render={(
-              <Button variant="soft" color="neutral" disabled={loading}>
+              <Button
+                variant="soft"
+                color="neutral"
+                density="tight"
+                disabled={loading}
+                aria-keyshortcuts={cancelAvailable ? shortcutAria(".") : undefined}
+                iconStart={(
+                  <ShortcutIconSwap pressed={showCancelHint} icon={<XIcon />}>
+                    <ShortcutHint shortcut="." variant="soft" color="neutral" />
+                  </ShortcutIconSwap>
+                )}
+              >
                 {cancelLabel}
               </Button>
             )}
@@ -84,12 +122,27 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
           <Button
             variant="solid"
             color={confirmColor}
-            iconStart={confirmIcon}
+            density="tight"
+            iconStart={confirmIcon != null && (
+              <ShortcutIconSwap pressed={showConfirmHint} icon={confirmIcon}>
+                <ShortcutHint shortcut="Enter" variant="solid" color={confirmColor} />
+              </ShortcutIconSwap>
+            )}
             loading={loading}
             disabled={confirmDisabled}
             onClick={onConfirm}
+            aria-keyshortcuts={confirmAvailable ? shortcutAria("Enter") : undefined}
           >
-            {confirmLabel}
+            {confirmIcon != null
+              ? confirmLabel
+              : (
+                  <ShortcutLabelSwap
+                    pressed={showConfirmHint}
+                    hint={<ShortcutHint shortcut="Enter" variant="solid" color={confirmColor} />}
+                  >
+                    {confirmLabel}
+                  </ShortcutLabelSwap>
+                )}
           </Button>
         </DialogFooter>
       </DialogPopup>

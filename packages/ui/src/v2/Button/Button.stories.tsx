@@ -18,10 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowRightIcon, BookmarkSimpleIcon } from "@phosphor-icons/react";
+import { ArrowRightIcon, BookmarkSimpleIcon, XIcon } from "@phosphor-icons/react";
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Button } from "./Button";
+import { ShortcutHint } from "../Dialog/ShortcutHint";
+import { ShortcutIconSwap } from "../ShortcutIconSwap/ShortcutIconSwap";
+import { ShortcutLabelSwap } from "../ShortcutLabelSwap/ShortcutLabelSwap";
+
+import { Button, type ButtonProps } from "./Button";
 import { ButtonSkeleton } from "./ButtonSkeleton";
 
 const sizes = [1, 2, 3, 4] as const;
@@ -44,7 +48,49 @@ export default {
 
 type Story = StoryObj<typeof Button>;
 
-export const Playground: Story = {};
+export const Playground: StoryObj<ButtonProps & { hint: boolean; icon: boolean }> = {
+  args: {
+    hint: false,
+    icon: false,
+  },
+  argTypes: {
+    hint: { control: "boolean" },
+    icon: { control: "boolean" },
+  },
+  render: ({ hint, icon, children, iconStart, iconEnd, variant = "solid", color = "gold", ...props }) => {
+    const shortcut = (
+      <ShortcutHint
+        shortcut="."
+        variant={variant === "solid" || variant === "classic" ? "solid" : "soft"}
+        color={color}
+      />
+    );
+
+    return (
+      <Button
+        {...props}
+        variant={variant}
+        color={color}
+        iconStart={icon
+          ? (
+              <ShortcutIconSwap pressed={hint} icon={<XIcon />}>
+                {shortcut}
+              </ShortcutIconSwap>
+            )
+          : iconStart}
+        iconEnd={iconEnd}
+      >
+        {icon
+          ? children
+          : (
+              <ShortcutLabelSwap pressed={hint} hint={shortcut}>
+                {children}
+              </ShortcutLabelSwap>
+            )}
+      </Button>
+    );
+  },
+};
 
 export const Sizes: Story = {
   render: () => (

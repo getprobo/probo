@@ -37,13 +37,13 @@ export type ButtonLinkProps
 // Set `active` for the selected nav state. See contrib/claude/ui.md.
 export function ButtonLink(props: ButtonLinkProps) {
   const {
-    size, variant, color, highContrast, active, className,
+    size, density, variant, color, highContrast, active, className,
     iconStart, iconEnd, children, ...rest
   } = props;
 
   return (
     <RouterLink
-      className={button({ size, variant, color, highContrast, active, className })}
+      className={button({ size, density, variant, color, highContrast, active, className })}
       {...rest}
     >
       {iconStart}

@@ -32,12 +32,17 @@ export const button = tv({
   ],
   variants: {
     // Corner radius is bound to size (per the Figma, radius is global/theme,
-    // not a per-instance prop).
+    // not a per-instance prop). Padding and gap follow size and density.
+    // Descendant selector sizes wrapped icons. Skip shortcut hints so size-2.5 stays.
     size: {
-      1: "h-6 gap-1 rounded-2 px-2 text-1 [&_svg]:size-4",
-      2: "h-8 gap-2 rounded-2 px-3 text-2 [&_svg]:size-4",
-      3: "h-10 gap-2 rounded-3 px-4 text-3 [&_svg]:size-5",
-      4: "h-12 gap-2 rounded-3 px-5 text-4 [&_svg]:size-5",
+      1: "h-6 rounded-2 text-1 [&_svg:not([data-shortcut-hint]_svg)]:size-4",
+      2: "h-8 rounded-2 text-2 [&_svg:not([data-shortcut-hint]_svg)]:size-4",
+      3: "h-10 rounded-3 text-3 [&_svg:not([data-shortcut-hint]_svg)]:size-5",
+      4: "h-12 rounded-3 text-4 [&_svg:not([data-shortcut-hint]_svg)]:size-5",
+    },
+    density: {
+      regular: "",
+      tight: "",
     },
     variant: {
       classic: "",
@@ -69,6 +74,14 @@ export const button = tv({
     },
   },
   compoundVariants: [
+    { size: 1, density: "regular", class: "gap-1 px-2" },
+    { size: 2, density: "regular", class: "gap-2 px-3" },
+    { size: 3, density: "regular", class: "gap-2 px-4" },
+    { size: 4, density: "regular", class: "gap-2 px-5" },
+    { size: 1, density: "tight", class: "gap-1 px-2" },
+    { size: 2, density: "tight", class: "gap-1 pl-2 pr-3" },
+    { size: 3, density: "tight", class: "gap-1 px-3" },
+    { size: 4, density: "tight", class: "gap-1 px-4" },
     // ── solid: filled step-9 background, white text (dark for light hues) ──
     // Gated on highContrast:false so the high-contrast rules below don't also
     // apply (tailwind-variants/lite has no merge — both would emit and a static
@@ -164,6 +177,7 @@ export const button = tv({
   ],
   defaultVariants: {
     size: 2,
+    density: "regular",
     variant: "solid",
     color: "gold",
     highContrast: false,

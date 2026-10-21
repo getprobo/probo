@@ -74,24 +74,40 @@ export const navRail = tv({
       "group-hover:opacity-100 group-has-focus-visible:opacity-100",
       "group-has-data-popup-open:opacity-100",
     ],
-    // Collapsed, the keycap appears only while Cmd or Ctrl is held.
-    // Deployed, the label fills the row and the keycap sits at its right.
+    // Collapsed, the keycap replaces the compass while the modifier is held.
+    // Open, the compass stays put and the keycap sits after the label.
     spotlight: [
-      "flex w-full cursor-pointer items-center rounded-3 text-sand-11 outline-none transition-colors",
+      "flex h-10 w-full cursor-pointer items-center justify-start rounded-3 text-sand-11 outline-none transition-colors",
       "hover:bg-sand-3 hover:text-sand-12",
       "focus-visible:ring-2 focus-visible:ring-sand-8",
-      "@min-[8rem]:h-10 @min-[8rem]:flex-row @min-[8rem]:justify-start @min-[8rem]:gap-2 @min-[8rem]:py-0",
+      "@min-[8rem]:gap-2",
     ],
-    spotlightIcon: [
-      "flex shrink-0 items-center justify-center [&_svg]:size-5",
-      "@min-[8rem]:size-10",
+    spotlightIcon: "relative flex size-10 shrink-0 items-center justify-center",
+    spotlightCompass: [
+      "transition-opacity duration-150 ease-out",
+      "@min-[8rem]:opacity-100 @min-[8rem]:transition-none",
+    ],
+    spotlightKeycap: [
+      "pointer-events-none absolute inset-0 flex items-center justify-center",
+      "transition-opacity duration-150 ease-out",
+      "@min-[8rem]:hidden",
     ],
     spotlightLabel: "hidden min-w-0 flex-1 truncate text-left @min-[8rem]:block",
-    spotlightHint: "shrink-0 @min-[8rem]:mr-2",
+    spotlightHint: "hidden shrink-0 @min-[8rem]:mr-2 @min-[8rem]:block",
   },
   variants: {
     active: {
       true: { item: "bg-gold-4 text-gold-12" },
+    },
+    modifierPressed: {
+      true: {
+        spotlightCompass: "opacity-0",
+        spotlightKeycap: "opacity-100",
+      },
+      false: {
+        spotlightCompass: "opacity-100",
+        spotlightKeycap: "opacity-0",
+      },
     },
     // data-popup-open keeps the rail open while a menu portaled out of it has
     // focus. focus-visible rather than focus-within: closing a menu restores
@@ -103,13 +119,6 @@ export const navRail = tv({
           "has-focus-visible:w-56 has-focus-visible:border-transparent has-focus-visible:shadow-4",
           "has-data-popup-open:w-56 has-data-popup-open:border-transparent has-data-popup-open:shadow-4",
         ],
-      },
-    },
-    modifierPressed: {
-      true: { spotlight: "flex-col justify-center gap-1 py-1" },
-      false: {
-        spotlight: "h-10 justify-center py-0",
-        spotlightHint: "hidden @min-[8rem]:block",
       },
     },
   },

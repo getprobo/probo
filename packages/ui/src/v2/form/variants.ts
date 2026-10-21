@@ -31,7 +31,7 @@ export const textField = tv({
     ],
     icon: "flex shrink-0 items-center justify-center text-sand-a9",
     input: "min-w-0 flex-1 bg-transparent text-sand-12 outline-none placeholder:text-sand-a9",
-    suffix: "pointer-events-none shrink-0 whitespace-nowrap text-sand-a11 select-none",
+    suffix: "pointer-events-none flex shrink-0 items-center whitespace-nowrap text-sand-a11 select-none",
   },
   variants: {
     size: {

@@ -20,9 +20,10 @@
 
 import { MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { TextField, type TextFieldProps } from "@probo/ui/src/v2/form/TextField";
+import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
 import { useCallback, useState } from "react";
 
-import { SearchShortcutHint, shortcutAria } from "#/components/SearchShortcutHint/SearchShortcutHint";
+import { SearchShortcutHint } from "#/components/SearchShortcutHint/SearchShortcutHint";
 
 import { useFocusTarget } from "./useFocusTarget";
 

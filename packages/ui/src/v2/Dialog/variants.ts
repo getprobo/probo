@@ -73,3 +73,60 @@ export const dialogSkeleton = tv({
     "rounded-5 border border-sand-6 bg-sand-1 py-6 shadow-6",
   ],
 });
+
+// `chip` adds the filled keycap. Neutral chips sit one step lighter than the
+// button, with a border one step darker. Colored chips sit one step darker
+// than the button, and the border stays one step darker than that fill.
+// Hint text uses the button's text color. Soft buttons are step 3. Solid
+// buttons are step 9.
+export const shortcutHint = tv({
+  slots: {
+    hint: [
+      "pointer-events-none inline-flex shrink-0 items-center gap-px",
+      "text-1 leading-none whitespace-nowrap text-current select-none",
+    ],
+    modifier: "size-2.5 shrink-0",
+  },
+  variants: {
+    chip: {
+      true: {
+        hint: "rounded-1 border px-0.5 py-px",
+      },
+      false: {},
+    },
+    variant: {
+      soft: "",
+      solid: "",
+    },
+    color: {
+      neutral: "",
+      gold: "",
+      red: "",
+      green: "",
+      amber: "",
+      sky: "",
+      indigo: "",
+    },
+  },
+  compoundVariants: [
+    { chip: true, variant: "soft", color: "neutral", class: { hint: "border-sand-4 bg-sand-2" } },
+    { chip: true, variant: "soft", color: "gold", class: { hint: "border-gold-5 bg-gold-4" } },
+    { chip: true, variant: "soft", color: "red", class: { hint: "border-red-5 bg-red-4" } },
+    { chip: true, variant: "soft", color: "green", class: { hint: "border-green-5 bg-green-4" } },
+    { chip: true, variant: "soft", color: "amber", class: { hint: "border-amber-5 bg-amber-4" } },
+    { chip: true, variant: "soft", color: "sky", class: { hint: "border-sky-5 bg-sky-4" } },
+    { chip: true, variant: "soft", color: "indigo", class: { hint: "border-indigo-5 bg-indigo-4" } },
+    { chip: true, variant: "solid", color: "neutral", class: { hint: "border-sand-10 bg-sand-8" } },
+    { chip: true, variant: "solid", color: "gold", class: { hint: "border-gold-11 bg-gold-10" } },
+    { chip: true, variant: "solid", color: "red", class: { hint: "border-red-11 bg-red-10" } },
+    { chip: true, variant: "solid", color: "green", class: { hint: "border-green-11 bg-green-10" } },
+    { chip: true, variant: "solid", color: "amber", class: { hint: "border-amber-11 bg-amber-10" } },
+    { chip: true, variant: "solid", color: "sky", class: { hint: "border-sky-11 bg-sky-10" } },
+    { chip: true, variant: "solid", color: "indigo", class: { hint: "border-indigo-11 bg-indigo-10" } },
+  ],
+  defaultVariants: {
+    chip: false,
+    variant: "soft",
+    color: "neutral",
+  },
+});

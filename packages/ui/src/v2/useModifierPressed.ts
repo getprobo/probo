@@ -18,10 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { usesMetaShortcut } from "@probo/hotkeys";
 import { useEffect, useState } from "react";
 
-function isModifier(event: KeyboardEvent) {
-  return event.key === "Meta" || event.key === "Control";
+function shortcutModifierDown(event: KeyboardEvent) {
+  return usesMetaShortcut() ? event.metaKey : event.ctrlKey;
+}
+
+function isShortcutModifier(event: KeyboardEvent) {
+  return usesMetaShortcut() ? event.key === "Meta" : event.key === "Control";
 }
 
 export function useModifierPressed() {
@@ -32,16 +37,16 @@ export function useModifierPressed() {
       if (event.repeat) {
         return;
       }
-      if (isModifier(event) || event.metaKey || event.ctrlKey) {
+      if (isShortcutModifier(event) || shortcutModifierDown(event)) {
         setPressed(true);
       }
     }
 
     function onKeyUp(event: KeyboardEvent) {
-      if (!isModifier(event)) {
+      if (!isShortcutModifier(event)) {
         return;
       }
-      setPressed(event.metaKey || event.ctrlKey);
+      setPressed(shortcutModifierDown(event));
     }
 
     function clear() {

@@ -26,13 +26,13 @@ export interface UseHotkeysOptions {
   capture?: boolean;
 }
 
+type HotkeyHandler = (event: KeyboardEvent) => void;
+
 interface HotkeySlot {
   key: string;
   capture: boolean;
   preventDefault: boolean;
-  handler: (event: KeyboardEvent) => void;
-  handlerRef: { current: (event: KeyboardEvent) => void };
-  count: number;
+  handlerRef: { current: HotkeyHandler };
 }
 
 const slots: HotkeySlot[] = [];
@@ -40,7 +40,7 @@ const slots: HotkeySlot[] = [];
 let captureListening = false;
 let bubbleListening = false;
 
-function usesMetaShortcut() {
+export function usesMetaShortcut() {
   if (typeof navigator === "undefined") {
     return false;
   }
@@ -48,7 +48,7 @@ function usesMetaShortcut() {
 }
 
 function parseCombo(combo: string) {
-  const match = /^mod\+([a-z])$/i.exec(combo);
+  const match = /^mod\+(enter|[a-z.])$/i.exec(combo);
   if (match == null) {
     throw new Error(`unsupported hotkey: ${combo}`);
   }
@@ -56,25 +56,42 @@ function parseCombo(combo: string) {
 }
 
 function matches(event: KeyboardEvent, key: string) {
-  if (event.repeat || event.altKey || event.shiftKey) {
+  if (event.repeat || event.altKey) {
+    return false;
+  }
+  // Period is Shift+; on AZERTY, so Command-Period arrives with shiftKey set.
+  if (event.shiftKey && key !== ".") {
     return false;
   }
   if (event.key.toLowerCase() !== key) {
     return false;
   }
-  return usesMetaShortcut() ? event.metaKey : event.ctrlKey;
+  if (usesMetaShortcut()) {
+    return event.metaKey && !event.ctrlKey;
+  }
+  return event.ctrlKey && !event.metaKey;
 }
 
 function onKeyDown(event: KeyboardEvent) {
   const capture = event.eventPhase === Event.CAPTURING_PHASE;
+  // Several mounts can share one stable callback. Run that function once.
+  const seen: { handler: HotkeyHandler; preventDefault: boolean }[] = [];
   for (const slot of slots) {
     if (slot.capture !== capture || !matches(event, slot.key)) {
       continue;
     }
+    const handler = slot.handlerRef.current;
+    const duplicate = seen.some(item =>
+      item.handler === handler && item.preventDefault === slot.preventDefault,
+    );
+    if (duplicate) {
+      continue;
+    }
+    seen.push({ handler, preventDefault: slot.preventDefault });
     if (slot.preventDefault) {
       event.preventDefault();
     }
-    slot.handlerRef.current(event);
+    handler(event);
   }
 }
 
@@ -104,57 +121,32 @@ function syncListeners() {
 
 function bindHotkey(
   combo: string,
-  handler: (event: KeyboardEvent) => void,
-  handlerRef: { current: (event: KeyboardEvent) => void },
+  handlerRef: { current: HotkeyHandler },
   options?: UseHotkeysOptions,
 ) {
   const key = parseCombo(combo);
   const capture = options?.capture ?? false;
   const preventDefault = options?.preventDefault ?? false;
-  const existing = slots.find(slot =>
-    slot.handler === handler
-    && slot.key === key
-    && slot.capture === capture
-    && slot.preventDefault === preventDefault,
-  );
-  if (existing != null) {
-    existing.count += 1;
-    existing.handlerRef = handlerRef;
-    return () => {
-      release(existing);
-    };
-  }
-
   const slot: HotkeySlot = {
     key,
     capture,
     preventDefault,
-    handler,
     handlerRef,
-    count: 1,
   };
   slots.push(slot);
   syncListeners();
   return () => {
-    release(slot);
+    const index = slots.indexOf(slot);
+    if (index >= 0) {
+      slots.splice(index, 1);
+    }
+    syncListeners();
   };
-}
-
-function release(slot: HotkeySlot) {
-  slot.count -= 1;
-  if (slot.count > 0) {
-    return;
-  }
-  const index = slots.indexOf(slot);
-  if (index >= 0) {
-    slots.splice(index, 1);
-  }
-  syncListeners();
 }
 
 export function useHotkeys(
   combo: string,
-  handler: (event: KeyboardEvent) => void,
+  handler: HotkeyHandler,
   options?: UseHotkeysOptions,
 ) {
   const handlerRef = useRef(handler);
@@ -170,9 +162,7 @@ export function useHotkeys(
     if (!enabled) {
       return;
     }
-    // handlerRef.current is the dedupe identity. A fresh callback keeps this
-    // binding and is read from the ref; a stable shared handler refcounts.
-    return bindHotkey(combo, handlerRef.current, handlerRef, {
+    return bindHotkey(combo, handlerRef, {
       preventDefault,
       capture,
     });

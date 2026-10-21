@@ -30,6 +30,7 @@ import { Dialog } from "@probo/ui/src/v2/Dialog/Dialog";
 import { DialogBody } from "@probo/ui/src/v2/Dialog/DialogBody";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
+import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
@@ -37,7 +38,7 @@ import { useNavigate } from "react-router";
 
 import type { navPermissions_organization$key } from "#/__generated__/iam/navPermissions_organization.graphql";
 import type { NavSpotlight_organization$key } from "#/__generated__/iam/NavSpotlight_organization.graphql";
-import { SearchShortcutHint, shortcutAria } from "#/components/SearchShortcutHint/SearchShortcutHint";
+import { SearchShortcutHint } from "#/components/SearchShortcutHint/SearchShortcutHint";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { visibleNavDestinations } from "#/pages/iam/organizations/_lib/navDestinations";
 import {

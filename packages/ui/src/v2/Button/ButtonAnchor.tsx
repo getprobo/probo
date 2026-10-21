@@ -36,13 +36,13 @@ export type ButtonAnchorProps
 // Link/Anchor. See contrib/claude/ui.md.
 export function ButtonAnchor(props: ButtonAnchorProps) {
   const {
-    size, variant, color, highContrast, active, className,
+    size, density, variant, color, highContrast, active, className,
     iconStart, iconEnd, children, ...rest
   } = props;
 
   return (
     <a
-      className={button({ size, variant, color, highContrast, active, className })}
+      className={button({ size, density, variant, color, highContrast, active, className })}
       {...rest}
     >
       {iconStart}

@@ -19,27 +19,18 @@
 // SOFTWARE.
 
 import { CommandIcon, ControlIcon } from "@phosphor-icons/react";
+import { usesMetaShortcut } from "@probo/ui/src/v2/shortcutAria";
 
 import { searchShortcutHint } from "./variants";
 
 export interface SearchShortcutHintProps {
   shortcut: string;
+  chip?: boolean;
+  inButton?: boolean;
 }
 
-function usesMetaShortcut() {
-  if (typeof navigator === "undefined") {
-    return false;
-  }
-  return /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
-}
-
-export function shortcutAria(shortcut: string) {
-  const key = shortcut.toLowerCase();
-  return usesMetaShortcut() ? `Meta+${key}` : `Control+${key}`;
-}
-
-export function SearchShortcutHint({ shortcut }: SearchShortcutHintProps) {
-  const { hint, modifier } = searchShortcutHint();
+export function SearchShortcutHint({ shortcut, chip = false, inButton = false }: SearchShortcutHintProps) {
+  const { hint, modifier } = searchShortcutHint({ chip, inButton });
   const key = shortcut.toUpperCase();
   const ModifierIcon = usesMetaShortcut() ? CommandIcon : ControlIcon;
 

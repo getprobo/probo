@@ -19,11 +19,12 @@
 // SOFTWARE.
 
 import { CompassIcon } from "@phosphor-icons/react";
+import { shortcutAria } from "@probo/ui/src/v2/shortcutAria";
 import { Text } from "@probo/ui/src/v2/typography/Text";
+import { useModifierPressed } from "@probo/ui/src/v2/useModifierPressed";
 import { useTranslation } from "react-i18next";
 
-import { SearchShortcutHint, shortcutAria } from "#/components/SearchShortcutHint/SearchShortcutHint";
-import { useModifierPressed } from "#/pages/iam/organizations/_lib/useModifierPressed";
+import { SearchShortcutHint } from "#/components/SearchShortcutHint/SearchShortcutHint";
 
 import { navRail } from "./variants";
 
@@ -34,9 +35,14 @@ export interface NavSpotlightTriggerProps {
 export function NavSpotlightTrigger({ onClick }: NavSpotlightTriggerProps) {
   const { t } = useTranslation();
   const modifierPressed = useModifierPressed();
-  const { spotlight, spotlightHint, spotlightIcon, spotlightLabel } = navRail({
-    modifierPressed,
-  });
+  const {
+    spotlight,
+    spotlightCompass,
+    spotlightHint,
+    spotlightIcon,
+    spotlightKeycap,
+    spotlightLabel,
+  } = navRail({ modifierPressed });
 
   return (
     <button
@@ -47,13 +53,18 @@ export function NavSpotlightTrigger({ onClick }: NavSpotlightTriggerProps) {
       aria-keyshortcuts={shortcutAria("K")}
     >
       <span className={spotlightIcon()}>
-        <CompassIcon weight="regular" aria-hidden />
+        <span className={spotlightCompass()}>
+          <CompassIcon weight="regular" className="size-5" aria-hidden />
+        </span>
+        <span className={spotlightKeycap()}>
+          <SearchShortcutHint shortcut="K" chip inButton />
+        </span>
       </span>
       <Text size={2} className={spotlightLabel()}>
         {t("nav.spotlight.placeholder")}
       </Text>
       <span className={spotlightHint()}>
-        <SearchShortcutHint shortcut="K" />
+        <SearchShortcutHint shortcut="K" chip />
       </span>
     </button>
   );

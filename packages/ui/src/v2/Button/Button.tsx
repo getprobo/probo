@@ -39,7 +39,7 @@ export type ButtonProps
 // Anchor. See contrib/claude/ui.md.
 export function Button(props: ButtonProps) {
   const {
-    size, variant, color, highContrast, active, className,
+    size, density, variant, color, highContrast, active, className,
     iconStart, iconEnd, loading = false, disabled, type = "button", children, ...rest
   } = props;
 
@@ -48,7 +48,7 @@ export function Button(props: ButtonProps) {
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={button({ size, variant, color, highContrast, active, className })}
+      className={button({ size, density, variant, color, highContrast, active, className })}
       {...rest}
     >
       {loading ? <SpinnerGapIcon className="animate-spin" aria-hidden /> : iconStart}

@@ -23,10 +23,29 @@ import { tv } from "tailwind-variants/lite";
 export const searchShortcutHint = tv({
   slots: {
     hint: [
-      "pointer-events-none inline-flex shrink-0 items-center gap-0.5 rounded-1",
-      "border border-sand-6 bg-sand-3 px-1 text-1 leading-none whitespace-nowrap",
-      "text-sand-a10 select-none",
+      "pointer-events-none inline-flex shrink-0 items-center gap-0.5",
+      "text-1 leading-none whitespace-nowrap text-sand-a10 select-none",
     ],
-    modifier: "size-3 shrink-0",
+    modifier: "shrink-0",
+  },
+  variants: {
+    chip: {
+      true: {
+        hint: "rounded-1 border border-sand-6 bg-sand-3 px-1 py-0.5",
+      },
+      false: {},
+    },
+    inButton: {
+      true: {
+        modifier: "size-3",
+      },
+      false: {
+        modifier: "size-3.5",
+      },
+    },
+  },
+  defaultVariants: {
+    chip: false,
+    inButton: false,
   },
 });
