@@ -30,8 +30,9 @@ type (
 )
 
 const (
-	TaskActivityTypeCreated TaskActivityType = "CREATED"
-	TaskActivityTypeUpdated TaskActivityType = "UPDATED"
+	TaskActivityTypeCreated   TaskActivityType = "CREATED"
+	TaskActivityTypeUpdated   TaskActivityType = "UPDATED"
+	TaskActivityTypeCommented TaskActivityType = "COMMENTED"
 )
 
 var (
@@ -42,7 +43,7 @@ var (
 
 func (v TaskActivityType) IsValid() bool {
 	switch v {
-	case TaskActivityTypeCreated, TaskActivityTypeUpdated:
+	case TaskActivityTypeCreated, TaskActivityTypeUpdated, TaskActivityTypeCommented:
 		return true
 	}
 

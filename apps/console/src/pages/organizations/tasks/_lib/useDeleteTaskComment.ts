@@ -25,7 +25,7 @@ import { useParams } from "react-router";
 import type { useDeleteTaskCommentMutation } from "#/__generated__/core/useDeleteTaskCommentMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { taskCommentsConnectionId } from "./taskPath";
+import { taskActivitiesConnectionId } from "./taskPath";
 
 const deleteTaskCommentMutation = graphql`
   mutation useDeleteTaskCommentMutation(
@@ -33,7 +33,7 @@ const deleteTaskCommentMutation = graphql`
     $connections: [ID!]!
   ) {
     deleteTaskComment(input: $input) {
-      deletedTaskCommentId @deleteEdge(connections: $connections)
+      deletedTaskActivityId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -57,7 +57,7 @@ export function useDeleteTaskComment() {
     await commit({
       variables: {
         input: { taskCommentId },
-        connections: [taskCommentsConnectionId(taskId)],
+        connections: [taskActivitiesConnectionId(taskId)],
       },
     });
   }

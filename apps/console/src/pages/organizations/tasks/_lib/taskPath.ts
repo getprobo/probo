@@ -143,9 +143,14 @@ export function taskConnectionId(parentId: string, connectionKey: string) {
 }
 
 export const taskCommentsConnectionKey = "TaskCommentsSection_comments";
+export const taskActivitiesConnectionKey = "TaskActivitySection_activities";
 
 const taskCommentsConnectionFilters = {
   orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
+};
+
+const taskActivitiesConnectionFilters = {
+  orderBy: { field: "CREATED_AT" as const, direction: "DESC" as const },
 };
 
 const rememberedOrganizationTaskListFiltersByKey = new Map<string, OrganizationTaskListFilter>();
@@ -178,5 +183,13 @@ export function taskCommentsConnectionId(taskId: string) {
     taskId,
     taskCommentsConnectionKey,
     taskCommentsConnectionFilters,
+  );
+}
+
+export function taskActivitiesConnectionId(taskId: string) {
+  return ConnectionHandler.getConnectionID(
+    taskId,
+    taskActivitiesConnectionKey,
+    taskActivitiesConnectionFilters,
   );
 }

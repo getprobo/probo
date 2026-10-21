@@ -149,7 +149,6 @@ export const taskProperties = tv({
 export const taskEngagement = tv({
   slots: {
     root: "flex min-w-0 flex-col gap-4",
-    panel: "min-w-0",
   },
 });
 

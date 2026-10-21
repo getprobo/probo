@@ -18,80 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Tabs } from "@probo/ui/src/v2/Tabs/Tabs";
-import { TabsIndicator } from "@probo/ui/src/v2/Tabs/TabsIndicator";
-import { TabsList } from "@probo/ui/src/v2/Tabs/TabsList";
-import { TabsPanel } from "@probo/ui/src/v2/Tabs/TabsPanel";
-import { TabsTab } from "@probo/ui/src/v2/Tabs/TabsTab";
 import type { ReactNode } from "react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
 
-import { TASKS_NAMESPACE } from "./i18n";
 import { taskEngagement } from "./variants";
 
 export interface TaskEngagementProps {
-  canListComments: boolean;
+  canCreateComment: boolean;
   canListActivities: boolean;
-  comments?: ReactNode;
+  composer?: ReactNode;
   activity?: ReactNode;
 }
 
 export function TaskEngagement({
-  canListComments,
+  canCreateComment,
   canListActivities,
-  comments,
+  composer,
   activity,
 }: TaskEngagementProps) {
-  const { t } = useTranslation(TASKS_NAMESPACE);
-  const { root, panel } = taskEngagement();
-  const defaultTab = canListComments ? "comments" : "activity";
-  const [tab, setTab] = useState(defaultTab);
-  const [activityVisited, setActivityVisited] = useState(defaultTab === "activity");
+  const { root } = taskEngagement();
 
-  if (!canListComments && !canListActivities) {
+  if (!canCreateComment && !canListActivities) {
     return null;
   }
 
   return (
-    <Tabs
-      className={root()}
-      value={tab}
-      onValueChange={(next) => {
-        const value = next as string;
-        setTab(value);
-        if (value === "activity") {
-          setActivityVisited(true);
-        }
-      }}
-    >
-      <TabsList>
-        {canListComments && (
-          <TabsTab value="comments">
-            {t("comments.title")}
-          </TabsTab>
-        )}
-        {canListActivities && (
-          <TabsTab value="activity">
-            {t("activity.title")}
-          </TabsTab>
-        )}
-        <TabsIndicator />
-      </TabsList>
-      {canListComments && (
-        <TabsPanel value="comments" keepMounted className={panel()}>
-          {comments}
-        </TabsPanel>
-      )}
-      {canListActivities && (
-        <TabsPanel
-          value="activity"
-          keepMounted={activityVisited}
-          className={panel()}
-        >
-          {activityVisited ? activity : null}
-        </TabsPanel>
-      )}
-    </Tabs>
+    <div className={root()}>
+      {canCreateComment ? composer : null}
+      {canListActivities ? activity : null}
+    </div>
   );
 }

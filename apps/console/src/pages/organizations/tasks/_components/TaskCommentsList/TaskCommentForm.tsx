@@ -20,6 +20,7 @@
 
 import { Form } from "@base-ui/react/form";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,7 +33,7 @@ import {
 
 import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
 import { useCreateTaskComment } from "../../_lib/useCreateTaskComment";
-import { taskCommentEditor, taskCommentForm } from "../../variants";
+import { taskCommentForm } from "../../variants";
 
 export function TaskCommentForm() {
   const { t } = useTranslation("organizations/tasks");
@@ -41,7 +42,7 @@ export function TaskCommentForm() {
   const [uploading, setUploading] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { root, actions } = taskCommentForm();
+  const { root, actions, editor } = taskCommentForm();
 
   function handleSubmit() {
     if (uploading) {
@@ -75,45 +76,48 @@ export function TaskCommentForm() {
   }
 
   return (
-    <Form className={root()} onFormSubmit={handleSubmit}>
-      <Field
-        label={t("detailsPage.comments.fields.leaveAComment")}
-        error={errors.content}
-      >
-        <RichEditor
-          key={editorKey}
-          className={taskCommentEditor()}
-          content={content}
-          disabled={isCreating}
-          aria-label={t("detailsPage.comments.fields.leaveAComment")}
-          onChangeContent={(next) => {
-            setContent(next);
-            if (richEditorContentTextLength(next) > taskCommentMaxLength) {
-              setErrors({
-                content: t("detailsPage.comments.errors.contentTooLong", {
-                  max: taskCommentMaxLength,
-                }),
-              });
-              return;
-            }
-
-            setErrors({});
-          }}
-          onUploadingChange={setUploading}
-        />
-      </Field>
-      <div className={actions()}>
-        <Button
-          type="submit"
-          variant="solid"
-          color="neutral"
-          highContrast
-          disabled={uploading}
-          loading={isCreating}
+    <Card variant="soft" size={2}>
+      <Form className={root()} onFormSubmit={handleSubmit}>
+        <Field
+          label={t("detailsPage.comments.fields.leaveAComment")}
+          error={errors.content}
         >
-          {t("detailsPage.comments.actions.submit")}
-        </Button>
-      </div>
-    </Form>
+          <RichEditor
+            key={editorKey}
+            compact
+            className={editor()}
+            content={content}
+            disabled={isCreating}
+            aria-label={t("detailsPage.comments.fields.leaveAComment")}
+            onChangeContent={(next) => {
+              setContent(next);
+              if (richEditorContentTextLength(next) > taskCommentMaxLength) {
+                setErrors({
+                  content: t("detailsPage.comments.errors.contentTooLong", {
+                    max: taskCommentMaxLength,
+                  }),
+                });
+                return;
+              }
+
+              setErrors({});
+            }}
+            onUploadingChange={setUploading}
+          />
+        </Field>
+        <div className={actions()}>
+          <Button
+            type="submit"
+            variant="solid"
+            color="neutral"
+            highContrast
+            disabled={uploading}
+            loading={isCreating}
+          >
+            {t("detailsPage.comments.actions.submit")}
+          </Button>
+        </div>
+      </Form>
+    </Card>
   );
 }

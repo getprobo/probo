@@ -118,6 +118,7 @@ export function TaskCommentEditor({ taskCommentKey }: TaskCommentEditorProps) {
     <Field error={error}>
       <RichEditor
         key={editorGeneration}
+        compact
         className={taskCommentEditor()}
         content={draft}
         aria-label={t("detailsPage.comments.fields.comment")}

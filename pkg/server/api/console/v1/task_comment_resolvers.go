@@ -36,7 +36,7 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 		ownerID = nil
 	}
 
-	taskComment, err := r.task.CreateComment(
+	taskComment, activity, err := r.task.CreateComment(
 		ctx, scope,
 		task.CreateTaskCommentRequest{
 			TaskID:     input.TaskID,
@@ -60,7 +60,8 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 	}
 
 	return &types.CreateTaskCommentPayload{
-		TaskCommentEdge: types.NewTaskCommentEdge(taskComment, coredata.TaskCommentOrderFieldCreatedAt),
+		TaskCommentEdge:  types.NewTaskCommentEdge(taskComment, coredata.TaskCommentOrderFieldCreatedAt),
+		TaskActivityEdge: types.NewTaskActivityEdge(activity, coredata.TaskActivityOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -105,7 +106,8 @@ func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.De
 		return nil, err
 	}
 
-	if err := r.task.DeleteComment(ctx, scope, input.TaskCommentID); err != nil {
+	activityID, err := r.task.DeleteComment(ctx, scope, input.TaskCommentID)
+	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}
@@ -116,7 +118,8 @@ func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.De
 	}
 
 	return &types.DeleteTaskCommentPayload{
-		DeletedTaskCommentID: input.TaskCommentID,
+		DeletedTaskCommentID:  input.TaskCommentID,
+		DeletedTaskActivityID: activityID,
 	}, nil
 }
 

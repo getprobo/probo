@@ -167,14 +167,14 @@ func (s *Service) CountCommentsForTaskID(
 func (s *Service) CreateComment(
 	ctx context.Context, scope coredata.Scoper,
 	req CreateTaskCommentRequest,
-) (*coredata.TaskComment, error) {
+) (*coredata.TaskComment, *coredata.TaskActivity, error) {
 	if err := req.Validate(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	content, err := prosemirror.DefaultDocumentJSON(&req.Content)
 	if err != nil {
-		return nil, fmt.Errorf("cannot sanitize task comment content: %w", err)
+		return nil, nil, fmt.Errorf("cannot sanitize task comment content: %w", err)
 	}
 
 	now := time.Now()
@@ -185,6 +185,8 @@ func (s *Service) CreateComment(
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
+
+	var activity *coredata.TaskActivity
 
 	err = s.pg.WithTx(
 		ctx,
@@ -222,6 +224,11 @@ func (s *Service) CreateComment(
 				return fmt.Errorf("cannot insert task comment: %w", err)
 			}
 
+			activity, err = InsertCommentActivity(ctx, conn, scope, task, taskComment)
+			if err != nil {
+				return err
+			}
+
 			if err := emitTaskCommentCreated(ctx, conn, scope, taskComment); err != nil {
 				return fmt.Errorf("cannot emit task comment created webhook: %w", err)
 			}
@@ -236,10 +243,10 @@ func (s *Service) CreateComment(
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return taskComment, nil
+	return taskComment, activity, nil
 }
 
 func (s *Service) UpdateComment(
@@ -314,10 +321,11 @@ func (s *Service) DeleteComment(
 	ctx context.Context,
 	scope coredata.Scoper,
 	taskCommentID gid.GID,
-) error {
+) (gid.GID, error) {
 	taskComment := coredata.TaskComment{ID: taskCommentID}
+	var activityID gid.GID
 
-	return s.pg.WithTx(
+	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			if err := taskComment.LoadByIDForUpdate(ctx, conn, scope, taskCommentID); err != nil {
@@ -338,7 +346,19 @@ func (s *Service) DeleteComment(
 				return fmt.Errorf("cannot delete task comment: %w", err)
 			}
 
+			deletedActivityID, err := coredata.DeleteCommentedActivity(ctx, conn, scope, taskComment.ID)
+			if err != nil {
+				return err
+			}
+
+			activityID = deletedActivityID
+
 			return nil
 		},
 	)
+	if err != nil {
+		return gid.Nil, err
+	}
+
+	return activityID, nil
 }

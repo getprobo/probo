@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { Button } from "@probo/ui/src/v2/Button/Button";
-import { List } from "@probo/ui/src/v2/List/List";
+import { Timeline } from "@probo/ui/src/v2/Timeline/Timeline";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import { useParams } from "react-router";
@@ -89,14 +89,14 @@ function TaskActivityListContent({ taskKey }: TaskActivityListContentProps) {
       {activities.length === 0
         ? <TaskActivityEmpty />
         : (
-            <List>
+            <Timeline>
               {activities.map(activity => (
                 <TaskActivityListItem
                   key={activity.id}
                   taskActivityKey={activity}
                 />
               ))}
-            </List>
+            </Timeline>
           )}
       {hasNext && (
         <div className={actions()}>

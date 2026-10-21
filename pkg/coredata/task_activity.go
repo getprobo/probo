@@ -282,3 +282,44 @@ VALUES (
 
 	return nil
 }
+
+func DeleteCommentedActivity(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+	commentID gid.GID,
+) (gid.GID, error) {
+	q := `
+DELETE FROM
+    task_activities
+WHERE
+    %s
+    AND activity_type = 'COMMENTED'
+    AND new_value = @comment_id
+RETURNING
+    id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"comment_id": commentID.String()}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return gid.Nil, fmt.Errorf("cannot delete comment activity: %w", err)
+	}
+
+	deleted, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[struct {
+		ID gid.GID `db:"id"`
+	}])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return gid.Nil, nil
+		}
+
+		return gid.Nil, fmt.Errorf("cannot delete comment activity: %w", err)
+	}
+
+	return deleted.ID, nil
+}

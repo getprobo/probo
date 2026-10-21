@@ -25,7 +25,7 @@ import { useParams } from "react-router";
 import type { useCreateTaskCommentMutation } from "#/__generated__/core/useCreateTaskCommentMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { taskCommentsConnectionId } from "./taskPath";
+import { taskActivitiesConnectionId } from "./taskPath";
 
 const createTaskCommentMutation = graphql`
   mutation useCreateTaskCommentMutation(
@@ -33,10 +33,10 @@ const createTaskCommentMutation = graphql`
     $connections: [ID!]!
   ) {
     createTaskComment(input: $input) {
-      taskCommentEdge @appendEdge(connections: $connections) {
+      taskActivityEdge @prependEdge(connections: $connections) {
         node {
           id
-          ...TaskCommentListItem_taskComment
+          ...TaskActivityListItem_activity
         }
       }
     }
@@ -66,7 +66,7 @@ export function useCreateTaskComment() {
           taskId,
           content,
         },
-        connections: [taskCommentsConnectionId(taskId)],
+        connections: [taskActivitiesConnectionId(taskId)],
       },
     });
   }

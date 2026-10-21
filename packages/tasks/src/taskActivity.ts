@@ -23,7 +23,7 @@ import { dateTimeFormat } from "@probo/i18n";
 import { parseTaskDuration } from "./taskDuration";
 import { taskPriorityKeys, taskStateKeys } from "./taskState";
 
-export type TaskActivityType = "CREATED" | "UPDATED";
+export type TaskActivityType = "CREATED" | "UPDATED" | "COMMENTED";
 
 export type TaskActivityField
   = | "NAME"
@@ -90,6 +90,10 @@ export function taskActivitySentenceKey(
 ): string {
   if (activityType === "CREATED") {
     return "activity.sentences.created";
+  }
+
+  if (activityType === "COMMENTED") {
+    return "activity.sentences.updated";
   }
 
   switch (field) {

@@ -24,13 +24,12 @@ import { graphql, useFragment } from "react-relay";
 import type { TaskEngagementSection_task$key } from "#/__generated__/core/TaskEngagementSection_task.graphql";
 
 import { TaskActivitySection } from "./TaskActivitySection";
-import { TaskCommentsSection } from "./TaskCommentsSection";
+import { TaskCommentForm } from "./TaskCommentsList/TaskCommentForm";
 
 const taskEngagementSectionFragment = graphql`
   fragment TaskEngagementSection_task on Task {
-    canListComments: permission(action: "core:task-comment:list")
+    canCreateComment: permission(action: "core:task-comment:create")
     canListActivities: permission(action: "core:task-activity:list")
-    ...TaskCommentsSection_task
     ...TaskActivitySection_task
   }
 `;
@@ -44,9 +43,9 @@ export function TaskEngagementSection({ taskKey }: TaskEngagementSectionProps) {
 
   return (
     <TaskEngagement
-      canListComments={task.canListComments}
+      canCreateComment={task.canCreateComment}
       canListActivities={task.canListActivities}
-      comments={<TaskCommentsSection taskKey={task} />}
+      composer={<TaskCommentForm />}
       activity={<TaskActivitySection taskKey={task} />}
     />
   );

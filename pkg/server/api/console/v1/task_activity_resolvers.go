@@ -12,6 +12,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
@@ -44,6 +45,38 @@ func (r *taskActivityResolver) Actor(ctx context.Context, obj *types.TaskActivit
 	}
 
 	return types.NewProfile(actor), nil
+}
+
+// Comment is the resolver for the comment field.
+func (r *taskActivityResolver) Comment(ctx context.Context, obj *types.TaskActivity) (*types.TaskComment, error) {
+	if obj.ActivityType != coredata.TaskActivityTypeCommented || obj.NewValue == nil || *obj.NewValue == "" {
+		return nil, nil
+	}
+
+	commentID, err := gid.ParseGID(*obj.NewValue)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot parse task comment activity", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	scope, err := r.authorize(ctx, commentID, task.ActionTaskCommentGet)
+	if err != nil {
+		return nil, err
+	}
+
+	comment, err := r.task.GetComment(ctx, scope, commentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get task activity comment", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewTaskComment(comment), nil
 }
 
 // Permission is the resolver for the permission field.

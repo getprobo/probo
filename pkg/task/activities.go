@@ -105,6 +105,31 @@ func insertFieldActivity(
 	return nil
 }
 
+func InsertCommentActivity(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	task *coredata.Task,
+	comment *coredata.TaskComment,
+) (*coredata.TaskActivity, error) {
+	commentID := comment.ID.String()
+	activity := &coredata.TaskActivity{
+		ID:             gid.New(scope.GetTenantID(), coredata.TaskActivityEntityType),
+		OrganizationID: task.OrganizationID,
+		TaskID:         task.ID,
+		ActorID:        comment.OwnerID,
+		ActivityType:   coredata.TaskActivityTypeCommented,
+		NewValue:       &commentID,
+		CreatedAt:      comment.CreatedAt,
+	}
+
+	if err := activity.Insert(ctx, tx, scope); err != nil {
+		return nil, fmt.Errorf("cannot insert task comment activity: %w", err)
+	}
+
+	return activity, nil
+}
+
 func InsertUpdateActivities(
 	ctx context.Context,
 	tx pg.Tx,

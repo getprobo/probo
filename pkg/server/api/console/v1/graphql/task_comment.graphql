@@ -88,6 +88,7 @@ input DeleteTaskCommentInput {
 
 type CreateTaskCommentPayload {
     taskCommentEdge: TaskCommentEdge!
+    taskActivityEdge: TaskActivityEdge!
 }
 
 type UpdateTaskCommentPayload {
@@ -96,4 +97,5 @@ type UpdateTaskCommentPayload {
 
 type DeleteTaskCommentPayload {
     deletedTaskCommentId: ID!
+    deletedTaskActivityId: ID!
 }

@@ -9947,7 +9947,7 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
-	taskComment, err := r.task.CreateComment(
+	taskComment, _, err := r.task.CreateComment(
 		ctx, scope,
 		task.CreateTaskCommentRequest{
 			TaskID:     input.TaskID,
@@ -10029,7 +10029,7 @@ func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.DeleteTaskCommentOutput{}, err
 	}
 
-	if err := r.task.DeleteComment(ctx, scope, input.ID); err != nil {
+	if _, err := r.task.DeleteComment(ctx, scope, input.ID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("resource not found")
 		}

@@ -27,6 +27,10 @@ enum TaskActivityType @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskActiv
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TaskActivityTypeUpdated"
         )
+    COMMENTED
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.TaskActivityTypeCommented"
+        )
 }
 
 enum TaskActivityField @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskActivityField") {
@@ -87,6 +91,7 @@ type TaskActivity implements Node {
     field: TaskActivityField
     oldValue: String
     newValue: String
+    comment: TaskComment @goField(forceResolver: true)
     createdAt: Datetime!
     permission(action: String!): Boolean! @goField(forceResolver: true)
 }

@@ -119,14 +119,26 @@ export const taskCommentForm = tv({
   slots: {
     root: "flex flex-col gap-3",
     actions: "flex justify-end",
+    editor: [
+      "flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
+      "[&_.tiptap>p:first-child]:mt-0",
+    ],
   },
 });
 
 export const taskCommentEditor = tv({
   base: [
-    "flex-none! overflow-visible! bg-sand-1! py-3! pr-3! pl-14! shadow-2!",
+    "flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
     "[&_.tiptap>p:first-child]:mt-0",
   ],
+});
+
+export const taskActivityComment = tv({
+  slots: {
+    content: "min-w-0 flex-1 !items-stretch",
+    card: "flex min-w-0 flex-1 flex-col gap-2",
+    header: "flex items-center justify-end gap-2",
+  },
 });
 
 export const taskCommentListItem = tv({

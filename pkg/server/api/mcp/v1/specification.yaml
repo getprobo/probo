@@ -8042,6 +8042,7 @@ components:
       enum:
         - CREATED
         - UPDATED
+        - COMMENTED
       go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/coredata.TaskActivityType
 
     TaskActivityField:
