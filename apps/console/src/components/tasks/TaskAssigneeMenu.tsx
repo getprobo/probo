@@ -218,57 +218,59 @@ function TaskAssigneeMenuLoaded({
         disabled={disabled}
         onValueChange={setInput}
       />
-      <DropdownItem
-        disabled={disabled}
-        onClick={() => {
-          select(emptyValue);
-        }}
-      >
-        {emptyIcon == null
-          ? emptyLabel
-          : (
-              <UserSelectOption
-                fullName={emptyLabel}
-                size={size}
-                fallback={emptyIcon}
-              />
-            )}
-      </DropdownItem>
-      {unassigned != null && (
+      <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
         <DropdownItem
           disabled={disabled}
           onClick={() => {
-            select(unassigned.value);
+            select(emptyValue);
           }}
         >
-          <UserSelectOption
-            fullName={unassigned.label}
-            size={size}
-            fallback={unassigned.icon}
-          />
+          {emptyIcon == null
+            ? emptyLabel
+            : (
+                <UserSelectOption
+                  fullName={emptyLabel}
+                  size={size}
+                  fallback={emptyIcon}
+                />
+              )}
         </DropdownItem>
-      )}
-      {users.map(user => (
-        <DropdownItem
-          key={user.id}
-          disabled={disabled}
-          onClick={() => {
-            select(user.id);
-          }}
-        >
-          <UserSelectOption
-            fullName={user.fullName}
-            emailAddress={user.emailAddress}
-            avatarUrl={user.avatarUrl}
-            size={size}
-          />
-        </DropdownItem>
-      ))}
-      {users.length === 0 && (
-        <Text size={2} color="faint" className="px-3 py-1.5">
-          {t("detailsPage.assigneeMenu.empty")}
-        </Text>
-      )}
+        {unassigned != null && (
+          <DropdownItem
+            disabled={disabled}
+            onClick={() => {
+              select(unassigned.value);
+            }}
+          >
+            <UserSelectOption
+              fullName={unassigned.label}
+              size={size}
+              fallback={unassigned.icon}
+            />
+          </DropdownItem>
+        )}
+        {users.map(user => (
+          <DropdownItem
+            key={user.id}
+            disabled={disabled}
+            onClick={() => {
+              select(user.id);
+            }}
+          >
+            <UserSelectOption
+              fullName={user.fullName}
+              emailAddress={user.emailAddress}
+              avatarUrl={user.avatarUrl}
+              size={size}
+            />
+          </DropdownItem>
+        ))}
+        {users.length === 0 && (
+          <Text size={2} color="faint" className="px-3 py-1.5">
+            {t("detailsPage.assigneeMenu.empty")}
+          </Text>
+        )}
+      </div>
       {hasNext && (
         <Button
           variant="ghost"
