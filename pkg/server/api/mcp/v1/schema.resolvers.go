@@ -6224,7 +6224,6 @@ func (r *Resolver) AddTrackerPatternTool(ctx context.Context, req *mcp.CallToolR
 		TrackerType:      coredata.TrackerType(input.TrackerType),
 		Pattern:          input.Pattern,
 		MatchType:        coredata.TrackerPatternMatchType(input.MatchType),
-		DisplayName:      input.DisplayName,
 		MaxAgeSeconds:    input.MaxAgeSeconds,
 		Description:      input.Description,
 		Source:           &source,

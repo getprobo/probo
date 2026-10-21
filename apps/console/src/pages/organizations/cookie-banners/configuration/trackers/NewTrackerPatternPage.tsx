@@ -60,7 +60,6 @@ const serverFields: Record<string, string> = {
   tracker_type: "trackerType",
   pattern: "pattern",
   match_type: "pattern",
-  display_name: "pattern",
   description: "description",
 };
 
@@ -206,7 +205,6 @@ export function NewTrackerPatternPage({ queryRef }: NewTrackerPatternPageProps) 
           trackerType,
           pattern: trimmedPattern,
           matchType: starCount(trimmedPattern) === 1 ? "GLOB" : "EXACT",
-          displayName: trimmedPattern,
           description: trimmedDescription === "" ? undefined : trimmedDescription,
           ...(maxAgeSeconds == null ? {} : { maxAgeSeconds }),
         },

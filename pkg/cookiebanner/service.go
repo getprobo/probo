@@ -192,7 +192,6 @@ type (
 		TrackerType      coredata.TrackerType
 		Pattern          string
 		MatchType        coredata.TrackerPatternMatchType
-		DisplayName      string
 		MaxAgeSeconds    *int
 		Description      string
 		Source           *coredata.CookieSource
@@ -527,7 +526,6 @@ func (r *CreateTrackerPatternRequest) Validate() error {
 
 		return nil
 	})
-	v.Check(r.DisplayName, "display_name", validator.Required(), validator.SafeTextNoNewLine(MaxTrackerIdentifierLength))
 	v.Check(r.Description, "description", validator.SafeText(1000))
 
 	return v.Error()
@@ -829,7 +827,6 @@ func (s *Service) CreateCookieBanner(
 						TrackerType:      coredata.TrackerTypeCookie,
 						Pattern:          "probo_consent",
 						MatchType:        coredata.TrackerPatternMatchTypeExact,
-						DisplayName:      "probo_consent",
 						MaxAgeSeconds:    &consentMaxAge,
 						Description:      "Stores your cookie consent preferences for this website.",
 						Source:           new(coredata.CookieSourceScript),
@@ -3034,7 +3031,6 @@ func (s *Service) reportDetectedTracker(
 			TrackerType:        info.TrackerType,
 			Pattern:            info.Identifier,
 			MatchType:          coredata.TrackerPatternMatchTypeExact,
-			DisplayName:        info.Identifier,
 			Description:        "",
 			MaxAgeSeconds:      info.MaxAgeSeconds,
 			Source:             info.Source,
@@ -3241,7 +3237,6 @@ func (s *Service) CreateTrackerPattern(
 				TrackerType:      req.TrackerType,
 				Pattern:          req.Pattern,
 				MatchType:        req.MatchType,
-				DisplayName:      req.DisplayName,
 				MaxAgeSeconds:    req.MaxAgeSeconds,
 				Description:      req.Description,
 				Source:           req.Source,

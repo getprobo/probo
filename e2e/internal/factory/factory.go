@@ -1695,7 +1695,6 @@ func CreateTrackerPattern(c *testutil.Client, categoryID string, attrs ...Attrs)
 		"trackerType":      a.getString("trackerType", "COOKIE"),
 		"pattern":          a.getString("pattern", gofakeit.LetterN(8)+"_cookie"),
 		"matchType":        a.getString("matchType", "EXACT"),
-		"displayName":      a.getString("displayName", SafeName("Pattern")),
 		"description":      a.getString("description", "Test tracker pattern"),
 	}
 	if _, ok := a["maxAgeSeconds"]; ok {

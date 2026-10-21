@@ -1248,7 +1248,6 @@ func (r *mutationResolver) CreateTrackerPattern(ctx context.Context, input types
 			TrackerType:      trackerType,
 			Pattern:          input.Pattern,
 			MatchType:        input.MatchType,
-			DisplayName:      input.DisplayName,
 			MaxAgeSeconds:    input.MaxAgeSeconds,
 			Description:      description,
 		},

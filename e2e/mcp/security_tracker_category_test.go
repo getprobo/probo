@@ -110,7 +110,6 @@ func TestSecurity_MCP_MoveTrackerPatternToCategory_TenantIsolation(t *testing.T)
 		"tracker_type":       "COOKIE",
 		"pattern":            "org1-tracker",
 		"match_type":         "EXACT",
-		"display_name":       "Org1 Tracker",
 		"description":        "Org1 tracker pattern",
 	}, &patternResult)
 	require.NotEmpty(t, patternResult.TrackerPattern.ID)

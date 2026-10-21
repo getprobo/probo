@@ -53,7 +53,6 @@ func NewTrackerPatternWithAttribution(
 		TrackerType:            TrackerPatternTrackerType(p.TrackerType),
 		Pattern:                p.Pattern,
 		MatchType:              TrackerPatternMatchType(p.MatchType),
-		DisplayName:            p.DisplayName,
 		MaxAgeSeconds:          p.MaxAgeSeconds,
 		Description:            p.Description,
 		Source:                 source,

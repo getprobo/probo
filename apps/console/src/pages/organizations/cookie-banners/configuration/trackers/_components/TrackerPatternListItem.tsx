@@ -61,7 +61,7 @@ const trackerPatternFragment = graphql`
   fragment TrackerPatternListItem_trackerPattern on TrackerPattern {
     id
     trackerType
-    displayName
+    pattern
     source
     description
     maxAgeSeconds
@@ -234,7 +234,7 @@ export function TrackerPatternListItem({
                 className={link()}
               >
                 <Text size={2} weight="medium" highContrast className={title()}>
-                  {pattern.displayName}
+                  {pattern.pattern}
                 </Text>
               </TableLink>
               {description !== ""
@@ -256,7 +256,7 @@ export function TrackerPatternListItem({
                         <PopoverPopup>
                           <div className={detail()}>
                             <Text size={2} weight="medium" highContrast>
-                              {pattern.displayName}
+                              {pattern.pattern}
                             </Text>
                             <Text size={2} color="faint">
                               {description}
@@ -359,7 +359,7 @@ export function TrackerPatternListItem({
       {pattern.canDelete && (
         <DeleteTrackerPatternDialog
           trackerPatternId={pattern.id}
-          displayName={pattern.displayName}
+          name={pattern.pattern}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           onRemoved={onRemoved}

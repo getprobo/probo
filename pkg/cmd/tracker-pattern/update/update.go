@@ -34,7 +34,7 @@ mutation($input: UpdateTrackerPatternInput!) {
   updateTrackerPattern(input: $input) {
     trackerPattern {
       id
-      displayName
+      pattern
     }
     cookieBanner {
       id
@@ -46,8 +46,8 @@ mutation($input: UpdateTrackerPatternInput!) {
 type updateResponse struct {
 	UpdateTrackerPattern struct {
 		TrackerPattern struct {
-			ID          string `json:"id"`
-			DisplayName string `json:"displayName"`
+			ID      string `json:"id"`
+			Pattern string `json:"pattern"`
 		} `json:"trackerPattern"`
 	} `json:"updateTrackerPattern"`
 }
@@ -111,7 +111,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			p := resp.UpdateTrackerPattern.TrackerPattern
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Updated tracker pattern %s (%s)\n", p.ID, p.DisplayName)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Updated tracker pattern %s (%s)\n", p.ID, p.Pattern)
 
 			return nil
 		},

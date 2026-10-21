@@ -103,7 +103,6 @@ const updatePatternMutation = graphql`
     updateTrackerPattern(input: $input) {
       trackerPattern {
         id
-        displayName
         maxAgeSeconds
         description
         updatedAt

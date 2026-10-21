@@ -73,7 +73,7 @@ func (p TrackerPatternOrderField) Column() string {
 	case TrackerPatternOrderFieldCreatedAt:
 		return "created_at"
 	case TrackerPatternOrderFieldName:
-		return "display_name"
+		return "pattern"
 	case TrackerPatternOrderFieldUpdatedAt:
 		return "updated_at"
 	case TrackerPatternOrderFieldSource:

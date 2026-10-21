@@ -46,7 +46,6 @@ type (
 		TrackerType            TrackerType             `db:"tracker_type"`
 		Pattern                string                  `db:"pattern"`
 		MatchType              TrackerPatternMatchType `db:"match_type"`
-		DisplayName            string                  `db:"display_name"`
 		Description            string                  `db:"description"`
 		Excluded               bool                    `db:"excluded"`
 		MaxAgeSeconds          *int                    `db:"max_age_seconds"`
@@ -64,7 +63,7 @@ func (tp *TrackerPattern) CursorKey(field TrackerPatternOrderField) page.CursorK
 	case TrackerPatternOrderFieldCreatedAt:
 		return page.NewCursorKey(tp.ID, tp.CreatedAt)
 	case TrackerPatternOrderFieldName:
-		return page.NewCursorKey(tp.ID, tp.DisplayName)
+		return page.NewCursorKey(tp.ID, tp.Pattern)
 	case TrackerPatternOrderFieldUpdatedAt:
 		return page.NewCursorKey(tp.ID, tp.UpdatedAt)
 	case TrackerPatternOrderFieldSource:
@@ -133,7 +132,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -200,7 +198,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -262,7 +259,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -328,7 +324,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -404,7 +399,6 @@ INSERT INTO tracker_patterns (
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -422,7 +416,6 @@ INSERT INTO tracker_patterns (
 	@tracker_type,
 	@pattern,
 	@match_type,
-	@display_name,
 	@description,
 	@excluded,
 	@max_age_seconds,
@@ -443,7 +436,6 @@ INSERT INTO tracker_patterns (
 		"tracker_type":              tp.TrackerType,
 		"pattern":                   tp.Pattern,
 		"match_type":                tp.MatchType,
-		"display_name":              tp.DisplayName,
 		"description":               tp.Description,
 		"excluded":                  tp.Excluded,
 		"max_age_seconds":           tp.MaxAgeSeconds,
@@ -483,7 +475,6 @@ INSERT INTO tracker_patterns (
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -501,7 +492,6 @@ INSERT INTO tracker_patterns (
 	@tracker_type,
 	@pattern,
 	@match_type,
-	@display_name,
 	@description,
 	@excluded,
 	@max_age_seconds,
@@ -523,7 +513,6 @@ ON CONFLICT (cookie_banner_id, tracker_type, pattern, COALESCE(max_age_seconds, 
 		"tracker_type":              tp.TrackerType,
 		"pattern":                   tp.Pattern,
 		"match_type":                tp.MatchType,
-		"display_name":              tp.DisplayName,
 		"description":               tp.Description,
 		"excluded":                  tp.Excluded,
 		"max_age_seconds":           tp.MaxAgeSeconds,
@@ -557,7 +546,6 @@ UPDATE tracker_patterns
 SET
 	common_tracker_pattern_id = @common_tracker_pattern_id,
 	cookie_category_id = @cookie_category_id,
-	display_name = @display_name,
 	max_age_seconds = @max_age_seconds,
 	description = @description,
 	excluded = @excluded,
@@ -574,7 +562,6 @@ WHERE
 		"id":                        tp.ID,
 		"common_tracker_pattern_id": tp.CommonTrackerPatternID,
 		"cookie_category_id":        tp.CookieCategoryID,
-		"display_name":              tp.DisplayName,
 		"max_age_seconds":           tp.MaxAgeSeconds,
 		"description":               tp.Description,
 		"excluded":                  tp.Excluded,
@@ -603,7 +590,7 @@ WHERE
 
 // UpdateMapping writes only the columns the tracker-mapping worker
 // resolves — common_tracker_pattern_id and an enriched description —
-// leaving the user-editable fields (display_name, excluded,
+// leaving the user-editable fields (excluded,
 // cookie_category_id, max_age_seconds, source)
 // untouched.
 //
@@ -696,7 +683,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -790,7 +776,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,
@@ -980,7 +965,6 @@ SELECT
 	tracker_type,
 	pattern,
 	match_type,
-	display_name,
 	description,
 	excluded,
 	max_age_seconds,

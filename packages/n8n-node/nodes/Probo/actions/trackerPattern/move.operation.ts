@@ -66,7 +66,6 @@ export async function execute(
 					id
 					pattern
 					matchType
-					displayName
 					maxAgeSeconds
 					description
 					source

@@ -50,7 +50,6 @@ func TestTrackerPattern_RBAC(t *testing.T) {
 				"cookieCategoryId": categoryID,
 				"pattern":          "test_viewer",
 				"matchType":        "EXACT",
-				"displayName":      "Test Viewer Pattern",
 				"description":      "Should fail",
 			},
 		})

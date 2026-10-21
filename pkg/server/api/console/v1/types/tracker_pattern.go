@@ -46,7 +46,6 @@ type (
 		TrackerType   coredata.TrackerType             `json:"trackerType"`
 		Pattern       string                           `json:"pattern"`
 		MatchType     coredata.TrackerPatternMatchType `json:"matchType"`
-		DisplayName   string                           `json:"displayName"`
 		MaxAgeSeconds *int                             `json:"maxAgeSeconds,omitempty"`
 		Description   string                           `json:"description"`
 		Source        *coredata.CookieSource           `json:"source,omitempty"`
@@ -150,7 +149,6 @@ func NewTrackerPatternNode(tp *coredata.TrackerPattern) *TrackerPattern {
 		TrackerType:            tp.TrackerType,
 		Pattern:                tp.Pattern,
 		MatchType:              tp.MatchType,
-		DisplayName:            tp.DisplayName,
 		MaxAgeSeconds:          tp.MaxAgeSeconds,
 		Description:            tp.Description,
 		Source:                 tp.Source,

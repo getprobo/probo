@@ -405,7 +405,6 @@ type TrackerPattern implements Node
     trackerType: TrackerType!
     pattern: String!
     matchType: TrackerPatternMatchType!
-    displayName: String!
     maxAgeSeconds: Int
     description: String!
     source: CookieSource
@@ -928,7 +927,6 @@ input CreateTrackerPatternInput {
     trackerType: TrackerType
     pattern: String!
     matchType: TrackerPatternMatchType!
-    displayName: String!
     maxAgeSeconds: Int
     description: String
 }

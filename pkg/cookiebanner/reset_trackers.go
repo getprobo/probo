@@ -356,7 +356,6 @@ func ensureExactPattern(
 		TrackerType:        detection.TrackerType,
 		Pattern:            detection.Identifier,
 		MatchType:          coredata.TrackerPatternMatchTypeExact,
-		DisplayName:        detection.Identifier,
 		MaxAgeSeconds:      detection.MaxAgeSeconds,
 		Source:             detection.Source,
 		MappingRequestedAt: &now,

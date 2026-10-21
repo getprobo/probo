@@ -52,7 +52,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 							pattern
 							matchType
 							trackerType
-							displayName
 							maxAgeSeconds
 							description
 							commonTrackerPatternId
@@ -75,7 +74,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 						Pattern                string  `json:"pattern"`
 						MatchType              string  `json:"matchType"`
 						TrackerType            string  `json:"trackerType"`
-						DisplayName            string  `json:"displayName"`
 						MaxAgeSeconds          *int    `json:"maxAgeSeconds"`
 						Description            string  `json:"description"`
 						CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
@@ -96,7 +94,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 				"pattern":          "_ga",
 				"matchType":        "EXACT",
 				"trackerType":      "LOCAL_STORAGE",
-				"displayName":      "Google Analytics",
 				"maxAgeSeconds":    maxAge,
 				"description":      "Google Analytics tracking cookie",
 			},
@@ -109,7 +106,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 		assert.Equal(t, "_ga", node.Pattern)
 		assert.Equal(t, "EXACT", node.MatchType)
 		assert.Equal(t, "LOCAL_STORAGE", node.TrackerType)
-		assert.Equal(t, "Google Analytics", node.DisplayName)
 		require.NotNil(t, node.MaxAgeSeconds)
 		assert.Equal(t, maxAge, *node.MaxAgeSeconds)
 		assert.Equal(t, "Google Analytics tracking cookie", node.Description)
@@ -132,7 +128,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 							id
 							pattern
 							matchType
-							displayName
 							maxAgeSeconds
 						}
 					}
@@ -147,7 +142,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 						ID            string `json:"id"`
 						Pattern       string `json:"pattern"`
 						MatchType     string `json:"matchType"`
-						DisplayName   string `json:"displayName"`
 						MaxAgeSeconds *int   `json:"maxAgeSeconds"`
 					} `json:"node"`
 				} `json:"trackerPatternEdge"`
@@ -159,7 +153,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 				"cookieCategoryId": categoryID,
 				"pattern":          "_gat_*",
 				"matchType":        "GLOB",
-				"displayName":      "GA Throttle",
 				"description":      "Google Analytics rate limiting",
 			},
 		}, &result)
@@ -180,8 +173,7 @@ func TestTrackerPattern_Create(t *testing.T) {
 		categoryID := factory.CreateCookieCategory(owner, bannerID)
 
 		factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
-			"pattern":     "duplicate_cookie",
-			"displayName": "First",
+			"pattern": "duplicate_cookie",
 		})
 
 		_, err := owner.Do(`
@@ -196,7 +188,6 @@ func TestTrackerPattern_Create(t *testing.T) {
 				"cookieCategoryId": categoryID,
 				"pattern":          "duplicate_cookie",
 				"matchType":        "EXACT",
-				"displayName":      "Second",
 				"description":      "Duplicate",
 			},
 		})
@@ -214,7 +205,6 @@ func TestTrackerPattern_Update(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID)
 		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
-			"displayName": "Original Name",
 			"description": "Original description",
 		})
 
@@ -223,7 +213,6 @@ func TestTrackerPattern_Update(t *testing.T) {
 				updateTrackerPattern(input: $input) {
 					trackerPattern {
 						id
-						displayName
 						description
 					}
 					cookieBanner {
@@ -237,7 +226,6 @@ func TestTrackerPattern_Update(t *testing.T) {
 			UpdateTrackerPattern struct {
 				TrackerPattern struct {
 					ID          string `json:"id"`
-					DisplayName string `json:"displayName"`
 					Description string `json:"description"`
 				} `json:"trackerPattern"`
 				CookieBanner struct {
@@ -255,7 +243,6 @@ func TestTrackerPattern_Update(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, patternID, result.UpdateTrackerPattern.TrackerPattern.ID)
-		assert.Equal(t, "Original Name", result.UpdateTrackerPattern.TrackerPattern.DisplayName)
 		assert.Equal(t, "Updated description", result.UpdateTrackerPattern.TrackerPattern.Description)
 		assert.Equal(t, bannerID, result.UpdateTrackerPattern.CookieBanner.ID)
 	})
@@ -340,7 +327,6 @@ func TestTrackerPattern_Excluded(t *testing.T) {
 				"cookieCategoryId": categoryID,
 				"pattern":          "test_excluded_default",
 				"matchType":        "EXACT",
-				"displayName":      "Test Excluded Default",
 				"description":      "Should default to not excluded",
 			},
 		}, &result)
@@ -581,7 +567,6 @@ func TestTrackerPattern_List(t *testing.T) {
 								node {
 									id
 									pattern
-									displayName
 								}
 							}
 							pageInfo {
@@ -600,9 +585,8 @@ func TestTrackerPattern_List(t *testing.T) {
 					TotalCount int `json:"totalCount"`
 					Edges      []struct {
 						Node struct {
-							ID          string `json:"id"`
-							Pattern     string `json:"pattern"`
-							DisplayName string `json:"displayName"`
+							ID      string `json:"id"`
+							Pattern string `json:"pattern"`
 						} `json:"node"`
 					} `json:"edges"`
 					PageInfo struct {

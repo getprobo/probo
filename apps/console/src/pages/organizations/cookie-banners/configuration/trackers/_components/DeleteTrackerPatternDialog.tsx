@@ -53,7 +53,7 @@ const deletePatternMutation = graphql`
 
 interface DeleteTrackerPatternDialogProps {
   trackerPatternId: string;
-  displayName: string;
+  name: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRemoved: () => void;
@@ -61,7 +61,7 @@ interface DeleteTrackerPatternDialogProps {
 
 export function DeleteTrackerPatternDialog({
   trackerPatternId,
-  displayName,
+  name,
   open,
   onOpenChange,
   onRemoved,
@@ -97,7 +97,7 @@ export function DeleteTrackerPatternDialog({
         <DialogHeader>
           <DialogTitle>{t("trackerPatternRow.dialogs.deleteTitle")}</DialogTitle>
           <DialogDescription>
-            {t("trackerPatternRow.deleteConfirmation", { name: displayName })}
+            {t("trackerPatternRow.deleteConfirmation", { name })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

@@ -75,20 +75,6 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Display Name',
-		name: 'displayName',
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['trackerPattern'],
-				operation: ['create'],
-			},
-		},
-		default: '',
-		description: 'The display name for the tracker pattern',
-		required: true,
-	},
-	{
 		displayName: 'Description',
 		name: 'description',
 		type: 'string',
@@ -124,7 +110,6 @@ export async function execute(
 	const cookieCategoryId = this.getNodeParameter('cookieCategoryId', itemIndex) as string;
 	const pattern = this.getNodeParameter('pattern', itemIndex) as string;
 	const matchType = this.getNodeParameter('matchType', itemIndex) as string;
-	const displayName = this.getNodeParameter('displayName', itemIndex) as string;
 	const description = this.getNodeParameter('description', itemIndex) as string;
 	const maxAgeSeconds = this.getNodeParameter('maxAgeSeconds', itemIndex, 0) as number;
 
@@ -136,7 +121,6 @@ export async function execute(
 						id
 						pattern
 						matchType
-						displayName
 						maxAgeSeconds
 						description
 						source
@@ -157,7 +141,6 @@ export async function execute(
 		cookieCategoryId,
 		pattern,
 		matchType,
-		displayName,
 		description,
 	};
 	if (maxAgeSeconds) input.maxAgeSeconds = maxAgeSeconds;

@@ -37,7 +37,6 @@ mutation($input: CreateTrackerPatternInput!) {
       node {
         id
         pattern
-        displayName
       }
     }
     cookieBanner {
@@ -51,9 +50,8 @@ type createResponse struct {
 	CreateTrackerPattern struct {
 		TrackerPatternEdge struct {
 			Node struct {
-				ID          string `json:"id"`
-				Pattern     string `json:"pattern"`
-				DisplayName string `json:"displayName"`
+				ID      string `json:"id"`
+				Pattern string `json:"pattern"`
 			} `json:"node"`
 		} `json:"trackerPatternEdge"`
 	} `json:"createTrackerPattern"`
@@ -64,7 +62,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		flagCategoryID  string
 		flagPattern     string
 		flagMatchType   string
-		flagDisplayName string
 		flagDescription string
 		flagMaxAge      int
 	)
@@ -109,12 +106,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
-
-				if flagDisplayName == "" {
-					if err := huh.NewInput().Title("Display name").Value(&flagDisplayName).Run(); err != nil {
-						return err
-					}
-				}
 			}
 
 			if flagPattern == "" {
@@ -125,15 +116,10 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("match-type is required; pass --match-type or run interactively")
 			}
 
-			if flagDisplayName == "" {
-				return fmt.Errorf("display-name is required; pass --display-name or run interactively")
-			}
-
 			input := map[string]any{
 				"cookieCategoryId": flagCategoryID,
 				"pattern":          flagPattern,
 				"matchType":        flagMatchType,
-				"displayName":      flagDisplayName,
 			}
 			if flagDescription != "" {
 				input["description"] = flagDescription
@@ -154,7 +140,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			p := resp.CreateTrackerPattern.TrackerPatternEdge.Node
-			_, _ = fmt.Fprintf(f.IOStreams.Out, "Created tracker pattern %s (%s)\n", p.ID, p.DisplayName)
+			_, _ = fmt.Fprintf(f.IOStreams.Out, "Created tracker pattern %s (%s)\n", p.ID, p.Pattern)
 
 			return nil
 		},
@@ -164,7 +150,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	_ = cmd.MarkFlagRequired("category-id")
 	cmd.Flags().StringVar(&flagPattern, "pattern", "", "Tracker pattern (required)")
 	cmd.Flags().StringVar(&flagMatchType, "match-type", "", "Match type: EXACT or GLOB (required)")
-	cmd.Flags().StringVar(&flagDisplayName, "display-name", "", "Display name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Description")
 	cmd.Flags().IntVar(&flagMaxAge, "max-age-seconds", 0, "Maximum age in seconds")
 

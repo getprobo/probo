@@ -340,7 +340,6 @@ func TestCookieBannerVersioning_NoOpUpdates(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "visible-noop"})
 		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
-			"displayName": "GA Tracker",
 			"description": "Original description",
 		})
 
@@ -380,9 +379,7 @@ func TestCookieBannerVersioning_ExcludedPattern(t *testing.T) {
 
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "excl-update"})
-		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
-			"displayName": "Original",
-		})
+		patternID := factory.CreateTrackerPattern(owner, categoryID)
 
 		setPatternExcluded(t, owner, patternID, true)
 		published := publishBanner(t, owner, bannerID)
@@ -633,7 +630,6 @@ func TestCookieBannerVersioning_RealChangesStillBumpVersion(t *testing.T) {
 		bannerID := factory.CreateCookieBanner(owner)
 		categoryID := factory.CreateCookieCategory(owner, bannerID, factory.Attrs{"slug": "real-change"})
 		patternID := factory.CreateTrackerPattern(owner, categoryID, factory.Attrs{
-			"displayName": "Original",
 			"description": "Original desc",
 		})
 

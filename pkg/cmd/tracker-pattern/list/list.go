@@ -42,7 +42,6 @@ query($id: ID!, $first: Int, $after: CursorKey) {
             pattern
             matchType
             trackerType
-            displayName
             source
             excluded
             commonTrackerPatternId
@@ -64,7 +63,6 @@ type trackerPattern struct {
 	Pattern                string  `json:"pattern"`
 	MatchType              string  `json:"matchType"`
 	TrackerType            string  `json:"trackerType"`
-	DisplayName            string  `json:"displayName"`
 	Source                 *string `json:"source"`
 	Excluded               bool    `json:"excluded"`
 	CommonTrackerPatternID *string `json:"commonTrackerPatternId"`
@@ -170,10 +168,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 					attribution = *p.Attribution
 				}
 
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, p.DisplayName, source, excluded, commonPatternID, attribution})
+				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, source, excluded, commonPatternID, attribution})
 			}
 
-			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "DISPLAY NAME", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION").Rows(rows...)
+			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION").Rows(rows...)
 			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
 
 			if totalCount > len(patterns) {

@@ -104,7 +104,6 @@ func TestTrackerPatternFilter_CategorizedAndExcluded(t *testing.T) {
 			TrackerType:      coredata.TrackerTypeCookie,
 			Pattern:          "uncategorised",
 			MatchType:        coredata.TrackerPatternMatchTypeExact,
-			DisplayName:      "uncategorised",
 			Source:           &uncategorisedSource,
 			CreatedAt:        now,
 			UpdatedAt:        now,

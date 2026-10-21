@@ -43,7 +43,7 @@ export const trackerPatternDetailPageQuery = graphql`
     node(id: $trackerPatternId) @required(action: THROW) {
       __typename
       ... on TrackerPattern {
-        displayName
+        pattern
         ...TrackerPatternDetailHeader_trackerPattern
         ...TrackerPatternDiscoveryHitsSection_trackerPattern
         ...TrackerPatternPropertiesSection_trackerPattern
@@ -70,7 +70,7 @@ export default function TrackerPatternDetailPage({
   }
 
   const pattern = data.node;
-  usePageTitle(pattern.displayName);
+  usePageTitle(pattern.pattern);
 
   return (
     <div className="space-y-6">

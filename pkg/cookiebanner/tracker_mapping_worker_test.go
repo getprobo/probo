@@ -94,7 +94,6 @@ func seedPromotionFixture(t *testing.T, ctx context.Context, client *pg.Client) 
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                patternName,
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            patternName,
 		Description:            "",
 		CreatedAt:              now,
 		UpdatedAt:              now,
@@ -296,7 +295,6 @@ func TestProcess_UnlinkedExtensionPatternStaysUnlinked(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          patternName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      patternName,
 		Source:           &source,
 		CreatedAt:        now,
 		UpdatedAt:        now,
@@ -338,7 +336,6 @@ func TestMatchBySiblingOrigin_SiblingWithCatalogVendor(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "_gid",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "_gid",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -351,7 +348,6 @@ func TestMatchBySiblingOrigin_SiblingWithCatalogVendor(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          unmappedName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      unmappedName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -480,7 +476,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "sibling_a",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "sibling_a",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -494,7 +489,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "sibling_b",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "sibling_b",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -508,7 +502,6 @@ func TestMatchBySiblingOrigin_AmbiguousThirdParties(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          unmappedName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      unmappedName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -622,7 +615,6 @@ func TestMatchBySiblingOrigin_NoSiblings(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          "lonely_cookie",
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      "lonely_cookie",
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -663,7 +655,6 @@ func TestMatchBySiblingOrigin_EmptyDomains(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          "no_domains",
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      "no_domains",
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -707,7 +698,6 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "converge_a",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "converge_a",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -721,7 +711,6 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "converge_b",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "converge_b",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -734,7 +723,6 @@ func TestMatchBySiblingOrigin_ConvergentSiblings(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          unmappedName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      unmappedName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -857,7 +845,6 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "_gid_backfill",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "_gid_backfill",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -881,7 +868,6 @@ func TestProcess_BackfillsCommonThirdPartyFromSibling(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                backfillName,
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            backfillName,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -992,7 +978,6 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "_sibling_fp",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "_sibling_fp",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -1016,7 +1001,6 @@ func TestProcess_SiblingPromotionOnFirstPartyOrigin(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                supportName,
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            supportName,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -1128,7 +1112,6 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "_gid_reenq",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "_gid_reenq",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -1141,7 +1124,6 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          targetName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      targetName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1154,7 +1136,6 @@ func TestProcess_ReenqueuesUnmappedSiblingOnResolve(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          "_unmapped_reenq",
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      "_unmapped_reenq",
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1261,7 +1242,6 @@ func TestProcess_DoesNotReenqueueCatalogLinkedOrExtensionSiblings(t *testing.T) 
 		TrackerType:            coredata.TrackerTypeCookie,
 		Pattern:                "_gid_guard",
 		MatchType:              coredata.TrackerPatternMatchTypeExact,
-		DisplayName:            "_gid_guard",
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -1274,7 +1254,6 @@ func TestProcess_DoesNotReenqueueCatalogLinkedOrExtensionSiblings(t *testing.T) 
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          targetName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      targetName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1287,7 +1266,6 @@ func TestProcess_DoesNotReenqueueCatalogLinkedOrExtensionSiblings(t *testing.T) 
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          "_plain_guard",
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      "_plain_guard",
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1301,7 +1279,6 @@ func TestProcess_DoesNotReenqueueCatalogLinkedOrExtensionSiblings(t *testing.T) 
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          "_ext_guard",
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      "_ext_guard",
 		Source:           &extensionSource,
 		CreatedAt:        now,
 		UpdatedAt:        now,
@@ -1392,7 +1369,6 @@ func TestProcess_NoReenqueueWhenCommonThirdPartyPreexisted(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          "_unmapped_preexist",
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      "_unmapped_preexist",
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1475,7 +1451,6 @@ func TestProcess_FirstPartyVerdictIsTerminal(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeLocalStorage,
 		Pattern:          patternName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      patternName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -1569,7 +1544,6 @@ func TestProcess_LowConfidenceCatalogVendorNotAdopted(t *testing.T) {
 		TrackerType:      coredata.TrackerTypeCookie,
 		Pattern:          patternName,
 		MatchType:        coredata.TrackerPatternMatchTypeExact,
-		DisplayName:      patternName,
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}

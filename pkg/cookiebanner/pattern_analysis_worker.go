@@ -195,7 +195,6 @@ func (h *patternAnalysisHandler) Process(ctx context.Context, banner coredata.Co
 					TrackerType:        key.trackerType,
 					Pattern:            key.template,
 					MatchType:          coredata.TrackerPatternMatchTypeGlob,
-					DisplayName:        key.template,
 					MaxAgeSeconds:      maxAge,
 					Source:             source,
 					MappingRequestedAt: &now,

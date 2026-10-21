@@ -39,7 +39,6 @@ query($id: ID!) {
       pattern
       matchType
       trackerType
-      displayName
       maxAgeSeconds
       description
       source
@@ -64,7 +63,6 @@ type viewResponse struct {
 		Pattern                string  `json:"pattern"`
 		MatchType              string  `json:"matchType"`
 		TrackerType            string  `json:"trackerType"`
-		DisplayName            string  `json:"displayName"`
 		MaxAgeSeconds          *int    `json:"maxAgeSeconds"`
 		Description            *string `json:"description"`
 		Source                 string  `json:"source"`
@@ -134,7 +132,7 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			bold := lipgloss.NewStyle().Bold(true)
 			label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 
-			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(v.DisplayName))
+			_, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(v.Pattern))
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), v.ID)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Pattern:"), v.Pattern)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Match Type:"), v.MatchType)

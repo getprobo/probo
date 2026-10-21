@@ -14012,7 +14012,6 @@ components:
         - tracker_type
         - pattern
         - match_type
-        - display_name
         - description
         - source
         - excluded
@@ -14042,9 +14041,6 @@ components:
           type: string
           enum: [EXACT, GLOB]
           description: "Pattern match type. GLOB uses * as single wildcard (e.g. ph_phc_*_posthog)"
-        display_name:
-          type: string
-          description: Human-friendly display name
         max_age_seconds:
           type:
             - integer
@@ -14680,7 +14676,6 @@ components:
         - tracker_type
         - pattern
         - match_type
-        - display_name
         - description
       properties:
         cookie_category_id:
@@ -14693,8 +14688,6 @@ components:
         match_type:
           type: string
           enum: [EXACT, GLOB]
-        display_name:
-          type: string
         max_age_seconds:
           type: integer
         description:

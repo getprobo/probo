@@ -90,7 +90,7 @@ func buildSnapshot(
 		cookiesByCategory[p.CookieCategoryID] = append(
 			cookiesByCategory[p.CookieCategoryID],
 			coredata.CookieItem{
-				Name:          p.DisplayName,
+				Name:          p.Pattern,
 				TrackerType:   p.TrackerType,
 				MaxAgeSeconds: p.MaxAgeSeconds,
 				Description:   p.Description,

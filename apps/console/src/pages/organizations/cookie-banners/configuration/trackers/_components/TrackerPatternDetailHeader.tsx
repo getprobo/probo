@@ -43,7 +43,7 @@ import { TrackerTypeBadge } from "./TrackerTypeBadge";
 const trackerPatternDetailHeaderFragment = graphql`
   fragment TrackerPatternDetailHeader_trackerPattern on TrackerPattern {
     id
-    displayName
+    pattern
     trackerType
     source
     excluded
@@ -127,7 +127,7 @@ export function TrackerPatternDetailHeader({
       <div className={bar()}>
         <div className={titleRow()}>
           <Heading level={1} size={6} weight="medium" highContrast className={title()}>
-            {pattern.displayName}
+            {pattern.pattern}
           </Heading>
           <div className={badges()}>
             <TrackerTypeBadge trackerType={pattern.trackerType} tooltip={false} />

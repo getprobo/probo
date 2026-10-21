@@ -136,15 +136,14 @@ func (f *TrackerPatternFilter) SQLFragment() string {
 	AND
 	CASE
 		WHEN @filter_query::text IS NOT NULL AND @filter_query::text != '' THEN
-			(display_name ILIKE '%' || @filter_query || '%'
+			(pattern ILIKE '%' || @filter_query || '%'
 			 OR description ILIKE '%' || @filter_query || '%')
 		ELSE TRUE
 	END
 	AND
 	CASE
 		WHEN @filter_pattern_keyword::text IS NOT NULL AND @filter_pattern_keyword::text != '' THEN
-			(pattern ILIKE '%' || @filter_pattern_keyword || '%'
-			 OR display_name ILIKE '%' || @filter_pattern_keyword || '%')
+			pattern ILIKE '%' || @filter_pattern_keyword || '%'
 		ELSE TRUE
 	END
 	AND
