@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.257.0] - 2026-10-21
+
+### Removed
+
+- Tracker Pattern `Create` no longer takes `Display Name`, and tracker
+  pattern operations no longer return `displayName`. Saved workflows
+  that set the field must remove it
+
 ## [0.256.0] - 2026-10-20
 
 ### Added
