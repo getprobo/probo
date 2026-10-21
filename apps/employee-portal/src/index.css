@@ -22,7 +22,45 @@
 @import "tailwindcss";
 @import "@probo/ui/src/v2/theme.css";
 @source "../../../packages/ui/src/v2";
+@source "../../../packages/ui/src/RichEditor";
 @source "../../../packages/tasks/src";
+
+/* The rich editor's chrome is styled for the console kit. The portal only
+ * loads the v2 theme, so the placeholder, slash menu, and focus ring have to
+ * be painted with v2 tokens here. */
+.ProseMirror-focused {
+  outline: none !important;
+}
+
+.tiptap p.is-empty-focused::before,
+.tiptap .slash-search[data-empty="true"]::after {
+  content: attr(data-placeholder);
+  color: var(--color-sand-a9);
+  pointer-events: none;
+}
+
+.tiptap p.is-empty-focused::before {
+  float: left;
+  height: 0;
+}
+
+[data-rich-editor-floating] {
+  border: 1px solid var(--color-sand-6);
+  border-radius: var(--radius-3);
+  background-color: var(--color-sand-1);
+  color: var(--color-sand-12);
+  box-shadow: var(--shadow-3);
+}
+
+[data-rich-editor-floating] button {
+  color: inherit;
+  background-color: transparent;
+}
+
+[data-rich-editor-floating] button:hover,
+[data-rich-editor-floating] button.bg-active {
+  background-color: var(--color-sand-3);
+}
 
 .status-pip-ring {
   animation: status-pip-pulse 1.8s ease-in-out infinite;

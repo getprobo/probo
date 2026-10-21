@@ -8,5 +8,33 @@
     "cancel": "Cancelar",
     "deleted": "Tarea eliminada.",
     "error": "No se pudo eliminar la tarea"
+  },
+  "details": {
+    "notFound": "Tarea no encontrada",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Escribe una descripción…",
+    "noDescription": "Sin descripción",
+    "commentPlaceholder": "Deja un comentario…",
+    "send": "Enviar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "editComment": "Editar comentario",
+    "deleteComment": "Eliminar comentario",
+    "deleteCommentTitle": "Eliminar comentario",
+    "deleteCommentDescription": "¿Seguro que quiere eliminar este comentario?",
+    "commentRequired": "Escribe un comentario",
+    "commentTooLong": "El comentario debe tener como máximo {{max}} caracteres",
+    "commentContentError": "No se pudo mostrar este comentario",
+    "commentCreated": "Comentario añadido.",
+    "commentUpdated": "Comentario actualizado.",
+    "commentDeleted": "Comentario eliminado.",
+    "commentCreateError": "No se pudo añadir el comentario",
+    "commentUpdateError": "No se pudo actualizar el comentario",
+    "commentDeleteError": "No se pudo eliminar el comentario",
+    "justNow": "ahora mismo",
+    "commented": "<name>{{name}}</name> <time>{{time}}</time>",
+    "showMore": "Mostrar más",
+    "actorFallback": "Alguien",
+    "activityEmpty": "Todavía no hay actividad"
   }
 }

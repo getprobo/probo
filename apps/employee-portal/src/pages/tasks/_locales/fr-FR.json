@@ -8,5 +8,33 @@
     "cancel": "Annuler",
     "deleted": "Tâche supprimée.",
     "error": "Échec de la suppression de la tâche"
+  },
+  "details": {
+    "notFound": "Tâche introuvable",
+    "description": "Description",
+    "descriptionPlaceholder": "Rédiger une description…",
+    "noDescription": "Aucune description",
+    "commentPlaceholder": "Laisser un commentaire…",
+    "send": "Envoyer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "editComment": "Modifier le commentaire",
+    "deleteComment": "Supprimer le commentaire",
+    "deleteCommentTitle": "Supprimer le commentaire",
+    "deleteCommentDescription": "Voulez-vous vraiment supprimer ce commentaire ?",
+    "commentRequired": "Saisissez un commentaire",
+    "commentTooLong": "Le commentaire ne doit pas dépasser {{max}} caractères",
+    "commentContentError": "Impossible d'afficher ce commentaire",
+    "commentCreated": "Commentaire ajouté.",
+    "commentUpdated": "Commentaire mis à jour.",
+    "commentDeleted": "Commentaire supprimé.",
+    "commentCreateError": "Échec de l'ajout du commentaire",
+    "commentUpdateError": "Échec de la mise à jour du commentaire",
+    "commentDeleteError": "Échec de la suppression du commentaire",
+    "justNow": "à l'instant",
+    "commented": "<name>{{name}}</name> <time>{{time}}</time>",
+    "showMore": "Afficher plus",
+    "actorFallback": "Quelqu'un",
+    "activityEmpty": "Aucune activité pour le moment"
   }
 }

@@ -70,6 +70,20 @@ export function rememberedTaskListDeadlines(): TaskDeadlineBounds[] {
   return rememberedTaskListDeadlinesList;
 }
 
+export const taskActivitiesConnectionKey = "EmployeeTaskActivityList_activities";
+
+const taskActivitiesConnectionFilters = {
+  orderBy: { field: "CREATED_AT" as const, direction: "ASC" as const },
+};
+
+export function taskActivitiesConnectionId(taskId: string) {
+  return ConnectionHandler.getConnectionID(
+    taskId,
+    taskActivitiesConnectionKey,
+    taskActivitiesConnectionFilters,
+  );
+}
+
 export function taskListConnectionId(
   viewerId: string,
   organizationId: string,

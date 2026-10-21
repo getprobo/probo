@@ -33,7 +33,7 @@ const taskDescriptionSectionFragment = graphql`
   fragment TaskDescriptionSection_task on Task {
     id
     content
-    canUpdate: permission(action: "core:task:update")
+    canAssign: permission(action: "core:task:assign")
   }
 `;
 
@@ -68,7 +68,7 @@ function TaskDescriptionSectionContent({
   return (
     <RichDescriptionEditor
       saved={task.content}
-      canUpdate={task.canUpdate}
+      canUpdate={task.canAssign}
       ariaLabel={t("detailsPage.fields.description")}
       emptyLabel={t("detailsPage.noDescription")}
       placeholder={t("detailsPage.fields.descriptionPlaceholder")}

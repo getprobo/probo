@@ -8,5 +8,33 @@
     "cancel": "Cancel",
     "deleted": "Task deleted.",
     "error": "Failed to delete task"
+  },
+  "details": {
+    "notFound": "Task not found",
+    "description": "Description",
+    "descriptionPlaceholder": "Write a description…",
+    "noDescription": "No description",
+    "commentPlaceholder": "Leave a comment…",
+    "send": "Send",
+    "save": "Save",
+    "cancel": "Cancel",
+    "editComment": "Edit comment",
+    "deleteComment": "Delete comment",
+    "deleteCommentTitle": "Delete comment",
+    "deleteCommentDescription": "Are you sure you want to delete this comment?",
+    "commentRequired": "Enter a comment",
+    "commentTooLong": "Comment must be at most {{max}} characters",
+    "commentContentError": "Could not display this comment",
+    "commentCreated": "Comment added.",
+    "commentUpdated": "Comment updated.",
+    "commentDeleted": "Comment deleted.",
+    "commentCreateError": "Failed to add comment",
+    "commentUpdateError": "Failed to update comment",
+    "commentDeleteError": "Failed to delete comment",
+    "justNow": "just now",
+    "commented": "<name>{{name}}</name> <time>{{time}}</time>",
+    "showMore": "Show more",
+    "actorFallback": "Someone",
+    "activityEmpty": "No activity yet"
   }
 }

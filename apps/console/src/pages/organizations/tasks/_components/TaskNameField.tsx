@@ -29,7 +29,7 @@ const taskNameFieldFragment = graphql`
   fragment TaskNameField_task on Task {
     id
     name
-    canUpdate: permission(action: "core:task:update")
+    canAssign: permission(action: "core:task:assign")
   }
 `;
 
@@ -44,7 +44,7 @@ export function TaskNameField({ taskKey }: TaskNameFieldProps) {
   return (
     <SharedTaskNameField
       name={task.name}
-      canUpdate={task.canUpdate}
+      canUpdate={task.canAssign}
       onSave={async (name) => {
         await updateTask({
           variables: {

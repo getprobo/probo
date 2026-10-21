@@ -8,5 +8,33 @@
     "cancel": "Annuleren",
     "deleted": "Taak verwijderd.",
     "error": "Taak verwijderen is mislukt"
+  },
+  "details": {
+    "notFound": "Taak niet gevonden",
+    "description": "Beschrijving",
+    "descriptionPlaceholder": "Schrijf een beschrijving…",
+    "noDescription": "Geen beschrijving",
+    "commentPlaceholder": "Laat een opmerking achter…",
+    "send": "Versturen",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "editComment": "Opmerking bewerken",
+    "deleteComment": "Opmerking verwijderen",
+    "deleteCommentTitle": "Opmerking verwijderen",
+    "deleteCommentDescription": "Weet u zeker dat u deze opmerking wilt verwijderen?",
+    "commentRequired": "Voer een opmerking in",
+    "commentTooLong": "Opmerking mag maximaal {{max}} tekens bevatten",
+    "commentContentError": "Deze opmerking kan niet worden weergegeven",
+    "commentCreated": "Opmerking toegevoegd.",
+    "commentUpdated": "Opmerking bijgewerkt.",
+    "commentDeleted": "Opmerking verwijderd.",
+    "commentCreateError": "Opmerking toevoegen is mislukt",
+    "commentUpdateError": "Opmerking bijwerken is mislukt",
+    "commentDeleteError": "Opmerking verwijderen is mislukt",
+    "justNow": "zojuist",
+    "commented": "<name>{{name}}</name> <time>{{time}}</time>",
+    "showMore": "Meer tonen",
+    "actorFallback": "Iemand",
+    "activityEmpty": "Nog geen activiteit"
   }
 }

@@ -21,6 +21,7 @@
 import { TaskListItem, type TaskPriority, type TaskState } from "@probo/tasks";
 import { memo, useState } from "react";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
+import { useLocation } from "react-router";
 
 import type { TasksPageTaskListItem_task$key } from "#/__generated__/core/TasksPageTaskListItem_task.graphql";
 import type { TasksPageTaskListItemUpdateStateMutation } from "#/__generated__/core/TasksPageTaskListItemUpdateStateMutation.graphql";
@@ -79,7 +80,8 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
   taskKey,
   sectionState,
 }: TasksPageTaskListItemProps) {
-  const { organizationId } = useEmployeePortalRoute();
+  const { employeePortalId, organizationId } = useEmployeePortalRoute();
+  const location = useLocation();
   const { graphqlQuery, deadlineBounds } = useTasksFilters();
   const environment = useRelayEnvironment();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -196,6 +198,10 @@ export const TasksPageTaskListItem = memo(function TasksPageTaskListItem({
         }}
         canUpdate={canUpdate}
         isUpdating={isUpdating}
+        detailsTo={{
+          pathname: `/${employeePortalId}/tasks/${task.id}`,
+          search: location.search,
+        }}
         sectionState={sectionState}
         onStateChange={(state) => {
           updateTask({ state });

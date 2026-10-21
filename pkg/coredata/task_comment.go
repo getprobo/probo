@@ -66,11 +66,14 @@ func (tc *TaskComment) AuthorizationAttributes(
 SELECT
     tc.id,
     tc.organization_id,
-    p.identity_id
+    p.identity_id,
+    t.assigned_to_profile_id
 FROM
     task_comments tc
 LEFT JOIN
     iam_membership_profiles p ON p.id = tc.owner_profile_id
+LEFT JOIN
+    tasks t ON t.id = tc.task_id
 WHERE
     tc.id = ANY(@resource_ids)
 `
@@ -87,9 +90,9 @@ WHERE
 	for rows.Next() {
 		var id, organizationID gid.GID
 
-		var ownerIdentityID *gid.GID
+		var ownerIdentityID, assignedToID *gid.GID
 
-		if err := rows.Scan(&id, &organizationID, &ownerIdentityID); err != nil {
+		if err := rows.Scan(&id, &organizationID, &ownerIdentityID, &assignedToID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
@@ -98,6 +101,9 @@ WHERE
 		}
 		if ownerIdentityID != nil {
 			attrs["owner_id"] = ownerIdentityID.String()
+		}
+		if assignedToID != nil {
+			attrs["assigned_to_profile_id"] = assignedToID.String()
 		}
 
 		attrsByID[id] = attrs
