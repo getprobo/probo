@@ -18,4 +18,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
+-- display_name was only a label. pattern stays the match key and the
+-- name. A label that differs is discarded: copying it onto pattern
+-- would change which trackers match.
 ALTER TABLE tracker_patterns DROP COLUMN display_name;

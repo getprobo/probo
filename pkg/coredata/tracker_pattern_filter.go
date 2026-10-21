@@ -67,11 +67,11 @@ func (f *TrackerPatternFilter) WithQuery(query *string) *TrackerPatternFilter {
 	return f
 }
 
-// WithPatternKeyword restricts the result to patterns whose pattern or
-// display name contains keyword (case-insensitive). It differs from
-// WithQuery, which matches display name or description: this targets the
-// raw pattern so operators can select by the matched domain or cookie
-// name. A nil or empty keyword disables the filter.
+// WithPatternKeyword restricts the result to patterns whose pattern
+// contains keyword (case-insensitive). It differs from WithQuery, which
+// matches pattern or description: this targets the raw pattern so
+// operators can select by the matched domain or cookie name. A nil or
+// empty keyword disables the filter.
 func (f *TrackerPatternFilter) WithPatternKeyword(keyword *string) *TrackerPatternFilter {
 	f.patternKeyword = keyword
 	return f
