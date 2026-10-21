@@ -699,6 +699,14 @@ func linuxRunAsUser(ctx context.Context, user, name string, args ...string) CmdR
 }
 
 func linuxFirewall(ctx context.Context) Result {
+	var verdict *Result
+
+	keep := func(r Result) {
+		if verdict == nil || verdict.Status != StatusUnknown || r.Status == StatusUnknown {
+			verdict = &r
+		}
+	}
+
 	if CommandExists("ufw") {
 		out := RunCommand(ctx, "ufw", "status")
 		if out.Err == nil {
@@ -709,7 +717,7 @@ func linuxFirewall(ctx context.Context) Result {
 				return pass(ev)
 			}
 
-			return fail(ev)
+			keep(fail(ev))
 		}
 	}
 
@@ -721,7 +729,7 @@ func linuxFirewall(ctx context.Context) Result {
 			return pass(ev)
 		}
 
-		return fail(ev)
+		keep(fail(ev))
 	}
 
 	if CommandExists("nft") {
@@ -731,43 +739,46 @@ func linuxFirewall(ctx context.Context) Result {
 			"backend":       "nftables",
 			"rules_excerpt": truncate(out.Stdout, 400),
 		}
-		if out.Err != nil {
+
+		switch {
+		case out.Err != nil:
 			ev["error"] = out.Err.Error()
-			return unknown(ev)
-		}
-
-		if strings.Contains(out.Stdout, "chain ") {
+			keep(unknown(ev))
+		case strings.Contains(out.Stdout, "chain "):
 			return pass(ev)
+		default:
+			keep(fail(ev))
 		}
-
-		return fail(ev)
 	}
 
 	if CommandExists("iptables") {
 		out := RunCommand(ctx, "iptables", "-S", "INPUT")
 
-		ev := map[string]any{"backend": "iptables"}
-		if out.Err != nil {
-			ev["error"] = out.Err.Error()
-			return unknown(ev)
-		}
-
 		policy, rules := parseIptablesInput(out.Stdout)
-		ev["input_policy"] = policy
 
-		ev["input_rules"] = rules
-		if policy == "DROP" || policy == "REJECT" {
+		ev := map[string]any{
+			"backend":      "iptables",
+			"input_policy": policy,
+			"input_rules":  rules,
+		}
+
+		switch {
+		case out.Err != nil:
+			keep(unknown(map[string]any{"backend": "iptables", "error": out.Err.Error()}))
+		case policy == "DROP" || policy == "REJECT":
 			return pass(ev)
+		case rules == 0:
+			keep(fail(ev))
+		default:
+			// ACCEPT policy with some rules means the operator is filtering,
+			// but we cannot tell from -S whether the rules are restrictive
+			// or permissive without modelling the chain.
+			keep(unknown(ev))
 		}
+	}
 
-		if rules == 0 {
-			return fail(ev)
-		}
-
-		// ACCEPT policy with some rules means the operator is filtering,
-		// but we cannot tell from -S whether the rules are restrictive
-		// or permissive without modelling the chain.
-		return unknown(ev)
+	if verdict != nil {
+		return *verdict
 	}
 
 	return unknown(
