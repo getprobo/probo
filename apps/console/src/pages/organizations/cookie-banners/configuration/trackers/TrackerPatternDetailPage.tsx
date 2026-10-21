@@ -22,11 +22,13 @@ import { usePageTitle } from "@probo/hooks";
 import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { TrackerPatternDetailPageQuery } from "#/__generated__/core/TrackerPatternDetailPageQuery.graphql";
+import { NotFoundError } from "#/lib/relay/errors";
+
+import { SampleFamilyCounts } from "../_components/SampleFamilyCounts";
 
 import { TrackerPatternDetailHeader } from "./_components/TrackerPatternDetailHeader";
 import { TrackerPatternDetectedTrackersSection } from "./_components/TrackerPatternDetectedTrackersSection";
 import { TrackerPatternPropertiesSection } from "./_components/TrackerPatternPropertiesSection";
-import { TrackerPatternSampleHitsSection } from "./_components/TrackerPatternSampleHitsSection";
 
 export const trackerPatternDetailPageQuery = graphql`
   query TrackerPatternDetailPageQuery(
@@ -37,7 +39,7 @@ export const trackerPatternDetailPageQuery = graphql`
       __typename
       ... on CookieBanner {
         ...TrackerPatternPropertiesSection_cookieBanner
-        ...TrackerPatternSampleHitsSection_cookieBanner
+        ...SampleFamilyCounts_cookieBanner
       }
     }
     node(id: $trackerPatternId) @required(action: THROW) {
@@ -45,7 +47,7 @@ export const trackerPatternDetailPageQuery = graphql`
       ... on TrackerPattern {
         pattern
         ...TrackerPatternDetailHeader_trackerPattern
-        ...TrackerPatternSampleHitsSection_trackerPattern
+        ...SampleFamilyCounts_trackerPattern
         ...TrackerPatternPropertiesSection_trackerPattern
         ...TrackerPatternDetectedTrackersSection_trackerPattern
       }
@@ -63,10 +65,10 @@ export default function TrackerPatternDetailPage({
   const data = usePreloadedQuery<TrackerPatternDetailPageQuery>(trackerPatternDetailPageQuery, queryRef);
 
   if (data.cookieBanner.__typename !== "CookieBanner") {
-    throw new Error("invalid type for cookieBanner node");
+    throw new NotFoundError("Cookie banner not found");
   }
   if (data.node.__typename !== "TrackerPattern") {
-    throw new Error("invalid type for node");
+    throw new NotFoundError("Tracker pattern not found");
   }
 
   const pattern = data.node;
@@ -76,7 +78,7 @@ export default function TrackerPatternDetailPage({
     <div className="space-y-6">
       <TrackerPatternDetailHeader trackerPatternKey={pattern} />
 
-      <TrackerPatternSampleHitsSection
+      <SampleFamilyCounts
         trackerPatternKey={pattern}
         cookieBannerKey={data.cookieBanner}
       />

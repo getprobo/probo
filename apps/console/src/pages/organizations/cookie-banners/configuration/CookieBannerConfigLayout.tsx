@@ -27,16 +27,19 @@ import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
+import { type PreloadedQuery, useFragment, usePreloadedQuery } from "react-relay";
 import { Outlet } from "react-router";
 import { graphql } from "relay-runtime";
 
+import type { CookieBannerConfigLayout_cookieBanner$key } from "#/__generated__/core/CookieBannerConfigLayout_cookieBanner.graphql";
+import type { CookieBannerConfigLayout_pageLoad$key } from "#/__generated__/core/CookieBannerConfigLayout_pageLoad.graphql";
 import type { CookieBannerConfigLayoutPublishMutation } from "#/__generated__/core/CookieBannerConfigLayoutPublishMutation.graphql";
 import type { CookieBannerConfigLayoutQuery } from "#/__generated__/core/CookieBannerConfigLayoutQuery.graphql";
 import type { CookieBannerConfigLayoutStartSampleMutation } from "#/__generated__/core/CookieBannerConfigLayoutStartSampleMutation.graphql";
 import type { CookieBannerConfigLayoutStopSampleMutation } from "#/__generated__/core/CookieBannerConfigLayoutStopSampleMutation.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import type { TonedCardTone } from "#/components/TonedCard/variants";
+import { NotFoundError } from "#/lib/relay/errors";
 import { useMutation } from "#/lib/relay/useMutation";
 
 import { cookieBannerConfigLayout } from "../variants";
@@ -44,28 +47,40 @@ import { cookieBannerConfigLayout } from "../variants";
 import { FamilyLogo } from "./_components/FamilyLogo";
 import { familyLabel } from "./_lib/familyLabel";
 
+const pageLoadFragment = graphql`
+  fragment CookieBannerConfigLayout_pageLoad on SampleFamilyCount {
+    family
+    count
+  }
+`;
+
+const cookieBannerFragment = graphql`
+  fragment CookieBannerConfigLayout_cookieBanner on CookieBanner {
+    id
+    name
+    state
+    latestVersion {
+      id
+      version
+      state
+    }
+    latestSample {
+      id
+      createdAt
+      frozenAt
+      pageLoads {
+        ...CookieBannerConfigLayout_pageLoad
+      }
+    }
+  }
+`;
+
 export const cookieBannerConfigLayoutQuery = graphql`
   query CookieBannerConfigLayoutQuery($cookieBannerId: ID!) {
     node(id: $cookieBannerId) {
       __typename
       ... on CookieBanner {
-        id
-        name
-        state
-        latestVersion {
-          id
-          version
-          state
-        }
-        latestSample {
-          id
-          createdAt
-          frozenAt
-          pageLoads {
-            family
-            count
-          }
-        }
+        ...CookieBannerConfigLayout_cookieBanner
       }
     }
   }
@@ -80,21 +95,7 @@ const publishMutation = graphql`
         state
       }
       cookieBanner {
-        id
-        latestVersion {
-          id
-          version
-          state
-        }
-        latestSample {
-          id
-          createdAt
-          frozenAt
-          pageLoads {
-            family
-            count
-          }
-        }
+        ...CookieBannerConfigLayout_cookieBanner
         publishedVersion {
           id
           gvlVendorCount
@@ -108,26 +109,8 @@ const publishMutation = graphql`
 const startSampleMutation = graphql`
   mutation CookieBannerConfigLayoutStartSampleMutation($input: StartCookieBannerSampleInput!) {
     startCookieBannerSample(input: $input) {
-      cookieBannerSample {
-        id
-        createdAt
-        frozenAt
-        pageLoads {
-          family
-          count
-        }
-      }
       cookieBanner {
-        id
-        latestSample {
-          id
-          createdAt
-          frozenAt
-          pageLoads {
-            family
-            count
-          }
-        }
+        ...CookieBannerConfigLayout_cookieBanner
       }
     }
   }
@@ -136,26 +119,8 @@ const startSampleMutation = graphql`
 const stopSampleMutation = graphql`
   mutation CookieBannerConfigLayoutStopSampleMutation($input: StopCookieBannerSampleInput!) {
     stopCookieBannerSample(input: $input) {
-      cookieBannerSample {
-        id
-        createdAt
-        frozenAt
-        pageLoads {
-          family
-          count
-        }
-      }
       cookieBanner {
-        id
-        latestSample {
-          id
-          createdAt
-          frozenAt
-          pageLoads {
-            family
-            count
-          }
-        }
+        ...CookieBannerConfigLayout_cookieBanner
       }
     }
   }
@@ -189,11 +154,13 @@ export function CookieBannerConfigLayout({
     cookieBannerConfigLayoutQuery,
     queryRef,
   );
-  if (data.node.__typename !== "CookieBanner") {
-    throw new Error("invalid type for node");
+  const banner = useFragment<CookieBannerConfigLayout_cookieBanner$key>(
+    cookieBannerFragment,
+    data.node.__typename === "CookieBanner" ? data.node : null,
+  );
+  if (banner == null) {
+    throw new NotFoundError("Cookie banner not found");
   }
-
-  const banner = data.node;
   usePageTitle(banner.name);
 
   const [publish, isPublishing] = useMutation<CookieBannerConfigLayoutPublishMutation>(
@@ -258,8 +225,10 @@ export function CookieBannerConfigLayout({
     icon = <CheckCircleIcon size={24} weight="duotone" />;
   }
 
+  const bannerId = banner.id;
+
   function handleCopyId() {
-    void navigator.clipboard.writeText(banner.id).then(
+    void navigator.clipboard.writeText(bannerId).then(
       () => {
         toast.add({
           title: t("configLayout.messages.copiedTitle"),
@@ -380,7 +349,7 @@ export function CookieBannerConfigLayout({
             ? (
                 <SampleLoadRow
                   label={t("configLayout.sample.pageLoads")}
-                  loads={pageLoads}
+                  pageLoads={pageLoads}
                   empty={t("configLayout.sample.empty")}
                   sampleRow={sampleRow()}
                   sampleItem={sampleItem()}
@@ -398,7 +367,7 @@ export function CookieBannerConfigLayout({
 
 interface SampleLoadRowProps {
   label: string;
-  loads: readonly { family: string; count: number }[];
+  pageLoads: readonly CookieBannerConfigLayout_pageLoad$key[];
   empty: string;
   sampleRow: string;
   sampleItem: string;
@@ -408,48 +377,28 @@ interface SampleLoadRowProps {
 
 function SampleLoadRow({
   label,
-  loads,
+  pageLoads,
   empty,
   sampleRow,
   sampleItem,
   sampleLogo,
   sampleSeparator,
 }: SampleLoadRowProps) {
-  const { t } = useTranslation("organizations/cookie-banners");
-
   return (
     <div className={sampleRow}>
       <Text size={2} color="faint">
         {label}
       </Text>
-      {loads.length > 0
-        ? loads.map((entry, index) => (
-            <Fragment key={entry.family}>
-              {index > 0
-                ? (
-                    <Text
-                      size={2}
-                      color="faint"
-                      className={sampleSeparator}
-                    >
-                      ·
-                    </Text>
-                  )
-                : null}
-              <div className={sampleItem}>
-                <FamilyLogo
-                  family={entry.family}
-                  size={16}
-                  className={sampleLogo}
-                />
-                <Text size={2} color="faint">
-                  {familyLabel(entry.family, t)}
-                </Text>
-                <Text size={2} weight="medium" highContrast>
-                  {entry.count}
-                </Text>
-              </div>
-            </Fragment>
+      {pageLoads.length > 0
+        ? pageLoads.map((pageLoad, index) => (
+            <SampleLoadItem
+              key={index}
+              pageLoadKey={pageLoad}
+              showSeparator={index > 0}
+              sampleItem={sampleItem}
+              sampleLogo={sampleLogo}
+              sampleSeparator={sampleSeparator}
+            />
           ))
         : (
             <Text size={2} color="faint">
@@ -457,5 +406,53 @@ function SampleLoadRow({
             </Text>
           )}
     </div>
+  );
+}
+
+interface SampleLoadItemProps {
+  pageLoadKey: CookieBannerConfigLayout_pageLoad$key;
+  showSeparator: boolean;
+  sampleItem: string;
+  sampleLogo: string;
+  sampleSeparator: string;
+}
+
+function SampleLoadItem({
+  pageLoadKey,
+  showSeparator,
+  sampleItem,
+  sampleLogo,
+  sampleSeparator,
+}: SampleLoadItemProps) {
+  const { t } = useTranslation("organizations/cookie-banners");
+  const load = useFragment(pageLoadFragment, pageLoadKey);
+
+  return (
+    <Fragment>
+      {showSeparator
+        ? (
+            <Text
+              size={2}
+              color="faint"
+              className={sampleSeparator}
+            >
+              ·
+            </Text>
+          )
+        : null}
+      <div className={sampleItem}>
+        <FamilyLogo
+          family={load.family}
+          size={16}
+          className={sampleLogo}
+        />
+        <Text size={2} color="faint">
+          {familyLabel(load.family, t)}
+        </Text>
+        <Text size={2} weight="medium" highContrast>
+          {load.count}
+        </Text>
+      </div>
+    </Fragment>
   );
 }

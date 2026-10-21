@@ -1246,6 +1246,7 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			patternIDs := make([]gid.GID, 0, len(queries))
+
 			seenPatterns := make(map[gid.GID]struct{}, len(queries))
 			for _, query := range queries {
 				if _, seen := seenPatterns[query.PatternID]; seen {
@@ -1347,12 +1348,14 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 				}
 
 				sampleForQuery[query] = sampleID
+
 				pair := hitPair{sampleID: sampleID, patternID: query.PatternID}
 				if _, seen := pairSeen[pair]; seen {
 					continue
 				}
 
 				pairSeen[pair] = struct{}{}
+
 				sampleIDs = append(sampleIDs, sampleID)
 				hitPatternIDs = append(hitPatternIDs, query.PatternID)
 			}
@@ -1363,6 +1366,7 @@ func (s *Service) GetSampleHitSplitsForPatterns(
 			}
 
 			rowsByPair := make(map[hitPair][]coredata.SamplePatternHit)
+
 			for _, hit := range hits {
 				pair := hitPair{sampleID: hit.SampleID, patternID: hit.TrackerPatternID}
 				if _, wanted := pairSeen[pair]; !wanted {

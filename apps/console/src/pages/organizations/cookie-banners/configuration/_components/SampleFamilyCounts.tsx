@@ -21,46 +21,80 @@
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useTranslation } from "react-i18next";
+import { useFragment } from "react-relay";
+import { graphql } from "relay-runtime";
+
+import type { SampleFamilyCounts_cookieBanner$key } from "#/__generated__/core/SampleFamilyCounts_cookieBanner.graphql";
+import type { SampleFamilyCounts_trackerPattern$key } from "#/__generated__/core/SampleFamilyCounts_trackerPattern.graphql";
 
 import { sampleFamilyCounts } from "../../variants";
 import { familyLabel } from "../_lib/familyLabel";
 
 import { FamilyLogo } from "./FamilyLogo";
 
-export interface SampleFamilyCountItem {
-  family: string;
-  count: number;
-}
+const cookieBannerFragment = graphql`
+  fragment SampleFamilyCounts_cookieBanner on CookieBanner {
+    latestSample {
+      pageLoads {
+        family
+        count
+      }
+    }
+  }
+`;
 
-export interface SampleFamilyCountsProps {
-  items: readonly SampleFamilyCountItem[];
-  denominators?: readonly SampleFamilyCountItem[];
-  allowedHits?: readonly SampleFamilyCountItem[];
-  deniedHits?: readonly SampleFamilyCountItem[];
+const trackerPatternFragment = graphql`
+  fragment SampleFamilyCounts_trackerPattern on TrackerPattern {
+    sampleHits {
+      family
+      count
+    }
+    allowedSampleHits {
+      family
+      count
+    }
+    deniedSampleHits {
+      family
+      count
+    }
+  }
+`;
+
+interface SampleFamilyCountsProps {
+  cookieBannerKey: SampleFamilyCounts_cookieBanner$key;
+  trackerPatternKey: SampleFamilyCounts_trackerPattern$key;
 }
 
 export function SampleFamilyCounts({
-  items,
-  denominators,
-  allowedHits,
-  deniedHits,
+  cookieBannerKey,
+  trackerPatternKey,
 }: SampleFamilyCountsProps) {
   const { t, i18n } = useTranslation("organizations/cookie-banners");
+  const banner = useFragment(cookieBannerFragment, cookieBannerKey);
+  const pattern = useFragment(trackerPatternFragment, trackerPatternKey);
   const { root, card, family, logo, rates, rate, rateLead, value, fraction }
     = sampleFamilyCounts();
   const loadsByFamily = new Map(
-    (denominators ?? []).map(entry => [entry.family, entry.count]),
+    (banner.latestSample?.pageLoads ?? []).map(entry => [entry.family, entry.count]),
   );
   const allowedHitsByFamily = new Map(
-    (allowedHits ?? []).map(entry => [entry.family, entry.count]),
+    pattern.allowedSampleHits.map(entry => [entry.family, entry.count]),
   );
   const deniedHitsByFamily = new Map(
-    (deniedHits ?? []).map(entry => [entry.family, entry.count]),
+    pattern.deniedSampleHits.map(entry => [entry.family, entry.count]),
   );
+
+  if (pattern.sampleHits.length === 0) {
+    return (
+      <Text size={2} color="faint">
+        {t("trackerSample.empty")}
+      </Text>
+    );
+  }
 
   return (
     <div className={root()}>
-      {items.map((entry) => {
+      {pattern.sampleHits.map((entry) => {
         const loads = loadsByFamily.get(entry.family) ?? 0;
         const allowedHitCount = allowedHitsByFamily.get(entry.family) ?? 0;
         const deniedHitCount = deniedHitsByFamily.get(entry.family) ?? 0;
