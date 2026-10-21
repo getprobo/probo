@@ -23,6 +23,7 @@ import { TaskListItem as SharedTaskListItem, type TaskPriority, type TaskState }
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRelayEnvironment } from "react-relay";
+import { useLocation } from "react-router";
 import type { RecordSourceSelectorProxy } from "relay-runtime";
 
 import type { TaskListItem_task$key } from "#/__generated__/core/TaskListItem_task.graphql";
@@ -118,6 +119,7 @@ function taskListItemPropsAreEqual(
 
 export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps) {
   const { t } = useTranslation("organizations/tasks");
+  const location = useLocation();
   const organizationId = useOrganizationId();
   const environment = useRelayEnvironment();
   const { graphqlFilter } = useTasksCardFilters();
@@ -297,7 +299,10 @@ export const TaskListItem = memo(function TaskListItem(props: TaskListItemProps)
         canUpdate={canUpdate}
         canUpdateAssignee={canUpdate}
         isUpdating={isUpdating}
-        detailsTo={taskDetailsPath(organizationId, task.id)}
+        detailsTo={{
+          pathname: taskDetailsPath(organizationId, task.id),
+          search: location.search,
+        }}
         renderAssigneeMenu={canUpdate
           ? () => (
               <TaskAssigneeMenu

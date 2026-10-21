@@ -1,6 +1,7 @@
 {
   "detailsPage": {
     "notFound": "Task not found",
+    "back": "Tasks",
     "empty": "—",
     "noDescription": "No description",
     "unassigned": "Not assigned",

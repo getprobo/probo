@@ -24,6 +24,7 @@ import type { ReactNode } from "react";
 import { taskDetails } from "./variants";
 
 export interface TaskDetailsProps {
+  back?: ReactNode;
   name: ReactNode;
   actions?: ReactNode;
   description: ReactNode;
@@ -32,6 +33,7 @@ export interface TaskDetailsProps {
 }
 
 export function TaskDetails({
+  back,
   name,
   actions,
   description,
@@ -42,6 +44,7 @@ export function TaskDetails({
 
   return (
     <div className={slots.root()}>
+      {back}
       <div className={slots.header()}>
         <div className={slots.titleRow()}>
           <div className={slots.title()}>

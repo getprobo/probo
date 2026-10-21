@@ -1,6 +1,7 @@
 {
   "detailsPage": {
     "notFound": "Taak niet gevonden",
+    "back": "Taken",
     "empty": "—",
     "noDescription": "Geen beschrijving",
     "unassigned": "Niet toegewezen",

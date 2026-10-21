@@ -18,10 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { TrashIcon } from "@phosphor-icons/react";
+import { CaretLeftIcon, TrashIcon } from "@phosphor-icons/react";
 import { usePageTitle } from "@probo/hooks";
 import { TaskDetails } from "@probo/tasks";
 import { Button } from "@probo/ui/src/v2/Button/Button";
+import { Link } from "@probo/ui/src/v2/Link/Link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +31,7 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import type { TaskDetailsPage_task$key } from "#/__generated__/core/TaskDetailsPage_task.graphql";
 import type { TaskDetailsPageQuery } from "#/__generated__/core/TaskDetailsPageQuery.graphql";
@@ -83,6 +84,7 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
   );
   const { t } = useTranslation("organizations/tasks");
   const navigate = useNavigate();
+  const location = useLocation();
   const organizationId = useOrganizationId();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const taskKey = data.node?.__typename === "Task" ? data.node : null;
@@ -99,6 +101,18 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
   return (
     <>
       <TaskDetails
+        back={(
+          <Link
+            to={{ pathname: taskListPath(organizationId), search: location.search }}
+            size={2}
+            color="neutral"
+            underline={false}
+            iconStart={<CaretLeftIcon />}
+            className="self-start"
+          >
+            {t("detailsPage.back")}
+          </Link>
+        )}
         name={<TaskNameField taskKey={task} />}
         actions={task.canDelete
           ? (
@@ -126,7 +140,10 @@ export function TaskDetailsPage({ queryRef }: TaskDetailsPageProps) {
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           onDeleted={() => {
-            void navigate(taskListPath(organizationId));
+            void navigate({
+              pathname: taskListPath(organizationId),
+              search: location.search,
+            });
           }}
         />
       )}

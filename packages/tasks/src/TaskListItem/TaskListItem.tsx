@@ -27,7 +27,7 @@ import { TooltipTrigger } from "@probo/ui/src/v2/Tooltip/TooltipTrigger";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { type DragEvent, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, type To } from "react-router";
 
 import { TASKS_NAMESPACE } from "../i18n";
 import { isOverdueTask } from "../isOverdueTask";
@@ -68,7 +68,7 @@ export interface TaskListItemProps {
   task: TaskListItemTask;
   canUpdate: boolean;
   isUpdating?: boolean;
-  detailsTo?: string;
+  detailsTo?: To;
   canUpdateAssignee?: boolean;
   renderAssigneeMenu?: () => ReactNode;
   extraMenu?: ReactNode;

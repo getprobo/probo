@@ -42,6 +42,7 @@ export function TaskDetailsPageSkeleton() {
 
   return (
     <div className={root()}>
+      <TextSkeleton size={2} className="w-16" />
       <div className={header()}>
         <div className={titleRow()}>
           <div className={title()}>

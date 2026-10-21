@@ -1,6 +1,7 @@
 {
   "detailsPage": {
     "notFound": "Tâche introuvable",
+    "back": "Tâches",
     "empty": "—",
     "noDescription": "Aucune description",
     "unassigned": "Non assigné",
