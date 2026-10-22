@@ -919,7 +919,13 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 
 		var document coredata.Document
 		if err := document.LoadPublishedByID(ctx, tx, scope, link.DocumentID); err != nil {
-			return fmt.Errorf("cannot load document: %w", err)
+			if !errors.Is(err, coredata.ErrResourceNotFound) {
+				return fmt.Errorf("cannot load published document: %w", err)
+			}
+
+			if err := document.LoadByID(ctx, tx, scope, link.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
 		}
 
 		fileNames = append(fileNames, document.Title)
