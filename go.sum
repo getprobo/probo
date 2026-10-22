@@ -649,8 +649,8 @@ github.com/zalando/go-keyring v0.2.3 h1:v9CUu9phlABObO4LPWycf+zwMG7nlbb3t/B5wa97
 github.com/zalando/go-keyring v0.2.3/go.mod h1:HL4k+OXQfJUWaMnqyuSOc0drfGPX2b51Du6K+MRgZMk=
 go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712 h1:J5ccbcxFuwxe6Oa9fVi9FqQOo+n17ni4wbl9t4NuEzc=
 go.gearno.de/crypto/uuid v0.1.1-0.20251208105319-3f587312a712/go.mod h1:fnIIvKO9QnsyLO3ZJLJT3r8KZv/p0FOeT5eZKilYWXg=
-go.gearno.de/kit v0.13.1 h1:0FRG+81rvnX3+xNgmh7b3R5zucJV+VhtlSDl6BrHmu0=
-go.gearno.de/kit v0.13.1/go.mod h1:jWrI/mxd0F4GZApL0HgMextcEQoiy2YA1JVamSA/G0E=
+go.gearno.de/kit v0.14.0 h1:aAU2ECZW8HG/fSK+3bJlrXGxjDEatKsY0Sa0QDSXUtk=
+go.gearno.de/kit v0.14.0/go.mod h1:jWrI/mxd0F4GZApL0HgMextcEQoiy2YA1JVamSA/G0E=
 go.gearno.de/x/panicf v0.1.1 h1:E3Cr9NB8Ry2EsvEG/1eHr7kplP3tEjTf5d56dTX64VQ=
 go.gearno.de/x/panicf v0.1.1/go.mod h1:VnB8oF0UefMZcYeD4v+Wk4U5Z1uza7PHLlhT2CbNEbU=
 go.gearno.de/x/ref v0.0.0-20260216110753-a700c951377c h1:rIVWwnNxHYu9aZhHkptXlNYTBJbY4ccaIAYjztVeaDc=

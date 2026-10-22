@@ -85,7 +85,6 @@ import (
 	"go.probo.inc/probo/pkg/mailer"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/notification"
-	"go.probo.inc/probo/pkg/notify"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/probot"
 	compliancecapability "go.probo.inc/probo/pkg/probot/capability/complianceportal"
@@ -312,18 +311,6 @@ func (impl *Implm) Run(
 	}
 
 	collaborationEvents := realtime.NewEvents()
-
-	notificationConfig, err := impl.cfg.Pg.ConnectionConfig()
-	if err != nil {
-		return fmt.Errorf("cannot configure PostgreSQL notifications: %w", err)
-	}
-
-	collaborationListener := notify.NewListener(
-		notificationConfig,
-		realtime.CollaborationChannel,
-		l.Named("document-collaboration-listener"),
-		collaborationEvents.Publish,
-	)
 
 	pepper, err := impl.cfg.Auth.GetPepperBytes()
 	if err != nil {
@@ -1132,7 +1119,12 @@ func (impl *Implm) Run(
 
 	wg.Go(
 		func() {
-			if err := collaborationListener.Run(notificationCtx); err != nil {
+			if err := listenCollaboration(
+				notificationCtx,
+				pgClient,
+				l.Named("document-collaboration-listener"),
+				collaborationEvents.Publish,
+			); err != nil {
 				cancel(fmt.Errorf("document collaboration listener crashed: %w", err))
 			}
 		},
@@ -2349,6 +2341,39 @@ func (impl *Implm) buildIdentityFederationIssuer(
 	}
 
 	return issuer, nil
+}
+
+func listenCollaboration(
+	ctx context.Context,
+	client *pg.Client,
+	logger *log.Logger,
+	handler func(string),
+) error {
+	const retryInterval = time.Second
+
+	for {
+		err := client.Listen(ctx, realtime.CollaborationChannel, handler)
+		if err != nil && ctx.Err() != nil {
+			return nil
+		}
+
+		if err != nil {
+			logger.WarnCtx(
+				ctx,
+				"PostgreSQL notification listener disconnected",
+				log.Error(err),
+			)
+		}
+
+		timer := time.NewTimer(retryInterval)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+
+			return nil
+		case <-timer.C:
+		}
+	}
 }
 
 func authSecureCookieConfig(c CookieConfig, maxAgeSeconds int) (securecookie.Config, error) {
