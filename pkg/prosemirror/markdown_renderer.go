@@ -449,6 +449,7 @@ func (r *mdRenderer) renderTaskList(n Node) error {
 		}
 
 		r.ensurePrefix()
+
 		if attrs.Checked {
 			r.buf.WriteString("- [x] ")
 		} else {

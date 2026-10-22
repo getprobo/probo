@@ -440,6 +440,7 @@ func (c *htmlBlockConverter) convertList(n *html.Node, ordered bool) ([]Node, er
 		}
 
 		item := Node{Type: NodeListItem, Content: body}
+
 		if task {
 			attrs, err := json.Marshal(TaskItemAttrs{Checked: checked})
 			if err != nil {
@@ -465,6 +466,7 @@ func (c *htmlBlockConverter) convertList(n *html.Node, ordered bool) ([]Node, er
 
 	consumed := 0
 	start := 1
+
 	if ordered {
 		start = parseOlStart(n)
 	}
@@ -523,6 +525,7 @@ func taskItemState(li *html.Node) (bool, bool) {
 
 	if input := leadingCheckbox(li); input != nil {
 		task = true
+
 		if taskCheckboxChecked(input) {
 			checked = true
 		}
@@ -551,6 +554,7 @@ func stripLeadingCheckbox(li *html.Node) {
 			}
 
 			removeCheckboxInputs(ch)
+
 			return
 		}
 

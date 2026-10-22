@@ -109,6 +109,7 @@ func emitBlock(spans []automerge.SpanInput, n pmNode, parents []string) []autome
 	case "bulletList", "orderedList", "taskList":
 		itemType := blockTypeUnorderedListItem
 		itemName := "listItem"
+
 		if n.Type == "orderedList" {
 			itemType = blockTypeOrderedListItem
 		}
