@@ -4,6 +4,19 @@ All notable changes to the `@probo/cookie-banner` SDK will be documented in this
 
 ## Unreleased
 
+## [0.22.0] - 2026-10-22
+
+### Added
+
+- While a sample is open, each page reports a page view, and cookies
+  already listed on the banner are still reported
+- A discovery hit includes `category_granted`, and the batch includes
+  `consent_action` when the visitor has one. The grant follows current
+  consent for the matching tracker. A `*` in the pattern is a glob: an
+  exact name wins, and otherwise the match with the longest fixed text
+  wins. Necessary categories are always granted, and an unmatched name
+  uses the banner's default for non-necessary trackers
+
 ## [0.21.0] - 2026-10-14
 
 ### Changed
