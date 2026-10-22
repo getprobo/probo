@@ -596,6 +596,34 @@ func assertCachedSaveDropsRemovedSuccessor(t *testing.T, useMerge bool) {
 	assert.Contains(t, string(after), string(unrelated))
 }
 
+func TestChangeHistory_MissingDependency(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngine()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+
+	actor, err := opset.NewActorID([]byte("incomplete"))
+	require.NoError(t, err)
+
+	var missing opset.ChangeHash
+	missing[0] = 7
+	hash := opset.ChangeHash{1}
+	engine.state.changes[hash] = &opset.Change{
+		Hash:         &hash,
+		Actor:        actor,
+		Sequence:     1,
+		Dependencies: []opset.ChangeHash{missing},
+	}
+	engine.state.heads[hash] = struct{}{}
+
+	entries, err := engine.ChangeHistory()
+
+	require.Error(t, err)
+	assert.Empty(t, entries)
+	assert.ErrorContains(t, err, "incomplete change graph")
+}
+
 func requireQueued(t *testing.T, engine *Engine, hashes ...opset.ChangeHash) {
 	t.Helper()
 

@@ -185,15 +185,18 @@ type ChangeHistoryEntry struct {
 }
 
 // ChangeHistory returns every change reachable from the frontier in causal
-// (dependency) order. Incomplete histories return whatever prefix can be
-// enumerated; callers treat that as best-effort.
+// (dependency) order. A missing dependency is an error: allChanges drops the
+// walk instead of returning a replayable prefix.
 func (b *Engine) ChangeHistory() ([]ChangeHistoryEntry, error) {
 	history := b.state
 	if b.isolationActive && b.fullState != nil {
 		history = b.fullState
 	}
 
-	changes, _ := history.allChanges()
+	changes, complete := history.allChanges()
+	if !complete {
+		return nil, fmt.Errorf("cannot list Automerge change history: incomplete change graph")
+	}
 	entries := make([]ChangeHistoryEntry, 0, len(changes))
 	for _, change := range changes {
 		if change.Hash == nil {

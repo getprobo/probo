@@ -88,6 +88,7 @@ func TestActorsFromSyncMessage_ReturnsDistinctActors(t *testing.T) {
 		seen[string(actor)] = struct{}{}
 	}
 
+	assert.Len(t, seen, len(actors))
 	assert.Contains(t, seen, string(leftActor[:]))
 	assert.Contains(t, seen, string(rightActor[:]))
 }

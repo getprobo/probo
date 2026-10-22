@@ -62,14 +62,10 @@ func parseHeadsFlag(value string) ([]string, error) {
 	for _, part := range parts {
 		head := strings.TrimSpace(part)
 		if head == "" {
-			continue
+			return nil, fmt.Errorf("heads contains an empty value")
 		}
 
 		heads = append(heads, head)
-	}
-
-	if len(heads) == 0 {
-		return nil, fmt.Errorf("heads must not be empty")
 	}
 
 	return heads, nil
