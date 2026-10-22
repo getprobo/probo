@@ -4,6 +4,39 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.324.0] - 2026-10-22
+
+### Added
+
+- Documents support real-time collaborative editing. Other editors
+  appear in a facepile with a live caret for each open tab, and caret
+  names come from the signed-in user so they cannot be spoofed
+- The document editor has a history panel that groups edits into
+  sessions by author, highlights inserts and deletes, and restores a
+  session from the draft. GraphQL gains `Document.history`,
+  `Document.revision`, and `restoreDocumentHistory`, and MCP gains
+  `listDocumentCollaborationHistorySessions`,
+  `getDocumentCollaborationHistorySnapshot`, and
+  `restoreDocumentCollaborationHistory`
+- MCP document tools return the collaboration heads, and fragment
+  edits apply on those heads so agents can edit a document while
+  others are typing
+
+### Changed
+
+- The console edits the live document directly. A version is created
+  only when publishing or requesting approval, and a version URL shows
+  a frozen snapshot. Rejected and voided versions keep their number
+  for the next publish
+- GraphQL `Document` exposes `title`, `classification`,
+  `documentType`, `orientation`, and `content`. Version and history
+  `content` is a `DocumentContent` object with `prosemirror` and
+  `markdown` fields. The `DRAFT` version status is replaced by
+  `REJECTED` and `VOIDED`, and `createDocument` no longer returns
+  `documentVersionEdge`
+- Documents pending approval stay read-only, and an open approver
+  form closes when the document locks
+
 ## [0.323.0] - 2026-10-22
 
 ### Added
