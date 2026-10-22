@@ -240,6 +240,77 @@ func TestStampSelectionIdentity_TruncatesLongNames(t *testing.T) {
 	assert.Equal(t, 128, utf8.RuneCountInString(name))
 }
 
+func TestStampSelectionIdentity_DropsFrameThatCannotFitIdentity(t *testing.T) {
+	t.Parallel()
+
+	payload := largestSelectionPayload(t)
+	frame, err := collaboration.EncodeMessage(
+		collaboration.Message{
+			Type:       collaboration.MessageEphemeral,
+			SenderID:   "peer-a",
+			TargetID:   "server",
+			DocumentID: "doc-1",
+			SessionID:  "session-1",
+			Count:      6,
+			Data:       payload,
+		},
+	)
+	require.NoError(t, err)
+
+	message, err := collaboration.DecodeMessage(frame)
+	require.NoError(t, err)
+	name, ok := collaboration.SelectionDisplayName(message.Data)
+	require.True(t, ok)
+	assert.Equal(t, "spoofed", name)
+
+	stamped := collaboration.StampSelectionIdentity(
+		frame,
+		strings.Repeat("A", 128),
+		strings.Repeat("i", 64),
+		"",
+	)
+	assert.Nil(t, stamped)
+	assert.NotEqual(t, frame, stamped)
+}
+
+func largestSelectionPayload(t *testing.T) []byte {
+	t.Helper()
+
+	low := 0
+	high := 2 << 20
+	var payload []byte
+	for low <= high {
+		mid := low + (high-low)/2
+		encoded, err := collaboration.MarshalPresenceValue(selectionWithPadding(mid))
+		if err != nil {
+			high = mid - 1
+
+			continue
+		}
+
+		payload = encoded
+		low = mid + 1
+	}
+
+	require.NotEmpty(t, payload)
+
+	return payload
+}
+
+func selectionWithPadding(padding int) map[string]any {
+	return map[string]any{
+		"kind":        "selection",
+		"displayName": "spoofed",
+		"identityID":  "attacker",
+		"selection": map[string]any{
+			"field":  "body",
+			"anchor": "cursor-a",
+			"head":   "cursor-a",
+		},
+		"padding": strings.Repeat("x", padding),
+	}
+}
+
 func decodeApplication(t *testing.T, data []byte, destination any) error {
 	t.Helper()
 

@@ -70,6 +70,10 @@ type (
 		) (int64, error)
 	}
 
+	seedReleaser interface {
+		ReleaseSeed(context.Context, coredata.Scoper, gid.GID, time.Time) error
+	}
+
 	Hub struct {
 		mu         sync.Mutex
 		documents  Documents
@@ -91,6 +95,12 @@ type (
 		stop          chan struct{}
 		done          chan struct{}
 		persistErr    error
+		opening       chan struct{}
+		seedWait      chan struct{}
+		seedOnce      sync.Once
+		seedReady     bool
+		seedReleased  bool
+		seedClaimedAt time.Time
 	}
 
 	RoomLease struct {
@@ -151,51 +161,105 @@ func (h *Hub) Acquire(
 	documentID gid.GID,
 	connectionID string,
 ) (*RoomLease, error) {
-	h.mu.Lock()
-	if room := h.rooms[documentID]; room != nil {
+	for {
+		h.mu.Lock()
+		if room := h.rooms[documentID]; room != nil {
+			opening := room.opening
+			seedWait := room.seedWait
+			seedReady := room.seedReady
+			h.mu.Unlock()
+
+			if opening != nil {
+				select {
+				case <-opening:
+				case <-ctx.Done():
+					return nil, fmt.Errorf("cannot wait for collaboration room to open: %w", ctx.Err())
+				}
+
+				continue
+			}
+
+			if !seedReady && seedWait != nil {
+				select {
+				case <-seedWait:
+				case <-ctx.Done():
+					return nil, fmt.Errorf("cannot wait for collaboration seed: %w", ctx.Err())
+				}
+
+				continue
+			}
+
+			h.mu.Lock()
+			current := h.rooms[documentID]
+			if current != room || current.opening != nil || (!current.seedReady && current.seedWait != nil) {
+				h.mu.Unlock()
+
+				continue
+			}
+
+			lease := h.addPeerLocked(documentID, current, connectionID)
+			h.mu.Unlock()
+
+			return lease, nil
+		}
+
+		room := &Room{
+			documents:  h.documents,
+			scope:      scope,
+			documentID: documentID,
+			peers:      make(map[uint64]RoomPeer),
+			presence:   make(map[string]presenceEntry),
+			dirty:      make(chan struct{}, 1),
+			stop:       make(chan struct{}),
+			done:       make(chan struct{}),
+			opening:    make(chan struct{}),
+		}
+		h.rooms[documentID] = room
+		h.mu.Unlock()
+
+		opened, err := h.documents.Open(ctx, scope, documentID)
+		if err != nil {
+			h.finishOpening(documentID, room)
+
+			return nil, fmt.Errorf("cannot open collaboration room: %w", err)
+		}
+
+		h.mu.Lock()
+		room.collaboration = opened
+		room.revision.Store(opened.Revision)
+		if opened.SeedClaimedAt != nil {
+			room.seedClaimedAt = *opened.SeedClaimedAt
+		}
+
+		if opened.NeedsSeed {
+			room.seedWait = make(chan struct{})
+		} else {
+			room.seedReady = true
+		}
+
 		lease := h.addPeerLocked(documentID, room, connectionID)
+		lease.seedOwner = opened.NeedsSeed
+		go room.run()
 		h.mu.Unlock()
+		h.finishOpening(documentID, room)
 
 		return lease, nil
 	}
+}
 
-	h.mu.Unlock()
-
-	opened, err := h.documents.Open(ctx, scope, documentID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open collaboration room: %w", err)
-	}
-
-	room := &Room{
-		collaboration: opened,
-		documents:     h.documents,
-		scope:         scope,
-		documentID:    documentID,
-		peers:         make(map[uint64]RoomPeer),
-		presence:      make(map[string]presenceEntry),
-		dirty:         make(chan struct{}, 1),
-		stop:          make(chan struct{}),
-		done:          make(chan struct{}),
-	}
-	room.revision.Store(opened.Revision)
-
+func (h *Hub) finishOpening(documentID gid.GID, room *Room) {
 	h.mu.Lock()
-	if existing := h.rooms[documentID]; existing != nil {
-		_ = opened.Document.Close()
-		lease := h.addPeerLocked(documentID, existing, connectionID)
-		h.mu.Unlock()
-
-		return lease, nil
+	if room.collaboration == nil && h.rooms[documentID] == room {
+		delete(h.rooms, documentID)
 	}
 
-	h.rooms[documentID] = room
-	lease := h.addPeerLocked(documentID, room, connectionID)
-	lease.seedOwner = opened.NeedsSeed
-
-	go room.run()
+	opening := room.opening
+	room.opening = nil
 	h.mu.Unlock()
 
-	return lease, nil
+	if opening != nil {
+		close(opening)
+	}
 }
 
 func (h *Hub) addPeerLocked(
@@ -235,6 +299,14 @@ func (l *RoomLease) Revision() int64 {
 
 func (l *RoomLease) SeedOwner() bool {
 	return l.seedOwner
+}
+
+func (l *RoomLease) SeedClaimedAt() time.Time {
+	if l == nil || l.room == nil {
+		return time.Time{}
+	}
+
+	return l.room.seedClaimedAt
 }
 
 func (l *RoomLease) SetRevision(revision int64) {
@@ -422,24 +494,97 @@ func (l *RoomLease) Close() {
 		}
 
 		empty := len(l.room.peers) == 0
-
 		l.room.mu.Unlock()
 
-		if !empty {
-			l.hub.mu.Unlock()
+		abortSeed := l.seedOwner && !l.room.seedReady
+		remove := empty || abortSeed
+		if remove && l.hub.rooms[l.documentID] == l.room {
+			delete(l.hub.rooms, l.documentID)
+		}
+		l.hub.mu.Unlock()
 
-			return
+		if abortSeed {
+			releaseCtx, cancel := context.WithTimeout(context.Background(), PersistTimeout)
+			_ = l.releaseUnseeded(releaseCtx)
+			cancel()
+			l.room.signalSeed()
 		}
 
-		delete(l.hub.rooms, l.documentID)
-		l.hub.mu.Unlock()
+		if !remove {
+			return
+		}
 
 		if l.room.stop != nil {
 			close(l.room.stop)
 			<-l.room.done
 		}
 
-		_ = l.room.collaboration.Document.Close()
+		if l.room.collaboration != nil && l.room.collaboration.Document != nil {
+			_ = l.room.collaboration.Document.Close()
+		}
+	})
+}
+
+func (l *RoomLease) completeSeed() {
+	if l.hub == nil || l.room == nil {
+		return
+	}
+
+	l.hub.mu.Lock()
+	l.room.seedReady = true
+	l.hub.mu.Unlock()
+	l.room.signalSeed()
+}
+
+func (l *RoomLease) releaseUnseeded(ctx context.Context) error {
+	if l.hub == nil || l.room == nil || !l.seedOwner {
+		return nil
+	}
+
+	l.hub.mu.Lock()
+	if l.room.seedReady || l.room.seedReleased {
+		l.hub.mu.Unlock()
+
+		return nil
+	}
+	l.hub.mu.Unlock()
+
+	releaser, ok := l.room.documents.(seedReleaser)
+	if !ok {
+		l.markSeedReleased()
+
+		return nil
+	}
+
+	if err := releaser.ReleaseSeed(
+		ctx,
+		l.room.scope,
+		l.room.documentID,
+		l.room.seedClaimedAt,
+	); err != nil {
+		return err
+	}
+
+	l.markSeedReleased()
+
+	return nil
+}
+
+func (l *RoomLease) markSeedReleased() {
+	if l.hub == nil || l.room == nil {
+		return
+	}
+
+	l.hub.mu.Lock()
+	l.room.seedReleased = true
+	l.hub.mu.Unlock()
+}
+
+func (r *Room) signalSeed() {
+	r.seedOnce.Do(func() {
+		if r.seedWait != nil {
+			close(r.seedWait)
+		}
 	})
 }
 
@@ -474,7 +619,11 @@ func (r *Room) run() {
 			}
 		case <-timerChannel:
 			if dirty {
-				r.persist()
+				if err := r.persist(); err != nil {
+					timer.Reset(PersistDebounce)
+
+					continue
+				}
 
 				dirty = false
 			}
@@ -486,7 +635,7 @@ func (r *Room) run() {
 			}
 
 			if dirty {
-				r.persist()
+				_ = r.persist()
 			}
 
 			return
@@ -494,7 +643,7 @@ func (r *Room) run() {
 	}
 }
 
-func (r *Room) persist() {
+func (r *Room) persist() error {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		PersistTimeout,
@@ -512,7 +661,11 @@ func (r *Room) persist() {
 	defer r.mu.Unlock()
 
 	r.persistErr = err
-	if err == nil {
-		r.revision.Store(revision)
+	if err != nil {
+		return err
 	}
+
+	r.revision.Store(revision)
+
+	return nil
 }

@@ -142,7 +142,9 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 
 	if lease.SeedOwner() {
 		if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
+			h.releaseSeedClaim(r.Context(), scope, documentID, lease)
 			h.renderServiceError(w, r, documentIDString, err)
+
 			return
 		}
 	}
@@ -253,6 +255,40 @@ func (h *Handler) authorize(
 	return authScope, document, nil
 }
 
+func (h *Handler) releaseSeedClaim(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	lease *RoomLease,
+) {
+	releaseCtx, cancel := context.WithTimeout(
+		context.WithoutCancel(ctx),
+		PersistTimeout,
+	)
+	defer cancel()
+
+	err := h.Probo.Collaboration.ReleaseSeed(
+		releaseCtx,
+		scope,
+		documentID,
+		lease.SeedClaimedAt(),
+	)
+	if err != nil {
+		if h.Logger != nil {
+			h.Logger.ErrorCtx(
+				releaseCtx,
+				"cannot release collaboration seed",
+				log.Error(err),
+				log.String("document_id", documentID.String()),
+			)
+		}
+
+		return
+	}
+
+	lease.markSeedReleased()
+}
+
 func (h *Handler) renderAuthorizationError(w http.ResponseWriter, err error) {
 	if scopeErr, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
 		bearertoken.SetBearerInsufficientScope(w, h.BaseURL, scopeErr.Scopes...)
@@ -291,6 +327,11 @@ func (h *Handler) renderServiceError(
 	}
 
 	if _, ok := errors.AsType[*probo.ErrCollaborationStateTooLarge](err); ok {
+		httpserver.RenderError(w, http.StatusConflict, err)
+		return
+	}
+
+	if errors.Is(err, probo.ErrSeedInProgress) {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
@@ -454,6 +495,7 @@ func SeedRepoCollaboration(ctx context.Context, lease *RoomLease) error {
 	}
 
 	lease.SchedulePersist()
+	lease.completeSeed()
 
 	return nil
 }
@@ -614,6 +656,9 @@ func ServeRepoCollaboration(
 					config.IdentityID,
 					config.AvatarURL,
 				)
+				if len(fanout) == 0 {
+					continue
+				}
 
 				lease.BroadcastEphemeral(fanout)
 

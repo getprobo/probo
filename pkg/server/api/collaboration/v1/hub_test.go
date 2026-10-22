@@ -22,6 +22,8 @@ package collaboration_v1
 
 import (
 	"context"
+	"errors"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -37,9 +39,13 @@ import (
 )
 
 type fakeDocuments struct {
-	opened      *probo.DocumentCollaboration
-	persisted   atomic.Int64
-	persistedCh chan struct{}
+	opened         *probo.DocumentCollaboration
+	persisted      atomic.Int64
+	attempts       atomic.Int64
+	failAttempts   atomic.Int64
+	persistedCh    chan struct{}
+	persistStarted chan struct{}
+	persistGate    chan struct{}
 }
 
 func (f *fakeDocuments) Open(
@@ -56,14 +62,78 @@ func (f *fakeDocuments) Persist(
 	gid.GID,
 	*automerge.Document,
 ) (int64, error) {
-	revision := f.persisted.Add(1) + 1
+	call := f.attempts.Add(1)
+	if f.persistGate != nil && call == 1 {
+		close(f.persistStarted)
+		<-f.persistGate
+	}
 
-	select {
-	case f.persistedCh <- struct{}{}:
-	default:
+	if call <= f.failAttempts.Load() {
+		return 0, errors.New("transient persist failure")
+	}
+
+	revision := f.persisted.Add(1) + 1
+	if f.persistedCh != nil {
+		select {
+		case f.persistedCh <- struct{}{}:
+		default:
+		}
 	}
 
 	return revision, nil
+}
+
+type gatingDocuments struct {
+	opens    atomic.Int64
+	releases atomic.Int64
+}
+
+func (g *gatingDocuments) Open(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+) (*probo.DocumentCollaboration, error) {
+	opened := g.opens.Add(1)
+	document, err := automerge.New(automerge.ActorID{byte(opened)})
+	if err != nil {
+		return nil, err
+	}
+
+	return &probo.DocumentCollaboration{
+		Document:  document,
+		Revision:  1,
+		NeedsSeed: opened == 1,
+	}, nil
+}
+
+func (g *gatingDocuments) Persist(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	*automerge.Document,
+) (int64, error) {
+	return 1, nil
+}
+
+func (g *gatingDocuments) ReleaseSeed(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	time.Time,
+) error {
+	g.releases.Add(1)
+
+	return nil
+}
+
+func newGatingFixture(t *testing.T) (*Hub, *gatingDocuments, coredata.Scoper, gid.GID) {
+	t.Helper()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	documents := &gatingDocuments{}
+
+	return NewHub(documents, nil), documents, coredata.NewScope(tenantID), documentID
 }
 
 func TestRoom_NotifiesOtherPeers(t *testing.T) {
@@ -438,12 +508,14 @@ func TestRoom_DropsEphemeralWhenBufferFull(t *testing.T) {
 
 	hub.mu.Lock()
 	sender := hub.addPeerLocked(documentID, room, "sender")
-	_ = hub.addPeerLocked(documentID, room, "slow")
+	slow := hub.addPeerLocked(documentID, room, "slow")
 	hub.mu.Unlock()
 
 	for range EphemeralBuffer + 10 {
 		sender.BroadcastEphemeral([]byte{0xff})
 	}
+
+	assert.Len(t, slow.EphemeralCh, EphemeralBuffer)
 
 	require.NoError(t, document.Close())
 }
@@ -482,16 +554,203 @@ func TestRoom_DebouncesPersistence(t *testing.T) {
 		lease.SchedulePersist()
 	}
 
-	select {
-	case <-documents.persistedCh:
-	case <-time.After(time.Second):
-		require.Fail(t, "collaboration room did not persist")
-	}
-
+	require.Eventually(
+		t,
+		func() bool {
+			return room.revision.Load() == 2
+		},
+		time.Second,
+		5*time.Millisecond,
+	)
 	assert.Equal(t, int64(1), documents.persisted.Load())
-	assert.Equal(t, int64(2), room.revision.Load())
 
 	close(room.stop)
 	<-room.done
 	require.NoError(t, document.Close())
+}
+
+func TestRoom_RetriesPersistAfterError(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	document, err := automerge.New(automerge.ActorID{6})
+	require.NoError(t, err)
+
+	documents := &fakeDocuments{
+		opened: &probo.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+	}
+	documents.failAttempts.Store(1)
+	room := &Room{
+		collaboration: documents.opened,
+		documents:     documents,
+		scope:         coredata.NewScope(tenantID),
+		documentID:    documentID,
+		peers:         make(map[uint64]RoomPeer),
+		dirty:         make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+	room.revision.Store(1)
+	go room.run()
+
+	lease := &RoomLease{room: room}
+	lease.SchedulePersist()
+
+	started := time.Now()
+	require.Eventually(
+		t,
+		func() bool {
+			return room.revision.Load() == 2
+		},
+		time.Second,
+		5*time.Millisecond,
+	)
+	assert.GreaterOrEqual(t, time.Since(started), PersistDebounce/2)
+	assert.Equal(t, int64(2), documents.attempts.Load())
+	assert.Equal(t, int64(1), documents.persisted.Load())
+
+	close(room.stop)
+	<-room.done
+	require.NoError(t, document.Close())
+}
+
+func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	document, err := automerge.New(automerge.ActorID{9})
+	require.NoError(t, err)
+
+	documents := &fakeDocuments{
+		opened: &probo.DocumentCollaboration{
+			Document: document,
+			Revision: 1,
+		},
+		persistStarted: make(chan struct{}),
+		persistGate:    make(chan struct{}),
+	}
+	documents.failAttempts.Store(10)
+	room := &Room{
+		collaboration: documents.opened,
+		documents:     documents,
+		scope:         coredata.NewScope(tenantID),
+		documentID:    documentID,
+		peers:         make(map[uint64]RoomPeer),
+		dirty:         make(chan struct{}, 1),
+		stop:          make(chan struct{}),
+		done:          make(chan struct{}),
+	}
+	room.revision.Store(1)
+	go room.run()
+
+	var releaseGate sync.Once
+	release := func() {
+		releaseGate.Do(func() {
+			close(documents.persistGate)
+		})
+	}
+	defer release()
+
+	lease := &RoomLease{room: room}
+	lease.SchedulePersist()
+
+	select {
+	case <-documents.persistStarted:
+	case <-time.After(time.Second):
+		require.Fail(t, "collaboration room did not attempt to persist")
+	}
+
+	close(room.stop)
+	release()
+	<-room.done
+
+	assert.GreaterOrEqual(t, documents.attempts.Load(), int64(2))
+	require.NoError(t, document.Close())
+}
+
+func TestHub_GatesUnseededRoom(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"peer waits until seed completes",
+		func(t *testing.T) {
+			t.Parallel()
+
+			hub, documents, scope, documentID := newGatingFixture(t)
+			owner, err := hub.Acquire(context.Background(), scope, documentID, "owner")
+			require.NoError(t, err)
+			require.True(t, owner.SeedOwner())
+
+			waitCtx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+			defer cancel()
+
+			_, err = hub.Acquire(waitCtx, scope, documentID, "early")
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+			assert.Equal(t, int64(1), documents.opens.Load())
+
+			owner.completeSeed()
+
+			peer, err := hub.Acquire(context.Background(), scope, documentID, "peer")
+			require.NoError(t, err)
+			assert.False(t, peer.SeedOwner())
+			assert.Equal(t, owner.room, peer.room)
+			assert.Equal(t, int64(1), documents.opens.Load())
+
+			peer.Close()
+			owner.Close()
+		},
+	)
+
+	t.Run(
+		"failed seed releases the claim once and retries",
+		func(t *testing.T) {
+			t.Parallel()
+
+			hub, documents, scope, documentID := newGatingFixture(t)
+			owner, err := hub.Acquire(context.Background(), scope, documentID, "owner")
+			require.NoError(t, err)
+			require.True(t, owner.SeedOwner())
+
+			waitCtx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
+			defer cancel()
+
+			_, err = hub.Acquire(waitCtx, scope, documentID, "early")
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+
+			require.NoError(t, owner.releaseUnseeded(context.Background()))
+			assert.Equal(t, int64(1), documents.releases.Load())
+
+			owner.Close()
+			assert.Equal(t, int64(1), documents.releases.Load())
+			assert.NotContains(t, hub.rooms, documentID)
+
+			peer, err := hub.Acquire(context.Background(), scope, documentID, "peer")
+			require.NoError(t, err)
+			assert.False(t, peer.SeedOwner())
+			assert.Equal(t, int64(2), documents.opens.Load())
+
+			peer.Close()
+		},
+	)
+
+	t.Run(
+		"closing the seed owner releases the claim",
+		func(t *testing.T) {
+			t.Parallel()
+
+			hub, documents, scope, documentID := newGatingFixture(t)
+			owner, err := hub.Acquire(context.Background(), scope, documentID, "owner")
+			require.NoError(t, err)
+
+			owner.Close()
+
+			assert.Equal(t, int64(1), documents.releases.Load())
+			assert.NotContains(t, hub.rooms, documentID)
+		},
+	)
 }

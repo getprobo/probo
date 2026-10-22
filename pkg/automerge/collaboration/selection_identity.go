@@ -111,7 +111,8 @@ func ephemeralPayloadKind(data []byte) (string, bool) {
 // id, and avatar URL on a selection ephemeral frame. Non-selection frames and
 // empty display names are returned unchanged so gossip of other payloads stays
 // intact. An empty avatarURL removes any client-supplied picture so it cannot
-// be spoofed.
+// be spoofed. A nil frame means restamping failed and the caller must not
+// broadcast the original payload.
 func StampSelectionIdentity(frame []byte, displayName, identityID, avatarURL string) []byte {
 	displayName = sanitizeDisplayName(displayName)
 	if displayName == "" {
@@ -125,7 +126,7 @@ func StampSelectionIdentity(frame []byte, displayName, identityID, avatarURL str
 		sanitizeAvatarURL(avatarURL),
 	)
 	if err != nil {
-		return frame
+		return nil
 	}
 
 	return stamped
