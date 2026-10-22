@@ -216,6 +216,20 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	assert.Equal(t, 1, countTaskComments(t, taskID))
 	assert.Equal(t, jobsAfterUpdate, countTaskSyncJobs(t, taskID))
 
+	commentActivities := listTaskActivities(t, owner, taskID)
+
+	var inboundComment *taskActivityNode
+
+	for _, edge := range commentActivities.Node.Activities.Edges {
+		node := edge.Node
+		if node.ActivityType == "COMMENTED" {
+			inboundComment = &node
+			break
+		}
+	}
+
+	require.NotNil(t, inboundComment, "inbound Linear comment must write a comment activity")
+
 	const commentQuery = `
 		query($id: ID!) {
 			node(id: $id) {
@@ -223,6 +237,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 					comments(first: 1) {
 						edges {
 							node {
+								id
 								owner {
 									id
 								}
@@ -239,6 +254,7 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 			Comments struct {
 				Edges []struct {
 					Node struct {
+						ID    string `json:"id"`
 						Owner *struct {
 							ID string `json:"id"`
 						} `json:"owner"`
@@ -253,6 +269,8 @@ func TestTaskLinearSync_UpdateEnqueuesOutboundAndInboundDoesNotLoop(t *testing.T
 	require.NotNil(t, commentResult.Node)
 	require.Len(t, commentResult.Node.Comments.Edges, 1)
 	assert.Nil(t, commentResult.Node.Comments.Edges[0].Node.Owner)
+	require.NotNil(t, inboundComment.NewValue)
+	assert.Equal(t, commentResult.Node.Comments.Edges[0].Node.ID, *inboundComment.NewValue)
 
 	duplicateStatus := postLinearWebhook(t, deliveryID, map[string]any{
 		"action":           "update",

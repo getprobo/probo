@@ -253,6 +253,10 @@ func (s *Service) importLinearComment(
 				return fmt.Errorf("cannot insert task comment external link: %w", err)
 			}
 
+			if err := insertSyncedCommentActivity(ctx, tx, scope, taskComment); err != nil {
+				return fmt.Errorf("cannot record imported comment activity: %w", err)
+			}
+
 			actorIdentityID, err := linearActorIdentityID(ctx, tx, scope, link.OrganizationID, remote.UserEmail)
 			if err != nil {
 				return fmt.Errorf("cannot match Linear actor: %w", err)
@@ -313,6 +317,10 @@ func (s *Service) rollbackLinkedComments(
 				comment := coredata.TaskComment{ID: commentID}
 				if err := comment.Delete(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot delete imported task comment: %w", err)
+				}
+
+				if _, err := coredata.DeleteCommentedActivity(ctx, tx, scope, commentID); err != nil {
+					return fmt.Errorf("cannot delete imported comment activity: %w", err)
 				}
 			}
 
@@ -455,6 +463,10 @@ func deleteSyncedComment(
 				return fmt.Errorf("cannot delete task comment external link: %w", err)
 			}
 
+			if _, err := coredata.DeleteCommentedActivity(ctx, tx, scope, mapping.TaskCommentID); err != nil {
+				return fmt.Errorf("cannot delete missing comment activity: %w", err)
+			}
+
 			return nil
 		}
 
@@ -474,6 +486,10 @@ func deleteSyncedComment(
 
 	if err := taskComment.Delete(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot delete task comment: %w", err)
+	}
+
+	if _, err := coredata.DeleteCommentedActivity(ctx, tx, scope, taskComment.ID); err != nil {
+		return fmt.Errorf("cannot delete synced comment activity: %w", err)
 	}
 
 	return nil
@@ -668,6 +684,10 @@ func (s *Service) applyInboundCommentTx(
 		return fmt.Errorf("cannot insert task comment external link: %w", err)
 	}
 
+	if err := insertSyncedCommentActivity(ctx, tx, scope, taskComment); err != nil {
+		return fmt.Errorf("cannot record inbound comment activity: %w", err)
+	}
+
 	if err := webhook.InsertData(
 		ctx,
 		tx,
@@ -677,6 +697,30 @@ func (s *Service) applyInboundCommentTx(
 		webhooktypes.NewTaskComment(taskComment),
 	); err != nil {
 		return fmt.Errorf("cannot emit task comment created webhook: %w", err)
+	}
+
+	return nil
+}
+
+func insertSyncedCommentActivity(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	comment *coredata.TaskComment,
+) error {
+	commentID := comment.ID.String()
+	activity := &coredata.TaskActivity{
+		ID:             gid.New(scope.GetTenantID(), coredata.TaskActivityEntityType),
+		OrganizationID: comment.OrganizationID,
+		TaskID:         comment.TaskID,
+		ActorID:        comment.OwnerID,
+		ActivityType:   coredata.TaskActivityTypeCommented,
+		NewValue:       &commentID,
+		CreatedAt:      comment.CreatedAt,
+	}
+
+	if err := activity.Insert(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot insert task comment activity: %w", err)
 	}
 
 	return nil

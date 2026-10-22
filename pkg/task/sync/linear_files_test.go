@@ -725,16 +725,58 @@ func TestApplyInboundComment_CreateRestoresKnownFile(t *testing.T) {
 		return (&Service{}).applyInboundCommentTx(ctx, tx, scope, link, &linear.WebhookEnvelope{}, data, nil)
 	}))
 
-	var content string
+	var (
+		content      string
+		commentID    string
+		activityType string
+		newValue     string
+	)
 
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		if err := conn.QueryRow(
+			ctx,
+			`SELECT id::text, content FROM task_comments WHERE task_id = $1`,
+			taskID,
+		).Scan(&commentID, &content); err != nil {
+			return err
+		}
+
 		return conn.QueryRow(
 			ctx,
-			`SELECT content FROM task_comments WHERE task_id = $1`,
+			`SELECT activity_type::text, new_value
+			 FROM task_activities
+			 WHERE task_id = $1 AND activity_type = 'COMMENTED'`,
 			taskID,
-		).Scan(&content)
+		).Scan(&activityType, &newValue)
 	}))
 
 	assert.Contains(t, content, fileID.String())
 	assert.NotContains(t, content, assetURL)
+	assert.Equal(t, "COMMENTED", activityType)
+	assert.Equal(t, commentID, newValue)
+
+	parsedCommentID, err := gid.ParseGID(commentID)
+	require.NoError(t, err)
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		return deleteSyncedComment(
+			ctx,
+			tx,
+			scope,
+			&coredata.TaskCommentExternalLink{TaskCommentID: parsedCommentID},
+		)
+	}))
+
+	var remaining int
+
+	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+		return conn.QueryRow(
+			ctx,
+			`SELECT COUNT(*) FROM task_activities
+			 WHERE task_id = $1 AND activity_type = 'COMMENTED'`,
+			taskID,
+		).Scan(&remaining)
+	}))
+
+	assert.Zero(t, remaining)
 }
