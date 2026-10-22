@@ -6,12 +6,14 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ### Added
 
-- `go run ./cmd/migrate-collaboration-documents` seeds existing
-  documents into their collaboration CRDT, so the first editor open
-  does not do the conversion. Run it after the migration that copies
-  the latest version content onto documents. It skips archived,
-  soft-deleted, and already seeded documents. `-dry-run` lists what
-  it would seed, and `-continue-on-error` keeps going after a failure
+- This version still seeds a document into its collaboration CRDT
+  the first time someone opens it for editing. The next version will
+  not. Run `go run ./cmd/migrate-collaboration-documents` before
+  upgrading, or a document that was never opened stays unconverted.
+  Run the command after the migration that copies the latest version
+  content onto documents. It skips archived, soft-deleted, and
+  already seeded documents. `-dry-run` lists what it would seed, and
+  `-continue-on-error` keeps going after a failure
 
 ### Fixed
 
