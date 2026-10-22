@@ -133,7 +133,7 @@ func newGatingFixture(t *testing.T) (*Hub, *gatingDocuments, coredata.Scoper, gi
 	documentID := gid.New(tenantID, coredata.DocumentEntityType)
 	documents := &gatingDocuments{}
 
-	return NewHub(documents, nil), documents, coredata.NewScope(tenantID), documentID
+	return NewHub(documents, nil), documents, coredata.NewScope(tenantID, gid.Nil), documentID
 }
 
 func TestRoom_NotifiesOtherPeers(t *testing.T) {
@@ -538,7 +538,7 @@ func TestRoom_DebouncesPersistence(t *testing.T) {
 	room := &Room{
 		collaboration: documents.opened,
 		documents:     documents,
-		scope:         coredata.NewScope(tenantID),
+		scope:         coredata.NewScope(tenantID, gid.Nil),
 		documentID:    documentID,
 		peers:         make(map[uint64]RoomPeer),
 		dirty:         make(chan struct{}, 1),
@@ -587,7 +587,7 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 	room := &Room{
 		collaboration: documents.opened,
 		documents:     documents,
-		scope:         coredata.NewScope(tenantID),
+		scope:         coredata.NewScope(tenantID, gid.Nil),
 		documentID:    documentID,
 		peers:         make(map[uint64]RoomPeer),
 		dirty:         make(chan struct{}, 1),
@@ -638,7 +638,7 @@ func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 	room := &Room{
 		collaboration: documents.opened,
 		documents:     documents,
-		scope:         coredata.NewScope(tenantID),
+		scope:         coredata.NewScope(tenantID, gid.Nil),
 		documentID:    documentID,
 		peers:         make(map[uint64]RoomPeer),
 		dirty:         make(chan struct{}, 1),

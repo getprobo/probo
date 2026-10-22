@@ -337,7 +337,7 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 		opened: &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := NewHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID, gid.Nil), documentID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
@@ -372,7 +372,7 @@ func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 		},
 	}
 	hub := NewHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID, gid.Nil), documentID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
@@ -404,7 +404,7 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 		opened: &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := NewHub(documents, nil)
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID, gid.Nil), documentID, nil)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
@@ -454,7 +454,7 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 	server := newRepoTestServerWithConfig(
 		t,
 		hub,
-		coredata.NewScope(tenantID),
+		coredata.NewScope(tenantID, gid.Nil),
 		documentID,
 		RepoConfig{
 			Shutdown:    context.Background(),
@@ -545,7 +545,7 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 		return nil
 	}
 
-	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, publisher)
+	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID, gid.Nil), documentID, publisher)
 
 	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
 	repoDocumentID := collabpkg.DeriveDocumentID(documentID.String())
