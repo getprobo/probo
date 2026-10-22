@@ -78,7 +78,8 @@ export const dialogSkeleton = tv({
 // button, with a border one step darker. Colored chips sit one step darker
 // than the button, and the border stays one step darker than that fill.
 // Hint text uses the button's text color. Soft buttons are step 3. Solid
-// buttons are step 9.
+// buttons are step 9. Linear has no scale: soft chips step `/16` to `/24`
+// to `/40`, and solid chips darken full `bg-linear` with black alpha.
 export const shortcutHint = tv({
   slots: {
     hint: [
@@ -106,6 +107,7 @@ export const shortcutHint = tv({
       amber: "",
       sky: "",
       indigo: "",
+      linear: "",
     },
   },
   compoundVariants: [
@@ -116,6 +118,7 @@ export const shortcutHint = tv({
     { chip: true, variant: "soft", color: "amber", class: { hint: "border-amber-5 bg-amber-4" } },
     { chip: true, variant: "soft", color: "sky", class: { hint: "border-sky-5 bg-sky-4" } },
     { chip: true, variant: "soft", color: "indigo", class: { hint: "border-indigo-5 bg-indigo-4" } },
+    { chip: true, variant: "soft", color: "linear", class: { hint: "border-linear/40 bg-linear/24" } },
     { chip: true, variant: "solid", color: "neutral", class: { hint: "border-sand-10 bg-sand-8" } },
     { chip: true, variant: "solid", color: "gold", class: { hint: "border-gold-11 bg-gold-10" } },
     { chip: true, variant: "solid", color: "red", class: { hint: "border-red-11 bg-red-10" } },
@@ -123,6 +126,7 @@ export const shortcutHint = tv({
     { chip: true, variant: "solid", color: "amber", class: { hint: "border-amber-11 bg-amber-10" } },
     { chip: true, variant: "solid", color: "sky", class: { hint: "border-sky-11 bg-sky-10" } },
     { chip: true, variant: "solid", color: "indigo", class: { hint: "border-indigo-11 bg-indigo-10" } },
+    { chip: true, variant: "solid", color: "linear", class: { hint: "border-black/40 bg-black/16" } },
   ],
   defaultVariants: {
     chip: false,
