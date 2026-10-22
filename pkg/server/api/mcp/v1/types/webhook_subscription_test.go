@@ -110,6 +110,7 @@ func TestWebhookSubscriptionSchemas_AcceptDocumentEvents(t *testing.T) {
 
 				enum := selectedEventEnum(t, tc.schema)
 				assert.Contains(t, enum, string(coredata.WebhookEventTypeDocumentArchived))
+
 				for _, event := range events {
 					assert.Contains(t, enum, string(event))
 				}
