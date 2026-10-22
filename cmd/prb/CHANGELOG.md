@@ -4,6 +4,19 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.258.0] - 2026-10-22
+
+### Added
+
+- `document list-history`, `document view-history-snapshot`, and
+  `document restore-history` list edit sessions, show a highlighted
+  snapshot, and restore a session
+
+### Changed
+
+- `document view-version` reads the ProseMirror content of the
+  version. `document create` reads the title from the document
+
 ## [0.257.0] - 2026-10-22
 
 ### Added
