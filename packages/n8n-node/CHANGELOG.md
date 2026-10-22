@@ -4,6 +4,14 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.260.0] - 2026-10-22
+
+### Changed
+
+- Document operations return `content` as an object with a
+  `prosemirror` field. The `Draft` version status filter is replaced
+  by `Rejected` and `Voided`
+
 ## [0.259.0] - 2026-10-22
 
 ### Added
