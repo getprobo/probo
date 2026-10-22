@@ -4,8 +4,20 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Added
+
+- `go run ./cmd/migrate-collaboration-documents` seeds existing
+  documents into their collaboration CRDT, so the first editor open
+  does not do the conversion. Run it after the migration that copies
+  the latest version content onto documents. It skips archived,
+  soft-deleted, and already seeded documents. `-dry-run` lists what
+  it would seed, and `-continue-on-error` keeps going after a failure
+
 ### Fixed
 
+- Seeding a large document into its collaboration CRDT finishes
+  instead of stalling on the text append and on documents with
+  thousands of marks
 - The Azure token request sends only the scope the caller asked for.
   It no longer adds openid, offline_access, or profile
 
