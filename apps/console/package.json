@@ -12,13 +12,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@automerge/automerge": "^3.4.0",
-    "@automerge/automerge-repo": "2.6.0-alpha.3",
-    "@automerge/automerge-repo-network-websocket": "2.6.0-alpha.3",
-    "@automerge/prosemirror": "^0.2.0",
     "@hookform/resolvers": "^5.9.1",
     "@iabtechlabtcf/core": "^1.5.22",
     "@phosphor-icons/react": "^2.1.10",
+    "@probo/collaboration": "1.0.0",
     "@probo/coredata": "^1.0.0",
     "@probo/helpers": "^1.0.0",
     "@probo/hooks": "1.0.0",

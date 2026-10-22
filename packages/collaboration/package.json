@@ -1,0 +1,21 @@
+{
+  "name": "@probo/collaboration",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@automerge/automerge-repo": "2.6.0-alpha.3",
+    "@automerge/automerge-repo-network-websocket": "2.6.0-alpha.3",
+    "@probo/ui": "1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2",
+    "vitest": "^4.1.11"
+  }
+}

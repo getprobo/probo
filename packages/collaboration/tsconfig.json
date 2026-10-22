@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2021", "dom"],
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src"]
+}

@@ -37,7 +37,7 @@ import {
   type TextSelection,
 } from "@probo/ui";
 
-import { type PresenceEntry, pruneStalePresences } from "./documentPresence";
+import { type PresenceEntry, pruneStalePresences } from "./presence";
 
 // A collaboration handle for the editor, plus a close() that tears down the repo
 // and its network connection.

@@ -25,7 +25,7 @@ export type PresenceEntry = {
   at: number;
 };
 
-export type DocumentPresencePerson = {
+export type PresencePerson = {
   identityID: string;
   displayName?: string;
   avatarURL?: string;
@@ -52,8 +52,8 @@ export function pruneStalePresences(
 // an active connection when both exist.
 export function groupPresencesByIdentity(
   presences: RichEditorPresence[],
-): DocumentPresencePerson[] {
-  const byIdentity = new Map<string, DocumentPresencePerson>();
+): PresencePerson[] {
+  const byIdentity = new Map<string, PresencePerson>();
 
   for (const presence of presences) {
     const existing = byIdentity.get(presence.identityID);
@@ -94,6 +94,6 @@ export function groupPresencesByIdentity(
   });
 }
 
-function presenceSortName(person: DocumentPresencePerson): string {
+function presenceSortName(person: PresencePerson): string {
   return (person.displayName?.trim() || person.identityID).toLocaleLowerCase();
 }

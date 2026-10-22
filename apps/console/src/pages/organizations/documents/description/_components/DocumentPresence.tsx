@@ -19,6 +19,10 @@
 // SOFTWARE.
 
 import {
+  groupPresencesByIdentity,
+  type PresencePerson,
+} from "@probo/collaboration";
+import {
   presenceColor,
   type RichEditorCollaborationHandle,
   type RichEditorPresence,
@@ -31,11 +35,6 @@ import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { tv } from "tailwind-variants/lite";
-
-import {
-  type DocumentPresencePerson,
-  groupPresencesByIdentity,
-} from "../_lib/documentPresence";
 
 const visibleLimit = 5;
 
@@ -129,7 +128,7 @@ function PresenceAvatar({
   person,
   label,
 }: {
-  person: DocumentPresencePerson;
+  person: PresencePerson;
   label: string;
 }) {
   const slots = facepile({ active: person.active });

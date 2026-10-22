@@ -18,6 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import {
+  connectRepoDocument,
+  type RepoCollaborationHandle,
+} from "@probo/collaboration";
 import { formatError } from "@probo/helpers";
 import { Button, CollaborativeRichEditor, IconClock, supportsRichEditorCollaboration } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
@@ -34,10 +38,6 @@ import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
 import { DocumentHistoryView } from "./_components/DocumentHistoryPanel";
 import { DocumentPresence } from "./_components/DocumentPresence";
-import {
-  connectRepoDocument,
-  type RepoCollaborationHandle,
-} from "./_lib/connectRepoDocument";
 
 const autoSaveIntervalMs = 1000;
 

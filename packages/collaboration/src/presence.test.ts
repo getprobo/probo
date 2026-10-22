@@ -25,7 +25,7 @@ import {
   groupPresencesByIdentity,
   type PresenceEntry,
   pruneStalePresences,
-} from "./documentPresence";
+} from "./presence";
 
 function presence(overrides: Partial<RichEditorPresence> = {}): RichEditorPresence {
   return {
