@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Yeni Gizlilik Talebi",
-    "description": "Bu form erişim veya silme gibi kişisel verileriniz içindir. Bir talep türü seçin ve aşağıdaki ayrıntıları doldurun.",
+    "description": "Bu form kişisel verilerinizle ilgili talepler içindir, örneğin erişim veya silme talebi. Bir talep türü seçin ve aşağıdaki ayrıntıları doldurun.",
     "typeLabel": "Talep türü",
     "cancel": "İptal",
     "submit": "Talebi Gönder",
