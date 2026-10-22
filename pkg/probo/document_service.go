@@ -103,6 +103,8 @@ type (
 		Classification     coredata.DocumentClassification
 		DocumentType       coredata.DocumentType
 		DefaultApproverIDs []gid.GID
+		IdentityID         gid.GID
+		ProfileID          *gid.GID
 	}
 
 	UpdateDocumentRequest struct {
@@ -758,7 +760,15 @@ func (s *DocumentService) Create(
 				return fmt.Errorf("cannot insert document: %w", err)
 			}
 
-			if err := s.collaboration.PutContent(ctx, conn, scope, document.ID, content); err != nil {
+			if err := s.collaboration.PutContent(
+				ctx,
+				conn,
+				scope,
+				document.ID,
+				content,
+				req.IdentityID,
+				req.ProfileID,
+			); err != nil {
 				return fmt.Errorf("cannot store document content: %w", err)
 			}
 
@@ -2241,7 +2251,15 @@ func (s *DocumentService) DeleteDraft(
 			document.Content = published.Content
 			document.UpdatedAt = time.Now()
 
-			if err := s.collaboration.PutContent(ctx, tx, scope, document.ID, published.Content); err != nil {
+			if err := s.collaboration.PutContent(
+				ctx,
+				tx,
+				scope,
+				document.ID,
+				published.Content,
+				gid.GID{},
+				nil,
+			); err != nil {
 				return fmt.Errorf("cannot restore published content: %w", err)
 			}
 

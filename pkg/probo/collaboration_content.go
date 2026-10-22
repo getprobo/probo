@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -114,6 +115,8 @@ func (s *CollaborationService) PutContent(
 	scope coredata.Scoper,
 	documentID gid.GID,
 	content string,
+	identityID gid.GID,
+	profileID *gid.GID,
 ) error {
 	if strings.TrimSpace(content) == "" {
 		content = emptyLiveDocument
@@ -124,7 +127,14 @@ func (s *CollaborationService) PutContent(
 		return err
 	}
 
-	automergeDocument, err := loadAutomergeDocument(ctx, doc.Snapshot)
+	automergeDocument, err := s.openPutContentDocument(
+		ctx,
+		tx,
+		scope,
+		doc,
+		identityID,
+		profileID,
+	)
 	if err != nil {
 		return err
 	}
@@ -190,4 +200,37 @@ func (s *CollaborationService) PutContent(
 	}
 
 	return nil
+}
+
+func (s *CollaborationService) openPutContentDocument(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	doc *coredata.CollaborationDocument,
+	identityID gid.GID,
+	profileID *gid.GID,
+) (*automerge.Document, error) {
+	if identityID == (gid.GID{}) {
+		return loadAutomergeDocument(ctx, doc.Snapshot)
+	}
+
+	actorID, err := s.lookupOrCreateActor(
+		ctx,
+		tx,
+		scope,
+		doc.DocumentID,
+		doc.OrganizationID,
+		identityID,
+		profileID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	document, err := automerge.Load(doc.Snapshot, actorID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load collaboration content for actor: %w", err)
+	}
+
+	return document, nil
 }

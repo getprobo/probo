@@ -2483,6 +2483,7 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
+	identity := authn.IdentityFromContext(ctx)
 	document, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
@@ -2492,6 +2493,8 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
+			IdentityID:         identity.ID,
+			ProfileID:          r.collaborationProfileID(ctx, identity.ID, input.OrganizationID),
 		},
 	)
 	if err != nil {

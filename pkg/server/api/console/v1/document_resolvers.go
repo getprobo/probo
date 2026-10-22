@@ -1124,6 +1124,17 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		content = *input.Content
 	}
 
+	identity := authn.IdentityFromContext(ctx)
+	var profileID *gid.GID
+	profile, profileErr := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(
+		ctx,
+		identity.ID,
+		input.OrganizationID,
+	)
+	if profileErr == nil {
+		profileID = &profile.ID
+	}
+
 	document, err := r.probo.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
@@ -1133,6 +1144,8 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
+			IdentityID:         identity.ID,
+			ProfileID:          profileID,
 		},
 	)
 	if err != nil {
