@@ -33,7 +33,7 @@ import { localizedPath, resolveUrlLocale, type UrlLocale } from "#/lib/i18n/loca
 export const REQUEST_DOCUMENT_PARAM = "request-document-id";
 export const REQUEST_REPORT_PARAM = "request-report-id";
 export const REQUEST_FILE_PARAM = "request-file-id";
-// Marker that re-opens the "New Request" dialog once the user lands back
+// Marker that re-opens the "New Privacy Request" dialog once the user lands back
 // authenticated (the data request form gates on sign-in before it opens).
 export const NEW_REQUEST_PARAM = "new-request";
 // Marker that re-opens the "Subscribe to updates" dialog after sign-in.

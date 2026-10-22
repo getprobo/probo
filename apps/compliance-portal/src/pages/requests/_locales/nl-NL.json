@@ -1,10 +1,10 @@
 {
-  "title": "Gegevensverzoeken",
-  "newRequest": "Nieuw verzoek",
+  "title": "Privacyverzoeken",
+  "newRequest": "Nieuw privacyverzoek",
   "loadMore": "Meer laden",
   "empty": {
-    "title": "Nog geen verzoeken",
-    "description": "Verzoeken die u indient verschijnen hier, zodat u de voortgang kunt volgen."
+    "title": "Nog geen privacyverzoeken",
+    "description": "Privacyverzoeken over uw persoonsgegevens verschijnen hier, zodat u de voortgang kunt volgen."
   },
   "types": {
     "ACCESS": "Inzage in gegevens",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Misbruik melden"
   },
   "dialog": {
-    "title": "Nieuw verzoek",
-    "description": "Kies een type verzoek en vul hieronder de details in.",
+    "title": "Nieuw privacyverzoek",
+    "description": "Dit gaat over uw persoonsgegevens, zoals inzage of verwijdering. Kies een type verzoek en vul hieronder de details in.",
     "typeLabel": "Type verzoek",
     "cancel": "Annuleren",
     "submit": "Verzoek indienen",

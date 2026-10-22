@@ -1,10 +1,10 @@
 {
-  "title": "Wnioski o dane",
-  "newRequest": "Nowy wniosek",
+  "title": "Wnioski o prywatność",
+  "newRequest": "Nowy wniosek o prywatność",
   "loadMore": "Wczytaj więcej",
   "empty": {
-    "title": "Brak wniosków",
-    "description": "Złożone wnioski będą wyświetlane tutaj, co pozwoli śledzić ich postęp."
+    "title": "Brak wniosków o prywatność",
+    "description": "Wnioski o prywatność dotyczące Twoich danych osobowych będą wyświetlane tutaj, co pozwoli śledzić ich postęp."
   },
   "types": {
     "ACCESS": "Dostęp do danych",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Zgłoś nadużycie"
   },
   "dialog": {
-    "title": "Nowy wniosek",
-    "description": "Wybierz typ wniosku i uzupełnij poniższe informacje.",
+    "title": "Nowy wniosek o prywatność",
+    "description": "Dotyczy Twoich danych osobowych, na przykład dostępu lub usunięcia. Wybierz typ wniosku i uzupełnij poniższe informacje.",
     "typeLabel": "Typ wniosku",
     "cancel": "Anuluj",
     "submit": "Wyślij wniosek",

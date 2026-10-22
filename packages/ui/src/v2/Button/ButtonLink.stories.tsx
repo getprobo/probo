@@ -23,7 +23,7 @@ import { MemoryRouter } from "react-router";
 
 import { ButtonLink } from "./ButtonLink";
 
-const navItems = ["Documents", "Subprocessors", "Updates", "Requests"] as const;
+const navItems = ["Documents", "Subprocessors", "Updates", "Privacy Requests"] as const;
 
 export default {
   title: "v2/ButtonLink",
