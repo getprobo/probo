@@ -317,7 +317,7 @@ function CommentStep({
             <Field error={editing ? error : undefined}>
               <RichEditor
                 key={editing ? "edit" : comment.content}
-                className={taskCommentEditor()}
+                className={taskCommentEditor({ editing })}
                 content={editing ? draft : comment.content}
                 controls={false}
                 disabled={!editing}

@@ -457,10 +457,10 @@ export function employeeTaskListUpdaters(
   }
 
   return {
-    optimisticUpdater(store: RecordSourceSelectorProxy) {
+    optimisticUpdater: (store: RecordSourceSelectorProxy) => {
       apply(store, "optimistic");
     },
-    updater(store: RecordSourceSelectorProxy) {
+    updater: (store: RecordSourceSelectorProxy) => {
       apply(store, "server");
     },
   };

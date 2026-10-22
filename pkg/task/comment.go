@@ -347,6 +347,7 @@ func (s *Service) DeleteComment(
 	taskCommentID gid.GID,
 ) (gid.GID, error) {
 	taskComment := coredata.TaskComment{ID: taskCommentID}
+
 	var activityID gid.GID
 
 	err := s.pg.WithTx(

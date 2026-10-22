@@ -32,11 +32,11 @@ import { useTranslation } from "react-i18next";
 import { TASKS_NAMESPACE } from "./i18n";
 import { isOverdueTask } from "./isOverdueTask";
 import { taskEstimateDurationUnits, taskRecurrenceDurationUnits } from "./taskDuration";
-import { type TaskPriority, type TaskState } from "./taskState";
 import { TaskDurationField } from "./TaskDurationField";
 import { TaskListItemDeadline } from "./TaskListItem/TaskListItemDeadline";
 import { TaskListItemPriority } from "./TaskListItem/TaskListItemPriority";
 import { TaskListItemState } from "./TaskListItem/TaskListItemState";
+import { type TaskPriority, type TaskState } from "./taskState";
 import { taskListItem, taskProperties } from "./variants";
 
 export interface TaskPropertiesTask {
@@ -97,7 +97,7 @@ export function TaskProperties({
           placeholder={t("placeholders.state")}
           slots={slots}
           onStateChange={(state) => {
-            onChange({ state });
+            void onChange({ state });
           }}
         />
         <TaskListItemPriority
@@ -108,7 +108,7 @@ export function TaskProperties({
           placeholder={t("placeholders.priority")}
           slots={slots}
           onPriorityChange={(priority) => {
-            onChange({ priority });
+            void onChange({ priority });
           }}
         />
         {assignee}
@@ -143,7 +143,7 @@ export function TaskProperties({
           placeholder={t("placeholders.deadline")}
           slots={slots}
           onDeadlineChange={(deadline) => {
-            onChange({
+            void onChange({
               deadline,
               ...(deadline == null && task.recurrenceInterval != null
                 ? { recurrenceInterval: null }
@@ -161,7 +161,7 @@ export function TaskProperties({
                       className={slots.chipTrigger()}
                       disabled={isUpdating || !task.deadline}
                       onClick={() => {
-                        onChange({ recurrenceInterval: "P7D" });
+                        void onChange({ recurrenceInterval: "P7D" });
                       }}
                     >
                       <span className={slots.stateOption()}>

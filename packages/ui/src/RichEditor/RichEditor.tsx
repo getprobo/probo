@@ -98,7 +98,7 @@ const extensions = [
 ];
 
 const richEditorVariants = tv({
-  base: ["relative flex-1 min-w-0 overflow-auto py-14 pr-8 bg-level-1 shadow-base"],
+  base: ["relative flex flex-1 flex-col min-w-0 overflow-auto py-14 pr-8 bg-level-1 shadow-base"],
   variants: {
     disabled: {
       true: "pl-8",
@@ -268,7 +268,7 @@ export function RichEditor(props: RichEditorProps) {
   const editor = useEditor({
     editorProps: {
       attributes: {
-        class: "h-full",
+        class: "min-h-full flex-1",
       },
       handlePaste(view, event) {
         const upload = uploadRef.current;
@@ -375,7 +375,7 @@ export function RichEditor(props: RichEditorProps) {
           </>
         )}
 
-      <EditorContent className="h-full" editor={editor} />
+      <EditorContent className="flex min-h-0 flex-1 flex-col" editor={editor} />
       <input
         ref={fileInputRef}
         type="file"

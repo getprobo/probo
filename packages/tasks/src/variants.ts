@@ -173,7 +173,7 @@ export const taskCommentForm = tv({
     root: "flex flex-col gap-3",
     actions: "flex justify-end",
     editor: [
-      "flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
+      "min-h-40 flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
       "[&_.tiptap>p:first-child]:mt-0",
     ],
   },
@@ -184,6 +184,15 @@ export const taskCommentEditor = tv({
     "flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
     "[&_.tiptap>p:first-child]:mt-0",
   ],
+  variants: {
+    editing: {
+      true: "min-h-40",
+      false: "",
+    },
+  },
+  defaultVariants: {
+    editing: false,
+  },
 });
 
 export const taskActivityComment = tv({
