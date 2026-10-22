@@ -107,4 +107,33 @@ describe("groupPresencesByIdentity", () => {
       active: false,
     });
   });
+
+  it("orders equal display names by identityID", () => {
+    const people = groupPresencesByIdentity([
+      presence({
+        connectionID: "tab-z",
+        identityID: "idnt_zara",
+        displayName: "Sam",
+        active: true,
+      }),
+      presence({
+        connectionID: "tab-idle",
+        identityID: "idnt_ada",
+        displayName: "Sam",
+        active: false,
+      }),
+      presence({
+        connectionID: "tab-m",
+        identityID: "idnt_mia",
+        displayName: "Sam",
+        active: true,
+      }),
+    ]);
+
+    expect(people.map(person => person.identityID)).toEqual([
+      "idnt_mia",
+      "idnt_zara",
+      "idnt_ada",
+    ]);
+  });
 });

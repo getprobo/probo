@@ -88,7 +88,9 @@ export function groupPresencesByIdentity(
 
   return [...byIdentity.values()].sort((left, right) => {
     if (left.active !== right.active) return left.active ? -1 : 1;
-    return presenceSortName(left).localeCompare(presenceSortName(right));
+    const byName = presenceSortName(left).localeCompare(presenceSortName(right));
+    if (byName !== 0) return byName;
+    return left.identityID.localeCompare(right.identityID);
   });
 }
 

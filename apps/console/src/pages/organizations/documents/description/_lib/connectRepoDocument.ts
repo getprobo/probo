@@ -70,10 +70,23 @@ type SelectionPresence = {
   avatarURL?: string;
 };
 
+function isCursor(value: unknown): value is string {
+  return typeof value === "string" && value !== "";
+}
+
+function isTextSelection(value: unknown): value is TextSelection {
+  if (!value || typeof value !== "object") return false;
+  const selection = value as Record<string, unknown>;
+  return typeof selection.field === "string"
+    && selection.field !== ""
+    && isCursor(selection.anchor)
+    && isCursor(selection.head);
+}
+
 function isSelectionPresence(value: unknown): value is SelectionPresence {
   if (!value || typeof value !== "object") return false;
   const message = value as Record<string, unknown>;
-  return message.kind === "selection" && !!message.selection;
+  return message.kind === "selection" && isTextSelection(message.selection);
 }
 
 function isDeparturePresence(value: unknown): boolean {
@@ -204,11 +217,17 @@ export async function connectRepoDocument(
     const document = handle.doc();
     if (!document) return;
 
-    const resolved = pmSelectionFromPresence(
-      adapter,
-      document,
-      payload.message.selection,
-    );
+    // A peer cursor can throw inside Automerge. Keep the ephemeral handler alive.
+    let resolved: ReturnType<typeof pmSelectionFromPresence>;
+    try {
+      resolved = pmSelectionFromPresence(
+        adapter,
+        document,
+        payload.message.selection,
+      );
+    } catch {
+      resolved = null;
+    }
     const now = Date.now();
     const displayName = typeof payload.message.displayName === "string"
       ? payload.message.displayName.trim()

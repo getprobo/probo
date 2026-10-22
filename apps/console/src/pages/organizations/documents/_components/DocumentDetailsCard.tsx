@@ -126,6 +126,7 @@ export function DocumentDetailsCard(props: {
   versionFragmentRef: DocumentDetailsCard_versionFragment$key | null;
   isEditable: boolean;
   isLatestVersion?: boolean;
+  hasPendingApproval: boolean;
   onDocumentUpdated: () => void;
 }) {
   const {
@@ -133,6 +134,7 @@ export function DocumentDetailsCard(props: {
     versionFragmentRef,
     isEditable,
     isLatestVersion = true,
+    hasPendingApproval,
     onDocumentUpdated,
   } = props;
 
@@ -153,7 +155,7 @@ export function DocumentDetailsCard(props: {
 
   const canEdit = document.canUpdate && isEditable;
   const canEditVersionFields = canEdit;
-  const canEditApprovers = document.canUpdate && isLatestVersion;
+  const canEditApprovers = document.canUpdate && isLatestVersion && !hasPendingApproval;
 
   const { control, handleSubmit, reset } = useFormWithSchema(
     schema,

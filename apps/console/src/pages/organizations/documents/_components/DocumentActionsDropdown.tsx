@@ -123,9 +123,10 @@ const exportDocumentVersionMutation = graphql`
 export function DocumentActionsDropdown(props: {
   documentFragmentRef: DocumentActionsDropdown_documentFragment$key;
   versionFragmentRef: DocumentActionsDropdown_versionFragment$key | null;
+  isLive: boolean;
   onVersionChanged: () => void;
 }) {
-  const { documentFragmentRef, versionFragmentRef, onVersionChanged } = props;
+  const { documentFragmentRef, versionFragmentRef, isLive, onVersionChanged } = props;
 
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -294,7 +295,7 @@ export function DocumentActionsDropdown(props: {
         >
           {t("documentActions.actions.downloadPdf")}
         </DropdownItem>
-        {document.canDeleteDraft && !version && document.currentPublishedMajor != null && (
+        {document.canDeleteDraft && isLive && document.currentPublishedMajor != null && (
           <DropdownItem
             icon={IconTrashCan}
             disabled={isDeletingDraft}

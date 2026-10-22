@@ -34,7 +34,6 @@ import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
 import { DocumentHistoryView } from "./_components/DocumentHistoryPanel";
 import { DocumentPresence } from "./_components/DocumentPresence";
-
 import {
   connectRepoDocument,
   type RepoCollaborationHandle,
@@ -44,6 +43,7 @@ const autoSaveIntervalMs = 1000;
 
 type CollaborationState = {
   versionID: string;
+  attempt: number;
   handle?: RepoCollaborationHandle;
   failed?: boolean;
 };
@@ -169,16 +169,17 @@ export function DocumentDescriptionPage(props: {
   const collaborationSupported = canEdit
     && supportsRichEditorCollaboration(content);
   const [collaboration, setCollaboration] = useState<CollaborationState>();
+  const connectionAttempt = useRef(0);
 
   useEffect(() => {
     if (!collaborationSupported) return;
 
-    let cancelled = false;
+    const attempt = ++connectionAttempt.current;
     let activeHandle: RepoCollaborationHandle | undefined;
 
     connectRepoDocument(document.id)
       .then((handle) => {
-        if (cancelled) {
+        if (attempt !== connectionAttempt.current) {
           handle.close();
           return;
         }
@@ -186,14 +187,16 @@ export function DocumentDescriptionPage(props: {
         activeHandle = handle;
         setCollaboration({
           versionID: document.id,
+          attempt,
           handle,
         });
       })
       .catch((error) => {
-        if (cancelled) return;
+        if (attempt !== connectionAttempt.current) return;
 
         setCollaboration({
           versionID: document.id,
+          attempt,
           failed: true,
         });
         toast.add({
@@ -206,8 +209,11 @@ export function DocumentDescriptionPage(props: {
       });
 
     return () => {
-      cancelled = true;
+      connectionAttempt.current += 1;
       activeHandle?.close();
+      setCollaboration(current =>
+        current?.attempt === attempt ? undefined : current,
+      );
     };
   }, [collaborationSupported, document.id, t, toast]);
 
@@ -254,9 +260,8 @@ export function DocumentDescriptionPage(props: {
   }
 
   const editorKey = `${editorIdentity}-${dataGeneration}`;
-  const historyAvailable = canEdit
-    && supportsRichEditorCollaboration(content)
-    && document.canViewHistory;
+  const historyAvailable = document.canViewHistory
+    && supportsRichEditorCollaboration(content);
 
   if (historyOpen) {
     return (

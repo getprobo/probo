@@ -155,7 +155,10 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
   const published = document.publishedVersion.edges[0]?.node ?? null;
   const isLive = snapshot == null;
   const isGenerated = document.writeMode === "GENERATED";
-  const isEditable = isLive && document.status !== "ARCHIVED" && !isGenerated;
+  const isEditable = isLive
+    && pending == null
+    && document.status !== "ARCHIVED"
+    && !isGenerated;
   const title = snapshot?.title ?? document.title;
   const approvalSource = snapshot ?? pending;
   const lastQuorum = approvalSource?.approvalQuorums?.edges?.[0]?.node ?? null;
@@ -214,6 +217,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
             <DocumentActionsDropdown
               documentFragmentRef={document}
               versionFragmentRef={snapshot ?? published}
+              isLive={isLive}
               onVersionChanged={handleVersionChanged}
             />
           </div>
@@ -244,6 +248,7 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
           versionFragmentRef={snapshot}
           isEditable={isEditable}
           isLatestVersion={isLive}
+          hasPendingApproval={pending != null}
           onDocumentUpdated={handleDocumentUpdated}
         />
 
