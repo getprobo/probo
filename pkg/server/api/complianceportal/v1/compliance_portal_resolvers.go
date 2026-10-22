@@ -20,7 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Frameworks is the resolver for the frameworks field.
@@ -37,19 +37,19 @@ func (r *auditResolver) Frameworks(ctx context.Context, obj *types.Audit) ([]*ty
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrAuditNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "audit %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "audit %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	frameworks, err := visitorService.ListFrameworksForAuditID(ctx, scope, audit.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list audit frameworks", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.Framework, 0, len(frameworks))
@@ -79,7 +79,7 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if audit.ReportFileID == nil {
@@ -94,7 +94,7 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 
 		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAuditReport(file), nil
@@ -119,7 +119,7 @@ func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.A
 
 		r.logger.ErrorCtx(ctx, "cannot load audit for report file", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	if portalAudit.Visibility == coredata.CompliancePortalVisibilityPublic {
@@ -146,7 +146,7 @@ func (r *auditReportResolver) IsUserAuthorized(ctx context.Context, obj *types.A
 
 		r.logger.ErrorCtx(ctx, "cannot check report access", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return reportAccess.Status == coredata.CompliancePortalDocumentAccessStatusGranted, nil
@@ -177,12 +177,12 @@ func (r *auditReportResolver) Access(ctx context.Context, obj *types.AuditReport
 		}
 
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get audit report access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DocumentAccess{
@@ -205,12 +205,12 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance framework %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "compliance framework %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	framework, err := visitorService.GetFrameworkForCompliancePortalID(
@@ -221,12 +221,12 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "framework %q not found", complianceFramework.FrameworkID)
+			return nil, gqlx.NotFoundf(ctx, "framework %q not found", complianceFramework.FrameworkID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFramework(framework), nil
@@ -265,7 +265,7 @@ func (r *compliancePortalResolver) NonDisclosureAgreement(ctx context.Context, o
 	file, err := visitorService.GetPortalNDAFile(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load NDA file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if file == nil {
@@ -287,7 +287,7 @@ func (r *compliancePortalResolver) ViewerSubscription(ctx context.Context, obj *
 	subscriber, err := r.mailman.GetSubscriber(ctx, compliancePortal.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if subscriber == nil {
@@ -309,7 +309,7 @@ func (r *compliancePortalResolver) ViewerHasRequestedAccess(ctx context.Context,
 	hasRequested, err := r.visitor.HasRequestedAccess(ctx, scope, obj.ID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check viewer requested access", log.Error(err))
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return hasRequested, nil
@@ -334,7 +334,7 @@ func (r *compliancePortalResolver) Documents(ctx context.Context, obj *types.Com
 	documentPage, err := visitorService.ListDocumentsForCompliancePortalID(ctx, scope, compliancePortal.ID, cursor, documentFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentConnection(documentPage), nil
@@ -359,7 +359,7 @@ func (r *compliancePortalResolver) Audits(ctx context.Context, obj *types.Compli
 	auditPage, err := visitorService.ListAuditsForCompliancePortalID(ctx, scope, compliancePortal.ID, cursor, auditFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public audits", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAuditConnection(auditPage), nil
@@ -388,11 +388,11 @@ func (r *compliancePortalResolver) Subprocessors(ctx context.Context, obj *types
 	}
 
 	if category != nil && !category.IsValid() {
-		return nil, gqlutils.Invalidf(ctx, "invalid subprocessor category filter: %q", string(*category))
+		return nil, gqlx.Invalidf(ctx, "invalid subprocessor category filter: %q", string(*category))
 	}
 
 	if country != nil && !country.IsValid() {
-		return nil, gqlutils.Invalidf(ctx, "invalid subprocessor country filter: %q", string(*country))
+		return nil, gqlx.Invalidf(ctx, "invalid subprocessor country filter: %q", string(*country))
 	}
 
 	thirdPartyFilter := coredata.NewThirdPartyFilter(nil, query, category, country)
@@ -400,7 +400,7 @@ func (r *compliancePortalResolver) Subprocessors(ctx context.Context, obj *types
 	thirdPartyPage, err := visitorService.ListThirdPartiesForCompliancePortalID(ctx, scope, compliancePortal.ID, cursor, thirdPartyFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessors", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewSubprocessorConnection(thirdPartyPage, r, obj.ID, thirdPartyFilter), nil
@@ -413,7 +413,7 @@ func (r *compliancePortalResolver) SubprocessorCategories(ctx context.Context, o
 	categories, err := r.visitor.ListDistinctPortalCategoriesForPortalID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessor categories", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return categories, nil
@@ -426,7 +426,7 @@ func (r *compliancePortalResolver) SubprocessorCountries(ctx context.Context, ob
 	countries, err := r.visitor.ListDistinctPortalCountriesForPortalID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list subprocessor countries", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return countries, nil
@@ -445,7 +445,7 @@ func (r *compliancePortalResolver) References(ctx context.Context, obj *types.Co
 	referencePage, err := visitorService.ListPortalReferencesForPortalID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public compliance portal references", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalReferenceConnection(referencePage), nil
@@ -464,7 +464,7 @@ func (r *compliancePortalResolver) CommitmentGroups(ctx context.Context, obj *ty
 	groupPage, err := visitorService.ListCommitmentGroupsForPortalID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public compliance portal commitment groups", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalCommitmentGroupConnection(groupPage), nil
@@ -496,7 +496,7 @@ func (r *compliancePortalResolver) CompliancePortalFiles(ctx context.Context, ob
 	portalFilePage, err := visitorService.ListPortalFilesForCompliancePortalID(ctx, scope, compliancePortal.ID, cursor, fileFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list public compliance portal files", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalFileConnection(portalFilePage), nil
@@ -515,7 +515,7 @@ func (r *compliancePortalResolver) ComplianceFrameworks(ctx context.Context, obj
 	cfPage, err := visitorService.ListComplianceFrameworksByPortalID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewComplianceFrameworkConnection(cfPage), nil
@@ -534,7 +534,7 @@ func (r *compliancePortalResolver) CustomLinks(ctx context.Context, obj *types.C
 	result, err := visitorService.ListCustomLinksForPortalID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance custom links", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewComplianceCustomLinkConnection(result), nil
@@ -548,7 +548,7 @@ func (r *compliancePortalResolver) Updates(ctx context.Context, obj *types.Compl
 	tc, err := visitorService.GetPortal(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	pageOrderBy := page.OrderBy[coredata.MailingListUpdateOrderField]{
@@ -560,7 +560,7 @@ func (r *compliancePortalResolver) Updates(ctx context.Context, obj *types.Compl
 	result, err := r.mailman.ListSentMailingListUpdates(ctx, tc.MailingListID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewMailingListUpdateConnection(result), nil
@@ -586,12 +586,12 @@ func (r *compliancePortalCommitmentGroupResolver) Commitments(ctx context.Contex
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "commitment group %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "commitment group %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list public compliance portal commitments", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalCommitmentConnection(commitmentPage), nil
@@ -611,12 +611,12 @@ func (r *compliancePortalFileResolver) IsUserAuthorized(ctx context.Context, obj
 	portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.ID, obj.ID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
-			return false, gqlutils.NotFoundf(ctx, "compliance portal file %q not found", obj.ID)
+			return false, gqlx.NotFoundf(ctx, "compliance portal file %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	if portalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
@@ -643,7 +643,7 @@ func (r *compliancePortalFileResolver) IsUserAuthorized(ctx context.Context, obj
 
 		r.logger.ErrorCtx(ctx, "cannot check compliance portal file access", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return fileAccess.Status == coredata.CompliancePortalDocumentAccessStatusGranted, nil
@@ -674,12 +674,12 @@ func (r *compliancePortalFileResolver) Access(ctx context.Context, obj *types.Co
 		}
 
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get file access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DocumentAccess{
@@ -696,12 +696,12 @@ func (r *compliancePortalReferenceResolver) Logo(ctx context.Context, obj *types
 	reference, err := r.visitor.GetPortalReferenceForCompliancePortalID(ctx, scope, compliancePortal.ID, obj.ID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrPortalReferenceNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance portal reference %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "compliance portal reference %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal reference", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return r.loadPublicFile(ctx, reference.LogoFileID)
@@ -721,16 +721,16 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 	_, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, obj.ID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
+			return false, gqlx.NotFoundf(ctx, "document %q not found", obj.ID)
 		}
 
 		if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
-			return false, gqlutils.NotFoundf(ctx, "document %q not found", obj.ID)
+			return false, gqlx.NotFoundf(ctx, "document %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
@@ -758,7 +758,7 @@ func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Docu
 
 		r.logger.ErrorCtx(ctx, "cannot check document access", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return documentAccess.Status == coredata.CompliancePortalDocumentAccessStatusGranted, nil
@@ -789,12 +789,12 @@ func (r *documentResolver) Access(ctx context.Context, obj *types.Document) (*ty
 		}
 
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DocumentAccess{
@@ -816,12 +816,12 @@ func (r *frameworkResolver) LightLogo(ctx context.Context, obj *types.Framework)
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "framework %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if framework.LightLogoFileID == nil {
@@ -844,12 +844,12 @@ func (r *frameworkResolver) DarkLogo(ctx context.Context, obj *types.Framework) 
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "framework %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if framework.DarkLogoFileID == nil {
@@ -868,23 +868,23 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	_, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+			return nil, gqlx.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
 		if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+			return nil, gqlx.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
 		pdf, err := visitorService.ExportDocumentPDFWithoutWatermark(ctx, scope, compliancePortal.ID, input.DocumentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export document PDF", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &types.ExportDocumentPDFPayload{
@@ -894,7 +894,7 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+		return nil, gqlx.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
 	if err := r.requireCompletedNDA(ctx); err != nil {
@@ -909,20 +909,20 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		return nil, nil
 	}
 
 	if documentAccess.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
-		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this document")
+		return nil, gqlx.Forbiddenf(ctx, "access denied: no permission to access this document")
 	}
 
 	pdf, err := visitorService.ExportDocumentPDF(ctx, scope, compliancePortal.ID, input.DocumentID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export document PDF", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ExportDocumentPDFPayload{
@@ -939,19 +939,19 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	_, portalAudit, err := visitorService.GetAuditByReportFileID(ctx, scope, compliancePortal.ID, input.ReportID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, visitor.ErrReportNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "report %q not found", input.ReportID)
+			return nil, gqlx.NotFoundf(ctx, "report %q not found", input.ReportID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if portalAudit.Visibility == coredata.CompliancePortalVisibilityPublic {
 		pdf, err := visitorService.ExportReportPDFWithoutWatermark(ctx, scope, input.ReportID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &types.ExportReportPDFPayload{
@@ -961,7 +961,7 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+		return nil, gqlx.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	if err := r.requireCompletedNDA(ctx); err != nil {
@@ -976,20 +976,20 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		return nil, nil
 	}
 
 	if reportAccess.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
-		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this report")
+		return nil, gqlx.Forbiddenf(ctx, "access denied: no permission to access this report")
 	}
 
 	pdf, err := visitorService.ExportReportPDF(ctx, scope, input.ReportID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export report PDF", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ExportReportPDFPayload{
@@ -1006,19 +1006,19 @@ func (r *mutationResolver) ExportCompliancePortalFile(ctx context.Context, input
 	portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.ID, input.CompliancePortalFileID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance portal file %q not found", input.CompliancePortalFileID)
+			return nil, gqlx.NotFoundf(ctx, "compliance portal file %q not found", input.CompliancePortalFileID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if portalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
 		fileData, mimeType, err := visitorService.ExportPortalFileWithoutWatermark(ctx, scope, input.CompliancePortalFileID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot export compliance portal file", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &types.ExportCompliancePortalFilePayload{
@@ -1028,7 +1028,7 @@ func (r *mutationResolver) ExportCompliancePortalFile(ctx context.Context, input
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "unauthenticated")
+		return nil, gqlx.Unauthenticatedf(ctx, "unauthenticated")
 	}
 
 	if err := r.requireCompletedNDA(ctx); err != nil {
@@ -1042,20 +1042,20 @@ func (r *mutationResolver) ExportCompliancePortalFile(ctx context.Context, input
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		return nil, nil
 	}
 
 	if fileAccess.Status != coredata.CompliancePortalDocumentAccessStatusGranted {
-		return nil, gqlutils.Forbiddenf(ctx, "access denied: no permission to access this file")
+		return nil, gqlx.Forbiddenf(ctx, "access denied: no permission to access this file")
 	}
 
 	fileData, mimeType, err := visitorService.ExportPortalFile(ctx, scope, input.CompliancePortalFileID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export compliance portal file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ExportCompliancePortalFilePayload{
@@ -1072,20 +1072,20 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	document, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+			return nil, gqlx.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
 		if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+			return nil, gqlx.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if portalDocument.Visibility == coredata.CompliancePortalVisibilityPublic {
-		return nil, gqlutils.Invalidf(
+		return nil, gqlx.Invalidf(
 			ctx,
 			"document is publicly available and does not require access request",
 		)
@@ -1093,7 +1093,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+		return nil, gqlx.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	if _, err := visitorService.RequestPortalAccess(
@@ -1108,7 +1108,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot request document access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RequestDocumentAccessPayload{
@@ -1126,16 +1126,16 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	audit, portalAudit, err := visitorService.GetAuditByReportFileID(ctx, scope, compliancePortal.ID, input.ReportID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, visitor.ErrReportNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "report %q not found", input.ReportID)
+			return nil, gqlx.NotFoundf(ctx, "report %q not found", input.ReportID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if portalAudit.Visibility == coredata.CompliancePortalVisibilityPublic {
-		return nil, gqlutils.Invalidf(
+		return nil, gqlx.Invalidf(
 			ctx,
 			"report is publicly available and does not require access request",
 		)
@@ -1143,7 +1143,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+		return nil, gqlx.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	if _, err := visitorService.RequestPortalAccess(
@@ -1158,7 +1158,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot request report access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RequestReportAccessPayload{
@@ -1176,16 +1176,16 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 	portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.ID, input.CompliancePortalFileID)
 	if err != nil {
 		if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance portal file %q not found", input.CompliancePortalFileID)
+			return nil, gqlx.NotFoundf(ctx, "compliance portal file %q not found", input.CompliancePortalFileID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if portalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
-		return nil, gqlutils.Invalidf(
+		return nil, gqlx.Invalidf(
 			ctx,
 			"compliance portal file is publicly available and does not require access request",
 		)
@@ -1193,7 +1193,7 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+		return nil, gqlx.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	if _, err := visitorService.RequestPortalAccess(
@@ -1208,7 +1208,7 @@ func (r *mutationResolver) RequestCompliancePortalFileAccess(ctx context.Context
 	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot request compliance portal file access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RequestFileAccessPayload{
@@ -1225,11 +1225,11 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+		return nil, gqlx.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	if len(input.DocumentIds) == 0 && len(input.ReportIds) == 0 && len(input.CompliancePortalFileIds) == 0 {
-		return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+		return nil, gqlx.Invalidf(ctx, "at least one document, report, or file id is required")
 	}
 
 	// Load and validate every target before requesting so a foreign, invisible,
@@ -1251,16 +1251,16 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 		document, portalDocument, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, documentID)
 		if err != nil {
 			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "document %q not found", documentID)
+				return nil, gqlx.NotFoundf(ctx, "document %q not found", documentID)
 			}
 
 			if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
-				return nil, gqlutils.NotFoundf(ctx, "document %q not found", documentID)
+				return nil, gqlx.NotFoundf(ctx, "document %q not found", documentID)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		// Public resources are already accessible; skip them so no needless
@@ -1277,12 +1277,12 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 		audit, portalAudit, err := visitorService.GetAuditByReportFileID(ctx, scope, compliancePortal.ID, reportID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, visitor.ErrReportNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "report %q not found", reportID)
+				return nil, gqlx.NotFoundf(ctx, "report %q not found", reportID)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		if portalAudit.Visibility == coredata.CompliancePortalVisibilityPublic {
@@ -1297,12 +1297,12 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 		portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.ID, fileID)
 		if err != nil {
 			if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
-				return nil, gqlutils.NotFoundf(ctx, "compliance portal file %q not found", fileID)
+				return nil, gqlx.NotFoundf(ctx, "compliance portal file %q not found", fileID)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		if portalFile.CompliancePortalVisibility == coredata.CompliancePortalVisibilityPublic {
@@ -1329,16 +1329,16 @@ func (r *mutationResolver) RequestAccesses(ctx context.Context, input types.Requ
 		},
 	); err != nil {
 		if errors.Is(err, visitor.ErrNoAccessTargets) {
-			return nil, gqlutils.Invalidf(ctx, "at least one document, report, or file id is required")
+			return nil, gqlx.Invalidf(ctx, "at least one document, report, or file id is required")
 		}
 
 		if errors.Is(err, visitor.ErrUserInactive) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot request accesses", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return payload, nil
@@ -1354,7 +1354,7 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 		count, err := visitorService.CountThirdPartiesForCompliancePortalID(ctx, scope, obj.ParentID, obj.Filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count subprocessors", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -1362,7 +1362,7 @@ func (r *subprocessorConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	r.logger.ErrorCtx(ctx, "not implemented: TotalCount for parent type")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Audit returns schema.AuditResolver implementation.

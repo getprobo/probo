@@ -16,7 +16,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Application is the resolver for the application field.
@@ -24,7 +24,7 @@ func (r *consentResolver) Application(ctx context.Context, obj *types.Consent) (
 	client, err := r.iam.OAuth2ServerService.GetClientByID(ctx, obj.Application.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load oauth2 client", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewApplication(client), nil
@@ -46,12 +46,12 @@ func (r *mutationResolver) AuthorizeDevice(ctx context.Context, input types.Auth
 		}
 
 		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
-			return nil, gqlutils.Invalidf(ctx, "%s", oauthErr.Description())
+			return nil, gqlx.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot authorize device", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.AuthorizeDevicePayload{
@@ -76,7 +76,7 @@ func (r *mutationResolver) ApproveConsent(ctx context.Context, input types.Appro
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot approve oauth2 consent", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if result.Denied {

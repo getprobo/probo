@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *internalControlResolver) loadProfile(ctx context.Context, profile *types.Profile) (*types.Profile, error) {
@@ -47,12 +47,12 @@ func (r *internalControlResolver) loadProfile(ctx context.Context, profile *type
 	loaded, err := loaders.Profile.Load(ctx, profile.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(loaded), nil

@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -43,12 +43,12 @@ func (r *documentResolver) Content(ctx context.Context, obj *types.Document) (*t
 	content, err := r.probo.Documents.LiveContent(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load document content", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentContent(content), nil
@@ -75,12 +75,12 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -108,7 +108,7 @@ func (r *documentResolver) CompliancePortalDocument(ctx context.Context, obj *ty
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalDocument(link), nil
@@ -136,7 +136,7 @@ func (r *documentResolver) CompliancePortalDocumentAccess(ctx context.Context, o
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalDocumentAccess(access), nil
@@ -171,7 +171,7 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 	page, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list document versions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionConnection(page, r, obj.ID), nil
@@ -206,7 +206,7 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 	page, err := r.probo.Controls.ListForDocumentID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list document controls", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -222,7 +222,7 @@ func (r *documentResolver) DefaultApprovers(ctx context.Context, obj *types.Docu
 	profiles, err := r.probo.Documents.GetDefaultApprovers(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get default approvers", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.Profile, len(profiles))
@@ -261,7 +261,7 @@ func (r *documentResolver) History(ctx context.Context, obj *types.Document, fir
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list revisions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentRevisionConnection(
@@ -282,12 +282,12 @@ func (r *documentResolver) Revision(ctx context.Context, obj *types.Document, id
 	session, err := r.probo.Collaboration.GetRevision(ctx, scope, obj.ID, id)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load revision", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentRevision(session), nil
@@ -310,7 +310,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		count, err := r.probo.Documents.CountForControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count controls", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -318,7 +318,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		count, err := r.probo.Documents.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -326,7 +326,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		count, err := r.probo.Documents.CountForRiskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risks", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -334,7 +334,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 		count, err := r.probo.Documents.CountForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count documents", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -342,7 +342,7 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Prosemirror is the resolver for the prosemirror field.
@@ -359,13 +359,13 @@ func (r *documentContentResolver) Markdown(ctx context.Context, obj *types.Docum
 	node, err := prosemirror.Parse(obj.Source)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot parse document content", log.Error(err))
-		return "", gqlutils.Internal(ctx)
+		return "", gqlx.Internal(ctx)
 	}
 
 	md, err := prosemirror.RenderMarkdown(node)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot render document content as markdown", log.Error(err))
-		return "", gqlutils.Internal(ctx)
+		return "", gqlx.Internal(ctx)
 	}
 
 	return md, nil
@@ -389,7 +389,7 @@ func (r *documentRevisionResolver) Author(ctx context.Context, obj *types.Docume
 
 		r.logger.ErrorCtx(ctx, "cannot load history author", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(profile), nil
@@ -404,12 +404,12 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 
 	heads, err := collaboration.ParseAutomergeHashes(obj.Heads)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	previousHeads, err := collaboration.ParseAutomergeHashes(obj.PreviousHeads)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	snapshot, err := r.probo.Collaboration.GetHistorySnapshot(
@@ -422,12 +422,12 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 	if err != nil {
 		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
 			errors.Is(err, collaboration.ErrSeedInProgress) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load history snapshot", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentHistorySnapshot(snapshot), nil
@@ -449,12 +449,12 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 	document, err := loaders.Document.Load(ctx, obj.Document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocument(document), nil
@@ -467,7 +467,7 @@ func (r *documentVersionResolver) Approvers(ctx context.Context, obj *types.Docu
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -489,7 +489,7 @@ func (r *documentVersionResolver) Approvers(ctx context.Context, obj *types.Docu
 	p, err := r.probo.Documents.ListVersionApprovers(ctx, scope, obj.ID, c)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list document version approvers", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfileConnection(p, r, obj.ID, nil), nil
@@ -541,7 +541,7 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 	page, err := r.probo.Documents.ListSignatures(ctx, scope, obj.ID, cursor, signatureFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list document version signatures", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionSignatureConnection(page, r, obj.ID, signatureFilter), nil
@@ -571,7 +571,7 @@ func (r *documentVersionResolver) ApprovalQuorums(ctx context.Context, obj *type
 	p, err := r.probo.DocumentApprovals.ListQuorums(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list approval quorums", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionApprovalQuorumConnection(p, r, obj.ID), nil
@@ -589,7 +589,7 @@ func (r *documentVersionResolver) Signed(ctx context.Context, obj *types.Documen
 	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check if document version is signed", log.Error(err))
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return signed, nil
@@ -610,12 +610,12 @@ func (r *documentVersionApprovalDecisionResolver) Quorum(ctx context.Context, ob
 	quorum, err := r.probo.DocumentApprovals.GetQuorum(ctx, scope, obj.Quorum.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get approval quorum", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionApprovalQuorum(quorum), nil
@@ -631,23 +631,23 @@ func (r *documentVersionApprovalDecisionResolver) DocumentVersion(ctx context.Co
 	quorum, err := r.probo.DocumentApprovals.GetQuorum(ctx, scope, obj.Quorum.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get approval quorum", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, quorum.VersionID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -662,12 +662,12 @@ func (r *documentVersionApprovalDecisionResolver) Approver(ctx context.Context, 
 	profile, err := r.iam.OrganizationService.GetProfile(ctx, obj.Approver.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get approver profile", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(profile), nil
@@ -690,7 +690,7 @@ func (r *documentVersionApprovalDecisionResolver) Permission(ctx context.Context
 				return false, nil
 			}
 
-			return false, gqlutils.Internal(ctx)
+			return false, gqlx.Internal(ctx)
 		}
 
 		if profile.IdentityID != identity.ID {
@@ -720,7 +720,7 @@ func (r *documentVersionApprovalDecisionConnectionResolver) TotalCount(ctx conte
 	count, err := r.probo.DocumentApprovals.CountDecisions(ctx, scope, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count approval decisions", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -736,12 +736,12 @@ func (r *documentVersionApprovalQuorumResolver) DocumentVersion(ctx context.Cont
 	documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, obj.DocumentVersion.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -778,7 +778,7 @@ func (r *documentVersionApprovalQuorumResolver) Decisions(ctx context.Context, o
 	p, err := r.probo.DocumentApprovals.ListDecisions(ctx, scope, obj.ID, cursor, approvalFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list approval decisions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionApprovalDecisionConnection(p, r, obj.ID, approvalFilter), nil
@@ -799,7 +799,7 @@ func (r *documentVersionApprovalQuorumConnectionResolver) TotalCount(ctx context
 	count, err := r.probo.DocumentApprovals.CountQuorums(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count approval quorums", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -822,7 +822,7 @@ func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj 
 		count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count document versions", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -830,7 +830,7 @@ func (r *documentVersionConnectionResolver) TotalCount(ctx context.Context, obj 
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // DocumentVersion is the resolver for the documentVersion field.
@@ -843,12 +843,12 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 	documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, obj.DocumentVersion.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersion(documentVersion), nil
@@ -865,12 +865,12 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 	signatory, err := loaders.Profile.Load(ctx, obj.SignedBy.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get people", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(signatory), nil
@@ -898,7 +898,7 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 		count, err := r.probo.Documents.CountSignaturesForVersionID(ctx, scope, obj.ParentID, filter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count signatures", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -906,7 +906,7 @@ func (r *documentVersionSignatureConnectionResolver) TotalCount(ctx context.Cont
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Signed is the resolver for the signed field.
@@ -926,7 +926,7 @@ func (r *employeeDocumentResolver) Signed(ctx context.Context, obj *types.Employ
 
 		r.logger.ErrorCtx(ctx, "cannot check if document is signed", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &signed, nil
@@ -949,7 +949,7 @@ func (r *employeeDocumentResolver) ApprovalState(ctx context.Context, obj *types
 
 		r.logger.ErrorCtx(ctx, "cannot get viewer approval state", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &state, nil
@@ -973,13 +973,13 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 		filterMode = coredata.EmployeeFilterModeApproval
 	default:
 		r.logger.ErrorCtx(ctx, "unsupported employee document filter mode", log.String("filter_mode", string(obj.FilterMode)))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	versionFilter := coredata.NewDocumentVersionFilter().
 		WithEmployeeIdentityID(&identity.ID, filterMode)
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.EmployeeDocumentVersionConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -1004,7 +1004,7 @@ func (r *employeeDocumentResolver) Versions(ctx context.Context, obj *types.Empl
 	versionsPage, err := r.probo.Documents.ListVersions(ctx, scope, obj.ID, cursor, versionFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list employee document versions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	employeeVersions := make([]*types.EmployeeDocumentVersion, len(versionsPage.Data))
@@ -1043,7 +1043,7 @@ func (r *employeeDocumentConnectionResolver) TotalCount(ctx context.Context, obj
 	count, err := r.probo.Documents.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count employee documents", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -1061,7 +1061,7 @@ func (r *employeeDocumentVersionResolver) Signed(ctx context.Context, obj *types
 	signed, err := r.probo.Documents.IsVersionSignedByUserEmail(ctx, scope, obj.ID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot check if version is signed", log.Error(err))
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return signed, nil
@@ -1089,7 +1089,7 @@ func (r *employeeDocumentVersionResolver) ApprovalDecision(ctx context.Context, 
 
 		r.logger.ErrorCtx(ctx, "cannot get viewer approval decision", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocumentVersionApprovalDecision(decision), nil
@@ -1110,7 +1110,7 @@ func (r *employeeDocumentVersionConnectionResolver) TotalCount(ctx context.Conte
 	count, err := r.probo.Documents.CountVersionsForDocumentID(ctx, scope, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count employee document versions", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -1141,16 +1141,16 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateDocumentPayload{
@@ -1183,29 +1183,29 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errGenerated, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
-			return nil, gqlutils.Conflict(ctx, errGenerated)
+			return nil, gqlx.Conflict(ctx, errGenerated)
 		}
 
 		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
 			errors.Is(err, collaboration.ErrSeedInProgress) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateDocumentPayload{
@@ -1223,20 +1223,20 @@ func (r *mutationResolver) DeleteDocumentDraft(ctx context.Context, input types.
 	document, err := r.probo.Documents.DeleteDraft(ctx, scope, input.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errNotDeletable, ok := errors.AsType[*probo.ErrDocumentDraftNotDeletable](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotDeletable)
+			return nil, gqlx.Conflict(ctx, errNotDeletable)
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete document draft", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteDocumentDraftPayload{
@@ -1254,12 +1254,12 @@ func (r *mutationResolver) ArchiveDocument(ctx context.Context, input types.Arch
 	document, err := r.probo.Documents.Archive(ctx, scope, input.DocumentID)
 	if err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot archive document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ArchiveDocumentPayload{
@@ -1277,12 +1277,12 @@ func (r *mutationResolver) UnarchiveDocument(ctx context.Context, input types.Un
 	document, err := r.probo.Documents.Unarchive(ctx, scope, input.DocumentID)
 	if err != nil {
 		if errNotArchived, ok := errors.AsType[*probo.ErrDocumentNotArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotArchived)
+			return nil, gqlx.Conflict(ctx, errNotArchived)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot unarchive document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UnarchiveDocumentPayload{
@@ -1299,7 +1299,7 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 
 	if err := r.probo.Documents.SoftDelete(ctx, scope, input.DocumentID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot soft delete document", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteDocumentPayload{
@@ -1325,24 +1325,24 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 	)
 	if err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errPending, ok := errors.AsType[*probo.ErrDocumentVersionPendingApproval](err); ok {
-			return nil, gqlutils.Conflict(ctx, errPending)
+			return nil, gqlx.Conflict(ctx, errPending)
 		}
 
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
-			return nil, gqlutils.Conflict(ctx, errContractEnded)
+			return nil, gqlx.Conflict(ctx, errContractEnded)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	payload := &types.PublishDocumentPayload{
@@ -1389,16 +1389,16 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot bulk publish documents", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	typesVersions := make([]*types.DocumentVersion, len(versions))
@@ -1427,20 +1427,20 @@ func (r *mutationResolver) VoidDocumentVersionApproval(ctx context.Context, inpu
 	quorum, documentVersion, err := r.probo.DocumentApprovals.VoidApproval(ctx, scope, input.DocumentVersionID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotPending)
+			return nil, gqlx.Conflict(ctx, errNotPending)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot void document version approval", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.VoidDocumentVersionApprovalPayload{
@@ -1472,7 +1472,7 @@ func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.
 
 	if err := r.probo.Documents.BulkSoftDelete(ctx, scope, input.DocumentIds); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot bulk delete documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.BulkDeleteDocumentsPayload{
@@ -1503,7 +1503,7 @@ func (r *mutationResolver) BulkArchiveDocuments(ctx context.Context, input types
 
 	if err := r.probo.Documents.BulkArchive(ctx, scope, input.DocumentIds); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot bulk archive documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.BulkArchiveDocumentsPayload{
@@ -1534,7 +1534,7 @@ func (r *mutationResolver) BulkUnarchiveDocuments(ctx context.Context, input typ
 
 	if err := r.probo.Documents.BulkUnarchive(ctx, scope, input.DocumentIds); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot bulk unarchive documents", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.BulkUnarchiveDocumentsPayload{
@@ -1546,7 +1546,7 @@ func (r *mutationResolver) BulkUnarchiveDocuments(ctx context.Context, input typ
 func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.BulkExportDocumentsInput) (*types.BulkExportDocumentsPayload, error) {
 	if len(input.DocumentIds) == 0 {
 		r.logger.ErrorCtx(ctx, "no document ids provided")
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	// TODO have a way to batch authorize for resources
@@ -1576,7 +1576,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	if input.WithWatermark {
 		if err := pdfutils.ValidateWatermarkText(*watermarkText); err != nil {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 	}
 
@@ -1589,7 +1589,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	documentExport, exportErr := r.probo.Documents.RequestExport(ctx, scope, input.DocumentIds, identity.EmailAddress, identity.FullName, options)
 	if exportErr != nil {
 		r.logger.ErrorCtx(ctx, "cannot request document export", log.Error(exportErr))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.BulkExportDocumentsPayload{
@@ -1613,28 +1613,28 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotPublished)
+			return nil, gqlx.Conflict(ctx, errNotPublished)
 		}
 
 		if errNotCurrent, ok := errors.AsType[*probo.ErrDocumentVersionNotCurrent](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotCurrent)
+			return nil, gqlx.Conflict(ctx, errNotCurrent)
 		}
 
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
-			return nil, gqlutils.Conflict(ctx, errContractEnded)
+			return nil, gqlx.Conflict(ctx, errContractEnded)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot request signature", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RequestSignaturePayload{
@@ -1672,20 +1672,20 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
-			return nil, gqlutils.Conflict(ctx, errNotPublished)
+			return nil, gqlx.Conflict(ctx, errNotPublished)
 		}
 
 		if errContractEnded, ok := errors.AsType[*probo.ErrProfileContractEnded](err); ok {
-			return nil, gqlutils.Conflict(ctx, errContractEnded)
+			return nil, gqlx.Conflict(ctx, errContractEnded)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot bulk request signatures", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.BulkRequestSignaturesPayload{
@@ -1702,12 +1702,12 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 
 	if err := r.probo.Documents.CancelSignatureRequest(ctx, scope, input.DocumentVersionSignatureID); err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot cancel signature request", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CancelSignatureRequestPayload{
@@ -1723,7 +1723,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	}
 
 	identity := authn.IdentityFromContext(ctx)
-	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+	httpReq := gqlx.HTTPRequestFromContext(ctx)
 
 	signerIP := clientip.Extract(httpReq)
 
@@ -1741,24 +1741,24 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 	)
 	if err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errNotPublished, ok := errors.AsType[*probo.ErrDocumentVersionNotPublished](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNotPublished)
+			return nil, gqlx.Invalid(ctx, errNotPublished)
 		}
 
 		if errAlreadySigned, ok := errors.AsType[*probo.ErrDocumentVersionSignatureAlreadySigned](err); ok {
-			return nil, gqlutils.Conflict(ctx, errAlreadySigned)
+			return nil, gqlx.Conflict(ctx, errAlreadySigned)
 		}
 
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot sign document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.SignDocumentPayload{
@@ -1774,7 +1774,7 @@ func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input typ
 	}
 
 	identity := authn.IdentityFromContext(ctx)
-	httpReq := gqlutils.HTTPRequestFromContext(ctx)
+	httpReq := gqlx.HTTPRequestFromContext(ctx)
 
 	signerIP := clientip.Extract(httpReq)
 
@@ -1789,24 +1789,24 @@ func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input typ
 	})
 	if err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNotPending)
+			return nil, gqlx.Invalid(ctx, errNotPending)
 		}
 
 		if errAlready, ok := errors.AsType[*probo.ErrApprovalDecisionAlreadyMade](err); ok {
-			return nil, gqlutils.Conflict(ctx, errAlready)
+			return nil, gqlx.Conflict(ctx, errAlready)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot approve document version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ApproveDocumentVersionPayload{
@@ -1830,24 +1830,24 @@ func (r *mutationResolver) RejectDocumentVersion(ctx context.Context, input type
 	})
 	if err != nil {
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errNotPending, ok := errors.AsType[*probo.ErrDocumentVersionNotPendingApproval](err); ok {
-			return nil, gqlutils.Invalid(ctx, errNotPending)
+			return nil, gqlx.Invalid(ctx, errNotPending)
 		}
 
 		if errAlready, ok := errors.AsType[*probo.ErrApprovalDecisionAlreadyMade](err); ok {
-			return nil, gqlutils.Conflict(ctx, errAlready)
+			return nil, gqlx.Conflict(ctx, errAlready)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot reject document version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RejectDocumentVersionPayload{
@@ -1874,7 +1874,7 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 
 	if input.WithWatermark {
 		if err := pdfutils.ValidateWatermarkText(*watermarkText); err != nil {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 	}
 
@@ -1887,7 +1887,7 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export document version PDF", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ExportDocumentVersionPDFPayload{
@@ -1905,7 +1905,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	documentVersion, err := r.probo.Documents.GetVersion(ctx, scope, input.DocumentVersionID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	identity := authn.IdentityFromContext(ctx)
@@ -1918,12 +1918,12 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	_, err = r.probo.Documents.GetWithFilter(ctx, scope, documentVersion.DocumentID, documentFilter)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get employee document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	options := probo.ExportPDFOptions{
@@ -1935,7 +1935,7 @@ func (r *mutationResolver) ExportEmployeeDocumentVersionPDF(ctx context.Context,
 	pdf, err := r.probo.Documents.ExportPDF(ctx, scope, input.DocumentVersionID, options)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot export employee document PDF", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ExportEmployeeDocumentVersionPDFPayload{
@@ -1952,7 +1952,7 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 
 	heads, err := collaboration.ParseAutomergeHashes(input.Heads)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	if _, err := r.probo.Collaboration.RestoreHistory(
@@ -1963,29 +1963,29 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 	); err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
 			errors.Is(err, collaboration.ErrSeedInProgress):
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-			return nil, gqlutils.Conflict(ctx, errArchived)
+			return nil, gqlx.Conflict(ctx, errArchived)
 		}
 
 		if errGenerated, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
-			return nil, gqlutils.Conflict(ctx, errGenerated)
+			return nil, gqlx.Conflict(ctx, errGenerated)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot restore document history", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	document, err := r.probo.Documents.Get(ctx, scope, input.DocumentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load restored document", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RestoreDocumentHistoryPayload{

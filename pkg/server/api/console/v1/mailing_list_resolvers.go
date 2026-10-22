@@ -17,7 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -37,7 +37,7 @@ func (r *mailingListResolver) Subscribers(ctx context.Context, obj *types.Mailin
 	result, err := r.mailman.ListSubscribers(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list mailing list subscribers", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewMailingListSubscriberConnection(result, r, obj.ID), nil
@@ -59,7 +59,7 @@ func (r *mailingListResolver) Updates(ctx context.Context, obj *types.MailingLis
 	result, err := r.mailman.ListMailingListUpdates(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list mailing list updates", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewMailingListUpdateConnection(result, r, obj.ID), nil
@@ -76,7 +76,7 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 		count, err := r.mailman.CountSubscribers(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count mailing list subscribers", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -84,7 +84,7 @@ func (r *mailingListSubscriberConnectionResolver) TotalCount(ctx context.Context
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver for mailing list subscriber connection", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // TotalCount is the resolver for the totalCount field on MailingListUpdateConnection.
@@ -96,7 +96,7 @@ func (r *mailingListUpdateConnectionResolver) TotalCount(ctx context.Context, ob
 	count, err := r.mailman.CountMailingListUpdates(ctx, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count mailing list updates", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -118,12 +118,12 @@ func (r *mutationResolver) CreateMailingListUpdate(ctx context.Context, input ty
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create mailing list update", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateMailingListUpdatePayload{
@@ -147,20 +147,20 @@ func (r *mutationResolver) UpdateMailingListUpdate(ctx context.Context, input ty
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
-			return nil, gqlutils.Conflictf(ctx, "mailing list update can only be edited when in draft")
+			return nil, gqlx.Conflictf(ctx, "mailing list update can only be edited when in draft")
 		}
 
 		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+			return nil, gqlx.NotFoundf(ctx, "mailing list update not found")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update mailing list update", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateMailingListUpdatePayload{
@@ -177,16 +177,16 @@ func (r *mutationResolver) SendMailingListUpdate(ctx context.Context, input type
 	mlu, err := r.mailman.SendMailingListUpdate(ctx, input.ID)
 	if err != nil {
 		if errors.Is(err, mailman.ErrMailingListUpdateAlreadySent) {
-			return nil, gqlutils.Conflictf(ctx, "mailing list update has already been queued for sending")
+			return nil, gqlx.Conflictf(ctx, "mailing list update has already been queued for sending")
 		}
 
 		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+			return nil, gqlx.NotFoundf(ctx, "mailing list update not found")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot queue mailing list update for sending", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.SendMailingListUpdatePayload{
@@ -202,12 +202,12 @@ func (r *mutationResolver) DeleteMailingListUpdate(ctx context.Context, input ty
 
 	if err := r.mailman.DeleteMailingListUpdate(ctx, input.ID); err != nil {
 		if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "mailing list update not found")
+			return nil, gqlx.NotFoundf(ctx, "mailing list update not found")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete mailing list update", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteMailingListUpdatePayload{
@@ -224,7 +224,7 @@ func (r *mutationResolver) UpdateMailingList(ctx context.Context, input types.Up
 	ml, err := r.mailman.UpdateMailingList(ctx, input.ID, input.ReplyTo)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update mailing list", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateMailingListPayload{
@@ -249,16 +249,16 @@ func (r *mutationResolver) CreateMailingListSubscriber(ctx context.Context, inpu
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
-			return nil, gqlutils.Conflictf(ctx, "subscriber already exists in this mailing list")
+			return nil, gqlx.Conflictf(ctx, "subscriber already exists in this mailing list")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create mailing list subscriber", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateMailingListSubscriberPayload{
@@ -274,12 +274,12 @@ func (r *mutationResolver) DeleteMailingListSubscriber(ctx context.Context, inpu
 
 	if err := r.mailman.DeleteSubscriber(ctx, input.ID); err != nil {
 		if errors.Is(err, mailman.ErrSubscriberNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "mailing list subscriber not found")
+			return nil, gqlx.NotFoundf(ctx, "mailing list subscriber not found")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete mailing list subscriber", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteMailingListSubscriberPayload{

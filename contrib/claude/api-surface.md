@@ -23,17 +23,17 @@ By default every error returned to the end user **must be an opaque internal err
 
 | Category | GraphQL helper | HTTP helper | When to use |
 |---|---|---|---|
-| Not found | `gqlutils.NotFound` / `NotFoundf` | `jsonx.RenderNotFound` | Resource does not exist or is not visible to the caller |
-| Forbidden | `gqlutils.Forbidden` / `Forbiddenf` | `jsonx.RenderForbidden` | Caller lacks permission (after authentication) |
-| Invalid | `gqlutils.Invalid` / `Invalidf` / `InvalidValidationErrors` | `jsonx.RenderBadRequest` | Validation failure on user-supplied input |
-| Conflict | `gqlutils.Conflict` / `Conflictf` | — | Unique constraint or state conflict |
-| Unauthenticated | `gqlutils.Unauthenticated` / `Unauthenticatedf` | `jsonx.RenderUnauthorized` | Missing or expired credentials |
+| Not found | `gqlx.NotFound` / `NotFoundf` | `jsonx.RenderNotFound` | Resource does not exist or is not visible to the caller |
+| Forbidden | `gqlx.Forbidden` / `Forbiddenf` | `jsonx.RenderForbidden` | Caller lacks permission (after authentication) |
+| Invalid | `gqlx.Invalid` / `Invalidf` / `InvalidValidationErrors` | `jsonx.RenderBadRequest` | Validation failure on user-supplied input |
+| Conflict | `gqlx.Conflict` / `Conflictf` | — | Unique constraint or state conflict |
+| Unauthenticated | `gqlx.Unauthenticated` / `Unauthenticatedf` | `jsonx.RenderUnauthorized` | Missing or expired credentials |
 
 ### Catch-all is always internal
 
 Any error that does **not** match one of the categories above must be returned as:
 
-- **GraphQL** — `gqlutils.Internal(ctx)` (fixed generic message, no error details)
+- **GraphQL** — `gqlx.Internal(ctx)` (fixed generic message, no error details)
 - **HTTP** — `jsonx.RenderInternalServerError(w)` (fixed 500 body, no error details)
 - **MCP** — return a generic "internal error" string; never forward `err.Error()`
 
@@ -46,12 +46,12 @@ result, err := s.doSomething(ctx, req)
 if err != nil {
     switch {
     case errors.Is(err, probo.ErrNotFound):
-        return nil, gqlutils.NotFoundf(ctx, "thing %q not found", id)
+        return nil, gqlx.NotFoundf(ctx, "thing %q not found", id)
     case errors.Is(err, probo.ErrConflict):
-        return nil, gqlutils.Conflictf(ctx, "thing already exists")
+        return nil, gqlx.Conflictf(ctx, "thing already exists")
     default:
         logger.ErrorCtx(ctx, "cannot do something", log.Error(err))
-        return nil, gqlutils.Internal(ctx)
+        return nil, gqlx.Internal(ctx)
     }
 }
 ```

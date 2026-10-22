@@ -21,7 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -40,12 +40,12 @@ func (r *deviceResolver) Owner(ctx context.Context, obj *types.Device) (*types.P
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get device owner profile", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -61,7 +61,7 @@ func (r *deviceResolver) LatestPostures(ctx context.Context, obj *types.Device) 
 	postures, err := r.itam.GetLatestPostures(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load latest device postures", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDevicePostures(postures), nil
@@ -91,7 +91,7 @@ func (r *deviceResolver) PostureReports(ctx context.Context, obj *types.Device, 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list device posture reports", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDevicePostureReportConnection(p, r, obj.ID), nil
@@ -109,13 +109,13 @@ func (r *deviceConnectionResolver) TotalCount(ctx context.Context, obj *types.De
 		count, err := r.itam.CountForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count devices", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
 	}
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -129,7 +129,7 @@ func (r *devicePostureReportConnectionResolver) TotalCount(ctx context.Context, 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count device posture reports", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -160,18 +160,18 @@ func (r *mutationResolver) EnrollDevice(ctx context.Context, input types.EnrollD
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot enroll device", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateDevicePayload{
@@ -198,22 +198,22 @@ func (r *mutationResolver) CreateDevice(ctx context.Context, input types.CreateD
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, itam.ErrInvalidOwnerProfile) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create device", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	urls, err := itam.BuildEnrollmentURLs(r.baseURL, result.EnrollmentToken)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build enrollment URLs", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateDevicePayload{
@@ -234,16 +234,16 @@ func (r *mutationResolver) RevokeDevices(ctx context.Context, input types.Revoke
 	devices, err := r.itam.RevokeDevices(ctx, scope, input.DeviceIds)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot revoke devices", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	payload := make([]*types.Device, len(devices))
@@ -264,20 +264,20 @@ func (r *mutationResolver) DeleteDevices(ctx context.Context, input types.Delete
 	devices, err := r.itam.DeleteDevices(ctx, scope, input.DeviceIds)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, itam.ErrDeviceNotDeletable) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete devices", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	deletedDeviceIDs := make([]gid.GID, len(devices))
@@ -298,16 +298,16 @@ func (r *mutationResolver) SetDeviceOwner(ctx context.Context, input types.SetDe
 	d, err := r.itam.SetDeviceOwner(ctx, scope, input.DeviceID, input.OwnerID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, itam.ErrInvalidOwnerProfile) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot set device owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.SetDeviceOwnerPayload{Device: types.NewDevice(d)}, nil
@@ -331,16 +331,16 @@ func (r *mutationResolver) DownloadDeviceEvidence(ctx context.Context, input typ
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot export device evidence", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DownloadDeviceEvidencePayload{DownloadURL: downloadURL}, nil

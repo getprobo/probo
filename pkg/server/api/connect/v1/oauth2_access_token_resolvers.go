@@ -17,7 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // CreateOAuth2AccessToken is the resolver for the createOAuth2AccessToken field.
@@ -30,7 +30,7 @@ func (r *mutationResolver) CreateOAuth2AccessToken(ctx context.Context, input ty
 
 	scopes, err := input.ParsedScopes()
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	tokenValue, accessToken, err := r.iam.OAuth2ServerService.CreateManualAccessToken(
@@ -44,12 +44,12 @@ func (r *mutationResolver) CreateOAuth2AccessToken(ctx context.Context, input ty
 	)
 	if err != nil {
 		if oauth2Err, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
-			return nil, gqlutils.Invalid(ctx, oauth2Err)
+			return nil, gqlx.Invalid(ctx, oauth2Err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create oauth2 access token", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateOAuth2AccessTokenPayload{
@@ -70,7 +70,7 @@ func (r *mutationResolver) RevokeOAuth2AccessToken(ctx context.Context, input ty
 	if err := r.iam.OAuth2ServerService.RevokeAccessToken(ctx, input.Oauth2AccessTokenID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot revoke oauth2 access token", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RevokeOAuth2AccessTokenPayload{
@@ -95,7 +95,7 @@ func (r *oAuth2AccessTokenConnectionResolver) TotalCount(ctx context.Context, ob
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count oauth2 access tokens", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &count, nil
@@ -103,7 +103,7 @@ func (r *oAuth2AccessTokenConnectionResolver) TotalCount(ctx context.Context, ob
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 
-	return nil, gqlutils.Internal(ctx)
+	return nil, gqlx.Internal(ctx)
 }
 
 // OAuth2AccessToken returns schema.OAuth2AccessTokenResolver implementation.

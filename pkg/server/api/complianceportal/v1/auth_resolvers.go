@@ -13,7 +13,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -21,7 +21,7 @@ import (
 func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.UpdateFullNameInput) (*types.UpdateFullNamePayload, error) {
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to request access")
+		return nil, gqlx.Unauthenticatedf(ctx, "authentication is required to request access")
 	}
 
 	if _, err := r.iam.AccountService.UpdateIdentity(
@@ -32,12 +32,12 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 		},
 	); err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update identity", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateFullNamePayload{Success: true}, nil
@@ -47,7 +47,7 @@ func (r *mutationResolver) UpdateFullName(ctx context.Context, input types.Updat
 func (r *mutationResolver) UpdateLocale(ctx context.Context, input types.UpdateLocaleInput) (*types.UpdateLocalePayload, error) {
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticatedf(ctx, "authentication is required to update locale")
+		return nil, gqlx.Unauthenticatedf(ctx, "authentication is required to update locale")
 	}
 
 	identity, err := r.iam.AccountService.UpdateLocale(
@@ -59,12 +59,12 @@ func (r *mutationResolver) UpdateLocale(ctx context.Context, input types.UpdateL
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update identity locale", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateLocalePayload{
@@ -91,14 +91,14 @@ func (r *mutationResolver) SignOut(ctx context.Context) (*types.SignOutPayload, 
 		_, expired := errors.AsType[*iam.ErrSessionExpired](err)
 		if !notFound && !expired {
 			r.logger.ErrorCtx(ctx, "cannot close session", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		// Already closed or missing — still clear the cookie so the browser
 		// drops the stale session on concurrent / retried logout.
 	}
 
-	w := gqlutils.HTTPResponseWriterFromContext(ctx)
+	w := gqlx.HTTPResponseWriterFromContext(ctx)
 	r.sessionCookie.Clear(w)
 
 	return &types.SignOutPayload{Success: true}, nil

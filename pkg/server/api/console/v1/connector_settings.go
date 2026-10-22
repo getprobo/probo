@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // These helpers live outside connector_resolvers.go because that file is
@@ -49,7 +49,7 @@ import (
 // key to be configured, which is what keeps the provider deactivated, and
 // ignores any client-supplied value. For all other providers it requires
 // the client-supplied key. The returned error is surfaced verbatim to the
-// client via gqlutils.Invalid, so it contains only provider/field names,
+// client via gqlx.Invalid, so it contains only provider/field names,
 // never the key itself.
 func (r *Resolver) resolveAPIKeyConnectorCredential(provider coredata.ConnectorProvider, clientKey *string) (string, error) {
 	if reg, ok := r.providerRegistry.Get(provider); ok && reg.IsManagedAPIKey() {
@@ -115,7 +115,7 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	if !ok {
 		r.logger.ErrorCtx(ctx, "tally connector provider not registered")
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	// The validation client authenticates exactly as the persisted connector
@@ -126,24 +126,24 @@ func (r *Resolver) resolveTallySettingsWith(ctx context.Context, apiKey string, 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build tally validation client", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	user, err := fetch(ctx, httpClient, reg.Endpoints.APIBase)
 
 	switch {
 	case errors.Is(err, drivers.ErrTallyUnauthorized):
-		return nil, gqlutils.Invalidf(ctx, "Tally rejected the API key: create a key under Settings > API keys and try again")
+		return nil, gqlx.Invalidf(ctx, "Tally rejected the API key: create a key under Settings > API keys and try again")
 	case err != nil:
 		r.logger.ErrorCtx(ctx, "cannot fetch tally current user", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if user.OrganizationID == "" {
 		r.logger.ErrorCtx(ctx, "tally current user has no organization id")
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return json.Marshal(&coredata.TallyConnectorSettings{OrganizationID: user.OrganizationID})
@@ -158,7 +158,7 @@ func settingRejectedError(ctx context.Context, rejected *drivers.SettingRejected
 		field = "apiKey"
 	}
 
-	return gqlutils.InvalidField(ctx, field, rejected.Code, rejected.Message)
+	return gqlx.InvalidField(ctx, field, rejected.Code, rejected.Message)
 }
 
 // instanceBaseURL trims space and one trailing slash. A query or fragment
@@ -203,7 +203,7 @@ func instanceBaseURL(raw *string, provider, field string, required bool) (string
 // nil) for providers without extra settings.
 //
 // Returned errors are surfaced verbatim to the client via
-// gqlutils.Invalid: they must contain only field names and structural
+// gqlx.Invalid: they must contain only field names and structural
 // information, never user-supplied values.
 func apiKeyConnectorSettings(input types.CreateAPIKeyConnectorInput) (json.RawMessage, error) {
 	switch input.Provider {

@@ -51,7 +51,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -76,7 +76,7 @@ func NewGraphQLHandler(
 	riskManagementSvc *riskmanagement.Service,
 	fileManagerSvc *filemanager.Service,
 	baseURL *baseurl.BaseURL,
-	limits gqlutils.Limits,
+	limits gqlx.Limits,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
 	notificationSvc *notification.Service,
@@ -127,7 +127,7 @@ func NewGraphQLHandler(
 	}
 
 	es := schema.NewExecutableSchema(config)
-	gqlh := gqlutils.NewHandler(es, logger, limits)
+	gqlh := gqlx.NewHandler(es, logger, limits)
 
 	return gqlh
 }

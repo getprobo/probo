@@ -13,7 +13,7 @@ import (
 	"go.probo.inc/probo/pkg/probot"
 	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // SetSlackbotNotificationChannel is the resolver for the setSlackbotNotificationChannel field.
@@ -21,7 +21,7 @@ func (r *mutationResolver) SetSlackbotNotificationChannel(ctx context.Context, i
 	if r.slackbotInstallations == nil ||
 		r.botDeliveryDestinations == nil ||
 		r.complianceMessages == nil {
-		return nil, gqlutils.NotFound(ctx, slackchannel.ErrSlackbotNotInstalled)
+		return nil, gqlx.NotFound(ctx, slackchannel.ErrSlackbotNotInstalled)
 	}
 
 	scope, err := r.authorize(
@@ -40,7 +40,7 @@ func (r *mutationResolver) SetSlackbotNotificationChannel(ctx context.Context, i
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	destination, err := applySlackbotNotificationChannel(
@@ -54,7 +54,7 @@ func (r *mutationResolver) SetSlackbotNotificationChannel(ctx context.Context, i
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot set Slackbot notification channel", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.SetSlackbotNotificationChannelPayload{
@@ -68,7 +68,7 @@ func (r *mutationResolver) SetSlackbotNotificationChannel(ctx context.Context, i
 // ClearSlackbotNotificationChannel is the resolver for the clearSlackbotNotificationChannel field.
 func (r *mutationResolver) ClearSlackbotNotificationChannel(ctx context.Context, input types.ClearSlackbotNotificationChannelInput) (*types.ClearSlackbotNotificationChannelPayload, error) {
 	if r.slackbotInstallations == nil || r.botDeliveryDestinations == nil {
-		return nil, gqlutils.NotFound(ctx, slackchannel.ErrSlackbotNotInstalled)
+		return nil, gqlx.NotFound(ctx, slackchannel.ErrSlackbotNotInstalled)
 	}
 
 	scope, err := r.authorize(
@@ -87,7 +87,7 @@ func (r *mutationResolver) ClearSlackbotNotificationChannel(ctx context.Context,
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if err := r.botDeliveryDestinations.ClearDestination(
@@ -100,7 +100,7 @@ func (r *mutationResolver) ClearSlackbotNotificationChannel(ctx context.Context,
 		},
 	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot clear Slackbot notification channel", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ClearSlackbotNotificationChannelPayload{
@@ -111,7 +111,7 @@ func (r *mutationResolver) ClearSlackbotNotificationChannel(ctx context.Context,
 // UninstallSlackbot is the resolver for the uninstallSlackbot field.
 func (r *mutationResolver) UninstallSlackbot(ctx context.Context, input types.UninstallSlackbotInput) (*types.UninstallSlackbotPayload, error) {
 	if r.slackbotInstallations == nil {
-		return nil, gqlutils.NotFound(ctx, slackchannel.ErrSlackbotNotInstalled)
+		return nil, gqlx.NotFound(ctx, slackchannel.ErrSlackbotNotInstalled)
 	}
 
 	scope, err := r.authorize(
@@ -129,7 +129,7 @@ func (r *mutationResolver) UninstallSlackbot(ctx context.Context, input types.Un
 		input.OrganizationID,
 	); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot uninstall Slackbot", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	organization, err := r.probo.Organizations.Get(
@@ -139,7 +139,7 @@ func (r *mutationResolver) UninstallSlackbot(ctx context.Context, input types.Un
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load organization after uninstalling Slackbot", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UninstallSlackbotPayload{

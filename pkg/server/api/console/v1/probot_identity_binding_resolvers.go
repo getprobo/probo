@@ -14,18 +14,18 @@ import (
 	"go.probo.inc/probo/pkg/probot/identitybinding"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // ConfirmProbotIdentityBinding is the resolver for the confirmProbotIdentityBinding field.
 func (r *mutationResolver) ConfirmProbotIdentityBinding(ctx context.Context, input types.ConfirmProbotIdentityBindingInput) (*types.ConfirmProbotIdentityBindingPayload, error) {
 	if r.probotIdentityBindings == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	binding, err := r.probotIdentityBindings.Confirm(
@@ -37,10 +37,10 @@ func (r *mutationResolver) ConfirmProbotIdentityBinding(ctx context.Context, inp
 		switch {
 		case errors.Is(err, identitybinding.ErrAlreadyBound),
 			errors.Is(err, identitybinding.ErrChallengeAlreadyUsed):
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		case errors.Is(err, identitybinding.ErrChallengeExpired),
 			errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		default:
 			r.logger.ErrorCtx(
 				ctx,
@@ -48,7 +48,7 @@ func (r *mutationResolver) ConfirmProbotIdentityBinding(ctx context.Context, inp
 				log.Error(err),
 			)
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -61,18 +61,18 @@ func (r *mutationResolver) ConfirmProbotIdentityBinding(ctx context.Context, inp
 // DeleteProbotIdentityBinding is the resolver for the deleteProbotIdentityBinding field.
 func (r *mutationResolver) DeleteProbotIdentityBinding(ctx context.Context, input types.DeleteProbotIdentityBindingInput) (*types.DeleteProbotIdentityBindingPayload, error) {
 	if r.probotIdentityBindings == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	err := r.probotIdentityBindings.Delete(ctx, identity.ID, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(
@@ -81,7 +81,7 @@ func (r *mutationResolver) DeleteProbotIdentityBinding(ctx context.Context, inpu
 			log.Error(err),
 		)
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteProbotIdentityBindingPayload{

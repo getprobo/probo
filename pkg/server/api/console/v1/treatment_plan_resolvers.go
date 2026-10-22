@@ -20,7 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -48,17 +48,17 @@ func (r *mutationResolver) CreateTreatmentPlan(ctx context.Context, input types.
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceAlreadyExists):
-			return nil, gqlutils.Conflictf(ctx, "treatment plan already exists for this risk and analysis")
+			return nil, gqlx.Conflictf(ctx, "treatment plan already exists for this risk and analysis")
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot create treatment plan", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -80,7 +80,7 @@ func (r *mutationResolver) UpdateTreatmentPlan(ctx context.Context, input types.
 		riskmanagement.UpdateTreatmentPlanRequest{
 			ID:                 input.ID,
 			Treatment:          input.Treatment,
-			OwnerID:            gqlutils.UnwrapOmittable(input.OwnerID),
+			OwnerID:            gqlx.UnwrapOmittable(input.OwnerID),
 			InherentLikelihood: input.InherentLikelihood,
 			InherentImpact:     input.InherentImpact,
 			ResidualLikelihood: input.ResidualLikelihood,
@@ -90,15 +90,15 @@ func (r *mutationResolver) UpdateTreatmentPlan(ctx context.Context, input types.
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot update treatment plan", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -115,11 +115,11 @@ func (r *mutationResolver) DeleteTreatmentPlan(ctx context.Context, input types.
 	if err := r.riskManagement.DeleteTreatmentPlan(ctx, scope, input.TreatmentPlanID); err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot delete treatment plan", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -137,17 +137,17 @@ func (r *mutationResolver) CreateTreatmentPlanInternalControlMapping(ctx context
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceAlreadyExists):
-			return nil, gqlutils.Conflictf(ctx, "internal control already linked to this treatment plan")
+			return nil, gqlx.Conflictf(ctx, "internal control already linked to this treatment plan")
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot create treatment plan internal control mapping", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -168,10 +168,10 @@ func (r *mutationResolver) DeleteTreatmentPlanInternalControlMapping(ctx context
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		default:
 			r.logger.ErrorCtx(ctx, "cannot delete treatment plan internal control mapping", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -224,7 +224,7 @@ func (r *treatmentPlanResolver) Progress(ctx context.Context, obj *types.Treatme
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &progress, nil
@@ -247,12 +247,12 @@ func (r *treatmentPlanResolver) Owner(ctx context.Context, obj *types.TreatmentP
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -276,12 +276,12 @@ func (r *treatmentPlanResolver) Risk(ctx context.Context, obj *types.TreatmentPl
 	risk, err := r.probo.Risks.Get(ctx, scope, obj.Risk.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get risk", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewRisk(risk), nil
@@ -302,12 +302,12 @@ func (r *treatmentPlanResolver) RiskAnalysis(ctx context.Context, obj *types.Tre
 	analysis, err := r.riskManagement.Get(ctx, scope, obj.RiskAnalysis.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get risk analysis", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewRiskAnalysis(analysis), nil
@@ -328,12 +328,12 @@ func (r *treatmentPlanResolver) Organization(ctx context.Context, obj *types.Tre
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -389,12 +389,12 @@ func (r *treatmentPlanResolver) InternalControls(ctx context.Context, obj *types
 		)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFound(ctx, err)
+				return nil, gqlx.NotFound(ctx, err)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot list treatment plan internal controls as of", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		connection := types.NewInternalControlConnectionAsOf(page, r, obj.ID, internalControlFilter, *asOf, total)
@@ -405,7 +405,7 @@ func (r *treatmentPlanResolver) InternalControls(ctx context.Context, obj *types
 	page, err := r.probo.InternalControls.ListForTreatmentPlanID(ctx, scope, obj.ID, cursor, internalControlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list treatment plan internal controls", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewInternalControlConnection(page, r, obj.ID, internalControlFilter), nil
@@ -436,12 +436,12 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 		count, err := r.riskManagement.CountTreatmentPlansForOrganizationID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return 0, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -449,12 +449,12 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 		count, err := r.riskManagement.CountTreatmentPlansForRiskID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return 0, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -462,12 +462,12 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 		count, err := r.riskManagement.CountTreatmentPlansForRiskAnalysisID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return 0, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -475,12 +475,12 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 		count, err := r.riskManagement.CountTreatmentPlansForInternalControlID(ctx, scope, obj.ParentID, obj.Filters)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return 0, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return 0, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot count treatment plans", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -488,7 +488,7 @@ func (r *treatmentPlanConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // TreatmentPlan returns schema.TreatmentPlanResolver implementation.

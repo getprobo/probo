@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/server"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 type MuxConfig struct {
@@ -50,7 +50,7 @@ type MuxConfig struct {
 	Mailman                 *mailman.Service
 	Cookie                  securecookie.Config
 	TokenSecret             string
-	GraphQLLimits           gqlutils.Limits
+	GraphQLLimits           gqlx.Limits
 	ExternallyTerminatedTLS bool
 }
 

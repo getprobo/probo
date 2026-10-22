@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // CreateRightsRequest is the resolver for the createRightsRequest field.
@@ -24,7 +24,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 	if identity == nil || !identity.EmailAddressVerified {
 		// The request is attributed to the viewer's email, so the email must be
 		// verified — an authenticated-but-unverified identity is not enough.
-		return nil, gqlutils.Unauthenticatedf(ctx, "a verified email is required to submit a request")
+		return nil, gqlx.Unauthenticatedf(ctx, "a verified email is required to submit a request")
 	}
 
 	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
@@ -43,12 +43,12 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 	)
 	if err != nil {
 		if errors.Is(err, visitor.ErrRightsRequestsDisabled) {
-			return nil, gqlutils.NotFoundf(ctx, "rights requests are not available on this compliance portal")
+			return nil, gqlx.NotFoundf(ctx, "rights requests are not available on this compliance portal")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateRightsRequestPayload{

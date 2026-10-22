@@ -31,7 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *trackerPatternResolver) loadSampleHitSplits(
@@ -54,7 +54,7 @@ func (r *trackerPatternResolver) loadSampleHitSplits(
 	splits, err := dataloader.FromContext(ctx).SampleHitSplits.Load(ctx, key)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrSampleNotFound) || errors.Is(err, cookiebanner.ErrTrackerPatternNotFound) {
-			return cookiebanner.SampleHitSplits{}, gqlutils.NotFound(ctx, err)
+			return cookiebanner.SampleHitSplits{}, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, dataloadgen.ErrNotFound) {
@@ -63,7 +63,7 @@ func (r *trackerPatternResolver) loadSampleHitSplits(
 
 		r.logger.ErrorCtx(ctx, "cannot get tracker pattern sample hits", log.Error(err))
 
-		return cookiebanner.SampleHitSplits{}, gqlutils.Internal(ctx)
+		return cookiebanner.SampleHitSplits{}, gqlx.Internal(ctx)
 	}
 
 	return splits, nil

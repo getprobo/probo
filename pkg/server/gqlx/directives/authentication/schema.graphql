@@ -13,27 +13,27 @@ directive @authentication(required: AuthenticationRequirement!) on FIELD_DEFINIT
 
 enum AuthenticationRequirement
   @goModel(
-    model: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirement"
+    model: "go.probo.inc/probo/pkg/server/gqlx/directives/authentication.AuthenticationRequirement"
   ) {
   """
   Requires an authenticated identity (session or API key).
   """
   PRESENT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirementPresent"
+      value: "go.probo.inc/probo/pkg/server/gqlx/directives/authentication.AuthenticationRequirementPresent"
     )
   """
   Forbids authenticated access (e.g., for login/signup endpoints).
   """
   NONE
     @goEnum(
-      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirementNone"
+      value: "go.probo.inc/probo/pkg/server/gqlx/directives/authentication.AuthenticationRequirementNone"
     )
   """
   Allows both authenticated and unauthenticated access.
   """
   OPTIONAL
     @goEnum(
-      value: "go.probo.inc/probo/pkg/server/gqlutils/directives/authentication.AuthenticationRequirementOptional"
+      value: "go.probo.inc/probo/pkg/server/gqlx/directives/authentication.AuthenticationRequirementOptional"
     )
 }

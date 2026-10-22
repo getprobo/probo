@@ -70,7 +70,7 @@ import (
 	linear_v1 "go.probo.inc/probo/pkg/server/api/linear/v1"
 	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	slack_v1 "go.probo.inc/probo/pkg/server/api/slack/v1"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
@@ -120,7 +120,7 @@ type (
 		ConnectorRegistry *connectorprotocol.Registry
 		ProviderRegistry  *provider.Registry
 		CustomDomainCname string
-		GraphQLLimits     gqlutils.Limits
+		GraphQLLimits     gqlx.Limits
 		Logger            *log.Logger
 
 		// IdentityFederationIssuer is nil when identity federation is disabled.

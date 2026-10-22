@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -40,12 +40,12 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 	rightsRequest, err := r.probo.RightsRequests.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create rights request", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateRightsRequestPayload{
@@ -64,22 +64,22 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 		ID:           input.ID,
 		RequestType:  input.RequestType,
 		RequestState: input.RequestState,
-		DataSubject:  gqlutils.UnwrapOmittable(input.DataSubject),
-		Contact:      gqlutils.UnwrapOmittable(input.Contact),
-		Details:      gqlutils.UnwrapOmittable(input.Details),
-		Deadline:     gqlutils.UnwrapOmittable(input.Deadline),
-		ActionTaken:  gqlutils.UnwrapOmittable(input.ActionTaken),
+		DataSubject:  gqlx.UnwrapOmittable(input.DataSubject),
+		Contact:      gqlx.UnwrapOmittable(input.Contact),
+		Details:      gqlx.UnwrapOmittable(input.Details),
+		Deadline:     gqlx.UnwrapOmittable(input.Deadline),
+		ActionTaken:  gqlx.UnwrapOmittable(input.ActionTaken),
 	}
 
 	rightsRequest, err := r.probo.RightsRequests.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update rights request", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateRightsRequestPayload{
@@ -96,7 +96,7 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 
 	if err := r.probo.RightsRequests.Delete(ctx, scope, input.RightsRequestID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete rights request", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteRightsRequestPayload{
@@ -114,18 +114,18 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 	rightsRequest, err := r.probo.RightsRequests.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get rights request", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	organization, err := r.probo.Organizations.Get(ctx, scope, rightsRequest.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -148,13 +148,13 @@ func (r *rightsRequestConnectionResolver) TotalCount(ctx context.Context, obj *t
 		count, err := r.probo.RightsRequests.CountByOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count rights requests", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
 	default:
 		r.logger.ErrorCtx(ctx, "unsupported resolver type for RightsRequestConnection")
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 }
 

@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *Resolver) loadFile(ctx context.Context, fileID gid.GID) (*types.File, error) {
@@ -38,12 +38,12 @@ func (r *Resolver) loadFile(ctx context.Context, fileID gid.GID) (*types.File, e
 	file, err := loaders.File.Load(ctx, fileID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFile(file, r.fileManager), nil

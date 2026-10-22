@@ -61,7 +61,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 type (
@@ -89,7 +89,7 @@ func NewMux(
 	employeePortalSvc *employeeportalmgmt.Service,
 	baseURL *baseurl.BaseURL,
 	allowedRedirectHost saferedirect.AllowedHostFunc,
-	graphqlLimits gqlutils.Limits,
+	graphqlLimits gqlx.Limits,
 	slackbotAvailable bool,
 ) *chi.Mux {
 	r := chi.NewMux()

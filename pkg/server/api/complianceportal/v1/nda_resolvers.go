@@ -18,18 +18,18 @@ import (
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // AcceptElectronicSignature is the resolver for the acceptElectronicSignature field.
 func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input types.AcceptElectronicSignatureInput) (*types.AcceptElectronicSignaturePayload, error) {
 	var (
 		identity         = authn.IdentityFromContext(ctx)
-		httpReq          = gqlutils.HTTPRequestFromContext(ctx)
+		httpReq          = gqlx.HTTPRequestFromContext(ctx)
 		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+		return nil, gqlx.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
 	signerIP := clientip.Extract(httpReq)
@@ -51,7 +51,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 	)
 	if err != nil {
 		if errors.Is(err, esign.ErrSignatureAccessDenied) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		if mapped := mapNDASigningValidationError(ctx, err); mapped != nil {
@@ -60,7 +60,7 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 
 		r.logger.ErrorCtx(ctx, "cannot accept electronic signature", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.AcceptElectronicSignaturePayload{
@@ -72,11 +72,11 @@ func (r *mutationResolver) AcceptElectronicSignature(ctx context.Context, input 
 func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.RecordSigningEventInput) (*types.RecordSigningEventPayload, error) {
 	var (
 		identity         = authn.IdentityFromContext(ctx)
-		httpReq          = gqlutils.HTTPRequestFromContext(ctx)
+		httpReq          = gqlx.HTTPRequestFromContext(ctx)
 		compliancePortal = complianceportal.CompliancePortalFromContext(ctx)
 	)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticated(ctx, errors.New("unauthenticated"))
+		return nil, gqlx.Unauthenticated(ctx, errors.New("unauthenticated"))
 	}
 
 	actorIP := clientip.Extract(httpReq)
@@ -99,7 +99,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 		},
 	); err != nil {
 		if errors.Is(err, esign.ErrSignatureAccessDenied) {
-			return nil, gqlutils.Forbidden(ctx, err)
+			return nil, gqlx.Forbidden(ctx, err)
 		}
 
 		if mapped := mapNDASigningValidationError(ctx, err); mapped != nil {
@@ -108,7 +108,7 @@ func (r *mutationResolver) RecordSigningEvent(ctx context.Context, input types.R
 
 		r.logger.ErrorCtx(ctx, "cannot record signing event", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RecordSigningEventPayload{Success: true}, nil
@@ -138,7 +138,7 @@ func (r *nonDisclosureAgreementResolver) FileURL(ctx context.Context, obj *types
 
 	fileURL, err := visitorService.GeneratePortalNDAFileURL(ctx, scope, compliancePortal.ID, 15*time.Minute)
 	if err != nil {
-		return "", gqlutils.Internal(ctx)
+		return "", gqlx.Internal(ctx)
 	}
 
 	return fileURL, nil

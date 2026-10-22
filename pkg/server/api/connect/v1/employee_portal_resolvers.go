@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Organization is the resolver for the organization field.
@@ -26,18 +26,18 @@ func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.Em
 
 	if obj.Organization == nil {
 		r.logger.ErrorCtx(ctx, "employee portal is missing organization id")
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -59,7 +59,7 @@ func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count employee portals", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil

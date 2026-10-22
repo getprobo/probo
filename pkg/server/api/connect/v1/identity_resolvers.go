@@ -19,8 +19,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/types/cursor"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -64,7 +64,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 		}
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -88,7 +88,7 @@ func (r *identityResolver) Profiles(ctx context.Context, obj *types.Identity, fi
 	page, err := r.iam.AccountService.ListProfilesForIdentity(ctx, obj.ID, cursor, filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfileConnection(page, r, obj.ID, filters), nil
@@ -100,7 +100,7 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.SessionConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -123,7 +123,7 @@ func (r *identityResolver) Sessions(ctx context.Context, obj *types.Identity, fi
 	page, err := r.iam.AccountService.ListSessions(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list sessions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewSessionConnection(page, r, obj.ID), nil
@@ -135,7 +135,7 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.PersonalAPIKeyConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -152,7 +152,7 @@ func (r *identityResolver) PersonalAPIKeys(ctx context.Context, obj *types.Ident
 	page, err := r.iam.AccountService.ListPersonalAPIKeys(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list personal api keys", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewPersonalAPIKeyConnection(page, r, obj.ID), nil
@@ -164,7 +164,7 @@ func (r *identityResolver) Oauth2AccessTokens(ctx context.Context, obj *types.Id
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.OAuth2AccessTokenConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -182,7 +182,7 @@ func (r *identityResolver) Oauth2AccessTokens(ctx context.Context, obj *types.Id
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list oauth2 access tokens", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOAuth2AccessTokenConnection(tokenPage, r, obj.ID), nil
@@ -197,7 +197,7 @@ func (r *identityResolver) InvitingOrganizations(ctx context.Context, obj *types
 	organizations, err := r.iam.AccountService.ListInvitingOrganizations(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list inviting organizations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.Organization, len(organizations))
@@ -219,7 +219,7 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if count != 1 {
@@ -239,12 +239,12 @@ func (r *identityResolver) SsoLoginURL(ctx context.Context, obj *types.Identity)
 	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if len(samlConfigs) == 0 {
 		r.logger.ErrorCtx(ctx, "cannot find SAML config")
-		return nil, gqlutils.NotFoundf(ctx, "cannot find SAML config")
+		return nil, gqlx.NotFoundf(ctx, "cannot find SAML config")
 	}
 
 	samlConfig := samlConfigs[0]
@@ -286,12 +286,12 @@ func (r *mutationResolver) UpdateAvatar(ctx context.Context, input types.UpdateA
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update identity avatar", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateAvatarPayload{
@@ -309,7 +309,7 @@ func (r *mutationResolver) DeleteAvatar(ctx context.Context) (*types.DeleteAvata
 	updated, err := r.iam.AccountService.DeleteAvatar(ctx, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete identity avatar", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAvatarPayload{

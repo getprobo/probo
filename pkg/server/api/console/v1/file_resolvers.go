@@ -14,7 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -22,7 +22,7 @@ import (
 func (r *mutationResolver) UploadFile(ctx context.Context, input types.UploadFileInput) (*types.UploadFilePayload, error) {
 	identity := authn.IdentityFromContext(ctx)
 	if identity == nil {
-		return nil, gqlutils.Unauthenticated(ctx, fmt.Errorf("missing identity"))
+		return nil, gqlx.Unauthenticated(ctx, fmt.Errorf("missing identity"))
 	}
 
 	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionFileUpload)
@@ -45,12 +45,12 @@ func (r *mutationResolver) UploadFile(ctx context.Context, input types.UploadFil
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot upload file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UploadFilePayload{

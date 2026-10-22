@@ -32,7 +32,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func NewDomainMiddleware(
@@ -68,7 +68,7 @@ func NewDomainMiddleware(
 					http.StatusInternalServerError,
 					&graphql.Response{
 						Errors: gqlerror.List{
-							gqlutils.Internal(ctx),
+							gqlx.Internal(ctx),
 						},
 					},
 				)
@@ -107,7 +107,7 @@ func NewDomainMiddleware(
 						http.StatusInternalServerError,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.Internal(ctx),
+								gqlx.Internal(ctx),
 							},
 						},
 					)

@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Organization is the resolver for the organization field.
@@ -38,7 +38,7 @@ func (r *auditLogEntryConnectionResolver) TotalCount(ctx context.Context, obj *t
 	count, err := r.iam.OrganizationService.CountAuditLogEntries(ctx, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count audit log entries", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -67,12 +67,12 @@ func (r *mutationResolver) RequestAuditLogExport(ctx context.Context, input type
 	)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrInvalidLogExportTimeRange](err); ok {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot request audit log export", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RequestAuditLogExportPayload{

@@ -1,4 +1,4 @@
-// Copyright (c) 2025-2026 Probo Inc <hello@probo.com>.
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,18 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package gqlutils
+package session
 
 import (
+	"context"
+
 	"github.com/99designs/gqlgen/graphql"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
-func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
-	if !field.IsSet() {
-		return nil
+// Directive enforces that the request carries a real session. It is meant to
+// be combined with @authentication(required: PRESENT): @authentication handles
+// the "must be authenticated" check, while @sessionOnly additionally rejects
+// API key authentication, which also carries an identity but no session.
+func Directive(ctx context.Context, obj any, next graphql.Resolver) (any, error) {
+	if authn.SessionFromContext(ctx) == nil {
+		return nil, gqlx.Forbiddenf(
+			ctx,
+			"this resource can only be accessed with session authentication, not API key authentication",
+		)
 	}
 
-	value := field.Value()
-
-	return &value
+	return next(ctx)
 }

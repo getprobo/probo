@@ -19,7 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -34,12 +34,12 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -68,12 +68,12 @@ func (r *frameworkResolver) Audits(ctx context.Context, obj *types.Framework, fi
 	auditPage, err := r.probo.Audits.ListForFrameworkID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "framework %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "framework %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list framework audits", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAuditConnection(auditPage, r, obj.ID), nil
@@ -108,7 +108,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 	page, err := r.probo.Controls.ListForFrameworkID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list controls", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -157,7 +157,7 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 		count, err := r.probo.Frameworks.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -165,7 +165,7 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 		count, err := r.probo.Audits.CountFrameworksForAuditID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count frameworks", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -173,7 +173,7 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // CreateFramework is the resolver for the createFramework field.
@@ -192,12 +192,12 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateFrameworkPayload{
@@ -217,17 +217,17 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 		probo.UpdateFrameworkRequest{
 			ID:          input.ID,
 			Name:        input.Name,
-			Description: gqlutils.UnwrapOmittable(input.Description),
+			Description: gqlx.UnwrapOmittable(input.Description),
 		},
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateFrameworkPayload{
@@ -245,18 +245,18 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 	req := probo.ImportFrameworkRequest{}
 	if err := json.NewDecoder(input.File.File).Decode(&req.Framework); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot decode framework", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	framework, err := r.probo.Frameworks.Import(ctx, scope, input.OrganizationID, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot import framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ImportFrameworkPayload{
@@ -273,7 +273,7 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 	if err := r.probo.Frameworks.Delete(ctx, scope, input.FrameworkID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete framework", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteFrameworkPayload{
@@ -298,7 +298,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	)
 	if exportErr != nil {
 		r.logger.ErrorCtx(ctx, "cannot export framework", log.Error(exportErr))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ExportFrameworkPayload{

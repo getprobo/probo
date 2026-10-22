@@ -28,7 +28,7 @@ import (
 	"go.gearno.de/kit/httpserver"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Handler) http.Handler {
@@ -50,7 +50,7 @@ func NewIdentityPresenceMiddleware(baseURL *baseurl.BaseURL) func(next http.Hand
 						http.StatusUnauthorized,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.Unauthenticatedf(
+								gqlx.Unauthenticatedf(
 									r.Context(),
 									"authentication is required to access this resource",
 								),

@@ -23,7 +23,7 @@ package types
 import (
 	"time"
 
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func NewPeriod(start, end *time.Time) *Period {
@@ -42,5 +42,5 @@ func PeriodInputOmittableDates(p *PeriodInput) (start, end **time.Time) {
 		return nil, nil
 	}
 
-	return gqlutils.UnwrapOmittable(p.Start), gqlutils.UnwrapOmittable(p.End)
+	return gqlx.UnwrapOmittable(p.Start), gqlx.UnwrapOmittable(p.End)
 }

@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // connectorConnectionStatus reports whether the connector's credential is
@@ -97,7 +97,7 @@ func (r *Resolver) connectorConnectionStatus(
 
 		r.logger.ErrorCtx(ctx, "cannot determine connector reconnect requirement", log.Error(err))
 
-		return "", gqlutils.Internal(ctx)
+		return "", gqlx.Internal(ctx)
 	}
 
 	if needsReconnect {

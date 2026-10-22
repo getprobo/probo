@@ -21,7 +21,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -45,12 +45,12 @@ func (r *cookieBannerResolver) Organization(ctx context.Context, obj *types.Cook
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -86,7 +86,7 @@ func (r *cookieBannerResolver) Categories(ctx context.Context, obj *types.Cookie
 	categories, err := r.cookieBanner.ListCategoriesForBanner(ctx, scope, obj.ID, cursor, cdFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie categories", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(categories, cursor)
@@ -104,7 +104,7 @@ func (r *cookieBannerResolver) Translations(ctx context.Context, obj *types.Cook
 	translations, err := r.cookieBanner.ListCookieBannerTranslations(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie banner translations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.CookieBannerTranslation, len(translations))
@@ -134,7 +134,7 @@ func (r *cookieBannerResolver) LatestVersion(ctx context.Context, obj *types.Coo
 	versions, err := r.cookieBanner.ListCookieBannerVersionsForBanner(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load latest cookie banner version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if len(versions) == 0 {
@@ -167,7 +167,7 @@ func (r *cookieBannerResolver) PublishedVersion(ctx context.Context, obj *types.
 
 		r.logger.ErrorCtx(ctx, "cannot load published cookie banner version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CookieBannerVersion{
@@ -202,7 +202,7 @@ func (r *cookieBannerResolver) Versions(ctx context.Context, obj *types.CookieBa
 	versions, err := r.cookieBanner.ListCookieBannerVersionsForBanner(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie banner versions", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(versions, cursor)
@@ -230,7 +230,7 @@ func (r *cookieBannerResolver) PolicyDocument(ctx context.Context, obj *types.Co
 
 		r.logger.ErrorCtx(ctx, "cannot get policy document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocument(document), nil
@@ -272,7 +272,7 @@ func (r *cookieBannerResolver) ConsentRecords(ctx context.Context, obj *types.Co
 	records, err := r.cookieBanner.ListCookieConsentRecordsForBanner(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list consent records", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(records, cursor)
@@ -308,7 +308,7 @@ func (r *cookieBannerResolver) TrackerPatterns(ctx context.Context, obj *types.C
 	patterns, err := r.cookieBanner.ListTrackerPatternsForBanner(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list tracker patterns", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(patterns, cursor)
@@ -329,7 +329,7 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 	commonPatternIDs, err := r.cookieBanner.LoadDistinctCommonTrackerPatternIDsByCookieBannerID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list banner common tracker pattern links", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if len(commonPatternIDs) == 0 {
@@ -344,7 +344,7 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 	patterns, err := r.cookieBanner.GetCommonTrackerPatternsByIDs(ctx, commonPatternIDs...)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get common tracker patterns", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	seen := make(map[gid.GID]struct{}, len(patterns))
@@ -370,7 +370,7 @@ func (r *cookieBannerResolver) LinkedThirdParties(ctx context.Context, obj *type
 	parties, err := r.thirdParty.GetCommonThirdPartiesByIDs(ctx, commonThirdPartyIDs...)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get common third parties", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	out := make([]*types.CommonThirdParty, 0, len(parties))
@@ -404,7 +404,7 @@ func (r *cookieBannerResolver) GvlVendors(ctx context.Context, obj *types.Cookie
 	vendors, err := r.cookieBanner.ListCookieBannerGVLVendors(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie banner gvl vendors", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(vendors, cursor)
@@ -423,7 +423,7 @@ func (r *cookieBannerResolver) GvlVendorIds(ctx context.Context, obj *types.Cook
 	ids, err := r.cookieBanner.ListCookieBannerGVLVendorIDs(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie banner gvl vendor ids", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return ids, nil
@@ -444,7 +444,7 @@ func (r *cookieBannerResolver) LatestSample(ctx context.Context, obj *types.Cook
 
 		r.logger.ErrorCtx(ctx, "cannot get latest cookie banner sample", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieBannerSample(sample), nil
@@ -473,7 +473,7 @@ func (r *cookieBannerResolver) Samples(ctx context.Context, obj *types.CookieBan
 	samples, err := r.cookieBanner.ListCookieBannerSamples(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list cookie banner samples", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieBannerSampleConnection(page.NewPage(samples, cursor), r, obj.ID), nil
@@ -507,7 +507,7 @@ func (r *cookieBannerResolver) UncategorisedTrackerResources(ctx context.Context
 	resources, err := r.cookieBanner.ListUncategorisedTrackerResources(ctx, scope, obj.ID, cursor, coredataFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list uncategorised tracker resources", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(resources, cursor)
@@ -530,7 +530,7 @@ func (r *cookieBannerConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	count, err := r.cookieBanner.CountCookieBannersForOrganization(ctx, scope, obj.ParentID, coredata.NewCookieBannerFilter(nil))
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie banners", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -551,12 +551,12 @@ func (r *cookieBannerSampleResolver) CookieBanner(ctx context.Context, obj *type
 	banner, err := loaders.CookieBanner.Load(ctx, obj.CookieBanner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieBanner(banner), nil
@@ -577,7 +577,7 @@ func (r *cookieBannerSampleConnectionResolver) TotalCount(ctx context.Context, o
 	count, err := r.cookieBanner.CountCookieBannerSamples(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie banner samples", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -593,13 +593,13 @@ func (r *cookieBannerVersionResolver) Categories(ctx context.Context, obj *types
 	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	snapshot, err := version.GetSnapshot()
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	categories := make([]*types.CookieBannerVersionCategory, len(snapshot.Categories))
@@ -636,13 +636,13 @@ func (r *cookieBannerVersionResolver) GvlVendorCount(ctx context.Context, obj *t
 	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	snapshot, err := version.GetSnapshot()
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return len(snapshot.IABVendorIDs), nil
@@ -658,13 +658,13 @@ func (r *cookieBannerVersionResolver) GvlVendorIds(ctx context.Context, obj *typ
 	version, err := r.cookieBanner.GetCookieBannerVersion(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	snapshot, err := version.GetSnapshot()
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get version snapshot", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if snapshot.IABVendorIDs == nil {
@@ -684,7 +684,7 @@ func (r *cookieBannerVersionConnectionResolver) TotalCount(ctx context.Context, 
 	count, err := r.cookieBanner.CountCookieBannerVersionsForBanner(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie banner versions", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -710,7 +710,7 @@ func (r *cookieCategoryResolver) CookieBanner(ctx context.Context, obj *types.Co
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieBanner(banner), nil
@@ -739,7 +739,7 @@ func (r *cookieCategoryResolver) TrackerPatterns(ctx context.Context, obj *types
 	patterns, err := r.cookieBanner.ListTrackerPatternsForCategory(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list tracker patterns", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(patterns, cursor)
@@ -770,7 +770,7 @@ func (r *cookieCategoryResolver) TrackerResources(ctx context.Context, obj *type
 	resources, err := r.cookieBanner.ListTrackerResourcesForCategory(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list tracker resources", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(resources, cursor)
@@ -793,7 +793,7 @@ func (r *cookieCategoryConnectionResolver) TotalCount(ctx context.Context, obj *
 	count, err := r.cookieBanner.CountCategoriesForBanner(ctx, scope, obj.ParentID, obj.Filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count cookie categories", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -809,7 +809,7 @@ func (r *detectedTrackerConnectionResolver) TotalCount(ctx context.Context, obj 
 	count, err := r.cookieBanner.CountDetectedTrackersByPatternID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count detected trackers", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -836,16 +836,16 @@ func (r *mutationResolver) CreateCookieBanner(ctx context.Context, input types.C
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrOriginAlreadyInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCookieBannerPayload{
@@ -883,16 +883,16 @@ func (r *mutationResolver) UpdateCookieBanner(ctx context.Context, input types.U
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCookieBannerPayload{
@@ -910,18 +910,18 @@ func (r *mutationResolver) StartCookieBannerSample(ctx context.Context, input ty
 	sample, err := r.cookieBanner.StartCookieBannerSample(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot start cookie banner sample", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.StartCookieBannerSamplePayload{
@@ -940,18 +940,18 @@ func (r *mutationResolver) StopCookieBannerSample(ctx context.Context, input typ
 	sample, err := r.cookieBanner.StopCookieBannerSample(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrSampleNotFound) || errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot stop cookie banner sample", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.StopCookieBannerSamplePayload{
@@ -969,12 +969,12 @@ func (r *mutationResolver) DeleteCookieBanner(ctx context.Context, input types.D
 
 	if err := r.cookieBanner.DeleteCookieBanner(ctx, scope, input.CookieBannerID); err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCookieBannerPayload{
@@ -992,20 +992,20 @@ func (r *mutationResolver) ActivateCookieBanner(ctx context.Context, input types
 	banner, err := r.cookieBanner.ActivateCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrBannerAlreadyActive) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrOriginAlreadyInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot activate cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ActivateCookieBannerPayload{
@@ -1023,16 +1023,16 @@ func (r *mutationResolver) DeactivateCookieBanner(ctx context.Context, input typ
 	banner, err := r.cookieBanner.DeactivateCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrBannerAlreadyInactive) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot deactivate cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeactivateCookieBannerPayload{
@@ -1050,18 +1050,18 @@ func (r *mutationResolver) PublishCookieBannerVersion(ctx context.Context, input
 	version, err := r.cookieBanner.PublishCookieBannerVersion(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrNoDraftVersion) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish cookie banner version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishCookieBannerVersionPayload{
@@ -1086,16 +1086,16 @@ func (r *mutationResolver) RegenerateCookieBannerTrackerPolicy(ctx context.Conte
 	banner, err := r.cookieBanner.RegenerateTrackerPolicy(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrNoPublishedVersion) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot regenerate cookie banner tracker policy", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RegenerateCookieBannerTrackerPolicyPayload{
@@ -1123,26 +1123,26 @@ func (r *mutationResolver) CreateCookieCategory(ctx context.Context, input types
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrCategorySlugAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCookieCategoryPayload{
@@ -1183,24 +1183,24 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrCategorySlugAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrPostHogConsentKindInvalid) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(category.CookieBannerID)
@@ -1208,7 +1208,7 @@ func (r *mutationResolver) UpdateCookieCategory(ctx context.Context, input types
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, category.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCookieCategoryPayload{
@@ -1227,12 +1227,12 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 	category, err := r.cookieBanner.GetCookieCategory(ctx, scope, input.CookieCategoryID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerID := category.CookieBannerID
@@ -1240,16 +1240,16 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 	err = r.cookieBanner.DeleteCookieCategory(ctx, scope, input.CookieCategoryID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, cookiebanner.ErrCannotDeleteSystemCategory) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(bannerID)
@@ -1257,7 +1257,7 @@ func (r *mutationResolver) DeleteCookieCategory(ctx context.Context, input types
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, bannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCookieCategoryPayload{
@@ -1283,16 +1283,16 @@ func (r *mutationResolver) ReorderCookieCategory(ctx context.Context, input type
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrCategoryNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot reorder cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ReorderCookieCategoryPayload{
@@ -1318,22 +1318,22 @@ func (r *mutationResolver) UpsertCookieBannerTranslation(ctx context.Context, in
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrBannerNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot upsert cookie banner translation", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpsertCookieBannerTranslationPayload{
@@ -1373,16 +1373,16 @@ func (r *mutationResolver) CreateTrackerPattern(ctx context.Context, input types
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrPatternAlreadyExists) {
-			return nil, gqlutils.Conflictf(ctx, "a pattern with this name already exists in this banner")
+			return nil, gqlx.Conflictf(ctx, "a pattern with this name already exists in this banner")
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create tracker pattern", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(pattern.CookieBannerID)
@@ -1390,7 +1390,7 @@ func (r *mutationResolver) CreateTrackerPattern(ctx context.Context, input types
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, pattern.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateTrackerPatternPayload{
@@ -1411,19 +1411,19 @@ func (r *mutationResolver) UpdateTrackerPattern(ctx context.Context, input types
 		scope,
 		cookiebanner.UpdateTrackerPatternRequest{
 			TrackerPatternID: input.TrackerPatternID,
-			MaxAgeSeconds:    gqlutils.UnwrapOmittable(input.MaxAgeSeconds),
+			MaxAgeSeconds:    gqlx.UnwrapOmittable(input.MaxAgeSeconds),
 			Description:      input.Description,
 			Excluded:         input.Excluded,
 		},
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrTrackerPatternNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update tracker pattern", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(pattern.CookieBannerID)
@@ -1431,7 +1431,7 @@ func (r *mutationResolver) UpdateTrackerPattern(ctx context.Context, input types
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, pattern.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateTrackerPatternPayload{
@@ -1450,24 +1450,24 @@ func (r *mutationResolver) DeleteTrackerPattern(ctx context.Context, input types
 	pattern, err := r.cookieBanner.GetTrackerPattern(ctx, scope, input.TrackerPatternID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrTrackerPatternNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get tracker pattern", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerID := pattern.CookieBannerID
 
 	if err := r.cookieBanner.DeleteTrackerPattern(ctx, scope, input.TrackerPatternID); err != nil {
 		if errors.Is(err, cookiebanner.ErrTrackerPatternNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete tracker pattern", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(bannerID)
@@ -1475,7 +1475,7 @@ func (r *mutationResolver) DeleteTrackerPattern(ctx context.Context, input types
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, bannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteTrackerPatternPayload{
@@ -1506,14 +1506,14 @@ func (r *mutationResolver) MoveTrackerPatternToCategory(ctx context.Context, inp
 	if err != nil {
 		switch {
 		case errors.Is(err, cookiebanner.ErrCategoryNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrTrackerPatternNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
-			return nil, gqlutils.NotFoundf(ctx, "tracker pattern or target category not found")
+			return nil, gqlx.NotFoundf(ctx, "tracker pattern or target category not found")
 		default:
 			r.logger.ErrorCtx(ctx, "cannot move tracker pattern to category", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -1549,16 +1549,16 @@ func (r *mutationResolver) CreateTrackerResource(ctx context.Context, input type
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflictf(ctx, "a resource with this origin and path already exists in this banner")
+			return nil, gqlx.Conflictf(ctx, "a resource with this origin and path already exists in this banner")
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create tracker resource", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(resource.CookieBannerID)
@@ -1566,7 +1566,7 @@ func (r *mutationResolver) CreateTrackerResource(ctx context.Context, input type
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, resource.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateTrackerResourcePayload{
@@ -1594,16 +1594,16 @@ func (r *mutationResolver) UpdateTrackerResource(ctx context.Context, input type
 	)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update tracker resource", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(resource.CookieBannerID)
@@ -1611,7 +1611,7 @@ func (r *mutationResolver) UpdateTrackerResource(ctx context.Context, input type
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, resource.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateTrackerResourcePayload{
@@ -1630,24 +1630,24 @@ func (r *mutationResolver) DeleteTrackerResource(ctx context.Context, input type
 	resource, err := r.cookieBanner.GetTrackerResource(ctx, scope, input.TrackerResourceID)
 	if err != nil {
 		if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get tracker resource", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerID := resource.CookieBannerID
 
 	if err := r.cookieBanner.DeleteTrackerResource(ctx, scope, input.TrackerResourceID); err != nil {
 		if errors.Is(err, cookiebanner.ErrTrackerResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete tracker resource", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	bannerScope := coredata.NewScopeFromObjectID(bannerID)
@@ -1655,7 +1655,7 @@ func (r *mutationResolver) DeleteTrackerResource(ctx context.Context, input type
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, bannerScope, bannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteTrackerResourcePayload{
@@ -1686,16 +1686,16 @@ func (r *mutationResolver) MoveTrackerResourceToCategory(ctx context.Context, in
 	if err != nil {
 		switch {
 		case errors.Is(err, cookiebanner.ErrCategoryNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrTrackerResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrCategoriesBannerMismatch):
-			return nil, gqlutils.NotFoundf(ctx, "tracker resource or target category not found")
+			return nil, gqlx.NotFoundf(ctx, "tracker resource or target category not found")
 		case errors.Is(err, cookiebanner.ErrSameResourceCategoryMove):
-			return nil, gqlutils.Invalidf(ctx, "tracker resource is already in the target category")
+			return nil, gqlx.Invalidf(ctx, "tracker resource is already in the target category")
 		default:
 			r.logger.ErrorCtx(ctx, "cannot move tracker resource to category", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -1723,28 +1723,28 @@ func (r *mutationResolver) AddCookieBannerGVLVendor(ctx context.Context, input t
 	if err != nil {
 		switch {
 		case errors.Is(err, cookiebanner.ErrBannerNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrGVLVendorNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, cookiebanner.ErrGVLVendorDeleted):
-			return nil, gqlutils.Invalidf(ctx, "gvl vendor has been deleted from the catalog")
+			return nil, gqlx.Invalidf(ctx, "gvl vendor has been deleted from the catalog")
 		case errors.Is(err, cookiebanner.ErrTCFNotEnabled):
-			return nil, gqlutils.Invalidf(ctx, "tcf is not enabled for this cookie banner")
+			return nil, gqlx.Invalidf(ctx, "tcf is not enabled for this cookie banner")
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot add cookie banner gvl vendor", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.AddCookieBannerGVLVendorPayload{
@@ -1771,22 +1771,22 @@ func (r *mutationResolver) RemoveCookieBannerGVLVendor(ctx context.Context, inpu
 	if err != nil {
 		switch {
 		case errors.Is(err, cookiebanner.ErrBannerNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot remove cookie banner gvl vendor", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
 	banner, err := r.cookieBanner.GetCookieBanner(ctx, scope, input.CookieBannerID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RemoveCookieBannerGVLVendorPayload{
@@ -1810,7 +1810,7 @@ func (r *trackerPatternResolver) CookieCategory(ctx context.Context, obj *types.
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieCategory(category), nil
@@ -1826,7 +1826,7 @@ func (r *trackerPatternResolver) DetectedCount(ctx context.Context, obj *types.T
 	count, err := r.cookieBanner.CountDetectedTrackersByPatternID(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count detected trackers", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -1883,7 +1883,7 @@ func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *type
 
 		r.logger.ErrorCtx(ctx, "cannot get common tracker pattern", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if pattern.CommonThirdPartyID == nil {
@@ -1898,7 +1898,7 @@ func (r *trackerPatternResolver) CommonThirdParty(ctx context.Context, obj *type
 
 		r.logger.ErrorCtx(ctx, "cannot get common third party", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCommonThirdParty(party), nil
@@ -1939,7 +1939,7 @@ func (r *trackerPatternResolver) Attribution(ctx context.Context, obj *types.Tra
 
 		r.logger.ErrorCtx(ctx, "cannot get common tracker pattern", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	attribution := pattern.Attribution
@@ -1970,7 +1970,7 @@ func (r *trackerPatternResolver) DetectedTrackers(ctx context.Context, obj *type
 	trackers, err := r.cookieBanner.ListDetectedTrackersForPattern(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list detected trackers", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(trackers, cursor)
@@ -2006,7 +2006,7 @@ func (r *trackerPatternConnectionResolver) TotalCount(ctx context.Context, obj *
 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count tracker patterns", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -2028,7 +2028,7 @@ func (r *trackerResourceResolver) CookieCategory(ctx context.Context, obj *types
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie category", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieCategory(category), nil
@@ -2062,7 +2062,7 @@ func (r *trackerResourceConnectionResolver) TotalCount(ctx context.Context, obj 
 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count tracker resources", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil

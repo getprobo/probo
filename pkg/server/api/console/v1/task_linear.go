@@ -26,25 +26,25 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	tasksync "go.probo.inc/probo/pkg/task/sync"
 )
 
 func (r *mutationResolver) linearPublishError(ctx context.Context, err error) error {
 	switch {
 	case errors.Is(err, coredata.ErrResourceNotFound):
-		return gqlutils.NotFound(ctx, err)
+		return gqlx.NotFound(ctx, err)
 	case errors.Is(err, tasksync.ErrLinearNotConnected),
 		errors.Is(err, tasksync.ErrLinearReconnectRequired),
 		errors.Is(err, tasksync.ErrLinearTeamIDRequired),
 		errors.Is(err, tasksync.ErrLinearTeamNotFound):
-		return gqlutils.Invalid(ctx, err)
+		return gqlx.Invalid(ctx, err)
 	case errors.Is(err, tasksync.ErrTaskAlreadyLinked),
 		errors.Is(err, coredata.ErrResourceAlreadyExists):
-		return gqlutils.Conflict(ctx, err)
+		return gqlx.Conflict(ctx, err)
 	default:
 		r.logger.ErrorCtx(ctx, "cannot publish task to Linear", log.Error(err))
 
-		return gqlutils.Internal(ctx)
+		return gqlx.Internal(ctx)
 	}
 }

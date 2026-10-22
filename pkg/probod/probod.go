@@ -96,7 +96,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server"
 	complianceportal_v1 "go.probo.inc/probo/pkg/server/api/complianceportal/v1"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/server/trustedproxy"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/task"
@@ -1057,7 +1057,7 @@ func (impl *Implm) Run(
 			ProviderRegistry:        providerRegistry,
 			BaseURL:                 baseURL,
 			FileStorageOrigin:       fileStorageOrigin,
-			GraphQLLimits: gqlutils.Limits{
+			GraphQLLimits: gqlx.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
 				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,
@@ -1102,7 +1102,7 @@ func (impl *Implm) Run(
 			Cookie:                  authCookie,
 			TokenSecret:             impl.cfg.Auth.Cookie.Secret,
 			ExternallyTerminatedTLS: impl.cfg.CompliancePortal.TLSMode.IsExternal(),
-			GraphQLLimits: gqlutils.Limits{
+			GraphQLLimits: gqlx.Limits{
 				ParserTokenLimit:  impl.cfg.Api.GraphQL.ParserTokenLimit,
 				ComplexityLimit:   impl.cfg.Api.GraphQL.ComplexityLimit,
 				QueryCacheSize:    impl.cfg.Api.GraphQL.QueryCacheSize,

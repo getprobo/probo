@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // newMembershipAccessMiddleware refuses console requests from an authenticated
@@ -66,7 +66,7 @@ func newMembershipAccessMiddleware(iamSvc *iam.Service, logger *log.Logger) func
 						http.StatusInternalServerError,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.Internal(ctx),
+								gqlx.Internal(ctx),
 							},
 						},
 					)
@@ -80,7 +80,7 @@ func newMembershipAccessMiddleware(iamSvc *iam.Service, logger *log.Logger) func
 						http.StatusForbidden,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.MembershipRequiredf(
+								gqlx.MembershipRequiredf(
 									ctx,
 									"an organization membership is required to access this resource",
 								),

@@ -19,7 +19,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -34,12 +34,12 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Pro
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -69,7 +69,7 @@ func (r *assetResolver) ThirdParties(ctx context.Context, obj *types.Asset, firs
 	page, err := r.probo.ThirdParties.ListForAssetID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list asset thirdParties", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
@@ -85,18 +85,18 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	asset, err := r.probo.Assets.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	org, err := r.probo.Organizations.Get(ctx, scope, asset.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(org), nil
@@ -119,7 +119,7 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 		count, err := r.probo.Assets.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count assets", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -127,7 +127,7 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 		count, err := r.probo.BusinessFunctions.CountAssets(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count business function assets", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -135,7 +135,7 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Owner is the resolver for the owner field.
@@ -149,7 +149,7 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Pro
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		return nil, fmt.Errorf("cannot get owner: %w", err)
@@ -182,7 +182,7 @@ func (r *datumResolver) ThirdParties(ctx context.Context, obj *types.Datum, firs
 	page, err := r.probo.Data.ListThirdParties(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list data thirdParties", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
@@ -199,12 +199,12 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 	org, err := loaders.Organization.Load(ctx, obj.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(org), nil
@@ -227,7 +227,7 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 		count, err := r.probo.Data.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count data", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -235,7 +235,7 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // CreateAsset is the resolver for the createAsset field.
@@ -259,12 +259,12 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create asset", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateAssetPayload{
@@ -293,12 +293,12 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update asset", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateAssetPayload{
@@ -315,7 +315,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 	if err := r.probo.Assets.Delete(ctx, scope, input.AssetID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete asset", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAssetPayload{
@@ -342,12 +342,12 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create datum", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateDatumPayload{
@@ -374,12 +374,12 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update datum", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateDatumPayload{
@@ -396,7 +396,7 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 
 	if err := r.probo.Data.Delete(ctx, scope, input.DatumID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete datum", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteDatumPayload{
@@ -420,12 +420,12 @@ func (r *mutationResolver) PublishDataList(ctx context.Context, input types.Publ
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish data list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishDataListPayload{
@@ -450,12 +450,12 @@ func (r *mutationResolver) PublishAssetList(ctx context.Context, input types.Pub
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish asset list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishAssetListPayload{

@@ -27,7 +27,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *Resolver) ResourceAliasResolver(
@@ -41,7 +41,7 @@ func (r *Resolver) ResourceAliasResolver(
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load resource alias", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return alias, nil

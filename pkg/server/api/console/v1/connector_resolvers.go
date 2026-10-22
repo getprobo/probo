@@ -20,7 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -89,7 +89,7 @@ func (r *connectorResolver) ConnectionStatus(ctx context.Context, obj *types.Con
 	status, err := r.connectorConnectionStatus(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return "", gqlutils.NotFound(ctx, err)
+			return "", gqlx.NotFound(ctx, err)
 		}
 
 		return "", err
@@ -127,12 +127,12 @@ func (r *connectorResolver) InitialAccountExternalID(ctx context.Context, obj *t
 	externalID, err := r.probo.Connectors.InitialAccountExternalID(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot resolve initial connector account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if externalID == "" {
@@ -165,12 +165,12 @@ func (r *connectorResolver) Accounts(ctx context.Context, obj *types.Connector, 
 	p, err := r.probo.Connectors.ListAccounts(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list connector accounts", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewConnectorAccountConnection(p, r, obj.ID), nil
@@ -186,12 +186,12 @@ func (r *connectorResolver) DistinctAccountCount(ctx context.Context, obj *types
 	count, err := r.probo.Connectors.CountDistinctAccounts(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return 0, gqlutils.NotFound(ctx, err)
+			return 0, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot count distinct connector accounts", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -220,7 +220,7 @@ func (r *connectorResolver) AccountDiscovery(ctx context.Context, obj *types.Con
 	if err != nil {
 		// The field sits on Connector next to data the caller can already
 		// read. A missing permission must not fail that query. Skip the probe.
-		if gqlutils.IsForbidden(err) {
+		if gqlx.IsForbidden(err) {
 			return &types.AccountDiscovery{
 				Status: types.AccountDiscoveryStatusNotPermitted,
 				Nodes:  []*types.DiscoveredConnectorAccount{},
@@ -233,7 +233,7 @@ func (r *connectorResolver) AccountDiscovery(ctx context.Context, obj *types.Con
 	accounts, err := r.accessReview.DiscoverAccounts(ctx, scope, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		// A failed listing must not fail connector creation, which selects this
@@ -260,7 +260,7 @@ func (r *connectorResolver) AccountDiscovery(ctx context.Context, obj *types.Con
 			log.Error(err),
 		)
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	status := types.AccountDiscoveryStatusEmpty
@@ -349,7 +349,7 @@ func (r *connectorResolver) SelectedOrganization(ctx context.Context, obj *types
 
 		r.logger.ErrorCtx(ctx, "cannot read selected organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if slug == "" {
@@ -374,12 +374,12 @@ func (r *connectorAccountResolver) Connector(ctx context.Context, obj *types.Con
 	cnnctr, err := r.probo.Connectors.Get(ctx, scope, obj.Connector.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load connector for account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewConnector(cnnctr), nil
@@ -395,7 +395,7 @@ func (r *connectorAccountResolver) ConnectionStatus(ctx context.Context, obj *ty
 	status, err := r.connectorConnectionStatus(ctx, scope, obj.Connector.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return "", gqlutils.NotFound(ctx, err)
+			return "", gqlx.NotFound(ctx, err)
 		}
 
 		return "", err
@@ -415,7 +415,7 @@ func (r *connectorAccountConnectionResolver) TotalCount(ctx context.Context, obj
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count connector accounts", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -438,12 +438,12 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 	// IsManagedAPIKey: a future managed provider with no ceremony still belongs
 	// here.
 	if reg, ok := r.providerRegistry.Get(input.Provider); ok && reg.SupportsInstall() {
-		return nil, gqlutils.Invalidf(ctx, "%s is connected through its install flow, not with an API key", reg.DisplayName)
+		return nil, gqlx.Invalidf(ctx, "%s is connected through its install flow, not with an API key", reg.DisplayName)
 	}
 
 	apiKey, err := r.resolveAPIKeyConnectorCredential(input.Provider, input.APIKey)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	conn := r.newAPIKeyConnection(input.Provider, apiKey)
@@ -458,7 +458,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	raw, err := apiKeyConnectorSettings(input)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	// Tally has no settings input: the key itself is validated against
@@ -480,7 +480,7 @@ func (r *mutationResolver) CreateAPIKeyConnector(ctx context.Context, input type
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot create API key connector", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot create API key connector", err)
 	}
 
 	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
@@ -499,12 +499,12 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	raw, err := clientCredentialsConnectorSettings(input)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	tokenURL, err := clientCredentialsTokenURL(r.providerRegistry, input.Provider, input.TokenURL)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	oauth2Conn := &connectorprotocol.OAuth2Connection{
@@ -527,7 +527,7 @@ func (r *mutationResolver) CreateClientCredentialsConnector(ctx context.Context,
 
 	cnnctr, err := r.probo.Connectors.Create(ctx, scope, req)
 	if err != nil {
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot create client credentials connector", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot create client credentials connector", err)
 	}
 
 	r.accessReview.SelectSoleOrganization(ctx, scope, cnnctr.ID)
@@ -545,7 +545,7 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 	}
 
 	if r.identityFederation == nil {
-		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+		return nil, gqlx.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
 	raw, err := r.workloadIdentitySettings(ctx, input)
@@ -562,7 +562,7 @@ func (r *mutationResolver) CreateWorkloadIdentityConnector(ctx context.Context, 
 		RawSettings:    raw,
 	})
 	if err != nil {
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot create workload identity connector", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot create workload identity connector", err)
 	}
 
 	return &types.CreateWorkloadIdentityConnectorPayload{
@@ -578,7 +578,7 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 	}
 
 	if r.identityFederation == nil {
-		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+		return nil, gqlx.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
 	raw, err := r.organizationConnectorSettings(ctx, input)
@@ -595,7 +595,7 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 		RawSettings:    raw,
 	})
 	if err != nil {
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot create organization connector", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot create organization connector", err)
 	}
 
 	discovered := []*types.DiscoveredConnectorAccount{}
@@ -624,7 +624,7 @@ func (r *mutationResolver) CreateOrganizationConnector(ctx context.Context, inpu
 					log.Error(err),
 				)
 
-				return nil, gqlutils.Internal(ctx)
+				return nil, gqlx.Internal(ctx)
 			}
 		}
 	}
@@ -657,16 +657,16 @@ func (r *mutationResolver) EnableConnectorAccounts(ctx context.Context, input ty
 	enabled, err := r.probo.Connectors.EnableAccounts(ctx, scope, input.ConnectorID, req)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot enable connector accounts", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	accounts := make([]*types.ConnectorAccount, len(enabled))
@@ -688,20 +688,20 @@ func (r *mutationResolver) DisableConnectorAccount(ctx context.Context, input ty
 
 	if err := r.probo.Connectors.DisableAccount(ctx, scope, input.ConnectorAccountID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflictf(ctx, "connector account is in use")
+			return nil, gqlx.Conflictf(ctx, "connector account is in use")
 		}
 
 		if errors.Is(err, connector.ErrInitialConnectorAccount) {
-			return nil, gqlutils.Conflictf(ctx, "connector account is the initial account")
+			return nil, gqlx.Conflictf(ctx, "connector account is the initial account")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot disable connector account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DisableConnectorAccountPayload{
@@ -718,12 +718,12 @@ func (r *mutationResolver) DeleteConnector(ctx context.Context, input types.Dele
 
 	if err := r.probo.Connectors.Delete(ctx, scope, input.ConnectorID); err != nil {
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete connector", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteConnectorPayload{
@@ -743,7 +743,7 @@ func (r *mutationResolver) UpdateConnector(ctx context.Context, input types.Upda
 		Name:        input.Name,
 	})
 	if err != nil {
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot update connector", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot update connector", err)
 	}
 
 	return &types.UpdateConnectorPayload{
@@ -760,20 +760,20 @@ func (r *mutationResolver) UpdateAPIKeyConnector(ctx context.Context, input type
 
 	cnnctr, err := r.probo.Connectors.Get(ctx, scope, input.ConnectorID)
 	if err != nil {
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot load connector", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot load connector", err)
 	}
 
 	if cnnctr.Protocol != coredata.ConnectorProtocolAPIKey {
-		return nil, gqlutils.Invalidf(ctx, "this connector does not take a customer API key")
+		return nil, gqlx.Invalidf(ctx, "this connector does not take a customer API key")
 	}
 
 	if reg, ok := r.providerRegistry.Get(cnnctr.Provider); ok && reg.IsManagedAPIKey() {
-		return nil, gqlutils.Invalidf(ctx, "this connector does not take a customer API key")
+		return nil, gqlx.Invalidf(ctx, "this connector does not take a customer API key")
 	}
 
 	apiKey, err := r.resolveAPIKeyConnectorCredential(cnnctr.Provider, &input.APIKey)
 	if err != nil {
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	conn := r.newAPIKeyConnection(cnnctr.Provider, apiKey)
@@ -804,10 +804,10 @@ func (r *mutationResolver) UpdateAPIKeyConnector(ctx context.Context, input type
 	updated, err := r.probo.Connectors.UpdateAPIKey(ctx, scope, req)
 	if err != nil {
 		if errors.Is(err, connector.ErrAPIKeyNotReplaceable) {
-			return nil, gqlutils.Invalidf(ctx, "this connector does not take a customer API key")
+			return nil, gqlx.Invalidf(ctx, "this connector does not take a customer API key")
 		}
 
-		return nil, gqlutils.MapError(ctx, r.logger, "cannot update connector API key", err)
+		return nil, gqlx.MapError(ctx, r.logger, "cannot update connector API key", err)
 	}
 
 	return &types.UpdateAPIKeyConnectorPayload{
@@ -824,27 +824,27 @@ func (r *mutationResolver) ConfigureConnectorOrganization(ctx context.Context, i
 
 	if err := r.accessReview.SetConnectorOrganization(ctx, scope, input.ConnectorID, input.OrganizationSlug); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, accessreview.ErrOrganizationPickerUnsupported) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot set connector organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	cnnctr, err := r.probo.Connectors.Get(ctx, scope, input.ConnectorID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ConfigureConnectorOrganizationPayload{
@@ -861,7 +861,7 @@ func (r *mutationResolver) DeleteSlackConnection(ctx context.Context, input type
 
 	if err := r.probo.Connectors.Delete(ctx, scope, input.SlackConnectionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete slack connection", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteSlackConnectionPayload{

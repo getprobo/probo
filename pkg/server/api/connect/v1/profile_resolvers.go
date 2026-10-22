@@ -18,8 +18,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/connect/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/types/cursor"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -53,12 +53,12 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input types.CreateUse
 	)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create user", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateUserPayload{
@@ -76,16 +76,16 @@ func (r *mutationResolver) DeactivateUser(ctx context.Context, input types.Deact
 	err = r.iam.OrganizationService.DeactivateUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be deactivated")
+			return nil, gqlx.Conflictf(ctx, "user is managed by SCIM and cannot be deactivated")
 		}
 
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "cannot deactivate last active owner")
+			return nil, gqlx.Conflictf(ctx, "cannot deactivate last active owner")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot deactivate user", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeactivateUserPayload{
@@ -117,7 +117,7 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input types.UpdateUse
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update profile", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateUserPayload{
@@ -135,20 +135,20 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 	err = r.iam.OrganizationService.RemoveUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "user is managed by SCIM and cannot be removed")
+			return nil, gqlx.Conflictf(ctx, "user is managed by SCIM and cannot be removed")
 		}
 
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "cannot remove last active owner")
+			return nil, gqlx.Conflictf(ctx, "cannot remove last active owner")
 		}
 
 		if _, ok := errors.AsType[*iam.ErrProfileInUse](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "cannot remove person: referenced by other resources")
+			return nil, gqlx.Conflictf(ctx, "cannot remove person: referenced by other resources")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove user from organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RemoveUserPayload{DeletedProfileID: input.ProfileID}, nil
@@ -174,12 +174,12 @@ func (r *profileResolver) Avatar(ctx context.Context, obj *types.Profile) (*type
 	identity, err := loaders.Identity.Load(ctx, obj.Identity.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load profile identity", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if identity.AvatarFileID == nil {
@@ -203,12 +203,12 @@ func (r *profileResolver) Identity(ctx context.Context, obj *types.Profile) (*ty
 	identity, err := r.iam.AccountService.GetIdentity(ctx, obj.Identity.ID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get identity", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewIdentity(identity), nil
@@ -223,12 +223,12 @@ func (r *profileResolver) Organization(ctx context.Context, obj *types.Profile) 
 	organization, err := r.iam.OrganizationService.GetOrganization(ctx, obj.Organization.ID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -243,12 +243,12 @@ func (r *profileResolver) Membership(ctx context.Context, obj *types.Profile) (*
 	membership, err := r.iam.AccountService.GetMembershipForOrganization(ctx, obj.Identity.ID, obj.Organization.ID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get membership", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewMembership(membership), nil
@@ -270,7 +270,7 @@ func (r *profileResolver) PendingInvitations(ctx context.Context, obj *types.Pro
 	page, err := r.iam.AccountService.ListPendingInvitations(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list pending invitations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewInvitationConnection(page, r, obj.ID, nil), nil
@@ -288,7 +288,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 		count, err := r.iam.AccountService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &count, nil
@@ -296,7 +296,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 		count, err := r.iam.OrganizationService.CountProfiles(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count profiles", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &count, nil
@@ -304,7 +304,7 @@ func (r *profileConnectionResolver) TotalCount(ctx context.Context, obj *types.P
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 
-	return nil, gqlutils.Internal(ctx)
+	return nil, gqlx.Internal(ctx)
 }
 
 // Profile returns schema.ProfileResolver implementation.

@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -49,7 +49,7 @@ func (r *employeePortalResolver) DarkLogo(ctx context.Context, obj *types.Employ
 func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.EmployeePortal) (*types.Organization, error) {
 	if obj.Organization == nil {
 		r.logger.ErrorCtx(ctx, "employee portal is missing organization id")
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	scope, err := r.authorize(ctx, obj.Organization.ID, probo.ActionOrganizationGet)
@@ -60,12 +60,12 @@ func (r *employeePortalResolver) Organization(ctx context.Context, obj *types.Em
 	organization, err := r.probo.Organizations.Get(ctx, scope, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -87,7 +87,7 @@ func (r *employeePortalConnectionResolver) TotalCount(ctx context.Context, obj *
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count employee portals", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -119,12 +119,12 @@ func (r *mutationResolver) UpdateEmployeePortal(ctx context.Context, input types
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update employee portal", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateEmployeePortalPayload{
@@ -180,12 +180,12 @@ func (r *mutationResolver) UpdateEmployeePortalBrand(ctx context.Context, input 
 	portal, err := r.employeePortal.UpdateBrand(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update employee portal brand", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateEmployeePortalBrandPayload{

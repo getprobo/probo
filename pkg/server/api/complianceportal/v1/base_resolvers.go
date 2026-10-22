@@ -20,7 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Viewer is the resolver for the viewer field.
@@ -57,16 +57,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		document, _, err := visitorService.GetDocument(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrDocumentNotFound) || errors.Is(err, visitor.ErrDocumentNotVisible) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			if _, ok := errors.AsType[*visitor.ErrDocumentArchived](err); ok {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get document", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewDocument(document), nil
@@ -75,12 +75,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		framework, err := visitorService.GetFrameworkForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrFrameworkNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get framework", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewFramework(framework), nil
@@ -89,12 +89,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		file, err := visitorService.GetReport(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrReportNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get audit report file", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewAuditReport(file), nil
@@ -103,12 +103,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		audit, err := visitorService.GetAuditForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrAuditNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get audit", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewAudit(audit), nil
@@ -117,12 +117,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		thirdParty, err := visitorService.GetThirdPartyForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrThirdPartyNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get thirdParty", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewSubprocessor(thirdParty), nil
@@ -131,18 +131,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		// An organization can run several portals; a visitor only ever sees the
 		// one they are visiting.
 		if id != compliancePortal.ID {
-			return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+			return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 		}
 
 		portal, err := visitorService.GetPortal(ctx, scope, id)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewCompliancePortal(portal), nil
@@ -151,12 +151,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		reference, err := visitorService.GetPortalReferenceForCompliancePortalID(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrPortalReferenceNotFound) || errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get compliance portal reference", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewCompliancePortalReference(reference), nil
@@ -165,12 +165,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		portalFile, err := visitorService.GetPortalFile(ctx, scope, compliancePortal.ID, id)
 		if err != nil {
 			if errors.Is(err, visitor.ErrPortalFileNotFound) || errors.Is(err, visitor.ErrPortalFileNotVisible) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get compliance portal file", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewCompliancePortalFile(portalFile), nil
@@ -179,18 +179,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		update, err := r.mailman.GetSentMailingListUpdate(ctx, scope, compliancePortal.MailingListID, id)
 		if err != nil {
 			if errors.Is(err, mailman.ErrMailingListUpdateNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot get mailing list update", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return types.NewMailingListUpdate(update), nil
 
 	default:
-		return nil, gqlutils.NotFoundf(ctx, "node %q not found", id)
+		return nil, gqlx.NotFoundf(ctx, "node %q not found", id)
 	}
 }
 
@@ -208,12 +208,12 @@ func (r *queryResolver) AliasedNode(ctx context.Context, alias string) (types.No
 		)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "node %q not found", alias)
+				return nil, gqlx.NotFoundf(ctx, "node %q not found", alias)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot resolve resource alias", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -230,7 +230,7 @@ func (r *queryResolver) CurrentCompliancePortal(ctx context.Context) (*types.Com
 	compliancePortal, err := visitorService.GetPortal(ctx, scope, compliancePortal.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortal(compliancePortal), nil
@@ -265,7 +265,7 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 
 	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 	if !compliancePage.Capabilities.RightsRequests {
-		return nil, gqlutils.NotFoundf(ctx, "rights requests are not available on this compliance portal")
+		return nil, gqlx.NotFoundf(ctx, "rights requests are not available on this compliance portal")
 	}
 
 	identity := authn.IdentityFromContext(ctx)
@@ -285,7 +285,7 @@ func (r *queryResolver) MyRightsRequests(ctx context.Context, first *int, after 
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list rights requests", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewRightsRequestConnection(result), nil

@@ -23,7 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -35,7 +35,7 @@ func (r *complianceCustomLinkResolver) Permission(ctx context.Context, obj *type
 // Framework is the resolver for the framework field.
 func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.ComplianceFramework) (*types.Framework, error) {
 	if obj.Framework == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if _, err := r.authorize(ctx, obj.Framework.ID, probo.ActionFrameworkGet); err != nil {
@@ -47,12 +47,12 @@ func (r *complianceFrameworkResolver) Framework(ctx context.Context, obj *types.
 	framework, err := loaders.Framework.Load(ctx, obj.Framework.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFramework(framework), nil
@@ -89,7 +89,7 @@ func (r *compliancePortalResolver) Nda(ctx context.Context, obj *types.Complianc
 	hasPermission, err := r.Resolver.Permission(ctx, obj, management.ActionCompliancePortalGetNda)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if !hasPermission || obj.Nda == nil {
@@ -109,18 +109,18 @@ func (r *compliancePortalResolver) Organization(ctx context.Context, obj *types.
 	compliancePortal, err := r.management.Get(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	organization, err := r.probo.Organizations.Get(ctx, scope, compliancePortal.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -134,7 +134,7 @@ func (r *compliancePortalResolver) SlackbotNotificationChannel(ctx context.Conte
 
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionConnectorInitiate)
 	if err != nil {
-		if gqlutils.IsForbidden(err) {
+		if gqlx.IsForbidden(err) {
 			return nil, nil
 		}
 
@@ -161,7 +161,7 @@ func (r *compliancePortalResolver) SlackbotNotificationChannel(ctx context.Conte
 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load Slackbot notification channel", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.SlackbotNotificationChannel{
@@ -199,7 +199,7 @@ func (r *compliancePortalResolver) Accesses(ctx context.Context, obj *types.Comp
 	result, err := r.management.ListAccesses(ctx, scope, obj.ID, cursor, accessFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal accesses", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalAccessConnection(result), nil
@@ -229,7 +229,7 @@ func (r *compliancePortalResolver) References(ctx context.Context, obj *types.Co
 	result, err := r.management.ListReferences(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal references", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalReferenceConnection(result, obj.ID), nil
@@ -259,7 +259,7 @@ func (r *compliancePortalResolver) CommitmentGroups(ctx context.Context, obj *ty
 	result, err := r.management.ListCommitmentGroups(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal commitment groups", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalCommitmentGroupConnection(result, obj.ID), nil
@@ -289,7 +289,7 @@ func (r *compliancePortalResolver) ComplianceFrameworks(ctx context.Context, obj
 	result, err := r.management.ListFrameworksWithHidden(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance frameworks", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewComplianceFrameworkConnection(result), nil
@@ -319,7 +319,7 @@ func (r *compliancePortalResolver) CustomLinks(ctx context.Context, obj *types.C
 	result, err := r.management.ListCustomLinks(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance custom links", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewComplianceCustomLinkConnection(result), nil
@@ -335,12 +335,12 @@ func (r *compliancePortalResolver) MemberCandidates(ctx context.Context, obj *ty
 	profiles, err := r.management.ListMemberCandidates(ctx, scope, obj.ID, query)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal member candidates", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.Profile, len(profiles))
@@ -375,7 +375,7 @@ func (r *compliancePortalResolver) CompliancePortalFiles(ctx context.Context, ob
 	pageResult, err := r.management.ListFilesForCompliancePortalID(ctx, scope, obj.ID, cursor, &coredata.CompliancePortalFileFilter{})
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal files", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalFileConnection(pageResult, obj.ID), nil
@@ -395,7 +395,7 @@ func (r *compliancePortalResolver) MailingList(ctx context.Context, obj *types.C
 	ml, err := r.management.GetMailingList(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list for compliance portal", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if ml == nil {
@@ -413,7 +413,7 @@ func (r *compliancePortalResolver) DefaultDomain(ctx context.Context, obj *types
 
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
-		if gqlutils.IsForbidden(err) {
+		if gqlx.IsForbidden(err) {
 			return nil, nil
 		}
 
@@ -428,7 +428,7 @@ func (r *compliancePortalResolver) DefaultDomain(ctx context.Context, obj *types
 
 		r.logger.ErrorCtx(ctx, "cannot load default domain", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCustomDomain(domain, r.customDomainCname), nil
@@ -442,7 +442,7 @@ func (r *compliancePortalResolver) CustomDomain(ctx context.Context, obj *types.
 
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
-		if gqlutils.IsForbidden(err) {
+		if gqlx.IsForbidden(err) {
 			return nil, nil
 		}
 
@@ -457,7 +457,7 @@ func (r *compliancePortalResolver) CustomDomain(ctx context.Context, obj *types.
 
 		r.logger.ErrorCtx(ctx, "cannot load custom domain", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCustomDomain(domain, r.customDomainCname), nil
@@ -473,7 +473,7 @@ func (r *compliancePortalResolver) PublicURL(ctx context.Context, obj *types.Com
 	publicURL, err := r.management.PublicURL(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot resolve compliance portal public url", log.Error(err))
-		return "", gqlutils.Internal(ctx)
+		return "", gqlx.Internal(ctx)
 	}
 
 	return publicURL, nil
@@ -518,7 +518,7 @@ func (r *compliancePortalAccessResolver) PendingRequestCount(ctx context.Context
 	count, err := r.management.CountPendingRequestDocumentAccesses(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count pending request document accesses", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -534,7 +534,7 @@ func (r *compliancePortalAccessResolver) ActiveCount(ctx context.Context, obj *t
 	count, err := r.management.CountActiveDocumentAccesses(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count active document accesses", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -551,7 +551,7 @@ func (r *compliancePortalAccessResolver) Identity(ctx context.Context, obj *type
 	identity, err := loaders.Identity.Load(ctx, obj.IdentityID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load identity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CompliancePortalAccessIdentity{
@@ -589,7 +589,7 @@ func (r *compliancePortalAccessResolver) Resources(ctx context.Context, obj *typ
 	result, err := r.management.ListAccessResources(ctx, scope, obj.ID, cursor, resourceFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal access resources", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalAccessResourceConnection(result, obj.ID, resourceFilter), nil
@@ -615,7 +615,7 @@ func (r *compliancePortalAccessResourceConnectionResolver) TotalCount(ctx contex
 	count, err := r.management.CountAccessResources(ctx, scope, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal access resources", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -631,12 +631,12 @@ func (r *compliancePortalAuditResolver) Audit(ctx context.Context, obj *types.Co
 	audit, err := r.probo.Audits.Get(ctx, scope, obj.Audit.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAudit(audit), nil
@@ -657,7 +657,7 @@ func (r *compliancePortalCommitmentConnectionResolver) TotalCount(ctx context.Co
 	count, err := r.management.CountCommitments(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal commitments", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -687,7 +687,7 @@ func (r *compliancePortalCommitmentGroupResolver) Commitments(ctx context.Contex
 	result, err := r.management.ListCommitments(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list compliance portal commitments", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalCommitmentConnection(result, obj.ID), nil
@@ -708,7 +708,7 @@ func (r *compliancePortalCommitmentGroupConnectionResolver) TotalCount(ctx conte
 	count, err := r.management.CountCommitmentGroups(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal commitment groups", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -725,7 +725,7 @@ func (r *compliancePortalConnectionResolver) TotalCount(ctx context.Context, obj
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portals", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -740,12 +740,12 @@ func (r *compliancePortalDocumentResolver) Document(ctx context.Context, obj *ty
 	document, err := dataloader.FromContext(ctx).Document.Load(ctx, obj.Document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocument(document), nil
@@ -765,12 +765,12 @@ func (r *compliancePortalDocumentAccessResolver) Document(ctx context.Context, o
 	link, err := dataloader.FromContext(ctx).CompliancePortalDocumentByID.Load(ctx, *access.CompliancePortalDocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if _, err := r.authorize(ctx, link.DocumentID, probo.ActionDocumentGet); err != nil {
@@ -780,12 +780,12 @@ func (r *compliancePortalDocumentAccessResolver) Document(ctx context.Context, o
 	document, err := dataloader.FromContext(ctx).Document.Load(ctx, link.DocumentID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDocument(document), nil
@@ -805,12 +805,12 @@ func (r *compliancePortalDocumentAccessResolver) ReportFile(ctx context.Context,
 	audit, err := dataloader.FromContext(ctx).Audit.Load(ctx, link.AuditID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if audit.ReportFileID == nil {
@@ -824,12 +824,12 @@ func (r *compliancePortalDocumentAccessResolver) ReportFile(ctx context.Context,
 	file, err := dataloader.FromContext(ctx).File.Load(ctx, *audit.ReportFileID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFile(file, r.fileManager), nil
@@ -858,7 +858,7 @@ func (r *compliancePortalDocumentAccessResolver) Audit(ctx context.Context, obj 
 
 		r.logger.ErrorCtx(ctx, "cannot load audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAudit(audit), nil
@@ -878,7 +878,7 @@ func (r *compliancePortalDocumentAccessResolver) CompliancePortalFile(ctx contex
 	compliancePortalFile, err := r.management.GetFile(ctx, scope, obj.CompliancePortalFile.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalFile(compliancePortalFile), nil
@@ -913,18 +913,18 @@ func (r *compliancePortalFileResolver) Organization(ctx context.Context, obj *ty
 	compliancePortalFile, err := r.management.GetFile(ctx, scope, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get compliance portal file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	organization, err := r.probo.Organizations.Get(ctx, scope, compliancePortalFile.OrganizationID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -952,7 +952,7 @@ func (r *compliancePortalFileResolver) CompliancePortalDocumentAccess(ctx contex
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalDocumentAccess(access), nil
@@ -973,7 +973,7 @@ func (r *compliancePortalFileConnectionResolver) TotalCount(ctx context.Context,
 	count, err := r.management.CountFilesForCompliancePortalID(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal files", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -1003,7 +1003,7 @@ func (r *compliancePortalReferenceConnectionResolver) TotalCount(ctx context.Con
 	count, err := r.management.CountReferences(ctx, scope, obj.ParentID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count compliance portal references", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -1018,12 +1018,12 @@ func (r *compliancePortalThirdPartyResolver) ThirdParty(ctx context.Context, obj
 	thirdParty, err := dataloader.FromContext(ctx).ThirdParty.Load(ctx, obj.ThirdParty.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewThirdParty(thirdParty), nil
@@ -1048,7 +1048,7 @@ func (r *customDomainResolver) Certificate(ctx context.Context, obj *types.Custo
 
 		r.logger.ErrorCtx(ctx, "cannot load certificate", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCertificate(cert), nil
@@ -1076,16 +1076,16 @@ func (r *mutationResolver) CreateCompliancePortal(ctx context.Context, input typ
 	)
 	if err != nil {
 		if errors.Is(err, management.ErrSlugAlreadyInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance portal", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCompliancePortalPayload{
@@ -1103,7 +1103,7 @@ func (r *mutationResolver) DeleteCompliancePortal(ctx context.Context, input typ
 	if err := r.management.Delete(ctx, scope, input.CompliancePortalID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalPayload{
@@ -1129,16 +1129,16 @@ func (r *mutationResolver) UpdateCompliancePortalDocumentVisibility(ctx context.
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "document %q not found", input.DocumentID)
+			return nil, gqlx.NotFoundf(ctx, "document %q not found", input.DocumentID)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal document visibility", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	link, err := r.management.GetDocumentLink(
@@ -1150,7 +1150,7 @@ func (r *mutationResolver) UpdateCompliancePortalDocumentVisibility(ctx context.
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalDocumentVisibilityPayload{
@@ -1169,12 +1169,12 @@ func (r *mutationResolver) DeleteCompliancePortalDocument(ctx context.Context, i
 	link, err := r.management.GetDocumentLinkByID(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance portal document %q not found", input.ID)
+			return nil, gqlx.NotFoundf(ctx, "compliance portal document %q not found", input.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	err = r.management.DeleteDocument(
@@ -1186,12 +1186,12 @@ func (r *mutationResolver) DeleteCompliancePortalDocument(ctx context.Context, i
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal document", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalDocumentPayload{
@@ -1218,23 +1218,23 @@ func (r *mutationResolver) UpdateCompliancePortalAuditVisibility(ctx context.Con
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "audit %q not found", input.AuditID)
+			return nil, gqlx.NotFoundf(ctx, "audit %q not found", input.AuditID)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal audit visibility", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	link, err := r.management.GetAuditLink(ctx, scope, input.CompliancePortalID, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load audit catalog entry", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalAuditVisibilityPayload{
@@ -1253,12 +1253,12 @@ func (r *mutationResolver) DeleteCompliancePortalAudit(ctx context.Context, inpu
 	link, err := r.management.GetAuditLinkByID(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance portal audit %q not found", input.ID)
+			return nil, gqlx.NotFoundf(ctx, "compliance portal audit %q not found", input.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	err = r.management.DeleteAudit(
@@ -1270,12 +1270,12 @@ func (r *mutationResolver) DeleteCompliancePortalAudit(ctx context.Context, inpu
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalAuditPayload{
@@ -1302,23 +1302,23 @@ func (r *mutationResolver) UpdateCompliancePortalThirdPartyPublished(ctx context
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "third party %q not found", input.ThirdPartyID)
+			return nil, gqlx.NotFoundf(ctx, "third party %q not found", input.ThirdPartyID)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal third party published", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	link, err := r.management.GetThirdPartyLink(ctx, scope, input.CompliancePortalID, input.ThirdPartyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load third party catalog entry", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalThirdPartyPublishedPayload{
@@ -1337,12 +1337,12 @@ func (r *mutationResolver) DeleteCompliancePortalThirdParty(ctx context.Context,
 	link, err := r.management.GetThirdPartyLinkByID(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "compliance portal third party %q not found", input.ID)
+			return nil, gqlx.NotFoundf(ctx, "compliance portal third party %q not found", input.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal third party link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	err = r.management.DeleteThirdParty(
@@ -1354,12 +1354,12 @@ func (r *mutationResolver) DeleteCompliancePortalThirdParty(ctx context.Context,
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal third party", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalThirdPartyPayload{
@@ -1389,21 +1389,21 @@ func (r *mutationResolver) UpdateCompliancePortal(ctx context.Context, input typ
 			Active:               input.Active,
 			SearchEngineIndexing: input.SearchEngineIndexing,
 			Capabilities:         capabilities,
-			Description:          gqlutils.UnwrapOmittable(input.Description),
-			WebsiteURL:           gqlutils.UnwrapOmittable(input.WebsiteURL),
-			Email:                gqlutils.UnwrapOmittable(input.Email),
-			HeadquarterAddress:   gqlutils.UnwrapOmittable(input.HeadquarterAddress),
+			Description:          gqlx.UnwrapOmittable(input.Description),
+			WebsiteURL:           gqlx.UnwrapOmittable(input.WebsiteURL),
+			Email:                gqlx.UnwrapOmittable(input.Email),
+			HeadquarterAddress:   gqlx.UnwrapOmittable(input.HeadquarterAddress),
 			EntityName:           input.EntityName,
 		},
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalPayload{
@@ -1428,12 +1428,12 @@ func (r *mutationResolver) UploadCompliancePortalNda(ctx context.Context, input 
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot upload compliance portal NDA", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UploadCompliancePortalNDAPayload{
@@ -1451,7 +1451,7 @@ func (r *mutationResolver) DeleteCompliancePortalNda(ctx context.Context, input 
 	compliancePortal, _, err := r.management.DeleteNDA(ctx, scope, input.CompliancePortalID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal NDA", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalNDAPayload{
@@ -1507,12 +1507,12 @@ func (r *mutationResolver) UpdateCompliancePortalBrand(ctx context.Context, inpu
 	compliancePortal, _, err := r.management.UpdateBrand(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal brand", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalBrandPayload{
@@ -1542,17 +1542,17 @@ func (r *mutationResolver) CreateCompliancePortalAccess(ctx context.Context, inp
 	if err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		case errors.Is(err, coredata.ErrResourceAlreadyExists):
-			return nil, gqlutils.Conflictf(ctx, "visitor already has access to this portal")
+			return nil, gqlx.Conflictf(ctx, "visitor already has access to this portal")
 		default:
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot create compliance portal access", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -1610,12 +1610,12 @@ func (r *mutationResolver) UpdateCompliancePortalAccess(ctx context.Context, inp
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	documents := make([]*types.Document, 0, len(input.Documents))
@@ -1628,12 +1628,12 @@ func (r *mutationResolver) UpdateCompliancePortalAccess(ctx context.Context, inp
 		audit, err := r.probo.Audits.GetByReportFileID(ctx, scope, reportAccess.ID)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFound(ctx, err)
+				return nil, gqlx.NotFound(ctx, err)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot load audit for report file", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		audits = append(audits, types.NewAudit(audit))
@@ -1662,16 +1662,16 @@ func (r *mutationResolver) DeactivateCompliancePortalAccess(ctx context.Context,
 	access, err := r.management.DeactivateAccess(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot deactivate compliance portal access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeactivateCompliancePortalAccessPayload{
@@ -1689,16 +1689,16 @@ func (r *mutationResolver) ActivateCompliancePortalAccess(ctx context.Context, i
 	access, err := r.management.ActivateAccess(ctx, scope, input.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot activate compliance portal access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ActivateCompliancePortalAccessPayload{
@@ -1715,7 +1715,7 @@ func (r *mutationResolver) DeleteCompliancePortalAccess(ctx context.Context, inp
 
 	if err := r.management.DeleteAccess(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal access", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalAccessPayload{
@@ -1747,12 +1747,12 @@ func (r *mutationResolver) CreateCompliancePortalReference(ctx context.Context, 
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance portal reference", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCompliancePortalReferencePayload{
@@ -1770,7 +1770,7 @@ func (r *mutationResolver) UpdateCompliancePortalReference(ctx context.Context, 
 	req := &management.UpdateReferenceRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: gqlutils.UnwrapOmittable(input.Description),
+		Description: gqlx.UnwrapOmittable(input.Description),
 		WebsiteURL:  input.WebsiteURL,
 		Rank:        input.Rank,
 	}
@@ -1787,12 +1787,12 @@ func (r *mutationResolver) UpdateCompliancePortalReference(ctx context.Context, 
 	reference, err := r.management.UpdateReference(ctx, scope, req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal reference", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalReferencePayload{
@@ -1809,7 +1809,7 @@ func (r *mutationResolver) DeleteCompliancePortalReference(ctx context.Context, 
 
 	if err := r.management.DeleteReference(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal reference", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalReferencePayload{
@@ -1834,12 +1834,12 @@ func (r *mutationResolver) CreateCompliancePortalCommitmentGroup(ctx context.Con
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance portal commitment group", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCompliancePortalCommitmentGroupPayload{
@@ -1865,12 +1865,12 @@ func (r *mutationResolver) UpdateCompliancePortalCommitmentGroup(ctx context.Con
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal commitment group", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalCommitmentGroupPayload{
@@ -1887,7 +1887,7 @@ func (r *mutationResolver) DeleteCompliancePortalCommitmentGroup(ctx context.Con
 
 	if err := r.management.DeleteCommitmentGroup(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal commitment group", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalCommitmentGroupPayload{
@@ -1914,12 +1914,12 @@ func (r *mutationResolver) CreateCompliancePortalCommitment(ctx context.Context,
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance portal commitment", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCompliancePortalCommitmentPayload{
@@ -1947,12 +1947,12 @@ func (r *mutationResolver) UpdateCompliancePortalCommitment(ctx context.Context,
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal commitment", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalCommitmentPayload{
@@ -1969,7 +1969,7 @@ func (r *mutationResolver) DeleteCompliancePortalCommitment(ctx context.Context,
 
 	if err := r.management.DeleteCommitment(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal commitment", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalCommitmentPayload{
@@ -1993,12 +1993,12 @@ func (r *mutationResolver) CreateComplianceFramework(ctx context.Context, input 
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateComplianceFrameworkPayload{
@@ -2019,12 +2019,12 @@ func (r *mutationResolver) UpdateComplianceFramework(ctx context.Context, input 
 	})
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateComplianceFrameworkPayload{
@@ -2046,12 +2046,12 @@ func (r *mutationResolver) DeleteComplianceFramework(ctx context.Context, input 
 		},
 	); err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete compliance framework", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteComplianceFrameworkPayload{
@@ -2076,12 +2076,12 @@ func (r *mutationResolver) CreateComplianceCustomLink(ctx context.Context, input
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance custom link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateComplianceCustomLinkPayload{
@@ -2104,12 +2104,12 @@ func (r *mutationResolver) UpdateComplianceCustomLink(ctx context.Context, input
 	})
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance custom link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateComplianceCustomLinkPayload{
@@ -2126,12 +2126,12 @@ func (r *mutationResolver) DeleteComplianceCustomLink(ctx context.Context, input
 
 	if err := r.management.DeleteCustomLink(ctx, scope, &management.DeleteCustomLinkRequest{ID: input.ID}); err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete compliance custom link", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteComplianceCustomLinkPayload{
@@ -2163,12 +2163,12 @@ func (r *mutationResolver) CreateCompliancePortalFile(ctx context.Context, input
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create compliance portal file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCompliancePortalFilePayload{
@@ -2194,12 +2194,12 @@ func (r *mutationResolver) UpdateCompliancePortalFile(ctx context.Context, input
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update compliance portal file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateCompliancePortalFilePayload{
@@ -2217,7 +2217,7 @@ func (r *mutationResolver) GetCompliancePortalFile(ctx context.Context, input ty
 	file, err := r.management.GetFile(ctx, scope, input.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get compliance portal file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.GetCompliancePortalFilePayload{
@@ -2234,7 +2234,7 @@ func (r *mutationResolver) DeleteCompliancePortalFile(ctx context.Context, input
 
 	if err := r.management.DeleteFile(ctx, scope, input.ID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete compliance portal file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCompliancePortalFilePayload{
@@ -2256,16 +2256,16 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, management.ErrCustomDomainSlotTaken) {
-			return nil, gqlutils.Conflictf(ctx, "compliance page already has a custom domain")
+			return nil, gqlx.Conflictf(ctx, "compliance page already has a custom domain")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create custom domain", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateCustomDomainPayload{
@@ -2282,12 +2282,12 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 	if err := r.management.RemoveCustomDomain(ctx, scope, input.CustomDomainID); err != nil {
 		if errors.Is(err, management.ErrCustomDomainManaged) {
-			return nil, gqlutils.Conflictf(ctx, "managed domain cannot be deleted")
+			return nil, gqlx.Conflictf(ctx, "managed domain cannot be deleted")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete custom domain", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteCustomDomainPayload{

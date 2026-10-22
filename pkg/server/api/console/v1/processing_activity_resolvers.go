@@ -18,7 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // CreateProcessingActivity is the resolver for the createProcessingActivity field.
@@ -54,7 +54,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 	activity, err := r.probo.ProcessingActivities.Create(ctx, scope, &req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create processing activity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateProcessingActivityPayload{
@@ -72,30 +72,30 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 	req := probo.UpdateProcessingActivityRequest{
 		ID:                                   input.ID,
 		Name:                                 input.Name,
-		Purpose:                              gqlutils.UnwrapOmittable(input.Purpose),
-		DataSubjectCategory:                  gqlutils.UnwrapOmittable(input.DataSubjectCategory),
-		PersonalDataCategory:                 gqlutils.UnwrapOmittable(input.PersonalDataCategory),
+		Purpose:                              gqlx.UnwrapOmittable(input.Purpose),
+		DataSubjectCategory:                  gqlx.UnwrapOmittable(input.DataSubjectCategory),
+		PersonalDataCategory:                 gqlx.UnwrapOmittable(input.PersonalDataCategory),
 		SpecialOrCriminalData:                input.SpecialOrCriminalData,
 		LawfulBasis:                          input.LawfulBasis,
-		Recipients:                           gqlutils.UnwrapOmittable(input.Recipients),
-		Location:                             gqlutils.UnwrapOmittable(input.Location),
+		Recipients:                           gqlx.UnwrapOmittable(input.Recipients),
+		Location:                             gqlx.UnwrapOmittable(input.Location),
 		InternationalTransfers:               input.InternationalTransfers,
-		TransferSafeguard:                    gqlutils.UnwrapOmittable(input.TransferSafeguards),
-		RetentionPeriod:                      gqlutils.UnwrapOmittable(input.RetentionPeriod),
-		SecurityMeasures:                     gqlutils.UnwrapOmittable(input.SecurityMeasures),
+		TransferSafeguard:                    gqlx.UnwrapOmittable(input.TransferSafeguards),
+		RetentionPeriod:                      gqlx.UnwrapOmittable(input.RetentionPeriod),
+		SecurityMeasures:                     gqlx.UnwrapOmittable(input.SecurityMeasures),
 		DataProtectionImpactAssessmentNeeded: input.DataProtectionImpactAssessmentNeeded,
 		TransferImpactAssessmentNeeded:       input.TransferImpactAssessmentNeeded,
-		LastReviewDate:                       gqlutils.UnwrapOmittable(input.LastReviewDate),
-		NextReviewDate:                       gqlutils.UnwrapOmittable(input.NextReviewDate),
+		LastReviewDate:                       gqlx.UnwrapOmittable(input.LastReviewDate),
+		NextReviewDate:                       gqlx.UnwrapOmittable(input.NextReviewDate),
 		Role:                                 input.Role,
-		DataProtectionOfficerID:              gqlutils.UnwrapOmittable(input.DataProtectionOfficerID),
+		DataProtectionOfficerID:              gqlx.UnwrapOmittable(input.DataProtectionOfficerID),
 		ThirdPartyIDs:                        &input.ThirdPartyIds,
 	}
 
 	activity, err := r.probo.ProcessingActivities.Update(ctx, scope, &req)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update processing activity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateProcessingActivityPayload{
@@ -112,7 +112,7 @@ func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input t
 
 	if err := r.probo.ProcessingActivities.Delete(ctx, scope, input.ProcessingActivityID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete processing activity", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteProcessingActivityPayload{
@@ -136,12 +136,12 @@ func (r *mutationResolver) PublishProcessingActivityList(ctx context.Context, in
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish processing activity list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishProcessingActivityListPayload{
@@ -161,12 +161,12 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -187,12 +187,12 @@ func (r *processingActivityResolver) DataProtectionOfficer(ctx context.Context, 
 	dpo, err := loaders.Profile.Load(ctx, obj.DataProtectionOfficer.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get data protection officer", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(dpo), nil
@@ -222,7 +222,7 @@ func (r *processingActivityResolver) ThirdParties(ctx context.Context, obj *type
 	page, err := r.probo.ThirdParties.ListForProcessingActivityID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list processing activity thirdParties", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewThirdPartyConnection(page, r, obj.ID, nil), nil
@@ -243,7 +243,7 @@ func (r *processingActivityResolver) DataProtectionImpactAssessment(ctx context.
 
 		r.logger.ErrorCtx(ctx, "cannot get processing activity dpia", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewDataProtectionImpactAssessment(dpia), nil
@@ -264,7 +264,7 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 
 		r.logger.ErrorCtx(ctx, "cannot get processing activity tia", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewTransferImpactAssessment(tia), nil
@@ -287,7 +287,7 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 		count, err := r.probo.ProcessingActivities.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count organization processing activities", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -295,7 +295,7 @@ func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, o
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // ProcessingActivity returns schema.ProcessingActivityResolver implementation.

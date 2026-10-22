@@ -20,7 +20,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -35,12 +35,12 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -69,12 +69,12 @@ func (r *auditResolver) Frameworks(ctx context.Context, obj *types.Audit, first 
 	frameworkPage, err := r.probo.Audits.ListFrameworksForAuditID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "audit %q not found", obj.ID)
+			return nil, gqlx.NotFoundf(ctx, "audit %q not found", obj.ID)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot list audit frameworks", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFrameworkConnection(frameworkPage, r, obj.ID), nil
@@ -95,12 +95,12 @@ func (r *auditResolver) ReportFile(ctx context.Context, obj *types.Audit) (*type
 	file, err := loaders.File.Load(ctx, obj.ReportFile.ID)
 	if err != nil {
 		if errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load report file", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFile(file, r.fileManager), nil
@@ -128,7 +128,7 @@ func (r *auditResolver) CompliancePortalAudit(ctx context.Context, obj *types.Au
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalAudit(link), nil
@@ -160,7 +160,7 @@ func (r *auditResolver) CompliancePortalDocumentAccess(ctx context.Context, obj 
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCompliancePortalDocumentAccess(access), nil
@@ -195,7 +195,7 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 	page, err := r.probo.Controls.ListForAuditID(ctx, scope, obj.ID, cursor, controlFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list audit controls", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -242,7 +242,7 @@ func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *i
 	p, err := r.probo.Findings.ListForAuditID(ctx, scope, obj.ID, cursor, findingFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list audit findings", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFindingConnection(p, r, obj.ID, filter), nil
@@ -265,7 +265,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		count, err := r.probo.Audits.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -273,7 +273,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		count, err := r.probo.Audits.CountForFindingID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -281,7 +281,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		count, err := r.probo.Audits.CountForControlID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -289,13 +289,13 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 		count, err := r.probo.Audits.CountForFrameworkID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count audits", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
 	default:
 		r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 }
 
@@ -310,12 +310,12 @@ func (r *findingResolver) Organization(ctx context.Context, obj *types.Finding) 
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get finding organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -345,7 +345,7 @@ func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first 
 	p, err := r.probo.Audits.ListForFindingID(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list finding audits", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	auditIDs := make([]gid.GID, len(p.Data))
@@ -361,7 +361,7 @@ func (r *findingResolver) Audits(ctx context.Context, obj *types.Finding, first 
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list finding audit mappings", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewFindingAuditConnection(p, findingAudits, r, obj.ID), nil
@@ -382,12 +382,12 @@ func (r *findingResolver) Owner(ctx context.Context, obj *types.Finding) (*types
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get finding owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -408,12 +408,12 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 	risk, err := loaders.Risk.Load(ctx, obj.Risk.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get finding risk", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewRisk(risk), nil
@@ -453,7 +453,7 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 		count, err := r.probo.Findings.CountForOrganizationID(ctx, scope, obj.ParentID, findingFilter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count findings", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -461,7 +461,7 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 		count, err := r.probo.Findings.CountForAuditID(ctx, scope, obj.ParentID, findingFilter)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count findings", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -469,7 +469,7 @@ func (r *findingConnectionResolver) TotalCount(ctx context.Context, obj *types.F
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // CreateAudit is the resolver for the createAudit field.
@@ -492,12 +492,12 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	audit, err := r.probo.Audits.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if input.File != nil {
@@ -514,12 +514,12 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 		audit, err = r.probo.Audits.UploadReport(ctx, scope, &uploadReq)
 		if err != nil {
 			if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-				return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+				return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot upload audit report", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 
@@ -537,8 +537,8 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 	req := probo.UpdateAuditRequest{
 		ID:    input.ID,
-		Name:  gqlutils.UnwrapOmittable(input.Name),
-		Firm:  gqlutils.UnwrapOmittable(input.Firm),
+		Name:  gqlx.UnwrapOmittable(input.Name),
+		Firm:  gqlx.UnwrapOmittable(input.Firm),
 		State: input.State,
 	}
 	req.ValidFrom, req.ValidUntil = types.PeriodInputDates(input.Validity)
@@ -547,12 +547,12 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	audit, err := r.probo.Audits.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateAuditPayload{
@@ -569,7 +569,7 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 
 	if err := r.probo.Audits.Delete(ctx, scope, input.AuditID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete audit", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAuditPayload{
@@ -597,12 +597,12 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 	audit, err := r.probo.Audits.UploadReport(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot upload audit report", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UploadAuditReportPayload{
@@ -620,7 +620,7 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 	audit, err := r.probo.Audits.DeleteReport(ctx, scope, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete audit report", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAuditReportPayload{
@@ -654,12 +654,12 @@ func (r *mutationResolver) CreateFinding(ctx context.Context, input types.Create
 	finding, err := r.probo.Findings.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create finding", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateFindingPayload{
@@ -676,28 +676,28 @@ func (r *mutationResolver) UpdateFinding(ctx context.Context, input types.Update
 
 	req := probo.UpdateFindingRequest{
 		ID:                 input.ID,
-		Description:        gqlutils.UnwrapOmittable(input.Description),
-		Source:             gqlutils.UnwrapOmittable(input.Source),
-		IdentifiedOn:       gqlutils.UnwrapOmittable(input.IdentifiedOn),
-		RootCause:          gqlutils.UnwrapOmittable(input.RootCause),
-		CorrectiveAction:   gqlutils.UnwrapOmittable(input.CorrectiveAction),
+		Description:        gqlx.UnwrapOmittable(input.Description),
+		Source:             gqlx.UnwrapOmittable(input.Source),
+		IdentifiedOn:       gqlx.UnwrapOmittable(input.IdentifiedOn),
+		RootCause:          gqlx.UnwrapOmittable(input.RootCause),
+		CorrectiveAction:   gqlx.UnwrapOmittable(input.CorrectiveAction),
 		OwnerID:            input.OwnerID,
-		DueDate:            gqlutils.UnwrapOmittable(input.DueDate),
+		DueDate:            gqlx.UnwrapOmittable(input.DueDate),
 		Status:             input.Status,
 		Priority:           input.Priority,
-		RiskID:             gqlutils.UnwrapOmittable(input.RiskID),
-		EffectivenessCheck: gqlutils.UnwrapOmittable(input.EffectivenessCheck),
+		RiskID:             gqlx.UnwrapOmittable(input.RiskID),
+		EffectivenessCheck: gqlx.UnwrapOmittable(input.EffectivenessCheck),
 	}
 
 	finding, err := r.probo.Findings.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update finding", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateFindingPayload{
@@ -714,7 +714,7 @@ func (r *mutationResolver) DeleteFinding(ctx context.Context, input types.Delete
 
 	if err := r.probo.Findings.Delete(ctx, scope, input.FindingID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete finding", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteFindingPayload{
@@ -738,7 +738,7 @@ func (r *mutationResolver) CreateFindingAuditMapping(ctx context.Context, input 
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot create finding audit mapping", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateFindingAuditMappingPayload{
@@ -761,7 +761,7 @@ func (r *mutationResolver) DeleteFindingAuditMapping(ctx context.Context, input 
 	finding, audit, err := r.probo.Findings.DeleteAuditMapping(ctx, scope, input.FindingID, input.AuditID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete finding audit mapping", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteFindingAuditMappingPayload{
@@ -787,20 +787,20 @@ func (r *mutationResolver) CreateAuditFrameworkMapping(ctx context.Context, inpu
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "audit or framework not found")
+			return nil, gqlx.NotFoundf(ctx, "audit or framework not found")
 		}
 
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflictf(ctx, "framework is already linked to the audit")
+			return nil, gqlx.Conflictf(ctx, "framework is already linked to the audit")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot link framework to audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateAuditFrameworkMappingPayload{
@@ -826,16 +826,16 @@ func (r *mutationResolver) DeleteAuditFrameworkMapping(ctx context.Context, inpu
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "audit or framework not found")
+			return nil, gqlx.NotFoundf(ctx, "audit or framework not found")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot unlink framework from audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAuditFrameworkMappingPayload{
@@ -860,12 +860,12 @@ func (r *mutationResolver) PublishFindingList(ctx context.Context, input types.P
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish finding list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishFindingListPayload{

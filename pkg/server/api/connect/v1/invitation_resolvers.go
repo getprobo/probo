@@ -14,7 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Permission is the resolver for the permission field.
@@ -37,16 +37,16 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 	)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrUserAlreadyExists](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot invite user", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.InviteUserPayload{

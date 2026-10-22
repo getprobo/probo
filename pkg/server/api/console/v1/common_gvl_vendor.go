@@ -26,7 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func commonGVLVendorFilter(
@@ -45,14 +45,14 @@ func commonGVLVendorFilter(
 		// lone value rather than silently dropping it and returning the
 		// unfiltered global catalog, which reads as a successful filter.
 		if filter.CookieBannerID != nil {
-			return nil, gqlutils.Invalidf(ctx, "membership is required when filtering by cookieBannerId")
+			return nil, gqlx.Invalidf(ctx, "membership is required when filtering by cookieBannerId")
 		}
 
 		return cdFilter, nil
 	}
 
 	if filter.CookieBannerID == nil {
-		return nil, gqlutils.Invalidf(ctx, "cookieBannerId is required when filtering by membership")
+		return nil, gqlx.Invalidf(ctx, "cookieBannerId is required when filtering by membership")
 	}
 
 	if _, err := r.authorize(ctx, *filter.CookieBannerID, probo.ActionCookieBannerGet); err != nil {

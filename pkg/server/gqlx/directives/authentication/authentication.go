@@ -29,7 +29,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 type AuthenticationRequirement string
@@ -100,14 +100,14 @@ func Directive(ctx context.Context, obj any, next graphql.Resolver, required Aut
 	case AuthenticationRequirementOptional:
 	case AuthenticationRequirementPresent:
 		if identity == nil {
-			return nil, gqlutils.Unauthenticatedf(
+			return nil, gqlx.Unauthenticatedf(
 				ctx,
 				"authentication is required to access this resource",
 			)
 		}
 	case AuthenticationRequirementNone:
 		if identity != nil {
-			return nil, gqlutils.AlreadyAuthenticatedf(
+			return nil, gqlx.AlreadyAuthenticatedf(
 				ctx,
 				"authentication not allowed for this resource/action",
 			)

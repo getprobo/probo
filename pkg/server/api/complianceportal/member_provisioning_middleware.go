@@ -29,7 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
 	"go.probo.inc/probo/pkg/server/api/authn"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func NewMemberProvisioningMiddleware(visitorSvc *visitor.Service, logger *log.Logger) func(next http.Handler) http.Handler {
@@ -53,7 +53,7 @@ func NewMemberProvisioningMiddleware(visitorSvc *visitor.Service, logger *log.Lo
 						http.StatusInternalServerError,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.Internal(ctx),
+								gqlx.Internal(ctx),
 							},
 						},
 					)

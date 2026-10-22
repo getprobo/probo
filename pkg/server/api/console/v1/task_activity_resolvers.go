@@ -17,7 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
 )
 
@@ -36,12 +36,12 @@ func (r *taskActivityResolver) Actor(ctx context.Context, obj *types.TaskActivit
 	actor, err := loaders.Profile.Load(ctx, obj.Actor.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get task activity actor", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(actor), nil
@@ -57,7 +57,7 @@ func (r *taskActivityResolver) Comment(ctx context.Context, obj *types.TaskActiv
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot parse task comment activity", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if _, err := r.authorize(ctx, commentID, task.ActionTaskCommentGet); err != nil {
@@ -72,7 +72,7 @@ func (r *taskActivityResolver) Comment(ctx context.Context, obj *types.TaskActiv
 
 		r.logger.ErrorCtx(ctx, "cannot get task activity comment", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewTaskComment(comment), nil
@@ -94,7 +94,7 @@ func (r *taskActivityConnectionResolver) TotalCount(ctx context.Context, obj *ty
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count task activities", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil

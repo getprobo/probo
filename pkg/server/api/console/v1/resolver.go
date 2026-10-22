@@ -61,7 +61,7 @@ import (
 	collaboration_v1 "go.probo.inc/probo/pkg/server/api/collaboration/v1"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
 	"go.probo.inc/probo/pkg/thirdparty"
 )
@@ -143,7 +143,7 @@ func NewMux(
 	slackbotInstallations *slackchannel.InstallationService,
 	botDeliveryDestinations BotDeliveryDestinations,
 	complianceMessages ComplianceMessages,
-	graphqlLimits gqlutils.Limits,
+	graphqlLimits gqlx.Limits,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
 	notificationSvc *notification.Service,
@@ -341,7 +341,7 @@ func (r *Resolver) treatmentPlanNetScores(
 	progress, err := loaders.TreatmentProgress.Load(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get treatment plan progress", log.Error(err))
-		return 0, 0, 0, gqlutils.Internal(ctx)
+		return 0, 0, 0, gqlx.Internal(ctx)
 	}
 
 	likelihood, impact, score := riskmanagement.NetScores(

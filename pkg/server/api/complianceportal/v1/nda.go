@@ -28,7 +28,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -44,10 +44,10 @@ func mapNDASigningValidationError(ctx context.Context, err error) error {
 
 	if len(validationErrors.ByField("signer_full_name")) > 0 ||
 		len(validationErrors.ByField("actor_full_name")) > 0 {
-		return gqlutils.FullNameRequiredf(ctx, "full name is required")
+		return gqlx.FullNameRequiredf(ctx, "full name is required")
 	}
 
-	return gqlutils.InvalidValidationErrors(ctx, validationErrors)
+	return gqlx.InvalidValidationErrors(ctx, validationErrors)
 }
 
 // requireCompletedNDA enforces portal NDA completion for the signed-in identity.
@@ -63,13 +63,13 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 	compliancePage := complianceportal.CompliancePortalFromContext(ctx)
 	if compliancePage == nil {
 		r.logger.ErrorCtx(ctx, "cannot get compliance page from context")
-		return gqlutils.Internal(ctx)
+		return gqlx.Internal(ctx)
 	}
 
 	membership, err := r.visitor.GetPortalMembership(ctx, compliancePage.ID, identity.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get compliance page membership", log.Error(err))
-		return gqlutils.Internal(ctx)
+		return gqlx.Internal(ctx)
 	}
 
 	if membership.ElectronicSignatureID == nil {
@@ -81,17 +81,17 @@ func (r *Resolver) requireCompletedNDA(ctx context.Context) error {
 	sig, err := r.esign.GetSignatureByID(ctx, scope, *membership.ElectronicSignatureID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get NDA signature", log.Error(err))
-		return gqlutils.Internal(ctx)
+		return gqlx.Internal(ctx)
 	}
 
 	// Full name before NDA so export paths send users to /full-name first.
 	// Accept maps esign signer_full_name validation to the same gate code.
 	if identity.FullName == "" {
-		return gqlutils.FullNameRequiredf(ctx, "full name is required")
+		return gqlx.FullNameRequiredf(ctx, "full name is required")
 	}
 
 	if sig.Status != coredata.ElectronicSignatureStatusCompleted {
-		return gqlutils.NDASignatureRequiredf(ctx, "NDA signature required")
+		return gqlx.NDASignatureRequiredf(ctx, "NDA signature required")
 	}
 
 	return nil

@@ -14,7 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
@@ -46,12 +46,12 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 	)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrSAMLConfigurationEmailDomainAlreadyExists](err); ok {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create saml configuration", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateSAMLConfigurationPayload{
@@ -91,7 +91,7 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot update saml configuration", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateSAMLConfigurationPayload{
@@ -108,7 +108,7 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 	err := r.iam.OrganizationService.DeleteSAMLConfiguration(ctx, input.OrganizationID, input.SamlConfigurationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete saml configuration", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteSAMLConfigurationPayload{DeletedSamlConfigurationID: input.SamlConfigurationID}, nil
@@ -131,7 +131,7 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 		count, err := r.iam.OrganizationService.CountSAMLConfigurations(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count saml configurations", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &count, nil
@@ -139,7 +139,7 @@ func (r *sAMLConfigurationConnectionResolver) TotalCount(ctx context.Context, ob
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 
-	return nil, gqlutils.Internal(ctx)
+	return nil, gqlx.Internal(ctx)
 }
 
 // SAMLConfiguration returns schema.SAMLConfigurationResolver implementation.

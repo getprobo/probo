@@ -28,7 +28,7 @@ import (
 	"strings"
 
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/server/httpx"
+	"go.probo.inc/probo/pkg/netx/httpx"
 )
 
 const (

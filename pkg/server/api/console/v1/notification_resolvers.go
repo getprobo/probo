@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // MarkNotificationsRead is the resolver for the markNotificationsRead field.
@@ -36,12 +36,12 @@ func (r *mutationResolver) MarkNotificationsRead(ctx context.Context, input type
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot mark notifications read", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	nodes := make([]*types.Notification, 0, len(notifications))
@@ -51,7 +51,7 @@ func (r *mutationResolver) MarkNotificationsRead(ctx context.Context, input type
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot mark notifications read", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		nodes = append(nodes, node)
@@ -82,12 +82,12 @@ func (r *notificationConnectionResolver) TotalCount(ctx context.Context, obj *ty
 		)
 		if err != nil {
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return 0, gqlutils.NotFound(ctx, err)
+				return 0, gqlx.NotFound(ctx, err)
 			}
 
 			r.logger.ErrorCtx(ctx, "cannot count notifications", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -95,7 +95,7 @@ func (r *notificationConnectionResolver) TotalCount(ctx context.Context, obj *ty
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // NotificationConnection returns schema.NotificationConnectionResolver implementation.

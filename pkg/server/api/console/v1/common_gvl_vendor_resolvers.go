@@ -13,7 +13,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // TotalCount is the resolver for the totalCount field.
@@ -27,7 +27,7 @@ func (r *commonGVLVendorConnectionResolver) TotalCount(ctx context.Context, obj 
 		count, err := r.cookieBanner.CountCookieBannerGVLVendors(ctx, scope, *obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count cookie banner gvl vendors", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -42,7 +42,7 @@ func (r *commonGVLVendorConnectionResolver) TotalCount(ctx context.Context, obj 
 	count, err := r.cookieBanner.CountCommonGVLVendors(ctx, obj.Filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count common gvl vendors", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil

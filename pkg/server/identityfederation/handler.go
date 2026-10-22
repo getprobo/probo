@@ -31,8 +31,8 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/identityfederation"
+	"go.probo.inc/probo/pkg/netx/httpx"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/server/httpx"
 	"go.probo.inc/probo/pkg/server/jsonx"
 )
 

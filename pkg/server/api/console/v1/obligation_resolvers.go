@@ -17,7 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -45,12 +45,12 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 	obligation, err := r.probo.Obligations.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create obligation", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateObligationPayload{
@@ -67,14 +67,14 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
-		Area:                   gqlutils.UnwrapOmittable(input.Area),
-		Source:                 gqlutils.UnwrapOmittable(input.Source),
-		Requirement:            gqlutils.UnwrapOmittable(input.Requirement),
-		ActionsToBeImplemented: gqlutils.UnwrapOmittable(input.ActionsToBeImplemented),
-		Regulator:              gqlutils.UnwrapOmittable(input.Regulator),
+		Area:                   gqlx.UnwrapOmittable(input.Area),
+		Source:                 gqlx.UnwrapOmittable(input.Source),
+		Requirement:            gqlx.UnwrapOmittable(input.Requirement),
+		ActionsToBeImplemented: gqlx.UnwrapOmittable(input.ActionsToBeImplemented),
+		Regulator:              gqlx.UnwrapOmittable(input.Regulator),
 		OwnerID:                input.OwnerID,
-		LastReviewDate:         gqlutils.UnwrapOmittable(input.LastReviewDate),
-		DueDate:                gqlutils.UnwrapOmittable(input.DueDate),
+		LastReviewDate:         gqlx.UnwrapOmittable(input.LastReviewDate),
+		DueDate:                gqlx.UnwrapOmittable(input.DueDate),
 		Status:                 input.Status,
 		Type:                   input.Type,
 	}
@@ -82,12 +82,12 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 	obligation, err := r.probo.Obligations.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update obligation", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateObligationPayload{
@@ -104,7 +104,7 @@ func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.Del
 
 	if err := r.probo.Obligations.Delete(ctx, scope, input.ObligationID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete obligation", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteObligationPayload{
@@ -128,12 +128,12 @@ func (r *mutationResolver) PublishObligationList(ctx context.Context, input type
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish obligation list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishObligationListPayload{
@@ -153,12 +153,12 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get obligation organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -175,12 +175,12 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get obligation owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -203,7 +203,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := r.probo.Obligations.CountForOrganizationID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count obligations", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -211,7 +211,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := r.probo.Obligations.CountForRiskID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count risk obligations", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -219,7 +219,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := r.probo.Obligations.CountForControlID(ctx, scope, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count control obligations", log.Error(err))
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -227,7 +227,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver")
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Obligation returns schema.ObligationResolver implementation.

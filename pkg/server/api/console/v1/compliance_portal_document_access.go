@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *compliancePortalDocumentAccessResolver) authorizedDocumentAccess(
@@ -44,12 +44,12 @@ func (r *compliancePortalDocumentAccessResolver) authorizedDocumentAccess(
 	access, err := dataloader.FromContext(ctx).CompliancePortalDocumentAccess.Load(ctx, obj.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal document access", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return access, nil
@@ -71,12 +71,12 @@ func (r *compliancePortalDocumentAccessResolver) auditLink(
 	link, err := dataloader.FromContext(ctx).CompliancePortalAuditByID.Load(ctx, *access.CompliancePortalAuditID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load compliance portal audit", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return link, nil

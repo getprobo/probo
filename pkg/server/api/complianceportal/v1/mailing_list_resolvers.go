@@ -14,7 +14,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -34,16 +34,16 @@ func (r *mutationResolver) SubscribeToMailingList(ctx context.Context) (*types.S
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, mailman.ErrSubscriberAlreadyExist) {
-			return nil, gqlutils.Conflictf(ctx, "already subscribed to this mailing list")
+			return nil, gqlx.Conflictf(ctx, "already subscribed to this mailing list")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot subscribe to mailing list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.SubscribeToMailingListPayload{
@@ -60,21 +60,21 @@ func (r *mutationResolver) UnsubscribeFromMailingList(ctx context.Context) (*typ
 	subscriber, err := r.mailman.GetSubscriber(ctx, compliancePortal.MailingListID, identity.EmailAddress)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get mailing list subscription", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if subscriber == nil {
-		return nil, gqlutils.NotFoundf(ctx, "not subscribed to this mailing list")
+		return nil, gqlx.NotFoundf(ctx, "not subscribed to this mailing list")
 	}
 
 	if err := r.mailman.DeleteSubscriber(ctx, subscriber.ID); err != nil {
 		if errors.Is(err, mailman.ErrSubscriberNotFound) {
-			return nil, gqlutils.NotFoundf(ctx, "not subscribed to this mailing list")
+			return nil, gqlx.NotFoundf(ctx, "not subscribed to this mailing list")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot unsubscribe from mailing list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UnsubscribeFromMailingListPayload{DeletedMailingListSubscriberID: &subscriber.ID}, nil

@@ -29,7 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authz"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // NewAuthorizeFunc returns an authz.AuthorizeFunc that batches authorize
@@ -65,24 +65,24 @@ func NewAuthorizeFunc(logger *log.Logger) authz.AuthorizeFunc {
 		)
 		if err != nil {
 			if _, ok := errors.AsType[*iam.ErrAssumptionRequired](err); ok {
-				return nil, gqlutils.AssumptionRequired(ctx, err)
+				return nil, gqlx.AssumptionRequired(ctx, err)
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInsufficientPermissions](err); ok {
-				return nil, gqlutils.Forbidden(ctx, err)
+				return nil, gqlx.Forbidden(ctx, err)
 			}
 
 			if _, ok := errors.AsType[*iam.ErrInsufficientOAuth2Scope](err); ok {
-				return nil, gqlutils.Forbidden(ctx, err)
+				return nil, gqlx.Forbidden(ctx, err)
 			}
 
 			if errors.Is(err, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFoundf(ctx, "resource not found")
+				return nil, gqlx.NotFoundf(ctx, "resource not found")
 			}
 
 			logger.ErrorCtx(ctx, "cannot authorize", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return result.Scope, nil

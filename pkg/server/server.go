@@ -61,7 +61,7 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api"
 	connect_v1 "go.probo.inc/probo/pkg/server/api/connect/v1"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	server_identityfederation "go.probo.inc/probo/pkg/server/identityfederation"
 	"go.probo.inc/probo/pkg/server/mailactions"
 	console_web "go.probo.inc/probo/pkg/server/web"
@@ -114,7 +114,7 @@ type Config struct {
 	ConnectorRegistry *connectorprotocol.Registry
 	ProviderRegistry  *provider.Registry
 	CustomDomainCname string
-	GraphQLLimits     gqlutils.Limits
+	GraphQLLimits     gqlx.Limits
 	Logger            *log.Logger
 
 	// IdentityFederationIssuer serves the outbound OIDC documents. It is nil when the

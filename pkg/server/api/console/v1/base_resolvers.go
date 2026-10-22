@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/task"
 )
 
@@ -738,12 +738,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	node, err := loadNode(ctx, scope, id)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return node, nil
@@ -765,7 +765,7 @@ func (r *queryResolver) CommonThirdParties(ctx context.Context, name string) ([]
 	parties, err := r.thirdParty.Search(ctx, name)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot search common third parties", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.CommonThirdParty, len(parties))
@@ -805,7 +805,7 @@ func (r *queryResolver) CommonGVLVendors(ctx context.Context, first *int, after 
 	vendors, err := r.cookieBanner.ListCommonGVLVendors(ctx, cursor, cdFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list common gvl vendors", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	p := page.NewPage(vendors, cursor)
@@ -824,7 +824,7 @@ func (r *queryResolver) CommonGVLCatalog(ctx context.Context) (*types.CommonGVLC
 	catalog, err := r.cookieBanner.GetCommonGVLCatalog(ctx)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get common gvl catalog", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCommonGVLCatalog(catalog), nil
@@ -944,7 +944,7 @@ func (r *queryResolver) AWSConnectorSetup(ctx context.Context, organizationID gi
 	}
 
 	if r.identityFederation == nil {
-		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+		return nil, gqlx.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
 	setup, err := cloudaws.ConnectorSetupFor(
@@ -955,7 +955,7 @@ func (r *queryResolver) AWSConnectorSetup(ctx context.Context, organizationID gi
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build aws connector setup", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return newAWSConnectorSetup(setup), nil
@@ -968,7 +968,7 @@ func (r *queryResolver) GCPConnectorSetup(ctx context.Context, organizationID gi
 	}
 
 	if r.identityFederation == nil {
-		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+		return nil, gqlx.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
 	setup, err := cloudgcp.ConnectorSetupFor(
@@ -979,7 +979,7 @@ func (r *queryResolver) GCPConnectorSetup(ctx context.Context, organizationID gi
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build gcp connector setup", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return newGCPConnectorSetup(setup), nil
@@ -992,7 +992,7 @@ func (r *queryResolver) AzureConnectorSetup(ctx context.Context, organizationID 
 	}
 
 	if r.identityFederation == nil {
-		return nil, gqlutils.Invalidf(ctx, "identity federation is not configured in this deployment")
+		return nil, gqlx.Invalidf(ctx, "identity federation is not configured in this deployment")
 	}
 
 	setup, err := cloudazure.ConnectorSetupFor(
@@ -1003,7 +1003,7 @@ func (r *queryResolver) AzureConnectorSetup(ctx context.Context, organizationID 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot build azure connector setup", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return newAzureConnectorSetup(setup), nil
@@ -1012,11 +1012,11 @@ func (r *queryResolver) AzureConnectorSetup(ctx context.Context, organizationID 
 // ProbotIdentityBindPreview is the resolver for the probotIdentityBindPreview field.
 func (r *queryResolver) ProbotIdentityBindPreview(ctx context.Context, token string) (*types.ProbotIdentityBindPreview, error) {
 	if r.probotIdentityBindings == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if authn.IdentityFromContext(ctx) == nil {
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	preview, err := r.probotIdentityBindings.Preview(ctx, token)
@@ -1025,7 +1025,7 @@ func (r *queryResolver) ProbotIdentityBindPreview(ctx context.Context, token str
 		case errors.Is(err, identitybinding.ErrChallengeAlreadyUsed),
 			errors.Is(err, identitybinding.ErrChallengeExpired),
 			errors.Is(err, coredata.ErrResourceNotFound):
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		default:
 			r.logger.ErrorCtx(
 				ctx,
@@ -1033,7 +1033,7 @@ func (r *queryResolver) ProbotIdentityBindPreview(ctx context.Context, token str
 				log.Error(err),
 			)
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 	}
 

@@ -25,7 +25,7 @@ import (
 
 	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/pageinfo"
+	"go.probo.inc/probo/pkg/server/gqlx/types/pageinfo"
 )
 
 func NewDocumentRevision(

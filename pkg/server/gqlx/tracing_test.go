@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package gqlutils_test
+package gqlx_test
 
 import (
 	"bytes"
@@ -34,13 +34,13 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func TestInterceptOperation(t *testing.T) {
 	t.Parallel()
 
-	extension := gqlutils.NewTracingExtension(log.NewLogger(log.WithOutput(io.Discard)))
+	extension := gqlx.NewTracingExtension(log.NewLogger(log.WithOutput(io.Discard)))
 
 	t.Run(
 		"nil response from a canceled operation",
@@ -52,7 +52,7 @@ func TestInterceptOperation(t *testing.T) {
 
 			var logs bytes.Buffer
 
-			extension := gqlutils.NewTracingExtension(log.NewLogger(log.WithOutput(&logs)))
+			extension := gqlx.NewTracingExtension(log.NewLogger(log.WithOutput(&logs)))
 
 			handler := extension.InterceptOperation(
 				ctx,

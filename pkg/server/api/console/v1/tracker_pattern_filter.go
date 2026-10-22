@@ -25,7 +25,7 @@ import (
 
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func trackerPatternCoredataFilter(
@@ -38,7 +38,7 @@ func trackerPatternCoredataFilter(
 	}
 
 	if filter.ThirdPartyID.EntityType() != coredata.CommonThirdPartyEntityType {
-		return nil, gqlutils.Invalidf(ctx, "thirdPartyId must reference a CommonThirdParty")
+		return nil, gqlx.Invalidf(ctx, "thirdPartyId must reference a CommonThirdParty")
 	}
 
 	return coredataFilter.WithCommonThirdPartyID(filter.ThirdPartyID), nil

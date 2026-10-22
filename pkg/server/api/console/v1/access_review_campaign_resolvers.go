@@ -22,7 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -37,12 +37,12 @@ func (r *accessReviewCampaignResolver) Organization(ctx context.Context, obj *ty
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -59,7 +59,7 @@ func (r *accessReviewCampaignResolver) Sources(ctx context.Context, obj *types.A
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list campaign sources", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.AccessReviewCampaignSource, len(campaignSources))
@@ -95,7 +95,7 @@ func (r *accessReviewCampaignResolver) Entries(ctx context.Context, obj *types.A
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list access entries", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewEntryConnection(p, r, obj.ID, nil, filter), nil
@@ -112,7 +112,7 @@ func (r *accessReviewCampaignResolver) Statistics(ctx context.Context, obj *type
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get campaign statistics", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewStatistics(stats), nil
@@ -136,7 +136,7 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count access review campaigns", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -144,7 +144,7 @@ func (r *accessReviewCampaignConnectionResolver) TotalCount(ctx context.Context,
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Campaign is the resolver for the campaign field.
@@ -157,12 +157,12 @@ func (r *accessReviewCampaignSourceResolver) Campaign(ctx context.Context, obj *
 	campaign, err := r.accessReview.GetCampaign(ctx, scope, obj.Campaign.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewCampaign(campaign), nil
@@ -187,7 +187,7 @@ func (r *accessReviewCampaignSourceResolver) Source(ctx context.Context, obj *ty
 
 		r.logger.ErrorCtx(ctx, "cannot get access review source", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewSource(source), nil
@@ -218,7 +218,7 @@ func (r *accessReviewCampaignSourceResolver) FetchAttempts(ctx context.Context, 
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list fetch attempts", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewCampaignSourceFetchAttemptConnection(p, r, obj.ID), nil
@@ -249,7 +249,7 @@ func (r *accessReviewCampaignSourceResolver) Entries(ctx context.Context, obj *t
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list access entries", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	sourceID := obj.ID
@@ -268,7 +268,7 @@ func (r *accessReviewCampaignSourceResolver) Statistics(ctx context.Context, obj
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get source statistics", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewStatistics(stats), nil
@@ -285,7 +285,7 @@ func (r *accessReviewCampaignSourceFetchAttemptConnectionResolver) TotalCount(ct
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count fetch attempts", log.Error(err))
 
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -301,12 +301,12 @@ func (r *accessReviewEntryResolver) Campaign(ctx context.Context, obj *types.Acc
 	campaign, err := r.accessReview.GetCampaign(ctx, scope, obj.Campaign.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewCampaign(campaign), nil
@@ -322,12 +322,12 @@ func (r *accessReviewEntryResolver) CampaignSource(ctx context.Context, obj *typ
 	campaignSource, err := r.accessReview.GetCampaignSource(ctx, scope, obj.CampaignSource.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get campaign source", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAccessReviewCampaignSource(campaignSource), nil
@@ -344,7 +344,7 @@ func (r *accessReviewEntryResolver) DecisionHistory(ctx context.Context, obj *ty
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot get decision history", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	result := make([]*types.AccessReviewEntryDecisionHistoryEntry, len(histories))
@@ -373,7 +373,7 @@ func (r *accessReviewEntryConnectionResolver) TotalCount(ctx context.Context, ob
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count access entries", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -382,7 +382,7 @@ func (r *accessReviewEntryConnectionResolver) TotalCount(ctx context.Context, ob
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count access entries", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -390,7 +390,7 @@ func (r *accessReviewEntryConnectionResolver) TotalCount(ctx context.Context, ob
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // Organization is the resolver for the organization field.
@@ -404,12 +404,12 @@ func (r *accessReviewSourceResolver) Organization(ctx context.Context, obj *type
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -433,7 +433,7 @@ func (r *accessReviewSourceResolver) ConnectorID(ctx context.Context, obj *types
 
 		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return connectorID, nil
@@ -458,7 +458,7 @@ func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.A
 
 		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if connectorID == nil {
@@ -473,7 +473,7 @@ func (r *accessReviewSourceResolver) Connector(ctx context.Context, obj *types.A
 
 		r.logger.ErrorCtx(ctx, "cannot get connector", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewConnector(connector), nil
@@ -497,7 +497,7 @@ func (r *accessReviewSourceResolver) ConnectorAccount(ctx context.Context, obj *
 
 		r.logger.ErrorCtx(ctx, "cannot get connector account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewConnectorAccount(account), nil
@@ -619,7 +619,7 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 
 		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	if connectorID == nil {
@@ -634,7 +634,7 @@ func (r *accessReviewSourceResolver) NeedsConfiguration(ctx context.Context, obj
 
 		r.logger.ErrorCtx(ctx, "cannot determine access source configuration", log.Error(err))
 
-		return false, gqlutils.Internal(ctx)
+		return false, gqlx.Internal(ctx)
 	}
 
 	return needsConfiguration, nil
@@ -663,7 +663,7 @@ func (r *accessReviewSourceResolver) ConnectionStatus(ctx context.Context, obj *
 
 		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
 
-		return types.AccessReviewSourceConnectionStatusNotApplicable, gqlutils.Internal(ctx)
+		return types.AccessReviewSourceConnectionStatusNotApplicable, gqlx.Internal(ctx)
 	}
 
 	if connectorID == nil {
@@ -706,7 +706,7 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 
 		r.logger.ErrorCtx(ctx, "cannot load connector account", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if connectorID == nil {
@@ -721,7 +721,7 @@ func (r *accessReviewSourceResolver) SelectedOrganization(ctx context.Context, o
 
 		r.logger.ErrorCtx(ctx, "cannot get selected organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if slug == "" {
@@ -749,7 +749,7 @@ func (r *accessReviewSourceConnectionResolver) TotalCount(ctx context.Context, o
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count access sources", log.Error(err))
 
-			return 0, gqlutils.Internal(ctx)
+			return 0, gqlx.Internal(ctx)
 		}
 
 		return count, nil
@@ -757,7 +757,7 @@ func (r *accessReviewSourceConnectionResolver) TotalCount(ctx context.Context, o
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.String("resolver", fmt.Sprintf("%T", obj.Resolver)))
 
-	return 0, gqlutils.Internal(ctx)
+	return 0, gqlx.Internal(ctx)
 }
 
 // CreateAccessReviewSources is the resolver for the createAccessReviewSources field.
@@ -781,24 +781,24 @@ func (r *mutationResolver) CreateAccessReviewSources(ctx context.Context, input 
 	if err != nil {
 		if errors.Is(err, accessreview.ErrNoConnectorAccount) ||
 			errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create access sources", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	results := make([]*types.CreateAccessReviewSourceResult, len(ensured))
@@ -828,27 +828,27 @@ func (r *mutationResolver) UpdateAccessReviewSource(ctx context.Context, input t
 		scope,
 		accessreview.UpdateAccessReviewSourceRequest{
 			AccessReviewSourceID: input.AccessReviewSourceID,
-			Name:                 gqlutils.UnwrapOmittable(input.Name),
-			ConnectorID:          gqlutils.UnwrapOmittable(input.ConnectorID),
-			CsvData:              gqlutils.UnwrapOmittable(input.CSVData),
+			Name:                 gqlx.UnwrapOmittable(input.Name),
+			ConnectorID:          gqlx.UnwrapOmittable(input.ConnectorID),
+			CsvData:              gqlx.UnwrapOmittable(input.CSVData),
 		},
 	)
 	if err != nil {
 		if errors.Is(err, accessreview.ErrNoConnectorAccount) || errors.Is(err, coredata.ErrMultipleConnectorAccounts) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, coredata.ErrResourceInUse) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update access source", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	// A connector was just (re)linked: default its org so the source is usable
@@ -872,12 +872,12 @@ func (r *mutationResolver) DeleteAccessReviewSource(ctx context.Context, input t
 
 	if err := r.accessReview.DeleteSource(ctx, scope, input.AccessReviewSourceID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete access source", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAccessReviewSourcePayload{
@@ -902,16 +902,16 @@ func (r *mutationResolver) ConfigureAccessReviewSource(ctx context.Context, inpu
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, accessreview.ErrOrganizationPickerUnsupported) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot configure access source", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.ConfigureAccessReviewSourcePayload{
@@ -943,12 +943,12 @@ func (r *mutationResolver) CreateAccessReviewCampaign(ctx context.Context, input
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateAccessReviewCampaignPayload{
@@ -968,23 +968,23 @@ func (r *mutationResolver) UpdateAccessReviewCampaign(ctx context.Context, input
 		scope,
 		accessreview.UpdateAccessReviewCampaignRequest{
 			CampaignID:            input.AccessReviewCampaignID,
-			Name:                  gqlutils.UnwrapOmittable(input.Name),
-			Description:           gqlutils.UnwrapOmittable(input.Description),
-			AccessReviewSourceIDs: gqlutils.UnwrapOmittable(input.AccessReviewSourceIds),
+			Name:                  gqlx.UnwrapOmittable(input.Name),
+			Description:           gqlx.UnwrapOmittable(input.Description),
+			AccessReviewSourceIDs: gqlx.UnwrapOmittable(input.AccessReviewSourceIds),
 		},
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errorx.AnyOf(err, accessreview.ErrCampaignNotDraft) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateAccessReviewCampaignPayload{
@@ -1001,16 +1001,16 @@ func (r *mutationResolver) DeleteAccessReviewCampaign(ctx context.Context, input
 
 	if err := r.accessReview.DeleteCampaign(ctx, scope, input.AccessReviewCampaignID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, accessreview.ErrCampaignNotDeletable) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAccessReviewCampaignPayload{
@@ -1032,12 +1032,12 @@ func (r *mutationResolver) StartAccessReviewCampaign(ctx context.Context, input 
 			accessreview.ErrCampaignMissingSources,
 			accessreview.ErrCampaignNotDraft,
 		) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot start access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.StartAccessReviewCampaignPayload{
@@ -1055,12 +1055,12 @@ func (r *mutationResolver) CloseAccessReviewCampaign(ctx context.Context, input 
 	campaign, err := r.accessReview.CloseCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
 		if errors.Is(err, accessreview.ErrCampaignNotPendingActions) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot close access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CloseAccessReviewCampaignPayload{
@@ -1078,12 +1078,12 @@ func (r *mutationResolver) CancelAccessReviewCampaign(ctx context.Context, input
 	campaign, err := r.accessReview.CancelCampaign(ctx, scope, input.AccessReviewCampaignID)
 	if err != nil {
 		if errorx.AnyOf(err, accessreview.ErrCampaignCompleted, accessreview.ErrCampaignCancelled) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot cancel access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CancelAccessReviewCampaignPayload{
@@ -1108,16 +1108,16 @@ func (r *mutationResolver) AddAccessReviewCampaignSource(ctx context.Context, in
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if errors.Is(err, accessreview.ErrCampaignNotDraft) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot add scope source to access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.AddAccessReviewCampaignSourcePayload{
@@ -1142,12 +1142,12 @@ func (r *mutationResolver) RemoveAccessReviewCampaignSource(ctx context.Context,
 	)
 	if err != nil {
 		if errors.Is(err, accessreview.ErrCampaignNotDraft) {
-			return nil, gqlutils.Invalid(ctx, err)
+			return nil, gqlx.Invalid(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot remove scope source from access review campaign", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RemoveAccessReviewCampaignSourcePayload{
@@ -1174,12 +1174,12 @@ func (r *mutationResolver) RecordAccessReviewEntryDecision(ctx context.Context, 
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot record access entry decision", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RecordAccessReviewEntryDecisionPayload{
@@ -1230,12 +1230,12 @@ func (r *mutationResolver) RecordAccessReviewEntryDecisions(ctx context.Context,
 	entries, err := r.accessReview.RecordDecisions(ctx, scope, decisions)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot record access entry decisions", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	accessEntries := make([]*types.AccessReviewEntry, len(entries))
@@ -1262,12 +1262,12 @@ func (r *mutationResolver) FlagAccessReviewEntry(ctx context.Context, input type
 	})
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot flag access entry", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.FlagAccessReviewEntryPayload{

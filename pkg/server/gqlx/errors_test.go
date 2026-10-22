@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package gqlutils_test
+package gqlx_test
 
 import (
 	"context"
@@ -32,7 +32,7 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -45,7 +45,7 @@ func TestMapError(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		err := gqlutils.MapError(
+		err := gqlx.MapError(
 			ctx,
 			logger,
 			"cannot update connector",
@@ -69,7 +69,7 @@ func TestMapError(t *testing.T) {
 			},
 		}
 
-		err := gqlutils.MapError(
+		err := gqlx.MapError(
 			ctx,
 			logger,
 			"cannot update connector",
@@ -87,7 +87,7 @@ func TestMapError(t *testing.T) {
 	t.Run("unknown error", func(t *testing.T) {
 		t.Parallel()
 
-		err := gqlutils.MapError(
+		err := gqlx.MapError(
 			ctx,
 			logger,
 			"cannot update connector",

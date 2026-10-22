@@ -20,8 +20,8 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/types/cursor"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -43,11 +43,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot check identity membership", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		if !hasMembership {
-			return nil, gqlutils.MembershipRequiredf(
+			return nil, gqlx.MembershipRequiredf(
 				ctx,
 				"an organization membership is required to create an organization",
 			)
@@ -61,11 +61,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot check identity owner membership", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		if !hasOwnerMembership {
-			return nil, gqlutils.Forbiddenf(
+			return nil, gqlx.Forbiddenf(
 				ctx,
 				"only organization owners can create an organization",
 			)
@@ -107,16 +107,16 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateOrganizationPayload{
@@ -133,7 +133,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 	req := &iam.UpdateOrganizationRequest{
 		Name:      input.Name,
-		LegalName: gqlutils.UnwrapOmittable(input.LegalName),
+		LegalName: gqlx.UnwrapOmittable(input.LegalName),
 	}
 
 	if input.LogoFile != nil {
@@ -161,12 +161,12 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 	)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateOrganizationPayload{
@@ -183,7 +183,7 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 	err := r.iam.OrganizationService.DeleteOrganization(ctx, input.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete organization", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteOrganizationPayload{DeletedOrganizationID: input.OrganizationID}, nil
@@ -198,7 +198,7 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 	organization, err := r.iam.OrganizationService.DeleteHorizontalLogo(ctx, input.OrganizationID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete organization horizontal logo", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteOrganizationHorizontalLogoPayload{
@@ -211,7 +211,7 @@ func (r *organizationResolver) Logo(ctx context.Context, obj *types.Organization
 	file, err := r.iam.OrganizationService.LogoFile(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load logo file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if file == nil {
@@ -226,7 +226,7 @@ func (r *organizationResolver) HorizontalLogo(ctx context.Context, obj *types.Or
 	file, err := r.iam.OrganizationService.HorizontalLogoFile(ctx, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot load horizontal logo file", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if file == nil {
@@ -263,7 +263,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 		}
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.ProfileConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -287,7 +287,7 @@ func (r *organizationResolver) Profiles(ctx context.Context, obj *types.Organiza
 	page, err := r.iam.OrganizationService.ListProfiles(ctx, obj.ID, cursor, filters)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list profiles", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfileConnection(page, r, obj.ID, filters), nil
@@ -299,7 +299,7 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.SAMLConfigurationConnection{
 			Resolver: r,
 			ParentID: obj.ID,
@@ -316,7 +316,7 @@ func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *type
 	page, err := r.iam.OrganizationService.ListSAMLConfigurations(ctx, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list saml configurations", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewSAMLConfigurationConnection(page, r, obj.ID), nil
@@ -336,7 +336,7 @@ func (r *organizationResolver) ScimConfiguration(ctx context.Context, obj *types
 
 		r.logger.ErrorCtx(ctx, "cannot get scim configuration", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewSCIMConfiguration(config), nil
@@ -398,7 +398,7 @@ func (r *organizationResolver) AuditLogEntries(ctx context.Context, obj *types.O
 	p, err := r.iam.OrganizationService.ListAuditLogEntries(ctx, obj.ID, c, coredataFilter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list audit log entries", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAuditLogEntryConnection(p, r, obj.ID, coredataFilter), nil
@@ -415,12 +415,12 @@ func (r *organizationResolver) Viewer(ctx context.Context, obj *types.Organizati
 	profile, err := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(ctx, identity.ID, obj.ID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get profile", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(profile), nil
@@ -438,7 +438,7 @@ func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.O
 		return nil, err
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.EmployeePortalConnection{ParentID: obj.ID}, nil
 	}
 
@@ -459,7 +459,7 @@ func (r *organizationResolver) EmployeePortals(ctx context.Context, obj *types.O
 	p, err := r.employeePortal.ListForOrganizationID(ctx, scope, obj.ID, c)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list employee portals", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewEmployeePortalConnection(p, obj.ID), nil

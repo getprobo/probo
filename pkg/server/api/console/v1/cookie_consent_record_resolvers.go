@@ -17,7 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // CookieBanner is the resolver for the cookieBanner field.
@@ -36,7 +36,7 @@ func (r *cookieConsentRecordResolver) CookieBanner(ctx context.Context, obj *typ
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewCookieBanner(banner), nil
@@ -57,7 +57,7 @@ func (r *cookieConsentRecordResolver) CookieBannerVersion(ctx context.Context, o
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner version", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CookieBannerVersion{
@@ -79,7 +79,7 @@ func (r *cookieConsentRecordConnectionResolver) TotalCount(ctx context.Context, 
 	count, err := r.cookieBanner.CountCookieConsentRecordsForBanner(ctx, scope, obj.ParentID, obj.Filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count consent records", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil

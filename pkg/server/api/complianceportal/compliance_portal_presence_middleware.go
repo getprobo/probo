@@ -26,7 +26,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func NewCompliancePortalPresenceMiddleware() func(next http.Handler) http.Handler {
@@ -41,7 +41,7 @@ func NewCompliancePortalPresenceMiddleware() func(next http.Handler) http.Handle
 						http.StatusNotFound,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.NotFoundf(
+								gqlx.NotFoundf(
 									r.Context(),
 									"compliance page not found",
 								),

@@ -22,7 +22,7 @@ package types
 
 import (
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/pageinfo"
+	"go.probo.inc/probo/pkg/server/gqlx/types/pageinfo"
 )
 
 func NewPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *PageInfo {

@@ -18,57 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package gqlutils
+package gqlx
 
 import (
 	"context"
-	"errors"
-	"runtime/debug"
 
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
-	"go.probo.inc/probo/pkg/iam"
-	"go.probo.inc/probo/pkg/validator"
+	"github.com/99designs/gqlgen/graphql"
 )
 
-func RecoverFunc(ctx context.Context, err any) error {
-	if gqlErr, ok := err.(*gqlerror.Error); ok {
-		return gqlErr
+func OnlyIDSelected(ctx context.Context) bool {
+	fields := graphql.CollectFieldsCtx(ctx, nil)
+
+	if len(fields) != 1 {
+		return false
 	}
 
-	if errValidations, ok := errors.AsType[validator.ValidationErrors](asError(err)); ok {
-		gqlErrors := gqlerror.List{}
-
-		for _, err := range errValidations {
-			gqlErrors = append(
-				gqlErrors,
-				Invalid(
-					ctx,
-					err,
-				),
-			)
-		}
-
-		return gqlErrors
-	}
-
-	if errTyped, ok := err.(error); ok {
-		if permissionDeniedErr, ok := errors.AsType[*iam.ErrInsufficientPermissions](errTyped); ok {
-			return Forbidden(ctx, permissionDeniedErr)
-		}
-	}
-
-	logger := httpserver.LoggerFromContext(ctx)
-	logger.Error("resolver panic", log.Any("error", err), log.String("stack", string(debug.Stack())))
-
-	return errors.New("internal server error")
+	return fields[0].Name == "id"
 }
 
-func asError(err any) error {
-	if e, ok := err.(error); ok {
-		return e
+func OnlyTotalCountSelected(ctx context.Context) bool {
+	fields := graphql.CollectFieldsCtx(ctx, nil)
+
+	if len(fields) != 1 {
+		return false
 	}
 
-	return errors.New("unknown panic")
+	return fields[0].Name == "totalCount"
 }

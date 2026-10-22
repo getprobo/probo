@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *cookieBannerSampleResolver) loadPageLoads(
@@ -49,7 +49,7 @@ func (r *cookieBannerSampleResolver) loadPageLoads(
 
 		r.logger.ErrorCtx(ctx, "cannot get cookie banner sample page loads", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return cookiebanner.NewSampleFamilyCountPtrs(pageLoads), nil

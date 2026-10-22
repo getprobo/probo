@@ -30,7 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func (r *viewerResolver) listEmployeeDocuments(
@@ -62,7 +62,7 @@ func (r *viewerResolver) listEmployeeDocuments(
 		}
 	}
 
-	if gqlutils.OnlyTotalCountSelected(ctx) {
+	if gqlx.OnlyTotalCountSelected(ctx) {
 		return &types.EmployeeDocumentConnection{
 			Resolver: r,
 			ParentID: organizationID,
@@ -93,7 +93,7 @@ func (r *viewerResolver) listEmployeeDocuments(
 	)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, listErrorMessage, log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	employeeDocuments := make([]*types.EmployeeDocument, len(documentsPage.Data))

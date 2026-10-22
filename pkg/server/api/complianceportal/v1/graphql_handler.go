@@ -34,9 +34,9 @@ import (
 	"go.probo.inc/probo/pkg/securecookie"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/complianceportal/v1/schema"
-	"go.probo.inc/probo/pkg/server/gqlutils"
-	"go.probo.inc/probo/pkg/server/gqlutils/directives/authentication"
-	"go.probo.inc/probo/pkg/server/gqlutils/directives/session"
+	"go.probo.inc/probo/pkg/server/gqlx"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/authentication"
+	"go.probo.inc/probo/pkg/server/gqlx/directives/session"
 )
 
 func NewGraphQLHandler(
@@ -50,7 +50,7 @@ func NewGraphQLHandler(
 	baseURL *baseurl.BaseURL,
 	cookieConfig securecookie.Config,
 	tokenSecret string,
-	limits gqlutils.Limits,
+	limits gqlx.Limits,
 ) http.Handler {
 	config := schema.Config{
 		Resolvers: &Resolver{
@@ -71,7 +71,7 @@ func NewGraphQLHandler(
 	}
 
 	es := schema.NewExecutableSchema(config)
-	gqlh := gqlutils.NewHandler(es, logger, limits)
+	gqlh := gqlx.NewHandler(es, logger, limits)
 
 	return gqlh
 }

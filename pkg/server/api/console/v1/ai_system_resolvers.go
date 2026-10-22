@@ -17,7 +17,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -32,12 +32,12 @@ func (r *aiSystemResolver) Organization(ctx context.Context, obj *types.AiSystem
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get ai system organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -58,12 +58,12 @@ func (r *aiSystemResolver) Owner(ctx context.Context, obj *types.AiSystem) (*typ
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get ai system owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -96,7 +96,7 @@ func (r *aiSystemConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	count, err := r.probo.AiSystems.CountForOrganizationID(ctx, scope, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count ai systems", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -135,16 +135,16 @@ func (r *mutationResolver) CreateAiSystem(ctx context.Context, input types.Creat
 	aiSystem, err := r.probo.AiSystems.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create ai system", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateAiSystemPayload{
@@ -161,38 +161,38 @@ func (r *mutationResolver) UpdateAiSystem(ctx context.Context, input types.Updat
 
 	req := probo.UpdateAiSystemRequest{
 		ID:                      input.ID,
-		Name:                    gqlutils.UnwrapOmittable(input.Name),
-		Version:                 gqlutils.UnwrapOmittable(input.Version),
-		Status:                  gqlutils.UnwrapOmittable(input.Status),
-		CompanyRoles:            gqlutils.UnwrapOmittable(input.CompanyRoles),
-		OwnerID:                 gqlutils.UnwrapOmittable(input.OwnerID),
-		Source:                  gqlutils.UnwrapOmittable(input.Source),
-		Purpose:                 gqlutils.UnwrapOmittable(input.Purpose),
-		IntendedUseCases:        gqlutils.UnwrapOmittable(input.IntendedUseCases),
-		AutonomyLevel:           gqlutils.UnwrapOmittable(input.AutonomyLevel),
-		HumanOversightMechanism: gqlutils.UnwrapOmittable(input.HumanOversightMechanism),
-		RiskClassification:      gqlutils.UnwrapOmittable(input.RiskClassification),
-		KeyStakeholders:         gqlutils.UnwrapOmittable(input.KeyStakeholders),
-		DataSourcesAndType:      gqlutils.UnwrapOmittable(input.DataSourcesAndType),
-		DeploymentDate:          gqlutils.UnwrapOmittable(input.DeploymentDate),
-		LastReviewDate:          gqlutils.UnwrapOmittable(input.LastReviewDate),
-		NextReviewDate:          gqlutils.UnwrapOmittable(input.NextReviewDate),
-		Notes:                   gqlutils.UnwrapOmittable(input.Notes),
+		Name:                    gqlx.UnwrapOmittable(input.Name),
+		Version:                 gqlx.UnwrapOmittable(input.Version),
+		Status:                  gqlx.UnwrapOmittable(input.Status),
+		CompanyRoles:            gqlx.UnwrapOmittable(input.CompanyRoles),
+		OwnerID:                 gqlx.UnwrapOmittable(input.OwnerID),
+		Source:                  gqlx.UnwrapOmittable(input.Source),
+		Purpose:                 gqlx.UnwrapOmittable(input.Purpose),
+		IntendedUseCases:        gqlx.UnwrapOmittable(input.IntendedUseCases),
+		AutonomyLevel:           gqlx.UnwrapOmittable(input.AutonomyLevel),
+		HumanOversightMechanism: gqlx.UnwrapOmittable(input.HumanOversightMechanism),
+		RiskClassification:      gqlx.UnwrapOmittable(input.RiskClassification),
+		KeyStakeholders:         gqlx.UnwrapOmittable(input.KeyStakeholders),
+		DataSourcesAndType:      gqlx.UnwrapOmittable(input.DataSourcesAndType),
+		DeploymentDate:          gqlx.UnwrapOmittable(input.DeploymentDate),
+		LastReviewDate:          gqlx.UnwrapOmittable(input.LastReviewDate),
+		NextReviewDate:          gqlx.UnwrapOmittable(input.NextReviewDate),
+		Notes:                   gqlx.UnwrapOmittable(input.Notes),
 	}
 
 	aiSystem, err := r.probo.AiSystems.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update ai system", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateAiSystemPayload{
@@ -209,12 +209,12 @@ func (r *mutationResolver) DeleteAiSystem(ctx context.Context, input types.Delet
 
 	if err := r.probo.AiSystems.Delete(ctx, scope, input.AiSystemID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot delete ai system", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteAiSystemPayload{
@@ -238,12 +238,12 @@ func (r *mutationResolver) PublishAiSystemList(ctx context.Context, input types.
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish ai system list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishAiSystemListPayload{

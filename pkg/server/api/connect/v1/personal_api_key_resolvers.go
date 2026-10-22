@@ -13,7 +13,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // RevokePersonalAPIKey is the resolver for the revokePersonalAPIKey field.
@@ -27,7 +27,7 @@ func (r *mutationResolver) RevokePersonalAPIKey(ctx context.Context, input types
 	err := r.iam.AccountService.DeletePersonalAPIKey(ctx, identity.ID, input.PersonalAPIKeyID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete personal api key", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.RevokePersonalAPIKeyPayload{PersonalAPIKeyID: input.PersonalAPIKeyID}, nil
@@ -44,7 +44,7 @@ func (r *personalAPIKeyResolver) Token(ctx context.Context, obj *types.PersonalA
 	token, err := r.iam.AccountService.RevealPersonalAPIKeyToken(ctx, identity.ID, obj.ID)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot reveal personal api key token", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &token, nil
@@ -66,7 +66,7 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 		count, err := r.iam.AccountService.CountPersonalAPIKeys(ctx, obj.ParentID)
 		if err != nil {
 			r.logger.ErrorCtx(ctx, "cannot count personal api keys", log.Error(err))
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
 		return &count, nil
@@ -74,7 +74,7 @@ func (r *personalAPIKeyConnectionResolver) TotalCount(ctx context.Context, obj *
 
 	r.logger.ErrorCtx(ctx, "unsupported resolver", log.Any("resolver", obj.Resolver))
 
-	return nil, gqlutils.Internal(ctx)
+	return nil, gqlx.Internal(ctx)
 }
 
 // PersonalAPIKey returns schema.PersonalAPIKeyResolver implementation.

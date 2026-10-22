@@ -18,7 +18,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 	"go.probo.inc/probo/pkg/validator"
 )
 
@@ -33,12 +33,12 @@ func (r *businessFunctionResolver) Organization(ctx context.Context, obj *types.
 	organization, err := loaders.Organization.Load(ctx, obj.Organization.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get business function organization", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewOrganization(organization), nil
@@ -59,12 +59,12 @@ func (r *businessFunctionResolver) Owner(ctx context.Context, obj *types.Busines
 	owner, err := loaders.Profile.Load(ctx, obj.Owner.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot get business function owner", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewProfile(owner), nil
@@ -94,7 +94,7 @@ func (r *businessFunctionResolver) Assets(ctx context.Context, obj *types.Busine
 	pageResult, err := r.probo.BusinessFunctions.ListAssets(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list business function assets", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewAssetConnection(pageResult, r, obj.ID), nil
@@ -124,7 +124,7 @@ func (r *businessFunctionResolver) ThirdParties(ctx context.Context, obj *types.
 	pageResult, err := r.probo.BusinessFunctions.ListThirdParties(ctx, scope, obj.ID, cursor)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list business function third parties", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewThirdPartyConnection(pageResult, r, obj.ID, nil), nil
@@ -152,7 +152,7 @@ func (r *businessFunctionConnectionResolver) TotalCount(ctx context.Context, obj
 	count, err := r.probo.BusinessFunctions.CountForOrganizationID(ctx, scope, obj.ParentID, filter)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count business functions", log.Error(err))
-		return 0, gqlutils.Internal(ctx)
+		return 0, gqlx.Internal(ctx)
 	}
 
 	return count, nil
@@ -182,16 +182,16 @@ func (r *mutationResolver) CreateBusinessFunction(ctx context.Context, input typ
 	businessFunction, err := r.probo.BusinessFunctions.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflictf(ctx, "business function reference already exists")
+			return nil, gqlx.Conflictf(ctx, "business function reference already exists")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot create business function", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.CreateBusinessFunctionPayload{
@@ -213,9 +213,9 @@ func (r *mutationResolver) UpdateBusinessFunction(ctx context.Context, input typ
 		MTDMinutes:      input.MtdMinutes,
 		RTOMinutes:      input.RtoMinutes,
 		RPOMinutes:      input.RpoMinutes,
-		ImpactTolerance: gqlutils.UnwrapOmittable(input.ImpactTolerance),
-		Notes:           gqlutils.UnwrapOmittable(input.Notes),
-		OwnerID:         gqlutils.UnwrapOmittable(input.OwnerID),
+		ImpactTolerance: gqlx.UnwrapOmittable(input.ImpactTolerance),
+		Notes:           gqlx.UnwrapOmittable(input.Notes),
+		OwnerID:         gqlx.UnwrapOmittable(input.OwnerID),
 	}
 
 	if input.AssetIds != nil {
@@ -229,16 +229,16 @@ func (r *mutationResolver) UpdateBusinessFunction(ctx context.Context, input typ
 	businessFunction, err := r.probo.BusinessFunctions.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
-			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
+			return nil, gqlx.InvalidValidationErrors(ctx, validationErrors)
 		}
 
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflictf(ctx, "business function reference already exists")
+			return nil, gqlx.Conflictf(ctx, "business function reference already exists")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update business function", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateBusinessFunctionPayload{
@@ -255,7 +255,7 @@ func (r *mutationResolver) DeleteBusinessFunction(ctx context.Context, input typ
 
 	if err := r.probo.BusinessFunctions.Delete(ctx, scope, input.BusinessFunctionID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete business function", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.DeleteBusinessFunctionPayload{
@@ -279,12 +279,12 @@ func (r *mutationResolver) PublishBusinessFunctionList(ctx context.Context, inpu
 	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
-			return nil, gqlutils.Conflict(ctx, err)
+			return nil, gqlx.Conflict(ctx, err)
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot publish business function list", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.PublishBusinessFunctionListPayload{

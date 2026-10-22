@@ -22,7 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // Node is the resolver for the node field.
@@ -176,40 +176,40 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	node, err := loadNode(ctx, id)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrOrganizationNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrIdentityNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrSessionNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrProfileNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrMembershipNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if _, ok := errors.AsType[*iam.ErrInvitationNotFound](err); ok {
-			return nil, gqlutils.NotFound(ctx, err)
+			return nil, gqlx.NotFound(ctx, err)
 		}
 
 		if oauthErr, ok := errors.AsType[*oauth2.OAuth2Error](err); ok {
-			return nil, gqlutils.Invalidf(ctx, "%s", oauthErr.Description())
+			return nil, gqlx.Invalidf(ctx, "%s", oauthErr.Description())
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load node", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return node, nil
@@ -234,7 +234,7 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	count, err := r.iam.AccountService.CountSAMLConfigurationsForEmail(ctx, email)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot count SAML configurations for email", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	if count != 1 {
@@ -254,7 +254,7 @@ func (r *queryResolver) SsoLoginURL(ctx context.Context, email mail.Addr) (*stri
 	samlConfigs, err := r.iam.AccountService.ListSAMLConfigurationsForEmail(ctx, email)
 	if err != nil {
 		r.logger.ErrorCtx(ctx, "cannot list SAML configurations for email", log.Error(err))
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	samlConfig := samlConfigs[0]

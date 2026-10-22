@@ -15,7 +15,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/authz"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/connect/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 // LastSession is the resolver for the lastSession field.
@@ -37,7 +37,7 @@ func (r *membershipResolver) LastSession(ctx context.Context, obj *types.Members
 
 		r.logger.ErrorCtx(ctx, "cannot get active session for membership", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return types.NewSession(childSession), nil
@@ -69,12 +69,12 @@ func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.Upd
 	)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
-			return nil, gqlutils.Conflictf(ctx, "cannot demote last active owner")
+			return nil, gqlx.Conflictf(ctx, "cannot demote last active owner")
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot update membership", log.Error(err))
 
-		return nil, gqlutils.Internal(ctx)
+		return nil, gqlx.Internal(ctx)
 	}
 
 	return &types.UpdateMembershipPayload{

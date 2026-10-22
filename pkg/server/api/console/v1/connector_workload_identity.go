@@ -31,7 +31,7 @@ import (
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func newAWSConnectorSetup(setup cloudaws.ConnectorSetup) *types.AWSConnectorSetup {
@@ -85,10 +85,10 @@ func (r *Resolver) workloadIdentitySettings(
 		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
 			r.logger.ErrorCtx(ctx, "cannot marshal workload identity connector settings", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	return raw, nil
@@ -115,10 +115,10 @@ func (r *Resolver) organizationConnectorSettings(
 		if errors.Is(err, probo.ErrMarshalWorkloadIdentitySettings) {
 			r.logger.ErrorCtx(ctx, "cannot marshal organization connector settings", log.Error(err))
 
-			return nil, gqlutils.Internal(ctx)
+			return nil, gqlx.Internal(ctx)
 		}
 
-		return nil, gqlutils.Invalid(ctx, err)
+		return nil, gqlx.Invalid(ctx, err)
 	}
 
 	return raw, nil

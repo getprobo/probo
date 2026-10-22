@@ -32,7 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/securetoken"
-	"go.probo.inc/probo/pkg/server/gqlutils"
+	"go.probo.inc/probo/pkg/server/gqlx"
 )
 
 func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Handler) http.Handler {
@@ -60,7 +60,7 @@ func NewAPIKeyMiddleware(svc *iam.Service, tokenSecret string) func(next http.Ha
 						http.StatusUnauthorized,
 						&graphql.Response{
 							Errors: gqlerror.List{
-								gqlutils.Conflictf(ctx, "API key authentication cannot be used with session authentication"),
+								gqlx.Conflictf(ctx, "API key authentication cannot be used with session authentication"),
 							},
 						},
 					)
