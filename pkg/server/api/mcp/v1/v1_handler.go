@@ -46,6 +46,7 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
 	"go.probo.inc/probo/pkg/server/api/authn"
@@ -77,6 +78,9 @@ func NewMux(
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
 	azureConnectorInstall cloudazure.ConnectorInstallConfig,
+	customDomainCname string,
+	slackbotInstallations *slackchannel.InstallationService,
+	slackDestinations SlackDestinations,
 ) *chi.Mux {
 	logger = logger.Named("mcp.v1")
 
@@ -103,6 +107,9 @@ func NewMux(
 		awsConnectorInstall:   awsConnectorInstall,
 		gcpConnectorInstall:   gcpConnectorInstall,
 		azureConnectorInstall: azureConnectorInstall,
+		customDomainCname:     customDomainCname,
+		slackbotInstallations: slackbotInstallations,
+		slackDestinations:     slackDestinations,
 	}
 
 	mcpServer := server.New(resolver, mcpgenmcp.WithRecoverFunc(mcpx.NewRecoverFunc(logger)))

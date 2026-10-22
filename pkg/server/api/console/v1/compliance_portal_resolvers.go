@@ -413,6 +413,10 @@ func (r *compliancePortalResolver) DefaultDomain(ctx context.Context, obj *types
 
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 
@@ -438,6 +442,10 @@ func (r *compliancePortalResolver) CustomDomain(ctx context.Context, obj *types.
 
 	scope, err := r.authorize(ctx, obj.ID, management.ActionCustomDomainGet)
 	if err != nil {
+		if gqlutils.IsForbidden(err) {
+			return nil, nil
+		}
+
 		return nil, err
 	}
 

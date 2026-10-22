@@ -5294,6 +5294,10 @@ func (r *Resolver) GetCompliancePortalTool(ctx context.Context, req *mcp.CallToo
 		tc.Nda = nda
 	}
 
+	if err := r.loadCompliancePortalDetails(ctx, scope, compliancePortal, tc); err != nil {
+		return nil, types.GetCompliancePortalOutput{}, err
+	}
+
 	return nil, types.GetCompliancePortalOutput{CompliancePortal: tc}, nil
 }
 
@@ -5672,7 +5676,7 @@ func (r *Resolver) CreateCustomDomainTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
-	return nil, types.CreateCustomDomainOutput{CustomDomain: types.NewCustomDomain(domain, cert)}, nil
+	return nil, types.CreateCustomDomainOutput{CustomDomain: types.NewCustomDomain(domain, cert, r.customDomainCname)}, nil
 }
 
 // DeleteCustomDomainTool handles the deleteCustomDomain tool
@@ -5705,7 +5709,7 @@ func (r *Resolver) DeleteCustomDomainTool(ctx context.Context, req *mcp.CallTool
 		}
 	}
 
-	deletedDomain := types.NewCustomDomain(domain, cert)
+	deletedDomain := types.NewCustomDomain(domain, cert, r.customDomainCname)
 
 	if err := r.management.RemoveCustomDomain(ctx, scope, domain.ID); err != nil {
 		return nil, types.DeleteCustomDomainOutput{}, fmt.Errorf("cannot delete custom domain: %w", err)

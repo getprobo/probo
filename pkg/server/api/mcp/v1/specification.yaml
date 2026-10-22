@@ -12119,6 +12119,21 @@ components:
         entity_name:
           type: string
           description: Entity name shown on the public compliance page
+        public_url:
+          type:
+            - string
+            - "null"
+          description: Public URL of the compliance portal
+        custom_domain:
+          anyOf:
+            - $ref: "#/components/schemas/CustomDomain"
+            - type: "null"
+          description: Customer custom domain configured for this portal
+        slack:
+          anyOf:
+            - $ref: "#/components/schemas/CompliancePortalSlack"
+            - type: "null"
+          description: Whether the Slack app is installed and which channel is connected
         created_at:
           type: string
           format: date-time
@@ -12234,6 +12249,58 @@ components:
             - type: string
             - type: "null"
 
+    DNSRecordInstruction:
+      type: object
+      required:
+        - type
+        - name
+        - value
+        - ttl
+        - purpose
+      properties:
+        type:
+          type: string
+          description: DNS record type
+        name:
+          type: string
+          description: DNS record name
+        value:
+          type: string
+          description: DNS record value
+        ttl:
+          type: integer
+          description: DNS record TTL in seconds
+        purpose:
+          type: string
+          description: Why this DNS record is required
+
+    CompliancePortalSlackChannel:
+      type: object
+      required:
+        - channel_id
+        - channel_name
+      properties:
+        channel_id:
+          type: string
+          description: Slack channel ID
+        channel_name:
+          type: string
+          description: Slack channel name
+
+    CompliancePortalSlack:
+      type: object
+      required:
+        - installed
+      properties:
+        installed:
+          type: boolean
+          description: Whether the Slack app is installed for the organization
+        channel:
+          anyOf:
+            - $ref: "#/components/schemas/CompliancePortalSlackChannel"
+            - type: "null"
+          description: Slack channel connected to this compliance portal
+
     CustomDomain:
       type: object
       required:
@@ -12241,6 +12308,7 @@ components:
         - organization_id
         - domain
         - managed
+        - dns_records
         - created_at
         - updated_at
       properties:
@@ -12257,6 +12325,11 @@ components:
           anyOf:
             - $ref: "#/components/schemas/Certificate"
             - type: "null"
+        dns_records:
+          type: array
+          description: DNS records to publish for this domain
+          items:
+            $ref: "#/components/schemas/DNSRecordInstruction"
         created_at:
           type: string
           format: date-time
@@ -20212,7 +20285,7 @@ tools:
       $ref: "#/components/schemas/ActivateCompliancePortalAccessOutput"
   - name: getCompliancePortal
     title: Get Compliance Portal
-    description: Get a compliance portal by ID
+    description: Get a compliance portal by ID, including its public URL, custom domain, and Slack status
     hints:
       readonly: true
       destructive: false
@@ -20632,7 +20705,7 @@ tools:
       $ref: "#/components/schemas/DeleteComplianceCustomLinkOutput"
   - name: createCustomDomain
     title: Create Custom Domain
-    description: Create a custom domain for a compliance page
+    description: Create a custom domain for a compliance page and return the DNS records to configure
     hints:
       readonly: false
       destructive: false

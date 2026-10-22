@@ -24,12 +24,13 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 )
 
-func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate) *CustomDomain {
+func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate, cnameTarget string) *CustomDomain {
 	domain := &CustomDomain{
 		ID:             d.ID,
 		OrganizationID: d.OrganizationID,
 		Domain:         d.Domain,
 		Managed:        d.Managed,
+		DNSRecords:     dnsRecordsForDomain(d.Domain, cnameTarget),
 		CreatedAt:      d.CreatedAt,
 		UpdatedAt:      d.UpdatedAt,
 	}
@@ -44,4 +45,16 @@ func NewCustomDomain(d *coredata.CustomDomain, cert *coredata.Certificate) *Cust
 	}
 
 	return domain
+}
+
+func dnsRecordsForDomain(domain, cnameTarget string) []*DNSRecordInstruction {
+	return []*DNSRecordInstruction{
+		{
+			Type:    "CNAME",
+			Name:    domain,
+			Value:   cnameTarget,
+			TTL:     300,
+			Purpose: "Point domain to Probo servers",
+		},
+	}
 }

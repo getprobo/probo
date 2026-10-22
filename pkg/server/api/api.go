@@ -345,6 +345,9 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.AWSConnectorInstall,
 			cfg.GCPConnectorInstall,
 			cfg.AzureConnectorInstall,
+			cfg.CustomDomainCname,
+			cfg.SlackbotInstallations,
+			cfg.BotDeliveryDestinations,
 		),
 		slackHandler: slack_v1.NewMux(
 			cfg.Logger.Named("slack.v1"),

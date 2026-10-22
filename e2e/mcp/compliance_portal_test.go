@@ -21,8 +21,10 @@
 package mcp_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,6 +154,216 @@ func TestMCP_GetCompliancePortal(t *testing.T) {
 		"download_url must route through the public files API, got %q",
 		result.CompliancePortal.Logo.DownloadURL,
 	)
+}
+
+func TestMCP_GetCompliancePortalExposesHostingAndSlack(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	viewer := testutil.NewClientInOrg(t, testutil.RoleViewer, owner)
+	mc := testutil.NewMCPClient(t, owner)
+	viewerMC := testutil.NewMCPClient(t, viewer)
+	portalID := mcpCompliancePortalID(t, owner)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on CompliancePortal {
+					publicUrl
+					customDomain { domain }
+					slackbotNotificationChannel { channelId channelName }
+					organization {
+						slackbotInstallation { active }
+					}
+				}
+			}
+		}
+	`
+
+	var gql struct {
+		Node struct {
+			PublicURL    string `json:"publicUrl"`
+			CustomDomain *struct {
+				Domain string `json:"domain"`
+			} `json:"customDomain"`
+			SlackbotNotificationChannel *struct {
+				ChannelID   string `json:"channelId"`
+				ChannelName string `json:"channelName"`
+			} `json:"slackbotNotificationChannel"`
+			Organization struct {
+				SlackbotInstallation *struct {
+					Active bool `json:"active"`
+				} `json:"slackbotInstallation"`
+			} `json:"organization"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{"id": portalID}, &gql)
+	require.NoError(t, err)
+	require.NotEmpty(t, gql.Node.PublicURL)
+
+	type portalDetails struct {
+		PublicURL    *string `json:"public_url"`
+		CustomDomain *struct {
+			Domain string `json:"domain"`
+		} `json:"custom_domain"`
+		Slack *struct {
+			Installed bool `json:"installed"`
+			Channel   *struct {
+				ChannelID   string `json:"channel_id"`
+				ChannelName string `json:"channel_name"`
+			} `json:"channel"`
+		} `json:"slack"`
+	}
+
+	var result struct {
+		CompliancePortal portalDetails `json:"compliance_portal"`
+	}
+
+	mc.CallToolInto("getCompliancePortal", map[string]any{
+		"compliance_portal_id": portalID,
+	}, &result)
+
+	require.NotNil(t, result.CompliancePortal.PublicURL)
+	assert.Equal(t, gql.Node.PublicURL, *result.CompliancePortal.PublicURL)
+	assert.Nil(t, result.CompliancePortal.CustomDomain)
+	require.NotNil(t, result.CompliancePortal.Slack)
+
+	installed := gql.Node.Organization.SlackbotInstallation != nil &&
+		gql.Node.Organization.SlackbotInstallation.Active
+	assert.Equal(t, installed, result.CompliancePortal.Slack.Installed)
+
+	if gql.Node.SlackbotNotificationChannel == nil {
+		assert.Nil(t, result.CompliancePortal.Slack.Channel)
+	} else {
+		require.NotNil(t, result.CompliancePortal.Slack.Channel)
+		assert.Equal(t, gql.Node.SlackbotNotificationChannel.ChannelID, result.CompliancePortal.Slack.Channel.ChannelID)
+		assert.Equal(t, gql.Node.SlackbotNotificationChannel.ChannelName, result.CompliancePortal.Slack.Channel.ChannelName)
+	}
+
+	var viewerResult struct {
+		CompliancePortal portalDetails `json:"compliance_portal"`
+	}
+
+	viewerMC.CallToolInto("getCompliancePortal", map[string]any{
+		"compliance_portal_id": portalID,
+	}, &viewerResult)
+
+	require.NotNil(t, viewerResult.CompliancePortal.PublicURL)
+	assert.Equal(t, gql.Node.PublicURL, *viewerResult.CompliancePortal.PublicURL)
+	assert.Nil(t, viewerResult.CompliancePortal.Slack)
+}
+
+func TestMCP_CreateCustomDomainReturnsDNSRecords(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+	portalID := factory.CreateCompliancePortal(
+		owner,
+		factory.Attrs{"entityName": factory.SafeName("MCP domain portal")},
+	)
+	domainName := fmt.Sprintf("mcp-%d.example.com", time.Now().UnixNano())
+
+	var created struct {
+		CustomDomain struct {
+			ID         string `json:"id"`
+			Domain     string `json:"domain"`
+			Managed    bool   `json:"managed"`
+			DNSRecords []struct {
+				Type    string `json:"type"`
+				Name    string `json:"name"`
+				Value   string `json:"value"`
+				TTL     int    `json:"ttl"`
+				Purpose string `json:"purpose"`
+			} `json:"dns_records"`
+		} `json:"custom_domain"`
+	}
+
+	mc.CallToolInto("createCustomDomain", map[string]any{
+		"compliance_portal_id": portalID,
+		"domain":               domainName,
+	}, &created)
+
+	t.Cleanup(func() {
+		mc.CallToolInto("deleteCustomDomain", map[string]any{
+			"compliance_portal_id": portalID,
+		}, &struct {
+			DeletedCustomDomain any `json:"deleted_custom_domain"`
+		}{})
+	})
+
+	assert.Equal(t, domainName, created.CustomDomain.Domain)
+	assert.False(t, created.CustomDomain.Managed)
+	require.NotEmpty(t, created.CustomDomain.ID)
+	require.Len(t, created.CustomDomain.DNSRecords, 1)
+	assert.Equal(t, "CNAME", created.CustomDomain.DNSRecords[0].Type)
+	assert.Equal(t, domainName, created.CustomDomain.DNSRecords[0].Name)
+	assert.Equal(t, 300, created.CustomDomain.DNSRecords[0].TTL)
+	assert.Equal(t, "Point domain to Probo servers", created.CustomDomain.DNSRecords[0].Purpose)
+	require.NotEmpty(t, created.CustomDomain.DNSRecords[0].Value)
+
+	const query = `
+		query($id: ID!) {
+			node(id: $id) {
+				... on CompliancePortal {
+					customDomain {
+						domain
+						dnsRecords { type name value ttl purpose }
+					}
+				}
+			}
+		}
+	`
+
+	var gql struct {
+		Node struct {
+			CustomDomain *struct {
+				Domain     string `json:"domain"`
+				DNSRecords []struct {
+					Type    string `json:"type"`
+					Name    string `json:"name"`
+					Value   string `json:"value"`
+					TTL     int    `json:"ttl"`
+					Purpose string `json:"purpose"`
+				} `json:"dnsRecords"`
+			} `json:"customDomain"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(query, map[string]any{"id": portalID}, &gql)
+	require.NoError(t, err)
+	require.NotNil(t, gql.Node.CustomDomain)
+	require.Len(t, gql.Node.CustomDomain.DNSRecords, 1)
+	assert.Equal(t, gql.Node.CustomDomain.Domain, created.CustomDomain.Domain)
+	assert.Equal(t, gql.Node.CustomDomain.DNSRecords[0].Type, created.CustomDomain.DNSRecords[0].Type)
+	assert.Equal(t, gql.Node.CustomDomain.DNSRecords[0].Name, created.CustomDomain.DNSRecords[0].Name)
+	assert.Equal(t, gql.Node.CustomDomain.DNSRecords[0].Value, created.CustomDomain.DNSRecords[0].Value)
+	assert.Equal(t, gql.Node.CustomDomain.DNSRecords[0].TTL, created.CustomDomain.DNSRecords[0].TTL)
+	assert.Equal(t, gql.Node.CustomDomain.DNSRecords[0].Purpose, created.CustomDomain.DNSRecords[0].Purpose)
+
+	var got struct {
+		CompliancePortal struct {
+			CustomDomain *struct {
+				Domain     string `json:"domain"`
+				DNSRecords []struct {
+					Value string `json:"value"`
+				} `json:"dns_records"`
+			} `json:"custom_domain"`
+			PublicURL *string `json:"public_url"`
+		} `json:"compliance_portal"`
+	}
+
+	mc.CallToolInto("getCompliancePortal", map[string]any{
+		"compliance_portal_id": portalID,
+	}, &got)
+
+	require.NotNil(t, got.CompliancePortal.CustomDomain)
+	assert.Equal(t, domainName, got.CompliancePortal.CustomDomain.Domain)
+	require.Len(t, got.CompliancePortal.CustomDomain.DNSRecords, 1)
+	assert.Equal(t, created.CustomDomain.DNSRecords[0].Value, got.CompliancePortal.CustomDomain.DNSRecords[0].Value)
+	require.NotNil(t, got.CompliancePortal.PublicURL)
+	assert.NotContains(t, *got.CompliancePortal.PublicURL, domainName)
 }
 
 func TestMCP_UpdateCompliancePortal(t *testing.T) {

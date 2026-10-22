@@ -75,6 +75,28 @@ export async function execute(
 						email
 						headquarterAddress
 						publicUrl
+						customDomain {
+							id
+							domain
+							managed
+							dnsRecords {
+								type
+								name
+								value
+								ttl
+								purpose
+							}
+						}
+						slackbotNotificationChannel {
+							channelId
+							channelName
+						}
+						organization {
+							slackbotAvailable
+							slackbotInstallation {
+								active
+							}
+						}
 						createdAt
 						updatedAt
 					}

@@ -47,6 +47,8 @@ import (
 	"go.probo.inc/probo/pkg/itam"
 	"go.probo.inc/probo/pkg/mailman"
 	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/probot"
+	slackchannel "go.probo.inc/probo/pkg/probot/channel/slack"
 	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/resourcealias"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -60,6 +62,16 @@ import (
 // maxDeviceListSize caps the listDevices page size: with include_postures the
 // resolver runs one posture query per returned device.
 const maxDeviceListSize = 100
+
+// SlackDestinations reads the Slack channel bound to a delivery target.
+type SlackDestinations interface {
+	GetDestination(
+		ctx context.Context,
+		scope coredata.Scoper,
+		organizationID gid.GID,
+		target probot.DeliveryTarget,
+	) (*coredata.BotDeliveryDestination, error)
+}
 
 type Resolver struct {
 	proboSvc              *probo.Service
@@ -82,6 +94,9 @@ type Resolver struct {
 	awsConnectorInstall   cloudaws.ConnectorInstallConfig
 	gcpConnectorInstall   cloudgcp.ConnectorInstallConfig
 	azureConnectorInstall cloudazure.ConnectorInstallConfig
+	customDomainCname     string
+	slackbotInstallations *slackchannel.InstallationService
+	slackDestinations     SlackDestinations
 }
 
 func markdownToProseMirrorJSON(markdown string) (string, error) {
@@ -216,6 +231,19 @@ func (r *Resolver) AuthorizeBatch(ctx context.Context, entityIDs []gid.GID, acti
 	r.logger.ErrorCtx(ctx, "cannot batch authorize MCP request", log.Error(err))
 
 	return nil, fmt.Errorf("internal server error")
+}
+
+func authorizationDenied(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	switch err.Error() {
+	case "permission denied", "insufficient scope", "assumption required":
+		return true
+	default:
+		return false
+	}
 }
 
 func (r *Resolver) compliancePortalAccessWithIdentity(

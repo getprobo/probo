@@ -38,10 +38,30 @@ query($id: ID!) {
       id
       active
       searchEngineIndexing
-      logoFileUrl
-      darkLogoFileUrl
-      ndaFileName
-      ndaFileUrl
+      publicUrl
+      logo { fileName downloadUrl }
+      darkLogo { fileName downloadUrl }
+      nda { fileName downloadUrl }
+      customDomain {
+        domain
+        dnsRecords {
+          type
+          name
+          value
+          ttl
+          purpose
+        }
+      }
+      canConnectSlack: permission(action: "core:connector:initiate")
+      slackbotNotificationChannel {
+        channelId
+        channelName
+      }
+      organization {
+        slackbotInstallation {
+          active
+        }
+      }
       createdAt
       updatedAt
     }
@@ -49,20 +69,49 @@ query($id: ID!) {
 }
 `
 
-type viewResponse struct {
-	Node *struct {
-		Typename             string  `json:"__typename"`
-		ID                   string  `json:"id"`
-		Active               bool    `json:"active"`
-		SearchEngineIndexing string  `json:"searchEngineIndexing"`
-		LogoFileUrl          *string `json:"logoFileUrl"`
-		DarkLogoFileUrl      *string `json:"darkLogoFileUrl"`
-		NdaFileName          *string `json:"ndaFileName"`
-		NdaFileUrl           *string `json:"ndaFileUrl"`
-		CreatedAt            string  `json:"createdAt"`
-		UpdatedAt            string  `json:"updatedAt"`
-	} `json:"node"`
-}
+type (
+	dnsRecord struct {
+		Type    string `json:"type"`
+		Name    string `json:"name"`
+		Value   string `json:"value"`
+		TTL     int    `json:"ttl"`
+		Purpose string `json:"purpose"`
+	}
+
+	portalFile struct {
+		FileName    string `json:"fileName"`
+		DownloadURL string `json:"downloadUrl"`
+	}
+
+	viewResponse struct {
+		Node *struct {
+			Typename             string      `json:"__typename"`
+			ID                   string      `json:"id"`
+			Active               bool        `json:"active"`
+			SearchEngineIndexing string      `json:"searchEngineIndexing"`
+			PublicURL            string      `json:"publicUrl"`
+			Logo                 *portalFile `json:"logo"`
+			DarkLogo             *portalFile `json:"darkLogo"`
+			Nda                  *portalFile `json:"nda"`
+			CustomDomain         *struct {
+				Domain     string      `json:"domain"`
+				DNSRecords []dnsRecord `json:"dnsRecords"`
+			} `json:"customDomain"`
+			CanConnectSlack             bool `json:"canConnectSlack"`
+			SlackbotNotificationChannel *struct {
+				ChannelID   string `json:"channelId"`
+				ChannelName string `json:"channelName"`
+			} `json:"slackbotNotificationChannel"`
+			Organization struct {
+				SlackbotInstallation *struct {
+					Active bool `json:"active"`
+				} `json:"slackbotInstallation"`
+			} `json:"organization"`
+			CreatedAt string `json:"createdAt"`
+			UpdatedAt string `json:"updatedAt"`
+		} `json:"node"`
+	}
+)
 
 func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 	var (
@@ -136,17 +185,51 @@ func NewCmdView(f *cmdutil.Factory) *cobra.Command {
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), tc.ID)
 			_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Active:"), tc.Active)
 			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Search Engine Indexing:"), tc.SearchEngineIndexing)
+			_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Public URL:"), tc.PublicURL)
 
-			if tc.NdaFileName != nil && *tc.NdaFileName != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("NDA File:"), *tc.NdaFileName)
+			if tc.CustomDomain != nil {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Custom Domain:"), tc.CustomDomain.Domain)
+
+				for _, record := range tc.CustomDomain.DNSRecords {
+					_, _ = fmt.Fprintf(
+						out,
+						"%s%s %s %s (TTL: %d, Purpose: %s)\n",
+						label.Render("DNS:"),
+						record.Type,
+						record.Name,
+						record.Value,
+						record.TTL,
+						record.Purpose,
+					)
+				}
 			}
 
-			if tc.LogoFileUrl != nil && *tc.LogoFileUrl != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Logo URL:"), *tc.LogoFileUrl)
+			if tc.CanConnectSlack {
+				slackInstalled := tc.Organization.SlackbotInstallation != nil &&
+					tc.Organization.SlackbotInstallation.Active
+				_, _ = fmt.Fprintf(out, "%s%v\n", label.Render("Slack Installed:"), slackInstalled)
+
+				if tc.SlackbotNotificationChannel != nil {
+					_, _ = fmt.Fprintf(
+						out,
+						"%s%s (%s)\n",
+						label.Render("Slack Channel:"),
+						tc.SlackbotNotificationChannel.ChannelName,
+						tc.SlackbotNotificationChannel.ChannelID,
+					)
+				}
 			}
 
-			if tc.DarkLogoFileUrl != nil && *tc.DarkLogoFileUrl != "" {
-				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Dark Logo URL:"), *tc.DarkLogoFileUrl)
+			if tc.Nda != nil && tc.Nda.FileName != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("NDA File:"), tc.Nda.FileName)
+			}
+
+			if tc.Logo != nil && tc.Logo.DownloadURL != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Logo URL:"), tc.Logo.DownloadURL)
+			}
+
+			if tc.DarkLogo != nil && tc.DarkLogo.DownloadURL != "" {
+				_, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Dark Logo URL:"), tc.DarkLogo.DownloadURL)
 			}
 
 			_, _ = fmt.Fprintln(out)
