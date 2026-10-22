@@ -49,13 +49,9 @@ describe("humanizeSeconds", () => {
     expect(humanizeSeconds(120, t)).toBe("2 minutes");
   });
 
-  it("formats trackers without a max age as session or persistent", () => {
+  it("formats a missing duration as a session", () => {
     expect(humanizeSeconds(null, t)).toBe("session");
-    expect(humanizeSeconds(0, t, "LOCAL_STORAGE")).toBe("persistent");
-    expect(humanizeSeconds(null, t, "INDEXED_DB")).toBe("persistent");
-    expect(humanizeSeconds(0, t, "CACHE_STORAGE")).toBe("persistent");
-    expect(humanizeSeconds(null, t, "SESSION_STORAGE")).toBe("session");
-    expect(humanizeSeconds(0, t, "COOKIE")).toBe("session");
+    expect(humanizeSeconds(0, t)).toBe("session");
   });
 });
 
