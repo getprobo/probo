@@ -136,6 +136,23 @@ func TestRenderHTML_CodeBlockWithoutLanguage(t *testing.T) {
 	assert.Equal(t, "<pre><code>hello</code></pre>", got)
 }
 
+func TestRenderHTML_TaskList(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"taskList","content":[{"type":"taskItem","attrs":{"checked":false},"content":[{"type":"paragraph","content":[{"type":"text","text":"open"}]}]},{"type":"taskItem","attrs":{"checked":true},"content":[{"type":"paragraph","content":[{"type":"text","text":"done"}]}]}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderHTML(n)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		`<ul data-type="taskList"><li data-type="taskItem" data-checked="false"><input disabled="disabled" type="checkbox"><p>open</p></li><li data-type="taskItem" data-checked="true"><input checked="checked" disabled="disabled" type="checkbox"><p>done</p></li></ul>`,
+		got,
+	)
+}
+
 func TestRenderHTML_OrderedListWithStart(t *testing.T) {
 	t.Parallel()
 

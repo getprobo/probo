@@ -204,7 +204,9 @@ func (r *mdRenderer) renderNode(n Node) error {
 		return r.renderBulletList(n)
 	case NodeOrderedList:
 		return r.renderOrderedList(n)
-	case NodeListItem:
+	case NodeTaskList:
+		return r.renderTaskList(n)
+	case NodeListItem, NodeTaskItem:
 		return fmt.Errorf("cannot render list item outside of list context")
 	case NodeTable:
 		return r.renderTable(n)
@@ -429,8 +431,53 @@ func (r *mdRenderer) closeMark(m Mark) error {
 	return nil
 }
 
+func (r *mdRenderer) renderTaskList(n Node) error {
+	tight, err := listTightness(n, NodeTaskItem)
+	if err != nil {
+		return fmt.Errorf("cannot render task list: %w", err)
+	}
+
+	for i, item := range n.Content {
+		if i > 0 && !tight {
+			r.ensurePrefix()
+			r.newLine()
+		}
+
+		attrs, err := item.TaskItemAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render task item: %w", err)
+		}
+
+		r.ensurePrefix()
+		if attrs.Checked {
+			r.buf.WriteString("- [x] ")
+		} else {
+			r.buf.WriteString("- [ ] ")
+		}
+
+		r.atLineStart = false
+
+		oldPrefix := r.prefix
+		oldTight := r.tight
+		r.prefix += "  "
+		r.tight = tight
+
+		if err := r.renderBlocks(item.Content); err != nil {
+			r.prefix = oldPrefix
+			r.tight = oldTight
+
+			return err
+		}
+
+		r.prefix = oldPrefix
+		r.tight = oldTight
+	}
+
+	return nil
+}
+
 func (r *mdRenderer) renderBulletList(n Node) error {
-	tight, err := listTightness(n)
+	tight, err := listTightness(n, NodeListItem)
 	if err != nil {
 		return fmt.Errorf("cannot render bullet list: %w", err)
 	}
@@ -470,7 +517,7 @@ func (r *mdRenderer) renderOrderedList(n Node) error {
 		return fmt.Errorf("cannot render ordered list node: %w", err)
 	}
 
-	tight, err := listTightness(n)
+	tight, err := listTightness(n, NodeListItem)
 	if err != nil {
 		return fmt.Errorf("cannot render ordered list: %w", err)
 	}
@@ -583,16 +630,16 @@ func (r *mdRenderer) renderCellInline(cell Node) error {
 }
 
 // listTightness returns true when the list is tight (no blank lines between items).
-// Every direct child of n must be a listItem; otherwise listTightness returns an error.
-func listTightness(n Node) (tight bool, err error) {
+// Every direct child of n must be itemType; otherwise listTightness returns an error.
+func listTightness(n Node, itemType NodeType) (tight bool, err error) {
 	tight = true
 
 	for _, item := range n.Content {
-		if item.Type != NodeListItem {
+		if item.Type != itemType {
 			return false, fmt.Errorf(
 				"invalid child type %q (expected %q)",
 				item.Type,
-				NodeListItem,
+				itemType,
 			)
 		}
 

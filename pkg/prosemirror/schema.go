@@ -85,8 +85,16 @@ func validateNode(n Node) error {
 		}
 
 		return validateChildren(n, "listItem", isListItem, 1)
+	case NodeTaskList:
+		if err := rejectNonTextPayload(n); err != nil {
+			return err
+		}
+
+		return validateChildren(n, "taskItem", isTaskItem, 1)
 	case NodeListItem:
 		return validateListItem(n)
+	case NodeTaskItem:
+		return validateTaskItem(n)
 	case NodeTable:
 		if err := rejectNonTextPayload(n); err != nil {
 			return err
@@ -129,17 +137,29 @@ func validateChildren(n Node, expected string, allowed func(NodeType) bool, min 
 }
 
 func validateListItem(n Node) error {
+	return validateItem(n, "listItem")
+}
+
+func validateTaskItem(n Node) error {
+	if _, err := n.TaskItemAttrs(); err != nil {
+		return fmt.Errorf("cannot validate task item node: %w", err)
+	}
+
+	return validateItem(n, "taskItem")
+}
+
+func validateItem(n Node, name string) error {
 	if err := rejectNonTextPayload(n); err != nil {
 		return err
 	}
 
 	if len(n.Content) == 0 || n.Content[0].Type != NodeParagraph {
-		return fmt.Errorf("listItem must start with a paragraph")
+		return fmt.Errorf("%s must start with a paragraph", name)
 	}
 
 	for i, child := range n.Content {
 		if i > 0 && !isBlock(child.Type) {
-			return fmt.Errorf("invalid child type %q in listItem (expected block)", child.Type)
+			return fmt.Errorf("invalid child type %q in %s (expected block)", child.Type, name)
 		}
 
 		if err := validateNode(child); err != nil {
@@ -276,7 +296,8 @@ func rejectNonTextPayload(n Node) error {
 func isBlock(t NodeType) bool {
 	switch t {
 	case NodeParagraph, NodeHeading, NodeBlockquote, NodeCodeBlock,
-		NodeHorizontalRule, NodeBulletList, NodeOrderedList, NodeTable, NodeImage, NodeFile:
+		NodeHorizontalRule, NodeBulletList, NodeOrderedList, NodeTaskList,
+		NodeTable, NodeImage, NodeFile:
 		return true
 	default:
 		return false
@@ -289,6 +310,10 @@ func isInline(t NodeType) bool {
 
 func isListItem(t NodeType) bool {
 	return t == NodeListItem
+}
+
+func isTaskItem(t NodeType) bool {
+	return t == NodeTaskItem
 }
 
 func isTableRow(t NodeType) bool {

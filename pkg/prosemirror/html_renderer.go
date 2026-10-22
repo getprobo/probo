@@ -191,6 +191,47 @@ func renderNode(buf *bytes.Buffer, n Node) error {
 		}
 
 		buf.WriteString("</li>")
+	case NodeTaskList:
+		buf.WriteString("<ul")
+		writeAttr(buf, "data-type", "taskList")
+		buf.WriteByte('>')
+
+		if err := renderChildren(buf, n.Content); err != nil {
+			return err
+		}
+
+		buf.WriteString("</ul>")
+	case NodeTaskItem:
+		attrs, err := n.TaskItemAttrs()
+		if err != nil {
+			return fmt.Errorf("cannot render task item node: %w", err)
+		}
+
+		buf.WriteString("<li")
+		writeAttr(buf, "data-type", "taskItem")
+
+		if attrs.Checked {
+			writeAttr(buf, "data-checked", "true")
+		} else {
+			writeAttr(buf, "data-checked", "false")
+		}
+
+		buf.WriteByte('>')
+		buf.WriteString("<input")
+
+		if attrs.Checked {
+			writeAttr(buf, "checked", "checked")
+		}
+
+		writeAttr(buf, "disabled", "disabled")
+		writeAttr(buf, "type", "checkbox")
+		buf.WriteByte('>')
+
+		if err := renderChildren(buf, n.Content); err != nil {
+			return err
+		}
+
+		buf.WriteString("</li>")
 	case NodeTable:
 		buf.WriteString("<table>")
 

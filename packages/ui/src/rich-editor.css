@@ -48,6 +48,38 @@
         @apply list-decimal list-outside my-2 pl-4;
     }
 
+    ul[data-type="taskList"] {
+        @apply list-none my-2 pl-0;
+
+        > li {
+            @apply flex items-start gap-2;
+
+            > label {
+                @apply mt-0.5 flex shrink-0;
+
+                input {
+                    @apply h-4 w-4 cursor-pointer;
+                }
+            }
+
+            > div {
+                @apply min-w-0 flex-1;
+
+                > p {
+                    @apply my-0;
+                }
+            }
+        }
+
+        > li[data-checked="true"] > div > p {
+            @apply line-through text-txt-tertiary;
+        }
+    }
+
+    &[contenteditable="false"] ul[data-type="taskList"] > li > label input {
+        @apply pointer-events-none;
+    }
+
     a { @apply text-txt-info underline font-normal cursor-pointer; }
 
     &.ProseMirror-focused a { cursor: text; }

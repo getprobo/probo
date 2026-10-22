@@ -95,3 +95,64 @@ func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 		)
 	}
 }
+
+func TestToSpans_TaskListRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	const document = `{
+		"type": "doc",
+		"content": [
+			{
+				"type": "taskList",
+				"content": [
+					{
+						"type": "taskItem",
+						"attrs": {"checked": false},
+						"content": [
+							{"type": "paragraph", "content": [{"type": "text", "text": "open"}]}
+						]
+					},
+					{
+						"type": "taskItem",
+						"attrs": {"checked": true},
+						"content": [
+							{"type": "paragraph", "content": [{"type": "text", "text": "done"}]},
+							{
+								"type": "bulletList",
+								"content": [
+									{
+										"type": "listItem",
+										"content": [
+											{"type": "paragraph", "content": [{"type": "text", "text": "child"}]}
+										]
+									}
+								]
+							}
+						]
+					}
+				]
+			}
+		]
+	}`
+
+	spans, err := prosemirror.ToSpans(document)
+	require.NoError(t, err)
+
+	actorID, err := automerge.NewActorID()
+	require.NoError(t, err)
+
+	doc, err := automerge.New(actorID)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = doc.Close() })
+
+	text, err := doc.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.UpdateSpans(spans, prosemirror.UpdateSpansConfig()))
+
+	readback, err := text.Spans()
+	require.NoError(t, err)
+
+	rendered, err := prosemirror.Render(readback)
+	require.NoError(t, err)
+	assert.JSONEq(t, document, rendered)
+}

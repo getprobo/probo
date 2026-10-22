@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license
 // that can be found in the LICENSE file.
 
-import { CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHFourIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
+import { CheckSquareIcon, CodeBlockIcon, ListBulletsIcon, ListNumbersIcon, QuotesIcon, TextHFourIcon, TextHOneIcon, TextHThreeIcon, TextHTwoIcon, TextTIcon } from "@phosphor-icons/react";
 import { Fragment, type Node as PmNode } from "@tiptap/pm/model";
 import { TextSelection } from "@tiptap/pm/state";
 import { type Editor } from "@tiptap/react";
@@ -250,6 +250,13 @@ export function OptionsMenuContent({
         >
           <ListNumbersIcon size={16} weight="bold" />
           Ordered List
+        </MenuButton>
+        <MenuButton
+          active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "taskList")}
+          onClick={() => handleAction(chain => chain.toggleTaskList(), "wrapper")}
+        >
+          <CheckSquareIcon size={16} weight="bold" />
+          Task List
         </MenuButton>
         <MenuButton
           active={hoveredBlock != null && isBlockNodeType(editor, hoveredBlock, "codeBlock")}
