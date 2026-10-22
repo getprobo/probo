@@ -18,12 +18,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import type { RichEditorPresence } from "@probo/ui";
+import type { RichEditorPresence, TextSelection } from "@probo/ui";
 
 export type PresenceEntry = {
   presence: RichEditorPresence;
   at: number;
+  // Stable cursors for this caret, kept so a later document change can move it
+  // onto text that had not synced when the caret first arrived.
+  selection?: TextSelection;
 };
+
+export type ResolvedPresencePosition = {
+  anchorPosition: number;
+  headPosition: number;
+};
+
+// Move stored carets when their stable cursors now resolve somewhere else.
+// A caret broadcast ahead of its edit resolves one edit behind; the same
+// cursors land on that edit once it is in the document.
+export function syncPresenceSelections(
+  entries: Map<string, PresenceEntry>,
+  resolve: (selection: TextSelection) => ResolvedPresencePosition | null,
+): boolean {
+  let changed = false;
+
+  for (const [peer, entry] of entries) {
+    if (!entry.selection) continue;
+
+    const resolved = resolve(entry.selection);
+    if (!resolved) continue;
+    if (
+      resolved.anchorPosition === entry.presence.anchorPosition
+      && resolved.headPosition === entry.presence.headPosition
+    ) {
+      continue;
+    }
+
+    entries.set(peer, {
+      ...entry,
+      presence: {
+        ...entry.presence,
+        anchorPosition: resolved.anchorPosition,
+        headPosition: resolved.headPosition,
+      },
+    });
+    changed = true;
+  }
+
+  return changed;
+}
 
 export type PresencePerson = {
   identityID: string;

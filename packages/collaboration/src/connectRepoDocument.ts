@@ -37,7 +37,11 @@ import {
   type TextSelection,
 } from "@probo/ui";
 
-import { type PresenceEntry, pruneStalePresences } from "./presence";
+import {
+  type PresenceEntry,
+  pruneStalePresences,
+  syncPresenceSelections,
+} from "./presence";
 
 // A collaboration handle for the editor, plus a close() that tears down the repo
 // and its network connection.
@@ -147,6 +151,7 @@ export async function connectRepoDocument(
   >[] = [];
   const latest = new Map<string, PresenceEntry>();
   const listeners = new Set<(presences: RichEditorPresence[]) => void>();
+  let closed = false;
 
   const localActive = (): boolean => {
     if (typeof document !== "undefined" && document.visibilityState === "hidden") {
@@ -248,6 +253,7 @@ export async function connectRepoDocument(
     if (resolved) {
       latest.set(sender, {
         at: now,
+        selection: payload.message.selection,
         presence: {
           connectionID: sender,
           identityID,
@@ -263,6 +269,7 @@ export async function connectRepoDocument(
       // refresh liveness and identity fields so the peer is not pruned.
       latest.set(sender, {
         at: now,
+        selection: payload.message.selection,
         presence: {
           ...previous.presence,
           identityID,
@@ -301,6 +308,30 @@ export async function connectRepoDocument(
     applyEphemeral(payload);
   };
 
+  // Presence is delivered ahead of the edit it describes. Resolving it in that
+  // window pins the caret one edit behind, and the decoration then stays there.
+  // Re-resolve after the sync plugin has applied the change to the editor.
+  const refreshPresencePositions = () => {
+    if (closed) return;
+
+    const document = handle.doc();
+    if (!document) return;
+
+    const changed = syncPresenceSelections(latest, (selection) => {
+      try {
+        return pmSelectionFromPresence(adapter, document, selection);
+      } catch {
+        return null;
+      }
+    });
+    if (!changed) return;
+
+    emitPresences();
+  };
+  const onDocumentChange = () => {
+    queueMicrotask(refreshPresencePositions);
+  };
+  handle.on("change", onDocumentChange);
   handle.on("ephemeral-message", handleEphemeral);
 
   try {
@@ -308,6 +339,8 @@ export async function connectRepoDocument(
       signal: AbortSignal.timeout(initializationTimeoutMs),
     });
   } catch (error) {
+    closed = true;
+    handle.off("change", onDocumentChange);
     handle.off("ephemeral-message", handleEphemeral);
     void repo.shutdown();
     throw error;
@@ -350,9 +383,11 @@ export async function connectRepoDocument(
   document.addEventListener("visibilitychange", onVisibilityChange);
 
   collaboration.close = () => {
+    closed = true;
     window.clearInterval(heartbeat);
     window.clearInterval(prune);
     document.removeEventListener("visibilitychange", onVisibilityChange);
+    handle.off("change", onDocumentChange);
     handle.off("ephemeral-message", handleEphemeral);
     listeners.clear();
     latest.clear();

@@ -25,6 +25,7 @@ import {
   groupPresencesByIdentity,
   type PresenceEntry,
   pruneStalePresences,
+  syncPresenceSelections,
 } from "./presence";
 
 function presence(overrides: Partial<RichEditorPresence> = {}): RichEditorPresence {
@@ -68,6 +69,48 @@ describe("pruneStalePresences", () => {
     expect(kept).toHaveLength(1);
     expect(kept[0]?.identityID).toBe("idnt_idle");
     expect(kept[0]?.active).toBe(false);
+  });
+});
+
+describe("syncPresenceSelections", () => {
+  it("advances a caret that was resolved before its edit synced", () => {
+    const selection = { field: "body", anchor: "cursor", head: "cursor" };
+    const entries = new Map<string, PresenceEntry>([
+      ["peer", {
+        at: 1,
+        selection,
+        presence: presence({ anchorPosition: 4, headPosition: 4 }),
+      }],
+    ]);
+
+    const changed = syncPresenceSelections(entries, () => ({
+      anchorPosition: 5,
+      headPosition: 5,
+    }));
+
+    expect(changed).toBe(true);
+    expect(entries.get("peer")?.presence).toMatchObject({
+      anchorPosition: 5,
+      headPosition: 5,
+    });
+    expect(entries.get("peer")?.selection).toBe(selection);
+  });
+
+  it("keeps the caret when the cursor still points at the same position", () => {
+    const entries = new Map<string, PresenceEntry>([
+      ["peer", {
+        at: 1,
+        selection: { field: "body", anchor: "cursor", head: "cursor" },
+        presence: presence({ anchorPosition: 4, headPosition: 4 }),
+      }],
+    ]);
+
+    const changed = syncPresenceSelections(entries, () => ({
+      anchorPosition: 4,
+      headPosition: 4,
+    }));
+
+    expect(changed).toBe(false);
   });
 });
 

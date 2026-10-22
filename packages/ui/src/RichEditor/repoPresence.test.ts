@@ -54,6 +54,38 @@ describe("repo presence mapping", () => {
     expect(resolved).toEqual({ anchorPosition: 7, headPosition: 7 });
   });
 
+  it("places a caret on the typed character once an edit that beat it syncs", () => {
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    const before = seededDocument("hello");
+    const author = Automerge.clone(before, {
+      actor: "02000000000000000000000000000000",
+    });
+    const edited = Automerge.change(author, (draft) => {
+      Automerge.splice(draft, ["body"], 3, 0, "X");
+    });
+
+    // Caret sits after the inserted "X" in "helXlo" (text offset 4, position 5).
+    const selection = presenceFromPmSelection(adapter, edited, 5, 5);
+    expect(selection).not.toBeNull();
+    expect(pmSelectionFromPresence(adapter, edited, selection!)).toEqual({
+      anchorPosition: 5,
+      headPosition: 5,
+    });
+
+    // Resolved against the document that does not contain "X" yet, the same
+    // cursor sits where the caret was before that edit.
+    expect(pmSelectionFromPresence(adapter, before, selection!)).toEqual({
+      anchorPosition: 4,
+      headPosition: 4,
+    });
+
+    const merged = Automerge.merge(Automerge.clone(before), edited);
+    expect(pmSelectionFromPresence(adapter, merged, selection!)).toEqual({
+      anchorPosition: 5,
+      headPosition: 5,
+    });
+  });
+
   it("keeps a remote caret anchored across a concurrent insertion", () => {
     const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
     let document = seededDocument("hello world");
