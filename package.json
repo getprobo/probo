@@ -28,6 +28,7 @@
   "overrides": {
     "@langchain/classic": "1.0.41",
     "@langchain/community": "1.1.29",
+    "argparse": "2.0.1",
     "axios": "^1.20.0",
     "browserslist": "^4.28.7",
     "engine.io": "^6.6.10",
