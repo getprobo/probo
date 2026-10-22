@@ -524,51 +524,34 @@ func (b *Engine) reconcileMarks(
 	desired []desiredMark,
 	config updateSpansConfigInput,
 ) error {
-	for _, current := range b.state.Marks(object.OpID) {
-		keep := false
+	current := b.state.Marks(object.OpID)
+	removed := false
 
-		for _, want := range desired {
-			if want.name == current.Name &&
-				want.start == current.Start &&
-				want.end == current.End &&
-				current.Value != nil &&
-				scalarValuesEqual(want.value, *current.Value) {
-				keep = true
-
-				break
-			}
-		}
-
-		if keep {
+	for _, mark := range current {
+		if desiredMarkExists(desired, mark) {
 			continue
 		}
 
+		removed = true
+
 		if err := b.markRange(
 			handle,
-			current.Start,
-			current.End,
-			current.Name, opset.Scalar{Type: opset.ScalarNull}, config.expandFor(current.Name),
+			mark.Start,
+			mark.End,
+			mark.Name,
+			opset.Scalar{Type: opset.ScalarNull},
+			config.expandFor(mark.Name),
 		); err != nil {
 			return err
 		}
 	}
 
+	if removed {
+		current = b.state.Marks(object.OpID)
+	}
+
 	for _, want := range desired {
-		exists := false
-
-		for _, current := range b.state.Marks(object.OpID) {
-			if want.name == current.Name &&
-				want.start == current.Start &&
-				want.end == current.End &&
-				current.Value != nil &&
-				scalarValuesEqual(want.value, *current.Value) {
-				exists = true
-
-				break
-			}
-		}
-
-		if exists {
+		if markRangeMatchesAny(current, want) {
 			continue
 		}
 
@@ -582,9 +565,47 @@ func (b *Engine) reconcileMarks(
 		); err != nil {
 			return err
 		}
+
+		current = append(
+			current,
+			MarkRange{
+				Start: want.start,
+				End:   want.end,
+				Name:  want.name,
+				Value: &want.value,
+			},
+		)
 	}
 
 	return nil
+}
+
+func desiredMarkExists(desired []desiredMark, mark MarkRange) bool {
+	for _, want := range desired {
+		if markRangeMatches(mark, want) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func markRangeMatchesAny(marks []MarkRange, want desiredMark) bool {
+	for _, mark := range marks {
+		if markRangeMatches(mark, want) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func markRangeMatches(mark MarkRange, want desiredMark) bool {
+	return mark.Name == want.name &&
+		mark.Start == want.start &&
+		mark.End == want.end &&
+		mark.Value != nil &&
+		scalarValuesEqual(want.value, *mark.Value)
 }
 
 // setBlockAttributes writes the attribute map onto a freshly created block
