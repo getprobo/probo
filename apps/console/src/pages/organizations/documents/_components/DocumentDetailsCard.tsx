@@ -201,6 +201,10 @@ export function DocumentDetailsCard(props: {
   const [updateApprovers, isUpdatingApprovers]
     = useMutation<DocumentDetailsCard_updateApproversMutation>(updateApproversMutation);
 
+  if (isEditingApprovers && !canEditApprovers) {
+    setIsEditingApprovers(false);
+  }
+
   const handleUpdateDocumentType = (data: {
     documentType: (typeof documentTypes)[number];
   }) => {
@@ -260,6 +264,10 @@ export function DocumentDetailsCard(props: {
   };
 
   const handleUpdateApprovers = (data: { approverIds: string[] }) => {
+    if (!canEditApprovers) {
+      return;
+    }
+
     updateApprovers({
       variables: {
         input: {
@@ -387,7 +395,7 @@ export function DocumentDetailsCard(props: {
             <div className="text-xs text-txt-tertiary font-semibold mb-1">
               {t("documentDetails.fields.approvers")}
             </div>
-            {isEditingApprovers
+            {isEditingApprovers && canEditApprovers
               ? (
                   <div className="flex items-center gap-2">
                     <div className="flex-1">
