@@ -113,7 +113,7 @@ func writeLiveContent(
 
 	current := &coredata.Document{}
 	if loadErr := current.LoadByID(ctx, tx, scope, documentID); loadErr != nil {
-		return fmt.Errorf("cannot update document content: %w", err)
+		return fmt.Errorf("cannot load document after content update: %w", loadErr)
 	}
 
 	if current.ArchivedAt != nil {
