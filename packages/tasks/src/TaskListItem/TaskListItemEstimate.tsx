@@ -33,8 +33,8 @@ import { useTranslation } from "react-i18next";
 import { TASKS_NAMESPACE } from "../i18n";
 import { taskListItem } from "../variants";
 
+import { TaskEstimateCustomDialog } from "./TaskEstimateCustomDialog";
 import { TaskEstimateMenu } from "./TaskEstimateMenu";
-import { estimateOptions } from "./taskEstimatePresets";
 
 export function TaskListItemEstimate({
   timeEstimate,
@@ -57,6 +57,7 @@ export function TaskListItemEstimate({
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
   const tooltip = label ?? placeholder ?? t("metadata.timeEstimate");
   const shown = label ?? placeholder ?? null;
   const chip = (
@@ -83,42 +84,51 @@ export function TaskListItemEstimate({
     );
   }
 
-  const options = estimateOptions(timeEstimate);
-
   return (
-    <div className={slots.state()}>
-      <Dropdown open={open} onOpenChange={setOpen}>
-        <Tooltip>
-          <TooltipTrigger
-            render={(
-              <DropdownTrigger
-                disabled={isUpdating}
-                render={(
-                  <button
-                    type="button"
-                    className={`${slots.meta()} ${slots.chipTrigger()}`}
-                    aria-label={label == null ? tooltip : `${tooltip}, ${label}`}
-                  >
-                    {chip}
-                  </button>
-                )}
-              />
-            )}
-          />
-          <TooltipPopup>{tooltip}</TooltipPopup>
-        </Tooltip>
-        <DropdownPopup size={1} align="end">
-          <TaskEstimateMenu
-            timeEstimate={timeEstimate}
-            options={options}
-            locale={i18n.language}
-            onChange={(next) => {
-              onTimeEstimateChange(next);
-              setOpen(false);
-            }}
-          />
-        </DropdownPopup>
-      </Dropdown>
-    </div>
+    <>
+      <div className={slots.state()}>
+        <Dropdown open={open} onOpenChange={setOpen}>
+          <Tooltip>
+            <TooltipTrigger
+              render={(
+                <DropdownTrigger
+                  disabled={isUpdating}
+                  render={(
+                    <button
+                      type="button"
+                      className={`${slots.meta()} ${slots.chipTrigger()}`}
+                      aria-label={label == null ? tooltip : `${tooltip}, ${label}`}
+                    >
+                      {chip}
+                    </button>
+                  )}
+                />
+              )}
+            />
+            <TooltipPopup>{tooltip}</TooltipPopup>
+          </Tooltip>
+          <DropdownPopup size={1} align="end">
+            <TaskEstimateMenu
+              timeEstimate={timeEstimate}
+              locale={i18n.language}
+              onChange={(next) => {
+                onTimeEstimateChange(next);
+                setOpen(false);
+              }}
+              onCustom={() => {
+                setOpen(false);
+                setCustomOpen(true);
+              }}
+            />
+          </DropdownPopup>
+        </Dropdown>
+      </div>
+      <TaskEstimateCustomDialog
+        open={customOpen}
+        timeEstimate={timeEstimate}
+        onOpenChange={setCustomOpen}
+        onSave={onTimeEstimateChange}
+      />
+    </>
   );
 }

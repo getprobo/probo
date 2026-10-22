@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ArrowsClockwiseIcon, ClockIcon } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon } from "@phosphor-icons/react";
 import { formatDuration } from "@probo/i18n";
 import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Tooltip } from "@probo/ui/src/v2/Tooltip/Tooltip";
@@ -31,9 +31,10 @@ import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "./i18n";
 import { isOverdueTask } from "./isOverdueTask";
-import { taskEstimateDurationUnits, taskRecurrenceDurationUnits } from "./taskDuration";
+import { taskRecurrenceDurationUnits } from "./taskDuration";
 import { TaskDurationField } from "./TaskDurationField";
 import { TaskListItemDeadline } from "./TaskListItem/TaskListItemDeadline";
+import { TaskListItemEstimate } from "./TaskListItem/TaskListItemEstimate";
 import { TaskListItemPriority } from "./TaskListItem/TaskListItemPriority";
 import { TaskListItemState } from "./TaskListItem/TaskListItemState";
 import { type TaskPriority, type TaskState } from "./taskState";
@@ -112,28 +113,18 @@ export function TaskProperties({
           }}
         />
         {assignee}
-        <div className={canUpdate ? `${recurrence()} ${slots.chipTrigger()}` : recurrence()}>
-          <ClockIcon className={slots.metaIcon()} weight="bold" />
-          {canUpdate
-            ? (
-                <div className={recurrenceField()}>
-                  <TaskDurationField
-                    value={task.timeEstimate ?? null}
-                    disabled={isUpdating}
-                    units={taskEstimateDurationUnits}
-                    clearLabel={t("actions.clearEstimate")}
-                    amountAriaLabel={t("fields.timeEstimate")}
-                    unitAriaLabel={t("fields.timeEstimateUnit")}
-                    onValueChange={next => onChange({ timeEstimate: next })}
-                  />
-                </div>
-              )
-            : (
-                <Text size={2} color={timeEstimate == null ? "faint" : undefined}>
-                  {timeEstimate ?? t("placeholders.timeEstimate")}
-                </Text>
-              )}
-        </div>
+        <TaskListItemEstimate
+          timeEstimate={task.timeEstimate}
+          label={timeEstimate}
+          canUpdate={canUpdate}
+          isUpdating={isUpdating}
+          size={2}
+          placeholder={t("placeholders.timeEstimate")}
+          slots={slots}
+          onTimeEstimateChange={(next) => {
+            void onChange({ timeEstimate: next });
+          }}
+        />
         <TaskListItemDeadline
           deadline={task.deadline}
           isOverdue={isOverdueTask(task.deadline, task.state)}

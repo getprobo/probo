@@ -18,28 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { ClockIcon, ProhibitIcon } from "@phosphor-icons/react";
+import { ClockIcon, PencilSimpleIcon, ProhibitIcon } from "@phosphor-icons/react";
 import { formatDuration } from "@probo/i18n";
+import { DropdownItem } from "@probo/ui/src/v2/Dropdown/DropdownItem";
 import { DropdownRadioGroup } from "@probo/ui/src/v2/Dropdown/DropdownRadioGroup";
 import { DropdownRadioItem } from "@probo/ui/src/v2/Dropdown/DropdownRadioItem";
+import { DropdownSeparator } from "@probo/ui/src/v2/Dropdown/DropdownSeparator";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TASKS_NAMESPACE } from "../i18n";
 import { taskDurationsEqual } from "../taskDuration";
 
-import { matchingEstimatePreset, noneEstimateValue } from "./taskEstimatePresets";
+import { estimatePresets, matchingEstimatePreset, noneEstimateValue } from "./taskEstimatePresets";
 
 export function TaskEstimateMenu({
   timeEstimate,
-  options,
   locale,
   onChange,
+  onCustom,
 }: {
   timeEstimate?: string | null;
-  options: readonly string[];
   locale: string;
   onChange: (timeEstimate: string | null) => void;
+  onCustom: () => void;
 }): ReactNode {
   const { t } = useTranslation(TASKS_NAMESPACE);
   const selected = matchingEstimatePreset(timeEstimate) ?? noneEstimateValue;
@@ -57,30 +59,39 @@ export function TaskEstimateMenu({
   }
 
   return (
-    <DropdownRadioGroup
-      value={selected}
-      onValueChange={(next) => {
-        if (typeof next !== "string") {
-          return;
-        }
-        commit(next);
-      }}
-    >
-      <DropdownRadioItem
-        value={noneEstimateValue}
-        iconStart={<ProhibitIcon className="size-4" weight="bold" />}
+    <>
+      <DropdownRadioGroup
+        value={selected}
+        onValueChange={(next) => {
+          if (typeof next !== "string") {
+            return;
+          }
+          commit(next);
+        }}
       >
-        {t("durationPicker.none")}
-      </DropdownRadioItem>
-      {options.map(value => (
         <DropdownRadioItem
-          key={value}
-          value={value}
-          iconStart={<ClockIcon className="size-4" weight="bold" />}
+          value={noneEstimateValue}
+          iconStart={<ProhibitIcon className="size-4" weight="bold" />}
         >
-          {formatDuration(value, t, { style: "short", locale })}
+          {t("durationPicker.none")}
         </DropdownRadioItem>
-      ))}
-    </DropdownRadioGroup>
+        {estimatePresets.map(value => (
+          <DropdownRadioItem
+            key={value}
+            value={value}
+            iconStart={<ClockIcon className="size-4" weight="bold" />}
+          >
+            {formatDuration(value, t, { style: "short", locale })}
+          </DropdownRadioItem>
+        ))}
+      </DropdownRadioGroup>
+      <DropdownSeparator />
+      <DropdownItem
+        iconStart={<PencilSimpleIcon className="size-4" weight="bold" />}
+        onClick={onCustom}
+      >
+        {t("durationPicker.custom")}
+      </DropdownItem>
+    </>
   );
 }

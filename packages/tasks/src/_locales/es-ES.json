@@ -54,7 +54,10 @@
     "none": "Ninguna"
   },
   "durationPicker": {
-    "none": "Ninguna"
+    "none": "Ninguna",
+    "custom": "Personalizada",
+    "save": "Guardar",
+    "cancel": "Cancelar"
   },
   "fields": {
     "name": "Nombre",

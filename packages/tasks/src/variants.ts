@@ -173,7 +173,7 @@ export const taskCommentForm = tv({
     root: "flex flex-col gap-3",
     actions: "flex justify-end",
     editor: [
-      "min-h-40 flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
+      "min-h-8 flex-none! overflow-visible! bg-transparent! py-0! pr-0! shadow-none!",
       "[&_.tiptap>p:first-child]:mt-0",
     ],
   },

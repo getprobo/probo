@@ -38,8 +38,8 @@ import { taskListItem } from "../variants";
 
 import { isNestedMenuDismiss } from "./isNestedMenuDismiss";
 import { TaskDeadlineMenu } from "./TaskDeadlineMenu";
+import { TaskEstimateCustomDialog } from "./TaskEstimateCustomDialog";
 import { TaskEstimateMenu } from "./TaskEstimateMenu";
-import { estimateOptions } from "./taskEstimatePresets";
 import { TaskPriorityMenu } from "./TaskPriorityMenu";
 import { TaskStateMenu } from "./TaskStateMenu";
 
@@ -80,6 +80,7 @@ export function TaskListItemMenu({
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
   const showAssigneeMenu = canUpdateAssignee && renderAssigneeMenu != null;
   const showFields = canUpdate || showAssigneeMenu;
   const showDelete = onDelete != null;
@@ -87,8 +88,6 @@ export function TaskListItemMenu({
   if (!showFields && !showDelete && !showExtra) {
     return null;
   }
-
-  const estimateValues = estimateOptions(timeEstimate);
 
   function commitDeadline(next: string | null) {
     if (toDateInput(next) === toDateInput(deadline)) {
@@ -168,11 +167,14 @@ export function TaskListItemMenu({
                 <DropdownPopup size={1} align="start" side="right">
                   <TaskEstimateMenu
                     timeEstimate={timeEstimate}
-                    options={estimateValues}
                     locale={i18n.language}
                     onChange={(next) => {
                       onTimeEstimateChange(next);
                       setOpen(false);
+                    }}
+                    onCustom={() => {
+                      setOpen(false);
+                      setCustomOpen(true);
                     }}
                   />
                 </DropdownPopup>
@@ -202,6 +204,12 @@ export function TaskListItemMenu({
           )}
         </DropdownPopup>
       </Dropdown>
+      <TaskEstimateCustomDialog
+        open={customOpen}
+        timeEstimate={timeEstimate}
+        onOpenChange={setCustomOpen}
+        onSave={onTimeEstimateChange}
+      />
     </div>
   );
 }

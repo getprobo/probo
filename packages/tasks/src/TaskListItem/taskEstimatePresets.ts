@@ -22,7 +22,7 @@ import { stringifyTaskDuration, taskDurationsEqual } from "../taskDuration";
 
 export const noneEstimateValue = "__NONE__";
 
-const estimatePresets = [
+export const estimatePresets = [
   stringifyTaskDuration(15, "M"),
   stringifyTaskDuration(30, "M"),
   stringifyTaskDuration(1, "H"),
@@ -37,12 +37,4 @@ export function matchingEstimatePreset(value?: string | null): string | null {
     return null;
   }
   return estimatePresets.find(preset => taskDurationsEqual(preset, value)) ?? value;
-}
-
-export function estimateOptions(value?: string | null): string[] {
-  const selected = matchingEstimatePreset(value);
-  if (selected == null || estimatePresets.includes(selected)) {
-    return estimatePresets;
-  }
-  return [selected, ...estimatePresets];
 }

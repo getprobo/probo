@@ -54,7 +54,10 @@
     "none": "Geen"
   },
   "durationPicker": {
-    "none": "Geen"
+    "none": "Geen",
+    "custom": "Aangepast",
+    "save": "Opslaan",
+    "cancel": "Annuleren"
   },
   "fields": {
     "name": "Naam",
