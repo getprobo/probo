@@ -4,13 +4,39 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.322.0] - 2026-10-22
+
 ### Added
 
+- Cookie banners measure trackers in a start/stop sample window, with
+  one open sample per banner. Tracker cards rate each pattern over the
+  page loads where it may fire, split by whether consent allowed it.
+  The header shows page loads for the current window
+- The public banner HTTP API accepts `sample_active` and
+  `consent_action`. `discovery_hit` is still accepted
+- The console and the employee portal show notifications for signature
+  requests, approval requests, and task assignments made by someone
+  else
 - Webhook deliveries include an `actor` object identifying the member
   who performed the action: profile id, full name, email address, and
   role. `actor` is null when no member can be identified
 
 ### Changed
+
+- Cookie banner discovery windows are samples in the console GraphQL
+  API and the MCP tools. Past discovery counts are not carried over;
+  start a new sample to measure again
+- Connector region settings declare their control. 1Password's
+  client-credentials region uses the same US, EU, or CA select as
+  OVHcloud, and any other value is rejected
+
+### Fixed
+
+- Linking a framework on the compliance portal reports it as public.
+  An empty visibility failed MCP output validation after the row was
+  written
+
+### Removed
 
 - OVHcloud Canada is removed. An account cannot be created in that
   region yet, and the connector can be added again when one can
