@@ -4,6 +4,14 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.257.0] - 2026-10-22
+
+### Added
+
+- `compliance-portal view` prints the public URL, the custom domain
+  with its full DNS records, and the Slack status. Slack is hidden
+  when the caller cannot read connectors
+
 ## [0.256.0] - 2026-10-22
 
 ### Added
