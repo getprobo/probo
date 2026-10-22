@@ -714,6 +714,19 @@ func TestRenderMarkdown_CodeBlockInBlockquote(t *testing.T) {
 	assert.Equal(t, "> ```go\n> fmt.Println()\n> ```\n", got)
 }
 
+func TestRenderMarkdown_TaskList(t *testing.T) {
+	t.Parallel()
+
+	raw := `{"type":"doc","content":[{"type":"taskList","content":[{"type":"taskItem","attrs":{"checked":false},"content":[{"type":"paragraph","content":[{"type":"text","text":"open"}]}]},{"type":"taskItem","attrs":{"checked":true},"content":[{"type":"paragraph","content":[{"type":"text","text":"done"}]}]}]}]}`
+
+	var n Node
+	require.NoError(t, json.Unmarshal([]byte(raw), &n))
+
+	got, err := RenderMarkdown(n)
+	require.NoError(t, err)
+	assert.Equal(t, "- [ ] open\n- [x] done\n", got)
+}
+
 func TestRenderMarkdown_ListItemOutsideList(t *testing.T) {
 	t.Parallel()
 

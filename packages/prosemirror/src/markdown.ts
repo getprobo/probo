@@ -6,6 +6,7 @@ import { lexer, type Token, type Tokens } from "marked";
 import type {
   Mark as ProseMirrorMark,
   Node as ProseMirrorNode,
+  NodeType,
   Schema,
 } from "@tiptap/pm/model";
 
@@ -193,30 +194,71 @@ class Converter {
   }
 
   private convertList(token: Tokens.List): ProseMirrorNode[] {
-    const children = token.items.flatMap(item => this.convertListItem(item));
+    const taskNodes = this.taskNodes();
+    const runs: { task: boolean; items: ProseMirrorNode[] }[] = [];
 
-    if (token.ordered) {
-      const start = typeof token.start === "number" ? token.start : 1;
-      return [
-        this.schema.nodes.orderedList.create(
-          { start },
-          children.length > 0 ? children : undefined,
-        ),
-      ];
+    for (const item of token.items) {
+      const task = item.task === true && taskNodes != null;
+      const node = this.convertListItem(item, task);
+      const last = runs[runs.length - 1];
+      if (!last || last.task !== task) {
+        runs.push({ task, items: [node] });
+      } else {
+        last.items.push(node);
+      }
     }
 
-    return [
-      this.schema.nodes.bulletList.create(
-        null,
-        children.length > 0 ? children : undefined,
-      ),
-    ];
+    if (runs.length === 0) {
+      if (token.ordered) {
+        const start = typeof token.start === "number" ? token.start : 1;
+        return [this.schema.nodes.orderedList.create({ start })];
+      }
+
+      return [this.schema.nodes.bulletList.create()];
+    }
+
+    const nodes: ProseMirrorNode[] = [];
+    let consumed = 0;
+    const start = typeof token.start === "number" ? token.start : 1;
+
+    for (const run of runs) {
+      if (run.task && taskNodes) {
+        nodes.push(taskNodes.list.create(null, run.items));
+      } else if (token.ordered) {
+        nodes.push(
+          this.schema.nodes.orderedList.create(
+            { start: start + consumed },
+            run.items,
+          ),
+        );
+      } else {
+        nodes.push(this.schema.nodes.bulletList.create(null, run.items));
+      }
+
+      consumed += run.items.length;
+    }
+
+    return nodes;
   }
 
-  private convertListItem(token: Tokens.ListItem): ProseMirrorNode[] {
+  private taskNodes(): { list: NodeType; item: NodeType } | null {
+    const list = this.schema.nodes.taskList;
+    const item = this.schema.nodes.taskItem;
+    if (!list || !item) return null;
+    return { list, item };
+  }
+
+  private convertListItem(
+    token: Tokens.ListItem,
+    task: boolean,
+  ): ProseMirrorNode {
     const children: ProseMirrorNode[] = [];
 
     for (const child of token.tokens) {
+      if (child.type === "checkbox") {
+        continue;
+      }
+
       if (child.type === "text") {
         const textToken = child as Tokens.Text;
         const inlineContent = textToken.tokens
@@ -237,7 +279,28 @@ class Converter {
       children.push(this.schema.nodes.paragraph.create());
     }
 
-    return [this.schema.nodes.listItem.create(null, children)];
+    if (token.task === true && !task) {
+      this.prependTaskMarker(children, token.checked === true);
+    }
+
+    if (task) {
+      return this.schema.nodes.taskItem.create(
+        { checked: token.checked === true },
+        children,
+      );
+    }
+
+    return this.schema.nodes.listItem.create(null, children);
+  }
+
+  private prependTaskMarker(children: ProseMirrorNode[], checked: boolean) {
+    const first = children[0];
+    if (!first || first.type !== this.schema.nodes.paragraph) return;
+
+    const marker = this.schema.text(checked ? "[x] " : "[ ] ");
+    const inlines = [marker];
+    first.forEach(node => inlines.push(node));
+    children[0] = first.type.create(null, inlines);
   }
 
   private convertBlockText(token: Tokens.Text): ProseMirrorNode[] {
