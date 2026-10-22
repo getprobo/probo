@@ -4,6 +4,33 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.323.0] - 2026-10-22
+
+### Added
+
+- Employees can open their assigned tasks in the employee portal and
+  act on them as their permissions allow
+- The task details page has a Linear card under the properties that
+  links an existing issue or creates a new one, and lists the linked
+  internal controls with a search menu to add more
+- Task comments appear in the activity timeline, oldest first, and can
+  be edited or deleted from there. GraphQL task activities gain the
+  `COMMENTED` type and a `comment` field
+- `getCompliancePortal` in MCP returns the public URL, custom domain,
+  and Slack status. Creating a custom domain returns the DNS records
+  needed to point it at Probo
+- Cmd/Ctrl+F focuses the page search field, the sidebar shows the
+  Cmd/Ctrl+K Go to shortcut, and confirm dialogs accept Mod+Enter to
+  confirm and Mod+C to cancel
+
+### Changed
+
+- The task details page is restyled around soft cards, with attributes
+  edited through the same menus as the task list. Opening a task keeps
+  the list filters when navigating back
+- Task description edits no longer create activity entries. The
+  `DESCRIPTION` task activity field is removed from GraphQL and MCP
+
 ### Fixed
 
 - Identity federation discovery is also served with the well-known
