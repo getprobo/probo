@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { type Extensions } from "@tiptap/core";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
 import { Code } from "@tiptap/extension-code";
@@ -46,12 +47,6 @@ import { AutomergeUnknownBlockExtension } from "./AutomergeUnknownBlockExtension
 import { BlockMenu } from "./BlockMenu/BlockMenu";
 import { BubbleMenu } from "./BubbleMenu";
 import { CodeBlockExtension } from "./CodeBlockExtension";
-import {
-  createRichEditorAutomergeDocument as createAutomergeDocument,
-  createRichEditorCollaborationExtension,
-  richEditorAutomergeContent,
-  supportsRichEditorCollaboration as supportsCollaboration,
-} from "./collaboration";
 import { ContentUploadExtension } from "./ContentUploadExtension";
 import { FileExtension } from "./FileExtension";
 import {
@@ -63,10 +58,6 @@ import { LinkExtension } from "./LinkExtension";
 import { MarkdownPasteExtension } from "./MarkdownPasteExtension";
 import { OptionsMenu } from "./OptionsMenu/OptionsMenu";
 import { PlaceholderExtension, setPlaceholder } from "./PlaceholderExtension";
-import {
-  createRichEditorPresenceExtension,
-  type RichEditorCollaborationHandle,
-} from "./presence";
 import { SlashCommandExtension } from "./SlashCommandExtension";
 import { TableCellMenu } from "./TableCellMenu/TableCellMenu";
 import { TableColumnMenu } from "./TableColumnMenu/TableColumnMenu";
@@ -115,6 +106,7 @@ const coreExtensions = [
 
 const extensions = [
   ...coreExtensions,
+  AutomergeTableStructureExtension,
   ImageExtension,
   FileExtension,
   ContentUploadExtension,
@@ -191,8 +183,11 @@ type RichEditorProps = ComponentProps<"div"> & {
   onChangeContent?: (content: string) => void;
   onUploadingChange?: (uploading: boolean) => void;
   onUploadFile?: UploadAttachment;
-  collaborationHandle?: RichEditorCollaborationHandle;
   historyHighlights?: RichEditorHistoryHighlight[];
+  editorExtensions?: Extensions;
+  initialContent?: Content;
+  onPresence?: (anchor: number, head: number) => void;
+  suspendContentChanges?: boolean;
 };
 
 function parseContent(content: string): Content {
@@ -218,8 +213,11 @@ export function RichEditor(props: RichEditorProps) {
     onChangeContent,
     onUploadingChange,
     onUploadFile,
-    collaborationHandle,
     historyHighlights,
+    editorExtensions: editorExtensionOverride,
+    initialContent: initialContentOverride,
+    onPresence,
+    suspendContentChanges = false,
     ...divProps
   } = props;
   const { t } = useTranslation();
@@ -231,7 +229,7 @@ export function RichEditor(props: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const reportUploadErrorRef = useRef<(error: AttachmentUploadError) => void>(() => {});
-  const canUpload = Boolean(onUploadFile && !disabled && !collaborationHandle);
+  const canUpload = Boolean(onUploadFile && !disabled && !suspendContentChanges);
 
   useLayoutEffect(() => {
     onChangeContentRef.current = onChangeContent;
@@ -250,7 +248,7 @@ export function RichEditor(props: RichEditorProps) {
   }, []);
 
   useLayoutEffect(() => {
-    if (onUploadFile == null || disabled || collaborationHandle) {
+    if (onUploadFile == null || disabled || suspendContentChanges) {
       uploadRef.current = null;
     } else {
       uploadRef.current = onUploadFile;
@@ -263,7 +261,7 @@ export function RichEditor(props: RichEditorProps) {
         type: "error",
       });
     };
-  }, [collaborationHandle, disabled, onUploadFile, t, toast]);
+  }, [disabled, onUploadFile, suspendContentChanges, t, toast]);
 
   const reportUploadError = useCallback((error: AttachmentUploadError) => {
     reportUploadErrorRef.current(error);
@@ -283,7 +281,7 @@ export function RichEditor(props: RichEditorProps) {
         onUploadingChangeRef.current?.(uploading);
       }
 
-      if (collaborationHandle) {
+      if (suspendContentChanges) {
         return;
       }
 
@@ -298,36 +296,24 @@ export function RichEditor(props: RichEditorProps) {
       emittedRef.current = next;
       onChangeContentRef.current?.(next);
     },
-    [collaborationHandle],
+    [suspendContentChanges],
   );
 
   const editorExtensions = useMemo(
     () => {
-      const base = collaborationHandle
-        ? [
-            ...richEditorCollaborationExtensions,
-            createRichEditorCollaborationExtension(
-              collaborationHandle,
-              richEditorCollaborationExtensions,
-            ),
-            createRichEditorPresenceExtension(collaborationHandle),
-          ]
-        : extensions;
-
-      if (!historyHighlights?.length) {
-        return base;
+      if (editorExtensionOverride) {
+        return editorExtensionOverride;
       }
 
-      return [...base, createRichEditorHistoryExtension(historyHighlights)];
+      if (!historyHighlights?.length) {
+        return extensions;
+      }
+
+      return [...extensions, createRichEditorHistoryExtension(historyHighlights)];
     },
-    [collaborationHandle, historyHighlights],
+    [editorExtensionOverride, historyHighlights],
   );
-  const initialContent = collaborationHandle
-    ? richEditorAutomergeContent(
-        collaborationHandle,
-        richEditorCollaborationExtensions,
-      )
-    : parseContent(content);
+  const initialContent = initialContentOverride ?? parseContent(content);
 
   const editor = useEditor({
     editorProps: {
@@ -385,19 +371,19 @@ export function RichEditor(props: RichEditorProps) {
       const json = withoutContentUploads(created.getJSON());
       stripNonTextMarks(json);
       emittedRef.current = JSON.stringify(json);
-      collaborationHandle?.updatePresence?.(
+      onPresence?.(
         created.state.selection.anchor,
         created.state.selection.head,
       );
     },
     onUpdate: handleUpdate,
     onSelectionUpdate: ({ editor }) => {
-      collaborationHandle?.updatePresence?.(
+      onPresence?.(
         editor.state.selection.anchor,
         editor.state.selection.head,
       );
     },
-  }, [collaborationHandle, historyHighlights]);
+  }, [editorExtensions]);
 
   const openFilePicker = useCallback((kind: "image" | "file") => {
     const input = fileInputRef.current;
@@ -488,14 +474,4 @@ function describeUploadError(
     case "failed":
       return t("ui.richEditor.couldNotUpload", { fileName: error.fileName });
   }
-}
-
-export function createRichEditorAutomergeDocument(
-  content: string,
-) {
-  return createAutomergeDocument(content, richEditorCollaborationExtensions);
-}
-
-export function supportsRichEditorCollaboration(content: string): boolean {
-  return supportsCollaboration(content);
 }

@@ -124,10 +124,11 @@ export { EditableRow } from "./Molecules/Table/EditableRow";
 
 // Rich editor
 export {
+  CollaborativeRichEditor,
   createRichEditorAutomergeDocument,
-  RichEditor,
   supportsRichEditorCollaboration,
-} from "./RichEditor/RichEditor";
+} from "./RichEditor/CollaborativeRichEditor";
+export { RichEditor } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
 export type { RichEditorHistoryHighlight } from "./RichEditor/historyDecorations";
 export type {

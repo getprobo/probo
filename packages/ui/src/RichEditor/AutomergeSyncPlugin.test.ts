@@ -30,10 +30,8 @@ import {
   isSurrogatePair,
 } from "./AutomergeSyncPlugin";
 import { createSchemaAdapter, type RichEditorAutomergeDocument } from "./collaboration";
-import {
-  createRichEditorAutomergeDocument,
-  richEditorCollaborationExtensions,
-} from "./RichEditor";
+import { createRichEditorAutomergeDocument } from "./CollaborativeRichEditor";
+import { richEditorCollaborationExtensions } from "./RichEditor";
 
 type RemoteChange = (payload: {
   doc: Automerge.Doc<RichEditorAutomergeDocument>;

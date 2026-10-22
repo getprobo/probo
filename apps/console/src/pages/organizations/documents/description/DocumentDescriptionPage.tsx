@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import { formatError } from "@probo/helpers";
-import { Button, IconClock, supportsRichEditorCollaboration } from "@probo/ui";
+import { Button, CollaborativeRichEditor, IconClock, supportsRichEditorCollaboration } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -302,21 +302,40 @@ export function DocumentDescriptionPage(props: {
           )}
         </div>
       )}
-      <RichEditor
-        key={editorKey}
-        className="flex-1"
-        content={content}
-        data-theme="document"
-        disabled={!canEdit || collaborationConnecting}
-        collaborationHandle={collaborationHandle}
-        onChangeContent={handleContentChange}
-        onUploadingChange={(uploading) => {
-          uploadingRef.current = uploading;
-          if (uploading) {
-            handleUpdate.cancel();
-          }
-        }}
-      />
+      {collaborationHandle
+        ? (
+            <CollaborativeRichEditor
+              key={editorKey}
+              className="flex-1"
+              collaborationHandle={collaborationHandle}
+              content={content}
+              data-theme="document"
+              disabled={!canEdit || collaborationConnecting}
+              onChangeContent={handleContentChange}
+              onUploadingChange={(uploading) => {
+                uploadingRef.current = uploading;
+                if (uploading) {
+                  handleUpdate.cancel();
+                }
+              }}
+            />
+          )
+        : (
+            <RichEditor
+              key={editorKey}
+              className="flex-1"
+              content={content}
+              data-theme="document"
+              disabled={!canEdit || collaborationConnecting}
+              onChangeContent={handleContentChange}
+              onUploadingChange={(uploading) => {
+                uploadingRef.current = uploading;
+                if (uploading) {
+                  handleUpdate.cancel();
+                }
+              }}
+            />
+          )}
     </div>
   );
 }

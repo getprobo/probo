@@ -43,9 +43,9 @@ import {
 } from "./collaboration";
 import {
   createRichEditorAutomergeDocument,
-  richEditorCollaborationExtensions,
   supportsRichEditorCollaboration,
-} from "./RichEditor";
+} from "./CollaborativeRichEditor";
+import { richEditorCollaborationExtensions } from "./RichEditor";
 
 function syncPlugin({
   adapter,
