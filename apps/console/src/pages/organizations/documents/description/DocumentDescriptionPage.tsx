@@ -27,16 +27,17 @@ import { Button, CollaborativeRichEditor, IconClock, supportsRichEditorCollabora
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { type PreloadedQuery, useMutation, usePreloadedQuery } from "react-relay";
+import { type PreloadedQuery, useMutation, usePreloadedQuery, useQueryLoader } from "react-relay";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 import { useDebounceCallback } from "usehooks-ts";
 
 import type { DocumentDescriptionPage_updateContentMutation } from "#/__generated__/core/DocumentDescriptionPage_updateContentMutation.graphql";
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
+import type { DocumentHistoryPanelQuery } from "#/__generated__/core/DocumentHistoryPanelQuery.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
-import { DocumentHistoryView } from "./_components/DocumentHistoryPanel";
+import { documentHistoryPanelQuery, DocumentHistoryView } from "./_components/DocumentHistoryPanel";
 import { DocumentPresence } from "./_components/DocumentPresence";
 
 const autoSaveIntervalMs = 1000;
@@ -237,6 +238,8 @@ export function DocumentDescriptionPage(props: {
   const [dataGeneration, setDataGeneration] = useState(0);
   const [pendingExplicit, setPendingExplicit] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyQueryRef, loadHistoryQuery]
+    = useQueryLoader<DocumentHistoryPanelQuery>(documentHistoryPanelQuery);
 
   if (versionChangedAt !== prevVCA) {
     setPrevVCA(versionChangedAt);
@@ -266,20 +269,29 @@ export function DocumentDescriptionPage(props: {
   if (historyOpen) {
     return (
       <div className="flex flex-1 min-h-0 min-w-0">
-        <Suspense
-          fallback={(
-            <div className="flex-1 px-8 py-6 text-sm text-txt-secondary">
-              {t("documentDescriptionPage.history.loading")}
-            </div>
-          )}
-        >
-          <DocumentHistoryView
-            documentId={documentId}
-            canRestore={canEdit}
-            onClose={() => setHistoryOpen(false)}
-            onRestored={() => setHistoryOpen(false)}
-          />
-        </Suspense>
+        {historyQueryRef
+          ? (
+              <Suspense
+                fallback={(
+                  <div className="flex-1 px-8 py-6 text-sm text-txt-secondary">
+                    {t("documentDescriptionPage.history.loading")}
+                  </div>
+                )}
+              >
+                <DocumentHistoryView
+                  queryRef={historyQueryRef}
+                  documentId={documentId}
+                  canRestore={canEdit}
+                  onClose={() => setHistoryOpen(false)}
+                  onRestored={() => setHistoryOpen(false)}
+                />
+              </Suspense>
+            )
+          : (
+              <div className="flex-1 px-8 py-6 text-sm text-txt-secondary">
+                {t("documentDescriptionPage.history.loading")}
+              </div>
+            )}
       </div>
     );
   }
@@ -295,7 +307,10 @@ export function DocumentDescriptionPage(props: {
             <Button
               icon={IconClock}
               variant="secondary"
-              onClick={() => setHistoryOpen(true)}
+              onClick={() => {
+                loadHistoryQuery({ documentId }, { fetchPolicy: "network-only" });
+                setHistoryOpen(true);
+              }}
             >
               {t("documentDescriptionPage.history.open")}
             </Button>

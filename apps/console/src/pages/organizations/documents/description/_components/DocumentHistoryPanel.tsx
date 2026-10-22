@@ -21,9 +21,16 @@
 import { dateTimeFormat } from "@probo/i18n";
 import { Button, IconClock, type RichEditorHistoryHighlight } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { Suspense, useState } from "react";
+import { Suspense, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { graphql, useLazyLoadQuery, useMutation, usePaginationFragment } from "react-relay";
+import {
+  graphql,
+  type PreloadedQuery,
+  useMutation,
+  usePaginationFragment,
+  usePreloadedQuery,
+  useQueryLoader,
+} from "react-relay";
 
 import type { DocumentHistoryPanel_document$key } from "#/__generated__/core/DocumentHistoryPanel_document.graphql";
 import type { DocumentHistoryPanelPaginationQuery } from "#/__generated__/core/DocumentHistoryPanelPaginationQuery.graphql";
@@ -32,7 +39,7 @@ import type { DocumentHistoryPanelRestoreMutation } from "#/__generated__/core/D
 import type { DocumentHistoryPanelSnapshotQuery } from "#/__generated__/core/DocumentHistoryPanelSnapshotQuery.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
 
-const documentHistoryPanelQuery = graphql`
+export const documentHistoryPanelQuery = graphql`
   query DocumentHistoryPanelQuery($documentId: ID!) {
     document: node(id: $documentId) {
       __typename
@@ -110,16 +117,16 @@ type Revision = {
 };
 
 export function DocumentHistoryView(props: {
+  queryRef: PreloadedQuery<DocumentHistoryPanelQuery>;
   documentId: string;
   canRestore: boolean;
   onClose: () => void;
   onRestored: () => void;
 }) {
-  const { documentId, canRestore, onClose, onRestored } = props;
-  const data = useLazyLoadQuery<DocumentHistoryPanelQuery>(
+  const { queryRef, documentId, canRestore, onClose, onRestored } = props;
+  const data = usePreloadedQuery<DocumentHistoryPanelQuery>(
     documentHistoryPanelQuery,
-    { documentId },
-    { fetchPolicy: "network-only" },
+    queryRef,
   );
 
   if (data.document?.__typename !== "Document") {
@@ -155,6 +162,31 @@ function DocumentRevisions(props: {
   const sessions = data.history.edges.map(edge => edge.node);
   const [selectedId, setSelectedId] = useState<string | null>(sessions[0]?.id ?? null);
   const selected = sessions.find(session => session.id === selectedId) ?? sessions[0];
+  const [snapshotQueryRef, loadSnapshotQuery]
+    = useQueryLoader<DocumentHistoryPanelSnapshotQuery>(documentHistorySnapshotQuery);
+  const loadedRevisionId = useRef<string | null>(null);
+
+  function selectRevision(revisionId: string) {
+    loadedRevisionId.current = revisionId;
+    setSelectedId(revisionId);
+    loadSnapshotQuery(
+      { documentId, revisionId },
+      { fetchPolicy: "network-only" },
+    );
+  }
+
+  const selectedRevisionId = selected?.id;
+  useLayoutEffect(() => {
+    if (!selectedRevisionId || loadedRevisionId.current === selectedRevisionId) {
+      return;
+    }
+
+    loadedRevisionId.current = selectedRevisionId;
+    loadSnapshotQuery(
+      { documentId, revisionId: selectedRevisionId },
+      { fetchPolicy: "network-only" },
+    );
+  }, [documentId, loadSnapshotQuery, selectedRevisionId]);
 
   const [restore, restoring] = useMutation<DocumentHistoryPanelRestoreMutation>(restoreMutation);
 
@@ -166,7 +198,7 @@ function DocumentRevisions(props: {
             {t("documentDescriptionPage.history.close")}
           </Button>
         </div>
-        {selected
+        {selected && snapshotQueryRef
           ? (
               <Suspense
                 fallback={(
@@ -177,14 +209,15 @@ function DocumentRevisions(props: {
               >
                 <DocumentHistoryPreview
                   key={selected.id}
-                  documentId={documentId}
-                  revisionId={selected.id}
+                  queryRef={snapshotQueryRef}
                 />
               </Suspense>
             )
           : (
               <div className="flex-1 px-8 py-6 text-sm text-txt-secondary">
-                {t("documentDescriptionPage.history.empty")}
+                {selected
+                  ? t("documentDescriptionPage.history.loading")
+                  : t("documentDescriptionPage.history.empty")}
               </div>
             )}
       </div>
@@ -199,14 +232,14 @@ function DocumentRevisions(props: {
               <div className="px-4 pt-3 pb-1 text-xs font-medium text-txt-secondary">
                 {dayLabel(group.key, t, i18n.language)}
               </div>
-              {group.sessions.map(session => {
+              {group.sessions.map((session) => {
                 const active = session.id === selected?.id;
                 return (
                   <div key={session.id} className="px-2">
                     <button
                       type="button"
                       className={`w-full rounded px-2 py-2 text-left ${active ? "bg-active" : "hover:bg-tertiary-hover"}`}
-                      onClick={() => setSelectedId(session.id)}
+                      onClick={() => selectRevision(session.id)}
                     >
                       <div className="text-sm text-txt-primary">
                         {session.authorName || t("documentDescriptionPage.history.unknownAuthor")}
@@ -277,13 +310,12 @@ function DocumentRevisions(props: {
 }
 
 function DocumentHistoryPreview(props: {
-  documentId: string;
-  revisionId: string;
+  queryRef: PreloadedQuery<DocumentHistoryPanelSnapshotQuery>;
 }) {
-  const { documentId, revisionId } = props;
-  const data = useLazyLoadQuery<DocumentHistoryPanelSnapshotQuery>(
+  const { queryRef } = props;
+  const data = usePreloadedQuery<DocumentHistoryPanelSnapshotQuery>(
     documentHistorySnapshotQuery,
-    { documentId, revisionId },
+    queryRef,
   );
 
   if (data.document?.__typename !== "Document" || !data.document.revision) {

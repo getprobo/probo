@@ -34,6 +34,7 @@ import { DocumentDetailsCard } from "./_components/DocumentDetailsCard";
 import { DocumentTitleForm } from "./_components/DocumentTitleForm";
 import { DocumentVersionsDropdown } from "./_components/DocumentVersionsDropdown";
 import { PublishDialog, type PublishDialogRef } from "./_components/PublishDialog";
+import { snapshotStatusLabel, snapshotStatusVariant } from "./_lib/snapshotStatus";
 
 export const documentLayoutQuery = graphql`
   query DocumentLayoutQuery($documentId: ID! $versionId: ID! $versionSpecified: Boolean!) {
@@ -301,36 +302,4 @@ export function DocumentLayout(props: { queryRef: PreloadedQuery<DocumentLayoutQ
       />
     </>
   );
-}
-
-function snapshotStatusVariant(status: string | undefined) {
-  switch (status) {
-    case "PUBLISHED":
-      return "success" as const;
-    case "PENDING_APPROVAL":
-      return "warning" as const;
-    case "REJECTED":
-    case "VOIDED":
-      return "danger" as const;
-    default:
-      return "highlight" as const;
-  }
-}
-
-function snapshotStatusLabel(
-  t: (key: string) => string,
-  status: string | undefined,
-) {
-  switch (status) {
-    case "PUBLISHED":
-      return t("documentLayout.status.published");
-    case "PENDING_APPROVAL":
-      return t("documentLayout.status.pendingApproval");
-    case "REJECTED":
-      return t("documentLayout.status.rejected");
-    case "VOIDED":
-      return t("documentLayout.status.voided");
-    default:
-      return t("documentLayout.status.draft");
-  }
 }
