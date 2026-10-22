@@ -25,7 +25,7 @@ export {
 } from "./connectRepoDocument";
 export {
   groupPresencesByIdentity,
-  pruneStalePresences,
   type PresenceEntry,
   type PresencePerson,
+  pruneStalePresences,
 } from "./presence";

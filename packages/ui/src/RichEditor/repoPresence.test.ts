@@ -88,7 +88,7 @@ describe("repo presence mapping", () => {
 
   it("keeps a remote caret anchored across a concurrent insertion", () => {
     const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
-    let document = seededDocument("hello world");
+    const document = seededDocument("hello world");
 
     const selection = presenceFromPmSelection(adapter, document, 7, 7);
     expect(selection).not.toBeNull();

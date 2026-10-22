@@ -27,10 +27,10 @@ describe("rich editor extensions", () => {
   it("keeps automerge attributes off the base editor schema", () => {
     const schema = getSchema(richEditorExtensions);
 
-    expect(schema.nodes.paragraph.attrs.isAmgBlock).toBeUndefined();
-    expect(schema.nodes.paragraph.attrs.unknownAttrs).toBeUndefined();
-    expect(schema.nodes.table.attrs.isAmgBlock).toBeUndefined();
-    expect(schema.nodes.horizontalRule.attrs.isAmgBlock).toBeUndefined();
+    expect(schema.nodes.paragraph.spec.attrs?.isAmgBlock).toBeUndefined();
+    expect(schema.nodes.paragraph.spec.attrs?.unknownAttrs).toBeUndefined();
+    expect(schema.nodes.table.spec.attrs?.isAmgBlock).toBeUndefined();
+    expect(schema.nodes.horizontalRule.spec.attrs?.isAmgBlock).toBeUndefined();
 
     const doc = schema.nodeFromJSON({
       type: "doc",
@@ -56,7 +56,7 @@ describe("rich editor extensions", () => {
   it("keeps automerge attributes on the collaboration schema", () => {
     const schema = getSchema(richEditorCollaborationExtensions);
 
-    expect(schema.nodes.paragraph.attrs.isAmgBlock).toBeDefined();
-    expect(schema.nodes.table.attrs.isAmgBlock).toBeDefined();
+    expect(schema.nodes.paragraph.spec.attrs?.isAmgBlock).toBeDefined();
+    expect(schema.nodes.table.spec.attrs?.isAmgBlock).toBeDefined();
   });
 });

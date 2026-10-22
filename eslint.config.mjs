@@ -13,7 +13,11 @@ const reactDirs = [
   "packages/routes/**",
   "packages/tasks/**",
 ];
-const lintedDirs = [...reactDirs, "packages/eslint-config/**"];
+const browserDirs = [
+  ...reactDirs,
+  "packages/collaboration/**",
+];
+const lintedDirs = [...browserDirs, "packages/eslint-config/**"];
 
 export default defineConfig([
   // Keep `configs.base` global so its `globalIgnores` (dist, __generated__,
@@ -134,7 +138,7 @@ export default defineConfig([
     },
   },
   {
-    files: reactDirs,
+    files: browserDirs,
     ignores: ["packages/ui/tailwind.config.js"],
     extends: [configs.languageOptions.browser],
   },

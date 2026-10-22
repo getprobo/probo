@@ -117,7 +117,7 @@ describe("Automerge sync plugin", () => {
       off: () => {},
     } as unknown as DocHandle<RichEditorAutomergeDocument>;
     const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
-    let state = EditorState.create({
+    const state = EditorState.create({
       schema: adapter.schema,
       doc: pmDocFromSpans(adapter, Automerge.spans(document, ["body"])),
       plugins: [createAutomergeSyncPlugin(adapter, handle, ["body"])],

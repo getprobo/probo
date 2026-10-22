@@ -45,7 +45,7 @@ describe("repo selection", () => {
   });
 
   it("keeps a caret anchored across a concurrent insertion", () => {
-    let document = seededDocument("hello world");
+    const document = seededDocument("hello world");
     // Caret on the "w" of "world".
     const selection = textSelection(document, "body", 6, 6);
     const before = resolveSelection(document, selection);

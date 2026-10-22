@@ -76,7 +76,7 @@ export function DocumentPresence({ collaborationHandle }: DocumentPresenceProps)
   return (
     <div className={slots.root()} aria-label={t("documentDescriptionPage.presence.label")}>
       <div className={slots.stack()}>
-        {visible.map(person => {
+        {visible.map((person) => {
           const name = person.displayName?.trim()
             || t("documentDescriptionPage.presence.anonymous");
           const label = person.active
@@ -98,7 +98,7 @@ export function DocumentPresence({ collaborationHandle }: DocumentPresenceProps)
                 count: overflow.length,
               })}
             >
-              +{overflow.length}
+              {`+${overflow.length}`}
             </TooltipTrigger>
             <TooltipPopup>
               <ul className="flex flex-col gap-1">
