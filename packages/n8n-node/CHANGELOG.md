@@ -4,6 +4,13 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.259.0] - 2026-10-22
+
+### Added
+
+- Compliance Portal `Get` returns the public URL, custom domain, and
+  Slack status, and `Create` returns the custom domain DNS records
+
 ## [0.258.0] - 2026-10-22
 
 ### Added
