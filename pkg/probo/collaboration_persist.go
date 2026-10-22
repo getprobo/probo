@@ -22,6 +22,7 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -237,18 +238,7 @@ func (s *CollaborationService) Refresh(
 	document *automerge.Document,
 	knownRevision int64,
 ) (int64, bool, error) {
-	doc := &coredata.CollaborationDocument{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			if err := doc.LoadByDocumentID(ctx, conn, scope, documentID); err != nil {
-				return fmt.Errorf("cannot load collaboration document: %w", err)
-			}
-
-			return nil
-		},
-	)
+	doc, changes, err := s.readConsistentCollaboration(ctx, scope, documentID)
 	if err != nil {
 		return 0, false, err
 	}
@@ -264,15 +254,10 @@ func (s *CollaborationService) Refresh(
 
 	defer func() { _ = canonical.Close() }()
 
-	if err := s.loadChanges(
-		ctx,
-		scope,
-		documentID,
-		canonical,
-		doc.SnapshotRevision,
-		doc.ChangeRevision,
-	); err != nil {
-		return 0, false, fmt.Errorf("cannot load refreshed collaboration changes: %w", err)
+	if len(changes) > 0 {
+		if err := canonical.ApplyChanges(changes); err != nil {
+			return 0, false, fmt.Errorf("cannot apply refreshed collaboration changes: %w", err)
+		}
 	}
 
 	if _, err := document.Merge(canonical); err != nil {
@@ -422,7 +407,39 @@ func (s *CollaborationService) loadChangesFromConn(
 	snapshotRevision int64,
 	latestRevision int64,
 ) error {
+	changes, err := s.collectChanges(
+		ctx,
+		conn,
+		scope,
+		documentID,
+		snapshotRevision,
+		latestRevision,
+	)
+	if err != nil {
+		return err
+	}
+
+	if len(changes) == 0 {
+		return nil
+	}
+
+	if err := document.ApplyChanges(changes); err != nil {
+		return fmt.Errorf("cannot apply collaboration change batch: %w", err)
+	}
+
+	return nil
+}
+
+func (s *CollaborationService) collectChanges(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	snapshotRevision int64,
+	latestRevision int64,
+) ([]automerge.Change, error) {
 	currentRevision := snapshotRevision
+	changes := make([]automerge.Change, 0)
 
 	for currentRevision < latestRevision {
 		var batch coredata.CollaborationChanges
@@ -435,35 +452,100 @@ func (s *CollaborationService) loadChangesFromConn(
 			currentRevision,
 			changeBatchSize,
 		); err != nil {
-			return fmt.Errorf("cannot load collaboration change batch: %w", err)
+			return nil, fmt.Errorf("cannot load collaboration change batch: %w", err)
 		}
 
 		if len(batch) == 0 {
-			return fmt.Errorf(
+			return nil, fmt.Errorf(
 				"collaboration change log ends at revision %d, expected %d",
 				currentRevision,
 				latestRevision,
 			)
 		}
 
-		changes := make([]automerge.Change, len(batch))
-		for i, change := range batch {
+		for _, change := range batch {
 			if change.Revision != currentRevision+1 {
-				return fmt.Errorf(
+				return nil, fmt.Errorf(
 					"collaboration change revision is %d, expected %d",
 					change.Revision,
 					currentRevision+1,
 				)
 			}
 
-			changes[i] = automerge.Change{Bytes: change.ChangeBytes}
+			changes = append(changes, automerge.Change{Bytes: change.ChangeBytes})
 			currentRevision = change.Revision
-		}
-
-		if err := document.ApplyChanges(changes); err != nil {
-			return fmt.Errorf("cannot apply collaboration change batch: %w", err)
 		}
 	}
 
-	return nil
+	return changes, nil
+}
+
+var errCollaborationViewMoved = errors.New("collaboration snapshot moved")
+
+// readConsistentCollaboration reads the snapshot and the change log in one
+// transaction and retries once when compaction commits between the two reads.
+func (s *CollaborationService) readConsistentCollaboration(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*coredata.CollaborationDocument, []automerge.Change, error) {
+	const attempts = 2
+
+	var lastErr error
+
+	for attempt := 0; attempt < attempts; attempt++ {
+		var (
+			doc     coredata.CollaborationDocument
+			changes []automerge.Change
+		)
+
+		err := s.pg.WithTx(
+			ctx,
+			func(ctx context.Context, tx pg.Tx) error {
+				if err := doc.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
+					return err
+				}
+
+				loaded, err := s.collectChanges(
+					ctx,
+					tx,
+					scope,
+					documentID,
+					doc.SnapshotRevision,
+					doc.ChangeRevision,
+				)
+				if err != nil {
+					return err
+				}
+
+				var again coredata.CollaborationDocument
+				if err := again.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {
+					return fmt.Errorf("cannot reload collaboration document: %w", err)
+				}
+
+				if again.Revision != doc.Revision ||
+					again.SnapshotRevision != doc.SnapshotRevision ||
+					again.ChangeRevision != doc.ChangeRevision {
+					return errCollaborationViewMoved
+				}
+
+				changes = loaded
+
+				return nil
+			},
+		)
+		if err == nil {
+			return &doc, changes, nil
+		}
+
+		if errors.Is(err, errCollaborationViewMoved) {
+			lastErr = err
+
+			continue
+		}
+
+		return nil, nil, err
+	}
+
+	return nil, nil, fmt.Errorf("cannot read consistent collaboration state: %w", lastErr)
 }

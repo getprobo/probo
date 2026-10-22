@@ -166,6 +166,62 @@ LIMIT 1;
 	return nil
 }
 
+func (p *Document) LoadByIDForUpdate(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+    documents.id,
+    documents.organization_id,
+    documents.current_published_major,
+    documents.current_published_minor,
+    documents.write_mode,
+    documents.status,
+    documents.archived_at,
+    documents.created_at,
+    documents.updated_at,
+    documents.title,
+    documents.classification,
+    documents.document_type,
+    documents.orientation,
+    documents.content
+FROM
+    documents
+WHERE
+    %s
+    AND documents.deleted_at IS NULL
+    AND documents.id = @document_id
+LIMIT 1
+FOR UPDATE;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"document_id": documentID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := tx.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document for update: %w", err)
+	}
+
+	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect document for update: %w", err)
+	}
+
+	*p = document
+
+	return nil
+}
+
 func (p *Document) LoadByIDWithFilter(
 	ctx context.Context,
 	conn pg.Querier,
@@ -402,7 +458,11 @@ func (p *Documents) loadPublished(
 WITH published_versions AS (
 	SELECT
 		dv.document_id,
-		dv.title AS published_title
+		dv.title,
+		dv.classification,
+		dv.document_type,
+		dv.orientation,
+		dv.content
 	FROM
 		document_versions dv
 		INNER JOIN documents d
@@ -425,14 +485,14 @@ base AS (
 		documents.archived_at,
 		documents.created_at,
 		documents.updated_at,
-		COALESCE(pv.published_title, documents.title) AS title,
-		documents.classification,
-		documents.document_type,
-		documents.orientation,
-		documents.content
+		pv.title,
+		pv.classification,
+		pv.document_type,
+		pv.orientation,
+		pv.content
 	FROM
 		documents
-		LEFT JOIN published_versions pv ON pv.document_id = documents.id
+		INNER JOIN published_versions pv ON pv.document_id = documents.id
 	WHERE
 		%s
 		AND documents.deleted_at IS NULL
@@ -462,6 +522,70 @@ SELECT * FROM base WHERE %s
 	}
 
 	*p = documents
+
+	return nil
+}
+
+// LoadPublishedByID loads the document and replaces the live title,
+// classification, type, orientation, and content with the published snapshot.
+func (p *Document) LoadPublishedByID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+) error {
+	q := `
+SELECT
+	documents.id,
+	documents.organization_id,
+	documents.current_published_major,
+	documents.current_published_minor,
+	documents.write_mode,
+	documents.status,
+	documents.archived_at,
+	documents.created_at,
+	documents.updated_at,
+	dv.title,
+	dv.classification,
+	dv.document_type,
+	dv.orientation,
+	dv.content
+FROM
+	documents
+	INNER JOIN document_versions dv
+		ON dv.document_id = documents.id
+		AND dv.major = documents.current_published_major
+		AND dv.minor = documents.current_published_minor
+		AND dv.status = @published_status
+WHERE
+	%s
+	AND documents.deleted_at IS NULL
+	AND documents.id = @document_id
+LIMIT 1
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":      documentID,
+		"published_status": DocumentVersionStatusPublished,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query published document: %w", err)
+	}
+
+	document, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Document])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect published document: %w", err)
+	}
+
+	*p = document
 
 	return nil
 }
@@ -582,7 +706,6 @@ SET
 	classification = @classification,
 	document_type = @document_type,
 	orientation = @orientation,
-	content = @content,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -602,13 +725,53 @@ WHERE
 		"classification":          p.Classification,
 		"document_type":           p.DocumentType,
 		"orientation":             p.Orientation,
-		"content":                 p.Content,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update document: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateContent writes the live projection and leaves metadata, publication
+// pointers, and archived_at untouched. An archive that landed after the
+// caller read the row stays archived.
+func (p *Document) UpdateContent(
+	ctx context.Context,
+	conn pg.Tx,
+	scope Scoper,
+) error {
+	q := `
+UPDATE
+	documents
+SET
+	content = @content,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @document_id
+	AND deleted_at IS NULL
+	AND archived_at IS NULL
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id": p.ID,
+		"content":     p.Content,
+		"updated_at":  time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	result, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update document content: %w", err)
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrResourceNotFound
 	}
 
 	return nil

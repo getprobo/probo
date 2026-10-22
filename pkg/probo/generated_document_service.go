@@ -4785,12 +4785,16 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 
 	document.Content = content
 	document.UpdatedAt = now
+	if err := s.svc.Documents.collaboration.PutContent(ctx, tx, scope, document.ID, content); err != nil {
+		return fmt.Errorf("cannot store generated document content: %w", err)
+	}
+
 	if err := document.Update(ctx, tx, scope); err != nil {
 		return fmt.Errorf("cannot update live document: %w", err)
 	}
 
-	if err := s.svc.Documents.collaboration.PutContent(ctx, tx, scope, document.ID, content); err != nil {
-		return fmt.Errorf("cannot store generated document content: %w", err)
+	if err := document.UpdateContent(ctx, tx, scope); err != nil {
+		return fmt.Errorf("cannot update live document content: %w", err)
 	}
 
 	if minor {

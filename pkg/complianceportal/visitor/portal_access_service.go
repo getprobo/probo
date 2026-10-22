@@ -918,7 +918,7 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 		}
 
 		var document coredata.Document
-		if err := document.LoadByID(ctx, tx, scope, link.DocumentID); err != nil {
+		if err := document.LoadPublishedByID(ctx, tx, scope, link.DocumentID); err != nil {
 			return fmt.Errorf("cannot load document: %w", err)
 		}
 

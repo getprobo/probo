@@ -24,9 +24,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 )
@@ -36,14 +38,7 @@ func (s *CollaborationService) Open(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) (*DocumentCollaboration, error) {
-	var (
-		snapshot         []byte
-		revision         int64
-		snapshotRevision int64
-		changeRevision   int64
-		seedContent      string
-		needsSeed        bool
-	)
+	var opened *DocumentCollaboration
 
 	err := s.pg.WithTx(
 		ctx,
@@ -53,61 +48,117 @@ func (s *CollaborationService) Open(
 				return err
 			}
 
-			snapshot = append([]byte(nil), doc.Snapshot...)
-
-			needsSeed, err = claimSeed(ctx, tx, scope, doc, time.Now())
-			if err != nil {
-				return fmt.Errorf("cannot claim collaboration seed: %w", err)
-			}
-
-			if needsSeed {
-				content, err := loadSeedContent(
-					ctx,
-					scope,
-					tx,
-					documentID,
-				)
-				if err != nil {
-					return fmt.Errorf("cannot load seed content: %w", err)
+			now := time.Now()
+			if !doc.Seeded {
+				if seedClaimActive(doc, now) {
+					return ErrSeedInProgress
 				}
 
-				seedContent = content
+				automergeDocument, _, err := s.seedUnderDocumentLock(
+					ctx,
+					tx,
+					scope,
+					doc,
+					nil,
+					nil,
+					now,
+				)
+				if err != nil {
+					return err
+				}
+
+				opened = &DocumentCollaboration{
+					Document: automergeDocument,
+					Revision: doc.Revision,
+				}
+
+				return nil
 			}
 
-			revision = doc.Revision
-			snapshotRevision = doc.SnapshotRevision
-			changeRevision = doc.ChangeRevision
+			changes, err := s.collectChanges(
+				ctx,
+				tx,
+				scope,
+				documentID,
+				doc.SnapshotRevision,
+				doc.ChangeRevision,
+			)
+			if err != nil {
+				return err
+			}
+
+			automergeDocument, err := loadAutomergeDocument(ctx, doc.Snapshot)
+			if err != nil {
+				return fmt.Errorf("cannot open collaboration snapshot: %w", err)
+			}
+
+			if len(changes) > 0 {
+				if err := automergeDocument.ApplyChanges(changes); err != nil {
+					_ = automergeDocument.Close()
+
+					return fmt.Errorf("cannot apply collaboration changes: %w", err)
+				}
+			}
+
+			opened = &DocumentCollaboration{
+				Document: automergeDocument,
+				Revision: doc.Revision,
+			}
 
 			return nil
 		},
 	)
 	if err != nil {
+		if opened != nil && opened.Document != nil {
+			_ = opened.Document.Close()
+		}
+
 		return nil, err
 	}
 
-	document, err := loadAutomergeDocument(ctx, snapshot)
+	return opened, nil
+}
+
+// openIfSeeded loads a collaboration document that is already seeded. It does
+// not create a row or take the seed lease.
+func (s *CollaborationService) openIfSeeded(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*DocumentCollaboration, error) {
+	doc, changes, err := s.readConsistentCollaboration(ctx, scope, documentID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, ErrDocumentCollaborationNotSeeded
+		}
+
+		return nil, err
+	}
+
+	if !doc.Seeded {
+		if seedClaimActive(doc, time.Now()) {
+			return nil, ErrSeedInProgress
+		}
+
+		return nil, ErrDocumentCollaborationNotSeeded
+	}
+
+	automergeDocument, err := loadAutomergeDocument(ctx, doc.Snapshot)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open collaboration snapshot: %w", err)
 	}
 
-	if err := s.loadChanges(
-		ctx,
-		scope,
-		documentID,
-		document,
-		snapshotRevision,
-		changeRevision,
-	); err != nil {
-		_ = document.Close()
+	if len(changes) > 0 {
+		if err := automergeDocument.ApplyChanges(changes); err != nil {
+			_ = automergeDocument.Close()
 
-		return nil, fmt.Errorf("cannot load collaboration changes: %w", err)
+			return nil, fmt.Errorf("cannot apply collaboration changes: %w", err)
+		}
 	}
 
 	return &DocumentCollaboration{
-		Document:    document,
-		Revision:    revision,
-		SeedContent: seedContent,
-		NeedsSeed:   needsSeed,
+		Document: automergeDocument,
+		Revision: doc.Revision,
 	}, nil
 }
 
@@ -115,28 +166,22 @@ func (s *CollaborationService) ReleaseSeed(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
+	claimedAt time.Time,
 ) error {
+	if claimedAt.IsZero() {
+		return nil
+	}
+
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			doc := &coredata.CollaborationDocument{}
-			if err := doc.LoadByDocumentIDForUpdate(ctx, tx, scope, documentID); err != nil {
-				if errors.Is(err, coredata.ErrResourceNotFound) {
-					return nil
-				}
-
-				return fmt.Errorf("cannot lock collaboration document seed: %w", err)
-			}
-
-			if doc.Seeded || doc.SeedClaimedAt == nil {
-				return nil
-			}
-
-			doc.SeedClaimedAt = nil
-			doc.Revision++
-
-			doc.UpdatedAt = time.Now()
-			if err := doc.Update(ctx, tx, scope); err != nil {
+			if err := coredata.ReleaseCollaborationSeedClaim(
+				ctx,
+				tx,
+				scope,
+				documentID,
+				claimedAt,
+			); err != nil {
 				return fmt.Errorf("cannot release collaboration document seed: %w", err)
 			}
 
@@ -209,28 +254,111 @@ func lockCollaborationDocument(
 	return doc, nil
 }
 
-func claimSeed(
+func seedClaimActive(doc *coredata.CollaborationDocument, now time.Time) bool {
+	return doc.SeedClaimedAt != nil && doc.SeedClaimedAt.After(now.Add(-seedLease))
+}
+
+// seedUnderDocumentLock builds the initial CRDT from content while the
+// document row is locked, and commits that seed before the lock is released.
+// A nil content reads the locked row. The returned document stays open.
+func (s *CollaborationService) seedUnderDocumentLock(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
 	doc *coredata.CollaborationDocument,
+	content *string,
+	actorID *automerge.ActorID,
 	now time.Time,
-) (bool, error) {
-	if doc.Seeded {
-		return false, nil
+) (*automerge.Document, string, error) {
+	document := &coredata.Document{}
+	if err := document.LoadByIDForUpdate(ctx, tx, scope, doc.DocumentID); err != nil {
+		return nil, "", fmt.Errorf("cannot lock document for collaboration seed: %w", err)
 	}
 
-	if doc.SeedClaimedAt != nil && doc.SeedClaimedAt.After(now.Add(-seedLease)) {
-		return false, nil
+	if document.ArchivedAt != nil {
+		return nil, "", &ErrDocumentArchived{}
 	}
 
-	doc.SeedClaimedAt = new(now)
+	body := document.Content
+	if content != nil {
+		body = *content
+	}
+
+	if strings.TrimSpace(body) == "" {
+		body = emptyLiveDocument
+	}
+
+	var (
+		automergeDocument *automerge.Document
+		err               error
+	)
+	if actorID != nil {
+		automergeDocument, err = automerge.Load(doc.Snapshot, *actorID)
+	} else {
+		automergeDocument, err = loadAutomergeDocument(ctx, doc.Snapshot)
+	}
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	if err := writeSpans(automergeDocument, body, true); err != nil {
+		_ = automergeDocument.Close()
+
+		return nil, "", err
+	}
+
+	if _, err := automergeDocument.Commit("Seed collaboration document", now); err != nil {
+		_ = automergeDocument.Close()
+
+		return nil, "", fmt.Errorf("cannot commit collaboration seed: %w", err)
+	}
+
+	snapshot, err := automergeDocument.Save()
+	if err != nil {
+		_ = automergeDocument.Close()
+
+		return nil, "", fmt.Errorf("cannot save collaboration seed: %w", err)
+	}
+
+	if len(snapshot) > snapshotMaxBytes {
+		_ = automergeDocument.Close()
+
+		return nil, "", &ErrCollaborationStateTooLarge{Size: len(snapshot)}
+	}
+
+	heads, err := automergeDocument.Heads()
+	if err != nil {
+		_ = automergeDocument.Close()
+
+		return nil, "", fmt.Errorf("cannot read collaboration seed heads: %w", err)
+	}
+
+	if err := coredata.DeleteCollaborationChangesThroughRevision(
+		ctx,
+		tx,
+		scope,
+		doc.DocumentID,
+		doc.ChangeRevision,
+	); err != nil {
+		_ = automergeDocument.Close()
+
+		return nil, "", err
+	}
+
+	doc.Snapshot = snapshot
+	doc.Heads = encodeHeads(heads)
+	doc.Seeded = true
+	doc.SeedClaimedAt = nil
 	doc.Revision++
-
+	doc.SnapshotRevision = doc.Revision
+	doc.ChangeRevision = doc.Revision
 	doc.UpdatedAt = now
 	if err := doc.Update(ctx, tx, scope); err != nil {
-		return false, fmt.Errorf("cannot update collaboration seed claim: %w", err)
+		_ = automergeDocument.Close()
+
+		return nil, "", fmt.Errorf("cannot store collaboration seed: %w", err)
 	}
 
-	return true, nil
+	return automergeDocument, body, nil
 }

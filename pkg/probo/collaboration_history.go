@@ -23,6 +23,7 @@ package probo
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -145,23 +146,23 @@ func (s *CollaborationService) loadRevisions(
 	scope coredata.Scoper,
 	documentID gid.GID,
 ) ([]*DocumentRevision, error) {
-	opened, err := s.Open(ctx, scope, documentID)
+	opened, err := s.openIfSeeded(ctx, scope, documentID)
 	if err != nil {
+		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+			return nil, nil
+		}
+
 		return nil, fmt.Errorf("cannot open collaboration for history: %w", err)
 	}
 
 	defer func() { _ = opened.Document.Close() }()
-
-	if opened.NeedsSeed {
-		return nil, nil
-	}
 
 	changes, err := opened.Document.ChangeHistory()
 	if err != nil {
 		return nil, fmt.Errorf("cannot read collaboration change history: %w", err)
 	}
 
-	actors, err := s.loadActorAttributions(ctx, scope, documentID)
+	actors, err := s.loadActorAttributions(ctx, scope, documentID, actorIDsFromChanges(changes))
 	if err != nil {
 		return nil, err
 	}
@@ -185,16 +186,16 @@ func (s *CollaborationService) GetHistorySnapshot(
 		return nil, fmt.Errorf("collaboration history snapshot requires heads")
 	}
 
-	opened, err := s.Open(ctx, scope, documentID)
+	opened, err := s.openIfSeeded(ctx, scope, documentID)
 	if err != nil {
+		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+			return nil, err
+		}
+
 		return nil, fmt.Errorf("cannot open collaboration for history snapshot: %w", err)
 	}
 
 	defer func() { _ = opened.Document.Close() }()
-
-	if opened.NeedsSeed {
-		return nil, ErrDocumentCollaborationNotSeeded
-	}
 
 	hasHeads, err := opened.Document.HasHeads(heads)
 	if err != nil {
@@ -292,16 +293,14 @@ func (s *CollaborationService) RestoreHistory(
 
 	opened, err := s.openWithActor(ctx, scope, documentID, actorID)
 	if err != nil {
+		if errors.Is(err, ErrDocumentCollaborationNotSeeded) || errors.Is(err, ErrSeedInProgress) {
+			return 0, err
+		}
+
 		return 0, fmt.Errorf("cannot open collaboration for history restore: %w", err)
 	}
 
 	defer func() { _ = opened.Document.Close() }()
-
-	if opened.NeedsSeed {
-		_ = s.ReleaseSeed(ctx, scope, documentID)
-
-		return 0, ErrDocumentCollaborationNotSeeded
-	}
 
 	hasHeads, err := opened.Document.HasHeads(heads)
 	if err != nil {
@@ -343,22 +342,44 @@ func (s *CollaborationService) RestoreHistory(
 	return revision, nil
 }
 
+func actorIDsFromChanges(changes []automerge.ChangeInfo) [][]byte {
+	seen := make(map[string]struct{}, len(changes))
+	ids := make([][]byte, 0)
+
+	for _, change := range changes {
+		if len(change.Actor) == 0 {
+			continue
+		}
+
+		key := string(change.Actor)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+
+		seen[key] = struct{}{}
+		ids = append(ids, append([]byte(nil), change.Actor...))
+	}
+
+	return ids
+}
+
 func (s *CollaborationService) loadActorAttributions(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
+	actorIDs [][]byte,
 ) (map[string]actorAttribution, error) {
 	var actors coredata.CollaborationActors
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return actors.LoadByDocumentID(
+			return actors.LoadByDocumentIDAndActorIDs(
 				ctx,
 				conn,
 				scope,
 				documentID,
-				0,
+				actorIDs,
 			)
 		},
 	)
@@ -499,6 +520,17 @@ func paginateRevisions(
 		slices.Reverse(ordered)
 	}
 
+	if cursor.Position == page.Tail {
+		return paginateRevisionTail(ordered, cursor)
+	}
+
+	return paginateRevisionHead(ordered, cursor)
+}
+
+func paginateRevisionHead(
+	ordered []*DocumentRevision,
+	cursor *page.Cursor[DocumentRevisionOrderField],
+) []*DocumentRevision {
 	start := 0
 	if cursor.Key != nil {
 		for i, session := range ordered {
@@ -520,6 +552,42 @@ func paginateRevisions(
 	}
 
 	return ordered[start:end]
+}
+
+func paginateRevisionTail(
+	ordered []*DocumentRevision,
+	cursor *page.Cursor[DocumentRevisionOrderField],
+) []*DocumentRevision {
+	end := len(ordered)
+	if cursor.Key != nil {
+		found := false
+		for i, session := range ordered {
+			if session.ID == cursor.Key.ID {
+				end = i + 1
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil
+		}
+	}
+
+	limit := cursor.Size + 1
+	if cursor.Key != nil {
+		limit++
+	}
+
+	start := end - limit
+	if start < 0 {
+		start = 0
+	}
+
+	window := slices.Clone(ordered[start:end])
+	slices.Reverse(window)
+
+	return window
 }
 
 func historyHighlights(
@@ -611,6 +679,7 @@ func automergeIndexToPlainOffset(spans []automerge.Span, index uint64) (int, boo
 			}
 
 			am++
+			plain++
 
 			continue
 		}

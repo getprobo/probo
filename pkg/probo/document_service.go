@@ -623,6 +623,26 @@ func (s *DocumentService) publish(
 		return result, nil
 	}
 
+	if req.IgnoreUnchanged {
+		published := &coredata.DocumentVersion{}
+		err := published.LoadLatestPublishedVersion(ctx, tx, scope, req.DocumentID)
+		if err == nil {
+			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)
+			if err != nil {
+				return nil, err
+			}
+
+			if !changed {
+				result.Document = document
+				result.Version = published
+
+				return result, nil
+			}
+		} else if !errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, fmt.Errorf("cannot load published version: %w", err)
+		}
+	}
+
 	if err := s.requestMajorApproval(ctx, scope, tx, req, document, result); err != nil {
 		return nil, fmt.Errorf("cannot request major approval: %w", err)
 	}
@@ -2091,6 +2111,7 @@ func (s *DocumentService) Update(
 				changed = true
 			}
 
+			var sanitizedContent string
 			if req.Content != nil {
 				content := *req.Content
 				if strings.TrimSpace(content) != "" {
@@ -2102,7 +2123,7 @@ func (s *DocumentService) Update(
 					content = sanitized
 				}
 
-				document.Content = content
+				sanitizedContent = content
 				changed = true
 			}
 
@@ -2126,9 +2147,37 @@ func (s *DocumentService) Update(
 				return nil
 			}
 
-			document.UpdatedAt = now
-			if err := document.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update document: %w", err)
+			if req.Content != nil {
+				var identityID gid.GID
+				if req.IdentityID != nil {
+					identityID = *req.IdentityID
+				}
+
+				written, err := s.collaboration.replaceUnseededContent(
+					ctx,
+					tx,
+					scope,
+					req.DocumentID,
+					sanitizedContent,
+					identityID,
+					req.ProfileID,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot apply collaboration content: %w", err)
+				}
+
+				document.Content = written.Content
+			}
+
+			metadataChanged := req.Title != nil ||
+				req.Classification != nil ||
+				req.DocumentType != nil ||
+				req.DefaultApproverIDs != nil
+			if metadataChanged {
+				document.UpdatedAt = now
+				if err := document.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update document: %w", err)
+				}
 			}
 
 			if err := s.emitDocumentEvent(ctx, scope, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil, webhooktypes.NewDocument(&previousDocument)); err != nil {
@@ -2140,21 +2189,6 @@ func (s *DocumentService) Update(
 	)
 	if err != nil {
 		return nil, err
-	}
-
-	if req.Content != nil && req.IdentityID != nil {
-		if _, err := s.collaboration.ApplyContent(
-			ctx,
-			scope,
-			CollaborationApplyContentRequest{
-				DocumentID: req.DocumentID,
-				Content:    document.Content,
-				IdentityID: *req.IdentityID,
-				ProfileID:  req.ProfileID,
-			},
-		); err != nil {
-			return nil, fmt.Errorf("cannot apply collaboration content: %w", err)
-		}
 	}
 
 	return document, nil
@@ -2177,6 +2211,10 @@ func (s *DocumentService) DeleteDraft(
 				return &ErrDocumentArchived{}
 			}
 
+			if err := s.ensureNoPendingApproval(ctx, scope, tx, documentID); err != nil {
+				return err
+			}
+
 			published := &coredata.DocumentVersion{}
 			if err := published.LoadLatestPublishedVersion(ctx, tx, scope, documentID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
@@ -2184,6 +2222,15 @@ func (s *DocumentService) DeleteDraft(
 				}
 
 				return fmt.Errorf("cannot load published version: %w", err)
+			}
+
+			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)
+			if err != nil {
+				return err
+			}
+
+			if !changed {
+				return &ErrDocumentDraftNotDeletable{}
 			}
 
 			previous := *document
@@ -2194,12 +2241,16 @@ func (s *DocumentService) DeleteDraft(
 			document.Content = published.Content
 			document.UpdatedAt = time.Now()
 
+			if err := s.collaboration.PutContent(ctx, tx, scope, document.ID, published.Content); err != nil {
+				return fmt.Errorf("cannot restore published content: %w", err)
+			}
+
 			if err := document.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot restore published document: %w", err)
 			}
 
-			if err := s.collaboration.PutContent(ctx, tx, scope, document.ID, published.Content); err != nil {
-				return fmt.Errorf("cannot restore published content: %w", err)
+			if err := document.UpdateContent(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot restore published document content: %w", err)
 			}
 
 			if err := s.emitDocumentEvent(

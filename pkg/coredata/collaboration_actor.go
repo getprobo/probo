@@ -22,6 +22,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -89,6 +90,117 @@ ON CONFLICT (document_id, actor_id) DO NOTHING
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot insert collaboration actor: %w", err)
 	}
+
+	return nil
+}
+
+// LoadByDocumentIDAndIdentityID returns the oldest actor bound to identityID
+// on this document. History and later edits must find that actor even when
+// the document has more writers than the list cap.
+func (a *CollaborationActor) LoadByDocumentIDAndIdentityID(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+	identityID gid.GID,
+) error {
+	q := `
+SELECT
+	document_id,
+	organization_id,
+	actor_id,
+	identity_id,
+	profile_id,
+	created_at
+FROM
+	collaboration_actors
+WHERE
+	%s
+	AND document_id = @document_id
+	AND identity_id = @identity_id
+ORDER BY created_at ASC, actor_id ASC
+LIMIT 1
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"identity_id": identityID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query collaboration actor: %w", err)
+	}
+
+	actor, err := pgx.CollectExactlyOneRow(
+		rows,
+		pgx.RowToStructByName[CollaborationActor],
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrResourceNotFound
+		}
+
+		return fmt.Errorf("cannot collect collaboration actor: %w", err)
+	}
+
+	*a = actor
+
+	return nil
+}
+
+// LoadByDocumentIDAndActorIDs loads the actors named by actorIDs. The caller
+// bounds the set, so this does not apply the list cap.
+func (as *CollaborationActors) LoadByDocumentIDAndActorIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	documentID gid.GID,
+	actorIDs [][]byte,
+) error {
+	if len(actorIDs) == 0 {
+		*as = nil
+
+		return nil
+	}
+
+	q := `
+SELECT
+	document_id,
+	organization_id,
+	actor_id,
+	identity_id,
+	profile_id,
+	created_at
+FROM
+	collaboration_actors
+WHERE
+	%s
+	AND document_id = @document_id
+	AND actor_id = ANY(@actor_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"document_id": documentID,
+		"actor_ids":   actorIDs,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query collaboration actors by id: %w", err)
+	}
+
+	actors, err := pgx.CollectRows(
+		rows,
+		pgx.RowToAddrOfStructByName[CollaborationActor],
+	)
+	if err != nil {
+		return fmt.Errorf("cannot collect collaboration actors by id: %w", err)
+	}
+
+	*as = actors
 
 	return nil
 }

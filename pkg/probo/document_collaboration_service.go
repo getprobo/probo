@@ -30,23 +30,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func (s *DocumentService) ApplyCollaborationTextEdit(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-	edit DocumentCollaborationTextEdit,
-) (int64, error) {
-	return s.collaboration.ApplyTextEdit(ctx, scope, documentID, edit)
-}
-
-func (s *DocumentService) ReadCollaborationText(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (string, int64, error) {
-	return s.collaboration.ReadText(ctx, scope, documentID)
-}
-
 func (s *DocumentService) CollaborationHeads(
 	ctx context.Context,
 	scope coredata.Scoper,

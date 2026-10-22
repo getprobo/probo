@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"unicode/utf8"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/automerge"
@@ -37,14 +36,6 @@ import (
 )
 
 type (
-	DocumentCollaborationTextEdit struct {
-		ExpectedRevision int64
-		Index            uint32
-		Cursor           automerge.Cursor
-		DeleteCount      int32
-		Text             string
-	}
-
 	DocumentCollaborationEdit struct {
 		Target      string
 		Replacement string
@@ -70,101 +61,6 @@ type (
 		Heads   []automerge.Hash
 	}
 )
-
-func (s *CollaborationService) ApplyTextEdit(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-	edit DocumentCollaborationTextEdit,
-) (int64, error) {
-	if edit.DeleteCount < 0 {
-		return 0, fmt.Errorf("collaboration text delete count cannot be negative")
-	}
-
-	opened, err := s.Open(ctx, scope, documentID)
-	if err != nil {
-		return 0, fmt.Errorf("cannot open collaboration for text edit: %w", err)
-	}
-
-	defer func() { _ = opened.Document.Close() }()
-
-	if opened.NeedsSeed {
-		return 0, ErrDocumentCollaborationNotSeeded
-	}
-
-	if edit.ExpectedRevision != opened.Revision {
-		return 0, ErrDocumentCollaborationStale
-	}
-
-	text, err := opened.Document.Text("body")
-	if err != nil {
-		return 0, fmt.Errorf("cannot get collaboration body: %w", err)
-	}
-
-	index := edit.Index
-	if len(edit.Cursor) > 0 {
-		index, err = text.CursorPosition(edit.Cursor)
-		if err != nil {
-			return 0, fmt.Errorf("cannot resolve collaboration text cursor: %w", err)
-		}
-	}
-
-	if err := text.Splice(index, edit.DeleteCount, edit.Text); err != nil {
-		return 0, fmt.Errorf("cannot apply collaboration text edit: %w", err)
-	}
-
-	content, err := text.String()
-	if err != nil {
-		return 0, fmt.Errorf("cannot read edited collaboration body: %w", err)
-	}
-
-	if utf8.RuneCountInString(content) > contentMaxText {
-		return 0, fmt.Errorf(
-			"collaboration text exceeds maximum length of %d characters",
-			contentMaxText,
-		)
-	}
-
-	if _, err := opened.Document.Commit("Agent edit", time.Now()); err != nil {
-		return 0, fmt.Errorf("cannot commit collaboration text edit: %w", err)
-	}
-
-	revision, err := s.Persist(ctx, scope, documentID, opened.Document)
-	if err != nil {
-		return 0, fmt.Errorf("cannot persist collaboration text edit: %w", err)
-	}
-
-	return revision, nil
-}
-
-func (s *CollaborationService) ReadText(
-	ctx context.Context,
-	scope coredata.Scoper,
-	documentID gid.GID,
-) (string, int64, error) {
-	opened, err := s.Open(ctx, scope, documentID)
-	if err != nil {
-		return "", 0, fmt.Errorf("cannot open collaboration for reading: %w", err)
-	}
-
-	defer func() { _ = opened.Document.Close() }()
-
-	if opened.NeedsSeed {
-		return "", 0, ErrDocumentCollaborationNotSeeded
-	}
-
-	text, err := opened.Document.Text("body")
-	if err != nil {
-		return "", 0, fmt.Errorf("cannot get collaboration body for reading: %w", err)
-	}
-
-	content, err := text.String()
-	if err != nil {
-		return "", 0, fmt.Errorf("cannot read collaboration body: %w", err)
-	}
-
-	return content, opened.Revision, nil
-}
 
 func (s *CollaborationService) Heads(
 	ctx context.Context,
@@ -237,22 +133,25 @@ func (s *CollaborationService) ApplyContent(
 		return nil, err
 	}
 
-	var organizationID gid.GID
+	var result *CollaborationWriteResult
 
-	err = s.pg.WithConn(
+	err = s.pg.WithTx(
 		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			orgID, err := assertDraftEditable(
+		func(ctx context.Context, tx pg.Tx) error {
+			written, err := s.replaceUnseededContent(
 				ctx,
+				tx,
 				scope,
-				conn,
 				req.DocumentID,
+				sanitized,
+				req.IdentityID,
+				req.ProfileID,
 			)
 			if err != nil {
 				return err
 			}
 
-			organizationID = orgID
+			result = written
 
 			return nil
 		},
@@ -261,68 +160,77 @@ func (s *CollaborationService) ApplyContent(
 		return nil, err
 	}
 
-	actorID, err := s.actorForIdentity(
+	return result, nil
+}
+
+// replaceUnseededContent seeds the CRDT from content and writes that
+// projection in the same transaction. A document that is already seeded is
+// rejected so a full-content write cannot drop concurrent edits.
+func (s *CollaborationService) replaceUnseededContent(
+	ctx context.Context,
+	tx pg.Tx,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	content string,
+	identityID gid.GID,
+	profileID *gid.GID,
+) (*CollaborationWriteResult, error) {
+	organizationID, err := assertDraftEditable(ctx, scope, tx, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	if doc.Seeded {
+		return nil, ErrDocumentCollaborationContentOnSeeded
+	}
+
+	if seedClaimActive(doc, time.Now()) {
+		return nil, ErrSeedInProgress
+	}
+
+	var actorID *automerge.ActorID
+	if identityID != (gid.GID{}) {
+		id, err := s.lookupOrCreateActor(
+			ctx,
+			tx,
+			scope,
+			documentID,
+			organizationID,
+			identityID,
+			profileID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		actorID = &id
+	}
+
+	automergeDocument, body, err := s.seedUnderDocumentLock(
 		ctx,
+		tx,
 		scope,
-		req.DocumentID,
-		organizationID,
-		req.IdentityID,
-		req.ProfileID,
+		doc,
+		&content,
+		actorID,
+		time.Now(),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	opened, err := s.openWithActor(ctx, scope, req.DocumentID, actorID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open collaboration for content write: %w", err)
-	}
+	defer func() { _ = automergeDocument.Close() }()
 
-	defer func() { _ = opened.Document.Close() }()
-
-	message := "Update document content"
-	if opened.NeedsSeed {
-		message = "Seed collaboration document"
-	}
-
-	if err := writeSpans(opened.Document, sanitized, true); err != nil {
-		if opened.NeedsSeed {
-			_ = s.ReleaseSeed(ctx, scope, req.DocumentID)
-		}
-
+	if err := writeLiveContent(ctx, scope, tx, documentID, body); err != nil {
 		return nil, err
 	}
 
-	if _, err := opened.Document.Commit(message, time.Now()); err != nil {
-		if opened.NeedsSeed {
-			_ = s.ReleaseSeed(ctx, scope, req.DocumentID)
-		}
-
-		return nil, fmt.Errorf("cannot commit collaboration content: %w", err)
-	}
-
-	if err := s.RecordActors(
-		ctx,
-		scope,
-		req.DocumentID,
-		organizationID,
-		req.IdentityID,
-		req.ProfileID,
-		[][]byte{actorID[:]},
-	); err != nil {
-		return nil, fmt.Errorf("cannot record collaboration content actor: %w", err)
-	}
-
-	if _, err := s.Persist(
-		ctx,
-		scope,
-		req.DocumentID,
-		opened.Document,
-	); err != nil {
-		return nil, fmt.Errorf("cannot persist collaboration content: %w", err)
-	}
-
-	return writeResult(opened.Document)
+	return writeResult(automergeDocument)
 }
 
 func (s *CollaborationService) ApplyEdits(
@@ -376,16 +284,14 @@ func (s *CollaborationService) ApplyEdits(
 
 	opened, err := s.openWithActor(ctx, scope, req.DocumentID, actorID)
 	if err != nil {
+		if errors.Is(err, ErrDocumentCollaborationNotSeeded) {
+			return nil, ErrDocumentCollaborationEditsNotSeeded
+		}
+
 		return nil, fmt.Errorf("cannot open collaboration for edits: %w", err)
 	}
 
 	defer func() { _ = opened.Document.Close() }()
-
-	if opened.NeedsSeed {
-		_ = s.ReleaseSeed(ctx, scope, req.DocumentID)
-
-		return nil, ErrDocumentCollaborationEditsNotSeeded
-	}
 
 	hasHeads, err := opened.Document.HasHeads(req.BaseHeads)
 	if err != nil {
@@ -494,37 +400,59 @@ func (s *CollaborationService) actorForIdentity(
 	identityID gid.GID,
 	profileID *gid.GID,
 ) (automerge.ActorID, error) {
-	var actors coredata.CollaborationActors
+	var actorID automerge.ActorID
 
 	err := s.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
-			return actors.LoadByDocumentID(
+			var err error
+
+			actorID, err = s.lookupOrCreateActor(
 				ctx,
 				conn,
 				scope,
 				documentID,
-				0,
+				organizationID,
+				identityID,
+				profileID,
 			)
+
+			return err
 		},
 	)
 	if err != nil {
-		return automerge.ActorID{}, fmt.Errorf("cannot load collaboration actors: %w", err)
+		return automerge.ActorID{}, err
 	}
 
-	for _, actor := range actors {
-		if actor.IdentityID != identityID {
-			continue
-		}
+	return actorID, nil
+}
 
-		if len(actor.ActorID) != len(automerge.ActorID{}) {
-			continue
-		}
-
+func (s *CollaborationService) lookupOrCreateActor(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	documentID gid.GID,
+	organizationID gid.GID,
+	identityID gid.GID,
+	profileID *gid.GID,
+) (automerge.ActorID, error) {
+	actor := &coredata.CollaborationActor{}
+	err := actor.LoadByDocumentIDAndIdentityID(
+		ctx,
+		conn,
+		scope,
+		documentID,
+		identityID,
+	)
+	if err == nil && len(actor.ActorID) == len(automerge.ActorID{}) {
 		var actorID automerge.ActorID
 		copy(actorID[:], actor.ActorID)
 
 		return actorID, nil
+	}
+
+	if err != nil && !errors.Is(err, coredata.ErrResourceNotFound) {
+		return automerge.ActorID{}, fmt.Errorf("cannot load collaboration actor: %w", err)
 	}
 
 	actorID, err := automerge.NewActorID()
@@ -532,15 +460,15 @@ func (s *CollaborationService) actorForIdentity(
 		return automerge.ActorID{}, fmt.Errorf("cannot create collaboration actor: %w", err)
 	}
 
-	if err := s.RecordActors(
-		ctx,
-		scope,
-		documentID,
-		organizationID,
-		identityID,
-		profileID,
-		[][]byte{actorID[:]},
-	); err != nil {
+	row := coredata.CollaborationActor{
+		DocumentID:     documentID,
+		OrganizationID: organizationID,
+		ActorID:        actorID[:],
+		IdentityID:     identityID,
+		ProfileID:      profileID,
+		CreatedAt:      time.Now(),
+	}
+	if err := row.InsertIfAbsent(ctx, conn, scope); err != nil {
 		return automerge.ActorID{}, fmt.Errorf("cannot store collaboration actor: %w", err)
 	}
 
@@ -553,7 +481,7 @@ func (s *CollaborationService) openWithActor(
 	documentID gid.GID,
 	actorID automerge.ActorID,
 ) (*DocumentCollaboration, error) {
-	opened, err := s.Open(ctx, scope, documentID)
+	opened, err := s.openIfSeeded(ctx, scope, documentID)
 	if err != nil {
 		return nil, err
 	}

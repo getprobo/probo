@@ -43,41 +43,67 @@ func (s *CollaborationService) MaterializedContent(
 	documentID gid.GID,
 	fallback string,
 ) (string, error) {
-	doc := &coredata.CollaborationDocument{}
-	err := doc.LoadByDocumentID(ctx, conn, scope, documentID)
-	if errors.Is(err, coredata.ErrResourceNotFound) || (err == nil && !doc.Seeded) {
-		return fallback, nil
+	const attempts = 2
+
+	var lastErr error
+
+	for attempt := 0; attempt < attempts; attempt++ {
+		doc := &coredata.CollaborationDocument{}
+		err := doc.LoadByDocumentID(ctx, conn, scope, documentID)
+		if errors.Is(err, coredata.ErrResourceNotFound) || (err == nil && !doc.Seeded) {
+			return fallback, nil
+		}
+
+		if err != nil {
+			return "", fmt.Errorf("cannot load collaboration document: %w", err)
+		}
+
+		snapshotRevision := doc.SnapshotRevision
+		changeRevision := doc.ChangeRevision
+		revision := doc.Revision
+
+		automergeDocument, err := loadAutomergeDocument(ctx, doc.Snapshot)
+		if err != nil {
+			return "", err
+		}
+
+		err = s.loadChangesFromConn(
+			ctx,
+			scope,
+			conn,
+			documentID,
+			automergeDocument,
+			snapshotRevision,
+			changeRevision,
+		)
+		if err != nil {
+			_ = automergeDocument.Close()
+			lastErr = err
+
+			continue
+		}
+
+		content, err := materialize(ctx, automergeDocument)
+		_ = automergeDocument.Close()
+		if err != nil {
+			return "", fmt.Errorf("cannot materialize collaboration document: %w", err)
+		}
+
+		var again coredata.CollaborationDocument
+		if err := again.LoadByDocumentID(ctx, conn, scope, documentID); err != nil {
+			return "", fmt.Errorf("cannot reload collaboration document: %w", err)
+		}
+
+		if again.Revision == revision &&
+			again.SnapshotRevision == snapshotRevision &&
+			again.ChangeRevision == changeRevision {
+			return content, nil
+		}
+
+		lastErr = errCollaborationViewMoved
 	}
 
-	if err != nil {
-		return "", fmt.Errorf("cannot load collaboration document: %w", err)
-	}
-
-	automergeDocument, err := loadAutomergeDocument(ctx, doc.Snapshot)
-	if err != nil {
-		return "", err
-	}
-
-	defer func() { _ = automergeDocument.Close() }()
-
-	if err := s.loadChangesFromConn(
-		ctx,
-		scope,
-		conn,
-		documentID,
-		automergeDocument,
-		doc.SnapshotRevision,
-		doc.ChangeRevision,
-	); err != nil {
-		return "", err
-	}
-
-	content, err := materialize(ctx, automergeDocument)
-	if err != nil {
-		return "", fmt.Errorf("cannot materialize collaboration document: %w", err)
-	}
-
-	return content, nil
+	return "", fmt.Errorf("cannot read consistent collaboration content: %w", lastErr)
 }
 
 // PutContent replaces the live CRDT with content. It is the write used when

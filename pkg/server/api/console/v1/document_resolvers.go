@@ -417,7 +417,8 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 		previousHeads,
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) {
+		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) ||
+			errors.Is(err, probo.ErrSeedInProgress) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
@@ -1215,6 +1216,11 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			return nil, gqlutils.Conflict(ctx, errGenerated)
 		}
 
+		if errors.Is(err, probo.ErrDocumentCollaborationContentOnSeeded) ||
+			errors.Is(err, probo.ErrSeedInProgress) {
+			return nil, gqlutils.Conflict(ctx, err)
+		}
+
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
 		}
@@ -1983,7 +1989,8 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
-		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded):
+		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded),
+			errors.Is(err, probo.ErrSeedInProgress):
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 

@@ -147,7 +147,7 @@ func (s *Service) GetDocument(
 				return fmt.Errorf("cannot load compliance page document: %w", err)
 			}
 
-			if err := document.LoadByID(ctx, conn, scope, documentID); err != nil {
+			if err := document.LoadPublishedByID(ctx, conn, scope, documentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 

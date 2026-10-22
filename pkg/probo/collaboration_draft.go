@@ -22,8 +22,8 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
 
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
@@ -98,17 +98,27 @@ func writeLiveContent(
 	documentID gid.GID,
 	content string,
 ) error {
-	document := &coredata.Document{}
-	if err := document.LoadByID(ctx, tx, scope, documentID); err != nil {
-		return fmt.Errorf("cannot load document for content: %w", err)
+	document := &coredata.Document{
+		ID:      documentID,
+		Content: content,
+	}
+	err := document.UpdateContent(ctx, tx, scope)
+	if err == nil {
+		return nil
 	}
 
-	document.Content = content
-	document.UpdatedAt = time.Now()
-
-	if err := document.Update(ctx, tx, scope); err != nil {
+	if !errors.Is(err, coredata.ErrResourceNotFound) {
 		return fmt.Errorf("cannot update document content: %w", err)
 	}
 
-	return nil
+	current := &coredata.Document{}
+	if loadErr := current.LoadByID(ctx, tx, scope, documentID); loadErr != nil {
+		return fmt.Errorf("cannot update document content: %w", err)
+	}
+
+	if current.ArchivedAt != nil {
+		return &ErrDocumentArchived{}
+	}
+
+	return fmt.Errorf("cannot update document content: %w", err)
 }

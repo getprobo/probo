@@ -43,10 +43,11 @@ type (
 	}
 
 	DocumentCollaboration struct {
-		Document    *automerge.Document
-		Revision    int64
-		SeedContent string
-		NeedsSeed   bool
+		Document      *automerge.Document
+		Revision      int64
+		SeedContent   string
+		NeedsSeed     bool
+		SeedClaimedAt *time.Time
 	}
 )
 

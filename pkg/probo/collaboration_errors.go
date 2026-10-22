@@ -31,6 +31,7 @@ type ErrCollaborationStateTooLarge struct {
 
 var (
 	ErrDocumentCollaborationNotSeeded = errors.New("collaboration document is not initialized")
+	ErrSeedInProgress                 = errors.New("collaboration document seed is in progress")
 	ErrDocumentCollaborationStale     = errors.New("collaboration document changed; read it again before editing")
 
 	ErrDocumentCollaborationBaseHeadsUnknown = errors.New(

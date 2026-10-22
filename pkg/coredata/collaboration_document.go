@@ -263,3 +263,39 @@ WHERE
 
 	return nil
 }
+
+// ReleaseSeedClaim clears seed_claimed_at only when it is still the claim
+// acquired by this opener. A newer claim is left in place.
+func ReleaseCollaborationSeedClaim(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	documentID gid.GID,
+	claimedAt time.Time,
+) error {
+	q := `
+UPDATE collaboration_documents SET
+	seed_claimed_at = NULL,
+	revision = revision + 1,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND document_id = @document_id
+	AND seeded = FALSE
+	AND seed_claimed_at = @seed_claimed_at
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_id":     documentID,
+		"seed_claimed_at": claimedAt,
+		"updated_at":      time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	if _, err := tx.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot release collaboration seed claim: %w", err)
+	}
+
+	return nil
+}
