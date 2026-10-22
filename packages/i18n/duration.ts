@@ -87,13 +87,19 @@ const DURATION_UNITS = [
   { value: "years", seconds: 31_536_000, snap: 21 * 24 * 3_600 },
 ] as const;
 
+const persistentStorageTypes = new Set<string>([
+  "LOCAL_STORAGE",
+  "INDEXED_DB",
+  "CACHE_STORAGE",
+]);
+
 export function humanizeSeconds(
   seconds: number | null,
   t: Translator,
   storageType?: string,
 ): string {
   if (seconds === null || seconds <= 0) {
-    return storageType === "LOCAL_STORAGE"
+    return storageType != null && persistentStorageTypes.has(storageType)
       ? t("duration.persistent")
       : t("duration.session");
   }
