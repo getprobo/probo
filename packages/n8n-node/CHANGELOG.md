@@ -4,11 +4,25 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.258.0] - 2026-10-22
+
 ### Added
 
+- Cookie Banner `Start Sample`, `Stop Sample`, and `Get Samples` open,
+  freeze, and list sample windows
 - Probo Trigger payloads include `actor`: profile id, full name,
   email address, and role. `actor` is null when no member can be
   identified
+
+### Changed
+
+- Cookie Banner `Get` returns `latestSample` (id, created time, frozen
+  time, and page loads) instead of `discoveryPageLoads` and
+  `discoveryFrozenAt`. Saved workflows that read the old fields must
+  read `latestSample`
+- Tracker Pattern `Get` returns `sampleHits` instead of
+  `discoveryHits`. Saved workflows that read `discoveryHits` must read
+  `sampleHits`
 
 ## [0.257.0] - 2026-10-21
 
