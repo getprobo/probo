@@ -18,12 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import { parseMarkdown } from "@probo/prosemirror";
 import { getSchema } from "@tiptap/core";
 import { Document } from "@tiptap/extension-document";
 import { BulletList, ListItem, OrderedList, TaskItem, TaskList } from "@tiptap/extension-list";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
-import { parseMarkdown } from "@probo/prosemirror";
 import { describe, expect, it } from "vitest";
 
 import { promoteCheckboxLists } from "./taskListContent";

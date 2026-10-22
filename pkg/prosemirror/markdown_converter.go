@@ -383,10 +383,7 @@ func (c *converter) convertList(n *ast.List) ([]Node, error) {
 
 func wrapPlainList(n *ast.List, items []Node, consumed int) ([]Node, error) {
 	if n.IsOrdered() {
-		start := n.Start
-		if start < 1 {
-			start = 1
-		}
+		start := max(n.Start, 1)
 
 		attrs, err := json.Marshal(OrderedListAttrs{Start: start + consumed})
 		if err != nil {
