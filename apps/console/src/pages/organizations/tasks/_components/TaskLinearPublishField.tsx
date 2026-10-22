@@ -172,7 +172,9 @@ export function TaskLinearPublishField({
           );
         }}
       >
-        {t("detailsPage.linear.link")}
+        {linking
+          ? t("detailsPage.linear.link")
+          : t("detailsPage.linear.publish")}
       </Button>
     </div>
   );

@@ -163,6 +163,48 @@ LIMIT 1;
 	return nil
 }
 
+func (tcs *TaskComments) LoadByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	scope Scoper,
+	taskCommentIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    id,
+    organization_id,
+    task_id,
+    owner_profile_id,
+    content,
+    created_at,
+    updated_at
+FROM
+    task_comments
+WHERE
+    %s
+    AND id = ANY(@task_comment_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"task_comment_ids": taskCommentIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query task comments: %w", err)
+	}
+
+	taskComments, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[TaskComment])
+	if err != nil {
+		return fmt.Errorf("cannot collect task comments: %w", err)
+	}
+
+	*tcs = taskComments
+
+	return nil
+}
+
 // LoadByIDForUpdate is LoadByID under FOR UPDATE so concurrent work on one
 // comment is serialized. That includes attachments and outbound sync.
 func (tc *TaskComment) LoadByIDForUpdate(

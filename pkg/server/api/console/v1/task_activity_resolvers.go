@@ -60,14 +60,13 @@ func (r *taskActivityResolver) Comment(ctx context.Context, obj *types.TaskActiv
 		return nil, gqlutils.Internal(ctx)
 	}
 
-	scope, err := r.authorize(ctx, commentID, task.ActionTaskCommentGet)
-	if err != nil {
+	if _, err := r.authorize(ctx, commentID, task.ActionTaskCommentGet); err != nil {
 		return nil, err
 	}
 
-	comment, err := r.task.GetComment(ctx, scope, commentID)
+	comment, err := dataloader.FromContext(ctx).TaskComment.Load(ctx, commentID)
 	if err != nil {
-		if errors.Is(err, coredata.ErrResourceNotFound) {
+		if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, dataloadgen.ErrNotFound) {
 			return nil, nil
 		}
 

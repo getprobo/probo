@@ -114,6 +114,30 @@ func (s *Service) GetComment(
 	return taskComment, nil
 }
 
+func (s *Service) GetCommentsByIDs(
+	ctx context.Context,
+	scope coredata.Scoper,
+	taskCommentIDs ...gid.GID,
+) (coredata.TaskComments, error) {
+	var taskComments coredata.TaskComments
+
+	err := s.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := taskComments.LoadByIDs(ctx, conn, scope, taskCommentIDs); err != nil {
+				return fmt.Errorf("cannot load task comments by ids: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return taskComments, nil
+}
+
 func (s *Service) ListCommentsForTaskID(
 	ctx context.Context, scope coredata.Scoper,
 	taskID gid.GID,

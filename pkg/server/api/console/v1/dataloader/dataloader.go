@@ -117,6 +117,7 @@ type (
 		TreatmentProgress                          *dataloadgen.Loader[gid.GID, riskmanagement.TreatmentProgress]
 		InternalControl                            *dataloadgen.Loader[gid.GID, *coredata.InternalControl]
 		Task                                       *dataloadgen.Loader[gid.GID, *coredata.Task]
+		TaskComment                                *dataloadgen.Loader[gid.GID, *coredata.TaskComment]
 		TaskExternalLink                           *dataloadgen.Loader[gid.GID, *coredata.TaskExternalLink]
 		File                                       *dataloadgen.Loader[gid.GID, *coredata.File]
 		CookieBanner                               *dataloadgen.Loader[gid.GID, *coredata.CookieBanner]
@@ -199,6 +200,7 @@ func (f *batchFetcher) newLoaders() *Loaders {
 		TreatmentProgress:                        dataloadgen.NewMappedLoader(f.fetchTreatmentProgress),
 		InternalControl:                          dataloadgen.NewMappedLoader(f.fetchInternalControls),
 		Task:                                     dataloadgen.NewMappedLoader(f.fetchTasks),
+		TaskComment:                              dataloadgen.NewMappedLoader(f.fetchTaskComments),
 		TaskExternalLink:                         dataloadgen.NewMappedLoader(f.fetchTaskExternalLinks),
 		File:                                     dataloadgen.NewMappedLoader(f.fetchFiles),
 		CookieBanner:                             dataloadgen.NewMappedLoader(f.fetchCookieBanners),
@@ -842,6 +844,32 @@ func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.
 	result := make(map[gid.GID]*coredata.Task, len(tasks))
 	for _, v := range tasks {
 		result[v.ID] = v
+	}
+
+	return result, nil
+}
+
+func (f *batchFetcher) fetchTaskComments(
+	ctx context.Context,
+	keys []gid.GID,
+) (map[gid.GID]*coredata.TaskComment, error) {
+	result := make(map[gid.GID]*coredata.TaskComment, len(keys))
+	commentIDsByTenant := make(map[gid.TenantID][]gid.GID)
+
+	for _, commentID := range keys {
+		tenantID := commentID.TenantID()
+		commentIDsByTenant[tenantID] = append(commentIDsByTenant[tenantID], commentID)
+	}
+
+	for tenantID, commentIDs := range commentIDsByTenant {
+		comments, err := f.task.GetCommentsByIDs(ctx, coredata.NewScope(tenantID), commentIDs...)
+		if err != nil {
+			return nil, fmt.Errorf("cannot batch load task comments: %w", err)
+		}
+
+		for _, comment := range comments {
+			result[comment.ID] = comment
+		}
 	}
 
 	return result, nil
