@@ -333,6 +333,35 @@ func TestMCP_UpdateCompliancePortalCatalogVisibilityReturnsOpaqueError(t *testin
 	assert.Contains(t, errorText, "resource not found")
 }
 
+func TestMCP_AddCompliancePortalFramework(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	mc := testutil.NewMCPClient(t, owner)
+
+	portalID := mcpCompliancePortalID(t, owner)
+	frameworkID := factory.CreateFramework(owner)
+
+	var result struct {
+		CompliancePortalFramework struct {
+			ID                 string `json:"id"`
+			CompliancePortalID string `json:"compliance_portal_id"`
+			FrameworkID        string `json:"framework_id"`
+			Visibility         string `json:"visibility"`
+			Rank               int    `json:"rank"`
+		} `json:"compliance_portal_framework"`
+	}
+	mc.CallToolInto("addCompliancePortalFramework", map[string]any{
+		"compliance_portal_id": portalID,
+		"framework_id":         frameworkID,
+	}, &result)
+
+	assert.NotEmpty(t, result.CompliancePortalFramework.ID)
+	assert.Equal(t, portalID, result.CompliancePortalFramework.CompliancePortalID)
+	assert.Equal(t, frameworkID, result.CompliancePortalFramework.FrameworkID)
+	assert.Equal(t, "PUBLIC", result.CompliancePortalFramework.Visibility)
+	assert.Positive(t, result.CompliancePortalFramework.Rank)
+}
+
 func TestMCP_AddCompliancePortalReference(t *testing.T) {
 	t.Parallel()
 	owner := testutil.NewClient(t, testutil.RoleOwner)

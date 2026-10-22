@@ -304,6 +304,9 @@ RETURNING rank;
 		return fmt.Errorf("cannot insert compliance framework: %w", err)
 	}
 
+	// Visibility is not a column. A linked framework is public.
+	c.Visibility = ComplianceFrameworkVisibilityPublic
+
 	return nil
 }
 

@@ -23,6 +23,7 @@ package console_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/e2e/internal/factory"
 	"go.probo.inc/probo/e2e/internal/testutil"
@@ -46,7 +47,8 @@ func TestComplianceFramework_Create(t *testing.T) {
 		CreateComplianceFramework struct {
 			ComplianceFrameworkEdge struct {
 				Node struct {
-					ID string `json:"id"`
+					ID         string `json:"id"`
+					Visibility string `json:"visibility"`
 				} `json:"node"`
 			} `json:"complianceFrameworkEdge"`
 		} `json:"createComplianceFramework"`
@@ -55,7 +57,7 @@ func TestComplianceFramework_Create(t *testing.T) {
 	err := owner.Execute(`
 		mutation($input: CreateComplianceFrameworkInput!) {
 			createComplianceFramework(input: $input) {
-				complianceFrameworkEdge { node { id } }
+				complianceFrameworkEdge { node { id visibility } }
 			}
 		}
 	`, map[string]any{
@@ -66,4 +68,5 @@ func TestComplianceFramework_Create(t *testing.T) {
 	}, &result)
 	require.NoError(t, err)
 	require.NotEmpty(t, result.CreateComplianceFramework.ComplianceFrameworkEdge.Node.ID)
+	assert.Equal(t, "PUBLIC", result.CreateComplianceFramework.ComplianceFrameworkEdge.Node.Visibility)
 }
