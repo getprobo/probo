@@ -279,7 +279,8 @@ func (s *CollaborationService) seedUnderDocumentLock(
 		return nil, "", &ErrDocumentArchived{}
 	}
 
-	body := document.Content
+	stored := document.Content
+	body := stored
 	if content != nil {
 		body = *content
 	}
@@ -358,6 +359,14 @@ func (s *CollaborationService) seedUnderDocumentLock(
 		_ = automergeDocument.Close()
 
 		return nil, "", fmt.Errorf("cannot store collaboration seed: %w", err)
+	}
+
+	if body != stored {
+		if err := writeLiveContent(ctx, scope, tx, doc.DocumentID, body); err != nil {
+			_ = automergeDocument.Close()
+
+			return nil, "", err
+		}
 	}
 
 	return automergeDocument, body, nil
