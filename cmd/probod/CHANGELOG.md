@@ -4,6 +4,11 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- The Azure token request sends only the scope the caller asked for.
+  It no longer adds openid, offline_access, or profile
+
 ## [0.324.0] - 2026-10-22
 
 ### Added

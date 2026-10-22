@@ -21,19 +21,17 @@
 package azure
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.probo.inc/probo/pkg/azidentityx"
 )
 
 type stubCredential struct {
@@ -63,12 +61,7 @@ func entraAuthError(codes ...int) error {
 		panic(err)
 	}
 
-	return &azidentity.AuthenticationFailedError{
-		RawResponse: &http.Response{
-			StatusCode: http.StatusBadRequest,
-			Body:       io.NopCloser(bytes.NewReader(body)),
-		},
-	}
+	return azidentityx.NewTokenEndpointError(http.StatusBadRequest, body)
 }
 
 func afterImmediately(time.Duration) <-chan time.Time {
