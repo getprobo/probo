@@ -19,6 +19,7 @@
 // SOFTWARE.
 
 type JSONContent = {
+  type?: string;
   text?: string;
   content?: JSONContent[];
 };
@@ -46,6 +47,20 @@ function parseDoc(content: string): JSONContent | null {
   return null;
 }
 
+function hasContent(node: JSONContent): boolean {
+  switch (node.type) {
+    case "horizontalRule":
+    case "image":
+    case "file":
+      return true;
+    default:
+      if (typeof node.text === "string" && node.text.trim() !== "") {
+        return true;
+      }
+      return node.content?.some(hasContent) ?? false;
+  }
+}
+
 function textOf(node: JSONContent): string {
   let value = node.text ?? "";
   for (const child of node.content ?? []) {
@@ -60,7 +75,7 @@ export function isRichTextEmpty(content: string): boolean {
     return true;
   }
 
-  return textOf(parsed).trim() === "";
+  return !hasContent(parsed);
 }
 
 export function richTextLength(content: string): number {

@@ -118,6 +118,69 @@ func (t *Task) AuthorizationAttributes(
 	return attrsByID, nil
 }
 
+func LoadAssignedToByIDs(
+	ctx context.Context,
+	conn pg.Querier,
+	taskIDs []gid.GID,
+) (map[gid.GID]*gid.GID, error) {
+	assignedByID := make(map[gid.GID]*gid.GID, len(taskIDs))
+	if len(taskIDs) == 0 {
+		return assignedByID, nil
+	}
+
+	q := `SELECT id, assigned_to_profile_id FROM tasks WHERE id = ANY(@task_ids::text[])`
+
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"task_ids": taskIDs})
+	if err != nil {
+		return nil, fmt.Errorf("cannot query task assignees: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id           gid.GID
+			assignedToID *gid.GID
+		)
+
+		if err := rows.Scan(&id, &assignedToID); err != nil {
+			return nil, fmt.Errorf("cannot scan task assignee: %w", err)
+		}
+
+		assignedByID[id] = assignedToID
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cannot iterate task assignees: %w", err)
+	}
+
+	return assignedByID, nil
+}
+
+func applyTaskAssigneeAttribute(
+	ctx context.Context,
+	conn pg.Querier,
+	attrsByID policy.AttributesByID,
+	taskIDByResource map[gid.GID]gid.GID,
+	taskIDs []gid.GID,
+) error {
+	assignedByTask, err := LoadAssignedToByIDs(ctx, conn, taskIDs)
+	if err != nil {
+		return err
+	}
+
+	for resourceID, taskID := range taskIDByResource {
+		assignedToID := assignedByTask[taskID]
+		if assignedToID == nil {
+			continue
+		}
+
+		attrsByID[resourceID]["assigned_to_profile_id"] = assignedToID.String()
+	}
+
+	return nil
+}
+
 func (t *Task) LoadByID(
 	ctx context.Context,
 	conn pg.Querier,

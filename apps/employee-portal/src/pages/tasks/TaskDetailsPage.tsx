@@ -216,11 +216,15 @@ function TaskDetailsDescription({
   onSave: (content: string | null) => Promise<unknown>;
 }) {
   const { t } = useTranslation("tasks");
+  const [base, setBase] = useState(content);
   const [draft, setDraft] = useState(content);
-  const [seen, setSeen] = useState(content);
-  if (content !== seen) {
-    setSeen(content);
-    setDraft(content);
+  const [editorKey, setEditorKey] = useState(content);
+  if (content !== base && (draft === base || draft === content)) {
+    setBase(content);
+    if (draft !== content) {
+      setDraft(content);
+      setEditorKey(content);
+    }
   }
 
   useEffect(() => {
@@ -246,6 +250,7 @@ function TaskDetailsDescription({
 
   return (
     <RichEditor
+      key={editorKey}
       className="min-h-40 bg-transparent! py-0! pr-0! shadow-none!"
       content={canAssign ? draft : content}
       controls={false}

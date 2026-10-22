@@ -59,8 +59,8 @@ export function TaskListItemDeadline({
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
-  const tooltip = placeholder ?? t("metadata.deadline");
   const label = deadline == null ? null : deadlineDateFormat(i18n.language, deadline);
+  const tooltip = label ?? placeholder ?? t("metadata.deadline");
   const shown = label ?? placeholder ?? null;
   const icon = isOverdue
     ? <CalendarXIcon className={slots.deadlineIcon()} weight="bold" />

@@ -382,3 +382,81 @@ export function taskListStateMoveUpdaters(
     },
   };
 }
+
+export function employeeTaskListUpdaters(
+  environment: Environment,
+  task: {
+    id: string;
+    state: TaskState;
+    deadline?: string | null;
+  },
+  input: {
+    state?: TaskState;
+    priority?: TaskPriority;
+    deadline?: string | null;
+  },
+  list: {
+    organizationId: string;
+    query: string | null;
+    deadline: TaskDeadlineBounds;
+  },
+) {
+  const queries = list.query == null ? [null] : [list.query, null];
+  const previousDeadline = task.deadline ?? null;
+  const move = input.state == null
+    ? null
+    : taskListStateMoveUpdaters(environment, {
+        taskId: task.id,
+        nextState: input.state,
+        organizationId: list.organizationId,
+        query: list.query,
+        deadline: list.deadline,
+      });
+
+  function apply(
+    store: RecordSourceSelectorProxy,
+    phase: "optimistic" | "server",
+  ) {
+    if (input.deadline !== undefined) {
+      const node = store.get(task.id);
+      if (node != null) {
+        node.setValue(input.deadline, "deadline");
+        reconcileTaskListDeadline(store, node, {
+          state: task.state,
+          organizationId: list.organizationId,
+          queries,
+          deadline: list.deadline,
+          previousDeadline,
+        });
+      }
+    }
+
+    if (phase === "optimistic") {
+      move?.optimisticUpdater(store);
+    } else {
+      move?.updater(store);
+    }
+
+    if (input.state == null && input.priority != null) {
+      const node = store.get(task.id);
+      if (node != null) {
+        node.setValue(input.priority, "priority");
+        resortTaskListEdge(store, node, {
+          state: task.state,
+          organizationId: list.organizationId,
+          queries,
+          deadline: list.deadline,
+        });
+      }
+    }
+  }
+
+  return {
+    optimisticUpdater(store: RecordSourceSelectorProxy) {
+      apply(store, "optimistic");
+    },
+    updater(store: RecordSourceSelectorProxy) {
+      apply(store, "server");
+    },
+  };
+}

@@ -66,14 +66,12 @@ func (tc *TaskComment) AuthorizationAttributes(
 SELECT
     tc.id,
     tc.organization_id,
-    p.identity_id,
-    t.assigned_to_profile_id
+    tc.task_id,
+    p.identity_id
 FROM
     task_comments tc
 LEFT JOIN
     iam_membership_profiles p ON p.id = tc.owner_profile_id
-LEFT JOIN
-    tasks t ON t.id = tc.task_id
 WHERE
     tc.id = ANY(@resource_ids)
 `
@@ -86,13 +84,15 @@ WHERE
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+	taskIDByComment := make(map[gid.GID]gid.GID, len(resourceIDs))
+	taskIDs := make([]gid.GID, 0, len(resourceIDs))
 
 	for rows.Next() {
-		var id, organizationID gid.GID
+		var id, organizationID, taskID gid.GID
 
-		var ownerIdentityID, assignedToID *gid.GID
+		var ownerIdentityID *gid.GID
 
-		if err := rows.Scan(&id, &organizationID, &ownerIdentityID, &assignedToID); err != nil {
+		if err := rows.Scan(&id, &organizationID, &taskID, &ownerIdentityID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
@@ -102,15 +102,18 @@ WHERE
 		if ownerIdentityID != nil {
 			attrs["owner_id"] = ownerIdentityID.String()
 		}
-		if assignedToID != nil {
-			attrs["assigned_to_profile_id"] = assignedToID.String()
-		}
 
 		attrsByID[id] = attrs
+		taskIDByComment[id] = taskID
+		taskIDs = append(taskIDs, taskID)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	if err := applyTaskAssigneeAttribute(ctx, conn, attrsByID, taskIDByComment, taskIDs); err != nil {
+		return nil, err
 	}
 
 	return attrsByID, nil

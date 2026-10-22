@@ -176,6 +176,7 @@ function TaskDetailsActivityLoaded({ taskId }: { taskId: string }) {
   const data = useLazyLoadQuery<TaskDetailsEngagementQuery>(
     taskDetailsActivityListQuery,
     { taskId },
+    { fetchPolicy: "store-and-network" },
   );
   const taskKey = data.node?.__typename === "Task" ? data.node : null;
   if (taskKey == null) {

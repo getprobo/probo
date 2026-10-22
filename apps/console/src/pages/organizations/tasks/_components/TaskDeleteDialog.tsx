@@ -27,7 +27,8 @@ import { DialogFooter } from "@probo/ui/src/v2/Dialog/DialogFooter";
 import { DialogHeader } from "@probo/ui/src/v2/Dialog/DialogHeader";
 import { DialogPopup } from "@probo/ui/src/v2/Dialog/DialogPopup";
 import { DialogTitle } from "@probo/ui/src/v2/Dialog/DialogTitle";
-import { Suspense } from "react";
+import { ErrorBoundary } from "@probo/ui/src/v2/ErrorBoundary/ErrorBoundary";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useLazyLoadQuery } from "react-relay";
 
@@ -60,16 +61,34 @@ export function TaskDeleteDialog({
   onOpenChange,
   onDeleted,
 }: TaskDeleteDialogProps) {
+  const [attempt, setAttempt] = useState(0);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {open && (
-        <Suspense fallback={<TaskDeleteDialogFallback />}>
-          <TaskDeleteDialogLoaded
-            taskId={taskId}
-            onOpenChange={onOpenChange}
-            onDeleted={onDeleted}
-          />
-        </Suspense>
+        <ErrorBoundary
+          key={attempt}
+          fallback={(
+            <TaskDeleteDialogBody
+              failed
+              pending={false}
+              deleting={false}
+              onRetry={() => {
+                setAttempt(value => value + 1);
+              }}
+              onDelete={() => {}}
+            />
+          )}
+        >
+          <Suspense fallback={<TaskDeleteDialogFallback />}>
+            <TaskDeleteDialogLoaded
+              key={attempt}
+              taskId={taskId}
+              onOpenChange={onOpenChange}
+              onDeleted={onDeleted}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </Dialog>
   );
@@ -83,6 +102,7 @@ function TaskDeleteDialogLoaded({
   const data = useLazyLoadQuery<TaskDeleteDialogQuery>(
     taskDeleteDialogQuery,
     { taskId },
+    { fetchPolicy: "network-only" },
   );
   const task = data.node?.__typename === "Task" ? data.node : null;
   if (task == null) {

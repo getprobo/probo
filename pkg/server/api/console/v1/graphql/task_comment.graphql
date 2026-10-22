@@ -97,5 +97,5 @@ type UpdateTaskCommentPayload {
 
 type DeleteTaskCommentPayload {
     deletedTaskCommentId: ID!
-    deletedTaskActivityId: ID!
+    deletedTaskActivityId: ID
 }

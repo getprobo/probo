@@ -44,7 +44,13 @@
   height: 0;
 }
 
-[data-rich-editor-floating] {
+.tiptap .slash-search {
+  border-radius: var(--radius-2);
+  background-color: var(--color-sand-3);
+  padding: 0.125rem 0.375rem;
+}
+
+[data-rich-editor-floating]:not(button) {
   border: 1px solid var(--color-sand-6);
   border-radius: var(--radius-3);
   background-color: var(--color-sand-1);

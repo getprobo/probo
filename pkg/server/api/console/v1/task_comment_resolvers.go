@@ -12,6 +12,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -117,9 +118,14 @@ func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.De
 		return nil, gqlutils.Internal(ctx)
 	}
 
+	var deletedTaskActivityID *gid.GID
+	if activityID != gid.Nil {
+		deletedTaskActivityID = &activityID
+	}
+
 	return &types.DeleteTaskCommentPayload{
 		DeletedTaskCommentID:  input.TaskCommentID,
-		DeletedTaskActivityID: activityID,
+		DeletedTaskActivityID: deletedTaskActivityID,
 	}, nil
 }
 

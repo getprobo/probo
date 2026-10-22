@@ -59,7 +59,6 @@ export function TaskListItemPriority({
   canUpdate,
   isUpdating,
   showLabel = false,
-  placeholder,
   slots,
   onPriorityChange,
 }: {
@@ -74,7 +73,7 @@ export function TaskListItemPriority({
   const { t } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
   const label = t(`priorities.${taskPriorityKeys[priority]}`);
-  const tooltip = placeholder ?? label;
+  const tooltip = label;
   const icon = <TaskPriorityIcon priority={priority} />;
   const value = priorityValue(icon, label, showLabel, slots);
   const frame = showLabel ? slots.stateOption() : slots.state();

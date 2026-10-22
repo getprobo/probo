@@ -39,6 +39,7 @@ const taskPropertiesSectionFragment = graphql`
     deadline
     recurrenceInterval
     canUpdate: permission(action: "core:task:update")
+    canAssign: permission(action: "core:task:assign")
     assignedTo {
       id
       fullName
@@ -99,12 +100,12 @@ export function TaskPropertiesSection({ taskKey }: TaskPropertiesSectionProps) {
                 emailAddress: assignedTo.emailAddress,
                 avatarUrl: assignedTo.avatar?.downloadUrl,
               }}
-          canUpdate={task.canUpdate}
+          canUpdate={task.canAssign}
           isUpdating={isUpdating}
           showLabel
           placeholder={tTasks("placeholders.assignee")}
           className={stateOption()}
-          renderAssigneeMenu={task.canUpdate
+          renderAssigneeMenu={task.canAssign
             ? () => (
                 <TaskAssigneeMenu
                   value={assignedTo?.id ?? null}

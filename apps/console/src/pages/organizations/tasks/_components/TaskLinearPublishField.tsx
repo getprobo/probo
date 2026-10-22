@@ -137,6 +137,7 @@ export function TaskLinearPublishField({
       <Button
         className="w-full"
         color="linear"
+        loading={isSaving}
         disabled={teamId == null || isSaving || (linking && issueId === newLinearIssueId)}
         onClick={() => {
           if (teamId == null) {

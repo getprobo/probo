@@ -112,6 +112,7 @@ export const button = tv({
     { variant: "surface", color: "amber", class: "bg-amber-2 text-amber-11 border-amber-6 hover:bg-amber-3" },
     { variant: "surface", color: "sky", class: "bg-sky-2 text-sky-11 border-sky-6 hover:bg-sky-3" },
     { variant: "surface", color: "indigo", class: "bg-indigo-2 text-indigo-11 border-indigo-6 hover:bg-indigo-3" },
+    { variant: "surface", color: "linear", class: "bg-linear/16 text-linear border-linear/24 hover:bg-linear/24" },
 
     // ── outline: transparent background, step-7 border ──
     { variant: "outline", color: "neutral", class: "text-sand-11 border-sand-7 hover:bg-sand-3" },
@@ -121,6 +122,7 @@ export const button = tv({
     { variant: "outline", color: "amber", class: "text-amber-11 border-amber-7 hover:bg-amber-3" },
     { variant: "outline", color: "sky", class: "text-sky-11 border-sky-7 hover:bg-sky-3" },
     { variant: "outline", color: "indigo", class: "text-indigo-11 border-indigo-7 hover:bg-indigo-3" },
+    { variant: "outline", color: "linear", class: "text-linear border-linear/40 hover:bg-linear/16" },
 
     // ── ghost: transparent until hover ──
     { variant: "ghost", color: "neutral", class: "text-sand-11 hover:bg-sand-3" },
@@ -141,6 +143,7 @@ export const button = tv({
     { variant: "ghost", color: "amber", active: true, class: "bg-amber-3 text-amber-12" },
     { variant: "ghost", color: "sky", active: true, class: "bg-sky-3 text-sky-12" },
     { variant: "ghost", color: "indigo", active: true, class: "bg-indigo-3 text-indigo-12" },
+    { variant: "ghost", color: "linear", active: true, class: "bg-linear/16 text-linear" },
     { variant: "soft", color: "neutral", active: true, class: "bg-sand-4 text-sand-12" },
     { variant: "soft", color: "gold", active: true, class: "bg-gold-4 text-gold-12" },
     { variant: "soft", color: "red", active: true, class: "bg-red-4 text-red-12" },
@@ -148,6 +151,7 @@ export const button = tv({
     { variant: "soft", color: "amber", active: true, class: "bg-amber-4 text-amber-12" },
     { variant: "soft", color: "sky", active: true, class: "bg-sky-4 text-sky-12" },
     { variant: "soft", color: "indigo", active: true, class: "bg-indigo-4 text-indigo-12" },
+    { variant: "soft", color: "linear", active: true, class: "bg-linear/24 text-linear" },
 
     // ── high-contrast text bump for the tinted variants ──
     { variant: ["soft", "surface", "outline", "ghost"], color: "neutral", highContrast: true, class: "text-sand-12" },

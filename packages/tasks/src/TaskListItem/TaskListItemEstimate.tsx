@@ -57,7 +57,7 @@ export function TaskListItemEstimate({
 }): ReactNode {
   const { t, i18n } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
-  const tooltip = placeholder ?? t("metadata.timeEstimate");
+  const tooltip = label ?? placeholder ?? t("metadata.timeEstimate");
   const shown = label ?? placeholder ?? null;
   const chip = (
     <span className={slots.meta()}>

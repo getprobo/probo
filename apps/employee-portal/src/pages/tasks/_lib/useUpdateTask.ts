@@ -27,11 +27,7 @@ import type { useUpdateTaskMutation } from "#/__generated__/core/useUpdateTaskMu
 import { useMutation } from "#/lib/relay/useMutation";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
-import {
-  reconcileTaskListDeadline,
-  resortTaskListEdge,
-  taskListStateMoveUpdaters,
-} from "./moveTaskListEdge";
+import { employeeTaskListUpdaters } from "./moveTaskListEdge";
 import { useTasksFilters } from "./useTasksFilters";
 
 const updateTaskMutation = graphql`
@@ -66,34 +62,11 @@ export function useUpdateTask(task: {
   const [commit, isUpdating] = useMutation<useUpdateTaskMutation>(updateTaskMutation);
 
   const updateTask = useCallback((input: UpdateTaskInput) => {
-    const queries = graphqlQuery == null ? [null] : [graphqlQuery, null];
-    const previousDeadline = task.deadline ?? null;
-    function applyDeadline(store: Parameters<typeof reconcileTaskListDeadline>[0]) {
-      if (input.deadline === undefined) {
-        return;
-      }
-      const node = store.get(task.id);
-      if (node == null) {
-        return;
-      }
-      node.setValue(input.deadline, "deadline");
-      reconcileTaskListDeadline(store, node, {
-        state: task.state,
-        organizationId,
-        queries,
-        deadline: deadlineBounds,
-        previousDeadline,
-      });
-    }
-    const move = input.state == null
-      ? null
-      : taskListStateMoveUpdaters(environment, {
-          taskId: task.id,
-          nextState: input.state,
-          organizationId,
-          query: graphqlQuery,
-          deadline: deadlineBounds,
-        });
+    const list = employeeTaskListUpdaters(environment, task, input, {
+      organizationId,
+      query: graphqlQuery,
+      deadline: deadlineBounds,
+    });
 
     return commit({
       variables: {
@@ -102,48 +75,10 @@ export function useUpdateTask(task: {
           ...input,
         },
       },
-      optimisticUpdater(store) {
-        applyDeadline(store);
-        move?.optimisticUpdater(store);
-        if (input.state == null && input.priority != null) {
-          const node = store.get(task.id);
-          if (node != null) {
-            node.setValue(input.priority, "priority");
-            resortTaskListEdge(store, node, {
-              state: task.state,
-              organizationId,
-              queries,
-              deadline: deadlineBounds,
-            });
-          }
-        }
-      },
-      updater(store) {
-        applyDeadline(store);
-        move?.updater(store);
-        if (input.state == null && input.priority != null) {
-          const node = store.get(task.id);
-          if (node != null) {
-            resortTaskListEdge(store, node, {
-              state: task.state,
-              organizationId,
-              queries,
-              deadline: deadlineBounds,
-            });
-          }
-        }
-      },
+      optimisticUpdater: list.optimisticUpdater,
+      updater: list.updater,
     }, { successMessage: "" });
-  }, [
-    commit,
-    deadlineBounds,
-    environment,
-    graphqlQuery,
-    organizationId,
-    task.deadline,
-    task.id,
-    task.state,
-  ]);
+  }, [commit, deadlineBounds, environment, graphqlQuery, organizationId, task]);
 
   return [updateTask, isUpdating] as const;
 }

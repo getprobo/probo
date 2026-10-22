@@ -21,7 +21,7 @@
     "editComment": "Editar comentario",
     "deleteComment": "Eliminar comentario",
     "deleteCommentTitle": "Eliminar comentario",
-    "deleteCommentDescription": "¿Seguro que quiere eliminar este comentario?",
+    "deleteCommentDescription": "¿Seguro que quieres eliminar este comentario?",
     "commentRequired": "Escribe un comentario",
     "commentTooLong": "El comentario debe tener como máximo {{max}} caracteres",
     "commentContentError": "No se pudo mostrar este comentario",

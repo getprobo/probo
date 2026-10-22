@@ -68,11 +68,9 @@ func (ta *TaskActivity) AuthorizationAttributes(
 SELECT
     ta.id,
     ta.organization_id,
-    t.assigned_to_profile_id
+    ta.task_id
 FROM
     task_activities ta
-LEFT JOIN
-    tasks t ON t.id = ta.task_id
 WHERE
     ta.id = ANY(@resource_ids)
 `
@@ -89,28 +87,29 @@ WHERE
 	defer rows.Close()
 
 	attrsByID := make(policy.AttributesByID)
+	taskIDByActivity := make(map[gid.GID]gid.GID, len(resourceIDs))
+	taskIDs := make([]gid.GID, 0, len(resourceIDs))
 
 	for rows.Next() {
-		var id, organizationID gid.GID
+		var id, organizationID, taskID gid.GID
 
-		var assignedToID *gid.GID
-
-		if err := rows.Scan(&id, &organizationID, &assignedToID); err != nil {
+		if err := rows.Scan(&id, &organizationID, &taskID); err != nil {
 			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
 		}
 
-		attrs := policy.Attributes{
+		attrsByID[id] = policy.Attributes{
 			"organization_id": organizationID.String(),
 		}
-		if assignedToID != nil {
-			attrs["assigned_to_profile_id"] = assignedToID.String()
-		}
-
-		attrsByID[id] = attrs
+		taskIDByActivity[id] = taskID
+		taskIDs = append(taskIDs, taskID)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+	}
+
+	if err := applyTaskAssigneeAttribute(ctx, conn, attrsByID, taskIDByActivity, taskIDs); err != nil {
+		return nil, err
 	}
 
 	return attrsByID, nil
@@ -312,7 +311,7 @@ DELETE FROM
     task_activities
 WHERE
     %s
-    AND activity_type = 'COMMENTED'
+    AND activity_type = @activity_type
     AND new_value = @comment_id
 RETURNING
     id
@@ -320,7 +319,10 @@ RETURNING
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"comment_id": commentID.String()}
+	args := pgx.StrictNamedArgs{
+		"comment_id":    commentID.String(),
+		"activity_type": TaskActivityTypeCommented,
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)

@@ -85,7 +85,7 @@ export function InternalControlCombobox({
       organizationId,
       first: pageSize,
       after,
-      query: query || null,
+      query: query.trim() || null,
     }),
     readPage: (data) => {
       const organization = data.node?.__typename === "Organization" ? data.node : null;

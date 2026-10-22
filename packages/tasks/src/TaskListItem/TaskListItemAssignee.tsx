@@ -59,7 +59,7 @@ export function TaskListItemAssignee({
   const slots = taskListItem({ field: showLabel });
   const name = assignee?.fullName ?? null;
   const label = name ?? (showLabel ? placeholder : null) ?? t("unassigned");
-  const tooltip = showLabel && placeholder != null ? placeholder : label;
+  const tooltip = name ?? placeholder ?? label;
   const avatar = assignee == null
     ? (
         <UserCircleDashedIcon

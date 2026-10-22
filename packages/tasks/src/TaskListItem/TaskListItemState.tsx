@@ -60,7 +60,6 @@ export function TaskListItemState({
   canUpdate,
   isUpdating,
   showLabel = false,
-  placeholder,
   slots,
   onStateChange,
 }: {
@@ -76,7 +75,7 @@ export function TaskListItemState({
   const { t } = useTranslation(TASKS_NAMESPACE);
   const [open, setOpen] = useState(false);
   const label = t(`states.${taskStateKeys[displayState]}`);
-  const tooltip = placeholder ?? label;
+  const tooltip = label;
   const icon = <TaskStateIcon state={displayState} />;
   const value = stateValue(icon, label, showLabel, slots);
   const frame = showLabel ? slots.stateOption() : slots.state();

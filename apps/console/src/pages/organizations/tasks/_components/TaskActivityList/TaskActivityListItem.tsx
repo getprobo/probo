@@ -208,6 +208,7 @@ function CommentStep({
   const [error, setError] = useState<string>();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [updateTaskComment, isSaving] = useUpdateTaskComment();
+  const [uploading, setUploading] = useState(false);
   const { card, row, body, header, identity, actions, save } = taskActivityComment();
   const name = authorName ?? t("detailsPage.activity.actorFallback");
   const relativeTime = relativeDateFormat(i18n.language, createdAt)
@@ -221,6 +222,10 @@ function CommentStep({
   }
 
   async function saveComment() {
+    if (uploading) {
+      return;
+    }
+
     if (isRichEditorContentEmpty(draft)) {
       setError(t("detailsPage.comments.errors.contentRequired"));
       return;
@@ -323,6 +328,7 @@ function CommentStep({
                       setError(undefined);
                     }
                   : undefined}
+                onUploadingChange={editing ? setUploading : undefined}
               />
             </Field>
           </ErrorBoundary>
@@ -346,6 +352,7 @@ function CommentStep({
                 color="neutral"
                 highContrast
                 loading={isSaving}
+                disabled={uploading}
                 onClick={() => {
                   void saveComment();
                 }}
