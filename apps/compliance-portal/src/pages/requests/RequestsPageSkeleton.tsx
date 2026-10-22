@@ -33,7 +33,7 @@ export function RequestsPageSkeleton() {
       <HeaderBand>
         <div className="flex w-full items-center justify-between gap-4">
           <HeadingSkeleton size={7} className="w-64" />
-          <div className="h-8 w-32 animate-pulse rounded-2 bg-sand-3" />
+          <div className="h-8 w-48 animate-pulse rounded-2 bg-sand-3" />
         </div>
       </HeaderBand>
       <div className={page()}>

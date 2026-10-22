@@ -1,10 +1,10 @@
 {
-  "title": "数据请求",
-  "newRequest": "新建请求",
+  "title": "隐私请求",
+  "newRequest": "新建隐私请求",
   "loadMore": "加载更多",
   "empty": {
-    "title": "暂无请求",
-    "description": "您提交的请求将显示在此处，方便您跟踪处理进度。"
+    "title": "暂无隐私请求",
+    "description": "与您的个人数据相关的隐私请求将显示在此处，方便您跟踪处理进度。"
   },
   "types": {
     "ACCESS": "数据访问",
@@ -28,8 +28,8 @@
     "COMPLAINT": "举报滥用行为"
   },
   "dialog": {
-    "title": "新建请求",
-    "description": "选择请求类型并填写以下详细信息。",
+    "title": "新建隐私请求",
+    "description": "此表单用于查阅或删除等个人数据请求。选择请求类型并填写以下详细信息。",
     "typeLabel": "请求类型",
     "cancel": "取消",
     "submit": "提交请求",

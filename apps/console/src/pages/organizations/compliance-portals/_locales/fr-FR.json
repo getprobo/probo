@@ -54,8 +54,8 @@
     "description": "Choisissez les référentiels, engagements et références affichés sur la page d’accueil."
   },
   "rightRequestsPage": {
-    "title": "Demandes de droits",
-    "description": "Permettez aux visiteurs de soumettre des demandes de droits sur le portail."
+    "title": "Demandes de confidentialité",
+    "description": "Permettez aux visiteurs de soumettre des demandes de confidentialité concernant leurs données personnelles."
   },
   "accessPage": {
     "description": "Ajoutez des personnes au portail, ou attendez qu’elles se connectent pour demander des documents ou accepter un NDA."
@@ -518,8 +518,8 @@
       "disabledHint": "Activez d’abord votre portail de conformité pour permettre l’indexation par les moteurs de recherche"
     },
     "rightsRequests": {
-      "title": "Demandes de droits",
-      "description": "Permettez aux visiteurs de soumettre des demandes relatives aux droits des personnes concernées sur votre portail de conformité"
+      "title": "Demandes de confidentialité",
+      "description": "Permettez aux visiteurs de soumettre des demandes de confidentialité concernant leurs données personnelles sur votre portail de conformité"
     }
   },
   "domainsSection": {

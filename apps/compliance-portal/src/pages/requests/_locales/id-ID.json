@@ -1,10 +1,10 @@
 {
-  "title": "Permintaan Data",
-  "newRequest": "Permintaan Baru",
+  "title": "Permintaan Privasi",
+  "newRequest": "Permintaan Privasi Baru",
   "loadMore": "Muat lebih banyak",
   "empty": {
-    "title": "Belum ada permintaan",
-    "description": "Permintaan yang Anda ajukan akan muncul di sini agar Anda dapat memantau progresnya."
+    "title": "Belum ada permintaan privasi",
+    "description": "Permintaan privasi tentang data pribadi Anda akan muncul di sini agar Anda dapat memantau progresnya."
   },
   "types": {
     "ACCESS": "Akses Data",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Laporkan penyalahgunaan"
   },
   "dialog": {
-    "title": "Permintaan Baru",
-    "description": "Pilih jenis permintaan dan lengkapi detail di bawah ini.",
+    "title": "Permintaan Privasi Baru",
+    "description": "Formulir ini untuk data pribadi Anda, seperti akses atau penghapusan. Pilih jenis permintaan dan lengkapi detail di bawah ini.",
     "typeLabel": "Jenis permintaan",
     "cancel": "Batal",
     "submit": "Kirim Permintaan",

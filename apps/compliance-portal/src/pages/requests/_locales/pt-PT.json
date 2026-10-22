@@ -1,10 +1,10 @@
 {
-  "title": "Pedidos de Dados",
-  "newRequest": "Novo Pedido",
+  "title": "Pedidos de Privacidade",
+  "newRequest": "Novo Pedido de Privacidade",
   "loadMore": "Carregar mais",
   "empty": {
-    "title": "Ainda não há pedidos",
-    "description": "Os pedidos que submeter aparecerão aqui para que possa acompanhar o seu progresso."
+    "title": "Ainda não há pedidos de privacidade",
+    "description": "Os pedidos de privacidade sobre os seus dados pessoais aparecerão aqui para que possa acompanhar o seu progresso."
   },
   "types": {
     "ACCESS": "Acesso a Dados",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Denunciar abuso"
   },
   "dialog": {
-    "title": "Novo Pedido",
-    "description": "Escolha um tipo de pedido e preencha os detalhes abaixo.",
+    "title": "Novo Pedido de Privacidade",
+    "description": "Trata-se dos seus dados pessoais, como o acesso ou a eliminação. Escolha um tipo de pedido e preencha os detalhes abaixo.",
     "typeLabel": "Tipo de pedido",
     "cancel": "Cancelar",
     "submit": "Enviar Pedido",
