@@ -4,6 +4,20 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ## Unreleased
 
+## [0.256.0] - 2026-10-22
+
+### Added
+
+- `cookie-banner start-sample`, `cookie-banner stop-sample`, and
+  `cookie-banner list-samples` open, close, and list sample windows.
+  `list-samples` is also `ls-samples`
+
+### Changed
+
+- `cookie-banner view` shows the latest sample id, whether it is
+  frozen, and sample page loads, instead of discovery loads
+- `tracker-pattern view` shows sample hits instead of discovery hits
+
 ## [0.255.0] - 2026-10-21
 
 ### Removed
