@@ -34,6 +34,10 @@ func ReadMessages(
 ) {
 	for {
 		messageType, data, err := connection.Read(ctx)
+		// Cancellation unblocks Read with ctx.Err(). That is not a connection failure.
+		if err != nil && ctx.Err() != nil {
+			return
+		}
 
 		message := Incoming{
 			MessageType: messageType,

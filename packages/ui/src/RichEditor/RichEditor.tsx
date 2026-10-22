@@ -104,9 +104,8 @@ const coreExtensions = [
   PlaceholderExtension,
 ];
 
-const extensions = [
+export const richEditorExtensions = [
   ...coreExtensions,
-  AutomergeTableStructureExtension,
   ImageExtension,
   FileExtension,
   ContentUploadExtension,
@@ -306,10 +305,10 @@ export function RichEditor(props: RichEditorProps) {
       }
 
       if (!historyHighlights?.length) {
-        return extensions;
+        return richEditorExtensions;
       }
 
-      return [...extensions, createRichEditorHistoryExtension(historyHighlights)];
+      return [...richEditorExtensions, createRichEditorHistoryExtension(historyHighlights)];
     },
     [editorExtensionOverride, historyHighlights],
   );

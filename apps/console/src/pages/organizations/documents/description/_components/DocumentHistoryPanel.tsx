@@ -21,7 +21,7 @@
 import { dateTimeFormat } from "@probo/i18n";
 import { Button, IconClock, type RichEditorHistoryHighlight } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
-import { Suspense, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   graphql,
@@ -164,29 +164,33 @@ function DocumentRevisions(props: {
   const selected = sessions.find(session => session.id === selectedId) ?? sessions[0];
   const [snapshotQueryRef, loadSnapshotQuery]
     = useQueryLoader<DocumentHistoryPanelSnapshotQuery>(documentHistorySnapshotQuery);
-  const loadedRevisionId = useRef<string | null>(null);
+  const requestedSnapshot = useRef<string | null>(null);
+  const requestSnapshot = useCallback((revisionId: string) => {
+    const key = `${documentId}:${revisionId}`;
+    if (requestedSnapshot.current === key) {
+      return;
+    }
 
-  function selectRevision(revisionId: string) {
-    loadedRevisionId.current = revisionId;
-    setSelectedId(revisionId);
+    requestedSnapshot.current = key;
     loadSnapshotQuery(
       { documentId, revisionId },
       { fetchPolicy: "network-only" },
     );
+  }, [documentId, loadSnapshotQuery]);
+
+  function selectRevision(revisionId: string) {
+    setSelectedId(revisionId);
+    requestSnapshot(revisionId);
   }
 
   const selectedRevisionId = selected?.id;
   useLayoutEffect(() => {
-    if (!selectedRevisionId || loadedRevisionId.current === selectedRevisionId) {
+    if (!selectedRevisionId) {
       return;
     }
 
-    loadedRevisionId.current = selectedRevisionId;
-    loadSnapshotQuery(
-      { documentId, revisionId: selectedRevisionId },
-      { fetchPolicy: "network-only" },
-    );
-  }, [documentId, loadSnapshotQuery, selectedRevisionId]);
+    requestSnapshot(selectedRevisionId);
+  }, [requestSnapshot, selectedRevisionId]);
 
   const [restore, restoring] = useMutation<DocumentHistoryPanelRestoreMutation>(restoreMutation);
 
@@ -199,6 +203,8 @@ function DocumentRevisions(props: {
           </Button>
         </div>
         {selected && snapshotQueryRef
+          && snapshotQueryRef.variables.documentId === documentId
+          && snapshotQueryRef.variables.revisionId === selected.id
           ? (
               <Suspense
                 fallback={(
