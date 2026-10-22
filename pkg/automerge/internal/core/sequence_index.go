@@ -535,6 +535,10 @@ func (i *sequenceIndex) rawPosition(target opset.OpID) (int, bool) {
 		return 0, false
 	}
 
+	if len(i.chunks) > 0 && position.chunk == i.chunks[len(i.chunks)-1] {
+		return len(i.positions) - len(position.chunk.entries) + position.offset, true
+	}
+
 	offset := 0
 
 	for _, chunk := range i.chunks {
@@ -625,6 +629,10 @@ func (i *sequenceIndex) insertEntry(
 		return true
 	}
 
+	if position == len(i.positions) {
+		return i.appendEntry(entry, nil)
+	}
+
 	var seen int
 	for chunkIndex, chunk := range i.chunks {
 		if position > seen+len(chunk.entries) {
@@ -686,6 +694,10 @@ func (i *sequenceIndex) insertEntryDeferred(
 		return true
 	}
 
+	if position == len(i.positions) {
+		return i.appendEntry(entry, dirty)
+	}
+
 	seen := 0
 	for chunkIndex, chunk := range i.chunks {
 		if position > seen+len(chunk.entries) {
@@ -729,6 +741,62 @@ func (i *sequenceIndex) insertEntryDeferred(
 	}
 
 	return false
+}
+
+// appendEntry inserts entry after every existing entry. A nil deferred map
+// refreshes summaries immediately; otherwise the touched chunks are recorded
+// for finishDeferredMutations.
+func (i *sequenceIndex) appendEntry(
+	entry sequenceIndexEntry,
+	deferred map[*sequenceIndexChunk]struct{},
+) bool {
+	chunkIndex := len(i.chunks) - 1
+	chunk := i.chunks[chunkIndex]
+
+	if len(chunk.entries)+1 <= sequenceIndexChunkMaximum {
+		chunk.entries = append(chunk.entries, entry)
+		i.indexChunkFrom(chunk, len(chunk.entries)-1)
+
+		if deferred != nil {
+			deferred[chunk] = struct{}{}
+
+			return true
+		}
+
+		i.removeChunkSummary(chunk)
+		refreshSequenceIndexChunk(chunk)
+		i.addChunkSummary(chunk)
+		i.refreshPrefixes()
+
+		return true
+	}
+
+	entries := make([]sequenceIndexEntry, len(chunk.entries)+1)
+	copy(entries, chunk.entries)
+	entries[len(chunk.entries)] = entry
+	middle := len(entries) / 2
+	left := newSequenceIndexChunk(append([]sequenceIndexEntry(nil), entries[:middle]...))
+	right := newSequenceIndexChunk(append([]sequenceIndexEntry(nil), entries[middle:]...))
+
+	i.chunks[chunkIndex] = left
+	i.chunks = append(i.chunks, right)
+	i.indexChunk(left)
+	i.indexChunk(right)
+
+	if deferred != nil {
+		delete(deferred, chunk)
+		deferred[left] = struct{}{}
+		deferred[right] = struct{}{}
+
+		return true
+	}
+
+	i.removeChunkSummary(chunk)
+	i.addChunkSummary(left)
+	i.addChunkSummary(right)
+	i.refreshPrefixes()
+
+	return true
 }
 
 func (i *sequenceIndex) finishDeferredMutations(
