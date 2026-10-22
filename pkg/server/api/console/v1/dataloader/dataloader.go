@@ -862,7 +862,7 @@ func (f *batchFetcher) fetchTaskComments(
 	}
 
 	for tenantID, commentIDs := range commentIDsByTenant {
-		comments, err := f.task.GetCommentsByIDs(ctx, coredata.NewScope(tenantID), commentIDs...)
+		comments, err := f.task.GetCommentsByIDs(ctx, scopeFromContext(ctx, tenantID), commentIDs...)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load task comments: %w", err)
 		}
