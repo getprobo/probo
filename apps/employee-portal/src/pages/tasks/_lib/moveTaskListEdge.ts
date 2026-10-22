@@ -200,6 +200,7 @@ export function moveTaskListEdge(
       if (fromConnection != null && findEdge(fromConnection, nodeId) != null) {
         ConnectionHandler.deleteNode(fromConnection, nodeId);
         adjustTotalCount(fromConnection, -1);
+        syncPageInfo(fromConnection);
       }
       continue;
     }
@@ -208,6 +209,7 @@ export function moveTaskListEdge(
     if (hadFrom && fromConnection != null) {
       ConnectionHandler.deleteNode(fromConnection, nodeId);
       adjustTotalCount(fromConnection, -1);
+      syncPageInfo(fromConnection);
     }
 
     if (toConnection == null) {
@@ -225,6 +227,7 @@ export function moveTaskListEdge(
       node,
     );
     adjustTotalCount(toConnection, 1);
+    syncPageInfo(toConnection);
   }
 }
 
@@ -324,6 +327,7 @@ export function reconcileTaskListDeadline(
     if (edge != null && !isMember && wasMember) {
       ConnectionHandler.deleteNode(connection, nodeId);
       adjustTotalCount(connection, -1);
+      syncPageInfo(connection);
       continue;
     }
     if (edge == null && !wasMember && isMember) {
@@ -333,6 +337,7 @@ export function reconcileTaskListDeadline(
         node,
       );
       adjustTotalCount(connection, 1);
+      syncPageInfo(connection);
     }
   }
 }

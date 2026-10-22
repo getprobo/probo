@@ -50,11 +50,14 @@ export interface UpdateTaskInput {
   recurrenceInterval?: string | null;
 }
 
-export function useUpdateTask(task: {
+export function useUpdateTask({
+  id,
+  state,
+  deadline,
+}: {
   id: string;
   state: TaskState;
   deadline?: string | null;
-  recurrenceInterval?: string | null;
 }) {
   const { organizationId } = useEmployeePortalRoute();
   const { graphqlQuery, deadlineBounds } = useTasksFilters();
@@ -62,23 +65,28 @@ export function useUpdateTask(task: {
   const [commit, isUpdating] = useMutation<useUpdateTaskMutation>(updateTaskMutation);
 
   const updateTask = useCallback((input: UpdateTaskInput) => {
-    const list = employeeTaskListUpdaters(environment, task, input, {
-      organizationId,
-      query: graphqlQuery,
-      deadline: deadlineBounds,
-    });
+    const list = employeeTaskListUpdaters(
+      environment,
+      { id, state, deadline },
+      input,
+      {
+        organizationId,
+        query: graphqlQuery,
+        deadline: deadlineBounds,
+      },
+    );
 
     return commit({
       variables: {
         input: {
-          taskId: task.id,
+          taskId: id,
           ...input,
         },
       },
       optimisticUpdater: list.optimisticUpdater,
       updater: list.updater,
     }, { successMessage: "" });
-  }, [commit, deadlineBounds, environment, graphqlQuery, organizationId, task]);
+  }, [commit, deadline, deadlineBounds, environment, graphqlQuery, id, organizationId, state]);
 
   return [updateTask, isUpdating] as const;
 }

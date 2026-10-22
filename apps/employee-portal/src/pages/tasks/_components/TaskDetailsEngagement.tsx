@@ -31,6 +31,7 @@ import {
   TASKS_NAMESPACE,
 } from "@probo/tasks";
 import { RichEditor } from "@probo/ui/src/RichEditor/RichEditor";
+import { isRichEditorContentEmpty, richEditorContentTextLength } from "@probo/ui/src/RichEditor/richEditorContent";
 import { Avatar } from "@probo/ui/src/v2/Avatar/Avatar";
 import { Button } from "@probo/ui/src/v2/Button/Button";
 import { Card } from "@probo/ui/src/v2/Card/Card";
@@ -65,7 +66,7 @@ import type { TaskDetailsEngagementRefetchQuery } from "#/__generated__/core/Tas
 import type { TaskDetailsEngagementUpdateCommentMutation } from "#/__generated__/core/TaskDetailsEngagementUpdateCommentMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
-import { isRichTextEmpty, richTextLength, taskCommentMaxLength } from "../_lib/richText";
+import { taskCommentMaxLength } from "../_lib/richText";
 import { taskActivitiesConnectionId } from "../_lib/taskPath";
 
 const taskDetailsActivityListQuery = graphql`
@@ -352,11 +353,11 @@ function CommentStep({
   const showActions = comment.canUpdate || comment.canDelete;
 
   async function saveComment() {
-    if (isRichTextEmpty(draft)) {
+    if (isRichEditorContentEmpty(draft)) {
       setError(t("details.commentRequired"));
       return;
     }
-    if (richTextLength(draft) > taskCommentMaxLength) {
+    if (richEditorContentTextLength(draft) > taskCommentMaxLength) {
       setError(t("details.commentTooLong", { max: taskCommentMaxLength }));
       return;
     }
@@ -504,11 +505,11 @@ export function TaskDetailsCommentForm({ taskId }: { taskId: string }) {
   const { root, actions, editor } = taskCommentForm();
 
   function handleSubmit() {
-    if (isRichTextEmpty(content)) {
+    if (isRichEditorContentEmpty(content)) {
       setError(t("details.commentRequired"));
       return;
     }
-    if (richTextLength(content) > taskCommentMaxLength) {
+    if (richEditorContentTextLength(content) > taskCommentMaxLength) {
       setError(t("details.commentTooLong", { max: taskCommentMaxLength }));
       return;
     }

@@ -128,7 +128,7 @@ func LoadAssignedToByIDs(
 		return assignedByID, nil
 	}
 
-	q := `SELECT id, assigned_to_profile_id FROM tasks WHERE id = ANY(@task_ids::text[])`
+	q := `SELECT id, assigned_to_profile_id FROM tasks WHERE id = ANY(@task_ids)`
 
 	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"task_ids": taskIDs})
 	if err != nil {

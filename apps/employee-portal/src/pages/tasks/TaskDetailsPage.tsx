@@ -29,6 +29,7 @@ import {
   TASKS_NAMESPACE,
 } from "@probo/tasks";
 import { RichEditor } from "@probo/ui/src/RichEditor/RichEditor";
+import { isRichEditorContentEmpty } from "@probo/ui/src/RichEditor/richEditorContent";
 import { Link } from "@probo/ui/src/v2/Link/Link";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useState } from "react";
@@ -47,7 +48,6 @@ import { NotFoundError } from "#/lib/relay/errors";
 import { useEmployeePortalRoute } from "#/pages/iam/_lib/EmployeePortalRouteContext";
 
 import { TaskDetailsActivity, TaskDetailsCommentForm } from "./_components/TaskDetailsEngagement";
-import { isRichTextEmpty } from "./_lib/richText";
 import { useUpdateTask } from "./_lib/useUpdateTask";
 
 export const taskDetailsPageFragment = graphql`
@@ -233,7 +233,7 @@ function TaskDetailsDescription({
     }
 
     const handle = setTimeout(() => {
-      const next = isRichTextEmpty(draft) ? null : draft;
+      const next = isRichEditorContentEmpty(draft) ? null : draft;
       void onSave(next).catch(() => {
         setDraft(content);
       });
@@ -244,7 +244,7 @@ function TaskDetailsDescription({
     };
   }, [canAssign, content, draft, onSave]);
 
-  if (!canAssign && isRichTextEmpty(content)) {
+  if (!canAssign && isRichEditorContentEmpty(content)) {
     return <Text size={2} color="faint">{t("details.noDescription")}</Text>;
   }
 
