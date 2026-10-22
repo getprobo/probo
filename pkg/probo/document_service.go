@@ -2177,6 +2177,7 @@ func (s *DocumentService) Update(
 				}
 
 				document.Content = written.Content
+				document.UpdatedAt = now
 			}
 
 			metadataChanged := req.Title != nil ||
