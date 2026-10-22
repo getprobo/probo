@@ -70,7 +70,7 @@ export function createAutomergeSyncPlugin(
       }) => {
         if (ignoreTransaction) return;
 
-        collaborationDebug("remote-patches", {
+        collaborationDebug("remote-patches", () => ({
           patchCount: patches.length,
           patches: patches.map(patch => ({
             action: patch.action,
@@ -79,9 +79,11 @@ export function createAutomergeSyncPlugin(
           heads: Automerge.getHeads(doc),
           spans: summarizeAutomergeSpans(doc),
           prosemirror: summarizeProseMirrorDocument(view.state.doc),
-        });
+        }));
 
-        const transaction = hasHorizontalRule(view.state.doc)
+        const structuralLeaf = hasHorizontalRule(view.state.doc)
+          || spansHaveHorizontalRule(doc, path);
+        const transaction = structuralLeaf
           ? reconcileAutomergeDocument(adapter, path, doc, view.state)
           : patchesToTr({
               adapter,
@@ -92,12 +94,15 @@ export function createAutomergeSyncPlugin(
               state: view.state,
             });
         ignoreTransaction = true;
-        view.dispatch(transaction);
-        ignoreTransaction = false;
-        collaborationDebug("remote-applied", {
+        try {
+          view.dispatch(transaction);
+        } finally {
+          ignoreTransaction = false;
+        }
+        collaborationDebug("remote-applied", () => ({
           stepCount: transaction.steps.length,
           prosemirror: summarizeProseMirrorDocument(view.state.doc),
-        });
+        }));
       };
 
       handle.on("change", onPatch);
@@ -116,7 +121,7 @@ export function createAutomergeSyncPlugin(
       );
       if (changedTransactions.length === 0) return undefined;
 
-      collaborationDebug("local-before", {
+      collaborationDebug("local-before", () => ({
         transactionCount: changedTransactions.length,
         steps: changedTransactions.flatMap(transaction =>
           transaction.steps.map(step => step.constructor.name),
@@ -125,41 +130,44 @@ export function createAutomergeSyncPlugin(
         spans: summarizeAutomergeSpans(handle.doc()),
         prosemirror: summarizeProseMirrorDocument(state.doc),
         structuralLeaf: hasHorizontalRule(state.doc),
-      });
+      }));
 
       ignoreTransaction = true;
-      handle.change((document) => {
-        if (
-          hasHorizontalRule(state.doc)
-          || hasMarkStep(changedTransactions)
-        ) {
-          Automerge.updateSpans(
-            document,
-            path,
-            pmNodeToSpans(adapter, state.doc),
-            adapter.updateSpansConfig(),
-          );
-        } else {
-          for (const transaction of changedTransactions) {
-            const spans = Automerge.spans(document, path);
-            pmToAm(
-              adapter,
-              spans,
-              transaction.steps,
+      try {
+        handle.change((document) => {
+          if (
+            hasHorizontalRule(state.doc)
+            || hasMarkStep(changedTransactions)
+          ) {
+            Automerge.updateSpans(
               document,
-              transaction.docs[0],
               path,
+              pmNodeToSpans(adapter, state.doc),
+              adapter.updateSpansConfig(),
             );
+          } else {
+            for (const transaction of changedTransactions) {
+              const spans = Automerge.spans(document, path);
+              pmToAm(
+                adapter,
+                spans,
+                transaction.steps,
+                document,
+                transaction.docs[0],
+                path,
+              );
+            }
           }
-        }
-      });
-      ignoreTransaction = false;
+        });
+      } finally {
+        ignoreTransaction = false;
+      }
 
-      collaborationDebug("local-after", {
+      collaborationDebug("local-after", () => ({
         heads: Automerge.getHeads(handle.doc()),
         spans: summarizeAutomergeSpans(handle.doc()),
         prosemirror: summarizeProseMirrorDocument(state.doc),
-      });
+      }));
 
       return undefined;
     },
@@ -187,6 +195,19 @@ export function reconcileAutomergeDocument(
   );
   transaction.setMeta("addToHistory", false);
   return transaction;
+}
+
+function spansHaveHorizontalRule(
+  document: Automerge.Doc<RichEditorAutomergeDocument>,
+  path: Automerge.Prop[],
+): boolean {
+  return Automerge.spans(document, path).some((span) => {
+    if (span.type !== "block") return false;
+    const type = span.value.type;
+    if (typeof type === "string") return type === "horizontal-rule";
+    if (Automerge.isImmutableString(type)) return type.val === "horizontal-rule";
+    return false;
+  });
 }
 
 function hasHorizontalRule(document: {
@@ -256,12 +277,12 @@ function findDocumentDiff(
   return { start, endBefore, endAfter };
 }
 
-function isSurrogatePair(value: string): boolean {
+export function isSurrogatePair(value: string): boolean {
   if (value.length !== 2) return false;
   const first = value.charCodeAt(0);
   const second = value.charCodeAt(1);
-  return first >= 0xdc00
-    && first <= 0xdfff
-    && second >= 0xd800
-    && second <= 0xdbff;
+  return first >= 0xd800
+    && first <= 0xdbff
+    && second >= 0xdc00
+    && second <= 0xdfff;
 }

@@ -50,16 +50,28 @@ describe("repo selection", () => {
     const selection = textSelection(document, "body", 6, 6);
     const before = resolveSelection(document, selection);
     expect(before).toEqual({ anchor: 6, head: 6 });
+    if (!before) throw new Error("expected resolved selection");
 
-    // Someone types three characters at the start of the document.
-    document = Automerge.change(document, (draft) => {
+    const other = Automerge.clone(document, {
+      actor: "02000000000000000000000000000000",
+    });
+    const edited = Automerge.change(other, (draft) => {
       Automerge.splice(draft, ["body"], 0, 0, "XX ");
     });
+    const merged = Automerge.merge(document, edited);
 
-    // The same cursors now resolve three positions later: an integer offset of
-    // 6 would point at the wrong character.
-    const after = resolveSelection(document, selection);
+    const after = resolveSelection(merged, selection);
     expect(after).toEqual({ anchor: before.anchor + 3, head: before.head + 3 });
+  });
+
+  it("returns null when a cursor cannot be resolved", () => {
+    const document = seededDocument("hello world");
+
+    expect(resolveSelection(document, {
+      field: "body",
+      anchor: "not-a-cursor",
+      head: "not-a-cursor",
+    })).toBeNull();
   });
 
   it("carries a non-collapsed selection range", () => {

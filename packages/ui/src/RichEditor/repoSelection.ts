@@ -73,19 +73,23 @@ export function textSelection<T>(
 export function resolveSelection<T>(
   document: Automerge.Doc<T>,
   selection: TextSelection,
-): ResolvedSelection {
-  return {
-    anchor: Automerge.getCursorPosition(
-      document,
-      [selection.field],
-      selection.anchor,
-    ),
-    head: Automerge.getCursorPosition(
-      document,
-      [selection.field],
-      selection.head,
-    ),
-  };
+): ResolvedSelection | null {
+  try {
+    return {
+      anchor: Automerge.getCursorPosition(
+        document,
+        [selection.field],
+        selection.anchor,
+      ),
+      head: Automerge.getCursorPosition(
+        document,
+        [selection.field],
+        selection.head,
+      ),
+    };
+  } catch {
+    return null;
+  }
 }
 
 // isCollapsed reports whether a selection is a single caret.

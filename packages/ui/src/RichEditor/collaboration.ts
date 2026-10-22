@@ -74,12 +74,6 @@ const supportedMarkNames = new Set([
 export function supportsRichEditorCollaboration(content: string): boolean {
   if (!content) return true;
 
-  const document = JSON.parse(content) as {
-    type?: string;
-    marks?: Array<{ type?: string }>;
-    content?: unknown[];
-  };
-
   function supportsNode(value: unknown): boolean {
     if (!value || typeof value !== "object") return false;
 
@@ -95,7 +89,11 @@ export function supportsRichEditorCollaboration(content: string): boolean {
     return node.content?.every(supportsNode) ?? true;
   }
 
-  return supportsNode(document);
+  try {
+    return supportsNode(JSON.parse(content));
+  } catch {
+    return false;
+  }
 }
 
 export function createRichEditorAutomergeDocument(

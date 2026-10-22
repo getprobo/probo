@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Schema } from "@tiptap/pm/model";
+import { Schema, Slice } from "@tiptap/pm/model";
 import { EditorState, type Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { describe, expect, it } from "vitest";
@@ -114,6 +114,45 @@ describe("SlashCommandExtension", () => {
       ),
     ).toBe(true);
     expect(storage.active).toBe(false);
+    expect(state.doc.textContent).toBe("");
+  });
+
+  it("appends a paste to the slash query instead of the document", () => {
+    const storage = slashCommandStorage();
+    const plugin = createSlashCommandPlugin(storage);
+    let state = EditorState.create({
+      schema,
+      doc: schema.node("doc", null, [schema.node("paragraph")]),
+      plugins: [plugin],
+    });
+    const view = {
+      get state() {
+        return state;
+      },
+      dispatch(transaction: Transaction) {
+        state = state.apply(transaction);
+      },
+    } as EditorView;
+    const handleTextInput = plugin.props.handleTextInput;
+    const handlePaste = plugin.props.handlePaste;
+    if (!handleTextInput || !handlePaste) {
+      throw new Error("expected slash command input handlers");
+    }
+
+    handleTextInput.call(plugin, view, 1, 1, "/", () => state.tr);
+    handleTextInput.call(plugin, view, 1, 1, "he", () => state.tr);
+    expect(handlePaste.call(
+      plugin,
+      view,
+      { clipboardData: { getData: () => "ad" } } as ClipboardEvent,
+      Slice.empty,
+    )).toBe(true);
+
+    expect(storage).toEqual({
+      active: true,
+      query: "head",
+      from: 1,
+    });
     expect(state.doc.textContent).toBe("");
   });
 });

@@ -109,6 +109,20 @@ export function createSlashCommandPlugin(
         return true;
       },
 
+      handlePaste(view, event) {
+        const current = slashCommandKey.getState(view.state);
+        if (!current?.active) return false;
+
+        const text = event.clipboardData?.getData("text/plain") ?? "";
+        if (text.length > 0) {
+          dispatchSlashCommand(view, { type: "append", text });
+          return true;
+        }
+
+        dispatchSlashCommand(view, { type: "close" });
+        return false;
+      },
+
       handleKeyDown(view, event) {
         const current = slashCommandKey.getState(view.state);
         if (!current?.active) return false;

@@ -89,7 +89,10 @@ export function pmSelectionFromPresence(
   document: Automerge.Doc<RichEditorAutomergeDocument>,
   selection: TextSelection,
 ): PmPresenceSelection | null {
+  if (!isResolvableSelection(document, selection)) return null;
+
   const resolved = resolveSelection(document, selection);
+  if (!resolved) return null;
   const spans = Automerge.spans(document, textPath);
 
   const anchorPosition = amSpliceIdxToPmIdx(adapter, spans, resolved.anchor);
@@ -99,6 +102,26 @@ export function pmSelectionFromPresence(
   }
 
   return { anchorPosition, headPosition };
+}
+
+function isResolvableSelection(
+  document: Automerge.Doc<RichEditorAutomergeDocument>,
+  selection: TextSelection,
+): boolean {
+  if (
+    typeof selection?.field !== "string"
+    || selection.field.length === 0
+    || typeof selection.anchor !== "string"
+    || selection.anchor.length === 0
+    || typeof selection.head !== "string"
+    || selection.head.length === 0
+  ) {
+    return false;
+  }
+
+  if (!(selection.field in document)) return false;
+  const value: unknown = document[selection.field as "body"];
+  return typeof value === "string";
 }
 
 function pmPositionToAmOffset(

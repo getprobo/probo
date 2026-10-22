@@ -56,7 +56,7 @@ export function createRichEditorHistoryExtension(
   });
 }
 
-function decorationsForHighlights(
+export function decorationsForHighlights(
   doc: ProseMirrorNode,
   highlights: RichEditorHistoryHighlight[],
 ): DecorationSet {
@@ -100,19 +100,39 @@ function decorationsForHighlights(
 function offsetToPosition(doc: ProseMirrorNode, offset: number): number {
   let remaining = offset;
   let position = doc.content.size;
+  let found = false;
 
   doc.descendants((node, pos) => {
-    if (!node.isText || !node.text) return;
+    if (found) return false;
 
-    if (remaining <= node.text.length) {
-      position = pos + remaining;
+    if (node.isText) {
+      const length = node.text?.length ?? 0;
+      if (remaining <= length) {
+        position = pos + remaining;
+        found = true;
+      } else {
+        remaining -= length;
+      }
       return false;
     }
 
-    remaining -= node.text.length;
+    if (!countsAsBlockBoundary(node)) return;
+
+    if (remaining === 0) {
+      position = node.isTextblock ? pos + 1 : pos;
+      found = true;
+      return false;
+    }
+
+    remaining -= 1;
+    return !node.isLeaf;
   });
 
   return position;
+}
+
+function countsAsBlockBoundary(node: ProseMirrorNode): boolean {
+  return node.isBlock || node.type.name === "hardBreak";
 }
 
 function clampPosition(value: number, minimum: number, maximum: number): number {

@@ -82,7 +82,7 @@ const tableExtension = TableKit.configure({
   table: { resizable: true },
 });
 
-const extensions = [
+const coreExtensions = [
   Document,
   Paragraph,
   Text,
@@ -111,13 +111,17 @@ const extensions = [
   AutomergeUnknownBlockExtension,
   MarkdownPasteExtension,
   PlaceholderExtension,
+];
+
+const extensions = [
+  ...coreExtensions,
   ImageExtension,
   FileExtension,
   ContentUploadExtension,
 ];
 
 export const richEditorCollaborationExtensions = [
-  ...extensions,
+  ...coreExtensions,
   AutomergeTableStructureExtension,
 ];
 
@@ -227,7 +231,7 @@ export function RichEditor(props: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const reportUploadErrorRef = useRef<(error: AttachmentUploadError) => void>(() => {});
-  const canUpload = Boolean(onUploadFile && !disabled);
+  const canUpload = Boolean(onUploadFile && !disabled && !collaborationHandle);
 
   useLayoutEffect(() => {
     onChangeContentRef.current = onChangeContent;
@@ -246,7 +250,7 @@ export function RichEditor(props: RichEditorProps) {
   }, []);
 
   useLayoutEffect(() => {
-    if (onUploadFile == null || disabled) {
+    if (onUploadFile == null || disabled || collaborationHandle) {
       uploadRef.current = null;
     } else {
       uploadRef.current = onUploadFile;
@@ -259,7 +263,7 @@ export function RichEditor(props: RichEditorProps) {
         type: "error",
       });
     };
-  }, [disabled, onUploadFile, t, toast]);
+  }, [collaborationHandle, disabled, onUploadFile, t, toast]);
 
   const reportUploadError = useCallback((error: AttachmentUploadError) => {
     reportUploadErrorRef.current(error);

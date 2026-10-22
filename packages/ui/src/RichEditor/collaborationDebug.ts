@@ -26,10 +26,10 @@ const collaborationDebugPrefix = "[probo:collaboration]";
 
 export function collaborationDebug(
   event: string,
-  details: Record<string, unknown>,
+  details: () => Record<string, unknown>,
 ): void {
   if (!collaborationDebugEnabled()) return;
-  console.info(collaborationDebugPrefix, event, JSON.stringify(details));
+  console.info(collaborationDebugPrefix, event, JSON.stringify(details()));
 }
 
 export function summarizeAutomergeSpans(
@@ -77,8 +77,12 @@ export function summarizeProseMirrorDocument(
 }
 
 function collaborationDebugEnabled(): boolean {
-  return typeof window !== "undefined"
-    && window.localStorage.getItem(collaborationDebugStorageKey) === "1";
+  try {
+    return typeof window !== "undefined"
+      && window.localStorage.getItem(collaborationDebugStorageKey) === "1";
+  } catch {
+    return false;
+  }
 }
 
 function automergeString(value: unknown): string {

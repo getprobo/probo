@@ -60,6 +60,26 @@ function syncPlugin({
 }
 
 describe("RichEditor collaboration", () => {
+  it("rejects collaboration content that cannot be parsed", () => {
+    expect(supportsRichEditorCollaboration("{")).toBe(false);
+    expect(supportsRichEditorCollaboration("null")).toBe(false);
+    expect(supportsRichEditorCollaboration("[]")).toBe(false);
+    expect(supportsRichEditorCollaboration(JSON.stringify({
+      type: "paragraph",
+      marks: { type: "bold" },
+    }))).toBe(false);
+  });
+
+  it("omits attachment nodes from the collaborative schema", () => {
+    const schema = getSchema(richEditorCollaborationExtensions);
+
+    expect(schema.nodes.image).toBeUndefined();
+    expect(schema.nodes.file).toBeUndefined();
+    expect(schema.nodes.contentUpload).toBeUndefined();
+    expect(schema.nodes.paragraph).toBeDefined();
+    expect(schema.nodes.horizontalRule).toBeDefined();
+  });
+
   it("imports supported ProseMirror content into Automerge rich text", () => {
     const document = createRichEditorAutomergeDocument(
       JSON.stringify({

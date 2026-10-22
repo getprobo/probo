@@ -85,4 +85,14 @@ describe("presence decorations", () => {
 
     expect(decorations.find().length).toBe(2);
   });
+
+  it("anchors the caret before text inserted at the same position", () => {
+    const doc = schema.node("doc", null, [
+      schema.node("paragraph", null, [schema.text("hello")]),
+    ]);
+
+    const [caret] = decorationsForPresences(doc, [presence()]).find();
+    expect(caret).toBeDefined();
+    expect((caret.type as { side: number }).side).toBe(-1);
+  });
 });

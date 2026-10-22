@@ -148,7 +148,9 @@ export function decorationsForPresences(
         },
         {
           key: presence.connectionID,
-          side: 1,
+          // Negative side keeps the caret before text inserted at this position,
+          // matching the Automerge cursor's move: "before".
+          side: -1,
         },
       ),
     );

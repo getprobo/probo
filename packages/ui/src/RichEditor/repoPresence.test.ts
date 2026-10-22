@@ -61,15 +61,38 @@ describe("repo presence mapping", () => {
     const selection = presenceFromPmSelection(adapter, document, 7, 7);
     expect(selection).not.toBeNull();
 
-    // Someone types three characters at the start of the text.
-    document = Automerge.change(document, (draft) => {
+    const other = Automerge.clone(document, {
+      actor: "02000000000000000000000000000000",
+    });
+    const edited = Automerge.change(other, (draft) => {
       Automerge.splice(draft, ["body"], 0, 0, "XX ");
     });
+    const merged = Automerge.merge(document, edited);
 
-    // The same stable selection now maps three positions later; a stored
-    // ProseMirror position of 7 would point at the wrong character.
-    const resolved = pmSelectionFromPresence(adapter, document, selection!);
+    const resolved = pmSelectionFromPresence(adapter, merged, selection!);
     expect(resolved).toEqual({ anchorPosition: 10, headPosition: 10 });
+  });
+
+  it("ignores a selection aimed at an unknown field", () => {
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    const document = seededDocument("hello world");
+
+    expect(pmSelectionFromPresence(adapter, document, {
+      field: "missing",
+      anchor: "cursor",
+      head: "cursor",
+    })).toBeNull();
+  });
+
+  it("ignores a cursor the document cannot resolve", () => {
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    const document = seededDocument("hello world");
+
+    expect(pmSelectionFromPresence(adapter, document, {
+      field: "body",
+      anchor: "not-a-cursor",
+      head: "not-a-cursor",
+    })).toBeNull();
   });
 
   it("carries a selection range with distinct endpoints", () => {
