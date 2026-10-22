@@ -29,6 +29,7 @@ import (
 
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
@@ -158,7 +159,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 				}
 
 				if document.ArchivedAt != nil {
-					return &ErrDocumentArchived{}
+					return &collaboration.ErrDocumentArchived{}
 				}
 
 				var approverIDs []gid.GID
@@ -229,7 +230,7 @@ func (s *DocumentApprovalService) Approve(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			var (
@@ -441,7 +442,7 @@ func (s *DocumentApprovalService) Reject(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			quorum, profile, err := s.loadQuorumAndProfile(ctx, scope, tx, req.DocumentVersionID, req.IdentityID, documentVersion.OrganizationID)
@@ -549,7 +550,7 @@ func (s *DocumentApprovalService) VoidApproval(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			if documentVersion.Status != coredata.DocumentVersionStatusPendingApproval {

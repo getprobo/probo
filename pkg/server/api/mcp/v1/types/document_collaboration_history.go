@@ -23,13 +23,13 @@ package types
 import (
 	"encoding/hex"
 
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/gqlutils/types/pageinfo"
 )
 
 func NewDocumentRevision(
-	session *probo.DocumentRevision,
+	session *collaboration.DocumentRevision,
 ) *DocumentRevision {
 	var authorName *string
 	if session.AuthorName != "" {
@@ -38,8 +38,8 @@ func NewDocumentRevision(
 
 	return &DocumentRevision{
 		ID:            session.ID,
-		Heads:         probo.EncodeAutomergeHashes(session.Heads),
-		PreviousHeads: probo.EncodeAutomergeHashes(session.PreviousHeads),
+		Heads:         collaboration.EncodeAutomergeHashes(session.Heads),
+		PreviousHeads: collaboration.EncodeAutomergeHashes(session.PreviousHeads),
 		ActorID:       hex.EncodeToString(session.ActorID),
 		IdentityID:    session.IdentityID,
 		ProfileID:     session.ProfileID,
@@ -62,7 +62,7 @@ func newPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *Pa
 }
 
 func NewListDocumentRevisionsOutput(
-	sessionPage *page.Page[*probo.DocumentRevision, probo.DocumentRevisionOrderField],
+	sessionPage *page.Page[*collaboration.DocumentRevision, collaboration.DocumentRevisionOrderField],
 	totalCount int,
 ) ListDocumentRevisionsOutput {
 	sessions := make([]*DocumentRevision, 0, len(sessionPage.Data))
@@ -88,7 +88,7 @@ func NewListDocumentRevisionsOutput(
 }
 
 func NewGetDocumentHistorySnapshotOutput(
-	snapshot *probo.DocumentHistorySnapshot,
+	snapshot *collaboration.DocumentHistorySnapshot,
 ) GetDocumentHistorySnapshotOutput {
 	highlights := make([]*DocumentHistoryHighlight, len(snapshot.Highlights))
 	for i := range snapshot.Highlights {

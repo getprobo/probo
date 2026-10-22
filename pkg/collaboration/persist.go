@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration
 
 import (
 	"context"
@@ -35,7 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/realtime"
 )
 
-func (s *CollaborationService) Persist(
+func (s *Service) Persist(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -231,7 +231,7 @@ func (s *CollaborationService) Persist(
 	return revision, nil
 }
 
-func (s *CollaborationService) Refresh(
+func (s *Service) Refresh(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -267,7 +267,7 @@ func (s *CollaborationService) Refresh(
 	return doc.Revision, true, nil
 }
 
-func (s *CollaborationService) NotifyEphemeral(
+func (s *Service) NotifyEphemeral(
 	ctx context.Context,
 	documentID gid.GID,
 	instanceID string,
@@ -298,7 +298,7 @@ func (s *CollaborationService) NotifyEphemeral(
 	})
 }
 
-func (s *CollaborationService) RecordActors(
+func (s *Service) RecordActors(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -329,7 +329,7 @@ func (s *CollaborationService) RecordActors(
 					ProfileID:      profileID,
 					CreatedAt:      now,
 				}
-				if err := row.InsertIfAbsent(ctx, conn, scope); err != nil {
+				if err := row.Insert(ctx, conn, scope); err != nil {
 					return fmt.Errorf("cannot record collaboration actor: %w", err)
 				}
 			}
@@ -339,7 +339,7 @@ func (s *CollaborationService) RecordActors(
 	)
 }
 
-func (s *CollaborationService) loadChanges(
+func (s *Service) loadChanges(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -398,7 +398,7 @@ func (s *CollaborationService) loadChanges(
 	return nil
 }
 
-func (s *CollaborationService) loadChangesFromConn(
+func (s *Service) loadChangesFromConn(
 	ctx context.Context,
 	scope coredata.Scoper,
 	conn pg.Querier,
@@ -430,7 +430,7 @@ func (s *CollaborationService) loadChangesFromConn(
 	return nil
 }
 
-func (s *CollaborationService) collectChanges(
+func (s *Service) collectChanges(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
@@ -484,7 +484,7 @@ var errCollaborationViewMoved = errors.New("collaboration snapshot moved")
 
 // readConsistentCollaboration reads the snapshot and the change log in one
 // transaction and retries once when compaction commits between the two reads.
-func (s *CollaborationService) readConsistentCollaboration(
+func (s *Service) readConsistentCollaboration(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,

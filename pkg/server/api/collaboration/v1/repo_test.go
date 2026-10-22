@@ -34,13 +34,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
 	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo"
 )
 
 type fakeDocumentCollaborationDocuments struct {
-	opened      *probo.DocumentCollaboration
+	opened      *collaboration.DocumentCollaboration
 	persisted   atomic.Int64
 	persistedCh chan struct{}
 }
@@ -49,7 +49,7 @@ func (f *fakeDocumentCollaborationDocuments) Open(
 	context.Context,
 	coredata.Scoper,
 	gid.GID,
-) (*probo.DocumentCollaboration, error) {
+) (*collaboration.DocumentCollaboration, error) {
 	return f.opened, nil
 }
 
@@ -334,7 +334,7 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := NewHub(documents, nil)
 	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
@@ -364,7 +364,7 @@ func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 		`{"type":"paragraph","content":[{"type":"text","text":"body text"}]}]}`
 
 	documents := &fakeDocumentCollaborationDocuments{
-		opened: &probo.DocumentCollaboration{
+		opened: &collaboration.DocumentCollaboration{
 			Document:    serverDocument,
 			Revision:    1,
 			NeedsSeed:   true,
@@ -401,7 +401,7 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := NewHub(documents, nil)
 	server := newRepoTestServer(t, hub, coredata.NewScope(tenantID), documentID, nil)
@@ -448,7 +448,7 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := NewHub(documents, nil)
 	server := newRepoTestServerWithConfig(
@@ -531,7 +531,7 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocumentCollaborationDocuments{
-		opened: &probo.DocumentCollaboration{Document: serverDocument, Revision: 1},
+		opened: &collaboration.DocumentCollaboration{Document: serverDocument, Revision: 1},
 	}
 	hub := NewHub(documents, nil)
 

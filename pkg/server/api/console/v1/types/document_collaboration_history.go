@@ -24,13 +24,13 @@ import (
 	"encoding/hex"
 	"time"
 
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/probo"
 )
 
 type (
-	DocumentRevisionOrderBy = OrderBy[probo.DocumentRevisionOrderField]
+	DocumentRevisionOrderBy = OrderBy[collaboration.DocumentRevisionOrderField]
 
 	DocumentRevision struct {
 		ID            gid.GID   `json:"id"`
@@ -55,10 +55,10 @@ type (
 	}
 
 	DocumentHistoryHighlight struct {
-		Kind probo.DocumentHistoryHighlightKind `json:"kind"`
-		From int                                `json:"from"`
-		To   int                                `json:"to"`
-		Text string                             `json:"text"`
+		Kind collaboration.DocumentHistoryHighlightKind `json:"kind"`
+		From int                                        `json:"from"`
+		To   int                                        `json:"to"`
+		Text string                                     `json:"text"`
 	}
 
 	DocumentHistorySnapshot struct {
@@ -68,7 +68,7 @@ type (
 )
 
 func NewDocumentRevision(
-	session *probo.DocumentRevision,
+	session *collaboration.DocumentRevision,
 ) *DocumentRevision {
 	var authorName *string
 	if session.AuthorName != "" {
@@ -78,8 +78,8 @@ func NewDocumentRevision(
 	return &DocumentRevision{
 		ID:            session.ID,
 		DocumentID:    session.DocumentID,
-		Heads:         probo.EncodeAutomergeHashes(session.Heads),
-		PreviousHeads: probo.EncodeAutomergeHashes(session.PreviousHeads),
+		Heads:         collaboration.EncodeAutomergeHashes(session.Heads),
+		PreviousHeads: collaboration.EncodeAutomergeHashes(session.PreviousHeads),
 		ActorID:       hex.EncodeToString(session.ActorID),
 		AuthorName:    authorName,
 		ProfileID:     session.ProfileID,
@@ -90,7 +90,7 @@ func NewDocumentRevision(
 }
 
 func NewDocumentRevisionConnection(
-	p *page.Page[*probo.DocumentRevision, probo.DocumentRevisionOrderField],
+	p *page.Page[*collaboration.DocumentRevision, collaboration.DocumentRevisionOrderField],
 	parentType any,
 	parentID gid.GID,
 	totalCount int,
@@ -113,7 +113,7 @@ func NewDocumentRevisionConnection(
 }
 
 func NewDocumentHistorySnapshot(
-	snapshot *probo.DocumentHistorySnapshot,
+	snapshot *collaboration.DocumentHistorySnapshot,
 ) *DocumentHistorySnapshot {
 	highlights := make([]*DocumentHistoryHighlight, len(snapshot.Highlights))
 	for i := range snapshot.Highlights {

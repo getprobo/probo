@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration
 
 import (
 	"context"
@@ -58,7 +58,7 @@ type (
 	}
 )
 
-func (s *CollaborationService) Heads(
+func (s *Service) Heads(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -91,7 +91,7 @@ func (s *CollaborationService) Heads(
 	return heads, nil
 }
 
-func (s *CollaborationService) Seeded(
+func (s *Service) Seeded(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -115,7 +115,7 @@ func (s *CollaborationService) Seeded(
 	return doc.Seeded, nil
 }
 
-func (s *CollaborationService) ApplyContent(
+func (s *Service) ApplyContent(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CollaborationApplyContentRequest,
@@ -134,7 +134,7 @@ func (s *CollaborationService) ApplyContent(
 	err = s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			written, err := s.replaceUnseededContent(
+			written, err := s.ReplaceUnseededContent(
 				ctx,
 				tx,
 				scope,
@@ -157,10 +157,10 @@ func (s *CollaborationService) ApplyContent(
 	return result, nil
 }
 
-// replaceUnseededContent seeds the CRDT from content and writes that
+// ReplaceUnseededContent seeds the CRDT from content and writes that
 // projection in the same transaction. A document that is already seeded is
 // rejected so a full-content write cannot drop concurrent edits.
-func (s *CollaborationService) replaceUnseededContent(
+func (s *Service) ReplaceUnseededContent(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
@@ -230,7 +230,7 @@ func (s *CollaborationService) replaceUnseededContent(
 	return writeResult(automergeDocument)
 }
 
-func (s *CollaborationService) ApplyEdits(
+func (s *Service) ApplyEdits(
 	ctx context.Context,
 	scope coredata.Scoper,
 	req CollaborationApplyEditsRequest,
@@ -403,7 +403,7 @@ func (s *CollaborationService) ApplyEdits(
 	return writeResult(opened.Document)
 }
 
-func (s *CollaborationService) actorForIdentity(
+func (s *Service) actorForIdentity(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -438,7 +438,7 @@ func (s *CollaborationService) actorForIdentity(
 	return actorID, nil
 }
 
-func (s *CollaborationService) lookupOrCreateActor(
+func (s *Service) lookupOrCreateActor(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
@@ -479,14 +479,14 @@ func (s *CollaborationService) lookupOrCreateActor(
 		ProfileID:      profileID,
 		CreatedAt:      time.Now(),
 	}
-	if err := row.InsertIfAbsent(ctx, conn, scope); err != nil {
+	if err := row.Insert(ctx, conn, scope); err != nil {
 		return automerge.ActorID{}, fmt.Errorf("cannot store collaboration actor: %w", err)
 	}
 
 	return actorID, nil
 }
 
-func (s *CollaborationService) openWithActor(
+func (s *Service) openWithActor(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,

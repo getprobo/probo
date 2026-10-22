@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration
 
 import (
 	"context"
@@ -33,7 +33,9 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const emptyLiveDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
+// EmptyProseMirrorDocument is the ProseMirror document a version with no stored
+// content seeds from, matching the frontend's default empty editor.
+const EmptyProseMirrorDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
 func collaborationProfile(
 	ctx context.Context,
@@ -60,7 +62,7 @@ func collaborationProfile(
 
 // MaterializedContent returns the live ProseMirror JSON. A seeded CRDT wins.
 // fallback is the document row's content, used until the CRDT exists.
-func (s *CollaborationService) MaterializedContent(
+func (s *Service) MaterializedContent(
 	ctx context.Context,
 	scope coredata.Scoper,
 	conn pg.Querier,
@@ -132,7 +134,7 @@ func (s *CollaborationService) MaterializedContent(
 
 // PutContent replaces the live CRDT with content. It is the write used when
 // creating a document, regenerating one, or restoring the published snapshot.
-func (s *CollaborationService) PutContent(
+func (s *Service) PutContent(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
@@ -140,7 +142,7 @@ func (s *CollaborationService) PutContent(
 	content string,
 ) error {
 	if strings.TrimSpace(content) == "" {
-		content = emptyLiveDocument
+		content = EmptyProseMirrorDocument
 	}
 
 	doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
@@ -228,7 +230,7 @@ func (s *CollaborationService) PutContent(
 	return nil
 }
 
-func (s *CollaborationService) openPutContentDocument(
+func (s *Service) openPutContentDocument(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration
 
 import (
 	"time"
@@ -37,7 +37,7 @@ const (
 )
 
 type (
-	CollaborationService struct {
+	Service struct {
 		pg     *pg.Client
 		logger *log.Logger
 	}
@@ -51,8 +51,8 @@ type (
 	}
 )
 
-func NewCollaborationService(pgClient *pg.Client, logger *log.Logger) *CollaborationService {
-	return &CollaborationService{
+func NewService(pgClient *pg.Client, logger *log.Logger) *Service {
+	return &Service{
 		pg:     pgClient,
 		logger: logger,
 	}

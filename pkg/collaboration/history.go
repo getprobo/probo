@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration
 
 import (
 	"context"
@@ -105,7 +105,7 @@ func (s *DocumentRevision) CursorKey(orderBy DocumentRevisionOrderField) page.Cu
 	panic(fmt.Sprintf("unsupported order field: %q", orderBy))
 }
 
-func (s *CollaborationService) ListRevisions(
+func (s *Service) ListRevisions(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -121,7 +121,7 @@ func (s *CollaborationService) ListRevisions(
 	return page.NewPage(paged, cursor), len(sessions), nil
 }
 
-func (s *CollaborationService) GetRevision(
+func (s *Service) GetRevision(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -141,7 +141,7 @@ func (s *CollaborationService) GetRevision(
 	return nil, coredata.ErrResourceNotFound
 }
 
-func (s *CollaborationService) loadRevisions(
+func (s *Service) loadRevisions(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -175,7 +175,7 @@ func (s *CollaborationService) loadRevisions(
 	return sessions, nil
 }
 
-func (s *CollaborationService) GetHistorySnapshot(
+func (s *Service) GetHistorySnapshot(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -222,7 +222,7 @@ func (s *CollaborationService) GetHistorySnapshot(
 	}, nil
 }
 
-func (s *CollaborationService) RestoreHistory(
+func (s *Service) RestoreHistory(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -360,7 +360,7 @@ func actorIDsFromChanges(changes []automerge.ChangeInfo) [][]byte {
 	return ids
 }
 
-func (s *CollaborationService) loadActorAttributions(
+func (s *Service) loadActorAttributions(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,

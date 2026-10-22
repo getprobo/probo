@@ -18,4 +18,52 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration_v1
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/coder/websocket"
+)
+
+func ReadMessages(
+	ctx context.Context,
+	connection *websocket.Conn,
+	incoming chan<- Incoming,
+) {
+	for {
+		messageType, data, err := connection.Read(ctx)
+
+		message := Incoming{
+			MessageType: messageType,
+			Data:        data,
+			Err:         err,
+		}
+		select {
+		case incoming <- message:
+		case <-ctx.Done():
+			return
+		}
+
+		if err != nil {
+			return
+		}
+	}
+}
+
+func WriteMessage(
+	ctx context.Context,
+	connection *websocket.Conn,
+	messageType websocket.MessageType,
+	data []byte,
+) error {
+	writeCtx, cancel := context.WithTimeout(ctx, WriteTimeout)
+	defer cancel()
+
+	if err := connection.Write(writeCtx, messageType, data); err != nil {
+		return fmt.Errorf("cannot write collaboration message: %w", err)
+	}
+
+	return nil
+}

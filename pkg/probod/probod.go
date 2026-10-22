@@ -57,6 +57,7 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/collaboration"
 	portal "go.probo.inc/probo/pkg/complianceportal"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/complianceportal/visitor"
@@ -827,7 +828,7 @@ func (impl *Implm) Run(
 		connector.WithRegisterer(r),
 	)
 
-	collaborationService := probo.NewCollaborationService(
+	collaborationService := collaboration.NewService(
 		pgClient,
 		l.Named("collaboration"),
 	)

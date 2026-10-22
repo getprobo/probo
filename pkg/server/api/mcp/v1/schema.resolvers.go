@@ -17,6 +17,7 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connectorprotocol/provider"
@@ -2534,7 +2535,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		if !seeded {
 			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
 				"cannot update document: %w",
-				probo.ErrDocumentCollaborationEditsNotSeeded,
+				collaboration.ErrDocumentCollaborationEditsNotSeeded,
 			)
 		}
 
@@ -2544,12 +2545,12 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 			)
 		}
 
-		baseHeads, err := probo.ParseAutomergeHashes(input.BaseHeads)
+		baseHeads, err := collaboration.ParseAutomergeHashes(input.BaseHeads)
 		if err != nil {
 			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot parse base_heads: %w", err)
 		}
 
-		edits := make([]probo.DocumentCollaborationEdit, 0, len(input.Edits))
+		edits := make([]collaboration.DocumentCollaborationEdit, 0, len(input.Edits))
 		for _, edit := range input.Edits {
 			if edit == nil {
 				continue
@@ -2557,7 +2558,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 
 			edits = append(
 				edits,
-				probo.DocumentCollaborationEdit{
+				collaboration.DocumentCollaborationEdit{
 					Target:      edit.Target,
 					Replacement: edit.Replacement,
 				},
@@ -2567,7 +2568,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		result, err := svc.Collaboration.ApplyEdits(
 			ctx,
 			scope,
-			probo.CollaborationApplyEditsRequest{
+			collaboration.CollaborationApplyEditsRequest{
 				DocumentID: document.ID,
 				BaseHeads:  baseHeads,
 				Edits:      edits,
@@ -2575,19 +2576,19 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		)
 		if err != nil {
 			switch {
-			case errors.Is(err, probo.ErrDocumentCollaborationBaseHeadsUnknown),
-				errors.Is(err, probo.ErrDocumentCollaborationStale),
-				errors.Is(err, probo.ErrDocumentCollaborationEditsNotSeeded),
-				errors.Is(err, probo.ErrSeedInProgress),
+			case errors.Is(err, collaboration.ErrDocumentCollaborationBaseHeadsUnknown),
+				errors.Is(err, collaboration.ErrDocumentCollaborationStale),
+				errors.Is(err, collaboration.ErrDocumentCollaborationEditsNotSeeded),
+				errors.Is(err, collaboration.ErrSeedInProgress),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
 
-			if _, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+			if _, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
 
-			if _, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+			if _, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
 
@@ -2602,7 +2603,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		return nil, types.UpdateDocumentOutput{
 			Document: types.NewDocumentWithHeads(
 				document,
-				probo.EncodeAutomergeHashes(result.Heads),
+				collaboration.EncodeAutomergeHashes(result.Heads),
 			),
 		}, nil
 	}
@@ -2611,7 +2612,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		if seeded {
 			return nil, types.UpdateDocumentOutput{}, fmt.Errorf(
 				"cannot update document: %w",
-				probo.ErrDocumentCollaborationContentOnSeeded,
+				collaboration.ErrDocumentCollaborationContentOnSeeded,
 			)
 		}
 
@@ -2637,8 +2638,8 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		},
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrDocumentCollaborationContentOnSeeded) ||
-			errors.Is(err, probo.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
+			errors.Is(err, collaboration.ErrSeedInProgress) {
 			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 		}
 
@@ -11265,12 +11266,12 @@ func (r *Resolver) ListDocumentRevisionsTool(ctx context.Context, req *mcp.CallT
 		return nil, types.ListDocumentRevisionsOutput{}, err
 	}
 
-	pageOrderBy := page.OrderBy[probo.DocumentRevisionOrderField]{
-		Field:     probo.DocumentRevisionOrderFieldEndedAt,
+	pageOrderBy := page.OrderBy[collaboration.DocumentRevisionOrderField]{
+		Field:     collaboration.DocumentRevisionOrderFieldEndedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if input.OrderBy != nil {
-		pageOrderBy = page.OrderBy[probo.DocumentRevisionOrderField]{
+		pageOrderBy = page.OrderBy[collaboration.DocumentRevisionOrderField]{
 			Field:     input.OrderBy.Field,
 			Direction: input.OrderBy.Direction,
 		}
@@ -11297,7 +11298,7 @@ func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.
 		return nil, types.GetDocumentHistorySnapshotOutput{}, err
 	}
 
-	parsedHeads, err := probo.ParseAutomergeHashes(input.Heads)
+	parsedHeads, err := collaboration.ParseAutomergeHashes(input.Heads)
 	if err != nil {
 		return nil, types.GetDocumentHistorySnapshotOutput{}, fmt.Errorf("cannot parse heads: %w", err)
 	}
@@ -11307,7 +11308,7 @@ func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.
 		previousHeads = []string{}
 	}
 
-	parsedPrevious, err := probo.ParseAutomergeHashes(previousHeads)
+	parsedPrevious, err := collaboration.ParseAutomergeHashes(previousHeads)
 	if err != nil {
 		return nil, types.GetDocumentHistorySnapshotOutput{}, fmt.Errorf("cannot parse previous_heads: %w", err)
 	}
@@ -11320,8 +11321,8 @@ func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.
 		parsedPrevious,
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, probo.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
+			errors.Is(err, collaboration.ErrSeedInProgress) {
 			return nil, types.GetDocumentHistorySnapshotOutput{}, fmt.Errorf("cannot get history snapshot: %w", err)
 		}
 
@@ -11337,7 +11338,7 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		return nil, types.RestoreDocumentHistoryOutput{}, err
 	}
 
-	heads, err := probo.ParseAutomergeHashes(input.Heads)
+	heads, err := collaboration.ParseAutomergeHashes(input.Heads)
 	if err != nil {
 		return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot parse heads: %w", err)
 	}
@@ -11351,16 +11352,16 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
-		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, probo.ErrSeedInProgress):
+		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
+			errors.Is(err, collaboration.ErrSeedInProgress):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}
 
-		if _, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if _, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}
 
-		if _, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+		if _, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}
 

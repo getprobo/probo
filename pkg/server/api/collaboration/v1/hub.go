@@ -31,9 +31,9 @@ import (
 
 	"go.probo.inc/probo/pkg/automerge"
 	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/realtime"
 )
 
@@ -61,7 +61,7 @@ type (
 			context.Context,
 			coredata.Scoper,
 			gid.GID,
-		) (*probo.DocumentCollaboration, error)
+		) (*collaboration.DocumentCollaboration, error)
 		Persist(
 			context.Context,
 			coredata.Scoper,
@@ -83,7 +83,7 @@ type (
 
 	Room struct {
 		mu            sync.Mutex
-		collaboration *probo.DocumentCollaboration
+		collaboration *collaboration.DocumentCollaboration
 		documents     Documents
 		scope         coredata.Scoper
 		documentID    gid.GID
@@ -289,7 +289,7 @@ func (h *Hub) addPeerLocked(
 	}
 }
 
-func (l *RoomLease) Collaboration() *probo.DocumentCollaboration {
+func (l *RoomLease) Collaboration() *collaboration.DocumentCollaboration {
 	return l.room.collaboration
 }
 

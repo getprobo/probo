@@ -37,6 +37,7 @@ import (
 	automergeprosemirror "go.probo.inc/probo/pkg/automerge/prosemirror"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bearertoken"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
@@ -49,10 +50,6 @@ const (
 	MessageMaxBytes = 1024 * 1024
 	WriteTimeout    = 10 * time.Second
 )
-
-// emptyRichEditorDocument is the ProseMirror document a version with no stored
-// content seeds from, matching the frontend's default empty editor.
-const emptyRichEditorDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
 const (
 	RepoRefreshInterval    = 500 * time.Millisecond
@@ -316,22 +313,22 @@ func (h *Handler) renderServiceError(
 		return
 	}
 
-	if _, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+	if _, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
 
-	if _, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+	if _, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
 
-	if _, ok := errors.AsType[*probo.ErrCollaborationStateTooLarge](err); ok {
+	if _, ok := errors.AsType[*collaboration.ErrCollaborationStateTooLarge](err); ok {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
 
-	if errors.Is(err, probo.ErrSeedInProgress) {
+	if errors.Is(err, collaboration.ErrSeedInProgress) {
 		httpserver.RenderError(w, http.StatusConflict, err)
 		return
 	}
@@ -359,47 +356,6 @@ func (h *Handler) closeWithError(
 	)
 
 	_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
-}
-
-func ReadMessages(
-	ctx context.Context,
-	connection *websocket.Conn,
-	incoming chan<- Incoming,
-) {
-	for {
-		messageType, data, err := connection.Read(ctx)
-
-		message := Incoming{
-			MessageType: messageType,
-			Data:        data,
-			Err:         err,
-		}
-		select {
-		case incoming <- message:
-		case <-ctx.Done():
-			return
-		}
-
-		if err != nil {
-			return
-		}
-	}
-}
-
-func WriteMessage(
-	ctx context.Context,
-	connection *websocket.Conn,
-	messageType websocket.MessageType,
-	data []byte,
-) error {
-	writeCtx, cancel := context.WithTimeout(ctx, WriteTimeout)
-	defer cancel()
-
-	if err := connection.Write(writeCtx, messageType, data); err != nil {
-		return fmt.Errorf("cannot write collaboration message: %w", err)
-	}
-
-	return nil
 }
 
 func collaborationPresenceIdentity(
@@ -468,7 +424,7 @@ func collaborationPresenceAvatarURL(
 func SeedRepoCollaboration(ctx context.Context, lease *RoomLease) error {
 	content := lease.Collaboration().SeedContent
 	if content == "" {
-		content = emptyRichEditorDocument
+		content = collaboration.EmptyProseMirrorDocument
 	}
 
 	spans, err := automergeprosemirror.ToSpans(content)

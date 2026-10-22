@@ -8932,7 +8932,7 @@ components:
       type: string
       enum:
         - ENDED_AT
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentRevisionOrderField
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.DocumentRevisionOrderField
 
     DocumentRevisionOrderBy:
       type: object
@@ -9000,7 +9000,7 @@ components:
       enum:
         - INSERT
         - DELETE
-      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKind
+      go.probo.inc/mcpgen/type: go.probo.inc/probo/pkg/collaboration.DocumentHistoryHighlightKind
 
     DocumentHistoryHighlight:
       type: object

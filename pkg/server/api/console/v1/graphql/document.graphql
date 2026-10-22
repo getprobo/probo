@@ -397,11 +397,11 @@ type DocumentVersion implements Node {
 
 enum DocumentRevisionOrderField
     @goModel(
-        model: "go.probo.inc/probo/pkg/probo.DocumentRevisionOrderField"
+        model: "go.probo.inc/probo/pkg/collaboration.DocumentRevisionOrderField"
     ) {
     ENDED_AT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/probo.DocumentRevisionOrderFieldEndedAt"
+            value: "go.probo.inc/probo/pkg/collaboration.DocumentRevisionOrderFieldEndedAt"
         )
 }
 
@@ -442,15 +442,15 @@ type DocumentRevisionEdge {
 
 enum DocumentHistoryHighlightKind
     @goModel(
-        model: "go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKind"
+        model: "go.probo.inc/probo/pkg/collaboration.DocumentHistoryHighlightKind"
     ) {
     INSERT
         @goEnum(
-            value: "go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKindInsert"
+            value: "go.probo.inc/probo/pkg/collaboration.DocumentHistoryHighlightKindInsert"
         )
     DELETE
         @goEnum(
-            value: "go.probo.inc/probo/pkg/probo.DocumentHistoryHighlightKindDelete"
+            value: "go.probo.inc/probo/pkg/collaboration.DocumentHistoryHighlightKindDelete"
         )
 }
 

@@ -28,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
@@ -87,7 +88,7 @@ type (
 		esign                                 *esign.Service
 		connectorRegistry                     *connectorprotocol.Registry
 		invitationTokenValidity               time.Duration
-		Collaboration                         *CollaborationService
+		Collaboration                         *collaboration.Service
 		Frameworks                            *FrameworkService
 		InternalControls                      *InternalControlService
 		Evidences                             *EvidenceService
@@ -137,7 +138,7 @@ func NewService(
 	logger *log.Logger,
 	iamService *iam.Service,
 	esignService *esign.Service,
-	collaborationService *CollaborationService,
+	collaborationService *collaboration.Service,
 	connectorsService *connector.Service,
 	connectorRegistry *connectorprotocol.Registry,
 	invitationTokenValidity time.Duration,

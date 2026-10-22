@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package probo
+package collaboration
 
 import (
 	"context"
@@ -33,7 +33,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func (s *CollaborationService) Open(
+func (s *Service) Open(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -121,7 +121,7 @@ func (s *CollaborationService) Open(
 
 // openIfSeeded loads a collaboration document that is already seeded. It does
 // not create a row or take the seed lease.
-func (s *CollaborationService) openIfSeeded(
+func (s *Service) openIfSeeded(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -162,7 +162,7 @@ func (s *CollaborationService) openIfSeeded(
 	}, nil
 }
 
-func (s *CollaborationService) ReleaseSeed(
+func (s *Service) ReleaseSeed(
 	ctx context.Context,
 	scope coredata.Scoper,
 	documentID gid.GID,
@@ -241,7 +241,7 @@ func lockCollaborationDocument(
 		UpdatedAt:        now,
 	}
 
-	if _, err := fresh.InsertIfAbsent(ctx, tx, scope); err != nil {
+	if _, err := fresh.Insert(ctx, tx, scope); err != nil {
 		return nil, fmt.Errorf("cannot create collaboration document: %w", err)
 	}
 
@@ -261,7 +261,7 @@ func seedClaimActive(doc *coredata.CollaborationDocument, now time.Time) bool {
 // seedUnderDocumentLock builds the initial CRDT from content while the
 // document row is locked, and commits that seed before the lock is released.
 // A nil content reads the locked row. The returned document stays open.
-func (s *CollaborationService) seedUnderDocumentLock(
+func (s *Service) seedUnderDocumentLock(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
@@ -286,7 +286,7 @@ func (s *CollaborationService) seedUnderDocumentLock(
 	}
 
 	if strings.TrimSpace(body) == "" {
-		body = emptyLiveDocument
+		body = EmptyProseMirrorDocument
 	}
 
 	var (

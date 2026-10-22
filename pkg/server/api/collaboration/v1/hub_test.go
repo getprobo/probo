@@ -32,14 +32,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/automerge"
 	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/realtime"
 )
 
 type fakeDocuments struct {
-	opened         *probo.DocumentCollaboration
+	opened         *collaboration.DocumentCollaboration
 	persisted      atomic.Int64
 	attempts       atomic.Int64
 	failAttempts   atomic.Int64
@@ -52,7 +52,7 @@ func (f *fakeDocuments) Open(
 	context.Context,
 	coredata.Scoper,
 	gid.GID,
-) (*probo.DocumentCollaboration, error) {
+) (*collaboration.DocumentCollaboration, error) {
 	return f.opened, nil
 }
 
@@ -92,14 +92,14 @@ func (g *gatingDocuments) Open(
 	context.Context,
 	coredata.Scoper,
 	gid.GID,
-) (*probo.DocumentCollaboration, error) {
+) (*collaboration.DocumentCollaboration, error) {
 	opened := g.opens.Add(1)
 	document, err := automerge.New(automerge.ActorID{byte(opened)})
 	if err != nil {
 		return nil, err
 	}
 
-	return &probo.DocumentCollaboration{
+	return &collaboration.DocumentCollaboration{
 		Document:  document,
 		Revision:  1,
 		NeedsSeed: opened == 1,
@@ -145,7 +145,7 @@ func TestRoom_NotifiesOtherPeers(t *testing.T) {
 	require.NoError(t, err)
 
 	room := &Room{
-		collaboration: &probo.DocumentCollaboration{
+		collaboration: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},
@@ -209,7 +209,7 @@ func TestRoom_ReplaysPresenceOnJoin(t *testing.T) {
 	require.NoError(t, err)
 
 	room := &Room{
-		collaboration: &probo.DocumentCollaboration{
+		collaboration: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},
@@ -302,7 +302,7 @@ func TestRoom_DepartureDropsCachedPresence(t *testing.T) {
 	require.NoError(t, err)
 
 	room := &Room{
-		collaboration: &probo.DocumentCollaboration{
+		collaboration: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},
@@ -389,7 +389,7 @@ func TestRoom_BroadcastsEphemeralToOtherPeers(t *testing.T) {
 	require.NoError(t, err)
 
 	room := &Room{
-		collaboration: &probo.DocumentCollaboration{
+		collaboration: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},
@@ -438,7 +438,7 @@ func TestHub_DeliversExternalEphemeral(t *testing.T) {
 	require.NoError(t, err)
 
 	room := &Room{
-		collaboration: &probo.DocumentCollaboration{Document: document, Revision: 1},
+		collaboration: &collaboration.DocumentCollaboration{Document: document, Revision: 1},
 		peers:         make(map[uint64]RoomPeer),
 	}
 	room.revision.Store(1)
@@ -498,7 +498,7 @@ func TestRoom_DropsEphemeralWhenBufferFull(t *testing.T) {
 	require.NoError(t, err)
 
 	room := &Room{
-		collaboration: &probo.DocumentCollaboration{Document: document, Revision: 1},
+		collaboration: &collaboration.DocumentCollaboration{Document: document, Revision: 1},
 		peers:         make(map[uint64]RoomPeer),
 	}
 	room.revision.Store(1)
@@ -529,7 +529,7 @@ func TestRoom_DebouncesPersistence(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocuments{
-		opened: &probo.DocumentCollaboration{
+		opened: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},
@@ -578,7 +578,7 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocuments{
-		opened: &probo.DocumentCollaboration{
+		opened: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},
@@ -627,7 +627,7 @@ func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 	require.NoError(t, err)
 
 	documents := &fakeDocuments{
-		opened: &probo.DocumentCollaboration{
+		opened: &collaboration.DocumentCollaboration{
 			Document: document,
 			Revision: 1,
 		},

@@ -32,8 +32,6 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-const collaborationActorMaxLoad = 500
-
 type (
 	CollaborationActor struct {
 		DocumentID     gid.GID   `db:"document_id"`
@@ -47,11 +45,11 @@ type (
 	CollaborationActors []*CollaborationActor
 )
 
-// InsertIfAbsent records the first authenticated identity that introduced an
+// Insert records the first authenticated identity that introduced an
 // Automerge actor on this collaboration document. Later inserts for the same
 // actor are ignored so a peer replaying someone else's changes cannot steal
 // authorship.
-func (a CollaborationActor) InsertIfAbsent(
+func (a CollaborationActor) Insert(
 	ctx context.Context,
 	conn pg.Querier,
 	scope Scoper,
@@ -95,8 +93,7 @@ ON CONFLICT (document_id, actor_id) DO NOTHING
 }
 
 // LoadByDocumentIDAndIdentityID returns the oldest actor bound to identityID
-// on this document. History and later edits must find that actor even when
-// the document has more writers than the list cap.
+// on this document.
 func (a *CollaborationActor) LoadByDocumentIDAndIdentityID(
 	ctx context.Context,
 	conn pg.Querier,
@@ -151,7 +148,7 @@ LIMIT 1
 }
 
 // LoadByDocumentIDAndActorIDs loads the actors named by actorIDs. The caller
-// bounds the set, so this does not apply the list cap.
+// bounds the set.
 func (as *CollaborationActors) LoadByDocumentIDAndActorIDs(
 	ctx context.Context,
 	conn pg.Querier,
@@ -198,62 +195,6 @@ WHERE
 	)
 	if err != nil {
 		return fmt.Errorf("cannot collect collaboration actors by id: %w", err)
-	}
-
-	*as = actors
-
-	return nil
-}
-
-// LoadByDocumentID loads Automerge actor bindings for a
-// collaboration document. The result is hard-capped; a document with more
-// concurrent writers than the cap still returns a usable prefix for history
-// attribution.
-func (as *CollaborationActors) LoadByDocumentID(
-	ctx context.Context,
-	conn pg.Querier,
-	scope Scoper,
-	documentID gid.GID,
-	limit int,
-) error {
-	if limit <= 0 || limit > collaborationActorMaxLoad {
-		limit = collaborationActorMaxLoad
-	}
-
-	q := `
-SELECT
-	document_id,
-	organization_id,
-	actor_id,
-	identity_id,
-	profile_id,
-	created_at
-FROM
-	collaboration_actors
-WHERE
-	%s
-	AND document_id = @document_id
-ORDER BY created_at ASC, actor_id ASC
-LIMIT @limit
-`
-	q = fmt.Sprintf(q, scope.SQLFragment())
-	args := pgx.StrictNamedArgs{
-		"document_id": documentID,
-		"limit":       limit,
-	}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query collaboration actors: %w", err)
-	}
-
-	actors, err := pgx.CollectRows(
-		rows,
-		pgx.RowToAddrOfStructByName[CollaborationActor],
-	)
-	if err != nil {
-		return fmt.Errorf("cannot collect collaboration actors: %w", err)
 	}
 
 	*as = actors

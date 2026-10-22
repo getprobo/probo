@@ -36,6 +36,7 @@ import (
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/cookiebanner"
 	"go.probo.inc/probo/pkg/coredata"
@@ -305,8 +306,8 @@ func (r *Resolver) documentWithHeads(
 	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, document.ID)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) ||
-			errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, probo.ErrSeedInProgress) {
+			errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
+			errors.Is(err, collaboration.ErrSeedInProgress) {
 			return types.NewDocument(document), nil
 		}
 
@@ -315,6 +316,6 @@ func (r *Resolver) documentWithHeads(
 
 	return types.NewDocumentWithHeads(
 		document,
-		probo.EncodeAutomergeHashes(heads),
+		collaboration.EncodeAutomergeHashes(heads),
 	), nil
 }

@@ -157,9 +157,9 @@ FOR UPDATE
 	return nil
 }
 
-// InsertIfAbsent creates the collaboration document for a document the first
+// Insert creates the collaboration document for a document the first
 // time it is opened for editing. It reports whether the row was created.
-func (d CollaborationDocument) InsertIfAbsent(
+func (d CollaborationDocument) Insert(
 	ctx context.Context,
 	tx pg.Tx,
 	scope Scoper,
@@ -212,7 +212,7 @@ ON CONFLICT (document_id) DO NOTHING
 
 	result, err := tx.Exec(ctx, q, args)
 	if err != nil {
-		return false, fmt.Errorf("cannot insert collaboration document if absent: %w", err)
+		return false, fmt.Errorf("cannot insert collaboration document: %w", err)
 	}
 
 	return result.RowsAffected() == 1, nil

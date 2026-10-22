@@ -39,7 +39,9 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/automerge"
 	"go.probo.inc/probo/pkg/awsconfig"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
 	"go.probo.inc/probo/pkg/esign"
@@ -60,7 +62,7 @@ const DocumentSignatureConsentText = "By clicking \"Review and sign\", I consent
 type (
 	DocumentService struct {
 		svc                     *Service
-		collaboration           *CollaborationService
+		collaboration           *collaboration.Service
 		html2pdfConverter       *html2pdf.Converter
 		invitationTokenValidity time.Duration
 		tokenSecret             string
@@ -601,7 +603,7 @@ func (s *DocumentService) publish(
 	}
 
 	if document.ArchivedAt != nil {
-		return nil, &ErrDocumentArchived{}
+		return nil, &collaboration.ErrDocumentArchived{}
 	}
 
 	defaultApprovers := &coredata.DocumentDefaultApprovers{}
@@ -820,7 +822,7 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			profile := &coredata.MembershipProfile{}
@@ -899,7 +901,7 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			documentVersionSignature = &coredata.DocumentVersionSignature{}
@@ -1150,7 +1152,7 @@ func (s *DocumentService) RequestSignature(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			if documentVersion.Status != coredata.DocumentVersionStatusPublished {
@@ -2090,11 +2092,11 @@ func (s *DocumentService) Update(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			if req.Content != nil && document.WriteMode == coredata.DocumentWriteModeGenerated {
-				return &ErrDocumentVersionGenerated{}
+				return &collaboration.ErrDocumentVersionGenerated{}
 			}
 
 			previousDocument := *document
@@ -2152,7 +2154,7 @@ func (s *DocumentService) Update(
 			}
 
 			if req.Content != nil {
-				written, err := s.collaboration.replaceUnseededContent(
+				written, err := s.collaboration.ReplaceUnseededContent(
 					ctx,
 					tx,
 					scope,
@@ -2206,7 +2208,7 @@ func (s *DocumentService) DeleteDraft(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			if err := s.ensureNoPendingApproval(ctx, scope, tx, documentID); err != nil {
@@ -2336,7 +2338,7 @@ func (s *DocumentService) Archive(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			if err := s.teardownDocumentWorkflowsInTx(ctx, scope, tx, documentID); err != nil {
@@ -2441,7 +2443,7 @@ func (s *DocumentService) CancelSignatureRequest(
 			}
 
 			if document.ArchivedAt != nil {
-				return &ErrDocumentArchived{}
+				return &collaboration.ErrDocumentArchived{}
 			}
 
 			if documentVersionSignature.State != coredata.DocumentVersionSignatureStateRequested {
@@ -3394,7 +3396,7 @@ func (s *DocumentService) publishMajor(
 	}
 
 	if document.ArchivedAt != nil {
-		return nil, nil, &ErrDocumentArchived{}
+		return nil, nil, &collaboration.ErrDocumentArchived{}
 	}
 
 	if err := s.ensureNoPendingApproval(ctx, scope, tx, documentID); err != nil {
@@ -3540,7 +3542,7 @@ func (s *DocumentService) publishMinor(
 	}
 
 	if document.ArchivedAt != nil {
-		return nil, nil, &ErrDocumentArchived{}
+		return nil, nil, &collaboration.ErrDocumentArchived{}
 	}
 
 	if err := s.ensureNoPendingApproval(ctx, scope, tx, documentID); err != nil {
@@ -3687,4 +3689,40 @@ func (s *DocumentService) generateAndUploadPublicationPDF(
 	}
 
 	return nil
+}
+
+func (s *DocumentService) CollaborationHeads(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) ([]automerge.Hash, error) {
+	return s.collaboration.Heads(ctx, scope, documentID)
+}
+
+func (s *DocumentService) CollaborationSeeded(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (bool, error) {
+	return s.collaboration.Seeded(ctx, scope, documentID)
+}
+
+func (s *DocumentService) LoadDocument(
+	ctx context.Context,
+	scope coredata.Scoper,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			return document.LoadByID(ctx, conn, scope, documentID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load document: %w", err)
+	}
+
+	return document, nil
 }

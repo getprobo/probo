@@ -14,6 +14,7 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/collaboration"
 	"go.probo.inc/probo/pkg/complianceportal/management"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -239,12 +240,12 @@ func (r *documentResolver) History(ctx context.Context, obj *types.Document, fir
 		return nil, err
 	}
 
-	pageOrderBy := page.OrderBy[probo.DocumentRevisionOrderField]{
-		Field:     probo.DocumentRevisionOrderFieldEndedAt,
+	pageOrderBy := page.OrderBy[collaboration.DocumentRevisionOrderField]{
+		Field:     collaboration.DocumentRevisionOrderFieldEndedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[probo.DocumentRevisionOrderField]{
+		pageOrderBy = page.OrderBy[collaboration.DocumentRevisionOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -399,12 +400,12 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 		return nil, err
 	}
 
-	heads, err := probo.ParseAutomergeHashes(obj.Heads)
+	heads, err := collaboration.ParseAutomergeHashes(obj.Heads)
 	if err != nil {
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
-	previousHeads, err := probo.ParseAutomergeHashes(obj.PreviousHeads)
+	previousHeads, err := collaboration.ParseAutomergeHashes(obj.PreviousHeads)
 	if err != nil {
 		return nil, gqlutils.Invalid(ctx, err)
 	}
@@ -417,8 +418,8 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 		previousHeads,
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) ||
-			errors.Is(err, probo.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded) ||
+			errors.Is(err, collaboration.ErrSeedInProgress) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
@@ -1182,16 +1183,16 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
-		if errGenerated, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+		if errGenerated, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
 			return nil, gqlutils.Conflict(ctx, errGenerated)
 		}
 
-		if errors.Is(err, probo.ErrDocumentCollaborationContentOnSeeded) ||
-			errors.Is(err, probo.ErrSeedInProgress) {
+		if errors.Is(err, collaboration.ErrDocumentCollaborationContentOnSeeded) ||
+			errors.Is(err, collaboration.ErrSeedInProgress) {
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
@@ -1226,7 +1227,7 @@ func (r *mutationResolver) DeleteDocumentDraft(ctx context.Context, input types.
 			return nil, gqlutils.Conflict(ctx, errNotDeletable)
 		}
 
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1249,7 +1250,7 @@ func (r *mutationResolver) ArchiveDocument(ctx context.Context, input types.Arch
 
 	document, err := r.probo.Documents.Archive(ctx, scope, input.DocumentID)
 	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1320,7 +1321,7 @@ func (r *mutationResolver) PublishDocument(ctx context.Context, input types.Publ
 		},
 	)
 	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1388,7 +1389,7 @@ func (r *mutationResolver) BulkPublishDocuments(ctx context.Context, input types
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1426,7 +1427,7 @@ func (r *mutationResolver) VoidDocumentVersionApproval(ctx context.Context, inpu
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1612,7 +1613,7 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 			return nil, gqlutils.NotFound(ctx, err)
 		}
 
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1697,7 +1698,7 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 	}
 
 	if err := r.probo.Documents.CancelSignatureRequest(ctx, scope, input.DocumentVersionSignatureID); err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1736,7 +1737,7 @@ func (r *mutationResolver) SignDocument(ctx context.Context, input types.SignDoc
 		},
 	)
 	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1784,7 +1785,7 @@ func (r *mutationResolver) ApproveDocumentVersion(ctx context.Context, input typ
 		SignerUA:          httpReq.UserAgent(),
 	})
 	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1825,7 +1826,7 @@ func (r *mutationResolver) RejectDocumentVersion(ctx context.Context, input type
 		Comment:           input.Comment,
 	})
 	if err != nil {
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
@@ -1946,7 +1947,7 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		return nil, err
 	}
 
-	heads, err := probo.ParseAutomergeHashes(input.Heads)
+	heads, err := collaboration.ParseAutomergeHashes(input.Heads)
 	if err != nil {
 		return nil, gqlutils.Invalid(ctx, err)
 	}
@@ -1960,16 +1961,16 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, gqlutils.NotFound(ctx, err)
-		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded),
-			errors.Is(err, probo.ErrSeedInProgress):
+		case errors.Is(err, collaboration.ErrDocumentCollaborationNotSeeded),
+			errors.Is(err, collaboration.ErrSeedInProgress):
 			return nil, gqlutils.Conflict(ctx, err)
 		}
 
-		if errArchived, ok := errors.AsType[*probo.ErrDocumentArchived](err); ok {
+		if errArchived, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
 			return nil, gqlutils.Conflict(ctx, errArchived)
 		}
 
-		if errGenerated, ok := errors.AsType[*probo.ErrDocumentVersionGenerated](err); ok {
+		if errGenerated, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
 			return nil, gqlutils.Conflict(ctx, errGenerated)
 		}
 
