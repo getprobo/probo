@@ -102,6 +102,7 @@ func writeLiveContent(
 		ID:      documentID,
 		Content: content,
 	}
+
 	err := document.UpdateContent(ctx, tx, scope)
 	if err == nil {
 		return nil

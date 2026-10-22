@@ -34,7 +34,7 @@ func TestDocumentVersion_TenantIsolation(t *testing.T) {
 	org2Owner := testutil.NewClient(t, testutil.RoleOwner)
 
 	docID := factory.NewDocument(org1Owner).WithTitle("Org1 Document for Version Isolation").Create()
-	versionID := latestDocumentVersionID(t, org1Owner, docID)
+	versionID := publishMajorDocumentVersion(t, org1Owner, docID)
 
 	t.Run("cannot read documentVersion from another organization", func(t *testing.T) {
 		query := `

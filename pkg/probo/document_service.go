@@ -331,6 +331,7 @@ func (s *DocumentService) LiveContent(
 			}
 
 			var err error
+
 			content, err = s.collaboration.MaterializedContent(ctx, scope, conn, document.ID, document.Content)
 
 			return err
@@ -2118,6 +2119,7 @@ func (s *DocumentService) Update(
 			}
 
 			var sanitizedContent string
+
 			if req.Content != nil {
 				content := *req.Content
 				if strings.TrimSpace(content) != "" {
@@ -2154,19 +2156,32 @@ func (s *DocumentService) Update(
 			}
 
 			if req.Content != nil {
-				written, err := s.collaboration.ReplaceUnseededContent(
+				if err := s.collaboration.PutContent(
 					ctx,
 					tx,
 					scope,
 					req.DocumentID,
 					sanitizedContent,
-				)
-				if err != nil {
+				); err != nil {
 					return fmt.Errorf("cannot apply collaboration content: %w", err)
 				}
 
-				document.Content = written.Content
+				content, err := s.collaboration.MaterializedContent(
+					ctx,
+					scope,
+					tx,
+					req.DocumentID,
+					sanitizedContent,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot read collaboration content: %w", err)
+				}
+
+				document.Content = content
 				document.UpdatedAt = now
+				if err := document.UpdateContent(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update document content: %w", err)
+				}
 			}
 
 			metadataChanged := req.Title != nil ||
@@ -2230,7 +2245,7 @@ func (s *DocumentService) DeleteDraft(
 			}
 
 			if !changed {
-				return &ErrDocumentDraftNotDeletable{}
+				return nil
 			}
 
 			previous := *document

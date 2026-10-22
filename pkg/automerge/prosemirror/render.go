@@ -109,6 +109,8 @@ const (
 	blockTypeHardBreak         = "hard-break"
 	blockTypeHeading           = "heading"
 	blockTypeHorizontalRule    = "horizontal-rule"
+	blockTypeImage             = "image"
+	blockTypeFile              = "file"
 	blockTypeOrderedListItem   = "ordered-list-item"
 	blockTypeParagraph         = "paragraph"
 	blockTypeTable             = "table"
@@ -288,7 +290,7 @@ func blockAllowedUnder(blockType string, parents []string) bool {
 
 func acceptsInlineContent(blockType string) bool {
 	switch blockType {
-	case blockTypeHorizontalRule, blockTypeTable, blockTypeTableRow:
+	case blockTypeHorizontalRule, blockTypeTable, blockTypeTableRow, blockTypeImage, blockTypeFile:
 		return false
 	default:
 		return true
@@ -423,6 +425,14 @@ func renderBlock(source block, children []node) ([]node, string) {
 		}
 
 		return append([]node{rendered}, children...), ""
+	case blockTypeImage:
+		rendered := []node{{Type: "image", Attrs: source.Attrs}}
+
+		return append(rendered, children...), ""
+	case blockTypeFile:
+		rendered := []node{{Type: "file", Attrs: source.Attrs}}
+
+		return append(rendered, children...), ""
 	case blockTypeHorizontalRule:
 		rendered := []node{{Type: blockNodeNames[blockTypeHorizontalRule]}}
 		if len(source.Content) > 0 {

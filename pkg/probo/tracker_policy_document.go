@@ -183,12 +183,19 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				document = existingDoc
 			}
 
+			title := fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", bannerOrigin)
+			if existingDoc != nil {
+				// Later publishes copy the generated title. The first publish
+				// does that itself while the document title is still empty.
+				document.Title = title
+			}
+
 			documentVersionID := gid.New(scope.GetTenantID(), coredata.DocumentVersionEntityType)
 			documentVersion := &coredata.DocumentVersion{
 				ID:             documentVersionID,
 				OrganizationID: organizationID,
 				DocumentID:     document.ID,
-				Title:          fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", bannerOrigin),
+				Title:          title,
 				Content:        prosemirrorJSON,
 				Classification: coredata.DocumentClassificationPublic,
 				DocumentType:   coredata.DocumentTypePolicy,

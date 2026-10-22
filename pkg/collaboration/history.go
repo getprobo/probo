@@ -354,6 +354,7 @@ func actorIDsFromChanges(changes []automerge.ChangeInfo) [][]byte {
 		}
 
 		seen[key] = struct{}{}
+
 		ids = append(ids, append([]byte(nil), change.Actor...))
 	}
 
@@ -393,6 +394,7 @@ func (s *Service) loadActorAttributions(
 
 		if actor.ProfileID != nil {
 			profile := &coredata.MembershipProfile{}
+
 			err := s.pg.WithConn(
 				ctx,
 				func(ctx context.Context, conn pg.Querier) error {
@@ -408,6 +410,7 @@ func (s *Service) loadActorAttributions(
 		}
 
 		identity := &coredata.Identity{}
+
 		err := s.pg.WithConn(
 			ctx,
 			func(ctx context.Context, conn pg.Querier) error {
@@ -437,10 +440,12 @@ func groupRevisions(
 	}
 
 	sessions := make([]*DocumentRevision, 0)
+
 	var current *DocumentRevision
 
 	for _, change := range changes {
 		actorKey := string(change.Actor)
+
 		changeTime := change.Time
 		if changeTime.IsZero() {
 			changeTime = time.Unix(0, 0).UTC()
@@ -529,6 +534,7 @@ func paginateRevisionHead(
 	cursor *page.Cursor[DocumentRevisionOrderField],
 ) []*DocumentRevision {
 	start := 0
+
 	if cursor.Key != nil {
 		for i, session := range ordered {
 			if session.ID == cursor.Key.ID {
@@ -543,10 +549,7 @@ func paginateRevisionHead(
 		limit++
 	}
 
-	end := start + limit
-	if end > len(ordered) {
-		end = len(ordered)
-	}
+	end := min(start+limit, len(ordered))
 
 	return ordered[start:end]
 }
@@ -556,12 +559,15 @@ func paginateRevisionTail(
 	cursor *page.Cursor[DocumentRevisionOrderField],
 ) []*DocumentRevision {
 	end := len(ordered)
+
 	if cursor.Key != nil {
 		found := false
+
 		for i, session := range ordered {
 			if session.ID == cursor.Key.ID {
 				end = i + 1
 				found = true
+
 				break
 			}
 		}
@@ -576,10 +582,7 @@ func paginateRevisionTail(
 		limit++
 	}
 
-	start := end - limit
-	if start < 0 {
-		start = 0
-	}
+	start := max(end-limit, 0)
 
 	window := slices.Clone(ordered[start:end])
 	slices.Reverse(window)
@@ -616,6 +619,7 @@ func historyHighlights(
 	}
 
 	highlights := make([]DocumentHistoryHighlight, 0)
+
 	for _, patch := range patches {
 		switch patch.Action {
 		case automerge.PatchSpliceText:
@@ -667,6 +671,7 @@ func historyHighlights(
 
 func automergeIndexToPlainOffset(spans []automerge.Span, index uint64) (int, bool) {
 	var am uint64
+
 	plain := 0
 
 	for _, span := range spans {
@@ -705,6 +710,7 @@ func plainTextSlice(spans []automerge.Span, index uint64, length uint64) string 
 	}
 
 	var am uint64
+
 	collected := make([]uint16, 0, length)
 
 	for _, span := range spans {

@@ -120,7 +120,8 @@ func TestEmployeeDocument_ExportPDF(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	employee := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
 
-	_, docVersionID := createTestDocument(t, owner)
+	docID, _ := createTestDocument(t, owner)
+	docVersionID := publishMajorDocumentVersion(t, owner, docID)
 
 	t.Run("employee cannot use exportDocumentVersionPDF", func(t *testing.T) {
 		t.Parallel()

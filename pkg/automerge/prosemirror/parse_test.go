@@ -38,6 +38,37 @@ import (
 // must reproduce the same ProseMirror JSON. This is exactly what server-side
 // seeding does, so a green run means the server can bootstrap a document
 // version's CRDT from its stored content and materialize it unchanged.
+func TestToSpans_RoundTripsAttachments(t *testing.T) {
+	t.Parallel()
+
+	const raw = `{"type":"doc","content":[{"type":"image","attrs":{"alt":"diagram","fileId":"file-1"}},{"type":"file","attrs":{"fileId":"file-2","fileName":"report.pdf","mimeType":"application/pdf","size":12}}]}`
+
+	spans, err := prosemirror.ToSpans(raw)
+	require.NoError(t, err)
+
+	actorID, err := automerge.NewActorID()
+	require.NoError(t, err)
+
+	document, err := automerge.New(actorID)
+	require.NoError(t, err)
+
+	defer func() { _ = document.Close() }()
+
+	text, err := document.CreateText("body")
+	require.NoError(t, err)
+	require.NoError(t, text.UpdateSpans(spans, prosemirror.UpdateSpansConfig()))
+
+	readback, err := text.Spans()
+	require.NoError(t, err)
+
+	rendered, err := prosemirror.Render(readback)
+	require.NoError(t, err)
+	assert.Contains(t, rendered, "file-1")
+	assert.Contains(t, rendered, "file-2")
+	assert.Contains(t, rendered, `"type":"image"`)
+	assert.Contains(t, rendered, `"type":"file"`)
+}
+
 func TestToSpans_RoundTripsCanonicalDocuments(t *testing.T) {
 	t.Parallel()
 

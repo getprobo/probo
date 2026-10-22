@@ -191,6 +191,7 @@ func (s *Service) ReplaceUnseededContent(
 	}
 
 	var actorID *automerge.ActorID
+
 	if identityID != (gid.GID{}) {
 		id, err := s.lookupOrCreateActor(
 			ctx,
@@ -448,6 +449,7 @@ func (s *Service) lookupOrCreateActor(
 	profileID *gid.GID,
 ) (automerge.ActorID, error) {
 	actor := &coredata.CollaborationActor{}
+
 	err := actor.LoadByDocumentIDAndIdentityID(
 		ctx,
 		conn,

@@ -35,6 +35,7 @@ func TestPaginateRevisions_Tail(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
+
 	sessions := make([]*DocumentRevision, 5)
 	for i := range sessions {
 		sessions[i] = &DocumentRevision{

@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -86,6 +87,7 @@ var (
 	ErrNilDocument     = errors.New("cannot merge a nil Automerge document")
 	ErrSameDocument    = errors.New("cannot merge an Automerge document into itself")
 	ErrSyncStateClosed = errors.New("automerge sync state is closed")
+	ErrNoOperations    = errors.New("change contains no operations")
 )
 
 const rootObject uint32 = 0
@@ -581,6 +583,10 @@ func (d *Document) Commit(
 
 	hash, err := d.engine.Commit(message, timestamp)
 	if err != nil {
+		if strings.Contains(err.Error(), ErrNoOperations.Error()) {
+			return Hash{}, ErrNoOperations
+		}
+
 		return Hash{}, fmt.Errorf("cannot commit Automerge document: %w", err)
 	}
 

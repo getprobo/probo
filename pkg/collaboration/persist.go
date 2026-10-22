@@ -493,7 +493,7 @@ func (s *Service) readConsistentCollaboration(
 
 	var lastErr error
 
-	for attempt := 0; attempt < attempts; attempt++ {
+	for range attempts {
 		var (
 			doc     coredata.CollaborationDocument
 			changes []automerge.Change

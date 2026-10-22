@@ -21,7 +21,9 @@
 package collaboration
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,6 +34,7 @@ func TestParseAutomergeHashes_RoundTrip(t *testing.T) {
 	t.Parallel()
 
 	var first, second automerge.Hash
+
 	first[0] = 1
 	second[31] = 2
 
@@ -41,4 +44,68 @@ func TestParseAutomergeHashes_RoundTrip(t *testing.T) {
 	decoded, err := ParseAutomergeHashes(encoded)
 	require.NoError(t, err)
 	assert.Equal(t, []automerge.Hash{first, second}, decoded)
+}
+
+func TestWriteSpans_ReplacesSeededContent(t *testing.T) {
+	t.Parallel()
+
+	const (
+		first = `{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Vendors"}]},{"type":"paragraph","content":[{"type":"text","text":"Legal Name: ","marks":[{"type":"bold"}]},{"type":"text","text":"Acme"}]},{"type":"horizontalRule"}]}`
+		same  = first
+		next  = `{"type":"doc","content":[{"type":"heading","attrs":{"level":1},"content":[{"type":"text","text":"Vendors"}]},{"type":"paragraph","content":[{"type":"text","text":"Legal Name: ","marks":[{"type":"bold"}]},{"type":"text","text":"Beta"}]},{"type":"horizontalRule"}]}`
+	)
+
+	actorID, err := automerge.NewActorID()
+	require.NoError(t, err)
+
+	document, err := automerge.New(actorID)
+	require.NoError(t, err)
+
+	require.NoError(t, writeSpans(document, first, true))
+	_, err = document.Commit("Set document content", time.Now())
+	require.NoError(t, err)
+
+	snapshot, err := document.Save()
+	require.NoError(t, err)
+	require.NoError(t, document.Close())
+
+	reloaded, err := automerge.Load(snapshot, actorID)
+	require.NoError(t, err)
+
+	defer func() { _ = reloaded.Close() }()
+
+	require.NoError(t, writeSpans(reloaded, same, false))
+	_, err = reloaded.Commit("Set document content", time.Now())
+	require.ErrorIs(t, err, automerge.ErrNoOperations)
+
+	require.NoError(t, writeSpans(reloaded, next, false))
+	_, err = reloaded.Commit("Set document content", time.Now())
+	require.NoError(t, err)
+
+	rendered, err := materialize(context.Background(), reloaded)
+	require.NoError(t, err)
+	assert.Contains(t, rendered, "Beta")
+	assert.NotContains(t, rendered, "Acme")
+
+	const table = `{"type":"doc","content":[{"type":"table","content":[{"type":"tableRow","content":[{"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Name"}]}]},{"type":"tableHeader","content":[{"type":"paragraph","content":[{"type":"text","text":"Owner"}]}]}]},{"type":"tableRow","content":[{"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"Laptop"}]}]},{"type":"tableCell","content":[{"type":"paragraph","content":[{"type":"text","text":"Ada"}]}]}]}]}]}`
+
+	tableDoc, err := automerge.New(actorID)
+	require.NoError(t, err)
+
+	require.NoError(t, writeSpans(tableDoc, table, true))
+	_, err = tableDoc.Commit("Set document content", time.Now())
+	require.NoError(t, err)
+
+	tableSnapshot, err := tableDoc.Save()
+	require.NoError(t, err)
+	require.NoError(t, tableDoc.Close())
+
+	reloadedTable, err := automerge.Load(tableSnapshot, actorID)
+	require.NoError(t, err)
+
+	defer func() { _ = reloadedTable.Close() }()
+
+	require.NoError(t, writeSpans(reloadedTable, table, false))
+	_, err = reloadedTable.Commit("Set document content", time.Now())
+	require.ErrorIs(t, err, automerge.ErrNoOperations)
 }

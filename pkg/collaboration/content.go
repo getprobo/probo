@@ -73,8 +73,9 @@ func (s *Service) MaterializedContent(
 
 	var lastErr error
 
-	for attempt := 0; attempt < attempts; attempt++ {
+	for range attempts {
 		doc := &coredata.CollaborationDocument{}
+
 		err := doc.LoadByDocumentID(ctx, conn, scope, documentID)
 		if errors.Is(err, coredata.ErrResourceNotFound) || (err == nil && !doc.Seeded) {
 			return fallback, nil
@@ -111,6 +112,7 @@ func (s *Service) MaterializedContent(
 
 		content, err := materialize(ctx, automergeDocument)
 		_ = automergeDocument.Close()
+
 		if err != nil {
 			return "", fmt.Errorf("cannot materialize collaboration document: %w", err)
 		}
@@ -185,7 +187,13 @@ func (s *Service) PutContent(
 		return err
 	}
 
+	// Rewriting a document with the content it already has produces no
+	// operations. That is a successful replace: the live CRDT already matches.
 	if _, err := automergeDocument.Commit("Set document content", time.Now()); err != nil {
+		if errors.Is(err, automerge.ErrNoOperations) && doc.Seeded {
+			return nil
+		}
+
 		return fmt.Errorf("cannot commit collaboration content: %w", err)
 	}
 

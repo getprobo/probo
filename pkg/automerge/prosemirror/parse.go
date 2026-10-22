@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	"go.probo.inc/probo/pkg/automerge"
 )
@@ -149,6 +150,13 @@ func emitBlock(spans []automerge.SpanInput, n pmNode, parents []string) []autome
 		return spans
 	case "horizontalRule":
 		return append(spans, blockSpan(blockTypeHorizontalRule, parents, map[string]any{}))
+	case "image", "file":
+		blockType := blockTypeImage
+		if n.Type == "file" {
+			blockType = blockTypeFile
+		}
+
+		return append(spans, blockSpan(blockType, parents, blockAttributes(blockType, n.Attrs)))
 	default:
 		// Unknown block node: drop it rather than abort, mirroring the renderer.
 		return spans
@@ -294,6 +302,10 @@ func blockAttributes(blockType string, attrs map[string]any) map[string]any {
 		}
 
 		return map[string]any{}
+	case blockTypeImage:
+		return attachmentAttributes(attrs, "fileId", "src", "alt", "title", "width")
+	case blockTypeFile:
+		return attachmentAttributes(attrs, "fileId", "fileName", "mimeType", "size")
 	case blockTypeTableCell, blockTypeTableHeader:
 		cellAttrs := map[string]any{
 			"colspan": intAttribute(attrs, "colspan", 1),
@@ -308,6 +320,25 @@ func blockAttributes(blockType string, attrs map[string]any) map[string]any {
 	default:
 		return map[string]any{}
 	}
+}
+
+func attachmentAttributes(attrs map[string]any, keys ...string) map[string]any {
+	copied := map[string]any{}
+
+	for _, key := range keys {
+		value, ok := attrs[key]
+		if !ok || value == nil {
+			continue
+		}
+
+		if text, ok := value.(string); ok && strings.TrimSpace(text) == "" {
+			continue
+		}
+
+		copied[key] = value
+	}
+
+	return copied
 }
 
 func childPath(parents []string, blockType string) []string {
