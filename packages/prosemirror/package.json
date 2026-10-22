@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tiptap/pm": "^3.31.4",
-    "dompurify": "^3.4.16",
+    "dompurify": "^3.4.17",
     "marked": "^18.0.11"
   },
   "devDependencies": {
