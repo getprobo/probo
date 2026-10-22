@@ -43,7 +43,6 @@ type (
 		CurrentPublishedMinor *int                       `db:"current_published_minor"`
 		WriteMode             DocumentWriteMode          `db:"write_mode"`
 		Status                DocumentStatus             `db:"status"`
-		ArchivedAt            *time.Time                 `db:"archived_at"`
 		Title                 string                     `db:"title"`
 		Classification        DocumentClassification     `db:"classification"`
 		DocumentType          DocumentType               `db:"document_type"`
@@ -51,6 +50,7 @@ type (
 		Content               string                     `db:"content"`
 		CreatedAt             time.Time                  `db:"created_at"`
 		UpdatedAt             time.Time                  `db:"updated_at"`
+		ArchivedAt            *time.Time                 `db:"archived_at"`
 	}
 
 	Documents []*Document
