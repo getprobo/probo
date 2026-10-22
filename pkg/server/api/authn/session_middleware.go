@@ -124,7 +124,8 @@ func NewSessionMiddleware(svc *iam.Service, cookieConfig securecookie.Config) fu
 				next.ServeHTTP(w, r.WithContext(ctx))
 
 				err = svc.SessionService.UpdateSessionData(ctx, session.ID, session.Data)
-				if err != nil {
+				// Ignore only the failure caused by the request context ending.
+				if err != nil && !errors.Is(err, ctx.Err()) {
 					panic(fmt.Errorf("cannot update session data: %w", err))
 				}
 			},

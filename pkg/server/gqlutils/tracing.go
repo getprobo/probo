@@ -121,6 +121,22 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 			operationName = "unnamed"
 		}
 
+		// A nil response also ends a stream, so only a context error is a cancel.
+		if resp == nil {
+			if err := ctx.Err(); err != nil {
+				t.logger.InfoCtx(
+					ctx,
+					fmt.Sprintf("%s %s canceled %s", operationType, operationName, duration.String()),
+					log.String("graphql_operation_name", operationName),
+					log.String("graphql_operation_type", operationType),
+					log.Duration("graphql_operation_duration", duration),
+					log.Error(err),
+				)
+			}
+
+			return nil
+		}
+
 		if resp.Errors != nil {
 			t.logger.ErrorCtx(
 				ctx,

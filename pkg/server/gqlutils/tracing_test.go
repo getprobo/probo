@@ -1,0 +1,138 @@
+// Copyright (c) 2026 Probo Inc <hello@probo.com>.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+package gqlutils_test
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"strings"
+	"testing"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/server/gqlutils"
+)
+
+func TestInterceptOperation(t *testing.T) {
+	t.Parallel()
+
+	extension := gqlutils.NewTracingExtension(log.NewLogger(log.WithOutput(io.Discard)))
+
+	t.Run(
+		"nil response from a canceled operation",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithCancel(operationContext())
+			t.Cleanup(cancel)
+
+			var logs bytes.Buffer
+
+			extension := gqlutils.NewTracingExtension(log.NewLogger(log.WithOutput(&logs)))
+
+			handler := extension.InterceptOperation(
+				ctx,
+				func(context.Context) graphql.ResponseHandler {
+					return func(ctx context.Context) *graphql.Response {
+						if ctx.Err() != nil {
+							return nil
+						}
+
+						return &graphql.Response{}
+					}
+				},
+			)
+
+			require.NotNil(t, handler(ctx))
+
+			cancel()
+
+			assert.Nil(t, handler(ctx))
+
+			entry := canceledLogEntry(t, logs.String())
+			assert.Equal(t, "INFO", entry["level"])
+			assert.Contains(t, entry["msg"], "query Viewer canceled")
+			assert.Equal(t, "Viewer", entry["graphql_operation_name"])
+			assert.Equal(t, "query", entry["graphql_operation_type"])
+			assert.Equal(t, "context canceled", entry["error"])
+		},
+	)
+
+	t.Run(
+		"returns the operation response",
+		func(t *testing.T) {
+			t.Parallel()
+
+			ctx := operationContext()
+			want := &graphql.Response{
+				Errors: gqlerror.List{gqlerror.Errorf("boom")},
+			}
+			handler := extension.InterceptOperation(
+				ctx,
+				func(context.Context) graphql.ResponseHandler {
+					return func(context.Context) *graphql.Response {
+						return want
+					}
+				},
+			)
+
+			assert.Equal(t, want, handler(ctx))
+		},
+	)
+}
+
+func canceledLogEntry(t *testing.T, logs string) map[string]any {
+	t.Helper()
+
+	var canceled map[string]any
+
+	for line := range strings.SplitSeq(strings.TrimSpace(logs), "\n") {
+		var entry map[string]any
+		require.NoError(t, json.Unmarshal([]byte(line), &entry))
+
+		msg, _ := entry["msg"].(string)
+		if strings.Contains(msg, "canceled") {
+			canceled = entry
+		}
+	}
+
+	require.NotNil(t, canceled)
+
+	return canceled
+}
+
+func operationContext() context.Context {
+	return graphql.WithOperationContext(
+		context.Background(),
+		&graphql.OperationContext{
+			OperationName: "Viewer",
+			Operation: &ast.OperationDefinition{
+				Operation: ast.Query,
+			},
+		},
+	)
+}
