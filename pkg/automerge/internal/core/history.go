@@ -197,6 +197,7 @@ func (b *Engine) ChangeHistory() ([]ChangeHistoryEntry, error) {
 	if !complete {
 		return nil, fmt.Errorf("cannot list Automerge change history: incomplete change graph")
 	}
+
 	entries := make([]ChangeHistoryEntry, 0, len(changes))
 	for _, change := range changes {
 		if change.Hash == nil {

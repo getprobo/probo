@@ -245,6 +245,7 @@ func sanitizeDisplayName(name string) string {
 	builder.Grow(len(name))
 
 	runes := 0
+
 	for _, character := range name {
 		if unicode.IsControl(character) {
 			if character == '\n' || character == '\r' || character == '\t' {
@@ -257,6 +258,7 @@ func sanitizeDisplayName(name string) string {
 		}
 
 		builder.WriteRune(character)
+
 		runes++
 		if runes >= maxSelectionDisplayRunes {
 			break

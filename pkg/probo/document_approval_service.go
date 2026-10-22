@@ -93,6 +93,7 @@ func (s *DocumentApprovalService) RequestApproval(
 
 	if changelog != nil && documentVersion.Changelog != *changelog {
 		documentVersion.Changelog = *changelog
+
 		documentVersion.UpdatedAt = now
 		if err := documentVersion.Update(ctx, tx, scope); err != nil {
 			return nil, fmt.Errorf("cannot update document version: %w", err)
@@ -144,6 +145,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range req.DocumentIDs {
 				pending := &coredata.DocumentVersion{}
+
 				err := pending.LoadPendingApprovalByDocumentID(ctx, tx, scope, documentID)
 				if err == nil {
 					continue
@@ -163,6 +165,7 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 				}
 
 				var approverIDs []gid.GID
+
 				if !req.Minor {
 					defaultApprovers := &coredata.DocumentDefaultApprovers{}
 					if err := defaultApprovers.LoadByDocumentID(ctx, tx, scope, documentID); err != nil {

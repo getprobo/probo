@@ -578,6 +578,7 @@ func documentVersionAutoDeleteDraft(t *testing.T, actors documentVersionActors) 
 			} `json:"content"`
 		} `json:"node"`
 	}
+
 	err = owner.Execute(`
 		query($id: ID!) {
 			node(id: $id) {

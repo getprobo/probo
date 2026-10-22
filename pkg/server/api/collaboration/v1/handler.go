@@ -463,6 +463,7 @@ func announceCollaborationDeparture(
 	config RepoConfig,
 ) {
 	senderID := conn.RemotePeerID()
+
 	documentID := conn.DocumentID()
 	if senderID == "" || documentID == "" {
 		return
@@ -573,6 +574,7 @@ func ServeRepoCollaboration(
 	revision := lease.Revision()
 
 	var tick <-chan time.Time
+
 	if config.Refresher != nil {
 		ticker := time.NewTicker(RepoRefreshInterval)
 		defer ticker.Stop()

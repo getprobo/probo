@@ -94,6 +94,7 @@ func (g *gatingDocuments) Open(
 	gid.GID,
 ) (*collaboration.DocumentCollaboration, error) {
 	opened := g.opens.Add(1)
+
 	document, err := automerge.New(automerge.ActorID{byte(opened)})
 	if err != nil {
 		return nil, err
@@ -594,6 +595,7 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
 	}
+
 	room.revision.Store(1)
 	go room.run()
 
@@ -601,6 +603,7 @@ func TestRoom_RetriesPersistAfterError(t *testing.T) {
 	lease.SchedulePersist()
 
 	started := time.Now()
+
 	require.Eventually(
 		t,
 		func() bool {
@@ -645,10 +648,12 @@ func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 		stop:          make(chan struct{}),
 		done:          make(chan struct{}),
 	}
+
 	room.revision.Store(1)
 	go room.run()
 
 	var releaseGate sync.Once
+
 	release := func() {
 		releaseGate.Do(func() {
 			close(documents.persistGate)

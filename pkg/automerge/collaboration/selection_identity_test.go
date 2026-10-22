@@ -259,6 +259,7 @@ func TestStampSelectionIdentity_DropsFrameThatCannotFitIdentity(t *testing.T) {
 
 	message, err := collaboration.DecodeMessage(frame)
 	require.NoError(t, err)
+
 	name, ok := collaboration.SelectionDisplayName(message.Data)
 	require.True(t, ok)
 	assert.Equal(t, "spoofed", name)
@@ -278,9 +279,12 @@ func largestSelectionPayload(t *testing.T) []byte {
 
 	low := 0
 	high := 2 << 20
+
 	var payload []byte
+
 	for low <= high {
 		mid := low + (high-low)/2
+
 		encoded, err := collaboration.MarshalPresenceValue(selectionWithPadding(mid))
 		if err != nil {
 			high = mid - 1

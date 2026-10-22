@@ -57,6 +57,7 @@ func ActorsFromSyncMessage(message []byte) ([][]byte, error) {
 			}
 
 			seen[key] = struct{}{}
+
 			actors = append(actors, decoded.Actor.Bytes())
 		}
 	}

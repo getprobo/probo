@@ -40,6 +40,7 @@ func proseMirrorDoc(paragraphs ...string) string {
 				{"type": "text", "text": text},
 			}
 		}
+
 		content = append(content, para)
 	}
 
@@ -144,6 +145,7 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	require.NotEmpty(t, addResult.Document.ID)
 
 	seeded := documentWithTable("Old body", "Keep me")
+
 	var seedResult struct {
 		Document struct {
 			Content            string   `json:"content"`
@@ -221,6 +223,7 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	assert.NotContains(t, unchanged.Document.Content, "Should not land")
 
 	oldTarget := paragraphNodeJSON(t, getVersion.Document.Content, "Old body")
+
 	var editResult struct {
 		Document struct {
 			Content            string   `json:"content"`
@@ -273,6 +276,7 @@ func TestMCP_Document_CollaborationEdits(t *testing.T) {
 	assert.NotContains(t, afterConflict.Document.Content, "Lost race")
 
 	newTarget := paragraphNodeJSON(t, editResult.Document.Content, "New body")
+
 	var secondEdit struct {
 		Document struct {
 			Content            string   `json:"content"`

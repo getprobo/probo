@@ -36,21 +36,25 @@ func TestActorsFromSyncMessage_ReturnsDistinctActors(t *testing.T) {
 
 	left, err := New(leftActor)
 	require.NoError(t, err)
+
 	defer func() { _ = left.Close() }()
 
 	right, err := New(rightActor)
 	require.NoError(t, err)
+
 	defer func() { _ = right.Close() }()
 
 	leftText, err := left.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, leftText.Splice(0, 0, "hello"))
+
 	_, err = left.Commit("left", time.Unix(1, 0).UTC())
 	require.NoError(t, err)
 
 	rightText, err := right.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, rightText.Splice(0, 0, "world"))
+
 	_, err = right.Commit("right", time.Unix(2, 0).UTC())
 	require.NoError(t, err)
 
@@ -59,14 +63,17 @@ func TestActorsFromSyncMessage_ReturnsDistinctActors(t *testing.T) {
 
 	empty, err := New(ActorID{9})
 	require.NoError(t, err)
+
 	defer func() { _ = empty.Close() }()
 
 	sender, err := left.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = sender.Close() }()
 
 	receiver, err := empty.NewSyncState()
 	require.NoError(t, err)
+
 	defer func() { _ = receiver.Close() }()
 
 	// Empty peer opens with a request; the document peer answers with its changes.

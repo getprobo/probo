@@ -190,6 +190,7 @@ func (h *Hub) Acquire(
 			}
 
 			h.mu.Lock()
+
 			current := h.rooms[documentID]
 			if current != room || current.opening != nil || (!current.seedReady && current.seedWait != nil) {
 				h.mu.Unlock()
@@ -227,6 +228,7 @@ func (h *Hub) Acquire(
 		h.mu.Lock()
 		room.collaboration = opened
 		room.revision.Store(opened.Revision)
+
 		if opened.SeedClaimedAt != nil {
 			room.seedClaimedAt = *opened.SeedClaimedAt
 		}
@@ -239,6 +241,7 @@ func (h *Hub) Acquire(
 
 		lease := h.addPeerLocked(documentID, room, connectionID)
 		lease.seedOwner = opened.NeedsSeed
+
 		go room.run()
 		h.mu.Unlock()
 		h.finishOpening(documentID, room)
@@ -364,6 +367,7 @@ func (l *RoomLease) ReplayPresence() {
 	}
 
 	now := time.Now()
+
 	for senderID, entry := range l.room.presence {
 		if senderID == l.remotePeerID {
 			continue
@@ -489,6 +493,7 @@ func (l *RoomLease) Close() {
 		l.hub.mu.Lock()
 		l.room.mu.Lock()
 		delete(l.room.peers, l.peerID)
+
 		if l.remotePeerID != "" && l.room.presence != nil {
 			delete(l.room.presence, l.remotePeerID)
 		}
@@ -497,15 +502,18 @@ func (l *RoomLease) Close() {
 		l.room.mu.Unlock()
 
 		abortSeed := l.seedOwner && !l.room.seedReady
+
 		remove := empty || abortSeed
 		if remove && l.hub.rooms[l.documentID] == l.room {
 			delete(l.hub.rooms, l.documentID)
 		}
+
 		l.hub.mu.Unlock()
 
 		if abortSeed {
 			releaseCtx, cancel := context.WithTimeout(context.Background(), PersistTimeout)
 			_ = l.releaseUnseeded(releaseCtx)
+
 			cancel()
 			l.room.signalSeed()
 		}
@@ -547,6 +555,7 @@ func (l *RoomLease) releaseUnseeded(ctx context.Context) error {
 
 		return nil
 	}
+
 	l.hub.mu.Unlock()
 
 	releaser, ok := l.room.documents.(seedReleaser)

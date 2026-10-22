@@ -65,6 +65,7 @@ func TestReadMessages_ClosedConnection(t *testing.T) {
 	t.Parallel()
 
 	serverConn, client := acceptWebSocket(t)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -96,9 +97,12 @@ func acceptWebSocket(t *testing.T) (*websocket.Conn, *websocket.Conn) {
 		}
 
 		accepted <- connection
+
 		<-release
+
 		_ = connection.Close(websocket.StatusNormalClosure, "")
 	}))
+
 	t.Cleanup(func() {
 		close(release)
 		server.Close()

@@ -45,7 +45,9 @@ func TestChangeHistory_CausalOrderAndActors(t *testing.T) {
 	require.NoError(t, err)
 
 	base := time.Date(2026, 10, 16, 12, 0, 0, 0, time.UTC)
+
 	require.NoError(t, text.Splice(0, 0, "hello"))
+
 	_, err = document.Commit("a1", base)
 	require.NoError(t, err)
 
@@ -56,6 +58,7 @@ func TestChangeHistory_CausalOrderAndActors(t *testing.T) {
 	forkText, err := fork.Text("body")
 	require.NoError(t, err)
 	require.NoError(t, forkText.Splice(5, 0, " world"))
+
 	_, err = fork.Commit("b1", base.Add(time.Minute))
 	require.NoError(t, err)
 
@@ -70,12 +73,16 @@ func TestChangeHistory_CausalOrderAndActors(t *testing.T) {
 	assert.Equal(t, base, history[0].Time)
 
 	foundB := false
+
 	for _, entry := range history[1:] {
 		if string(entry.Actor) == string(actorB[:]) {
 			foundB = true
+
 			assert.Equal(t, base.Add(time.Minute), entry.Time)
+
 			break
 		}
 	}
+
 	assert.True(t, foundB, "expected actor B change in history")
 }

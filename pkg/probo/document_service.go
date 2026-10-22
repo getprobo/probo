@@ -626,6 +626,7 @@ func (s *DocumentService) publish(
 
 	if req.IgnoreUnchanged {
 		published := &coredata.DocumentVersion{}
+
 		err := published.LoadLatestPublishedVersion(ctx, tx, scope, req.DocumentID)
 		if err == nil {
 			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)
@@ -2178,6 +2179,7 @@ func (s *DocumentService) Update(
 				}
 
 				document.Content = content
+
 				document.UpdatedAt = now
 				if err := document.UpdateContent(ctx, tx, scope); err != nil {
 					return fmt.Errorf("cannot update document content: %w", err)
@@ -3261,6 +3263,7 @@ func (s *DocumentService) ensureNoPendingApproval(
 	documentID gid.GID,
 ) error {
 	pending := &coredata.DocumentVersion{}
+
 	err := pending.LoadPendingApprovalByDocumentID(ctx, tx, scope, documentID)
 	if errors.Is(err, coredata.ErrResourceNotFound) {
 		return nil
@@ -3420,6 +3423,7 @@ func (s *DocumentService) publishMajor(
 
 	if ignoreExisting {
 		published := &coredata.DocumentVersion{}
+
 		err := published.LoadLatestPublishedVersion(ctx, tx, scope, documentID)
 		if err == nil {
 			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)
@@ -3566,6 +3570,7 @@ func (s *DocumentService) publishMinor(
 
 	if ignoreExisting {
 		published := &coredata.DocumentVersion{}
+
 		err := published.LoadLatestPublishedVersion(ctx, tx, scope, documentID)
 		if err == nil {
 			changed, err := s.liveDocumentChanged(ctx, scope, tx, document, published)

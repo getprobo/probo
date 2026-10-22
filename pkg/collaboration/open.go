@@ -280,6 +280,7 @@ func (s *Service) seedUnderDocumentLock(
 	}
 
 	stored := document.Content
+
 	body := stored
 	if content != nil {
 		body = *content
@@ -354,6 +355,7 @@ func (s *Service) seedUnderDocumentLock(
 	doc.Revision++
 	doc.SnapshotRevision = doc.Revision
 	doc.ChangeRevision = doc.Revision
+
 	doc.UpdatedAt = now
 	if err := doc.Update(ctx, tx, scope); err != nil {
 		_ = automergeDocument.Close()

@@ -4907,6 +4907,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	if isFirstVersion {
 		document.Title = version.Title
 		document.Classification = version.Classification
+
 		document.DocumentType = version.DocumentType
 		if version.Orientation != "" {
 			document.Orientation = version.Orientation

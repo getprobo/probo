@@ -58,6 +58,7 @@ func parseHeadsFlag(value string) ([]string, error) {
 	}
 
 	parts := strings.Split(value, ",")
+
 	heads := make([]string, 0, len(parts))
 	for _, part := range parts {
 		head := strings.TrimSpace(part)

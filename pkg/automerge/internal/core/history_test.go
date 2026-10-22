@@ -607,6 +607,7 @@ func TestChangeHistory_MissingDependency(t *testing.T) {
 	require.NoError(t, err)
 
 	var missing opset.ChangeHash
+
 	missing[0] = 7
 	hash := opset.ChangeHash{1}
 	engine.state.changes[hash] = &opset.Change{

@@ -135,6 +135,7 @@ func newRepoTestServerWithConfig(
 
 		loopConfig := config
 		loopConfig.ServerPeerID = "probo-gateway-" + connectionID
+
 		loopConfig.DocumentID = documentID
 		if loopConfig.Shutdown == nil {
 			loopConfig.Shutdown = context.Background()
@@ -192,6 +193,7 @@ func dialRepoClient(
 	}
 
 	frames := make(chan []byte, 8)
+
 	go func() {
 		for {
 			kind, data, readErr := conn.Read(ctx)
@@ -285,6 +287,7 @@ func dialRepoClient(
 
 func actorFromByte(value int) automerge.ActorID {
 	var actorID automerge.ActorID
+
 	actorID[0] = byte(value + 1)
 
 	return actorID
@@ -294,6 +297,7 @@ func (c *repoTestClient) waitForBody(t *testing.T, ctx context.Context, want str
 	t.Helper()
 
 	deadline := time.After(10 * time.Second)
+
 	for {
 		select {
 		case err := <-c.errs:
@@ -325,11 +329,13 @@ func TestServeRepoCollaboration_ConvergesRealDocument(t *testing.T) {
 
 	serverDocument, err := automerge.New(automerge.ActorID{200})
 	require.NoError(t, err)
+
 	defer func() { _ = serverDocument.Close() }()
 
 	text, err := serverDocument.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "hello repo"))
+
 	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
 	require.NoError(t, err)
 
@@ -357,6 +363,7 @@ func TestServeRepoCollaboration_SeedsUnseededDocument(t *testing.T) {
 
 	serverDocument, err := automerge.New(automerge.ActorID{202})
 	require.NoError(t, err)
+
 	defer func() { _ = serverDocument.Close() }()
 
 	const seedContent = `{"type":"doc","content":[` +
@@ -392,11 +399,13 @@ func TestServeRepoCollaboration_FansOutEphemeral(t *testing.T) {
 
 	serverDocument, err := automerge.New(automerge.ActorID{201})
 	require.NoError(t, err)
+
 	defer func() { _ = serverDocument.Close() }()
 
 	text, err := serverDocument.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "shared"))
+
 	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
 	require.NoError(t, err)
 
@@ -439,11 +448,13 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 
 	serverDocument, err := automerge.New(automerge.ActorID{205})
 	require.NoError(t, err)
+
 	defer func() { _ = serverDocument.Close() }()
 
 	text, err := serverDocument.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "shared"))
+
 	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
 	require.NoError(t, err)
 
@@ -497,6 +508,7 @@ func TestServeRepoCollaboration_StampsSelectionDisplayName(t *testing.T) {
 			Type:  collabpkg.PresenceUpdate,
 			Value: got,
 		}
+
 		var decoded struct {
 			Kind       string `cbor:"kind"`
 			IdentityID string `cbor:"identityID"`
@@ -522,11 +534,13 @@ func TestServeRepoCollaboration_PublishesEphemeralCrossInstance(t *testing.T) {
 
 	serverDocument, err := automerge.New(automerge.ActorID{203})
 	require.NoError(t, err)
+
 	defer func() { _ = serverDocument.Close() }()
 
 	text, err := serverDocument.CreateText("body")
 	require.NoError(t, err)
 	require.NoError(t, text.Splice(0, 0, "shared"))
+
 	_, err = serverDocument.Commit("seed", time.Unix(1786147200, 0).UTC())
 	require.NoError(t, err)
 

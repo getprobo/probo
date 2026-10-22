@@ -286,6 +286,7 @@ func (r *documentResolver) Revision(ctx context.Context, obj *types.Document, id
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load revision", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -387,6 +388,7 @@ func (r *documentRevisionResolver) Author(ctx context.Context, obj *types.Docume
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load history author", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -424,6 +426,7 @@ func (r *documentRevisionResolver) Snapshot(ctx context.Context, obj *types.Docu
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot load history snapshot", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
@@ -1975,6 +1978,7 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		}
 
 		r.logger.ErrorCtx(ctx, "cannot restore document history", log.Error(err))
+
 		return nil, gqlutils.Internal(ctx)
 	}
 
