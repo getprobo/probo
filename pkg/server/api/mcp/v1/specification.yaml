@@ -8918,10 +8918,14 @@ components:
           type: boolean
           description: Whether more results exist before this page
         start_cursor:
-          $ref: "#/components/schemas/CursorKey"
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
           description: Cursor of the first item in this page
         end_cursor:
-          $ref: "#/components/schemas/CursorKey"
+          anyOf:
+            - $ref: "#/components/schemas/CursorKey"
+            - type: "null"
           description: Cursor of the last item in this page
 
     DocumentRevisionOrderField:

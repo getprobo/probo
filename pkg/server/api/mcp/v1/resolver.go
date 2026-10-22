@@ -318,21 +318,20 @@ func (r *Resolver) documentWithHeads(
 	ctx context.Context,
 	scope *coredata.Scope,
 	document *coredata.Document,
-) *types.Document {
+) (*types.Document, error) {
 	heads, err := r.proboSvc.Documents.CollaborationHeads(ctx, scope, document.ID)
 	if err != nil {
-		r.logger.ErrorCtx(
-			ctx,
-			"cannot load document collaboration heads",
-			log.Error(err),
-			log.String("document_id", document.ID.String()),
-		)
+		if errors.Is(err, coredata.ErrResourceNotFound) ||
+			errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) ||
+			errors.Is(err, probo.ErrSeedInProgress) {
+			return types.NewDocument(document), nil
+		}
 
-		return types.NewDocument(document)
+		return nil, fmt.Errorf("cannot load document collaboration heads: %w", err)
 	}
 
 	return types.NewDocumentWithHeads(
 		document,
 		probo.EncodeAutomergeHashes(heads),
-	)
+	), nil
 }

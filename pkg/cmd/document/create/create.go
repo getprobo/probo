@@ -36,13 +36,7 @@ mutation($input: CreateDocumentInput!) {
     documentEdge {
       node {
         id
-      }
-    }
-    documentVersionEdge {
-      node {
         title
-        documentType
-        classification
       }
     }
   }
@@ -53,16 +47,10 @@ type createResponse struct {
 	CreateDocument struct {
 		DocumentEdge struct {
 			Node struct {
-				ID string `json:"id"`
+				ID    string `json:"id"`
+				Title string `json:"title"`
 			} `json:"node"`
 		} `json:"documentEdge"`
-		DocumentVersionEdge struct {
-			Node struct {
-				Title          string `json:"title"`
-				DocumentType   string `json:"documentType"`
-				Classification string `json:"classification"`
-			} `json:"node"`
-		} `json:"documentVersionEdge"`
 	} `json:"createDocument"`
 }
 
@@ -217,12 +205,11 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			doc := resp.CreateDocument.DocumentEdge.Node
-			ver := resp.CreateDocument.DocumentVersionEdge.Node
 			_, _ = fmt.Fprintf(
 				f.IOStreams.Out,
 				"Created document %s (%s)\n",
 				doc.ID,
-				ver.Title,
+				doc.Title,
 			)
 
 			return nil

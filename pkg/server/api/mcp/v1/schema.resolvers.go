@@ -2461,8 +2461,13 @@ func (r *Resolver) GetDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
+	withHeads, err := r.documentWithHeads(ctx, scope, document)
+	if err != nil {
+		return nil, types.GetDocumentOutput{}, err
+	}
+
 	return nil, types.GetDocumentOutput{
-		Document: r.documentWithHeads(ctx, scope, document),
+		Document: withHeads,
 	}, nil
 }
 
@@ -2578,6 +2583,7 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 			case errors.Is(err, probo.ErrDocumentCollaborationBaseHeadsUnknown),
 				errors.Is(err, probo.ErrDocumentCollaborationStale),
 				errors.Is(err, probo.ErrDocumentCollaborationEditsNotSeeded),
+				errors.Is(err, probo.ErrSeedInProgress),
 				errors.Is(err, prosemirror.ErrFragmentEditAmbiguous):
 				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
 			}
@@ -2640,11 +2646,21 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		},
 	)
 	if err != nil {
+		if errors.Is(err, probo.ErrDocumentCollaborationContentOnSeeded) ||
+			errors.Is(err, probo.ErrSeedInProgress) {
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("cannot update document: %w", err)
+		}
+
 		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
+	withHeads, err := r.documentWithHeads(ctx, scope, document)
+	if err != nil {
+		return nil, types.UpdateDocumentOutput{}, err
+	}
+
 	return nil, types.UpdateDocumentOutput{
-		Document: r.documentWithHeads(ctx, scope, document),
+		Document: withHeads,
 	}, nil
 }
 
@@ -11247,7 +11263,8 @@ func (r *Resolver) GetDocumentHistorySnapshotTool(ctx context.Context, req *mcp.
 		parsedPrevious,
 	)
 	if err != nil {
-		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) {
+		if errors.Is(err, probo.ErrDocumentCollaborationNotSeeded) ||
+			errors.Is(err, probo.ErrSeedInProgress) {
 			return nil, types.GetDocumentHistorySnapshotOutput{}, fmt.Errorf("cannot get history snapshot: %w", err)
 		}
 
@@ -11280,7 +11297,8 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
-		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded):
+		case errors.Is(err, probo.ErrDocumentCollaborationNotSeeded),
+			errors.Is(err, probo.ErrSeedInProgress):
 			return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot restore history: %w", err)
 		}
 
@@ -11300,7 +11318,12 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		panic(fmt.Errorf("cannot load restored document: %w", err))
 	}
 
+	withHeads, err := r.documentWithHeads(ctx, scope, document)
+	if err != nil {
+		return nil, types.RestoreDocumentHistoryOutput{}, err
+	}
+
 	return nil, types.RestoreDocumentHistoryOutput{
-		Document: types.NewDocument(document),
+		Document: withHeads,
 	}, nil
 }
