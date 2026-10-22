@@ -297,23 +297,6 @@ func validateMCPDocumentContent(content string) error {
 	return nil
 }
 
-func (r *Resolver) collaborationProfileID(
-	ctx context.Context,
-	identityID gid.GID,
-	organizationID gid.GID,
-) *gid.GID {
-	profile, err := r.iamSvc.OrganizationService.GetProfileForIdentityAndOrganization(
-		ctx,
-		identityID,
-		organizationID,
-	)
-	if err != nil {
-		return nil
-	}
-
-	return &profile.ID
-}
-
 func (r *Resolver) documentWithHeads(
 	ctx context.Context,
 	scope *coredata.Scope,

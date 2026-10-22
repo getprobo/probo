@@ -2483,7 +2483,6 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 
 	svc := r.proboSvc
 
-	identity := authn.IdentityFromContext(ctx)
 	document, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
@@ -2493,8 +2492,6 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
-			IdentityID:         identity.ID,
-			ProfileID:          r.collaborationProfileID(ctx, identity.ID, input.OrganizationID),
 		},
 	)
 	if err != nil {
@@ -2511,7 +2508,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 	}
 
 	svc := r.proboSvc
-	identity := authn.IdentityFromContext(ctx)
 
 	document, err := svc.Documents.Get(ctx, scope, input.ID)
 	if err != nil {
@@ -2568,8 +2564,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 			)
 		}
 
-		profileID := r.collaborationProfileID(ctx, identity.ID, document.OrganizationID)
-
 		result, err := svc.Collaboration.ApplyEdits(
 			ctx,
 			scope,
@@ -2577,8 +2571,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 				DocumentID: document.ID,
 				BaseHeads:  baseHeads,
 				Edits:      edits,
-				IdentityID: identity.ID,
-				ProfileID:  profileID,
 			},
 		)
 		if err != nil {
@@ -2633,8 +2625,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		defaultApproverIDs = &input.DefaultApproverIds
 	}
 
-	profileID := r.collaborationProfileID(ctx, identity.ID, document.OrganizationID)
-
 	document, err = svc.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
@@ -2644,8 +2634,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: defaultApproverIDs,
-			IdentityID:         &identity.ID,
-			ProfileID:          profileID,
 		},
 	)
 	if err != nil {
@@ -4630,7 +4618,13 @@ func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req 
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.ID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishStatementOfApplicability(
+		ctx,
+		scope,
+		input.ID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishStatementOfApplicabilityOutput{}, fmt.Errorf("cannot publish statement of applicability: %w", err)
 	}
@@ -4910,7 +4904,13 @@ func (r *Resolver) PublishDataListTool(ctx context.Context, req *mcp.CallToolReq
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishDataList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishDataList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishDataListOutput{}, fmt.Errorf("cannot publish data list: %w", err)
 	}
@@ -4929,7 +4929,13 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishAssetListOutput{}, fmt.Errorf("cannot publish asset list: %w", err)
 	}
@@ -5895,7 +5901,13 @@ func (r *Resolver) PublishFindingListTool(ctx context.Context, req *mcp.CallTool
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishFindingList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishFindingList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishFindingListOutput{}, fmt.Errorf("cannot publish finding list: %w", err)
 	}
@@ -5914,7 +5926,13 @@ func (r *Resolver) PublishObligationListTool(ctx context.Context, req *mcp.CallT
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishObligationList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishObligationListOutput{}, fmt.Errorf("cannot publish obligation list: %w", err)
 	}
@@ -5933,7 +5951,13 @@ func (r *Resolver) PublishProcessingActivityListTool(ctx context.Context, req *m
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishProcessingActivityList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishProcessingActivityListOutput{}, fmt.Errorf("cannot publish processing activity list: %w", err)
 	}
@@ -5952,7 +5976,13 @@ func (r *Resolver) PublishDataProtectionImpactAssessmentListTool(ctx context.Con
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishDataProtectionImpactAssessmentListOutput{}, fmt.Errorf("cannot publish DPIA list: %w", err)
 	}
@@ -5971,7 +6001,13 @@ func (r *Resolver) PublishTransferImpactAssessmentListTool(ctx context.Context, 
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishTransferImpactAssessmentList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishTransferImpactAssessmentListOutput{}, fmt.Errorf("cannot publish TIA list: %w", err)
 	}
@@ -5990,7 +6026,13 @@ func (r *Resolver) PublishThirdPartyListTool(ctx context.Context, req *mcp.CallT
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishThirdPartyList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishThirdPartyList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishThirdPartyListOutput{}, fmt.Errorf("cannot publish thirdParty list: %w", err)
 	}
@@ -6671,7 +6713,13 @@ func (r *Resolver) PublishRiskListTool(ctx context.Context, req *mcp.CallToolReq
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskList(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishRiskListOutput{}, fmt.Errorf("cannot publish risk list: %w", err)
 	}
@@ -10506,7 +10554,13 @@ func (r *Resolver) PublishRiskAnalysisTool(ctx context.Context, req *mcp.CallToo
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, input.ID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskAnalysis(
+		ctx,
+		scope,
+		input.ID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		return nil, types.PublishRiskAnalysisOutput{}, fmt.Errorf("cannot publish risk analysis: %w", err)
 	}
@@ -11288,14 +11342,11 @@ func (r *Resolver) RestoreDocumentHistoryTool(ctx context.Context, req *mcp.Call
 		return nil, types.RestoreDocumentHistoryOutput{}, fmt.Errorf("cannot parse heads: %w", err)
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-
 	if _, err := r.proboSvc.Collaboration.RestoreHistory(
 		ctx,
 		scope,
 		input.DocumentID,
 		heads,
-		identity.ID,
 	); err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):

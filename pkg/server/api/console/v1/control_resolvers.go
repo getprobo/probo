@@ -779,7 +779,13 @@ func (r *mutationResolver) PublishStatementOfApplicability(ctx context.Context, 
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.StatementOfApplicabilityID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishStatementOfApplicability(
+		ctx,
+		scope,
+		input.StatementOfApplicabilityID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)

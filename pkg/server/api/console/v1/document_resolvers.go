@@ -1124,17 +1124,6 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		content = *input.Content
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-	var profileID *gid.GID
-	profile, profileErr := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(
-		ctx,
-		identity.ID,
-		input.OrganizationID,
-	)
-	if profileErr == nil {
-		profileID = &profile.ID
-	}
-
 	document, err := r.probo.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
@@ -1144,8 +1133,6 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: input.DefaultApproverIds,
-			IdentityID:         identity.ID,
-			ProfileID:          profileID,
 		},
 	)
 	if err != nil {
@@ -1179,30 +1166,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		defaultApproverIDs = &input.DefaultApproverIds
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-	var profileID *gid.GID
-	if input.Content != nil {
-		existing, loadErr := r.probo.Documents.Get(ctx, scope, input.ID)
-		if loadErr != nil {
-			if errors.Is(loadErr, coredata.ErrResourceNotFound) {
-				return nil, gqlutils.NotFound(ctx, loadErr)
-			}
-
-			r.logger.ErrorCtx(ctx, "cannot load document for collaboration attribution", log.Error(loadErr))
-
-			return nil, gqlutils.Internal(ctx)
-		}
-
-		profile, profileErr := r.iam.OrganizationService.GetProfileForIdentityAndOrganization(
-			ctx,
-			identity.ID,
-			existing.OrganizationID,
-		)
-		if profileErr == nil {
-			profileID = &profile.ID
-		}
-	}
-
 	document, err := r.probo.Documents.Update(
 		ctx, scope,
 		probo.UpdateDocumentRequest{
@@ -1212,8 +1175,6 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 			Classification:     input.Classification,
 			DocumentType:       input.DocumentType,
 			DefaultApproverIDs: defaultApproverIDs,
-			IdentityID:         &identity.ID,
-			ProfileID:          profileID,
 		},
 	)
 	if err != nil {
@@ -1990,14 +1951,11 @@ func (r *mutationResolver) RestoreDocumentHistory(ctx context.Context, input typ
 		return nil, gqlutils.Invalid(ctx, err)
 	}
 
-	identity := authn.IdentityFromContext(ctx)
-
 	if _, err := r.probo.Collaboration.RestoreHistory(
 		ctx,
 		scope,
 		input.DocumentID,
 		heads,
-		identity.ID,
 	); err != nil {
 		switch {
 		case errors.Is(err, coredata.ErrResourceNotFound):

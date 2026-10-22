@@ -227,7 +227,6 @@ func (s *CollaborationService) RestoreHistory(
 	scope coredata.Scoper,
 	documentID gid.GID,
 	heads []automerge.Hash,
-	identityID gid.GID,
 ) (int64, error) {
 	if len(heads) == 0 {
 		return 0, fmt.Errorf("collaboration history restore requires heads")
@@ -235,7 +234,8 @@ func (s *CollaborationService) RestoreHistory(
 
 	var (
 		organizationID gid.GID
-		profileID      gid.GID
+		identityID     gid.GID
+		profileID      *gid.GID
 	)
 
 	err := s.pg.WithConn(
@@ -253,18 +253,15 @@ func (s *CollaborationService) RestoreHistory(
 
 			organizationID = orgID
 
-			profile := &coredata.MembershipProfile{}
-			if err := profile.LoadByIdentityIDAndOrganizationID(
+			identityID, profileID, err = collaborationProfile(
 				ctx,
 				conn,
 				scope,
-				identityID,
 				organizationID,
-			); err != nil {
-				return fmt.Errorf("cannot load profile for history restore: %w", err)
+			)
+			if err != nil {
+				return err
 			}
-
-			profileID = profile.ID
 
 			return nil
 		},
@@ -285,7 +282,7 @@ func (s *CollaborationService) RestoreHistory(
 		documentID,
 		organizationID,
 		identityID,
-		&profileID,
+		profileID,
 		[][]byte{actorID[:]},
 	); err != nil {
 		return 0, fmt.Errorf("cannot record collaboration restore actor: %w", err)

@@ -45,15 +45,11 @@ type (
 		DocumentID gid.GID
 		BaseHeads  []automerge.Hash
 		Edits      []DocumentCollaborationEdit
-		IdentityID gid.GID
-		ProfileID  *gid.GID
 	}
 
 	CollaborationApplyContentRequest struct {
 		DocumentID gid.GID
 		Content    string
-		IdentityID gid.GID
-		ProfileID  *gid.GID
 	}
 
 	CollaborationWriteResult struct {
@@ -144,8 +140,6 @@ func (s *CollaborationService) ApplyContent(
 				scope,
 				req.DocumentID,
 				sanitized,
-				req.IdentityID,
-				req.ProfileID,
 			)
 			if err != nil {
 				return err
@@ -172,10 +166,13 @@ func (s *CollaborationService) replaceUnseededContent(
 	scope coredata.Scoper,
 	documentID gid.GID,
 	content string,
-	identityID gid.GID,
-	profileID *gid.GID,
 ) (*CollaborationWriteResult, error) {
 	organizationID, err := assertDraftEditable(ctx, scope, tx, documentID)
+	if err != nil {
+		return nil, err
+	}
+
+	identityID, profileID, err := collaborationProfile(ctx, tx, scope, organizationID)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +243,11 @@ func (s *CollaborationService) ApplyEdits(
 		return nil, fmt.Errorf("collaboration edits require at least one edit")
 	}
 
-	var organizationID gid.GID
+	var (
+		organizationID gid.GID
+		identityID     gid.GID
+		profileID      *gid.GID
+	)
 
 	err := s.pg.WithConn(
 		ctx,
@@ -263,6 +264,16 @@ func (s *CollaborationService) ApplyEdits(
 
 			organizationID = orgID
 
+			identityID, profileID, err = collaborationProfile(
+				ctx,
+				conn,
+				scope,
+				organizationID,
+			)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	)
@@ -275,8 +286,8 @@ func (s *CollaborationService) ApplyEdits(
 		scope,
 		req.DocumentID,
 		organizationID,
-		req.IdentityID,
-		req.ProfileID,
+		identityID,
+		profileID,
 	)
 	if err != nil {
 		return nil, err
@@ -373,8 +384,8 @@ func (s *CollaborationService) ApplyEdits(
 		scope,
 		req.DocumentID,
 		organizationID,
-		req.IdentityID,
-		req.ProfileID,
+		identityID,
+		profileID,
 		[][]byte{actorID[:]},
 	); err != nil {
 		return nil, fmt.Errorf("cannot record collaboration edit actor: %w", err)

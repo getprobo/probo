@@ -885,7 +885,13 @@ func (r *mutationResolver) PublishRiskAnalysis(ctx context.Context, input types.
 		return nil, err
 	}
 
-	document, documentVersion, err := r.probo.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, input.RiskAnalysisID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := r.probo.GeneratedDocuments.PublishRiskAnalysis(
+		ctx,
+		scope,
+		input.RiskAnalysisID,
+		input.ApproverIds,
+		input.Minor,
+	)
 	if err != nil {
 		if errors.Is(err, coredata.ErrResourceAlreadyExists) {
 			return nil, gqlutils.Conflict(ctx, err)

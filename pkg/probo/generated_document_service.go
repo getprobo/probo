@@ -137,7 +137,17 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, soa.OrganizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				soa.OrganizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -406,7 +416,17 @@ func (s *GeneratedDocumentService) PublishDataList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -677,7 +697,17 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -971,7 +1001,17 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -1342,7 +1382,17 @@ func (s *GeneratedDocumentService) PublishBusinessFunctionList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -1745,7 +1795,17 @@ func (s *GeneratedDocumentService) PublishAiSystemList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -2044,7 +2104,17 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -2337,7 +2407,17 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -2731,7 +2811,17 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -2962,7 +3052,17 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -3209,7 +3309,17 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -3809,7 +3919,17 @@ func (s *GeneratedDocumentService) PublishRiskList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				organizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -4187,7 +4307,17 @@ func (s *GeneratedDocumentService) PublishRiskAnalysis(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, riskAnalysis.OrganizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(
+				ctx,
+				scope,
+				tx,
+				document,
+				documentVersion,
+				riskAnalysis.OrganizationID,
+				approverIDs,
+				minor,
+				now,
+			)
 		},
 	)
 	if err != nil {
@@ -4785,14 +4915,13 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 
 	document.Content = content
 	document.UpdatedAt = now
+
 	if err := s.svc.Documents.collaboration.PutContent(
 		ctx,
 		tx,
 		scope,
 		document.ID,
 		content,
-		gid.GID{},
-		nil,
 	); err != nil {
 		return fmt.Errorf("cannot store generated document content: %w", err)
 	}

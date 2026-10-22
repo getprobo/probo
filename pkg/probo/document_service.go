@@ -103,8 +103,6 @@ type (
 		Classification     coredata.DocumentClassification
 		DocumentType       coredata.DocumentType
 		DefaultApproverIDs []gid.GID
-		IdentityID         gid.GID
-		ProfileID          *gid.GID
 	}
 
 	UpdateDocumentRequest struct {
@@ -114,8 +112,6 @@ type (
 		Classification     *coredata.DocumentClassification
 		DocumentType       *coredata.DocumentType
 		DefaultApproverIDs *[]gid.GID
-		IdentityID         *gid.GID
-		ProfileID          *gid.GID
 	}
 
 	RequestSignatureRequest struct {
@@ -766,8 +762,6 @@ func (s *DocumentService) Create(
 				scope,
 				document.ID,
 				content,
-				req.IdentityID,
-				req.ProfileID,
 			); err != nil {
 				return fmt.Errorf("cannot store document content: %w", err)
 			}
@@ -2158,19 +2152,12 @@ func (s *DocumentService) Update(
 			}
 
 			if req.Content != nil {
-				var identityID gid.GID
-				if req.IdentityID != nil {
-					identityID = *req.IdentityID
-				}
-
 				written, err := s.collaboration.replaceUnseededContent(
 					ctx,
 					tx,
 					scope,
 					req.DocumentID,
 					sanitizedContent,
-					identityID,
-					req.ProfileID,
 				)
 				if err != nil {
 					return fmt.Errorf("cannot apply collaboration content: %w", err)
@@ -2258,8 +2245,6 @@ func (s *DocumentService) DeleteDraft(
 				scope,
 				document.ID,
 				published.Content,
-				gid.GID{},
-				nil,
 			); err != nil {
 				return fmt.Errorf("cannot restore published content: %w", err)
 			}

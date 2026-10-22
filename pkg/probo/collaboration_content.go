@@ -35,6 +35,29 @@ import (
 
 const emptyLiveDocument = `{"type":"doc","content":[{"type":"paragraph"}]}`
 
+func collaborationProfile(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+) (gid.GID, *gid.GID, error) {
+	identityID := scope.PrincipalID()
+	if identityID == gid.Nil {
+		return gid.Nil, nil, nil
+	}
+
+	profile := &coredata.MembershipProfile{}
+	if err := profile.LoadByIdentityIDAndOrganizationID(ctx, conn, scope, identityID, organizationID); err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return identityID, nil, nil
+		}
+
+		return gid.Nil, nil, fmt.Errorf("cannot load collaboration profile: %w", err)
+	}
+
+	return identityID, &profile.ID, nil
+}
+
 // MaterializedContent returns the live ProseMirror JSON. A seeded CRDT wins.
 // fallback is the document row's content, used until the CRDT exists.
 func (s *CollaborationService) MaterializedContent(
@@ -115,14 +138,17 @@ func (s *CollaborationService) PutContent(
 	scope coredata.Scoper,
 	documentID gid.GID,
 	content string,
-	identityID gid.GID,
-	profileID *gid.GID,
 ) error {
 	if strings.TrimSpace(content) == "" {
 		content = emptyLiveDocument
 	}
 
 	doc, err := lockCollaborationDocument(ctx, tx, scope, documentID)
+	if err != nil {
+		return err
+	}
+
+	identityID, profileID, err := collaborationProfile(ctx, tx, scope, doc.OrganizationID)
 	if err != nil {
 		return err
 	}
