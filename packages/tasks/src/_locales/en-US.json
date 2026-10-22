@@ -107,7 +107,6 @@
       "created": "{{actor}} created this task",
       "updated": "{{actor}} updated this task",
       "renamed": "{{actor}} renamed from {{oldValue}} to {{newValue}}",
-      "descriptionUpdated": "{{actor}} updated the description",
       "stateChanged": "{{actor}} changed status from {{oldValue}} to {{newValue}}",
       "priorityChanged": "{{actor}} changed priority from {{oldValue}} to {{newValue}}",
       "assigned": "{{actor}} assigned {{newValue}}",

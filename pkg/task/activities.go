@@ -155,22 +155,6 @@ func InsertUpdateActivities(
 		}
 	}
 
-	if task.Content != oldTask.Content {
-		if err := insertFieldActivity(
-			ctx,
-			tx,
-			scope,
-			task,
-			actorID,
-			coredata.TaskActivityFieldDescription,
-			new(oldTask.Content),
-			new(task.Content),
-			now,
-		); err != nil {
-			return fmt.Errorf("cannot record description activity: %w", err)
-		}
-	}
-
 	if task.State != oldTask.State {
 		if err := insertFieldActivity(
 			ctx,

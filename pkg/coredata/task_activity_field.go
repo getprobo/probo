@@ -31,7 +31,6 @@ type (
 
 const (
 	TaskActivityFieldName            TaskActivityField = "NAME"
-	TaskActivityFieldDescription     TaskActivityField = "DESCRIPTION"
 	TaskActivityFieldState           TaskActivityField = "STATE"
 	TaskActivityFieldPriority        TaskActivityField = "PRIORITY"
 	TaskActivityFieldAssignedTo      TaskActivityField = "ASSIGNED_TO"
@@ -50,7 +49,6 @@ func (v TaskActivityField) IsValid() bool {
 	switch v {
 	case
 		TaskActivityFieldName,
-		TaskActivityFieldDescription,
 		TaskActivityFieldState,
 		TaskActivityFieldPriority,
 		TaskActivityFieldAssignedTo,

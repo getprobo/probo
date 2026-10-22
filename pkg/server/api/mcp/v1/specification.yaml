@@ -8049,7 +8049,6 @@ components:
       type: string
       enum:
         - NAME
-        - DESCRIPTION
         - STATE
         - PRIORITY
         - ASSIGNED_TO

@@ -107,7 +107,6 @@
       "created": "{{actor}} heeft deze taak aangemaakt",
       "updated": "{{actor}} heeft deze taak bijgewerkt",
       "renamed": "{{actor}} heeft hernoemd van {{oldValue}} naar {{newValue}}",
-      "descriptionUpdated": "{{actor}} heeft de beschrijving bijgewerkt",
       "stateChanged": "{{actor}} heeft de status gewijzigd van {{oldValue}} naar {{newValue}}",
       "priorityChanged": "{{actor}} heeft de prioriteit gewijzigd van {{oldValue}} naar {{newValue}}",
       "assigned": "{{actor}} heeft de taak toegewezen aan {{newValue}}",

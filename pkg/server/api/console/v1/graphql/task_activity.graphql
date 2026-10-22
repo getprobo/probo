@@ -38,10 +38,6 @@ enum TaskActivityField @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskActi
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TaskActivityFieldName"
         )
-    DESCRIPTION
-        @goEnum(
-            value: "go.probo.inc/probo/pkg/coredata.TaskActivityFieldDescription"
-        )
     STATE
         @goEnum(
             value: "go.probo.inc/probo/pkg/coredata.TaskActivityFieldState"

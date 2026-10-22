@@ -203,21 +203,8 @@ func TestTaskActivity_UpdateDescriptionWritesValues(t *testing.T) {
 	})
 
 	result := listTaskActivities(t, owner, taskID)
-
-	var descriptionActivity *taskActivityNode
-
-	for _, edge := range result.Node.Activities.Edges {
-		if edge.Node.ActivityType == "UPDATED" && edge.Node.Field != nil && *edge.Node.Field == "DESCRIPTION" {
-			descriptionActivity = &edge.Node
-			break
-		}
-	}
-
-	require.NotNil(t, descriptionActivity)
-	require.NotNil(t, descriptionActivity.OldValue)
-	require.NotNil(t, descriptionActivity.NewValue)
-	factory.AssertProseMirrorPlainText(t, "Original description", *descriptionActivity.OldValue)
-	factory.AssertProseMirrorPlainText(t, "A new description", *descriptionActivity.NewValue)
+	require.Equal(t, 1, result.Node.Activities.TotalCount)
+	assert.Equal(t, "CREATED", result.Node.Activities.Edges[0].Node.ActivityType)
 }
 
 func TestTaskActivity_RankOnlyUpdateWritesNothing(t *testing.T) {
@@ -287,22 +274,17 @@ func TestTaskActivity_ImportReuseWritesFieldDiffs(t *testing.T) {
 	assert.Equal(t, "Renamed import task", second[0].Name)
 
 	result := listTaskActivities(t, owner, second[0].ID)
-	require.GreaterOrEqual(t, result.Node.Activities.TotalCount, 3)
+	require.Equal(t, 2, result.Node.Activities.TotalCount)
 
 	var nameActivity *taskActivityNode
-
-	var descriptionActivity *taskActivityNode
 
 	for _, edge := range result.Node.Activities.Edges {
 		if edge.Node.ActivityType != "UPDATED" || edge.Node.Field == nil {
 			continue
 		}
 
-		switch *edge.Node.Field {
-		case "NAME":
+		if *edge.Node.Field == "NAME" {
 			nameActivity = &edge.Node
-		case "DESCRIPTION":
-			descriptionActivity = &edge.Node
 		}
 	}
 
@@ -313,12 +295,6 @@ func TestTaskActivity_ImportReuseWritesFieldDiffs(t *testing.T) {
 	assert.Equal(t, "Renamed import task", *nameActivity.NewValue)
 	require.NotNil(t, nameActivity.Actor)
 	assert.Equal(t, owner.GetProfileID().String(), nameActivity.Actor.ID)
-
-	require.NotNil(t, descriptionActivity)
-	require.NotNil(t, descriptionActivity.OldValue)
-	require.NotNil(t, descriptionActivity.NewValue)
-	factory.AssertProseMirrorPlainText(t, "First description", *descriptionActivity.OldValue)
-	factory.AssertProseMirrorPlainText(t, "Second description", *descriptionActivity.NewValue)
 }
 
 func importInternalControlTasks(

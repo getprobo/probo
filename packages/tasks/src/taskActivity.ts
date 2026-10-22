@@ -27,7 +27,6 @@ export type TaskActivityType = "CREATED" | "UPDATED" | "COMMENTED";
 
 export type TaskActivityField
   = | "NAME"
-    | "DESCRIPTION"
     | "STATE"
     | "PRIORITY"
     | "ASSIGNED_TO"
@@ -99,8 +98,6 @@ export function taskActivitySentenceKey(
   switch (field) {
     case "NAME":
       return "activity.sentences.renamed";
-    case "DESCRIPTION":
-      return "activity.sentences.descriptionUpdated";
     case "STATE":
       return "activity.sentences.stateChanged";
     case "PRIORITY":

@@ -107,7 +107,6 @@
       "created": "{{actor}} a créé cette tâche",
       "updated": "{{actor}} a mis à jour cette tâche",
       "renamed": "{{actor}} a renommé de {{oldValue}} en {{newValue}}",
-      "descriptionUpdated": "{{actor}} a mis à jour la description",
       "stateChanged": "{{actor}} a changé le statut de {{oldValue}} à {{newValue}}",
       "priorityChanged": "{{actor}} a changé la priorité de {{oldValue}} à {{newValue}}",
       "assigned": "{{actor}} a assigné {{newValue}}",

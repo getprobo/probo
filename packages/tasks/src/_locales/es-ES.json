@@ -107,7 +107,6 @@
       "created": "{{actor}} creó esta tarea",
       "updated": "{{actor}} actualizó esta tarea",
       "renamed": "{{actor}} cambió el nombre de {{oldValue}} a {{newValue}}",
-      "descriptionUpdated": "{{actor}} actualizó la descripción",
       "stateChanged": "{{actor}} cambió el estado de {{oldValue}} a {{newValue}}",
       "priorityChanged": "{{actor}} cambió la prioridad de {{oldValue}} a {{newValue}}",
       "assigned": "{{actor}} asignó a {{newValue}}",
