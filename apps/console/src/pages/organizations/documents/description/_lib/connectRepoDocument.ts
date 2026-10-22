@@ -86,7 +86,9 @@ function isTextSelection(value: unknown): value is TextSelection {
 function isSelectionPresence(value: unknown): value is SelectionPresence {
   if (!value || typeof value !== "object") return false;
   const message = value as Record<string, unknown>;
-  return message.kind === "selection" && isTextSelection(message.selection);
+  return message.kind === "selection"
+    && typeof message.active === "boolean"
+    && isTextSelection(message.selection);
 }
 
 function isDeparturePresence(value: unknown): boolean {
@@ -239,7 +241,7 @@ export async function connectRepoDocument(
     const avatarURL = typeof payload.message.avatarURL === "string"
       ? payload.message.avatarURL.trim()
       : undefined;
-    const active = payload.message.active !== false;
+    const active = payload.message.active;
 
     const previous = latest.get(sender);
     const isNewSender = !previous;
