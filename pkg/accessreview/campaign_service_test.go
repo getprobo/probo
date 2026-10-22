@@ -44,7 +44,7 @@ func TestCreateCampaign_SnapshotsConnectorAccount(t *testing.T) {
 	client := test.PGClient(t)
 	ctx := context.Background()
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC()
 

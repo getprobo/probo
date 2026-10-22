@@ -41,7 +41,7 @@ func TestRightsRequestService_CreateEnqueuesWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	organizationID := insertPortalRequestWebhookOrganization(t, client)
-	scope := coredata.NewScope(organizationID.TenantID())
+	scope := coredata.NewScope(organizationID.TenantID(), gid.Nil)
 	insertPortalRequestWebhookSubscription(t, client, scope, organizationID)
 	compliancePortalID := insertPortalRequestWebhookPortal(
 		t,
@@ -96,7 +96,7 @@ func TestRightsRequestService_CreateDisabledReturnsErr(t *testing.T) {
 
 	client := test.PGClient(t)
 	organizationID := insertPortalRequestWebhookOrganization(t, client)
-	scope := coredata.NewScope(organizationID.TenantID())
+	scope := coredata.NewScope(organizationID.TenantID(), gid.Nil)
 	insertPortalRequestWebhookSubscription(t, client, scope, organizationID)
 	compliancePortalID := insertPortalRequestWebhookPortal(
 		t,

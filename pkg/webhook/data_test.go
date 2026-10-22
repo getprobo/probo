@@ -39,7 +39,7 @@ import (
 func TestInsertUpdateData_PersistsUpdatedFromSnapshot(t *testing.T) {
 	client := test.PGClient(t)
 	orgID := insertTestOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 
 	insertTestSubscription(t, client, orgID, coredata.WebhookEventTypeUserUpdated)
 
@@ -51,7 +51,6 @@ func TestInsertUpdateData_PersistsUpdatedFromSnapshot(t *testing.T) {
 			ctx,
 			tx,
 			scope,
-			gid.Nil,
 			orgID,
 			coredata.WebhookEventTypeUserUpdated,
 			current,
@@ -71,7 +70,7 @@ func TestInsertUpdateData_PersistsUpdatedFromSnapshot(t *testing.T) {
 func TestInsertData_StoresNullUpdatedFrom(t *testing.T) {
 	client := test.PGClient(t)
 	orgID := insertTestOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 
 	insertTestSubscription(t, client, orgID, coredata.WebhookEventTypeObligationUpdated)
 
@@ -80,7 +79,6 @@ func TestInsertData_StoresNullUpdatedFrom(t *testing.T) {
 			ctx,
 			tx,
 			scope,
-			gid.Nil,
 			orgID,
 			coredata.WebhookEventTypeObligationUpdated,
 			map[string]any{"status": "OPEN"},
@@ -98,7 +96,7 @@ func TestInsertData_StoresNullUpdatedFrom(t *testing.T) {
 func TestInsertUpdateData_NoSubscriptionIsNoop(t *testing.T) {
 	client := test.PGClient(t)
 	orgID := insertTestOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 
 	// Subscribe to a different event than the one we emit.
 	insertTestSubscription(t, client, orgID, coredata.WebhookEventTypeObligationUpdated)
@@ -108,7 +106,6 @@ func TestInsertUpdateData_NoSubscriptionIsNoop(t *testing.T) {
 			ctx,
 			tx,
 			scope,
-			gid.Nil,
 			orgID,
 			coredata.WebhookEventTypeUserUpdated,
 			map[string]any{"role": "OWNER"},
@@ -221,7 +218,7 @@ func insertTestSubscription(
 	err := client.WithTx(
 		context.Background(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return subscription.Insert(ctx, tx, coredata.NewScope(orgID.TenantID()))
+			return subscription.Insert(ctx, tx, coredata.NewScope(orgID.TenantID(), gid.Nil))
 		},
 	)
 	require.NoError(t, err)

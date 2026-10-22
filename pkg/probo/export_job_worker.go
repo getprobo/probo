@@ -144,7 +144,7 @@ func (h *exportJobHandler) startHeartbeat(ctx context.Context, exportJobID gid.G
 						return coredata.TouchExportJobLease(
 							ctx,
 							conn,
-							coredata.NewScope(exportJobID.TenantID()),
+							coredata.NewScope(exportJobID.TenantID(), gid.Nil),
 							exportJobID,
 						)
 					},

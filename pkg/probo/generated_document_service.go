@@ -46,7 +46,6 @@ type GeneratedDocumentService struct {
 
 func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	statementOfApplicabilityID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -138,7 +137,7 @@ func (s *GeneratedDocumentService) PublishStatementOfApplicability(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, soa.OrganizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, soa.OrganizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -315,7 +314,6 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 
 func (s *GeneratedDocumentService) PublishDataList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -408,7 +406,7 @@ func (s *GeneratedDocumentService) PublishDataList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -587,7 +585,6 @@ func BuildDataListDocument(data docgen.DataListData) (string, error) {
 
 func (s *GeneratedDocumentService) PublishAssetList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -680,7 +677,7 @@ func (s *GeneratedDocumentService) PublishAssetList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -882,7 +879,6 @@ func BuildStatementOfApplicabilityDocument(data docgen.StatementOfApplicabilityD
 
 func (s *GeneratedDocumentService) PublishFindingList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -975,7 +971,7 @@ func (s *GeneratedDocumentService) PublishFindingList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -1254,7 +1250,6 @@ func BuildFindingListDocument(data docgen.FindingListData) (string, error) {
 func (s *GeneratedDocumentService) PublishBusinessFunctionList(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -1347,7 +1342,7 @@ func (s *GeneratedDocumentService) PublishBusinessFunctionList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -1658,7 +1653,6 @@ func BuildBusinessFunctionListDocument(data docgen.BusinessFunctionListData) (st
 func (s *GeneratedDocumentService) PublishAiSystemList(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -1751,7 +1745,7 @@ func (s *GeneratedDocumentService) PublishAiSystemList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -1958,7 +1952,6 @@ func optionalDateOrDash(value *time.Time) string {
 
 func (s *GeneratedDocumentService) PublishObligationList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2051,7 +2044,7 @@ func (s *GeneratedDocumentService) PublishObligationList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -2252,7 +2245,6 @@ func BuildObligationListDocument(data docgen.ObligationListData) (string, error)
 
 func (s *GeneratedDocumentService) PublishProcessingActivityList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2345,7 +2337,7 @@ func (s *GeneratedDocumentService) PublishProcessingActivityList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -2647,7 +2639,6 @@ func BuildProcessingActivityListDocument(data docgen.ProcessingActivityListData)
 
 func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2740,7 +2731,7 @@ func (s *GeneratedDocumentService) PublishDataProtectionImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -2879,7 +2870,6 @@ func BuildDataProtectionImpactAssessmentListDocument(data docgen.DataProtectionI
 
 func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -2972,7 +2962,7 @@ func (s *GeneratedDocumentService) PublishTransferImpactAssessmentList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -3111,7 +3101,6 @@ func BuildTransferImpactAssessmentListDocument(data docgen.TransferImpactAssessm
 
 func (s *GeneratedDocumentService) PublishThirdPartyList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -3220,7 +3209,7 @@ func (s *GeneratedDocumentService) PublishThirdPartyList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -3728,7 +3717,6 @@ func BuildRiskListDocument(data docgen.RiskListData) (string, error) {
 
 func (s *GeneratedDocumentService) PublishRiskList(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -3821,7 +3809,7 @@ func (s *GeneratedDocumentService) PublishRiskList(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, organizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -4108,7 +4096,6 @@ func BuildRiskAnalysisDocument(data docgen.RiskAnalysisData) (string, error) {
 
 func (s *GeneratedDocumentService) PublishRiskAnalysis(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	riskAnalysisID gid.GID,
 	approverIDs []gid.GID,
 	minor bool,
@@ -4200,7 +4187,7 @@ func (s *GeneratedDocumentService) PublishRiskAnalysis(
 				UpdatedAt:      now,
 			}
 
-			return s.publishOrRequestApproval(ctx, scope, actorIdentityID, tx, document, documentVersion, riskAnalysis.OrganizationID, approverIDs, minor, now)
+			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, riskAnalysis.OrganizationID, approverIDs, minor, now)
 		},
 	)
 	if err != nil {
@@ -4769,7 +4756,6 @@ func formatInternalControlState(state coredata.InternalControlState) string {
 func (s *GeneratedDocumentService) publishOrRequestApproval(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	document *coredata.Document,
 	version *coredata.DocumentVersion,
@@ -4863,7 +4849,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		}
 
 		if isFirstVersion {
-			if err := s.svc.Documents.emitDocumentEvent(ctx, scope, actorIdentityID, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
+			if err := s.svc.Documents.emitDocumentEvent(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document created webhook: %w", err)
 			}
 		}
@@ -4871,7 +4857,6 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 		if err := s.svc.Documents.emitDocumentEvent(
 			ctx,
 			scope,
-			actorIdentityID,
 			tx,
 			version.DocumentID,
 			coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
@@ -4901,7 +4886,7 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	}
 
 	if isFirstVersion {
-		if err := s.svc.Documents.emitDocumentEvent(ctx, scope, actorIdentityID, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
+		if err := s.svc.Documents.emitDocumentEvent(ctx, scope, tx, document.ID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 			return fmt.Errorf("cannot emit document created webhook: %w", err)
 		}
 	}
@@ -4909,7 +4894,6 @@ func (s *GeneratedDocumentService) publishOrRequestApproval(
 	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		version.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionPublished,

@@ -461,7 +461,7 @@ FOR UPDATE SKIP LOCKED
 	staleMessage := "fetch timed out"
 
 	for _, attempt := range stale {
-		scope := NewScope(attempt.TenantID)
+		scope := NewScope(attempt.TenantID, gid.Nil)
 
 		attempt.Status = AccessReviewCampaignSourceFetchStatusFailed
 		attempt.Error = &staleMessage

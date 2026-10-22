@@ -236,7 +236,7 @@ func NewService(
 }
 
 func (s *Service) processExportJob(ctx context.Context, exportJob *coredata.ExportJob) error {
-	scope := coredata.NewScope(exportJob.ID.TenantID())
+	scope := coredata.NewScope(exportJob.ID.TenantID(), gid.Nil)
 
 	var exportService ExportService
 
@@ -309,7 +309,7 @@ func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error
 				return fmt.Errorf("cannot load next pending export job: %w", err)
 			}
 
-			scope = coredata.NewScope(exportJob.ID.TenantID())
+			scope = coredata.NewScope(exportJob.ID.TenantID(), gid.Nil)
 
 			if err := exportJob.MarkProcessing(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
@@ -334,7 +334,7 @@ func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.Ex
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScope(exportJob.ID.TenantID())
+			scope := coredata.NewScope(exportJob.ID.TenantID(), gid.Nil)
 			if err := exportJob.UpdateIfStatus(ctx, tx, scope, coredata.ExportJobStatusProcessing); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
@@ -351,7 +351,7 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 	return s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			scope := coredata.NewScope(exportJob.ID.TenantID())
+			scope := coredata.NewScope(exportJob.ID.TenantID(), gid.Nil)
 			if err := exportJob.UpdateIfStatus(ctx, tx, scope, coredata.ExportJobStatusProcessing); err != nil {
 				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}

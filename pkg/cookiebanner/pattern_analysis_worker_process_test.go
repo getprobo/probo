@@ -53,7 +53,7 @@ func seedWorkerFixture(t *testing.T, ctx context.Context, client *pg.Client) wor
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	bannerID := gid.New(tenantID, coredata.CookieBannerEntityType)
 	uncategorisedID := gid.New(tenantID, coredata.CookieCategoryEntityType)

@@ -73,7 +73,6 @@ func (r *mutationResolver) UpdateTaskComment(ctx context.Context, input types.Up
 
 	taskComment, err := r.task.UpdateComment(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		task.UpdateTaskCommentRequest{
 			ID:      input.TaskCommentID,
 			OwnerID: gqlutils.UnwrapOmittable(input.OwnerID),
@@ -106,7 +105,7 @@ func (r *mutationResolver) DeleteTaskComment(ctx context.Context, input types.De
 		return nil, err
 	}
 
-	if err := r.task.DeleteComment(ctx, scope, authn.IdentityIDFromContext(ctx), input.TaskCommentID); err != nil {
+	if err := r.task.DeleteComment(ctx, scope, input.TaskCommentID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}

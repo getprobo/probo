@@ -359,7 +359,6 @@ func (s ThirdPartyService) ListForDatumID(
 
 func (s ThirdPartyService) Update(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req UpdateThirdPartyRequest,
 ) (*coredata.ThirdParty, error) {
 	if err := req.Validate(); err != nil {
@@ -490,7 +489,6 @@ func (s ThirdPartyService) Update(
 				ctx,
 				conn,
 				scope,
-				actorIdentityID,
 				thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyUpdated,
 				webhooktypes.NewThirdParty(thirdParty, administratorIDs),
@@ -558,7 +556,6 @@ func (s ThirdPartyService) GetByIDs(
 
 func (s ThirdPartyService) Delete(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	thirdPartyID gid.GID,
 ) error {
 	thirdParty := &coredata.ThirdParty{}
@@ -579,7 +576,6 @@ func (s ThirdPartyService) Delete(
 				ctx,
 				conn,
 				scope,
-				actorIdentityID,
 				thirdParty.OrganizationID,
 				coredata.WebhookEventTypeThirdPartyDeleted,
 				webhooktypes.NewThirdParty(thirdParty, administratorIDs),
@@ -594,7 +590,6 @@ func (s ThirdPartyService) Delete(
 
 func (s ThirdPartyService) Create(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req CreateThirdPartyRequest,
 ) (*coredata.ThirdParty, error) {
 	if err := req.Validate(); err != nil {
@@ -691,7 +686,6 @@ func (s ThirdPartyService) Create(
 				ctx,
 				conn,
 				scope,
-				actorIdentityID,
 				organization.ID,
 				coredata.WebhookEventTypeThirdPartyCreated,
 				webhooktypes.NewThirdParty(thirdParty, req.AdministratorIDs),
@@ -716,7 +710,6 @@ func (s ThirdPartyService) Create(
 // ThirdParty and whether it was newly created.
 func (s ThirdPartyService) ImportFromCommon(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req ImportThirdPartyFromCommonRequest,
 ) (*coredata.ThirdParty, bool, error) {
 	if err := req.Validate(); err != nil {
@@ -796,7 +789,6 @@ func (s ThirdPartyService) ImportFromCommon(
 					ctx,
 					conn,
 					scope,
-					actorIdentityID,
 					organization.ID,
 					coredata.WebhookEventTypeThirdPartyCreated,
 					webhooktypes.NewThirdParty(thirdParty, nil),

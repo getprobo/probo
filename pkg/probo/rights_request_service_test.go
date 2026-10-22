@@ -40,7 +40,7 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 
 	client := test.PGClient(t)
 	organizationID := insertRightsRequestWebhookOrganization(t, client)
-	scope := coredata.NewScope(organizationID.TenantID())
+	scope := coredata.NewScope(organizationID.TenantID(), gid.Nil)
 	insertRightsRequestWebhookSubscription(t, client, scope, organizationID)
 
 	service := RightsRequestService{svc: &Service{pg: client}}
@@ -52,7 +52,6 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 	rightsRequest, err := service.Create(
 		t.Context(),
 		scope,
-		gid.Nil,
 		&CreateRightsRequestRequest{
 			OrganizationID: organizationID,
 			RequestType:    &requestType,
@@ -78,7 +77,6 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 	rightsRequest, err = service.Update(
 		t.Context(),
 		scope,
-		gid.Nil,
 		&UpdateRightsRequestRequest{
 			ID:           rightsRequest.ID,
 			RequestState: &updatedState,
@@ -99,7 +97,7 @@ func TestRightsRequestService_WebhookLifecycle(t *testing.T) {
 	assert.Equal(t, requestState, updatedFrom.RequestState)
 	assert.Equal(t, dataSubject, *updatedFrom.DataSubject)
 
-	err = service.Delete(t.Context(), scope, gid.Nil, rightsRequest.ID)
+	err = service.Delete(t.Context(), scope, rightsRequest.ID)
 	require.NoError(t, err)
 
 	deleted, deletedFrom := loadRightsRequestWebhookData(

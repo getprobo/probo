@@ -94,7 +94,7 @@ func (h *sourceFetchHandler) Claim(ctx context.Context) (coredata.AccessReviewCa
 			attempt.CompletedAt = nil
 			attempt.UpdatedAt = now
 
-			scope := coredata.NewScope(attempt.TenantID)
+			scope := coredata.NewScope(attempt.TenantID, gid.Nil)
 			if err := attempt.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update fetch attempt status: %w", err)
 			}
@@ -147,7 +147,7 @@ func (h *sourceFetchHandler) handle(
 	ctx context.Context,
 	attempt *coredata.AccessReviewCampaignSourceFetchAttempt,
 ) error {
-	scope := coredata.NewScope(attempt.TenantID)
+	scope := coredata.NewScope(attempt.TenantID, gid.Nil)
 
 	campaignSource := &coredata.AccessReviewCampaignSource{}
 	if err := h.loadCampaignSource(ctx, scope, attempt.AccessReviewCampaignSourceID, campaignSource); err != nil {
@@ -235,7 +235,7 @@ func (h *sourceFetchHandler) commitFailedSourceFetch(
 	var (
 		now    = time.Now()
 		errMsg = fetchFailureMessage(failureErr)
-		scope  = coredata.NewScope(attempt.TenantID)
+		scope  = coredata.NewScope(attempt.TenantID, gid.Nil)
 	)
 
 	attempt.Status = coredata.AccessReviewCampaignSourceFetchStatusFailed
@@ -258,7 +258,7 @@ func (h *sourceFetchHandler) commitSuccessfulSourceFetch(
 ) error {
 	var (
 		now   = time.Now()
-		scope = coredata.NewScope(attempt.TenantID)
+		scope = coredata.NewScope(attempt.TenantID, gid.Nil)
 	)
 
 	attempt.Status = coredata.AccessReviewCampaignSourceFetchStatusSuccess
@@ -280,7 +280,7 @@ func (h *sourceFetchHandler) finalizeCampaignFetchLifecycle(
 	tenantID gid.TenantID,
 	campaignID gid.GID,
 ) error {
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 
 	return h.pg.WithTx(
 		ctx,

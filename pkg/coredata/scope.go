@@ -32,12 +32,14 @@ type (
 		SQLArguments() pgx.StrictNamedArgs
 		SQLFragment() string
 		GetTenantID() gid.TenantID
+		PrincipalID() gid.GID
 	}
 
 	NoScope struct{}
 
 	Scope struct {
-		tenantID gid.TenantID
+		tenantID    gid.TenantID
+		principalID gid.GID
 	}
 )
 
@@ -62,14 +64,19 @@ func (*NoScope) GetTenantID() gid.TenantID {
 	panic(fmt.Errorf("cannot get tenant id from no scope"))
 }
 
-func NewScope(tenantID gid.TenantID) *Scope {
+func (*NoScope) PrincipalID() gid.GID {
+	return gid.Nil
+}
+
+func NewScope(tenantID gid.TenantID, principalID gid.GID) *Scope {
 	return &Scope{
-		tenantID: tenantID,
+		tenantID:    tenantID,
+		principalID: principalID,
 	}
 }
 
 func NewScopeFromObjectID(objectID gid.GID) *Scope {
-	return NewScope(objectID.TenantID())
+	return NewScope(objectID.TenantID(), gid.Nil)
 }
 
 func (s *Scope) SQLArguments() pgx.StrictNamedArgs {
@@ -84,4 +91,8 @@ func (*Scope) SQLFragment() string {
 
 func (s *Scope) GetTenantID() gid.TenantID {
 	return s.tenantID
+}
+
+func (s *Scope) PrincipalID() gid.GID {
+	return s.principalID
 }

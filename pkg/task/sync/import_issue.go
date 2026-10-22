@@ -122,7 +122,7 @@ func (s *Service) importLinearIssueForConnector(
 		return nil
 	}
 
-	scope := coredata.NewScope(connector.OrganizationID.TenantID())
+	scope := coredata.NewScope(connector.OrganizationID.TenantID(), gid.Nil)
 
 	var (
 		content  string
@@ -261,7 +261,14 @@ func (s *Service) importLinearIssueForConnector(
 		return fmt.Errorf("cannot match Linear actor: %w", err)
 	}
 
-	if err := s.recordImportedTask(ctx, tx, scope, task, actorID, actorIdentityID, now); err != nil {
+	if err := s.recordImportedTask(
+		ctx,
+		tx,
+		coredata.NewScope(connector.OrganizationID.TenantID(), actorIdentityID),
+		task,
+		actorID,
+		now,
+	); err != nil {
 		return fmt.Errorf("cannot record imported task: %w", err)
 	}
 
@@ -309,7 +316,7 @@ func (s *Service) prepareImportedIssues(
 	prepared := make([]preparedImportedIssue, 0, len(connectors))
 
 	for _, connector := range connectors {
-		scope := coredata.NewScope(connector.OrganizationID.TenantID())
+		scope := coredata.NewScope(connector.OrganizationID.TenantID(), gid.Nil)
 
 		content, markdown, files, created, err := s.importedTaskContent(ctx, scope, connector, data)
 		if err != nil {

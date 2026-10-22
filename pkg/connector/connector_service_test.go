@@ -133,7 +133,7 @@ func seedConnectorDeleteOrg(t *testing.T, client *pg.Client) (coredata.Scoper, g
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC()
 

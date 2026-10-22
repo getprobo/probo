@@ -54,7 +54,7 @@ func TestElectronicSignature_EmailSubjectRoundTrip(t *testing.T) {
 
 				client := internaltest.PGClient(t)
 				tenantID := gid.NewTenantID()
-				scope := coredata.NewScope(tenantID)
+				scope := coredata.NewScope(tenantID, gid.Nil)
 				now := time.Now()
 				organization := coredata.Organization{
 					ID:        gid.New(tenantID, coredata.OrganizationEntityType),

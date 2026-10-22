@@ -79,12 +79,11 @@ func InsertData(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	eventType coredata.WebhookEventType,
 	data any,
 ) error {
-	if err := InsertUpdateData(ctx, tx, scope, actorIdentityID, organizationID, eventType, data, nil); err != nil {
+	if err := InsertUpdateData(ctx, tx, scope, organizationID, eventType, data, nil); err != nil {
 		return fmt.Errorf("cannot insert webhook data: %w", err)
 	}
 
@@ -95,7 +94,6 @@ func InsertUpdateData(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	eventType coredata.WebhookEventType,
 	data any,
@@ -117,9 +115,9 @@ func InsertUpdateData(
 		return nil
 	}
 
-	actor, err := snapshotActor(ctx, tx, scope, organizationID, actorIdentityID)
+	actor, err := marshalActor(ctx, tx, scope, organizationID)
 	if err != nil {
-		return fmt.Errorf("cannot snapshot webhook actor: %w", err)
+		return fmt.Errorf("cannot marshal webhook actor: %w", err)
 	}
 
 	raw, err := json.Marshal(data)

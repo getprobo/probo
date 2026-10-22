@@ -40,7 +40,7 @@ func TestEmitTaskCreated_InsertsCreatedWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	orgID := insertTaskWebhookOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskCreated)
 
 	task := newWebhookTestTask(orgID, coredata.TaskStateTodo)
@@ -48,7 +48,7 @@ func TestEmitTaskCreated_InsertsCreatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCreated(ctx, tx, scope, gid.Nil, task)
+			return emitTaskCreated(ctx, tx, scope, task)
 		},
 	)
 	require.NoError(t, err)
@@ -65,7 +65,7 @@ func TestEmitTaskUpdated_InsertsUpdatedWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	orgID := insertTaskWebhookOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskUpdated)
 
 	previous := newWebhookTestTask(orgID, coredata.TaskStateTodo)
@@ -78,7 +78,7 @@ func TestEmitTaskUpdated_InsertsUpdatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskUpdated(ctx, tx, scope, gid.Nil, previous, &current, nil)
+			return emitTaskUpdated(ctx, tx, scope, previous, &current, nil)
 		},
 	)
 	require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestEmitTaskDeleted_InsertsDeletedWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	orgID := insertTaskWebhookOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskDeleted)
 
 	task := newWebhookTestTask(orgID, coredata.TaskStateTodo)
@@ -106,7 +106,7 @@ func TestEmitTaskDeleted_InsertsDeletedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskDeleted(ctx, tx, scope, gid.Nil, task)
+			return emitTaskDeleted(ctx, tx, scope, task)
 		},
 	)
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestEmitTaskCommentCreated_InsertsCommentWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	orgID := insertTaskWebhookOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskCommentCreated)
 
 	ownerID := gid.New(orgID.TenantID(), coredata.MembershipProfileEntityType)
@@ -138,7 +138,7 @@ func TestEmitTaskCommentCreated_InsertsCommentWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCommentCreated(ctx, tx, scope, gid.Nil, comment)
+			return emitTaskCommentCreated(ctx, tx, scope, comment)
 		},
 	)
 	require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestEmitTaskCommentUpdated_InsertsUpdatedWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	orgID := insertTaskWebhookOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskCommentUpdated)
 
 	previous := newWebhookTestComment(orgID)
@@ -171,7 +171,7 @@ func TestEmitTaskCommentUpdated_InsertsUpdatedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCommentUpdated(ctx, tx, scope, gid.Nil, previous, &comment)
+			return emitTaskCommentUpdated(ctx, tx, scope, previous, &comment)
 		},
 	)
 	require.NoError(t, err)
@@ -189,7 +189,7 @@ func TestEmitTaskCommentDeleted_InsertsDeletedWebhook(t *testing.T) {
 
 	client := test.PGClient(t)
 	orgID := insertTaskWebhookOrganization(t, client)
-	scope := coredata.NewScope(orgID.TenantID())
+	scope := coredata.NewScope(orgID.TenantID(), gid.Nil)
 	insertTaskWebhookSubscription(t, client, orgID, coredata.WebhookEventTypeTaskCommentDeleted)
 
 	comment := newWebhookTestComment(orgID)
@@ -197,7 +197,7 @@ func TestEmitTaskCommentDeleted_InsertsDeletedWebhook(t *testing.T) {
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return emitTaskCommentDeleted(ctx, tx, scope, gid.Nil, comment)
+			return emitTaskCommentDeleted(ctx, tx, scope, comment)
 		},
 	)
 	require.NoError(t, err)
@@ -305,7 +305,7 @@ func insertTaskWebhookSubscription(
 	err := client.WithTx(
 		t.Context(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return subscription.Insert(ctx, tx, coredata.NewScope(orgID.TenantID()))
+			return subscription.Insert(ctx, tx, coredata.NewScope(orgID.TenantID(), gid.Nil))
 		},
 	)
 	require.NoError(t, err)

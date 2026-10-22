@@ -29,6 +29,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
+	"go.probo.inc/probo/pkg/server/api/authn"
 )
 
 type (
@@ -102,7 +103,7 @@ func (f *batchFetcher) fetchFiles(
 	for tenantID, fileIDs := range fileIDsByTenant {
 		files, err := f.iam.AccountService.GetFilesByIDs(
 			ctx,
-			coredata.NewScope(tenantID),
+			scopeFromContext(ctx, tenantID),
 			fileIDs...,
 		)
 		if err != nil {
@@ -115,4 +116,8 @@ func (f *batchFetcher) fetchFiles(
 	}
 
 	return result, nil
+}
+
+func scopeFromContext(ctx context.Context, tenantID gid.TenantID) *coredata.Scope {
+	return coredata.NewScope(tenantID, authn.IdentityFromContext(ctx).ID)
 }

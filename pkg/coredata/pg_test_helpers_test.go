@@ -66,7 +66,7 @@ func insertIdleExecution(
 				return fmt.Errorf("cannot insert placeholder organization: %w", err)
 			}
 
-			return run.Insert(ctx, tx, coredata.NewScope(tenantID))
+			return run.Insert(ctx, tx, coredata.NewScope(tenantID, gid.Nil))
 		},
 	)
 	require.NoError(t, err)

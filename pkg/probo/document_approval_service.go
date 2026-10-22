@@ -141,7 +141,6 @@ func (s *DocumentApprovalService) RequestApproval(
 func (s *DocumentApprovalService) BulkPublishVersions(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req BulkPublishVersionsRequest,
 ) ([]*coredata.DocumentVersion, []*coredata.Document, error) {
 	var (
@@ -193,7 +192,6 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					document, dv, err = s.svc.Documents.publishMinor(
 						ctx,
 						scope,
-						actorIdentityID,
 						tx,
 						documentID,
 						&req.Changelog,
@@ -234,7 +232,6 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 						document, dv, err = s.svc.Documents.publishMajor(
 							ctx,
 							scope,
-							actorIdentityID,
 							tx,
 							documentID,
 							&req.Changelog,
@@ -256,7 +253,6 @@ func (s *DocumentApprovalService) BulkPublishVersions(
 					if err := s.svc.Documents.emitDocumentEvent(
 						ctx,
 						scope,
-						actorIdentityID,
 						tx,
 						dv.DocumentID,
 						coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
@@ -457,7 +453,7 @@ func (s *DocumentApprovalService) Approve(
 				return fmt.Errorf("cannot update approval decision: %w", err)
 			}
 
-			if err := s.maybeApproveQuorum(ctx, scope, req.IdentityID, tx, quorum.ID); err != nil {
+			if err := s.maybeApproveQuorum(ctx, scope, tx, quorum.ID); err != nil {
 				return fmt.Errorf("cannot check quorum approval: %w", err)
 			}
 
@@ -476,7 +472,6 @@ func (s *DocumentApprovalService) Approve(
 			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
-				req.IdentityID,
 				tx,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionApprovalQuorumUpdated,
@@ -576,7 +571,6 @@ func (s *DocumentApprovalService) Reject(
 			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
-				req.IdentityID,
 				tx,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionApprovalQuorumRejected,
@@ -591,7 +585,6 @@ func (s *DocumentApprovalService) Reject(
 			if err := s.svc.Documents.emitDocumentEvent(
 				ctx,
 				scope,
-				req.IdentityID,
 				tx,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionRejected,
@@ -615,7 +608,6 @@ func (s *DocumentApprovalService) Reject(
 
 func (s *DocumentApprovalService) VoidApproval(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentVersionID gid.GID,
 ) (*coredata.DocumentVersionApprovalQuorum, *coredata.DocumentVersion, error) {
 	var (
@@ -653,7 +645,7 @@ func (s *DocumentApprovalService) VoidApproval(
 				return &ErrDocumentVersionNotPendingApproval{}
 			}
 
-			return s.voidApprovalInTx(ctx, scope, actorIdentityID, tx, document, documentVersion, quorum)
+			return s.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum)
 		},
 	)
 	if err != nil {
@@ -665,7 +657,6 @@ func (s *DocumentApprovalService) VoidApproval(
 
 func (s *DocumentApprovalService) voidApprovalInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	document *coredata.Document,
 	documentVersion *coredata.DocumentVersion,
@@ -703,7 +694,6 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		documentVersion.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionApprovalQuorumVoided,
@@ -720,7 +710,6 @@ func (s *DocumentApprovalService) voidApprovalInTx(
 
 func (s *DocumentApprovalService) voidPendingApprovalForLatestVersionInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	document *coredata.Document,
 	documentVersion *coredata.DocumentVersion,
@@ -742,7 +731,7 @@ func (s *DocumentApprovalService) voidPendingApprovalForLatestVersionInTx(
 		return nil
 	}
 
-	if err := s.voidApprovalInTx(ctx, scope, actorIdentityID, tx, document, documentVersion, quorum); err != nil {
+	if err := s.voidApprovalInTx(ctx, scope, tx, document, documentVersion, quorum); err != nil {
 		return fmt.Errorf("cannot void pending approval: %w", err)
 	}
 
@@ -1212,7 +1201,6 @@ func (s *DocumentApprovalService) countDecisions(
 
 func (s *DocumentApprovalService) maybeApproveQuorum(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	quorumID gid.GID,
 ) error {
@@ -1257,7 +1245,6 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		version.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionApprovalQuorumApproved,
@@ -1272,7 +1259,6 @@ func (s *DocumentApprovalService) maybeApproveQuorum(
 	if err := s.svc.Documents.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		version.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionPublished,

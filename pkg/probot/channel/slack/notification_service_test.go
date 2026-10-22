@@ -49,7 +49,7 @@ func newNotificationFixture(t *testing.T) notificationFixture {
 	ctx := context.Background()
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 
 	err := client.WithConn(
 		ctx,
@@ -177,7 +177,7 @@ func TestNotificationService_QueueRejectsIncompleteDedup(t *testing.T) {
 	service := slackchannel.NewNotificationService(nil)
 	_, err := service.Queue(
 		context.Background(),
-		coredata.NewScope(gid.NewTenantID()),
+		coredata.NewScope(gid.NewTenantID(), gid.Nil),
 		slackchannel.QueueNotificationRequest{
 			DedupKey: &dedupKey,
 		},

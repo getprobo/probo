@@ -298,7 +298,7 @@ func newConnectorCreateEnv(t *testing.T) (*Service, coredata.Scoper, gid.GID) {
 
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC()
 

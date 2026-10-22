@@ -85,7 +85,7 @@ func newInstallStateClaimOrganization(
 		)
 	})
 
-	return organization, coredata.NewScope(tenantID)
+	return organization, coredata.NewScope(tenantID, gid.Nil)
 }
 
 func TestInstallStateClaim_ProcessingLifecycle(t *testing.T) {

@@ -285,7 +285,7 @@ func (s *Service) Create(
 				return err
 			}
 
-			if err := emitTaskCreated(ctx, conn, scope, identityIDValue(req.IdentityID), task); err != nil {
+			if err := emitTaskCreated(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot emit task created webhook: %w", err)
 			}
 
@@ -415,7 +415,7 @@ func (s *Service) Assign(
 				return err
 			}
 
-			if err := emitTaskUpdated(ctx, conn, scope, identityIDValue(identityID), &oldTask, task, nil); err != nil {
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, nil); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -499,7 +499,7 @@ func (s *Service) Unassign(
 				return fmt.Errorf("cannot record task unassign event: %w", err)
 			}
 
-			if err := emitTaskUpdated(ctx, conn, scope, identityIDValue(identityID), &oldTask, task, nil); err != nil {
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, nil); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -699,7 +699,7 @@ func (s *Service) Update(
 				previousForWebhook = previousInternalControlIDs
 			}
 
-			if err := emitTaskUpdated(ctx, conn, scope, identityIDValue(req.IdentityID), &oldTask, task, previousForWebhook); err != nil {
+			if err := emitTaskUpdated(ctx, conn, scope, &oldTask, task, previousForWebhook); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -736,7 +736,6 @@ func (s *Service) Update(
 func (s *Service) Delete(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	taskID gid.GID,
 ) error {
 	task := &coredata.Task{ID: taskID}
@@ -760,7 +759,7 @@ func (s *Service) Delete(
 				}
 			}
 
-			if err := emitTaskDeleted(ctx, conn, scope, actorIdentityID, task); err != nil {
+			if err := emitTaskDeleted(ctx, conn, scope, task); err != nil {
 				return fmt.Errorf("cannot emit task deleted webhook: %w", err)
 			}
 

@@ -261,8 +261,7 @@ func (s *Service) importLinearComment(
 			if err := webhook.InsertData(
 				ctx,
 				tx,
-				scope,
-				actorIdentityID,
+				coredata.NewScope(link.OrganizationID.TenantID(), actorIdentityID),
 				taskComment.OrganizationID,
 				coredata.WebhookEventTypeTaskCommentCreated,
 				webhooktypes.NewTaskComment(taskComment),
@@ -426,12 +425,14 @@ func (s *Service) unlinkRemovedComment(
 				return fmt.Errorf("cannot match Linear actor: %w", err)
 			}
 
+			actorScope := coredata.NewScope(link.OrganizationID.TenantID(), actorIdentityID)
+
 			for _, mapping := range mappings {
 				if mapping.TaskID != link.TaskID {
 					continue
 				}
 
-				if err := deleteSyncedComment(ctx, tx, scope, actorIdentityID, mapping); err != nil {
+				if err := deleteSyncedComment(ctx, tx, actorScope, mapping); err != nil {
 					return err
 				}
 			}
@@ -445,7 +446,6 @@ func deleteSyncedComment(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	mapping *coredata.TaskCommentExternalLink,
 ) error {
 	taskComment := &coredata.TaskComment{}
@@ -465,7 +465,6 @@ func deleteSyncedComment(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		taskComment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentDeleted,
 		webhooktypes.NewTaskComment(taskComment),
@@ -593,6 +592,8 @@ func (s *Service) applyInboundCommentTx(
 		return fmt.Errorf("cannot match Linear actor: %w", err)
 	}
 
+	actorScope := coredata.NewScope(link.OrganizationID.TenantID(), actorIdentityID)
+
 	hash := CommentContentHash(canonical)
 	remoteUpdatedAt := linearDateTime(data.UpdatedAt)
 
@@ -627,7 +628,7 @@ func (s *Service) applyInboundCommentTx(
 			return nil
 		}
 
-		return s.updateImportedComment(ctx, tx, scope, actorIdentityID, existing, content, hash, remoteUpdatedAt)
+		return s.updateImportedComment(ctx, tx, actorScope, existing, content, hash, remoteUpdatedAt)
 	}
 
 	ownerID, err := resolveCommentOwnerTx(ctx, tx, scope, link, authorEmail)
@@ -670,8 +671,7 @@ func (s *Service) applyInboundCommentTx(
 	if err := webhook.InsertData(
 		ctx,
 		tx,
-		scope,
-		actorIdentityID,
+		actorScope,
 		taskComment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentCreated,
 		webhooktypes.NewTaskComment(taskComment),
@@ -686,7 +686,6 @@ func (s *Service) updateImportedComment(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	mapping *coredata.TaskCommentExternalLink,
 	content string,
 	hash string,
@@ -722,7 +721,6 @@ func (s *Service) updateImportedComment(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		taskComment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentUpdated,
 		webhooktypes.NewTaskComment(taskComment),

@@ -43,7 +43,7 @@ func TestLoadResources_SkipsReportAndFileFromOtherPortal(t *testing.T) {
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	now := time.Now()
 
 	var (
@@ -259,7 +259,7 @@ func TestResolveAccessResourceIDs_MapsPortalIDsAndDropsForeignRows(t *testing.T)
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	now := time.Now()
 
 	var (

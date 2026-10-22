@@ -327,7 +327,7 @@ func newQueueTestOrganizationInTenant(
 
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now()
 
@@ -423,7 +423,7 @@ func TestMessageService_GetMessageNilBackend(t *testing.T) {
 	t.Parallel()
 
 	service := NewMessageService(nil, nil, nil, nil, log.NewLogger())
-	scope := coredata.NewScope(gid.NewTenantID())
+	scope := coredata.NewScope(gid.NewTenantID(), gid.Nil)
 
 	_, err := service.GetMessage(
 		t.Context(),

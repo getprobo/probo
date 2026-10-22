@@ -109,7 +109,7 @@ func insertStaleSlackDeliveryOperation(
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -164,7 +164,7 @@ func loadSlackDeliveryOperation(
 ) *coredata.SlackDeliveryOperation {
 	t.Helper()
 
-	scope := coredata.NewScope(operation.ID.TenantID())
+	scope := coredata.NewScope(operation.ID.TenantID(), gid.Nil)
 
 	var persisted coredata.SlackDeliveryOperation
 

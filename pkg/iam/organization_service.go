@@ -291,13 +291,11 @@ func NewOrganizationService(svc *Service) *OrganizationService {
 
 func (s *OrganizationService) UpdateMembership(
 	ctx context.Context,
-	actorIdentityID gid.GID,
+	scope coredata.Scoper,
 	organizationID gid.GID,
 	membershipID gid.GID,
 	role coredata.MembershipRole,
 ) (*coredata.Membership, error) {
-	scope := coredata.NewScopeFromObjectID(organizationID)
-
 	membership := coredata.Membership{}
 
 	if err := s.pg.WithTx(
@@ -342,7 +340,15 @@ func (s *OrganizationService) UpdateMembership(
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertUpdateData(ctx, tx, scope, actorIdentityID, organizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(profile, &membership), previousUser); err != nil {
+			if err := webhook.InsertUpdateData(
+				ctx,
+				tx,
+				scope,
+				organizationID,
+				coredata.WebhookEventTypeUserUpdated,
+				webhooktypes.NewUser(profile, &membership),
+				previousUser,
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -358,7 +364,6 @@ func (s *OrganizationService) UpdateMembership(
 func (s *OrganizationService) RemoveUser(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	profileID gid.GID,
 ) error {
@@ -401,7 +406,14 @@ func (s *OrganizationService) RemoveUser(
 				}
 			}
 
-			if err := webhook.InsertData(ctx, tx, scope, actorIdentityID, organizationID, coredata.WebhookEventTypeUserDeleted, webhooktypes.NewUser(&profile, membership)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				tx,
+				scope,
+				organizationID,
+				coredata.WebhookEventTypeUserDeleted,
+				webhooktypes.NewUser(&profile, membership),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -425,7 +437,6 @@ func (s *OrganizationService) RemoveUser(
 func (s *OrganizationService) DeactivateUser(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	organizationID gid.GID,
 	profileID gid.GID,
 ) error {
@@ -500,7 +511,15 @@ func (s *OrganizationService) DeactivateUser(
 				return fmt.Errorf("cannot update membership: %w", err)
 			}
 
-			if err := webhook.InsertUpdateData(ctx, tx, scope, actorIdentityID, profile.OrganizationID, coredata.WebhookEventTypeUserUpdated, webhooktypes.NewUser(&profile, membership), previousUser); err != nil {
+			if err := webhook.InsertUpdateData(
+				ctx,
+				tx,
+				scope,
+				profile.OrganizationID,
+				coredata.WebhookEventTypeUserUpdated,
+				webhooktypes.NewUser(&profile, membership),
+				previousUser,
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -662,7 +681,7 @@ func (s *OrganizationService) CreateOrganization(
 
 		logoFile           *coredata.File
 		horizontalLogoFile *coredata.File
-		scope              = coredata.NewScope(tenantID)
+		scope              = coredata.NewScope(tenantID, identityID)
 	)
 
 	if req.LogoFile != nil {
@@ -1104,7 +1123,7 @@ func deleteOrganizationDependencies(
 	return nil
 }
 
-func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Scoper, actorIdentityID gid.GID, req *CreateUserRequest) (*coredata.MembershipProfile, error) {
+func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Scoper, req *CreateUserRequest) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -1180,7 +1199,14 @@ func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Sco
 				return fmt.Errorf("cannot insert membership: %w", err)
 			}
 
-			if err := webhook.InsertData(ctx, conn, scope, actorIdentityID, req.OrganizationID, coredata.WebhookEventTypeUserCreated, webhooktypes.NewUser(profile, membership)); err != nil {
+			if err := webhook.InsertData(
+				ctx,
+				conn,
+				scope,
+				req.OrganizationID,
+				coredata.WebhookEventTypeUserCreated,
+				webhooktypes.NewUser(profile, membership),
+			); err != nil {
 				return fmt.Errorf("cannot insert webhook event: %w", err)
 			}
 
@@ -1194,15 +1220,16 @@ func (s *OrganizationService) CreateUser(ctx context.Context, scope coredata.Sco
 	return profile, nil
 }
 
-func (s *OrganizationService) UpdateUser(ctx context.Context, actorIdentityID gid.GID, req *UpdateUserRequest) (*coredata.MembershipProfile, error) {
+func (s *OrganizationService) UpdateUser(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req *UpdateUserRequest,
+) (*coredata.MembershipProfile, error) {
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	var (
-		scope   = coredata.NewScopeFromObjectID(req.ID)
-		profile = &coredata.MembershipProfile{}
-	)
+	profile := &coredata.MembershipProfile{}
 
 	err := s.pg.WithTx(
 		ctx,
@@ -1265,7 +1292,6 @@ func (s *OrganizationService) UpdateUser(ctx context.Context, actorIdentityID gi
 				ctx,
 				conn,
 				scope,
-				actorIdentityID,
 				profile.OrganizationID,
 				coredata.WebhookEventTypeUserUpdated,
 				webhookPayload,

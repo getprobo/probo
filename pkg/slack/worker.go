@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/connectorprotocol"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (
@@ -102,7 +103,7 @@ func (h *sendingHandler) Claim(ctx context.Context) (coredata.SlackMessage, erro
 			message.ProcessingStartedAt = &now
 			message.UpdatedAt = now
 
-			scope := coredata.NewScope(message.ID.TenantID())
+			scope := coredata.NewScope(message.ID.TenantID(), gid.Nil)
 			if err := message.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot mark slack message as processing: %w", err)
 			}
@@ -135,7 +136,7 @@ func (h *sendingHandler) Process(ctx context.Context, message coredata.SlackMess
 		sendErr = h.updateMessage(ctx, &message)
 	}
 
-	scope := coredata.NewScope(message.ID.TenantID())
+	scope := coredata.NewScope(message.ID.TenantID(), gid.Nil)
 
 	if commitErr := h.pg.WithTx(
 		ctx,
@@ -194,7 +195,7 @@ func (h *sendingHandler) RecoverStale(ctx context.Context) error {
 }
 
 func (h *sendingHandler) loadSlackConnection(ctx context.Context, message *coredata.SlackMessage) (*connectorprotocol.SlackConnection, error) {
-	scope := coredata.NewScope(message.ID.TenantID())
+	scope := coredata.NewScope(message.ID.TenantID(), gid.Nil)
 
 	var c coredata.Connector
 

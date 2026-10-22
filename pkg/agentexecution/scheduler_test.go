@@ -562,7 +562,7 @@ func TestRecoverStale_DeadLettersAllPendingInputsOnTerminalExecution(t *testing.
 				if err := claimed.SetProcessingInputIDs(
 					ctx,
 					conn,
-					coredata.NewScope(organizationID.TenantID()),
+					coredata.NewScope(organizationID.TenantID(), gid.Nil),
 					ownerToken,
 					[]string{batchInput.ID.String()},
 					now,

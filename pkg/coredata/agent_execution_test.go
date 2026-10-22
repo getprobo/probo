@@ -38,7 +38,7 @@ func TestAgentExecution_QueueLifecycle(t *testing.T) {
 	ctx := t.Context()
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC()
 
@@ -366,7 +366,7 @@ func TestAgentInput_NullSourceEventIDsRemainDistinct(t *testing.T) {
 	ctx := t.Context()
 	client := test.PGClient(t)
 	run := insertIdleExecution(t, client, "test-agent")
-	scope := coredata.NewScope(run.ID.TenantID())
+	scope := coredata.NewScope(run.ID.TenantID(), gid.Nil)
 	now := time.Now().UTC()
 
 	for range 2 {
@@ -403,7 +403,7 @@ func TestDeadLetterAgentInputsForStaleExecutions_DeadLettersAllPendingOnTerminal
 	ctx := t.Context()
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC()
 	ownerToken := "stale-owner"
@@ -578,7 +578,7 @@ func TestLockStaleAgentExecutionIDs_BlocksHeartbeatUntilReset(t *testing.T) {
 	ctx := t.Context()
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC()
 	ownerToken := "heartbeat-owner"

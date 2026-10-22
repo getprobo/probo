@@ -139,7 +139,6 @@ func (r *Resolver) AddThirdPartyTool(ctx context.Context, req *mcp.CallToolReque
 
 	thirdParty, err := svc.ThirdParties.Create(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		probo.CreateThirdPartyRequest{
 			OrganizationID:                input.OrganizationID,
 			Name:                          input.Name,
@@ -266,7 +265,6 @@ func (r *Resolver) UpdateThirdPartyTool(ctx context.Context, req *mcp.CallToolRe
 
 	thirdParty, err := svc.ThirdParties.Update(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		probo.UpdateThirdPartyRequest{
 			ID:                            input.ID,
 			Name:                          input.Name,
@@ -1040,7 +1038,6 @@ func (r *Resolver) AddObligationTool(ctx context.Context, req *mcp.CallToolReque
 
 	obligation, err := svc.Obligations.Create(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		&probo.CreateObligationRequest{
 			OrganizationID:         input.OrganizationID,
 			Area:                   input.Area,
@@ -1074,7 +1071,6 @@ func (r *Resolver) UpdateObligationTool(ctx context.Context, req *mcp.CallToolRe
 
 	obligation, err := svc.Obligations.Update(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		&probo.UpdateObligationRequest{
 			ID:                     input.ID,
 			Area:                   UnwrapOmittable(input.Area),
@@ -2390,7 +2386,7 @@ func (r *Resolver) DeleteTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.DeleteTaskOutput{}, err
 	}
 
-	err = r.task.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	err = r.task.Delete(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteTaskOutput{}, fmt.Errorf("failed to delete task: %w", err)
 	}
@@ -2484,7 +2480,6 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 
 	document, documentVersion, err := svc.Documents.Create(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		probo.CreateDocumentRequest{
 			OrganizationID:     input.OrganizationID,
 			Title:              input.Title,
@@ -2527,7 +2522,6 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 
 	document, documentVersion, _, err := svc.Documents.Update(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		probo.UpdateDocumentRequest{
 			DocumentID:         input.ID,
 			Title:              input.Title,
@@ -2684,7 +2678,6 @@ func (r *Resolver) RequestDocumentVersionSignatureTool(ctx context.Context, req 
 
 	documentVersionSignature, err := svc.Documents.RequestSignature(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		probo.RequestSignatureRequest{
 			DocumentVersionID: input.DocumentVersionID,
 			Signatory:         input.SignatoryID,
@@ -2711,7 +2704,7 @@ func (r *Resolver) DeleteDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 
 	svc := r.proboSvc
 
-	err = svc.Documents.SoftDelete(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentID)
+	err = svc.Documents.SoftDelete(ctx, scope, input.DocumentID)
 	if err != nil {
 		panic(fmt.Errorf("cannot soft delete document: %w", err))
 	}
@@ -2729,7 +2722,7 @@ func (r *Resolver) CancelSignatureRequestTool(ctx context.Context, req *mcp.Call
 
 	svc := r.proboSvc
 
-	err = svc.Documents.CancelSignatureRequest(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentVersionSignatureID)
+	err = svc.Documents.CancelSignatureRequest(ctx, scope, input.DocumentVersionSignatureID)
 	if err != nil {
 		panic(fmt.Errorf("cannot cancel signature request: %w", err))
 	}
@@ -3139,7 +3132,6 @@ func (r *Resolver) CreateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	profile, err := r.iamSvc.OrganizationService.CreateUser(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		&iam.CreateUserRequest{
 			OrganizationID:           input.OrganizationID,
 			EmailAddress:             input.EmailAddress,
@@ -3188,7 +3180,8 @@ func (r *Resolver) InviteUserTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateUserInput) (*mcp.CallToolResult, types.UpdateUserOutput, error) {
-	if _, err := r.Authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate); err != nil {
+	scope, err := r.Authorize(ctx, input.ID, iam.ActionMembershipProfileUpdate)
+	if err != nil {
 		return nil, types.UpdateUserOutput{}, err
 	}
 
@@ -3209,7 +3202,7 @@ func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 
 	profile, err := r.iamSvc.OrganizationService.UpdateUser(
 		ctx,
-		authn.IdentityIDFromContext(ctx),
+		scope,
 		&iam.UpdateUserRequest{
 			ID:                       input.ID,
 			FullName:                 input.FullName,
@@ -3228,16 +3221,23 @@ func (r *Resolver) UpdateUserTool(ctx context.Context, req *mcp.CallToolRequest,
 }
 
 func (r *Resolver) UpdateMembershipTool(ctx context.Context, req *mcp.CallToolRequest, input *types.UpdateMembershipInput) (*mcp.CallToolResult, types.UpdateMembershipOutput, error) {
-	if _, err := r.Authorize(
+	scope, err := r.Authorize(
 		ctx,
 		input.MembershipID,
 		iam.ActionMembershipUpdate,
 		authz.WithAttr("target_role", input.Role.String()),
-	); err != nil {
+	)
+	if err != nil {
 		return nil, types.UpdateMembershipOutput{}, err
 	}
 
-	membership, err := r.iamSvc.OrganizationService.UpdateMembership(ctx, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.MembershipID, input.Role)
+	membership, err := r.iamSvc.OrganizationService.UpdateMembership(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.MembershipID,
+		input.Role,
+	)
 	if err != nil {
 		return nil, types.UpdateMembershipOutput{}, fmt.Errorf("update membership: %w", err)
 	}
@@ -3257,7 +3257,7 @@ func (r *Resolver) RemoveUserTool(ctx context.Context, req *mcp.CallToolRequest,
 		return nil, types.RemoveUserOutput{}, err
 	}
 
-	err = r.iamSvc.OrganizationService.RemoveUser(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ProfileID)
+	err = r.iamSvc.OrganizationService.RemoveUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, types.RemoveUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be removed: %w", err)
@@ -3283,7 +3283,7 @@ func (r *Resolver) DeactivateUserTool(ctx context.Context, req *mcp.CallToolRequ
 		return nil, types.DeactivateUserOutput{}, err
 	}
 
-	err = r.iamSvc.OrganizationService.DeactivateUser(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ProfileID)
+	err = r.iamSvc.OrganizationService.DeactivateUser(ctx, scope, input.OrganizationID, input.ProfileID)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrUserManagedBySCIM](err); ok {
 			return nil, types.DeactivateUserOutput{}, fmt.Errorf("user is managed by SCIM and cannot be deactivated: %w", err)
@@ -3605,7 +3605,7 @@ func (r *Resolver) DeleteThirdPartyTool(ctx context.Context, req *mcp.CallToolRe
 
 	svc := r.proboSvc
 
-	err = svc.ThirdParties.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	err = svc.ThirdParties.Delete(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteThirdPartyOutput{}, fmt.Errorf("failed to delete thirdParty: %w", err)
 	}
@@ -4306,7 +4306,7 @@ func (r *Resolver) ArchiveDocumentTool(ctx context.Context, req *mcp.CallToolReq
 
 	svc := r.proboSvc
 
-	document, err := svc.Documents.Archive(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	document, err := svc.Documents.Archive(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.ArchiveDocumentOutput{}, fmt.Errorf("cannot archive document: %w", err)
 	}
@@ -4324,7 +4324,7 @@ func (r *Resolver) UnarchiveDocumentTool(ctx context.Context, req *mcp.CallToolR
 
 	svc := r.proboSvc
 
-	document, err := svc.Documents.Unarchive(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	document, err := svc.Documents.Unarchive(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.UnarchiveDocumentOutput{}, fmt.Errorf("cannot unarchive document: %w", err)
 	}
@@ -4473,7 +4473,7 @@ func (r *Resolver) VoidDocumentVersionApprovalTool(ctx context.Context, req *mcp
 
 	svc := r.proboSvc
 
-	_, documentVersion, err := svc.DocumentApprovals.VoidApproval(ctx, scope, authn.IdentityIDFromContext(ctx), input.DocumentVersionID)
+	_, documentVersion, err := svc.DocumentApprovals.VoidApproval(ctx, scope, input.DocumentVersionID)
 	if err != nil {
 		panic(fmt.Errorf("cannot void document version approval: %w", err))
 	}
@@ -4491,7 +4491,7 @@ func (r *Resolver) DeleteDocumentDraftTool(ctx context.Context, req *mcp.CallToo
 
 	svc := r.proboSvc
 
-	document, err := svc.Documents.DeleteDraft(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	document, err := svc.Documents.DeleteDraft(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteDocumentDraftOutput{}, fmt.Errorf("cannot delete document draft: %w", err)
 	}
@@ -4509,7 +4509,7 @@ func (r *Resolver) PublishStatementOfApplicabilityTool(ctx context.Context, req 
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishStatementOfApplicability(ctx, scope, input.ID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishStatementOfApplicabilityOutput{}, fmt.Errorf("cannot publish statement of applicability: %w", err)
 	}
@@ -4789,7 +4789,7 @@ func (r *Resolver) PublishDataListTool(ctx context.Context, req *mcp.CallToolReq
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishDataList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishDataList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishDataListOutput{}, fmt.Errorf("cannot publish data list: %w", err)
 	}
@@ -4808,7 +4808,7 @@ func (r *Resolver) PublishAssetListTool(ctx context.Context, req *mcp.CallToolRe
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishAssetList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishAssetListOutput{}, fmt.Errorf("cannot publish asset list: %w", err)
 	}
@@ -5097,7 +5097,7 @@ func (r *Resolver) DeleteObligationTool(ctx context.Context, req *mcp.CallToolRe
 
 	svc := r.proboSvc
 
-	err = svc.Obligations.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	err = svc.Obligations.Delete(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteObligationOutput{}, fmt.Errorf("failed to delete obligation: %w", err)
 	}
@@ -5179,7 +5179,6 @@ func (r *Resolver) AddRightsRequestTool(ctx context.Context, req *mcp.CallToolRe
 
 	rightsRequest, err := svc.RightsRequests.Create(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		&probo.CreateRightsRequestRequest{
 			OrganizationID: input.OrganizationID,
 			RequestType:    &input.RequestType,
@@ -5214,7 +5213,6 @@ func (r *Resolver) UpdateRightsRequestTool(ctx context.Context, req *mcp.CallToo
 
 	rightsRequest, err := svc.RightsRequests.Update(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		&probo.UpdateRightsRequestRequest{
 			ID:           input.ID,
 			RequestType:  input.RequestType,
@@ -5242,7 +5240,7 @@ func (r *Resolver) DeleteRightsRequestTool(ctx context.Context, req *mcp.CallToo
 
 	svc := r.proboSvc
 
-	err = svc.RightsRequests.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID)
+	err = svc.RightsRequests.Delete(ctx, scope, input.ID)
 	if err != nil {
 		return nil, types.DeleteRightsRequestOutput{}, fmt.Errorf("failed to delete rights request: %w", err)
 	}
@@ -5772,7 +5770,7 @@ func (r *Resolver) PublishFindingListTool(ctx context.Context, req *mcp.CallTool
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishFindingList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishFindingList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishFindingListOutput{}, fmt.Errorf("cannot publish finding list: %w", err)
 	}
@@ -5791,7 +5789,7 @@ func (r *Resolver) PublishObligationListTool(ctx context.Context, req *mcp.CallT
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishObligationList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishObligationList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishObligationListOutput{}, fmt.Errorf("cannot publish obligation list: %w", err)
 	}
@@ -5810,7 +5808,7 @@ func (r *Resolver) PublishProcessingActivityListTool(ctx context.Context, req *m
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishProcessingActivityList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishProcessingActivityListOutput{}, fmt.Errorf("cannot publish processing activity list: %w", err)
 	}
@@ -5829,7 +5827,7 @@ func (r *Resolver) PublishDataProtectionImpactAssessmentListTool(ctx context.Con
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishDataProtectionImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishDataProtectionImpactAssessmentListOutput{}, fmt.Errorf("cannot publish DPIA list: %w", err)
 	}
@@ -5848,7 +5846,7 @@ func (r *Resolver) PublishTransferImpactAssessmentListTool(ctx context.Context, 
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishTransferImpactAssessmentList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishTransferImpactAssessmentListOutput{}, fmt.Errorf("cannot publish TIA list: %w", err)
 	}
@@ -5867,7 +5865,7 @@ func (r *Resolver) PublishThirdPartyListTool(ctx context.Context, req *mcp.CallT
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishThirdPartyList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishThirdPartyList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishThirdPartyListOutput{}, fmt.Errorf("cannot publish thirdParty list: %w", err)
 	}
@@ -6548,7 +6546,7 @@ func (r *Resolver) PublishRiskListTool(ctx context.Context, req *mcp.CallToolReq
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskList(ctx, scope, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskList(ctx, scope, input.OrganizationID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishRiskListOutput{}, fmt.Errorf("cannot publish risk list: %w", err)
 	}
@@ -6711,7 +6709,6 @@ func (r *Resolver) PublishDocumentTool(ctx context.Context, req *mcp.CallToolReq
 
 	result, err := svc.Documents.PublishVersionWithDefaultApprovers(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		probo.PublishDocumentRequest{
 			DocumentID: input.DocumentID,
 			Minor:      input.Minor,
@@ -9365,7 +9362,6 @@ func (r *Resolver) PublishBusinessFunctionListTool(ctx context.Context, req *mcp
 	document, documentVersion, err := svc.GeneratedDocuments.PublishBusinessFunctionList(
 		ctx,
 		scope,
-		authn.IdentityIDFromContext(ctx),
 		input.OrganizationID,
 		input.ApproverIds,
 		input.Minor,
@@ -9572,7 +9568,6 @@ func (r *Resolver) PublishAiSystemListTool(ctx context.Context, req *mcp.CallToo
 	document, documentVersion, err := svc.GeneratedDocuments.PublishAiSystemList(
 		ctx,
 		scope,
-		authn.IdentityIDFromContext(ctx),
 		input.OrganizationID,
 		input.ApproverIds,
 		input.Minor,
@@ -9998,7 +9993,6 @@ func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 
 	taskComment, err := r.task.UpdateComment(
 		ctx, scope,
-		authn.IdentityIDFromContext(ctx),
 		task.UpdateTaskCommentRequest{
 			ID:      input.ID,
 			OwnerID: optionalPtr(input.OwnerID),
@@ -10035,7 +10029,7 @@ func (r *Resolver) DeleteTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 		return nil, types.DeleteTaskCommentOutput{}, err
 	}
 
-	if err := r.task.DeleteComment(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID); err != nil {
+	if err := r.task.DeleteComment(ctx, scope, input.ID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.DeleteTaskCommentOutput{}, fmt.Errorf("resource not found")
 		}
@@ -10387,7 +10381,7 @@ func (r *Resolver) PublishRiskAnalysisTool(ctx context.Context, req *mcp.CallToo
 
 	svc := r.proboSvc
 
-	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, authn.IdentityIDFromContext(ctx), input.ID, input.ApproverIds, input.Minor)
+	document, documentVersion, err := svc.GeneratedDocuments.PublishRiskAnalysis(ctx, scope, input.ID, input.ApproverIds, input.Minor)
 	if err != nil {
 		return nil, types.PublishRiskAnalysisOutput{}, fmt.Errorf("cannot publish risk analysis: %w", err)
 	}

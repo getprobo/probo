@@ -319,7 +319,7 @@ func insertRetentionTaskSyncJob(
 		pgClient.WithTx(
 			t.Context(),
 			func(ctx context.Context, tx pg.Tx) error {
-				return job.Insert(ctx, tx, coredata.NewScope(organization.TenantID))
+				return job.Insert(ctx, tx, coredata.NewScope(organization.TenantID, gid.Nil))
 			},
 		),
 	)

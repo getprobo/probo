@@ -27,6 +27,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 // SyncStats holds the statistics from a sync operation.
@@ -52,7 +53,7 @@ func (r *BridgeRunner) acquireNextBridge(ctx context.Context) (*coredata.SCIMBri
 				return err
 			}
 
-			scope = coredata.NewScope(bridge.ID.TenantID())
+			scope = coredata.NewScope(bridge.ID.TenantID(), gid.Nil)
 
 			now := time.Now()
 			bridge.State = coredata.SCIMBridgeStateSyncing

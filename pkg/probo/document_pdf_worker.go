@@ -28,6 +28,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 const maxPDFAttempts = 3
@@ -75,7 +76,7 @@ func (h *documentPDFHandler) Claim(ctx context.Context) (coredata.DocumentVersio
 }
 
 func (h *documentPDFHandler) Process(ctx context.Context, version coredata.DocumentVersion) error {
-	scope := coredata.NewScope(version.ID.TenantID())
+	scope := coredata.NewScope(version.ID.TenantID(), gid.Nil)
 
 	if err := h.service.Documents.generateAndUploadPublicationPDF(ctx, scope, &version); err != nil {
 		h.logger.ErrorCtx(

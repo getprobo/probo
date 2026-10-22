@@ -1214,7 +1214,7 @@ func (r *mutationResolver) RecordAccessReviewEntryDecisions(ctx context.Context,
 	}
 
 	tenantID := input.Decisions[0].AccessReviewEntryID.TenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, identity.ID)
 	decidedByID := &identity.ID
 
 	decisions := make([]accessreview.RecordAccessReviewEntryDecisionRequest, len(input.Decisions))

@@ -48,7 +48,7 @@ func seedTrackerPatternFixture(t *testing.T, ctx context.Context, client *pg.Cli
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	cookieBannerID := gid.New(tenantID, coredata.CookieBannerEntityType)
 	cookieCategoryID := gid.New(tenantID, coredata.CookieCategoryEntityType)

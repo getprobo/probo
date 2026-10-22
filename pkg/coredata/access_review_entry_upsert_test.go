@@ -49,7 +49,7 @@ func seedAccessReviewEntryFixture(t *testing.T, ctx context.Context, client *pg.
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	campaignID := gid.New(tenantID, coredata.AccessReviewCampaignEntityType)
 	sourceID := gid.New(tenantID, coredata.AccessReviewSourceEntityType)

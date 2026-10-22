@@ -55,7 +55,7 @@ func insertTaskSyncJobFixture(
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -154,7 +154,7 @@ func insertOutboundTaskSyncJob(
 ) *coredata.TaskSyncJob {
 	t.Helper()
 
-	scope := coredata.NewScope(organization.TenantID)
+	scope := coredata.NewScope(organization.TenantID, gid.Nil)
 	job := coredata.TaskSyncJob{
 		ID:                   gid.New(organization.TenantID, coredata.TaskSyncJobEntityType),
 		OrganizationID:       organization.ID,
@@ -199,7 +199,7 @@ func loadTaskSyncJob(
 		pgClient.WithConn(
 			t.Context(),
 			func(ctx context.Context, conn pg.Querier) error {
-				return job.LoadByID(ctx, conn, coredata.NewScope(id.TenantID()), id)
+				return job.LoadByID(ctx, conn, coredata.NewScope(id.TenantID(), gid.Nil), id)
 			},
 		),
 	)
@@ -255,7 +255,7 @@ func TestTaskSyncJob_ClaimAndCompleteProcessing(t *testing.T) {
 				return claimed.UpdateProcessingState(
 					ctx,
 					conn,
-					coredata.NewScope(claimed.ID.TenantID()),
+					coredata.NewScope(claimed.ID.TenantID(), gid.Nil),
 				)
 			},
 		),
@@ -338,7 +338,7 @@ func TestTaskSyncJob_ClaimNextForUpdateSkipLocked_ClearsNextAttemptAt(t *testing
 				return claimed.UpdateProcessingState(
 					ctx,
 					conn,
-					coredata.NewScope(claimed.ID.TenantID()),
+					coredata.NewScope(claimed.ID.TenantID(), gid.Nil),
 				)
 			},
 		),
@@ -496,7 +496,7 @@ func TestTaskSyncJob_UpdateProcessingState_WrongToken(t *testing.T) {
 			return job.UpdateProcessingState(
 				ctx,
 				conn,
-				coredata.NewScope(job.ID.TenantID()),
+				coredata.NewScope(job.ID.TenantID(), gid.Nil),
 			)
 		},
 	)
@@ -535,7 +535,7 @@ func TestTaskSyncJob_TouchLease_RenewsStartedAt(t *testing.T) {
 				return job.TouchLease(
 					ctx,
 					conn,
-					coredata.NewScope(job.ID.TenantID()),
+					coredata.NewScope(job.ID.TenantID(), gid.Nil),
 					touchedAt,
 				)
 			},
@@ -574,7 +574,7 @@ func TestTaskSyncJob_TouchLease_WrongToken(t *testing.T) {
 			return job.TouchLease(
 				ctx,
 				conn,
-				coredata.NewScope(job.ID.TenantID()),
+				coredata.NewScope(job.ID.TenantID(), gid.Nil),
 				now,
 			)
 		},

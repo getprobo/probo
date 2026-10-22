@@ -66,7 +66,7 @@ func newNotificationWorkerFixture(t *testing.T) notificationWorkerFixture {
 	ctx := context.Background()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 
 	err := pgClient.WithConn(
 		ctx,

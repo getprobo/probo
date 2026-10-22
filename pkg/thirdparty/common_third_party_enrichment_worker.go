@@ -414,7 +414,7 @@ func (h *enrichmentHandler) persist(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			if logoFile != nil {
-				if err := logoFile.Insert(ctx, tx, coredata.NewScope(gid.NilTenant)); err != nil {
+				if err := logoFile.Insert(ctx, tx, coredata.NewScope(gid.NilTenant, gid.Nil)); err != nil {
 					return fmt.Errorf("cannot insert common third party logo file: %w", err)
 				}
 

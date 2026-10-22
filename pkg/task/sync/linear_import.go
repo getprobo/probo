@@ -530,7 +530,7 @@ func (s *Service) discardInboundImport(ctx context.Context, imported *linearImpo
 
 	return s.discardCreatedFiles(
 		ctx,
-		coredata.NewScope(imported.organizationID.TenantID()),
+		coredata.NewScope(imported.organizationID.TenantID(), gid.Nil),
 		imported.created,
 	)
 }
@@ -543,7 +543,7 @@ func (s *Service) discardPreparedIssues(ctx context.Context, issues []preparedIm
 
 		err := s.discardCreatedFiles(
 			ctx,
-			coredata.NewScope(issues[i].connector.OrganizationID.TenantID()),
+			coredata.NewScope(issues[i].connector.OrganizationID.TenantID(), gid.Nil),
 			issues[i].created,
 		)
 		if err != nil {

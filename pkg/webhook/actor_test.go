@@ -28,10 +28,10 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-func TestSnapshotActor_OmitsActorWithoutIdentity(t *testing.T) {
+func TestMarshalActor_OmitsActorWithoutIdentity(t *testing.T) {
 	t.Parallel()
 
-	raw, err := snapshotActor(t.Context(), nil, nil, gid.Nil, gid.Nil)
+	raw, err := marshalActor(t.Context(), nil, nil, gid.Nil)
 	require.NoError(t, err)
 	assert.Nil(t, raw)
 }

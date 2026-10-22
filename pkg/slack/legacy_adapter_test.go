@@ -48,7 +48,7 @@ func newLegacyLookupFixture(t *testing.T) legacyLookupFixture {
 	ctx := context.Background()
 	client := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	now := time.Now()
 	organization := &coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),

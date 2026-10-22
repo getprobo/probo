@@ -222,7 +222,7 @@ func (s *Service) CreateComment(
 				return fmt.Errorf("cannot insert task comment: %w", err)
 			}
 
-			if err := emitTaskCommentCreated(ctx, conn, scope, req.IdentityID, taskComment); err != nil {
+			if err := emitTaskCommentCreated(ctx, conn, scope, taskComment); err != nil {
 				return fmt.Errorf("cannot emit task comment created webhook: %w", err)
 			}
 
@@ -245,7 +245,6 @@ func (s *Service) CreateComment(
 func (s *Service) UpdateComment(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req UpdateTaskCommentRequest,
 ) (*coredata.TaskComment, error) {
 	if err := req.Validate(); err != nil {
@@ -291,7 +290,7 @@ func (s *Service) UpdateComment(
 				return fmt.Errorf("cannot update task comment: %w", err)
 			}
 
-			if err := emitTaskCommentUpdated(ctx, conn, scope, actorIdentityID, &previousComment, taskComment); err != nil {
+			if err := emitTaskCommentUpdated(ctx, conn, scope, &previousComment, taskComment); err != nil {
 				return fmt.Errorf("cannot emit task comment updated webhook: %w", err)
 			}
 
@@ -314,7 +313,6 @@ func (s *Service) UpdateComment(
 func (s *Service) DeleteComment(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	taskCommentID gid.GID,
 ) error {
 	taskComment := coredata.TaskComment{ID: taskCommentID}
@@ -326,7 +324,7 @@ func (s *Service) DeleteComment(
 				return fmt.Errorf("cannot load task comment: %w", err)
 			}
 
-			if err := emitTaskCommentDeleted(ctx, conn, scope, actorIdentityID, &taskComment); err != nil {
+			if err := emitTaskCommentDeleted(ctx, conn, scope, &taskComment); err != nil {
 				return fmt.Errorf("cannot emit task comment deleted webhook: %w", err)
 			}
 

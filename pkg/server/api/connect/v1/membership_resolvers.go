@@ -50,16 +50,23 @@ func (r *membershipResolver) Permission(ctx context.Context, obj *types.Membersh
 
 // UpdateMembership is the resolver for the updateMembership field.
 func (r *mutationResolver) UpdateMembership(ctx context.Context, input types.UpdateMembershipInput) (*types.UpdateMembershipPayload, error) {
-	if _, err := r.authorize(
+	scope, err := r.authorize(
 		ctx,
 		input.MembershipID,
 		iam.ActionMembershipUpdate,
 		authz.WithAttr("target_role", input.Role.String()),
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
 
-	membership, err := r.iam.OrganizationService.UpdateMembership(ctx, authn.IdentityIDFromContext(ctx), input.OrganizationID, input.MembershipID, input.Role)
+	membership, err := r.iam.OrganizationService.UpdateMembership(
+		ctx,
+		scope,
+		input.OrganizationID,
+		input.MembershipID,
+		input.Role,
+	)
 	if err != nil {
 		if _, ok := errors.AsType[*iam.ErrLastActiveOwner](err); ok {
 			return nil, gqlutils.Conflictf(ctx, "cannot demote last active owner")

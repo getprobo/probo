@@ -40,7 +40,7 @@ func TestDevice_DeleteOrphans(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 
 	orphanPendingID := gid.New(tenantID, coredata.DeviceEntityType)

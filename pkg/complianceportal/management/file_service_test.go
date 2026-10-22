@@ -48,7 +48,7 @@ func seedUpdateFileAccessFixture(t *testing.T, ctx context.Context, client *pg.C
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now()
 

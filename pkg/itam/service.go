@@ -346,7 +346,7 @@ func (s *Service) ExchangeEnrollmentToken(
 				return fmt.Errorf("cannot load device enrollment token: %w", err)
 			}
 
-			scope := coredata.NewScope(token.TenantID)
+			scope := coredata.NewScope(token.TenantID, gid.Nil)
 
 			if now.After(token.ExpiresAt) {
 				if err := token.Delete(ctx, conn, scope); err != nil {

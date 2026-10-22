@@ -74,11 +74,11 @@ func repeatLockedRecurringTask(
 		return nil, err
 	}
 
-	if err := emitTaskCreated(ctx, conn, scope, gid.Nil, next); err != nil {
+	if err := emitTaskCreated(ctx, conn, scope, next); err != nil {
 		return nil, fmt.Errorf("cannot emit next task created webhook: %w", err)
 	}
 
-	if err := emitTaskUpdated(ctx, conn, scope, gid.Nil, &previous, source, nil); err != nil {
+	if err := emitTaskUpdated(ctx, conn, scope, &previous, source, nil); err != nil {
 		return nil, fmt.Errorf("cannot emit recurring task updated webhook: %w", err)
 	}
 

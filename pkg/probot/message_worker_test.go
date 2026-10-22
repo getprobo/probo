@@ -184,7 +184,7 @@ func newMessageWorkerFixture(t *testing.T) messageWorkerFixture {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,

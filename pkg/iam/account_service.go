@@ -633,7 +633,7 @@ func (s AccountService) UpdateAvatar(
 	now := time.Now()
 	fileID := gid.New(gid.NilTenant, coredata.FileEntityType)
 	objectKey := uuid.MustNewV7()
-	scope := coredata.NewScope(gid.NilTenant)
+	scope := coredata.NewScope(gid.NilTenant, gid.Nil)
 
 	avatarFile := &coredata.File{
 		ID:             fileID,
@@ -710,7 +710,7 @@ func (s AccountService) DeleteAvatar(
 	identityID gid.GID,
 ) (*coredata.Identity, error) {
 	identity := &coredata.Identity{}
-	scope := coredata.NewScope(gid.NilTenant)
+	scope := coredata.NewScope(gid.NilTenant, gid.Nil)
 
 	err := s.pg.WithTx(
 		ctx,

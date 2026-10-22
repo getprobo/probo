@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/worker"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 const pdfClaimLease = 5 * time.Minute
@@ -82,7 +83,7 @@ func (h *documentApprovalQuorumPDFHandler) Claim(ctx context.Context) (coredata.
 }
 
 func (h *documentApprovalQuorumPDFHandler) Process(ctx context.Context, quorum coredata.DocumentVersionApprovalQuorum) error {
-	scope := coredata.NewScope(quorum.ID.TenantID())
+	scope := coredata.NewScope(quorum.ID.TenantID(), gid.Nil)
 
 	if err := h.service.DocumentApprovals.generateAndUploadQuorumPDF(ctx, scope, &quorum); err != nil {
 		h.logger.ErrorCtx(

@@ -33,7 +33,7 @@ import (
 )
 
 // Actor is the membership profile that performed the action in a webhook
-// delivery. It is snapshotted when the event is recorded.
+// delivery.
 type Actor struct {
 	ID           gid.GID                 `json:"id"`
 	FullName     string                  `json:"fullName"`
@@ -41,13 +41,21 @@ type Actor struct {
 	Role         coredata.MembershipRole `json:"role"`
 }
 
-func snapshotActor(
+func principalID(scope coredata.Scoper) gid.GID {
+	if scope == nil {
+		return gid.Nil
+	}
+
+	return scope.PrincipalID()
+}
+
+func marshalActor(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
 	organizationID gid.GID,
-	identityID gid.GID,
 ) (json.RawMessage, error) {
+	identityID := principalID(scope)
 	if identityID == gid.Nil {
 		return nil, nil
 	}

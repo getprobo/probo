@@ -155,7 +155,7 @@ func seedConnector(
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	connectorID := gid.New(tenantID, coredata.ConnectorEntityType)
 	now := time.Now()

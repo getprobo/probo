@@ -215,7 +215,7 @@ func insertIdleExecutionInOrg(
 	err := client.WithTx(
 		context.Background(),
 		func(ctx context.Context, tx pg.Tx) error {
-			return run.Insert(ctx, tx, coredata.NewScope(organizationID.TenantID()))
+			return run.Insert(ctx, tx, coredata.NewScope(organizationID.TenantID(), gid.Nil))
 		},
 	)
 	require.NoError(t, err)
@@ -360,7 +360,7 @@ func insertExecution(
 				_, err := execution.UpsertBySourceSession(
 					ctx,
 					tx,
-					coredata.NewScope(organizationID.TenantID()),
+					coredata.NewScope(organizationID.TenantID(), gid.Nil),
 				)
 
 				return err
@@ -403,7 +403,7 @@ func enqueueAgentInput(
 				_, err := input.EnqueueIdempotently(
 					ctx,
 					tx,
-					coredata.NewScope(execution.ID.TenantID()),
+					coredata.NewScope(execution.ID.TenantID(), gid.Nil),
 				)
 
 				return err
@@ -463,7 +463,7 @@ func enqueueAgentInputWithIdentity(
 				_, err := input.EnqueueIdempotently(
 					ctx,
 					tx,
-					coredata.NewScope(execution.ID.TenantID()),
+					coredata.NewScope(execution.ID.TenantID(), gid.Nil),
 				)
 
 				return err

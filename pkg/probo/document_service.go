@@ -482,7 +482,6 @@ func (s *DocumentService) GetWithFilter(
 func (s *DocumentService) PublishVersionWithDefaultApprovers(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req PublishDocumentRequest,
 ) (*PublishDocumentResult, error) {
 	var result *PublishDocumentResult
@@ -504,7 +503,7 @@ func (s *DocumentService) PublishVersionWithDefaultApprovers(
 				req.ApproverIDs = approverIDs
 			}
 
-			publishResult, err := s.publish(ctx, scope, actorIdentityID, tx, req)
+			publishResult, err := s.publish(ctx, scope, tx, req)
 			if err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
 			}
@@ -535,7 +534,6 @@ func (s *DocumentService) PublishVersionWithDefaultApprovers(
 func (s *DocumentService) PublishVersion(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req PublishDocumentRequest,
 ) (*PublishDocumentResult, error) {
 	var result *PublishDocumentResult
@@ -543,7 +541,7 @@ func (s *DocumentService) PublishVersion(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			publishResult, err := s.publish(ctx, scope, actorIdentityID, tx, req)
+			publishResult, err := s.publish(ctx, scope, tx, req)
 			if err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
 			}
@@ -563,7 +561,6 @@ func (s *DocumentService) PublishVersion(
 func (s *DocumentService) publish(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	req PublishDocumentRequest,
 ) (*PublishDocumentResult, error) {
@@ -583,7 +580,7 @@ func (s *DocumentService) publish(
 	}
 
 	if req.Minor {
-		document, version, err := s.publishMinor(ctx, scope, actorIdentityID, tx, req.DocumentID, &req.Changelog, false)
+		document, version, err := s.publishMinor(ctx, scope, tx, req.DocumentID, &req.Changelog, false)
 		if err != nil {
 			return nil, fmt.Errorf("cannot publish minor version: %w", err)
 		}
@@ -609,7 +606,7 @@ func (s *DocumentService) publish(
 	}
 
 	if len(req.ApproverIDs) == 0 {
-		publishedDocument, version, err := s.publishMajor(ctx, scope, actorIdentityID, tx, req.DocumentID, &req.Changelog, false)
+		publishedDocument, version, err := s.publishMajor(ctx, scope, tx, req.DocumentID, &req.Changelog, false)
 		if err != nil {
 			return nil, fmt.Errorf("cannot publish major version: %w", err)
 		}
@@ -620,7 +617,7 @@ func (s *DocumentService) publish(
 		return result, nil
 	}
 
-	if err := s.requestMajorApproval(ctx, scope, actorIdentityID, tx, req, document, dv, result); err != nil {
+	if err := s.requestMajorApproval(ctx, scope, tx, req, document, dv, result); err != nil {
 		return nil, fmt.Errorf("cannot request major approval: %w", err)
 	}
 
@@ -630,7 +627,6 @@ func (s *DocumentService) publish(
 func (s *DocumentService) requestMajorApproval(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	req PublishDocumentRequest,
 	document *coredata.Document,
@@ -665,7 +661,6 @@ func (s *DocumentService) requestMajorApproval(
 	if err := s.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		dv.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionApprovalQuorumRequested,
@@ -682,7 +677,6 @@ func (s *DocumentService) requestMajorApproval(
 
 func (s *DocumentService) Create(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req CreateDocumentRequest,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
 	if err := req.Validate(); err != nil {
@@ -759,14 +753,13 @@ func (s *DocumentService) Create(
 				}
 			}
 
-			if err := s.emitDocumentEvent(ctx, scope, actorIdentityID, conn, documentID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
+			if err := s.emitDocumentEvent(ctx, scope, conn, documentID, coredata.WebhookEventTypeDocumentCreated, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document created webhook: %w", err)
 			}
 
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,
-				actorIdentityID,
 				conn,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionCreated,
@@ -942,7 +935,6 @@ func (s *DocumentService) SignDocumentVersionByIdentity(
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,
-				req.IdentityID,
 				tx,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionSignatureSigned,
@@ -1024,7 +1016,6 @@ func (s *DocumentService) GetVersionSignature(
 
 func (s *DocumentService) BulkRequestSignatures(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req BulkRequestSignaturesRequest,
 ) ([]*coredata.DocumentVersionSignature, error) {
 	var signatures []*coredata.DocumentVersionSignature
@@ -1074,7 +1065,6 @@ func (s *DocumentService) BulkRequestSignatures(
 					if err := s.emitLoadedDocumentEventInTx(
 						ctx,
 						scope,
-						actorIdentityID,
 						tx,
 						document,
 						coredata.WebhookEventTypeDocumentVersionSignatureRequested,
@@ -1170,7 +1160,6 @@ func (s *DocumentService) createSignatureRequestInTx(
 
 func (s *DocumentService) RequestSignature(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req RequestSignatureRequest,
 ) (*coredata.DocumentVersionSignature, error) {
 	var signature *coredata.DocumentVersionSignature
@@ -1229,7 +1218,6 @@ func (s *DocumentService) RequestSignature(
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,
-				actorIdentityID,
 				tx,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionSignatureRequested,
@@ -1351,7 +1339,6 @@ func (s *DocumentService) deleteDraftInTx(
 // since Document.LoadByID filters out soft-deleted rows.
 func (s *DocumentService) emitDocumentEvent(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentID gid.GID,
 	eventType coredata.WebhookEventType,
@@ -1365,12 +1352,11 @@ func (s *DocumentService) emitDocumentEvent(
 		return fmt.Errorf("cannot load document for %q webhook: %w", eventType, err)
 	}
 
-	return s.emitLoadedDocumentEventInTx(ctx, scope, actorIdentityID, tx, document, eventType, version, signature, quorumID, updatedFrom)
+	return s.emitLoadedDocumentEventInTx(ctx, scope, tx, document, eventType, version, signature, quorumID, updatedFrom)
 }
 
 func (s *DocumentService) emitLoadedDocumentEventInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	document *coredata.Document,
 	eventType coredata.WebhookEventType,
@@ -1410,7 +1396,6 @@ func (s *DocumentService) emitLoadedDocumentEventInTx(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		document.OrganizationID,
 		eventType,
 		payload,
@@ -1424,7 +1409,6 @@ func (s *DocumentService) emitLoadedDocumentEventInTx(
 
 func (s *DocumentService) emitDocumentLifecycleEventsInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentIDs []gid.GID,
 	eventType coredata.WebhookEventType,
@@ -1462,7 +1446,6 @@ func (s *DocumentService) emitDocumentLifecycleEventsInTx(
 			ctx,
 			tx,
 			scope,
-			actorIdentityID,
 			document.OrganizationID,
 			eventType,
 			webhooktypes.NewDocument(document),
@@ -1513,7 +1496,6 @@ func (s *DocumentService) loadDocumentApprovalQuorumForWebhook(
 
 func (s *DocumentService) SoftDelete(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentID gid.GID,
 ) error {
 	document := coredata.Document{ID: documentID}
@@ -1521,7 +1503,7 @@ func (s *DocumentService) SoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := s.emitDocumentEvent(ctx, scope, actorIdentityID, tx, documentID, coredata.WebhookEventTypeDocumentDeleted, nil, nil, nil, nil); err != nil {
+			if err := s.emitDocumentEvent(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentDeleted, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document deleted webhook: %w", err)
 			}
 
@@ -1540,7 +1522,6 @@ func (s *DocumentService) SoftDelete(
 
 func (s *DocumentService) BulkSoftDelete(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentIDs []gid.GID,
 ) error {
 	documents := coredata.Documents{}
@@ -1552,7 +1533,7 @@ func (s *DocumentService) BulkSoftDelete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
-			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, actorIdentityID, tx, documentIDs, coredata.WebhookEventTypeDocumentDeleted); err != nil {
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentDeleted); err != nil {
 				return fmt.Errorf("cannot emit document deleted webhooks: %w", err)
 			}
 
@@ -1571,7 +1552,6 @@ func (s *DocumentService) BulkSoftDelete(
 
 func (s *DocumentService) BulkArchive(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentIDs []gid.GID,
 ) error {
 	documents := coredata.Documents{}
@@ -1584,7 +1564,7 @@ func (s *DocumentService) BulkArchive(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range documentIDs {
-				if err := s.teardownDocumentWorkflowsInTx(ctx, scope, actorIdentityID, tx, documentID); err != nil {
+				if err := s.teardownDocumentWorkflowsInTx(ctx, scope, tx, documentID); err != nil {
 					return err
 				}
 			}
@@ -1601,7 +1581,7 @@ func (s *DocumentService) BulkArchive(
 				return err
 			}
 
-			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, actorIdentityID, tx, documentIDs, coredata.WebhookEventTypeDocumentArchived); err != nil {
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentArchived); err != nil {
 				return fmt.Errorf("cannot emit document archived webhooks: %w", err)
 			}
 
@@ -1612,7 +1592,6 @@ func (s *DocumentService) BulkArchive(
 
 func (s *DocumentService) BulkUnarchive(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentIDs []gid.GID,
 ) error {
 	documents := coredata.Documents{}
@@ -1625,7 +1604,7 @@ func (s *DocumentService) BulkUnarchive(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			for _, documentID := range documentIDs {
-				if err := s.ensureDraftReadyOnUnarchiveInTx(ctx, scope, actorIdentityID, tx, documentID); err != nil {
+				if err := s.ensureDraftReadyOnUnarchiveInTx(ctx, scope, tx, documentID); err != nil {
 					return err
 				}
 			}
@@ -1634,7 +1613,7 @@ func (s *DocumentService) BulkUnarchive(
 				return err
 			}
 
-			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, actorIdentityID, tx, documentIDs, coredata.WebhookEventTypeDocumentUnarchived); err != nil {
+			if err := s.emitDocumentLifecycleEventsInTx(ctx, scope, tx, documentIDs, coredata.WebhookEventTypeDocumentUnarchived); err != nil {
 				return fmt.Errorf("cannot emit document unarchived webhooks: %w", err)
 			}
 
@@ -2147,7 +2126,6 @@ func (s *DocumentService) ListForInternalControlID(
 
 func (s *DocumentService) Update(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	req UpdateDocumentRequest,
 ) (*coredata.Document, *coredata.DocumentVersion, bool, error) {
 	if err := req.Validate(); err != nil {
@@ -2268,7 +2246,6 @@ func (s *DocumentService) Update(
 					if err := s.emitDocumentEvent(
 						ctx,
 						scope,
-						actorIdentityID,
 						tx,
 						latestVersion.DocumentID,
 						coredata.WebhookEventTypeDocumentVersionDeleted,
@@ -2286,14 +2263,14 @@ func (s *DocumentService) Update(
 						versionPrevious = nil
 					}
 
-					if err := s.emitDocumentEvent(ctx, scope, actorIdentityID, tx, resultVersion.DocumentID, versionEvent, resultVersion, nil, nil, versionPrevious); err != nil {
+					if err := s.emitDocumentEvent(ctx, scope, tx, resultVersion.DocumentID, versionEvent, resultVersion, nil, nil, versionPrevious); err != nil {
 						return fmt.Errorf("cannot emit document version webhook: %w", err)
 					}
 				}
 			}
 
 			if docLevelChanged {
-				if err := s.emitDocumentEvent(ctx, scope, actorIdentityID, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil, webhooktypes.NewDocument(&previousDocument)); err != nil {
+				if err := s.emitDocumentEvent(ctx, scope, tx, req.DocumentID, coredata.WebhookEventTypeDocumentUpdated, nil, nil, nil, webhooktypes.NewDocument(&previousDocument)); err != nil {
 					return fmt.Errorf("cannot emit document updated webhook: %w", err)
 				}
 			}
@@ -2310,7 +2287,6 @@ func (s *DocumentService) Update(
 
 func (s *DocumentService) DeleteDraft(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
@@ -2346,7 +2322,6 @@ func (s *DocumentService) DeleteDraft(
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,
-				actorIdentityID,
 				tx,
 				latestVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionDeleted,
@@ -2370,7 +2345,6 @@ func (s *DocumentService) DeleteDraft(
 
 func (s *DocumentService) teardownDocumentWorkflowsInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentID gid.GID,
 ) error {
@@ -2387,7 +2361,6 @@ func (s *DocumentService) teardownDocumentWorkflowsInTx(
 	if err := s.svc.DocumentApprovals.voidPendingApprovalForLatestVersionInTx(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		document,
 		documentVersion,
@@ -2395,12 +2368,11 @@ func (s *DocumentService) teardownDocumentWorkflowsInTx(
 		return err
 	}
 
-	return s.cancelRequestedSignaturesForDocumentInTx(ctx, scope, actorIdentityID, tx, documentID)
+	return s.cancelRequestedSignaturesForDocumentInTx(ctx, scope, tx, documentID)
 }
 
 func (s *DocumentService) ensureDraftReadyOnUnarchiveInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentID gid.GID,
 ) error {
@@ -2417,7 +2389,6 @@ func (s *DocumentService) ensureDraftReadyOnUnarchiveInTx(
 	return s.svc.DocumentApprovals.voidPendingApprovalForLatestVersionInTx(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		document,
 		documentVersion,
@@ -2426,7 +2397,6 @@ func (s *DocumentService) ensureDraftReadyOnUnarchiveInTx(
 
 func (s *DocumentService) Archive(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
@@ -2443,7 +2413,7 @@ func (s *DocumentService) Archive(
 				return &ErrDocumentArchived{}
 			}
 
-			if err := s.teardownDocumentWorkflowsInTx(ctx, scope, actorIdentityID, tx, documentID); err != nil {
+			if err := s.teardownDocumentWorkflowsInTx(ctx, scope, tx, documentID); err != nil {
 				return err
 			}
 
@@ -2463,7 +2433,7 @@ func (s *DocumentService) Archive(
 				return fmt.Errorf("cannot archive document: %w", err)
 			}
 
-			if err := s.emitDocumentEvent(ctx, scope, actorIdentityID, tx, documentID, coredata.WebhookEventTypeDocumentArchived, nil, nil, nil, nil); err != nil {
+			if err := s.emitDocumentEvent(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentArchived, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document archived webhook: %w", err)
 			}
 
@@ -2479,7 +2449,6 @@ func (s *DocumentService) Archive(
 
 func (s *DocumentService) Unarchive(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentID gid.GID,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
@@ -2496,7 +2465,7 @@ func (s *DocumentService) Unarchive(
 				return &ErrDocumentNotArchived{}
 			}
 
-			if err := s.ensureDraftReadyOnUnarchiveInTx(ctx, scope, actorIdentityID, tx, documentID); err != nil {
+			if err := s.ensureDraftReadyOnUnarchiveInTx(ctx, scope, tx, documentID); err != nil {
 				return err
 			}
 
@@ -2508,7 +2477,7 @@ func (s *DocumentService) Unarchive(
 				return fmt.Errorf("cannot unarchive document: %w", err)
 			}
 
-			if err := s.emitDocumentEvent(ctx, scope, actorIdentityID, tx, documentID, coredata.WebhookEventTypeDocumentUnarchived, nil, nil, nil, nil); err != nil {
+			if err := s.emitDocumentEvent(ctx, scope, tx, documentID, coredata.WebhookEventTypeDocumentUnarchived, nil, nil, nil, nil); err != nil {
 				return fmt.Errorf("cannot emit document unarchived webhook: %w", err)
 			}
 
@@ -2524,7 +2493,6 @@ func (s *DocumentService) Unarchive(
 
 func (s *DocumentService) CancelSignatureRequest(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	documentVersionSignatureID gid.GID,
 ) error {
 	documentVersionSignature := &coredata.DocumentVersionSignature{}
@@ -2564,7 +2532,6 @@ func (s *DocumentService) CancelSignatureRequest(
 			if err := s.emitDocumentEvent(
 				ctx,
 				scope,
-				actorIdentityID,
 				tx,
 				documentVersion.DocumentID,
 				coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
@@ -3408,7 +3375,6 @@ func (s *DocumentService) finalizePublish(
 func (s *DocumentService) publishMajor(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentID gid.GID,
 	changelog *string,
@@ -3449,7 +3415,6 @@ func (s *DocumentService) publishMajor(
 	if err := s.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		documentVersion.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionPublished,
@@ -3471,7 +3436,6 @@ func (s *DocumentService) publishMajor(
 // to preserve the audit trail.
 func (s *DocumentService) cancelRequestedSignaturesForDocumentInTx(
 	ctx context.Context, scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentID gid.GID,
 ) error {
@@ -3512,7 +3476,6 @@ func (s *DocumentService) cancelRequestedSignaturesForDocumentInTx(
 		if err := s.emitDocumentEvent(
 			ctx,
 			scope,
-			actorIdentityID,
 			tx,
 			documentID,
 			coredata.WebhookEventTypeDocumentVersionSignatureCancelled,
@@ -3548,7 +3511,6 @@ func (s *DocumentService) cancelPreviousMajorSignatureRequestsInTx(
 func (s *DocumentService) publishMinor(
 	ctx context.Context,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	tx pg.Tx,
 	documentID gid.GID,
 	changelog *string,
@@ -3577,7 +3539,6 @@ func (s *DocumentService) publishMinor(
 	if err := s.emitDocumentEvent(
 		ctx,
 		scope,
-		actorIdentityID,
 		tx,
 		documentVersion.DocumentID,
 		coredata.WebhookEventTypeDocumentVersionPublished,

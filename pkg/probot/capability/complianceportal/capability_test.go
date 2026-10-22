@@ -321,7 +321,7 @@ func TestCapability_ButtonAndAgentUseSameCommand(t *testing.T) {
 	capability := NewCapability(
 		notificationService,
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 
@@ -410,7 +410,7 @@ func TestCapability_FailedActionCanRetry(t *testing.T) {
 	capability := NewCapability(
 		notifications,
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 	action := messaging.Action{
 		ID:               "compliance_access.approve_all",
@@ -445,7 +445,7 @@ func TestCapability_RejectsEmptyApproveAll(t *testing.T) {
 	capability := NewCapability(
 		&fakeAccessService{message: message},
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	_, err := capability.HandleAction(
@@ -481,7 +481,7 @@ func TestCapability_ManageToolRequiresToolCallID(t *testing.T) {
 			},
 		},
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	var manageTool agent.Tool
@@ -558,7 +558,7 @@ func TestCapability_HandlesReviewMenuSelection(t *testing.T) {
 				capability := NewCapability(
 					notifications,
 					visitor,
-					&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+					&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 				)
 
 				result, err := capability.HandleAction(
@@ -613,7 +613,7 @@ func TestCapability_MapsLegacyDocumentAndReportFileIDs(t *testing.T) {
 					},
 				},
 				visitor,
-				&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+				&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 			)
 
 			result, err := capability.HandleAction(
@@ -646,7 +646,7 @@ func TestCapability_MapsLegacyDocumentAndReportFileIDs(t *testing.T) {
 					},
 				},
 				visitor,
-				&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+				&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 			)
 
 			result, err := capability.HandleAction(
@@ -685,7 +685,7 @@ func TestCapability_SkipsRefreshWhenActionFails(t *testing.T) {
 	capability := NewCapability(
 		notifications,
 		&fakeVisitor{err: errors.New("temporary grant failure")},
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	_, err := capability.HandleAction(
@@ -721,7 +721,7 @@ func TestCapability_SurfacesRefreshFailureAfterAction(t *testing.T) {
 	capability := NewCapability(
 		notifications,
 		&fakeVisitor{},
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	_, err := capability.HandleAction(
@@ -751,7 +751,7 @@ func TestCapability_RejectsMalformedReviewMenuSelection(t *testing.T) {
 	capability := NewCapability(
 		&fakeAccessService{message: message},
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	_, err := capability.HandleAction(
@@ -788,7 +788,7 @@ func TestCapability_RejectsResourceIDNotOnMessage(t *testing.T) {
 			compliancePortalDocumentIDs: []gid.GID{attachedID},
 		},
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	_, err := capability.HandleAction(
@@ -824,7 +824,7 @@ func TestCapability_ManageToolRejectsResourceIDNotOnMessage(t *testing.T) {
 			compliancePortalDocumentIDs: []gid.GID{attachedID},
 		},
 		visitor,
-		&fakeAuthorizer{scope: coredata.NewScope(tenantID)},
+		&fakeAuthorizer{scope: coredata.NewScope(tenantID, gid.Nil)},
 	)
 
 	var manageTool agent.Tool

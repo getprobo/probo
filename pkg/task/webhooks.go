@@ -31,19 +31,10 @@ import (
 	webhooktypes "go.probo.inc/probo/pkg/webhook/types"
 )
 
-func identityIDValue(id *gid.GID) gid.GID {
-	if id == nil {
-		return gid.Nil
-	}
-
-	return *id
-}
-
 func emitTaskCreated(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	task *coredata.Task,
 ) error {
 	internalControlIDs, err := loadTaskInternalControlIDs(ctx, tx, scope, task.ID)
@@ -55,7 +46,6 @@ func emitTaskCreated(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		task.OrganizationID,
 		coredata.WebhookEventTypeTaskCreated,
 		webhooktypes.NewTask(task, internalControlIDs),
@@ -70,7 +60,6 @@ func emitTaskUpdated(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	previous *coredata.Task,
 	task *coredata.Task,
 	previousInternalControlIDs []gid.GID,
@@ -84,7 +73,7 @@ func emitTaskUpdated(
 		previousInternalControlIDs = currentInternalControlIDs
 	}
 
-	if err := webhook.InsertTaskUpdated(ctx, tx, scope, actorIdentityID, previous, task, previousInternalControlIDs, currentInternalControlIDs); err != nil {
+	if err := webhook.InsertTaskUpdated(ctx, tx, scope, previous, task, previousInternalControlIDs, currentInternalControlIDs); err != nil {
 		return fmt.Errorf("cannot insert task updated webhook event: %w", err)
 	}
 
@@ -95,7 +84,6 @@ func emitTaskDeleted(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	task *coredata.Task,
 ) error {
 	internalControlIDs, err := loadTaskInternalControlIDs(ctx, tx, scope, task.ID)
@@ -107,7 +95,6 @@ func emitTaskDeleted(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		task.OrganizationID,
 		coredata.WebhookEventTypeTaskDeleted,
 		webhooktypes.NewTask(task, internalControlIDs),
@@ -122,14 +109,12 @@ func emitTaskCommentCreated(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	comment *coredata.TaskComment,
 ) error {
 	if err := webhook.InsertData(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		comment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentCreated,
 		webhooktypes.NewTaskComment(comment),
@@ -144,7 +129,6 @@ func emitTaskCommentUpdated(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	previous *coredata.TaskComment,
 	comment *coredata.TaskComment,
 ) error {
@@ -152,7 +136,6 @@ func emitTaskCommentUpdated(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		comment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentUpdated,
 		webhooktypes.NewTaskComment(comment),
@@ -168,14 +151,12 @@ func emitTaskCommentDeleted(
 	ctx context.Context,
 	tx pg.Tx,
 	scope coredata.Scoper,
-	actorIdentityID gid.GID,
 	comment *coredata.TaskComment,
 ) error {
 	if err := webhook.InsertData(
 		ctx,
 		tx,
 		scope,
-		actorIdentityID,
 		comment.OrganizationID,
 		coredata.WebhookEventTypeTaskCommentDeleted,
 		webhooktypes.NewTaskComment(comment),

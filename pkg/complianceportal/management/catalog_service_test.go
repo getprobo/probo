@@ -49,7 +49,7 @@ func seedCatalogUnlinkFixture(t *testing.T, ctx context.Context, client *pg.Clie
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now()
 

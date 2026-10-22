@@ -249,7 +249,7 @@ func (f *batchFetcher) fetchCompliancePortalDocuments(
 	for group, documentIDs := range documentIDsByGroup {
 		links, err := f.compliancePortal.GetDocumentLinks(
 			ctx,
-			coredata.NewScope(group.tenantID),
+			scopeFromContext(ctx, group.tenantID),
 			group.compliancePortalID,
 			documentIDs,
 		)
@@ -295,7 +295,7 @@ func (f *batchFetcher) fetchCompliancePortalAudits(
 	for group, auditIDs := range auditIDsByGroup {
 		links, err := f.compliancePortal.GetAuditLinks(
 			ctx,
-			coredata.NewScope(group.tenantID),
+			scopeFromContext(ctx, group.tenantID),
 			group.compliancePortalID,
 			auditIDs,
 		)
@@ -326,7 +326,7 @@ func (f *batchFetcher) fetchCompliancePortalDocumentsByID(
 	for tenantID, documentLinkIDs := range gidKeysByTenant(keys) {
 		links, err := f.compliancePortal.GetDocumentLinksByIDs(
 			ctx,
-			coredata.NewScope(tenantID),
+			scopeFromContext(ctx, tenantID),
 			documentLinkIDs,
 		)
 		if err != nil {
@@ -350,7 +350,7 @@ func (f *batchFetcher) fetchCompliancePortalAuditsByID(
 	for tenantID, auditLinkIDs := range gidKeysByTenant(keys) {
 		links, err := f.compliancePortal.GetAuditLinksByIDs(
 			ctx,
-			coredata.NewScope(tenantID),
+			scopeFromContext(ctx, tenantID),
 			auditLinkIDs,
 		)
 		if err != nil {
@@ -374,7 +374,7 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccesses(
 	for tenantID, accessIDs := range gidKeysByTenant(keys) {
 		accesses, err := f.compliancePortal.GetDocumentAccessesByIDs(
 			ctx,
-			coredata.NewScope(tenantID),
+			scopeFromContext(ctx, tenantID),
 			accessIDs,
 		)
 		if err != nil {
@@ -393,7 +393,7 @@ func (f *batchFetcher) fetchAudits(ctx context.Context, keys []gid.GID) (map[gid
 	result := make(map[gid.GID]*coredata.Audit, len(keys))
 
 	for tenantID, auditIDs := range gidKeysByTenant(keys) {
-		audits, err := f.probo.Audits.GetByIDs(ctx, coredata.NewScope(tenantID), auditIDs...)
+		audits, err := f.probo.Audits.GetByIDs(ctx, scopeFromContext(ctx, tenantID), auditIDs...)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load audits: %w", err)
 		}
@@ -430,7 +430,7 @@ func (f *batchFetcher) fetchCompliancePortalThirdParties(
 	for group, thirdPartyIDs := range thirdPartyIDsByGroup {
 		links, err := f.compliancePortal.GetThirdPartyLinks(
 			ctx,
-			coredata.NewScope(group.tenantID),
+			scopeFromContext(ctx, group.tenantID),
 			group.compliancePortalID,
 			thirdPartyIDs,
 		)
@@ -472,7 +472,7 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByDocument(
 	result := make(map[CompliancePortalDocumentAccessByDocumentKey]*coredata.CompliancePortalDocumentAccess, len(keys))
 
 	for group, documentIDs := range documentIDsByGroup {
-		scope := coredata.NewScope(group.tenantID)
+		scope := scopeFromContext(ctx, group.tenantID)
 
 		access, err := f.compliancePortal.GetAccess(ctx, scope, group.compliancePortalAccessID)
 		if err != nil {
@@ -550,7 +550,7 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByReportFile(
 	result := make(map[CompliancePortalDocumentAccessByReportFileKey]*coredata.CompliancePortalDocumentAccess, len(keys))
 
 	for group, reportFileIDs := range reportFileIDsByGroup {
-		scope := coredata.NewScope(group.tenantID)
+		scope := scopeFromContext(ctx, group.tenantID)
 
 		access, err := f.compliancePortal.GetAccess(ctx, scope, group.compliancePortalAccessID)
 		if err != nil {
@@ -632,7 +632,7 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByFile(
 	for group, fileIDs := range fileIDsByGroup {
 		accesses, err := f.compliancePortal.GetDocumentAccessesByCompliancePortalFileIDs(
 			ctx,
-			coredata.NewScope(group.tenantID),
+			scopeFromContext(ctx, group.tenantID),
 			group.compliancePortalAccessID,
 			fileIDs,
 		)
@@ -657,7 +657,7 @@ func (f *batchFetcher) fetchCompliancePortalDocumentAccessesByFile(
 }
 
 func (f *batchFetcher) fetchConnectorAccounts(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ConnectorAccount, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	accounts, err := f.probo.Connectors.GetAccountsByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -673,7 +673,7 @@ func (f *batchFetcher) fetchConnectorAccounts(ctx context.Context, keys []gid.GI
 }
 
 func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Organization, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	orgs, err := f.probo.Organizations.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -689,7 +689,7 @@ func (f *batchFetcher) fetchOrganizations(ctx context.Context, keys []gid.GID) (
 }
 
 func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Framework, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	frameworks, err := f.probo.Frameworks.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -705,7 +705,7 @@ func (f *batchFetcher) fetchFrameworks(ctx context.Context, keys []gid.GID) (map
 }
 
 func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Control, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	controls, err := f.probo.Controls.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -721,7 +721,7 @@ func (f *batchFetcher) fetchControls(ctx context.Context, keys []gid.GID) (map[g
 }
 
 func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.ThirdParty, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	thirdParties, err := f.probo.ThirdParties.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -737,7 +737,7 @@ func (f *batchFetcher) fetchThirdParties(ctx context.Context, keys []gid.GID) (m
 }
 
 func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Document, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	documents, err := f.probo.Documents.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -753,7 +753,7 @@ func (f *batchFetcher) fetchDocuments(ctx context.Context, keys []gid.GID) (map[
 }
 
 func (f *batchFetcher) fetchProfiles(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.MembershipProfile, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	profiles, err := f.iam.OrganizationService.GetProfilesByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -786,7 +786,7 @@ func (f *batchFetcher) fetchIdentities(
 }
 
 func (f *batchFetcher) fetchRisks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Risk, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	risks, err := f.probo.Risks.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -805,7 +805,7 @@ func (f *batchFetcher) fetchTreatmentProgress(
 	ctx context.Context,
 	keys []gid.GID,
 ) (map[gid.GID]riskmanagement.TreatmentProgress, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	progress, err := f.riskManagement.GetTreatmentProgressByIDs(ctx, scope, keys)
 	if err != nil {
@@ -816,7 +816,7 @@ func (f *batchFetcher) fetchTreatmentProgress(
 }
 
 func (f *batchFetcher) fetchInternalControls(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.InternalControl, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	internalControls, err := f.probo.InternalControls.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -832,7 +832,7 @@ func (f *batchFetcher) fetchInternalControls(ctx context.Context, keys []gid.GID
 }
 
 func (f *batchFetcher) fetchTasks(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.Task, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	tasks, err := f.task.GetByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -864,7 +864,7 @@ func (f *batchFetcher) fetchTaskExternalLinks(
 	}
 
 	for tenantID, taskIDs := range taskIDsByTenant {
-		links, err := f.task.Sync.GetLinksByTaskIDs(ctx, coredata.NewScope(tenantID), taskIDs)
+		links, err := f.task.Sync.GetLinksByTaskIDs(ctx, scopeFromContext(ctx, tenantID), taskIDs)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load task external links: %w", err)
 		}
@@ -885,7 +885,7 @@ func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.
 	}
 
 	for tenantID, fileIDs := range fileIDsByTenant {
-		files, err := f.probo.Files.GetByIDs(ctx, coredata.NewScope(tenantID), fileIDs...)
+		files, err := f.probo.Files.GetByIDs(ctx, scopeFromContext(ctx, tenantID), fileIDs...)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load files: %w", err)
 		}
@@ -899,7 +899,7 @@ func (f *batchFetcher) fetchFiles(ctx context.Context, keys []gid.GID) (map[gid.
 }
 
 func (f *batchFetcher) fetchCookieBanners(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CookieBanner, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	banners, err := f.cookieBanner.GetCookieBannersByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -926,7 +926,7 @@ func (f *batchFetcher) fetchSamplePageLoads(
 	}
 
 	for tenantID, sampleIDs := range idsByTenant {
-		loads, err := f.cookieBanner.GetSamplePageLoadsByIDs(ctx, coredata.NewScope(tenantID), sampleIDs)
+		loads, err := f.cookieBanner.GetSamplePageLoadsByIDs(ctx, scopeFromContext(ctx, tenantID), sampleIDs)
 		if err != nil {
 			return nil, fmt.Errorf("cannot batch load sample page loads: %w", err)
 		}
@@ -958,7 +958,7 @@ func (f *batchFetcher) fetchSampleHitSplits(
 	for tenantID, queries := range queriesByTenant {
 		splits, err := f.cookieBanner.GetSampleHitSplitsForPatterns(
 			ctx,
-			coredata.NewScope(tenantID),
+			scopeFromContext(ctx, tenantID),
 			queries,
 		)
 		if err != nil {
@@ -978,7 +978,7 @@ func (f *batchFetcher) fetchSampleHitSplits(
 }
 
 func (f *batchFetcher) fetchCookieCategories(ctx context.Context, keys []gid.GID) (map[gid.GID]*coredata.CookieCategory, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	categories, err := f.cookieBanner.GetCookieCategoriesByIDs(ctx, scope, keys...)
 	if err != nil {
@@ -1022,7 +1022,7 @@ func (f *batchFetcher) fetchCommonThirdParties(ctx context.Context, keys []gid.G
 }
 
 func (f *batchFetcher) fetchThirdPartyAdministratorIDs(ctx context.Context, keys []gid.GID) (map[gid.GID][]gid.GID, error) {
-	scope := coredata.NewScopeFromObjectID(keys[0])
+	scope := scopeFromContext(ctx, keys[0].TenantID())
 
 	administratorIDsByThirdPartyID, err := f.probo.ThirdParties.MapAdministratorIDsForThirdPartyIDs(ctx, scope, keys)
 	if err != nil {
@@ -1177,6 +1177,10 @@ func decodeAuthorizeKeyAttributes(s string) (policy.Attributes, error) {
 	}
 
 	return attrs, nil
+}
+
+func scopeFromContext(ctx context.Context, tenantID gid.TenantID) *coredata.Scope {
+	return coredata.NewScope(tenantID, authn.IdentityFromContext(ctx).ID)
 }
 
 func gidKeysByTenant(keys []gid.GID) map[gid.TenantID][]gid.GID {

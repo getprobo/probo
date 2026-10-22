@@ -195,7 +195,7 @@ func TestRepeatLockedRecurringTask(t *testing.T) {
 				deadline,
 				mustInterval(t, "P21D"),
 			)
-			scope := coredata.NewScope(source.OrganizationID.TenantID())
+			scope := coredata.NewScope(source.OrganizationID.TenantID(), gid.Nil)
 
 			var next *coredata.Task
 
@@ -248,7 +248,7 @@ func TestRepeatLockedRecurringTask(t *testing.T) {
 				now.Add(-time.Minute),
 				mustInterval(t, "P7D"),
 			)
-			scope := coredata.NewScope(source.OrganizationID.TenantID())
+			scope := coredata.NewScope(source.OrganizationID.TenantID(), gid.Nil)
 
 			var next *coredata.Task
 
@@ -294,7 +294,7 @@ func TestRepeatLockedRecurringTask(t *testing.T) {
 				now.Add(24*time.Hour),
 				mustInterval(t, "P21D"),
 			)
-			scope := coredata.NewScope(source.OrganizationID.TenantID())
+			scope := coredata.NewScope(source.OrganizationID.TenantID(), gid.Nil)
 
 			err := client.WithTx(
 				t.Context(),
@@ -328,7 +328,7 @@ func TestRepeatLockedRecurringTask(t *testing.T) {
 			deadline := time.Date(2027, 1, 31, 0, 0, 0, 0, time.UTC)
 			now := time.Date(2027, 2, 1, 0, 0, 0, 0, time.UTC)
 			source := insertRecurringTask(t, client, coredata.TaskStateTodo, deadline, mustInterval(t, "P1M"))
-			scope := coredata.NewScope(source.OrganizationID.TenantID())
+			scope := coredata.NewScope(source.OrganizationID.TenantID(), gid.Nil)
 
 			var next *coredata.Task
 
@@ -403,7 +403,7 @@ func TestRecurrenceWorkerClaim(t *testing.T) {
 			stopped := loadTask(
 				t,
 				client,
-				coredata.NewScope(poison.OrganizationID.TenantID()),
+				coredata.NewScope(poison.OrganizationID.TenantID(), gid.Nil),
 				poison.ID,
 			)
 			assert.Nil(t, stopped.Recurrence)
@@ -431,7 +431,7 @@ func TestRecurrenceWorkerClaim(t *testing.T) {
 			source := loadTask(
 				t,
 				client,
-				coredata.NewScope(good.OrganizationID.TenantID()),
+				coredata.NewScope(good.OrganizationID.TenantID(), gid.Nil),
 				good.ID,
 			)
 			assert.Nil(t, source.Recurrence)
@@ -481,7 +481,7 @@ func insertRecurringTask(
 		UpdatedAt:      now,
 	}
 
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 
 	require.NoError(
 		t,

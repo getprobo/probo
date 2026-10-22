@@ -122,7 +122,6 @@ func (s *Service) CreateRightsRequest(
 				ctx,
 				tx,
 				scope,
-				gid.Nil,
 				request.OrganizationID,
 				coredata.WebhookEventTypeRightRequestCreated,
 				webhooktypes.NewRightsRequest(request),

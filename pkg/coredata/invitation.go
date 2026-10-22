@@ -214,7 +214,7 @@ WHERE
 
 	for tenantID, profileIDs := range profileIDsByTenant {
 		var profiles MembershipProfiles
-		if err := profiles.LoadExistingByIDs(ctx, conn, NewScope(tenantID), profileIDs); err != nil {
+		if err := profiles.LoadExistingByIDs(ctx, conn, NewScope(tenantID, gid.Nil), profileIDs); err != nil {
 			return nil, fmt.Errorf("cannot load invitation profile attributes: %w", err)
 		}
 

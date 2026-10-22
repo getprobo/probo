@@ -554,11 +554,11 @@ func (a *Authorizer) evaluateMultiInTx(
 		}
 	}
 
-	scope := coredata.NewScopeFromObjectID(uniqueResourceIDs[0])
+	scope := coredata.NewScope(uniqueResourceIDs[0].TenantID(), params.Principal)
 
 	if resourceOrgID != "" {
 		orgID, _ := gid.ParseGID(resourceOrgID)
-		scope = coredata.NewScope(orgID.TenantID())
+		scope = coredata.NewScope(orgID.TenantID(), params.Principal)
 	}
 
 	return scope, itemAttrs, decisions, nil

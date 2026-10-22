@@ -148,7 +148,7 @@ func TestInstallationComplete_ReleasesStateAfterExchangeFailure(t *testing.T) {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -231,7 +231,7 @@ func TestInstallationComplete_PersistsInstallationOnOAuthSuccess(t *testing.T) {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -352,7 +352,7 @@ func TestInstallationUninstall_RemovesIdentityBindings(t *testing.T) {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -516,7 +516,7 @@ func TestInstallationUninstall_IgnoresReplacedInstallation(t *testing.T) {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -675,7 +675,7 @@ func TestPersistInstallationCredentials_DisabledReturnsNotInstalled(t *testing.T
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -765,7 +765,7 @@ func TestInstallationUninstall_CleansUpAfterCredentialRefresh(t *testing.T) {
 	ctx := t.Context()
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,

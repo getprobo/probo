@@ -71,7 +71,7 @@ func TestWebhookEvent_ClaimAndCompleteDelivery(t *testing.T) {
 				return claimed.UpdateDeliveryState(
 					ctx,
 					conn,
-					coredata.NewScope(claimed.ID.TenantID()),
+					coredata.NewScope(claimed.ID.TenantID(), gid.Nil),
 				)
 			},
 		),
@@ -156,7 +156,7 @@ func insertWebhookDeliveryFixture(
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organization := coredata.Organization{
 		ID:        gid.New(tenantID, coredata.OrganizationEntityType),
 		TenantID:  tenantID,
@@ -272,7 +272,7 @@ func loadWebhookEvent(
 		pgClient.WithConn(
 			t.Context(),
 			func(ctx context.Context, conn pg.Querier) error {
-				return event.LoadByID(ctx, conn, coredata.NewScope(id.TenantID()), id)
+				return event.LoadByID(ctx, conn, coredata.NewScope(id.TenantID(), gid.Nil), id)
 			},
 		),
 	)

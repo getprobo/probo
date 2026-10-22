@@ -815,7 +815,7 @@ func seedBatchAuthorizeFixture(t *testing.T, ctx context.Context, client *pg.Cli
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	identityID := gid.New(gid.NilTenant, coredata.IdentityEntityType)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	organization2ID := gid.New(tenantID, coredata.OrganizationEntityType)

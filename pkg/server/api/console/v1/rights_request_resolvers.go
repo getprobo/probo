@@ -13,7 +13,6 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
-	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
@@ -38,7 +37,7 @@ func (r *mutationResolver) CreateRightsRequest(ctx context.Context, input types.
 		ActionTaken:    input.ActionTaken,
 	}
 
-	rightsRequest, err := r.probo.RightsRequests.Create(ctx, scope, authn.IdentityIDFromContext(ctx), &req)
+	rightsRequest, err := r.probo.RightsRequests.Create(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -72,7 +71,7 @@ func (r *mutationResolver) UpdateRightsRequest(ctx context.Context, input types.
 		ActionTaken:  gqlutils.UnwrapOmittable(input.ActionTaken),
 	}
 
-	rightsRequest, err := r.probo.RightsRequests.Update(ctx, scope, authn.IdentityIDFromContext(ctx), &req)
+	rightsRequest, err := r.probo.RightsRequests.Update(ctx, scope, &req)
 	if err != nil {
 		if validationErrors, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			return nil, gqlutils.InvalidValidationErrors(ctx, validationErrors)
@@ -95,7 +94,7 @@ func (r *mutationResolver) DeleteRightsRequest(ctx context.Context, input types.
 		return nil, err
 	}
 
-	if err := r.probo.RightsRequests.Delete(ctx, scope, authn.IdentityIDFromContext(ctx), input.RightsRequestID); err != nil {
+	if err := r.probo.RightsRequests.Delete(ctx, scope, input.RightsRequestID); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot delete rights request", log.Error(err))
 		return nil, gqlutils.Internal(ctx)
 	}

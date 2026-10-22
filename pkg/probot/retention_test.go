@@ -129,7 +129,7 @@ func TestRetentionHandlerPreservesReceiptsBeyondReplayState(t *testing.T) {
 
 	pgClient := test.PGClient(t)
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	now := time.Now().UTC().Round(time.Microsecond)
 	old := now.Add(-5 * time.Hour)

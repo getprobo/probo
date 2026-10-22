@@ -105,7 +105,7 @@ func (s *Service) ApplyInboundIssue(
 				return nil
 			}
 
-			scope := coredata.NewScope(link.OrganizationID.TenantID())
+			scope := coredata.NewScope(link.OrganizationID.TenantID(), gid.Nil)
 			if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, link.TaskID); err != nil {
 				if errors.Is(err, coredata.ErrResourceNotFound) {
 					unusedUpdate = update
@@ -261,7 +261,15 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot match Linear actor: %w", err)
 			}
 
-			if err := webhook.InsertTaskUpdated(ctx, tx, scope, actorIdentityID, &oldTask, task, internalControlIDs, internalControlIDs); err != nil {
+			if err := webhook.InsertTaskUpdated(
+				ctx,
+				tx,
+				coredata.NewScope(link.OrganizationID.TenantID(), actorIdentityID),
+				&oldTask,
+				task,
+				internalControlIDs,
+				internalControlIDs,
+			); err != nil {
 				return fmt.Errorf("cannot emit task updated webhook: %w", err)
 			}
 
@@ -394,7 +402,7 @@ func (s *Service) previewInboundIssue(
 
 		imported, err := s.prepareLinearImport(
 			ctx,
-			coredata.NewScope(link.OrganizationID.TenantID()),
+			coredata.NewScope(link.OrganizationID.TenantID(), gid.Nil),
 			link.ConnectorID,
 			link.OrganizationID,
 			data.Description,
@@ -456,7 +464,7 @@ func (s *Service) loadLinearLink(
 		return nil, nil, false, nil
 	}
 
-	return link, coredata.NewScope(link.OrganizationID.TenantID()), true, nil
+	return link, coredata.NewScope(link.OrganizationID.TenantID(), gid.Nil), true, nil
 }
 
 func lockedLinearLink(
@@ -481,7 +489,7 @@ func lockedLinearLink(
 		return nil, nil, false, nil
 	}
 
-	scope := coredata.NewScope(link.OrganizationID.TenantID())
+	scope := coredata.NewScope(link.OrganizationID.TenantID(), gid.Nil)
 	if err := link.LoadByTaskIDForUpdate(ctx, tx, scope, link.TaskID); err != nil {
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, nil, false, nil
@@ -685,14 +693,6 @@ func activeProfileByEmail(
 	}
 
 	return profile, nil
-}
-
-func gidValue(id *gid.GID) gid.GID {
-	if id == nil {
-		return gid.Nil
-	}
-
-	return *id
 }
 
 func linearDateTime(value string) *time.Time {

@@ -45,7 +45,7 @@ func seedDevicePostureFixture(t *testing.T, ctx context.Context, client *pg.Clie
 	t.Helper()
 
 	tenantID := gid.NewTenantID()
-	scope := coredata.NewScope(tenantID)
+	scope := coredata.NewScope(tenantID, gid.Nil)
 	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
 	deviceID := gid.New(tenantID, coredata.DeviceEntityType)
 	now := time.Now().UTC().Truncate(time.Microsecond)
