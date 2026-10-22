@@ -101,6 +101,30 @@ func TestIdentityFederation_Discovery(t *testing.T) {
 	assert.Equal(t, []string{"RS256"}, discovery.IDTokenSigningAlgValuesSupported)
 }
 
+func TestIdentityFederation_RFC8414Discovery(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	organizationID := owner.GetOrganizationID().String()
+
+	status, body := identityFederationGet(
+		t,
+		owner,
+		"/federation/.well-known/openid-configuration/"+organizationID,
+	)
+
+	require.Equal(t, http.StatusOK, status, string(body))
+
+	suffixStatus, suffixBody := identityFederationGet(
+		t,
+		owner,
+		identityFederationIssuerPath(organizationID)+"/.well-known/openid-configuration",
+	)
+
+	require.Equal(t, http.StatusOK, suffixStatus, string(suffixBody))
+	assert.JSONEq(t, string(suffixBody), string(body))
+}
+
 func TestIdentityFederation_JWKS(t *testing.T) {
 	t.Parallel()
 
@@ -136,13 +160,14 @@ func TestIdentityFederation_UnknownOrganizationIsNotFound(t *testing.T) {
 
 	unknownOrganizationID := gid.New(gid.TenantID{}, coredata.OrganizationEntityType)
 
-	status, _ := identityFederationGet(
-		t,
-		owner,
-		identityFederationIssuerPath(unknownOrganizationID.String())+"/.well-known/openid-configuration",
-	)
+	for _, path := range []string{
+		identityFederationIssuerPath(unknownOrganizationID.String()) + "/.well-known/openid-configuration",
+		"/federation/.well-known/openid-configuration/" + unknownOrganizationID.String(),
+	} {
+		status, _ := identityFederationGet(t, owner, path)
 
-	assert.Equal(t, http.StatusNotFound, status)
+		assert.Equal(t, http.StatusNotFound, status, path)
+	}
 }
 
 func TestIdentityFederation_NoTokenEndpointOrRFC8414Variant(t *testing.T) {
@@ -151,8 +176,9 @@ func TestIdentityFederation_NoTokenEndpointOrRFC8414Variant(t *testing.T) {
 	owner := testutil.NewClient(t, testutil.RoleOwner)
 	organizationID := owner.GetOrganizationID().String()
 
-	// Only the appended OIDC discovery form exists. The RFC 8414 variant the
-	// OAuth2 server serves has no identity federation equivalent.
+	// The OAuth authorization-server infix is the OAuth2 server's document.
+	// Identity federation does not serve it. Entra uses the openid-configuration
+	// infix instead, which is covered above.
 	status, _ := identityFederationGet(
 		t,
 		owner,

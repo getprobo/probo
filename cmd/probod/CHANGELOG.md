@@ -4,6 +4,12 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+### Fixed
+
+- Identity federation discovery is also served with the well-known
+  segment before the organization id. Entra fetches that URL and was
+  receiving 404, so it never loaded the key that verifies the assertion
+
 ## [0.322.0] - 2026-10-22
 
 ### Added

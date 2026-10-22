@@ -106,6 +106,10 @@ func discoveryPath(organizationID string) string {
 	return "/" + organizationID + discoveryPathSuffix
 }
 
+func rfc8414DiscoveryPath(organizationID string) string {
+	return discoveryPathSuffix + "/" + organizationID
+}
+
 func TestJWKS_IgnoresRequestHost(t *testing.T) {
 	t.Parallel()
 
@@ -160,10 +164,15 @@ func TestDiscovery_NotFound(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				response := doGet(t, testMux(t), discoveryPath(test.organizationID))
+				for _, path := range []string{
+					discoveryPath(test.organizationID),
+					rfc8414DiscoveryPath(test.organizationID),
+				} {
+					response := doGet(t, testMux(t), path)
 
-				assert.Equal(t, http.StatusNotFound, response.Code)
-				assert.Empty(t, response.Header().Get("Cache-Control"))
+					assert.Equal(t, http.StatusNotFound, response.Code, path)
+					assert.Empty(t, response.Header().Get("Cache-Control"), path)
+				}
 			},
 		)
 	}
@@ -236,7 +245,7 @@ func TestMux_NoWriteOrTokenSurface(t *testing.T) {
 	)
 
 	t.Run(
-		"no RFC 8414 discovery variant",
+		"no oauth authorization server discovery",
 		func(t *testing.T) {
 			t.Parallel()
 
@@ -256,12 +265,17 @@ func TestMux_NoWriteOrTokenSurface(t *testing.T) {
 			t.Parallel()
 
 			for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodDelete} {
-				request := httptest.NewRequest(method, discoveryPath(knownOrganizationID), nil)
-				recorder := httptest.NewRecorder()
+				for _, path := range []string{
+					discoveryPath(knownOrganizationID),
+					rfc8414DiscoveryPath(knownOrganizationID),
+				} {
+					request := httptest.NewRequest(method, path, nil)
+					recorder := httptest.NewRecorder()
 
-				handler.ServeHTTP(recorder, request)
+					handler.ServeHTTP(recorder, request)
 
-				assert.Equal(t, http.StatusMethodNotAllowed, recorder.Code, method)
+					assert.Equal(t, http.StatusMethodNotAllowed, recorder.Code, method+" "+path)
+				}
 			}
 		},
 	)
