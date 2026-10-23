@@ -87,9 +87,9 @@ interface RequestsPageProps {
   queryRef: PreloadedQuery<RequestsPageQuery>;
 }
 
-// Data Requests page: the viewer's own data subject requests, with a "New
-// Request" flow gated behind sign-in for guests. Submission and the personal
-// list are scoped to the verified viewer's email server-side.
+// Privacy Requests page: the viewer's own data subject requests, with a "New
+// Privacy Request" flow gated behind sign-in for guests. Submission and the
+// personal list are scoped to the verified viewer's email server-side.
 export function RequestsPage({ queryRef }: RequestsPageProps) {
   const data = usePreloadedQuery<RequestsPageQuery>(requestsPageQuery, queryRef);
   const { currentCompliancePortal, viewer } = data;

@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { key: "documents", width: "w-16" },
   { key: "subprocessors", width: "w-24" },
   { key: "updates", width: "w-12" },
-  { key: "requests", width: "w-14" },
+  { key: "requests", width: "w-28" },
 ] as const;
 
 // Loading placeholder paired with TopBar: reuses the same layout slots with

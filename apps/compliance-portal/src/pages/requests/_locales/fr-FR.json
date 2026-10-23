@@ -1,10 +1,10 @@
 {
-  "title": "Demandes de données",
-  "newRequest": "Nouvelle demande",
+  "title": "Demandes de confidentialité",
+  "newRequest": "Nouvelle demande de confidentialité",
   "loadMore": "Charger plus",
   "empty": {
-    "title": "Aucune demande pour le moment",
-    "description": "Les demandes que vous soumettez apparaîtront ici afin que vous puissiez suivre leur avancement."
+    "title": "Aucune demande de confidentialité pour le moment",
+    "description": "Les demandes de confidentialité concernant vos données personnelles apparaîtront ici afin que vous puissiez suivre leur avancement."
   },
   "types": {
     "ACCESS": "Accès aux données",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Signaler un abus"
   },
   "dialog": {
-    "title": "Nouvelle demande",
-    "description": "Choisissez un type de demande et remplissez les détails ci-dessous.",
+    "title": "Nouvelle demande de confidentialité",
+    "description": "Soumettez une demande concernant vos données personnelles, comme une demande d'accès ou de suppression. Choisissez un type de demande et remplissez les détails ci-dessous.",
     "typeLabel": "Type de demande",
     "cancel": "Annuler",
     "submit": "Envoyer la demande",

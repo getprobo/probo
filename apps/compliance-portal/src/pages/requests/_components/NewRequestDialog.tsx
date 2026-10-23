@@ -56,7 +56,7 @@ interface NewRequestDialogProps {
   viewerName: string;
 }
 
-// The "New Request" modal. The form lives in a child that only mounts while the
+// The "New Privacy Request" modal. The form lives in a child that only mounts while the
 // dialog is open, so each open starts from a clean slate without a reset effect.
 export function NewRequestDialog({
   open,

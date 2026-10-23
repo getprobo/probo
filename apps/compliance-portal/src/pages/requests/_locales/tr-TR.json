@@ -1,10 +1,10 @@
 {
-  "title": "Veri Talepleri",
-  "newRequest": "Yeni Talep",
+  "title": "Gizlilik Talepleri",
+  "newRequest": "Yeni Gizlilik Talebi",
   "loadMore": "Daha fazla yükle",
   "empty": {
-    "title": "Henüz talep yok",
-    "description": "Gönderdiğiniz talepler burada görünür, böylece ilerlemelerini takip edebilirsiniz."
+    "title": "Henüz gizlilik talebi yok",
+    "description": "Kişisel verilerinize ilişkin gizlilik talepleri burada görünür, böylece ilerlemelerini takip edebilirsiniz."
   },
   "types": {
     "ACCESS": "Veriye Erişim",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Kötüye kullanım bildirmek istiyorum"
   },
   "dialog": {
-    "title": "Yeni Talep",
-    "description": "Bir talep türü seçin ve aşağıdaki ayrıntıları doldurun.",
+    "title": "Yeni Gizlilik Talebi",
+    "description": "Kişisel verileriniz hakkında bir talep gönderin, örneğin bunlara erişme veya silme talebi. Bir talep türü seçin ve aşağıdaki ayrıntıları doldurun.",
     "typeLabel": "Talep türü",
     "cancel": "İptal",
     "submit": "Talebi Gönder",

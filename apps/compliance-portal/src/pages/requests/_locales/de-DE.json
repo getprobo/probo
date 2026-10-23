@@ -1,10 +1,10 @@
 {
-  "title": "Datenanfragen",
-  "newRequest": "Neue Anfrage",
+  "title": "Datenschutzanfragen",
+  "newRequest": "Neue Datenschutzanfrage",
   "loadMore": "Mehr laden",
   "empty": {
-    "title": "Noch keine Anfragen",
-    "description": "Von Ihnen gestellte Anfragen werden hier angezeigt, damit Sie deren Fortschritt verfolgen können."
+    "title": "Noch keine Datenschutzanfragen",
+    "description": "Datenschutzanfragen zu Ihren personenbezogenen Daten werden hier angezeigt, damit Sie deren Fortschritt verfolgen können."
   },
   "types": {
     "ACCESS": "Datenzugriff",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Missbrauch melden"
   },
   "dialog": {
-    "title": "Neue Anfrage",
-    "description": "Wählen Sie einen Anfragetyp und füllen Sie die Details unten aus.",
+    "title": "Neue Datenschutzanfrage",
+    "description": "Stellen Sie einen Antrag zu Ihren personenbezogenen Daten, zum Beispiel einen Antrag auf Auskunft oder Löschung. Wählen Sie einen Anfragetyp und füllen Sie die Details unten aus.",
     "typeLabel": "Anfragetyp",
     "cancel": "Abbrechen",
     "submit": "Anfrage senden",

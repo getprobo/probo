@@ -29,7 +29,7 @@ export interface PageHeaderProps {
   title: ReactNode;
   // Optional muted item count appended to the title (e.g. "Documents (3)").
   count?: number;
-  // Right-aligned controls on the title line (e.g. a "New Request" button).
+  // Right-aligned controls on the title line (e.g. a "New Privacy Request" button).
   actions?: ReactNode;
   // Optional toolbar (tabs / filters / search) rendered below the title.
   children?: ReactNode;

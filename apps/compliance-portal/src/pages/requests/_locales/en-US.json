@@ -1,10 +1,10 @@
 {
-  "title": "Data Requests",
-  "newRequest": "New Request",
+  "title": "Privacy Requests",
+  "newRequest": "New Privacy Request",
   "loadMore": "Load more",
   "empty": {
-    "title": "No requests yet",
-    "description": "Requests you submit will appear here so you can track their progress."
+    "title": "No privacy requests yet",
+    "description": "Privacy requests about your personal data appear here so you can track their progress."
   },
   "types": {
     "ACCESS": "Data Access",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Report abuse"
   },
   "dialog": {
-    "title": "New Request",
-    "description": "Choose a request type and fill in the details below.",
+    "title": "New Privacy Request",
+    "description": "Submit a request about your personal data, such as a request to access or delete it. Choose a request type and fill in the details below.",
     "typeLabel": "Request type",
     "cancel": "Cancel",
     "submit": "Submit Request",

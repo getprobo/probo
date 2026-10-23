@@ -1,10 +1,10 @@
 {
-  "title": "Richieste di dati",
-  "newRequest": "Nuova richiesta",
+  "title": "Richieste di privacy",
+  "newRequest": "Nuova richiesta di privacy",
   "loadMore": "Carica altri",
   "empty": {
-    "title": "Nessuna richiesta al momento",
-    "description": "Le richieste che invierà appariranno qui, così potrà seguirne l'avanzamento."
+    "title": "Nessuna richiesta di privacy al momento",
+    "description": "Le richieste di privacy sui Suoi dati personali appariranno qui, così potrà seguirne l'avanzamento."
   },
   "types": {
     "ACCESS": "Accesso ai dati",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Segnalare un abuso"
   },
   "dialog": {
-    "title": "Nuova richiesta",
-    "description": "Scelga un tipo di richiesta e compili i dettagli riportati di seguito.",
+    "title": "Nuova richiesta di privacy",
+    "description": "Invii una richiesta sui Suoi dati personali, ad esempio una richiesta di accesso o di cancellazione. Scelga un tipo di richiesta e compili i dettagli riportati di seguito.",
     "typeLabel": "Tipo di richiesta",
     "cancel": "Annulla",
     "submit": "Invia richiesta",

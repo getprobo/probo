@@ -1,10 +1,10 @@
 {
-  "title": "Solicitudes de datos",
-  "newRequest": "Nueva solicitud",
+  "title": "Solicitudes de privacidad",
+  "newRequest": "Nueva solicitud de privacidad",
   "loadMore": "Cargar más",
   "empty": {
-    "title": "Todavía no hay solicitudes",
-    "description": "Las solicitudes que envíe aparecerán aquí para que pueda seguir su progreso."
+    "title": "Todavía no hay solicitudes de privacidad",
+    "description": "Las solicitudes de privacidad sobre sus datos personales aparecerán aquí para que pueda seguir su progreso."
   },
   "types": {
     "ACCESS": "Acceso a datos",
@@ -28,8 +28,8 @@
     "COMPLAINT": "Denunciar un abuso"
   },
   "dialog": {
-    "title": "Nueva solicitud",
-    "description": "Elija un tipo de solicitud y complete los datos a continuación.",
+    "title": "Nueva solicitud de privacidad",
+    "description": "Envíe una solicitud sobre sus datos personales, como una solicitud para acceder a ellos o eliminarlos. Elija un tipo de solicitud y complete los datos a continuación.",
     "typeLabel": "Tipo de solicitud",
     "cancel": "Cancelar",
     "submit": "Enviar solicitud",

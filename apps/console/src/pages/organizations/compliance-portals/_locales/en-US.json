@@ -54,8 +54,8 @@
     "description": "Choose frameworks, commitments, and references shown on the landing page."
   },
   "rightRequestsPage": {
-    "title": "Right Requests",
-    "description": "Let visitors submit data subject rights requests on the portal."
+    "title": "Privacy Requests",
+    "description": "Let visitors submit privacy requests about their personal data."
   },
   "accessPage": {
     "description": "Add people to the portal, or wait for them to sign in to request documents or accept an NDA."
@@ -518,8 +518,8 @@
       "disabledHint": "Activate your compliance portal first to enable search engine indexing"
     },
     "rightsRequests": {
-      "title": "Rights requests",
-      "description": "Let visitors submit data subject rights requests on your compliance portal"
+      "title": "Privacy requests",
+      "description": "Let visitors submit privacy requests about their personal data on your compliance portal"
     }
   },
   "domainsSection": {
