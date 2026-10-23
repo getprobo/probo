@@ -4,8 +4,11 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+## [0.28.0] - 2026-10-23
+
 ### Changed
 
+- Default `appVersion` is now `0.326.0`
 - Bundled demo PostgreSQL image is now `18.6`
 
 ## [0.27.0] - 2026-10-20
