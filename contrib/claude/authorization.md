@@ -291,19 +291,19 @@ Scopes are namespace- or product-level only — no resource segments (e.g. `v1:p
 - Authorization server (RFC 8414): `scopes_supported` on `/.well-known/oauth-authorization-server` lists OIDC + all API scopes; `protected_resources` links to the resource metadata document
 - Protected resource (RFC 9728): `scopes_supported` on `/.well-known/oauth-protected-resource` lists `openid` plus write API scopes only (no `:read` suffix); matches CIMD client registration
 
-**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `oauth2scope.Registry` mappings via `Registry.Allows`. Each domain package exports an OAuth2 scope mapping in its `oauth2_scopes.go` (`OAuth2ScopeMappings`, or `IAMOAuth2ScopeMappings` in `pkg/iam`); `probod` registers all domain mappings on the shared registry before `iam.NewService`. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session, personal API key, and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
+**Enforcement:** OAuth2 bearer-token requests carry the validated access token on the request context (`pkg/iam/oauth2/request_context.go`). Before IAM policy evaluation, `iam.Authorizer` checks registered `oauth2scope.Registry` mappings via `Registry.Allows`. Each domain package exports an OAuth2 scope mapping in its `oauth2_scopes.go` (`OAuth2ScopeMappings`, or `IAMOAuth2ScopeMappings` in `pkg/iam`); `probod` registers all domain mappings on the shared registry before `iam.NewService`. The check uses explicit scope→action lists — no `:read` / `:get` heuristics at enforcement time. Session and SCIM auth skip the check (no access token on context). Unmapped IAM actions **deny** OAuth requests (fail closed). Enforcement reads scopes from the access token directly.
 
 **When adding or extending IAM actions:** every new action used by GraphQL, MCP, CLI, or n8n must be listed in the owning package's OAuth2 scope mapping (`OAuth2ScopeMappings`, or `IAMOAuth2ScopeMappings` in `pkg/iam`). Prefer an existing `v1:<namespace>` / `v1:<namespace>:read` pair (e.g. commitment CRUD under `v1:compliance-page`). Only introduce a new namespace-level scope when no existing scope fits — then add constants in `oauth2_scopes.go`, map actions in the package's OAuth2 scope mapping, and register the mapping in `probod` wiring. Write scopes are registered only when their mutating IAM actions are mapped.
 
 When you add a new `v1:<namespace>` pair, add labels in the console locale files. Put the keys `v1:<namespace>` and `v1:<namespace>:read` under `oauthScopes.api` in `apps/console/src/_locales/{en-US,fr-FR,nl-NL}.json`.
 
-E2E MCP tests often authenticate with personal API keys, which skip the OAuth2 scope gate. A green e2e suite does **not** prove OAuth2 clients can call the tool — always update the package's OAuth2 scope mapping when wiring new actions.
+E2E MCP tests authenticate with OAuth2 access tokens. Keep each tool's IAM action in the package's OAuth2 scope mapping so those requests pass the scope gate.
 
 **Well-known Probo CLI client:** `iam_oauth2_clients` scopes for `AAAAAAAAAAAASwAAAAAAAAAAcHJiY2xp` must match `CLIClientScopes` in `pkg/cli/config/config.go` (requested by `prb auth login`). When adding API scopes, update the client migration, `CLIClientScopes`, and scope registration together.
 
 ### Personal OAuth2 access tokens
 
-Manual bearer tokens created from the console are stored in `iam_oauth2_access_tokens` with a `NULL` `client_id` and are scoped to the creating identity. They are managed via Connect GraphQL on the signed-in user's `Identity`, similar to personal API keys. IAM actions:
+Manual bearer tokens created from the console are stored in `iam_oauth2_access_tokens` with a `NULL` `client_id` and are scoped to the creating identity. They are managed via Connect GraphQL on the signed-in user's `Identity`. IAM actions:
 
 | Action | Purpose |
 |--------|---------|

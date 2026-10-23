@@ -73,13 +73,6 @@ func handleConnectorInstallInitiate(
 			return
 		}
 
-		// The flow ends at a browser redirect carrying a session cookie, so an
-		// API key can never complete what it starts here.
-		if authn.APIKeyFromContext(ctx) != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("api key authentication cannot be used for this endpoint"))
-			return
-		}
-
 		identity := authn.IdentityFromContext(ctx)
 		if identity == nil {
 			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))

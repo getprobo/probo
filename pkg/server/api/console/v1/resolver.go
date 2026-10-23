@@ -129,7 +129,6 @@ func NewMux(
 	cookieBannerSvc *cookiebanner.Service,
 	employeePortalSvc *employeeportalmgmt.Service,
 	cookieConfig securecookie.Config,
-	tokenSecret string,
 	installStateKey string,
 	connectorRegistry *connectorprotocol.Registry,
 	providerRegistry *provider.Registry,
@@ -192,7 +191,6 @@ func NewMux(
 
 	r.Group(func(r chi.Router) {
 		r.Use(authn.NewSessionMiddleware(iamSvc, cookieConfig))
-		r.Use(authn.NewAPIKeyMiddleware(iamSvc, tokenSecret))
 		r.Use(authn.NewOAuth2AccessTokenMiddleware(iamSvc))
 		r.Use(authn.NewIdentityPresenceMiddleware(baseURL))
 		r.Use(newMembershipAccessMiddleware(iamSvc, logger))
@@ -263,8 +261,8 @@ func NewMux(
 
 	// Public in the sense that the vendor top-level-redirects the customer's
 	// browser here carrying no Probo credentials of its own, so the full auth
-	// group above -- API key, OAuth2 access token, identity presence,
-	// membership -- cannot gate it. NewSessionMiddleware is mounted alone
+	// group above -- session, OAuth2 access token, identity presence,
+	// and membership -- cannot gate it. NewSessionMiddleware is mounted alone
 	// because it is the one middleware that is non-blocking when no cookie is
 	// present: it hands the request straight to the next handler, attaching an
 	// identity only when a valid session cookie rides along.

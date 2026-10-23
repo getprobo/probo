@@ -85,7 +85,6 @@ func TestHandleGetStaticFile(t *testing.T) {
 		nil,
 		nil,
 		securecookie.Config{},
-		"test-secret",
 		baseurl.MustParse("https://example.com"),
 	)
 
@@ -123,9 +122,8 @@ func TestHandleGetFile_UnauthenticatedReturns401(t *testing.T) {
 		log.NewLogger(log.WithOutput(io.Discard)),
 		nil, // fileSvc — not reached
 		nil, // proboSvc — not reached
-		nil, // iamSvc — not reached when no token/cookie present
+		nil, // iamSvc — not reached when no credentials are present
 		securecookie.Config{},
-		"test-secret",
 		baseurl.MustParse("https://example.com"),
 	)
 

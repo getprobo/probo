@@ -253,7 +253,7 @@ bin/probod -cfg-file cfg/dev.yaml   # API + OAuth at http://localhost:8080
 bin/prb auth login --hostname http://localhost:8080
 ```
 
-Use `http://` explicitly — hosts without a scheme default to HTTPS. Config is stored under the OS user config dir (`prb/config.yaml`). Override with `PROBO_HOST` and `PROBO_TOKEN` for scripting; see `contrib/seed.sh` for a personal API key bootstrap.
+Use `http://` explicitly — hosts without a scheme default to HTTPS. Config is stored under the OS user config dir (`prb/config.yaml`). Override with `PROBO_HOST` and `PROBO_TOKEN` for scripting; see `contrib/seed.sh` for an OAuth access token bootstrap.
 
 ## New resource command checklist
 

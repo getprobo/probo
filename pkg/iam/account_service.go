@@ -38,7 +38,6 @@ import (
 	"go.probo.inc/probo/pkg/imageutil"
 	"go.probo.inc/probo/pkg/mail"
 	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/securetoken"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/validator"
 )
@@ -46,13 +45,6 @@ import (
 type (
 	AccountService struct {
 		*Service
-	}
-
-	PersonalAPIKeyTokenData struct {
-		Version     int       `json:"v"`
-		KeyID       gid.GID   `json:"kid"`
-		PrincipalID gid.GID   `json:"pid"`
-		IssuedAt    time.Time `json:"iat"`
 	}
 
 	EmailConfirmationData struct {
@@ -785,91 +777,6 @@ func (s AccountService) UpdateLocale(ctx context.Context, identityID gid.GID, re
 	return identity, nil
 }
 
-func (s AccountService) ListPersonalAPIKeys(
-	ctx context.Context,
-	identityID gid.GID,
-	cursor *page.Cursor[coredata.PersonalAPIKeyOrderField],
-) (*page.Page[*coredata.PersonalAPIKey, coredata.PersonalAPIKeyOrderField], error) {
-	var personalAccessTokens coredata.PersonalAPIKeys
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			err := personalAccessTokens.LoadByIdentityID(ctx, conn, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot load personal access tokens: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(personalAccessTokens, cursor), nil
-}
-
-func (s AccountService) CountPersonalAPIKeys(ctx context.Context, identityID gid.GID) (int, error) {
-	var count int
-
-	err := s.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) (err error) {
-			personalAccessTokens := coredata.PersonalAPIKeys{}
-
-			count, err = personalAccessTokens.CountByIdentityID(ctx, conn, identityID)
-			if err != nil {
-				return fmt.Errorf("cannot count personal access tokens: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	return count, err
-}
-func (s *AccountService) RevealPersonalAPIKeyToken(
-	ctx context.Context,
-	identityID gid.GID,
-	personalAPIKeyID gid.GID,
-) (string, error) {
-	var token string
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) (err error) {
-			personalAPIKey := &coredata.PersonalAPIKey{}
-			if err := personalAPIKey.LoadByID(ctx, tx, personalAPIKeyID); err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
-				}
-
-				return fmt.Errorf("cannot load personal api key: %w", err)
-			}
-
-			if personalAPIKey.IdentityID != identityID {
-				return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
-			}
-
-			token, err = securetoken.Sign(
-				personalAPIKey.ID.String(),
-				s.tokenSecret,
-			)
-			if err != nil {
-				return fmt.Errorf("cannot generate personal api key token: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
 func (s AccountService) GetIdentityForMembership(ctx context.Context, membershipID gid.GID) (*coredata.Identity, error) {
 	var (
 		scope    = coredata.NewScopeFromObjectID(membershipID)
@@ -907,86 +814,6 @@ func (s AccountService) GetIdentityForMembership(ctx context.Context, membership
 	}
 
 	return identity, nil
-}
-
-func (s *AccountService) CreatePersonalAPIKey(
-	ctx context.Context,
-	identityID gid.GID,
-	name string,
-	expiresAt time.Time,
-) (*coredata.PersonalAPIKey, string, error) {
-	var (
-		personalAPIKey *coredata.PersonalAPIKey
-		token          string
-	)
-
-	err := s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) (err error) {
-			now := time.Now()
-
-			personalAPIKey = &coredata.PersonalAPIKey{
-				ID:         gid.New(gid.NilTenant, coredata.PersonalAPIKeyEntityType),
-				IdentityID: identityID,
-				Name:       name,
-				ExpiresAt:  expiresAt,
-				CreatedAt:  now,
-				UpdatedAt:  now,
-			}
-
-			if err := personalAPIKey.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert personal api key: %w", err)
-			}
-
-			token, err = securetoken.Sign(
-				personalAPIKey.ID.String(),
-				s.tokenSecret,
-			)
-			if err != nil {
-				return fmt.Errorf("cannot generate personal api key token: %w", err)
-			}
-
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return personalAPIKey, token, nil
-}
-
-func (s *AccountService) DeletePersonalAPIKey(
-	ctx context.Context,
-	identityID gid.GID,
-	personalAPIKeyID gid.GID,
-) error {
-	return s.pg.WithTx(
-		ctx,
-		func(ctx context.Context, tx pg.Tx) error {
-			personalAPIKey := &coredata.PersonalAPIKey{}
-
-			err := personalAPIKey.LoadByID(ctx, tx, personalAPIKeyID)
-			if err != nil {
-				if err == coredata.ErrResourceNotFound {
-					return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
-				}
-
-				return fmt.Errorf("cannot load personal api key: %w", err)
-			}
-
-			if personalAPIKey.IdentityID != identityID {
-				return NewPersonalAPIKeyNotFoundError(personalAPIKeyID)
-			}
-
-			err = personalAPIKey.Delete(ctx, tx)
-			if err != nil {
-				return fmt.Errorf("cannot delete personal api key: %w", err)
-			}
-
-			return nil
-		},
-	)
 }
 
 func (s AccountService) ListInvitingOrganizations(ctx context.Context, identityID gid.GID) ([]*coredata.Organization, error) {
