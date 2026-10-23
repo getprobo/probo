@@ -97,9 +97,9 @@ export function TaskEstimateCustomDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>{t("durationPicker.custom")}</DialogTitle>
+          <DialogTitle>{t("fields.timeEstimate")}</DialogTitle>
         </DialogHeader>
-        <Form onFormSubmit={save}>
+        <Form className="flex flex-col gap-4" onFormSubmit={save}>
           <DialogBody className="flex flex-col gap-3">
             <Field label={t("fields.timeEstimate")} required>
               <TextField

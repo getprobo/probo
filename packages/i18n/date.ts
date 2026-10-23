@@ -92,19 +92,26 @@ function calendarDayDiff(date: Date, now = new Date()): number {
   );
 }
 
+export type CompactDateFormatOptions = {
+  // Another year reads "Sep 2027" instead of "Sep 30, 2027".
+  omitDayWithYear?: boolean;
+};
+
 export function compactDateFormat(
   language: string,
   date: Date | string | null | undefined,
   now = new Date(),
+  format: CompactDateFormatOptions = {},
 ): string {
   if (!date) return "";
 
   const dateValue = typeof date === "string" ? parseDate(date) : date;
-  const options: Intl.DateTimeFormatOptions = {
-    month: "short",
-    day: "numeric",
-  };
-  if (dateValue.getFullYear() !== now.getFullYear()) {
+  const sameYear = dateValue.getFullYear() === now.getFullYear();
+  const options: Intl.DateTimeFormatOptions = { month: "short" };
+  if (sameYear || format.omitDayWithYear !== true) {
+    options.day = "numeric";
+  }
+  if (!sameYear) {
     options.year = "numeric";
   }
 

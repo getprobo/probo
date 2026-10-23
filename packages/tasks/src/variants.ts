@@ -76,7 +76,7 @@ export const taskListItem = tv({
     deadlineIcon: "text-red-11",
     deadlineCustom: "p-1",
     chipTrigger: "appearance-none cursor-pointer border-0 bg-transparent p-0 text-inherit",
-    created: "relative z-1 flex h-6 shrink-0 items-center text-sand-11",
+    created: "relative z-1 grid h-6 shrink-0 items-center justify-items-end whitespace-nowrap text-1 text-sand-11 tabular-nums",
     more: "relative z-1 flex h-6 shrink-0 items-center",
     trailing: "relative z-1 flex h-6 shrink-0 items-center gap-2",
     assignee: "relative z-1 flex h-6 shrink-0 items-center",

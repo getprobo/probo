@@ -138,6 +138,13 @@ describe("compactDateFormat", () => {
   it("includes the year when it differs from now", () => {
     expect(compactDateFormat("en-US", new Date(2025, 7, 25), now)).toBe("Aug 25, 2025");
   });
+
+  it("can omit the day when the year differs", () => {
+    expect(compactDateFormat("en-US", new Date(2027, 8, 30), now, { omitDayWithYear: true }))
+      .toBe("Sep 2027");
+    expect(compactDateFormat("en-US", new Date(2026, 8, 30), now, { omitDayWithYear: true }))
+      .toBe("Sep 30");
+  });
 });
 
 describe("deadlineDateFormat", () => {

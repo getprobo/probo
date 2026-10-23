@@ -128,7 +128,14 @@ export function TaskListItem(props: TaskListItemProps) {
     style: "short",
     locale: i18n.language,
   });
-  const createdAt = compactDateFormat(i18n.language, props.task.createdAt);
+  const formatCreatedDate = (date: Date | string) => compactDateFormat(
+    i18n.language,
+    date,
+    new Date(),
+    { omitDayWithYear: true },
+  );
+  const createdAt = formatCreatedDate(props.task.createdAt);
+  const createdColumn = formatCreatedDate(new Date(2020, 8, 30));
   const showAssignee = props.canUpdateAssignee === true || props.task.assignedTo != null;
   const showEstimate = timeEstimate != null;
   const showDeadline = props.task.deadline != null;
@@ -274,7 +281,10 @@ export function TaskListItem(props: TaskListItemProps) {
             <TooltipTrigger
               render={(
                 <span className={slots.created()} aria-label={t("fields.createdAt")}>
-                  <Text size={1} color="current">
+                  <span className="invisible col-start-1 row-start-1" aria-hidden>
+                    {createdColumn}
+                  </span>
+                  <Text size={1} color="current" className="col-start-1 row-start-1">
                     <time dateTime={props.task.createdAt}>
                       {createdAt}
                     </time>

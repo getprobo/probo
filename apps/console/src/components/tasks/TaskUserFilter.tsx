@@ -63,7 +63,10 @@ export function TaskUserFilter({ value, onValueChange }: TaskUserFilterProps) {
 
   return (
     <Dropdown>
-      <DropdownTrigger className={slots.trigger()}>
+      <DropdownTrigger
+        className={slots.trigger()}
+        data-placeholder={value == null ? "" : undefined}
+      >
         <span className={slots.value()}>
           {value == null
             ? emptyLabel
