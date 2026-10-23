@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Nieuw privacyverzoek",
-    "description": "Dit gaat over uw persoonsgegevens, zoals inzage of verwijdering. Kies een type verzoek en vul hieronder de details in.",
+    "description": "Dien een verzoek in over uw persoonsgegevens, bijvoorbeeld om ze in te zien of te verwijderen. Kies een type verzoek en vul hieronder de details in.",
     "typeLabel": "Type verzoek",
     "cancel": "Annuleren",
     "submit": "Verzoek indienen",

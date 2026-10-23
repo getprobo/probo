@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Novo Pedido de Privacidade",
-    "description": "Faça um pedido relativo aos seus dados pessoais, como um pedido de acesso ou eliminação. Escolha um tipo de pedido e preencha os detalhes abaixo.",
+    "description": "Submeta um pedido sobre os seus dados pessoais, por exemplo para lhes aceder ou os eliminar. Escolha um tipo de pedido e preencha os detalhes abaixo.",
     "typeLabel": "Tipo de pedido",
     "cancel": "Cancelar",
     "submit": "Enviar Pedido",
