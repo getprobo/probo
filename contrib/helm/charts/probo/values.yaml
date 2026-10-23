@@ -182,8 +182,10 @@ probo:
     # bundled HAProxy TCP passthrough are disabled in this mode.
     # External mode also disables Probo ACME issuance and renewal. Preserve the
     # requested Host and overwrite X-Forwarded-Proto at the proxy. Route
-    # {slug}.<baseDomain> or a domain already stored in Probo.
-    # Creating custom domains is unsupported and leaves them pending.
+    # {slug}.<baseDomain> and every custom domain to it: a domain is served
+    # and treated as verified as soon as it is stored in Probo. Probo performs
+    # no ownership check on custom domains in this mode, the proxy routing is
+    # the only control, and certificate status has no meaning.
     tlsMode: "direct"
 
   # OpenTelemetry tracing configuration

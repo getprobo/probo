@@ -29,7 +29,7 @@ func (s *Service) EffectiveDomainForCompliancePortal(
 	scope coredata.Scoper,
 	compliancePage *coredata.CompliancePortal,
 ) (*coredata.CustomDomain, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
+	byID, active, err := s.loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *Service) PublicURLForCompliancePortal(
 	scope coredata.Scoper,
 	compliancePage *coredata.CompliancePortal,
 ) (string, error) {
-	byID, active, err := loadDomains(ctx, conn, scope, compliancePage)
+	byID, active, err := s.loadDomains(ctx, conn, scope, compliancePage)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,7 @@ func (s *Service) PublicURLForCompliancePortal(
 	return "https://" + host, nil
 }
 
-func loadDomains(
+func (s *Service) loadDomains(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
@@ -113,6 +113,14 @@ func loadDomains(
 			certificateIDs = append(certificateIDs, *d.CertificateID)
 			domainByCertificate[*d.CertificateID] = d.ID
 		}
+	}
+
+	if s.externallyTerminatedTLS {
+		for _, d := range domains {
+			active[d.ID] = true
+		}
+
+		return byID, active, nil
 	}
 
 	if len(certificateIDs) == 0 {

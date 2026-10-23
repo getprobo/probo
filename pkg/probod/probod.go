@@ -643,7 +643,7 @@ func (impl *Implm) Run(
 	var acmeService *certmanager.ACMEService
 
 	if impl.cfg.CompliancePortal.TLSMode.IsExternal() {
-		l.Info("custom domains and ACME are disabled in external compliance portal TLS mode")
+		l.Info("ACME is disabled in external compliance portal TLS mode, linked domains are served without a Probo-issued certificate")
 	} else {
 		var accountKey crypto.Signer
 		if !impl.cfg.CustomDomains.ACME.AccountKey.IsZero() {
@@ -775,6 +775,7 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		baseURL.String(),
 		impl.cfg.CompliancePortal.BaseDomain,
+		impl.cfg.CompliancePortal.TLSMode.IsExternal(),
 		fileManagerService,
 		certManagerService,
 		botService,

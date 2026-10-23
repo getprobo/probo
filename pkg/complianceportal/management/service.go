@@ -43,17 +43,18 @@ type (
 	// scoped CRUD operations for the compliance page and its related resources as
 	// methods on a single type.
 	Service struct {
-		pg            *pg.Client
-		s3            *s3.Client
-		bucket        string
-		baseURL       string
-		baseDomain    string
-		fileManager   *filemanager.Service
-		certManager   *certmanager.Service
-		logger        *log.Logger
-		bot           *bot.Service
-		esign         *esign.Service
-		fileValidator *filevalidation.FileValidator
+		pg                      *pg.Client
+		s3                      *s3.Client
+		bucket                  string
+		baseURL                 string
+		baseDomain              string
+		externallyTerminatedTLS bool
+		fileManager             *filemanager.Service
+		certManager             *certmanager.Service
+		logger                  *log.Logger
+		bot                     *bot.Service
+		esign                   *esign.Service
+		fileValidator           *filevalidation.FileValidator
 	}
 
 	// FileUpload is an in-memory file supplied by a caller for upload.
@@ -79,6 +80,7 @@ func NewService(
 	bucket string,
 	baseURL string,
 	baseDomain string,
+	externallyTerminatedTLS bool,
 	fileManagerService *filemanager.Service,
 	certManagerService *certmanager.Service,
 	botService *bot.Service,
@@ -86,16 +88,17 @@ func NewService(
 	logger *log.Logger,
 ) *Service {
 	return &Service{
-		pg:          pgClient,
-		s3:          s3Client,
-		bucket:      bucket,
-		baseURL:     baseURL,
-		baseDomain:  baseDomain,
-		fileManager: fileManagerService,
-		certManager: certManagerService,
-		logger:      logger,
-		bot:         botService,
-		esign:       esignService,
+		pg:                      pgClient,
+		s3:                      s3Client,
+		bucket:                  bucket,
+		baseURL:                 baseURL,
+		baseDomain:              baseDomain,
+		externallyTerminatedTLS: externallyTerminatedTLS,
+		fileManager:             fileManagerService,
+		certManager:             certManagerService,
+		logger:                  logger,
+		bot:                     botService,
+		esign:                   esignService,
 		fileValidator: filevalidation.NewValidator(
 			filevalidation.WithCategories(
 				filevalidation.CategoryData,
