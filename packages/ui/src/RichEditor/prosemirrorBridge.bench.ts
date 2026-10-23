@@ -20,7 +20,7 @@
 
 import * as Automerge from "@automerge/automerge";
 import { pmDocFromSpans, pmNodeToSpans } from "@automerge/prosemirror";
-import { bench, describe } from "vitest";
+import { describe, test } from "vitest";
 
 import {
   createRichEditorAutomergeDocument,
@@ -79,19 +79,27 @@ const tableAutomerge = createRichEditorAutomergeDocument(
 const tableSpans = Automerge.spans(tableAutomerge, ["body"]);
 
 describe("ProseMirror bridge", () => {
-  bench("pmNodeToSpans / 1,000 paragraphs / 100 KiB", () => {
-    pmNodeToSpans(adapter, paragraphDocument);
+  test("pmNodeToSpans / 1,000 paragraphs / 100 KiB", async ({ bench }) => {
+    await bench("pmNodeToSpans / 1,000 paragraphs / 100 KiB", () => {
+      pmNodeToSpans(adapter, paragraphDocument);
+    }).run();
   });
 
-  bench("pmDocFromSpans / 1,000 paragraphs / 100 KiB", () => {
-    pmDocFromSpans(adapter, paragraphSpans);
+  test("pmDocFromSpans / 1,000 paragraphs / 100 KiB", async ({ bench }) => {
+    await bench("pmDocFromSpans / 1,000 paragraphs / 100 KiB", () => {
+      pmDocFromSpans(adapter, paragraphSpans);
+    }).run();
   });
 
-  bench("pmNodeToSpans / table 100x10", () => {
-    pmNodeToSpans(adapter, tableDocument);
+  test("pmNodeToSpans / table 100x10", async ({ bench }) => {
+    await bench("pmNodeToSpans / table 100x10", () => {
+      pmNodeToSpans(adapter, tableDocument);
+    }).run();
   });
 
-  bench("pmDocFromSpans / table 100x10", () => {
-    pmDocFromSpans(adapter, tableSpans);
+  test("pmDocFromSpans / table 100x10", async ({ bench }) => {
+    await bench("pmDocFromSpans / table 100x10", () => {
+      pmDocFromSpans(adapter, tableSpans);
+    }).run();
   });
 });
