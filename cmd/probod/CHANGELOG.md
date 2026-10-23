@@ -4,6 +4,13 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.325.1] - 2026-10-23
+
+### Fixed
+
+- Bumped DOMPurify to 3.4.17 to pick up its sanitization security
+  fixes
+
 ## [0.325.0] - 2026-10-23
 
 ### Added
