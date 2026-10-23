@@ -43,8 +43,14 @@
     "typescript": "6.0.2"
   },
   "allowScripts": {
+    "cbor-extract": false,
+    "core-js": false,
+    "cpu-features": false,
     "esbuild": true,
+    "eslint-plugin-n8n-nodes-base": false,
     "fsevents": true,
+    "isolated-vm": false,
+    "ssh2": false,
     "unrs-resolver": true
   },
   "license": "MIT",
