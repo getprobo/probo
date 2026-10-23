@@ -47,7 +47,7 @@ jobs:
           GOTESTSUM_JUNITFILE: "junit-automerge.xml"
           TEST_FLAGS: "-count=1 -race -cover -coverprofile=coverage.out -timeout 45m"
       - name: "Upload test results"
-        uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         if: "always()"
         continue-on-error: true
         with:
@@ -55,7 +55,7 @@ jobs:
           path: "junit-automerge.xml"
           retention-days: 30
       - run: "go tool cover -html=coverage.out -o coverage.html"
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         continue-on-error: true
         with:
           name: "automerge-coverage-reports"
