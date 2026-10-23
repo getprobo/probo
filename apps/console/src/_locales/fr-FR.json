@@ -3863,6 +3863,12 @@
       "retry": "Réessayer",
       "truncated": "Affichage des 100 premières lignes de données."
     },
+    "json": {
+      "empty": "Ce fichier JSON est vide.",
+      "error": "Impossible de charger l’aperçu JSON.",
+      "retry": "Réessayer",
+      "truncated": "Affichage des 512 premiers Ko."
+    },
     "text": {
       "empty": "Ce fichier texte est vide.",
       "error": "Impossible de charger l’aperçu du texte.",
