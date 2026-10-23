@@ -333,6 +333,10 @@ func (h *Handler) renderServiceError(
 		return
 	}
 
+	if requestCanceled(err) {
+		return
+	}
+
 	h.Logger.ErrorCtx(
 		r.Context(),
 		"cannot open document collaboration",
@@ -742,6 +746,29 @@ func repoReadResult(err error) error {
 	default:
 		return fmt.Errorf("repo collaboration read failed: %w", err)
 	}
+}
+
+// A joined rollback is ignored when the operation itself was canceled.
+func requestCanceled(err error) bool {
+	for err != nil {
+		type joined interface{ Unwrap() []error }
+		if group, ok := err.(joined); ok {
+			parts := group.Unwrap()
+			if len(parts) == 0 {
+				return false
+			}
+
+			return requestCanceled(parts[0])
+		}
+
+		if err == context.Canceled {
+			return true
+		}
+
+		err = errors.Unwrap(err)
+	}
+
+	return false
 }
 
 func writeRepoFrames(ctx context.Context, connection *websocket.Conn, frames [][]byte) error {

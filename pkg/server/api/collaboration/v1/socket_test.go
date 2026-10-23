@@ -22,6 +22,7 @@ package collaboration_v1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -163,4 +164,60 @@ func TestRepoReadResult(t *testing.T) {
 
 		assert.ErrorContains(t, repoReadResult(err), "repo collaboration read failed")
 	})
+}
+
+func TestRequestCanceled(t *testing.T) {
+	t.Parallel()
+
+	rollback := fmt.Errorf(
+		"cannot rollback transaction: failed to deallocate cached statement(s): conn closed",
+	)
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{
+			name: "commit on a canceled request",
+			err: fmt.Errorf(
+				"cannot open collaboration room: %w",
+				fmt.Errorf("cannot commit transaction: %w", context.Canceled),
+			),
+			want: true,
+		},
+		{
+			name: "load canceled and rollback lost the connection",
+			err: fmt.Errorf(
+				"cannot open collaboration room: %w",
+				errors.Join(
+					fmt.Errorf(
+						"cannot load collaboration document: %w",
+						fmt.Errorf("cannot collect collaboration document: %w", context.Canceled),
+					),
+					rollback,
+				),
+			),
+			want: true,
+		},
+		{
+			name: "database failure with a canceled rollback",
+			err: fmt.Errorf(
+				"cannot open collaboration room: %w",
+				errors.Join(
+					fmt.Errorf("cannot load collaboration document: %w", errors.New("connection reset")),
+					fmt.Errorf("cannot rollback transaction: %w", context.Canceled),
+				),
+			),
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, requestCanceled(tt.err))
+		})
+	}
 }
