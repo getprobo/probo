@@ -62,8 +62,6 @@ func ExtractPageTextTool(b *Browser) agent.Tool {
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 
-			var text string
-
 			// Cap the JS-side slice at 4 code units per rune so the
 			// DevTools transfer stays bounded even for huge pages;
 			// the Go-side rune truncation below then produces the
@@ -74,18 +72,22 @@ func ExtractPageTextTool(b *Browser) agent.Tool {
 				jsMaxLen,
 			)
 
-			err := chromedp.Run(
+			err := chromedp.Do(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				waitForPage(),
 				// Scroll to bottom to trigger lazy-loaded content,
 				// then back to top and wait briefly for rendering.
-				chromedp.Evaluate(`window.scrollTo(0, document.body.scrollHeight)`, nil),
+				chromedp.Evaluate[chromedp.Void](`window.scrollTo(0, document.body.scrollHeight)`),
 				chromedp.Sleep(500*time.Millisecond),
-				chromedp.Evaluate(`window.scrollTo(0, 0)`, nil),
+				chromedp.Evaluate[chromedp.Void](`window.scrollTo(0, 0)`),
 				chromedp.Sleep(200*time.Millisecond),
-				chromedp.Evaluate(extractJS, &text),
 			)
+			if err != nil {
+				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
+			}
+
+			text, err := chromedp.Run(tabCtx, chromedp.Evaluate[string](extractJS))
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
 			}

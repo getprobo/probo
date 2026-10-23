@@ -57,21 +57,25 @@ func SelectOptionTool(b *Browser) agent.Tool {
 
 			var text string
 
-			err := chromedp.Run(
+			err := chromedp.Do(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				waitForPage(),
 				chromedp.WaitVisible(p.Selector),
 				chromedp.SetValue(p.Selector, p.Value),
-				chromedp.Evaluate(
+				chromedp.Evaluate[chromedp.Void](
 					fmt.Sprintf(
 						`document.querySelector(%q).dispatchEvent(new Event('change', {bubbles: true}))`,
 						p.Selector,
 					),
-					nil,
 				),
 				waitForPage(),
-				chromedp.Evaluate(`document.body.innerText`, &text),
+				chromedp.Func(
+					func(ctx context.Context, t *chromedp.Target) (err error) {
+						text, err = chromedp.Evaluate[string](`document.body.innerText`)(ctx, t)
+						return err
+					},
+				),
 			)
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil

@@ -68,19 +68,32 @@ func NavigateToURLTool(b *Browser) agent.Tool {
 				finalURL    string
 			)
 
-			err := chromedp.Run(
+			err := chromedp.Do(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				waitForPage(),
-				chromedp.Title(&title),
-				chromedp.Evaluate(
-					`(() => {
-						const meta = document.querySelector('meta[name="description"]');
-						return meta ? meta.getAttribute("content") : "";
-					})()`,
-					&description,
+				chromedp.Func(
+					func(ctx context.Context, t *chromedp.Target) (err error) {
+						title, err = chromedp.Title()(ctx, t)
+						if err != nil {
+							return err
+						}
+
+						description, err = chromedp.Evaluate[string](
+							`(() => {
+								const meta = document.querySelector('meta[name="description"]');
+								return meta?.getAttribute("content") ?? "";
+							})()`,
+						)(ctx, t)
+						if err != nil {
+							return err
+						}
+
+						finalURL, err = chromedp.Location()(ctx, t)
+
+						return err
+					},
 				),
-				chromedp.Location(&finalURL),
 			)
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil

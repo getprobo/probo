@@ -35,16 +35,15 @@ import (
 // changing) with a short debounce. After stabilization, it attempts to dismiss
 // common cookie consent banners so they don't interfere with content
 // extraction.
-func waitForPage() chromedp.Action {
-	return chromedp.ActionFunc(func(ctx context.Context) error {
-		if err := chromedp.WaitReady("body").Do(ctx); err != nil {
+func waitForPage() chromedp.Action[chromedp.Void] {
+	return chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
+		if _, err := chromedp.WaitReady("body")(ctx, t); err != nil {
 			return err
 		}
 
 		// Wait for SPA content to stabilize by checking if innerText
 		// length stops changing over a 500ms window. Gives up after 5s.
-		// EvaluateAsDevTools is required to await the Promise.
-		if err := chromedp.EvaluateAsDevTools(`
+		if _, err := chromedp.Evaluate[chromedp.Void](`
 			new Promise((resolve) => {
 				let lastLen = -1;
 				let stableCount = 0;
@@ -66,14 +65,14 @@ func waitForPage() chromedp.Action {
 					resolve(true);
 				}, 5000);
 			})
-		`, nil).Do(ctx); err != nil {
+		`, chromedp.EvalAwaitPromise)(ctx, t); err != nil {
 			return err
 		}
 
 		// Dismiss common cookie consent banners. This is best-effort;
 		// failures are silently ignored because not every page has a
 		// banner and the selectors may not match.
-		return chromedp.Evaluate(`
+		_, err := chromedp.Evaluate[chromedp.Void](`
 			(() => {
 				const selectors = [
 					"#onetrust-accept-btn-handler",
@@ -102,7 +101,9 @@ func waitForPage() chromedp.Action {
 					}
 				}
 			})()
-		`, nil).Do(ctx)
+		`)(ctx, t)
+
+		return err
 	})
 }
 

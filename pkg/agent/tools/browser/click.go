@@ -58,15 +58,25 @@ func ClickElementTool(b *Browser) agent.Tool {
 				postClickURL string
 			)
 
-			err := chromedp.Run(
+			err := chromedp.Do(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				waitForPage(),
 				chromedp.WaitVisible(p.Selector),
 				chromedp.Click(p.Selector),
 				waitForPage(),
-				chromedp.Location(&postClickURL),
-				chromedp.Evaluate(`document.body.innerText`, &text),
+				chromedp.Func(
+					func(ctx context.Context, t *chromedp.Target) (err error) {
+						postClickURL, err = chromedp.Location()(ctx, t)
+						if err != nil {
+							return err
+						}
+
+						text, err = chromedp.Evaluate[string](`document.body.innerText`)(ctx, t)
+
+						return err
+					},
+				),
 			)
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil

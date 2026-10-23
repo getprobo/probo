@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/chromedp/chromedp/remote"
 	"go.probo.inc/probo/pkg/agent"
 	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
 )
@@ -49,7 +50,7 @@ func NewBrowser(ctx context.Context, addr string) *Browser {
 		addr = "ws://" + addr
 	}
 
-	allocCtx, cancel := chromedp.NewRemoteAllocator(ctx, addr)
+	allocCtx, cancel := remote.NewAllocator(ctx, addr)
 
 	return &Browser{
 		addr:     addr,

@@ -59,8 +59,6 @@ func FindLinksMatchingTool(b *Browser) agent.Tool {
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 
-			var links []link
-
 			patternJSON, err := json.Marshal(p.Pattern)
 			if err != nil {
 				return agent.ResultErrorf("cannot encode pattern: %s", err), nil
@@ -87,12 +85,16 @@ func FindLinksMatchingTool(b *Browser) agent.Tool {
 				string(patternJSON),
 			)
 
-			err = chromedp.Run(
+			err = chromedp.Do(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				waitForPage(),
-				chromedp.Evaluate(js, &links),
 			)
+			if err != nil {
+				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
+			}
+
+			links, err := chromedp.Run(tabCtx, chromedp.Evaluate[[]link](js))
 			if err != nil {
 				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
 			}

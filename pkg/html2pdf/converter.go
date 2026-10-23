@@ -29,8 +29,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
+	"github.com/chromedp/chromedp/remote"
 	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -38,9 +40,9 @@ import (
 )
 
 var (
-	waitUntilDocumentReady = func(ctx context.Context) error {
-		var ready bool
-		return chromedp.Evaluate(`document.readyState === 'complete'`, &ready).Do(ctx)
+	waitUntilDocumentReady = func(ctx context.Context, t *chromedp.Target) error {
+		_, err := chromedp.Evaluate[bool](`document.readyState === 'complete'`)(ctx, t)
+		return err
 	}
 
 	tracerName = "go.probo.inc/probo/pkg/html2pdf"
@@ -164,7 +166,7 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		defer span.End()
 	}
 
-	allocCtx, cancel := chromedp.NewRemoteAllocator(ctx, c.addr)
+	allocCtx, cancel := remote.NewAllocator(ctx, c.addr)
 	defer cancel()
 
 	ctx, cancel = chromedp.NewContext(allocCtx)
@@ -185,8 +187,6 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 	generateTaggedPDF := generateTaggedPDFEnabled(cfg)
 	generateDocumentOutline := generateDocumentOutlineEnabled(cfg)
 
-	var pdfBytes []byte
-
 	c.l.InfoCtx(
 		ctx,
 		"running chromedp",
@@ -203,6 +203,8 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		log.Bool("displayHeaderFooter", cfg.HeaderTemplate != "" || cfg.FooterTemplate != ""),
 	)
 
+	var pdfBytes []byte
+
 	htmlContent := string(htmlDocument)
 
 	waitTimeout := cfg.WaitForExpressionTimeout
@@ -210,15 +212,15 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		waitTimeout = 15 * time.Second
 	}
 
-	waitForExpr := chromedp.ActionFunc(func(ctx context.Context) error {
+	waitForExpr := chromedp.Func(func(ctx context.Context, t *chromedp.Target) error {
 		if cfg.WaitForExpression == "" {
 			return nil
 		}
 
 		deadline := time.Now().Add(waitTimeout)
 		for time.Now().Before(deadline) {
-			var ready bool
-			if err := chromedp.Evaluate(cfg.WaitForExpression, &ready).Do(ctx); err != nil {
+			ready, err := chromedp.Evaluate[bool](cfg.WaitForExpression)(ctx, t)
+			if err != nil {
 				time.Sleep(100 * time.Millisecond)
 				continue
 			}
@@ -233,39 +235,48 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 		return nil // proceed even on timeout
 	})
 
-	err := chromedp.Run(
+	err := chromedp.Do(
 		ctx,
 		chromedp.Navigate("about:blank"),
-		chromedp.ActionFunc(
-			func(ctx context.Context) error {
-				frameTree, err := page.GetFrameTree().Do(ctx)
+		chromedp.Func(
+			func(ctx context.Context, t *chromedp.Target) error {
+				frameTree, err := cdp.Call(ctx, t, page.GetFrameTree, cdp.Empty{})
 				if err != nil {
 					return fmt.Errorf("cannot get frame tree: %w", err)
 				}
 
-				if err := page.SetDocumentContent(frameTree.Frame.ID, htmlContent).Do(ctx); err != nil {
+				if _, err := cdp.Call(
+					ctx,
+					t,
+					page.SetDocumentContent,
+					page.SetDocumentContentParams{
+						FrameID: frameTree.FrameTree.Frame.ID,
+						HTML:    htmlContent,
+					},
+				); err != nil {
 					return fmt.Errorf("cannot set document content: %w", err)
 				}
 
 				return nil
 			}),
 		chromedp.WaitReady("body"),
-		chromedp.ActionFunc(waitUntilDocumentReady),
+		chromedp.Func(waitUntilDocumentReady),
 		waitForExpr,
-		chromedp.ActionFunc(
-			func(ctx context.Context) (err error) {
-				printParams := page.PrintToPDF().
-					WithPrintBackground(cfg.PrintBackground).
-					WithPaperWidth(width).
-					WithPaperHeight(height).
-					WithMarginTop(marginTop).
-					WithMarginBottom(marginBottom).
-					WithMarginLeft(marginLeft).
-					WithMarginRight(marginRight).
-					WithScale(scale).
-					WithPreferCSSPageSize(false).
-					WithGenerateTaggedPDF(generateTaggedPDF).
-					WithGenerateDocumentOutline(generateDocumentOutline)
+		chromedp.Func(
+			func(ctx context.Context, t *chromedp.Target) error {
+				printParams := page.PrintToPDFParams{
+					PrintBackground:         new(cfg.PrintBackground),
+					PaperWidth:              width,
+					PaperHeight:             height,
+					MarginTop:               new(marginTop),
+					MarginBottom:            new(marginBottom),
+					MarginLeft:              new(marginLeft),
+					MarginRight:             new(marginRight),
+					Scale:                   scale,
+					PreferCSSPageSize:       new(false),
+					GenerateTaggedPDF:       new(generateTaggedPDF),
+					GenerateDocumentOutline: new(generateDocumentOutline),
+				}
 
 				if cfg.HeaderTemplate != "" || cfg.FooterTemplate != "" {
 					// Chrome draws a default date and title header when the
@@ -280,15 +291,19 @@ func (c *Converter) GeneratePDF(ctx context.Context, htmlDocument []byte, cfg Re
 						footerTemplate = "<span></span>"
 					}
 
-					printParams = printParams.
-						WithDisplayHeaderFooter(true).
-						WithHeaderTemplate(headerTemplate).
-						WithFooterTemplate(footerTemplate)
+					printParams.DisplayHeaderFooter = new(true)
+					printParams.HeaderTemplate = headerTemplate
+					printParams.FooterTemplate = footerTemplate
 				}
 
-				pdfBytes, _, err = printParams.Do(ctx)
+				res, err := cdp.Call(ctx, t, page.PrintToPDF, printParams)
+				if err != nil {
+					return err
+				}
 
-				return err
+				pdfBytes = res.Data
+
+				return nil
 			},
 		),
 	)

@@ -63,18 +63,22 @@ func ExtractLinksTool(b *Browser) agent.Tool {
 			tabCtx, cancel := b.NewTab(ctx)
 			defer cancel()
 
-			var links []link
-
-			err = chromedp.Run(
+			err = chromedp.Do(
 				tabCtx,
 				chromedp.Navigate(p.URL),
 				waitForPage(),
-				chromedp.Evaluate(
+			)
+			if err != nil {
+				return agent.ResultError(b.classifyError(ctx, p.URL, err)), nil
+			}
+
+			links, err := chromedp.Run(
+				tabCtx,
+				chromedp.Evaluate[[]link](
 					`Array.from(document.querySelectorAll("a[href]")).map(a => ({
 						href: a.href,
 						text: a.innerText.trim().substring(0, 200)
 					}))`,
-					&links,
 				),
 			)
 			if err != nil {
