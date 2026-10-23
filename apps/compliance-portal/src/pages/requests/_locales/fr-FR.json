@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Nouvelle demande de confidentialité",
-    "description": "Soumettez une demande concernant vos données personnelles, par exemple pour y accéder ou les supprimer. Choisissez un type de demande et remplissez les détails ci-dessous.",
+    "description": "Soumettez une demande concernant vos données personnelles, comme une demande d'accès ou de suppression. Choisissez un type de demande et remplissez les détails ci-dessous.",
     "typeLabel": "Type de demande",
     "cancel": "Annuler",
     "submit": "Envoyer la demande",

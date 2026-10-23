@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Nowy wniosek dotyczący prywatności",
-    "description": "Złóż wniosek dotyczący Twoich danych osobowych, na przykład aby uzyskać do nich dostęp lub je usunąć. Wybierz typ wniosku i uzupełnij poniższe informacje.",
+    "description": "Złóż wniosek dotyczący Twoich danych osobowych, na przykład wniosek o dostęp do nich lub o ich usunięcie. Wybierz typ wniosku i uzupełnij poniższe informacje.",
     "typeLabel": "Typ wniosku",
     "cancel": "Anuluj",
     "submit": "Wyślij wniosek",

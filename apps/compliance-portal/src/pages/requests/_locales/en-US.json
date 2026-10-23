@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "New Privacy Request",
-    "description": "Submit a request about your personal data, such as to access or delete it. Choose a request type and fill in the details below.",
+    "description": "Submit a request about your personal data, such as a request to access or delete it. Choose a request type and fill in the details below.",
     "typeLabel": "Request type",
     "cancel": "Cancel",
     "submit": "Submit Request",
