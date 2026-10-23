@@ -80,7 +80,7 @@ jobs:
         run: |
           npm --workspace @probo/employee-portal run check
           NODE_ENV=production npm --workspace @probo/employee-portal run build
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "frontend-apps"
           path: |
@@ -113,7 +113,7 @@ jobs:
         with:
           node: "false"
           go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
         with:
           name: "frontend-apps"
       - name: "Generate Go code"
@@ -139,7 +139,7 @@ jobs:
 
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o "dist/prb${EXT}" ./cmd/prb/main.go
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
@@ -170,7 +170,7 @@ jobs:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
         with:
           name: "binary-linux-${{ matrix.arch }}"
           path: "linux/${{ matrix.arch }}"
@@ -191,7 +191,7 @@ jobs:
           key: "trivy-db-${{ matrix.arch }}-${{ github.run_id }}"
           restore-keys: "trivy-db-${{ matrix.arch }}-"
       - name: "Scan Docker image with Trivy"
-        uses: "aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e" # trivy v0.75.0
+        uses: "aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87" # trivy v0.75.0
         with:
           image-ref: "artifact.probo.inc/probo/probo:snapshot-${{ matrix.arch }}"
           format: "table"
@@ -265,7 +265,7 @@ jobs:
           go build -ldflags "-s -w -X 'main.version=snapshot'" \
             -gcflags="-e" -o bin/prb ./cmd/prb/main.go & pids+=($!)
           for pid in "${pids[@]}"; do wait "$pid"; done
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "probod-ci"
           path: "bin/probod"
@@ -397,7 +397,7 @@ jobs:
       - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v6
         with:
           submodules: recursive
-      - uses: "runs-on/action@4e5f72399b6b17f2e79c511c1b38a315a64d22dc" # v2
+      - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "./.github/actions/setup"
         with:
           go: "false"
@@ -525,7 +525,7 @@ jobs:
       - name: "Race-test e2e harness packages"
         run: "CGO_ENABLED=1 go test -race -count=1 ./e2e/internal/..."
       - name: "Upload test results"
-        uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         if: "always()"
         continue-on-error: true
         with:
@@ -533,7 +533,7 @@ jobs:
           path: "junit.xml"
           retention-days: 30
       - run: "go tool cover -html=coverage.out -o coverage.html"
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         continue-on-error: true
         with:
           name: "coverage-reports"
@@ -557,7 +557,7 @@ jobs:
       - uses: "./.github/actions/setup"
         with:
           node: "false"
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
         with:
           name: "probod-ci"
           path: "bin"
@@ -619,7 +619,7 @@ jobs:
               E2E_BINARY="${{ github.workspace }}/bin/probod" \
               E2E_TEST_FLAGS="-parallel=8"
       - name: "Upload test results"
-        uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+        uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         if: "always()"
         continue-on-error: true
         with:

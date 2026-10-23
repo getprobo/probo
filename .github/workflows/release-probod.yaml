@@ -36,7 +36,7 @@ jobs:
         run: |
           npm --workspace @probo/employee-portal run check
           NODE_ENV=production npm --workspace @probo/employee-portal run build
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "frontend-apps"
           path: |
@@ -74,7 +74,7 @@ jobs:
         with:
           node: "false"
           go-cache-key-prefix: "${{ github.workflow }}-${{ github.job }}-${{ matrix.goos }}-${{ matrix.goarch }}"
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
         with:
           name: "frontend-apps"
       - name: "Generate Go code"
@@ -128,12 +128,12 @@ jobs:
           else
             tar -czf "archives/${PROBOD_DIR}.tar.gz" -C staging "${PROBOD_DIR}"
           fi
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "binary-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "dist/"
           retention-days: 1
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "archive-${{ matrix.goos }}-${{ matrix.goarch }}"
           path: "archives/"
@@ -165,7 +165,7 @@ jobs:
           registry: artifact.probo.inc
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
         with:
           name: "binary-linux-${{ matrix.arch }}"
           path: "linux/${{ matrix.arch }}"
@@ -282,7 +282,7 @@ jobs:
           submodules: recursive
       - uses: "runs-on/action@17b59092eb37ebfdbb034460892887c09100eaa3" # v2
       - uses: "sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6" # v4.1.2
-      - uses: "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
         with:
           pattern: "archive-*"
           path: "archives"
@@ -320,7 +320,7 @@ jobs:
           subject-digest: ${{ needs.docker-manifest.outputs.digest }}
           sbom-path: "sbom.json"
       - name: "Trivy scan Docker image"
-        uses: "aquasecurity/trivy-action@c03d123cb480c08c69b054af418ea5e69fe6e57e" # trivy v0.75.0
+        uses: "aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87" # trivy v0.75.0
         with:
           image-ref: "artifact.probo.inc/probo/probo:${{ needs.docker-manifest.outputs.image_tag }}"
           format: "sarif"
@@ -331,7 +331,7 @@ jobs:
           severity: "CRITICAL,HIGH"
           limit-severities-for-sarif: true
       - name: "Upload Trivy scan results"
-        uses: "github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2" # v4.38.2
+        uses: "github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee" # v4.39.0
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
@@ -369,7 +369,7 @@ jobs:
             --notes-file release-notes.md \
             $PRERELEASE_FLAG \
             archives/* sbom.json
-      - uses: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
         with:
           name: "sbom"
           path: "sbom.json"
