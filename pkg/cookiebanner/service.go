@@ -3260,6 +3260,7 @@ func (s *Service) ReportDetectedTrackers(
 						Identifier:    dc.Name,
 						MaxAgeSeconds: dc.MaxAgeSeconds,
 						Source:        &dc.Source,
+						ObservedBy:    coredata.DetectedTrackerObserverSDK,
 						InitiatorURL:  dc.InitiatorURL,
 						CookieDomain:  dc.CookieDomain,
 						HostOnly:      dc.HostOnly,
@@ -3286,6 +3287,7 @@ func (s *Service) ReportDetectedTrackers(
 						Identifier:   ds.Key,
 						ValueSize:    ds.ValueSize,
 						Source:       ds.Source,
+						ObservedBy:   coredata.DetectedTrackerObserverSDK,
 						InitiatorURL: ds.InitiatorURL,
 						SampleHit:    ds.SampleHit,
 						Granted:      categoryGrantedForHit(req.Presentation, req.ConsentAction, ds.CategoryGranted),
@@ -3346,6 +3348,7 @@ type detectedTrackerInfo struct {
 	Identifier    string
 	MaxAgeSeconds *int
 	Source        *coredata.CookieSource
+	ObservedBy    coredata.DetectedTrackerObserver
 	ValueSize     *int
 	InitiatorURL  *string
 	CookieDomain  *string
@@ -3480,6 +3483,7 @@ func (s *Service) reportDetectedTracker(
 		Identifier:       info.Identifier,
 		MaxAgeSeconds:    info.MaxAgeSeconds,
 		Source:           info.Source,
+		ObservedBy:       info.ObservedBy,
 		ValueSize:        info.ValueSize,
 		InitiatorURL:     info.InitiatorURL,
 		InitiatorDomain:  initiatorDomain,

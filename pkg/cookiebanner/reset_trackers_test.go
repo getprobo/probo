@@ -75,6 +75,7 @@ func TestResetBannerTrackers_FullRebuild(t *testing.T) {
 				CookieBannerID:   fx.banner.ID,
 				TrackerPatternID: &glob.ID,
 				TrackerType:      coredata.TrackerTypeCookie,
+				ObservedBy:       coredata.DetectedTrackerObserverSDK,
 				Identifier:       identifier,
 				Source:           new(coredata.CookieSourceScript),
 				CreatedAt:        now,
