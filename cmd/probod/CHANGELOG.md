@@ -4,6 +4,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.325.0] - 2026-10-23
+
 ### Added
 
 - This version still seeds a document into its collaboration CRDT
@@ -22,6 +24,8 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
   thousands of marks
 - The Azure token request sends only the scope the caller asked for.
   It no longer adds openid, offline_access, or profile
+- The compliance portal loads published documents again instead of
+  failing with an ambiguous `tenant_id` column error
 
 ## [0.324.0] - 2026-10-22
 
