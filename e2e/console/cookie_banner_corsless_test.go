@@ -290,7 +290,6 @@ func TestCookieBanner_Corsless(t *testing.T) {
 			t.Parallel()
 
 			fixture := setupPublishedCookieBanner(t)
-			factory.EnableCookieBannerCorsless(t, fixture.BannerID)
 
 			var banner struct {
 				Node struct {
@@ -306,6 +305,21 @@ func TestCookieBanner_Corsless(t *testing.T) {
 					&banner,
 				),
 			)
+
+			// Publishing queues a policy labeled with the origin. Wait until
+			// that version commits before enabling corsless, so the in-flight
+			// render cannot finish later and become the latest version.
+			originVersion := waitForTrackerPolicyVersion(
+				t,
+				fixture.Owner,
+				fixture.BannerID,
+				func(version trackerPolicyVersion) bool {
+					return strings.Contains(version.Title, banner.Node.Origin)
+				},
+			)
+			assert.Contains(t, originVersion.Title, banner.Node.Origin)
+
+			factory.EnableCookieBannerCorsless(t, fixture.BannerID)
 
 			var regen struct {
 				RegenerateCookieBannerTrackerPolicy struct {
@@ -325,64 +339,124 @@ func TestCookieBanner_Corsless(t *testing.T) {
 				),
 			)
 
-			type policyVersion struct {
-				Title   string `json:"title"`
-				Content string `json:"content"`
-			}
-
-			var version policyVersion
-
-			require.Eventually(
+			version := waitForTrackerPolicyVersion(
 				t,
-				func() bool {
-					var policy struct {
-						Node struct {
-							PolicyDocument *struct {
-								Versions struct {
-									Edges []struct {
-										Node policyVersion `json:"node"`
-									} `json:"edges"`
-								} `json:"versions"`
-							} `json:"policyDocument"`
-						} `json:"node"`
-					}
-					if err := fixture.Owner.Execute(
-						`
-						query($id: ID!) {
-							node(id: $id) {
-								... on CookieBanner {
-									policyDocument {
-										versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
-											edges { node { title content } }
-										}
-									}
-								}
-							}
-						}
-						`,
-						map[string]any{"id": fixture.BannerID},
-						&policy,
-					); err != nil {
-						return false
-					}
-
-					if policy.Node.PolicyDocument == nil || len(policy.Node.PolicyDocument.Versions.Edges) == 0 {
-						return false
-					}
-
-					version = policy.Node.PolicyDocument.Versions.Edges[0].Node
-
-					return strings.Contains(version.Title, banner.Node.Name)
+				fixture.Owner,
+				fixture.BannerID,
+				func(version trackerPolicyVersion) bool {
+					return strings.Contains(version.Title, banner.Node.Name) &&
+						!strings.Contains(version.Title, banner.Node.Origin)
 				},
-				15*time.Second,
-				200*time.Millisecond,
 			)
 			assert.Contains(t, version.Title, banner.Node.Name)
 			assert.NotContains(t, version.Title, banner.Node.Origin)
-			assert.Contains(t, version.Content, banner.Node.Name)
-			assert.NotContains(t, version.Content, banner.Node.Origin)
+			assert.Contains(t, version.Content.Prosemirror, banner.Node.Name)
+			assert.NotContains(t, version.Content.Prosemirror, banner.Node.Origin)
 		},
 	)
+}
+
+// trackerPolicyGenerationTimeout outlasts the tracker-policy worker poll
+// (10s) and a backlog from the rest of the suite.
+const trackerPolicyGenerationTimeout = 60 * time.Second
+
+type trackerPolicyVersion struct {
+	Title   string `json:"title"`
+	Content struct {
+		Prosemirror string `json:"prosemirror"`
+	} `json:"content"`
+}
+
+func waitForTrackerPolicyVersion(
+	t *testing.T,
+	owner *testutil.Client,
+	bannerID string,
+	match func(trackerPolicyVersion) bool,
+) trackerPolicyVersion {
+	t.Helper()
+
+	deadline := time.Now().Add(trackerPolicyGenerationTimeout)
+
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	var (
+		version trackerPolicyVersion
+		lastErr error
+		saw     bool
+	)
+
+	for {
+		loaded, ok, err := loadLatestTrackerPolicyVersion(owner, bannerID)
+		if err != nil {
+			lastErr = err
+		} else if ok {
+			saw = true
+			version = loaded
+			lastErr = nil
+
+			if match(version) {
+				return version
+			}
+		}
+
+		if time.Now().After(deadline) {
+			require.Failf(
+				t,
+				"tracker policy version not ready",
+				"sawVersion=%t title=%q err=%v",
+				saw,
+				version.Title,
+				lastErr,
+			)
+		}
+
+		<-ticker.C
+	}
+}
+
+func loadLatestTrackerPolicyVersion(
+	owner *testutil.Client,
+	bannerID string,
+) (trackerPolicyVersion, bool, error) {
+	var policy struct {
+		Node struct {
+			PolicyDocument *struct {
+				Versions struct {
+					Edges []struct {
+						Node trackerPolicyVersion `json:"node"`
+					} `json:"edges"`
+				} `json:"versions"`
+			} `json:"policyDocument"`
+		} `json:"node"`
+	}
+
+	err := owner.Execute(
+		`
+		query($id: ID!) {
+			node(id: $id) {
+				... on CookieBanner {
+					policyDocument {
+						versions(first: 1, orderBy: { field: CREATED_AT, direction: DESC }) {
+							edges { node { title content { prosemirror } } }
+						}
+					}
+				}
+			}
+		}
+		`,
+		map[string]any{"id": bannerID},
+		&policy,
+	)
+	if err != nil {
+		return trackerPolicyVersion{}, false, err
+	}
+
+	if policy.Node.PolicyDocument == nil || len(policy.Node.PolicyDocument.Versions.Edges) == 0 {
+		return trackerPolicyVersion{}, false, nil
+	}
+
+	return policy.Node.PolicyDocument.Versions.Edges[0].Node, true, nil
 }
 
 type consentRecordView struct {

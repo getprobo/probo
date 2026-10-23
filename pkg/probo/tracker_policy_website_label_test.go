@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestTrackerPolicyWebsiteLabel_UsesBannerNameWhenCorsless(t *testing.T) {
@@ -87,6 +88,47 @@ func TestTrackerPolicyWebsiteLabel_UsesBannerNameWhenCorsless(t *testing.T) {
 					},
 				),
 			)
+		},
+	)
+}
+
+func TestTrackerPolicyInputsChanged(t *testing.T) {
+	t.Parallel()
+
+	versionID := gid.New(gid.NewTenantID(), coredata.CookieBannerVersionEntityType)
+	otherVersionID := gid.New(gid.NewTenantID(), coredata.CookieBannerVersionEntityType)
+	banner := &coredata.CookieBanner{
+		Name:   "Product telemetry",
+		Origin: "https://example.com",
+	}
+
+	t.Run(
+		"is false when the label and published version are unchanged",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.False(t, trackerPolicyInputsChanged(banner.Origin, versionID, banner, versionID))
+		},
+	)
+
+	t.Run(
+		"is true when corsless changes the website label",
+		func(t *testing.T) {
+			t.Parallel()
+
+			corsless := *banner
+			corsless.Capabilities.Corsless = true
+
+			assert.True(t, trackerPolicyInputsChanged(banner.Origin, versionID, &corsless, versionID))
+		},
+	)
+
+	t.Run(
+		"is true when the published version changed",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.True(t, trackerPolicyInputsChanged(banner.Origin, versionID, banner, otherVersionID))
 		},
 	)
 }

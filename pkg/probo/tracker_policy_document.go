@@ -38,14 +38,21 @@ import (
 	"go.probo.inc/probo/pkg/prosemirror"
 )
 
-var trackerPolicyTemplate = template.Must(
-	template.New("tracker_policy.md.tmpl").
-		Funcs(template.FuncMap{
-			"add": func(a, b int) int {
-				return a + b
-			},
-		}).
-		ParseFS(Templates, "templates/tracker_policy.md.tmpl"),
+var (
+	trackerPolicyTemplate = template.Must(
+		template.New("tracker_policy.md.tmpl").
+			Funcs(template.FuncMap{
+				"add": func(a, b int) int {
+					return a + b
+				},
+			}).
+			ParseFS(Templates, "templates/tracker_policy.md.tmpl"),
+	)
+
+	// errTrackerPolicyStale means the banner label or published snapshot
+	// changed while the policy was rendered. Generation is re-armed and this
+	// render is dropped so it cannot become the latest version.
+	errTrackerPolicyStale = errors.New("tracker policy inputs changed during generation")
 )
 
 // BuildTrackerPolicyDocument renders the tracker policy markdown template for
@@ -84,9 +91,10 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	// write transaction. Template rendering, markdown parsing, and JSON
 	// marshaling are CPU work that should not hold a write transaction open.
 	var (
-		organizationID gid.GID
-		bannerOrigin   string
-		documentData   docgen.TrackerPolicyData
+		organizationID     gid.GID
+		websiteLabel       string
+		publishedVersionID gid.GID
+		documentData       docgen.TrackerPolicyData
 	)
 
 	err := s.svc.pg.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
@@ -102,13 +110,13 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 
 		var err error
 
-		documentData, err = s.buildTrackerPolicyDocumentData(ctx, scope, conn, organization, banner)
+		documentData, publishedVersionID, err = s.buildTrackerPolicyDocumentData(ctx, scope, conn, organization, banner)
 		if err != nil {
 			return fmt.Errorf("cannot build document data: %w", err)
 		}
 
 		organizationID = banner.OrganizationID
-		bannerOrigin = trackerPolicyWebsiteLabel(banner)
+		websiteLabel = trackerPolicyWebsiteLabel(banner)
 
 		return nil
 	})
@@ -122,12 +130,33 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 	}
 
 	// Phase 2: persist the document and version in a write transaction.
-	return s.svc.pg.WithTx(
+	// Drop the render when the banner label or published snapshot changed
+	// after phase 1. A newer generation (for example after enabling corsless)
+	// may already have committed, and publishing this older render would make
+	// it the latest version.
+	var stale bool
+
+	err = s.svc.pg.WithTx(
 		ctx,
 		func(ctx context.Context, tx pg.Tx) error {
 			banner := &coredata.CookieBanner{}
 			if err := banner.LoadByID(ctx, tx, scope, cookieBannerID); err != nil {
 				return fmt.Errorf("cannot reload cookie banner: %w", err)
+			}
+
+			published := &coredata.CookieBannerVersion{}
+			if err := published.LoadLatestPublishedByCookieBannerID(ctx, tx, scope, cookieBannerID); err != nil {
+				return fmt.Errorf("cannot reload latest published version: %w", err)
+			}
+
+			if trackerPolicyInputsChanged(websiteLabel, publishedVersionID, banner, published.ID) {
+				stale = true
+
+				if err := banner.SetPolicyGenerationRequested(ctx, tx); err != nil {
+					return fmt.Errorf("cannot re-request tracker policy generation: %w", err)
+				}
+
+				return nil
 			}
 
 			now := time.Now()
@@ -183,7 +212,7 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 				document = existingDoc
 			}
 
-			title := fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", bannerOrigin)
+			title := fmt.Sprintf("Cookie and Tracking Technologies Policy — %s", websiteLabel)
 			if existingDoc != nil {
 				// Later publishes copy the generated title. The first publish
 				// does that itself while the document title is still empty.
@@ -207,22 +236,32 @@ func (s *GeneratedDocumentService) PublishTrackerPolicy(
 			return s.publishOrRequestApproval(ctx, scope, tx, document, documentVersion, organizationID, nil, false, now)
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	if stale {
+		return errTrackerPolicyStale
+	}
+
+	return nil
 }
 
 func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	conn pg.Querier,
 	organization *coredata.Organization,
 	banner *coredata.CookieBanner,
-) (docgen.TrackerPolicyData, error) {
+) (docgen.TrackerPolicyData, gid.GID, error) {
 	version := &coredata.CookieBannerVersion{}
 	if err := version.LoadLatestPublishedByCookieBannerID(ctx, conn, scope, banner.ID); err != nil {
-		return docgen.TrackerPolicyData{}, fmt.Errorf("cannot load latest published version: %w", err)
+		return docgen.TrackerPolicyData{}, gid.Nil, fmt.Errorf("cannot load latest published version: %w", err)
 	}
 
 	snapshot, err := version.GetSnapshot()
 	if err != nil {
-		return docgen.TrackerPolicyData{}, fmt.Errorf("cannot decode snapshot: %w", err)
+		return docgen.TrackerPolicyData{}, gid.Nil, fmt.Errorf("cannot decode snapshot: %w", err)
 	}
 
 	categories := make([]docgen.TrackerPolicyCategory, 0, len(snapshot.Categories))
@@ -247,7 +286,7 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 
 	thirdParties, err := s.buildTrackerPolicyThirdParties(ctx, scope, conn, banner.ID)
 	if err != nil {
-		return docgen.TrackerPolicyData{}, err
+		return docgen.TrackerPolicyData{}, gid.Nil, err
 	}
 
 	privacyPolicyURL := ""
@@ -262,7 +301,19 @@ func (s *GeneratedDocumentService) buildTrackerPolicyDocumentData(
 		ConsentExpiryDays: snapshot.ConsentExpiryDays,
 		Categories:        categories,
 		ThirdParties:      thirdParties,
-	}, nil
+	}, version.ID, nil
+}
+
+// trackerPolicyInputsChanged reports whether a rendered policy no longer
+// matches the banner. The website label covers corsless and renames; the
+// published version id covers a newer banner snapshot.
+func trackerPolicyInputsChanged(
+	renderedLabel string,
+	renderedVersionID gid.GID,
+	banner *coredata.CookieBanner,
+	publishedVersionID gid.GID,
+) bool {
+	return trackerPolicyWebsiteLabel(banner) != renderedLabel || publishedVersionID != renderedVersionID
 }
 
 func trackerPolicyWebsiteLabel(banner *coredata.CookieBanner) string {

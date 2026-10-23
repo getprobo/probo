@@ -102,6 +102,16 @@ func (h *trackerPolicyHandler) Process(ctx context.Context, banner coredata.Cook
 			return nil
 		}
 
+		if errors.Is(err, errTrackerPolicyStale) {
+			h.logger.InfoCtx(
+				ctx,
+				"skipping stale tracker policy generation",
+				log.String("banner_id", banner.ID.String()),
+			)
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot generate tracker policy: %w", err)
 	}
 
