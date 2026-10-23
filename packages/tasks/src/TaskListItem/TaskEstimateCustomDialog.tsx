@@ -76,7 +76,7 @@ export function TaskEstimateCustomDialog({
     setWasOpen(open);
     if (open) {
       const parsed = timeEstimate ? parseTaskDuration(timeEstimate) : null;
-      setAmount(parsed ? String(parsed.amount) : "1");
+      setAmount(parsed ? String(Math.max(1, Math.round(parsed.amount))) : "1");
       setUnit(parsed?.unit ?? "H");
     }
   }
