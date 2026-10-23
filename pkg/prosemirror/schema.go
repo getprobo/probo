@@ -27,8 +27,13 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 )
 
-// MaxFileNameBytes is the longest file name a file node accepts.
-const MaxFileNameBytes = 1024
+const (
+	// MaxFileNameBytes is the longest file name a file node accepts.
+	MaxFileNameBytes = 1024
+
+	// MaxMentionLabelBytes is the longest label a mention node accepts.
+	MaxMentionLabelBytes = 255
+)
 
 func validateDocument(n Node) error {
 	if n.Type != NodeDoc {
@@ -77,6 +82,8 @@ func validateNode(n Node) error {
 		return validateImage(n)
 	case NodeFile:
 		return validateFile(n)
+	case NodeMention:
+		return validateMention(n)
 	case NodeText:
 		return validateText(n)
 	case NodeBulletList, NodeOrderedList:
@@ -227,6 +234,27 @@ func validateFile(n Node) error {
 	return nil
 }
 
+func validateMention(n Node) error {
+	if err := validateLeaf(n); err != nil {
+		return fmt.Errorf("cannot validate mention node: %w", err)
+	}
+
+	attrs, err := n.MentionAttrs()
+	if err != nil {
+		return fmt.Errorf("cannot validate mention node: %w", err)
+	}
+
+	if _, err := gid.ParseGID(attrs.ID); err != nil {
+		return fmt.Errorf("cannot validate mention node: invalid id")
+	}
+
+	if strings.TrimSpace(attrs.Label) == "" || len(attrs.Label) > MaxMentionLabelBytes {
+		return fmt.Errorf("cannot validate mention node: invalid label")
+	}
+
+	return nil
+}
+
 func validFileID(id string) bool {
 	_, err := gid.ParseGID(id)
 
@@ -284,7 +312,7 @@ func isBlock(t NodeType) bool {
 }
 
 func isInline(t NodeType) bool {
-	return t == NodeText || t == NodeHardBreak
+	return t == NodeText || t == NodeHardBreak || t == NodeMention
 }
 
 func isListItem(t NodeType) bool {

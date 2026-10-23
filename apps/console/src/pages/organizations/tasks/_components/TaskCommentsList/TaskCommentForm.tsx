@@ -31,6 +31,7 @@ import {
   isRichEditorContentEmpty,
   richEditorContentTextLength,
 } from "#/pages/organizations/_lib/richEditorContent";
+import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers";
 
 import { taskCommentMaxLength } from "../../_lib/taskCommentMaxLength";
 import { useCreateTaskComment } from "../../_lib/useCreateTaskComment";
@@ -38,6 +39,7 @@ import { useCreateTaskComment } from "../../_lib/useCreateTaskComment";
 export function TaskCommentForm() {
   const { t } = useTranslation("organizations/tasks");
   const [createTaskComment, isCreating] = useCreateTaskComment();
+  const mentionSource = useMentionMembers();
   const [content, setContent] = useState("");
   const [uploading, setUploading] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
@@ -87,6 +89,7 @@ export function TaskCommentForm() {
             disabled={isCreating}
             placeholder={t("detailsPage.comments.fields.leaveAComment")}
             aria-label={t("detailsPage.comments.fields.leaveAComment")}
+            mentionSource={mentionSource}
             onChangeContent={(next) => {
               setContent(next);
               if (richEditorContentTextLength(next) > taskCommentMaxLength) {

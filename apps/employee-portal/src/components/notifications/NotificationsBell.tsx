@@ -46,6 +46,7 @@ import { notificationsPanel } from "./variants";
 const notificationTypes = [
   "DOCUMENT_SIGNATURE_REQUESTED",
   "DOCUMENT_APPROVAL_REQUESTED",
+  "TASK_MENTIONED",
 ] as const;
 
 const PAGE_SIZE = 10;
@@ -408,6 +409,9 @@ function notificationPath(employeePortalId: string, notification: NotificationNo
   if (notification.type === "DOCUMENT_APPROVAL_REQUESTED") {
     return `/${employeePortalId}/approvals/${notification.subjectId}`;
   }
+  if (notification.type === "TASK_MENTIONED") {
+    return `/${employeePortalId}/tasks/${notification.subjectId}`;
+  }
 
   return `/${employeePortalId}`;
 }
@@ -423,5 +427,7 @@ function notificationMessage(
       return t("notifications.documentApprovalRequested", { title: notification.title });
     case "TASK_ASSIGNED":
       return t("notifications.taskAssigned", { title: notification.title });
+    case "TASK_MENTIONED":
+      return t("notifications.taskMentioned", { title: notification.title });
   }
 }

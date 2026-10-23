@@ -46,6 +46,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
+import { useMentionMembers } from "#/pages/organizations/_lib/useMentionMembers";
 
 import { createTaskDialog } from "../../variants";
 
@@ -65,6 +66,7 @@ export function CreateTaskDialogFields({
   onSubmit,
 }: CreateTaskDialogFieldsProps) {
   const { t } = useTranslation("organizations/tasks");
+  const mentionSource = useMentionMembers();
   const { form: formClass, fields, descriptionField, editor, value } = createTaskDialog();
   const {
     name,
@@ -116,6 +118,7 @@ export function CreateTaskDialogFields({
             content={content}
             disabled={isSaving}
             aria-label={t("detailsPage.fields.description")}
+            mentionSource={mentionSource}
             onChangeContent={setContent}
             onUploadingChange={setUploading}
           />

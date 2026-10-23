@@ -18,14 +18,27 @@ const menuButtonVariants = tv({
 });
 
 type MenuButtonProps = {
-  active?: boolean;
-  onClick: () => void;
+  "active"?: boolean;
+  "onClick": () => void;
+  "id"?: string;
+  "role"?: string;
+  "aria-selected"?: boolean;
 };
 
-export function MenuButton({ children, active, onClick }: PropsWithChildren<MenuButtonProps>) {
+export function MenuButton({
+  children,
+  active,
+  onClick,
+  id,
+  role,
+  "aria-selected": ariaSelected,
+}: PropsWithChildren<MenuButtonProps>) {
   return (
     <button
       type="button"
+      id={id}
+      role={role}
+      aria-selected={ariaSelected}
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       className={menuButtonVariants({ active })}

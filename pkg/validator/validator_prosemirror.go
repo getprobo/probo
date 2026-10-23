@@ -103,7 +103,10 @@ func parseProseMirrorDocument(s string) (prosemirror.Node, bool) {
 }
 
 func nodeHasVisibleText(n prosemirror.Node) bool {
-	if n.Type == prosemirror.NodeHorizontalRule || n.Type == prosemirror.NodeImage || n.Type == prosemirror.NodeFile {
+	if n.Type == prosemirror.NodeHorizontalRule ||
+		n.Type == prosemirror.NodeImage ||
+		n.Type == prosemirror.NodeFile ||
+		n.Type == prosemirror.NodeMention {
 		return true
 	}
 
@@ -117,7 +120,7 @@ func nodeHasVisibleText(n prosemirror.Node) bool {
 // HasVisibleRichText requires a ProseMirror document with user-visible
 // content. Empty documents (blank paragraphs, lists, or tables) fail the
 // same way as empty or whitespace-only values. Horizontal rules, images,
-// and file cards count as visible even without text.
+// file cards, and mentions count as visible even without text.
 func HasVisibleRichText() ValidatorFunc {
 	return func(value any) *ValidationError {
 		actualValue, isNil := dereferenceValue(value)

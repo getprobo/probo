@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+import type { MentionSource } from "@probo/ui";
 import { Text } from "@probo/ui/src/v2/typography/Text";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { tv } from "tailwind-variants/lite";
@@ -47,6 +48,7 @@ export interface RichDescriptionEditorProps {
   emptyLabel: string;
   placeholder?: string;
   saveDelayMs?: number;
+  mentionSource?: MentionSource;
   save: (content: string | null) => Promise<void>;
 }
 
@@ -57,6 +59,7 @@ export function RichDescriptionEditor({
   emptyLabel,
   placeholder,
   saveDelayMs = defaultSaveDelayMs,
+  mentionSource,
   save,
 }: RichDescriptionEditorProps) {
   const saveRef = useRef(save);
@@ -123,6 +126,7 @@ export function RichDescriptionEditor({
               content={draft}
               placeholder={placeholder}
               aria-label={ariaLabel}
+              mentionSource={mentionSource}
               onUploadingChange={(uploading) => {
                 uploadingRef.current = uploading;
                 if (uploading) {
