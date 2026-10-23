@@ -64,7 +64,7 @@ func TestBuildTokenRequest_PostForm(t *testing.T) {
 
 		assert.Equal(t, http.MethodPost, req.Method)
 		assert.Equal(t, "https://provider.example.com/oauth/token", req.URL.String())
-		assert.Equal(t, "application/x-www-form-urlencoded; charset=utf-8", req.Header.Get("Content-Type"))
+		assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 		assert.Empty(t, req.Header.Get("Authorization"))
 
 		body, err := io.ReadAll(req.Body)
@@ -137,7 +137,7 @@ func TestBuildTokenRequest_BasicForm(t *testing.T) {
 
 	assert.Equal(t, http.MethodPost, req.Method)
 	assert.Equal(t, "https://provider.example.com/oauth/token", req.URL.String())
-	assert.Equal(t, "application/x-www-form-urlencoded; charset=utf-8", req.Header.Get("Content-Type"))
+	assert.Equal(t, "application/x-www-form-urlencoded", req.Header.Get("Content-Type"))
 
 	// Verify Basic auth header
 	authHeader := req.Header.Get("Authorization")
@@ -216,6 +216,7 @@ func TestClientCredentialsClient(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 
 		// Verify Basic auth header is present
 		authHeader := r.Header.Get("Authorization")
@@ -1692,6 +1693,7 @@ func TestRefreshableClient_RefreshScopes(t *testing.T) {
 
 		captured := &capturedRequest{}
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 			require.NoError(t, r.ParseForm())
 
 			captured.calls++

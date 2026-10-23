@@ -641,7 +641,8 @@ func newFormTokenRequest(ctx context.Context, form url.Values, tokenURL string) 
 		return nil, fmt.Errorf("cannot create token request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+	// RFC 6749 media type, without a charset parameter.
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "Probo Connector")
 
