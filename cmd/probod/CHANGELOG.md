@@ -4,6 +4,31 @@ All notable changes to `probod` (the server, including the bundled `@probo/conso
 
 ## Unreleased
 
+## [0.326.0] - 2026-10-23
+
+### Added
+
+- PlanetScale access review connector, with multi-organization
+  selection
+- Access review connect dialogs link to the vendor page where the API
+  key or client credential is created
+- Linear comments now appear on the task timeline, including comments
+  imported before this release
+
+### Changed
+
+- Task list aligns avatars and created dates, and empty filters use a
+  consistent placeholder color
+
+### Fixed
+
+- OAuth2 access review connections keep rotated refresh tokens even
+  when building the source fails, and providers can send scopes on
+  refresh
+- Canceled GraphQL requests no longer panic the server
+- Tracker policy rendering drops a stale render when the website label
+  or published snapshot changes while it is being built
+
 ## [0.325.1] - 2026-10-23
 
 ### Fixed
