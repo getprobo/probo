@@ -23,7 +23,11 @@ import {
   type RepoCollaborationHandle,
 } from "@probo/collaboration";
 import { formatError } from "@probo/helpers";
-import { Button, CollaborativeRichEditor, IconClock, supportsRichEditorCollaboration } from "@probo/ui";
+import { Button, IconClock } from "@probo/ui";
+import {
+  CollaborativeRichEditor,
+  supportsRichEditorCollaboration,
+} from "@probo/ui/src/RichEditor/CollaborativeRichEditor";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

@@ -122,12 +122,8 @@ export {
 } from "./Molecules/Table/SelectCell";
 export { EditableRow } from "./Molecules/Table/EditableRow";
 
-// Rich editor
-export {
-  CollaborativeRichEditor,
-  createRichEditorAutomergeDocument,
-  supportsRichEditorCollaboration,
-} from "./RichEditor/CollaborativeRichEditor";
+// Rich editor. Automerge modules stay off this barrel: Vite dev evaluates
+// every export, which instantiated that WebAssembly on every console page.
 export { RichEditor } from "./RichEditor/RichEditor";
 export type { RichEditorAutomergeDocument } from "./RichEditor/collaboration";
 export type { RichEditorHistoryHighlight } from "./RichEditor/historyDecorations";
@@ -141,10 +137,6 @@ export {
   presenceHighlightColor,
 } from "./RichEditor/presence";
 export {
-  collaborationDebug,
-  summarizeAutomergeSpans,
-} from "./RichEditor/collaborationDebug";
-export {
   AUTOMERGE_URL_PREFIX,
   automergeUrl,
   decodeDocumentId,
@@ -155,18 +147,8 @@ export {
   parseAutomergeUrl,
   validDocumentId,
 } from "./RichEditor/repoDocumentId";
-export {
-  isCollapsed,
-  resolveSelection,
-  textSelection,
-} from "./RichEditor/repoSelection";
 export type {
   ResolvedSelection,
   TextSelection,
 } from "./RichEditor/repoSelection";
-export {
-  pmSelectionFromPresence,
-  presenceFromPmSelection,
-  richEditorPresenceAdapter,
-} from "./RichEditor/repoPresence";
 export type { PmPresenceSelection } from "./RichEditor/repoPresence";

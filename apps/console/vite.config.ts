@@ -345,11 +345,33 @@ export default defineConfig(({ mode, command }) => {
         "/employee-portal": proxyTo("http://localhost:5175"),
       },
     },
+    // Vite's .wasm loader instantiates Automerge's bundler build with
+    // JS-string builtins, and Chrome throws WebAssembly.Exception while
+    // the document route imports. The base64 entry compiles the bytes
+    // with Automerge's own loader.
+    optimizeDeps: {
+      exclude: ["@automerge/automerge"],
+    },
     resolve: {
-      alias: {
-        "#": fileURLToPath(new URL("./src", import.meta.url)),
-        "mermaid": require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
-      },
+      alias: [
+        {
+          find: /^@automerge\/automerge$/,
+          replacement: fileURLToPath(
+            new URL(
+              "../../node_modules/@automerge/automerge/dist/mjs/entrypoints/fullfat_base64.js",
+              import.meta.url,
+            ),
+          ),
+        },
+        {
+          find: "#",
+          replacement: fileURLToPath(new URL("./src", import.meta.url)),
+        },
+        {
+          find: "mermaid",
+          replacement: require.resolve("mermaid/dist/mermaid.esm.min.mjs"),
+        },
+      ],
     },
   };
 });

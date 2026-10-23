@@ -28,14 +28,16 @@ import {
 import { WebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
 import {
   deriveAutomergeUrl,
-  pmSelectionFromPresence,
-  presenceFromPmSelection,
   type RichEditorAutomergeDocument,
   type RichEditorCollaborationHandle,
   type RichEditorPresence,
-  richEditorPresenceAdapter,
   type TextSelection,
 } from "@probo/ui";
+import {
+  pmSelectionFromPresence,
+  presenceFromPmSelection,
+  richEditorPresenceAdapter,
+} from "@probo/ui/src/RichEditor/repoPresence";
 
 import {
   type PresenceEntry,
