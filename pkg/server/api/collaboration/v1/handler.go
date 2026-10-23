@@ -735,7 +735,9 @@ func ServeRepoCollaboration(
 
 func repoReadResult(err error) error {
 	switch websocket.CloseStatus(err) {
-	case websocket.StatusNormalClosure, websocket.StatusGoingAway:
+	case websocket.StatusNormalClosure,
+		websocket.StatusGoingAway,
+		websocket.StatusNoStatusRcvd:
 		return nil
 	default:
 		return fmt.Errorf("repo collaboration read failed: %w", err)

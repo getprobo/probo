@@ -22,6 +22,7 @@ package collaboration_v1
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -128,4 +129,38 @@ func acceptWebSocket(t *testing.T) (*websocket.Conn, *websocket.Conn) {
 		require.NoError(t, dialCtx.Err())
 		return nil, nil
 	}
+}
+
+func TestRepoReadResult(t *testing.T) {
+	t.Parallel()
+
+	t.Run("empty close frame", func(t *testing.T) {
+		t.Parallel()
+
+		err := fmt.Errorf(
+			"failed to get reader: %w",
+			websocket.CloseError{Code: websocket.StatusNoStatusRcvd},
+		)
+
+		assert.NoError(t, repoReadResult(err))
+	})
+
+	t.Run("normal closure", func(t *testing.T) {
+		t.Parallel()
+
+		err := websocket.CloseError{Code: websocket.StatusNormalClosure}
+
+		assert.NoError(t, repoReadResult(err))
+	})
+
+	t.Run("protocol error", func(t *testing.T) {
+		t.Parallel()
+
+		err := websocket.CloseError{
+			Code:   websocket.StatusProtocolError,
+			Reason: "bad",
+		}
+
+		assert.ErrorContains(t, repoReadResult(err), "repo collaboration read failed")
+	})
 }
