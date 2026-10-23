@@ -67,7 +67,7 @@ type (
 		gc                        *GarbageCollector
 		cimd                      *cimdFetcher
 		cimdAllow                 CIMDAllowFunc
-		cimdSupported             bool
+		cimdAllowedClientIDs      []string
 		registry                  *oauth2scope.Registry
 		accessTokenDuration       time.Duration
 		refreshTokenDuration      time.Duration
@@ -179,18 +179,22 @@ func WithCIMDAllow(fn CIMDAllowFunc) Option {
 	}
 }
 
+// WithCIMDAllowedClientIDs sets the Client ID Metadata Document URLs that
+// third-party clients may use. An empty list disables CIMD for them.
+func WithCIMDAllowedClientIDs(clientIDs []string) Option {
+	return func(s *Service) {
+		s.cimdAllowedClientIDs = slices.Clone(clientIDs)
+	}
+}
+
 func (s *Service) SetCIMDAllow(fn CIMDAllowFunc) {
 	s.cimdAllow = fn
 }
 
-// SetCIMDSupported sets whether the discovery document advertises Client
+// CIMDSupported reports whether the discovery document advertises Client
 // ID Metadata Document support to third-party clients.
-func (s *Service) SetCIMDSupported(supported bool) {
-	s.cimdSupported = supported
-}
-
 func (s *Service) CIMDSupported() bool {
-	return s.cimdSupported
+	return len(s.cimdAllowedClientIDs) > 0
 }
 
 func NewService(
