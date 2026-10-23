@@ -345,24 +345,30 @@ export default defineConfig(({ mode, command }) => {
         "/employee-portal": proxyTo("http://localhost:5175"),
       },
     },
-    // Vite's .wasm loader instantiates Automerge's bundler build with
-    // JS-string builtins, and Chrome throws WebAssembly.Exception while
-    // the document route imports. The base64 entry compiles the bytes
-    // with Automerge's own loader.
-    optimizeDeps: {
-      exclude: ["@automerge/automerge"],
-    },
+    // Dev only. `vite build` emits Automerge's wasm as its own asset,
+    // which Chrome loads. The base64 entry avoids the dev server's wasm
+    // loader (it throws WebAssembly.Exception) but would inline the
+    // module into production bundles.
+    ...(command === "serve"
+      ? {
+          optimizeDeps: {
+            exclude: ["@automerge/automerge"],
+          },
+        }
+      : {}),
     resolve: {
       alias: [
-        {
-          find: /^@automerge\/automerge$/,
-          replacement: fileURLToPath(
-            new URL(
-              "../../node_modules/@automerge/automerge/dist/mjs/entrypoints/fullfat_base64.js",
-              import.meta.url,
-            ),
-          ),
-        },
+        ...(command === "serve"
+          ? [{
+              find: /^@automerge\/automerge$/,
+              replacement: fileURLToPath(
+                new URL(
+                  "../../node_modules/@automerge/automerge/dist/mjs/entrypoints/fullfat_base64.js",
+                  import.meta.url,
+                ),
+              ),
+            }]
+          : []),
         {
           find: "#",
           replacement: fileURLToPath(new URL("./src", import.meta.url)),
