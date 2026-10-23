@@ -34,20 +34,27 @@ import (
 
 type (
 	DetectedTracker struct {
-		ID               gid.GID       `db:"id"`
-		CookieBannerID   gid.GID       `db:"cookie_banner_id"`
-		TrackerPatternID *gid.GID      `db:"tracker_pattern_id"`
-		TrackerType      TrackerType   `db:"tracker_type"`
-		Identifier       string        `db:"identifier"`
-		MaxAgeSeconds    *int          `db:"max_age_seconds"`
-		Source           *CookieSource `db:"source"`
-		ValueSize        *int          `db:"value_size"`
-		InitiatorURL     *string       `db:"initiator_url"`
-		InitiatorDomain  *string       `db:"initiator_domain"`
-		CookieDomain     *string       `db:"cookie_domain"`
-		HostOnly         *bool         `db:"host_only"`
-		CreatedAt        time.Time     `db:"created_at"`
-		UpdatedAt        time.Time     `db:"updated_at"`
+		ID                 gid.GID                 `db:"id"`
+		CookieBannerID     gid.GID                 `db:"cookie_banner_id"`
+		TrackerPatternID   *gid.GID                `db:"tracker_pattern_id"`
+		TrackerType        TrackerType             `db:"tracker_type"`
+		Identifier         string                  `db:"identifier"`
+		MaxAgeSeconds      *int                    `db:"max_age_seconds"`
+		Source             *CookieSource           `db:"source"`
+		ObservedBy         DetectedTrackerObserver `db:"observed_by"`
+		ValueSize          *int                    `db:"value_size"`
+		InitiatorURL       *string                 `db:"initiator_url"`
+		InitiatorDomain    *string                 `db:"initiator_domain"`
+		CookieDomain       *string                 `db:"cookie_domain"`
+		HostOnly           *bool                   `db:"host_only"`
+		HTTPOnly           *bool                   `db:"http_only"`
+		Secure             *bool                   `db:"secure"`
+		SameSite           *CookieSameSite         `db:"same_site"`
+		Partitioned        *bool                   `db:"partitioned"`
+		SetByURL           *string                 `db:"set_by_url"`
+		CookieBannerScanID *gid.GID                `db:"cookie_banner_scan_id"`
+		CreatedAt          time.Time               `db:"created_at"`
+		UpdatedAt          time.Time               `db:"updated_at"`
 	}
 
 	DetectedTrackers []*DetectedTracker
@@ -83,11 +90,18 @@ INSERT INTO detected_trackers (
 	identifier,
 	max_age_seconds,
 	source,
+	observed_by,
 	value_size,
 	initiator_url,
 	initiator_domain,
 	cookie_domain,
 	host_only,
+	http_only,
+	secure,
+	same_site,
+	partitioned,
+	set_by_url,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -99,15 +113,22 @@ INSERT INTO detected_trackers (
 	@identifier,
 	@max_age_seconds,
 	@source,
+	@observed_by,
 	@value_size,
 	@initiator_url,
 	@initiator_domain,
 	@cookie_domain,
 	@host_only,
+	@http_only,
+	@secure,
+	@same_site,
+	@partitioned,
+	@set_by_url,
+	@cookie_banner_scan_id,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, '')) DO UPDATE
+ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, ''), observed_by) DO UPDATE
 	SET source = CASE
 			WHEN detected_trackers.source IS NULL THEN EXCLUDED.source
 			WHEN (
@@ -132,25 +153,38 @@ ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain,
 		host_only = COALESCE(detected_trackers.host_only, EXCLUDED.host_only),
 		max_age_seconds = COALESCE(detected_trackers.max_age_seconds, EXCLUDED.max_age_seconds),
 		value_size = COALESCE(detected_trackers.value_size, EXCLUDED.value_size),
+		http_only = COALESCE(EXCLUDED.http_only, detected_trackers.http_only),
+		secure = COALESCE(EXCLUDED.secure, detected_trackers.secure),
+		same_site = COALESCE(EXCLUDED.same_site, detected_trackers.same_site),
+		partitioned = COALESCE(EXCLUDED.partitioned, detected_trackers.partitioned),
+		set_by_url = COALESCE(EXCLUDED.set_by_url, detected_trackers.set_by_url),
+		cookie_banner_scan_id = COALESCE(EXCLUDED.cookie_banner_scan_id, detected_trackers.cookie_banner_scan_id),
 		updated_at = EXCLUDED.updated_at
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 dt.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"cookie_banner_id":   dt.CookieBannerID,
-		"tracker_pattern_id": dt.TrackerPatternID,
-		"tracker_type":       dt.TrackerType,
-		"identifier":         dt.Identifier,
-		"max_age_seconds":    dt.MaxAgeSeconds,
-		"source":             dt.Source,
-		"value_size":         dt.ValueSize,
-		"initiator_url":      dt.InitiatorURL,
-		"initiator_domain":   dt.InitiatorDomain,
-		"cookie_domain":      dt.CookieDomain,
-		"host_only":          dt.HostOnly,
-		"created_at":         dt.CreatedAt,
-		"updated_at":         dt.UpdatedAt,
+		"id":                    dt.ID,
+		"tenant_id":             scope.GetTenantID(),
+		"cookie_banner_id":      dt.CookieBannerID,
+		"tracker_pattern_id":    dt.TrackerPatternID,
+		"tracker_type":          dt.TrackerType,
+		"identifier":            dt.Identifier,
+		"max_age_seconds":       dt.MaxAgeSeconds,
+		"source":                dt.Source,
+		"observed_by":           dt.ObservedBy,
+		"value_size":            dt.ValueSize,
+		"initiator_url":         dt.InitiatorURL,
+		"initiator_domain":      dt.InitiatorDomain,
+		"cookie_domain":         dt.CookieDomain,
+		"host_only":             dt.HostOnly,
+		"http_only":             dt.HTTPOnly,
+		"secure":                dt.Secure,
+		"same_site":             dt.SameSite,
+		"partitioned":           dt.Partitioned,
+		"set_by_url":            dt.SetByURL,
+		"cookie_banner_scan_id": dt.CookieBannerScanID,
+		"created_at":            dt.CreatedAt,
+		"updated_at":            dt.UpdatedAt,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -176,11 +210,18 @@ INSERT INTO detected_trackers (
 	identifier,
 	max_age_seconds,
 	source,
+	observed_by,
 	value_size,
 	initiator_url,
 	initiator_domain,
 	cookie_domain,
 	host_only,
+	http_only,
+	secure,
+	same_site,
+	partitioned,
+	set_by_url,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -192,33 +233,47 @@ INSERT INTO detected_trackers (
 	@identifier,
 	@max_age_seconds,
 	@source,
+	@observed_by,
 	@value_size,
 	@initiator_url,
 	@initiator_domain,
 	@cookie_domain,
 	@host_only,
+	@http_only,
+	@secure,
+	@same_site,
+	@partitioned,
+	@set_by_url,
+	@cookie_banner_scan_id,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, '')) DO NOTHING
+ON CONFLICT (cookie_banner_id, tracker_type, identifier, COALESCE(cookie_domain, ''), observed_by) DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 dt.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"cookie_banner_id":   dt.CookieBannerID,
-		"tracker_pattern_id": dt.TrackerPatternID,
-		"tracker_type":       dt.TrackerType,
-		"identifier":         dt.Identifier,
-		"max_age_seconds":    dt.MaxAgeSeconds,
-		"source":             dt.Source,
-		"value_size":         dt.ValueSize,
-		"initiator_url":      dt.InitiatorURL,
-		"initiator_domain":   dt.InitiatorDomain,
-		"cookie_domain":      dt.CookieDomain,
-		"host_only":          dt.HostOnly,
-		"created_at":         dt.CreatedAt,
-		"updated_at":         dt.UpdatedAt,
+		"id":                    dt.ID,
+		"tenant_id":             scope.GetTenantID(),
+		"cookie_banner_id":      dt.CookieBannerID,
+		"tracker_pattern_id":    dt.TrackerPatternID,
+		"tracker_type":          dt.TrackerType,
+		"identifier":            dt.Identifier,
+		"max_age_seconds":       dt.MaxAgeSeconds,
+		"source":                dt.Source,
+		"observed_by":           dt.ObservedBy,
+		"value_size":            dt.ValueSize,
+		"initiator_url":         dt.InitiatorURL,
+		"initiator_domain":      dt.InitiatorDomain,
+		"cookie_domain":         dt.CookieDomain,
+		"host_only":             dt.HostOnly,
+		"http_only":             dt.HTTPOnly,
+		"secure":                dt.Secure,
+		"same_site":             dt.SameSite,
+		"partitioned":           dt.Partitioned,
+		"set_by_url":            dt.SetByURL,
+		"cookie_banner_scan_id": dt.CookieBannerScanID,
+		"created_at":            dt.CreatedAt,
+		"updated_at":            dt.UpdatedAt,
 	}
 
 	result, err := tx.Exec(ctx, q, args)
@@ -308,11 +363,18 @@ SELECT
 	identifier,
 	max_age_seconds,
 	source,
+	observed_by,
 	value_size,
 	initiator_url,
 	initiator_domain,
 	cookie_domain,
 	host_only,
+	http_only,
+	secure,
+	same_site,
+	partitioned,
+	set_by_url,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 FROM
