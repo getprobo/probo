@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Permintaan Privasi Baru",
-    "description": "Kirim permintaan tentang data pribadi Anda, misalnya untuk mengakses atau menghapusnya. Pilih jenis permintaan dan lengkapi detail di bawah ini.",
+    "description": "Kirim permintaan tentang data pribadi Anda, misalnya permintaan untuk mengakses atau menghapusnya. Pilih jenis permintaan dan lengkapi detail di bawah ini.",
     "typeLabel": "Jenis permintaan",
     "cancel": "Batal",
     "submit": "Kirim Permintaan",

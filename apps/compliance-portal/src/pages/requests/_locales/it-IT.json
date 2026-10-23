@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Nuova richiesta di privacy",
-    "description": "Invii una richiesta sui Suoi dati personali, ad esempio per accedervi o cancellarli. Scelga un tipo di richiesta e compili i dettagli riportati di seguito.",
+    "description": "Invii una richiesta sui Suoi dati personali, ad esempio una richiesta di accesso o di cancellazione. Scelga un tipo di richiesta e compili i dettagli riportati di seguito.",
     "typeLabel": "Tipo di richiesta",
     "cancel": "Annulla",
     "submit": "Invia richiesta",
