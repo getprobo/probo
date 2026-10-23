@@ -551,16 +551,31 @@ SELECT
 	dv.orientation,
 	dv.content
 FROM
-	documents
+	(
+		SELECT
+			id,
+			tenant_id,
+			organization_id,
+			current_published_major,
+			current_published_minor,
+			write_mode,
+			status,
+			archived_at,
+			created_at,
+			updated_at
+		FROM
+			documents
+		WHERE
+			%s
+			AND deleted_at IS NULL
+			AND id = @document_id
+	) documents
 	INNER JOIN document_versions dv
 		ON dv.document_id = documents.id
+		AND dv.tenant_id = documents.tenant_id
 		AND dv.major = documents.current_published_major
 		AND dv.minor = documents.current_published_minor
 		AND dv.status = @published_status
-WHERE
-	%s
-	AND documents.deleted_at IS NULL
-	AND documents.id = @document_id
 LIMIT 1
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
