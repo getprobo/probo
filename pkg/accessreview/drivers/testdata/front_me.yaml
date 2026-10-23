@@ -1,0 +1,43 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api2.frontapp.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api2.frontapp.com/me
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 101
+        body: '{"_links":{"self":"https://example.api.frontapp.com/me"},"id":"cmp_fixture","name":"Example Company"}'
+        headers:
+            Content-Length:
+                - "101"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 23 Oct 2026 09:30:14 GMT
+            X-Front-Time:
+                - "108"
+            X-Ratelimit-Burst-Limit:
+                - "50"
+            X-Ratelimit-Burst-Remaining:
+                - "50"
+            X-Ratelimit-Limit:
+                - "100"
+            X-Ratelimit-Remaining:
+                - "98"
+            X-Ratelimit-Reset:
+                - "1792747874.433"
+        status: 200 OK
+        code: 200
+        duration: 255.429917ms
