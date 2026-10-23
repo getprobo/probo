@@ -6,7 +6,7 @@
 
 services:
   postgres:
-    image: "artifact.probo.inc/dockerhub/library/postgres@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0"
+    image: "artifact.probo.inc/dockerhub/library/postgres@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6"
 
   seaweedfs:
     image: "artifact.probo.inc/dockerhub/chrislusf/seaweedfs@sha256:cea8339d21dad1b200adce581dd7434d254b8f5975f142c3b4c930ba78647eef"

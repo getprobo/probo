@@ -4,6 +4,10 @@ All notable changes to the Probo Helm chart will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Bundled demo PostgreSQL image is now `18.6`
+
 ## [0.27.0] - 2026-10-20
 
 ### Changed

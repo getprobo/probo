@@ -20,7 +20,7 @@ vol="$(docker compose -f compose.prod.yaml ps -aq postgres | xargs docker inspec
 
 docker run --rm --entrypoint bash \
   -v "$vol":/var/lib/postgresql \
-  postgres@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0 \
+  postgres@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6 \
   -c 'mkdir -p /var/lib/postgresql/17/data && find /var/lib/postgresql -mindepth 1 -maxdepth 1 ! -name 17 ! -name 18 -exec mv {} /var/lib/postgresql/17/data/ \;'
 
 docker run --rm \
