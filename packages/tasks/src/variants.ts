@@ -48,7 +48,7 @@ export const taskList = tv({
 });
 
 export const taskListRow = tv({
-  base: "h-12 overflow-hidden bg-sand-1",
+  base: "box-border flex h-12 overflow-hidden bg-sand-1",
   variants: {
     position: {
       only: "rounded-4 border border-sand-a3",
@@ -64,7 +64,7 @@ export const taskListRow = tv({
 
 export const taskListItem = tv({
   slots: {
-    root: "relative flex h-full items-center gap-3 px-6",
+    root: "relative flex min-h-0 min-w-0 flex-1 items-center gap-3 px-6",
     main: "flex min-w-0 flex-1 items-center gap-3",
     title: "flex min-w-0 flex-1 items-center gap-1.5",
     titleText: "min-w-0 truncate",

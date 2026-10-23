@@ -73,7 +73,7 @@ export function TaskListView<T extends TaskListViewItem>({
 }: TaskListViewProps<T>) {
   const { t } = useTranslation(TASKS_NAMESPACE);
   const [closedStates, setClosedStates] = useState(
-    () => new Set<TaskState>(["CANCELED", "DUPLICATE"]),
+    () => new Set<TaskState>(["DONE", "CANCELED", "DUPLICATE"]),
   );
   const closedBeforeSearchRef = useRef<Set<TaskState> | null>(null);
   const openedSearchKeyRef = useRef<string | null>(null);

@@ -37,7 +37,7 @@ export function TaskListRowFrame({
     <div className={taskListRow({ position })}>
       {placeholder
         ? (
-            <div className="flex h-full items-center gap-3 px-6" aria-hidden>
+            <div className="flex min-h-0 min-w-0 flex-1 items-center gap-3 px-6" aria-hidden>
               <span className="size-4 shrink-0 rounded-full bg-sand-4" />
               <span className="h-2 w-40 rounded-full bg-sand-4" />
               <span className="ml-auto h-2 w-16 shrink-0 rounded-full bg-sand-4" />
