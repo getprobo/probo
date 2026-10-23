@@ -73,7 +73,7 @@ describe("formatDuration", () => {
     const form = count === 1 ? "one" : "other";
     const counted = countedUnits[key];
     if (counted && count != null) {
-      return counted[form].replaceAll("{{count}}", String(count));
+      return counted[form].split("{{count}}").join(String(count));
     }
     const unit = unitWords[key];
     if (unit && count != null) {
@@ -118,7 +118,7 @@ describe("formatDuration", () => {
       if (template == null || options?.count == null) {
         return key;
       }
-      return template.replaceAll("{{count}}", String(options.count));
+      return template.split("{{count}}").join(String(options.count));
     }
 
     expect(formatDuration("PT30M", shortT, { style: "short" })).toBe("30 min");
