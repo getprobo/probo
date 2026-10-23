@@ -5,6 +5,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     groups:
       go-dependencies:
@@ -16,6 +18,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     groups:
       npm-dependencies:
@@ -27,6 +31,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
 
   # GitHub Actions
@@ -34,6 +40,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     ignore:
       # v3 is 3.0.0-beta.1 and fails Swiftly GPG verification.
