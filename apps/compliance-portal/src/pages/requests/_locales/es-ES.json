@@ -29,7 +29,7 @@
   },
   "dialog": {
     "title": "Nueva solicitud de privacidad",
-    "description": "Se trata de sus datos personales, como el acceso o la eliminación. Elija un tipo de solicitud y complete los datos a continuación.",
+    "description": "Envíe una solicitud sobre sus datos personales, por ejemplo para acceder a ellos o eliminarlos. Elija un tipo de solicitud y complete los datos a continuación.",
     "typeLabel": "Tipo de solicitud",
     "cancel": "Cancelar",
     "submit": "Enviar solicitud",
