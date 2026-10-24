@@ -862,8 +862,6 @@ func (impl *Implm) Run(
 		managementService,
 	)
 
-	staticCIMDAllow := oauth2.CIMDAllowFromClientIDs(impl.cfg.Auth.OAuth2Server.CIMDAllowedClientIDs)
-
 	iamService.OAuth2ServerService.SetCIMDAllow(
 		func(ctx context.Context, clientIDURL string) (oauth2.CIMDAllowance, error) {
 			host, ok := oauth2.CIMDClientIDHost(clientIDURL)
@@ -871,7 +869,7 @@ func (impl *Implm) Run(
 				return oauth2.CIMDAllowanceAllowedSkipConsent, nil
 			}
 
-			return staticCIMDAllow(ctx, clientIDURL)
+			return oauth2.CIMDAllowanceDenied, nil
 		},
 	)
 
@@ -2301,6 +2299,8 @@ func oauth2ServerOptions(cfg OAuth2ServerConfig) []oauth2.Option {
 	if cfg.DeviceCodeDuration > 0 {
 		opts = append(opts, oauth2.WithDeviceCodeDuration(time.Duration(cfg.DeviceCodeDuration)*time.Second))
 	}
+
+	opts = append(opts, oauth2.WithCIMDAllowedClientIDs(cfg.CIMDAllowedClientIDs))
 
 	return opts
 }
