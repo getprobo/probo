@@ -443,6 +443,7 @@ func TestRequestMappingForUnmappedByInitiatorDomains(t *testing.T) {
 			CookieBannerID:   fx.cookieBannerID,
 			TrackerPatternID: &patternID,
 			TrackerType:      coredata.TrackerTypeCookie,
+			ObservedBy:       coredata.DetectedTrackerObserverSDK,
 			Identifier:       identifier,
 			InitiatorDomain:  &d,
 			CreatedAt:        now,

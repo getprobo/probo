@@ -37,18 +37,19 @@ import (
 
 type (
 	TrackerResource struct {
-		ID               gid.GID             `db:"id"`
-		OrganizationID   gid.GID             `db:"organization_id"`
-		CookieBannerID   gid.GID             `db:"cookie_banner_id"`
-		CookieCategoryID gid.GID             `db:"cookie_category_id"`
-		ResourceType     TrackerResourceType `db:"resource_type"`
-		Origin           string              `db:"origin"`
-		Path             string              `db:"path"`
-		DisplayName      string              `db:"display_name"`
-		Description      string              `db:"description"`
-		Excluded         bool                `db:"excluded"`
-		CreatedAt        time.Time           `db:"created_at"`
-		UpdatedAt        time.Time           `db:"updated_at"`
+		ID                 gid.GID             `db:"id"`
+		OrganizationID     gid.GID             `db:"organization_id"`
+		CookieBannerID     gid.GID             `db:"cookie_banner_id"`
+		CookieCategoryID   gid.GID             `db:"cookie_category_id"`
+		ResourceType       TrackerResourceType `db:"resource_type"`
+		Origin             string              `db:"origin"`
+		Path               string              `db:"path"`
+		DisplayName        string              `db:"display_name"`
+		Description        string              `db:"description"`
+		Excluded           bool                `db:"excluded"`
+		CookieBannerScanID *gid.GID            `db:"cookie_banner_scan_id"`
+		CreatedAt          time.Time           `db:"created_at"`
+		UpdatedAt          time.Time           `db:"updated_at"`
 	}
 
 	TrackerResources []*TrackerResource
@@ -124,6 +125,7 @@ SELECT
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 FROM
@@ -179,6 +181,7 @@ SELECT
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 FROM
@@ -239,6 +242,7 @@ INSERT INTO tracker_resources (
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -253,25 +257,27 @@ INSERT INTO tracker_resources (
 	@display_name,
 	@description,
 	@excluded,
+	@cookie_banner_scan_id,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":                 tr.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    tr.OrganizationID,
-		"cookie_banner_id":   tr.CookieBannerID,
-		"cookie_category_id": tr.CookieCategoryID,
-		"resource_type":      tr.ResourceType,
-		"origin":             tr.Origin,
-		"path":               tr.Path,
-		"display_name":       tr.DisplayName,
-		"description":        tr.Description,
-		"excluded":           tr.Excluded,
-		"created_at":         tr.CreatedAt,
-		"updated_at":         tr.UpdatedAt,
+		"id":                    tr.ID,
+		"tenant_id":             scope.GetTenantID(),
+		"organization_id":       tr.OrganizationID,
+		"cookie_banner_id":      tr.CookieBannerID,
+		"cookie_category_id":    tr.CookieCategoryID,
+		"resource_type":         tr.ResourceType,
+		"origin":                tr.Origin,
+		"path":                  tr.Path,
+		"display_name":          tr.DisplayName,
+		"description":           tr.Description,
+		"excluded":              tr.Excluded,
+		"cookie_banner_scan_id": tr.CookieBannerScanID,
+		"created_at":            tr.CreatedAt,
+		"updated_at":            tr.UpdatedAt,
 	}
 
 	_, err := tx.Exec(ctx, q, args)
@@ -289,7 +295,8 @@ INSERT INTO tracker_resources (
 }
 
 // Upsert inserts a new tracker resource. Repeat reports of the same
-// (cookie_banner_id, resource_type, origin, path) are a no-op.
+// (cookie_banner_id, resource_type, origin, path) are a no-op, except
+// that a non-nil CookieBannerScanID is stamped on the existing row.
 // Returns true when a new row was inserted.
 func (tr *TrackerResource) Upsert(
 	ctx context.Context,
@@ -309,6 +316,7 @@ INSERT INTO tracker_resources (
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -323,10 +331,13 @@ INSERT INTO tracker_resources (
 	@display_name,
 	@description,
 	@excluded,
+	@cookie_banner_scan_id,
 	@created_at,
 	@updated_at
 )
-ON CONFLICT (cookie_banner_id, resource_type, origin, path) DO NOTHING
+ON CONFLICT (cookie_banner_id, resource_type, origin, path) DO UPDATE
+	SET cookie_banner_scan_id = EXCLUDED.cookie_banner_scan_id
+	WHERE EXCLUDED.cookie_banner_scan_id IS NOT NULL
 RETURNING
 	id,
 	organization_id,
@@ -338,6 +349,7 @@ RETURNING
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 `
@@ -345,19 +357,20 @@ RETURNING
 	originalID := tr.ID
 
 	args := pgx.StrictNamedArgs{
-		"id":                 tr.ID,
-		"tenant_id":          scope.GetTenantID(),
-		"organization_id":    tr.OrganizationID,
-		"cookie_banner_id":   tr.CookieBannerID,
-		"cookie_category_id": tr.CookieCategoryID,
-		"resource_type":      tr.ResourceType,
-		"origin":             tr.Origin,
-		"path":               tr.Path,
-		"display_name":       tr.DisplayName,
-		"description":        tr.Description,
-		"excluded":           tr.Excluded,
-		"created_at":         tr.CreatedAt,
-		"updated_at":         tr.UpdatedAt,
+		"id":                    tr.ID,
+		"tenant_id":             scope.GetTenantID(),
+		"organization_id":       tr.OrganizationID,
+		"cookie_banner_id":      tr.CookieBannerID,
+		"cookie_category_id":    tr.CookieCategoryID,
+		"resource_type":         tr.ResourceType,
+		"origin":                tr.Origin,
+		"path":                  tr.Path,
+		"display_name":          tr.DisplayName,
+		"description":           tr.Description,
+		"excluded":              tr.Excluded,
+		"cookie_banner_scan_id": tr.CookieBannerScanID,
+		"created_at":            tr.CreatedAt,
+		"updated_at":            tr.UpdatedAt,
 	}
 
 	rows, err := tx.Query(ctx, q, args)
@@ -467,6 +480,7 @@ SELECT
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 FROM
@@ -573,6 +587,7 @@ SELECT
 	display_name,
 	description,
 	excluded,
+	cookie_banner_scan_id,
 	created_at,
 	updated_at
 FROM
