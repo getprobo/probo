@@ -57,3 +57,9 @@ export const PlanetScale: Story = {
     thirdParty: "PLANETSCALE",
   },
 };
+
+export const Front: Story = {
+  args: {
+    thirdParty: "FRONT",
+  },
+};

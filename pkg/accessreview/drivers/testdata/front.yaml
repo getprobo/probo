@@ -1,0 +1,43 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        host: api2.frontapp.com
+        headers:
+            Accept:
+                - application/json
+        url: https://api2.frontapp.com/teammates
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        content_length: 1011
+        body: '{"_links":{"self":"https://example.api.frontapp.com/teammates"},"_pagination":{"next":null},"_results":[{"_links":{"related":{"conversations":"https://example.api.frontapp.com/teammates/tea_fixture1/conversations","inboxes":"https://example.api.frontapp.com/teammates/tea_fixture1/inboxes"},"self":"https://example.api.frontapp.com/teammates/tea_fixture1"},"custom_fields":{},"email":"teammate1@example.com","first_name":"Teammate","id":"tea_fixture1","is_admin":true,"is_available":true,"is_blocked":false,"last_name":"1","type":"user","username":"teammate1"},{"_links":{"related":{"conversations":"https://example.api.frontapp.com/teammates/tea_fixture2/conversations","inboxes":"https://example.api.frontapp.com/teammates/tea_fixture2/inboxes"},"self":"https://example.api.frontapp.com/teammates/tea_fixture2"},"custom_fields":{},"email":"teammate2@example.com","first_name":"","id":"tea_fixture2","is_admin":false,"is_available":true,"is_blocked":false,"last_name":"","type":"user","username":"teammate2"}]}'
+        headers:
+            Content-Length:
+                - "1011"
+            Content-Type:
+                - application/json; charset=utf-8
+            Date:
+                - Fri, 23 Oct 2026 09:30:14 GMT
+            X-Front-Time:
+                - "37"
+            X-Ratelimit-Burst-Limit:
+                - "50"
+            X-Ratelimit-Burst-Remaining:
+                - "50"
+            X-Ratelimit-Limit:
+                - "100"
+            X-Ratelimit-Remaining:
+                - "99"
+            X-Ratelimit-Reset:
+                - "1792747874.432"
+        status: 200 OK
+        code: 200
+        duration: 183.514625ms
