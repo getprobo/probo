@@ -473,6 +473,7 @@ WHERE
 	if s.StartedAt == nil {
 		s.StartedAt = &now
 	}
+
 	s.UpdatedAt = now
 
 	return nil

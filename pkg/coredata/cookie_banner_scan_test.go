@@ -185,12 +185,14 @@ func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T)
 	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
 
 	startedAt := time.Now().Add(-time.Minute).UTC().Truncate(time.Microsecond)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return scan.MarkRunning(ctx, tx, fx.scope, startedAt)
 	}))
 
 	checkpoint := json.RawMessage(`{"visited_templates":["/"],"queue":[],"pages_scanned":1,"elapsed_ms":1000,"truncated":false}`)
 	scan.Checkpoint = &checkpoint
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return scan.MarkPaused(ctx, tx, fx.scope, time.Now())
 	}))
@@ -204,6 +206,7 @@ func TestCookieBannerScan_Pause_BlocksAnotherScanAndKeepsStartedAt(t *testing.T)
 	}))
 
 	var resumed coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return resumed.LoadByID(ctx, conn, fx.scope, scan.ID)
 	}))
@@ -240,6 +243,7 @@ func TestFailStaleCookieBannerScans_PausesCheckpointedRun(t *testing.T) {
 	}))
 
 	var reloaded coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
 	}))
@@ -276,6 +280,7 @@ func TestFailStaleCookieBannerScans_KeepsPausedScan(t *testing.T) {
 	}))
 
 	var reloaded coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
 	}))
