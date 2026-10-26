@@ -200,6 +200,153 @@ func TestBuildPostHogProbeURL(t *testing.T) {
 	assert.Equal(t, "https://us.posthog.com/api/organizations/@current/", probeURL)
 }
 
+func TestBuildOnePasswordProbeURL(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"client credentials ask the users api of their region",
+		func(t *testing.T) {
+			t.Parallel()
+
+			conn := &coredata.Connector{
+				Provider: coredata.ConnectorProviderOnePassword,
+				Connection: &connectorprotocol.OAuth2Connection{
+					GrantType: connectorprotocol.OAuth2GrantTypeClientCredentials,
+				},
+			}
+			require.NoError(
+				t,
+				conn.SetSettings(
+					&coredata.OnePasswordUsersAPISettings{
+						AccountID: "WX52YXL2MVEPBK43P3R4XMWKXI",
+						Region:    "ENT",
+					},
+				),
+			)
+
+			probeURL, err := buildOnePasswordProbeURL(conn)
+			require.NoError(t, err)
+			assert.Equal(t, "https://api.ent.1password.com/v1/accounts/WX52YXL2MVEPBK43P3R4XMWKXI/users?max_page_size=1", probeURL)
+		},
+	)
+
+	t.Run(
+		"api key asks the scim bridge",
+		func(t *testing.T) {
+			t.Parallel()
+
+			conn := &coredata.Connector{
+				Provider:   coredata.ConnectorProviderOnePassword,
+				Connection: &connectorprotocol.APIKeyConnection{APIKey: "scim-token"},
+			}
+			require.NoError(t, conn.SetSettings(&coredata.OnePasswordConnectorSettings{SCIMBridgeURL: "https://scim.example.test"}))
+
+			probeURL, err := buildOnePasswordProbeURL(conn)
+			require.NoError(t, err)
+			assert.Equal(t, "https://scim.example.test/scim/v2/Users?count=1", probeURL)
+		},
+	)
+
+	t.Run(
+		"api key without a scim bridge",
+		func(t *testing.T) {
+			t.Parallel()
+
+			conn := &coredata.Connector{
+				Provider:   coredata.ConnectorProviderOnePassword,
+				Connection: &connectorprotocol.APIKeyConnection{APIKey: "scim-token"},
+			}
+
+			_, err := buildOnePasswordProbeURL(conn)
+			require.Error(t, err)
+		},
+	)
+}
+
+func TestProbeOnePassword(t *testing.T) {
+	t.Parallel()
+
+	usersAPI := &coredata.Connector{
+		Provider: coredata.ConnectorProviderOnePassword,
+		Connection: &connectorprotocol.OAuth2Connection{
+			GrantType: connectorprotocol.OAuth2GrantTypeClientCredentials,
+		},
+	}
+	require.NoError(
+		t,
+		usersAPI.SetSettings(
+			&coredata.OnePasswordUsersAPISettings{
+				AccountID: "WX52YXL2MVEPBK43P3R4XMWKXI",
+				Region:    "US",
+			},
+		),
+	)
+
+	scimBridge := &coredata.Connector{
+		Provider:   coredata.ConnectorProviderOnePassword,
+		Connection: &connectorprotocol.APIKeyConnection{APIKey: "scim-token"},
+	}
+	require.NoError(t, scimBridge.SetSettings(&coredata.OnePasswordConnectorSettings{SCIMBridgeURL: "https://scim.example.test"}))
+
+	cases := []struct {
+		name       string
+		conn       *coredata.Connector
+		status     int
+		wantAccept string
+		wantReject bool
+	}{
+		{"users api accepts", usersAPI, http.StatusOK, "application/json", false},
+		{"users api rejects", usersAPI, http.StatusUnauthorized, "application/json", true},
+		{"scim bridge accepts", scimBridge, http.StatusOK, "application/scim+json", false},
+		{"scim bridge rejects", scimBridge, http.StatusUnauthorized, "application/scim+json", true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var gotAccept string
+
+			client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				gotAccept = r.Header.Get("Accept")
+
+				return &http.Response{StatusCode: tc.status, Body: http.NoBody, Header: make(http.Header)}, nil
+			})}
+
+			err := NewBuiltinRegistry().ProbeConnection(t.Context(), client, tc.conn)
+
+			assert.Equal(t, tc.wantAccept, gotAccept)
+
+			if !tc.wantReject {
+				require.NoError(t, err)
+				return
+			}
+
+			rejected, ok := errors.AsType[*CredentialRejectedError](err)
+			require.True(t, ok)
+			assert.Equal(t, tc.status, rejected.StatusCode)
+		})
+	}
+
+	t.Run("scim bridge missing", func(t *testing.T) {
+		t.Parallel()
+
+		conn := &coredata.Connector{
+			Provider:   coredata.ConnectorProviderOnePassword,
+			Connection: &connectorprotocol.APIKeyConnection{APIKey: "scim-token"},
+		}
+
+		client := &http.Client{Transport: probeRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			t.Errorf("unexpected probe request to %s", r.URL)
+
+			return nil, errors.New("unexpected probe request")
+		})}
+
+		err := NewBuiltinRegistry().ProbeConnection(t.Context(), client, conn)
+		require.ErrorContains(t, err, "cannot build probe URL")
+	})
+}
+
 func TestProbePostHog(t *testing.T) {
 	t.Parallel()
 

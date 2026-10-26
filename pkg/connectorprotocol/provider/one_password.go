@@ -37,18 +37,12 @@ func onePasswordRegistration() *Registration {
 		DisplayName:        "1Password",
 		InitialAccountFunc: onePasswordInitialAccount,
 		DocumentationURL:   accessReviewDocsURL("one-password"),
-		// APIBase is deliberately empty: 1Password has no single data host to
-		// name. Three host families live under this one registration — the
-		// per-connection SCIM bridge URL (customer-hosted, from
-		// APIKeyExtraSettings), the regional Users API hosts resolved from the
-		// Region setting (drivers.OnePasswordUsersAPIBaseURL), which also serve
-		// the token endpoint, and the events.1password.com probe below, which
-		// is not the root any driver joins onto. A single APIBase would have to
-		// be wrong for at least two of them, and Register's
-		// Probe-host-matches-APIBase check would reject the honest pairing.
-		Endpoints: Endpoints{
-			Probe: "https://events.1password.com/api/v1/auditevents",
-		},
+		// Endpoints is deliberately empty: every 1Password host is chosen per
+		// connection. The API-key path reaches the customer's own SCIM bridge,
+		// and the client-credentials path one of the regional Users API hosts
+		// its Region setting names (drivers.OnePasswordUsersAPIBaseURL), which
+		// also serve its token endpoint.
+		Probe: probeOnePassword,
 		APIKey: &APIKeyConfig{
 			ExtraSettings: []ExtraSetting{
 				{Key: "scimBridgeUrl", Label: "SCIM Bridge URL", Required: true},
