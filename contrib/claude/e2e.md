@@ -185,7 +185,8 @@ processes that contend for the same probod ports and database migrations.
 
 CLI coverage lives in that same package (`cli_test.go`). It builds or reuses
 `bin/prb` (`PROBO_E2E_PRB`), authenticates with `PROBO_HOST` and `PROBO_TOKEN`,
-and drives the binary through create, list, view, update, and delete. `make
+and drives the binary through create, list, view, update, and delete. The same
+test lists and prints the agent skills embedded in the binary. `make
 test-e2e` builds `bin/prb` and passes it to the suite.
 
 Organize large resources by concern:

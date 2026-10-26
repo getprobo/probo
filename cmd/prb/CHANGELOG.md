@@ -9,6 +9,8 @@ All notable changes to the `prb` CLI will be documented in this file.
 - `--json` is shorthand for `--output json` on commands that print a
   result. Combining it with a different `--output` value is an error
 - `risk-analysis diagram mermaid --json` prints the diagram node
+- `prb skills` lists, prints, and installs the agent skills shipped in
+  the binary so a model can call prb without inventing flags
 
 ### Changed
 
