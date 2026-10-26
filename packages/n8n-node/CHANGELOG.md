@@ -4,6 +4,15 @@ All notable changes to the `@probo/n8n-nodes-probo` package will be documented i
 
 ## Unreleased
 
+## [0.261.0] - 2026-10-26
+
+### Changed
+
+- The Probo API credential label is Access Token. It still sends the
+  value as a Bearer token, and the stored field name is unchanged, so
+  saved workflows still load. Create the token from the user menu
+  under OAuth tokens
+
 ## [0.260.0] - 2026-10-22
 
 ### Changed
