@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/itam"
@@ -94,4 +95,103 @@ func TestITAMPolicySet_CompliancePortalRolesCanListEmployeeDevices(t *testing.T)
 			})
 		})
 	}
+}
+
+func TestITAMPolicySet_RolesCanListOwnDevicePostures(t *testing.T) {
+	t.Parallel()
+
+	organizationID := gid.New(gid.NewTenantID(), 1)
+	otherOrganizationID := gid.New(gid.NewTenantID(), 1)
+	ownerID := gid.New(gid.NewTenantID(), 2)
+	otherOwnerID := gid.New(gid.NewTenantID(), 2)
+
+	roles := []string{
+		"EMPLOYEE",
+		"COMPLIANCE_PORTAL_MANAGER",
+		"COMPLIANCE_PORTAL_ACCESS_MANAGER",
+	}
+
+	for _, role := range roles {
+		t.Run(role, func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("own device", func(t *testing.T) {
+				t.Parallel()
+
+				result := evaluateDevicePostureList(
+					t,
+					role,
+					organizationID,
+					organizationID,
+					ownerID,
+					ownerID,
+				)
+
+				assert.True(t, result.IsAllowed())
+			})
+
+			t.Run("other owner", func(t *testing.T) {
+				t.Parallel()
+
+				result := evaluateDevicePostureList(
+					t,
+					role,
+					organizationID,
+					organizationID,
+					ownerID,
+					otherOwnerID,
+				)
+
+				assert.False(t, result.IsAllowed())
+			})
+
+			t.Run("other organization", func(t *testing.T) {
+				t.Parallel()
+
+				result := evaluateDevicePostureList(
+					t,
+					role,
+					organizationID,
+					otherOrganizationID,
+					ownerID,
+					ownerID,
+				)
+
+				assert.False(t, result.IsAllowed())
+			})
+		})
+	}
+}
+
+func evaluateDevicePostureList(
+	t *testing.T,
+	role string,
+	principalOrganizationID gid.GID,
+	resourceOrganizationID gid.GID,
+	principalID gid.GID,
+	resourceOwnerID gid.GID,
+) policy.EvaluationResult {
+	t.Helper()
+
+	policies := itam.ITAMPolicySet().RolePolicies[role]
+	require.NotNil(t, policies)
+
+	return policy.NewEvaluator().Evaluate(
+		policy.AuthorizationRequest{
+			Principal: principalID,
+			Resource:  gid.New(gid.NewTenantID(), 3),
+			Action:    itam.ActionDevicePostureList,
+			ConditionContext: policy.ConditionContext{
+				Principal: map[string]string{
+					"id":              principalID.String(),
+					"organization_id": principalOrganizationID.String(),
+				},
+				Resource: map[string]string{
+					"organization_id": resourceOrganizationID.String(),
+					"owner_id":        resourceOwnerID.String(),
+				},
+			},
+		},
+		policies,
+	)
 }

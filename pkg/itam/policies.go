@@ -71,17 +71,24 @@ var EmployeePolicy = policy.NewPolicy(
 	policy.Allow(ActionEmployeeDeviceList).
 		WithSID("itam-employee-device-list").
 		When(organizationCondition),
-).WithDescription("Self-enrollment: enroll own device and read own enrolled devices")
+	policy.Allow(ActionDevicePostureList).
+		WithSID("itam-employee-list-own-device-postures").
+		When(organizationCondition, ownerCondition),
+).WithDescription("Self-enrollment: enroll own device, read own devices, and read their posture checks")
 
 // PortalDeviceListPolicy lets employee-portal roles load the home-page device
-// list. The resolver returns only devices owned by the caller.
+// list and the posture checks on devices they own. The device list resolver
+// returns only devices owned by the caller.
 var PortalDeviceListPolicy = policy.NewPolicy(
 	"itam:employee-portal-device-list",
 	"Employee Portal Device List",
 	policy.Allow(ActionEmployeeDeviceList).
 		WithSID("employee-portal-device-list").
 		When(organizationCondition),
-).WithDescription("List own devices from the employee portal home page")
+	policy.Allow(ActionDevicePostureList).
+		WithSID("employee-portal-list-own-device-postures").
+		When(organizationCondition, ownerCondition),
+).WithDescription("List own devices and their posture checks from the employee portal")
 
 // ITAMPolicySet returns the PolicySet for the ITAM service.
 func ITAMPolicySet() *iam.PolicySet {

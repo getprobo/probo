@@ -94,8 +94,24 @@
       "devices": {
         "title": "Dispositivos",
         "description": "Gestione sus dispositivos de trabajo.",
-        "connected": "Dispositivo conectado",
-        "action": "Registrar un dispositivo"
+        "action": "Registrar un dispositivo",
+        "emptyPostures": "Aún no hay controles de postura",
+        "pendingHostname": "Pendiente",
+        "checks_one": "{{count}} control",
+        "checks_other": "{{count}} controles",
+        "warnings_one": "{{count}} advertencia",
+        "warnings_other": "{{count}} advertencias",
+        "checks": {
+          "diskEncryption": "Cifrado de disco",
+          "screenLock": "Bloqueo de pantalla",
+          "firewallEnabled": "Cortafuegos activado",
+          "timeSync": "Sincronización horaria",
+          "osVersion": "Versión del sistema",
+          "autoUpdate": "Actualización automática",
+          "passwordPolicy": "Política de contraseñas",
+          "remoteLogin": "Inicio de sesión remoto",
+          "malwareProtection": "Protección contra malware"
+        }
       },
       "slack": {
         "title": "Slack",

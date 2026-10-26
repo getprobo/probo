@@ -94,8 +94,24 @@
       "devices": {
         "title": "Apparaten",
         "description": "Beheer uw werkapparaten.",
-        "connected": "Apparaat verbonden",
-        "action": "Apparaat registreren"
+        "action": "Apparaat registreren",
+        "emptyPostures": "Nog geen postuurcontroles",
+        "pendingHostname": "In behandeling",
+        "checks_one": "{{count}} controle",
+        "checks_other": "{{count}} controles",
+        "warnings_one": "{{count}} waarschuwing",
+        "warnings_other": "{{count}} waarschuwingen",
+        "checks": {
+          "diskEncryption": "Schijfversleuteling",
+          "screenLock": "Schermvergrendeling",
+          "firewallEnabled": "Firewall ingeschakeld",
+          "timeSync": "Tijdsynchronisatie",
+          "osVersion": "OS-versie",
+          "autoUpdate": "Automatische update",
+          "passwordPolicy": "Wachtwoordbeleid",
+          "remoteLogin": "Extern inloggen",
+          "malwareProtection": "Malwarebescherming"
+        }
       },
       "slack": {
         "title": "Slack",

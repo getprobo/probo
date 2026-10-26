@@ -94,8 +94,24 @@
       "devices": {
         "title": "Devices",
         "description": "Manage your work devices.",
-        "connected": "Device connected",
-        "action": "Register a device"
+        "action": "Register a device",
+        "emptyPostures": "No posture checks yet",
+        "pendingHostname": "Pending",
+        "checks_one": "{{count}} check",
+        "checks_other": "{{count}} checks",
+        "warnings_one": "{{count}} warning",
+        "warnings_other": "{{count}} warnings",
+        "checks": {
+          "diskEncryption": "Disk encryption",
+          "screenLock": "Screen lock",
+          "firewallEnabled": "Firewall enabled",
+          "timeSync": "Time sync",
+          "osVersion": "OS version",
+          "autoUpdate": "Auto update",
+          "passwordPolicy": "Password policy",
+          "remoteLogin": "Remote login",
+          "malwareProtection": "Malware protection"
+        }
       },
       "slack": {
         "title": "Slack",
