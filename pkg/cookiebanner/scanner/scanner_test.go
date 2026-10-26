@@ -126,6 +126,16 @@ func TestBlockSDKPost_AllowsConfigAndConsentRead(t *testing.T) {
 	assert.False(t, blockSDKPost("POST", "https://shop.example.com/"+banner+"/report", banner, api))
 }
 
+func TestRun_RequiresAPIBaseURL(t *testing.T) {
+	t.Parallel()
+
+	_, err := Run(context.Background(), nil, Input{
+		Origin:   "https://example.com",
+		BannerID: "banner",
+	})
+	require.ErrorContains(t, err, "API base URL is required")
+}
+
 func TestRecorder_DeduplicatesAndDropsAPIOrigin(t *testing.T) {
 	t.Parallel()
 

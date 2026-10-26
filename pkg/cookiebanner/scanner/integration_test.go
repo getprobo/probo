@@ -60,7 +60,7 @@ func TestRun_RecordsTrackersAndSkipsOtherOrigins(t *testing.T) {
 		_, _ = w.Write([]byte(`<!doctype html><script>document.cookie = "tp=1; path=/";</script>`))
 	}))
 
-	var site *httptest.Server = serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	var site = serve(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/track.js":
 			w.Header().Set("Content-Type", "text/javascript")
@@ -145,6 +145,7 @@ func TestRun_StopsAtPageLimit(t *testing.T) {
 	result, err := Run(context.Background(), alloc, Input{
 		Origin:             chromeURL(t, site),
 		BannerID:           "banner",
+		APIBaseURL:         "https://api.example.com",
 		Limits:             fastLimits(2),
 		skipPublicURLCheck: true,
 	})
