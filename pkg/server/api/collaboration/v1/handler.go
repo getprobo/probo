@@ -137,6 +137,11 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 
 	defer lease.Close()
 
+	// The handshake is already gone. Drop the lease instead of upgrading.
+	if r.Context().Err() != nil {
+		return
+	}
+
 	if lease.SeedOwner() {
 		if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
 			h.releaseSeedClaim(r.Context(), scope, documentID, lease)

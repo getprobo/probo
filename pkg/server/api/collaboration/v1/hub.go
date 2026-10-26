@@ -122,6 +122,7 @@ const (
 	PersistDebounce = 50 * time.Millisecond
 	PersistTimeout  = 5 * time.Second
 	PresenceTTL     = 30 * time.Second
+	RoomOpenTimeout = 20 * time.Second
 )
 
 func NewConnectionID() (string, error) {
@@ -218,7 +219,14 @@ func (h *Hub) Acquire(
 		h.rooms[documentID] = room
 		h.mu.Unlock()
 
-		opened, err := h.documents.Open(ctx, scope, documentID)
+		// A dropped handshake cancels the caller. The SELECT must keep a
+		// context that outlives it, or pgx closes the connection on rollback.
+		openCtx, openCancel := context.WithTimeout(
+			context.WithoutCancel(ctx),
+			RoomOpenTimeout,
+		)
+		opened, err := h.documents.Open(openCtx, scope, documentID)
+		openCancel()
 		if err != nil {
 			h.finishOpening(documentID, room)
 

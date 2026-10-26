@@ -678,6 +678,98 @@ func TestRoom_PersistsDirtyOnCloseAfterError(t *testing.T) {
 	require.NoError(t, document.Close())
 }
 
+type cancelProbeDocuments struct {
+	started chan struct{}
+	release chan struct{}
+	openCtx context.Context
+}
+
+func (d *cancelProbeDocuments) Open(
+	ctx context.Context,
+	_ coredata.Scoper,
+	_ gid.GID,
+) (*collaboration.DocumentCollaboration, error) {
+	d.openCtx = ctx
+	close(d.started)
+	<-d.release
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	document, err := automerge.New(automerge.ActorID{1})
+	if err != nil {
+		return nil, err
+	}
+
+	return &collaboration.DocumentCollaboration{
+		Document: document,
+		Revision: 1,
+	}, nil
+}
+
+func (d *cancelProbeDocuments) Persist(
+	context.Context,
+	coredata.Scoper,
+	gid.GID,
+	*automerge.Document,
+) (int64, error) {
+	return 1, nil
+}
+
+func TestAcquire_OpenSurvivesCallerCancel(t *testing.T) {
+	t.Parallel()
+
+	tenantID := gid.NewTenantID()
+	documentID := gid.New(tenantID, coredata.DocumentEntityType)
+	documents := &cancelProbeDocuments{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	hub := NewHub(documents, nil)
+	scope := coredata.NewScope(tenantID, gid.Nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	type acquireResult struct {
+		lease *RoomLease
+		err   error
+	}
+
+	resultCh := make(chan acquireResult, 1)
+
+	go func() {
+		lease, err := hub.Acquire(ctx, scope, documentID, "conn")
+		resultCh <- acquireResult{lease: lease, err: err}
+	}()
+
+	select {
+	case <-documents.started:
+	case <-time.After(time.Second):
+		require.Fail(t, "open did not start")
+	}
+
+	cancel()
+	close(documents.release)
+
+	var result acquireResult
+
+	select {
+	case result = <-resultCh:
+	case <-time.After(time.Second):
+		require.Fail(t, "acquire did not return")
+	}
+
+	require.NoError(t, result.err)
+	require.NotNil(t, result.lease)
+	t.Cleanup(result.lease.Close)
+
+	deadline, ok := documents.openCtx.Deadline()
+	require.True(t, ok)
+	assert.WithinDuration(t, time.Now().Add(RoomOpenTimeout), deadline, time.Second)
+}
+
 func TestHub_GatesUnseededRoom(t *testing.T) {
 	t.Parallel()
 
