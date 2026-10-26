@@ -65,9 +65,12 @@ func TestDetectedTracker_InsertIfNotExists_SeparatesObservers(t *testing.T) {
 
 	insert := func(dt *coredata.DetectedTracker) bool {
 		var inserted bool
+
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var err error
+
 			inserted, err = dt.InsertIfNotExists(ctx, tx, fx.scope)
+
 			return err
 		}))
 
@@ -91,6 +94,7 @@ func TestDetectedTracker_Upsert_RefreshesScannerAttributes(t *testing.T) {
 	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
 
 	first := newDetectedTracker(fx, tp.ID, "_session", coredata.DetectedTrackerObserverScanner)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		_, err := first.Upsert(ctx, tx, fx.scope)
 		return err
@@ -101,12 +105,14 @@ func TestDetectedTracker_Upsert_RefreshesScannerAttributes(t *testing.T) {
 	second.SameSite = new(coredata.CookieSameSiteLax)
 	second.SetByURL = new("https://tracker-pattern-test.example.com/login")
 	second.CookieBannerScanID = &scan.ID
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		_, err := second.Upsert(ctx, tx, fx.scope)
 		return err
 	}))
 
 	var trackers coredata.DetectedTrackers
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		cursor := page.NewCursor(
 			10,
@@ -163,9 +169,12 @@ func TestTrackerResource_Upsert_StampsScanOnlyWhenSet(t *testing.T) {
 
 	upsert := func(tr *coredata.TrackerResource) bool {
 		var inserted bool
+
 		require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 			var err error
+
 			inserted, err = tr.Upsert(ctx, tx, fx.scope)
+
 			return err
 		}))
 
@@ -183,6 +192,7 @@ func TestTrackerResource_Upsert_StampsScanOnlyWhenSet(t *testing.T) {
 	assert.False(t, upsert(scannerReport), "a scanner report of an existing resource is not an insert")
 
 	var reloaded coredata.TrackerResource
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadByID(ctx, conn, fx.scope, sdkReport.ID)
 	}))

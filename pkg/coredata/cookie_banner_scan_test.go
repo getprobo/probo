@@ -93,12 +93,14 @@ func TestCookieBannerScan_Insert_OneActivePerBanner(t *testing.T) {
 	assert.NoError(t, insertCookieBannerScan(t, ctx, client, fx, third), "a new scan must be accepted once the previous one completed")
 
 	var latest coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return latest.LoadLatestByCookieBannerID(ctx, conn, fx.scope, fx.cookieBannerID)
 	}))
 	assert.Equal(t, third.ID, latest.ID)
 
 	var completed coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return completed.LoadByID(ctx, conn, fx.scope, first.ID)
 	}))
@@ -120,6 +122,7 @@ func TestCookieBannerScan_MarkCompleted_RejectsStaleFailedScan(t *testing.T) {
 	require.NoError(t, insertCookieBannerScan(t, ctx, client, fx, scan))
 
 	startedAt := time.Now().Add(-time.Hour)
+
 	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
 		return scan.MarkRunning(ctx, tx, fx.scope, startedAt)
 	}))
@@ -129,6 +132,7 @@ func TestCookieBannerScan_MarkCompleted_RejectsStaleFailedScan(t *testing.T) {
 	}))
 
 	var reloaded coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
 	}))
@@ -161,6 +165,7 @@ func TestFailStaleCookieBannerScans_KeepsRecentRunningScan(t *testing.T) {
 	}))
 
 	var reloaded coredata.CookieBannerScan
+
 	require.NoError(t, client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
 		return reloaded.LoadByID(ctx, conn, fx.scope, scan.ID)
 	}))
