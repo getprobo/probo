@@ -179,40 +179,51 @@ func DefaultLimits() Limits {
 
 func (l Limits) withDefaults() Limits {
 	d := DefaultLimits()
-	if l.MaxPages == 0 {
+	if l.MaxPages <= 0 {
 		l.MaxPages = d.MaxPages
 	}
-	if l.MaxDepth == 0 {
+
+	if l.MaxDepth <= 0 {
 		l.MaxDepth = d.MaxDepth
 	}
-	if l.NavigationTimeout == 0 {
+
+	if l.NavigationTimeout <= 0 {
 		l.NavigationTimeout = d.NavigationTimeout
 	}
-	if l.HomepageDwell == 0 {
+
+	if l.HomepageDwell <= 0 {
 		l.HomepageDwell = d.HomepageDwell
 	}
-	if l.QuietWindow == 0 {
+
+	if l.QuietWindow <= 0 {
 		l.QuietWindow = d.QuietWindow
 	}
-	if l.QuietCap == 0 {
+
+	if l.QuietCap <= 0 {
 		l.QuietCap = d.QuietCap
 	}
-	if l.ScrollQuietCap == 0 {
+
+	if l.ScrollQuietCap <= 0 {
 		l.ScrollQuietCap = d.ScrollQuietCap
 	}
-	if l.MaxSitemapIndexes == 0 {
+
+	if l.MaxSitemapIndexes <= 0 {
 		l.MaxSitemapIndexes = d.MaxSitemapIndexes
 	}
-	if l.MaxSitemapBytes == 0 {
+
+	if l.MaxSitemapBytes <= 0 {
 		l.MaxSitemapBytes = d.MaxSitemapBytes
 	}
-	if l.MaxSitemapURLs == 0 {
+
+	if l.MaxSitemapURLs <= 0 {
 		l.MaxSitemapURLs = d.MaxSitemapURLs
 	}
-	if l.MaxObservations == 0 {
+
+	if l.MaxObservations <= 0 {
 		l.MaxObservations = d.MaxObservations
 	}
-	if l.ScanTimeout == 0 {
+
+	if l.ScanTimeout <= 0 {
 		l.ScanTimeout = d.ScanTimeout
 	}
 

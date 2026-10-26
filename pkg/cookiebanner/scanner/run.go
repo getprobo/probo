@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
+	"net/url"
 	"strings"
 	"time"
 
@@ -112,16 +113,19 @@ const storageJS = `(() => {
 // scan budget is Limits.ScanTimeout minus checkpoint elapsed time.
 func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, error) {
 	in.Limits = in.Limits.withDefaults()
+
 	root, ok := originRoot(in.Origin)
 	if !ok || in.BannerID == "" {
 		return nil, fmt.Errorf("cannot start scan: origin and banner id are required")
 	}
+
 	if !in.allow(root) {
 		return nil, fmt.Errorf("cannot start scan: origin is not a public URL")
 	}
 
 	start := checkpointOrEmpty(in.Checkpoint)
 	elapsed := time.Duration(start.ElapsedMS) * time.Millisecond
+
 	remaining := in.Limits.ScanTimeout - elapsed
 	if remaining <= 0 || start.Truncated {
 		start.Truncated = true
@@ -135,10 +139,12 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 
 	scanCtx, cancelScan := context.WithTimeout(ctx, remaining)
 	defer cancelScan()
+
 	started := time.Now()
 
 	tabCtx, cancelTab := chromedp.NewContext(allocCtx, chromedp.WithNewBrowserContext())
 	defer cancelTab()
+
 	go func() {
 		select {
 		case <-scanCtx.Done():
@@ -148,8 +154,9 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 	}()
 
 	rec := newRecorder(in.APIBaseURL, in.BannerID, in.Limits.MaxObservations)
+
 	if err := chromedp.Do(tabCtx, chromedp.Func(func(actionCtx context.Context, target *chromedp.Target) error {
-		listen(tabCtx, target, rec, in.BannerID)
+		listen(tabCtx, target, rec, in.BannerID, in.allow)
 
 		return prepareBrowser(actionCtx, target, in, root)
 	})); err != nil {
@@ -171,6 +178,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		if paused, truncated := stopReason(ctx, scanCtx); paused || truncated {
 			return finish(result, front, elapsed+time.Since(started), paused, truncated || rec.truncatedObservations()), nil
 		}
+
 		if rec.truncatedObservations() {
 			return finish(result, front, elapsed+time.Since(started), false, true), nil
 		}
@@ -179,6 +187,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		if !found {
 			break
 		}
+
 		if !sameOrigin(root, item.URL) || !in.allow(item.URL) {
 			continue
 		}
@@ -186,6 +195,7 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		visited, loaded := visitPage(scanCtx, tabCtx, rec, in, item)
 		if !loaded {
 			if paused, truncated := stopReason(ctx, scanCtx); paused || truncated {
+				front.add(item)
 				return finish(result, front, elapsed+time.Since(started), paused, truncated || rec.truncatedObservations()), nil
 			}
 
@@ -193,12 +203,14 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		}
 
 		front.visit(item.URL)
+
 		if !item.FromSitemap && item.Depth < in.Limits.MaxDepth {
 			for _, href := range visited.links {
 				link, linkOK := normalizeLink(item.URL, href)
 				if !linkOK || !sameOrigin(root, link) || !in.allow(link) {
 					continue
 				}
+
 				front.add(QueueItem{URL: link, Depth: item.Depth + 1})
 			}
 		}
@@ -208,18 +220,21 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		result.Storage = append(result.Storage, visited.observations.Storage...)
 		result.Resources = append(result.Resources, visited.observations.Resources...)
 		checkpoint := front.checkpoint(result.PagesScanned, elapsed+time.Since(started), rec.truncatedObservations())
+
 		visited.observations.URL = item.URL
 		if in.OnPage != nil {
 			if err := in.OnPage(context.WithoutCancel(ctx), visited.observations, checkpoint); err != nil {
 				return nil, fmt.Errorf("cannot accept scanned page: %w", err)
 			}
 		}
+
 		result.Checkpoint = checkpoint
 	}
 
 	_, truncated := stopReason(ctx, scanCtx)
 	paused, _ := stopReason(ctx, scanCtx)
 	truncated = truncated || rec.truncatedObservations()
+
 	result = finish(result, front, elapsed+time.Since(started), paused, truncated)
 	if result.PagesScanned == 0 && !result.Paused {
 		return result, ErrNoPageLoaded
@@ -237,33 +252,47 @@ func visitPage(scanCtx, tabCtx context.Context, rec *recorder, in Input, item Qu
 	mark := rec.mark()
 	navCtx, cancel := bound(tabCtx, scanCtx, in.Limits.NavigationTimeout)
 	err := chromedp.Do(navCtx, chromedp.Navigate(item.URL))
+
 	cancel()
+
 	if err != nil || scanCtx.Err() != nil {
 		return visitedPage{}, false
 	}
 
 	waitQuiet(scanCtx, rec, in.Limits.QuietWindow, in.Limits.QuietCap)
+
 	if item.Depth == 0 && !item.FromSitemap {
 		dwell(scanCtx, in.Limits.HomepageDwell)
 	}
+
 	scroll(scanCtx, tabCtx)
 	waitQuiet(scanCtx, rec, in.Limits.QuietWindow, in.Limits.ScrollQuietCap)
+
 	if scanCtx.Err() != nil {
 		return visitedPage{}, false
 	}
 
 	readCtx, cancelRead := bound(tabCtx, scanCtx, 5*time.Second)
+
 	links, err := chromedp.Run(readCtx, chromedp.Evaluate[[]string](linkJS))
 	if err != nil {
 		links = nil
 	}
+
 	stored, err := chromedp.Run(readCtx, chromedp.Evaluate[storageRead](storageJS))
+
 	cancelRead()
+
 	if err != nil {
 		stored = storageRead{}
 	}
 
 	jar, _ := browserCookies(tabCtx)
+
+	if scanCtx.Err() != nil {
+		return visitedPage{}, false
+	}
+
 	observations := rec.collect(mark, jar, stored.items())
 
 	return visitedPage{observations: observations, links: links}, true
@@ -282,6 +311,7 @@ func browserCookies(ctx context.Context) ([]*network.Cookie, error) {
 
 func waitQuiet(ctx context.Context, rec *recorder, window, cap time.Duration) {
 	deadline := time.Now().Add(cap)
+
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -316,7 +346,9 @@ func scroll(ctx context.Context, tabCtx context.Context) {
 
 		stepCtx, cancel := bound(tabCtx, ctx, time.Second)
 		done, err := chromedp.Run(stepCtx, chromedp.Evaluate[bool](scrollJS))
+
 		cancel()
+
 		if err != nil || done {
 			return
 		}
@@ -339,29 +371,26 @@ func prepareBrowser(ctx context.Context, target *chromedp.Target, in Input, root
 	if _, err := cdp.Call(ctx, target, network.Enable, network.EnableParams{}); err != nil {
 		return fmt.Errorf("cannot enable network events: %w", err)
 	}
+
 	if _, err := cdp.Call(ctx, target, runtime.AddBinding, runtime.AddBindingParams{Name: cookieBinding}); err != nil {
 		return fmt.Errorf("cannot add cookie binding: %w", err)
 	}
+
 	if _, err := cdp.Call(ctx, target, page.AddScriptToEvaluateOnNewDocument, page.AddScriptToEvaluateOnNewDocumentParams{
 		Source: cookieHookJS,
 	}); err != nil {
 		return fmt.Errorf("cannot install cookie hook: %w", err)
 	}
+
 	if _, err := cdp.Call(ctx, target, emulation.SetUserAgentOverride, emulation.SetUserAgentOverrideParams{
 		UserAgent:      userAgent,
 		AcceptLanguage: "en-US,en;q=0.9",
 	}); err != nil {
 		return fmt.Errorf("cannot set user agent: %w", err)
 	}
-	if pattern, ok := fetchPattern(in.APIBaseURL); ok {
-		if _, err := cdp.Call(ctx, target, fetch.Enable, fetch.EnableParams{
-			Patterns: []*fetch.RequestPattern{{
-				URLPattern:   pattern,
-				RequestStage: fetch.RequestStageRequest,
-			}},
-		}); err != nil {
-			return fmt.Errorf("cannot block sdk posts: %w", err)
-		}
+
+	if _, err := cdp.Call(ctx, target, fetch.Enable, fetch.EnableParams{}); err != nil {
+		return fmt.Errorf("cannot intercept browser requests: %w", err)
 	}
 
 	vid := visitorID()
@@ -372,6 +401,7 @@ func prepareBrowser(ctx context.Context, target *chromedp.Target, in Input, root
 			return fmt.Errorf("cannot seed visitor id: %w", err)
 		}
 	}
+
 	if params, ok := consentCookieParams(in, root, vid); ok {
 		if _, err := cdp.Call(ctx, target, network.SetCookie, params); err != nil {
 			return fmt.Errorf("cannot seed consent cookie: %w", err)
@@ -381,7 +411,7 @@ func prepareBrowser(ctx context.Context, target *chromedp.Target, in Input, root
 	return nil
 }
 
-func listen(ctx context.Context, target *chromedp.Target, rec *recorder, bannerID string) {
+func listen(ctx context.Context, target *chromedp.Target, rec *recorder, bannerID string, allow func(string) bool) {
 	rangeAppend(cdp.Events(ctx, target, network.RequestWillBeSent), rec)
 	rangeAppend(cdp.Events(ctx, target, network.LoadingFinished), rec)
 	rangeAppend(cdp.Events(ctx, target, network.LoadingFailed), rec)
@@ -395,7 +425,8 @@ func listen(ctx context.Context, target *chromedp.Target, rec *recorder, bannerI
 			if err != nil {
 				return
 			}
-			go answerFetch(ctx, target, ev, bannerID)
+
+			go answerFetch(ctx, target, ev, bannerID, allow)
 		}
 	}()
 }
@@ -406,18 +437,10 @@ func rangeAppend[E any](events iter.Seq2[E, error], rec *recorder) {
 			if err != nil {
 				return
 			}
+
 			rec.append(&ev)
 		}
 	}()
-}
-
-func fetchPattern(apiBase string) (string, bool) {
-	origin, ok := requestOrigin(apiBase)
-	if !ok {
-		return "", false
-	}
-
-	return origin + "/*", true
 }
 
 func consentStorageScript(in Input, root, vid string) (string, bool) {
@@ -451,6 +474,7 @@ func consentCookieParams(in Input, root, vid string) (network.SetCookieParams, b
 	for _, slug := range in.Consent.CategorySlugs {
 		data[slug] = true
 	}
+
 	encoded, err := json.Marshal(map[string]any{
 		"bid":    in.BannerID,
 		"v":      in.Consent.Version,
@@ -483,8 +507,8 @@ func visitorID() string {
 	return hex.EncodeToString(buf)
 }
 
-func answerFetch(ctx context.Context, target *chromedp.Target, ev fetch.EventRequestPaused, bannerID string) {
-	if ev.Request != nil && blockSDKPost(ev.Request.Method, ev.Request.URL, bannerID) {
+func answerFetch(ctx context.Context, target *chromedp.Target, ev fetch.EventRequestPaused, bannerID string, allow func(string) bool) {
+	if ev.Request != nil && (blockedRequest(ev.Request.URL, allow) || blockSDKPost(ev.Request.Method, ev.Request.URL, bannerID)) {
 		_, _ = cdp.Call(ctx, target, fetch.FailRequest, fetch.FailRequestParams{
 			RequestID:   ev.RequestID,
 			ErrorReason: network.ErrorReasonBlockedByClient,
@@ -498,6 +522,19 @@ func answerFetch(ctx context.Context, target *chromedp.Target, ev fetch.EventReq
 	})
 }
 
+func blockedRequest(raw string, allow func(string) bool) bool {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return true
+	}
+
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return false
+	}
+
+	return !allow(raw)
+}
+
 func checkpointOrEmpty(checkpoint *Checkpoint) Checkpoint {
 	if checkpoint == nil {
 		return Checkpoint{VisitedTemplates: []string{}, Queue: []QueueItem{}}
@@ -507,6 +544,7 @@ func checkpointOrEmpty(checkpoint *Checkpoint) Checkpoint {
 	if out.VisitedTemplates == nil {
 		out.VisitedTemplates = []string{}
 	}
+
 	if out.Queue == nil {
 		out.Queue = []QueueItem{}
 	}
@@ -518,6 +556,7 @@ func stopReason(parent, scan context.Context) (bool, bool) {
 	if parent.Err() != nil {
 		return true, false
 	}
+
 	if scan.Err() != nil {
 		return false, true
 	}
@@ -564,6 +603,7 @@ func (s storageRead) items() []StorageItem {
 			ValueSize: item.Size,
 		})
 	}
+
 	for _, item := range s.Session {
 		items = append(items, StorageItem{
 			Type:      coredata.TrackerTypeSessionStorage,
