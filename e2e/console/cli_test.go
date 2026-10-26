@@ -82,6 +82,7 @@ func TestCLI_AuthAndOutput(t *testing.T) {
 
 	users := session.must("user", "list", "--org", session.orgID, "--json")
 	assert.Contains(t, users, "e2e.probo.test")
+
 	byOrganization := session.must("user", "list", "--organization", session.orgID, "--json")
 	assert.JSONEq(t, users, byOrganization)
 
@@ -268,6 +269,7 @@ func TestCLI_ResourceLifecycles(t *testing.T) {
 		listed := session.must(group, "list", "--organization", session.orgID, "--json")
 		assert.Contains(t, listed, thirdPartyID)
 	}
+
 	_, stderr, err := session.run("third_party", "list", "--org", session.orgID)
 	require.Error(t, err)
 	assert.Contains(t, stderr, "unknown command")
@@ -277,6 +279,7 @@ func TestCLI_ResourceLifecycles(t *testing.T) {
 	session.must("third-party", "update", thirdPartyID, "--name", name+"-vendor-updated")
 	viewed := session.must("third-party", "view", thirdPartyID, "--json")
 	assert.Contains(t, viewed, name+"-vendor-updated")
+
 	_, stderr, err = session.run("third-party", "delete", thirdPartyID)
 	require.Error(t, err)
 	assert.Contains(t, stderr, "confirmation required")
@@ -348,6 +351,7 @@ func (s *prbSession) roundTrip(group string, createArgs, updateArgs []string, ne
 	if group != "control" {
 		create = append(create, "--org", s.orgID)
 	}
+
 	create = append(create, createArgs...)
 	id := s.mustID(create...)
 
@@ -415,6 +419,7 @@ func (s *prbSession) run(args ...string) (string, string, error) {
 	})
 
 	var stdout, stderr bytes.Buffer
+
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
@@ -459,6 +464,7 @@ func cliTokenScopes() []string {
 		Register(task.OAuth2ScopeMappings)
 
 	var scopes []string
+
 	for scope := range strings.FieldsSeq(config.CLIClientScopes) {
 		if !strings.HasPrefix(scope, "v1:") {
 			continue
@@ -497,6 +503,7 @@ func prbBinary(t *testing.T) string {
 		out := filepath.Join(os.TempDir(), "prb-e2e-test")
 		cmd := exec.Command("go", "build", "-o", out, "./cmd/prb")
 		cmd.Dir = root
+
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			prbErr = fmt.Errorf("cannot build prb: %w\n%s", err, output)
