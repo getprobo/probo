@@ -224,3 +224,20 @@ func TestIsOnePasswordRegion(t *testing.T) {
 		assert.False(t, IsOnePasswordRegion(region), region)
 	}
 }
+
+func TestIsOnePasswordAccountID(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, IsOnePasswordAccountID("WX52YXL2MVEPBK43P3R4XMWKXI"))
+
+	for _, id := range []string{
+		"",
+		"wx52yxl2mvepbk43p3r4xmwkxi",
+		"WX52YXL2MVEPBK43P3R4XMWKX",
+		"WX52YXL2MVEPBK43P3R4XMWKXIA",
+		"WX52YXL2MVEPBK43/3R4XMWKXI",
+		"12345a67-bcde-89f0-123a-45bcdef678ga",
+	} {
+		assert.False(t, IsOnePasswordAccountID(id), id)
+	}
+}

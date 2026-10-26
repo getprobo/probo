@@ -102,6 +102,23 @@ func IsOnePasswordRegion(region string) bool {
 	return ok
 }
 
+// IsOnePasswordAccountID reports whether id has the shape of a 1Password
+// account ID: 26 uppercase letters and digits. The Users API answers a
+// malformed one with 400.
+func IsOnePasswordAccountID(id string) bool {
+	if len(id) != 26 {
+		return false
+	}
+
+	for _, r := range id {
+		if (r < 'A' || r > 'Z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+
+	return true
+}
+
 // OnePasswordUsersAPIBaseURL returns the Users API root of region.
 func OnePasswordUsersAPIBaseURL(region string) string {
 	u := url.URL{Scheme: "https", Host: onePasswordHost(region)}

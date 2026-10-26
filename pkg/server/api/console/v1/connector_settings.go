@@ -435,8 +435,13 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 			return nil, fmt.Errorf("cannot create 1password connector: onePasswordRegion must be US, EU, CA or ENT")
 		}
 
+		accountID := strings.ToUpper(strings.TrimSpace(*input.OnePasswordAccountID))
+		if !drivers.IsOnePasswordAccountID(accountID) {
+			return nil, fmt.Errorf("cannot create 1password connector: onePasswordAccountId must be the 26-character account ID")
+		}
+
 		return json.Marshal(&coredata.OnePasswordUsersAPISettings{
-			AccountID: *input.OnePasswordAccountID,
+			AccountID: accountID,
 			Region:    region,
 		})
 	}

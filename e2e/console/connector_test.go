@@ -529,6 +529,23 @@ func TestCreateClientCredentialsConnector(t *testing.T) {
 		}, &ignored)
 		require.NoError(t, err)
 	})
+
+	t.Run("an account name is not an account ID", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := owner.Do(query, map[string]any{
+			"input": map[string]any{
+				"organizationId":       orgID,
+				"name":                 "Wrong ID",
+				"provider":             "ONE_PASSWORD",
+				"clientId":             "test-client",
+				"clientSecret":         "test-secret",
+				"onePasswordAccountId": "acme",
+				"onePasswordRegion":    "US",
+			},
+		})
+		testutil.RequireErrorCode(t, err, "INVALID", "an account name must return INVALID not INTERNAL")
+	})
 }
 
 func TestDeleteConnector(t *testing.T) {
