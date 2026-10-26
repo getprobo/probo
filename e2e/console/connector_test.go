@@ -500,9 +500,8 @@ func TestCreateClientCredentialsConnector(t *testing.T) {
 			"provider":             "ONE_PASSWORD",
 			"clientId":             "test-client",
 			"clientSecret":         "test-secret",
-			"tokenUrl":             "https://api.1password.com/v1beta1/users/oauth2/token",
-			"onePasswordAccountId": "ACC123",
-			"onePasswordRegion":    "US",
+			"onePasswordAccountId": "WX52YXL2MVEPBK43P3R4XMWKXI",
+			"onePasswordRegion":    "ENT",
 		},
 	}, &result)
 	require.NoError(t, err)
@@ -510,6 +509,26 @@ func TestCreateClientCredentialsConnector(t *testing.T) {
 	connector := result.CreateClientCredentialsConnector.Connector
 	assert.NotEmpty(t, connector.ID)
 	assert.Equal(t, "ONE_PASSWORD", connector.Provider)
+
+	t.Run("a deprecated tokenUrl is still accepted", func(t *testing.T) {
+		t.Parallel()
+
+		var ignored struct{}
+
+		err := owner.Execute(query, map[string]any{
+			"input": map[string]any{
+				"organizationId":       orgID,
+				"name":                 "Legacy client",
+				"provider":             "ONE_PASSWORD",
+				"clientId":             "test-client",
+				"clientSecret":         "test-secret",
+				"tokenUrl":             "https://api.1password.com/v1beta1/users/oauth2/token",
+				"onePasswordAccountId": "WX52YXL2MVEPBK43P3R4XMWKXI",
+				"onePasswordRegion":    "US",
+			},
+		}, &ignored)
+		require.NoError(t, err)
+	})
 }
 
 func TestDeleteConnector(t *testing.T) {
@@ -1125,8 +1144,7 @@ func TestUpdateAPIKeyConnector_RefusesNonAPIKey(t *testing.T) {
 			"provider":             "ONE_PASSWORD",
 			"clientId":             "test-client",
 			"clientSecret":         "test-secret",
-			"tokenUrl":             "https://api.1password.com/v1beta1/users/oauth2/token",
-			"onePasswordAccountId": "ACC123",
+			"onePasswordAccountId": "WX52YXL2MVEPBK43P3R4XMWKXI",
 			"onePasswordRegion":    "US",
 		},
 	}, &created))

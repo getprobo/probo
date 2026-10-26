@@ -49,7 +49,6 @@
       "apiKey": "API-sleutel",
       "clientId": "Client-ID",
       "clientSecret": "Clientgeheim",
-      "tokenUrl": "Token-URL",
       "scope": "Bereik",
       "datadogSite": "Datadog-site",
       "zendeskSubdomain": "Zendesk-subdomein",
@@ -57,7 +56,8 @@
       "regionPlaceholder": "Selecteer een regio",
       "regionUnitedStates": "Verenigde Staten",
       "regionEurope": "Europa",
-      "regionCanada": "Canada"
+      "regionCanada": "Canada",
+      "regionEnterprise": "Enterprise (ent.1password.com)"
     },
     "workloadIdentity": {
       "propagationHint": "Federatie kan enkele minuten duren. Als de connector als verbroken wordt weergegeven, wacht dan en probeer het opnieuw.",

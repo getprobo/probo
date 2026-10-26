@@ -45,7 +45,6 @@ const clientCredentialsConnectFormFragment = graphql`
   fragment ClientCredentialsConnectForm_provider on ConnectorProviderInfo {
     provider
     displayName
-    clientCredentialsTokenUrlRequired
     clientCredentialsExtraSettings {
       key
       required
@@ -81,13 +80,11 @@ export function ClientCredentialsConnectForm({
   const provider = useFragment(clientCredentialsConnectFormFragment, providerKey);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
-  const [tokenUrl, setTokenUrl] = useState("");
   const [scope, setScope] = useState("");
   const [extras, setExtras] = useState<Record<string, string>>({});
   const [createClientCredentialsConnector] = useMutation<ClientCredentialsConnectFormCreateMutation>(
     createClientCredentialsConnectorMutation,
   );
-  const tokenReady = !provider.clientCredentialsTokenUrlRequired || tokenUrl.trim() !== "";
   const extraSettings = provider.clientCredentialsExtraSettings.map(setting => ({
     key: setting.key,
     required: setting.required,
@@ -98,12 +95,14 @@ export function ClientCredentialsConnectForm({
     provider.clientCredentialsPage?.baseSetting,
     extras,
   );
-  const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && tokenReady && extrasValid;
+  const canSubmit = clientId.trim() !== "" && clientSecret.trim() !== "" && extrasValid;
   // OVHcloud declares account/all and the create mutation uses that, so a
   // typed scope cannot take effect. Each region is its own provider.
+  // 1Password takes no scope: the OAuth app's own scopes ride on every token.
   const scopeField
     = provider.provider !== "OVHCLOUD"
-      && provider.provider !== "OVHCLOUD_US";
+      && provider.provider !== "OVHCLOUD_US"
+      && provider.provider !== "ONE_PASSWORD";
 
   return (
     <ConnectForm
@@ -118,7 +117,6 @@ export function ClientCredentialsConnectForm({
               provider: provider.provider,
               clientId: clientId.trim(),
               clientSecret: clientSecret.trim(),
-              tokenUrl: provider.clientCredentialsTokenUrlRequired ? tokenUrl.trim() : null,
               scope: scopeField ? scope.trim() || null : null,
               ...buildExtraFields(
                 provider.provider,
@@ -150,16 +148,6 @@ export function ClientCredentialsConnectForm({
           onValueChange={setClientSecret}
         />
       </Field>
-      {provider.clientCredentialsTokenUrlRequired && (
-        <Field required label={t("marketplacePage.fields.tokenUrl")}>
-          <TextField
-            name="tokenUrl"
-            required
-            value={tokenUrl}
-            onValueChange={setTokenUrl}
-          />
-        </Field>
-      )}
       {scopeField && (
         <Field label={t("marketplacePage.fields.scope")}>
           <TextField name="scope" value={scope} onValueChange={setScope} />

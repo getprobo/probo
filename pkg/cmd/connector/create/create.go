@@ -235,9 +235,6 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 					"clientId":       flagClientID,
 					"clientSecret":   flagClientSecret,
 				}
-				if flagTokenURL != "" {
-					input["tokenUrl"] = flagTokenURL
-				}
 
 				if flagScope != "" {
 					input["scope"] = flagScope
@@ -286,7 +283,8 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagAPIKey, "api-key", "", fmt.Sprintf("Customer API key (or %s)", envConnectorAPIKey))
 	cmd.Flags().StringVar(&flagClientID, "client-id", "", "OAuth client ID")
 	cmd.Flags().StringVar(&flagClientSecret, "client-secret", "", fmt.Sprintf("OAuth client secret (or %s)", envConnectorClientSecret))
-	cmd.Flags().StringVar(&flagTokenURL, "token-url", "", "Token endpoint. Leave empty when the provider pins one.")
+	cmd.Flags().StringVar(&flagTokenURL, "token-url", "", "Ignored: the server names the token endpoint.")
+	_ = cmd.Flags().MarkDeprecated("token-url", "the server names the token endpoint")
 	cmd.Flags().StringVar(&flagScope, "scope", "", "OAuth scope. The provider's own scopes win when it declares them.")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 

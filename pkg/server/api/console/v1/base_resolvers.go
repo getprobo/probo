@@ -891,9 +891,7 @@ func (r *queryResolver) ConnectorProviders(ctx context.Context) ([]*types.Connec
 			documentationURL = new(reg.DocumentationURL)
 		}
 
-		// A provider that pins its token endpoint leaves the connect form
-		// nothing to ask for, and the create mutation ignores the field
-		// regardless.
+		// Null unless the provider pins its token endpoint.
 		var clientCredentialsTokenURL *string
 		if pinned := pinnedClientCredentialsTokenURL(reg); pinned != "" {
 			clientCredentialsTokenURL = new(pinned)
@@ -918,7 +916,7 @@ func (r *queryResolver) ConnectorProviders(ctx context.Context) ([]*types.Connec
 			APIKeyPage:                        connectorCredentialPage(reg.APIKeyCredentialPage()),
 			ClientCredentialsExtraSettings:    connectorProviderSettingInfos(reg.ClientCredentialsExtraSettings()),
 			ClientCredentialsTokenURL:         clientCredentialsTokenURL,
-			ClientCredentialsTokenURLRequired: clientCredentialsTokenURLRequired(reg),
+			ClientCredentialsTokenURLRequired: false,
 			ClientCredentialsPage:             connectorCredentialPage(reg.ClientCredentialsCredentialPage()),
 			WorkloadIdentitySupported:         workloadIdentityReady,
 			InstallSupported:                  installReady,

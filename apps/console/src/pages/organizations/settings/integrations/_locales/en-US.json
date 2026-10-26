@@ -49,7 +49,6 @@
       "apiKey": "API key",
       "clientId": "Client ID",
       "clientSecret": "Client secret",
-      "tokenUrl": "Token URL",
       "scope": "Scope",
       "datadogSite": "Datadog site",
       "zendeskSubdomain": "Zendesk subdomain",
@@ -57,7 +56,8 @@
       "regionPlaceholder": "Select a region",
       "regionUnitedStates": "United States",
       "regionEurope": "Europe",
-      "regionCanada": "Canada"
+      "regionCanada": "Canada",
+      "regionEnterprise": "Enterprise (ent.1password.com)"
     },
     "workloadIdentity": {
       "propagationHint": "Federation can take a few minutes to propagate. If the connector shows as disconnected, wait and try again.",

@@ -38,13 +38,13 @@ func onePasswordRegistration() *Registration {
 		InitialAccountFunc: onePasswordInitialAccount,
 		DocumentationURL:   accessReviewDocsURL("one-password"),
 		// APIBase is deliberately empty: 1Password has no single data host to
-		// name. Four host families live under this one registration —
-		// the per-connection SCIM bridge URL (customer-hosted, from
-		// APIKeyExtraSettings), the three regional Users API hosts resolved
-		// from the Region setting (drivers.onePasswordBaseURL), and the
-		// events.1password.com probe below, which is yet another host and is
-		// therefore not the root any driver joins onto. A single APIBase would
-		// have to be wrong for at least two of them, and Register's
+		// name. Three host families live under this one registration — the
+		// per-connection SCIM bridge URL (customer-hosted, from
+		// APIKeyExtraSettings), the regional Users API hosts resolved from the
+		// Region setting (drivers.OnePasswordUsersAPIBaseURL), which also serve
+		// the token endpoint, and the events.1password.com probe below, which
+		// is not the root any driver joins onto. A single APIBase would have to
+		// be wrong for at least two of them, and Register's
 		// Probe-host-matches-APIBase check would reject the honest pairing.
 		Endpoints: Endpoints{
 			Probe: "https://events.1password.com/api/v1/auditevents",
@@ -61,24 +61,20 @@ func onePasswordRegistration() *Registration {
 				{Key: "region", Label: "Region", Required: true, Control: ExtraSettingControlRegion},
 			},
 			CredentialPage: &CredentialPage{URL: "https://start.1password.com/integrations/directory"},
+			TokenURL:       onePasswordTokenURL,
 		},
 		// Two settings shapes, one per connect path, because a different
 		// driver sits behind each:
 		//  - API key:            SCIMBridgeURL      (SCIM-bridge driver).
 		//  - Client credentials: AccountID + Region (Users API driver).
 		NewDriver: func(_ context.Context, c *http.Client, conn *coredata.Connector, _ *log.Logger, _ Endpoints) (drivers.Driver, error) {
-			// The client-credentials grant uses the Users API driver.
-			// Everything else is the API-key connection, whose
-			// *APIKeyConnection makes GrantType() return "": it uses the
-			// SCIM-bridge driver. 1Password declares no AuthURL/TokenURL, so
-			// the authorization-code path is unreachable.
-			if conn.GrantType() == string(connectorprotocol.OAuth2GrantTypeClientCredentials) {
+			if isOnePasswordUsersAPI(conn) {
 				s, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](conn)
 				if err != nil {
 					return nil, fmt.Errorf("cannot read 1password users api settings: %w", err)
 				}
 
-				return drivers.NewOnePasswordUsersAPIDriver(c, s.AccountID, s.Region), nil
+				return drivers.NewOnePasswordUsersAPIDriver(c, drivers.OnePasswordUsersAPIBaseURL(s.Region), s.AccountID), nil
 			}
 
 			s, err := coredata.ConnectorSettings[coredata.OnePasswordConnectorSettings](conn)
@@ -93,6 +89,23 @@ func onePasswordRegistration() *Registration {
 			return drivers.NewOnePasswordDriver(c, s.SCIMBridgeURL), nil
 		},
 	}
+}
+
+// isOnePasswordUsersAPI reports whether the connector is a client-credentials
+// one, served by the Users API. Everything else is the API-key connection to a
+// SCIM bridge, whose *APIKeyConnection makes GrantType() return "". 1Password
+// declares no authorization endpoint, so there is no third kind.
+func isOnePasswordUsersAPI(c *coredata.Connector) bool {
+	return c.GrantType() == string(connectorprotocol.OAuth2GrantTypeClientCredentials)
+}
+
+func onePasswordTokenURL(c *coredata.Connector) (string, error) {
+	s, err := coredata.ConnectorSettings[coredata.OnePasswordUsersAPISettings](c)
+	if err != nil {
+		return "", fmt.Errorf("cannot read 1password users api settings: %w", err)
+	}
+
+	return drivers.OnePasswordTokenURL(s.Region), nil
 }
 
 func onePasswordInitialAccount(c *coredata.Connector) (string, string, error) {

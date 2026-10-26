@@ -66,6 +66,10 @@ func stubNewDriver(
 	return nil, nil
 }
 
+func stubClientCredentialsTokenURL(*coredata.Connector) (string, error) {
+	return "https://example.com/token", nil
+}
+
 func stubWorkloadIdentity() *provider.WorkloadIdentityConfig {
 	return &provider.WorkloadIdentityConfig{
 		NewSession: stubNewCloudSession,
@@ -542,6 +546,7 @@ func TestRegistry_Register(t *testing.T) {
 						&provider.Registration{
 							Provider:    coredata.ConnectorProviderSlack,
 							DisplayName: "Slack",
+							Endpoints:   provider.Endpoints{Token: "https://example.com/token"},
 							APIKey: &provider.APIKeyConfig{
 								ExtraSettings:  baseURL,
 								CredentialPage: &provider.CredentialPage{URL: "if/admin/#/core/tokens", BaseSetting: "baseUrl"},
@@ -808,9 +813,47 @@ func TestRegistry_Register(t *testing.T) {
 			},
 			ClientCredentials: &provider.ClientCredentialsConfig{
 				ExtraSettings: []provider.ExtraSetting{{Key: "region", Label: "Region"}},
+				TokenURL:      stubClientCredentialsTokenURL,
 			},
 		})
 		require.NoError(t, err)
+	})
+
+	t.Run("client credentials token endpoint", func(t *testing.T) {
+		t.Parallel()
+
+		tests := []struct {
+			name      string
+			endpoints provider.Endpoints
+			tokenURL  func(*coredata.Connector) (string, error)
+			wantErr   bool
+		}{
+			{name: "pinned", endpoints: provider.Endpoints{Token: "https://example.com/token"}},
+			{name: "derived", tokenURL: stubClientCredentialsTokenURL},
+			{name: "neither", wantErr: true},
+			{name: "both", endpoints: provider.Endpoints{Token: "https://example.com/token"}, tokenURL: stubClientCredentialsTokenURL, wantErr: true},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Parallel()
+
+				err := provider.NewRegistry().Register(&provider.Registration{
+					Provider:          coredata.ConnectorProviderSlack,
+					DisplayName:       "Slack",
+					Endpoints:         tt.endpoints,
+					ClientCredentials: &provider.ClientCredentialsConfig{TokenURL: tt.tokenURL},
+				})
+				if !tt.wantErr {
+					require.NoError(t, err)
+
+					return
+				}
+
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "ClientCredentials needs exactly one of Endpoints.Token and ClientCredentials.TokenURL")
+			})
+		}
 	})
 
 	t.Run("setting with an empty Key", func(t *testing.T) {

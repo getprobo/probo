@@ -431,10 +431,8 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 		}
 
 		region := strings.ToUpper(strings.TrimSpace(*input.OnePasswordRegion))
-		switch region {
-		case "US", "EU", "CA":
-		default:
-			return nil, fmt.Errorf("cannot create 1password connector: onePasswordRegion must be US, EU or CA")
+		if !drivers.IsOnePasswordRegion(region) {
+			return nil, fmt.Errorf("cannot create 1password connector: onePasswordRegion must be US, EU, CA or ENT")
 		}
 
 		return json.Marshal(&coredata.OnePasswordUsersAPISettings{
@@ -446,20 +444,8 @@ func clientCredentialsConnectorSettings(input types.CreateClientCredentialsConne
 	return nil, nil
 }
 
-// clientCredentialsTokenURLRequired reports whether the customer must supply
-// the token endpoint. True when the provider offers client credentials and
-// does not pin Endpoints.Token.
-func clientCredentialsTokenURLRequired(reg *provider.Registration) bool {
-	if reg == nil || !reg.SupportsClientCredentials() {
-		return false
-	}
-
-	return pinnedClientCredentialsTokenURL(reg) == ""
-}
-
 // pinnedClientCredentialsTokenURL returns the token endpoint a provider fixes
-// at compile time, or "" when its token host varies per connection and only
-// the customer can supply it.
+// at compile time, or "" when it derives one from each connector's settings.
 func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
 	if reg == nil || !reg.SupportsClientCredentials() {
 		return ""
@@ -471,16 +457,23 @@ func pinnedClientCredentialsTokenURL(reg *provider.Registration) string {
 // clientCredentialsScope decides which scope a client-credentials connector
 // requests. A provider that declares scopes wins outright: the registration
 // already knows what the grant needs, and the customer has no way to know
-// better. Only a provider that declares none falls back to the input.
+// better. So does one that derives its token endpoint, whose request sends no
+// scope. Only the rest fall back to the input.
 // A token endpoint may require one: OVHcloud answers invalid_scope with none.
 func clientCredentialsScope(
 	registry *provider.Registry,
 	p coredata.ConnectorProvider,
 	supplied *string,
 ) string {
-	if reg, ok := registry.Get(p); ok && reg.OAuth2 != nil {
-		if scope := connectorprotocol.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
-			return scope
+	if reg, ok := registry.Get(p); ok {
+		if reg.DerivesClientCredentialsTokenURL() {
+			return ""
+		}
+
+		if reg.OAuth2 != nil {
+			if scope := connectorprotocol.FormatScopeString(reg.OAuth2.Scopes); scope != "" {
+				return scope
+			}
 		}
 	}
 
@@ -492,43 +485,18 @@ func clientCredentialsScope(
 }
 
 // clientCredentialsTokenURL decides which token endpoint a client-credentials
-// connector will POST its client secret to.
-//
-// A provider that pins one wins outright and the client-supplied value is
-// discarded: the server already knows the URL and the customer has no way to
-// know a better one. Only a provider whose token host varies per connection
-// falls back to the input, and that value is checked to be an absolute https
-// URL first — it is the address a client secret is sent to, and nothing else
-// in the request constrains it.
-func clientCredentialsTokenURL(
-	registry *provider.Registry,
-	p coredata.ConnectorProvider,
-	supplied *string,
-) (string, error) {
-	// An unregistered provider has no registration to consult, so there is no
-	// basis for deciding whether it pins an endpoint. Trusting client input
-	// here would let an unknown provider name a token endpoint freely.
-	reg, ok := registry.Get(p)
-	if !ok {
-		return "", fmt.Errorf("unknown connector provider")
+// connector will POST its client secret to: the one its registration pins, or
+// derives from the settings the connector is created with. The customer never
+// names it, so a client-supplied tokenUrl is ignored.
+func clientCredentialsTokenURL(registry *provider.Registry, c *coredata.Connector) (string, error) {
+	reg, ok := registry.Get(c.Provider)
+	if !ok || !reg.SupportsClientCredentials() {
+		return "", fmt.Errorf("provider does not support client credentials")
 	}
 
-	if pinned := pinnedClientCredentialsTokenURL(reg); pinned != "" {
-		return pinned, nil
-	}
-
-	if supplied == nil || strings.TrimSpace(*supplied) == "" {
-		return "", fmt.Errorf("tokenUrl is required for this provider")
-	}
-
-	tokenURL := strings.TrimSpace(*supplied)
-
-	// Hostname() rather than Host: "https://:443/token" parses with a non-empty
-	// Host that carries only a port, which would persist a token endpoint the
-	// exchange can never reach.
-	parsed, err := url.Parse(tokenURL)
-	if err != nil || parsed.Scheme != "https" || parsed.Hostname() == "" {
-		return "", fmt.Errorf("tokenUrl must be an absolute https URL")
+	tokenURL, err := reg.ClientCredentialsTokenURL(c)
+	if err != nil {
+		return "", fmt.Errorf("cannot derive the token endpoint from the connector settings")
 	}
 
 	return tokenURL, nil
