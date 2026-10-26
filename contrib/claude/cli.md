@@ -21,6 +21,10 @@ pkg/cli/config/                           # Config file management (hosts, token
 
 Register group commands in `pkg/cmd/root/root.go` with `cmd.AddCommand()`.
 
+## Agent skills
+
+`prb skills` ships Agent Skills inside the binary (`pkg/cmd/skill/content`). `list` and `show` read them with no network call. `install` copies each `<skill>/SKILL.md` tree into `--dir`, or into the user skill directories for Cursor, Claude, Codex, and OpenCode (`--target`). `--force` replaces a file whose bytes differ from the copy in the binary. Identical files are left in place. These skills describe how to call `prb`. The MCP workflows in `@probo/skills` stay in that package.
+
 ## Leaf command pattern
 
 Every leaf command follows this structure:
