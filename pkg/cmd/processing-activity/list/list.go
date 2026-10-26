@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -85,23 +84,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -128,65 +114,31 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[processingActivity], error) {
-					var resp struct {
-						Node *struct {
-							Typename             string                             `json:"__typename"`
-							ProcessingActivities api.Connection[processingActivity] `json:"processingActivities"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.ProcessingActivities, nil
-				},
+				api.NodeConnection[processingActivity]("processingActivities", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, activities)
-			}
-
-			if len(activities) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No processing activities found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(activities))
-			for _, a := range activities {
-				rows = append(rows, []string{
-					a.ID,
-					a.Name,
-					a.Role,
-					a.LawfulBasis,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "ROLE", "LAWFUL BASIS").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(activities) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d processing activities\n",
-					len(activities),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				activities,
+				totalCount,
+				cmdutil.ListView[processingActivity]{
+					Empty:   "No processing activities found.",
+					Noun:    "processing activities",
+					Headers: []string{"ID", "NAME", "ROLE", "LAWFUL BASIS"},
+					Row: func(a processingActivity) ([]string, error) {
+						return []string{
+							a.ID,
+							a.Name,
+							a.Role,
+							a.LawfulBasis,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

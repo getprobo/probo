@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -86,23 +85,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -138,68 +124,30 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				eventsListQuery(*flagOutput == cmdutil.OutputJSON),
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[webhookEvent], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                       `json:"__typename"`
-							Events   api.Connection[webhookEvent] `json:"events"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("webhook subscription %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "WebhookSubscription" {
-						return nil, fmt.Errorf("expected WebhookSubscription node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Events, nil
-				},
+				api.NodeConnection[webhookEvent]("events", "WebhookSubscription", fmt.Sprintf("webhook subscription %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				if events == nil {
-					events = []webhookEvent{}
-				}
-
-				return cmdutil.PrintJSON(f.IOStreams.Out, events)
-			}
-
-			if len(events) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No webhook events found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(events))
-			for _, e := range events {
-				rows = append(rows, []string{
-					e.ID,
-					e.Status,
-					cmdutil.FormatTime(e.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "STATUS", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(events) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d events\n",
-					len(events),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				events,
+				totalCount,
+				cmdutil.ListView[webhookEvent]{
+					Empty:   "No webhook events found.",
+					Noun:    "events",
+					Headers: []string{"ID", "STATUS", "CREATED"},
+					Row: func(e webhookEvent) ([]string, error) {
+						return []string{
+							e.ID,
+							e.Status,
+							cmdutil.FormatTime(e.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

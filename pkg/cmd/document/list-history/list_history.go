@@ -21,7 +21,6 @@
 package listhistory
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -89,22 +88,10 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -138,79 +125,38 @@ func NewCmdListHistory(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[revision], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                   `json:"__typename"`
-							History  api.Connection[revision] `json:"history"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("document %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "Document" {
-						return nil, fmt.Errorf("expected Document node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.History, nil
-				},
+				api.NodeConnection[revision]("history", "Document", fmt.Sprintf("document %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, sessions)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				sessions,
+				totalCount,
+				cmdutil.ListView[revision]{
+					Empty:   "No revisions found.",
+					Noun:    "sessions",
+					Headers: []string{"ID", "AUTHOR", "STARTED", "ENDED", "CHANGES", "HEADS"},
+					Row: func(session revision) ([]string, error) {
+						author := ""
+						if session.AuthorName != nil {
+							author = *session.AuthorName
+						}
 
-			if len(sessions) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No revisions found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(sessions))
-			for _, session := range sessions {
-				author := ""
-				if session.AuthorName != nil {
-					author = *session.AuthorName
-				}
-
-				rows = append(rows, []string{
-					session.ID,
-					author,
-					session.StartedAt,
-					session.EndedAt,
-					fmt.Sprintf("%d", session.ChangeCount),
-					strings.Join(session.Heads, ","),
-				})
-			}
-
-			t := cmdutil.NewTable(
-				"ID",
-				"AUTHOR",
-				"STARTED",
-				"ENDED",
-				"CHANGES",
-				"HEADS",
-			).Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(sessions) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d sessions\n",
-					len(sessions),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							session.ID,
+							author,
+							session.StartedAt,
+							session.EndedAt,
+							fmt.Sprintf("%d", session.ChangeCount),
+							strings.Join(session.Heads, ","),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

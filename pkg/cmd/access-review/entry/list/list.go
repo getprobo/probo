@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -197,23 +196,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("campaign ID is required when --source-id is not set")
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{}
 
@@ -322,93 +308,59 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				query,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[entryNode], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                    `json:"__typename"`
-							Entries  api.Connection[entryNode] `json:"entries"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("%s %s not found", notFoundLabel, variables["id"])
-					}
-
-					if resp.Node.Typename != expectedTypename {
-						return nil, fmt.Errorf("expected %s node, got %s", expectedTypename, resp.Node.Typename)
-					}
-
-					return &resp.Node.Entries, nil
-				},
+				api.NodeConnection[entryNode](
+					"entries",
+					expectedTypename,
+					fmt.Sprintf("%s %s not found", notFoundLabel, variables["id"]),
+				),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				if entries == nil {
-					entries = []entryNode{}
-				}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				entries,
+				totalCount,
+				cmdutil.ListView[entryNode]{
+					Empty:   "No access entries found.",
+					Noun:    "entries",
+					Headers: []string{"ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN", "ACTIVE"},
+					Row: func(e entryNode) ([]string, error) {
+						admin := "unknown"
 
-				return cmdutil.PrintJSON(f.IOStreams.Out, entries)
-			}
+						if e.IsAdmin != nil {
+							if *e.IsAdmin {
+								admin = "yes"
+							} else {
+								admin = "no"
+							}
+						}
 
-			if len(entries) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No access entries found.")
-				return nil
-			}
+						active := "unknown"
 
-			rows := make([][]string, 0, len(entries))
-			for _, e := range entries {
-				admin := "unknown"
+						if e.Active != nil {
+							if *e.Active {
+								active = "active"
+							} else {
+								active = "disabled"
+							}
+						}
 
-				if e.IsAdmin != nil {
-					if *e.IsAdmin {
-						admin = "yes"
-					} else {
-						admin = "no"
-					}
-				}
-
-				active := "unknown"
-
-				if e.Active != nil {
-					if *e.Active {
-						active = "active"
-					} else {
-						active = "disabled"
-					}
-				}
-
-				rows = append(rows, []string{
-					e.ID,
-					e.Email,
-					e.FullName,
-					e.CampaignSource.Name,
-					e.Decision,
-					strings.Join(e.Flags, ","),
-					admin,
-					active,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "EMAIL", "NAME", "SOURCE", "DECISION", "FLAGS", "ADMIN", "ACTIVE").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(entries) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d entries\n",
-					len(entries),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							e.ID,
+							e.Email,
+							e.FullName,
+							e.CampaignSource.Name,
+							e.Decision,
+							strings.Join(e.Flags, ","),
+							admin,
+							active,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

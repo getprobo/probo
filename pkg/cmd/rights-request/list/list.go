@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -87,23 +86,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -130,71 +116,37 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[rightsRequest], error) {
-					var resp struct {
-						Node *struct {
-							Typename       string                        `json:"__typename"`
-							RightsRequests api.Connection[rightsRequest] `json:"rightsRequests"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.RightsRequests, nil
-				},
+				api.NodeConnection[rightsRequest]("rightsRequests", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, rightsRequests)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				rightsRequests,
+				totalCount,
+				cmdutil.ListView[rightsRequest]{
+					Empty:   "No rights requests found.",
+					Noun:    "rights requests",
+					Headers: []string{"ID", "DATA SUBJECT", "TYPE", "STATE", "DEADLINE"},
+					Row: func(r rightsRequest) ([]string, error) {
+						deadline := ""
+						if r.Deadline != nil {
+							deadline = *r.Deadline
+						}
 
-			if len(rightsRequests) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No rights requests found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(rightsRequests))
-			for _, r := range rightsRequests {
-				deadline := ""
-				if r.Deadline != nil {
-					deadline = *r.Deadline
-				}
-
-				rows = append(rows, []string{
-					r.ID,
-					r.DataSubject,
-					r.RequestType,
-					r.RequestState,
-					deadline,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "DATA SUBJECT", "TYPE", "STATE", "DEADLINE").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(rightsRequests) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d rights requests\n",
-					len(rightsRequests),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							r.ID,
+							r.DataSubject,
+							r.RequestType,
+							r.RequestState,
+							deadline,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

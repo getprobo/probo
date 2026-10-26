@@ -21,7 +21,6 @@
 package listgvlcatalog
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -78,23 +77,10 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			filter := map[string]any{}
 			if flagQuery != "" {
@@ -124,48 +110,31 @@ func NewCmdListGVLCatalog(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[vendor], error) {
-					var resp struct {
-						CommonGVLVendors api.Connection[vendor] `json:"commonGVLVendors"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					return &resp.CommonGVLVendors, nil
-				},
+				api.RootConnection[vendor]("commonGVLVendors"),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, vendors)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				vendors,
+				totalCount,
+				cmdutil.ListView[vendor]{
+					Empty:   "No GVL vendors found. Run gvl-import to populate the catalog.",
+					Noun:    "GVL vendors",
+					Headers: []string{"IAB ID", "NAME", "POLICY URL"},
+					Row: func(v vendor) ([]string, error) {
+						policy := ""
+						if v.PolicyURL != nil {
+							policy = *v.PolicyURL
+						}
 
-			if len(vendors) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No GVL vendors found. Run gvl-import to populate the catalog.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(vendors))
-			for _, v := range vendors {
-				policy := ""
-				if v.PolicyURL != nil {
-					policy = *v.PolicyURL
-				}
-
-				rows = append(rows, []string{fmt.Sprintf("%d", v.IabVendorID), v.Name, policy})
-			}
-
-			t := cmdutil.NewTable("IAB ID", "NAME", "POLICY URL").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(vendors) {
-				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d GVL vendors\n", len(vendors), totalCount)
-			}
-
-			return nil
+						return []string{fmt.Sprintf("%d", v.IabVendorID), v.Name, policy}, nil
+					},
+				},
+			)
 		},
 	}
 

@@ -21,7 +21,6 @@
 package listversions
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -94,22 +93,10 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -157,67 +144,33 @@ func NewCmdListVersions(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[documentVersion], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                          `json:"__typename"`
-							Versions api.Connection[documentVersion] `json:"versions"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("document %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "Document" {
-						return nil, fmt.Errorf("expected Document node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Versions, nil
-				},
+				api.NodeConnection[documentVersion]("versions", "Document", fmt.Sprintf("document %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, versions)
-			}
-
-			if len(versions) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No versions found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(versions))
-			for _, v := range versions {
-				rows = append(rows, []string{
-					v.ID,
-					v.Title,
-					fmt.Sprintf("%d.%d", v.Major, v.Minor),
-					v.Status,
-					v.DocumentType,
-					v.Classification,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "TITLE", "VERSION", "STATUS", "TYPE", "CLASSIFICATION").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(versions) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d versions\n",
-					len(versions),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				versions,
+				totalCount,
+				cmdutil.ListView[documentVersion]{
+					Empty:   "No versions found.",
+					Noun:    "versions",
+					Headers: []string{"ID", "TITLE", "VERSION", "STATUS", "TYPE", "CLASSIFICATION"},
+					Row: func(v documentVersion) ([]string, error) {
+						return []string{
+							v.ID,
+							v.Title,
+							fmt.Sprintf("%d.%d", v.Major, v.Minor),
+							v.Status,
+							v.DocumentType,
+							v.Classification,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

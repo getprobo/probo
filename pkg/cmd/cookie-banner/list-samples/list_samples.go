@@ -21,7 +21,6 @@
 package listsamples
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -75,23 +74,10 @@ func NewCmdListSamples(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{"id": args[0]}
 
@@ -100,55 +86,31 @@ func NewCmdListSamples(f *cmdutil.Factory) *cobra.Command {
 				listSamplesQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[sample], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                 `json:"__typename"`
-							Samples  api.Connection[sample] `json:"samples"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil || resp.Node.Typename != "CookieBanner" {
-						return nil, fmt.Errorf("cookie banner %s not found", args[0])
-					}
-
-					return &resp.Node.Samples, nil
-				},
+				api.NodeConnectionOrMissing[sample]("samples", "CookieBanner", fmt.Sprintf("cookie banner %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, samples)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				samples,
+				totalCount,
+				cmdutil.ListView[sample]{
+					Empty:   "No cookie banner samples found.",
+					Noun:    "samples",
+					Headers: []string{"ID", "CREATED", "FROZEN"},
+					Row: func(s sample) ([]string, error) {
+						frozen := "open"
+						if s.FrozenAt != nil {
+							frozen = cmdutil.FormatTime(*s.FrozenAt)
+						}
 
-			if len(samples) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No cookie banner samples found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(samples))
-			for _, s := range samples {
-				frozen := "open"
-				if s.FrozenAt != nil {
-					frozen = cmdutil.FormatTime(*s.FrozenAt)
-				}
-
-				rows = append(rows, []string{s.ID, cmdutil.FormatTime(s.CreatedAt), frozen})
-			}
-
-			t := cmdutil.NewTable("ID", "CREATED", "FROZEN").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(samples) {
-				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d samples\n", len(samples), totalCount)
-			}
-
-			return nil
+						return []string{s.ID, cmdutil.FormatTime(s.CreatedAt), frozen}, nil
+					},
+				},
+			)
 		},
 	}
 

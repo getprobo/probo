@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -85,23 +84,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -128,65 +114,31 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[asset], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                `json:"__typename"`
-							Assets   api.Connection[asset] `json:"assets"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Assets, nil
-				},
+				api.NodeConnection[asset]("assets", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, assets)
-			}
-
-			if len(assets) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No assets found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(assets))
-			for _, a := range assets {
-				rows = append(rows, []string{
-					a.ID,
-					a.Name,
-					a.AssetType,
-					fmt.Sprintf("%d", a.Amount),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "TYPE", "AMOUNT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(assets) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d assets\n",
-					len(assets),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				assets,
+				totalCount,
+				cmdutil.ListView[asset]{
+					Empty:   "No assets found.",
+					Noun:    "assets",
+					Headers: []string{"ID", "NAME", "TYPE", "AMOUNT"},
+					Row: func(a asset) ([]string, error) {
+						return []string{
+							a.ID,
+							a.Name,
+							a.AssetType,
+							fmt.Sprintf("%d", a.Amount),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

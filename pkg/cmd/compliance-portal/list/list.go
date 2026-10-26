@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -87,23 +86,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -123,65 +109,31 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[compliancePortal], error) {
-					var resp struct {
-						Node *struct {
-							Typename          string                           `json:"__typename"`
-							CompliancePortals api.Connection[compliancePortal] `json:"compliancePortals"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.CompliancePortals, nil
-				},
+				api.NodeConnection[compliancePortal]("compliancePortals", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, portals)
-			}
-
-			if len(portals) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No compliance portals found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(portals))
-			for _, portal := range portals {
-				rows = append(rows, []string{
-					portal.ID,
-					portal.Slug,
-					portal.EntityName,
-					strconv.FormatBool(portal.Active),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "SLUG", "ENTITY NAME", "ACTIVE").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(portals) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d compliance portals\n",
-					len(portals),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				portals,
+				totalCount,
+				cmdutil.ListView[compliancePortal]{
+					Empty:   "No compliance portals found.",
+					Noun:    "compliance portals",
+					Headers: []string{"ID", "SLUG", "ENTITY NAME", "ACTIVE"},
+					Row: func(portal compliancePortal) ([]string, error) {
+						return []string{
+							portal.ID,
+							portal.Slug,
+							portal.EntityName,
+							strconv.FormatBool(portal.Active),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

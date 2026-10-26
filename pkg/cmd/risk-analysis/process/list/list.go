@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -91,23 +90,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			if flagDiagram == "" {
 				return fmt.Errorf("diagram is required; pass --diagram")
@@ -133,66 +119,32 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[riskAnalysisProcess], error) {
-					var resp struct {
-						Node *struct {
-							Typename  string                              `json:"__typename"`
-							Processes api.Connection[riskAnalysisProcess] `json:"processes"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("diagram %s not found", flagDiagram)
-					}
-
-					if resp.Node.Typename != "RiskAnalysisDiagram" {
-						return nil, fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Processes, nil
-				},
+				api.NodeConnection[riskAnalysisProcess]("processes", "RiskAnalysisDiagram", fmt.Sprintf("diagram %s not found", flagDiagram)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, processes)
-			}
-
-			if len(processes) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No processes found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(processes))
-			for _, p := range processes {
-				rows = append(rows, []string{
-					p.ID,
-					p.Name,
-					p.SourceNodeId,
-					p.TargetNodeId,
-					cmdutil.FormatTime(p.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "SOURCE NODE", "TARGET NODE", "CREATED AT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(processes) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d processes\n",
-					len(processes),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				processes,
+				totalCount,
+				cmdutil.ListView[riskAnalysisProcess]{
+					Empty:   "No processes found.",
+					Noun:    "processes",
+					Headers: []string{"ID", "NAME", "SOURCE NODE", "TARGET NODE", "CREATED AT"},
+					Row: func(p riskAnalysisProcess) ([]string, error) {
+						return []string{
+							p.ID,
+							p.Name,
+							p.SourceNodeId,
+							p.TargetNodeId,
+							cmdutil.FormatTime(p.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

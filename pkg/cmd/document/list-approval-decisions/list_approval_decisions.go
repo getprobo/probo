@@ -21,7 +21,6 @@
 package listapprovaldecisions
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -86,22 +85,10 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -135,76 +122,42 @@ func NewCmdListApprovalDecisions(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[approvalDecision], error) {
-					var resp struct {
-						Node *struct {
-							Typename  string                           `json:"__typename"`
-							Decisions api.Connection[approvalDecision] `json:"decisions"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("approval quorum %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "DocumentVersionApprovalQuorum" {
-						return nil, fmt.Errorf("expected DocumentVersionApprovalQuorum node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Decisions, nil
-				},
+				api.NodeConnection[approvalDecision]("decisions", "DocumentVersionApprovalQuorum", fmt.Sprintf("approval quorum %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, decisions)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				decisions,
+				totalCount,
+				cmdutil.ListView[approvalDecision]{
+					Empty:   "No approval decisions found.",
+					Noun:    "approval decisions",
+					Headers: []string{"ID", "APPROVER", "STATE", "COMMENT", "DECIDED AT"},
+					Row: func(d approvalDecision) ([]string, error) {
+						comment := ""
+						if d.Comment != nil {
+							comment = *d.Comment
+						}
 
-			if len(decisions) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No approval decisions found.")
-				return nil
-			}
+						decidedAt := ""
+						if d.DecidedAt != nil {
+							decidedAt = cmdutil.FormatTime(*d.DecidedAt)
+						}
 
-			rows := make([][]string, 0, len(decisions))
-			for _, d := range decisions {
-				comment := ""
-				if d.Comment != nil {
-					comment = *d.Comment
-				}
-
-				decidedAt := ""
-				if d.DecidedAt != nil {
-					decidedAt = cmdutil.FormatTime(*d.DecidedAt)
-				}
-
-				rows = append(rows, []string{
-					d.ID,
-					d.Approver.FullName,
-					d.State,
-					comment,
-					decidedAt,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "APPROVER", "STATE", "COMMENT", "DECIDED AT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(decisions) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d approval decisions\n",
-					len(decisions),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							d.ID,
+							d.Approver.FullName,
+							d.State,
+							comment,
+							decidedAt,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

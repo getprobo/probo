@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -106,23 +105,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -193,77 +179,43 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[profile], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                  `json:"__typename"`
-							Profiles api.Connection[profile] `json:"profiles"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Profiles, nil
-				},
+				api.NodeConnection[profile]("profiles", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, profiles)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				profiles,
+				totalCount,
+				cmdutil.ListView[profile]{
+					Empty:   "No users found.",
+					Noun:    "users",
+					Headers: []string{"ID", "NAME", "EMAIL", "STATE", "KIND", "POSITION"},
+					Row: func(p profile) ([]string, error) {
+						kind := ""
+						if p.Kind != nil {
+							kind = *p.Kind
+						}
 
-			if len(profiles) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No users found.")
-				return nil
-			}
+						position := ""
+						if p.Position != nil {
+							position = *p.Position
+						}
 
-			rows := make([][]string, 0, len(profiles))
-			for _, p := range profiles {
-				kind := ""
-				if p.Kind != nil {
-					kind = *p.Kind
-				}
-
-				position := ""
-				if p.Position != nil {
-					position = *p.Position
-				}
-
-				rows = append(rows, []string{
-					p.ID,
-					p.FullName,
-					p.EmailAddress,
-					p.State,
-					kind,
-					position,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "EMAIL", "STATE", "KIND", "POSITION").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(profiles) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d users\n",
-					len(profiles),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							p.ID,
+							p.FullName,
+							p.EmailAddress,
+							p.State,
+							kind,
+							position,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

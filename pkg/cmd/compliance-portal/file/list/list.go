@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -91,23 +90,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("compliance portal is required; pass --portal")
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": flagPortal,
@@ -129,65 +115,31 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[compliancePortalFile], error) {
-					var resp struct {
-						Node *struct {
-							Typename              string                               `json:"__typename"`
-							CompliancePortalFiles api.Connection[compliancePortalFile] `json:"compliancePortalFiles"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("compliance portal %s not found", flagPortal)
-					}
-
-					if resp.Node.Typename != "CompliancePortal" {
-						return nil, fmt.Errorf("expected CompliancePortal node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.CompliancePortalFiles, nil
-				},
+				api.NodeConnection[compliancePortalFile]("compliancePortalFiles", "CompliancePortal", fmt.Sprintf("compliance portal %s not found", flagPortal)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, files)
-			}
-
-			if len(files) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No files found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(files))
-			for _, file := range files {
-				rows = append(rows, []string{
-					file.ID,
-					file.Name,
-					file.Category,
-					file.CompliancePortalVisibility,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "CATEGORY", "VISIBILITY").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(files) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d files\n",
-					len(files),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				files,
+				totalCount,
+				cmdutil.ListView[compliancePortalFile]{
+					Empty:   "No files found.",
+					Noun:    "files",
+					Headers: []string{"ID", "NAME", "CATEGORY", "VISIBILITY"},
+					Row: func(file compliancePortalFile) ([]string, error) {
+						return []string{
+							file.ID,
+							file.Name,
+							file.Category,
+							file.CompliancePortalVisibility,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

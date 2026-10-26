@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -105,23 +104,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": flagTask,
@@ -136,73 +122,39 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[activity], error) {
-					var resp struct {
-						Node *struct {
-							Typename   string                   `json:"__typename"`
-							Activities api.Connection[activity] `json:"activities"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("task %s not found", flagTask)
-					}
-
-					if resp.Node.Typename != "Task" {
-						return nil, fmt.Errorf("expected Task node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Activities, nil
-				},
+				api.NodeConnection[activity]("activities", "Task", fmt.Sprintf("task %s not found", flagTask)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, activities)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				activities,
+				totalCount,
+				cmdutil.ListView[activity]{
+					Empty:   "No activities found.",
+					Noun:    "activities",
+					Headers: []string{"ID", "TYPE", "FIELD", "OLD", "NEW", "ACTOR", "CREATED"},
+					Row: func(e activity) ([]string, error) {
+						actorName := ""
+						if e.Actor != nil {
+							actorName = e.Actor.FullName
+						}
 
-			if len(activities) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No activities found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(activities))
-			for _, e := range activities {
-				actorName := ""
-				if e.Actor != nil {
-					actorName = e.Actor.FullName
-				}
-
-				rows = append(rows, []string{
-					e.ID,
-					e.ActivityType,
-					stringOrEmpty(e.Field),
-					stringOrEmpty(e.OldValue),
-					stringOrEmpty(e.NewValue),
-					actorName,
-					cmdutil.FormatTime(e.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "TYPE", "FIELD", "OLD", "NEW", "ACTOR", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(activities) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d activities\n",
-					len(activities),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							e.ID,
+							e.ActivityType,
+							stringOrEmpty(e.Field),
+							stringOrEmpty(e.OldValue),
+							stringOrEmpty(e.NewValue),
+							actorName,
+							cmdutil.FormatTime(e.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -95,23 +94,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("group is required; pass --group")
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": flagGroup,
@@ -133,66 +119,32 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[commitment], error) {
-					var resp struct {
-						Node *struct {
-							Typename    string                     `json:"__typename"`
-							Commitments api.Connection[commitment] `json:"commitments"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("commitment group %s not found", flagGroup)
-					}
-
-					if resp.Node.Typename != "CompliancePortalCommitmentGroup" {
-						return nil, fmt.Errorf("expected CompliancePortalCommitmentGroup node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Commitments, nil
-				},
+				api.NodeConnection[commitment]("commitments", "CompliancePortalCommitmentGroup", fmt.Sprintf("commitment group %s not found", flagGroup)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, commitments)
-			}
-
-			if len(commitments) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No commitments found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(commitments))
-			for _, c := range commitments {
-				rows = append(rows, []string{
-					c.ID,
-					c.Icon,
-					c.Eyebrow,
-					c.Title,
-					fmt.Sprintf("%d", c.Rank),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "ICON", "EYEBROW", "TITLE", "RANK").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(commitments) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d commitments\n",
-					len(commitments),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				commitments,
+				totalCount,
+				cmdutil.ListView[commitment]{
+					Empty:   "No commitments found.",
+					Noun:    "commitments",
+					Headers: []string{"ID", "ICON", "EYEBROW", "TITLE", "RANK"},
+					Row: func(c commitment) ([]string, error) {
+						return []string{
+							c.ID,
+							c.Icon,
+							c.Eyebrow,
+							c.Title,
+							fmt.Sprintf("%d", c.Rank),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

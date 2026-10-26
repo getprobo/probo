@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -80,23 +79,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -123,69 +109,31 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[webhookSubscription], error) {
-					var resp struct {
-						Node *struct {
-							Typename             string                              `json:"__typename"`
-							WebhookSubscriptions api.Connection[webhookSubscription] `json:"webhookSubscriptions"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.WebhookSubscriptions, nil
-				},
+				api.NodeConnection[webhookSubscription]("webhookSubscriptions", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				if webhooks == nil {
-					webhooks = []webhookSubscription{}
-				}
-
-				return cmdutil.PrintJSON(f.IOStreams.Out, webhooks)
-			}
-
-			if len(webhooks) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No webhook subscriptions found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(webhooks))
-			for _, w := range webhooks {
-				rows = append(rows, []string{
-					w.ID,
-					w.EndpointURL,
-					fmt.Sprintf("%d events", len(w.SelectedEvents)),
-					cmdutil.FormatTime(w.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "ENDPOINT", "EVENTS", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(webhooks) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d webhook subscriptions\n",
-					len(webhooks),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				webhooks,
+				totalCount,
+				cmdutil.ListView[webhookSubscription]{
+					Empty:   "No webhook subscriptions found.",
+					Noun:    "webhook subscriptions",
+					Headers: []string{"ID", "ENDPOINT", "EVENTS", "CREATED"},
+					Row: func(w webhookSubscription) ([]string, error) {
+						return []string{
+							w.ID,
+							w.EndpointURL,
+							fmt.Sprintf("%d events", len(w.SelectedEvents)),
+							cmdutil.FormatTime(w.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

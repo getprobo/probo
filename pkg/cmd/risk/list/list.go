@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -128,23 +127,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			query := listByOrgQuery
 			parentID := flagOrg
@@ -185,74 +171,48 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				}
 			}
 
+			field := "risks"
+			if expectedType == "RiskAnalysis" {
+				field = "scenarioRisks"
+			}
+
 			risks, totalCount, err := api.Paginate(
 				client,
 				query,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[risk], error) {
-					var resp struct {
-						Node *struct {
-							Typename      string               `json:"__typename"`
-							Risks         api.Connection[risk] `json:"risks"`
-							ScenarioRisks api.Connection[risk] `json:"scenarioRisks"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil || resp.Node.Typename != expectedType {
-						return nil, fmt.Errorf("%s %s not found", expectedType, parentID)
-					}
-
-					if expectedType == "RiskAnalysis" {
-						return &resp.Node.ScenarioRisks, nil
-					}
-
-					return &resp.Node.Risks, nil
-				},
+				api.NodeConnectionOrMissing[risk](
+					field,
+					expectedType,
+					fmt.Sprintf("%s %s not found", expectedType, parentID),
+				),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, risks)
-			}
-
-			if len(risks) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No risks found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(risks))
-			for _, r := range risks {
-				rows = append(rows, []string{
-					r.ID,
-					r.ReferenceID,
-					r.Name,
-					r.Category,
-					formatOptionalString(r.Treatment),
-					formatOptionalInt(r.InherentRiskScore),
-					formatOptionalInt(r.ResidualRiskScore),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "REFERENCE", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(risks) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d risks\n",
-					len(risks),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				risks,
+				totalCount,
+				cmdutil.ListView[risk]{
+					Empty:   "No risks found.",
+					Noun:    "risks",
+					Headers: []string{"ID", "REFERENCE", "NAME", "CATEGORY", "TREATMENT", "INHERENT", "RESIDUAL"},
+					Row: func(r risk) ([]string, error) {
+						return []string{
+							r.ID,
+							r.ReferenceID,
+							r.Name,
+							r.Category,
+							formatOptionalString(r.Treatment),
+							formatOptionalInt(r.InherentRiskScore),
+							formatOptionalInt(r.ResidualRiskScore),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

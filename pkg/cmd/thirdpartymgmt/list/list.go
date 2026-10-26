@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -84,23 +83,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -137,64 +123,30 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[thirdParty], error) {
-					var resp struct {
-						Node *struct {
-							Typename     string                     `json:"__typename"`
-							ThirdParties api.Connection[thirdParty] `json:"thirdParties"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.ThirdParties, nil
-				},
+				api.NodeConnection[thirdParty]("thirdParties", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, thirdParties)
-			}
-
-			if len(thirdParties) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No third parties found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(thirdParties))
-			for _, v := range thirdParties {
-				rows = append(rows, []string{
-					v.ID,
-					v.Name,
-					v.Category,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "CATEGORY").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(thirdParties) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d third parties\n",
-					len(thirdParties),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				thirdParties,
+				totalCount,
+				cmdutil.ListView[thirdParty]{
+					Empty:   "No third parties found.",
+					Noun:    "third parties",
+					Headers: []string{"ID", "NAME", "CATEGORY"},
+					Row: func(v thirdParty) ([]string, error) {
+						return []string{
+							v.ID,
+							v.Name,
+							v.Category,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

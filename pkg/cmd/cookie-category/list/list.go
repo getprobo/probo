@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -84,23 +83,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("banner-id is required; pass --banner-id")
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{"id": flagBannerID}
 
@@ -109,54 +95,26 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[category], error) {
-					var resp struct {
-						Node *struct {
-							Typename   string                   `json:"__typename"`
-							Categories api.Connection[category] `json:"categories"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("cookie banner %s not found", flagBannerID)
-					}
-
-					if resp.Node.Typename != "CookieBanner" {
-						return nil, fmt.Errorf("expected CookieBanner node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Categories, nil
-				},
+				api.NodeConnection[category]("categories", "CookieBanner", fmt.Sprintf("cookie banner %s not found", flagBannerID)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, categories)
-			}
-
-			if len(categories) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No cookie categories found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(categories))
-			for _, c := range categories {
-				rows = append(rows, []string{c.ID, c.Name, c.Slug, c.Kind, fmt.Sprintf("%d", c.Rank)})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "SLUG", "KIND", "RANK").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(categories) {
-				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d cookie categories\n", len(categories), totalCount)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				categories,
+				totalCount,
+				cmdutil.ListView[category]{
+					Empty:   "No cookie categories found.",
+					Noun:    "cookie categories",
+					Headers: []string{"ID", "NAME", "SLUG", "KIND", "RANK"},
+					Row: func(c category) ([]string, error) {
+						return []string{c.ID, c.Name, c.Slug, c.Kind, fmt.Sprintf("%d", c.Rank)}, nil
+					},
+				},
+			)
 		},
 	}
 

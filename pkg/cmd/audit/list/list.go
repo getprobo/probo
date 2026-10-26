@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -101,23 +100,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -144,93 +130,59 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[audit], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                `json:"__typename"`
-							Audits   api.Connection[audit] `json:"audits"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Audits, nil
-				},
+				api.NodeConnection[audit]("audits", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, audits)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				audits,
+				totalCount,
+				cmdutil.ListView[audit]{
+					Empty:   "No audits found.",
+					Noun:    "audits",
+					Headers: []string{"ID", "NAME", "FIRM", "STATE", "VALID FROM", "VALID UNTIL", "AUDIT START", "AUDIT END"},
+					Row: func(a audit) ([]string, error) {
+						validFrom, validUntil := "", ""
 
-			if len(audits) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No audits found.")
-				return nil
-			}
+						if a.Validity != nil {
+							if a.Validity.Start != nil {
+								validFrom = *a.Validity.Start
+							}
 
-			rows := make([][]string, 0, len(audits))
-			for _, a := range audits {
-				validFrom, validUntil := "", ""
+							if a.Validity.End != nil {
+								validUntil = *a.Validity.End
+							}
+						}
 
-				if a.Validity != nil {
-					if a.Validity.Start != nil {
-						validFrom = *a.Validity.Start
-					}
+						auditStartDate, auditEndDate := "", ""
 
-					if a.Validity.End != nil {
-						validUntil = *a.Validity.End
-					}
-				}
+						if a.AuditDates != nil {
+							if a.AuditDates.Start != nil {
+								auditStartDate = *a.AuditDates.Start
+							}
 
-				auditStartDate, auditEndDate := "", ""
+							if a.AuditDates.End != nil {
+								auditEndDate = *a.AuditDates.End
+							}
+						}
 
-				if a.AuditDates != nil {
-					if a.AuditDates.Start != nil {
-						auditStartDate = *a.AuditDates.Start
-					}
-
-					if a.AuditDates.End != nil {
-						auditEndDate = *a.AuditDates.End
-					}
-				}
-
-				rows = append(rows, []string{
-					a.ID,
-					a.Name,
-					a.Firm,
-					a.State,
-					validFrom,
-					validUntil,
-					auditStartDate,
-					auditEndDate,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "FIRM", "STATE", "VALID FROM", "VALID UNTIL", "AUDIT START", "AUDIT END").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(audits) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d audits\n",
-					len(audits),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							a.ID,
+							a.Name,
+							a.Firm,
+							a.State,
+							validFrom,
+							validUntil,
+							auditStartDate,
+							auditEndDate,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

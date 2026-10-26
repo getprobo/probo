@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -93,23 +92,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{"id": flagBannerID}
 
@@ -135,79 +121,51 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[consentRecord], error) {
-					var resp struct {
-						Node *struct {
-							Typename       string                        `json:"__typename"`
-							ConsentRecords api.Connection[consentRecord] `json:"consentRecords"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("cookie banner %s not found", flagBannerID)
-					}
-
-					if resp.Node.Typename != "CookieBanner" {
-						return nil, fmt.Errorf("expected CookieBanner node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.ConsentRecords, nil
-				},
+				api.NodeConnection[consentRecord]("consentRecords", "CookieBanner", fmt.Sprintf("cookie banner %s not found", flagBannerID)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, records)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				records,
+				totalCount,
+				cmdutil.ListView[consentRecord]{
+					Empty:   "No consent records found.",
+					Noun:    "consent records",
+					Headers: []string{"ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "SOURCE", "COUNTRY", "SUBDIVISION", "ORIGIN", "CREATED AT"},
+					Row: func(r consentRecord) ([]string, error) {
+						regulation := "-"
+						if r.Regulation != nil {
+							regulation = *r.Regulation
+						}
 
-			if len(records) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No consent records found.")
-				return nil
-			}
+						regulationSource := "-"
+						if r.RegulationSource != nil {
+							regulationSource = *r.RegulationSource
+						}
 
-			rows := make([][]string, 0, len(records))
-			for _, r := range records {
-				regulation := "-"
-				if r.Regulation != nil {
-					regulation = *r.Regulation
-				}
+						countryCode := "-"
+						if r.CountryCode != nil {
+							countryCode = *r.CountryCode
+						}
 
-				regulationSource := "-"
-				if r.RegulationSource != nil {
-					regulationSource = *r.RegulationSource
-				}
+						subdivisionCode := "-"
+						if r.SubdivisionCode != nil {
+							subdivisionCode = *r.SubdivisionCode
+						}
 
-				countryCode := "-"
-				if r.CountryCode != nil {
-					countryCode = *r.CountryCode
-				}
+						origin := "-"
+						if r.Origin != nil && *r.Origin != "" {
+							origin = *r.Origin
+						}
 
-				subdivisionCode := "-"
-				if r.SubdivisionCode != nil {
-					subdivisionCode = *r.SubdivisionCode
-				}
-
-				origin := "-"
-				if r.Origin != nil && *r.Origin != "" {
-					origin = *r.Origin
-				}
-
-				rows = append(rows, []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, regulation, regulationSource, countryCode, subdivisionCode, origin, r.CreatedAt})
-			}
-
-			t := cmdutil.NewTable("ID", "VISITOR ID", "ACTION", "SDK VERSION", "REGULATION", "SOURCE", "COUNTRY", "SUBDIVISION", "ORIGIN", "CREATED AT").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(records) {
-				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d consent records\n", len(records), totalCount)
-			}
-
-			return nil
+						return []string{r.ID, r.VisitorID, r.Action, r.SDKVersion, regulation, regulationSource, countryCode, subdivisionCode, origin, r.CreatedAt}, nil
+					},
+				},
+			)
 		},
 	}
 

@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -90,23 +89,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConnectEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/connect/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -121,67 +107,33 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[scimEvent], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                    `json:"__typename"`
-							Events   api.Connection[scimEvent] `json:"events"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("SCIM configuration %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "SCIMConfiguration" {
-						return nil, fmt.Errorf("expected SCIMConfiguration node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Events, nil
-				},
+				api.NodeConnection[scimEvent]("events", "SCIMConfiguration", fmt.Sprintf("SCIM configuration %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, events)
-			}
-
-			if len(events) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No SCIM events found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(events))
-			for _, e := range events {
-				rows = append(rows, []string{
-					e.ID,
-					e.Method,
-					e.Path,
-					strconv.Itoa(e.StatusCode),
-					e.UserName,
-					cmdutil.FormatTime(e.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "METHOD", "PATH", "STATUS", "USER", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(events) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d events\n",
-					len(events),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				events,
+				totalCount,
+				cmdutil.ListView[scimEvent]{
+					Empty:   "No SCIM events found.",
+					Noun:    "events",
+					Headers: []string{"ID", "METHOD", "PATH", "STATUS", "USER", "CREATED"},
+					Row: func(e scimEvent) ([]string, error) {
+						return []string{
+							e.ID,
+							e.Method,
+							e.Path,
+							strconv.Itoa(e.StatusCode),
+							e.UserName,
+							cmdutil.FormatTime(e.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

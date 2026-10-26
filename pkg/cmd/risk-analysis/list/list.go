@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -104,23 +103,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -147,95 +133,61 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[riskAnalysis], error) {
-					var resp struct {
-						Node *struct {
-							Typename     string                       `json:"__typename"`
-							RiskAnalyses api.Connection[riskAnalysis] `json:"riskAnalyses"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.RiskAnalyses, nil
-				},
+				api.NodeConnection[riskAnalysis]("riskAnalyses", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, riskAnalyses)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				riskAnalyses,
+				totalCount,
+				cmdutil.ListView[riskAnalysis]{
+					Empty:   "No risk analyses found.",
+					Noun:    "risk analyses",
+					Headers: []string{"ID", "NAME", "DESCRIPTION", "PERIOD START", "PERIOD END", "MATRIX SIZE", "CREATED AT"},
+					Row: func(r riskAnalysis) ([]string, error) {
+						desc := ""
 
-			if len(riskAnalyses) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No risk analyses found.")
-				return nil
-			}
+						if r.Description != nil {
+							formatted, err := cmdutil.FormatRichText(*r.Description)
+							if err != nil {
+								return nil, fmt.Errorf("cannot format description: %w", err)
+							}
 
-			rows := make([][]string, 0, len(riskAnalyses))
-			for _, r := range riskAnalyses {
-				desc := ""
+							// Hard breaks render as "\\\n"; strip that marker before
+							// flattening remaining newlines into a single table cell.
+							desc = strings.ReplaceAll(formatted, "\\\n", " ")
+							desc = strings.ReplaceAll(desc, "\n", " ")
+						}
 
-				if r.Description != nil {
-					formatted, err := cmdutil.FormatRichText(*r.Description)
-					if err != nil {
-						return fmt.Errorf("cannot format description: %w", err)
-					}
+						periodStart := ""
+						periodEnd := ""
 
-					// Hard breaks render as "\\\n"; strip that marker before
-					// flattening remaining newlines into a single table cell.
-					desc = strings.ReplaceAll(formatted, "\\\n", " ")
-					desc = strings.ReplaceAll(desc, "\n", " ")
-				}
+						if r.Period != nil {
+							if r.Period.Start != nil {
+								periodStart = cmdutil.FormatTime(*r.Period.Start)
+							}
 
-				periodStart := ""
-				periodEnd := ""
+							if r.Period.End != nil {
+								periodEnd = cmdutil.FormatTime(*r.Period.End)
+							}
+						}
 
-				if r.Period != nil {
-					if r.Period.Start != nil {
-						periodStart = cmdutil.FormatTime(*r.Period.Start)
-					}
-
-					if r.Period.End != nil {
-						periodEnd = cmdutil.FormatTime(*r.Period.End)
-					}
-				}
-
-				rows = append(rows, []string{
-					r.ID,
-					r.Name,
-					desc,
-					periodStart,
-					periodEnd,
-					fmt.Sprintf("%d×%d", r.MatrixSize.Rows, r.MatrixSize.Cols),
-					cmdutil.FormatTime(r.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "DESCRIPTION", "PERIOD START", "PERIOD END", "MATRIX SIZE", "CREATED AT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(riskAnalyses) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d risk analyses\n",
-					len(riskAnalyses),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							r.ID,
+							r.Name,
+							desc,
+							periodStart,
+							periodEnd,
+							fmt.Sprintf("%d×%d", r.MatrixSize.Rows, r.MatrixSize.Cols),
+							cmdutil.FormatTime(r.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

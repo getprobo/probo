@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -83,23 +82,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -126,64 +112,34 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(raw json.RawMessage) (*api.Connection[datum], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                `json:"__typename"`
-							Data     api.Connection[datum] `json:"data"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(raw, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Data, nil
-				},
+				api.NodeConnection[datum](
+					"data",
+					"Organization",
+					fmt.Sprintf("organization %s not found", flagOrg),
+				),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, data)
-			}
-
-			if len(data) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No data found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(data))
-			for _, d := range data {
-				rows = append(rows, []string{
-					d.ID,
-					d.Name,
-					d.DataClassification,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "CLASSIFICATION").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(data) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d data\n",
-					len(data),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				data,
+				totalCount,
+				cmdutil.ListView[datum]{
+					Empty:   "No data found.",
+					Noun:    "data",
+					Headers: []string{"ID", "NAME", "CLASSIFICATION"},
+					Row: func(d datum) ([]string, error) {
+						return []string{
+							d.ID,
+							d.Name,
+							d.DataClassification,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

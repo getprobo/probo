@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -84,23 +83,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			if flagOrg == "" {
 				flagOrg = hc.Organization
@@ -134,68 +120,30 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[sourceNode], error) {
-					var resp struct {
-						Node *struct {
-							Typename            string                     `json:"__typename"`
-							AccessReviewSources api.Connection[sourceNode] `json:"accessReviewSources"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.AccessReviewSources, nil
-				},
+				api.NodeConnection[sourceNode]("accessReviewSources", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				if sources == nil {
-					sources = []sourceNode{}
-				}
-
-				return cmdutil.PrintJSON(f.IOStreams.Out, sources)
-			}
-
-			if len(sources) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No access sources found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(sources))
-			for _, s := range sources {
-				rows = append(rows, []string{
-					s.ID,
-					s.label(),
-					cmdutil.FormatTime(s.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(sources) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d access sources\n",
-					len(sources),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				sources,
+				totalCount,
+				cmdutil.ListView[sourceNode]{
+					Empty:   "No access sources found.",
+					Noun:    "access sources",
+					Headers: []string{"ID", "NAME", "CREATED"},
+					Row: func(s sourceNode) ([]string, error) {
+						return []string{
+							s.ID,
+							s.label(),
+							cmdutil.FormatTime(s.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 
