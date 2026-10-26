@@ -103,7 +103,7 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 	require.Equal(t, "accountId", reg.ClientCredentialsExtraSettings()[0].Key)
 	require.Equal(t, "region", reg.ClientCredentialsExtraSettings()[1].Key)
 
-	accountID, region := "acme", "EU"
+	accountID, region := "WX52YXL2MVEPBK43P3R4XMWKXI", "EU"
 
 	raw, err := clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
 		Provider:             coredata.ConnectorProviderOnePassword,
@@ -116,6 +116,16 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 	require.NoError(t, json.Unmarshal(raw, &settings))
 	assert.Equal(t, accountID, settings.AccountID)
 	assert.Equal(t, region, settings.Region)
+
+	ent := "ent"
+	raw, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
+		Provider:             coredata.ConnectorProviderOnePassword,
+		OnePasswordAccountID: &accountID,
+		OnePasswordRegion:    &ent,
+	})
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &settings))
+	assert.Equal(t, "ENT", settings.Region)
 
 	_, err = clientCredentialsConnectorSettings(types.CreateClientCredentialsConnectorInput{
 		Provider:             coredata.ConnectorProviderOnePassword,
@@ -143,120 +153,86 @@ func TestClientCredentialsConnectorSettings_OnePassword(t *testing.T) {
 }
 
 // TestClientCredentialsTokenURL pins which endpoint a client-credentials
-// connector POSTs its client secret to. The decision is split between a
-// provider that fixes the endpoint and one that cannot, and getting it wrong
-// either sends a credential to a client-supplied address or refuses a connect
-// the customer has no way to complete.
+// connector POSTs its client secret to: always one the registration names,
+// pinned or derived from the connector's settings, never one the client sends.
 func TestClientCredentialsTokenURL(t *testing.T) {
 	t.Parallel()
 
 	registry := provider.NewBuiltinRegistry()
 
-	supplied := func(s string) *string { return &s }
-
-	t.Run("a pinning provider ignores what the client sends", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := clientCredentialsTokenURL(
-			registry,
-			coredata.ConnectorProviderMongoDBAtlas,
-			supplied("https://attacker.example/token"),
-		)
-		require.NoError(t, err)
-		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
-	})
-
-	t.Run("a pinning provider needs nothing from the client", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := clientCredentialsTokenURL(registry, coredata.ConnectorProviderMongoDBAtlas, nil)
-		require.NoError(t, err)
-		assert.Equal(t, "https://cloud.mongodb.com/api/oauth/token", got)
-	})
-
-	// 1Password declares no Endpoints.Token: its token host follows the region
-	// the customer picks, so the value still comes from the form.
-	t.Run("a non-pinning provider keeps taking the input", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := clientCredentialsTokenURL(
-			registry,
-			coredata.ConnectorProviderOnePassword,
-			supplied("https://api.1password.eu/v1beta1/users/oauth2/token"),
-		)
-		require.NoError(t, err)
-		assert.Equal(t, "https://api.1password.eu/v1beta1/users/oauth2/token", got)
-	})
-
-	// Each OVHcloud region pins its own token endpoint. A client-supplied URL
-	// is ignored.
-	t.Run("ovhcloud regions pin their token url", func(t *testing.T) {
-		t.Parallel()
-
-		for _, tc := range []struct {
-			provider coredata.ConnectorProvider
-			want     string
-		}{
-			{provider: coredata.ConnectorProviderOVHcloud, want: "https://www.ovh.com/auth/oauth2/token"},
-			{provider: coredata.ConnectorProviderOVHcloudUS, want: "https://us.ovhcloud.com/auth/oauth2/token"},
-		} {
-			t.Run(string(tc.provider), func(t *testing.T) {
+	for _, tc := range []struct {
+		provider coredata.ConnectorProvider
+		want     string
+	}{
+		{provider: coredata.ConnectorProviderMongoDBAtlas, want: "https://cloud.mongodb.com/api/oauth/token"},
+		{provider: coredata.ConnectorProviderOVHcloud, want: "https://www.ovh.com/auth/oauth2/token"},
+		{provider: coredata.ConnectorProviderOVHcloudUS, want: "https://us.ovhcloud.com/auth/oauth2/token"},
+	} {
+		t.Run(
+			"pinned by "+string(tc.provider),
+			func(t *testing.T) {
 				t.Parallel()
 
-				got, err := clientCredentialsTokenURL(
-					registry,
-					tc.provider,
-					supplied("https://attacker.example/token"),
-				)
+				got, err := clientCredentialsTokenURL(registry, &coredata.Connector{Provider: tc.provider})
 				require.NoError(t, err)
 				assert.Equal(t, tc.want, got)
-			})
-		}
-	})
-
-	// An unregistered provider has no registration to consult, so there is no
-	// basis for honouring a client-supplied endpoint either.
-	t.Run("an unknown provider is rejected outright", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := clientCredentialsTokenURL(
-			provider.NewRegistry(),
-			coredata.ConnectorProviderMongoDBAtlas,
-			supplied("https://cloud.mongodb.com/api/oauth/token"),
+			},
 		)
-		assert.Error(t, err)
-	})
+	}
 
-	t.Run("a non-pinning provider rejects a missing or unusable URL", func(t *testing.T) {
-		t.Parallel()
-
-		for _, tc := range []struct {
-			name     string
-			supplied *string
-		}{
-			{name: "absent", supplied: nil},
-			{name: "blank", supplied: supplied("   ")},
-			{name: "not a URL", supplied: supplied("not-a-url")},
-			{name: "relative", supplied: supplied("/token")},
-			// Host is non-empty here but carries only a port, so the exchange
-			// could never reach it.
-			{name: "port-only authority", supplied: supplied("https://:443/token")},
-			{name: "port-only authority, no path", supplied: supplied("https://:443")},
-			// A client secret must not travel in cleartext, whatever the host.
-			{name: "plaintext http", supplied: supplied("http://api.1password.com/token")},
-		} {
-			t.Run(tc.name, func(t *testing.T) {
+	// 1Password's token endpoint shares the host of the Users API the
+	// customer's region names.
+	for _, tc := range []struct {
+		region string
+		want   string
+	}{
+		{region: "US", want: "https://api.1password.com/v1/oauth/token"},
+		{region: "CA", want: "https://api.1password.ca/v1/oauth/token"},
+		{region: "EU", want: "https://api.1password.eu/v1/oauth/token"},
+		{region: "ENT", want: "https://api.ent.1password.com/v1/oauth/token"},
+	} {
+		t.Run(
+			"1password derives it from region "+tc.region,
+			func(t *testing.T) {
 				t.Parallel()
 
-				_, err := clientCredentialsTokenURL(
-					registry,
-					coredata.ConnectorProviderOnePassword,
-					tc.supplied,
+				c := &coredata.Connector{Provider: coredata.ConnectorProviderOnePassword}
+				require.NoError(
+					t,
+					c.SetSettings(
+						&coredata.OnePasswordUsersAPISettings{
+							AccountID: "WX52YXL2MVEPBK43P3R4XMWKXI",
+							Region:    tc.region,
+						},
+					),
 				)
-				assert.Error(t, err)
-			})
-		}
-	})
+
+				got, err := clientCredentialsTokenURL(registry, c)
+				require.NoError(t, err)
+				assert.Equal(t, tc.want, got)
+			},
+		)
+	}
+
+	t.Run(
+		"a provider without client credentials is rejected",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := clientCredentialsTokenURL(registry, &coredata.Connector{Provider: coredata.ConnectorProviderSlack})
+			assert.Error(t, err)
+		},
+	)
+
+	t.Run(
+		"an unknown provider is rejected",
+		func(t *testing.T) {
+			t.Parallel()
+
+			_, err := clientCredentialsTokenURL(provider.NewRegistry(), &coredata.Connector{Provider: coredata.ConnectorProviderMongoDBAtlas})
+			assert.Error(t, err)
+		},
+	)
 }
 
 // TestPinnedClientCredentialsTokenURL covers the value the connect form reads
@@ -280,32 +256,6 @@ func TestPinnedClientCredentialsTokenURL(t *testing.T) {
 	slack, ok := registry.Get(coredata.ConnectorProviderSlack)
 	require.True(t, ok)
 	assert.Empty(t, pinnedClientCredentialsTokenURL(slack))
-}
-
-// TestClientCredentialsTokenURLRequired covers whether the connect form asks
-// for a Token URL: only when the server cannot pin one.
-func TestClientCredentialsTokenURLRequired(t *testing.T) {
-	t.Parallel()
-
-	registry := provider.NewBuiltinRegistry()
-
-	for _, tc := range []struct {
-		provider coredata.ConnectorProvider
-		want     bool
-	}{
-		{provider: coredata.ConnectorProviderMongoDBAtlas, want: false},
-		{provider: coredata.ConnectorProviderOnePassword, want: true},
-		{provider: coredata.ConnectorProviderOVHcloud, want: false},
-		{provider: coredata.ConnectorProviderSlack, want: false},
-	} {
-		t.Run(string(tc.provider), func(t *testing.T) {
-			t.Parallel()
-
-			reg, ok := registry.Get(tc.provider)
-			require.True(t, ok)
-			assert.Equal(t, tc.want, clientCredentialsTokenURLRequired(reg))
-		})
-	}
 }
 
 func TestApiKeyConnectorSettings_InstanceBaseURL(t *testing.T) {
@@ -438,16 +388,24 @@ func TestClientCredentialsScope(t *testing.T) {
 	t.Run("a provider that declares none falls back to the supplied value", func(t *testing.T) {
 		t.Parallel()
 
-		// 1Password offers client credentials without an OAuth2 block, so
+		// MongoDB Atlas offers client credentials without an OAuth2 block, so
 		// nothing is pinned and the customer's value is authoritative.
-		got := clientCredentialsScope(registry, coredata.ConnectorProviderOnePassword, supplied("  read:users  "))
+		got := clientCredentialsScope(registry, coredata.ConnectorProviderMongoDBAtlas, supplied("  read:users  "))
 		assert.Equal(t, "read:users", got, "the supplied value is trimmed")
 	})
 
 	t.Run("nil input on an unpinned provider yields no scope", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Empty(t, clientCredentialsScope(registry, coredata.ConnectorProviderOnePassword, nil))
+		assert.Empty(t, clientCredentialsScope(registry, coredata.ConnectorProviderMongoDBAtlas, nil))
+	})
+
+	// 1Password's token endpoint takes no scope: the app's own scopes ride on
+	// every token it issues.
+	t.Run("a provider that derives its token endpoint sends no scope", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Empty(t, clientCredentialsScope(registry, coredata.ConnectorProviderOnePassword, supplied("users.view")))
 	})
 
 	t.Run("an unknown provider cannot pin anything", func(t *testing.T) {

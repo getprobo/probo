@@ -578,15 +578,7 @@ func (s *Service) BuildHTTPClient(
 		return nil, nil, err
 	}
 
-	conn, ok := dbConnector.Connection.(connectorprotocol.HTTPConnection)
-	if !ok {
-		return nil, nil, fmt.Errorf(
-			"cannot create HTTP client for %s connector: credential does not ride on HTTP",
-			dbConnector.Provider,
-		)
-	}
-
-	httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+	httpClient, err := s.httpClientFor(ctx, scope, dbConnector)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -601,9 +593,8 @@ func (s *Service) httpClientFor(
 	ctx context.Context,
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
-	conn connectorprotocol.HTTPConnection,
 ) (*http.Client, error) {
-	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn)
+	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(dbConnector.Connection)
 
 	var tokenBefore string
 	if oauth2Conn != nil {
@@ -614,8 +605,7 @@ func (s *Service) httpClientFor(
 		ctx,
 		s.connectorRegistry,
 		s.providerRegistry,
-		dbConnector.Provider,
-		conn,
+		dbConnector,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP client: %w", err)
@@ -769,7 +759,7 @@ func (s *Service) ProbeConnector(
 
 	// Only a ProbeError means the credential or the provider is at fault;
 	// everything else returned here is Probo's own.
-	switch conn := dbConnector.Connection.(type) {
+	switch dbConnector.Connection.(type) {
 	case *connectorprotocol.WorkloadIdentityConnection:
 		session, err := s.OpenSession(ctx, dbConnector, "")
 		if err != nil {
@@ -789,7 +779,7 @@ func (s *Service) ProbeConnector(
 	case connectorprotocol.HTTPConnection:
 		// The eager token refresh runs here, so a revoked grant fails the
 		// probe before any request is made.
-		httpClient, err := s.httpClientFor(ctx, scope, dbConnector, conn)
+		httpClient, err := s.httpClientFor(ctx, scope, dbConnector)
 		if err != nil {
 			if !IsProviderVerdict(err) {
 				return err
@@ -868,16 +858,16 @@ func (s *Service) probeNewAPIKeyConnector(
 	conn *connectorprotocol.APIKeyConnection,
 	rawSettings json.RawMessage,
 ) error {
-	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, prvdr, conn)
-	if err != nil {
-		return fmt.Errorf("cannot create HTTP client: %w", err)
-	}
-
 	dbConnector := &coredata.Connector{
 		Provider:    prvdr,
 		Protocol:    coredata.ConnectorProtocolAPIKey,
 		RawSettings: []byte(rawSettings),
 		Connection:  conn,
+	}
+
+	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, dbConnector)
+	if err != nil {
+		return fmt.Errorf("cannot create HTTP client: %w", err)
 	}
 
 	return s.probeHTTPConnector(ctx, httpClient, dbConnector)
@@ -1109,12 +1099,16 @@ func (s *Service) ValidateConnectorInstall(
 		return nil
 	}
 
-	httpConn, ok := conn.(connectorprotocol.HTTPConnection)
-	if !ok {
+	if _, ok := conn.(connectorprotocol.HTTPConnection); !ok {
 		return nil
 	}
 
-	httpClient, err := connectorprovider.HTTPClient(ctx, s.connectorRegistry, s.providerRegistry, provider, httpConn)
+	httpClient, err := connectorprovider.HTTPClient(
+		ctx,
+		s.connectorRegistry,
+		s.providerRegistry,
+		&coredata.Connector{Provider: provider, Connection: conn},
+	)
 	if err != nil {
 		return fmt.Errorf("cannot create HTTP client for %s connector: %w", provider, err)
 	}

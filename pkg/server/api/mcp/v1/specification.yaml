@@ -11326,7 +11326,7 @@ components:
           type:
             - string
             - "null"
-          description: Token URL the provider pins. Null when the customer supplies it.
+          description: Token URL the provider pins. Null when it follows a connection setting, such as the 1Password region, or when the provider has no client-credentials path.
         client_credentials_extra_settings:
           type: array
           description: Extra settings the client-credentials form requires. Empty when the console form needs no extra setting.

@@ -75,20 +75,6 @@ export const description: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Token Endpoint',
-		name: 'tokenUrl',
-		// eslint-disable-next-line n8n-nodes-base/node-param-type-options-password-missing -- endpoint URL, not a secret
-		type: 'string',
-		displayOptions: {
-			show: {
-				resource: ['connector'],
-				operation: [operation],
-			},
-		},
-		default: '',
-		description: 'Leave empty when the provider pins a token URL. The server ignores a value in that case.',
-	},
-	{
 		displayName: 'Scope',
 		name: 'scope',
 		type: 'string',
@@ -112,7 +98,6 @@ export async function execute(
 	const provider = this.getNodeParameter('provider', itemIndex) as string;
 	const clientId = this.getNodeParameter('clientId', itemIndex) as string;
 	const clientSecret = this.getNodeParameter('clientSecret', itemIndex) as string;
-	const tokenUrl = this.getNodeParameter('tokenUrl', itemIndex, '') as string;
 	const scope = this.getNodeParameter('scope', itemIndex, '') as string;
 
 	const input: Record<string, string> = {
@@ -123,9 +108,6 @@ export async function execute(
 		clientSecret,
 	};
 
-	if (tokenUrl !== '') {
-		input.tokenUrl = tokenUrl;
-	}
 	if (scope !== '') {
 		input.scope = scope;
 	}

@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"go.probo.inc/probo/pkg/cloud"
 	"go.probo.inc/probo/pkg/connectorprotocol"
@@ -85,7 +86,7 @@ func oauthClient(
 	return conn.Client(ctx)
 }
 
-// HTTPClient returns an HTTP client for the given connection. For OAuth2
+// HTTPClient returns an HTTP client for the connector's connection. For OAuth2
 // connections it refreshes the token. For API-key connections it overlays a
 // Probo-held key onto a copy when the provider is managed, so the loaded row
 // is never mutated.
@@ -93,14 +94,24 @@ func HTTPClient(
 	ctx context.Context,
 	connectorRegistry *connectorprotocol.Registry,
 	registries *Registry,
-	prvdr coredata.ConnectorProvider,
-	conn connectorprotocol.HTTPConnection,
+	dbConnector *coredata.Connector,
 ) (*http.Client, error) {
+	prvdr := dbConnector.Provider
+
+	conn, ok := dbConnector.Connection.(connectorprotocol.HTTPConnection)
+	if !ok {
+		return nil, fmt.Errorf("cannot create HTTP client for %s connector: credential does not ride on HTTP", prvdr)
+	}
+
 	if err := connectorRegistry.ConfigureConnection(string(prvdr), conn); err != nil {
 		return nil, err
 	}
 
 	if oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn); oauth2Conn != nil {
+		if err := registries.alignClientCredentials(dbConnector, oauth2Conn); err != nil {
+			return nil, fmt.Errorf("cannot align %s client credentials: %w", prvdr, err)
+		}
+
 		return oauthClient(ctx, connectorRegistry, oauth2Conn, prvdr)
 	}
 
@@ -118,4 +129,37 @@ func HTTPClient(
 	prepared.APIKey = key
 
 	return prepared.Client(ctx)
+}
+
+// alignClientCredentials points a client-credentials connection at the token
+// endpoint its registration derives from the connector's settings, and drops
+// any stored scope. A row stored with another endpoint also loses its access
+// token, which that endpoint issued; the caller persists the replacement.
+func (r *Registry) alignClientCredentials(
+	dbConnector *coredata.Connector,
+	conn *connectorprotocol.OAuth2Connection,
+) error {
+	if conn.GrantType != connectorprotocol.OAuth2GrantTypeClientCredentials {
+		return nil
+	}
+
+	reg, ok := r.Get(dbConnector.Provider)
+	if !ok || !reg.DerivesClientCredentialsTokenURL() {
+		return nil
+	}
+
+	tokenURL, err := reg.ClientCredentialsTokenURL(dbConnector)
+	if err != nil {
+		return fmt.Errorf("cannot derive token endpoint: %w", err)
+	}
+
+	if conn.TokenURL != tokenURL {
+		conn.TokenURL = tokenURL
+		conn.AccessToken = ""
+		conn.ExpiresAt = time.Time{}
+	}
+
+	conn.Scope = ""
+
+	return nil
 }

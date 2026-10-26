@@ -368,6 +368,14 @@ func (r *Registry) Register(reg *Registration) error {
 		}
 	}
 
+	// The token endpoint receives the customer's client secret, so the
+	// registration names it, pinned or derived from the connector's settings;
+	// the customer never types it.
+	pinned := reg.Endpoints.Token != ""
+	if reg.SupportsClientCredentials() && pinned == reg.DerivesClientCredentialsTokenURL() {
+		return fmt.Errorf("cannot register connector provider %q: ClientCredentials needs exactly one of Endpoints.Token and ClientCredentials.TokenURL", reg.Provider)
+	}
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

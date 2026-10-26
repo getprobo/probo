@@ -60,7 +60,7 @@ type Endpoints struct {
 	// both from auth.monday.com, while HubSpot authorizes on app.hubspot.com
 	// and exchanges on api.hubapi.com. Empty for API-key-only providers, for
 	// BuildTokenURLForDomain / BuildTokenURLForSite providers, and for
-	// 1Password, whose token endpoint is supplied per connection.
+	// providers whose ClientCredentials.TokenURL derives it per connection.
 	Token string
 
 	// Probe is the connection-check URL for a plain authenticated GET. Empty
@@ -395,6 +395,14 @@ type ClientCredentialsConfig struct {
 	// CredentialPage is the vendor page where the customer creates the client
 	// credentials. Nil when no page fits every customer.
 	CredentialPage *CredentialPage
+
+	// TokenURL derives the token endpoint from the connector's settings, for a
+	// provider whose token host follows a per-connection setting (1Password's
+	// region). Set exactly one of it and Endpoints.Token. The derivation owns
+	// the whole token request, so no scope is sent, and it is applied again
+	// whenever a client is built: a stored endpoint it no longer derives is
+	// replaced, not trusted.
+	TokenURL func(*coredata.Connector) (string, error)
 }
 
 // ErrInstallVerificationTransient marks an install verification that failed for
@@ -709,6 +717,23 @@ func (r *Registration) ClientCredentialsCredentialPage() *CredentialPage {
 	}
 
 	return r.ClientCredentials.CredentialPage
+}
+
+// DerivesClientCredentialsTokenURL reports whether the client-credentials token
+// endpoint is derived from each connector's settings rather than pinned.
+func (r *Registration) DerivesClientCredentialsTokenURL() bool {
+	return r.ClientCredentials != nil && r.ClientCredentials.TokenURL != nil
+}
+
+// ClientCredentialsTokenURL returns the token endpoint a client-credentials
+// connector exchanges its secret at: derived from the connector's settings
+// when the registration says how, else the pinned Endpoints.Token.
+func (r *Registration) ClientCredentialsTokenURL(c *coredata.Connector) (string, error) {
+	if r.DerivesClientCredentialsTokenURL() {
+		return r.ClientCredentials.TokenURL(c)
+	}
+
+	return r.Endpoints.Token, nil
 }
 
 // WorkloadIdentityExtraSettings returns the workload-identity dialog's

@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { IconFlagCA, IconFlagEU, IconFlagUS } from "@probo/ui";
+import { IconFlagCA, IconFlagEU, IconFlagUS, IconGlobe } from "@probo/ui";
 import { Field } from "@probo/ui/src/v2/form/Field";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
@@ -30,6 +30,7 @@ const REGIONS = [
   { value: "EU", labelKey: "marketplacePage.fields.regionEurope" },
   { value: "US", labelKey: "marketplacePage.fields.regionUnitedStates" },
   { value: "CA", labelKey: "marketplacePage.fields.regionCanada" },
+  { value: "ENT", labelKey: "marketplacePage.fields.regionEnterprise" },
 ] as const;
 
 type Region = (typeof REGIONS)[number]["value"];
@@ -80,6 +81,7 @@ const REGION_FLAGS = {
   EU: IconFlagEU,
   US: IconFlagUS,
   CA: IconFlagCA,
+  ENT: IconGlobe,
 } as const;
 
 function RegionFlag({ region }: { region: Region }) {

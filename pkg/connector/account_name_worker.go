@@ -154,7 +154,7 @@ func (h *accountNameHandler) Process(ctx context.Context, account coredata.Conne
 			// The connection decides which credential the resolver can be
 			// built from. A protocol without a factory lands in the default
 			// arm rather than falling through to the other kind.
-			switch conn := dbConnector.Connection.(type) {
+			switch dbConnector.Connection.(type) {
 			case *connectorprotocol.WorkloadIdentityConnection:
 				r, err := h.newCloudNameResolver(ctx, &account, &dbConnector)
 				if err != nil {
@@ -166,7 +166,7 @@ func (h *accountNameHandler) Process(ctx context.Context, account coredata.Conne
 				return nil
 
 			case connectorprotocol.HTTPConnection:
-				r, err := h.newHTTPNameResolver(ctx, tx, scope, &dbConnector, conn)
+				r, err := h.newHTTPNameResolver(ctx, tx, scope, &dbConnector)
 				if err != nil {
 					return err
 				}
@@ -322,14 +322,13 @@ func (h *accountNameHandler) newHTTPNameResolver(
 	tx pg.Tx,
 	scope coredata.Scoper,
 	dbConnector *coredata.Connector,
-	conn connectorprotocol.HTTPConnection,
 ) (drivers.NameResolver, error) {
 	reg, ok := h.providerRegistry.Get(dbConnector.Provider)
 	if !ok || reg.NewNameResolver == nil {
 		return nil, nil
 	}
 
-	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(conn)
+	oauth2Conn := connectorprotocol.OAuth2ConnectionOf(dbConnector.Connection)
 
 	var tokenBefore string
 	if oauth2Conn != nil {
@@ -340,8 +339,7 @@ func (h *accountNameHandler) newHTTPNameResolver(
 		ctx,
 		h.connectorRegistry,
 		h.providerRegistry,
-		dbConnector.Provider,
-		conn,
+		dbConnector,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create HTTP client for connector: %w", err)
