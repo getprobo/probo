@@ -270,6 +270,12 @@ jobs:
           name: "probod-ci"
           path: "bin/probod"
           retention-days: 1
+      - uses: "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9" # v7
+        with:
+          name: "emails-dist"
+          path: "packages/emails/dist/"
+          if-no-files-found: error
+          retention-days: 1
 
   build-probo-agent:
     name: "build-probo-agent"
@@ -561,6 +567,12 @@ jobs:
         with:
           name: "probod-ci"
           path: "bin"
+      # emails parses every template in dist at init. build-probod already
+      # produced that output; a placeholder file panics the test binary.
+      - uses: "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333" # v8
+        with:
+          name: "emails-dist"
+          path: "packages/emails/dist"
       - name: "Prepare probod"
         run: "chmod +x bin/probod"
       - name: "Configure Docker image source"
@@ -610,11 +622,10 @@ jobs:
       - run: "make stack-ps"
       - name: "Create placeholder dist files"
         run: |
-          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist packages/emails/dist
+          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist
           echo ci > apps/console/dist/index.html
           echo ci > apps/compliance-portal/dist/index.html
           echo ci > apps/employee-portal/dist/index.html
-          echo ci > packages/emails/dist/placeholder
       - name: "Run e2e tests"
         env:
           PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
