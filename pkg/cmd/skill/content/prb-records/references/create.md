@@ -1,6 +1,7 @@
 # Required create flags
 
 `--org` is required on every command in this table except `control`.
+`--organization` is the same flag.
 `prb <command> create --help` is authoritative when a row is stale.
 
 | Command | Required flags besides `--org` |

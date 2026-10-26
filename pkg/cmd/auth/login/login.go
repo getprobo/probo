@@ -253,12 +253,7 @@ func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
 		"",
 		"Probo hostname (e.g. eu.probo.com, us.probo.com)",
 	)
-	cmd.Flags().StringVar(
-		&flagOrganization,
-		"org",
-		"",
-		"Default organization ID",
-	)
+	cmdutil.AddOrganizationFlag(cmd, &flagOrganization, "Default organization ID")
 
 	return cmd
 }

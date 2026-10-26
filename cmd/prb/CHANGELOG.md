@@ -14,12 +14,11 @@ All notable changes to the `prb` CLI will be documented in this file.
 
 ### Changed
 
-- `third-party` is the command name. `thirdParty`, `third_party`, and
-  `tp` stay as aliases
-- `--org` is the organization flag. `finding` still accepts the hidden
-  `--organization` alias
-- `--third-party-ids` replaces `--thirdParty-ids`. The old flag remains
-  as a hidden alias
+- `third-party` is the command name. `tp` is the short alias
+- `--org` and `--organization` are the same organization flag.
+  `connector connect --organization` stays the boolean that connects a
+  cloud organization
+- `--third-party-ids` is the vendor-id flag
 - `auth status` shows the host selected by `PROBO_HOST` and whether
   `PROBO_TOKEN` is set
 - `webhook list` lists one organization's subscriptions and takes `--org`

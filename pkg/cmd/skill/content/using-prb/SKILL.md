@@ -32,7 +32,7 @@ When this skill is not installed on disk, read a bundled reference with
    choice. Combining `--json` with any other `--output` value fails.
 4. `list` is also `ls`.
 5. Command and flag names are kebab-case. The vendor command is
-   `prb third-party`. Older names still run and are not the names to write.
+   `prb third-party`. `tp` is its short alias.
 6. View, update, and delete take the resource id printed by create. That id
    is the first token that parses as a Probo id.
 7. Update with only the id fails with `at least one field must be specified`.
@@ -45,9 +45,15 @@ When this skill is not installed on disk, read a bundled reference with
 
 ## Organization
 
-Most commands take `--org`. `prb-auth` covers login and how to choose the
-organization. `control create` and `control list` take `--framework` and do
-not take `--org`.
+Commands that select an organization take `--org`. `--organization` sets the
+same value. `prb-auth` covers login and how to choose the organization.
+Lists of a child record take the parent id instead: `control` takes
+`--framework`, `evidence` takes `--internal-control`, consent records and
+cookie categories take the banner, and access-review entries take the
+campaign.
+
+`connector connect --organization` is a boolean. The Probo organization id
+on that command is `--org`.
 
 ## After writing
 

@@ -98,10 +98,9 @@ func NewCmdBrowse(f *cmdutil.Factory) *cobra.Command {
 		"Print the URL instead of opening it",
 	)
 
-	cmd.Flags().StringVar(
+	cmdutil.AddOrganizationFlag(
+		cmd,
 		&flagOrg,
-		"org",
-		"",
 		"Organization ID (defaults to the current organization)",
 	)
 

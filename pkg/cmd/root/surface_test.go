@@ -60,6 +60,14 @@ func TestCommandSurface(t *testing.T) {
 				t.Errorf("command %q is missing the ls alias", c.CommandPath())
 			}
 
+			if slices.Contains(c.Aliases, "thirdParty") || slices.Contains(c.Aliases, "third_party") {
+				t.Errorf("command %q still aliases thirdParty or third_party", c.CommandPath())
+			}
+
+			if c.CommandPath() == "prb third-party" && !slices.Contains(c.Aliases, "tp") {
+				t.Errorf("command %q is missing the tp alias", c.CommandPath())
+			}
+
 			if strings.Contains(c.Example, "--json") && c.Flags().Lookup("json") == nil {
 				t.Errorf("command %q documents --json but does not register it", c.CommandPath())
 			}
@@ -74,6 +82,40 @@ func TestCommandSurface(t *testing.T) {
 				}
 			})
 		})
+
+		for _, child := range c.Commands() {
+			walk(child)
+		}
+	}
+
+	walk(cmd)
+}
+
+func TestOrganizationFlagAlias(t *testing.T) {
+	t.Parallel()
+
+	cmd := root.NewCmdRoot(&cmdutil.Factory{
+		IOStreams: iostreams.System(),
+		Config: func() (*config.Config, error) {
+			return &config.Config{Hosts: map[string]*config.HostConfig{}}, nil
+		},
+	})
+
+	var walk func(*cobra.Command)
+	walk = func(c *cobra.Command) {
+		orgFlag := c.Flags().Lookup("org")
+		organizationFlag := c.Flags().Lookup("organization")
+		if c.CommandPath() == "prb connector connect" {
+			if orgFlag == nil || organizationFlag == nil || organizationFlag.Value.Type() != "bool" {
+				t.Errorf("connector connect must keep --org and boolean --organization")
+			}
+		} else if orgFlag != nil && (organizationFlag == nil || organizationFlag.Name == "org") {
+			if err := c.ParseFlags([]string{"--organization", "org_test"}); err != nil {
+				t.Errorf("%s: --organization: %v", c.CommandPath(), err)
+			} else if orgFlag.Value.String() != "org_test" {
+				t.Errorf("%s: --organization did not set --org", c.CommandPath())
+			}
+		}
 
 		for _, child := range c.Commands() {
 			walk(child)

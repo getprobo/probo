@@ -307,7 +307,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Processing activity name (required)")
 	cmd.Flags().StringVar(&flagPurpose, "purpose", "", "Purpose of processing")
 	cmd.Flags().StringVar(&flagRole, "role", "", "Role: CONTROLLER, PROCESSOR (required)")

@@ -347,7 +347,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagRisk, "risk", "", "List plans for a risk ID")
 	cmd.Flags().StringVar(&flagRiskAnalysis, "risk-analysis", "", "List plans for a risk analysis ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of treatment plans to list")

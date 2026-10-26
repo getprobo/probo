@@ -67,7 +67,8 @@ func TestCLI_AuthAndOutput(t *testing.T) {
 
 	thirdPartyHelp := session.must("third-party", "--help")
 	assert.Contains(t, thirdPartyHelp, "Manage third parties")
-	assert.Contains(t, thirdPartyHelp, "third_party")
+	assert.NotContains(t, thirdPartyHelp, "third_party")
+	assert.NotContains(t, thirdPartyHelp, "thirdParty")
 
 	status := session.must("auth", "status")
 	assert.Contains(t, status, session.host)
@@ -81,6 +82,8 @@ func TestCLI_AuthAndOutput(t *testing.T) {
 
 	users := session.must("user", "list", "--org", session.orgID, "--json")
 	assert.Contains(t, users, "e2e.probo.test")
+	byOrganization := session.must("user", "list", "--organization", session.orgID, "--json")
+	assert.JSONEq(t, users, byOrganization)
 
 	_, stderr, err := session.run("org", "list", "--json", "--output", "table")
 	require.Error(t, err)
@@ -261,14 +264,20 @@ func TestCLI_ResourceLifecycles(t *testing.T) {
 		"--name", name+"-vendor",
 		"--category", "IT",
 	)
-	for _, group := range []string{"third-party", "third_party", "thirdParty", "tp"} {
-		listed := session.must(group, "list", "--org", session.orgID, "--json")
+	for _, group := range []string{"third-party", "tp"} {
+		listed := session.must(group, "list", "--organization", session.orgID, "--json")
 		assert.Contains(t, listed, thirdPartyID)
 	}
+	_, stderr, err := session.run("third_party", "list", "--org", session.orgID)
+	require.Error(t, err)
+	assert.Contains(t, stderr, "unknown command")
+	_, stderr, err = session.run("thirdParty", "list", "--org", session.orgID)
+	require.Error(t, err)
+	assert.Contains(t, stderr, "unknown command")
 	session.must("third-party", "update", thirdPartyID, "--name", name+"-vendor-updated")
 	viewed := session.must("third-party", "view", thirdPartyID, "--json")
 	assert.Contains(t, viewed, name+"-vendor-updated")
-	_, stderr, err := session.run("third-party", "delete", thirdPartyID)
+	_, stderr, err = session.run("third-party", "delete", thirdPartyID)
 	require.Error(t, err)
 	assert.Contains(t, stderr, "confirmation required")
 	session.must("third-party", "delete", thirdPartyID, "--yes")

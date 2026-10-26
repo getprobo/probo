@@ -179,7 +179,7 @@ A CSV source is the path with no provider.`,
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Access source name (required)")
 	cmd.Flags().StringVar(&flagCSVFile, "csv-file", "", "Path to CSV file with access data. A CSV source has no provider.")
 	cmd.Flags().StringVar(&flagConnectorID, "connector-id", "", "Connector ID. Connect the provider first; this command does not collect credentials.")

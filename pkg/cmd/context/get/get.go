@@ -88,13 +88,9 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			orgID := flagOrg
-			if orgID == "" {
-				orgID = hc.Organization
-			}
-
-			if orgID == "" {
-				return fmt.Errorf("organization ID is required: pass --org or run `prb auth login`")
+			orgID, err := cmdutil.ResolveOrganization(flagOrg, hc.Organization)
+			if err != nil {
+				return err
 			}
 
 			client := api.NewClient(
@@ -156,7 +152,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
 	return cmd

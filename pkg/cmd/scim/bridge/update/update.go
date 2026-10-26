@@ -130,7 +130,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringSliceVar(&flagExcludedUserNames, "excluded-user-names", nil, "User names to exclude from SCIM sync (repeatable)")
 
 	return cmd

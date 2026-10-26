@@ -130,7 +130,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Campaign name (required)")
 	cmd.Flags().StringVar(&flagDescription, "description", "", "Campaign description")
 	cmd.Flags().StringSliceVar(

@@ -277,7 +277,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().StringVar(&flagName, "name", "", "Business function name (required)")
 	cmd.Flags().StringVar(&flagClassification, "classification", "", "Classification: CRITICAL, IMPORTANT, SECONDARY, STANDARD (required)")
 	cmd.Flags().IntVar(&flagMTDMinutes, "mtd-minutes", 0, "Maximum tolerable downtime in minutes (required)")
