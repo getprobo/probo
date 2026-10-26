@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -89,23 +88,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			if flagDiagram == "" {
 				return fmt.Errorf("diagram is required; pass --diagram")
@@ -131,70 +117,36 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[riskAnalysisScenario], error) {
-					var resp struct {
-						Node *struct {
-							Typename  string                               `json:"__typename"`
-							Scenarios api.Connection[riskAnalysisScenario] `json:"scenarios"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("diagram %s not found", flagDiagram)
-					}
-
-					if resp.Node.Typename != "RiskAnalysisDiagram" {
-						return nil, fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Scenarios, nil
-				},
+				api.NodeConnection[riskAnalysisScenario]("scenarios", "RiskAnalysisDiagram", fmt.Sprintf("diagram %s not found", flagDiagram)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, scenarios)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				scenarios,
+				totalCount,
+				cmdutil.ListView[riskAnalysisScenario]{
+					Empty:   "No scenarios found.",
+					Noun:    "scenarios",
+					Headers: []string{"ID", "NAME", "DESCRIPTION", "CREATED AT"},
+					Row: func(s riskAnalysisScenario) ([]string, error) {
+						desc := ""
+						if s.Description != nil {
+							desc = *s.Description
+						}
 
-			if len(scenarios) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No scenarios found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(scenarios))
-			for _, s := range scenarios {
-				desc := ""
-				if s.Description != nil {
-					desc = *s.Description
-				}
-
-				rows = append(rows, []string{
-					s.ID,
-					s.Name,
-					desc,
-					cmdutil.FormatTime(s.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "DESCRIPTION", "CREATED AT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(scenarios) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d scenarios\n",
-					len(scenarios),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							s.ID,
+							s.Name,
+							desc,
+							cmdutil.FormatTime(s.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

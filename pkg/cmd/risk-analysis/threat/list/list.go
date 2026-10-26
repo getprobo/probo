@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -91,23 +90,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			if flagDiagram == "" {
 				return fmt.Errorf("diagram is required; pass --diagram")
@@ -133,66 +119,32 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[riskAnalysisThreat], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                             `json:"__typename"`
-							Threats  api.Connection[riskAnalysisThreat] `json:"threats"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("diagram %s not found", flagDiagram)
-					}
-
-					if resp.Node.Typename != "RiskAnalysisDiagram" {
-						return nil, fmt.Errorf("expected RiskAnalysisDiagram node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Threats, nil
-				},
+				api.NodeConnection[riskAnalysisThreat]("threats", "RiskAnalysisDiagram", fmt.Sprintf("diagram %s not found", flagDiagram)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, threats)
-			}
-
-			if len(threats) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No threats found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(threats))
-			for _, t := range threats {
-				rows = append(rows, []string{
-					t.ID,
-					t.Name,
-					t.Category,
-					t.ProcessId,
-					cmdutil.FormatTime(t.CreatedAt),
-				})
-			}
-
-			tbl := cmdutil.NewTable("ID", "NAME", "CATEGORY", "PROCESS", "CREATED AT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, tbl)
-
-			if totalCount > len(threats) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d threats\n",
-					len(threats),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				threats,
+				totalCount,
+				cmdutil.ListView[riskAnalysisThreat]{
+					Empty:   "No threats found.",
+					Noun:    "threats",
+					Headers: []string{"ID", "NAME", "CATEGORY", "PROCESS", "CREATED AT"},
+					Row: func(t riskAnalysisThreat) ([]string, error) {
+						return []string{
+							t.ID,
+							t.Name,
+							t.Category,
+							t.ProcessId,
+							cmdutil.FormatTime(t.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

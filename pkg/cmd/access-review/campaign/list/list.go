@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -84,23 +83,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			if flagOrg == "" {
 				flagOrg = hc.Organization
@@ -134,69 +120,31 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[campaignNode], error) {
-					var resp struct {
-						Node *struct {
-							Typename              string                       `json:"__typename"`
-							AccessReviewCampaigns api.Connection[campaignNode] `json:"accessReviewCampaigns"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.AccessReviewCampaigns, nil
-				},
+				api.NodeConnection[campaignNode]("accessReviewCampaigns", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				if campaigns == nil {
-					campaigns = []campaignNode{}
-				}
-
-				return cmdutil.PrintJSON(f.IOStreams.Out, campaigns)
-			}
-
-			if len(campaigns) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No access review campaigns found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(campaigns))
-			for _, c := range campaigns {
-				rows = append(rows, []string{
-					c.ID,
-					c.Name,
-					c.Status,
-					cmdutil.FormatTime(c.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "STATUS", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(campaigns) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d campaigns\n",
-					len(campaigns),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				campaigns,
+				totalCount,
+				cmdutil.ListView[campaignNode]{
+					Empty:   "No access review campaigns found.",
+					Noun:    "campaigns",
+					Headers: []string{"ID", "NAME", "STATUS", "CREATED"},
+					Row: func(c campaignNode) ([]string, error) {
+						return []string{
+							c.ID,
+							c.Name,
+							c.Status,
+							cmdutil.FormatTime(c.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

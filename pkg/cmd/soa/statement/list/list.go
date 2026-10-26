@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -87,23 +86,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -125,71 +111,37 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[applicabilityStatement], error) {
-					var resp struct {
-						Node *struct {
-							Typename                string                                 `json:"__typename"`
-							ApplicabilityStatements api.Connection[applicabilityStatement] `json:"applicabilityStatements"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("statement of applicability %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "StatementOfApplicability" {
-						return nil, fmt.Errorf("expected StatementOfApplicability node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.ApplicabilityStatements, nil
-				},
+				api.NodeConnection[applicabilityStatement]("applicabilityStatements", "StatementOfApplicability", fmt.Sprintf("statement of applicability %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, statements)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				statements,
+				totalCount,
+				cmdutil.ListView[applicabilityStatement]{
+					Empty:   "No applicability statements found.",
+					Noun:    "statements",
+					Headers: []string{"ID", "SECTION", "CONTROL", "APPLICABLE", "JUSTIFICATION"},
+					Row: func(s applicabilityStatement) ([]string, error) {
+						applicable := "No"
+						if s.Applicability {
+							applicable = "Yes"
+						}
 
-			if len(statements) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No applicability statements found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(statements))
-			for _, s := range statements {
-				applicable := "No"
-				if s.Applicability {
-					applicable = "Yes"
-				}
-
-				rows = append(rows, []string{
-					s.ID,
-					s.Control.SectionTitle,
-					s.Control.Name,
-					applicable,
-					s.Justification,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "SECTION", "CONTROL", "APPLICABLE", "JUSTIFICATION").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(statements) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d statements\n",
-					len(statements),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							s.ID,
+							s.Control.SectionTitle,
+							s.Control.Name,
+							applicable,
+							s.Justification,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

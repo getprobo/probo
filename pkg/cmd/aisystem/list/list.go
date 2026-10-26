@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -95,23 +94,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -180,87 +166,50 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[aiSystem], error) {
-					var resp struct {
-						Node *struct {
-							Typename  string                   `json:"__typename"`
-							AiSystems api.Connection[aiSystem] `json:"aiSystems"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.AiSystems, nil
-				},
+				api.NodeConnection[aiSystem]("aiSystems", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, systems)
-			}
-
-			if len(systems) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No AI systems found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(systems))
-			for _, system := range systems {
-				version := ""
-				if system.Version != nil {
-					version = *system.Version
-				}
-
-				risk := ""
-				if system.RiskClassification != nil {
-					risk = *system.RiskClassification
-				}
-
-				rows = append(
-					rows,
-					[]string{
-						system.ID,
-						system.Name,
-						version,
-						fmt.Sprintf("%v", system.CompanyRoles),
-						system.Status,
-						risk,
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				systems,
+				totalCount,
+				cmdutil.ListView[aiSystem]{
+					Empty: "No AI systems found.",
+					Noun:  "AI systems",
+					Headers: []string{
+						"ID",
+						"NAME",
+						"VERSION",
+						"COMPANY ROLES",
+						"STATUS",
+						"RISK CLASSIFICATION",
 					},
-				)
-			}
+					Row: func(system aiSystem) ([]string, error) {
+						version := ""
+						if system.Version != nil {
+							version = *system.Version
+						}
 
-			t := cmdutil.NewTable(
-				"ID",
-				"NAME",
-				"VERSION",
-				"COMPANY ROLES",
-				"STATUS",
-				"RISK CLASSIFICATION",
-			).Rows(rows...)
+						risk := ""
+						if system.RiskClassification != nil {
+							risk = *system.RiskClassification
+						}
 
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(systems) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d AI systems\n",
-					len(systems),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							system.ID,
+							system.Name,
+							version,
+							fmt.Sprintf("%v", system.CompanyRoles),
+							system.Status,
+							risk,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

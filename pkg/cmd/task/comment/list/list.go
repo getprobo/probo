@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -97,23 +96,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": flagTask,
@@ -128,70 +114,36 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[comment], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                  `json:"__typename"`
-							Comments api.Connection[comment] `json:"comments"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("task %s not found", flagTask)
-					}
-
-					if resp.Node.Typename != "Task" {
-						return nil, fmt.Errorf("expected Task node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Comments, nil
-				},
+				api.NodeConnection[comment]("comments", "Task", fmt.Sprintf("task %s not found", flagTask)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, comments)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				comments,
+				totalCount,
+				cmdutil.ListView[comment]{
+					Empty:   "No comments found.",
+					Noun:    "comments",
+					Headers: []string{"ID", "OWNER", "CONTENT", "CREATED"},
+					Row: func(c comment) ([]string, error) {
+						content, err := cmdutil.FormatRichText(c.Content)
+						if err != nil {
+							return nil, fmt.Errorf("cannot format comment content: %w", err)
+						}
 
-			if len(comments) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No comments found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(comments))
-			for _, c := range comments {
-				content, err := cmdutil.FormatRichText(c.Content)
-				if err != nil {
-					return fmt.Errorf("cannot format comment content: %w", err)
-				}
-
-				rows = append(rows, []string{
-					c.ID,
-					owner.Name(c.Owner),
-					content,
-					cmdutil.FormatTime(c.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "OWNER", "CONTENT", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(comments) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d comments\n",
-					len(comments),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							c.ID,
+							owner.Name(c.Owner),
+							content,
+							cmdutil.FormatTime(c.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

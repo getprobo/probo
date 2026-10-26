@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -70,23 +69,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -98,50 +84,36 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			var resp struct {
-				Node *struct {
-					Typename   string      `json:"__typename"`
-					Connectors []connector `json:"connectors"`
-				} `json:"node"`
-			}
-			if err := json.Unmarshal(data, &resp); err != nil {
+			connectors, err := api.NodeSlice[connector](
+				data,
+				"connectors",
+				"Organization",
+				fmt.Sprintf("organization %s not found", flagOrg),
+			)
+			if err != nil {
 				return fmt.Errorf("cannot parse response: %w", err)
 			}
 
-			if resp.Node == nil {
-				return fmt.Errorf("organization %s not found", flagOrg)
-			}
-
-			if resp.Node.Typename != "Organization" {
-				return fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-			}
-
-			connectors := resp.Node.Connectors
-
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, connectors)
-			}
-
-			if len(connectors) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No connectors found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(connectors))
-			for _, c := range connectors {
-				rows = append(rows, []string{
-					c.ID,
-					c.Name,
-					c.Provider,
-					c.Protocol,
-					cmdutil.FormatTime(c.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "PROVIDER", "PROTOCOL", "CREATED").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				connectors,
+				len(connectors),
+				cmdutil.ListView[connector]{
+					Empty:   "No connectors found.",
+					Noun:    "connectors",
+					Headers: []string{"ID", "NAME", "PROVIDER", "PROTOCOL", "CREATED"},
+					Row: func(c connector) ([]string, error) {
+						return []string{
+							c.ID,
+							c.Name,
+							c.Provider,
+							c.Protocol,
+							cmdutil.FormatTime(c.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

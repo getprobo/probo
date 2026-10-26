@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -89,23 +88,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -132,72 +118,38 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[obligation], error) {
-					var resp struct {
-						Node *struct {
-							Typename    string                     `json:"__typename"`
-							Obligations api.Connection[obligation] `json:"obligations"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Obligations, nil
-				},
+				api.NodeConnection[obligation]("obligations", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, obligations)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				obligations,
+				totalCount,
+				cmdutil.ListView[obligation]{
+					Empty:   "No obligations found.",
+					Noun:    "obligations",
+					Headers: []string{"ID", "AREA", "SOURCE", "STATUS", "TYPE", "DUE DATE"},
+					Row: func(o obligation) ([]string, error) {
+						dueDate := ""
+						if o.DueDate != nil {
+							dueDate = *o.DueDate
+						}
 
-			if len(obligations) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No obligations found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(obligations))
-			for _, o := range obligations {
-				dueDate := ""
-				if o.DueDate != nil {
-					dueDate = *o.DueDate
-				}
-
-				rows = append(rows, []string{
-					o.ID,
-					o.Area,
-					o.Source,
-					o.Status,
-					o.Type,
-					dueDate,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "AREA", "SOURCE", "STATUS", "TYPE", "DUE DATE").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(obligations) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d obligations\n",
-					len(obligations),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							o.ID,
+							o.Area,
+							o.Source,
+							o.Status,
+							o.Type,
+							dueDate,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

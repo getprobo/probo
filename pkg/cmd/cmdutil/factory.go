@@ -26,10 +26,42 @@ import (
 	"go.probo.inc/probo/pkg/cmd/iostreams"
 )
 
+const (
+	// ConsoleEndpoint is the console GraphQL API used by organization records.
+	ConsoleEndpoint = "/api/console/v1/graphql"
+
+	// ConnectEndpoint is the connect GraphQL API used by the signed-in user.
+	ConnectEndpoint = "/api/connect/v1/graphql"
+)
+
 type Factory struct {
 	IOStreams *iostreams.IOStreams
 	Version   string
 	Config    func() (*config.Config, error)
+}
+
+// GraphQLClient loads the active host and returns an authenticated client.
+// hc is the host configuration, including the saved default organization.
+func (f *Factory) GraphQLClient(endpoint string) (*api.Client, *config.HostConfig, error) {
+	cfg, err := f.Config()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	host, hc, err := cfg.DefaultHost()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := api.NewClient(
+		host,
+		hc.Token,
+		endpoint,
+		cfg.HTTPTimeoutDuration(),
+		TokenRefreshOption(cfg, host, hc),
+	)
+
+	return client, hc, nil
 }
 
 // TokenRefreshOption returns an api.Option that enables automatic access

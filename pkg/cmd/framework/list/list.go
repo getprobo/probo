@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -78,23 +77,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -121,69 +107,35 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[framework], error) {
-					var resp struct {
-						Node *struct {
-							Typename   string                    `json:"__typename"`
-							Frameworks api.Connection[framework] `json:"frameworks"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Frameworks, nil
-				},
+				api.NodeConnection[framework]("frameworks", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, frameworks)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				frameworks,
+				totalCount,
+				cmdutil.ListView[framework]{
+					Empty:   "No frameworks found.",
+					Noun:    "frameworks",
+					Headers: []string{"ID", "NAME", "DESCRIPTION"},
+					Row: func(fw framework) ([]string, error) {
+						desc := ""
+						if fw.Description != nil {
+							desc = *fw.Description
+						}
 
-			if len(frameworks) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No frameworks found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(frameworks))
-			for _, fw := range frameworks {
-				desc := ""
-				if fw.Description != nil {
-					desc = *fw.Description
-				}
-
-				rows = append(rows, []string{
-					fw.ID,
-					fw.Name,
-					desc,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "DESCRIPTION").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(frameworks) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d frameworks\n",
-					len(frameworks),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							fw.ID,
+							fw.Name,
+							desc,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

@@ -21,7 +21,6 @@
 package listapprovalquorums
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -78,22 +77,10 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -127,64 +114,30 @@ func NewCmdListApprovalQuorums(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[approvalQuorum], error) {
-					var resp struct {
-						Node *struct {
-							Typename        string                         `json:"__typename"`
-							ApprovalQuorums api.Connection[approvalQuorum] `json:"approvalQuorums"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("document version %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "DocumentVersion" {
-						return nil, fmt.Errorf("expected DocumentVersion node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.ApprovalQuorums, nil
-				},
+				api.NodeConnection[approvalQuorum]("approvalQuorums", "DocumentVersion", fmt.Sprintf("document version %s not found", args[0])),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, quorums)
-			}
-
-			if len(quorums) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No approval quorums found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(quorums))
-			for _, q := range quorums {
-				rows = append(rows, []string{
-					q.ID,
-					q.Status,
-					cmdutil.FormatTime(q.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "STATUS", "CREATED AT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(quorums) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d approval quorums\n",
-					len(quorums),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				quorums,
+				totalCount,
+				cmdutil.ListView[approvalQuorum]{
+					Empty:   "No approval quorums found.",
+					Noun:    "approval quorums",
+					Headers: []string{"ID", "STATUS", "CREATED AT"},
+					Row: func(q approvalQuorum) ([]string, error) {
+						return []string{
+							q.ID,
+							q.Status,
+							cmdutil.FormatTime(q.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

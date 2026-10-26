@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -86,23 +85,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{"id": flagCategoryID}
 
@@ -111,74 +97,46 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[trackerPattern], error) {
-					var resp struct {
-						Node *struct {
-							Typename        string                         `json:"__typename"`
-							TrackerPatterns api.Connection[trackerPattern] `json:"trackerPatterns"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("cookie category %s not found", flagCategoryID)
-					}
-
-					if resp.Node.Typename != "CookieCategory" {
-						return nil, fmt.Errorf("expected CookieCategory node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.TrackerPatterns, nil
-				},
+				api.NodeConnection[trackerPattern]("trackerPatterns", "CookieCategory", fmt.Sprintf("cookie category %s not found", flagCategoryID)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, patterns)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				patterns,
+				totalCount,
+				cmdutil.ListView[trackerPattern]{
+					Empty:   "No tracker patterns found.",
+					Noun:    "tracker patterns",
+					Headers: []string{"ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION"},
+					Row: func(p trackerPattern) ([]string, error) {
+						excluded := ""
+						if p.Excluded {
+							excluded = "yes"
+						}
 
-			if len(patterns) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No tracker patterns found.")
-				return nil
-			}
+						source := ""
+						if p.Source != nil {
+							source = *p.Source
+						}
 
-			rows := make([][]string, 0, len(patterns))
-			for _, p := range patterns {
-				excluded := ""
-				if p.Excluded {
-					excluded = "yes"
-				}
+						commonPatternID := ""
+						if p.CommonTrackerPatternID != nil {
+							commonPatternID = *p.CommonTrackerPatternID
+						}
 
-				source := ""
-				if p.Source != nil {
-					source = *p.Source
-				}
+						attribution := ""
+						if p.Attribution != nil {
+							attribution = *p.Attribution
+						}
 
-				commonPatternID := ""
-				if p.CommonTrackerPatternID != nil {
-					commonPatternID = *p.CommonTrackerPatternID
-				}
-
-				attribution := ""
-				if p.Attribution != nil {
-					attribution = *p.Attribution
-				}
-
-				rows = append(rows, []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, source, excluded, commonPatternID, attribution})
-			}
-
-			t := cmdutil.NewTable("ID", "PATTERN", "MATCH TYPE", "TRACKER TYPE", "SOURCE", "EXCLUDED", "COMMON PATTERN ID", "ATTRIBUTION").Rows(rows...)
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(patterns) {
-				_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d tracker patterns\n", len(patterns), totalCount)
-			}
-
-			return nil
+						return []string{p.ID, p.Pattern, p.MatchType, p.TrackerType, source, excluded, commonPatternID, attribution}, nil
+					},
+				},
+			)
 		},
 	}
 

@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -91,23 +90,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -135,69 +121,35 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[employeePortal], error) {
-					var resp struct {
-						Node *struct {
-							Typename        string                          `json:"__typename"`
-							EmployeePortals *api.Connection[employeePortal] `json:"employeePortals"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					if resp.Node.EmployeePortals == nil {
-						return nil, fmt.Errorf("employee portal list is unavailable")
-					}
-
-					return resp.Node.EmployeePortals, nil
-				},
+				api.NodeConnection[employeePortal](
+					"employeePortals",
+					"Organization",
+					fmt.Sprintf("organization %s not found", flagOrg),
+				),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, portals)
-			}
-
-			if len(portals) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No employee portals found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(portals))
-			for _, portal := range portals {
-				rows = append(rows, []string{
-					portal.ID,
-					portal.Name,
-					strconv.FormatBool(portal.Active),
-					strconv.FormatBool(portal.Capabilities.DeviceAgent),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "ACTIVE", "DEVICE AGENT").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(portals) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d employee portals\n",
-					len(portals),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				portals,
+				totalCount,
+				cmdutil.ListView[employeePortal]{
+					Empty:   "No employee portals found.",
+					Noun:    "employee portals",
+					Headers: []string{"ID", "NAME", "ACTIVE", "DEVICE AGENT"},
+					Row: func(portal employeePortal) ([]string, error) {
+						return []string{
+							portal.ID,
+							portal.Name,
+							strconv.FormatBool(portal.Active),
+							strconv.FormatBool(portal.Capabilities.DeviceAgent),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

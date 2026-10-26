@@ -21,7 +21,6 @@
 package listlinearteams
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -73,23 +72,10 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": args[0],
@@ -103,27 +89,11 @@ func NewCmdListLinearTeams(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[linearTeam], error) {
-					var resp struct {
-						Node *struct {
-							Typename    string                     `json:"__typename"`
-							LinearTeams api.Connection[linearTeam] `json:"linearTeams"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, fmt.Errorf("cannot parse Linear teams: %w", err)
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", args[0])
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.LinearTeams, nil
-				},
+				api.NodeConnection[linearTeam](
+					"linearTeams",
+					"Organization",
+					fmt.Sprintf("organization %s not found", args[0]),
+				),
 			)
 			if err != nil {
 				return fmt.Errorf("cannot list Linear teams: %w", err)

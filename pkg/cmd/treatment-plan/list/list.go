@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -182,23 +181,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("--as-of requires --risk-analysis")
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			query := listByOrgQuery
 			parentID := flagOrg
@@ -287,63 +273,33 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				query,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[treatmentPlan], error) {
-					var resp struct {
-						Node *struct {
-							Typename       string                        `json:"__typename"`
-							TreatmentPlans api.Connection[treatmentPlan] `json:"treatmentPlans"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil || resp.Node.Typename != expectedType {
-						return nil, fmt.Errorf("%s %s not found", expectedType, parentID)
-					}
-
-					return &resp.Node.TreatmentPlans, nil
-				},
+				api.NodeConnectionOrMissing[treatmentPlan]("treatmentPlans", expectedType, fmt.Sprintf("%s %s not found", expectedType, parentID)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, plans)
-			}
-
-			if len(plans) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No treatment plans found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(plans))
-			for _, p := range plans {
-				rows = append(rows, []string{
-					p.ID,
-					p.Treatment,
-					p.tableCategory(),
-					fmt.Sprintf("%d", p.InherentRiskScore),
-					fmt.Sprintf("%d", p.ResidualRiskScore),
-					fmt.Sprintf("%d", p.NetRiskScore),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "TREATMENT", "CATEGORY", "INHERENT", "RESIDUAL", "NET").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(plans) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d treatment plans\n",
-					len(plans),
-					totalCount,
-				)
-			}
-
-			return nil
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				plans,
+				totalCount,
+				cmdutil.ListView[treatmentPlan]{
+					Empty:   "No treatment plans found.",
+					Noun:    "treatment plans",
+					Headers: []string{"ID", "TREATMENT", "CATEGORY", "INHERENT", "RESIDUAL", "NET"},
+					Row: func(p treatmentPlan) ([]string, error) {
+						return []string{
+							p.ID,
+							p.Treatment,
+							p.tableCategory(),
+							fmt.Sprintf("%d", p.InherentRiskScore),
+							fmt.Sprintf("%d", p.ResidualRiskScore),
+							fmt.Sprintf("%d", p.NetRiskScore),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

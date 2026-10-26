@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -93,23 +92,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -142,72 +128,38 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[internalControl], error) {
-					var resp struct {
-						Node *struct {
-							Typename         string                          `json:"__typename"`
-							InternalControls api.Connection[internalControl] `json:"internalControls"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.InternalControls, nil
-				},
+				api.NodeConnection[internalControl]("internalControls", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, internalControls)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				internalControls,
+				totalCount,
+				cmdutil.ListView[internalControl]{
+					Empty:   "No internal controls found.",
+					Noun:    "internal controls",
+					Headers: []string{"ID", "CODE", "NAME", "CATEGORY", "STATUS", "STATE"},
+					Row: func(m internalControl) ([]string, error) {
+						code := ""
+						if m.Code != nil {
+							code = *m.Code
+						}
 
-			if len(internalControls) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No internal controls found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(internalControls))
-			for _, m := range internalControls {
-				code := ""
-				if m.Code != nil {
-					code = *m.Code
-				}
-
-				rows = append(rows, []string{
-					m.ID,
-					code,
-					m.Name,
-					m.Category,
-					m.ImplementationStatus,
-					m.State,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "CODE", "NAME", "CATEGORY", "STATUS", "STATE").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(internalControls) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d internal controls\n",
-					len(internalControls),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							m.ID,
+							code,
+							m.Name,
+							m.Category,
+							m.ImplementationStatus,
+							m.State,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

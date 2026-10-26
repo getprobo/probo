@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -89,23 +88,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": flagInternalControl,
@@ -127,77 +113,43 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[evidence], error) {
-					var resp struct {
-						Node *struct {
-							Typename  string                   `json:"__typename"`
-							Evidences api.Connection[evidence] `json:"evidences"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("internal control %s not found", flagInternalControl)
-					}
-
-					if resp.Node.Typename != "InternalControl" {
-						return nil, fmt.Errorf("expected InternalControl node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Evidences, nil
-				},
+				api.NodeConnection[evidence]("evidences", "InternalControl", fmt.Sprintf("internal control %s not found", flagInternalControl)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, evidences)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				evidences,
+				totalCount,
+				cmdutil.ListView[evidence]{
+					Empty:   "No evidences found.",
+					Noun:    "evidences",
+					Headers: []string{"ID", "TYPE", "STATE", "DESCRIPTION", "CREATED"},
+					Row: func(e evidence) ([]string, error) {
+						desc := "-"
 
-			if len(evidences) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No evidences found.")
-				return nil
-			}
+						if e.Description != nil && *e.Description != "" {
+							d := *e.Description
+							if len(d) > 60 {
+								d = d[:57] + "..."
+							}
 
-			rows := make([][]string, 0, len(evidences))
-			for _, e := range evidences {
-				desc := "-"
+							desc = d
+						}
 
-				if e.Description != nil && *e.Description != "" {
-					d := *e.Description
-					if len(d) > 60 {
-						d = d[:57] + "..."
-					}
-
-					desc = d
-				}
-
-				rows = append(rows, []string{
-					e.ID,
-					e.Type,
-					e.State,
-					desc,
-					cmdutil.FormatTime(e.CreatedAt),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "TYPE", "STATE", "DESCRIPTION", "CREATED").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(evidences) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d evidences\n",
-					len(evidences),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							e.ID,
+							e.Type,
+							e.State,
+							desc,
+							cmdutil.FormatTime(e.CreatedAt),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

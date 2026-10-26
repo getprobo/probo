@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -96,23 +95,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -169,79 +155,42 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[businessFunction], error) {
-					var resp struct {
-						Node *struct {
-							Typename          string                           `json:"__typename"`
-							BusinessFunctions api.Connection[businessFunction] `json:"businessFunctions"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.BusinessFunctions, nil
-				},
+				api.NodeConnection[businessFunction]("businessFunctions", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, businessFunctions)
-			}
-
-			if len(businessFunctions) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No business functions found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(businessFunctions))
-			for _, bf := range businessFunctions {
-				rows = append(
-					rows,
-					[]string{
-						bf.ID,
-						bf.ReferenceID,
-						bf.Name,
-						bf.Classification,
-						fmt.Sprintf("%d", bf.MTDMinutes),
-						fmt.Sprintf("%d", bf.RTOMinutes),
-						fmt.Sprintf("%d", bf.RPOMinutes),
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				businessFunctions,
+				totalCount,
+				cmdutil.ListView[businessFunction]{
+					Empty: "No business functions found.",
+					Noun:  "business functions",
+					Headers: []string{
+						"ID",
+						"REFERENCE ID",
+						"NAME",
+						"CLASSIFICATION",
+						"MTD",
+						"RTO",
+						"RPO",
 					},
-				)
-			}
-
-			t := cmdutil.NewTable(
-				"ID",
-				"REFERENCE ID",
-				"NAME",
-				"CLASSIFICATION",
-				"MTD",
-				"RTO",
-				"RPO",
-			).Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(businessFunctions) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d business functions\n",
-					len(businessFunctions),
-					totalCount,
-				)
-			}
-
-			return nil
+					Row: func(bf businessFunction) ([]string, error) {
+						return []string{
+							bf.ID,
+							bf.ReferenceID,
+							bf.Name,
+							bf.Classification,
+							fmt.Sprintf("%d", bf.MTDMinutes),
+							fmt.Sprintf("%d", bf.RTOMinutes),
+							fmt.Sprintf("%d", bf.RPOMinutes),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -174,23 +173,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			flagOrg, err = cmdutil.ResolveOrganization(flagOrg, hc.Organization)
 			if err != nil {
@@ -280,39 +266,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				query,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[device], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                 `json:"__typename"`
-							Devices  api.Connection[device] `json:"devices"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("organization %s not found", flagOrg)
-					}
-
-					if resp.Node.Typename != "Organization" {
-						return nil, fmt.Errorf("expected Organization node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Devices, nil
-				},
+				api.NodeConnection[device]("devices", "Organization", fmt.Sprintf("organization %s not found", flagOrg)),
 			)
 			if err != nil {
 				return err
-			}
-
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, devices)
-			}
-
-			if len(devices) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No devices found.")
-				return nil
 			}
 
 			headers := []string{"ID", "STATE", "HOSTNAME", "PLATFORM"}
@@ -320,35 +277,30 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				headers = append(headers, "POSTURES")
 			}
 
-			rows := make([][]string, 0, len(devices))
-			for _, d := range devices {
-				row := []string{
-					d.ID,
-					d.State,
-					ref.UnrefOrZero(d.Hostname),
-					ref.UnrefOrZero(d.Platform),
-				}
-				if flagPostures {
-					row = append(row, fmt.Sprintf("%d", len(d.LatestPostures)))
-				}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				devices,
+				totalCount,
+				cmdutil.ListView[device]{
+					Empty:   "No devices found.",
+					Noun:    "devices",
+					Headers: headers,
+					Row: func(d device) ([]string, error) {
+						row := []string{
+							d.ID,
+							d.State,
+							ref.UnrefOrZero(d.Hostname),
+							ref.UnrefOrZero(d.Platform),
+						}
+						if flagPostures {
+							row = append(row, fmt.Sprintf("%d", len(d.LatestPostures)))
+						}
 
-				rows = append(rows, row)
-			}
-
-			t := cmdutil.NewTable(headers...).Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(devices) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d devices\n",
-					len(devices),
-					totalCount,
-				)
-			}
-
-			return nil
+						return row, nil
+					},
+				},
+			)
 		},
 	}
 

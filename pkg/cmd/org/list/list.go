@@ -21,9 +21,6 @@
 package list
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"go.probo.inc/probo/pkg/cli/api"
 	"go.probo.inc/probo/pkg/cmd/cmdutil"
@@ -97,23 +94,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConnectEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/connect/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"filter": map[string]any{
@@ -126,74 +110,49 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[profile], error) {
-					var resp struct {
-						Viewer struct {
-							Profiles api.Connection[profile] `json:"profiles"`
-						} `json:"viewer"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					return &resp.Viewer.Profiles, nil
-				},
+				api.ViewerConnection[profile]("profiles"),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, profiles)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				profiles,
+				totalCount,
+				cmdutil.ListView[profile]{
+					Empty:   "No organizations found.",
+					Noun:    "organizations",
+					Headers: []string{"ID", "NAME", "LEGAL NAME", "ROLE"},
+					Row: func(p profile) ([]string, error) {
+						orgID := ""
+						orgName := ""
+						legalName := ""
 
-			if len(profiles) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No organizations found.")
-				return nil
-			}
+						if p.Organization != nil {
+							orgID = p.Organization.ID
+							orgName = p.Organization.Name
 
-			rows := make([][]string, 0, len(profiles))
-			for _, p := range profiles {
-				orgID := ""
-				orgName := ""
-				legalName := ""
+							if p.Organization.LegalName != nil {
+								legalName = *p.Organization.LegalName
+							}
+						}
 
-				if p.Organization != nil {
-					orgID = p.Organization.ID
-					orgName = p.Organization.Name
+						role := ""
+						if p.Membership != nil {
+							role = p.Membership.Role
+						}
 
-					if p.Organization.LegalName != nil {
-						legalName = *p.Organization.LegalName
-					}
-				}
-
-				role := ""
-				if p.Membership != nil {
-					role = p.Membership.Role
-				}
-
-				rows = append(rows, []string{
-					orgID,
-					orgName,
-					legalName,
-					role,
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "NAME", "LEGAL NAME", "ROLE").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(profiles) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d organizations\n",
-					len(profiles),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							orgID,
+							orgName,
+							legalName,
+							role,
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

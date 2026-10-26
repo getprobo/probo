@@ -21,7 +21,6 @@
 package list
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -92,23 +91,10 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
-			cfg, err := f.Config()
+			client, _, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
 			if err != nil {
 				return err
 			}
-
-			host, hc, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			client := api.NewClient(
-				host,
-				hc.Token,
-				"/api/console/v1/graphql",
-				cfg.HTTPTimeoutDuration(),
-				cmdutil.TokenRefreshOption(cfg, host, hc),
-			)
 
 			variables := map[string]any{
 				"id": flagFramework,
@@ -136,71 +122,37 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				func(data json.RawMessage) (*api.Connection[control], error) {
-					var resp struct {
-						Node *struct {
-							Typename string                  `json:"__typename"`
-							Controls api.Connection[control] `json:"controls"`
-						} `json:"node"`
-					}
-					if err := json.Unmarshal(data, &resp); err != nil {
-						return nil, err
-					}
-
-					if resp.Node == nil {
-						return nil, fmt.Errorf("framework %s not found", flagFramework)
-					}
-
-					if resp.Node.Typename != "Framework" {
-						return nil, fmt.Errorf("expected Framework node, got %s", resp.Node.Typename)
-					}
-
-					return &resp.Node.Controls, nil
-				},
+				api.NodeConnection[control]("controls", "Framework", fmt.Sprintf("framework %s not found", flagFramework)),
 			)
 			if err != nil {
 				return err
 			}
 
-			if *flagOutput == cmdutil.OutputJSON {
-				return cmdutil.PrintJSON(f.IOStreams.Out, controls)
-			}
+			return cmdutil.PrintList(
+				f.IOStreams,
+				*flagOutput,
+				controls,
+				totalCount,
+				cmdutil.ListView[control]{
+					Empty:   "No controls found.",
+					Noun:    "controls",
+					Headers: []string{"ID", "SECTION", "NAME", "BEST PRACTICE", "MATURITY"},
+					Row: func(c control) ([]string, error) {
+						bp := "No"
+						if c.BestPractice {
+							bp = "Yes"
+						}
 
-			if len(controls) == 0 {
-				_, _ = fmt.Fprintln(f.IOStreams.Out, "No controls found.")
-				return nil
-			}
-
-			rows := make([][]string, 0, len(controls))
-			for _, c := range controls {
-				bp := "No"
-				if c.BestPractice {
-					bp = "Yes"
-				}
-
-				rows = append(rows, []string{
-					c.ID,
-					c.SectionTitle,
-					c.Name,
-					bp,
-					docgen.MaturityLabel(coredata.ControlMaturityLevel(c.MaturityLevel)),
-				})
-			}
-
-			t := cmdutil.NewTable("ID", "SECTION", "NAME", "BEST PRACTICE", "MATURITY").Rows(rows...)
-
-			_, _ = fmt.Fprintln(f.IOStreams.Out, t)
-
-			if totalCount > len(controls) {
-				_, _ = fmt.Fprintf(
-					f.IOStreams.ErrOut,
-					"\nShowing %d of %d controls\n",
-					len(controls),
-					totalCount,
-				)
-			}
-
-			return nil
+						return []string{
+							c.ID,
+							c.SectionTitle,
+							c.Name,
+							bp,
+							docgen.MaturityLabel(coredata.ControlMaturityLevel(c.MaturityLevel)),
+						}, nil
+					},
+				},
+			)
 		},
 	}
 

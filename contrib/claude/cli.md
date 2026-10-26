@@ -50,15 +50,14 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// 1. Validate output flag
-			// 2. Load config, get host + token
-			// 3. Create api.Client
-			// 4. Resolve --org (flag or config default)
-			// 5. Call API
-			// 6. Output results
+			// 2. f.GraphQLClient (config, host, token, refresh)
+			// 3. Resolve --org (flag or config default)
+			// 4. Call API
+			// 5. cmdutil.PrintList
 		},
 	}
 
-	cmd.Flags().StringVar(&flagOrg, "org", "", "Organization ID")
+	cmdutil.AddOrganizationFlag(cmd, &flagOrg, "Organization ID")
 	cmd.Flags().IntVarP(&flagLimit, "limit", "L", 30, "Maximum number of items")
 	flagOutput = cmdutil.AddOutputFlag(cmd)
 
@@ -68,48 +67,58 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 ## Pagination with `api.Paginate[T]`
 
+List commands share the client, the node extract, and the printer. `Factory.GraphQLClient` loads the active host. Pass `cmdutil.ConsoleEndpoint` for organization records and `cmdutil.ConnectEndpoint` for the signed-in user (`org list`, SCIM events).
+
 ```go
+client, hc, err := f.GraphQLClient(cmdutil.ConsoleEndpoint)
+if err != nil {
+	return err
+}
+
 resources, totalCount, err := api.Paginate(
 	client,
 	listQuery,
 	variables,
 	flagLimit,
-	func(data json.RawMessage) (*api.Connection[resource], error) {
-		var resp struct {
-			Node *struct {
-				Typename  string                   `json:"__typename"`
-				Resources api.Connection[resource]  `json:"resources"`
-			} `json:"node"`
-		}
-		if err := json.Unmarshal(data, &resp); err != nil {
-			return nil, err
-		}
-		if resp.Node == nil {
-			return nil, fmt.Errorf("organization %s not found", flagOrg)
-		}
-		return &resp.Node.Resources, nil
-	},
+	api.NodeConnection[resource](
+		"resources",
+		"Organization",
+		fmt.Sprintf("organization %s not found", flagOrg),
+	),
 )
 ```
+
+`api.NodeConnection` reads `data.node.<field>`. A null node returns the not-found string. A different `__typename` returns `expected <type> node, got <actual>`. `api.Paginate` wraps that error as `cannot parse response`.
+
+Use the variant that matches the response:
+
+- `NodeConnectionOrMissing` when a wrong `__typename` is also not-found (risk and treatment-plan lists choose the parent at runtime).
+- `NodeNestedConnection` when the connection sits under a child object (`node.trustCenter.commitmentGroups`).
+- `ViewerConnection` for `data.viewer.<field>` (`org list`).
+- `RootConnection` for a top-level field (GVL catalog).
+- `NodeSlice` for a JSON array that is not a Relay connection (`connector list`). Pass `len(items)` as the total so the truncation line stays absent.
 
 ## Output formatting
 
 **JSON output:** `--json` is shorthand for `--output json` / `-o json`. Do not combine `--json` with a different `--output` value.
 
-```go
-if *flagOutput == cmdutil.OutputJSON {
-	return cmdutil.PrintJSON(f.IOStreams.Out, resources)
-}
-```
+**List output:** `PrintList` writes JSON (a null slice becomes `[]`), the empty sentence, the table, and `Showing n of m <noun>` on stderr when the server total is larger than the page. `Empty` and `Noun` can differ (`No access review campaigns found.` vs `campaigns`).
 
-**Table output:**
 ```go
-rows := make([][]string, 0, len(resources))
-for _, r := range resources {
-	rows = append(rows, []string{r.ID, r.Name})
-}
-t := cmdutil.NewTable("ID", "NAME").Rows(rows...)
-_, _ = fmt.Fprintln(f.IOStreams.Out, t)
+return cmdutil.PrintList(
+	f.IOStreams,
+	*flagOutput,
+	resources,
+	totalCount,
+	cmdutil.ListView[resource]{
+		Empty:   "No resources found.",
+		Noun:    "resources",
+		Headers: []string{"ID", "NAME"},
+		Row: func(r resource) ([]string, error) {
+			return []string{r.ID, r.Name}, nil
+		},
+	},
+)
 ```
 
 **View detail output with lipgloss:**
@@ -120,13 +129,6 @@ label := lipgloss.NewStyle().Foreground(lipgloss.Color("242")).Width(22)
 _, _ = fmt.Fprintf(out, "%s\n\n", bold.Render(r.Name))
 _, _ = fmt.Fprintf(out, "%s%s\n", label.Render("ID:"), r.ID)
 _, _ = fmt.Fprintf(out, "%s%s\n", label.Render("Created:"), cmdutil.FormatTime(r.CreatedAt))
-```
-
-**Truncation message** (stderr, not stdout):
-```go
-if totalCount > len(resources) {
-	_, _ = fmt.Fprintf(f.IOStreams.ErrOut, "\nShowing %d of %d resources\n", len(resources), totalCount)
-}
 ```
 
 ## Interactive prompts with `charmbracelet/huh`
