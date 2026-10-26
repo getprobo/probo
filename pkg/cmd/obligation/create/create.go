@@ -82,7 +82,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
   prb obligation create
 
   # Create an obligation non-interactively
-  prb obligation create --area "Data Protection" --source "GDPR Article 5" --status NON_COMPLIANT --type LEGAL`,
+  prb obligation create --area "Data Protection" --source "GDPR Article 5" --status NON_COMPLIANT --type LEGAL --owner <profile-id>`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
 			if err != nil {
@@ -151,6 +151,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 							huh.NewOption("Contractual", "CONTRACTUAL"),
 						).
 						Value(&flagType).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+
+				if flagOwner == "" {
+					err := huh.NewInput().
+						Title("Owner profile ID").
+						Value(&flagOwner).
 						Run()
 					if err != nil {
 						return err

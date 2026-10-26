@@ -105,6 +105,59 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return err
 			}
 
+			if flagRole != "" {
+				if err := cmdutil.ValidateEnum("role", flagRole, []string{"CONTROLLER", "PROCESSOR"}); err != nil {
+					return err
+				}
+			}
+
+			if flagLawfulBasis != "" {
+				if err := cmdutil.ValidateEnum(
+					"lawful-basis",
+					flagLawfulBasis,
+					[]string{
+						"LEGITIMATE_INTEREST",
+						"CONSENT",
+						"CONTRACTUAL_NECESSITY",
+						"LEGAL_OBLIGATION",
+						"VITAL_INTERESTS",
+						"PUBLIC_TASK",
+					},
+				); err != nil {
+					return err
+				}
+			}
+
+			if flagSpecialOrCriminal != "" {
+				if err := cmdutil.ValidateEnum(
+					"special-or-criminal-data",
+					flagSpecialOrCriminal,
+					[]string{"YES", "NO", "POSSIBLE"},
+				); err != nil {
+					return err
+				}
+			}
+
+			if flagDPIA != "" {
+				if err := cmdutil.ValidateEnum(
+					"data-protection-impact-assessment",
+					flagDPIA,
+					[]string{"NEEDED", "NOT_NEEDED"},
+				); err != nil {
+					return err
+				}
+			}
+
+			if flagTIA != "" {
+				if err := cmdutil.ValidateEnum(
+					"transfer-impact-assessment",
+					flagTIA,
+					[]string{"NEEDED", "NOT_NEEDED"},
+				); err != nil {
+					return err
+				}
+			}
+
 			if f.IOStreams.IsInteractive() {
 				if flagName == "" {
 					err := huh.NewInput().

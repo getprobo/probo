@@ -23,6 +23,7 @@ package create
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
@@ -125,6 +126,43 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
+				if !cmd.Flags().Changed("amount") {
+					var amount string
+
+					err := huh.NewInput().
+						Title("Amount").
+						Value(&amount).
+						Run()
+					if err != nil {
+						return err
+					}
+
+					flagAmount, err = strconv.Atoi(amount)
+					if err != nil {
+						return fmt.Errorf("amount must be an integer")
+					}
+				}
+
+				if flagOwner == "" {
+					err := huh.NewInput().
+						Title("Owner profile ID").
+						Value(&flagOwner).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
+
+				if flagDataTypesStored == "" {
+					err := huh.NewInput().
+						Title("Data types stored").
+						Value(&flagDataTypesStored).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			if flagName == "" {
@@ -136,7 +174,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if flagAmount < 1 {
-				return fmt.Errorf("amount is required; pass --amount")
+				return fmt.Errorf("amount must be at least 1; pass --amount")
 			}
 
 			if flagOwner == "" {
