@@ -246,6 +246,44 @@ const curatedCorpus: CorpusEntry[] = [
     },
   },
   {
+    name: "image-and-file",
+    doc: {
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Before" }] },
+        {
+          type: "image",
+          attrs: { alt: "diagram", fileId: "file-1", width: 50 },
+        },
+        {
+          type: "file",
+          attrs: {
+            fileId: "file-2",
+            fileName: "report.pdf",
+            mimeType: "application/pdf",
+            size: 12,
+          },
+        },
+        { type: "paragraph", content: [{ type: "text", text: "After" }] },
+      ],
+    },
+  },
+  {
+    name: "image-inside-blockquote",
+    doc: {
+      type: "doc",
+      content: [
+        {
+          type: "blockquote",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Note" }] },
+            { type: "image", attrs: { alt: "sketch", fileId: "file-3" } },
+          ],
+        },
+      ],
+    },
+  },
+  {
     name: "horizontal-rule-between-paragraphs",
     doc: {
       type: "doc",
@@ -729,12 +767,39 @@ function tableDocument(): unknown {
   };
 }
 
+function attachmentAttrs(
+  source: Record<string, unknown>,
+  strings: string[],
+  numbers: string[],
+): Record<string, unknown> | undefined {
+  const attrs: Record<string, unknown> = {};
+  for (const key of strings) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim() !== "") {
+      attrs[key] = value;
+    }
+  }
+  for (const key of numbers) {
+    const value = source[key];
+    if (typeof value !== "number" || !Number.isFinite(value)) continue;
+    if (key === "width" && (value <= 0 || value > 100)) continue;
+    if (key === "size" && value < 0) continue;
+    attrs[key] = value;
+  }
+
+  return Object.keys(attrs).length > 0 ? attrs : undefined;
+}
+
 function canonicalAttrs(
   type: string,
   attrs: Record<string, unknown> | undefined,
 ): Record<string, unknown> | undefined {
   const source = attrs ?? {};
   switch (type) {
+    case "image":
+      return attachmentAttrs(source, ["fileId", "src", "alt", "title"], ["width"]);
+    case "file":
+      return attachmentAttrs(source, ["fileId", "fileName", "mimeType"], ["size"]);
     case "heading":
       return { level: source.level };
     case "codeBlock":

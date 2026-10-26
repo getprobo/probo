@@ -52,6 +52,8 @@ const supportedNodeNames = new Set([
   "blockquote",
   "codeBlock",
   "horizontalRule",
+  "image",
+  "file",
   "hardBreak",
   "bulletList",
   "orderedList",
@@ -136,7 +138,11 @@ export function reconcileRichEditorAutomergeDocument(
 ): void {
   let hasStructuralLeaf = false;
   document.descendants((node) => {
-    if (node.type.name === "horizontalRule") {
+    if (
+      node.type.name === "horizontalRule"
+      || node.type.name === "image"
+      || node.type.name === "file"
+    ) {
       hasStructuralLeaf = true;
       return false;
     }
@@ -289,6 +295,22 @@ function automergeNodeMapping(name: string): MappedNodeSpec["automerge"] {
       };
     case "horizontalRule":
       return { block: "horizontal-rule" };
+    case "image":
+      return {
+        block: "image",
+        attrParsers: {
+          fromAutomerge: block => imageAttrsFromBlock(block.attrs),
+          fromProsemirror: node => imageAttrsFromBlock(node.attrs),
+        },
+      };
+    case "file":
+      return {
+        block: "file",
+        attrParsers: {
+          fromAutomerge: block => fileAttrsFromBlock(block.attrs),
+          fromProsemirror: node => fileAttrsFromBlock(node.attrs),
+        },
+      };
     case "hardBreak":
       return { block: "hard-break", isEmbed: true };
     case "listItem":
@@ -379,6 +401,8 @@ export function markAutomergeStructuralBlocks(
   const type = node.type;
   if (
     type === "horizontalRule"
+    || type === "image"
+    || type === "file"
     || type === "table"
     || type === "tableRow"
     || type === "tableCell"
@@ -393,6 +417,41 @@ export function markAutomergeStructuralBlocks(
   for (const child of node.content) {
     if (isJSONObject(child)) markAutomergeStructuralBlocks(child);
   }
+}
+
+function imageAttrsFromBlock(attributes: unknown): Record<string, string | number> {
+  const attrs = presentStrings(attributes, ["fileId", "src", "alt", "title"]);
+  const width = readNumberAttribute(attributes, "width", Number.NaN);
+  if (width > 0 && width <= 100) {
+    attrs.width = width;
+  }
+
+  return attrs;
+}
+
+function fileAttrsFromBlock(attributes: unknown): Record<string, string | number> {
+  const attrs = presentStrings(attributes, ["fileId", "fileName", "mimeType"]);
+  const size = readNumberAttribute(attributes, "size", Number.NaN);
+  if (Number.isFinite(size) && size >= 0) {
+    attrs.size = size;
+  }
+
+  return attrs;
+}
+
+function presentStrings(
+  attributes: unknown,
+  names: string[],
+): Record<string, string | number> {
+  const attrs: Record<string, string | number> = {};
+  for (const name of names) {
+    const value = readStringAttribute(attributes, name, "");
+    if (value.trim() !== "") {
+      attrs[name] = value;
+    }
+  }
+
+  return attrs;
 }
 
 function readNumberAttribute(

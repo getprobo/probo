@@ -40,6 +40,7 @@ import type { DocumentDescriptionPage_updateContentMutation } from "#/__generate
 import type { DocumentDescriptionPageQuery } from "#/__generated__/core/DocumentDescriptionPageQuery.graphql";
 import type { DocumentHistoryPanelQuery } from "#/__generated__/core/DocumentHistoryPanelQuery.graphql";
 import { RichEditor } from "#/pages/organizations/_components/RichEditor";
+import { useUploadRichTextFile } from "#/pages/organizations/_lib/useUploadRichTextFile";
 
 import { documentHistoryPanelQuery, DocumentHistoryView } from "./_components/DocumentHistoryPanel";
 import { DocumentPresence } from "./_components/DocumentPresence";
@@ -100,6 +101,7 @@ export function DocumentDescriptionPage(props: {
 
   const { t } = useTranslation();
   const toast = useToast();
+  const onUploadFile = useUploadRichTextFile();
   const { isEditable } = useOutletContext<{
     isEditable: boolean;
   }>();
@@ -331,6 +333,7 @@ export function DocumentDescriptionPage(props: {
               data-theme="document"
               disabled={!canEdit || collaborationConnecting}
               onChangeContent={handleContentChange}
+              onUploadFile={onUploadFile}
               onUploadingChange={(uploading) => {
                 uploadingRef.current = uploading;
                 if (uploading) {

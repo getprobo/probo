@@ -49,6 +49,8 @@ var (
 		{Automerge: blockTypeOrderedListItem, ProseMirror: "listItem"},
 		{Automerge: blockTypeUnorderedListItem, ProseMirror: "listItem"},
 		{Automerge: blockTypeHorizontalRule, ProseMirror: "horizontalRule"},
+		{Automerge: blockTypeImage, ProseMirror: "image"},
+		{Automerge: blockTypeFile, ProseMirror: "file"},
 		{Automerge: blockTypeHardBreak, ProseMirror: "hardBreak"},
 		{Automerge: blockTypeTable, ProseMirror: "table"},
 		{Automerge: blockTypeTableCell, ProseMirror: "tableCell"},

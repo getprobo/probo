@@ -98,6 +98,84 @@ describe("Automerge sync plugin", () => {
     expect(state.doc.textContent).toBe("BeforeAfter");
   });
 
+  it("reconciles a remote image and keeps a local upload placeholder", () => {
+    let local = createRichEditorAutomergeDocument(JSON.stringify({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Before" }] },
+        { type: "paragraph", content: [{ type: "text", text: "After" }] },
+      ],
+    }));
+    const remote = createRichEditorAutomergeDocument(JSON.stringify({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Before" }] },
+        { type: "image", attrs: { alt: "diagram", fileId: "file-1" } },
+        { type: "paragraph", content: [{ type: "text", text: "After" }] },
+      ],
+    }));
+    const adapter = createSchemaAdapter(richEditorCollaborationExtensions);
+    let onChange: RemoteChange | undefined;
+    const handle = {
+      doc: () => local,
+      change: (callback: (draft: RichEditorAutomergeDocument) => void) => {
+        local = Automerge.change(local, callback);
+      },
+      on: (_event: string, callback: RemoteChange) => {
+        onChange = callback;
+      },
+      off: () => {},
+    } as unknown as DocHandle<RichEditorAutomergeDocument>;
+    let state = EditorState.create({
+      schema: adapter.schema,
+      doc: pmDocFromSpans(adapter, Automerge.spans(local, ["body"])),
+      plugins: [createAutomergeSyncPlugin(adapter, handle, ["body"])],
+    });
+    const plugin = state.plugins.find(item => item.spec.view);
+    const start = plugin?.spec.view;
+    if (!start) throw new Error("expected sync view");
+    const view = {
+      get state() {
+        return state;
+      },
+      dispatch(transaction: Transaction) {
+        state = state.apply(transaction);
+      },
+    } as EditorView;
+    start(view);
+
+    const upload = state.schema.nodes.contentUpload.create({
+      id: "upload-1",
+      fileName: "scan.png",
+    });
+    const firstParagraph = state.doc.firstChild;
+    if (!firstParagraph) throw new Error("expected first paragraph");
+    state = state.apply(state.tr.insert(firstParagraph.nodeSize, upload));
+    expect(nodeNames(state.doc)).toContain("contentUpload");
+    expect(nodeNames(state.doc)).not.toContain("image");
+    expect(blockTypes(local)).toEqual(["paragraph", "paragraph"]);
+
+    if (!onChange) throw new Error("expected remote change handler");
+    onChange({
+      doc: remote,
+      patches: [],
+      patchInfo: { before: local },
+    });
+
+    expect(nodeNames(state.doc)).toContain("image");
+    expect(nodeNames(state.doc)).toContain("contentUpload");
+    expect(state.doc.textContent).toBe("BeforeAfter");
+    let fileId = "";
+    state.doc.descendants((node) => {
+      if (node.type.name === "image") {
+        fileId = String(node.attrs.fileId);
+        return false;
+      }
+      return true;
+    });
+    expect(fileId).toBe("file-1");
+  });
+
   it("keeps syncing after a local Automerge change throws", () => {
     let document = createRichEditorAutomergeDocument(JSON.stringify({
       type: "doc",
@@ -189,6 +267,17 @@ describe("surrogate pairs", () => {
     expect(isSurrogatePair("a")).toBe(false);
   });
 });
+
+function blockTypes(document: Automerge.Doc<RichEditorAutomergeDocument>): string[] {
+  return Automerge.spans(document, ["body"])
+    .filter(span => span.type === "block")
+    .map((span) => {
+      const type = span.value.type;
+      if (typeof type === "string") return type;
+      if (Automerge.isImmutableString(type)) return type.val;
+      throw new Error("expected block type");
+    });
+}
 
 function nodeNames(doc: { descendants: (callback: (node: { type: { name: string } }) => void) => void }): string[] {
   const names: string[] = [];

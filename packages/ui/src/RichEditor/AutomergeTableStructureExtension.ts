@@ -48,7 +48,9 @@ export const AutomergeTableStructureExtension = Extension.create({
       },
       {
         types: [
+          "file",
           "horizontalRule",
+          "image",
           "table",
           "tableRow",
           "tableCell",

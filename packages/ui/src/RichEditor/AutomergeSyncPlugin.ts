@@ -20,6 +20,8 @@
 
 // Adapted from @automerge/prosemirror's MIT-licensed sync plugin. The
 // structural-leaf path deliberately bypasses its text-offset fast path.
+// Images, files, and upload placeholders are leaves too. Placeholders stay
+// in the local editor and are left out of the shared document.
 
 import * as Automerge from "@automerge/automerge";
 import type {
@@ -32,7 +34,7 @@ import {
   pmDocFromSpans,
   pmNodeToSpans,
 } from "@automerge/prosemirror/dist/traversal.js";
-import type { Fragment } from "@tiptap/pm/model";
+import { type Fragment, type Node as ProseMirrorNode } from "@tiptap/pm/model";
 import {
   type EditorState,
   Plugin,
@@ -81,8 +83,8 @@ export function createAutomergeSyncPlugin(
           prosemirror: summarizeProseMirrorDocument(view.state.doc),
         }));
 
-        const structuralLeaf = hasHorizontalRule(view.state.doc)
-          || spansHaveHorizontalRule(doc, path);
+        const structuralLeaf = hasStructuralLeaf(view.state.doc)
+          || spansHaveStructuralLeaf(doc, path);
         const transaction = structuralLeaf
           ? reconcileAutomergeDocument(adapter, path, doc, view.state)
           : patchesToTr({
@@ -93,6 +95,7 @@ export function createAutomergeSyncPlugin(
               patches,
               state: view.state,
             });
+        restoreContentUploads(view.state.doc, transaction);
         ignoreTransaction = true;
         try {
           view.dispatch(transaction);
@@ -129,14 +132,14 @@ export function createAutomergeSyncPlugin(
         heads: Automerge.getHeads(handle.doc()),
         spans: summarizeAutomergeSpans(handle.doc()),
         prosemirror: summarizeProseMirrorDocument(state.doc),
-        structuralLeaf: hasHorizontalRule(state.doc),
+        structuralLeaf: hasStructuralLeaf(state.doc),
       }));
 
       ignoreTransaction = true;
       try {
         handle.change((document) => {
           if (
-            hasHorizontalRule(state.doc)
+            hasStructuralLeaf(state.doc)
             || hasMarkStep(changedTransactions)
           ) {
             Automerge.updateSpans(
@@ -197,32 +200,87 @@ export function reconcileAutomergeDocument(
   return transaction;
 }
 
-function spansHaveHorizontalRule(
+const structuralLeafNodes = new Set([
+  "contentUpload",
+  "file",
+  "horizontalRule",
+  "image",
+]);
+
+const structuralLeafBlocks = new Set([
+  "file",
+  "horizontal-rule",
+  "image",
+]);
+
+function spansHaveStructuralLeaf(
   document: Automerge.Doc<RichEditorAutomergeDocument>,
   path: Automerge.Prop[],
 ): boolean {
   return Automerge.spans(document, path).some((span) => {
     if (span.type !== "block") return false;
     const type = span.value.type;
-    if (typeof type === "string") return type === "horizontal-rule";
-    if (Automerge.isImmutableString(type)) return type.val === "horizontal-rule";
+    if (typeof type === "string") return structuralLeafBlocks.has(type);
+    if (Automerge.isImmutableString(type)) {
+      return structuralLeafBlocks.has(type.val);
+    }
     return false;
   });
 }
 
-function hasHorizontalRule(document: {
+function hasStructuralLeaf(document: {
   descendants: (
     callback: (node: { type: { name: string } }) => boolean,
   ) => void;
 }): boolean {
   let found = false;
   document.descendants((node) => {
-    if (node.type.name === "horizontalRule") {
+    if (structuralLeafNodes.has(node.type.name)) {
       found = true;
       return false;
     }
 
     return true;
+  });
+  return found;
+}
+
+function restoreContentUploads(
+  before: ProseMirrorNode,
+  transaction: Transaction,
+): void {
+  const uploads: Array<{ id: string; node: ProseMirrorNode; pos: number }> = [];
+  before.descendants((node, pos) => {
+    if (node.type.name !== "contentUpload") return true;
+    const id = typeof node.attrs.id === "string" ? node.attrs.id : "";
+    uploads.push({ id, node, pos });
+    return false;
+  });
+  if (uploads.length === 0) return;
+
+  const placements = uploads
+    .filter(upload => upload.id === "" || !hasContentUpload(transaction.doc, upload.id))
+    .map(upload => ({
+      node: upload.node,
+      pos: transaction.mapping.map(upload.pos, -1),
+    }))
+    .sort((left, right) => right.pos - left.pos);
+
+  for (const placement of placements) {
+    const insertAt = Math.max(0, Math.min(placement.pos, transaction.doc.content.size));
+    transaction.insert(insertAt, placement.node);
+  }
+}
+
+function hasContentUpload(document: ProseMirrorNode, id: string): boolean {
+  let found = false;
+  document.descendants((node) => {
+    if (node.type.name === "contentUpload" && node.attrs.id === id) {
+      found = true;
+      return false;
+    }
+
+    return !found;
   });
   return found;
 }

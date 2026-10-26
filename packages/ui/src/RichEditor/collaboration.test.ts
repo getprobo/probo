@@ -70,14 +70,157 @@ describe("RichEditor collaboration", () => {
     }))).toBe(false);
   });
 
-  it("omits attachment nodes from the collaborative schema", () => {
+  it("includes image and file nodes in the collaborative schema", () => {
     const schema = getSchema(richEditorCollaborationExtensions);
 
-    expect(schema.nodes.image).toBeUndefined();
-    expect(schema.nodes.file).toBeUndefined();
-    expect(schema.nodes.contentUpload).toBeUndefined();
+    expect(schema.nodes.image).toBeDefined();
+    expect(schema.nodes.file).toBeDefined();
+    expect(schema.nodes.contentUpload).toBeDefined();
+    expect(schema.nodes.image.spec.attrs?.isAmgBlock?.default).toBe(true);
+    expect(schema.nodes.file.spec.attrs?.isAmgBlock?.default).toBe(true);
     expect(schema.nodes.paragraph).toBeDefined();
     expect(schema.nodes.horizontalRule).toBeDefined();
+  });
+
+  it("round-trips images and files through Automerge rich text", () => {
+    const content = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Before" }],
+        },
+        {
+          type: "image",
+          attrs: { alt: "diagram", fileId: "file-1", width: 50 },
+        },
+        {
+          type: "file",
+          attrs: {
+            fileId: "file-2",
+            fileName: "report.pdf",
+            mimeType: "application/pdf",
+            size: 12,
+          },
+        },
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "After" }],
+        },
+      ],
+    });
+
+    expect(supportsRichEditorCollaboration(content)).toBe(true);
+    const document = createRichEditorAutomergeDocument(content);
+    const spans = Automerge.spans(document, ["body"]);
+    expect(spanLabels(spans)).toEqual([
+      "block:paragraph",
+      "text:Before",
+      "block:image",
+      "block:file",
+      "block:paragraph",
+      "text:After",
+    ]);
+    expect(
+      spans
+        .filter(span => span.type === "block")
+        .map(span => ({
+          type: automergeString(span.value.type),
+          isEmbed: span.value.isEmbed,
+          parents: automergeStringArray(span.value.parents),
+        })),
+    ).toEqual([
+      { type: "paragraph", isEmbed: false, parents: [] },
+      { type: "image", isEmbed: false, parents: [] },
+      { type: "file", isEmbed: false, parents: [] },
+      { type: "paragraph", isEmbed: false, parents: [] },
+    ]);
+
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: () => {},
+      on: () => {},
+      off: () => {},
+    };
+    const roundTrip = richEditorAutomergeContent(
+      handle,
+      richEditorCollaborationExtensions,
+    ) as {
+      content: Array<{
+        type: string;
+        attrs?: Record<string, unknown>;
+      }>;
+    };
+
+    expect(roundTrip.content.map(node => node.type)).toEqual([
+      "paragraph",
+      "image",
+      "file",
+      "paragraph",
+    ]);
+    expect(roundTrip.content[1]?.attrs).toMatchObject({
+      alt: "diagram",
+      fileId: "file-1",
+      width: 50,
+    });
+    expect(roundTrip.content[2]?.attrs).toMatchObject({
+      fileId: "file-2",
+      fileName: "report.pdf",
+      mimeType: "application/pdf",
+      size: 12,
+    });
+  });
+
+  it("keeps an image when text is typed after it", () => {
+    let document = createRichEditorAutomergeDocument(JSON.stringify({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "Before" }] },
+        { type: "image", attrs: { alt: "diagram", fileId: "file-1", width: 40 } },
+      ],
+    }));
+    const targetSchema = getSchema(richEditorCollaborationExtensions);
+    const adapter = createSchemaAdapter(
+      richEditorCollaborationExtensions,
+      targetSchema,
+    );
+    const handle: DocHandle<RichEditorAutomergeDocument> = {
+      doc: () => document,
+      change: (change) => {
+        document = Automerge.change(document, change);
+      },
+      on: () => {},
+      off: () => {},
+    };
+    const initial = pmDocFromSpans(
+      createSchemaAdapter(richEditorCollaborationExtensions),
+      Automerge.spans(document, ["body"]),
+    );
+    let state = EditorState.create({
+      schema: targetSchema,
+      doc: targetSchema.nodeFromJSON(initial.toJSON()),
+      plugins: [
+        explicitBlockIdentityPlugin(),
+        createAutomergeSyncPlugin(adapter, handle, ["body"]),
+      ],
+    });
+    const paragraph = targetSchema.nodes.paragraph.create();
+    state = state.applyTransaction(
+      state.tr.insert(state.doc.content.size, paragraph),
+    ).state;
+    const position = state.doc.content.size - paragraph.nodeSize + 1;
+    state.applyTransaction(state.tr.insertText("After", position));
+
+    const remote = pmDocFromSpans(
+      createSchemaAdapter(richEditorCollaborationExtensions),
+      Automerge.spans(document, ["body"]),
+    );
+    expect(remote.childCount).toBe(3);
+    expect(remote.child(0).textContent).toBe("Before");
+    expect(remote.child(1).type.name).toBe("image");
+    expect(remote.child(1).attrs.fileId).toBe("file-1");
+    expect(remote.child(1).attrs.width).toBe(40);
+    expect(remote.child(2).textContent).toBe("After");
   });
 
   it("imports supported ProseMirror content into Automerge rich text", () => {
@@ -760,6 +903,12 @@ function tableDocumentJSON(): string {
       },
     ],
   });
+}
+
+function spanLabels(spans: ReturnType<typeof Automerge.spans>): string[] {
+  return spans.map(span => span.type === "text"
+    ? `text:${span.value}`
+    : `block:${automergeString(span.value.type)}`);
 }
 
 function automergeString(value: unknown): string {

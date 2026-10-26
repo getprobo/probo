@@ -31,6 +31,8 @@ describe("rich editor extensions", () => {
     expect(schema.nodes.paragraph.spec.attrs?.unknownAttrs).toBeUndefined();
     expect(schema.nodes.table.spec.attrs?.isAmgBlock).toBeUndefined();
     expect(schema.nodes.horizontalRule.spec.attrs?.isAmgBlock).toBeUndefined();
+    expect(schema.nodes.image.spec.attrs?.isAmgBlock).toBeUndefined();
+    expect(schema.nodes.file.spec.attrs?.isAmgBlock).toBeUndefined();
 
     const doc = schema.nodeFromJSON({
       type: "doc",
@@ -58,5 +60,7 @@ describe("rich editor extensions", () => {
 
     expect(schema.nodes.paragraph.spec.attrs?.isAmgBlock).toBeDefined();
     expect(schema.nodes.table.spec.attrs?.isAmgBlock).toBeDefined();
+    expect(schema.nodes.image.spec.attrs?.isAmgBlock?.default).toBe(true);
+    expect(schema.nodes.file.spec.attrs?.isAmgBlock?.default).toBe(true);
   });
 });

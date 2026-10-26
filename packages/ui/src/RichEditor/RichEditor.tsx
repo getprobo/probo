@@ -113,6 +113,9 @@ export const richEditorExtensions = [
 
 export const richEditorCollaborationExtensions = [
   ...coreExtensions,
+  ImageExtension,
+  FileExtension,
+  ContentUploadExtension,
   AutomergeTableStructureExtension,
 ];
 
@@ -228,7 +231,7 @@ export function RichEditor(props: RichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const reportUploadErrorRef = useRef<(error: AttachmentUploadError) => void>(() => {});
-  const canUpload = Boolean(onUploadFile && !disabled && !suspendContentChanges);
+  const canUpload = Boolean(onUploadFile && !disabled);
 
   useLayoutEffect(() => {
     onChangeContentRef.current = onChangeContent;
@@ -247,7 +250,7 @@ export function RichEditor(props: RichEditorProps) {
   }, []);
 
   useLayoutEffect(() => {
-    if (onUploadFile == null || disabled || suspendContentChanges) {
+    if (onUploadFile == null || disabled) {
       uploadRef.current = null;
     } else {
       uploadRef.current = onUploadFile;
@@ -260,7 +263,7 @@ export function RichEditor(props: RichEditorProps) {
         type: "error",
       });
     };
-  }, [disabled, onUploadFile, suspendContentChanges, t, toast]);
+  }, [disabled, onUploadFile, t, toast]);
 
   const reportUploadError = useCallback((error: AttachmentUploadError) => {
     reportUploadErrorRef.current(error);
