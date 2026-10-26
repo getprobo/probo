@@ -608,6 +608,13 @@ jobs:
       - name: "Start stack"
         run: "make stack-up"
       - run: "make stack-ps"
+      - name: "Create placeholder dist files"
+        run: |
+          mkdir -p apps/console/dist apps/compliance-portal/dist apps/employee-portal/dist packages/emails/dist
+          echo ci > apps/console/dist/index.html
+          echo ci > apps/compliance-portal/dist/index.html
+          echo ci > apps/employee-portal/dist/index.html
+          echo ci > packages/emails/dist/placeholder
       - name: "Run e2e tests"
         env:
           PROBO_E2E_ARTIFACT_DIR: "${{ github.workspace }}/e2e-artifacts"
