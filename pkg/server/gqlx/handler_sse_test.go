@@ -118,9 +118,11 @@ func readUntil(t *testing.T, reader *bufio.Reader, marker string) string {
 
 	go func() {
 		var b strings.Builder
+
 		for {
 			line, err := reader.ReadString('\n')
 			b.WriteString(line)
+
 			if strings.Contains(b.String(), marker) || err != nil {
 				done <- result{text: b.String(), err: err}
 				return
@@ -157,6 +159,7 @@ func newStreamingHandler(gate <-chan struct{}) http.Handler {
 				switch step {
 				case 1:
 					hasNext := true
+
 					return &graphql.Response{
 						Data:    json.RawMessage(`{"name":"ready"}`),
 						HasNext: &hasNext,
@@ -169,6 +172,7 @@ func newStreamingHandler(gate <-chan struct{}) http.Handler {
 					}
 
 					hasNext := false
+
 					return &graphql.Response{
 						Data:    json.RawMessage(`{"name":"deferred"}`),
 						HasNext: &hasNext,

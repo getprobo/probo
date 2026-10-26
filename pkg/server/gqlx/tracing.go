@@ -105,6 +105,7 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 	handler := next(spanCtx)
 
 	operationType := string(requestContext.Operation.Operation)
+
 	operationName := requestContext.OperationName
 	if operationName == "" {
 		operationName = "unnamed"
@@ -121,6 +122,7 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		}
 
 		finished = true
+
 		if operationSpan != nil {
 			operationSpan.End()
 		}
@@ -150,6 +152,7 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 			}
 
 			finish()
+
 			return nil
 		}
 
@@ -181,6 +184,7 @@ func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 		}
 
 		finish()
+
 		return resp
 	}
 }
