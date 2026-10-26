@@ -219,12 +219,7 @@ func (h *Hub) Acquire(
 		h.rooms[documentID] = room
 		h.mu.Unlock()
 
-		// A dropped handshake cancels the caller. The SELECT must keep a
-		// context that outlives it, or pgx closes the connection on rollback.
-		openCtx, openCancel := context.WithTimeout(
-			context.WithoutCancel(ctx),
-			RoomOpenTimeout,
-		)
+		openCtx, openCancel := context.WithTimeout(ctx, RoomOpenTimeout)
 		opened, err := h.documents.Open(openCtx, scope, documentID)
 		openCancel()
 		if err != nil {

@@ -100,21 +100,6 @@ func newRepoTestServerWithConfig(
 			return
 		}
 
-		lease, err := hub.Acquire(r.Context(), scope, documentID, connectionID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		defer lease.Close()
-
-		if lease.SeedOwner() {
-			if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
 		connection, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 			InsecureSkipVerify: true,
 		})
@@ -125,6 +110,21 @@ func newRepoTestServerWithConfig(
 		defer func() { _ = connection.Close(websocket.StatusNormalClosure, "") }()
 
 		connection.SetReadLimit(1 << 20)
+
+		lease, err := hub.Acquire(r.Context(), scope, documentID, connectionID)
+		if err != nil {
+			_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
+			return
+		}
+
+		defer lease.Close()
+
+		if lease.SeedOwner() {
+			if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
+				_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
+				return
+			}
+		}
 
 		syncState, err := lease.Collaboration().Document.NewSyncState()
 		if err != nil {

@@ -30,7 +30,6 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/automerge"
 	collabpkg "go.probo.inc/probo/pkg/automerge/collaboration"
@@ -129,28 +128,8 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lease, err := h.Hub.Acquire(r.Context(), scope, documentID, connectionID)
-	if err != nil {
-		h.renderServiceError(w, r, documentIDString, err)
-		return
-	}
-
-	defer lease.Close()
-
-	// The handshake is already gone. Drop the lease instead of upgrading.
-	if r.Context().Err() != nil {
-		return
-	}
-
-	if lease.SeedOwner() {
-		if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
-			h.releaseSeedClaim(r.Context(), scope, documentID, lease)
-			h.renderServiceError(w, r, documentIDString, err)
-
-			return
-		}
-	}
-
+	// Upgrade before loading the collaboration row. Until hijack, net/http
+	// cancels the request when the client drops, and that aborts the SELECT.
 	connection, err := websocket.Accept(
 		w,
 		r,
@@ -173,6 +152,23 @@ func (h *Handler) HandleRepo(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = connection.Close(websocket.StatusNormalClosure, "") }()
 
 	connection.SetReadLimit(MessageMaxBytes)
+
+	lease, err := h.Hub.Acquire(r.Context(), scope, documentID, connectionID)
+	if err != nil {
+		h.closeOpenError(r.Context(), connection, documentIDString, err)
+		return
+	}
+
+	defer lease.Close()
+
+	if lease.SeedOwner() {
+		if err := SeedRepoCollaboration(r.Context(), lease); err != nil {
+			h.releaseSeedClaim(r.Context(), scope, documentID, lease)
+			h.closeOpenError(r.Context(), connection, documentIDString, err)
+
+			return
+		}
+	}
 
 	syncState, err := lease.Collaboration().Document.NewSyncState()
 	if err != nil {
@@ -307,48 +303,49 @@ func (h *Handler) renderAuthorizationError(w http.ResponseWriter, err error) {
 	jsonx.RenderNotFound(w, fmt.Errorf("document not found"))
 }
 
-func (h *Handler) renderServiceError(
-	w http.ResponseWriter,
-	r *http.Request,
+func (h *Handler) closeOpenError(
+	ctx context.Context,
+	connection *websocket.Conn,
 	documentID string,
 	err error,
 ) {
-	if errors.Is(err, coredata.ErrResourceNotFound) {
-		jsonx.RenderNotFound(w, fmt.Errorf("document not found"))
-		return
-	}
-
-	if _, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
-		httpserver.RenderError(w, http.StatusConflict, err)
-		return
-	}
-
-	if _, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
-		httpserver.RenderError(w, http.StatusConflict, err)
-		return
-	}
-
-	if _, ok := errors.AsType[*collaboration.ErrCollaborationStateTooLarge](err); ok {
-		httpserver.RenderError(w, http.StatusConflict, err)
-		return
-	}
-
-	if errors.Is(err, collaboration.ErrSeedInProgress) {
-		httpserver.RenderError(w, http.StatusConflict, err)
-		return
-	}
-
 	if requestCanceled(err) {
+		_ = connection.Close(websocket.StatusGoingAway, "")
+		return
+	}
+
+	if collaborationOpenUnavailable(err) {
+		_ = connection.Close(websocket.StatusPolicyViolation, "collaboration unavailable")
 		return
 	}
 
 	h.Logger.ErrorCtx(
-		r.Context(),
+		ctx,
 		"cannot open document collaboration",
 		log.Error(err),
 		log.String("document_id", documentID),
 	)
-	jsonx.RenderInternalServerError(w)
+	_ = connection.Close(websocket.StatusInternalError, "collaboration failed")
+}
+
+func collaborationOpenUnavailable(err error) bool {
+	if errors.Is(err, coredata.ErrResourceNotFound) || errors.Is(err, collaboration.ErrSeedInProgress) {
+		return true
+	}
+
+	if _, ok := errors.AsType[*collaboration.ErrDocumentArchived](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*collaboration.ErrDocumentVersionGenerated](err); ok {
+		return true
+	}
+
+	if _, ok := errors.AsType[*collaboration.ErrCollaborationStateTooLarge](err); ok {
+		return true
+	}
+
+	return false
 }
 
 func (h *Handler) closeWithError(

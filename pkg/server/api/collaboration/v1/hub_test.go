@@ -717,7 +717,7 @@ func (d *cancelProbeDocuments) Persist(
 	return 1, nil
 }
 
-func TestAcquire_OpenSurvivesCallerCancel(t *testing.T) {
+func TestAcquire_OpenFollowsCallerContext(t *testing.T) {
 	t.Parallel()
 
 	tenantID := gid.NewTenantID()
@@ -732,16 +732,11 @@ func TestAcquire_OpenSurvivesCallerCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	type acquireResult struct {
-		lease *RoomLease
-		err   error
-	}
-
-	resultCh := make(chan acquireResult, 1)
+	errCh := make(chan error, 1)
 
 	go func() {
-		lease, err := hub.Acquire(ctx, scope, documentID, "conn")
-		resultCh <- acquireResult{lease: lease, err: err}
+		_, err := hub.Acquire(ctx, scope, documentID, "conn")
+		errCh <- err
 	}()
 
 	select {
@@ -750,24 +745,19 @@ func TestAcquire_OpenSurvivesCallerCancel(t *testing.T) {
 		require.Fail(t, "open did not start")
 	}
 
-	cancel()
-	close(documents.release)
-
-	var result acquireResult
-
-	select {
-	case result = <-resultCh:
-	case <-time.After(time.Second):
-		require.Fail(t, "acquire did not return")
-	}
-
-	require.NoError(t, result.err)
-	require.NotNil(t, result.lease)
-	t.Cleanup(result.lease.Close)
-
 	deadline, ok := documents.openCtx.Deadline()
 	require.True(t, ok)
 	assert.WithinDuration(t, time.Now().Add(RoomOpenTimeout), deadline, time.Second)
+
+	cancel()
+	close(documents.release)
+
+	select {
+	case err := <-errCh:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		require.Fail(t, "acquire did not return")
+	}
 }
 
 func TestHub_GatesUnseededRoom(t *testing.T) {
