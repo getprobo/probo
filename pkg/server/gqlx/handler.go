@@ -70,9 +70,7 @@ var (
 	mb int64 = 1024 * 1024
 
 	sseTransport = eventStreamTransport{
-		SSE: transport.SSE{
-			KeepAlivePingInterval: sseKeepAlivePingInterval,
-		},
+		KeepAlivePingInterval: sseKeepAlivePingInterval,
 	}
 	postTransport      = transport.POST{}
 	optionsTransport   = transport.Options{}
