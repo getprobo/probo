@@ -119,6 +119,10 @@ func Run(ctx context.Context, allocCtx context.Context, in Input) (*Result, erro
 		return nil, fmt.Errorf("cannot start scan: origin and banner id are required")
 	}
 
+	if _, apiOK := requestOrigin(in.APIBaseURL); !apiOK {
+		return nil, fmt.Errorf("cannot start scan: API base URL is required")
+	}
+
 	if !in.allow(root) {
 		return nil, fmt.Errorf("cannot start scan: origin is not a public URL")
 	}

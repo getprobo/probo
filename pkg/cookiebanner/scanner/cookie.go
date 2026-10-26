@@ -133,6 +133,7 @@ func resourceOf(rawURL, initiator string, kind coredata.TrackerResourceType) (Re
 
 func blockSDKPost(method, rawURL, bannerID, apiBase string) bool {
 	apiOrigin, apiOK := requestOrigin(apiBase)
+
 	requestOriginURL, requestOK := requestOrigin(rawURL)
 	if method != http.MethodPost || bannerID == "" || !apiOK || !requestOK || !strings.EqualFold(apiOrigin, requestOriginURL) {
 		return false
