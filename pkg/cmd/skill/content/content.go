@@ -202,7 +202,7 @@ func load(name string) (Skill, error) {
 	}
 
 	fields := map[string]string{}
-	for _, line := range strings.Split(front, "\n") {
+	for line := range strings.SplitSeq(front, "\n") {
 		key, value, found := strings.Cut(line, ":")
 		if !found {
 			continue
