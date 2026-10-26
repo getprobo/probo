@@ -49,9 +49,9 @@ func TestCommandSurface(t *testing.T) {
 	var walk func(*cobra.Command)
 
 	walk = func(c *cobra.Command) {
+		// LocalFlags merges parent persistent flags into the shared tree.
+		// Keep the walk sequential so parallel subtests cannot race pflag.
 		t.Run(c.CommandPath(), func(t *testing.T) {
-			t.Parallel()
-
 			name := c.Name()
 			if name != "" && !kebabCase.MatchString(name) {
 				t.Errorf("command %q is not kebab-case", c.CommandPath())

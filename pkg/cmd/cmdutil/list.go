@@ -38,14 +38,20 @@ type ListView[T any] struct {
 
 // PrintList writes items as JSON or as a table.
 // JSON null slices are printed as []. A total larger than len(items) writes
-// "Showing n of m <noun>" to stderr.
+// "Showing n of m <noun>" to stderr for both JSON and table output.
 func PrintList[T any](ios *iostreams.IOStreams, format string, items []T, total int, view ListView[T]) error {
 	if format == OutputJSON {
 		if items == nil {
 			items = []T{}
 		}
 
-		return PrintJSON(ios.Out, items)
+		if err := PrintJSON(ios.Out, items); err != nil {
+			return err
+		}
+
+		writeListTruncation(ios, len(items), total, view.Noun)
+
+		return nil
 	}
 
 	if len(items) == 0 {
@@ -67,9 +73,13 @@ func PrintList[T any](ios *iostreams.IOStreams, format string, items []T, total 
 
 	_, _ = fmt.Fprintln(ios.Out, NewTable(view.Headers...).Rows(rows...))
 
-	if total > len(items) {
-		_, _ = fmt.Fprintf(ios.ErrOut, "\nShowing %d of %d %s\n", len(items), total, view.Noun)
-	}
+	writeListTruncation(ios, len(items), total, view.Noun)
 
 	return nil
+}
+
+func writeListTruncation(ios *iostreams.IOStreams, shown, total int, noun string) {
+	if total > shown {
+		_, _ = fmt.Fprintf(ios.ErrOut, "\nShowing %d of %d %s\n", shown, total, noun)
+	}
 }

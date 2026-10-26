@@ -121,10 +121,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 				listQuery,
 				variables,
 				flagLimit,
-				api.NodeConnection[employeePortal](
+				api.NodeConnectionRequired[employeePortal](
 					"employeePortals",
 					"Organization",
 					fmt.Sprintf("organization %s not found", flagOrg),
+					"employee portal list is unavailable",
 				),
 			)
 			if err != nil {

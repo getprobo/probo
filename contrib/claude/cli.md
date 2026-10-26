@@ -93,16 +93,18 @@ resources, totalCount, err := api.Paginate(
 Use the variant that matches the response:
 
 - `NodeConnectionOrMissing` when a wrong `__typename` is also not-found (risk and treatment-plan lists choose the parent at runtime).
+- `NodeConnectionRequired` when a null connection means the list is unavailable (`employee-portal list`).
 - `NodeNestedConnection` when the connection sits under a child object (`node.trustCenter.commitmentGroups`).
 - `ViewerConnection` for `data.viewer.<field>` (`org list`).
 - `RootConnection` for a top-level field (GVL catalog).
-- `NodeSlice` for a JSON array that is not a Relay connection (`connector list`). Pass `len(items)` as the total so the truncation line stays absent.
+
+`NodeSlice` is a direct call, not an `api.Paginate` extract. It reads a JSON array from `data.node.<field>` for a non-Relay list (`connector list`). Pass `len(items)` as the total to `PrintList` so the truncation line stays absent.
 
 ## Output formatting
 
 **JSON output:** `--json` is shorthand for `--output json` / `-o json`. Do not combine `--json` with a different `--output` value.
 
-**List output:** `PrintList` writes JSON (a null slice becomes `[]`), the empty sentence, the table, and `Showing n of m <noun>` on stderr when the server total is larger than the page. `Empty` and `Noun` can differ (`No access review campaigns found.` vs `campaigns`).
+**List output:** `PrintList` writes JSON (a null slice becomes `[]`), the empty sentence, the table, and `Showing n of m <noun>` on stderr when the server total is larger than the page. The truncation line is written for both JSON and table output so agents still see a truncated page. `Empty` and `Noun` can differ (`No access review campaigns found.` vs `campaigns`).
 
 ```go
 return cmdutil.PrintList(
