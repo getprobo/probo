@@ -21,7 +21,7 @@
 package browser
 
 import (
-	"go.probo.inc/probo/pkg/agent/tools/internal/netcheck"
+	"go.probo.inc/probo/pkg/netcheck"
 )
 
 // validatePublicURL checks that a URL uses an http(s) scheme and that its
