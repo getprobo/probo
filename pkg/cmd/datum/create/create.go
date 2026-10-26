@@ -123,6 +123,16 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 						return err
 					}
 				}
+
+				if flagOwner == "" {
+					err := huh.NewInput().
+						Title("Owner profile ID").
+						Value(&flagOwner).
+						Run()
+					if err != nil {
+						return err
+					}
+				}
 			}
 
 			if flagName == "" {

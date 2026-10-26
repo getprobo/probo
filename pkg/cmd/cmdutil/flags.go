@@ -50,6 +50,21 @@ func TaskStateFlagUsage() string {
 	return "Task state: " + strings.Join(TaskStates(), ", ")
 }
 
+func TaskPriorities() []string {
+	priorities := coredata.TaskPriorities()
+
+	out := make([]string, len(priorities))
+	for i, priority := range priorities {
+		out[i] = priority.String()
+	}
+
+	return out
+}
+
+func TaskPriorityFlagUsage() string {
+	return "Task priority: " + strings.Join(TaskPriorities(), ", ")
+}
+
 // AddOutputFlag registers --output / -o and --json on cmd and returns a
 // pointer to the value. The default is "table". --json is shorthand for
 // --output json. Callers should call ValidateOutputFlag early in RunE, then

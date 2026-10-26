@@ -213,8 +213,8 @@ if err != nil {
 
 ## Flag conventions
 
-- Use kebab-case for command names and flags: `third-party`, `--order-by`, `--inherent-likelihood`. The organization flag is `--org`. `--organization` is the same flag. Register it with `cmdutil.AddOrganizationFlag`. `connector connect --organization` is a boolean and is the exception.
-- Short flags for common options: `-L` (limit), `-o` (output), `--json` (JSON output), `-q` (query), `-y` (yes)
+- Use kebab-case for command names and flags: `third-party`, `--order-by`, `--inherent-likelihood`. Organization-scoped commands use `--org`. `--organization` is the same flag. Register it with `cmdutil.AddOrganizationFlag`. `connector connect --organization` is a boolean and is the exception.
+- Common options: `-L` (limit), `-o` (output), `--json` (JSON output), `-q` (query), `-y` (yes)
 - `StringVar`/`IntVar`/`BoolVar` for flags, positional args only for IDs in view/update/delete
 - Use `cmd.MarkFlagRequired()` for mandatory flags
 

@@ -364,7 +364,7 @@ bin/probod-coverage: generate embed
 	$(GO_BUILD) $(PROBOD_LDFLAGS) -cover -covermode=atomic -o $@ $(PROBOD_SRC)
 
 .PHONY: test-e2e-coverage
-test-e2e-coverage: bin/probod-coverage ## Run e2e tests with coverage
+test-e2e-coverage: bin/probod-coverage bin/prb ## Run e2e tests with coverage
 	$(MAKE) test-e2e-coverage-run E2E_BINARY=$(E2E_BINARY)
 
 .PHONY: test-e2e-coverage-run

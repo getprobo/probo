@@ -161,11 +161,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 				return fmt.Errorf("priority is required; pass --priority or run interactively")
 			}
 
-			if err := cmdutil.ValidateEnum(
-				"priority",
-				flagPriority,
-				[]string{"URGENT", "HIGH", "MEDIUM", "LOW"},
-			); err != nil {
+			if err := cmdutil.ValidateEnum("priority", flagPriority, cmdutil.TaskPriorities()); err != nil {
 				return err
 			}
 
@@ -280,7 +276,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&flagName, "name", "", "Task name (required)")
 	cmd.Flags().StringVar(&flagContent, "content", "", "Task content as markdown or ProseMirror JSON. Images and links to /api/files/v1/{id} are kept")
 	cmd.Flags().StringVar(&flagState, "state", "", cmdutil.TaskStateFlagUsage())
-	cmd.Flags().StringVar(&flagPriority, "priority", "", "Task priority: URGENT, HIGH, MEDIUM, LOW (required)")
+	cmd.Flags().StringVar(&flagPriority, "priority", "", cmdutil.TaskPriorityFlagUsage()+" (required)")
 	cmd.Flags().StringArrayVar(&flagInternalControls, "internal-control", nil, "Internal control ID (repeatable)")
 	cmd.Flags().StringVar(&flagTimeEstimate, "time-estimate", "", "Time estimate")
 	cmd.Flags().StringVar(&flagAssignedTo, "assigned-to", "", "Assigned profile ID")

@@ -23,6 +23,7 @@ package status
 import (
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -66,7 +67,14 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 
 			bold := lipgloss.NewStyle().Bold(true)
 
-			for host, hc := range displayed {
+			hosts := make([]string, 0, len(displayed))
+			for host := range displayed {
+				hosts = append(hosts, host)
+			}
+			slices.Sort(hosts)
+
+			for _, host := range hosts {
+				hc := displayed[host]
 				label := host
 				if host == active {
 					label += " (active)"

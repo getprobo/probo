@@ -23,6 +23,9 @@ All notable changes to the `prb` CLI will be documented in this file.
   `PROBO_TOKEN` is set
 - `webhook list` lists one organization's subscriptions and takes `--org`
 - A missing organization is reported the same way on every command
+- Creates now require the fields the API requires: task priority, asset
+  amount, owner, and data types, datum and obligation owner,
+  processing-activity role and assessments, and control description
 
 ### Fixed
 
@@ -30,10 +33,6 @@ All notable changes to the `prb` CLI will be documented in this file.
 - `asset list` no longer queries an `AssetFilter` the API does not define
 - `document list` and `document view` show the document title, type, and
   classification
-- Non-interactive creates now require the fields the API requires: task
-  priority, asset amount, owner, and data types, datum and obligation
-  owner, processing-activity role and assessments, and control
-  description
 
 ## [0.259.0] - 2026-10-27
 
