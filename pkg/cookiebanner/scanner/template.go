@@ -33,20 +33,20 @@ var (
 )
 
 // templateKey collapses variable path segments so one URL stands for a
-// template. The query and fragment are ignored.
+// template. The query and fragment are ignored. The host is folded the same
+// way as origin, so the apex and its www host share a template.
 func templateKey(raw string) (string, bool) {
+	base, ok := parseOrigin(raw)
+	if !ok {
+		return "", false
+	}
+
 	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" {
+	if err != nil {
 		return "", false
 	}
 
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", false
-	}
-
-	path := templatePath(u.EscapedPath())
-
-	return u.Scheme + "://" + strings.ToLower(u.Host) + path, true
+	return base.String() + templatePath(u.EscapedPath()), true
 }
 
 func templatePath(path string) string {
@@ -65,66 +65,22 @@ func templatePath(path string) string {
 	return "/" + strings.Join(parts, "/")
 }
 
-func sameOrigin(origin, raw string) bool {
-	base, err := url.Parse(origin)
+func resolveLink(pageURL, href string) (string, bool) {
+	base, err := url.Parse(pageURL)
 	if err != nil {
-		return false
+		return "", false
 	}
 
-	u, err := url.Parse(raw)
+	ref, err := base.Parse(href)
 	if err != nil {
-		return false
-	}
-
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return false
-	}
-
-	return strings.EqualFold(base.Scheme, u.Scheme) && sameEndpoint(base, u)
-}
-
-func sameEndpoint(left, right *url.URL) bool {
-	return strings.EqualFold(left.Hostname(), right.Hostname()) && effectivePort(left) == effectivePort(right)
-}
-
-func effectivePort(u *url.URL) string {
-	if port := u.Port(); port != "" {
-		return port
-	}
-
-	if u.Scheme == "https" {
-		return "443"
-	}
-
-	return "80"
-}
-
-func originRoot(raw string) (string, bool) {
-	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" {
 		return "", false
 	}
 
-	if u.Scheme != "http" && u.Scheme != "https" {
+	if ref.Scheme != "http" && ref.Scheme != "https" || ref.User != nil {
 		return "", false
 	}
 
-	u.Path = "/"
-	u.RawQuery = ""
-	u.Fragment = ""
+	ref.Fragment = ""
 
-	return u.String(), true
-}
-
-func requestOrigin(raw string) (string, bool) {
-	u, err := url.Parse(raw)
-	if err != nil || u.Host == "" {
-		return "", false
-	}
-
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return "", false
-	}
-
-	return u.Scheme + "://" + strings.ToLower(u.Host), true
+	return ref.String(), true
 }
