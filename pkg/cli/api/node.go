@@ -31,7 +31,7 @@ import (
 // "expected <expectedType> node, got <actual>".
 func NodeConnection[T any](field, expectedType, notFound string) func(json.RawMessage) (*Connection[T], error) {
 	return func(data json.RawMessage) (*Connection[T], error) {
-		return nodeConnection[T](data, field, expectedType, notFound, false)
+		return nodeConnection[T](data, field, expectedType, notFound, false, "")
 	}
 }
 
@@ -39,7 +39,15 @@ func NodeConnection[T any](field, expectedType, notFound string) func(json.RawMe
 // also returns notFound. Lists that choose the parent type at runtime use it.
 func NodeConnectionOrMissing[T any](field, expectedType, notFound string) func(json.RawMessage) (*Connection[T], error) {
 	return func(data json.RawMessage) (*Connection[T], error) {
-		return nodeConnection[T](data, field, expectedType, notFound, true)
+		return nodeConnection[T](data, field, expectedType, notFound, true, "")
+	}
+}
+
+// NodeConnectionRequired is NodeConnection, except a null or absent
+// connection field returns missing instead of an empty connection.
+func NodeConnectionRequired[T any](field, expectedType, notFound, missing string) func(json.RawMessage) (*Connection[T], error) {
+	return func(data json.RawMessage) (*Connection[T], error) {
+		return nodeConnection[T](data, field, expectedType, notFound, false, missing)
 	}
 }
 
@@ -63,12 +71,12 @@ func NodeNestedConnection[T any](parent, field, expectedType, notFound, missingP
 			return nil, errors.New(missingParent)
 		}
 
-		return connectionField[T](raw, field)
+		return connectionField[T](raw, field, "")
 	}
 }
 
 // ViewerConnection reads a Relay connection from data.viewer.<field>.
-// A null viewer is an empty connection.
+// A null viewer is an empty connection. An absent viewer key is an error.
 func ViewerConnection[T any](field string) func(json.RawMessage) (*Connection[T], error) {
 	return func(data json.RawMessage) (*Connection[T], error) {
 		var envelope map[string]json.RawMessage
@@ -76,19 +84,23 @@ func ViewerConnection[T any](field string) func(json.RawMessage) (*Connection[T]
 			return nil, err
 		}
 
-		raw := envelope["viewer"]
+		raw, ok := envelope["viewer"]
+		if !ok {
+			return nil, errors.New("response has no viewer")
+		}
+
 		if len(raw) == 0 || string(raw) == "null" {
 			return &Connection[T]{}, nil
 		}
 
-		return connectionField[T](raw, field)
+		return connectionField[T](raw, field, "")
 	}
 }
 
 // RootConnection reads a Relay connection from a top-level data field.
 func RootConnection[T any](field string) func(json.RawMessage) (*Connection[T], error) {
 	return func(data json.RawMessage) (*Connection[T], error) {
-		return connectionField[T](data, field)
+		return connectionField[T](data, field, "")
 	}
 }
 
@@ -125,13 +137,18 @@ func NodeSlice[T any](data json.RawMessage, field, expectedType, notFound string
 	return items, nil
 }
 
-func nodeConnection[T any](data json.RawMessage, field, expectedType, notFound string, mismatchIsNotFound bool) (*Connection[T], error) {
+func nodeConnection[T any](
+	data json.RawMessage,
+	field, expectedType, notFound string,
+	mismatchIsNotFound bool,
+	missing string,
+) (*Connection[T], error) {
 	node, err := nodeObject(data, expectedType, notFound, mismatchIsNotFound)
 	if err != nil {
 		return nil, err
 	}
 
-	return connectionField[T](node, field)
+	return connectionField[T](node, field, missing)
 }
 
 func nodeObject(data json.RawMessage, expectedType, notFound string, mismatchIsNotFound bool) (json.RawMessage, error) {
@@ -164,7 +181,7 @@ func nodeObject(data json.RawMessage, expectedType, notFound string, mismatchIsN
 	return envelope.Node, nil
 }
 
-func connectionField[T any](object json.RawMessage, field string) (*Connection[T], error) {
+func connectionField[T any](object json.RawMessage, field, missing string) (*Connection[T], error) {
 	var fields map[string]json.RawMessage
 	if err := json.Unmarshal(object, &fields); err != nil {
 		return nil, err
@@ -172,6 +189,10 @@ func connectionField[T any](object json.RawMessage, field string) (*Connection[T
 
 	raw, ok := fields[field]
 	if !ok || len(raw) == 0 || string(raw) == "null" {
+		if missing != "" {
+			return nil, errors.New(missing)
+		}
+
 		if !ok {
 			return nil, fmt.Errorf("response has no %s connection", field)
 		}

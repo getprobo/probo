@@ -77,6 +77,17 @@ func TestPrintList(t *testing.T) {
 		assert.Equal(t, "\nShowing 1 of 4 frameworks\n", errOut.String())
 	})
 
+	t.Run("json truncation", func(t *testing.T) {
+		t.Parallel()
+
+		var out, errOut bytes.Buffer
+
+		err := cmdutil.PrintList(streams(&out, &errOut), cmdutil.OutputJSON, []string{"fw_1"}, 4, view)
+		require.NoError(t, err)
+		assert.JSONEq(t, `["fw_1"]`, out.String())
+		assert.Equal(t, "\nShowing 1 of 4 frameworks\n", errOut.String())
+	})
+
 	t.Run("row error prints nothing", func(t *testing.T) {
 		t.Parallel()
 

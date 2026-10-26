@@ -69,6 +69,25 @@ func TestNodeConnectionOrMissing(t *testing.T) {
 	assert.EqualError(t, err, "Organization org_1 not found")
 }
 
+func TestNodeConnectionRequired(t *testing.T) {
+	t.Parallel()
+
+	extract := api.NodeConnectionRequired[struct {
+		ID string `json:"id"`
+	}](
+		"employeePortals",
+		"Organization",
+		"organization org_1 not found",
+		"employee portal list is unavailable",
+	)
+
+	_, err := extract(json.RawMessage(`{"node": {"__typename": "Organization", "employeePortals": null}}`))
+	assert.EqualError(t, err, "employee portal list is unavailable")
+
+	_, err = extract(json.RawMessage(`{"node": {"__typename": "Organization"}}`))
+	assert.EqualError(t, err, "employee portal list is unavailable")
+}
+
 func TestNodeNestedConnection(t *testing.T) {
 	t.Parallel()
 
@@ -115,6 +134,9 @@ func TestViewerConnection(t *testing.T) {
 	conn, err = extract(json.RawMessage(`{"viewer": null}`))
 	require.NoError(t, err)
 	assert.Empty(t, conn.Edges)
+
+	_, err = extract(json.RawMessage(`{}`))
+	assert.EqualError(t, err, "response has no viewer")
 }
 
 func TestRootConnection(t *testing.T) {
