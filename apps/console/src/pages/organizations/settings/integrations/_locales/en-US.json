@@ -135,6 +135,7 @@
     "addMore": "Add more",
     "emptyConnected": "No vendor is connected yet.",
     "emptyConnectedSearch": "No connected vendor matches your search.",
+    "checkingStatuses": "Checking connection statuses…",
     "emptyAvailable": "Every available vendor is already connected.",
     "emptyAvailableSearch": "No available vendor matches your search.",
     "searchPlaceholder": "Search vendors...",

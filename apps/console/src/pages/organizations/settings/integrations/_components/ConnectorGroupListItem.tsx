@@ -27,13 +27,14 @@ import { CardLink } from "@probo/ui/src/v2/Card/CardLink";
 import { IconButton } from "@probo/ui/src/v2/IconButton/IconButton";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ConnectorGroupListItem_connector$key } from "#/__generated__/core/ConnectorGroupListItem_connector.graphql";
 import type { ConnectorGroupListItem_organization$key } from "#/__generated__/core/ConnectorGroupListItem_organization.graphql";
 import type { ConnectorGroupListItem_provider$key } from "#/__generated__/core/ConnectorGroupListItem_provider.graphql";
+import type { useConnectorStatuses_connector$key } from "#/__generated__/core/useConnectorStatuses_connector.graphql";
 import { TonedCard } from "#/components/TonedCard/TonedCard";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import {
@@ -47,6 +48,7 @@ import {
 import { buildConnectorInitiateURL } from "../_lib/connectorInitiate";
 import { connectorProviderAccessibleName, connectorProviderVisibleName } from "../_lib/connectorProviderLabel";
 import { connectorDetailsPath } from "../_lib/integrationPath";
+import { useConnectorStatuses } from "../_lib/useConnectorStatuses";
 import { connectorCard } from "../variants";
 
 import { ConnectionIssueMark } from "./ConnectionIssueMark";
@@ -56,9 +58,6 @@ import { ConnectorConnectMore } from "./ConnectorConnectMore";
 import { ConnectorDeleteDialog } from "./ConnectorDeleteDialog";
 import { ConnectorProviderName } from "./ConnectorProviderName";
 
-// connectionStatus probes the vendor on every read, so this list pays one
-// outbound call per connected connector. providerOrganizations does too, for
-// providers that have an account picker.
 const connectorGroupListItemOrganizationFragment = graphql`
   fragment ConnectorGroupListItem_organization on Organization {
     ...ConnectorConnectMore_organization
@@ -77,13 +76,9 @@ const connectorGroupListItemFragment = graphql`
     name
     provider
     displayName
-    connectionStatus
     canReconnect
     protocol
     oauth2Scopes
-    providerOrganizations {
-      status
-    }
     accounts(first: 1) {
       totalCount
     }
@@ -99,18 +94,55 @@ const connectorGroupListItemFragment = graphql`
 
 interface ConnectorGroupListItemProps {
   connectorKeys: ConnectorGroupListItem_connector$key;
+  // The same connectors, read through a fragment the list spreads with @defer.
+  statusKeys: useConnectorStatuses_connector$key;
   organizationKey: ConnectorGroupListItem_organization$key;
   providerKey?: ConnectorGroupListItem_provider$key | null;
 }
 
-export function ConnectorGroupListItem({
+export function ConnectorGroupListItem(props: ConnectorGroupListItemProps) {
+  // Owned here so an open delete dialog survives the statuses arriving.
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  return (
+    <Suspense
+      fallback={(
+        <ConnectorGroupListItemCard
+          {...props}
+          statusKeys={null}
+          deleteOpen={deleteOpen}
+          onDeleteOpenChange={setDeleteOpen}
+        />
+      )}
+    >
+      <ConnectorGroupListItemCard
+        {...props}
+        deleteOpen={deleteOpen}
+        onDeleteOpenChange={setDeleteOpen}
+      />
+    </Suspense>
+  );
+}
+
+interface ConnectorGroupListItemCardProps
+  extends Omit<ConnectorGroupListItemProps, "statusKeys"> {
+  // Null while the deferred statuses are pending.
+  statusKeys: useConnectorStatuses_connector$key | null;
+  deleteOpen: boolean;
+  onDeleteOpenChange: (open: boolean) => void;
+}
+
+function ConnectorGroupListItemCard({
   connectorKeys,
+  statusKeys,
   organizationKey,
   providerKey,
-}: ConnectorGroupListItemProps) {
+  deleteOpen,
+  onDeleteOpenChange: setDeleteOpen,
+}: ConnectorGroupListItemCardProps) {
   const { t, i18n } = useTranslation("organizations/settings/integrations");
   const organizationId = useOrganizationId();
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const statuses = useConnectorStatuses(statusKeys);
   const organization = useFragment(connectorGroupListItemOrganizationFragment, organizationKey);
   const connectors = useFragment(connectorGroupListItemFragment, connectorKeys);
   const provider = useFragment(connectorGroupListItemProviderFragment, providerKey ?? null);
@@ -121,13 +153,12 @@ export function ConnectorGroupListItem({
   }
 
   const single = connectors.length === 1 ? face : null;
-  const presented = connectors.flatMap((connector) => {
+  const presented = connectors.flatMap((connector, index) => {
+    const status = statuses?.[index];
     const signal = connectionSignalFrom({
-      connectionStatus: connector.connectionStatus,
+      connectionStatus: status?.connectionStatus,
       canReconnect: connector.canReconnect,
-      providerOrganizations: {
-        status: connector.providerOrganizations.status,
-      },
+      providerOrganizations: status?.providerOrganizations,
     });
     return signal == null ? [] : [presentConnection(signal)];
   });
@@ -211,7 +242,7 @@ export function ConnectorGroupListItem({
         <div className={tags()}>
           <ConnectorConnectionBadge
             aggregated={single == null}
-            aggregatedTotal={single == null ? connectors.length : null}
+            aggregatedTotal={single == null && statuses != null ? connectors.length : null}
             connectedCount={connectedCount}
             tone={tone}
             solo={solo}

@@ -135,6 +135,7 @@
     "addMore": "Ajouter plus",
     "emptyConnected": "Aucun fournisseur n'est encore connecté.",
     "emptyConnectedSearch": "Aucun fournisseur connecté ne correspond à votre recherche.",
+    "checkingStatuses": "Vérification des statuts de connexion…",
     "emptyAvailable": "Tous les fournisseurs disponibles sont déjà connectés.",
     "emptyAvailableSearch": "Aucun fournisseur disponible ne correspond à votre recherche.",
     "searchPlaceholder": "Rechercher des fournisseurs...",

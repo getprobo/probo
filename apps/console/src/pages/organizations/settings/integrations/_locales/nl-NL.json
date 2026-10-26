@@ -135,6 +135,7 @@
     "addMore": "Meer toevoegen",
     "emptyConnected": "Er is nog geen leverancier verbonden.",
     "emptyConnectedSearch": "Geen verbonden leverancier komt overeen met uw zoekopdracht.",
+    "checkingStatuses": "Verbindingsstatussen worden gecontroleerd…",
     "emptyAvailable": "Alle beschikbare leveranciers zijn al verbonden.",
     "emptyAvailableSearch": "Geen beschikbare leverancier komt overeen met uw zoekopdracht.",
     "searchPlaceholder": "Leveranciers zoeken...",

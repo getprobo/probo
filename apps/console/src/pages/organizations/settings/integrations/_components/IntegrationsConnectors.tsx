@@ -18,14 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import { Card } from "@probo/ui/src/v2/Card/Card";
 import { Select } from "@probo/ui/src/v2/Select/Select";
 import { SelectItem } from "@probo/ui/src/v2/Select/SelectItem";
 import { SelectPopup } from "@probo/ui/src/v2/Select/SelectPopup";
 import { SelectTrigger } from "@probo/ui/src/v2/Select/SelectTrigger";
+import { Spinner } from "@probo/ui/src/v2/Spinner/Spinner";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
 import { Text } from "@probo/ui/src/v2/typography/Text";
-import { useEffect, useRef, useTransition } from "react";
+import { Suspense, useEffect, useRef, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 
@@ -33,10 +33,7 @@ import type { IntegrationsConnectors_organization$key } from "#/__generated__/co
 import type { IntegrationsConnectors_query$key } from "#/__generated__/core/IntegrationsConnectors_query.graphql";
 import type { IntegrationsConnectorsRefetchQuery } from "#/__generated__/core/IntegrationsConnectorsRefetchQuery.graphql";
 import { SearchField } from "#/components/SearchField/SearchField";
-import {
-  type ConnectorConnectionStatus,
-  groupByProvider,
-} from "#/pages/organizations/_lib/connectorStatus";
+import type { ConnectorConnectionStatus } from "#/pages/organizations/_lib/connectorStatus";
 
 import {
   connectionStatuses,
@@ -47,8 +44,7 @@ import {
 import { useIntegrationsListSearch } from "../_lib/useIntegrationsListSearch";
 import { integrationsList, integrationsPage } from "../variants";
 
-import { ConnectorGroupListItem } from "./ConnectorGroupListItem";
-import { MarketplaceEntryCard } from "./MarketplaceEntryCard";
+import { IntegrationsConnectorResults } from "./IntegrationsConnectorResults";
 
 const integrationsConnectorsFragment = graphql`
   fragment IntegrationsConnectors_query on Query {
@@ -71,8 +67,10 @@ const integrationsConnectorsOrganizationFragment = graphql`
     connectors(filter: $filter) {
       id
       provider
-      connectionStatus
       ...ConnectorGroupListItem_connector
+      # The server streams this in a later payload, so the list renders
+      # before the vendor probes finish.
+      ...useConnectorStatuses_connector @defer
     }
   }
 `;
@@ -113,9 +111,6 @@ export function IntegrationsConnectors({
 
   const isSearching = query.trim() !== "";
   const isFiltering = isSearching || status != null;
-  const connectors = organization.connectors.filter(connector =>
-    status == null || connector.connectionStatus === status,
-  );
 
   const { root, header, intro } = integrationsPage();
   const {
@@ -125,9 +120,6 @@ export function IntegrationsConnectors({
     filters,
     filter,
     results,
-    section,
-    sectionTitle,
-    grid,
     empty,
   } = integrationsList({ pending: isPending });
 
@@ -191,53 +183,20 @@ export function IntegrationsConnectors({
           </div>
         </div>
         <div className={results()} aria-busy={isPending}>
-          <section className={section()}>
-            <div className={sectionTitle()}>
-              <Heading level={2} size={3} weight="medium">
-                {t("listPage.sections.connected")}
-              </Heading>
-              <Text size={2} color="faint">{connectors.length}</Text>
-            </div>
-            {connectors.length === 0 && isFiltering
-              ? (
-                  <Card variant="soft" size={2}>
-                    <div className={empty()}>
-                      <Text size={2} color="faint">
-                        {t("listPage.emptyConnectedSearch")}
-                      </Text>
-                    </div>
-                  </Card>
-                )
-              : (
-                  <div className={grid()}>
-                    <MarketplaceEntryCard organizationKey={organization} />
-                    {groupByProvider(connectors).map((group) => {
-                      const face = group[0];
-                      const providerKey = connectorProviders.find(
-                        driver => driver.provider === face.provider,
-                      );
-
-                      return (
-                        <ConnectorGroupListItem
-                          key={group.length > 1 ? face.provider : face.id}
-                          connectorKeys={group}
-                          organizationKey={organization}
-                          providerKey={providerKey}
-                        />
-                      );
-                    })}
-                    {connectors.length === 0 && !organization.canCreateConnector && (
-                      <Card variant="soft" size={2}>
-                        <div className={empty()}>
-                          <Text size={2} color="faint">
-                            {t("listPage.emptyConnected")}
-                          </Text>
-                        </div>
-                      </Card>
-                    )}
-                  </div>
-                )}
-          </section>
+          <Suspense
+            fallback={(
+              <div className={empty()}>
+                <Spinner size={2} aria-label={t("listPage.checkingStatuses")} />
+              </div>
+            )}
+          >
+            <IntegrationsConnectorResults
+              organization={organization}
+              connectorProviders={connectorProviders}
+              status={status}
+              isFiltering={isFiltering}
+            />
+          </Suspense>
         </div>
       </div>
     </div>
