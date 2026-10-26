@@ -131,8 +131,10 @@ func resourceOf(rawURL, initiator string, kind coredata.TrackerResourceType) (Re
 	return resource, true
 }
 
-func blockSDKPost(method, rawURL, bannerID string) bool {
-	if method != http.MethodPost || bannerID == "" {
+func blockSDKPost(method, rawURL, bannerID, apiBase string) bool {
+	apiOrigin, apiOK := requestOrigin(apiBase)
+	requestOriginURL, requestOK := requestOrigin(rawURL)
+	if method != http.MethodPost || bannerID == "" || !apiOK || !requestOK || !strings.EqualFold(apiOrigin, requestOriginURL) {
 		return false
 	}
 
