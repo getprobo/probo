@@ -47,6 +47,7 @@ func TestCommandSurface(t *testing.T) {
 	})
 
 	var walk func(*cobra.Command)
+
 	walk = func(c *cobra.Command) {
 		t.Run(c.CommandPath(), func(t *testing.T) {
 			t.Parallel()
@@ -102,8 +103,10 @@ func TestOrganizationFlagAlias(t *testing.T) {
 	})
 
 	var walk func(*cobra.Command)
+
 	walk = func(c *cobra.Command) {
 		orgFlag := c.Flags().Lookup("org")
+
 		organizationFlag := c.Flags().Lookup("organization")
 		if c.CommandPath() == "prb connector connect" {
 			if orgFlag == nil || organizationFlag == nil || organizationFlag.Value.Type() != "bool" {

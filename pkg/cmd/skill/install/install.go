@@ -100,8 +100,9 @@ func destinationDirs(dir string, targets []string) ([]string, error) {
 		return nil, fmt.Errorf("cannot locate home directory: %w", err)
 	}
 
-	dirs := make([]string, 0, len(targets))
 	seen := map[string]struct{}{}
+
+	dirs := make([]string, 0, len(targets))
 	for _, target := range targets {
 		rel, err := targetPath(target)
 		if err != nil {

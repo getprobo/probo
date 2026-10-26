@@ -71,10 +71,12 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 			for host := range displayed {
 				hosts = append(hosts, host)
 			}
+
 			slices.Sort(hosts)
 
 			for _, host := range hosts {
 				hc := displayed[host]
+
 				label := host
 				if host == active {
 					label += " (active)"
